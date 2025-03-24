@@ -2,21 +2,16 @@
 
 ## Folder Structure:
 
-/full-stack-booking-app/
-|
-├── /frontend # React.js application code
-|
-├── /backend # Node.js server code
-|
-├── /docs # Documentation (project overview, API docs)
-|
-├── /ci-cd # CI/CD configuration files
-|
-├── .gitignore # Git ignore patterns
-|
-├── README.md # Project overview
-|
-└── package.json # Project dependencies
+```
+full-stack-booking-app/
+├── frontend/        # React.js application code
+├── backend/         # Node.js server code
+├── docs/            # Documentation (project overview, API docs)
+├── ci-cd/           # CI/CD configuration files
+├── .gitignore       # Git ignore patterns
+├── README.md        # Project overview
+└── package.json     # Project dependencies
+```
 
 -   frontend: Contains all the React.js application code.
 -   backend: Contains the Node.js server code.
