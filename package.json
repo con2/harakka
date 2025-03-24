@@ -1,0 +1,19 @@
+{
+	"name": "full-stack-booking-app",
+	"version": "1.0.0",
+	"description": "Full-Stack Storage & Booking Application",
+	"main": "index.js",
+	"scripts": {
+		"start": "echo 'Run frontend and backend separately!'",
+		"frontend": "npm --prefix frontend start",
+		"backend": "npm --prefix backend start",
+		"dev": "concurrently \"npm run frontend\" \"npm run backend\"",
+		"install-all": "npm install --prefix frontend && npm install --prefix backend",
+		"deploy": "echo 'Add deployment scripts here'"
+	},
+	"author": "Your Team Name",
+	"license": "MIT",
+	"devDependencies": {
+		"concurrently": "^9.1.2"
+	}
+}
