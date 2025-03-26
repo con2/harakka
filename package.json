@@ -14,6 +14,7 @@
 	"author": "Your Team Name",
 	"license": "MIT",
 	"devDependencies": {
-		"concurrently": "^9.1.2"
+		"concurrently": "^9.1.2",
+		"supabase": "^2.20.3"
 	}
 }
