@@ -26,11 +26,13 @@ full-stack-booking-app/
 
 -   develop: The integration branch where features are merged.
 
--   feature/[feature-name]: Branches for new features or tasks.
+-   feature/<ISSUE-KEY>-[feature-name]: Branches for new features or tasks.
 
--   bugfix/[bug-name]: Branches for fixing bugs.
+-   bugfix/<ISSUE-KEY>-[bug-name]: Branches for fixing bugs.
 
--   hotfix/[hotfix-name]: Quick fixes for urgent issues in production.
+-   hotfix/<ISSUE-KEY>-[hotfix-name]: Quick fixes for urgent issues in production.
+
+**ISSUE-KEY comes from Jira.**
 
 1. Main Branches:
    main: This branch should always represent the latest stable version of the application. It's the version that will be deployed to production.
@@ -38,33 +40,33 @@ full-stack-booking-app/
 develop: This branch is used for integration. It contains the latest development changes and features that are ready to be tested but not yet deployed to production. After completing each sprint or milestone, you merge changes from feature branches into develop.
 
 2. Feature Branches:
-   feature/<name>: These branches are used for individual features or tasks you work on during the development process. For example, if you’re working on implementing the background music functionality, you could create a feature/background-music branch from develop.
+   feature/<ISSUE-KEY>-[feature-name]: These branches are used for individual features or tasks you work on during the development process. For example, if you’re working on implementing the background music functionality, you could create a feature/background-music branch from develop.
 
 Example:
 
 ```sh
 git checkout develop
-git checkout -b feature/background-music
+git checkout -b feature/SCRUM-123-add-background-music
 ```
 
-Once the feature is complete, you can merge it back into the develop branch:
+Once the feature is complete **and reviewed**, you can merge it back into the develop branch:
 
 ```sh
 git checkout develop
-git merge feature/background-music
+git merge feature/SCRUM-123-add-background-music
 ```
 
 3. Bugfix Branches:
-   bugfix/<name>: These branches are used for fixing bugs. They are created from the develop branch (or main if the bug is in production).
+   bugfix/<ISSUE-KEY>-[bug-name]: These branches are used for fixing bugs. They are created from the develop branch (or main if the bug is in production).
 
 Example:
 
 ```sh
 git checkout develop
-git checkout -b bugfix/fix-login-error
+git checkout -b bugfix/SCRUM-321-fix-login-error
 ```
 
-After fixing the bug, merge it back into develop:
+After the bug is fixed **and reviewed**, merge it back into develop:
 
 ```sh
 git checkout develop
@@ -72,22 +74,22 @@ git merge bugfix/fix-login-error
 ```
 
 4. Hotfix Branches:
-   hotfix/<name>: These branches are used to fix critical issues in the production environment. If there's a bug that needs to be fixed on main immediately, you create a hotfix branch from main, fix the issue, and then merge it back into both main and develop.
+   hotfix/<ISSUE-KEY>-<name>: These branches are used to fix critical issues in the production environment. If there's a bug that needs to be fixed on main immediately, you create a hotfix branch from main, fix the issue, and then merge it back into both main and develop.
 
 Example:
 
 ```sh
 git checkout main
-git checkout -b hotfix/critical-login-bug
+git checkout -b hotfix/SCRUM-777-critical-login-bug
 ```
 
-After fixing the issue, you merge it into both main and develop:
+After the bug is fixed **and reviewed**, you merge it into **both main and develop**:
 
 ```sh
 git checkout main
-git merge hotfix/critical-login-bug
+git merge hotfix/SCRUM-777-critical-login-bug
 git checkout develop
-git merge hotfix/critical-login-bug
+git merge hotfix/SCRUM-777-critical-login-bug
 ```
 
 ## Development Workflow
@@ -147,7 +149,7 @@ test(booking): add tests for conflict detection
 6. Special Annotations:
 
 -   BREAKING CHANGE: in the footer for breaking changes
--   Issues references: Fixes #123, Resolves #456
+-   Issues references: Fixes SCRUM-777, Resolves SCRUM-999
 
 7. Atomic Commits:
 
@@ -161,9 +163,13 @@ test(booking): add tests for conflict detection
 
 ### Merge Process:
 
-1. After the code is reviewed, merge it into the develop branch. TODO: set rules of reviewing. Think about automate testing and deployment.
+_These rules are temporary. We will revise them during the first sprint_
 
-2. Once the develop branch reaches a stable state with all features for the sprint, merge it into main. TODO: set rules of main merging.
+1. We have decided to split to 2 sub-teams: Frontend and Backend. Each sub-team will review the code accordingly.
+2. To organize the merge process, all team members agree, that the timeframe for code review should be 24 hours.
+3. After the code is reviewed, author merges it into the develop branch.
+4. Once the develop branch reaches a stable state with all features for the sprint create a pull request from develop to main.
+5. The team decides to merge the pull request to main during the sprint review meeting
 
 ### Versioning:
 
