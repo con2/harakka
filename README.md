@@ -1,5 +1,29 @@
 # Full-Stack Storage & Booking App
 
+## Tech Stack
+
+### Frontend<!--  TODO: complete later-->
+
+-   React with TypeScript
+-   Vite for fast development and building
+-   Redux Toolkit for state management
+-   UI <!-- TODO: define -->
+-   Axios for API requests
+-   Cypress for E2E testing
+
+### Backend
+
+-   NestJS for robust API development
+-   TypeScript for type safety
+-   Supabase for database and authentication
+
+### Prerequisites
+
+-   Node.js (v18 or higher recommended)
+-   npm (comes with Node.js)
+-   Supabase account (free tier works fine)
+-   Azure account (free tier available, we use student't account)
+
 ## Setup
 
 1. Clone the repo:
