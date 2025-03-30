@@ -7,7 +7,7 @@
 -   React with TypeScript
 -   Vite for fast development and building
 -   Redux Toolkit for state management
--   UI <!-- TODO: define -->
+-   UI <!-- TODO: define UI tools and libraries -->
 -   Axios for API requests
 -   Cypress for E2E testing
 
