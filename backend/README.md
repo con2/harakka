@@ -48,4 +48,8 @@ npm run start
 
 and go to the url in your browser:
 
-localhost:3000
+**localhost:3000**
+
+to see all the data from storage_items go to:
+
+http://localhost:3000/storage-items/
