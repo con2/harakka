@@ -1,15 +1,14 @@
-import { Button } from "./components/ui/button"
+//import { Button } from "./components/ui/button"
+import { RouterProvider } from "react-router-dom";
+import { router } from "./routes/appRoutes";
 
 function App() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center min-h-svh">
-        <p>
-          Hello there!
-        </p>
-        <Button className="cursor-pointer">Click Me!</Button>
-      </div>
+      <RouterProvider
+      router={router}
+    />
     </>
   )
 }
