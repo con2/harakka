@@ -18,13 +18,37 @@ ALTER TABLE saved_lists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saved_list_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- ==== Helper function to check if user is admin ====
+-- ==== Helper functions for role-based access ====
+
+-- Helper function to check if user is superVera
+CREATE OR REPLACE FUNCTION is_super_vera()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM user_profiles 
+    WHERE id = auth.uid() AND role = 'superVera'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if user is admin (but not superVera)
+CREATE OR REPLACE FUNCTION is_admin_only()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM user_profiles 
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Updated function to check if user has elevated privileges (admin or superVera)
 CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM user_profiles 
-    WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
+    WHERE id = auth.uid() AND role IN ('admin', 'superVera')
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -36,15 +60,10 @@ CREATE POLICY "Public read access for storage locations"
 ON storage_locations FOR SELECT
 USING (is_active = TRUE);
 
--- storage_items - Public can view available items
-CREATE POLICY "Public read access for available storage items"
-ON storage_items FOR SELECT
-USING (status = 'available' AND is_active = TRUE);
-
--- tags - Public can view active tags
+-- tags - Public can view tags
 CREATE POLICY "Public read access for tags"
 ON tags FOR SELECT
-USING (is_active = TRUE);
+USING (TRUE);
 
 -- storage_working_hours - Public can view active hours
 CREATE POLICY "Public read access for working hours"
@@ -64,7 +83,6 @@ USING (
   EXISTS (
     SELECT 1 FROM storage_items
     WHERE id = storage_item_images.item_id
-    AND status = 'available'
     AND is_active = TRUE
   )
 );
@@ -261,7 +279,44 @@ USING (
   )
 );
 
+-- ==== superVera Policies ====
+
+-- SuperVera has full access to all data
+
+-- Create specific superVera policy for user_profiles
+CREATE POLICY "SuperVera has full access to user_profiles"
+ON user_profiles FOR ALL
+USING (is_super_vera());
+
 -- ==== Admin Policies ====
+
+-- Drop existing admin policy on user_profiles
+DROP POLICY IF EXISTS "Admins have full access to user_profiles" ON user_profiles;
+
+-- Create new admin policies for user_profiles
+CREATE POLICY "Admins can view all user profiles"
+ON user_profiles FOR SELECT
+USING (is_admin_only());
+
+CREATE POLICY "Admins can modify regular user profiles"
+ON user_profiles FOR UPDATE
+USING (
+  is_admin_only() AND 
+  (SELECT role FROM user_profiles WHERE id = user_profiles.id) = 'user'
+);
+
+CREATE POLICY "Admins can insert new regular user profiles"
+ON user_profiles FOR INSERT
+WITH CHECK (
+  is_admin_only()
+);
+
+CREATE POLICY "Admins can delete regular user profiles"
+ON user_profiles FOR DELETE
+USING (
+  is_admin_only() AND 
+  (SELECT role FROM user_profiles WHERE id = user_profiles.id) = 'user'
+);
 
 -- Admin can do everything on all tables
 CREATE POLICY "Admins have full access to storage_locations"
@@ -290,10 +345,6 @@ USING (is_admin());
 
 CREATE POLICY "Admins have full access to item_tags"
 ON storage_item_tags FOR ALL
-USING (is_admin());
-
-CREATE POLICY "Admins have full access to user_profiles"
-ON user_profiles FOR ALL
 USING (is_admin());
 
 CREATE POLICY "Admins have full access to user_addresses"
