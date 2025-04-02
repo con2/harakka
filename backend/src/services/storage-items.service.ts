@@ -16,7 +16,7 @@ export class StorageItemsService{ // handles Database querys
         return data;
     }
 
-    async getItemById(id: number){
+    async getItemById(id: string ){
         const {data, error}= await this.supabase.from('storage_items').select('*').eq('id', id).single();
         if (error) throw new Error (error.message);
         return data;
@@ -28,13 +28,13 @@ export class StorageItemsService{ // handles Database querys
         return data;
     }
 
-    async updateItem(id: number, item : any){
+    async updateItem(id: string, item : any){
         const {data, error} = await this.supabase.from('storage_items').update(item).eq('id', id);
         if (error) throw new Error (error.message);
         return data;
     }
 
-    async deleteItem(id:number){
+    async deleteItem(id: string){
         const {data, error}= await this.supabase.from('storage_items').delete().eq('id', id);
         if (error) throw new Error (error.message);
         return data;
