@@ -11,27 +11,25 @@ CREATE TABLE storage_locations (
   image_url VARCHAR
 );
 
+-- Create storage compartments table
+CREATE TABLE storage_compartments (
+ id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+ created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+ translations JSONB
+);
+
 -- Create storage items table
 CREATE TABLE storage_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   location_id UUID REFERENCES storage_locations(id) NOT NULL,
-  items_number NUMERIC NOT NULL,
-  features JSONB,
-  status VARCHAR NOT NULL CHECK (status IN ('available', 'booked', 'maintenance', 'unavailable')),
-  price_base DECIMAL NOT NULL,
-  price_modifier DECIMAL DEFAULT 1,
+  compartment_id UUID REFERENCES storage_compartments(id),
+  items_number_total NUMERIC NOT NULL,
+  items_number_available NUMERIC NOT NULL,
+  price DECIMAL NOT NULL,
   average_rating DECIMAL DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create tags table
-CREATE TABLE tags (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name VARCHAR NOT NULL,
-  description VARCHAR,
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  translations JSONB
 );
 
 -- Create working hours table
@@ -69,22 +67,30 @@ CREATE TABLE storage_item_images (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create item-tags junction table
+-- Create tags table
+CREATE TABLE tags (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  translations JSONB
+);
+
+-- Create item-tags table
 CREATE TABLE storage_item_tags (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   item_id UUID REFERENCES storage_items(id) NOT NULL,
   tag_id UUID REFERENCES tags(id) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(item_id, tag_id)
+  translations JSONB
 );
 
 -- Create user profiles table 
 CREATE TABLE user_profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id),
-  role VARCHAR NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin', 'superadmin')),
+  role VARCHAR NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin', 'superVera')),
   full_name VARCHAR,
   visible_name VARCHAR,
   phone VARCHAR,
+  email VARCHAR,
   saved_lists JSONB,
   preferences JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -97,7 +103,6 @@ CREATE TABLE user_addresses (
   address_type VARCHAR NOT NULL CHECK (address_type IN ('billing', 'shipping', 'both')),
   street_address VARCHAR NOT NULL,
   city VARCHAR NOT NULL,
-  state VARCHAR NOT NULL,
   postal_code VARCHAR NOT NULL,
   country VARCHAR NOT NULL,
   is_default BOOLEAN DEFAULT FALSE,
