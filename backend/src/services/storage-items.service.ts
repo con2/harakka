@@ -34,7 +34,7 @@ export class StorageItemsService{ // handles Database querys
         return data;
     }
 
-    async deleteItem(id: string){
+    async deleteItem(id:string){
         const {data, error}= await this.supabase.from('storage_items').delete().eq('id', id);
         if (error) throw new Error (error.message);
         return data;
