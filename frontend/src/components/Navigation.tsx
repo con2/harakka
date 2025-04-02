@@ -33,6 +33,13 @@ export const Navigation = () => {
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link to="/admin" className="flex items-center gap-1">
+                      Admin Panel
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
           </div>
