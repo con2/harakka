@@ -38,6 +38,18 @@ CREATE TRIGGER audit_orders_trigger
 AFTER INSERT OR UPDATE OR DELETE ON orders
 FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
 
+CREATE TRIGGER audit_order_items_trigger
+AFTER INSERT OR UPDATE OR DELETE ON order_items
+FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
+
 CREATE TRIGGER audit_payments_trigger
 AFTER INSERT OR UPDATE OR DELETE ON payments
+FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
+
+CREATE TRIGGER audit_storage_items_trigger
+AFTER INSERT OR UPDATE OR DELETE ON storage_items
+FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
+
+CREATE TRIGGER audit_user_profiles_trigger
+AFTER INSERT OR UPDATE OR DELETE ON user_profiles
 FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
