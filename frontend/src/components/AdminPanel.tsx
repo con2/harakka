@@ -7,7 +7,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } f
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, Settings, Menu } from "lucide-react";
+import { LayoutDashboard, Users, Settings, Menu, Warehouse } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const AdminPanel = () => {
@@ -24,16 +24,17 @@ const AdminPanel = () => {
   return (
     <div className="flex h-screen">
       {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-gray-900 text-white p-4">
+      <aside className="hidden md:flex flex-col w-64 p-4">
         <div className="flex items-center gap-2">
           <img src={logo} alt="Logo" className="h-10" />
           <h2 className="text-lg font-bold">Admin Panel</h2>
         </div>
-        <Separator className="my-4 bg-gray-700" />
+        <Separator className="my-4 bg-primary" />
         
         <nav className="flex flex-col space-y-4">
           <SidebarLink to="/admin" icon={<LayoutDashboard />} label="Dashboard" />
           <SidebarLink to="/admin/users" icon={<Users />} label="Users" />
+          <SidebarLink to="/admin/items" icon={<Warehouse />} label="Items" />
           <SidebarLink to="/admin/settings" icon={<Settings />} label="Settings" />
         </nav>
       </aside>
@@ -45,16 +46,17 @@ const AdminPanel = () => {
             <Menu className="w-6 h-6" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="bg-gray-900 text-white w-64">
+        <SheetContent side="left" className="bg-primary w-64">
           <div className="flex items-center gap-2">
             <img src={logo} alt="Logo" className="h-10" />
             <h2 className="text-lg font-bold">Admin Panel</h2>
           </div>
-          <Separator className="my-4 bg-gray-700" />
+          <Separator className="my-4 bg-primary" />
 
           <nav className="flex flex-col space-y-4">
             <SidebarLink to="/admin" icon={<LayoutDashboard />} label="Dashboard" />
             <SidebarLink to="/admin/users" icon={<Users />} label="Users" />
+            <SidebarLink to="/admin/items" icon={<Users />} label="Items" />
             <SidebarLink to="/admin/settings" icon={<Settings />} label="Settings" />
           </nav>
         </SheetContent>
