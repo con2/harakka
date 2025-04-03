@@ -9,7 +9,7 @@ import { UserController } from './controllers/user.controller';
 import { UserService } from './services/user.service';
 
 @Module({
-  imports: [ConfigModule.forRoot()],
+  imports: [ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' })],
   controllers: [AppController, StorageItemsController, UserController],
   providers: [AppService, SupabaseService, StorageItemsService, UserService],
 })
