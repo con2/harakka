@@ -12,7 +12,7 @@ export class StorageItemsController {
     }
 
     @Get(':id')
-    async getById(@Param('id') id: number) {
+    async getById(@Param('id') id: string) {
         return this.storageItemsService.getItemById(id); // GET /storage-items/:id (get one)
     }
 
@@ -22,12 +22,12 @@ export class StorageItemsController {
     }
 
     @Put(':id')
-        async update (@Param('id') id: number, @Body() item: any){
+        async update (@Param('id') id: string, @Body() item: any){
             return this.storageItemsService.updateItem(id, item); // PUT /storage-items/:id (update item)
         }
     
     @Delete(':id')
-        async delete(@Param('id') id: number){
+        async delete(@Param('id') id: string){
             return this.storageItemsService.deleteItem(id); // DELETE /storage-items/:id (delete item)
         }
 }
