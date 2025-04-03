@@ -10,7 +10,7 @@ import { UserService } from './services/user.service';
 
 @Module({
   imports: [ConfigModule.forRoot()],
-  controllers: [AppController, StorageItemsController  , UserController],
+  controllers: [AppController, StorageItemsController, UserController],
   providers: [AppService, SupabaseService, StorageItemsService, UserService],
 })
 export class AppModule {}
