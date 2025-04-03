@@ -13,7 +13,7 @@ export const Navigation = () => {
   const { user, signOut } = useAuth();
 
   return (
-    <nav className="mb-3 shadow-sm">
+    <nav className="shadow-sm">
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center gap-4">
             <Link to="/">
