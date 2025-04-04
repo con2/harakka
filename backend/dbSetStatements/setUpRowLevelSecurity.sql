@@ -327,6 +327,10 @@ CREATE POLICY "Admins have full access to storage_items"
 ON storage_items FOR ALL
 USING (is_admin());
 
+CREATE POLICY "Allow anonymous read access to storage_items"
+ON storage_items FOR SELECT
+USING (true);
+
 CREATE POLICY "Admins have full access to tags"
 ON tags FOR ALL
 USING (is_admin());
