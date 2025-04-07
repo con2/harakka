@@ -22,6 +22,10 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // if (!user || user.role !== "admin") {
+  //   return <Navigate to="/login" state={{ from: location }} replace />;
+  // }
+
   return <>{children}</>;
 };
 
