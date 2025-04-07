@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import Navigation from "./components/Navigation";
 import TestComponent from "./components/TestComponent";
 import AdminPanel from "./components/AdminPanel";
+import ItemsList from "./components/Items/ItemsList";
 
 function App() {
 
@@ -30,6 +31,13 @@ function App() {
                   <ProtectedRoute>
                     <AdminPanel />
                   </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/storage"
+                element={
+                  <ItemsList />   
                 }
               />
               {/* Other routes... */}
