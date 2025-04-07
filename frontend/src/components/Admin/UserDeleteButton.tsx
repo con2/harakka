@@ -8,7 +8,6 @@ const DeleteUserButton = ({ id, closeModal }: { id: string; closeModal: () => vo
 
   const handleDelete = () => {
     if (!id) {
-      console.error("Invalid user ID:", id);
       toast.error("Invalid user ID.");
       return;
     }
