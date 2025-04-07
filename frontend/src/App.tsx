@@ -12,9 +12,9 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col text-primary">
           <Navigation />
-          <main className="p-3 flex-1">
+          <main className="flex-1">
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route
