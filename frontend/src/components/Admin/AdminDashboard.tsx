@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 import { DataTable } from "../ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
-import { MoveRight } from "lucide-react";
+import { LoaderCircle, MoveRight } from "lucide-react";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
@@ -13,10 +13,14 @@ const AdminDashboard = () => {
   const loading = useAppSelector(selectLoading);
   const navigate = useNavigate();
 
+  // fetch only if users list is empty
   useEffect(() => {
+    if (users.length === 0) {
     dispatch(fetchAllUsers());
-  }, [dispatch]);
+    }
+  }, [dispatch, users.length]);
 
+  // define columns for the Orders data table
   const orderColumns: ColumnDef<any>[] = [
     { accessorKey: "full_name", header: "Name" },
     { accessorKey: "phone", header: "Phone" },
@@ -25,13 +29,13 @@ const AdminDashboard = () => {
     { accessorKey: "phone", header: "Phone" },
     { accessorKey: "email", header: "Email" },
   ];
-
+  // define columns for the Users and Team data table
   const columns: ColumnDef<any>[] = [
     { accessorKey: "full_name", header: "Name" },
     { accessorKey: "phone", header: "Phone" },
     { accessorKey: "email", header: "Email" },
   ];
-
+  // limit the number of users displayed in the table
   const limitedUsers = users.slice(0, 3);
 
   return (
@@ -41,7 +45,7 @@ const AdminDashboard = () => {
       {/* Recent Orders Section */}
       <div className="mb-8">
         <h2>Recent Orders</h2>
-        {loading && <p>Loading orders...</p>}
+        {loading && <p><LoaderCircle/></p>}
         <div className="w-full mx-auto">
           <DataTable columns={orderColumns} data={users} />
         </div>
@@ -60,7 +64,7 @@ const AdminDashboard = () => {
         {/* Users Table */}
         <div>
           <h2>Users</h2>
-          {loading && <p>Loading users...</p>}
+          {loading && <p><LoaderCircle/></p>}
           <div className="w-full max-w-4xl mx-auto">
             <DataTable columns={columns} data={limitedUsers} />
           </div>
@@ -76,7 +80,7 @@ const AdminDashboard = () => {
         {/* Team Table */}
         <div>
           <h2>Your Team</h2>
-          {loading && <p>Loading team...</p>}
+          {loading && <p><LoaderCircle/></p>}
           <div className="w-full max-w-4xl mx-auto">
             <DataTable columns={columns} data={limitedUsers} />
           </div>
