@@ -7,8 +7,10 @@ import { createUser } from "@/store/slices/usersSlice";
 import { toast } from "sonner";
 import { UserProfile } from "@/types/user";
 import { Label } from "../ui/label";
+import { useAuth } from "@/context/AuthContext";
 
 const AddUserModal = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<UserProfile>({
     full_name: "",
@@ -23,11 +25,13 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
 
   const [password, setPassword] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // function to handle input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value = e.target.name === "role" ? (e.target.value as "user" | "admin" | "superVera") : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
   };
 
+  // check for a valid email format
   const isValidEmail = (email: string) => {
     const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     return regex.test(email);
@@ -44,10 +48,11 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       const userWithPassword = { ...formData, password };
-      await dispatch(createUser(userWithPassword));
+      await dispatch(createUser(userWithPassword)).unwrap(); 
       toast.success("User added successfully!");
-    } catch (error) {
-      toast.error("Failed to add user.");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to add user.");
+      console.log("Add user error:", error);
     }
   };
 
@@ -104,6 +109,22 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
               placeholder="Password"
             />
           </div>
+          {user?.role === "superVera" && (
+            <div>
+              <Label htmlFor="role">Role</Label>
+              <select
+                id="role"
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+                <option value="superVera">Super Vera</option>
+              </select>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button className="text-white px-6 rounded-2xl bg-highlight2 hover:bg-white hover:text-highlight2" onClick={handleSave}>
