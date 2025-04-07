@@ -50,6 +50,7 @@ CREATE TRIGGER audit_storage_items_trigger
 AFTER INSERT OR UPDATE OR DELETE ON storage_items
 FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
 
-CREATE TRIGGER audit_user_profiles_trigger
-AFTER INSERT OR UPDATE OR DELETE ON user_profiles
-FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
+-- Drop this trigger temporarily to avoid errors
+-- CREATE TRIGGER audit_user_profiles_trigger
+-- AFTER INSERT OR UPDATE OR DELETE ON user_profiles
+-- FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
