@@ -63,17 +63,23 @@ storage_images
 ├── is_active (boolean, default true)
 └── created_at (timestamp with time zone, default NOW())
 
+storage_compartments
+├── id (uuid, PK)
+├── created_at (timestamp with time zone, default NOW())
+└── translations (jsonb) // Multilingual content for compartment information
+
 storage_items
 ├── id (uuid, PK)
 ├── location_id (uuid, FK -> storage_locations.id, NOT NULL)
-├── items_number (numeric, NOT NULL)
-├── features (jsonb, nullable)
-├── status (varchar, CHECK IN ('available','booked','maintenance','unavailable'), NOT NULL)
-├── price_base (decimal, NOT NULL)
-├── price_modifier (decimal, default 1)
+├── compartment_id (uuid, FK -> storage_compartments.id)
+├── items_number_total (numeric, NOT NULL)
+├── items_number_available (numeric, NOT NULL)
+├── price (decimal, NOT NULL)
 ├── average_rating (decimal, default 0)
+├── status (varchar, default 'available') // Item availability status
 ├── is_active (boolean, default true)
-└── created_at (timestamp with time zone, default NOW())
+├── created_at (timestamp with time zone, default NOW())
+└── translations (jsonb) // Multilingual content for item details
 
 storage_item_images
 ├── id (uuid, PK)
@@ -89,22 +95,21 @@ storage_item_tags
 ├── id (uuid, PK)
 ├── item_id (uuid, FK -> storage_items.id, NOT NULL)
 ├── tag_id (uuid, FK -> tags.id, NOT NULL)
-├── created_at (timestamp with time zone, default NOW())
-└── UNIQUE(item_id, tag_id)
+└── created_at (timestamp with time zone, default NOW())
 
 tags
 ├── id (uuid, PK)
-├── name (varchar, NOT NULL)
-├── description (varchar, nullable)
 ├── is_active (boolean, default true)
-└── created_at (timestamp with time zone, default NOW())
+├── created_at (timestamp with time zone, default NOW())
+└── translations (jsonb) // Multilingual content for tag names
 
 user_profiles
 ├── id (uuid, PK, FK -> auth.users.id)
-├── role (varchar, CHECK IN ('user','admin','superadmin'), default 'user', NOT NULL)
+├── role (varchar, CHECK IN ('user','admin','superVera'), default 'user', NOT NULL)
 ├── full_name (varchar)
 ├── visible_name (varchar)
 ├── phone (varchar)
+├── email (varchar)
 ├── saved_lists (jsonb, nullable)
 ├── preferences (jsonb, nullable)
 └── created_at (timestamp with time zone, default NOW())
@@ -115,7 +120,6 @@ user_addresses
 ├── address_type (varchar, CHECK IN ('billing','shipping','both'), NOT NULL)
 ├── street_address (varchar, NOT NULL)
 ├── city (varchar, NOT NULL)
-├── state (varchar, NOT NULL)
 ├── postal_code (varchar, NOT NULL)
 ├── country (varchar, NOT NULL)
 ├── is_default (boolean, default false)
@@ -225,11 +229,41 @@ audit_logs
 └── created_at (timestamp with time zone, default NOW())
 ```
 
+### Example translations field for a storage item
+
+```json
+{
+	"fi": {
+		"item_type": "kypäriä",
+		"item_name": "sotilaskypärä",
+		"item_description": "sotilaskypärä musta, iso"
+	},
+	"en": {
+		"item_type": "helmets",
+		"item_name": "military helmet",
+		"item_description": "military helmet black, large"
+	}
+}
+```
+
+This approach allows:
+
+-   Storing translations for all languages in a single field
+-   Adding new languages without schema changes
+-   Flexible querying using JSON operators
+-   Client-side language selection
+
 ## Security and Automation Features
 
 ### 1. Audit System
 
-The database implements a comprehensive audit system that automatically tracks all changes to critical tables.
+The database implements a comprehensive audit system that automatically tracks all changes to critical tables:
+
+-   orders
+-   order_items
+-   payments
+-   storage_items
+-   user_profiles
 
 #### Audit Function
 
@@ -269,15 +303,11 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
-This function is applied to critical tables via triggers:
+This function is applied to critical tables via triggers like:
 
 ```sql
 CREATE TRIGGER audit_orders_trigger
 AFTER INSERT OR UPDATE OR DELETE ON orders
-FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
-
-CREATE TRIGGER audit_payments_trigger
-AFTER INSERT OR UPDATE OR DELETE ON payments
 FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
 ```
 
@@ -319,26 +349,76 @@ FOR EACH ROW EXECUTE FUNCTION calculate_average_rating();
 ```sql
 CREATE OR REPLACE FUNCTION update_order_amounts()
 RETURNS TRIGGER AS $$
+DECLARE
+  total_sum DECIMAL;
 BEGIN
-  UPDATE orders
-  SET total_amount = (
-    SELECT SUM(subtotal)
+  -- Handle DELETE operation differently
+  IF TG_OP = 'DELETE' THEN
+    SELECT COALESCE(SUM(subtotal), 0) INTO total_sum
     FROM order_items
-    WHERE order_id = NEW.order_id
-  ),
-  final_amount = (
-    SELECT SUM(subtotal)
+    WHERE order_id = OLD.order_id;
+
+    UPDATE orders
+    SET
+      total_amount = total_sum,
+      final_amount = total_sum - COALESCE(discount_amount, 0)
+    WHERE id = OLD.order_id;
+    RETURN OLD;
+  ELSE
+    SELECT COALESCE(SUM(subtotal), 0) INTO total_sum
     FROM order_items
-    WHERE order_id = NEW.order_id
-  ) - discount_amount
-  WHERE id = NEW.order_id;
-  RETURN NEW;
+    WHERE order_id = NEW.order_id;
+
+    UPDATE orders
+    SET
+      total_amount = total_sum,
+      final_amount = total_sum - COALESCE(discount_amount, 0)
+    WHERE id = NEW.order_id;
+    RETURN NEW;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Error in update_order_amounts: %', SQLERRM;
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
+```
 
-CREATE TRIGGER update_order_amounts_trigger
-AFTER INSERT OR UPDATE OR DELETE ON order_items
-FOR EACH ROW EXECUTE FUNCTION update_order_amounts();
+**Inventory management**
+
+```sql
+CREATE OR REPLACE FUNCTION update_item_availability()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- For new or updated order items
+  IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+    -- When a new order is placed or an existing one is updated
+    IF NEW.status = 'confirmed' THEN
+      UPDATE storage_items
+      SET items_number_available = items_number_available - NEW.quantity
+      WHERE id = NEW.item_id AND items_number_available >= NEW.quantity;
+
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'Not enough available items for storage item %', NEW.item_id;
+      END IF;
+    END IF;
+
+  -- For deleted or cancelled order items
+  ELSIF TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND NEW.status = 'cancelled' AND OLD.status = 'confirmed') THEN
+    UPDATE storage_items
+    SET items_number_available = items_number_available +
+        CASE WHEN TG_OP = 'DELETE' THEN OLD.quantity
+             ELSE NEW.quantity END
+    WHERE id = CASE WHEN TG_OP = 'DELETE' THEN OLD.item_id ELSE NEW.item_id END;
+  END IF;
+
+  RETURN COALESCE(NEW, OLD);
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Error in update_item_availability: %', SQLERRM;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
 ```
 
 ### 3. Row Level Security (RLS)
@@ -350,17 +430,40 @@ All tables have RLS enabled, with policies controlling:
 
 -   What public (unauthenticated) users can see
 -   What authenticated users can see and modify
--   What administrators can access
+-   What administrators and superVera can access
 
-**Admin Check Function**
+**Role-Based Access Control Functions**
 
 ```sql
+-- Helper function to check if user is superVera
+CREATE OR REPLACE FUNCTION is_super_vera()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM user_profiles
+    WHERE id = auth.uid() AND role = 'superVera'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if user is admin (but not superVera)
+CREATE OR REPLACE FUNCTION is_admin_only()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM user_profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Updated function to check if user has elevated privileges (admin or superVera)
 CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM user_profiles
-    WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
+    WHERE id = auth.uid() AND role IN ('admin', 'superVera')
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -377,19 +480,43 @@ ON storage_locations FOR SELECT
 USING (is_active = TRUE);
 ```
 
+User-Specific Policies:
+
+```sql
+-- Example: Users can view their own orders
+CREATE POLICY "Users can view their own orders"
+ON orders FOR SELECT
+USING (user_id = auth.uid());
+```
+
 Admin Policies:
 
 ```sql
--- Example: Admins have full access to all tables
-CREATE POLICY "Admins have full access to orders"
-ON orders FOR ALL
-USING (is_admin());
+-- Example: Admins can view all user profiles but modify only regular users
+CREATE POLICY "Admins can view all user profiles"
+ON user_profiles FOR SELECT
+USING (is_admin_only());
+
+CREATE POLICY "Admins can modify regular user profiles"
+ON user_profiles FOR UPDATE
+USING (
+  is_admin_only() AND
+  (SELECT role FROM user_profiles WHERE id = user_profiles.id) = 'user'
+);
+```
+
+SuperVera Policies:
+
+```sql
+-- Example: SuperVera has full access to all user profiles
+CREATE POLICY "SuperVera has full access to user_profiles"
+ON user_profiles FOR ALL
+USING (is_super_vera());
 ```
 
 System Policies:
 
 ```sql
--- Allow the system to insert audit logs and notifications
 CREATE POLICY "System can insert audit logs"
 ON audit_logs FOR INSERT
 WITH CHECK (TRUE);
@@ -407,19 +534,38 @@ CREATE INDEX idx_order_items_order ON order_items(order_id);
 CREATE INDEX idx_payments_order ON payments(order_id);
 CREATE INDEX idx_notifications_user ON notifications(user_id);
 CREATE INDEX idx_reviews_item ON reviews(item_id);
+CREATE INDEX idx_storage_items_translations ON storage_items USING GIN (translations);
+CREATE INDEX idx_tags_translations ON tags USING GIN (translations);
 ```
 
 ## Injecting test data
 
 ### Test users:
 
-Test users are created in Supabase, for more details read file: '../backend/dbSetStatements/testUsers.json'
+Test users are created in Supabase, including roles:
+
+-   superVera: Has full access to all data
+-   admin: Can manage all data except other admins and superVera
+-   user: Regular user with limited access
 
 ### Test data:
 
 Test data injection is done by running the following file: '../backend/dbSetStatements/testData.sql'
 
 ## Using Database Features in the Application
+
+### Working with Multilingual Content
+
+```js
+// Get item data in Finnish
+const { data, error } = await supabase
+	.from("storage_items")
+	.select("id, price, translations:translations->fi")
+	.eq("status", "available");
+
+// Client-side language selection
+const displayName = item.translations[userLanguage].item_name || item.translations.en.item_name; // Fallback to English
+```
 
 ### Querying Audit Logs
 
