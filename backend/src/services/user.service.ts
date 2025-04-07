@@ -40,42 +40,141 @@ export class UserService {
   }
 
   async createUser(user: CreateUserDto): Promise<User> {
-    // Create a user in Supabase Auth
-    const { data: authData, error: authError }: UserResponse =
-      await this.supabase.auth.admin.createUser({
-        email: user.email,
-        password: user.password,
-        email_confirm: true, // Auto-confirm email for now TODO: think about it later
-      });
-
-    if (authError) {
-      this.logger.error('Supabase Auth Error:', authError);
-      throw new Error(authError.message);
-    }
-
-    // Use the newly created user ID for the user_profiles table
-    const { data, error: profileError }: PostgrestSingleResponse<User> =
-      await this.supabase
+    try {
+      // First, check if user already exists to provide better error message
+      const { data: existingUser } = await this.supabase
         .from('user_profiles')
-        .insert([
-          {
-            id: authData.user.id, // Auth-generated user ID
-            role: user.role || 'user',
-            full_name: user.full_name,
-            visible_name: user.visible_name,
-            phone: user.phone,
-            preferences: user.preferences || {},
-          },
-        ])
-        .select()
+        .select('id')
+        .eq('email', user.email)
         .single();
 
-    if (profileError) {
-      this.logger.error('Supabase Profile Insert Error:', profileError);
-      throw new Error(profileError.message);
-    }
+      if (existingUser) {
+        throw new Error(`Email ${user.email} is already registered`);
+      }
 
-    return data;
+      // Log the attempt to create a user
+      this.logger.log(`Attempting to create user with email: ${user.email}`);
+
+      // Create a user in Supabase Auth
+      const { data: authData, error: authError }: UserResponse =
+        await this.supabase.auth.admin.createUser({
+          email: user.email,
+          password: user.password,
+          email_confirm: true, // Auto-confirm email for now
+        });
+
+      if (authError) {
+        this.logger.error(`Supabase Auth Error: ${JSON.stringify(authError)}`);
+
+        // Handle specific error cases
+        if (
+          authError.message &&
+          (authError.message.includes('email') ||
+            authError.message.includes('already registered') ||
+            authError.message.includes('already exists'))
+        ) {
+          throw new Error(`Email ${user.email} is already registered`);
+        }
+
+        // For 500 errors, provide a more helpful message
+        if (authError.status === 500) {
+          this.logger.error(
+            'Supabase server error. Check your configuration and Supabase service status.',
+          );
+          throw new Error(
+            'Unable to create user account due to a service error. Please try again later.',
+          );
+        }
+
+        throw new Error(authError.message || 'Error creating user');
+      }
+
+      // Check if profile was already created by the database trigger
+      const {
+        data: existingProfile,
+        error: profileError,
+      }: PostgrestSingleResponse<User> = await this.supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        this.logger.error(
+          `Error checking for existing profile: ${JSON.stringify(profileError)}`,
+        );
+        throw new Error(
+          profileError.message || 'Error checking for existing user profile',
+        );
+      }
+
+      if (existingProfile) {
+        // Profile already exists (created by trigger), update it with additional information
+        const { data, error: updateError }: PostgrestSingleResponse<User> =
+          await this.supabase
+            .from('user_profiles')
+            .update({
+              full_name: user.full_name,
+              visible_name: user.visible_name,
+              role: user.role || 'user',
+              phone: user.phone,
+              preferences: user.preferences || {},
+            })
+            .eq('id', authData.user.id)
+            .select()
+            .single();
+
+        if (updateError) {
+          this.logger.error(
+            `Profile Update Error: ${JSON.stringify(updateError)}`,
+          );
+          throw new Error(
+            updateError.message || `Error updating profile for ${user.email}`,
+          );
+        }
+
+        return data;
+      } else {
+        // Profile doesn't exist yet, create it
+        const { data, error: profileError }: PostgrestSingleResponse<User> =
+          await this.supabase
+            .from('user_profiles')
+            .insert([
+              {
+                id: authData.user.id, // Auth-generated user ID
+                role: user.role || 'user',
+                full_name: user.full_name,
+                visible_name: user.visible_name,
+                phone: user.phone,
+                email: user.email,
+                preferences: user.preferences || {},
+              },
+            ])
+            .select()
+            .single();
+
+        if (profileError) {
+          this.logger.error(
+            `Supabase Profile Insert Error: ${JSON.stringify(profileError)}`,
+          );
+          // Fix: Use a default message if no message property exists
+          throw new Error(
+            profileError.message || `Error creating profile for ${user.email}`,
+          );
+        }
+
+        return data;
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      this.logger.log(
+        `User creation failed: ${errorMessage}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    }
   }
 
   async updateUser(id: string, user: Partial<User>): Promise<User | null> {
