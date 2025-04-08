@@ -96,6 +96,11 @@ USING (
   expires_at > NOW()
 );
 
+-- user_profiles - Public can create user profiles
+CREATE POLICY "Anyone can insert user profiles" ON user_profiles 
+FOR INSERT TO authenticated 
+WITH CHECK (true);
+
 -- ==== User-specific Data Policies ====
 
 -- user_profiles - Users can view and update their own profiles
@@ -305,12 +310,6 @@ USING (
   (SELECT role FROM user_profiles WHERE id = user_profiles.id) = 'user'
 );
 
-CREATE POLICY "Admins can insert new regular user profiles"
-ON user_profiles FOR INSERT
-WITH CHECK (
-  is_admin_only()
-);
-
 CREATE POLICY "Admins can delete regular user profiles"
 ON user_profiles FOR DELETE
 USING (
@@ -326,6 +325,10 @@ USING (is_admin());
 CREATE POLICY "Admins have full access to storage_items"
 ON storage_items FOR ALL
 USING (is_admin());
+
+CREATE POLICY "Allow anonymous read access to storage_items"
+ON storage_items FOR SELECT
+USING (true);
 
 CREATE POLICY "Admins have full access to tags"
 ON tags FOR ALL
