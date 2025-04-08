@@ -8,28 +8,31 @@ import { useAuth } from "@/context/AuthContext";
 import { useAppDispatch } from "@/store/hooks";
 import { itemsApi } from "@/api/services/items";
 import { fetchAllItems } from "@/store/slices/itemsSlice";
+import { Item } from "@/types/item";
 
 const DEFAULT_ITEM_IMAGE = defaultImage;
 
-interface StorageItem {
+/* interface StorageItem {
   id: string;
   name: string;
   description: string;
   location: string;
   imageUrl?: string; // optional image URL
-}
+} */
 
 interface ItemsCardProps {
-  item: StorageItem;
+  item: Item;
 }
 
 const ItemCard = ({ item }: ItemsCardProps) => {
   const navigate = useNavigate();
+
   const handleItemClick = (itemName: string) => {
+    // change that to show a default image!!!
     navigate(`/items/${item.id}`);
   };
   const { user } = useAuth();
-  const isAdmin = user?.user_metadata?.role === "admin";
+  const isAdmin = user?.user_metadata?.role === "admin"; // maybe doesnt show? - take it from user_profile instead!
   const dispatch = useAppDispatch();
 
   const handleDelete = async () => {
@@ -52,23 +55,28 @@ const ItemCard = ({ item }: ItemsCardProps) => {
     <Card className="w-full max-w-[350px] m-1 flex flex-col justify-between p-4">
       {/* Image Section */}
       <div className="mb-4">
-        <img
-          src={item.imageUrl || DEFAULT_ITEM_IMAGE}
+        {/*  <img
+          src={item.img || DEFAULT_ITEM_IMAGE}
           alt="Item image"
           className="w-full h-48 object-cover rounded-lg"
           onError={(e) => {
             (e.target as HTMLImageElement).src = DEFAULT_ITEM_IMAGE;
           }}
-        />
+        /> */}
       </div>
 
       {/* Price and Location Section */}
       <div className="space-y-2 mb-4">
-        <h2 className="text-xl font-semibold text-center">{item.name}</h2>
-        <p className="text-xl font-semibold text-center">{item.description}</p>
+        <h2 className="text-xl font-semibold text-center">
+          {item.translations.fi.item_name}{" "}
+          {/* parameterize it take it from context */}
+        </h2>
+        <p className="text-xl font-semibold text-center">
+          {item.translations.fi.item_description}
+        </p>
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <BoxIcon className="h-4 w-4" />
-          <span>{item.location}</span>
+          <span>{item.location_id}</span>
         </div>
       </div>
 

@@ -1,10 +1,4 @@
 import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-//import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-//import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Search, X } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   fetchAllItems,
@@ -12,7 +6,13 @@ import {
   selectItemsError,
   selectItemsLoading,
 } from "../../store/slices/itemsSlice";
-import ItemsCard from "./ItemCard";
+import ItemCard from "./ItemCard";
+//import { Input } from "@/components/ui/input";
+//import { Button } from "@/components/ui/button";
+//import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+//import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+//import { Badge } from "@/components/ui/badge";
+//import { Search, X } from "lucide-react";
 
 const ItemsList = () => {
   const dispatch = useAppDispatch();
@@ -54,7 +54,7 @@ const ItemsList = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredItems.map((item) => (
-          <ItemsCard item={item} key={item.id} />
+          <ItemCard item={item} key={item.id} />
         ))}
       </div>
     </div>
