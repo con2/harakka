@@ -11,32 +11,49 @@ const DeleteUserButton = ({ id, closeModal }: { id: string; closeModal: () => vo
       toast.error("Invalid user ID.");
       return;
     }
-    toast(
-      "Confirm Deletion",
-      {
-        description: "Are you sure you want to delete this user?",
-        action: {
-          label: "Confirm",
-          onClick: async () => {
-            await toast.promise(
-              dispatch(deleteUser(id)).unwrap(),
-              {
+
+    toast.custom((t) => (
+      <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
+        <div className="font-semibold text-lg">Confirm Deletion</div>
+        <div className="text-sm text-muted-foreground">
+          Are you sure you want to delete this user?
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => toast.dismiss(t)}
+            className="bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-md"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="rounded-md"
+            onClick={async () => {
+              toast.dismiss(t); // dismiss confirmation toast
+              await toast.promise(dispatch(deleteUser(id)).unwrap(), {
                 loading: "Deleting user...",
                 success: "User has been successfully removed.",
                 error: "Failed to delete user.",
-              }
-            );
-            closeModal();
-          },
-        },
-        className: "delete-toast",
-        closeButton: true,
-      }
-    );
+              });
+              closeModal();
+            }}
+          >
+            Confirm
+          </Button>
+        </div>
+      </div>
+    ));
   };
 
   return (
-    <Button onClick={handleDelete} className="bg-background rounded-2xl px-6 text-destructive border-destructive border-1 hover:text-background" variant="destructive">
+    <Button
+      onClick={handleDelete}
+      className="bg-background rounded-2xl px-6 text-destructive border-destructive border hover:text-background"
+      variant="destructive"
+    >
       Delete
     </Button>
   );

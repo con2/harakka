@@ -39,9 +39,9 @@ export const createUser = createAsyncThunk(
 // fetch a user by ID
 export const getUserById = createAsyncThunk(
     'users/getUserById',
-    async (userId: string, { rejectWithValue }) => {
+    async (id: string, { rejectWithValue }) => {
         try {
-            return await usersApi.getUserById(userId);
+            return await usersApi.getUserById(id);
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || "Failed to fetch user");
         }
@@ -80,13 +80,10 @@ export const usersSlice = createSlice({
     name: 'users',
     initialState,
     reducers: {
-        // clear selected user (e.g., when modal is closed)
         clearSelectedUser: (state) => {
             state.selectedUser = null;
             state.error = null;
         },
-
-        // set selected user (e.g., for editing/viewing)
         selectUser: (state, action: PayloadAction<UserProfile>) => {
             state.selectedUser = action.payload;
         }
@@ -104,6 +101,20 @@ export const usersSlice = createSlice({
                 state.users = action.payload;
             })
             .addCase(fetchAllUsers.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+
+            // fetch user by ID
+            .addCase(getUserById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(getUserById.fulfilled, (state, action) => {
+                state.loading = false;
+                state.selectedUser = action.payload;
+            })
+            .addCase(getUserById.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             })
@@ -133,6 +144,10 @@ export const selectAllUsers = (state: RootState) => state.users.users;
 export const selectLoading = (state: RootState) => state.users.loading;
 export const selectError = (state: RootState) => state.users.error;
 export const selectSelectedUser = (state: RootState) => state.users.selectedUser;
+export const selectUserRole = (state: RootState) => state.users.selectedUser?.role || null;
+export const selectIsAdmin = (state: RootState) => state.users.selectedUser?.role === "admin";
+export const selectIsSuperVera = (state: RootState) => state.users.selectedUser?.role === "superVera";
+export const selectIsUser = (state: RootState) => state.users.selectedUser?.role === "user";
 
 // export actions from the slice
 export const { clearSelectedUser, selectUser } = usersSlice.actions;

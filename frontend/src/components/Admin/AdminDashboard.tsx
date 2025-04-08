@@ -1,11 +1,15 @@
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchAllUsers, selectAllUsers, selectLoading } from "@/store/slices/usersSlice";
+import {
+  fetchAllUsers,
+  selectAllUsers,
+  selectLoading,
+} from "@/store/slices/usersSlice";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { DataTable } from "../ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
-import { LoaderCircle, MoveRight } from "lucide-react";
+import { LoaderCircle, MoveRight, Plus } from "lucide-react";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
@@ -13,30 +17,25 @@ const AdminDashboard = () => {
   const loading = useAppSelector(selectLoading);
   const navigate = useNavigate();
 
-  // fetch only if users list is empty
   useEffect(() => {
     if (users.length === 0) {
-    dispatch(fetchAllUsers());
+      dispatch(fetchAllUsers());
     }
   }, [dispatch, users.length]);
 
-  // define columns for the Orders data table
-  const orderColumns: ColumnDef<any>[] = [
-    { accessorKey: "full_name", header: "Name" },
-    { accessorKey: "phone", header: "Phone" },
-    { accessorKey: "email", header: "Email" },
-    { accessorKey: "full_name", header: "Name" },
-    { accessorKey: "phone", header: "Phone" },
-    { accessorKey: "email", header: "Email" },
-  ];
-  // define columns for the Users and Team data table
   const columns: ColumnDef<any>[] = [
     { accessorKey: "full_name", header: "Name" },
     { accessorKey: "phone", header: "Phone" },
     { accessorKey: "email", header: "Email" },
   ];
-  // limit the number of users displayed in the table
-  const limitedUsers = users.slice(0, 3);
+
+  // Users table: only role === "user"
+  const regularUsers = users.filter((user) => user.role === "user").slice(0, 3);
+
+  // Team table: role === "admin" or "superVera"
+  const teamUsers = users
+    .filter((user) => user.role === "admin" || user.role === "superVera")
+    .slice(0, 3);
 
   return (
     <div className="p-4">
@@ -45,15 +44,15 @@ const AdminDashboard = () => {
       {/* Recent Orders Section */}
       <div className="mb-8">
         <h2>Recent Orders</h2>
-        {loading && <p><LoaderCircle/></p>}
+        {loading && <p><LoaderCircle /></p>}
         <div className="w-full mx-auto">
-          <DataTable columns={orderColumns} data={users} />
+          <DataTable columns={columns} data={regularUsers} />
         </div>
         <div className="flex items-center justify-center mt-4">
           <Button
             className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
             onClick={() => navigate("/admin/orders")}
-            >
+          >
             Manage Orders <MoveRight />
           </Button>
         </div>
@@ -63,15 +62,18 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Users Table */}
         <div>
-          <h2>Users</h2>
-          {loading && <p><LoaderCircle/></p>}
-          <div className="w-full max-w-4xl mx-auto">
-            <DataTable columns={columns} data={limitedUsers} />
+          <div className="flex justify-between items-center">
+            <h2>Users</h2>
           </div>
-          <div className="flex items-center justify-center mt-4">
-            <Button className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+          {loading && <p><LoaderCircle /></p>}
+          <div className="w-full max-w-4xl mx-auto">
+            <DataTable columns={columns} data={regularUsers} />
+          </div>
+          <div className="flex items-center justify-center mt-4 space-x-4">
+            <Button
+              className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
               onClick={() => navigate("/admin/users")}
-              >
+            >
               Manage Users <MoveRight />
             </Button>
           </div>
@@ -79,16 +81,18 @@ const AdminDashboard = () => {
 
         {/* Team Table */}
         <div>
-          <h2>Your Team</h2>
-          {loading && <p><LoaderCircle/></p>}
-          <div className="w-full max-w-4xl mx-auto">
-            <DataTable columns={columns} data={limitedUsers} />
+          <div className="flex justify-between items-center">
+            <h2>Your Team</h2>
           </div>
-          <div className="flex items-center justify-center mt-4">
+          {loading && <p><LoaderCircle /></p>}
+          <div className="w-full max-w-4xl mx-auto">
+            <DataTable columns={columns} data={teamUsers} />
+          </div>
+          <div className="flex items-center justify-center mt-4 space-x-4">
             <Button
               className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
               onClick={() => navigate("/admin/team")}
-              >
+            >
               Manage Team <MoveRight />
             </Button>
           </div>
