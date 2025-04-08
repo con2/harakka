@@ -12,6 +12,7 @@ import LandingPage from "./components/LandingPage";
 import Unauthorized from "./components/Unauthorized";
 import { UserProfileLoader } from "./context/UserProfileLoader";
 import TeamList from "./components/Admin/TeamList";
+import ItemsList from "./components/Items/ItemsList";
 
 function App() {
 
@@ -48,6 +49,13 @@ function App() {
 
               </Route>
               <Route path="/unauthorized" element={<Unauthorized />} />
+
+              <Route
+                path="/storage"
+                element={
+                  <ItemsList />   
+                }
+              />
               {/* Other routes... */}
             </Routes>
           </main>
