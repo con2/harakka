@@ -48,7 +48,7 @@ export const itemsSlice = createSlice({
 });
 
 // Selectors
-export const selectAllItems = (state: RootState) => state.items.items;
+export const selectAllItems = (state: RootState) => state.items.items ?? [];
 export const selectItemsLoading = (state: RootState) => state.items.loading;
 export const selectItemsError = (state: RootState) => state.items.error;
 
