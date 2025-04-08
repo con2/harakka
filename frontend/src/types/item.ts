@@ -43,9 +43,27 @@
 
 export interface Item {
     id: string;
-    location: string;
+    location_id: string;
+    compartment_id: string;
+    items_number_total: number;
+    items_number_available: number;
     price: number;
-    average_rating: number;
+    is_active: boolean;
+    translations: {
+      fi: {
+        item_type: string;
+        item_name: string;
+        item_description: string;
+      };
+      en: {
+        item_type: string;
+        item_name: string;
+        item_description: string;
+      };
+    };
+    average_rating?: number;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface ItemState {
