@@ -5,8 +5,12 @@ import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { LayoutDashboard, Users, Settings, Menu, Warehouse } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { useAppSelector } from "@/store/hooks";
+import { selectIsSuperVera } from "@/store/slices/usersSlice";
+import TeamList from "./TeamList";
 
 const AdminPanel = () => {
+  const isSuperVera = useAppSelector(selectIsSuperVera);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -20,6 +24,9 @@ const AdminPanel = () => {
         <nav className="flex flex-col space-y-4">
           <SidebarLink to="/admin" icon={<LayoutDashboard />} label="Dashboard" />
           <SidebarLink to="/admin/users" icon={<Users />} label="Users" />
+          {isSuperVera && (
+              <SidebarLink to="/admin/team" icon={<Users />} label="Team" />
+            )}
           <SidebarLink to="/admin/items" icon={<Warehouse />} label="Items" />
           <SidebarLink to="/admin/settings" icon={<Settings />} label="Settings" />
         </nav>
@@ -41,6 +48,10 @@ const AdminPanel = () => {
           <nav className="flex flex-col space-y-4">
             <SidebarLink to="/admin" icon={<LayoutDashboard />} label="Dashboard" />
             <SidebarLink to="/admin/users" icon={<Users />} label="Users" />
+            {isSuperVera && (
+              <SidebarLink to="/admin/team" icon={<Users />} label="Team" />
+            )}
+
             <SidebarLink to="/admin/items" icon={<Warehouse />} label="Items" />
             <SidebarLink to="/admin/settings" icon={<Settings />} label="Settings" />
           </nav>
