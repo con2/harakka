@@ -6,9 +6,9 @@ import Navigation from "./components/Navigation";
 import TestComponent from "./components/TestComponent";
 import AdminPanel from "./components/AdminPanel";
 import ItemsList from "./components/Items/ItemsList";
+import ItemsDetails from "./components/Items/ItemsDetails";
 
 function App() {
-
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -34,19 +34,19 @@ function App() {
                 }
               />
 
+              <Route path="/storage" element={<ItemsList />} />
               <Route
-                path="/storage"
-                element={
-                  <ItemsList />   
-                }
+                path="/items/:id"
+                element={<ItemsDetails />} // ← you'd need to create this
               />
+
               {/* Other routes... */}
             </Routes>
           </main>
         </div>
       </BrowserRouter>
     </AuthProvider>
-  )
+  );
 }
 
-export default App
+export default App;
