@@ -1,43 +1,57 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchAllUsers, selectAllUsers, selectLoading, selectError } from "@/store/slices/usersSlice";
+import {
+  fetchAllUsers,
+  selectAllUsers,
+  selectLoading,
+  selectError,
+  selectIsAdmin,
+  selectIsSuperVera,
+  selectIsUser,
+  selectSelectedUser,
+} from "@/store/slices/usersSlice";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "../ui/data-table";
+import { PaginatedDataTable } from "../ui/data-table-paginated";
 import UserDeleteButton from "./UserDeleteButton";
 import UserEditModal from "./UserEditModal";
 import AddUserModal from "./AddUserModal";
 import { LoaderCircle } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { Navigate } from "react-router-dom";
 
 const UsersList = () => {
   const dispatch = useAppDispatch();
+  const { authLoading } = useAuth();
   const users = useAppSelector(selectAllUsers);
   const loading = useAppSelector(selectLoading);
   const error = useAppSelector(selectError);
+  const user = useAppSelector(selectSelectedUser);
+  const isAdmin = useAppSelector(selectIsAdmin);
+  const isSuperVera = useAppSelector(selectIsSuperVera);
+  const isUser = useAppSelector(selectIsUser);
   const [isModalOpen, setIsModalOpen] = useState(true);
+  const closeModal = () => setIsModalOpen(false);
+  const isAuthorized = isAdmin || isSuperVera || isUser;
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
-
-  // fetch only if users list is empty
   useEffect(() => {
-    if (users.length === 0) {
-    dispatch(fetchAllUsers());
+    if (!authLoading && isAuthorized && users.length === 0) {
+      dispatch(fetchAllUsers());
     }
-  }, [dispatch, users.length]);
+  }, [authLoading, isAuthorized, users.length, dispatch]);
 
-  // format date to DD/MM/YYYY
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("en-GB");
-  };
-  
-  // define columns for the data table
-  // accessorKey is the key in the data object
-  // and header is the column name
-  // cell is a function that returns the value to be displayed in the cell
+  const formatDate = (dateString: string): string =>
+    new Date(dateString).toLocaleDateString("en-GB");
+
+  const visibleUsers = users.filter((u) => {
+    if (isSuperVera) return u.role !== "superVera" || u.id === user?.id; 
+    if (isAdmin) return u.role === "user";
+    return false;
+  });
+
+  const canEdit = isSuperVera || (isAdmin && user?.role === "user");
+
   const columns: ColumnDef<any>[] = [
-    // { accessorKey: "id", header: "ID" },
     { accessorKey: "full_name", header: "Name" },
     { accessorKey: "phone", header: "Phone" },
     {
@@ -53,21 +67,59 @@ const UsersList = () => {
       header: "User Since",
       cell: ({ row }) => formatDate(row.original.created_at),
     },
-    { id: "edit", header: "Edit", cell: ({ row }) => <UserEditModal user={row.original} /> },
-    { id: "delete", header: "Delete", cell: ({ row }) => <UserDeleteButton id={row.original.id} closeModal={closeModal} /> },
+    {
+      id: "role",
+      header: "Role",
+      cell: ({ row }) => {
+        const userRole = row.original.role;
+        return userRole ? userRole : <span className="text-slate-500">N/A</span>;
+      },
+    },
+    {
+      id: "edit",
+      header: "Edit",
+      cell: ({ row }) => {
+        const targetUser = row.original;
+        const canEdit = isSuperVera || (isAdmin && targetUser.role === "user");
+        return canEdit ? <UserEditModal user={targetUser} /> : null;
+      },
+    },
+    {
+      id: "delete",
+      header: "Delete",
+      cell: ({ row }) => {
+        const targetUser = row.original;
+        const canDelete = isSuperVera || (isAdmin && targetUser.role === "user");
+        return canDelete ? <UserDeleteButton id={targetUser.id} closeModal={closeModal} /> : null;
+      },
+    },
   ];
+
+  if (authLoading || loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoaderCircle className="animate-spin h-8 w-8" />
+      </div>
+    );
+  }
+
+  if (!authLoading && !isAuthorized) {
+    return <Navigate to="/unauthorized" replace />;
+  }
 
   return (
     <>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl">Manage Users</h1>
         <AddUserModal>
-          <Button className="text-white px-6 rounded-2xl bg-highlight2 hover:bg-white hover:text-highlight2">Add New User</Button>
+          <Button className="text-white rounded-2xl bg-highlight2 hover:bg-white hover:text-highlight2">
+            Add New User
+          </Button>
         </AddUserModal>
       </div>
       {loading && <p><LoaderCircle /></p>}
       {error && <p className="text-red-500">Error: {error}</p>}
-      <DataTable columns={columns} data={users}/>
+      <PaginatedDataTable columns={columns} data={visibleUsers} />
     </>
   );
 };

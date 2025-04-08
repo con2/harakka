@@ -10,11 +10,14 @@ import { Toaster } from "sonner";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import LandingPage from "./components/LandingPage";
 import Unauthorized from "./components/Unauthorized";
+import { UserProfileLoader } from "./context/UserProfileLoader";
+import TeamList from "./components/Admin/TeamList";
 
 function App() {
 
   return (
     <AuthProvider>
+      <UserProfileLoader /> 
       <BrowserRouter>
         <div className="min-h-screen flex flex-col text-primary">
           <Navigation />
@@ -41,6 +44,8 @@ function App() {
                 {/* nesting routes inside admin path */}
                 <Route index element={<AdminDashboard />} />
                 <Route path="users" element={<UsersList />} />
+                <Route path="team" element={<TeamList />} />
+
               </Route>
               <Route path="/unauthorized" element={<Unauthorized />} />
               {/* Other routes... */}

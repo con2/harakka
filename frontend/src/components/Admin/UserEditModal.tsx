@@ -30,7 +30,6 @@ const UserEditModal = ({ user }: { user: any }) => {
     try {
       await dispatch(updateUser({ id: user.id, data: formData })).unwrap();
       toast.success("User updated successfully!");
-      setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
       toast.error("Failed to update user. Please try again.");
     }
