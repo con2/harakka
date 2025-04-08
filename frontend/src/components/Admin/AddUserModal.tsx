@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/store/hooks";
@@ -8,63 +15,80 @@ import { toast } from "sonner";
 import { UserProfile } from "@/types/user";
 import { Label } from "../ui/label";
 import { useAuth } from "@/context/AuthContext";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+
+const initialFormState: UserProfile = {
+  full_name: "",
+  visible_name: "",
+  email: "",
+  phone: "",
+  role: "user",
+  saved_lists: [],
+  preferences: [],
+  createdAt: "",
+};
 
 const AddUserModal = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const dispatch = useAppDispatch();
-  const [formData, setFormData] = useState<UserProfile>({
-    full_name: "",
-    visible_name: "",
-    email: "",
-    phone: "",
-    role: "user",
-    saved_lists: [],
-    preferences: [],
-    createdAt: "",
-  });
 
+  const [formData, setFormData] = useState<UserProfile>(initialFormState);
   const [password, setPassword] = useState("");
+  const [open, setOpen] = useState(false); // control modal state
 
-  // function to handle input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const value = e.target.name === "role" ? (e.target.value as "user" | "admin" | "superVera") : e.target.value;
-    setFormData({ ...formData, [e.target.name]: value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // check for a valid email format
+  const handleRoleChange = (newRole: "user" | "admin" | "superVera") => {
+    setFormData({ ...formData, role: newRole });
+  };
+
   const isValidEmail = (email: string) => {
     const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     return regex.test(email);
   };
 
-  const handleSave = async () => {
+  const resetForm = () => {
+    setFormData(initialFormState);
+    setPassword("");
+  };
+
+  const handleSubmit = async () => {
+    if (!password) {
+      toast.error("Password is required.");
+      return;
+    }
+    if (!isValidEmail(formData.email)) {
+      toast.error("Invalid email address.");
+      return;
+    }
     try {
-      if (!password) {
-        toast.error("Password is required.");
-        return;
-      }
-      if (!isValidEmail(formData.email)) {
-        toast.error("Invalid email address.");
-        return;
-      }
       const userWithPassword = { ...formData, password };
-      await dispatch(createUser(userWithPassword)).unwrap(); 
+      await dispatch(createUser(userWithPassword)).unwrap();
       toast.success("User added successfully!");
+
+      resetForm();
+      setOpen(false); // close modal on success
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to add user.");
-      console.log("Add user error:", error);
     }
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="text-center mb-4">Add New User</DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4">
           <div>
             <Label htmlFor="full_name">Full Name</Label>
@@ -74,6 +98,17 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
               value={formData.full_name}
               onChange={handleChange}
               placeholder="Full Name"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="visible_name">Visible Name</Label>
+            <Input
+              id="visible_name"
+              name="visible_name"
+              value={formData.visible_name}
+              onChange={handleChange}
+              placeholder="Visible Name"
             />
           </div>
 
@@ -95,9 +130,10 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="Phone"
+              placeholder="Phone Number"
             />
           </div>
+
           <div>
             <Label htmlFor="password">Password</Label>
             <Input
@@ -109,26 +145,30 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
               placeholder="Password"
             />
           </div>
+
           {user?.role === "superVera" && (
             <div>
               <Label htmlFor="role">Role</Label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2"
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-                <option value="superVera">Super Vera</option>
-              </select>
+              <Select value={formData.role} onValueChange={handleRoleChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="superVera">Super Vera</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
         </div>
+
         <DialogFooter>
-          <Button className="text-white px-6 rounded-2xl bg-highlight2 hover:bg-white hover:text-highlight2" onClick={handleSave}>
-            Save User
+          <Button
+            className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+            onClick={handleSubmit}
+          >
+            Add User
           </Button>
         </DialogFooter>
       </DialogContent>
