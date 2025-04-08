@@ -136,7 +136,7 @@
   th {
     @apply text-secondary;
   }
-  .delete-toast .action {
-    @apply bg-green-500 text-white rounded-lg px-4 py-2 hover:bg-green-600 transition duration-200;
+  .delete-toast {
+    @apply text-red-500 transition duration-200;
   }
 }
