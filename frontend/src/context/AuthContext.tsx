@@ -5,7 +5,7 @@ import { supabase } from "../config/supabase";
 interface AuthContextType {
   session: Session | null;
   user: User | null;
-  loading: boolean;
+  authLoading: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -14,21 +14,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const handleSessionUpdate = (session: Session | null) => {
+    const user = session?.user ?? null;
+    setSession(session);
+    setUser(user);
+    setAuthLoading(false);
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      handleSessionUpdate(session);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      handleSessionUpdate(session);
     });
 
     return () => subscription.unsubscribe();
@@ -41,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     session,
     user,
-    loading,
+    authLoading,
     signOut,
   };
 
