@@ -49,7 +49,7 @@ const UsersList = () => {
     return false;
   });
 
-  const canEdit = isSuperVera || (isAdmin && user?.role === "user");
+  const canEdit = isSuperVera || isAdmin;
 
   const columns: ColumnDef<any>[] = [
     { accessorKey: "full_name", header: "Name" },
@@ -117,7 +117,7 @@ const UsersList = () => {
           </Button>
         </AddUserModal>
       </div>
-      {loading && <p><LoaderCircle /></p>}
+      {loading && <p><LoaderCircle className="animate-spin" /></p>}
       {error && <p className="text-red-500">Error: {error}</p>}
       <PaginatedDataTable columns={columns} data={visibleUsers} />
     </>
