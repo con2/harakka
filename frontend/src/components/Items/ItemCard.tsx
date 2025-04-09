@@ -91,6 +91,9 @@ const ItemCard = ({ item }: ItemsCardProps) => {
           <Button variant="destructive" onClick={handleDelete}>
             Delete
           </Button>
+          <Button variant="destructive" onClick={handleDelete}>
+            Create Item
+          </Button>
         </div>
       )}
     </Card>
