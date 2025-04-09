@@ -49,7 +49,7 @@ const UsersList = () => {
     return false;
   });
 
-  const canEdit = isSuperVera || (isAdmin && user?.role === "user");
+  const canEdit = isSuperVera || isAdmin;
 
   const columns: ColumnDef<any>[] = [
     { accessorKey: "full_name", header: "Name" },
