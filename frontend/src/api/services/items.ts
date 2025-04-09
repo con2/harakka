@@ -5,7 +5,7 @@ import { api } from "../axios";
 export const itemsApi = {
     getAllItems: async (): Promise<Item[]> => {
         const res = await api.get('http://localhost:3000/storage-items');
-        console.log("API response for all items:", res);
+       // console.log("API response for all items:", res);
         return res.data;
       },
           getItemById: (id: string): Promise<Item[]> => api.get(`http://localhost:3000/storage-items/${id}`),
