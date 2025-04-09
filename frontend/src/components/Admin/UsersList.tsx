@@ -117,7 +117,7 @@ const UsersList = () => {
           </Button>
         </AddUserModal>
       </div>
-      {loading && <p><LoaderCircle /></p>}
+      {loading && <p><LoaderCircle className="animate-spin" /></p>}
       {error && <p className="text-red-500">Error: {error}</p>}
       <PaginatedDataTable columns={columns} data={visibleUsers} />
     </>

@@ -13,6 +13,7 @@ import Unauthorized from "./components/Unauthorized";
 import { UserProfileLoader } from "./context/UserProfileLoader";
 import TeamList from "./components/Admin/TeamList";
 import ItemsList from "./components/Items/ItemsList";
+import AdminItemsTable from "./components/Admin/AdminItemsTable";
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
                 <Route index element={<AdminDashboard />} />
                 <Route path="users" element={<UsersList />} />
                 <Route path="team" element={<TeamList />} />
+                <Route path="items" element={<AdminItemsTable />} />
               </Route>
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route
