@@ -1,0 +1,26 @@
+[
+  {
+    "id": "272ff9ac-1d2c-43f2-8564-dde2d352aeda",
+    "email": "ermegilius@gmail.com",
+    "full_name": "Test User 123",
+    "visible_name": "Tester",
+    "role": "admin",
+    "phone": "+1239874561928"
+  },
+  {
+    "id": "fc2cd86c-f03d-4313-9150-95a5f77c5fd6",
+    "email": "ermegilius2@gmail.com",
+    "full_name": "Test User 444",
+    "visible_name": "Tester444",
+    "role": "user",
+    "phone": "+1239874561928"
+  },
+  {
+    "id": "b4a23027-1e6e-4b65-bc76-f4253fb8c39c",
+    "email": "garschtibald@web.de",
+    "full_name": "Updated Name",
+    "visible_name": "Updated Name",
+    "role": "superVera",
+    "phone": "+1234567890"
+  }
+]
