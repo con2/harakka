@@ -14,15 +14,21 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { authLoading } = useAuth(); // wait for supabase auth to finish
   const selectedUser = useAppSelector(selectSelectedUser); // pull profile from redux
 
-  if (authLoading || !selectedUser) {
-    // still loading auth or user profile
+  if (authLoading) {
+    // still loading auth
     return (
       <div className="flex justify-center items-center h-screen">
         <LoaderCircle />
       </div>
-      )
+    );
   }
 
+  // If the user is not logged in (selectedUser is null), allow access to public pages
+  if (!selectedUser) {
+    return <Navigate to="/" replace />; // Redirect to public landing page if not logged in
+  }
+
+  // Check if user has the appropriate role
   const userRole = selectedUser.role;
 
   if (!allowedRoles.includes(userRole)) {
