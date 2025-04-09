@@ -43,7 +43,6 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   return (
     <Card className="w-full max-w-[350px] m-1 flex flex-col justify-between p-4">
       {/* Image Section */}
-      <div className="mb-4">{/* Image placeholder or default image */}</div>
 
       {/* Item Details */}
       <div className="space-y-2 mb-4">
