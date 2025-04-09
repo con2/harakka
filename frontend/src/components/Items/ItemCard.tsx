@@ -1,77 +1,56 @@
-// Updated ItemsCard component
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
 import { Box as BoxIcon } from "lucide-react";
-import defaultImage from "../../assets/defaultImage.jpg";
 import { useAuth } from "@/context/AuthContext";
 import { useAppDispatch } from "@/store/hooks";
-import { itemsApi } from "@/api/services/items";
-import { fetchAllItems } from "@/store/slices/itemsSlice";
-import { Item } from "@/types/item";
-
-const DEFAULT_ITEM_IMAGE = defaultImage;
-
-/* interface StorageItem {
-  id: string;
-  name: string;
-  description: string;
-  location: string;
-  imageUrl?: string; // optional image URL
-} */
+import { getItemById, deleteItem, updateItem } from "@/store/slices/itemsSlice";
+import { Item } from "../../types/item";
 
 interface ItemsCardProps {
   item: Item;
 }
 
-const ItemCard = ({ item }: ItemsCardProps) => {
+const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   const navigate = useNavigate();
-
-  const handleItemClick = (itemName: string) => {
-    // change that to show a default image!!!
-    navigate(`/items/${item.id}`);
-  };
-  const { user } = useAuth();
-  const isAdmin = user?.user_metadata?.role === "admin"; // maybe doesnt show? - take it from user_profile instead!
   const dispatch = useAppDispatch();
+  const { user } = useAuth();
+  const isAdmin = user?.user_metadata?.role === "admin"; // Admin check
 
+  // Navigate to the item's detail page
+  const handleItemClick = (itemId: string) => {
+    dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
+    navigate(`/items/${itemId}`);
+  };
+
+  // Handle item deletion
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
     try {
-      await itemsApi.deleteItem(item.id);
-      dispatch(fetchAllItems()); // ERROR fixed here!
-    } catch (err) {
-      console.error("Delete failed", err);
+      await dispatch(deleteItem(item.id)).unwrap(); // Delete item via Redux action
+    } catch (error) {
+      console.error("Error deleting item:", error);
     }
   };
 
-  const handleEdit = () => {
-    console.log("Edit item", item.id);
-    // example open Modal or navigate to /admin/items/:id/edit
+  // Handle item update (for admin only)
+  const handleUpdate = () => {
+    // Navigate to the update form or trigger a modal to edit the item
+    navigate(`/admin/items/${item.id}/edit`);
   };
-  console.log(item);
 
   return (
     <Card className="w-full max-w-[350px] m-1 flex flex-col justify-between p-4">
       {/* Image Section */}
-      <div className="mb-4">
-        {/*  <img
-          src={item.img || DEFAULT_ITEM_IMAGE}
-          alt="Item image"
-          className="w-full h-48 object-cover rounded-lg"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = DEFAULT_ITEM_IMAGE;
-          }}
-        /> */}
-      </div>
+      <div className="mb-4">{/* Image placeholder or default image */}</div>
 
-      {/* Price and Location Section */}
+      {/* Item Details */}
       <div className="space-y-2 mb-4">
         <h2 className="text-xl font-semibold text-center">
-          {item.translations.fi.item_name}{" "}
-          {/* parameterize it take it from context */}
+          {item.translations.fi.item_name}
         </h2>
-        <p className="text-xl font-semibold text-center">
+        <p className="text-lg text-center">
           {item.translations.fi.item_description}
         </p>
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -80,19 +59,17 @@ const ItemCard = ({ item }: ItemsCardProps) => {
         </div>
       </div>
 
+      {/* View Details Button */}
       <Button onClick={() => handleItemClick(item.id)}>View Details</Button>
 
       {/* Admin Actions */}
       {isAdmin && (
         <div className="mt-2 flex gap-2">
-          <Button variant="outline" onClick={handleEdit}>
+          <Button variant="outline" onClick={handleUpdate}>
             Edit
           </Button>
           <Button variant="destructive" onClick={handleDelete}>
             Delete
-          </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            Create Item
           </Button>
         </div>
       )}
