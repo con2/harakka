@@ -11,8 +11,12 @@ import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router-dom";
 import ItemsLoader from "../../context/ItemsLoader";
 import { useAuth } from "../../context/AuthContext";
+import { useOutletContext } from "react-router-dom";
 
+// Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
+  const filters = useOutletContext<any>(); // Get filters from context
+
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -31,6 +35,17 @@ const ItemsList: React.FC = () => {
   useEffect(() => {
     dispatch(fetchAllItems());
   }, [dispatch]);
+
+  // Apply filters to the items
+  const filteredItems = items.filter(item => {
+    // Filter by price range
+    const isWithinPriceRange =
+      item.price >= filters.priceRange[0] && item.price <= filters.priceRange[1];
+    // Filter by active status
+    const isActive = filters.isActive ? item.is_active : true;
+
+    return isWithinPriceRange && isActive;
+  });
 
   // Loading state
   if (loading) {
@@ -58,12 +73,12 @@ const ItemsList: React.FC = () => {
         </Button>
       )}
 
-      {/* Render the list of items */}
+      {/* Render the list of filtered items */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.length === 0 ? (
+        {filteredItems.length === 0 ? (
           <p>No items found</p> // Message when no items exist
         ) : (
-          items.map((item) => <ItemCard key={item.id} item={item} />)
+          filteredItems.map((item) => <ItemCard key={item.id} item={item} />)
         )}
       </div>
     </div>
