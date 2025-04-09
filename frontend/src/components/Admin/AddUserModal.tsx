@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/store/hooks";
 import { createUser } from "@/store/slices/usersSlice";
 import { toast } from "sonner";
-import { UserProfile } from "@/types/user";
+import { CreateUserDto } from "@/types/user";
 import { Label } from "../ui/label";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -23,24 +23,22 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-const initialFormState: UserProfile = {
+const initialFormState: CreateUserDto = {
   full_name: "",
   visible_name: "",
   email: "",
   phone: "",
   role: "user",
-  saved_lists: [],
-  preferences: [],
-  createdAt: "",
+  preferences: {},
 };
 
 const AddUserModal = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const dispatch = useAppDispatch();
 
-  const [formData, setFormData] = useState<UserProfile>(initialFormState);
+  const [formData, setFormData] = useState<CreateUserDto>(initialFormState);
   const [password, setPassword] = useState("");
-  const [open, setOpen] = useState(false); // control modal state
+  const [open, setOpen] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -70,14 +68,14 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
       return;
     }
     try {
-      const userWithPassword = { ...formData, password };
-      await dispatch(createUser(userWithPassword)).unwrap();
-      toast.success("User added successfully!");
+      const payload = { ...formData, password };
+      await dispatch(createUser(payload)).unwrap();
 
+      toast.success(`User ${payload.email} created successfully!`);
       resetForm();
-      setOpen(false); // close modal on success
+      setOpen(false);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to add user.");
+      toast.error(typeof error === "string" ? error : "Failed to add user.");
     }
   };
 
@@ -165,7 +163,7 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
 
         <DialogFooter>
           <Button
-            className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+            className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
             onClick={handleSubmit}
           >
             Add User
