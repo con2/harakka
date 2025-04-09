@@ -14,6 +14,7 @@ import { UserProfileLoader } from "./context/UserProfileLoader";
 import TeamList from "./components/Admin/TeamList";
 import ItemsList from "./components/Items/ItemsList";
 import ItemDetails from "./components/Items/ItemsDetails";
+import UserPanel from "./components/Items/UserPanel";
 
 function App() {
   return (
@@ -49,11 +50,10 @@ function App() {
               </Route>
               <Route path="/unauthorized" element={<Unauthorized />} />
 
-              <Route path="/storage" element={<ItemsList />} />
-              <Route
-                path="/items/:id"
-                element={<ItemDetails />} // ← you'd need to create this
-              />
+              <Route path="/" element={<UserPanel />}>
+                <Route path="/storage" element={<ItemsList />} />
+              </Route>
+              <Route path="/items/:id" element={<ItemDetails />} />
 
               {/* Other routes... */}
             </Routes>
