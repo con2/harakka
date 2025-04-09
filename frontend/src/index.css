@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto+Slab:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -5,7 +7,7 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: #ffffff;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -13,8 +15,9 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: #2a2a2a;
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
+  --secondary: #9537c7;
   --secondary-foreground: oklch(0.205 0 0);
+  --highlight2: #3ec3ba;
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
@@ -87,6 +90,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-highlight2: var(--highlight2);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -116,5 +120,23 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+  h2 {
+    @apply text-center text-lg font-bold text-secondary mb-2;
+  }
+  /* h1, nav {
+    @apply font-robotoSlab;
+  } */
+  label {
+    @apply mb-1;
+  }
+  th {
+    @apply text-secondary;
+  }
+  .delete-toast {
+    @apply text-red-500 transition duration-200;
   }
 }
