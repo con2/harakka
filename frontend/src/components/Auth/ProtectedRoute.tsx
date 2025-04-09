@@ -1,25 +1,32 @@
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Navigate } from "react-router-dom";
+import { useAppSelector } from "@/store/hooks";
+import { selectSelectedUser } from "@/store/slices/usersSlice";
+import { useAuth } from "@/context/AuthContext";
+import { ReactNode } from "react";
+import { LoaderCircle } from "lucide-react";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  allowedRoles: string[];
 }
 
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
-  const location = useLocation();
+const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+  const { authLoading } = useAuth(); // wait for supabase auth to finish
+  const selectedUser = useAppSelector(selectSelectedUser); // pull profile from redux
 
-  if (loading) {
+  if (authLoading || !selectedUser) {
+    // still loading auth or user profile
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+      <div className="flex justify-center items-center h-screen">
+        <LoaderCircle />
       </div>
-    );
+      )
   }
 
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  const userRole = selectedUser.role;
+
+  if (!allowedRoles.includes(userRole)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <>{children}</>;
