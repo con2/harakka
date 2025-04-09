@@ -13,6 +13,7 @@ import ItemCard from "./ItemCard";
 //import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 //import { Badge } from "@/components/ui/badge";
 //import { Search, X } from "lucide-react";
+import { Item } from "../../types/item";
 
 const ItemsList = () => {
   const dispatch = useAppDispatch();
@@ -22,19 +23,21 @@ const ItemsList = () => {
 
   //const [searchTerm, setSearchTerm] = useState("");
   //const [selectedStatus, setSelectedStatus] = useState("");
-  const [filteredItems, setFilteredItems] = useState(items);
+  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
 
   //const DEFAULT_ITEM_IMAGE = '/default-item.jpg'; // default image
-
-  useEffect(() => {
-    setFilteredItems(items);
-  }, [items]);
 
   useEffect(() => {
     if (items.length === 0) {
       dispatch(fetchAllItems());
     }
   }, [dispatch, items.length]);
+
+  useEffect(() => {
+    setFilteredItems(items);
+    console.log("Filtered items:", items);
+    console.log("Items:", items);
+  }, [items]);
 
   if (loading) {
     return (
@@ -53,9 +56,15 @@ const ItemsList = () => {
       <h1 className="text-3xl font-bold">Storage Inventory</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredItems.map((item) => (
-          <ItemCard item={item} key={item.id} />
-        ))}
+        {filteredItems.length === 0 ? (
+          <div className="text-center text-muted">No items found.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredItems.map((item) => (
+              <ItemCard item={item} key={item.id} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
