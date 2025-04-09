@@ -13,18 +13,18 @@ import Unauthorized from "./components/Unauthorized";
 import { UserProfileLoader } from "./context/UserProfileLoader";
 import TeamList from "./components/Admin/TeamList";
 import ItemsList from "./components/Items/ItemsList";
-import ItemsDetails from "./components/Items/ItemsDetails";
+import ItemDetails from "./components/Items/ItemsDetails";
 
 function App() {
   return (
     <AuthProvider>
-      <UserProfileLoader /> 
+      <UserProfileLoader />
       <BrowserRouter>
         <div className="min-h-screen flex flex-col text-primary">
           <Navigation />
           <main className="flex-1">
             <Routes>
-            <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
               <Route
                 path="/protected"
@@ -46,14 +46,13 @@ function App() {
                 <Route index element={<AdminDashboard />} />
                 <Route path="users" element={<UsersList />} />
                 <Route path="team" element={<TeamList />} />
-
               </Route>
               <Route path="/unauthorized" element={<Unauthorized />} />
 
               <Route path="/storage" element={<ItemsList />} />
               <Route
                 path="/items/:id"
-                element={<ItemsDetails />} // ← you'd need to create this
+                element={<ItemDetails />} // ← you'd need to create this
               />
 
               {/* Other routes... */}
