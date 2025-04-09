@@ -1,26 +1,23 @@
 [
   {
-    "id": "272ff9ac-1d2c-43f2-8564-dde2d352aeda",
-    "email": "ermegilius@gmail.com",
-    "full_name": "Test User 123",
-    "visible_name": "Tester",
-    "role": "admin",
-    "phone": "+1239874561928"
+    "id": "3996b102-a466-4da0-997b-2ed3138a69c4",
+    "email": "ermegilius4@gmail.com",
+    "full_name": "Cypress_admin_user",
+    "visible_name": "Cypress_admin_user",
+    "role": "admin"
   },
   {
-    "id": "fc2cd86c-f03d-4313-9150-95a5f77c5fd6",
-    "email": "ermegilius2@gmail.com",
-    "full_name": "Test User 444",
-    "visible_name": "Tester444",
-    "role": "user",
-    "phone": "+1239874561928"
+    "id": "28062719-5b75-4504-af6d-556dae5be2956",
+    "email": "ermegilius3@gmail.com",
+    "full_name": "Cypress_regular_user",
+    "visible_name": "Cypress_regular_user",
+    "role": "user"
   },
   {
-    "id": "b4a23027-1e6e-4b65-bc76-f4253fb8c39c",
-    "email": "garschtibald@web.de",
-    "full_name": "Updated Name",
-    "visible_name": "Updated Name",
-    "role": "superVera",
-    "phone": "+1234567890"
+    "id": "28062719-5b75-4504-af6d-556dae5be295",
+    "email": "ermegilius3@gmail.com",
+    "full_name": "Cypress_superVera_user",
+    "visible_name": "Cypress_superVera_user",
+    "role": "superVera"
   }
 ]
