@@ -1,8 +1,7 @@
 {
-  "id": "fc2cd86c-f03d-4313-9150-95a5f77c5fd6",
-  "email": "ermegilius2@gmail.com",
-  "full_name": "Test User 444",
-  "visible_name": "Tester444",
-  "role": "user",
-  "phone": "+1239874561928"
+  "id": "28062719-5b75-4504-af6d-556dae5be2956",
+  "email": "ermegilius3@gmail.com",
+  "full_name": "Cypress_regular_user",
+  "visible_name": "Cypress_regular_user",
+  "role": "user"
 }
