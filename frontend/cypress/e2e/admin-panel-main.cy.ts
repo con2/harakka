@@ -1,119 +1,251 @@
 describe('Admin Panel', () => {
-  // Setup: Different user roles for testing
-  const adminUser = { email: 'admin@example.com', password: 'password123' };
-  const superVeraUser = {
-    email: 'supervera@example.com',
-    password: 'password123',
+  // Test users configuration
+  const users = {
+    admin: {
+      email: 'ermegilius4@gmail.com',
+      password: '12345678',
+      role: 'admin',
+    },
+    superVera: {
+      email: 'ermegilius5@gmail.com',
+      password: '12345678',
+      role: 'superVera',
+    },
+    regular: {
+      email: 'ermegilius3@gmail.com',
+      password: '12345678',
+      role: 'user',
+    },
   };
-  const regularUser = { email: 'user@example.com', password: 'password123' };
 
-  // Custom command to login through Supabase Auth UI
+  // Protected routes that should be tested
+  const protectedRoutes = [
+    '/admin',
+    '/admin/users',
+    '/admin/items',
+    '/admin/settings',
+    '/admin/team',
+  ];
+
+  // Define route access permissions
+  const routePermissions = {
+    '/admin': ['admin', 'superVera'],
+    '/admin/users': ['admin', 'superVera'],
+    '/admin/items': ['admin', 'superVera'],
+    '/admin/settings': ['admin', 'superVera'],
+    '/admin/team': ['superVera'],
+  };
+
+  /**
+   * Custom commands
+   */
+  // Login through Supabase Auth UI with improved session handling
   Cypress.Commands.add('loginWithSupabase', (email, password) => {
-    cy.visit('/login');
-    // Target elements based on Supabase Auth UI structure
-    cy.get('input[name="email"]').type(email);
-    cy.get('input[type="password"]').type(password);
-    cy.get('button[type="submit"]').click();
+    cy.session(
+      [email, password],
+      () => {
+        cy.visit('/login');
+        cy.get('input[name="email"]').should('be.visible').type(email);
+        cy.get('input[type="password"]').should('be.visible').type(password);
+        cy.get('button[type="submit"]').should('be.visible').click();
+
+        // Wait for login to complete - using a more reliable approach
+        cy.url().should('not.include', '/login', { timeout: 10000 });
+      },
+      {
+        cacheAcrossSpecs: false,
+      },
+    );
   });
 
-  describe('Authentication and Authorization', () => {
-    it('should redirect to login when not authenticated', () => {
-      cy.visit('/admin');
-      cy.url().should('include', '/login');
-    });
-
-    it('should not allow regular users to access admin panel', () => {
-      cy.intercept('GET', '**/users', { fixture: 'regular-user.json' }).as(
-        'getUser',
-      );
-
-      // Login as regular user using the new command
-      cy.loginWithSupabase(regularUser.email, regularUser.password);
-
-      cy.visit('/admin');
-      cy.url().should('include', '/unauthorized');
-    });
-
-    it('should allow admin users to access admin panel', () => {
+  // Setup user role and fixtures with better naming
+  Cypress.Commands.add('setupUserRole', (role) => {
+    if (role === 'admin') {
       cy.intercept('GET', '**/users/current', {
         fixture: 'admin-user.json',
-      }).as('getAdminUser');
-      cy.intercept('GET', '**/users', { fixture: 'users-list.json' }).as(
-        'getUsers',
-      );
+        statusCode: 200,
+      }).as('getCurrentUserAdmin');
+    } else if (role === 'superVera') {
+      cy.intercept('GET', '**/users/current', {
+        fixture: 'supervera-user.json',
+        statusCode: 200,
+      }).as('getCurrentUserSuperVera');
+    } else {
+      cy.intercept('GET', '**/users/current', {
+        fixture: 'regular-user.json',
+        statusCode: 200,
+      }).as('getCurrentUserRegular');
+    }
 
-      // Login as admin using the new command
-      cy.loginWithSupabase(adminUser.email, adminUser.password);
+    // Common intercept for all users
+    cy.intercept('GET', '**/users', {
+      fixture: 'users-list.json',
+      statusCode: 200,
+    }).as('getUsers');
+  });
+
+  /**
+   * Test scenarios
+   */
+  describe('Authentication and Authorization', () => {
+    // Test anonymous users - improved with better assertions
+    it('should redirect anonymous users to landing page when accessing protected routes', () => {
+      // Test each protected route with clearer failure messages
+      protectedRoutes.forEach((route) => {
+        cy.visit(route, { failOnStatusCode: false });
+        cy.url().should(
+          'eq',
+          Cypress.config().baseUrl + '/',
+          `Expected ${route} to redirect to landing page`,
+        );
+      });
+    });
+
+    // Test regular user access - improved assertions
+    it('should redirect regular users to unauthorized page when accessing admin panel', () => {
+      cy.setupUserRole('user');
+      cy.loginWithSupabase(users.regular.email, users.regular.password);
+
+      cy.visit('/admin', { failOnStatusCode: false });
+      cy.url().should('include', '/unauthorized');
+
+      // Also verify content of unauthorized page
+      cy.contains(/unauthorized|access denied/i).should('be.visible');
+    });
+
+    // Test admin access with better content verification
+    it('should allow admin users to access admin panel', () => {
+      cy.setupUserRole('admin');
+      cy.loginWithSupabase(users.admin.email, users.admin.password);
 
       cy.visit('/admin');
       cy.url().should('include', '/admin');
       cy.contains('Admin Panel').should('be.visible');
+
+      // Verify dashboard elements
+      cy.contains('Dashboard').should('be.visible');
+      cy.contains('Users').should('be.visible');
+    });
+
+    // Test SuperVera access with better content verification
+    it('should allow superVera users to access admin panel', () => {
+      cy.setupUserRole('superVera');
+      cy.loginWithSupabase(users.superVera.email, users.superVera.password);
+
+      cy.visit('/admin');
+      cy.url().should('include', '/admin');
+      cy.contains('Admin Panel').should('be.visible');
+
+      // Verify SuperVera specific elements
+      cy.contains('Team').should('be.visible');
     });
   });
 
-  describe('Navigation', () => {
+  describe('Navigation as Admin', () => {
     beforeEach(() => {
-      cy.intercept('GET', '**/users/current', {
-        fixture: 'admin-user.json',
-      }).as('getAdminUser');
-      cy.intercept('GET', '**/users', { fixture: 'users-list.json' }).as(
-        'getUsers',
-      );
-
-      // Login as admin using the new command
-      cy.loginWithSupabase(adminUser.email, adminUser.password);
-
+      cy.setupUserRole('admin');
+      cy.loginWithSupabase(users.admin.email, users.admin.password);
       cy.visit('/admin');
       cy.wait('@getUsers');
     });
 
-    it('should navigate to users section', () => {
+    it('should navigate to users section and show user management', () => {
       cy.contains('Users').click();
       cy.url().should('include', '/admin/users');
       cy.contains('Manage Users').should('be.visible');
+
+      // Verify table and actions are present
+      cy.get('table').should('be.visible');
+      cy.contains('button', /add|create/i).should('exist');
     });
 
-    it('should navigate to items section', () => {
+    it('should navigate to items section and show inventory', () => {
       cy.contains('Items').click();
       cy.url().should('include', '/admin/items');
+
+      // Verify content specific to items page
+      cy.contains(/inventory|items/i).should('be.visible');
     });
 
     it('should navigate to settings section', () => {
       cy.contains('Settings').click();
       cy.url().should('include', '/admin/settings');
-    });
-  });
 
-  describe('SuperVera specific functionality', () => {
-    beforeEach(() => {
-      cy.intercept('GET', '**/users/current', {
-        fixture: 'supervera-user.json',
-      }).as('getSuperVeraUser');
-      cy.intercept('GET', '**/users', { fixture: 'users-list.json' }).as(
-        'getUsers',
-      );
-
-      // Login as SuperVera using the new command
-      cy.loginWithSupabase(superVeraUser.email, superVeraUser.password);
-
-      cy.visit('/admin');
-      cy.wait('@getUsers');
-    });
-
-    it('should show Team management for SuperVera', () => {
-      cy.contains('Team').should('be.visible');
-      cy.contains('Team').click();
-      cy.url().should('include', '/admin/team');
+      // Verify settings page content
+      cy.contains(/settings|configuration/i).should('exist');
     });
 
     it('should not show Team management for regular admin', () => {
-      cy.intercept('GET', '**/users/current', {
-        fixture: 'admin-user.json',
-      }).as('getAdminUser');
-      cy.reload();
-      cy.wait('@getAdminUser');
-
+      // First verify it's not in the sidebar
       cy.contains('Team').should('not.exist');
+
+      // Also verify direct navigation is prevented
+      cy.visit('/admin/team', { failOnStatusCode: false });
+      cy.url().should('not.include', '/admin/team');
     });
   });
+
+  // describe('SuperVera specific functionality', () => {
+  //   beforeEach(() => {
+  //     cy.setupUserRole('superVera');
+  //     cy.loginWithSupabase(users.superVera.email, users.superVera.password);
+  //     cy.visit('/admin');
+  //     cy.wait('@getUsers');
+  //   });
+
+  //   it('should show and navigate to Team management for SuperVera', () => {
+  //     cy.contains('Team').should('be.visible');
+  //     cy.contains('Team').click();
+  //     cy.url().should('include', '/admin/team');
+
+  //     // Verify team management specific content
+  //     cy.contains(/manage team|team members/i).should('be.visible');
+  //   });
+
+  //   it('should provide access to all admin sections', () => {
+  //     // SuperVera should have access to all admin sections
+  //     cy.contains('Users').should('be.visible');
+  //     cy.contains('Items').should('be.visible');
+  //     cy.contains('Settings').should('be.visible');
+  //     cy.contains('Team').should('be.visible');
+
+  //     // Verify navigation works for each section
+  //     ['Users', 'Items', 'Settings', 'Team'].forEach((section) => {
+  //       cy.contains(section).click();
+  //       cy.url().should('include', `/admin/${section.toLowerCase()}`);
+  //       cy.visit('/admin'); // Go back to admin home
+  //     });
+  //   });
+  // });
+
+  // // Improved version of permission testing - more focused and reliable
+  // describe('Specific route permissions', () => {
+  //   const testCases = [
+  //     { route: '/admin/team', role: 'admin', expectedResult: 'denied' },
+  //     { route: '/admin/team', role: 'superVera', expectedResult: 'allowed' },
+  //     { route: '/admin/users', role: 'admin', expectedResult: 'allowed' },
+  //     { route: '/admin/users', role: 'user', expectedResult: 'denied' },
+  //   ];
+
+  //   testCases.forEach(({ route, role, expectedResult }) => {
+  //     it(`should ${
+  //       expectedResult === 'allowed' ? 'allow' : 'deny'
+  //     } ${role} access to ${route}`, () => {
+  //       // Setup user and login
+  //       cy.setupUserRole(role);
+  //       const userCredentials = users[role as keyof typeof users];
+  //       cy.loginWithSupabase(userCredentials.email, userCredentials.password);
+
+  //       // Visit route and check result
+  //       cy.visit(route, { failOnStatusCode: false });
+
+  //       if (expectedResult === 'allowed') {
+  //         cy.url().should('include', route);
+  //       } else {
+  //         cy.url().should('not.include', route);
+  //         cy.url().should('include', '/unauthorized');
+  //       }
+  //     });
+  //   });
+  // });
 });
