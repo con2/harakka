@@ -1,69 +1,69 @@
-import { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   fetchAllItems,
   selectAllItems,
-  selectItemsError,
   selectItemsLoading,
+  selectItemsError,
 } from "../../store/slices/itemsSlice";
 import ItemCard from "./ItemCard";
-//import { Input } from "@/components/ui/input";
-//import { Button } from "@/components/ui/button";
-//import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-//import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-//import { Badge } from "@/components/ui/badge";
-//import { Search, X } from "lucide-react";
-import { Item } from "../../types/item";
+import { Button } from "../../components/ui/button";
+import { useNavigate } from "react-router-dom";
+import ItemsLoader from "../../context/ItemsLoader";
+import { useAuth } from "../../context/AuthContext";
 
-const ItemsList = () => {
+const ItemsList: React.FC = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  // Redux state selectors
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
 
-  //const [searchTerm, setSearchTerm] = useState("");
-  //const [selectedStatus, setSelectedStatus] = useState("");
-  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
+  // Auth state from AuthContext
+  const { user, authLoading } = useAuth();
 
-  //const DEFAULT_ITEM_IMAGE = '/default-item.jpg'; // default image
+  // Check if the user is an admin
+  const isAdmin = user?.user_metadata?.role === "admin";
 
+  // Fetch all items when the component mounts
   useEffect(() => {
-    if (items.length === 0) {
-      dispatch(fetchAllItems());
-    }
-  }, [dispatch, items.length]);
+    dispatch(fetchAllItems());
+  }, [dispatch]);
 
-  useEffect(() => {
-    setFilteredItems(items);
-    console.log("Filtered items:", items);
-    console.log("Items:", items);
-  }, [items]);
-
+  // Loading state
   if (loading) {
     return (
-      <div className="flex justify-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex justify-center items-center">
+        <ItemsLoader /> {/* Displaying loader component */}
       </div>
     );
   }
 
+  // Error handling
   if (error) {
-    return <div className="p-4 text-destructive">{error}</div>;
+    return <div>Error: {error}</div>;
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold">Storage Inventory</h1>
+    <div className="container">
+      {/* Show the create button only for admins */}
+      {isAdmin && (
+        <Button
+          className="mb-4"
+          onClick={() => navigate("/admin/items/create")}
+        >
+          Create New Item
+        </Button>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredItems.length === 0 ? (
-          <div className="text-center text-muted">No items found.</div>
+      {/* Render the list of items */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {items.length === 0 ? (
+          <p>No items found</p> // Message when no items exist
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems.map((item) => (
-              <ItemCard item={item} key={item.id} />
-            ))}
-          </div>
+          items.map((item) => <ItemCard key={item.id} item={item} />)
         )}
       </div>
     </div>
