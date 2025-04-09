@@ -13,18 +13,18 @@ import Unauthorized from "./components/Unauthorized";
 import { UserProfileLoader } from "./context/UserProfileLoader";
 import TeamList from "./components/Admin/TeamList";
 import ItemsList from "./components/Items/ItemsList";
+import AdminItemsTable from "./components/Admin/AdminItemsTable";
 
 function App() {
-
   return (
-    <AuthProvider>
-      <UserProfileLoader /> 
-      <BrowserRouter>
+    <BrowserRouter> 
+      <AuthProvider> 
+        <UserProfileLoader />
         <div className="min-h-screen flex flex-col text-primary">
           <Navigation />
           <main className="flex-1">
             <Routes>
-            <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
               <Route
                 path="/protected"
@@ -42,28 +42,23 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                {/* nesting routes inside admin path */}
                 <Route index element={<AdminDashboard />} />
                 <Route path="users" element={<UsersList />} />
                 <Route path="team" element={<TeamList />} />
-
+                <Route path="items" element={<AdminItemsTable />} />
               </Route>
               <Route path="/unauthorized" element={<Unauthorized />} />
-
               <Route
                 path="/storage"
-                element={
-                  <ItemsList />   
-                }
+                element={<ItemsList />}
               />
-              {/* Other routes... */}
             </Routes>
           </main>
           <Toaster position="top-right" duration={3000} richColors />
         </div>
-      </BrowserRouter>
-    </AuthProvider>
-  )
+      </AuthProvider>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
