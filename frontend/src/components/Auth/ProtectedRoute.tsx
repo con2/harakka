@@ -23,7 +23,6 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     );
   }
 
-  // Redirect ALL unauthorized users (both anonymous and authenticated without permission) to /unauthorized
   if (!selectedUser || !allowedRoles.includes(selectedUser.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
