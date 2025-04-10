@@ -1,16 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAppDispatch } from "@/store/hooks";
 import { createUser, updateUser } from "@/store/slices/usersSlice";
-import { UserProfile } from "@/types/user";
+import { CreateUserDto, UserProfile } from "@/types/user";
 import { toast } from "sonner";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import { Label } from "@/components/ui/label";
@@ -23,15 +17,14 @@ type TeamMemberFormProps = {
 const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
   const dispatch = useAppDispatch();
 
-  const [formData, setFormData] = useState<UserProfile>({
+  const [formData, setFormData] = useState<CreateUserDto>({
     full_name: "",
     visible_name: "",
     email: "",
     phone: "",
-    role: "user", // tried with admin and superVera, but it didn't work
+    role: "user", 
+    preferences: {},
     saved_lists: [],
-    preferences: [],
-    createdAt: "",
     ...(initialData || {}),
   });
 
@@ -40,7 +33,14 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        full_name: initialData.full_name,
+        visible_name: initialData.visible_name,
+        email: initialData.email,
+        phone: initialData.phone,
+        role: initialData.role,
+        preferences: initialData.preferences || {},
+      });
     }
   }, [initialData]);
 
@@ -52,6 +52,27 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
     }));
   };
 
+  const handlePreferencesChange = (key: string, value: string) => {
+    setFormData({
+      ...formData,
+      preferences: { ...formData.preferences, [key]: value },
+    });
+  };
+
+  const addPreference = () => {
+    const newPreferenceKey = `new_key_${Date.now()}`;
+    setFormData({
+      ...formData,
+      preferences: { ...formData.preferences, [newPreferenceKey]: "" },
+    });
+  };
+
+  const removePreference = (key: string) => {
+    const newPreferences = { ...formData.preferences };
+    delete newPreferences[key];
+    setFormData({ ...formData, preferences: newPreferences });
+  };
+
   const isValidEmail = (email: string) => {
     const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     return regex.test(email);
@@ -59,9 +80,6 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log("Form Data before sending:", formData);
-    console.log("Password:", password);
   
     if (!formData.full_name || !formData.email || !formData.phone || !formData.role) {
       toast.error("Please fill in all required fields.");
@@ -77,20 +95,11 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
       toast.error("Password is required when creating a new member.");
       return;
     }
-  
-    if (!["admin", "superVera", "user"].includes(formData.role)) {
-      toast.error("Invalid role.");
-      return;
-    }
-  
     const payload = { ...formData };
   
     if (!initialData) {
       (payload as any).password = password;
     }
-
-    console.log("Payload being sent:", payload);
-  
     setLoading(true);
   
     try {
@@ -105,8 +114,7 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
         await dispatch(createUser(payload)).unwrap();
         toast.success("User added successfully!");
       }
-  
-      onClose(); // Close the modal after the action completes
+      onClose();
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to save user.");
       console.error("User save error:", error);
@@ -121,9 +129,7 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
         <DialogHeader>
           <DialogTitle>{initialData ? "Edit Team Member" : "Add Team Member"}</DialogTitle>
           <DialogDescription>
-            {initialData
-              ? "Update the user's details below."
-              : "Enter information to create a new team member."}
+            {initialData ? "Update the user's details below." : "Enter information to create a new team member."}
           </DialogDescription>
         </DialogHeader>
 
@@ -182,6 +188,46 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
                 <SelectItem value="superVera">SuperVera</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="visible_name">Visible Name</Label>
+            <Input
+              id="visible_name"
+              name="visible_name"
+              placeholder="Visible Name"
+              value={formData.visible_name}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <Label>Preferences</Label>
+            {Object.keys(formData.preferences || {}).map((key) => (
+              <div key={key} className="flex space-x-2">
+                <Input
+                  className="mb-2"
+                  name={`preference_${key}`}
+                  value={formData.preferences?.[key] || ""}
+                  onChange={(e) => handlePreferencesChange(key, e.target.value)}
+                  placeholder="Enter a new preference"
+                />
+                <Button
+                  type="button"
+                  className="bg-background rounded-2xl px-6 text-destructive border-destructive border hover:text-background"
+                  onClick={() => removePreference(key)}
+                >
+                  Remove
+                </Button>
+              </div>
+            ))}
+            <Button 
+              className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+              type="button"
+              onClick={addPreference}
+            >
+              Add Preference
+            </Button>
           </div>
 
           {!initialData && (

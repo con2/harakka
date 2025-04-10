@@ -15,12 +15,13 @@ import TeamList from "./components/Admin/TeamList";
 import ItemsList from "./components/Items/ItemsList";
 import ItemDetails from "./components/Items/ItemsDetails";
 import UserPanel from "./components/Items/UserPanel";
+import AdminItemsTable from "./components/Admin/AdminItemsTable";
 
 function App() {
   return (
-    <AuthProvider>
-      <UserProfileLoader />
-      <BrowserRouter>
+    <BrowserRouter> 
+      <AuthProvider> 
+        <UserProfileLoader />
         <div className="min-h-screen flex flex-col text-primary">
           <Navigation />
           <main className="flex-1">
@@ -43,25 +44,25 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                {/* nesting routes inside admin path */}
                 <Route index element={<AdminDashboard />} />
                 <Route path="users" element={<UsersList />} />
                 <Route path="team" element={<TeamList />} />
+                <Route path="items" element={<AdminItemsTable />} />
               </Route>
-              <Route path="/unauthorized" element={<Unauthorized />} />
 
               <Route path="/" element={<UserPanel />}>
                 <Route path="/storage" element={<ItemsList />} />
+                <Route path="/items/:id" element={<ItemDetails />} />
               </Route>
-              <Route path="/items/:id" element={<ItemDetails />} />
 
-              {/* Other routes... */}
+              <Route path="/unauthorized" element={<Unauthorized />} />
+
             </Routes>
           </main>
           <Toaster position="top-right" duration={3000} richColors />
         </div>
-      </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
