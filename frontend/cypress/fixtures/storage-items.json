@@ -11,37 +11,60 @@
     "created_at": "2025-04-08T12:05:40.385845+00:00",
     "translations": {
       "en": {
-        "item_name": "Combat vest",
-        "item_type": "Combat vests",
+        "item_name": "Combat vest 1",
+        "item_type": "Combat vests 1",
         "item_description": "Combat vest x 5, black (old model) + combat vest x 3, black (light), with EL tapes. Stored in storage box on storage shelves, near entrance."
       },
       "fi": {
-        "item_name": "Taisteluliivi",
-        "item_type": "Taisteluliivejä",
+        "item_name": "Taisteluliivi 1",
+        "item_type": "Taisteluliivejä 1",
         "item_description": "Taisteluliivi x 5, musta (vanha malli) + taisteluliivi x 3, musta (kevyt), EL-nauhoilla. Varastolaatikossa varastohyllyillä, sisäänkäynnin puolella."
       }
     }
   },
   {
-    "id": "5eb0e1b8-cb83-4d33-9c0c-23018579900b",
+    "id": "0292cb9e-542c-4878-a03d-94ed697ee312",
     "location": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
     "compartment_id": "0ffa5562-82a9-4352-b804-1adebbb7d80c",
-    "items_number_total": 17,
-    "items_number_available": 17,
-    "price": 333,
+    "items_number_total": 8,
+    "items_number_available": 8,
+    "price": 1,
     "average_rating": 0,
     "is_active": true,
-    "created_at": "2025-04-08T12:08:34.904265+00:00",
+    "created_at": "2025-04-08T12:05:40.385845+00:00",
     "translations": {
       "en": {
-        "item_name": "Protective glasses/masks",
-        "item_type": "Protective gear",
-        "item_description": "Protective glasses/masks x 17, EL tape (2x3m, 3x2m), MOLLE-mounted phone holder. In black storage box at the back of front storage."
+        "item_name": "Combat vest 2",
+        "item_type": "Combat vests 2",
+        "item_description": "Combat vest x 5, black (old model) + combat vest x 3, black (light), with EL tapes. Stored in storage box on storage shelves, near entrance."
       },
       "fi": {
-        "item_name": "Suojalasit/-maskit",
-        "item_type": "Suojavarusteita",
-        "item_description": "Suojalasit/-maski x 17, EL-nauhaa (2x3m, 3x2m), Molle-kiinnitteinen kännykkäpidike. Etuvaraston perällä, musta laatikko."
+        "item_name": "Taisteluliivi 2",
+        "item_type": "Taisteluliivejä 2",
+        "item_description": "Taisteluliivi x 5, musta (vanha malli) + taisteluliivi x 3, musta (kevyt), EL-nauhoilla. Varastolaatikossa varastohyllyillä, sisäänkäynnin puolella."
+      }
+    }
+  },
+  {
+    "id": "0292cb9e-542c-4878-a03d-94ed697ee313",
+    "location": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "compartment_id": "0ffa5562-82a9-4352-b804-1adebbb7d80c",
+    "items_number_total": 8,
+    "items_number_available": 8,
+    "price": 1,
+    "average_rating": 0,
+    "is_active": true,
+    "created_at": "2025-04-08T12:05:40.385845+00:00",
+    "translations": {
+      "en": {
+        "item_name": "Combat vest 3",
+        "item_type": "Combat vests 3",
+        "item_description": "Combat vest x 5, black (old model) + combat vest x 3, black (light), with EL tapes. Stored in storage box on storage shelves, near entrance."
+      },
+      "fi": {
+        "item_name": "Taisteluliivi 3",
+        "item_type": "Taisteluliivejä 3",
+        "item_description": "Taisteluliivi x 5, musta (vanha malli) + taisteluliivi x 3, musta (kevyt), EL-nauhoilla. Varastolaatikossa varastohyllyillä, sisäänkäynnin puolella."
       }
     }
   }
