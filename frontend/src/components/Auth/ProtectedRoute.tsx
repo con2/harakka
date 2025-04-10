@@ -23,15 +23,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     );
   }
 
-  // If the user is not logged in (selectedUser is null), allow access to public pages
-  if (!selectedUser) {
-    return <Navigate to="/" replace />; // Redirect to public landing page if not logged in
-  }
-
-  // Check if user has the appropriate role
-  const userRole = selectedUser.role;
-
-  if (!allowedRoles.includes(userRole)) {
+  if (!selectedUser || !allowedRoles.includes(selectedUser.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
