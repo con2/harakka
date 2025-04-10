@@ -5,7 +5,7 @@ import { Card } from "../../components/ui/card";
 import { Box as BoxIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useAppDispatch } from "@/store/hooks";
-import { getItemById, deleteItem, updateItem } from "@/store/slices/itemsSlice";
+import { getItemById, deleteItem } from "@/store/slices/itemsSlice";
 import { Item } from "../../types/item";
 
 interface ItemsCardProps {
