@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit"; // Redux Toolkit utilities for async actions and state slices
 import { usersApi } from "../../api/services/users"; // API service functions to interact with the backend
-import { UserState, UserProfile } from "../../types/user";
+import { UserState, UserProfile, CreateUserDto } from "../../types/user";
 import { RootState } from "../store"; // rootState type to access global Redux state
 
 const initialState: UserState = {
@@ -27,12 +27,19 @@ export const fetchAllUsers = createAsyncThunk(
 // create a new user
 export const createUser = createAsyncThunk(
     'users/createUser',
-    async (user: UserProfile, { rejectWithValue }) => {
+    async (user: CreateUserDto, { rejectWithValue }) => {
         try {
             return await usersApi.createUser(user);
         } catch (error: any) {
-            return rejectWithValue(error.response?.data?.message || "Failed to create user");
-        }
+            console.error("Create user error:", error);
+            const message =
+                error?.response?.data?.message ||
+                error?.response?.data?.error ||
+                error?.message ||
+                "Failed to create user";
+
+            return rejectWithValue(message);
+            }
     }
 );
 
@@ -118,6 +125,20 @@ export const usersSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload as string;
             })
+
+            // create User
+            .addCase(createUser.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+              })
+              .addCase(createUser.fulfilled, (state, action) => {
+                state.loading = false;
+                state.users.push(action.payload);
+              })
+              .addCase(createUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+              })
 
             // delete User
             .addCase(deleteUser.fulfilled, (state, action) => {
