@@ -24,7 +24,6 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
     phone: "",
     role: "user", 
     preferences: {},
-    saved_lists: [],
     ...(initialData || {}),
   });
 
