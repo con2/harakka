@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useEffect, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   deleteItem,
   fetchAllItems,
@@ -7,39 +7,22 @@ import {
   selectAllItems,
   selectItemsError,
   selectItemsLoading,
-} from "@/store/slices/itemsSlice";
-import { PaginatedDataTable } from "../ui/data-table-paginated";
-import { ColumnDef } from "@tanstack/react-table";
-import { Box, LoaderCircle } from "lucide-react";
-import { Button } from "../ui/button";
-import AddItemModal from "./AddItemModal";
-import { Item } from "@/types/item"; // Ensure you import the correct type
-import { toast } from "sonner"; // Make sure you import toast from sonner
+  selectSelectedItem,
+} from '@/store/slices/itemsSlice';
+import { PaginatedDataTable } from '../ui/data-table-paginated';
+import { ColumnDef } from '@tanstack/react-table';
+import { Box, LoaderCircle } from 'lucide-react';
+import defaultImage from '@/assets/defaultImage.jpg';
+import { Button } from '../ui/button';
+import AddItemModal from './AddItemModal';
+import { toast } from 'sonner';
+import UpdateItemModal from './UpdateItemModal'; // Import UpdateItemModal
 
-// Updated StorageItem type
-interface StorageItem extends Item {
+interface StorageItem {
   id: string;
-  location_id: string;
-  compartment_id: string;
-  items_number_total: number;
-  items_number_available: number;
+  location: string;
   price: number;
-  is_active: boolean;
-  translations: {
-    fi: {
-      item_name: string;
-      item_description: string;
-      item_type: string;
-    };
-    en: {
-      item_name: string;
-      item_description: string;
-      item_type: string;
-    };
-  };
-  average_rating?: number;
-  created_at?: string;
-  updated_at?: string;
+  imageUrl?: string;
 }
 
 const AdminItemsTable = () => {
@@ -47,49 +30,60 @@ const AdminItemsTable = () => {
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
-
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<StorageItem | null>(null);
 
   const itemsColumns: ColumnDef<StorageItem>[] = [
+    // {
+    //   header: 'Image',
+    //   accessorKey: 'imageUrl',
+    //   cell: ({ row }) => {
+    //     const url = row.original.imageUrl || defaultImage;
+    //     return (
+    //       <img
+    //         src={url}
+    //         alt="Item"
+    //         className="h-12 w-12 object-cover rounded-md"
+    //         onError={(e) => {
+    //           (e.target as HTMLImageElement).src = defaultImage;
+    //         }}
+    //       />
+    //     );
+    //   },
+    // },
     {
-      header: "Item Name (fi)",
-      accessorKey: "translations.fi.item_name",
-      cell: ({ row }) => row.original.translations.fi.item_name,
+      header: 'Location',
+      accessorKey: 'location',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Box className="h-4 w-4" />
+          {row.original.location}
+        </div>
+      ),
     },
     {
-      header: "Item Type (fi)",
-      accessorKey: "translations.fi.item_type",
-      cell: ({ row }) => row.original.translations.fi.item_type,
-    },
-    {
-      header: "Price",
-      accessorKey: "price",
+      header: 'Price',
+      accessorKey: 'price',
       cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
     },
     {
-      header: "Items Total",
-      accessorKey: "items_number_total",
-      cell: ({ row }) => row.original.items_number_total,
+      header: 'Item Name (FI)',
+      accessorFn: (row) => row.translations.fi.item_name,
+      cell: ({ row }) => row.original.translations.fi.item_name,
     },
     {
-      header: "Items Available",
-      accessorKey: "items_number_available",
-      cell: ({ row }) => row.original.items_number_available,
-    },
-    // {
-    //   header: "Location ID",
-    //   accessorKey: "location_id",
-    //   cell: ({ row }) => row.original.location_id,
-    // },
-    {
-      header: "Average Rating",
-      accessorKey: "average_rating",
-      cell: ({ row }) => (row.original.average_rating ? row.original.average_rating : "N/A"),
+      header: 'Item Type (FI)',
+      accessorFn: (row) => row.translations.fi.item_type,
+      cell: ({ row }) => row.original.translations.fi.item_type,
     },
     {
-      id: "edit",
-      header: "Edit",
+      header: 'Average Rating',
+      accessorFn: (row) => row.average_rating,
+      cell: ({ row }) => row.original.average_rating ?? 'N/A', // Handle if no average rating
+    },
+    {
+      id: 'edit',
+      header: 'Edit',
       cell: ({ row }) => (
         <Button
           className="bg-background rounded-2xl px-6 text-highlight2 border-highlight2 border-1 hover:text-background hover:bg-highlight2"
@@ -100,8 +94,8 @@ const AdminItemsTable = () => {
       ),
     },
     {
-      id: "delete",
-      header: "Delete",
+      id: 'delete',
+      header: 'Delete',
       cell: ({ row }) => (
         <Button
           className="bg-background rounded-2xl px-6 text-destructive border-destructive border hover:text-background"
@@ -113,14 +107,14 @@ const AdminItemsTable = () => {
       ),
     },
   ];
+  
 
   const handleEdit = (item: StorageItem) => {
-    setSelectedItem(item); // Ensure selectedItem is of type StorageItem
-    setShowModal(true);
-    dispatch(getItemById(item.id)); // Fetch item by ID to populate form
+    setSelectedItem(item);  // Set the selected item
+    setShowModal(true);      // Show the modal
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     toast.custom((t) => (
       <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
         <div className="font-semibold text-lg">Confirm Deletion</div>
@@ -175,8 +169,7 @@ const AdminItemsTable = () => {
 
   useEffect(() => {
     if (selectedItem) {
-      // Update the local item data after editing the item
-      dispatch(fetchAllItems()); // Optionally, refetch the items
+      dispatch(fetchAllItems());
     }
   }, [selectedItem, dispatch]);
 
@@ -189,33 +182,26 @@ const AdminItemsTable = () => {
   }
 
   if (error) {
-    return (
-      <div className="p-4 text-destructive">
-        {error}
-      </div>
-    );
+    return <div className="p-4 text-destructive">{error}</div>;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex justify-between items-center">
         <h1 className="text-xl">Manage Storage Items</h1>
-        <Button
-          className="text-white rounded-2xl bg-highlight2 hover:bg-white hover:text-highlight2"
-          onClick={() => {
-            setSelectedItem(null); // Reset selected item when adding new item
-            setShowModal(true); // Show modal to add a new item
-          }}
-        >
-          Add New Item
-        </Button>
+        <AddItemModal>
+          <Button className="text-white rounded-2xl bg-highlight2 hover:bg-white hover:text-highlight2">
+            Add New Item
+          </Button>
+        </AddItemModal>
       </div>
       <PaginatedDataTable columns={itemsColumns} data={items} />
 
-      {showModal && (
-        <AddItemModal
+      {/* Show UpdateItemModal when showModal is true */}
+      {showModal && selectedItem && (
+        <UpdateItemModal
           onClose={handleCloseModal}
-          initialData={selectedItem || undefined} // Pass selectedItem or undefined
+          initialData={selectedItem}  // Pass the selected item data to the modal
         />
       )}
     </div>
