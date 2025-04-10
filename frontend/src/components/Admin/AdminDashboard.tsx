@@ -44,7 +44,7 @@ const AdminDashboard = () => {
       {/* Recent Orders Section */}
       <div className="mb-8">
         <h2>Recent Orders</h2>
-        {loading && <p><LoaderCircle /></p>}
+        {loading && <p><LoaderCircle className="animate-spin" /></p>}
         <div className="w-full mx-auto">
           <DataTable columns={columns} data={regularUsers} />
         </div>
@@ -65,7 +65,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center">
             <h2>Users</h2>
           </div>
-          {loading && <p><LoaderCircle /></p>}
+          {loading && <p><LoaderCircle className="animate-spin" /></p>}
           <div className="w-full max-w-4xl mx-auto">
             <DataTable columns={columns} data={regularUsers} />
           </div>
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center">
             <h2>Your Team</h2>
           </div>
-          {loading && <p><LoaderCircle /></p>}
+          {loading && <p><LoaderCircle className="animate-spin"/></p>}
           <div className="w-full max-w-4xl mx-auto">
             <DataTable columns={columns} data={teamUsers} />
           </div>
