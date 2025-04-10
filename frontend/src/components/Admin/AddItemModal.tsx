@@ -1,188 +1,274 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useAppDispatch } from "@/store/hooks";
-import { createItem, updateItem } from "@/store/slices/itemsSlice";
-import { Item } from "@/types/item";
-import { toast } from "sonner";
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useAppDispatch } from '@/store/hooks';
+import { createItem } from '@/store/slices/itemsSlice';
+import { toast } from 'sonner';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Switch } from '../ui/switch';
 
-type AddItemModalProps = {
-  onClose: () => void;
-  initialData?: Item;
+const initialFormState = {
+  location_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479', //TODO: same for all new items, change later
+  compartment_id: '0ffa5562-82a9-4352-b804-1adebbb7d80c', //TODO: same for all new items, change later
+  items_number_total: 1, //1 by default
+  items_number_available: 1, //1 by default
+  price: 0,
+  is_active: true,
+  translations: {
+    fi: {
+      item_type: '',
+      item_name: '',
+      item_description: '',
+    },
+    en: {
+      item_type: '',
+      item_name: '',
+      item_description: '',
+    },
+  },
 };
 
-const AddItemModal = ({ onClose, initialData }: AddItemModalProps) => {
+const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
-  const [formData, setFormData] = useState<Item>({
-    id: "",
-    price: 0,
-    location_id: "",
-    compartment_id: "",
-    items_number_total: 0,
-    items_number_available: 0,
-    is_active: true,
-    translations: {
-      fi: {
-        item_name: "",
-        item_description: "",
-        item_type: "",
-      },
-      en: {
-        item_name: "",
-        item_description: "",
-        item_type: "",
-      },
-    },
-    average_rating: 0,
-    created_at: "",
-    updated_at: "",
-  });
-  
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState(initialFormState);
+  const [open, setOpen] = useState(false);
 
-  // Prefill the form with initial data if available
-  useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
-    }
-  }, [initialData]);
-
-  // Handle changes in input fields
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
 
-    // Handle nested fields (like translations) separately
-    if (name.startsWith("translations")) {
-      const language = name.split(".")[1] as keyof typeof formData.translations;
-      setFormData((prev) => ({
-        ...prev,
-        translations: {
-          ...prev.translations,
-          [language]: {
-            ...prev.translations[language],
-            [name.split(".")[2]]: value,
+    // Handle nested fields
+    if (name.includes('.')) {
+      const [parent, child, field] = name.split('.');
+      setFormData({
+        ...formData,
+        [parent]: {
+          ...formData[parent as keyof typeof formData],
+          [child]: {
+            ...formData[parent as keyof typeof formData][
+              child as keyof (typeof formData)[typeof parent]
+            ],
+            [field]: value,
           },
         },
-      }));
+      });
     } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+      // Handle numeric values
+      if (
+        name === 'price' ||
+        name === 'items_number_total' ||
+        name === 'items_number_available'
+      ) {
+        setFormData({ ...formData, [name]: parseFloat(value) || 0 });
+      } else {
+        setFormData({ ...formData, [name]: value });
+      }
     }
   };
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    console.log('Submitting form data:', formData);
-  
-    setLoading(true);
+  const handleToggleChange = (checked: boolean) => {
+    setFormData({ ...formData, is_active: checked });
+  };
+
+  const resetForm = () => {
+    setFormData(initialFormState);
+  };
+
+  const handleSubmit = async () => {
     try {
-      if (initialData) {
-        await dispatch(updateItem({ id: formData.id, data: formData })).unwrap();
-        toast.success("Item updated successfully!");
-      } else {
-        await dispatch(createItem(formData)).unwrap();
-        toast.success("Item added successfully!");
-      }
-      onClose();
-    } catch (error) {
-      console.error(error);  // Log error
-      toast.error("Failed to save item.");
-    } finally {
-      setLoading(false);
+      await dispatch(createItem(formData)).unwrap();
+      toast.success('Item created successfully!');
+      resetForm();
+      setOpen(false);
+    } catch (error: any) {
+      toast.error(typeof error === 'string' ? error : 'Failed to create item.');
     }
   };
-  
+
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{initialData ? "Edit Item" : "Add New Item"}</DialogTitle>
-          <DialogDescription>
-            {initialData ? "Update item details below." : "Fill in the details to create a new item."}
-          </DialogDescription>
+          <DialogTitle className="text-center mb-4">Add New Item</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Finnish Information */}
+            <div>
+              <h3 className="font-medium mb-2">Finnish</h3>
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="translations.fi.item_name">
+                    Item Name (FI)
+                  </Label>
+                  <Input
+                    id="translations.fi.item_name"
+                    name="translations.fi.item_name"
+                    value={formData.translations.fi.item_name}
+                    onChange={handleChange}
+                  />
+                </div>
 
-          {/* Price */}
-          <div>
-            <label htmlFor="price">Price</label>
-            <Input
-              id="price"
-              name="price"
-              type="number"
-              value={formData.price}
-              onChange={handleChange}
-              placeholder="Price"
-              required
-            />
+                <div>
+                  <Label htmlFor="translations.fi.item_type">
+                    Item Type (FI)
+                  </Label>
+                  <Input
+                    id="translations.fi.item_type"
+                    name="translations.fi.item_type"
+                    value={formData.translations.fi.item_type}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="translations.fi.item_description">
+                    Description (FI)
+                  </Label>
+                  <Textarea
+                    id="translations.fi.item_description"
+                    name="translations.fi.item_description"
+                    value={formData.translations.fi.item_description}
+                    onChange={handleChange}
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* English Information */}
+            <div>
+              <h3 className="font-medium mb-2">English</h3>
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="translations.en.item_name">
+                    Item Name (EN)
+                  </Label>
+                  <Input
+                    id="translations.en.item_name"
+                    name="translations.en.item_name"
+                    value={formData.translations.en.item_name}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="translations.en.item_type">
+                    Item Type (EN)
+                  </Label>
+                  <Input
+                    id="translations.en.item_type"
+                    name="translations.en.item_type"
+                    value={formData.translations.en.item_type}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="translations.en.item_description">
+                    Description (EN)
+                  </Label>
+                  <Textarea
+                    id="translations.en.item_description"
+                    name="translations.en.item_description"
+                    value={formData.translations.en.item_description}
+                    onChange={handleChange}
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Item Translation Fields */}
-          <div>
-            <h3 className="text-lg font-medium">Translations</h3>
-
-            {/* Finnish Translation */}
+          {/* Item Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
-              <h4 className="text-sm font-medium">Finnish (fi)</h4>
-              <label htmlFor="translations.fi.item_name">Item Name</label>
+              <Label htmlFor="location_id">Location ID</Label>
               <Input
-                id="translations.fi.item_name"
-                name="translations.fi.item_name"
-                value={formData.translations.fi.item_name}
+                id="location_id"
+                name="location_id"
+                value={formData.location_id}
                 onChange={handleChange}
-                placeholder="Item Name (fi)"
-                required
-              />
-              <label htmlFor="translations.fi.item_description">Item Description</label>
-              <Input
-                id="translations.fi.item_description"
-                name="translations.fi.item_description"
-                value={formData.translations.fi.item_description}
-                onChange={handleChange}
-                placeholder="Item Description (fi)"
-                required
               />
             </div>
 
-            {/* English Translation */}
             <div>
-              <h4 className="text-sm font-medium">English (en)</h4>
-              <label htmlFor="translations.en.item_name">Item Name</label>
+              <Label htmlFor="compartment_id">Compartment ID</Label>
               <Input
-                id="translations.en.item_name"
-                name="translations.en.item_name"
-                value={formData.translations.en.item_name}
+                id="compartment_id"
+                name="compartment_id"
+                value={formData.compartment_id}
                 onChange={handleChange}
-                placeholder="Item Name (en)"
-                required
-              />
-              <label htmlFor="translations.en.item_description">Item Description</label>
-              <Input
-                id="translations.en.item_description"
-                name="translations.en.item_description"
-                value={formData.translations.en.item_description}
-                onChange={handleChange}
-                placeholder="Item Description (en)"
-                required
               />
             </div>
-          </div>
 
-          {/* Submit Button */}
+            <div>
+              <Label htmlFor="price">Price (€)</Label>
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                value={formData.price}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="items_number_total">Total Quantity</Label>
+              <Input
+                id="items_number_total"
+                name="items_number_total"
+                type="number"
+                value={formData.items_number_total}
+                onChange={handleChange}
+                min="1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="items_number_available">Available Quantity</Label>
+              <Input
+                id="items_number_available"
+                name="items_number_available"
+                type="number"
+                value={formData.items_number_available}
+                onChange={handleChange}
+                min="0"
+                max={formData.items_number_total}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is_active"
+                checked={formData.is_active}
+                onCheckedChange={handleToggleChange}
+              />
+              <Label htmlFor="is_active">Active</Label>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
           <Button
-            type="submit"
-            className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
-            disabled={loading}
+            className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+            onClick={handleSubmit}
           >
-            {loading ? (initialData ? "Updating..." : "Creating...") : initialData ? "Update Item" : "Add Item"}
+            Add Item
           </Button>
-        </form>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
