@@ -39,7 +39,7 @@ const AdminDashboard = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
+      <h1 className="text-xl mb-4">Admin Dashboard</h1>
 
       {/* Recent Orders Section */}
       <div className="mb-8">
