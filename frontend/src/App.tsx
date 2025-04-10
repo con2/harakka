@@ -13,6 +13,8 @@ import Unauthorized from "./components/Unauthorized";
 import { UserProfileLoader } from "./context/UserProfileLoader";
 import TeamList from "./components/Admin/TeamList";
 import ItemsList from "./components/Items/ItemsList";
+import ItemDetails from "./components/Items/ItemsDetails";
+import UserPanel from "./components/Items/UserPanel";
 import AdminItemsTable from "./components/Admin/AdminItemsTable";
 
 function App() {
@@ -47,11 +49,14 @@ function App() {
                 <Route path="team" element={<TeamList />} />
                 <Route path="items" element={<AdminItemsTable />} />
               </Route>
+
+              <Route path="/" element={<UserPanel />}>
+                <Route path="/storage" element={<ItemsList />} />
+                <Route path="/items/:id" element={<ItemDetails />} />
+              </Route>
+
               <Route path="/unauthorized" element={<Unauthorized />} />
-              <Route
-                path="/storage"
-                element={<ItemsList />}
-              />
+
             </Routes>
           </main>
           <Toaster position="top-right" duration={3000} richColors />
