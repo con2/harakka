@@ -1,17 +1,18 @@
 // AdminItemsTable.tsx
-import { useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   fetchAllItems,
   selectAllItems,
   selectItemsError,
   selectItemsLoading,
-} from "@/store/slices/itemsSlice";
-import { PaginatedDataTable } from "../ui/data-table-paginated";
-import { ColumnDef } from "@tanstack/react-table";
-import { Box, LoaderCircle } from "lucide-react";
-import defaultImage from "@/assets/defaultImage.jpg";
-import { Button } from "../ui/button";
+} from '@/store/slices/itemsSlice';
+import { PaginatedDataTable } from '../ui/data-table-paginated';
+import { ColumnDef } from '@tanstack/react-table';
+import { Box, LoaderCircle } from 'lucide-react';
+import defaultImage from '@/assets/defaultImage.jpg';
+import { Button } from '../ui/button';
+import AddItemModal from './AddItemModal';
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -28,8 +29,8 @@ const AdminItemsTable = () => {
 
   const itemsColumns: ColumnDef<StorageItem>[] = [
     {
-      header: "Image",
-      accessorKey: "imageUrl",
+      header: 'Image',
+      accessorKey: 'imageUrl',
       cell: ({ row }) => {
         const url = row.original.imageUrl || defaultImage;
         return (
@@ -45,13 +46,13 @@ const AdminItemsTable = () => {
       },
     },
     {
-      header: "Price",
-      accessorKey: "price",
+      header: 'Price',
+      accessorKey: 'price',
       cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
     },
     {
-      header: "Location",
-      accessorKey: "location",
+      header: 'Location',
+      accessorKey: 'location',
       cell: ({ row }) => (
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <Box className="h-4 w-4" />
@@ -60,19 +61,17 @@ const AdminItemsTable = () => {
       ),
     },
     {
-      id: "edit",
-      header: "Edit",
+      id: 'edit',
+      header: 'Edit',
       cell: ({ row }) => (
-        <Button
-          className="bg-background rounded-2xl px-6 text-highlight2 border-highlight2 border-1 hover:text-background hover:bg-highlight2"
-        >
+        <Button className="bg-background rounded-2xl px-6 text-highlight2 border-highlight2 border-1 hover:text-background hover:bg-highlight2">
           Edit
         </Button>
       ),
     },
     {
-      id: "delete",
-      header: "Delete",
+      id: 'delete',
+      header: 'Delete',
       cell: ({ row }) => (
         <Button
           className="bg-background rounded-2xl px-6 text-destructive border-destructive border hover:text-background"
@@ -99,16 +98,19 @@ const AdminItemsTable = () => {
   }
 
   if (error) {
-    return (
-      <div className="p-4 text-destructive">
-        {error}
-      </div>
-    );
+    return <div className="p-4 text-destructive">{error}</div>;
   }
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-xl">Admin Storage Inventory</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-xl">Admin Storage Inventory</h1>
+        <AddItemModal>
+          <Button className="text-white rounded-2xl bg-highlight2 hover:bg-white hover:text-highlight2">
+            Add New Item
+          </Button>
+        </AddItemModal>
+      </div>
       <PaginatedDataTable columns={itemsColumns} data={items} />
     </div>
   );
