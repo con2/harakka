@@ -1,9 +1,9 @@
-import { Navigate } from "react-router-dom";
-import { useAppSelector } from "@/store/hooks";
-import { selectSelectedUser } from "@/store/slices/usersSlice";
-import { useAuth } from "@/context/AuthContext";
-import { ReactNode } from "react";
-import { LoaderCircle } from "lucide-react";
+import { Navigate } from 'react-router-dom';
+import { useAppSelector } from '@/store/hooks';
+import { selectSelectedUser } from '@/store/slices/usersSlice';
+import { useAuth } from '@/context/AuthContext';
+import { ReactNode } from 'react';
+import { LoaderCircle } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -23,15 +23,8 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     );
   }
 
-  // If the user is not logged in (selectedUser is null), allow access to public pages
-  if (!selectedUser) {
-    return <Navigate to="/" replace />; // Redirect to public landing page if not logged in
-  }
-
-  // Check if user has the appropriate role
-  const userRole = selectedUser.role;
-
-  if (!allowedRoles.includes(userRole)) {
+  // Redirect ALL unauthorized users (both anonymous and authenticated without permission) to /unauthorized
+  if (!selectedUser || !allowedRoles.includes(selectedUser.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
