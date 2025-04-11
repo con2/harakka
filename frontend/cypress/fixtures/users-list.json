@@ -1,0 +1,23 @@
+[
+  {
+    "id": "3996b102-a466-4da0-997b-2ed3138a69c4",
+    "email": "ermegilius4@gmail.com",
+    "full_name": "Cypress_admin_user",
+    "visible_name": "Cypress_admin_user",
+    "role": "admin"
+  },
+  {
+    "id": "28062719-5b75-4504-af6d-556dae5be2956",
+    "email": "ermegilius3@gmail.com",
+    "full_name": "Cypress_regular_user",
+    "visible_name": "Cypress_regular_user",
+    "role": "user"
+  },
+  {
+    "id": "28062719-5b75-4504-af6d-556dae5be295",
+    "email": "ermegilius3@gmail.com",
+    "full_name": "Cypress_superVera_user",
+    "visible_name": "Cypress_superVera_user",
+    "role": "superVera"
+  }
+]
