@@ -7,32 +7,36 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import logo from "../assets/logo.png"
+import logo from "../assets/logo.png";
 
 export const Navigation = () => {
   const { user, signOut } = useAuth();
+
+  // Check if the user is an admin
+  const isAdmin = user?.user_metadata?.role === "admin";
 
   return (
     <nav className="shadow-sm">
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center gap-4">
-            <Link to="/">
-              <img src={logo} alt="Logo" className="h-20" />
-            </Link>
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link to="/">Home</Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link to="/protected" className="flex items-center gap-1">
-                      Protected Data
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
+          <Link to="/">
+            <img src={logo} alt="Logo" className="h-20" />
+          </Link>
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link to="/">Home</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link to="/protected" className="flex items-center gap-1">
+                    Protected Data
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              {isAdmin && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
                     <Link to="/admin" className="flex items-center gap-1">
@@ -40,17 +44,19 @@ export const Navigation = () => {
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
-                {/* Items */}
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link to="/storage" className="flex items-center gap-1">
-                      Storage Items
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-          </div>
+              )}
+
+              {/* Items */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link to="/storage" className="flex items-center gap-1">
+                    Storage Items
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+        </div>
         {user ? (
           <Button variant="ghost" onClick={signOut}>
             Logout ({user.email})
