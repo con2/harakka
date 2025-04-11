@@ -1,4 +1,4 @@
-# Cypress Tests
+# Cypress Tests for Storage and Booking App
 
 ## Setup Cypress
 
@@ -23,16 +23,22 @@ This will open the Cypress Test Runner, where you can run tests interactively.
 touch cypress.config.ts
 ```
 
-Add the following configuration to `cypress.config.ts`:
+The project uses Cypress for end-to-end testing with the following configuration:
 
 ```ts
+// cypress.config.js
 import { defineConfig } from 'cypress';
 
 export default defineConfig({
   e2e: {
-    baseUrl: 'http://localhost:5180', // frontend port from vite.config.ts
+    baseUrl: 'http://localhost:5180',
+    video: true, // Enable video recording
+    videoCompression: 0, // No compression for highest quality in demos
+    videosFolder: 'cypress/videos', // Where videos are saved
+    viewportWidth: 1280, // Wider viewport for demos
+    viewportHeight: 800, // Taller viewport for demos
     setupNodeEvents(on, config) {
-      // implement node event listeners here
+      return config;
     },
   },
   component: {
@@ -41,9 +47,10 @@ export default defineConfig({
       bundler: 'vite',
     },
   },
-  video: false, // no video recording to save disk space
 });
 ```
+
+We take videos for demo purposes, but you can disable it by setting `video: false` in the configuration.
 
 4. Add scripts to package.json:
 
@@ -53,6 +60,22 @@ export default defineConfig({
   "cy:run": "cypress run",
   "test:e2e": "start-server-and-test dev http://localhost:5180 cy:run"
 }
+```
+
+Commands to run tests:
+
+```sh
+# Open Cypress Test Runner (interactive UI)
+npx cypress open
+
+# Run all tests headless with video recording
+npx cypress run
+
+# Run specific test files
+npx cypress run --spec "cypress/e2e/autorization.cy.ts"
+
+# Run with specific browser
+npx cypress run --browser chrome
 ```
 
 ## Folders structure
@@ -66,166 +89,193 @@ frontend/
 └── cypress.config.ts   <- configuration file for Cypress
 ```
 
+## Custom Commands
+
+we created some custom commands to make the tests easier to write and maintain:
+
+```ts
+// Login using regular form
+Cypress.Commands.add('login', (email, password) => {
+  cy.session([email, password], () => {
+    cy.visit('/login');
+    cy.get('[data-cy=email-input]').type(email);
+    cy.get('[data-cy=password-input]').type(password);
+    cy.get('[data-cy=login-button]').click();
+    cy.url().should('not.include', '/login');
+  });
+});
+
+// Login using Supabase
+Cypress.Commands.add('loginWithSupabase', (email, password) => {
+  cy.session(
+    [email, password],
+    () => {
+      cy.visit('/login');
+      cy.get('input[name="email"]').should('be.visible').type(email);
+      cy.get('input[type="password"]').should('be.visible').type(password);
+      cy.get('button[type="submit"]').should('be.visible').click();
+      cy.wait(500);
+      cy.visit('/');
+    },
+    {
+      cacheAcrossSpecs: false,
+    },
+  );
+});
+
+// Setup user roles with mock API responses
+Cypress.Commands.add('setupUserRole', (role) => {
+  if (role === 'admin') {
+    cy.intercept('GET', '**/users/**', {
+      fixture: 'admin-user.json',
+      statusCode: 200,
+    }).as('getCurrentUserAdmin');
+  } else if (role === 'superVera') {
+    cy.intercept('GET', '**/users/**', {
+      fixture: 'supervera-user.json',
+      statusCode: 200,
+    }).as('getCurrentUserSuperVera');
+  } else {
+    cy.intercept('GET', '**/users/**', {
+      fixture: 'regular-user.json',
+      statusCode: 200,
+    }).as('getCurrentUserRegular');
+  }
+
+  // Common intercept for all users
+  cy.intercept('GET', '**/users', {
+    fixture: 'users-list.json',
+    statusCode: 200,
+  }).as('getUsers');
+});
+
+// Mock storage items API
+Cypress.Commands.add('mockStorageItems', () => {
+  cy.intercept('GET', '**/storage-items', { fixture: 'storage-items.json' }).as(
+    'getItems',
+  );
+});
+
+// Add pauses for demo recordings
+Cypress.Commands.add('demoPause', (ms = 500) => {
+  cy.wait(ms);
+});
+```
+
 ## Writing Tests
 
 1. Create a couple of tests in the `cypress/e2e` directory.
 
-For example,
-
-- `homepage.cy.ts`:
+Testing Authorization
 
 ```ts
-describe('Homepage', () => {
-  beforeEach(() => {
+describe('User Authorization', () => {
+  // Test users configuration
+  const users = {
+    admin: {
+      email: 'ermegilius4@gmail.com',
+      password: '12345678',
+      role: 'admin',
+    },
+    superVera: {
+      email: 'ermegilius5@gmail.com',
+      password: '12345678',
+      role: 'superVera',
+    },
+    regular: {
+      email: 'ermegilius3@gmail.com',
+      password: '12345678',
+      role: 'user',
+    },
+  };
+
+  // Regular user login test
+  it('should allow regular user to log in successfully', () => {
+    cy.setupUserRole('user');
+    cy.visit('/login');
+    cy.get('input[name="email"]')
+      .should('be.visible')
+      .type(users.regular.email);
+    cy.get('input[type="password"]')
+      .should('be.visible')
+      .type(users.regular.password);
+    cy.get('button[type="submit"]').should('be.visible').click();
+    cy.wait('@getCurrentUserRegular');
+    cy.contains(users.regular.email).should('be.visible');
+    cy.contains(/Dashboard|Home|Profile/i).should('be.visible');
+  });
+
+  // Admin navigation test
+  it('should show admin navigation options', () => {
+    cy.setupUserRole('admin');
+    cy.loginWithSupabase(users.admin.email, users.admin.password);
     cy.visit('/');
-  });
+    cy.contains('Admin Panel').should('be.visible').click();
+    cy.url().should('include', '/admin');
 
-  it('should display the page title', () => {
-    cy.contains('h1', 'Storage').should('be.visible');
-  });
-
-  it('should navigate to storage items page', () => {
-    cy.get('a[href*="storage"]').click();
-    cy.url().should('include', '/storage');
+    cy.get('aside nav').within(() => {
+      cy.contains('Dashboard').should('be.visible');
+      cy.contains('Users').should('be.visible');
+      cy.contains('Items').should('be.visible');
+      cy.contains('Settings').should('be.visible');
+      cy.contains('Team').should('not.exist'); // Admin should not see Team option
+    });
   });
 });
 ```
 
-- `storage.cy.ts`:
+2. Testing Storage Items
 
 ```ts
 describe('Storage Items Page', () => {
   beforeEach(() => {
-    // Mock the API response for items
-    cy.intercept('GET', 'http://localhost:3000/storage-items', {
-      fixture: 'storage-items.json',
-    }).as('getItems');
-
+    cy.mockStorageItems();
     cy.visit('/storage');
   });
 
-  it('should display storage items', () => {
+  it('should display storage items correctly', () => {
     cy.wait('@getItems');
-    cy.get('[data-cy="items-card"]').should('be.visible');
+    cy.get('[data-cy="items-card"]').should('have.length.at.least', 2);
+    cy.get('[data-cy="items-card"]')
+      .first()
+      .within(() => {
+        cy.contains('Combat vest').should('be.visible');
+        cy.contains('1').should('be.visible'); // Price check
+      });
   });
 
   it('should show loading state before items load', () => {
-    // Before waiting for the response
+    // Reset the intercept to delay the response
+    cy.intercept('GET', 'http://localhost:3000/storage-items', (req) => {
+      req.reply({
+        delay: 1000,
+        fixture: 'storage-items.json',
+      });
+    }).as('delayedItems');
+
+    cy.visit('/storage');
     cy.get('.animate-spin').should('be.visible');
-    cy.wait('@getItems');
+    cy.wait('@delayedItems');
     cy.get('.animate-spin').should('not.exist');
   });
 });
 ```
 
-2. Create a mock data file in the `cypress/fixtures` directory:
+## Creating Demo Videos
 
-- `storage-items.json`:
+To create high-quality demo videos with pauses at key points:
 
-```json
-[
-  {
-    "id": "0292cb9e-542c-4878-a03d-94ed697ee311",
-    "location_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-    "compartment_id": "0ffa5562-82a9-4352-b804-1adebbb7d80c",
-    "items_number_total": 8,
-    "items_number_available": 8,
-    "price": 1,
-    "average_rating": 0,
-    "is_active": true,
-    "created_at": "2025-04-08T12:05:40.385845+00:00",
-    "translations": {
-      "en": {
-        "item_name": "Combat vest",
-        "item_type": "Combat vests",
-        "item_description": "Combat vest x 5, black (old model) + combat vest x 3, black (light), with EL tapes. Stored in storage box on storage shelves, near entrance."
-      },
-      "fi": {
-        "item_name": "Taisteluliivi",
-        "item_type": "Taisteluliivejä",
-        "item_description": "Taisteluliivi x 5, musta (vanha malli) + taisteluliivi x 3, musta (kevyt), EL-nauhoilla. Varastolaatikossa varastohyllyillä, sisäänkäynnin puolella."
-      }
-    }
-  },
-  {
-    "id": "5eb0e1b8-cb83-4d33-9c0c-23018579900b",
-    "location_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-    "compartment_id": "0ffa5562-82a9-4352-b804-1adebbb7d80c",
-    "items_number_total": 17,
-    "items_number_available": 17,
-    "price": 333,
-    "average_rating": 0,
-    "is_active": true,
-    "created_at": "2025-04-08T12:08:34.904265+00:00",
-    "translations": {
-      "en": {
-        "item_name": "Protective glasses/masks",
-        "item_type": "Protective gear",
-        "item_description": "Protective glasses/masks x 17, EL tape (2x3m, 3x2m), MOLLE-mounted phone holder. In black storage box at the back of front storage."
-      },
-      "fi": {
-        "item_name": "Suojalasit/-maskit",
-        "item_type": "Suojavarusteita",
-        "item_description": "Suojalasit/-maski x 17, EL-nauhaa (2x3m, 3x2m), Molle-kiinnitteinen kännykkäpidike. Etuvaraston perällä, musta laatikko."
-      }
-    }
-  }
-]
-```
-
-3. Create support files in the `cypress/support` directory:
-
-- `e2e.ts`:
-
-```ts
-import './commands'; // Custom commands
-```
-
-- `commands.ts`:
-
-```ts
-// Login command
-Cypress.Commands.add('login', (email, password) => {
-  cy.visit('/login');
-  cy.get('[data-cy=email-input]').type(email);
-  cy.get('[data-cy=password-input]').type(password);
-  cy.get('[data-cy=login-button]').click();
-});
-
-// Declare the types for your custom commands
-declare global {
-  namespace Cypress {
-    interface Chainable {
-      login(email: string, password: string): Chainable<void>;
-    }
-  }
-}
-```
-
-4. Add data attributes to components to make them easier to target in tests:
-
-- In `src/components/Items/ItemsCard.tsx`, add `data-cy` attributes to the card elements:
-
-```tsx
-<Card data-cy="items-card" />
-```
-
-## Running Tests
-
-- Run tests in the Cypress UI:
+Use the demo-specific test files that include demoPause() calls
+Run tests with Chrome for better video quality:
 
 ```sh
-npm run cy:run
+npx cypress run --spec "cypress/e2e/demo.autorization.cy.ts" --browser chrome
 ```
 
-- Run tests in headless mode:
+## Best Practices
 
-```sh
-npm run cy:run
-```
-
-- Run tests with the frontend server started automatically:
-
-```sh
-npm run test:e2e
-```
+- Use data-cy attributes to target elements for testing. <!-- TODO: add later -->
+- Mock API responses using fixtures to make tests reliable and fast
+- Use custom commands for common operations
+- Add appropriate assertions to validate both UI elements and application state
+- For demo recordings, add strategic pauses with cy.demoPause() to highlight important aspects

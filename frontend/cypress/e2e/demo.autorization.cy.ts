@@ -30,15 +30,18 @@ describe('User Authorization', () => {
 
       cy.visit('/login');
 
+      cy.demoPause(500);
+
       // Type login credentials
       cy.get('input[name="email"]')
         .should('be.visible')
         .type(users.regular.email);
+      cy.demoPause(500);
 
       cy.get('input[type="password"]')
         .should('be.visible')
         .type(users.regular.password);
-
+      cy.demoPause(500);
       cy.get('button[type="submit"]').should('be.visible').click();
 
       // Wait for the network request that happens after login
@@ -46,9 +49,11 @@ describe('User Authorization', () => {
 
       // Verify user email is displayed somewhere in the UI
       cy.contains(users.regular.email).should('be.visible');
+      cy.demoPause(500);
 
       // Additional verification
       cy.contains(/Dashboard|Home|Profile/i).should('be.visible');
+      cy.demoPause(500);
     });
   });
 
@@ -63,20 +68,22 @@ describe('User Authorization', () => {
       cy.get('input[name="email"]')
         .should('be.visible')
         .type(users.admin.email);
-
+      cy.demoPause(500);
       cy.get('input[type="password"]')
         .should('be.visible')
         .type(users.admin.password);
-
+      cy.demoPause(500);
       cy.get('button[type="submit"]').should('be.visible').click();
 
       // Wait for the network request that happens after login
       cy.wait('@getCurrentUserAdmin');
       // Verify user email is displayed somewhere in the UI
       cy.contains(users.admin.email).should('be.visible');
+      cy.demoPause(500);
 
       // Additional verification
       cy.contains(/Dashboard|Home|Profile/i).should('be.visible');
+      cy.demoPause(500);
 
       // Verify admin elements are visible
       cy.contains('Admin Panel').should('be.visible');
@@ -87,11 +94,12 @@ describe('User Authorization', () => {
       cy.loginWithSupabase(users.admin.email, users.admin.password);
 
       cy.visit('/');
-
+      cy.demoPause(500);
       cy.contains('Admin Panel').click();
 
       // Verify user email is displayed somewhere in the UI
       cy.contains(users.regular.email).should('be.visible');
+      cy.demoPause(500);
 
       // Should be able to visit admin section
       cy.contains('Admin Panel').should('be.visible').click();
@@ -107,29 +115,29 @@ describe('User Authorization', () => {
 
       // Now visit the admin page with our established session and intercepts
       cy.visit('/');
-      // Show the homepage first
+      cy.demoPause(500); // Show the homepage first
       cy.contains('Admin Panel').should('be.visible').click();
-      // Highlight admin panel navigation
+      cy.demoPause(500); // Highlight admin panel navigation
 
       // Now we should be on the admin page with proper navigation
       cy.url().should('include', '/admin');
-      // Pause to show the admin panel page
+      cy.demoPause(500); // Pause to show the admin panel page
 
       // Check for admin navigation items in the sidebar specifically
       cy.get('aside nav').within(() => {
-        // Pause to highlight the navigation sidebar
+        cy.demoPause(500); // Pause to highlight the navigation sidebar
         cy.contains('Dashboard').should('be.visible');
-
+        cy.demoPause(500);
         cy.contains('Users').should('be.visible');
-
+        cy.demoPause(500);
         cy.contains('Items').should('be.visible');
-
+        cy.demoPause(500);
         cy.contains('Settings').should('be.visible');
-        // Longer pause to emphasize available options
+        cy.demoPause(500); // Longer pause to emphasize available options
 
         // But should not include SuperVera-only features
         cy.contains('Team').should('not.exist');
-        // Emphasize that Team option is missing for regular admin
+        cy.demoPause(500); // Emphasize that Team option is missing for regular admin
       });
     });
 
@@ -142,25 +150,28 @@ describe('User Authorization', () => {
 
       // Visit home page, then verify we see admin panel link
       cy.visit('/');
-
+      cy.demoPause(500);
       cy.contains('Admin Panel').should('be.visible').click();
+      cy.demoPause(500);
 
       // Now verify we reached the admin panel and aren't redirected
       cy.url().should('include', '/admin');
       cy.contains('Admin Panel').should('exist');
+      cy.demoPause(500);
 
       // Now navigate to users page from within admin panel
       cy.contains('Users').click();
-      // Longer pause to emphasize user management section
+      cy.demoPause(500); // Longer pause to emphasize user management section
 
       // Verify we're on the users page
       cy.url().should('include', '/admin/users');
+      cy.demoPause(500);
 
       // Admin should see user management interface
       cy.contains('Manage Users').should('be.visible');
-
+      cy.demoPause(500);
       cy.contains('Add New User').should('be.visible');
-      // Final emphasis on user management capabilities
+      cy.demoPause(500); // Final emphasis on user management capabilities
     });
   });
 
@@ -199,26 +210,29 @@ describe('User Authorization', () => {
 
       // First navigate to admin through UI
       cy.visit('/');
-
+      cy.demoPause(500);
       cy.contains('Admin Panel').should('be.visible').click();
+      cy.demoPause(800);
 
       // Verify we've reached the admin panel
       cy.url().should('include', '/admin');
+      cy.demoPause(500);
 
       // Check standard admin navigation plus team option
       cy.get('aside nav').within(() => {
-        // Highlight sidebar
+        cy.demoPause(500); // Highlight sidebar
         cy.contains('Dashboard').should('be.visible');
-
+        cy.demoPause(500);
         cy.contains('Users').should('be.visible');
-
+        cy.demoPause(500);
         cy.contains('Items').should('be.visible');
-
+        cy.demoPause(500);
         cy.contains('Settings').should('be.visible');
+        cy.demoPause(500);
 
         // SuperVera should have Team option - key differentiator
         cy.contains('Team').should('be.visible');
-        // Extended pause to emphasize SuperVera's extra privileges
+        cy.demoPause(500); // Extended pause to emphasize SuperVera's extra privileges
       });
     });
 
@@ -228,15 +242,17 @@ describe('User Authorization', () => {
 
       // First navigate to admin through UI
       cy.visit('/');
-
+      cy.demoPause(500);
       cy.contains('Admin Panel').should('be.visible').click();
+      cy.demoPause(500);
 
       // Verify we've reached the admin panel
       cy.url().should('include', '/admin');
+      cy.demoPause(500);
 
       // Now look for and click the Team link
       cy.contains('Team').should('be.visible').click();
-      // Extended pause to emphasize SuperVera's extra privileges
+      cy.demoPause(500); // Extended pause to emphasize SuperVera's extra privileges
 
       // Verify we're on the team page
       cy.url().should('include', '/admin/team');
@@ -250,16 +266,18 @@ describe('User Authorization', () => {
   describe('Failed Login Attempts', () => {
     it('should show error message with invalid credentials', () => {
       cy.visit('/login');
+      cy.demoPause(500);
 
       cy.get('input[name="email"]').type('wrong@example.com');
-
+      cy.demoPause(500);
       cy.get('input[type="password"]').type('wrongpassword');
-
+      cy.demoPause(500);
       cy.get('button[type="submit"]').click();
+      cy.demoPause(500);
 
       // Should show error message
       cy.contains(/invalid/i).should('be.visible');
-      // Emphasize security feature
+      cy.demoPause(500); // Emphasize security feature
     });
   });
 });
