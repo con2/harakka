@@ -50,14 +50,14 @@ Cypress.Commands.add('loginWithSupabase', (email, password) => {
       cy.get('button[type="submit"]').should('be.visible').click();
 
       // Give the auth request time to complete and handle possible redirects
-      cy.wait(3000);
+      cy.wait(500);
 
       // Force navigation to home and ensure authentication is complete
       cy.visit('/');
       cy.url().should('eq', `${Cypress.config().baseUrl}/`);
 
       // Wait for user data to finish loading
-      cy.wait(1000);
+      cy.wait(500);
     },
     {
       cacheAcrossSpecs: false,
@@ -78,7 +78,7 @@ Cypress.Commands.add('mockStorageItems', () => {
 });
 
 // Demo pause - used for customer presentations
-Cypress.Commands.add('demoPause', (ms = 1500) => {
+Cypress.Commands.add('demoPause', (ms = 500) => {
   // Always pause when running demo - no environment check needed for demos
   cy.wait(ms);
 });
