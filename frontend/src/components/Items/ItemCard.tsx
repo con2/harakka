@@ -1,12 +1,12 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
-import { Box as BoxIcon } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useAppDispatch } from "@/store/hooks";
-import { getItemById, deleteItem } from "@/store/slices/itemsSlice";
-import { Item } from "../../types/item";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../../components/ui/button';
+import { Card } from '../../components/ui/card';
+import { Box as BoxIcon } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useAppDispatch } from '@/store/hooks';
+import { getItemById, deleteItem } from '@/store/slices/itemsSlice';
+import { Item } from '../../types/item';
 
 interface ItemsCardProps {
   item: Item;
@@ -16,7 +16,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user } = useAuth();
-  const isAdmin = user?.user_metadata?.role === "admin"; // Admin check
+  const isAdmin = user?.user_metadata?.role === 'admin'; // Admin check
 
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
@@ -26,11 +26,11 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   // Handle item deletion
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    if (!window.confirm('Are you sure you want to delete this item?')) return;
     try {
       await dispatch(deleteItem(item.id)).unwrap(); // Delete item via Redux action
     } catch (error) {
-      console.error("Error deleting item:", error);
+      console.error('Error deleting item:', error);
     }
   };
 
@@ -41,7 +41,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   };
 
   return (
-    <Card className="w-full max-w-[350px] m-1 flex flex-col justify-between p-4">
+    <Card
+      data-cy="items-card"
+      className="w-full max-w-[350px] m-1 flex flex-col justify-between p-4"
+    >
       {/* Image Section */}
 
       {/* Item Details */}

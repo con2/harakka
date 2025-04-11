@@ -1,17 +1,17 @@
-import React, { useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import React, { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   fetchAllItems,
   selectAllItems,
   selectItemsLoading,
   selectItemsError,
-} from "../../store/slices/itemsSlice";
-import ItemCard from "./ItemCard";
-import { Button } from "../../components/ui/button";
-import { useNavigate } from "react-router-dom";
-import ItemsLoader from "../../context/ItemsLoader";
-import { useAuth } from "../../context/AuthContext";
-import { useOutletContext } from "react-router-dom";
+} from '../../store/slices/itemsSlice';
+import ItemCard from './ItemCard';
+import { Button } from '../../components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import ItemsLoader from '../../context/ItemsLoader';
+import { useAuth } from '../../context/AuthContext';
+import { useOutletContext } from 'react-router-dom';
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
@@ -29,7 +29,7 @@ const ItemsList: React.FC = () => {
   const { user, authLoading } = useAuth();
 
   // Check if the user is an admin
-  const isAdmin = user?.user_metadata?.role === "admin";
+  const isAdmin = user?.user_metadata?.role === 'admin';
 
   // Fetch all items when the component mounts
   useEffect(() => {
@@ -37,10 +37,11 @@ const ItemsList: React.FC = () => {
   }, [dispatch]);
 
   // Apply filters to the items
-  const filteredItems = items.filter(item => {
+  const filteredItems = items.filter((item) => {
     // Filter by price range
     const isWithinPriceRange =
-      item.price >= filters.priceRange[0] && item.price <= filters.priceRange[1];
+      item.price >= filters.priceRange[0] &&
+      item.price <= filters.priceRange[1];
     // Filter by active status
     const isActive = filters.isActive ? item.is_active : true;
 
@@ -67,7 +68,7 @@ const ItemsList: React.FC = () => {
       {isAdmin && (
         <Button
           className="mb-4"
-          onClick={() => navigate("/admin/items/create")}
+          onClick={() => navigate('/admin/items/create')}
         >
           Create New Item
         </Button>
