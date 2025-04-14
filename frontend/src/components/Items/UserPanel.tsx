@@ -4,12 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ChevronRight, SlidersIcon } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { Star } from "lucide-react";
 
 const UserPanel = () => {
-  // Define the filter states
-  const [filters, setFilters] = useState({
-    priceRange: [0, 100],  // Example: Price range filter [min, max]
-    isActive: true,        // Example: Is item active or not filter
+  // filter states
+  const [filters, setFilters] = useState<{
+    priceRange: [number, number];
+    isActive: boolean;
+    averageRating: number[];
+    itemsNumberAvailable: [number, number];
+  }>({
+    priceRange: [0, 100],  // edit price range filter [min, max]
+    isActive: true,        // Is item active or not filter
+    averageRating: [],
+    itemsNumberAvailable: [0, 100], // add a range for number of items
   });
 
   // Handle filter change (you can modify this based on your filter UI)
@@ -25,6 +33,7 @@ const UserPanel = () => {
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-76 p-4 border-r bg-white shadow-md">
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
+
           {/* Filter Section */}
           <div>
             <div className='flex items-center justify-between my-2'>
@@ -32,6 +41,8 @@ const UserPanel = () => {
               <SlidersIcon className="w-5 h-5 text-slate-500" />
             </div>
             <Separator className="my-4" />
+
+            {/* Categories/tags to be updated */}
             <div className="flex flex-col flex-wrap gap-3 text-md my-6">
               <span
                 className="cursor-pointer text-slate-500 hover:text-secondary justify-between flex items-center"
@@ -59,6 +70,8 @@ const UserPanel = () => {
               </span>
             </div>
             <Separator className="my-4" />
+
+            {/* Price filter */}
             <div className="my-4">
               <label className="text-secondary font-bold block mb-6">Price</label>
               <Slider
@@ -72,11 +85,64 @@ const UserPanel = () => {
                 className="w-full"
               />
               <div className="mt-2 text-secondary text-center">
-                ${filters.priceRange[0]} - ${filters.priceRange[1]}
+                €{filters.priceRange[0]} - €{filters.priceRange[1]}
               </div>
             </div>
             <Separator className="my-4" />
 
+            {/* Rating filter */}
+            <div className="my-4">
+              <label className="text-secondary font-bold block mb-4">Average Rating</label>
+              <div className="flex flex-col gap-3">
+                {[5, 4, 3, 2, 1].map((rating) => {
+                  const isChecked = filters.averageRating.includes(rating);
+                  return (
+                    <label
+                      key={rating}
+                      className="flex items-center gap-2 cursor-pointer text-slate-600 hover:text-secondary hover:cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {
+                          const updated = isChecked
+                            ? filters.averageRating.filter((r) => r !== rating)
+                            : [...filters.averageRating, rating];
+                          handleFilterChange("averageRating", updated);
+                        }}
+                        className="accent-secondary"
+                      />
+                      <div className="flex items-center">
+                        {Array.from({ length: rating }, (_, i) => (
+                          <Star key={i} className="w-4 h-4 fill-secondary text-secondary" />
+                        ))}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <Separator className="my-4" />
+            
+            {/* availability filter */}
+            <div className="my-4">
+              <label className="text-secondary font-bold block mb-6">Items Available</label>
+              <Slider
+                min={0}
+                max={100} // edit upper limit
+                value={filters.itemsNumberAvailable}
+                onValueChange={([min, max]) =>
+                  handleFilterChange("itemsNumberAvailable", [min, max])
+                }
+                className="w-full"
+              />
+              <div className="mt-2 text-secondary text-center">
+                {filters.itemsNumberAvailable[0]} - {filters.itemsNumberAvailable[1]} items
+              </div>
+            </div>
+            <Separator className="my-4" />
+            
+            {/* color filter */}
             <div className="my-4">
               <label className="text-secondary font-bold block mb-6">Colors</label>
               <div className="mt-2 mb-6 text-secondary text-center">
@@ -92,7 +158,8 @@ const UserPanel = () => {
               </div>
             </div>
             <Separator className="my-4" />
-
+              
+            {/* second idea for tags, should be clickable or like above? */}
             <div className="my-4">
               <label className="text-secondary font-bold block mb-6">Tags</label>
               <div className='flex flex-wrap gap-2'>
