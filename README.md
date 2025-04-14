@@ -41,7 +41,7 @@
 3. Install dependencies:
 
 ```sh
-    npm install-all
+    npm run install-all
 ```
 
 4. Run the app:
