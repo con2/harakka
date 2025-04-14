@@ -7,7 +7,8 @@ const initialState: UserState = {
     users: [],             // users fetched from the backend
     loading: false,        
     error: null,           
-    selectedUser: null     // user currently selected (for viewing/editing)
+    selectedUser: null,
+    selectedUserLoading: false,
 };
 
 // Async Thunks (API Calls)
@@ -114,15 +115,15 @@ export const usersSlice = createSlice({
 
             // fetch user by ID
             .addCase(getUserById.pending, (state) => {
-                state.loading = true;
+                state.selectedUserLoading = true;
                 state.error = null;
             })
             .addCase(getUserById.fulfilled, (state, action) => {
-                state.loading = false;
+                state.selectedUserLoading = false;
                 state.selectedUser = action.payload;
             })
             .addCase(getUserById.rejected, (state, action) => {
-                state.loading = false;
+                state.selectedUserLoading = false;
                 state.error = action.payload as string;
             })
 
@@ -169,6 +170,7 @@ export const selectUserRole = (state: RootState) => state.users.selectedUser?.ro
 export const selectIsAdmin = (state: RootState) => state.users.selectedUser?.role === "admin";
 export const selectIsSuperVera = (state: RootState) => state.users.selectedUser?.role === "superVera";
 export const selectIsUser = (state: RootState) => state.users.selectedUser?.role === "user";
+export const selectSelectedUserLoading = (state: RootState) => state.users.selectedUserLoading;
 
 // export actions from the slice
 export const { clearSelectedUser, selectUser } = usersSlice.actions;
