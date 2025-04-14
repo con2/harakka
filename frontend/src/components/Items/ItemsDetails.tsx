@@ -16,8 +16,8 @@ import {
   PopoverTrigger,
 } from '../../components/ui/popover';
 import { format } from 'date-fns'; // For date formatting
-import { CalendarIcon } from 'lucide-react';
 import Rating from '../ui/rating';
+import DatePickerButton from '../ui/DatePickerButton';
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -80,18 +80,11 @@ const ItemsDetails: React.FC = () => {
             <div>
               <span className="text-sm font-semibold">Start Date: </span>
               <Popover>
-                <PopoverTrigger>
-                  <Button
-                    variant="outline"
-                    className="w-[280px] justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? (
-                      format(startDate, 'PPP')
-                    ) : (
-                      <span>Pick a start date</span>
-                    )}
-                  </Button>
+                <PopoverTrigger asChild>
+                  <DatePickerButton
+                    value={startDate ? format(startDate, 'PPP') : null}
+                    placeholder="Pick a start date"
+                  />
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
@@ -108,18 +101,11 @@ const ItemsDetails: React.FC = () => {
             <div>
               <span className="text-sm font-semibold">End Date: </span>
               <Popover>
-                <PopoverTrigger>
-                  <Button
-                    variant="outline"
-                    className="w-[280px] justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? (
-                      format(endDate, 'PPP')
-                    ) : (
-                      <span>Pick an end date</span>
-                    )}
-                  </Button>
+                <PopoverTrigger asChild>
+                  <DatePickerButton
+                    value={endDate ? format(endDate, 'PPP') : null}
+                    placeholder="Pick an end date"
+                  />
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
