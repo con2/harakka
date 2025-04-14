@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useAppSelector } from "@/store/hooks";
+import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -10,10 +12,10 @@ import {
 import logo from "../assets/logo.png";
 
 export const Navigation = () => {
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
+  const selectedUser = useAppSelector(selectSelectedUser);
 
-  // Check if the user is an admin
-  const isAdmin = user?.user_metadata?.role === "admin";
+  const isAdmin = ["admin", "superVera"].includes(selectedUser?.role ?? "");
 
   return (
     <nav className="shadow-sm">
@@ -36,6 +38,8 @@ export const Navigation = () => {
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
+
+              {/* Show Admin Panel link only for admins/superVera */}
               {isAdmin && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
@@ -46,7 +50,7 @@ export const Navigation = () => {
                 </NavigationMenuItem>
               )}
 
-              {/* Items */}
+              {/* Always show Storage */}
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/storage" className="flex items-center gap-1">
@@ -57,9 +61,10 @@ export const Navigation = () => {
             </NavigationMenuList>
           </NavigationMenu>
         </div>
-        {user ? (
+
+        {selectedUser ? (
           <Button variant="ghost" onClick={signOut}>
-            Logout ({user.email})
+            Logout ({selectedUser.email})
           </Button>
         ) : (
           <Button variant="ghost" asChild>
