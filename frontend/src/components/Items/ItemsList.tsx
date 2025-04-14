@@ -12,6 +12,10 @@ import { Input } from '../ui/input';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import ItemsLoader from '../../context/ItemsLoader';
 import { useAuth } from '../../context/AuthContext';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import DatePickerButton from '../ui/DatePickerButton';
+import { Calendar } from '../ui/calendar';
+import { format } from 'date-fns';
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
@@ -23,6 +27,11 @@ const ItemsList: React.FC = () => {
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
+
+  // Timeframe filter states
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [useTimeFilter, setUseTimeFilter] = useState(false);
 
   // Auth state from AuthContext
   const { user, authLoading } = useAuth();
@@ -49,25 +58,36 @@ const ItemsList: React.FC = () => {
     // Filter by active status
     const isActive = filters.isActive ? item.is_active : true;
     const isWithinAvailabilityRange =
-    item.items_number_available >= filters.itemsNumberAvailable[0] &&
-    item.items_number_available <= filters.itemsNumberAvailable[1];
+      item.items_number_available >= filters.itemsNumberAvailable[0] &&
+      item.items_number_available <= filters.itemsNumberAvailable[1];
+    // Filter by timeframe availability (TODO: replace placeholder - needs backend implementation)
+    const timeframeMatch =
+      !useTimeFilter || (startDate && endDate) ? true : true;
+
     // filter by average rating
     const matchesRating =
-    filters.averageRating.length === 0 ||
-    filters.averageRating.includes(Math.floor(item.average_rating ?? 0));
+      filters.averageRating.length === 0 ||
+      filters.averageRating.includes(Math.floor(item.average_rating ?? 0));
 
     const matchesSearch =
       item.translations.fi.item_name.toLowerCase().includes(userQuery) ||
       item.translations.fi.item_type?.toLowerCase().includes(userQuery) ||
-      item.translations.fi.item_description?.toLowerCase().includes(userQuery) ||
+      item.translations.fi.item_description
+        ?.toLowerCase()
+        .includes(userQuery) ||
       item.translations.en.item_name.toLowerCase().includes(userQuery) ||
       item.translations.en.item_type?.toLowerCase().includes(userQuery) ||
-      item.translations.en.item_description?.toLowerCase().includes(userQuery)
-      // add tags filter here
-      // right now the englih tags are not found
-      ;
-
-    return isWithinPriceRange && isActive && isWithinAvailabilityRange && matchesRating && matchesSearch;
+      item.translations.en.item_description?.toLowerCase().includes(userQuery);
+    // add tags filter here
+    // right now the englih tags are not found
+    return (
+      isWithinPriceRange &&
+      isActive &&
+      isWithinAvailabilityRange &&
+      matchesRating &&
+      matchesSearch &&
+      timeframeMatch
+    );
   });
 
   // Loading state
@@ -104,6 +124,67 @@ const ItemsList: React.FC = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
         />
+      </div>
+
+      {/* Timeframe filter section */}
+      <div className="border-t pt-4 mt-2">
+        <div className="flex items-center mb-">
+          <label className="flex items-center text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={useTimeFilter}
+              onChange={() => setUseTimeFilter(!useTimeFilter)}
+              className="mr-2 h-4 w-4 rounded"
+            />
+            Filter by availability timeframe
+          </label>
+        </div>
+
+        {useTimeFilter && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Start Date Picker */}
+            <div>
+              <span className="text-sm font-semibold">Start Date: </span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <DatePickerButton
+                    value={startDate ? format(startDate, 'PPP') : null}
+                    placeholder="Pick a start date"
+                  />
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate || undefined}
+                    onSelect={(date) => setStartDate(date || null)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* End Date Picker */}
+            <div>
+              <span className="text-sm font-semibold">End Date: </span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <DatePickerButton
+                    value={endDate ? format(endDate, 'PPP') : null}
+                    placeholder="Pick an end date"
+                  />
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={endDate || undefined}
+                    onSelect={(date) => setEndDate(date || null)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Render the list of filtered items */}

@@ -1,14 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { getItemById, selectSelectedItem, selectItemsLoading, selectItemsError } from "../../store/slices/itemsSlice";
-import { Button } from "../../components/ui/button"; 
-import { LoaderCircle } from "lucide-react"; 
-import { Calendar } from "../../components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover"; 
-import { format } from "date-fns"; // For date formatting
-import { CalendarIcon } from "lucide-react";
-import Rating from "../ui/rating";
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import {
+  getItemById,
+  selectSelectedItem,
+  selectItemsLoading,
+  selectItemsError,
+} from '../../store/slices/itemsSlice';
+import { Button } from '../../components/ui/button';
+import { LoaderCircle } from 'lucide-react';
+import { Calendar } from '../../components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '../../components/ui/popover';
+import { format } from 'date-fns'; // For date formatting
+import Rating from '../ui/rating';
+import DatePickerButton from '../ui/DatePickerButton';
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -33,7 +42,11 @@ const ItemsDetails: React.FC = () => {
 
   // Loading and error states
   if (loading) {
-    return <div><LoaderCircle className="animate-spin h-8 w-8" /></div>;
+    return (
+      <div>
+        <LoaderCircle className="animate-spin h-8 w-8" />
+      </div>
+    );
   }
 
   if (error) {
@@ -54,8 +67,12 @@ const ItemsDetails: React.FC = () => {
 
         {/* Right Side - Item Details */}
         <div className="md:w-2/3 w-full space-y-4">
-          <h2 className="text-2xl font-bold">{item.translations.fi.item_name}</h2>
-          <p className="text-lg text-gray-500">{item.translations.fi.item_description}</p>
+          <h2 className="text-2xl font-bold">
+            {item.translations.fi.item_name}
+          </h2>
+          <p className="text-lg text-gray-500">
+            {item.translations.fi.item_description}
+          </p>
 
           {/* Booking Section */}
           <div className="flex flex-col space-y-2">
@@ -64,13 +81,10 @@ const ItemsDetails: React.FC = () => {
               <span className="text-sm font-semibold">Start Date: </span>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-[280px] justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP") : <span>Pick a start date</span>}
-                  </Button>
+                  <DatePickerButton
+                    value={startDate ? format(startDate, 'PPP') : null}
+                    placeholder="Pick a start date"
+                  />
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
@@ -88,13 +102,10 @@ const ItemsDetails: React.FC = () => {
               <span className="text-sm font-semibold">End Date: </span>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-[280px] justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "PPP") : <span>Pick an end date</span>}
-                  </Button>
+                  <DatePickerButton
+                    value={endDate ? format(endDate, 'PPP') : null}
+                    placeholder="Pick an end date"
+                  />
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
@@ -129,19 +140,25 @@ const ItemsDetails: React.FC = () => {
       {/* Tabs and Tab Contents - Positioned Below */}
       <div className="mt-10 w-full">
         <div className="flex gap-4">
-          <Button 
-            onClick={() => setSelectedTab('description')} className="bg-transparent text-secondary"
+          <Button
+            onClick={() => setSelectedTab('description')}
+            className="bg-transparent text-secondary"
           >
             Description
           </Button>
-          <Button onClick={() => setSelectedTab('reviews')} className="bg-transparent text-secondary">
+          <Button
+            onClick={() => setSelectedTab('reviews')}
+            className="bg-transparent text-secondary"
+          >
             Reviews
           </Button>
         </div>
 
         {/* Tab Content */}
         <div className="mt-4 bg-slate-50 p-4 rounded-lg">
-          {selectedTab === 'description' && <p>{item.translations.fi.item_description}</p>}
+          {selectedTab === 'description' && (
+            <p>{item.translations.fi.item_description}</p>
+          )}
           {selectedTab === 'reviews' && <p>Reviews will be displayed here</p>}
         </div>
       </div>
