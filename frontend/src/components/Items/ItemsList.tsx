@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   fetchAllItems,
@@ -16,6 +16,22 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
+
+// Create a forwardRef button component
+const DatePickerButton = forwardRef<
+  HTMLButtonElement,
+  { value: string | null; placeholder: string; onClick?: () => void }
+>(({ value, placeholder, onClick }, ref) => (
+  <button
+    ref={ref}
+    onClick={onClick}
+    className="flex items-center w-[280px] justify-start rounded-md border border-input bg-background px-3 py-2 text-sm text-left font-normal shadow-sm hover:bg-accent hover:text-accent-foreground"
+  >
+    <CalendarIcon className="mr-2 h-4 w-4" />
+    {value ? value : <span>{placeholder}</span>}
+  </button>
+));
+DatePickerButton.displayName = 'DatePickerButton';
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
@@ -108,17 +124,10 @@ const ItemsList: React.FC = () => {
               <span className="text-sm font-semibold">Start Date: </span>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-[280px] justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? (
-                      format(startDate, 'PPP')
-                    ) : (
-                      <span>Pick a start date</span>
-                    )}
-                  </Button>
+                  <DatePickerButton
+                    value={startDate ? format(startDate, 'PPP') : null}
+                    placeholder="Pick a start date"
+                  />
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
@@ -136,20 +145,18 @@ const ItemsList: React.FC = () => {
               <span className="text-sm font-semibold">End Date: </span>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-[280px] justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? (
-                      format(endDate, 'PPP')
-                    ) : (
-                      <span>Pick an end date</span>
-                    )}
-                  </Button>
+                  <DatePickerButton
+                    value={endDate ? format(endDate, 'PPP') : null}
+                    placeholder="Pick an end date"
+                  />
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  {/* Calendar content remains the same */}
+                  <Calendar
+                    mode="single"
+                    selected={endDate || undefined}
+                    onSelect={(date) => setEndDate(date || null)}
+                    initialFocus
+                  />
                 </PopoverContent>
               </Popover>
             </div>
