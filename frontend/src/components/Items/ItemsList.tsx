@@ -1,4 +1,4 @@
-import React, { useEffect, useState, forwardRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   fetchAllItems,
@@ -13,25 +13,9 @@ import ItemsLoader from '../../context/ItemsLoader';
 import { useAuth } from '../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
-
-// Create a forwardRef button component
-const DatePickerButton = forwardRef<
-  HTMLButtonElement,
-  { value: string | null; placeholder: string; onClick?: () => void }
->(({ value, placeholder, onClick }, ref) => (
-  <button
-    ref={ref}
-    onClick={onClick}
-    className="flex items-center w-[280px] justify-start rounded-md border border-input bg-background px-3 py-2 text-sm text-left font-normal shadow-sm hover:bg-accent hover:text-accent-foreground"
-  >
-    <CalendarIcon className="mr-2 h-4 w-4" />
-    {value ? value : <span>{placeholder}</span>}
-  </button>
-));
-DatePickerButton.displayName = 'DatePickerButton';
+import DatePickerButton from '../ui/DatePickerButton';
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
