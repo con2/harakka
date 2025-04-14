@@ -23,7 +23,7 @@ import {
   
       if (!user) throw new BadRequestException('User not found');
   
-      const unavailableItems = [];
+      const unavailableItems: string[] = [];
   
       for (const item of dto.items) {
         const { data: itemData } = await supabase
@@ -43,15 +43,15 @@ import {
         );
       }
   
-      // Reservieren
+      // Reserve
       for (const item of dto.items) {
-        await this.supabaseService.rpc('reserve_item_quantity', {
+        await this.supabaseService.rpc('reserve_item_quantity', { // noch in supabase ausführen. Andere fragen obs ok ist
           item_id: item.item_id,
           quantity: item.quantity,
         });
       }
   
-      // Neue Bestellung
+      // New order
       const { data: order } = await supabase
         .from('orders')
         .insert({
@@ -73,7 +73,8 @@ import {
   
       return order;
     }
-  
+
+    // confirm a Booking
     async confirmBooking(orderId: string) {
       const supabase = this.supabaseService.getServiceClient();
       await supabase
@@ -82,11 +83,12 @@ import {
         .eq('id', orderId);
       return { message: 'Booking confirmed' };
     }
-  
+    
+    // reject a Booking
     async rejectBooking(orderId: string) {
       const supabase = this.supabaseService.getServiceClient();
   
-      // Bestellung löschen + ggf. Items rückgängig machen
+      // Delete order + cancel items if necessary
       const { data: items } = await supabase
         .from('order_items')
         .select('item_id, quantity')
@@ -104,7 +106,8 @@ import {
       await supabase.from('orders').delete().eq('id', orderId);
       return { message: 'Booking rejected and removed' };
     }
-  
+
+    // cancel a Booking
     async cancelBooking(orderId: string, userId: string) {
       const supabase = this.supabaseService.getServiceClient();
   
@@ -116,7 +119,7 @@ import {
   
       if (!order) throw new BadRequestException('Order not found');
   
-      // Rollen prüfen
+      // identify roles
       const { data: user } = await supabase
         .from('user_profiles')
         .select('role')
@@ -134,7 +137,7 @@ import {
         throw new ForbiddenException('This booking has already been confirmed');
       }
   
-      // Items zurückbuchen
+      // Book items back
       const { data: items } = await supabase
         .from('order_items')
         .select('item_id, quantity')
