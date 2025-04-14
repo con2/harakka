@@ -18,6 +18,9 @@ import {
 import { format } from 'date-fns'; // For date formatting
 import Rating from '../ui/rating';
 import DatePickerButton from '../ui/DatePickerButton';
+import { addToCart } from '../../store/slices/cartSlice';
+import { Input } from '../ui/input';
+import { toast } from 'sonner';
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -33,6 +36,22 @@ const ItemsDetails: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState('description');
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(new Date());
+  // State for cart quantity
+  const [quantity, setQuantity] = useState(1);
+
+  const handleAddToCart = () => {
+    if (item) {
+      dispatch(
+        addToCart({
+          item: item,
+          quantity: quantity,
+          startDate: startDate,
+          endDate: endDate,
+        }),
+      );
+      toast.success(`${item.translations.fi.item_name} added to cart`);
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -117,6 +136,37 @@ const ItemsDetails: React.FC = () => {
                 </PopoverContent>
               </Popover>
             </div>
+          </div>
+
+          <div className="flex items-center mt-4 gap-4">
+            <div className="flex items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              >
+                -
+              </Button>
+              <Input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                className="w-16 mx-2 text-center"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setQuantity(quantity + 1)}
+              >
+                +
+              </Button>
+            </div>
+            <Button
+              className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary flex-1"
+              onClick={handleAddToCart}
+            >
+              Add to Cart
+            </Button>
           </div>
 
           {/* Rating Component */}
