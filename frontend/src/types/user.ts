@@ -38,4 +38,5 @@ export interface UserState {
   loading: boolean;
   error: string | null;
   selectedUser: UserProfile | null;
+  selectedUserLoading?: boolean;
 }
