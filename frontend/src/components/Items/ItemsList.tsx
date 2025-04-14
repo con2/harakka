@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   fetchAllItems,
@@ -12,6 +12,10 @@ import { useNavigate } from 'react-router-dom';
 import ItemsLoader from '../../context/ItemsLoader';
 import { useAuth } from '../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '../ui/calendar';
+import { format } from 'date-fns';
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
@@ -24,6 +28,11 @@ const ItemsList: React.FC = () => {
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
+
+  // Timeframe filter states
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [useTimeFilter, setUseTimeFilter] = useState(false);
 
   // Auth state from AuthContext
   const { user, authLoading } = useAuth();
@@ -45,7 +54,11 @@ const ItemsList: React.FC = () => {
     // Filter by active status
     const isActive = filters.isActive ? item.is_active : true;
 
-    return isWithinPriceRange && isActive;
+    // Filter by timeframe availability (TODO: replace placeholder - needs backend implementation)
+    const timeframeMatch =
+      !useTimeFilter || (startDate && endDate) ? true : true;
+
+    return isWithinPriceRange && isActive && timeframeMatch;
   });
 
   // Loading state
@@ -73,6 +86,76 @@ const ItemsList: React.FC = () => {
           Create New Item
         </Button>
       )}
+
+      {/* Timeframe filter section */}
+      <div className="border-t pt-4 mt-2">
+        <div className="flex items-center mb-2">
+          <label className="flex items-center text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={useTimeFilter}
+              onChange={() => setUseTimeFilter(!useTimeFilter)}
+              className="mr-2 h-4 w-4 rounded"
+            />
+            Filter by availability timeframe
+          </label>
+        </div>
+
+        {useTimeFilter && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Start Date Picker */}
+            <div>
+              <span className="text-sm font-semibold">Start Date: </span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-[280px] justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? (
+                      format(startDate, 'PPP')
+                    ) : (
+                      <span>Pick a start date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate || undefined}
+                    onSelect={(date) => setStartDate(date || null)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* End Date Picker */}
+            <div>
+              <span className="text-sm font-semibold">End Date: </span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-[280px] justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? (
+                      format(endDate, 'PPP')
+                    ) : (
+                      <span>Pick an end date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  {/* Calendar content remains the same */}
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Render the list of filtered items */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
