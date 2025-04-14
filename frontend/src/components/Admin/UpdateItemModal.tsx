@@ -6,6 +6,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { updateItem } from "@/store/slices/itemsSlice";
 import { Item } from "@/types/item";
 import { toast } from "sonner";
+import { Switch } from '@/components/ui/switch';
 
 type UpdateItemModalProps = {
   onClose: () => void;
@@ -139,6 +140,23 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 required
               />
             </div>
+          </div>
+
+          {/* Active Toggle */}
+          <div className="flex flex-col">
+            <label htmlFor="is_active" className="text-secondary font-medium">
+              Active
+            </label>
+            <Switch
+              id="is_active"
+              checked={formData.is_active}
+              onCheckedChange={(checked: boolean) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  is_active: checked,
+                }))
+              }
+            />
           </div>
 
           {/* Submit Button */}
