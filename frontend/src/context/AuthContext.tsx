@@ -1,7 +1,7 @@
 import { Session, User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../config/supabase";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch } from "@/store/hooks";
 import { clearSelectedUser } from "@/store/slices/usersSlice";
 
@@ -18,20 +18,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+
   const navigate = useNavigate();
-  const dispatch = useAppDispatch(); // 👈 hook to update Redux
+  const location = useLocation();
+  const dispatch = useAppDispatch();
 
   const handleSessionUpdate = (session: Session | null) => {
     const user = session?.user ?? null;
     setSession(session);
     setUser(user);
     setAuthLoading(false);
+  };
 
-    // If there's no user, clear the Redux profile
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleSessionUpdate(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleSessionUpdate(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
     if (!user) {
       dispatch(clearSelectedUser());
     }
-  };
+
+    if (user && location.pathname === "/login") {
+      navigate("/"); 
+    }
+  }, [user, location.pathname, dispatch, navigate]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
