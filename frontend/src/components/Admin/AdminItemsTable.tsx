@@ -8,6 +8,7 @@ import {
   selectItemsError,
   selectItemsLoading,
   selectSelectedItem,
+  updateItem,
 } from '@/store/slices/itemsSlice';
 import { PaginatedDataTable } from '../ui/data-table-paginated';
 import { ColumnDef } from '@tanstack/react-table';
@@ -17,6 +18,7 @@ import { Button } from '../ui/button';
 import AddItemModal from './AddItemModal';
 import { toast } from 'sonner';
 import UpdateItemModal from './UpdateItemModal'; // Import UpdateItemModal
+import { Switch } from '@/components/ui/switch';
 
 interface StorageItem {
   id: string;
@@ -81,6 +83,32 @@ const AdminItemsTable = () => {
       accessorFn: (row) => row.average_rating,
       cell: ({ row }) => row.original.average_rating ?? 'N/A', // Handle if no average rating
     },
+    {
+      id: 'status',
+      header: 'Active',
+      cell: ({ row }) => {
+        const item = row.original;
+    
+        const handleToggle = async (checked: boolean) => {
+          try {
+            await dispatch(updateItem({
+              id: item.id,
+              data: { ...item, is_active: checked },
+            })).unwrap();
+            toast.success(`Item ${checked ? 'activated' : 'deactivated'} successfully`);
+          } catch (error) {
+            toast.error('Failed to update item status');
+          }
+        };
+    
+        return (
+          <Switch
+            checked={item.is_active}
+            onCheckedChange={handleToggle}
+          />
+        );
+      },
+    },    
     {
       id: 'edit',
       header: 'Edit',
