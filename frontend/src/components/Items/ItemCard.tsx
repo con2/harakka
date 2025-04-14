@@ -43,7 +43,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   return (
     <Card
       data-cy="items-card"
-      className="w-full max-w-[350px] m-1 flex flex-col justify-between p-4"
+      className="w-full max-w-[350px] flex flex-col justify-between p-4"
     >
       {/* Image Section */}
 
@@ -52,17 +52,28 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         <h2 className="text-xl font-semibold text-center">
           {item.translations.fi.item_name}
         </h2>
-        <p className="text-lg text-center">
+        {/* <p className="text-lg text-center">
           {item.translations.fi.item_description}
-        </p>
+        </p> */}
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <BoxIcon className="h-4 w-4" />
           <span>{item.location_id}</span>
         </div>
+        <p className='text-sm text-slate-400 italic m-0'>
+          Available from: {'date comes here'}
+        </p>
+        <p className='text-sm text-slate-400 italic m-0'>
+          Bookable units: {item.items_number_available}
+        </p>
       </div>
 
       {/* View Details Button */}
-      <Button onClick={() => handleItemClick(item.id)}>View Details</Button>
+      <Button
+        onClick={() => handleItemClick(item.id)}
+        className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+      >
+        View Details
+      </Button>
 
       {/* Admin Actions */}
       {isAdmin && (
