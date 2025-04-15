@@ -5,7 +5,6 @@ import {
   } from '@nestjs/common';
   import { SupabaseService } from './supabase.service';
   import { CreateBookingDto } from '../dto/create-booking.dto';
-  import { BookingItem } from '../interfaces/booking.interface';
   
   @Injectable()
   export class BookingService {
@@ -43,14 +42,6 @@ import {
         );
       }
   
-      // Reserve
-      for (const item of dto.items) {
-        await this.supabaseService.rpc('reserve_item_quantity', { // noch in supabase ausführen. Andere fragen obs ok ist
-          item_id: item.item_id,
-          quantity: item.quantity,
-        });
-      }
-  
       // New order
       const { data: order } = await supabase
         .from('orders')
@@ -76,14 +67,29 @@ import {
 
     // confirm a Booking
     async confirmBooking(orderId: string) {
-      const supabase = this.supabaseService.getServiceClient();
-      await supabase
-        .from('orders')
-        .update({ status: 'confirmed' })
-        .eq('id', orderId);
-      return { message: 'Booking confirmed' };
-    }
-    
+        const supabase = this.supabaseService.getServiceClient();
+  
+    // get the items
+    const { data: items, error: itemsError } = await supabase
+      .from('order_items')
+      .select('item_id, quantity')
+      .eq('order_id', orderId);
+  
+    if (itemsError) throw new BadRequestException('Could not load order items');
+  
+    // change status - trigger functions in supabase handle: check stock and take items away
+    const { error: updateError } = await supabase
+    .from('orders')
+    .update({ status: 'confirmed' })
+    .eq('id', orderId);
+
+  if (updateError) {
+    throw new BadRequestException('Could not confirm booking');
+  }
+
+  return { message: 'Booking confirmed' };
+}
+  
     // reject a Booking
     async rejectBooking(orderId: string) {
       const supabase = this.supabaseService.getServiceClient();
