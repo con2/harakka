@@ -83,7 +83,30 @@ import {
           }
   
       const unavailableItems: string[] = [];
-  
+      
+      // check for overlapping bookings
+      for (const item of dto.items) {
+        // parse times as objects
+        const start = new Date(item.start_date);
+        const end = new Date(item.end_date);
+      
+        // check overlapping
+        const { data: overlappingOrders, error: overlapError } = await supabase
+          .from('order_items')
+          .select('id')
+          .eq('item_id', item.item_id)
+          .or(`and(start_date.lte.${item.end_date},end_date.gte.${item.start_date})`);
+      
+        if (overlapError) {
+          console.error('Overlap check error:', overlapError);
+          throw new BadRequestException('Could not check overlapping bookings');
+        }
+      
+        if (overlappingOrders && overlappingOrders.length > 0) {
+          throw new BadRequestException(`Item ${item.item_id} is already booked for the selected period`);
+        }
+
+      // check availability
       for (const item of dto.items) {
         const { data: itemData, error: itemError } = await supabase
           .from('storage_items')
@@ -105,6 +128,8 @@ import {
           `Not enough items available: ${unavailableItems.join(', ')}`,
         );
       }
+    }
+
       // generate the order number
       const generateOrderNumber = () => {
         const now = new Date();
@@ -113,9 +138,8 @@ import {
         return `ORD-${datePart}-${randomPart}`;
       };
      
-      // New order
+      // insert new order
       const { data: order, error: orderError } = await supabase
-      
         .from('orders')
         .insert({
           user_id: user.id,
@@ -136,30 +160,44 @@ import {
         console.log('Order created:', order);
 
         // Insert order items and calculate days
-        for (const item of dto.items) {
-            const start = new Date(item.start_date);
-            const end = new Date(item.end_date);
-            const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-          
-            const { error: itemInsertError } = await supabase.from('order_items').insert({
-              order_id: order.id,
-              item_id: item.item_id,
-              quantity: item.quantity,
-              start_date: item.start_date,
-              end_date: item.end_date,
-              total_days: totalDays,
-              status: 'pending',
-            });
-          
-            if (itemInsertError) {
-              console.error('Order item insert error:', itemInsertError);
-              throw new BadRequestException('Could not create order items');
-            }
-          }
-          
+for (const item of dto.items) {
+    const start = new Date(item.start_date);
+    const end = new Date(item.end_date);
+    const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  
+    // get location_id from storage_items
+    const { data: storageItem, error: storageError } = await supabase
+      .from('storage_items')
+      .select('location_id')
+      .eq('id', item.item_id)
+      .single();
+  
+    if (storageError || !storageItem) {
+      console.error('Storage item fetch error (location_id):', storageError);
+      throw new BadRequestException(`Could not fetch location_id for item ${item.item_id}`);
+    }
+  
+    const { error: itemInsertError } = await supabase
+      .from('order_items')
+      .insert({
+        order_id: order.id,
+        item_id: item.item_id,
+        location_id: storageItem.location_id,
+        quantity: item.quantity,
+        start_date: item.start_date,
+        end_date: item.end_date,
+        total_days: totalDays,
+        status: 'pending',
+      });
+  
+    if (itemInsertError) {
+      console.error('Order item insert error:', itemInsertError);
+      throw new BadRequestException('Could not create order items');
+    }
+  }
   
       return order;
-    }
+    } // end of createBooking
 
     // confirm a Booking
     async confirmBooking(orderId: string) {
@@ -186,6 +224,10 @@ import {
   return { message: 'Booking confirmed' };
 }
   // don't delete the order, just change the status to 'rejected' or 'cancelled' TODO!
+
+
+
+
 
     // reject a Booking
     async rejectBooking(orderId: string) {
