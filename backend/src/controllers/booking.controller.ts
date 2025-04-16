@@ -1,6 +1,7 @@
 import { Body,
     Controller,
     Delete,
+    Get,
     Param,
     Post,
     Put,
@@ -12,6 +13,11 @@ import { CreateBookingDto } from '../dto/create-booking.dto';
 @Controller('bookings')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
+
+  @Get()
+  async getAll() {
+    return this.bookingService.getAllOrders();
+  }
 
   @Post()
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: any) {
