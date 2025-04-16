@@ -71,22 +71,29 @@ import {
       const supabase = this.supabaseService.getServiceClient();
       const userEmail = dto.user_email ?? requestingUserEmail;
   
-      const { data: user } = await supabase
+      const { data: user, error: userError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('email', userEmail)
         .single();
-  
-      if (!user) throw new BadRequestException('User not found');
+        // debugging
+        if (userError || !user) {
+            console.error('User fetch error:', userError);
+            throw new BadRequestException('User not found');
+          }
   
       const unavailableItems: string[] = [];
   
       for (const item of dto.items) {
-        const { data: itemData } = await supabase
+        const { data: itemData, error: itemError } = await supabase
           .from('storage_items')
           .select('items_number_available')
           .eq('id', item.item_id)
           .single();
+        //debugging
+          if (itemError) {
+            console.error('Item fetch error:', itemError);
+          }
   
         if (!itemData || itemData.items_number_available < item.quantity) {
           unavailableItems.push(item.item_id);
@@ -98,26 +105,58 @@ import {
           `Not enough items available: ${unavailableItems.join(', ')}`,
         );
       }
-  
+      // generate the order number
+      const generateOrderNumber = () => {
+        const now = new Date();
+        const datePart = now.toISOString().split('T')[0].replace(/-/g, '');
+        const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        return `ORD-${datePart}-${randomPart}`;
+      };
+     
       // New order
-      const { data: order } = await supabase
+      const { data: order, error: orderError } = await supabase
+      
         .from('orders')
         .insert({
           user_id: user.id,
           status: 'pending',
+          order_number: generateOrderNumber(),
+          // total_amount: dto.total_amount,
+          // final amount: dto.total_amount,
+          // payment_status are now nullable in database (maybe turn this into not null later again)
         })
         .select()
         .single();
-  
-      for (const item of dto.items) {
-        await supabase.from('order_items').insert({
-          order_id: order.id,
-          item_id: item.item_id,
-          quantity: item.quantity,
-          start_date: item.start_date,
-          end_date: item.end_date,
-        });
-      }
+        // debugging
+        if (orderError || !order) {
+            console.error('Order creation error:', orderError);
+            throw new BadRequestException('Could not create order');
+          }
+        //debugging
+        console.log('Order created:', order);
+
+        // Insert order items and calculate days
+        for (const item of dto.items) {
+            const start = new Date(item.start_date);
+            const end = new Date(item.end_date);
+            const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          
+            const { error: itemInsertError } = await supabase.from('order_items').insert({
+              order_id: order.id,
+              item_id: item.item_id,
+              quantity: item.quantity,
+              start_date: item.start_date,
+              end_date: item.end_date,
+              total_days: totalDays,
+              status: 'pending',
+            });
+          
+            if (itemInsertError) {
+              console.error('Order item insert error:', itemInsertError);
+              throw new BadRequestException('Could not create order items');
+            }
+          }
+          
   
       return order;
     }
