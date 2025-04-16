@@ -24,5 +24,10 @@ export class CreateBookingDto {
   @ValidateNested({ each: true })
   @Type(() => BookingItemDto)
   items: BookingItemDto[];
-}
+
+
+/* @IsOptional()  // Falls total_amount optional sein soll
+  @IsNumber()
+  total_amount?: number; // Gesamtbetrag der Buchung */
+} 
 // This DTO defines the structure of the data required to create a booking.
