@@ -11,8 +11,7 @@ import {
     constructor(private readonly supabaseService: SupabaseService) {}
   
     // get all orders
-    // get all orders
-async getAllOrders() {
+    async getAllOrders() {
     const supabase = this.supabaseService.getServiceClient();
   
     const { data: orders, error } = await supabase
@@ -36,7 +35,7 @@ async getAllOrders() {
       throw new BadRequestException('No orders found');
     }
   
-    // hole für jeden Auftrag das zugehörige User-Profil (per user_id)
+    // get corresponding user profile for each booking (via user_id)
     const ordersWithUserProfiles = await Promise.all(
       orders.map(async (order) => {
         let user: { name: string; email: string } | null = null;
@@ -49,8 +48,8 @@ async getAllOrders() {
           user = userData ?? null;
         }
   
-        // item_name aus dem translations JSON ziehen
-        const enrichedItems = order.order_items?.map((item) => ({
+        // extract item name from JSON
+        const itemWithName = order.order_items?.map((item) => ({
           ...item,
           item_name: item.storage_items?.translations?.en?.item_name ?? 'Unknown',
         })) ?? [];
@@ -58,7 +57,7 @@ async getAllOrders() {
         return {
           ...order,
           user_profile: user,
-          order_items: enrichedItems,
+          order_items: itemWithName,
         };
       })
     );
