@@ -16,6 +16,8 @@ const Cart: React.FC = () => {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector(selectCartItems);
   const cartTotal = useAppSelector(selectCartTotal);
+  // Use global timeframe
+  const { startDate, endDate } = useAppSelector((state) => state.timeframe);
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return;
@@ -39,9 +41,47 @@ const Cart: React.FC = () => {
     );
   }
 
+  // Calculate total number of rental days
+  const rentalDays =
+    startDate && endDate
+      ? Math.ceil(
+          (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+            (1000 * 60 * 60 * 24),
+        ) + 1
+      : 0;
+
   return (
     <div className="p-6">
       <h2 className="text-xl mb-4">Your Cart</h2>
+
+      {/* Booking Timeframe Summary */}
+      <div className="bg-slate-50 p-4 rounded-lg mb-6">
+        <div className="flex items-center mb-2">
+          <Calendar className="h-5 w-5 mr-2 text-secondary" />
+          <h3 className="text-lg font-semibold">Booking Timeframe</h3>
+        </div>
+        {startDate && endDate ? (
+          <div>
+            <p className="text-md">
+              <span className="font-medium">From:</span>{' '}
+              {format(new Date(startDate), 'PPP')}
+            </p>
+            <p className="text-md">
+              <span className="font-medium">To:</span>{' '}
+              {format(new Date(endDate), 'PPP')}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              ({rentalDays} {rentalDays === 1 ? 'day' : 'days'} total)
+            </p>
+          </div>
+        ) : (
+          <p className="text-amber-600">
+            No booking period selected. Please select dates first.
+          </p>
+        )}
+      </div>
+
+      {/* Cart Items */}
       <div className="space-y-4">
         {cartItems.map((cartItem) => (
           <div key={cartItem.item.id} className="flex flex-col border-b pb-4">
@@ -53,22 +93,6 @@ const Cart: React.FC = () => {
                 <p className="text-sm text-gray-500">
                   {cartItem.item.translations.fi.item_type}
                 </p>
-
-                {/* Booking dates display */}
-                {(cartItem.startDate || cartItem.endDate) && (
-                  <div className="mt-2 text-sm flex items-center">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    <span>
-                      {cartItem.startDate
-                        ? format(new Date(cartItem.startDate), 'PPP')
-                        : 'No start date'}
-                      {' - '}
-                      {cartItem.endDate
-                        ? format(new Date(cartItem.endDate), 'PPP')
-                        : 'No end date'}
-                    </span>
-                  </div>
-                )}
               </div>
 
               <div className="flex items-center gap-4">
@@ -125,23 +149,42 @@ const Cart: React.FC = () => {
         ))}
       </div>
 
-      <div className="mt-6 flex flex-col gap-4">
-        <div className="flex justify-between font-medium">
-          <span>Total:</span>
-          <span>€{cartTotal.toFixed(2)}</span>
+      {/* Order Summary */}
+      <div className="mt-8 bg-slate-50 p-4 rounded-lg">
+        <h3 className="font-semibold mb-3">Order Summary</h3>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Items subtotal:</span>
+            <span>€{cartTotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Rental period:</span>
+            <span>
+              {rentalDays} {rentalDays === 1 ? 'day' : 'days'}
+            </span>
+          </div>
+          <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
+            <span>Total:</span>
+            <span>€{(cartTotal * rentalDays).toFixed(2)}</span>
+          </div>
         </div>
-        <div className="flex gap-4">
-          <Button
-            variant="outline"
-            onClick={handleClearCart}
-            className="text-secondary border-secondary hover:bg-secondary hover:text-white"
-          >
-            Clear Cart
-          </Button>
-          <Button className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary flex-1">
-            Checkout
-          </Button>
-        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-4">
+        <Button
+          variant="outline"
+          onClick={handleClearCart}
+          className="text-secondary border-secondary hover:bg-secondary hover:text-white"
+        >
+          Clear Cart
+        </Button>
+        <Button
+          className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary flex-1"
+          disabled={!startDate || !endDate}
+        >
+          Checkout
+        </Button>
       </div>
     </div>
   );
