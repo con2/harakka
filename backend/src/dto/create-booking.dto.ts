@@ -18,7 +18,7 @@ class BookingItemDto {
 export class CreateBookingDto {
   @IsOptional()
   @IsString()
-  user_email?: string;
+  user_email?: string; // use id TODO!
 
   @IsArray()
   @ValidateNested({ each: true })

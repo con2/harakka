@@ -10,6 +10,64 @@ import {
   export class BookingService {
     constructor(private readonly supabaseService: SupabaseService) {}
   
+    // get all orders
+    // get all orders
+async getAllOrders() {
+    const supabase = this.supabaseService.getServiceClient();
+  
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          *,
+          storage_items (
+            translations
+          )
+        )
+      `);
+  
+    if (error) {
+      console.error('Supabase error in getAllOrders():', error);
+      throw new BadRequestException('Could not load orders');
+    }
+  
+    if (!orders || orders.length === 0) {
+      throw new BadRequestException('No orders found');
+    }
+  
+    // hole für jeden Auftrag das zugehörige User-Profil (per user_id)
+    const ordersWithUserProfiles = await Promise.all(
+      orders.map(async (order) => {
+        let user: { name: string; email: string } | null = null;
+        if (order.user_id) {
+          const { data: userData } = await supabase
+            .from('user_profiles')
+            .select('name, email')
+            .eq('id', order.user_id)
+            .maybeSingle();
+          user = userData ?? null;
+        }
+  
+        // item_name aus dem translations JSON ziehen
+        const enrichedItems = order.order_items?.map((item) => ({
+          ...item,
+          item_name: item.storage_items?.translations?.en?.item_name ?? 'Unknown',
+        })) ?? [];
+  
+        return {
+          ...order,
+          user_profile: user,
+          order_items: enrichedItems,
+        };
+      })
+    );
+  
+    return ordersWithUserProfiles;
+  }
+  
+      
+    // create a Booking
     async createBooking(dto: CreateBookingDto, requestingUserEmail: string) {
       const supabase = this.supabaseService.getServiceClient();
       const userEmail = dto.user_email ?? requestingUserEmail;
@@ -89,7 +147,8 @@ import {
 
   return { message: 'Booking confirmed' };
 }
-  
+  // don't delete the order, just change the status to 'rejected' or 'cancelled' TODO!
+
     // reject a Booking
     async rejectBooking(orderId: string) {
       const supabase = this.supabaseService.getServiceClient();
