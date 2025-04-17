@@ -34,16 +34,15 @@ export class BookingController {
 
   @Post()
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: any) {
-    const userEmail = req.user?.email ?? "";
-    return this.bookingService.createBooking(dto, userEmail);
+    return this.bookingService.createBooking(dto);
   }
 
-  @Put(":id/confirm")
+  @Put(":id/confirm") // admin confirms booking
   async confirm(@Param("id") id: string) {
     return this.bookingService.confirmBooking(id);
   }
 
-  @Put(":id/update")
+  @Put(":id/update") // user updates own booking or admin updates booking
   async updateBooking(
     @Param("id") id: string,
     @Body("items") items: any[],
@@ -53,25 +52,25 @@ export class BookingController {
     return this.bookingService.updateBooking(id, userId, items);
   }
 
-  @Put(":id/reject")
+  @Put(":id/reject") // admin rejects booking
   async reject(@Param("id") id: string, @Req() req: any) {
     const userId = req.user?.id;
     return this.bookingService.rejectBooking(id, userId);
   }
 
-  @Delete(":id/cancel")
+  @Delete(":id/cancel") // user cancels own booking
   async cancel(@Param("id") id: string, @Req() req: any) {
     const userId = req.user?.id;
     return this.bookingService.cancelOwnBooking(id, userId);
   }
 
-  @Delete(":id/delete")
+  @Delete(":id/delete") // admin deletes booking
   async delete(@Param("id") id: string, @Req() req: any) {
     const userId = req.user?.id;
     return this.bookingService.deleteBooking(id, userId);
   }
 
-  @Post(":id/return")
+  @Post(":id/return") // admin returns items
   async returnItems(@Param("id") id: string) {
     return this.bookingService.returnItems(id);
   }
