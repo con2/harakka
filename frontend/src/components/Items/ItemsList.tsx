@@ -12,6 +12,7 @@ import { Input } from '../ui/input';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import ItemsLoader from '../../context/ItemsLoader';
 import { useAuth } from '../../context/AuthContext';
+import TimeframeSelector from '../TimeframeSelector';
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
@@ -49,25 +50,33 @@ const ItemsList: React.FC = () => {
     // Filter by active status
     const isActive = filters.isActive ? item.is_active : true;
     const isWithinAvailabilityRange =
-    item.items_number_available >= filters.itemsNumberAvailable[0] &&
-    item.items_number_available <= filters.itemsNumberAvailable[1];
+      item.items_number_available >= filters.itemsNumberAvailable[0] &&
+      item.items_number_available <= filters.itemsNumberAvailable[1];
+    // Filter by timeframe availability (TODO: replace placeholder - needs backend implementation)
+
     // filter by average rating
     const matchesRating =
-    filters.averageRating.length === 0 ||
-    filters.averageRating.includes(Math.floor(item.average_rating ?? 0));
+      filters.averageRating.length === 0 ||
+      filters.averageRating.includes(Math.floor(item.average_rating ?? 0));
 
     const matchesSearch =
       item.translations.fi.item_name.toLowerCase().includes(userQuery) ||
       item.translations.fi.item_type?.toLowerCase().includes(userQuery) ||
-      item.translations.fi.item_description?.toLowerCase().includes(userQuery) ||
+      item.translations.fi.item_description
+        ?.toLowerCase()
+        .includes(userQuery) ||
       item.translations.en.item_name.toLowerCase().includes(userQuery) ||
       item.translations.en.item_type?.toLowerCase().includes(userQuery) ||
-      item.translations.en.item_description?.toLowerCase().includes(userQuery)
-      // add tags filter here
-      // right now the englih tags are not found
-      ;
-
-    return isWithinPriceRange && isActive && isWithinAvailabilityRange && matchesRating && matchesSearch;
+      item.translations.en.item_description?.toLowerCase().includes(userQuery);
+    // add tags filter here
+    // right now the englih tags are not found
+    return (
+      isWithinPriceRange &&
+      isActive &&
+      isWithinAvailabilityRange &&
+      matchesRating &&
+      matchesSearch
+    );
   });
 
   // Loading state
@@ -105,6 +114,9 @@ const ItemsList: React.FC = () => {
           className="w-full bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
         />
       </div>
+
+      {/* Global Timeframe Selector */}
+      <TimeframeSelector />
 
       {/* Render the list of filtered items */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
