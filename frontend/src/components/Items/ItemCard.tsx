@@ -32,7 +32,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
 
   // Only keep quantity as local state
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(0);
 
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
@@ -45,8 +45,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
     try {
       await dispatch(deleteItem(item.id)).unwrap(); // Delete item via Redux action
+      toast.success('Item deleted successfully');
     } catch (error) {
       console.error('Error deleting item:', error);
+      toast.error('Failed to delete item');
     }
   };
 
@@ -79,7 +81,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
     !startDate ||
     !endDate ||
     quantity > item.items_number_available ||
-    quantity < 1 ||
+    quantity <= 0 ||
     !isItemAvailableForTimeframe;
 
   return (
@@ -88,15 +90,15 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       className="w-full max-w-[350px] flex flex-col justify-between p-4"
     >
       {/* Image Section */}
+      <div className="h-40 bg-gray-200 mb-4 flex items-center justify-center rounded">
+        <span className="text-gray-500">Image Placeholder</span>
+      </div>
 
       {/* Item Details */}
       <div className="space-y-2 mb-4">
         <h2 className="text-xl font-semibold text-center">
           {item.translations.fi.item_name}
         </h2>
-        {/* <p className="text-lg text-center">
-          {item.translations.fi.item_description}
-        </p> */}
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <BoxIcon className="h-4 w-4" />
           <span>{item.location_id}</span>
@@ -113,6 +115,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         </p>
         <p className="text-sm text-slate-400 italic m-0">
           Bookable units: {item.items_number_available}
+        </p>
+        <p className="text-lg font-semibold text-center text-primary mt-2">
+          €{item.price.toFixed(2)} / day
         </p>
       </div>
 
@@ -137,19 +142,23 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              onClick={() => setQuantity(Math.max(0, quantity - 1))}
               className="h-8 w-8 p-0"
+              disabled={quantity <= 0}
             >
               -
             </Button>
             <Input
               type="number"
               value={quantity}
-              onChange={(e) =>
-                setQuantity(Math.max(1, parseInt(e.target.value) || 1))
-              }
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 0;
+                setQuantity(
+                  Math.min(item.items_number_available, Math.max(0, value)),
+                );
+              }}
               className="w-16 h-8 mx-2 text-center"
-              min="1"
+              min="0"
               max={item.items_number_available}
             />
             <Button
@@ -159,6 +168,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                 setQuantity(Math.min(item.items_number_available, quantity + 1))
               }
               className="h-8 w-8 p-0"
+              disabled={quantity >= item.items_number_available}
             >
               +
             </Button>
