@@ -114,18 +114,20 @@ export class BookingService {
   }
 
   // create a Booking
-  async createBooking(dto: CreateBookingDto, requestingUserEmail: string) {
+  async createBooking(dto: CreateBookingDto) {
     const supabase = this.supabaseService.getServiceClient();
-    const userEmail = dto.user_email ?? requestingUserEmail;
+    const userId = dto.user_id;
 
+    if (!userId) {
+      throw new BadRequestException("No userId found: user_id is required");
+    }
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
       .select("*")
-      .eq("email", userEmail)
+      .eq("id", userId)
       .single();
-    // debugging
+
     if (userError || !user) {
-      console.error("User fetch error:", userError);
       throw new BadRequestException("User not found");
     }
 
