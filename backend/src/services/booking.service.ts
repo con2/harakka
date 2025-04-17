@@ -438,6 +438,7 @@ export class BookingService {
   async deleteBooking(orderId: string, userId: string) {
     const supabase = this.supabaseService.getServiceClient();
 
+    // check if order is in database
     const { data: order } = await supabase
       .from("orders")
       .select("user_id")
@@ -453,9 +454,8 @@ export class BookingService {
       .single();
 
     const isAdmin = user?.role === "admin" || user?.role === "superVera";
-    const isOwner = order.user_id === userId;
 
-    if (!isAdmin && !isOwner) {
+    if (!isAdmin) {
       throw new ForbiddenException(
         "You are not allowed to delete this booking",
       );
