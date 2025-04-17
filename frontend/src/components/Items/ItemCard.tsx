@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/card';
-import { Box as BoxIcon, Clock } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { getItemById, deleteItem } from '@/store/slices/itemsSlice';
-import { Item } from '../../types/item';
-import { format } from 'date-fns';
-import { Input } from '../ui/input';
-import { addToCart } from '@/store/slices/cartSlice';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
+import { Box as BoxIcon, Clock } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { getItemById, deleteItem } from "@/store/slices/itemsSlice";
+import { Item } from "../../types/item";
+import { format } from "date-fns";
+import { Input } from "../ui/input";
+import { addToCart } from "@/store/slices/cartSlice";
+import { toast } from "sonner";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 
 interface ItemsCardProps {
   item: Item;
@@ -26,7 +26,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user } = useAuth();
-  const isAdmin = user?.user_metadata?.role === 'admin'; // Admin check
+  const isAdmin = user?.user_metadata?.role === "admin"; // Admin check
 
   // Get global timeframe from Redux
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
@@ -42,13 +42,13 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   // Handle item deletion
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this item?')) return;
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
     try {
       await dispatch(deleteItem(item.id)).unwrap(); // Delete item via Redux action
-      toast.success('Item deleted successfully');
+      toast.success("Item deleted successfully");
     } catch (error) {
-      console.error('Error deleting item:', error);
-      toast.error('Failed to delete item');
+      console.error("Error deleting item:", error);
+      toast.error("Failed to delete item");
     }
   };
 
@@ -65,8 +65,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         addToCart({
           item: item,
           quantity: quantity,
-          startDate: startDate, // Use global timeframe
-          endDate: endDate, // Use global timeframe
+          startDate: startDate ? startDate : undefined,
+          endDate: endDate ? endDate : undefined,
         }),
       );
       toast.success(`${item.translations.fi.item_name} added to cart`);
@@ -104,14 +104,14 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           <span>{item.location_id}</span>
         </div>
         <p className="text-sm text-slate-400 italic m-0">
-          Available from:{' '}
+          Available from:{" "}
           {item.available_from
-            ? format(new Date(item.available_from), 'PPP')
-            : 'N/A'}{' '}
-          to{' '}
+            ? format(new Date(item.available_from), "PPP")
+            : "N/A"}{" "}
+          to{" "}
           {item.available_until
-            ? format(new Date(item.available_until), 'PPP')
-            : 'N/A'}
+            ? format(new Date(item.available_until), "PPP")
+            : "N/A"}
         </p>
         <p className="text-sm text-slate-400 italic m-0">
           Bookable units: {item.items_number_available}
@@ -129,7 +129,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             <span className="font-medium">Selected booking:</span>
           </div>
           <p className="text-xs m-0">
-            {format(startDate, 'PPP')} - {format(endDate, 'PPP')}
+            {format(startDate, "PPP")} - {format(endDate, "PPP")}
           </p>
         </div>
       )}
@@ -183,8 +183,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                 tabIndex={0}
                 className={
                   isAddToCartDisabled
-                    ? 'inline-block w-full cursor-not-allowed'
-                    : 'inline-block w-full'
+                    ? "inline-block w-full cursor-not-allowed"
+                    : "inline-block w-full"
                 }
               >
                 <Button
@@ -192,7 +192,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                   className="w-full bg-background rounded-2xl text-primary border-primary border-1 hover:text-background hover:bg-primary"
                   disabled={isAddToCartDisabled}
                   style={{
-                    pointerEvents: isAddToCartDisabled ? 'none' : 'auto',
+                    pointerEvents: isAddToCartDisabled ? "none" : "auto",
                   }}
                 >
                   Add to Cart
