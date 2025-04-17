@@ -9,18 +9,11 @@ import {
 } from '../../store/slices/itemsSlice';
 import { Button } from '../../components/ui/button';
 import { LoaderCircle } from 'lucide-react';
-import { Calendar } from '../../components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '../../components/ui/popover';
-import { format } from 'date-fns'; // For date formatting
 import Rating from '../ui/rating';
-import DatePickerButton from '../ui/DatePickerButton';
 import { addToCart } from '../../store/slices/cartSlice';
 import { Input } from '../ui/input';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -31,11 +24,10 @@ const ItemsDetails: React.FC = () => {
   const item = useAppSelector(selectSelectedItem);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
+  const { startDate, endDate } = useAppSelector((state) => state.timeframe);
 
-  // State for selected tab and date range
+  // State for selected tab
   const [selectedTab, setSelectedTab] = useState('description');
-  const [startDate, setStartDate] = useState<Date | null>(new Date());
-  const [endDate, setEndDate] = useState<Date | null>(new Date());
   // State for cart quantity
   const [quantity, setQuantity] = useState(1);
 
@@ -45,8 +37,8 @@ const ItemsDetails: React.FC = () => {
         addToCart({
           item: item,
           quantity: quantity,
-          startDate: startDate,
-          endDate: endDate,
+          startDate: startDate, // Use global timeframe
+          endDate: endDate, // Use global timeframe
         }),
       );
       toast.success(`${item.translations.fi.item_name} added to cart`);
@@ -95,46 +87,15 @@ const ItemsDetails: React.FC = () => {
 
           {/* Booking Section */}
           <div className="flex flex-col space-y-2">
-            {/* Start Date Picker */}
             <div>
               <span className="text-sm font-semibold">Start Date: </span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <DatePickerButton
-                    value={startDate ? format(startDate, 'PPP') : null}
-                    placeholder="Pick a start date"
-                  />
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={startDate || undefined}
-                    onSelect={(date) => setStartDate(date || null)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <span>
+                {startDate ? format(startDate, 'PPP') : 'Not selected'}
+              </span>
             </div>
-
-            {/* End Date Picker */}
             <div>
               <span className="text-sm font-semibold">End Date: </span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <DatePickerButton
-                    value={endDate ? format(endDate, 'PPP') : null}
-                    placeholder="Pick an end date"
-                  />
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={endDate || undefined}
-                    onSelect={(date) => setEndDate(date || null)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <span>{endDate ? format(endDate, 'PPP') : 'Not selected'}</span>
             </div>
           </div>
 
