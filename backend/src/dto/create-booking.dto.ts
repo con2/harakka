@@ -1,0 +1,33 @@
+import { IsArray, IsOptional, IsString, ValidateNested, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
+
+class BookingItemDto {
+  @IsString()
+  item_id: string;
+
+  @IsNumber()
+  quantity: number;
+
+  @IsString()
+  start_date: string;
+
+  @IsString()
+  end_date: string;
+}
+
+export class CreateBookingDto {
+  @IsOptional()
+  @IsString()
+  user_email?: string; // use id TODO!
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => BookingItemDto)
+  items: BookingItemDto[];
+
+
+/* @IsOptional()  // Falls total_amount optional sein soll
+  @IsNumber()
+  total_amount?: number; // Gesamtbetrag der Buchung */
+} 
+// This DTO defines the structure of the data required to create a booking.
