@@ -18,6 +18,9 @@ import UserPanel from "./components/Items/UserPanel";
 import AdminItemsTable from "./components/Admin/AdminItemsTable";
 import Cart from "./components/Cart";
 import OrderConfirmation from "./components/OrderConfirmation";
+import AuthCallback from "./components/Auth/AuthCallback";
+import PasswordReset from "./components/Auth/PasswordReset";
+import PasswordResetSuccess from "./components/Auth/PasswordResetSuccess";
 
 function App() {
   return (
@@ -60,6 +63,12 @@ function App() {
               <Route
                 path="/orders/confirmation"
                 element={<OrderConfirmation />}
+              />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/password-reset" element={<PasswordReset />} />
+              <Route
+                path="/password-reset-success"
+                element={<PasswordResetSuccess />}
               />
             </Routes>
           </main>
