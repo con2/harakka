@@ -73,6 +73,46 @@ export class BookingService {
     return ordersWithUserProfiles;
   }
 
+  // get all bookings of a user
+  async getUserBookings(userId: string) {
+    const supabase = this.supabaseService.getServiceClient();
+
+    const { data: orders, error } = await supabase
+      .from("orders")
+      .select(
+        `
+        *,
+        order_items (
+          *,
+          storage_items (
+            translations
+          )
+        )
+      `,
+      )
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Supabase error in getUserBookings():", error);
+      throw new BadRequestException("Could not load user bookings");
+    }
+
+    // Optional: map user_profile + item_name wie bei getAllOrders()
+    const ordersWithItemNames =
+      orders?.map((order) => ({
+        ...order,
+        order_items:
+          order.order_items?.map((item) => ({
+            ...item,
+            item_name:
+              item.storage_items?.translations?.en?.item_name ?? "Unknown",
+          })) ?? [],
+      })) ?? [];
+
+    return ordersWithItemNames;
+  }
+
   // create a Booking
   async createBooking(dto: CreateBookingDto, requestingUserEmail: string) {
     const supabase = this.supabaseService.getServiceClient();
@@ -156,13 +196,10 @@ export class BookingService {
       })
       .select()
       .single();
-    // debugging
+
     if (orderError || !order) {
-      console.error("Order creation error:", orderError);
       throw new BadRequestException("Could not create order");
     }
-    //debugging
-    console.log("Order created:", order);
 
     // Insert order items and calculate days
     for (const item of dto.items) {

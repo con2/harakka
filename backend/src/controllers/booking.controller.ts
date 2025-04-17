@@ -20,6 +20,18 @@ export class BookingController {
     return this.bookingService.getAllOrders();
   }
 
+  @Get("my") // gets the bookings of the logged-in user
+  async getOwnBookings(@Req() req: any) {
+    const userId = req.user?.id;
+    return this.bookingService.getUserBookings(userId);
+  }
+
+  /*   @Get("my") // for testing
+  async getOwnBookings(@Req() req: any) {
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
+    return this.bookingService.getUserBookings(userId);
+  } */
+
   @Post()
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: any) {
     const userEmail = req.user?.email ?? "";
