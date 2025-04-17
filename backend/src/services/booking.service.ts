@@ -65,7 +65,6 @@ import {
     return ordersWithUserProfiles;
   }
   
-      
     // create a Booking
     async createBooking(dto: CreateBookingDto, requestingUserEmail: string) {
       const supabase = this.supabaseService.getServiceClient();
@@ -137,7 +136,8 @@ import {
         const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
         return `ORD-${datePart}-${randomPart}`;
       };
-     
+      // TODO: invoice number - should be created here?
+
       // insert new order
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -229,7 +229,7 @@ for (const item of dto.items) {
 
 
 
-    // reject a Booking
+    /* // reject a Booking
     async rejectBooking(orderId: string) {
       const supabase = this.supabaseService.getServiceClient();
   
@@ -250,7 +250,7 @@ for (const item of dto.items) {
   
       await supabase.from('orders').delete().eq('id', orderId);
       return { message: 'Booking rejected and removed' };
-    }
+    } */
 
     // cancel a Booking
     async cancelBooking(orderId: string, userId: string) {

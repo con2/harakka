@@ -30,10 +30,10 @@ export class BookingController {
     return this.bookingService.confirmBooking(id);
   }
 
-  @Delete(':id/reject')
+/*   @Delete(':id/reject')
   async reject(@Param('id') id: string) {
     return this.bookingService.rejectBooking(id);
-  }
+  } */
 
   @Delete(':id/cancel')
   async cancel(@Param('id') id: string, @Req() req: any) {
