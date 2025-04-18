@@ -28,7 +28,6 @@ export class BookingService {
       console.error("Supabase error in getAllOrders():", error);
       throw new BadRequestException("Could not load orders");
     }
-
     if (!orders || orders.length === 0) {
       throw new BadRequestException("No orders found");
     }
