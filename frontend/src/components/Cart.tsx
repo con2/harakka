@@ -25,12 +25,15 @@ const Cart: React.FC = () => {
   const orderLoading = useAppSelector(selectOrdersLoading);
   const userProfile = useAppSelector(selectSelectedUser);
   const { user } = useAuth();
-  // Use global timeframe
+
+  // Get start and end dates from the timeframe Redux slice
   const { startDate: startDateStr, endDate: endDateStr } = useAppSelector(
     (state) => state.timeframe,
   );
-  const startDate = startDateStr ? new Date(startDateStr) : undefined;
-  const endDate = endDateStr ? new Date(endDateStr) : undefined;
+
+  // Convert string dates to Date objects when needed
+  const startDate = startDateStr ? new Date(startDateStr) : null;
+  const endDate = endDateStr ? new Date(endDateStr) : null;
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return;
