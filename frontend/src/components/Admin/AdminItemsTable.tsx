@@ -19,6 +19,9 @@ import AddItemModal from './AddItemModal';
 import { toast } from 'sonner';
 import UpdateItemModal from './UpdateItemModal'; // Import UpdateItemModal
 import { Switch } from '@/components/ui/switch';
+import { fetchAllTags } from '@/store/slices/tagSlice';
+import { Item } from '@/types/item';
+import AssignTagsModal from './AssignTagsModal';
 
 interface StorageItem {
   id: string;
@@ -33,9 +36,23 @@ const AdminItemsTable = () => {
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
   const [showModal, setShowModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<StorageItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
 
-  const itemsColumns: ColumnDef<StorageItem>[] = [
+  const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
+  const [currentItemId, setCurrentItemId] = useState<string | null>(null);
+
+  const handleOpenAssignTagsModal = (itemId: string) => {
+    setCurrentItemId(itemId);
+    setAssignTagsModalOpen(true);
+  };
+
+  const handleCloseAssignTagsModal = () => {
+    setAssignTagsModalOpen(false);
+    setCurrentItemId(null);
+  };
+
+
+  const itemsColumns: ColumnDef<Item>[] = [
     // {
     //   header: 'Image',
     //   accessorKey: 'imageUrl',
@@ -53,16 +70,16 @@ const AdminItemsTable = () => {
     //     );
     //   },
     // },
-    {
-      header: 'Location',
-      accessorKey: 'location',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <Box className="h-4 w-4" />
-          {row.original.location}
-        </div>
-      ),
-    },
+    // {
+    //   header: 'Location',
+    //   accessorKey: 'location',
+    //   cell: ({ row }) => (
+    //     <div className="flex items-center gap-1 text-sm text-muted-foreground">
+    //       <Box className="h-4 w-4" />
+    //       {row.original.location_id}
+    //     </div>
+    //   ),
+    // },
     {
       header: 'Price',
       accessorKey: 'price',
@@ -78,11 +95,11 @@ const AdminItemsTable = () => {
       accessorFn: (row) => row.translations.fi.item_type,
       cell: ({ row }) => row.original.translations.fi.item_type,
     },
-    {
-      header: 'Average Rating',
-      accessorFn: (row) => row.average_rating,
-      cell: ({ row }) => row.original.average_rating ?? 'N/A', // Handle if no average rating
-    },
+    // {
+    //   header: 'Average Rating',
+    //   accessorFn: (row) => row.average_rating,
+    //   cell: ({ row }) => row.original.average_rating ?? 'N/A', // Handle if no average rating
+    // },
     {
       id: 'status',
       header: 'Active',
@@ -108,7 +125,38 @@ const AdminItemsTable = () => {
           />
         );
       },
-    },    
+    },
+    {
+      id: 'tags',
+      header: 'Tags',
+      cell: ({ row }) => {
+        const tags = row.original.storage_item_tags ?? [];
+        return (
+          <div className="flex flex-wrap gap-1">
+            {tags.map(tag => (
+              <span
+                key={tag.id}
+                className="text-xs rounded px-2 py-1 text-secondary"
+              >
+                {tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed'}
+              </span>
+            ))}
+          </div>
+        );
+      },
+    },   
+    // {
+    //   id: 'manageTags',
+    //   header: 'Manage Tags',
+    //   cell: ({ row }) => (
+    //     <Button 
+    //       className="bg-background rounded-2xl px-6 text-highlight2 border-highlight2 border-1 hover:text-background hover:bg-highlight2"
+    //       onClick={() => handleOpenAssignTagsModal(row.original.id)}
+    //     >
+    //       Edit Tags
+    //     </Button>
+    //   )
+    // },        
     {
       id: 'edit',
       header: 'Edit',
@@ -135,9 +183,14 @@ const AdminItemsTable = () => {
       ),
     },
   ];
-  
 
-  const handleEdit = (item: StorageItem) => {
+  useEffect(() => {
+    if (items.length === 0) {
+      dispatch(fetchAllItems());
+    }
+  }, [dispatch, items.length]);  
+  
+  const handleEdit = (item: Item) => {
     setSelectedItem(item);  // Set the selected item
     setShowModal(true);      // Show the modal
   };
@@ -232,6 +285,14 @@ const AdminItemsTable = () => {
           initialData={selectedItem}  // Pass the selected item data to the modal
         />
       )}
+      {assignTagsModalOpen && currentItemId && (
+      <AssignTagsModal
+        open={assignTagsModalOpen}
+        itemId={currentItemId}
+        onClose={handleCloseAssignTagsModal}
+      />
+    )}
+
     </div>
   );
 };

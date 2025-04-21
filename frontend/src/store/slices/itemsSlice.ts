@@ -1,7 +1,8 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { itemsApi } from '../../api/services/items';
 import { ItemState, Item } from '../../types/item';
 import { RootState } from '../store';
+import { Tag } from '@/types/tag';
 
 const initialState: ItemState = {
   items: [],
@@ -62,6 +63,16 @@ export const itemsSlice = createSlice({
       state.selectedItem = null;
       state.error = null;
     },
+    updateItemTags: (
+      state,
+      action: PayloadAction<{ itemId: string; tags: Tag[] }>
+    ) => {
+      const { itemId, tags } = action.payload;
+      const item = state.items.find(item => item.id === itemId);
+      if (item) {
+        item.storage_item_tags = tags;
+      }
+    }
   },
 
   extraReducers: (builder) => {
@@ -141,6 +152,6 @@ export const selectSelectedItem = (state: RootState) =>
   state.items.selectedItem;
 
 // Actions
-export const { clearSelectedItem } = itemsSlice.actions;
+export const { clearSelectedItem, updateItemTags } = itemsSlice.actions;
 
 export default itemsSlice.reducer;
