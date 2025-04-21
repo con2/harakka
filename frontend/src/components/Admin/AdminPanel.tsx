@@ -3,11 +3,12 @@ import { Link, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { LayoutDashboard, Users, Settings, Menu, Warehouse } from "lucide-react";
+import { LayoutDashboard, Users, Settings, Menu, Warehouse, PinIcon } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useAppSelector } from "@/store/hooks";
 import { selectIsSuperVera } from "@/store/slices/usersSlice";
-import TeamList from "./TeamList";
+import { Tooltip } from "../ui/tooltip";
+import { TooltipContent } from "@radix-ui/react-tooltip";
 
 const AdminPanel = () => {
   const isSuperVera = useAppSelector(selectIsSuperVera);
@@ -28,6 +29,7 @@ const AdminPanel = () => {
               <SidebarLink to="/admin/team" icon={<Users />} label="Team" />
             )}
           <SidebarLink to="/admin/items" icon={<Warehouse />} label="Items" />
+          <SidebarLink to="/admin/tags" icon={<PinIcon />} label="Tags" />
           <SidebarLink to="/admin/settings" icon={<Settings />} label="Settings" />
         </nav>
       </aside>
