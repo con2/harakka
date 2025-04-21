@@ -20,7 +20,7 @@ import Cart from "./components/Cart";
 import OrderConfirmation from "./components/OrderConfirmation";
 import AuthCallback from "./components/Auth/AuthCallback";
 import PasswordReset from "./components/Auth/PasswordReset";
-import PasswordResetSuccess from "./components/Auth/PasswordResetSuccess";
+import PasswordResetResult from "./components/Auth/PasswordResetResult";
 
 function App() {
   return (
@@ -68,7 +68,7 @@ function App() {
               <Route path="/password-reset" element={<PasswordReset />} />
               <Route
                 path="/password-reset-success"
-                element={<PasswordResetSuccess />}
+                element={<PasswordResetResult />}
               />
             </Routes>
           </main>
