@@ -10,6 +10,8 @@ import { UserService } from './services/user.service';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
+import { TagController } from './controllers/tag.controller';
+import { TagService } from './services/tag.service';
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), '../.env.local');
@@ -23,7 +25,7 @@ dotenvExpand.expand(env);
       ignoreEnvFile: true,
     }),
   ],
-  controllers: [AppController, StorageItemsController, UserController],
-  providers: [AppService, SupabaseService, StorageItemsService, UserService],
+  controllers: [AppController, StorageItemsController, UserController, TagController],
+  providers: [AppService, SupabaseService, StorageItemsService, UserService, TagService],
 })
 export class AppModule {}
