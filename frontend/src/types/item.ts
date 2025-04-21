@@ -4,6 +4,8 @@
 //     features?: string[];
 // }
 
+import { Tag } from "./tag";
+
 // export interface ItemMedia {
 //     images: string[];  // Array of image URLs
 //     thumbnail?: string;
@@ -64,6 +66,8 @@ export interface Item {
     average_rating?: number;
     created_at?: string;
     updated_at?: string;
+    tagIds?: string[];
+    storage_item_tags?: Tag[];
 }
 
 export interface ItemState {

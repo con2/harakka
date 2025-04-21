@@ -17,6 +17,7 @@ import ItemDetails from './components/Items/ItemsDetails';
 import UserPanel from './components/Items/UserPanel';
 import AdminItemsTable from './components/Admin/AdminItemsTable';
 import Cart from './components/Cart';
+import TagList from './components/Admin/TagList';
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
                 <Route path="users" element={<UsersList />} />
                 <Route path="team" element={<TeamList />} />
                 <Route path="items" element={<AdminItemsTable />} />
+                <Route path="tags" element={<TagList />} />
               </Route>
 
               <Route path="/" element={<UserPanel />}>
