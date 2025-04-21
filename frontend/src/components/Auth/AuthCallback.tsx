@@ -21,6 +21,11 @@ const AuthCallback = () => {
         const hashParams = new URLSearchParams(url.hash.replace("#", ""));
         const hashType = hashParams.get("type");
 
+        console.log("Auth callback URL parameters:", {
+          searchParams: Object.fromEntries(url.searchParams.entries()),
+          hash: url.hash,
+        });
+
         if (error) {
           console.error("Auth error:", error, errorDescription);
           navigate(
@@ -40,7 +45,7 @@ const AuthCallback = () => {
           // Check for access_token in hash
           const hash = url.hash;
           if (hash && hash.includes("access_token=")) {
-            // For recovery with token already in hash, just redirect
+            // For recovery with token already in hash, just redirect to password reset page
             navigate("/password-reset" + hash, { replace: true });
           } else {
             // If token is in query but not hash, rebuild it
@@ -58,7 +63,7 @@ const AuthCallback = () => {
           return;
         }
 
-        // For other auth flows, proceed normally
+        // Then proceed with normal session checks
         const { data, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) throw sessionError;
@@ -67,14 +72,6 @@ const AuthCallback = () => {
           // For other auth flows, redirect to home or dashboard
           navigate("/");
         } else {
-          const resetParam = url.searchParams.get("reset");
-
-          // If there's a reset=success parameter, add it to the login redirect
-          if (resetParam === "success") {
-            navigate("/login?reset=success", { replace: true });
-            return;
-          }
-
           navigate("/login");
         }
       } catch (error) {
