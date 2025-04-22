@@ -1,38 +1,53 @@
-import React from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setTimeframe, clearTimeframe } from '../store/slices/timeframeSlice';
-import { format } from 'date-fns';
-import { Calendar } from './ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import DatePickerButton from './ui/DatePickerButton';
-import { Button } from './ui/button';
-import { selectCartItems } from '../store/slices/cartSlice';
-import { toast } from 'sonner';
+import React from "react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { setTimeframe, clearTimeframe } from "../store/slices/timeframeSlice";
+import { format } from "date-fns";
+import { Calendar } from "./ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import DatePickerButton from "./ui/DatePickerButton";
+import { Button } from "./ui/button";
+import { selectCartItems } from "../store/slices/cartSlice";
+import { toast } from "sonner";
 
 const TimeframeSelector: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { startDate, endDate } = useAppSelector((state) => state.timeframe);
+  const { startDate: startDateStr, endDate: endDateStr } = useAppSelector(
+    (state) => state.timeframe,
+  );
+  const startDate = startDateStr ? new Date(startDateStr) : undefined;
+  const endDate = endDateStr ? new Date(endDateStr) : undefined;
+
   const cartItems = useAppSelector(selectCartItems);
 
-  const handleDateChange = (type: 'start' | 'end', date: Date | undefined) => {
+  const handleDateChange = (type: "start" | "end", date: Date | undefined) => {
     if (cartItems.length > 0) {
       toast.warning(
-        'Changing dates will clear your cart. Please complete or clear your current booking first.',
+        "Changing dates will clear your cart. Please complete or clear your current booking first.",
       );
       return;
     }
 
-    if (type === 'start') {
-      dispatch(setTimeframe({ startDate: date, endDate }));
+    if (type === "start") {
+      dispatch(
+        setTimeframe({
+          startDate: date ? date.toISOString() : undefined,
+          endDate: endDateStr,
+        }),
+      );
     } else {
-      dispatch(setTimeframe({ startDate, endDate: date }));
+      dispatch(
+        setTimeframe({
+          startDate: startDateStr,
+          endDate: date ? date.toISOString() : undefined,
+        }),
+      );
     }
   };
 
   const handleClearTimeframe = () => {
     if (cartItems.length > 0) {
       toast.warning(
-        'Clearing dates will clear your cart. Please complete or clear your current booking first.',
+        "Clearing dates will clear your cart. Please complete or clear your current booking first.",
       );
       return;
     }
@@ -49,7 +64,7 @@ const TimeframeSelector: React.FC = () => {
           <Popover>
             <PopoverTrigger asChild>
               <DatePickerButton
-                value={startDate ? format(startDate, 'PPP') : null}
+                value={startDate ? format(startDate, "PPP") : null}
                 placeholder="Select start date"
               />
             </PopoverTrigger>
@@ -57,7 +72,7 @@ const TimeframeSelector: React.FC = () => {
               <Calendar
                 mode="single"
                 selected={startDate || undefined}
-                onSelect={(date) => handleDateChange('start', date)}
+                onSelect={(date) => handleDateChange("start", date)}
                 initialFocus
                 disabled={(date) =>
                   date < new Date(new Date().setHours(0, 0, 0, 0))
@@ -73,7 +88,7 @@ const TimeframeSelector: React.FC = () => {
           <Popover>
             <PopoverTrigger asChild>
               <DatePickerButton
-                value={endDate ? format(endDate, 'PPP') : null}
+                value={endDate ? format(endDate, "PPP") : null}
                 placeholder="Select end date"
               />
             </PopoverTrigger>
@@ -81,7 +96,7 @@ const TimeframeSelector: React.FC = () => {
               <Calendar
                 mode="single"
                 selected={endDate || undefined}
-                onSelect={(date) => handleDateChange('end', date)}
+                onSelect={(date) => handleDateChange("end", date)}
                 initialFocus
                 disabled={(date) => {
                   // Always return a boolean value:

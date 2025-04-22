@@ -1,9 +1,9 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from '../store';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { RootState } from "../store";
 
 interface TimeframeState {
-  startDate: Date | undefined;
-  endDate: Date | undefined;
+  startDate: string | undefined;
+  endDate: string | undefined;
 }
 
 const initialState: TimeframeState = {
@@ -12,22 +12,18 @@ const initialState: TimeframeState = {
 };
 
 const timeframeSlice = createSlice({
-  name: 'timeframe',
+  name: "timeframe",
   initialState,
   reducers: {
     setTimeframe: (
       state,
       action: PayloadAction<{
-        startDate: Date | undefined;
-        endDate: Date | undefined;
+        startDate: string | undefined;
+        endDate: string | undefined;
       }>,
     ) => {
-      if (action.payload.startDate !== undefined) {
-        state.startDate = action.payload.startDate;
-      }
-      if (action.payload.endDate !== undefined) {
-        state.endDate = action.payload.endDate;
-      }
+      state.startDate = action.payload.startDate;
+      state.endDate = action.payload.endDate;
     },
     clearTimeframe: (state) => {
       state.startDate = undefined;
@@ -40,6 +36,13 @@ const timeframeSlice = createSlice({
 export const { setTimeframe, clearTimeframe } = timeframeSlice.actions;
 
 // Selectors:
-export const selectTimeframe = (state: RootState) => state.timeframe;
+export const selectTimeframe = (state: RootState) => ({
+  startDate: state.timeframe.startDate
+    ? new Date(state.timeframe.startDate)
+    : undefined,
+  endDate: state.timeframe.endDate
+    ? new Date(state.timeframe.endDate)
+    : undefined,
+});
 
 export default timeframeSlice.reducer;
