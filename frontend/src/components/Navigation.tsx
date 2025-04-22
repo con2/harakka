@@ -10,7 +10,7 @@ import {
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
 import logo from '../assets/logo.png';
-import { ShoppingCart } from 'lucide-react';
+import { LogInIcon, LogOutIcon, ShoppingCart } from 'lucide-react';
 import { selectCartItemsCount } from '../store/slices/cartSlice';
 
 export const Navigation = () => {
@@ -77,11 +77,11 @@ export const Navigation = () => {
 
           {selectedUser ? (
             <Button variant="ghost" onClick={signOut}>
-              Logout ({selectedUser.email})
+              {selectedUser.full_name} <LogOutIcon />
             </Button>
           ) : (
             <Button variant="ghost" asChild>
-              <Link to="/login">Login</Link>
+              <Link to="/login">Login <LogInIcon /></Link>
             </Button>
           )}
         </div>
