@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
-import { deleteTag } from "@/store/slices/tagSlice";
+import { deleteTag, fetchAllTags } from "@/store/slices/tagSlice";
 
 const TagDelete = ({
   id,
@@ -40,16 +40,19 @@ const TagDelete = ({
             size="sm"
             className="rounded-md"
             onClick={async () => {
-              toast.dismiss(t); 
-              await toast.promise(dispatch(deleteTag(id)).unwrap(), {
-                loading: "Deleting tag...",
-                success: "Tag has been successfully deleted.",
-                error: "Failed to delete tag.",
-              });
-              if (onDeleted) {
-                onDeleted();
+              toast.dismiss(t);  
+              try {
+                await toast.promise(dispatch(deleteTag(id)).unwrap(), {
+                  loading: "Deleting tag...",
+                  success: "Tag has been successfully deleted.",
+                  error: "Failed to delete tag.",
+                });
+                dispatch(fetchAllTags());
+                onDeleted?.();
+                closeModal?.();
+              } catch (error) {
+                toast.error("Error deleting tag.");
               }
-              closeModal?.();
             }}
           >
             Confirm
