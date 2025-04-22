@@ -21,6 +21,7 @@ import OrderConfirmation from "./components/OrderConfirmation";
 import AuthCallback from "./components/Auth/AuthCallback";
 import PasswordReset from "./components/Auth/PasswordReset";
 import PasswordResetResult from "./components/Auth/PasswordResetResult";
+import OrderList from "./components/Admin/OrderList";
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
                 <Route path="users" element={<UsersList />} />
                 <Route path="team" element={<TeamList />} />
                 <Route path="items" element={<AdminItemsTable />} />
+                <Route path="orders" element={<OrderList />} />
               </Route>
               <Route path="/" element={<UserPanel />}>
                 <Route path="/storage" element={<ItemsList />} />
