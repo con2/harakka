@@ -1,9 +1,10 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createEntityAdapter, createSlice } from "@reduxjs/toolkit";
 import { ordersApi } from "../../api/services/orders";
 import { RootState } from "../store";
 import { BookingOrder, BookingItem } from "../../types/orders";
+import { createApiThunk } from "../utils/thunkCreators";
 
-// DTO type for order creation
+// Define the DTO type for order creation
 interface CreateOrderDto {
   user_id: string;
   items: {
@@ -14,180 +15,117 @@ interface CreateOrderDto {
   }[];
 }
 
-interface OrdersState {
-  orders: BookingOrder[];
-  loading: boolean;
-  error: {
-    message: string | null;
-    code?: string;
-    context?:
-      | "create"
-      | "fetch"
-      | "update"
-      | "delete"
-      | "confirm"
-      | "cancel"
-      | "reject"
-      | null;
-  };
-  currentOrder: BookingOrder | null;
+// Create an entity adapter for orders
+const ordersAdapter = createEntityAdapter<BookingOrder, string>({
+  // Select the order ID as the primary key
+  selectId: (order) => order.id,
+  // Sort by creation date, newest first
+  sortComparer: (a, b) => {
+    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+    return bTime - aTime;
+  },
+});
+
+// Define the error state interface
+interface OrderError {
+  message: string | null;
+  code?: string;
+  context?:
+    | "create"
+    | "fetch"
+    | "update"
+    | "delete"
+    | "confirm"
+    | "cancel"
+    | "reject"
+    | null;
 }
 
-const initialState: OrdersState = {
-  orders: [],
+// Additional state properties beyond EntityState
+interface OrdersAdditionalState {
+  loading: boolean;
+  error: OrderError;
+  currentOrder: string | null;
+}
+
+// Create initial state
+const initialState = ordersAdapter.getInitialState<OrdersAdditionalState>({
   loading: false,
   error: {
     message: null,
     context: null,
   },
   currentOrder: null,
-};
+});
 
-// Create order from cart items
-export const createOrder = createAsyncThunk(
+// Create order thunk
+export const createOrder = createApiThunk<BookingOrder, CreateOrderDto>(
   "orders/createOrder",
-  async (orderData: CreateOrderDto, { rejectWithValue }) => {
-    try {
-      const response = await ordersApi.createOrder(orderData);
-      return response;
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message || "Failed to create order");
-      }
-      return rejectWithValue("Failed to create order");
-    }
-  },
+  ordersApi.createOrder,
+  "Failed to create order",
 );
 
-// Get user orders
-export const getUserOrders = createAsyncThunk(
+// Get user orders thunk
+export const getUserOrders = createApiThunk<BookingOrder[], void>(
   "orders/getUserOrders",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await ordersApi.getUserOrders();
-      return response;
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message || "Failed to fetch orders");
-      }
-      return rejectWithValue("Failed to fetch orders");
-    }
-  },
+  ordersApi.getUserOrders,
+  "Failed to fetch orders",
 );
 
-// Get all orders (admin)
-export const getAllOrders = createAsyncThunk(
-  "orders/getAllOrders",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await ordersApi.getAllOrders();
-      return response;
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message || "Failed to fetch all orders");
-      }
-      return rejectWithValue("Failed to fetch all orders");
-    }
-  },
-);
-
-// Confirm order (admin)
-export const confirmOrder = createAsyncThunk(
-  "orders/confirmOrder",
-  async (orderId: string, { rejectWithValue }) => {
-    try {
-      const response = await ordersApi.confirmOrder(orderId);
-      return { id: orderId, ...response };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message || "Failed to confirm order");
-      }
-      return rejectWithValue("Failed to confirm order");
-    }
-  },
-);
-
-// Update order
-export const updateOrder = createAsyncThunk(
+// Update order thunk
+export const updateOrder = createApiThunk<
+  BookingOrder,
+  { orderId: string; items: BookingItem[] }
+>(
   "orders/updateOrder",
-  async (
-    { orderId, items }: { orderId: string; items: BookingItem[] },
-    { rejectWithValue },
-  ) => {
-    try {
-      const response = await ordersApi.updateOrder(orderId, items);
-      return { id: orderId, ...response };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message || "Failed to update order");
-      }
-      return rejectWithValue("Failed to update order");
-    }
-  },
+  ({ orderId, items }) => ordersApi.updateOrder(orderId, items),
+  "Failed to update order",
+  (response, { orderId }) => ({ ...response, id: orderId }),
 );
 
-// Reject order (admin)
-export const rejectOrder = createAsyncThunk(
+// Get all orders (admin) thunk
+export const getAllOrders = createApiThunk<BookingOrder[], void>(
+  "orders/getAllOrders",
+  ordersApi.getAllOrders,
+  "Failed to fetch all orders",
+);
+
+// Confirm order (admin) thunk
+export const confirmOrder = createApiThunk<BookingOrder, string>(
+  "orders/confirmOrder",
+  ordersApi.confirmOrder,
+  "Failed to confirm order",
+  (response, orderId) => ({ ...response, id: orderId }),
+);
+
+// Other thunks follow the same pattern...
+export const rejectOrder = createApiThunk<BookingOrder, string>(
   "orders/rejectOrder",
-  async (orderId: string, { rejectWithValue }) => {
-    try {
-      const response = await ordersApi.rejectOrder(orderId);
-      return { id: orderId, ...response };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message || "Failed to reject order");
-      }
-      return rejectWithValue("Failed to reject order");
-    }
-  },
+  ordersApi.rejectOrder,
+  "Failed to reject order",
+  (response, orderId) => ({ ...response, id: orderId }),
 );
 
-// Cancel order (user)
-export const cancelOrder = createAsyncThunk(
+export const cancelOrder = createApiThunk<BookingOrder, string>(
   "orders/cancelOrder",
-  async (orderId: string, { rejectWithValue }) => {
-    try {
-      const response = await ordersApi.cancelOrder(orderId);
-      return { id: orderId, ...response };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message || "Failed to cancel order");
-      }
-      return rejectWithValue("Failed to cancel order");
-    }
-  },
+  ordersApi.cancelOrder,
+  "Failed to cancel order",
+  (response, orderId) => ({ ...response, id: orderId }),
 );
 
-// Delete order (admin)
-export const deleteOrder = createAsyncThunk(
+export const deleteOrder = createApiThunk<string, string>(
   "orders/deleteOrder",
-  async (orderId: string, { rejectWithValue }) => {
-    try {
-      const response = await ordersApi.deleteOrder(orderId);
-      return { id: orderId, ...response };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message || "Failed to delete order");
-      }
-      return rejectWithValue("Failed to delete order");
-    }
-  },
+  ordersApi.deleteOrder,
+  "Failed to delete order",
+  (_, orderId) => orderId, // Just return the ID for deletion
 );
 
-// Return items (admin)
-export const returnItems = createAsyncThunk(
+export const returnItems = createApiThunk<BookingOrder, string>(
   "orders/returnItems",
-  async (orderId: string, { rejectWithValue }) => {
-    try {
-      const response = await ordersApi.returnItems(orderId);
-      return { id: orderId, ...response };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message || "Failed to process returns");
-      }
-      return rejectWithValue("Failed to process returns");
-    }
-  },
+  ordersApi.returnItems,
+  "Failed to process returns",
+  (response, orderId) => ({ ...response, id: orderId }),
 );
 
 export const ordersSlice = createSlice({
@@ -211,8 +149,8 @@ export const ordersSlice = createSlice({
       })
       .addCase(createOrder.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentOrder = action.payload;
-        state.orders.push(action.payload);
+        state.currentOrder = action.payload.id;
+        ordersAdapter.addOne(state, action.payload);
       })
       .addCase(createOrder.rejected, (state, action) => {
         state.loading = false;
@@ -229,7 +167,7 @@ export const ordersSlice = createSlice({
       })
       .addCase(getUserOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
+        ordersAdapter.setAll(state, action.payload);
       })
       .addCase(getUserOrders.rejected, (state, action) => {
         state.loading = false;
@@ -246,7 +184,7 @@ export const ordersSlice = createSlice({
       })
       .addCase(getAllOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
+        ordersAdapter.setAll(state, action.payload);
       })
       .addCase(getAllOrders.rejected, (state, action) => {
         state.loading = false;
@@ -263,12 +201,10 @@ export const ordersSlice = createSlice({
       })
       .addCase(confirmOrder.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.orders.findIndex(
-          (order) => order.id === action.payload.id,
-        );
-        if (index !== -1) {
-          state.orders[index] = { ...state.orders[index], status: "confirmed" };
-        }
+        ordersAdapter.updateOne(state, {
+          id: action.payload.id,
+          changes: { status: "confirmed" },
+        });
       })
       .addCase(confirmOrder.rejected, (state, action) => {
         state.loading = false;
@@ -285,12 +221,10 @@ export const ordersSlice = createSlice({
       })
       .addCase(updateOrder.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.orders.findIndex(
-          (order) => order.id === action.payload.id,
-        );
-        if (index !== -1) {
-          state.orders[index] = { ...state.orders[index], ...action.payload };
-        }
+        ordersAdapter.updateOne(state, {
+          id: action.payload.id,
+          changes: action.payload,
+        });
       })
       .addCase(updateOrder.rejected, (state, action) => {
         state.loading = false;
@@ -307,12 +241,10 @@ export const ordersSlice = createSlice({
       })
       .addCase(rejectOrder.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.orders.findIndex(
-          (order) => order.id === action.payload.id,
-        );
-        if (index !== -1) {
-          state.orders[index] = { ...state.orders[index], status: "rejected" };
-        }
+        ordersAdapter.updateOne(state, {
+          id: action.payload.id,
+          changes: { status: "rejected" },
+        });
       })
       .addCase(rejectOrder.rejected, (state, action) => {
         state.loading = false;
@@ -329,15 +261,10 @@ export const ordersSlice = createSlice({
       })
       .addCase(cancelOrder.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.orders.findIndex(
-          (order) => order.id === action.payload.id,
-        );
-        if (index !== -1) {
-          state.orders[index] = {
-            ...state.orders[index],
-            status: "cancelled by user",
-          };
-        }
+        ordersAdapter.updateOne(state, {
+          id: action.payload.id,
+          changes: { status: "cancelled by user" },
+        });
       })
       .addCase(cancelOrder.rejected, (state, action) => {
         state.loading = false;
@@ -354,9 +281,7 @@ export const ordersSlice = createSlice({
       })
       .addCase(deleteOrder.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = state.orders.filter(
-          (order) => order.id !== action.payload.id,
-        );
+        ordersAdapter.removeOne(state, action.payload);
       })
       .addCase(deleteOrder.rejected, (state, action) => {
         state.loading = false;
@@ -373,12 +298,10 @@ export const ordersSlice = createSlice({
       })
       .addCase(returnItems.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.orders.findIndex(
-          (order) => order.id === action.payload.id,
-        );
-        if (index !== -1) {
-          state.orders[index] = { ...state.orders[index], status: "completed" };
-        }
+        ordersAdapter.updateOne(state, {
+          id: action.payload.id,
+          changes: { status: "completed" },
+        });
       })
       .addCase(returnItems.rejected, (state, action) => {
         state.loading = false;
@@ -390,11 +313,22 @@ export const ordersSlice = createSlice({
   },
 });
 
+// Export actions
 export const { clearCurrentOrder } = ordersSlice.actions;
 
-export const selectOrders = (state: RootState) => state.orders.orders;
+// Get the selector functions
+const ordersSelectors = ordersAdapter.getSelectors<RootState>(
+  (state) => state.orders,
+);
+
+// Export selectors
+export const selectOrders = ordersSelectors.selectAll;
+export const selectOrderById = ordersSelectors.selectById;
+export const selectOrderIds = ordersSelectors.selectIds;
 export const selectCurrentOrder = (state: RootState) =>
-  state.orders.currentOrder;
+  state.orders.currentOrder
+    ? selectOrderById(state, state.orders.currentOrder)
+    : null;
 export const selectOrdersLoading = (state: RootState) => state.orders.loading;
 export const selectOrdersError = (state: RootState) =>
   state.orders.error.message;
@@ -402,5 +336,7 @@ export const selectOrdersErrorContext = (state: RootState) =>
   state.orders.error.context;
 export const selectOrdersErrorWithContext = (state: RootState) =>
   state.orders.error;
+export const selectOrdersTotal = ordersSelectors.selectTotal;
 
+// Export reducer
 export default ordersSlice.reducer;
