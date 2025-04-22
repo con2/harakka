@@ -99,17 +99,51 @@ const OrderList = () => {
   const handleDeleteOrder = async (orderId?: string) => {
     if (!orderId) return;
 
-    if (!window.confirm("Are you sure you want to delete this order?")) return;
-
-    try {
-      await toast.promise(dispatch(deleteOrder(orderId)).unwrap(), {
-        loading: "Deleting order...",
-        success: "Order deleted",
-        error: "Failed to delete order",
-      });
-    } catch (error) {
-      console.error("Error deleting order:", error);
-    }
+    toast.custom((t) => (
+      <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
+        <div className="font-semibold text-lg">Confirm Order Deletion</div>
+        <div className="text-sm text-muted-foreground">
+          Are you sure you want to delete this order? This action cannot be
+          undone.
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => toast.dismiss(t)}
+            className="bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-md"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="rounded-md"
+            onClick={async () => {
+              toast.dismiss(t); // dismiss confirmation toast
+              try {
+                await toast.promise(dispatch(deleteOrder(orderId)).unwrap(), {
+                  loading: "Deleting order...",
+                  success: "Order deleted successfully",
+                  error: (err) => {
+                    if (err.includes("403") || err.includes("Forbidden")) {
+                      return "Permission denied: Only admins can delete orders";
+                    }
+                    return "Failed to delete order";
+                  },
+                });
+                // Refresh orders list after successful deletion
+                dispatch(getAllOrders());
+              } catch (error) {
+                console.error("Error deleting order:", error);
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
+    ));
   };
 
   const handleReturnItems = async (orderId?: string) => {
