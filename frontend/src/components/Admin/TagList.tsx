@@ -2,7 +2,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 import { ColumnDef } from '@tanstack/react-table';
-import { LoaderCircle, Pencil, Trash } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import { PaginatedDataTable } from '../ui/data-table-paginated';
 import { Tag } from '@/types/tag';
 import {
@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '../ui/input';
 import { toast } from 'sonner';
-import { set } from 'date-fns';
+import TagDelete from './TagDelete';
 
 const TagList = () => {
   const dispatch = useAppDispatch();
@@ -46,15 +46,6 @@ const TagList = () => {
     setEditNameEn(tag.translations?.en?.name || '');
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await dispatch(deleteTag(id)).unwrap();
-      toast.success('Tag deleted successfully');
-    } catch (err) {
-      toast.error('Failed to delete tag');
-    }
-  };
-
   const handleUpdate = async () => {
     if (!editTag) return;
     setIsSubmitting(true);
@@ -71,6 +62,7 @@ const TagList = () => {
       await dispatch(updateTag({ id: editTag.id, tagData: updatedTag })).unwrap();
       toast.success('Tag updated successfully');
       setIsSubmitting(false);
+      dispatch(fetchAllTags());
       setEditTag(null);
     } catch (err) {
       toast.error('Failed to update tag');
@@ -110,14 +102,12 @@ const TagList = () => {
             >
               Edit
             </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              className="bg-background rounded-2xl px-6 text-destructive border-destructive border hover:text-background"
-              onClick={() => handleDelete(tag.id)}
-            >
-              Delete
-            </Button>
+            <TagDelete
+              id={tag.id}
+              onDeleted={() => {
+                dispatch(fetchAllTags());
+              }}
+            />
           </div>
         );
       },
@@ -139,7 +129,7 @@ const TagList = () => {
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-semibold">Manage Tags</h1>
+        <h1 className="text-xl">Manage Tags</h1>
         <AddTagModal>
           <Button className="bg-highlight2 text-background rounded-2xl px-6">
             Add New Tag
