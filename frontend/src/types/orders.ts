@@ -13,7 +13,7 @@ export interface BookingItem {
 }
 
 export interface BookingOrder {
-  id?: string;
+  id: string;
   user_id?: string;
   order_number?: string;
   status?:
@@ -25,9 +25,9 @@ export interface BookingOrder {
     | "cancelled by user"
     | "rejected"
     | "refunded";
-  total_amount?: number;
-  discount_amount?: number;
-  final_amount?: number;
+  total_amount?: number | null;
+  discount_amount?: number | null;
+  final_amount?: number | null;
   payment_status?: "pending" | "partial" | "paid" | "refunded";
   created_at?: string;
   updated_at?: string;
