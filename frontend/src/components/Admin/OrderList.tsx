@@ -4,16 +4,13 @@ import {
   fetchAllOrders,
   selectAllOrders,
   selectOrdersLoading,
-  selectOrdersError,
-  selectSelectedOrder
+  selectOrdersError
 } from "@/store/slices/ordersSlice";
 import { LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-//import OrderCancelledButton from "./OrderCancelledButton";
-import { Navigate } from "react-router-dom";
+//import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { ColumnDef } from "@tanstack/react-table";
-import AddTeamMemberModal from "./AddTeamMemberModal";
 import { Button } from "../ui/button";
 import { OrderState } from "@/types/order";
 
