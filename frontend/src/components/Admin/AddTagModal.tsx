@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/store/hooks";
-import { createTag } from "@/store/slices/tagSlice";
+import { createTag, fetchAllTags } from "@/store/slices/tagSlice";
 import { toast } from "sonner";
 import { Label } from "../ui/label";
 import { Tag } from "@/types/tag";
@@ -51,6 +51,7 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
       ).unwrap();
 
       toast.success("Tag created successfully!");
+      dispatch(fetchAllTags());
       onCreated?.(result);
       resetForm();
       setOpen(false);
