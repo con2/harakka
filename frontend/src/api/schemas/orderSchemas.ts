@@ -56,8 +56,8 @@ export const bookingOrderSchema = z.object({
   created_at: z.string(),
   updated_at: z.string().nullable(),
   payment_details: z.any().nullable(),
-  order_items: z.array(orderItemSchema),
-  user_profile: userProfileSchema,
+  order_items: z.array(orderItemSchema).optional(),
+  user_profile: userProfileSchema.optional(),
 });
 
 export const bookingOrdersSchema = z.array(bookingOrderSchema);
