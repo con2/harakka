@@ -15,7 +15,8 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const selectedUser = useAppSelector(selectSelectedUser); // pull profile from redux
   const userLoading = useAppSelector(selectSelectedUserLoading);
 
-  if (authLoading || userLoading) {
+  if (authLoading || userLoading || !selectedUser) {
+    // Wait for auth and user loading to finish
     return (
       <div className="flex justify-center items-center h-screen">
         <LoaderCircle className="animate-spin w-6 h-6" />

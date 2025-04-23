@@ -8,6 +8,7 @@ import {
   Put,
   Req,
   Query,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { BookingService } from "../services/booking.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
@@ -28,11 +29,13 @@ export class BookingController {
     return this.bookingService.getUserBookings(userId);
   }
 
-  /*   @Get("my") // for testing
-  async getOwnBookings(@Req() req: any) {
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
+  @Get("user/:userId")
+  async getUserBookings(@Param("userId") userId: string) {
+    if (!userId) {
+      throw new UnauthorizedException("User ID is required");
+    }
     return this.bookingService.getUserBookings(userId);
-  } */
+  }
 
   @Post()
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: any) {
