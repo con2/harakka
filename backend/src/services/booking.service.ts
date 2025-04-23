@@ -407,6 +407,8 @@ export class BookingService {
 
   // user cancels own Booking
   async cancelOwnBooking(orderId: string, userId: string) {
+    // also usable for admins!!!
+
     const supabase = this.supabaseService.getServiceClient();
 
     const { data: order } = await supabase
@@ -452,7 +454,7 @@ export class BookingService {
       .eq("id", userId)
       .single();
 
-    const isAdmin = user?.role === "admin" || user?.role === "superVera";
+    const isAdmin = user?.role === "admin" || user?.role === "superVera"; // check from user profile table!!!!
 
     if (!isAdmin) {
       throw new ForbiddenException(
@@ -493,6 +495,49 @@ export class BookingService {
     }
 
     return { message: "Items returned successfully" };
+  }
+
+  // check availability of item by date range
+  async checkAvailability(itemId: string, startDate: string, endDate: string) {
+    const supabase = this.supabaseService.getServiceClient();
+
+    // Sum all overlapping bookings
+    const { data: overlappingOrders, error: overlapError } = await supabase
+      .from("order_items")
+      .select("quantity")
+      .eq("item_id", itemId)
+      .or(`and(start_date.lte.${endDate},end_date.gte.${startDate})`);
+
+    if (overlapError) {
+      throw new BadRequestException("Error checking overlapping bookings");
+    }
+
+    const alreadyBookedQuantity =
+      overlappingOrders?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
+      0;
+
+    // Get total quantity of item from storage
+    const { data: itemData, error: itemError } = await supabase
+      .from("storage_items")
+      .select("items_number_total")
+      .eq("id", itemId)
+      .single();
+
+    if (itemError || !itemData) {
+      throw new BadRequestException("Item data not found");
+    }
+
+    const availableQuantity =
+      itemData.items_number_total - alreadyBookedQuantity;
+
+    return {
+      item_id: itemId,
+      availableQuantity,
+      alreadyBookedQuantity,
+      totalQuantity: itemData.items_number_total,
+      startDate,
+      endDate,
+    };
   }
 }
 // This service handles the logic for creating, confirming, rejecting, and cancelling bookings.
