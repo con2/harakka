@@ -3,7 +3,6 @@ import { AuthProvider } from "./context/AuthContext";
 import Login from "./components/Auth/Login";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import Navigation from "./components/Navigation";
-import TestComponent from "./components/TestComponent";
 import AdminPanel from "./components/Admin/AdminPanel";
 import UsersList from "./components/Admin/UsersList";
 import { Toaster } from "sonner";
@@ -22,6 +21,8 @@ import AuthCallback from "./components/Auth/AuthCallback";
 import PasswordReset from "./components/Auth/PasswordReset";
 import PasswordResetResult from "./components/Auth/PasswordResetResult";
 import OrderList from "./components/Admin/OrderList";
+import TagList from "./components/Admin/TagList";
+import MyOrders from "./components/MyOrders";
 
 function App() {
   return (
@@ -35,10 +36,10 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
               <Route
-                path="/protected"
+                path="/orders"
                 element={
                   <ProtectedRoute allowedRoles={["user", "admin", "superVera"]}>
-                    <TestComponent />
+                    <MyOrders />
                   </ProtectedRoute>
                 }
               />
@@ -55,6 +56,7 @@ function App() {
                 <Route path="team" element={<TeamList />} />
                 <Route path="items" element={<AdminItemsTable />} />
                 <Route path="orders" element={<OrderList />} />
+                <Route path="tags" element={<TagList />} />
               </Route>
               <Route path="/" element={<UserPanel />}>
                 <Route path="/storage" element={<ItemsList />} />

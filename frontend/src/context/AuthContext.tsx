@@ -4,6 +4,7 @@ import { supabase } from "../config/supabase";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch } from "@/store/hooks";
 import { clearSelectedUser } from "@/store/slices/usersSlice";
+import { LoaderCircle } from "lucide-react";
 
 interface AuthContextType {
   session: Session | null;
@@ -82,7 +83,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  // return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {authLoading ? (
+        <div className="flex justify-center items-center h-screen">
+          <LoaderCircle className="animate-spin w-6 h-6" />
+        </div>
+      ) : (
+        children
+      )}
+    </AuthContext.Provider>
+  );
+  
 }
 
 export function useAuth() {
