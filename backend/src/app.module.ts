@@ -10,6 +10,8 @@ import { UserService } from './services/user.service';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
+import { BookingController } from './controllers/booking.controller';
+import { BookingService } from './services/booking.service';
 import { TagController } from './controllers/tag.controller';
 import { TagService } from './services/tag.service';
 
@@ -25,7 +27,7 @@ dotenvExpand.expand(env);
       ignoreEnvFile: true,
     }),
   ],
-  controllers: [AppController, StorageItemsController, UserController, TagController],
-  providers: [AppService, SupabaseService, StorageItemsService, UserService, TagService],
+  controllers: [AppController, StorageItemsController, UserController, BookingController, TagController],
+  providers: [AppService, SupabaseService, StorageItemsService, UserService, BookingService, TagService],
 })
 export class AppModule {}
