@@ -8,12 +8,14 @@ import {
   Users,
   Settings,
   Menu,
-  Warehouse,
+  Warehouse, PinIcon,
   ShoppingBag,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useAppSelector } from "@/store/hooks";
 import { selectIsSuperVera } from "@/store/slices/usersSlice";
+import { Tooltip } from "../ui/tooltip";
+import { TooltipContent } from "@radix-ui/react-tooltip";
 
 const AdminPanel = () => {
   const isSuperVera = useAppSelector(selectIsSuperVera);
@@ -38,6 +40,7 @@ const AdminPanel = () => {
             <SidebarLink to="/admin/team" icon={<Users />} label="Team" />
           )}
           <SidebarLink to="/admin/items" icon={<Warehouse />} label="Items" />
+          <SidebarLink to="/admin/tags" icon={<PinIcon />} label="Tags" />
           <SidebarLink
             to="/admin/orders"
             icon={<ShoppingBag />}
