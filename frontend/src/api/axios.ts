@@ -36,7 +36,6 @@ api.interceptors.request.use(
 // Return response.data directly
 api.interceptors.response.use(
   (response) => {
-    console.log("Response before extraction:", response);
     return response.data;
   },
   (error) => {
