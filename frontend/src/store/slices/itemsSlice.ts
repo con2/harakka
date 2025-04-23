@@ -1,7 +1,9 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { itemsApi } from '../../api/services/items';
 import { ItemState, Item } from '../../types/item';
 import { RootState } from '../store';
+import { Tag } from '@/types/tag';
+import { tagsApi } from '@/api/services/tags';
 
 const initialState: ItemState = {
   items: [],
@@ -54,6 +56,15 @@ export const updateItem = createAsyncThunk<
   return response;
 });
 
+// Get items with a specific tag
+export const getItemsByTag = createAsyncThunk<Item[], string>(
+  'items/getItemsByTag',
+  async (tagId: string) => {
+    const response = await itemsApi.getItemsByTag(tagId);
+    return response;
+  },
+);
+
 export const itemsSlice = createSlice({
   name: 'items',
   initialState,
@@ -62,6 +73,16 @@ export const itemsSlice = createSlice({
       state.selectedItem = null;
       state.error = null;
     },
+    updateItemTags: (
+      state,
+      action: PayloadAction<{ itemId: string; tags: Tag[] }>
+    ) => {
+      const { itemId, tags } = action.payload;
+      const item = state.items.find(item => item.id === itemId);
+      if (item) {
+        item.storage_item_tags = tags;
+      }
+    }
   },
 
   extraReducers: (builder) => {
@@ -114,7 +135,21 @@ export const itemsSlice = createSlice({
         state.loading = false;
         state.error =
           (action.payload as string) || 'Failed to load available items';
-      });
+      })
+      .addCase(getItemsByTag.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getItemsByTag.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload;
+      })
+      .addCase(getItemsByTag.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          (action.payload as string) || 'Failed to load items with tag';
+      }
+      );
   },
 });
 
@@ -141,6 +176,6 @@ export const selectSelectedItem = (state: RootState) =>
   state.items.selectedItem;
 
 // Actions
-export const { clearSelectedItem } = itemsSlice.actions;
+export const { clearSelectedItem, updateItemTags } = itemsSlice.actions;
 
 export default itemsSlice.reducer;
