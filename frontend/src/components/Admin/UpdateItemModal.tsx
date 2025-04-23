@@ -184,6 +184,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
               {tags.map((tag) => (
                 <label key={tag.id} className="flex items-center space-x-2">
                   <Checkbox
+                    className="border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
                     checked={localSelectedTags.includes(tag.id)}
                     onCheckedChange={() => handleTagToggle(tag.id)}
                   />

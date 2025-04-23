@@ -8,6 +8,8 @@ export const itemsApi = {
   updateItem: (id: string, item: Partial<Item>): Promise<Item> =>
     api.put(`/storage-items/${id}`, item),
   deleteItem: (id: string): Promise<void> => api.delete(`/storage-items/${id}`),
+  getItemsByTag: (tagId: string): Promise<Item[]> =>
+    api.get(`/storage-items/by-tag/${tagId}`),
 
   // gets available items based on start and end date TODO: adjust when back is ready
   getAvailableItems: (
