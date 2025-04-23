@@ -4,6 +4,7 @@ import itemsReducer from "./slices/itemsSlice";
 import ordersReducer from "./slices/ordersSlice";
 import cartReducer from "./slices/cartSlice";
 import timeframeReducer from "./slices/timeframeSlice";
+import tagsReducer from './slices/tagSlice';
 
 // add slices in the reducer object
 export const store = configureStore({
@@ -13,6 +14,7 @@ export const store = configureStore({
     orders: ordersReducer,
     cart: cartReducer,
     timeframe: timeframeReducer,
+    tags: tagsReducer,
   },
 });
 
