@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getAllOrders,
-  selectOrders,
   selectOrdersLoading,
   selectOrdersError,
   confirmOrder,
   rejectOrder,
   deleteOrder,
   returnItems,
+  selectAllOrders,
 } from "@/store/slices/ordersSlice";
 import {
   LoaderCircle,
@@ -34,7 +34,7 @@ import { toast } from "sonner";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
-  const orders = useAppSelector(selectOrders);
+  const orders = useAppSelector(selectAllOrders);
   const loading = useAppSelector(selectOrdersLoading);
   const error = useAppSelector(selectOrdersError);
   const ordersLoadedRef = useRef(false);
