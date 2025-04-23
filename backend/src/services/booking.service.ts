@@ -337,6 +337,10 @@ export class BookingService {
       .eq("id", userId)
       .single();
 
+    if (!user) {
+      throw new BadRequestException("User not found");
+    }
+
     const isAdmin = user?.role === "admin" || user?.role === "superVera";
     const isOwner = order.user_id === userId;
 
