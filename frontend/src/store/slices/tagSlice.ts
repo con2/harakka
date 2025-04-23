@@ -11,7 +11,7 @@ const initialState: TagState = {
 };
 
 // Async Thunks (API Calls)
-
+// get all tags
 export const fetchAllTags = createAsyncThunk(
   'tags/fetchAllTags',
   async (_, { rejectWithValue }) => {
@@ -73,19 +73,6 @@ export const assignTagToItem = createAsyncThunk(
   }
 );
 
-// Fetch tags for a specific item
-export const fetchTagsForItem = createAsyncThunk(
-  'tags/fetchTagsForItem',
-  async (itemId: string, { rejectWithValue }) => {
-    try {
-      const data = await tagsApi.getItemsByTag(itemId);
-      return data;
-    } catch (error: any) {
-      return rejectWithValue(error?.response?.data?.message || 'Failed to fetch tags for item');
-    }
-  }
-);
-
 // Remove a tag from an item
 export const removeTagFromItem = createAsyncThunk(
   'tags/removeTagFromItem',
@@ -95,6 +82,19 @@ export const removeTagFromItem = createAsyncThunk(
       return { itemId, tagId };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to remove tag');
+    }
+  }
+);
+
+// Fetch tags for a specific item
+export const fetchTagsForItem = createAsyncThunk(
+  'tags/fetchTagsForItem',
+  async (itemId: string, { rejectWithValue }) => {
+    try {
+      const data = await tagsApi.getTagsByItem(itemId);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error?.response?.data?.message || 'Failed to fetch tags for item');
     }
   }
 );
@@ -155,9 +155,13 @@ export const tagSlice = createSlice({
         state.loading = true;
       })
       .addCase(deleteTag.fulfilled, (state, action) => {
-        state.tags = state.tags.filter((tag) => tag.id !== action.payload);
-      })
+        const tagId = action.payload;
+        state.tags = state.tags.filter((tag) => tag.id !== tagId);
+        state.selectedTags = state.selectedTags ? state.selectedTags.filter((tag) => tag.id !== tagId) : [];
+        state.loading = false;
+      })      
       .addCase(deleteTag.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload as string;
       })
       // assign tag to item
@@ -166,17 +170,9 @@ export const tagSlice = createSlice({
       })
       .addCase(assignTagToItem.fulfilled, (state, action) => {
         state.loading = false;
-        // update the selected tags in the state // TODO: Update this logic based on our requirements
-        const { itemId, tagIds } = action.payload;
-        const updatedTags = state.tags.map((tag) => {
-          if (tagIds.includes(tag.id)) {
-            return { ...tag, assignedTo: itemId }; // Assuming we want to set an assignedTo property
-          }
-          return tag;
-        });
-        state.tags = updatedTags;
-        state.selectedTags = tagIds.map((tagId) => state.tags.find((tag) => tag.id === tagId)!);
-      })
+        const { tagIds } = action.payload;
+        state.selectedTags = state.tags.filter((tag) => tagIds.includes(tag.id));
+      })      
       .addCase(assignTagToItem.rejected, (state, action) => {
         state.error = action.payload as string;
       })
@@ -185,6 +181,7 @@ export const tagSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchTagsForItem.fulfilled, (state, action) => {
+        state.loading = false;
         state.selectedTags = action.payload; // Store the fetched tags in the Redux state
       })
       .addCase(fetchTagsForItem.rejected, (state, action) => {
@@ -206,6 +203,7 @@ export const tagSlice = createSlice({
         state.loading = false;
       })
       .addCase(removeTagFromItem.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload as string;
       });
   }
