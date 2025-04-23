@@ -448,13 +448,18 @@ export class BookingService {
 
     if (!order) throw new BadRequestException("Order not found");
 
-    const { data: user } = await supabase
+    const { data: userProfile, error: userProfileError } = await supabase
       .from("user_profiles")
       .select("role")
       .eq("id", userId)
       .single();
 
-    const isAdmin = user?.role === "admin" || user?.role === "superVera"; // check from user profile table!!!!
+    if (userProfileError || !userProfile) {
+      throw new BadRequestException("User profile not found");
+    }
+
+    const isAdmin =
+      userProfile.role === "admin" || userProfile.role === "superVera";
 
     if (!isAdmin) {
       throw new ForbiddenException(
