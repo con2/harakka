@@ -17,7 +17,8 @@ export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
   @Get()
-  async getAll() {
+  async getAll(@Req() req: any) {
+    const userId = req.user?.id;
     return this.bookingService.getAllOrders(userId);
   }
 
@@ -39,8 +40,8 @@ export class BookingController {
   }
 
   @Put(":id/confirm") // admin confirms booking
-  async confirm(@Param("id") id: string) {
-    return this.bookingService.confirmBooking(id);
+  async confirm(@Param("id") id: string, @Req() req: any) {
+    return this.bookingService.confirmBooking(id, req.user?.id);
   }
 
   @Put(":id/update") // user updates own booking or admin updates booking
@@ -72,8 +73,8 @@ export class BookingController {
   }
 
   @Post(":id/return") // admin returns items
-  async returnItems(@Param("id") id: string) {
-    return this.bookingService.returnItems(id);
+  async returnItems(@Param("id") id: string, @Req() req: any) {
+    return this.bookingService.returnItems(id, req.user?.id);
   }
 
   @Get("availability/:itemId")
@@ -81,8 +82,14 @@ export class BookingController {
     @Param("itemId") itemId: string,
     @Query("start_date") startDate: string,
     @Query("end_date") endDate: string,
+    @Req() req: any,
   ) {
-    return this.bookingService.checkAvailability(itemId, startDate, endDate);
+    return this.bookingService.checkAvailability(
+      itemId,
+      startDate,
+      endDate,
+      req.user?.id,
+    );
   }
 }
 // handles the booking process, including creating, confirming, rejecting, and canceling bookings.
