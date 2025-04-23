@@ -18,7 +18,7 @@ export class BookingController {
 
   @Get()
   async getAll() {
-    return this.bookingService.getAllOrders();
+    return this.bookingService.getAllOrders(userId);
   }
 
   @Get("my") // gets the bookings of the logged-in user
