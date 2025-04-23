@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Req,
+  Query,
 } from "@nestjs/common";
 import { BookingService } from "../services/booking.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
@@ -73,6 +74,15 @@ export class BookingController {
   @Post(":id/return") // admin returns items
   async returnItems(@Param("id") id: string) {
     return this.bookingService.returnItems(id);
+  }
+
+  @Get("availability/:itemId")
+  async getItemAvailability(
+    @Param("itemId") itemId: string,
+    @Query("start_date") startDate: string,
+    @Query("end_date") endDate: string,
+  ) {
+    return this.bookingService.checkAvailability(itemId, startDate, endDate);
   }
 }
 // handles the booking process, including creating, confirming, rejecting, and canceling bookings.
