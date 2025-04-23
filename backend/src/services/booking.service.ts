@@ -11,8 +11,8 @@ export class BookingService {
   constructor(private readonly supabaseService: SupabaseService) {}
 
   // get all orders
-  async getAllOrders() {
-    const supabase = this.supabaseService.getServiceClient();
+  async getAllOrders(userId: string) {
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     const { data: orders, error } = await supabase.from("orders").select(`
       *,
@@ -44,7 +44,7 @@ export class BookingService {
             .eq("id", order.user_id)
             .maybeSingle();
 
-          // manuelles Mapping von full_name -> name
+          // manual mapping full_name -- to -> name
           if (userData) {
             user = {
               name: userData.full_name,
@@ -74,7 +74,7 @@ export class BookingService {
 
   // get all bookings of a user
   async getUserBookings(userId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     const { data: orders, error } = await supabase
       .from("orders")
@@ -114,12 +114,14 @@ export class BookingService {
 
   // create a Booking
   async createBooking(dto: CreateBookingDto) {
-    const supabase = this.supabaseService.getServiceClient();
     const userId = dto.user_id;
 
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
     }
+
+    const supabase = await this.supabaseService.getClientByRole(userId);
+
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
       .select("*")
@@ -247,8 +249,8 @@ export class BookingService {
   } // end of createBooking
 
   // confirm a Booking
-  async confirmBooking(orderId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+  async confirmBooking(orderId: string, userId: string) {
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     // Get all the order items
     const { data: items, error: itemsError } = await supabase
@@ -321,7 +323,7 @@ export class BookingService {
 
   // update a Booking (Admin/SuperVera OR Owner)
   async updateBooking(orderId: string, userId: string, updatedItems: any[]) {
-    const supabase = this.supabaseService.getServiceClient();
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     const { data: order } = await supabase
       .from("orders")
@@ -336,12 +338,24 @@ export class BookingService {
       .select("role")
       .eq("id", userId)
       .single();
-
+    // there is no user: console log: user=null
     if (!user) {
-      throw new BadRequestException("User not found");
+      throw new BadRequestException("User not found"); // this is where the request fails
     }
 
+    // const isAdmin = user?.role === "admin" || user?.role === "superVera";
+
     const isAdmin = user?.role === "admin" || user?.role === "superVera";
+    if (
+      !(
+        user.role === "admin" ||
+        userId === order.user_id ||
+        user.role === "service_role"
+      )
+    ) {
+      throw new ForbiddenException("Not allowed to update this booking");
+    }
+
     const isOwner = order.user_id === userId;
 
     if (!isAdmin && !isOwner) {
@@ -385,7 +399,7 @@ export class BookingService {
 
   // reject a Booking (Admin/SuperVera only)
   async rejectBooking(orderId: string, userId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     const { data: user } = await supabase
       .from("user_profiles")
@@ -411,7 +425,7 @@ export class BookingService {
 
   // cancel a Booking (User if not confirmed, Admins/SuperVera always)
   async cancelBooking(orderId: string, userId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     const { data: order } = await supabase
       .from("orders")
@@ -465,7 +479,7 @@ export class BookingService {
 
   // delete a Booking and mark it as deleted
   async deleteBooking(orderId: string, userId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     // check if order is in database
     const { data: order } = await supabase
@@ -508,8 +522,8 @@ export class BookingService {
   }
 
   // return items (when items are brought back)
-  async returnItems(orderId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+  async returnItems(orderId: string, userId: string) {
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     const { data: items } = await supabase
       .from("order_items")
@@ -531,8 +545,13 @@ export class BookingService {
   }
 
   // check availability of item by date range
-  async checkAvailability(itemId: string, startDate: string, endDate: string) {
-    const supabase = this.supabaseService.getServiceClient();
+  async checkAvailability(
+    itemId: string,
+    startDate: string,
+    endDate: string,
+    userId: string,
+  ) {
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     // Sum all overlapping bookings
     const { data: overlappingOrders, error: overlapError } = await supabase
