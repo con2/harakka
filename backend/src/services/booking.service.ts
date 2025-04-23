@@ -409,34 +409,58 @@ export class BookingService {
     return { message: "Booking rejected" };
   }
 
-  // user cancels own Booking
-  async cancelOwnBooking(orderId: string, userId: string) {
-    // also usable for admins!!!
-
+  // cancel a Booking (User if not confirmed, Admins/SuperVera always)
+  async cancelBooking(orderId: string, userId: string) {
     const supabase = this.supabaseService.getServiceClient();
 
     const { data: order } = await supabase
       .from("orders")
       .select("user_id")
       .eq("id", orderId)
-      .single();
+      .single<{
+        user_id: string;
+        status: string;
+      }>();
 
     if (!order) throw new BadRequestException("Order not found");
 
-    if (order.user_id !== userId) {
-      throw new ForbiddenException("You can only cancel your own bookings");
+    const { data: userProfile, error: userProfileError } = await supabase
+      .from("user_profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    if (userProfileError || !userProfile) {
+      throw new BadRequestException("User profile not found");
+    }
+
+    const isAdmin =
+      userProfile.role === "admin" || userProfile.role === "superVera";
+    const isOwner = order.user_id === userId;
+
+    if (!isAdmin) {
+      if (!isOwner) {
+        throw new ForbiddenException("You can only cancel your own bookings");
+      }
+      if (order.status === "confirmed") {
+        throw new ForbiddenException(
+          "You can't cancel a booking that has already been confirmed",
+        );
+      }
     }
 
     const { error } = await supabase
       .from("orders")
-      .update({ status: "cancelled by user" })
+      .update({ status: isAdmin ? "cancelled by admin" : "cancelled by user" })
       .eq("id", orderId);
 
     if (error) {
       throw new BadRequestException("Could not cancel the booking");
     }
 
-    return { message: "Booking cancelled by user" };
+    return {
+      message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
+    };
   }
 
   // delete a Booking and mark it as deleted
