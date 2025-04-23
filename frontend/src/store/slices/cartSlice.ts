@@ -1,12 +1,12 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from '../store';
-import { Item } from '../../types/item';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { RootState } from "../store";
+import { Item } from "../../types/item";
 
 interface CartItem {
   item: Item;
   quantity: number;
-  startDate: Date | null;
-  endDate: Date | null;
+  startDate: string | undefined;
+  endDate: string | undefined;
 }
 
 interface CartState {
@@ -22,7 +22,7 @@ const initialState: CartState = {
 };
 
 export const cartSlice = createSlice({
-  name: 'cart',
+  name: "cart",
   initialState,
   reducers: {
     addToCart: (state, action: PayloadAction<CartItem>) => {
