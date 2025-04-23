@@ -3,6 +3,7 @@ import { itemsApi } from '../../api/services/items';
 import { ItemState, Item } from '../../types/item';
 import { RootState } from '../store';
 import { Tag } from '@/types/tag';
+import { tagsApi } from '@/api/services/tags';
 
 const initialState: ItemState = {
   items: [],
@@ -54,6 +55,15 @@ export const updateItem = createAsyncThunk<
   const response = await itemsApi.updateItem(id, data);
   return response;
 });
+
+// Get items with a specific tag
+export const getItemsByTag = createAsyncThunk<Item[], string>(
+  'items/getItemsByTag',
+  async (tagId: string) => {
+    const response = await itemsApi.getItemsByTag(tagId);
+    return response;
+  },
+);
 
 export const itemsSlice = createSlice({
   name: 'items',
@@ -125,7 +135,21 @@ export const itemsSlice = createSlice({
         state.loading = false;
         state.error =
           (action.payload as string) || 'Failed to load available items';
-      });
+      })
+      .addCase(getItemsByTag.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getItemsByTag.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload;
+      })
+      .addCase(getItemsByTag.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          (action.payload as string) || 'Failed to load items with tag';
+      }
+      );
   },
 });
 

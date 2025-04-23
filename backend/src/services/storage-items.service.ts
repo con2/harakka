@@ -83,7 +83,6 @@ export class StorageItemsService {
     };
   }
   
-  
   //previously createItem commented out
   // async createItem(item: Partial<StorageItem>): Promise<StorageItem[]> {
   //   const supabase = this.supabaseService.getServiceClient(); // Write operation
@@ -130,28 +129,107 @@ export class StorageItemsService {
     return insertedItem;
   }    
 
+  // async updateItem(
+  //   id: string,
+  //   item: Partial<StorageItem>,
+  // ): Promise<StorageItem[]> {
+  //   const supabase = this.supabaseService.getServiceClient(); // Write operation
+  //   const { data, error }: PostgrestResponse<StorageItem> = await supabase
+  //     .from('storage_items')
+  //     .update(item)
+  //     .eq('id', id)
+  //     .select();
+  //   if (error) throw new Error(error.message);
+  //   return data || [];
+  // }
+
   async updateItem(
     id: string,
-    item: Partial<StorageItem>,
-  ): Promise<StorageItem[]> {
-    const supabase = this.supabaseService.getServiceClient(); // Write operation
-    const { data, error }: PostgrestResponse<StorageItem> = await supabase
+    item: Partial<StorageItem> & { tagIds?: string[] }
+  ): Promise<StorageItem> {
+    const { tagIds, ...itemData } = item;
+  
+    // Update the main item
+    const { data: updatedItemData, error: updateError } = await this.supabase
       .from('storage_items')
-      .update(item)
+      .update(itemData)
       .eq('id', id)
       .select();
-    if (error) throw new Error(error.message);
-    return data || [];
-  }
+  
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+  
+    const updatedItem = updatedItemData?.[0];
+    if (!updatedItem) throw new Error('Failed to update item');
+  
+    // Update tag relationships
+    if (tagIds) {
+      // Remove all old tags
+      await this.supabase
+        .from('storage_item_tags')
+        .delete()
+        .eq('item_id', id);
+  
+      // Insert new tag relationships
+      if (tagIds.length > 0) {
+        const tagLinks = tagIds.map(tagId => ({ item_id: id, tag_id: tagId }));
+        const { error: tagError } = await this.supabase
+          .from('storage_item_tags')
+          .insert(tagLinks);
+        if (tagError) throw new Error(tagError.message);
+      }
+    }
+  
+    return updatedItem;
+  }  
 
-  async deleteItem(id: string): Promise<StorageItem[]> {
-    const supabase = this.supabaseService.getServiceClient();
-    const { data, error }: PostgrestResponse<StorageItem> = await supabase
+  // async deleteItem(id: string): Promise<StorageItem[]> {
+  //   const supabase = this.supabaseService.getServiceClient();
+  //   const { data, error }: PostgrestResponse<StorageItem> = await supabase
+  //     .from('storage_items')
+  //     .delete()
+  //     .eq('id', id)
+  //     .select(); // Add this to return deleted data
+  //   if (error) throw new Error(error.message);
+  //   return data || [];
+  // }
+
+  async deleteItem(id: string): Promise<void> {
+    if (!id) {
+      throw new Error('No item ID provided for deletion');
+    }
+    // Step 1: Delete related tags from the join table
+    const { error: tagDeleteError } = await this.supabase
+      .from('storage_item_tags')
+      .delete()
+      .eq('item_id', id);
+
+    if (tagDeleteError) {
+      throw new Error(`Failed to delete related tags: ${tagDeleteError.message}`);
+    }
+
+    // Step 2: Delete the item itself
+    const { error: itemDeleteError } = await this.supabase
       .from('storage_items')
       .delete()
-      .eq('id', id)
-      .select(); // Add this to return deleted data
+      .eq('id', id);
+
+    if (itemDeleteError) {
+      throw new Error(`Failed to delete item: ${itemDeleteError.message}`);
+    }
+  }
+  
+// TODO: needs to be fixed and updated
+  async getItemsByTag(tagId: string) {
+    const { data, error } = await this.supabase
+      .from('storage_item_tags')
+      .select('item_id, items(*)')  // Select foreign table 'items' if it's a relation
+      .eq('tag_id', tagId);
+  
     if (error) throw new Error(error.message);
-    return data || [];
+  
+    // The data will now have the related 'items' fetched in the same query
+    return data.map(entry => entry.items);  // Extract items from the relation
   }
 }

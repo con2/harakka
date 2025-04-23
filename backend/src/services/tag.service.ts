@@ -85,11 +85,20 @@ export class TagService {
   }
 
   async deleteTag(id: string) {
-    const { error } = await this.supabase
+    // Remove tag from all items
+    const { error: deleteRefsError } = await this.supabase
+      .from('storage_item_tags')
+      .delete()
+      .eq('tag_id', id);
+  
+    if (deleteRefsError) throw new Error(deleteRefsError.message);
+  
+    // Delete the tag itself
+    const { error: deleteTagError } = await this.supabase
       .from('tags')
       .delete()
       .eq('id', id);
   
-    if (error) throw new Error(error.message);
-  }
+    if (deleteTagError) throw new Error(deleteTagError.message);
+  }  
 }
