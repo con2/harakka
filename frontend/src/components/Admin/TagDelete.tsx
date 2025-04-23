@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
-import { deleteTag, fetchAllTags } from "@/store/slices/tagSlice";
+import {
+  deleteTag,
+  fetchAllTags,
+} from "@/store/slices/tagSlice";
 
 const TagDelete = ({
   id,
@@ -13,7 +16,6 @@ const TagDelete = ({
   onDeleted?: () => void;
 }) => {
   const dispatch = useAppDispatch();
-
   const handleDelete = () => {
     if (!id) {
       toast.error("Invalid tag ID.");
@@ -24,7 +26,7 @@ const TagDelete = ({
       <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
         <div className="font-semibold text-lg">Confirm Deletion</div>
         <div className="text-sm text-muted-foreground">
-          Are you sure you want to delete this tag?
+        This will permanently delete the tag and remove it from all associated items. Are you sure?
         </div>
         <div className="flex justify-end gap-2">
           <Button

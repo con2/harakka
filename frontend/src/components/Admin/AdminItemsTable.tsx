@@ -13,11 +13,10 @@ import {
 import { PaginatedDataTable } from '../ui/data-table-paginated';
 import { ColumnDef } from '@tanstack/react-table';
 import { Box, LoaderCircle } from 'lucide-react';
-import defaultImage from '@/assets/defaultImage.jpg';
 import { Button } from '../ui/button';
 import AddItemModal from './AddItemModal';
 import { toast } from 'sonner';
-import UpdateItemModal from './UpdateItemModal'; // Import UpdateItemModal
+import UpdateItemModal from './UpdateItemModal';
 import { Switch } from '@/components/ui/switch';
 import { fetchAllTags } from '@/store/slices/tagSlice';
 import { Item } from '@/types/item';
@@ -110,7 +109,10 @@ const AdminItemsTable = () => {
           try {
             await dispatch(updateItem({
               id: item.id,
-              data: { ...item, is_active: checked },
+              data: {
+                is_active: checked,
+                // tagIds: (item.storage_item_tags ?? []).map(tag => tag.id),
+              },
             })).unwrap();
             toast.success(`Item ${checked ? 'activated' : 'deactivated'} successfully`);
           } catch (error) {
