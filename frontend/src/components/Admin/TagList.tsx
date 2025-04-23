@@ -24,6 +24,7 @@ import {
 import { Input } from '../ui/input';
 import { toast } from 'sonner';
 import TagDelete from './TagDelete';
+import { getItemsByTag } from '@/store/slices/itemsSlice';
 
 const TagList = () => {
   const dispatch = useAppDispatch();
@@ -31,6 +32,8 @@ const TagList = () => {
   const loading = useAppSelector(selectLoading);
   const error = useAppSelector(selectError);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [assignedCounts, setAssignedCounts] = useState<Record<string, number>>({});
+
 
   const [editTag, setEditTag] = useState<Tag | null>(null);
   const [editNameFi, setEditNameFi] = useState('');
