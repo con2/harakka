@@ -1,24 +1,24 @@
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useAppSelector } from '@/store/hooks';
-import { selectSelectedUser } from '@/store/slices/usersSlice';
-import { Button } from '@/components/ui/button';
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useAppSelector } from "@/store/hooks";
+import { selectSelectedUser } from "@/store/slices/usersSlice";
+import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-} from '@/components/ui/navigation-menu';
-import logo from '../assets/logo.png';
-import { LogInIcon, LogOutIcon, ShoppingCart } from 'lucide-react';
-import { selectCartItemsCount } from '../store/slices/cartSlice';
+} from "@/components/ui/navigation-menu";
+import logo from "../assets/logo.png";
+import { LogInIcon, LogOutIcon, ShoppingCart } from "lucide-react";
+import { selectCartItemsCount } from "../store/slices/cartSlice";
 
 export const Navigation = () => {
   const { signOut } = useAuth();
   const selectedUser = useAppSelector(selectSelectedUser);
   const cartItemsCount = useAppSelector(selectCartItemsCount);
 
-  const isAdmin = ['admin', 'superVera'].includes(selectedUser?.role ?? '');
+  const isAdmin = ["admin", "superVera"].includes(selectedUser?.role ?? "");
 
   return (
     <nav className="shadow-sm">
@@ -36,8 +36,8 @@ export const Navigation = () => {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
-                  <Link to="/protected" className="flex items-center gap-1">
-                    Protected Data
+                  <Link to="/orders" className="flex items-center gap-1">
+                    My orders
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -81,7 +81,9 @@ export const Navigation = () => {
             </Button>
           ) : (
             <Button variant="ghost" asChild>
-              <Link to="/login">Login <LogInIcon /></Link>
+              <Link to="/login">
+                Login <LogInIcon />
+              </Link>
             </Button>
           )}
         </div>

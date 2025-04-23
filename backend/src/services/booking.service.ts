@@ -74,42 +74,32 @@ export class BookingService {
 
   // get all bookings of a user
   async getUserBookings(userId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+    // Validate userId is provided and is a valid UUID
+    if (!userId || userId === "undefined") {
+      throw new BadRequestException("Valid user ID is required");
+    }
 
-    const { data: orders, error } = await supabase
+    const supabase = this.supabaseService.getServiceClient(); // TODO: Try SERVICE client instead of anon for testing
+
+    const { data, error } = await supabase
       .from("orders")
       .select(
         `
         *,
-        order_items (
-          *,
-          storage_items (
-            translations
-          )
-        )
+        order_items (*)
       `,
       )
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Supabase error in getUserBookings():", error);
-      throw new BadRequestException("Could not load user bookings");
+      console.error(
+        `Supabase error in getUserBookings(): ${JSON.stringify(error)}`,
+      );
+      throw new Error(`Failed to fetch user bookings: ${error.message}`);
     }
 
-    // Optional: map user_profile + item_name wie bei getAllOrders()
-    const ordersWithItemNames =
-      orders?.map((order) => ({
-        ...order,
-        order_items:
-          order.order_items?.map((item) => ({
-            ...item,
-            item_name:
-              item.storage_items?.translations?.en?.item_name ?? "Unknown",
-          })) ?? [],
-      })) ?? [];
-
-    return ordersWithItemNames;
+    return data || [];
   }
 
   // create a Booking

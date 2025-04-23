@@ -1,4 +1,8 @@
-import { createEntityAdapter, createSlice } from "@reduxjs/toolkit";
+import {
+  createEntityAdapter,
+  createSlice,
+  createAsyncThunk,
+} from "@reduxjs/toolkit";
 import { ordersApi } from "../../api/services/orders";
 import { RootState } from "../store";
 import { BookingOrder, BookingItem } from "../../types/orders";
@@ -44,6 +48,8 @@ interface OrderError {
 
 // Additional state properties beyond EntityState
 interface OrdersAdditionalState {
+  orders: BookingOrder[];
+  userOrders: BookingOrder[];
   loading: boolean;
   error: OrderError;
   currentOrder: string | null;
@@ -51,6 +57,8 @@ interface OrdersAdditionalState {
 
 // Create initial state
 const initialState = ordersAdapter.getInitialState<OrdersAdditionalState>({
+  orders: [], // All orders (admin)
+  userOrders: [], // Single user's orders
   loading: false,
   error: {
     message: null,
@@ -67,21 +75,22 @@ export const createOrder = createApiThunk<BookingOrder, CreateOrderDto>(
 );
 
 // Get user orders thunk
-export const getUserOrders = createApiThunk<BookingOrder[], void>(
+export const getUserOrders = createAsyncThunk<BookingOrder[], string>(
   "orders/getUserOrders",
-  ordersApi.getUserOrders,
-  "Failed to fetch orders",
-);
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await ordersApi.getUserOrders(userId);
 
-// Update order thunk
-export const updateOrder = createApiThunk<
-  BookingOrder,
-  { orderId: string; items: BookingItem[] }
->(
-  "orders/updateOrder",
-  ({ orderId, items }) => ordersApi.updateOrder(orderId, items),
-  "Failed to update order",
-  (response, { orderId }) => ({ ...response, id: orderId }),
+      // Ensure we return the raw array from the API
+      return Array.isArray(response) ? response : [];
+    } catch (error: unknown) {
+      let errorMessage = "Failed to fetch orders";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      return rejectWithValue(errorMessage);
+    }
+  },
 );
 
 // Get all orders (admin) thunk
@@ -97,6 +106,20 @@ export const confirmOrder = createApiThunk<BookingOrder, string>(
   ordersApi.confirmOrder,
   "Failed to confirm order",
   (response, orderId) => ({ ...response, id: orderId }),
+);
+
+// Update order thunk
+export const updateOrder = createApiThunk<
+  BookingOrder,
+  { orderId: string; items: BookingItem[] }
+>(
+  "orders/updateOrder",
+  async ({ orderId, items }) => {
+    const response = await ordersApi.updateOrder(orderId, items);
+    return response;
+  },
+  "Failed to update order",
+  (response, { orderId }) => ({ ...response, id: orderId }),
 );
 
 // Other thunks follow the same pattern...
@@ -167,6 +190,8 @@ export const ordersSlice = createSlice({
       })
       .addCase(getUserOrders.fulfilled, (state, action) => {
         state.loading = false;
+        state.error = { message: null, context: null };
+        state.userOrders = action.payload;
         ordersAdapter.setAll(state, action.payload);
       })
       .addCase(getUserOrders.rejected, (state, action) => {
@@ -184,6 +209,7 @@ export const ordersSlice = createSlice({
       })
       .addCase(getAllOrders.fulfilled, (state, action) => {
         state.loading = false;
+        state.orders = action.payload;
         ordersAdapter.setAll(state, action.payload);
       })
       .addCase(getAllOrders.rejected, (state, action) => {
@@ -337,6 +363,8 @@ export const selectOrdersErrorContext = (state: RootState) =>
 export const selectOrdersErrorWithContext = (state: RootState) =>
   state.orders.error;
 export const selectOrdersTotal = ordersSelectors.selectTotal;
+export const selectAllOrders = (state: RootState) => state.orders.orders;
+export const selectUserOrders = (state: RootState) => state.orders.userOrders;
 
 // Export reducer
 export default ordersSlice.reducer;
