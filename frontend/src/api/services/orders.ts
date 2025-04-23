@@ -1,9 +1,5 @@
 import { api } from "../axios";
-import { BookingItem } from "../../types/orders";
-import {
-  bookingOrderSchema,
-  bookingOrdersSchema,
-} from "../schemas/orderSchemas";
+import { BookingItem, BookingOrder } from "../../types/orders";
 
 interface CreateOrderDto {
   items: {
@@ -18,19 +14,18 @@ export const ordersApi = {
   // Create a new booking/order from cart items
   createOrder: async (orderData: CreateOrderDto) => {
     const response = await api.post("/bookings", orderData);
-    return bookingOrderSchema.parse(response);
+    return response;
   },
 
-  // Get orders for the current user
-  getUserOrders: async () => {
-    const response = await api.get("/bookings/my");
-    return bookingOrdersSchema.parse(response);
+  getUserOrders: async (userId: string) => {
+    const response = await api.get(`/bookings/user/${userId}`);
+    return response;
   },
 
   // Get all orders (admin only)
   getAllOrders: async () => {
     const response = await api.get("/bookings");
-    return bookingOrdersSchema.parse(response);
+    return response;
   },
 
   // Confirm an order (admin only)
@@ -52,9 +47,9 @@ export const ordersApi = {
   },
 
   // Cancel an order (user cancels own order)
-  cancelOrder: async (orderId: string) => {
-    const response = await api.delete(`/bookings/${orderId}/cancel`);
-    return response;
+  cancelOrder: async (orderId: string): Promise<BookingOrder> => {
+    const response = await api.patch(`/bookings/${orderId}/cancel`);
+    return response.data;
   },
 
   // Delete an order (admin only)
