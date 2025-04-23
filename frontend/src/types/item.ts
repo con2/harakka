@@ -44,35 +44,37 @@ import { Tag } from "./tag";
 // }
 
 export interface Item {
-    id: string;
-    location_id: string;
-    compartment_id: string;
-    items_number_total: number;
-    items_number_available: number;
-    price: number;
-    is_active: boolean;
-    translations: {
-      fi: {
-        item_type: string;
-        item_name: string;
-        item_description: string;
-      };
-      en: {
-        item_type: string;
-        item_name: string;
-        item_description: string;
-      };
+  id: string;
+  location_id: string;
+  compartment_id: string;
+  items_number_total: number;
+  items_number_available: number;
+  price: number;
+  is_active: boolean;
+  available_from?: Date | undefined; // optional property for Redux state
+  available_until?: Date | undefined; // optional property for Redux state
+  translations: {
+    fi: {
+      item_type: string;
+      item_name: string;
+      item_description: string;
     };
-    average_rating?: number;
-    created_at?: string;
-    updated_at?: string;
+    en: {
+      item_type: string;
+      item_name: string;
+      item_description: string;
+    };
+  };
+  average_rating?: number;
+  created_at?: string;
+  updated_at?: string;
     tagIds?: string[];
     storage_item_tags?: Tag[];
 }
 
 export interface ItemState {
-    items: Item[];
-    loading: boolean;
-    error: string | null;
-    selectedItem: Item | null;
+  items: Item[];
+  loading: boolean;
+  error: string | null;
+  selectedItem: Item | null;
 }
