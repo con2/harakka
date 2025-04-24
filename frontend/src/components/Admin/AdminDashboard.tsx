@@ -31,7 +31,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (!ordersLoading && user?.id && orders.length === 0) {
-      dispatch(getAllOrders());
+      dispatch(getAllOrders(user.id));
     }
   }, [dispatch, user?.id, orders.length, ordersLoading]);  
 
