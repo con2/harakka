@@ -34,37 +34,83 @@ export const ordersApi = {
 
   // Confirm an order (admin only)
   confirmOrder: async (orderId: string) => {
-    const response = await api.put(`/bookings/${orderId}/confirm`);
+    const userId = localStorage.getItem("userId");
+    const response = await api.put(
+      `/bookings/${orderId}/confirm`,
+      {},
+      {
+        headers: {
+          "x-user-id": userId || "",
+        },
+      },
+    );
     return response;
   },
 
   // Update an existing order
   updateOrder: async (orderId: string, items: BookingItem[]) => {
-    const response = await api.put(`/bookings/${orderId}/update`, { items });
+    const userId = localStorage.getItem("userId");
+    const response = await api.put(
+      `/bookings/${orderId}/update`,
+      { items },
+      {
+        headers: {
+          "x-user-id": userId || "",
+        },
+      },
+    );
     return response;
   },
 
   // Reject an order (admin only)
   rejectOrder: async (orderId: string) => {
-    const response = await api.put(`/bookings/${orderId}/reject`);
+    const userId = localStorage.getItem("userId");
+    const response = await api.put(
+      `/bookings/${orderId}/reject`,
+      {},
+      {
+        headers: {
+          "x-user-id": userId || "",
+        },
+      },
+    );
     return response;
   },
 
   // Cancel an order (user cancels own order)
   cancelOrder: async (orderId: string): Promise<BookingOrder> => {
-    const response = await api.patch(`/bookings/${orderId}/cancel`);
+    const userId = localStorage.getItem("userId");
+    const response = await api.delete(`/bookings/${orderId}/cancel`, {
+      headers: {
+        "x-user-id": userId || "",
+      },
+    });
     return response.data;
   },
 
   // Delete an order (admin only)
   deleteOrder: async (orderId: string) => {
-    const response = await api.delete(`/bookings/${orderId}/delete`);
+    const userId = localStorage.getItem("userId");
+    const response = await api.delete(`/bookings/${orderId}/delete`, {
+      headers: {
+        "x-user-id": userId || "",
+      },
+    });
     return response;
   },
 
   // Process item returns (admin only)
   returnItems: async (orderId: string) => {
-    const response = await api.post(`/bookings/${orderId}/return`);
+    const userId = localStorage.getItem("userId");
+    const response = await api.post(
+      `/bookings/${orderId}/return`,
+      {},
+      {
+        headers: {
+          "x-user-id": userId || "",
+        },
+      },
+    );
     return response;
   },
 };
