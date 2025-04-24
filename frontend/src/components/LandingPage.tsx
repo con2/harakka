@@ -32,16 +32,9 @@ const LandingPage = () => {
             </p>
           </Card>
         </main>
-
-        {/* Footer */}
-        <footer className="bg-[#9537C7] text-white py-6 mt-auto">
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <p>&copy; 2024 Illusia. All rights reserved.</p>
-          </div>
-        </footer>
       </div>
   </div>
   )
 }
 
-export default LandingPage
+export default LandingPage;
