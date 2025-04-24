@@ -94,7 +94,7 @@ export const getUserOrders = createAsyncThunk<BookingOrder[], string>(
 );
 
 // Get all orders (admin) thunk
-export const getAllOrders = createApiThunk<BookingOrder[], string>(
+export const getAllOrders = createApiThunk<BookingOrder[], void>(
   "orders/getAllOrders",
   ordersApi.getAllOrders,
   "Failed to fetch all orders",
@@ -227,14 +227,10 @@ export const ordersSlice = createSlice({
       })
       .addCase(confirmOrder.fulfilled, (state, action) => {
         state.loading = false;
-        const { id, ...changes } = action.payload;
         ordersAdapter.updateOne(state, {
-          id,
+          id: action.payload.id,
           changes: { status: "confirmed" },
         });
-        state.orders = state.orders.map((order) =>
-          order.id === id ? { ...order, status: "confirmed" } : order,
-        );
       })
       .addCase(confirmOrder.rejected, (state, action) => {
         state.loading = false;
@@ -291,10 +287,18 @@ export const ordersSlice = createSlice({
       })
       .addCase(cancelOrder.fulfilled, (state, action) => {
         state.loading = false;
+
         ordersAdapter.updateOne(state, {
           id: action.payload.id,
           changes: { status: "cancelled by user" },
         });
+
+        // Also update the userOrders array
+        state.userOrders = state.userOrders.map((order) =>
+          order.id === action.payload.id
+            ? { ...order, status: "cancelled by user" }
+            : order,
+        );
       })
       .addCase(cancelOrder.rejected, (state, action) => {
         state.loading = false;
@@ -312,9 +316,6 @@ export const ordersSlice = createSlice({
       .addCase(deleteOrder.fulfilled, (state, action) => {
         state.loading = false;
         ordersAdapter.removeOne(state, action.payload);
-        state.orders = state.orders.filter(
-          (order) => order.id !== action.payload,
-        );
       })
       .addCase(deleteOrder.rejected, (state, action) => {
         state.loading = false;
@@ -370,7 +371,7 @@ export const selectOrdersErrorContext = (state: RootState) =>
 export const selectOrdersErrorWithContext = (state: RootState) =>
   state.orders.error;
 export const selectOrdersTotal = ordersSelectors.selectTotal;
-export const selectAllOrders = ordersSelectors.selectAll;
+export const selectAllOrders = (state: RootState) => state.orders.orders;
 export const selectUserOrders = (state: RootState) => state.orders.userOrders;
 
 // Export reducer
