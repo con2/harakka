@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../config/supabase";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch } from "@/store/hooks";
-import { clearSelectedUser } from "@/store/slices/usersSlice";
+import { clearSelectedUser, getUserById } from "@/store/slices/usersSlice";
 import { LoaderCircle } from "lucide-react";
 
 interface AuthContextType {
@@ -33,8 +33,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user?.id) {
       localStorage.setItem("userId", user.id);
       console.log("User ID saved to localStorage:", user.id);
+
+      // Load the full user profile from backend immediately after login
+      dispatch(getUserById(user.id));
     } else if (!user) {
       localStorage.removeItem("userId"); // Clean up on logout
+      dispatch(clearSelectedUser());
     }
 
     setAuthLoading(false);
