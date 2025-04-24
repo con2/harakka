@@ -293,7 +293,7 @@ export const ordersSlice = createSlice({
           changes: { status: "cancelled by user" },
         });
 
-        // ALSO update the userOrders array
+        // Also update the userOrders array
         state.userOrders = state.userOrders.map((order) =>
           order.id === action.payload.id
             ? { ...order, status: "cancelled by user" }
