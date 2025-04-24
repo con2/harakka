@@ -10,7 +10,7 @@ import { CreateBookingDto } from "../dto/create-booking.dto";
 export class BookingService {
   constructor(private readonly supabaseService: SupabaseService) {}
 
-  // get all orders
+  // 1. get all orders
   async getAllOrders(userId: string) {
     const supabase = await this.supabaseService.getClientByRole(userId);
 
@@ -19,7 +19,10 @@ export class BookingService {
       order_items (
         *,
         storage_items (
-          translations
+          translations,
+          storage_locations (
+            name
+          )
         )
       )
     `);
@@ -44,7 +47,6 @@ export class BookingService {
             .eq("id", order.user_id)
             .maybeSingle();
 
-          // manual mapping full_name -- to -> name
           if (userData) {
             user = {
               name: userData.full_name,
@@ -53,18 +55,19 @@ export class BookingService {
           }
         }
 
-        // extract item name from JSON
-        const itemWithName =
+        const itemWithNamesAndLocation =
           order.order_items?.map((item) => ({
             ...item,
             item_name:
               item.storage_items?.translations?.en?.item_name ?? "Unknown",
+            location_name:
+              item.storage_items?.storage_locations?.name ?? "Unknown",
           })) ?? [];
 
         return {
           ...order,
           user_profile: user,
-          order_items: itemWithName,
+          order_items: itemWithNamesAndLocation,
         };
       }),
     );
@@ -72,22 +75,26 @@ export class BookingService {
     return ordersWithUserProfiles;
   }
 
-  // get all bookings of a user
+  // 2. get all bookings of a user
   async getUserBookings(userId: string) {
-    // Validate userId is provided and is a valid UUID
     if (!userId || userId === "undefined") {
       throw new BadRequestException("Valid user ID is required");
     }
 
     const supabase = await this.supabaseService.getClientByRole(userId);
-    // const supabase = this.supabaseService.getServiceClient(); // TODO: Try SERVICE client instead of anon for testing
 
-    const { data, error } = await supabase
+    const { data: orders, error } = await supabase
       .from("orders")
       .select(
         `
         *,
-        order_items (*)
+        order_items (
+          *,
+          storage_items (
+            translations,
+            location_id
+          )
+        )
       `,
       )
       .eq("user_id", userId)
@@ -100,10 +107,53 @@ export class BookingService {
       throw new Error(`Failed to fetch user bookings: ${error.message}`);
     }
 
-    return data || [];
+    if (!orders || orders.length === 0) {
+      return [];
+    }
+
+    // Get unique location_ids from all order_items
+    const locationIds = Array.from(
+      new Set(
+        orders
+          .flatMap((order) => order.order_items ?? [])
+          .map((item) => item.storage_items?.location_id)
+          .filter((id): id is string => !!id),
+      ),
+    );
+
+    // Load all relevant storage locations
+    const { data: locationsData, error: locationError } = await supabase
+      .from("storage_locations")
+      .select("id, name")
+      .in("id", locationIds);
+
+    if (locationError) {
+      console.error(
+        `Supabase error loading locations: ${JSON.stringify(locationError)}`,
+      );
+      throw new Error(`Failed to fetch locations: ${locationError.message}`);
+    }
+
+    const locationMap = new Map(
+      (locationsData ?? []).map((loc) => [loc.id, loc.name]),
+    );
+
+    // Add location_name and item_name to each item
+    const ordersWithNames = orders.map((order) => ({
+      ...order,
+      order_items: order.order_items?.map((item) => ({
+        ...item,
+        item_name: item.storage_items?.translations?.en?.item_name ?? "Unknown",
+        location_name:
+          locationMap.get(item.storage_items?.location_id) ??
+          "Unknown Location",
+      })),
+    }));
+
+    return ordersWithNames;
   }
 
-  // create a Booking
+  // 3. create a Booking
   async createBooking(dto: CreateBookingDto) {
     const userId = dto.user_id;
 
