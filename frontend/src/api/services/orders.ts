@@ -2,6 +2,7 @@ import { api } from "../axios";
 import { BookingItem, BookingOrder } from "../../types/orders";
 
 interface CreateOrderDto {
+  user_id: string;
   items: {
     item_id: string;
     quantity: number;
@@ -13,7 +14,14 @@ interface CreateOrderDto {
 export const ordersApi = {
   // Create a new booking/order from cart items
   createOrder: async (orderData: CreateOrderDto) => {
-    const response = await api.post("/bookings", orderData);
+    const userId = orderData.user_id;
+    console.log("Creating order with user ID:", userId);
+
+    const response = await api.post("/bookings", orderData, {
+      headers: {
+        "x-user-id": userId || "",
+      },
+    });
     return response;
   },
 

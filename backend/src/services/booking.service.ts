@@ -12,7 +12,8 @@ export class BookingService {
 
   // 1. get all orders
   async getAllOrders(userId: string) {
-    const supabase = await this.supabaseService.getClientByRole(userId);
+    //const supabase = await this.supabaseService.getClientByRole(userId);
+    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
     const { data: orders, error } = await supabase.from("orders").select(`
       *,
@@ -77,11 +78,12 @@ export class BookingService {
 
   // 2. get all bookings of a user
   async getUserBookings(userId: string) {
+    //const supabase = await this.supabaseService.getClientByRole(userId);
+    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
+
     if (!userId || userId === "undefined") {
       throw new BadRequestException("Valid user ID is required");
     }
-
-    const supabase = await this.supabaseService.getClientByRole(userId);
 
     const { data: orders, error } = await supabase
       .from("orders")
@@ -155,22 +157,13 @@ export class BookingService {
 
   // 3. create a Booking
   async createBooking(dto: CreateBookingDto) {
+    //const supabase = await this.supabaseService.getClientByRole(userId);
+    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
+
     const userId = dto.user_id;
 
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
-    }
-
-    const supabase = await this.supabaseService.getClientByRole(userId);
-
-    const { data: user, error: userError } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
-    if (userError || !user) {
-      throw new BadRequestException("User not found");
     }
 
     const unavailableItems: string[] = [];
@@ -180,7 +173,7 @@ export class BookingService {
       const start = new Date(item.start_date);
       const end = new Date(item.end_date);
 
-      // get all overlapping orders and their quantities
+      // get all overlapping orders and their quantities - USE SERVICE CLIENT
       const { data: overlappingOrders, error: overlapError } = await supabase
         .from("order_items")
         .select("quantity")
@@ -197,7 +190,7 @@ export class BookingService {
       const alreadyBookedQuantity =
         overlappingOrders?.reduce((sum, o) => sum + (o.quantity ?? 0), 0) ?? 0;
 
-      // get max availability from storage_items
+      // get max availability from storage_items - USE SERVICE CLIENT
       const { data: itemData, error: itemError } = await supabase
         .from("storage_items")
         .select("items_number_total")
@@ -225,27 +218,24 @@ export class BookingService {
         .padStart(4, "0");
       return `ORD-${datePart}-${randomPart}`;
     };
-    // TODO: invoice number - should be created here?
 
     // insert new order
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
-        user_id: user.id,
+        user_id: userId,
         status: "pending",
         order_number: generateOrderNumber(),
-        // total_amount: dto.total_amount,
-        // final amount: dto.total_amount,
-        // payment_status are now nullable in database (maybe turn this into not null later again)
       })
       .select()
       .single();
 
     if (orderError || !order) {
+      console.error("Order creation error:", orderError);
       throw new BadRequestException("Could not create order");
     }
 
-    // Insert order items and calculate days
+    // Insert order items and calculate days - USE SERVICE CLIENT
     for (const item of dto.items) {
       const start = new Date(item.start_date);
       const end = new Date(item.end_date);
@@ -253,7 +243,7 @@ export class BookingService {
         (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
       );
 
-      // get location_id from storage_items
+      // get location_id from storage_items - USE SERVICE CLIENT
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
         .select("location_id")
@@ -291,7 +281,8 @@ export class BookingService {
 
   // 4. confirm a Booking
   async confirmBooking(orderId: string, userId: string) {
-    const supabase = await this.supabaseService.getClientByRole(userId);
+    //const supabase = await this.supabaseService.getClientByRole(userId);
+    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
     // Get all the order items
     const { data: items, error: itemsError } = await supabase
@@ -364,7 +355,8 @@ export class BookingService {
 
   // 5. update a Booking (Admin/SuperVera OR Owner)
   async updateBooking(orderId: string, userId: string, updatedItems: any[]) {
-    const supabase = await this.supabaseService.getClientByRole(userId);
+    //const supabase = await this.supabaseService.getClientByRole(userId);
+    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
     const { data: order } = await supabase
       .from("orders")
@@ -438,7 +430,8 @@ export class BookingService {
 
   // 6. reject a Booking (Admin/SuperVera only)
   async rejectBooking(orderId: string, userId: string) {
-    const supabase = await this.supabaseService.getClientByRole(userId);
+    //const supabase = await this.supabaseService.getClientByRole(userId);
+    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
@@ -470,7 +463,8 @@ export class BookingService {
 
   // 7. cancel a Booking (User if not confirmed, Admins/SuperVera always)
   async cancelBooking(orderId: string, userId: string) {
-    const supabase = await this.supabaseService.getClientByRole(userId);
+    //const supabase = await this.supabaseService.getClientByRole(userId);
+    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
     const { data: order } = await supabase
       .from("orders")
@@ -524,7 +518,8 @@ export class BookingService {
 
   // 8. delete a Booking and mark it as deleted
   async deleteBooking(orderId: string, userId: string) {
-    const supabase = await this.supabaseService.getClientByRole(userId);
+    //const supabase = await this.supabaseService.getClientByRole(userId);
+    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
     // check if order is in database
     const { data: order } = await supabase
@@ -568,7 +563,8 @@ export class BookingService {
 
   // 9. return items (when items are brought back)
   async returnItems(orderId: string, userId: string) {
-    const supabase = await this.supabaseService.getClientByRole(userId);
+    //const supabase = await this.supabaseService.getClientByRole(userId);
+    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
     const { data: items } = await supabase
       .from("order_items")
@@ -596,7 +592,8 @@ export class BookingService {
     endDate: string,
     userId: string,
   ) {
-    const supabase = await this.supabaseService.getClientByRole(userId);
+    //const supabase = await this.supabaseService.getClientByRole(userId);
+    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
     // Sum all overlapping bookings
     const { data: overlappingOrders, error: overlapError } = await supabase
