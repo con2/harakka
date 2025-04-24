@@ -20,14 +20,14 @@ export class BookingController {
   // gets all bookings - use case: admin
   @Get()
   async getAll(@Req() req: any) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.getAllOrders(userId);
   }
 
   // gets the bookings of the logged-in user
   @Get("my")
   async getOwnBookings(@Req() req: any) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.getUserBookings(userId);
   }
 
@@ -49,7 +49,8 @@ export class BookingController {
   // confirms a booking
   @Put(":id/confirm") // admin confirms booking
   async confirm(@Param("id") id: string, @Req() req: any) {
-    return this.bookingService.confirmBooking(id, req.user?.id);
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
+    return this.bookingService.confirmBooking(id, userId);
   }
 
   // updates a booking
@@ -59,21 +60,20 @@ export class BookingController {
     @Body("items") items: any[],
     @Req() req: any,
   ) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.updateBooking(id, userId, items);
   }
 
   // rejects a booking by admin
   @Put(":id/reject")
   async reject(@Param("id") id: string, @Req() req: any) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.rejectBooking(id, userId);
   }
 
   // cancels own booking by user or admin cancels any booking
   @Delete(":id/cancel")
   async cancel(@Param("id") id: string, @Req() req: any) {
-    // const userId = req.user?.id;
     const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.cancelBooking(id, userId);
   }
@@ -81,7 +81,6 @@ export class BookingController {
   // admin deletes booking
   @Delete(":id/delete")
   async delete(@Param("id") id: string, @Req() req: any) {
-    // const userId = req.user?.id;
     const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.deleteBooking(id, userId);
   }
@@ -89,7 +88,8 @@ export class BookingController {
   // admin returns items
   @Post(":id/return")
   async returnItems(@Param("id") id: string, @Req() req: any) {
-    return this.bookingService.returnItems(id, req.user?.id);
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
+    return this.bookingService.returnItems(id, userId);
   }
 
   // checks availability of items by date range
