@@ -94,7 +94,7 @@ export const getUserOrders = createAsyncThunk<BookingOrder[], string>(
 );
 
 // Get all orders (admin) thunk
-export const getAllOrders = createApiThunk<BookingOrder[], void>(
+export const getAllOrders = createApiThunk<BookingOrder[], string>(
   "orders/getAllOrders",
   ordersApi.getAllOrders,
   "Failed to fetch all orders",
