@@ -10,16 +10,19 @@ import { CreateBookingDto } from "../dto/create-booking.dto";
 export class BookingService {
   constructor(private readonly supabaseService: SupabaseService) {}
 
-  // get all orders
-  async getAllOrders() {
-    const supabase = this.supabaseService.getServiceClient();
+  // 1. get all orders
+  async getAllOrders(userId: string) {
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     const { data: orders, error } = await supabase.from("orders").select(`
       *,
       order_items (
         *,
         storage_items (
-          translations
+          translations,
+          storage_locations (
+            name
+          )
         )
       )
     `);
@@ -44,7 +47,6 @@ export class BookingService {
             .eq("id", order.user_id)
             .maybeSingle();
 
-          // manuelles Mapping von full_name -> name
           if (userData) {
             user = {
               name: userData.full_name,
@@ -53,18 +55,19 @@ export class BookingService {
           }
         }
 
-        // extract item name from JSON
-        const itemWithName =
+        const itemWithNamesAndLocation =
           order.order_items?.map((item) => ({
             ...item,
             item_name:
               item.storage_items?.translations?.en?.item_name ?? "Unknown",
+            location_name:
+              item.storage_items?.storage_locations?.name ?? "Unknown",
           })) ?? [];
 
         return {
           ...order,
           user_profile: user,
-          order_items: itemWithName,
+          order_items: itemWithNamesAndLocation,
         };
       }),
     );
@@ -72,21 +75,26 @@ export class BookingService {
     return ordersWithUserProfiles;
   }
 
-  // get all bookings of a user
+  // 2. get all bookings of a user
   async getUserBookings(userId: string) {
-    // Validate userId is provided and is a valid UUID
     if (!userId || userId === "undefined") {
       throw new BadRequestException("Valid user ID is required");
     }
 
-    const supabase = this.supabaseService.getServiceClient(); // TODO: Try SERVICE client instead of anon for testing
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
-    const { data, error } = await supabase
+    const { data: orders, error } = await supabase
       .from("orders")
       .select(
         `
         *,
-        order_items (*)
+        order_items (
+          *,
+          storage_items (
+            translations,
+            location_id
+          )
+        )
       `,
       )
       .eq("user_id", userId)
@@ -99,17 +107,62 @@ export class BookingService {
       throw new Error(`Failed to fetch user bookings: ${error.message}`);
     }
 
-    return data || [];
+    if (!orders || orders.length === 0) {
+      return [];
+    }
+
+    // Get unique location_ids from all order_items
+    const locationIds = Array.from(
+      new Set(
+        orders
+          .flatMap((order) => order.order_items ?? [])
+          .map((item) => item.storage_items?.location_id)
+          .filter((id): id is string => !!id),
+      ),
+    );
+
+    // Load all relevant storage locations
+    const { data: locationsData, error: locationError } = await supabase
+      .from("storage_locations")
+      .select("id, name")
+      .in("id", locationIds);
+
+    if (locationError) {
+      console.error(
+        `Supabase error loading locations: ${JSON.stringify(locationError)}`,
+      );
+      throw new Error(`Failed to fetch locations: ${locationError.message}`);
+    }
+
+    const locationMap = new Map(
+      (locationsData ?? []).map((loc) => [loc.id, loc.name]),
+    );
+
+    // Add location_name and item_name to each item
+    const ordersWithNames = orders.map((order) => ({
+      ...order,
+      order_items: order.order_items?.map((item) => ({
+        ...item,
+        item_name: item.storage_items?.translations?.en?.item_name ?? "Unknown",
+        location_name:
+          locationMap.get(item.storage_items?.location_id) ??
+          "Unknown Location",
+      })),
+    }));
+
+    return ordersWithNames;
   }
 
-  // create a Booking
+  // 3. create a Booking
   async createBooking(dto: CreateBookingDto) {
-    const supabase = this.supabaseService.getServiceClient();
     const userId = dto.user_id;
 
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
     }
+
+    const supabase = await this.supabaseService.getClientByRole(userId);
+
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
       .select("*")
@@ -234,11 +287,11 @@ export class BookingService {
     }
 
     return order;
-  } // end of createBooking
+  }
 
-  // confirm a Booking
-  async confirmBooking(orderId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+  // 4. confirm a Booking
+  async confirmBooking(orderId: string, userId: string) {
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     // Get all the order items
     const { data: items, error: itemsError } = await supabase
@@ -309,9 +362,9 @@ export class BookingService {
     return { message: "Booking confirmed" };
   }
 
-  // update a Booking (Admin/SuperVera OR Owner)
+  // 5. update a Booking (Admin/SuperVera OR Owner)
   async updateBooking(orderId: string, userId: string, updatedItems: any[]) {
-    const supabase = this.supabaseService.getServiceClient();
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     const { data: order } = await supabase
       .from("orders")
@@ -327,7 +380,21 @@ export class BookingService {
       .eq("id", userId)
       .single();
 
+    if (!user) {
+      throw new BadRequestException("User not found");
+    }
+
     const isAdmin = user?.role === "admin" || user?.role === "superVera";
+    if (
+      !(
+        user.role === "admin" ||
+        userId === order.user_id ||
+        user.role === "service_role"
+      )
+    ) {
+      throw new ForbiddenException("Not allowed to update this booking");
+    }
+
     const isOwner = order.user_id === userId;
 
     if (!isAdmin && !isOwner) {
@@ -369,63 +436,95 @@ export class BookingService {
     return { message: "Booking updated" };
   }
 
-  // reject a Booking (Admin/SuperVera only)
+  // 6. reject a Booking (Admin/SuperVera only)
   async rejectBooking(orderId: string, userId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
-    const { data: user } = await supabase
+    const { data: user, error: userError } = await supabase
       .from("user_profiles")
       .select("role")
       .eq("id", userId)
       .single();
 
-    if (!user || (user.role !== "admin" && user.role !== "superVera")) {
+    if (!user) {
+      throw new ForbiddenException("User not found");
+    }
+
+    const role = user.role?.trim();
+
+    if (role !== "admin" && role !== "superVera") {
       throw new ForbiddenException("Only admins can reject bookings");
     }
 
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from("orders")
       .update({ status: "rejected" })
       .eq("id", orderId);
 
-    if (error) {
+    if (updateError) {
+      console.error("Failed to reject booking:", updateError);
       throw new BadRequestException("Could not reject the booking");
     }
-
     return { message: "Booking rejected" };
   }
 
-  // user cancels own Booking
-  async cancelOwnBooking(orderId: string, userId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+  // 7. cancel a Booking (User if not confirmed, Admins/SuperVera always)
+  async cancelBooking(orderId: string, userId: string) {
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     const { data: order } = await supabase
       .from("orders")
       .select("user_id")
       .eq("id", orderId)
-      .single();
+      .single<{
+        user_id: string;
+        status: string;
+      }>();
 
     if (!order) throw new BadRequestException("Order not found");
 
-    if (order.user_id !== userId) {
-      throw new ForbiddenException("You can only cancel your own bookings");
+    const { data: userProfile, error: userProfileError } = await supabase
+      .from("user_profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    if (userProfileError || !userProfile) {
+      throw new BadRequestException("User profile not found");
+    }
+
+    const isAdmin =
+      userProfile.role === "admin" || userProfile.role === "superVera";
+    const isOwner = order.user_id === userId;
+
+    if (!isAdmin) {
+      if (!isOwner) {
+        throw new ForbiddenException("You can only cancel your own bookings");
+      }
+      if (order.status === "confirmed") {
+        throw new ForbiddenException(
+          "You can't cancel a booking that has already been confirmed",
+        );
+      }
     }
 
     const { error } = await supabase
       .from("orders")
-      .update({ status: "cancelled by user" })
+      .update({ status: isAdmin ? "cancelled by admin" : "cancelled by user" })
       .eq("id", orderId);
 
     if (error) {
       throw new BadRequestException("Could not cancel the booking");
     }
 
-    return { message: "Booking cancelled by user" };
+    return {
+      message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
+    };
   }
 
-  // delete a Booking and mark it as deleted
+  // 8. delete a Booking and mark it as deleted
   async deleteBooking(orderId: string, userId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     // check if order is in database
     const { data: order } = await supabase
@@ -436,13 +535,18 @@ export class BookingService {
 
     if (!order) throw new BadRequestException("Order not found");
 
-    const { data: user } = await supabase
+    const { data: userProfile, error: userProfileError } = await supabase
       .from("user_profiles")
       .select("role")
       .eq("id", userId)
       .single();
 
-    const isAdmin = user?.role === "admin" || user?.role === "superVera";
+    if (userProfileError || !userProfile) {
+      throw new BadRequestException("User profile not found");
+    }
+
+    const isAdmin =
+      userProfile.role === "admin" || userProfile.role === "superVera";
 
     if (!isAdmin) {
       throw new ForbiddenException(
@@ -462,9 +566,9 @@ export class BookingService {
     return { message: "Booking deleted" };
   }
 
-  // return items (when items are brought back)
-  async returnItems(orderId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+  // 9. return items (when items are brought back)
+  async returnItems(orderId: string, userId: string) {
+    const supabase = await this.supabaseService.getClientByRole(userId);
 
     const { data: items } = await supabase
       .from("order_items")
@@ -483,6 +587,54 @@ export class BookingService {
     }
 
     return { message: "Items returned successfully" };
+  }
+
+  // 10. check availability of item by date range
+  async checkAvailability(
+    itemId: string,
+    startDate: string,
+    endDate: string,
+    userId: string,
+  ) {
+    const supabase = await this.supabaseService.getClientByRole(userId);
+
+    // Sum all overlapping bookings
+    const { data: overlappingOrders, error: overlapError } = await supabase
+      .from("order_items")
+      .select("quantity")
+      .eq("item_id", itemId)
+      .or(`and(start_date.lte.${endDate},end_date.gte.${startDate})`);
+
+    if (overlapError) {
+      throw new BadRequestException("Error checking overlapping bookings");
+    }
+
+    const alreadyBookedQuantity =
+      overlappingOrders?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
+      0;
+
+    // Get total quantity of item from storage
+    const { data: itemData, error: itemError } = await supabase
+      .from("storage_items")
+      .select("items_number_total")
+      .eq("id", itemId)
+      .single();
+
+    if (itemError || !itemData) {
+      throw new BadRequestException("Item data not found");
+    }
+
+    const availableQuantity =
+      itemData.items_number_total - alreadyBookedQuantity;
+
+    return {
+      item_id: itemId,
+      availableQuantity,
+      alreadyBookedQuantity,
+      totalQuantity: itemData.items_number_total,
+      startDate,
+      endDate,
+    };
   }
 }
 // This service handles the logic for creating, confirming, rejecting, and cancelling bookings.
