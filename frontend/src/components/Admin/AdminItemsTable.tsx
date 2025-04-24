@@ -114,6 +114,7 @@ const AdminItemsTable = () => {
                 // tagIds: (item.storage_item_tags ?? []).map(tag => tag.id),
               },
             })).unwrap();
+            dispatch(fetchAllItems());
             toast.success(`Item ${checked ? 'activated' : 'deactivated'} successfully`);
           } catch (error) {
             toast.error('Failed to update item status');
@@ -334,11 +335,11 @@ const AdminItemsTable = () => {
                   ? prev.filter(t => t !== tag.id)
                   : [...prev, tag.id]);
               }}
-              className={`px-3 py-1 rounded-2xl text-xs border ${
+              className={`px-3 py-2 rounded-2xl text-xs border ${
                 tagFilter.includes(tag.id) ? 'bg-secondary text-white' : 'border-secondary text-secondary'
               }`}
             >
-              {tag.translations?.fi?.name || tag.translations?.en?.name}
+              {tag.translations?.fi?.name?.toLowerCase() || tag.translations?.en?.name?.toLowerCase()}
             </button>
           ))}
         </div>
@@ -348,7 +349,7 @@ const AdminItemsTable = () => {
             setStatusFilter('all');
             setTagFilter([]);
           }}
-          className="ml-2 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+          className="ml-4 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
         >
           Clear Filters
         </Button>
