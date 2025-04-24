@@ -20,11 +20,20 @@ export const api = axios.create({
   },
 });
 
+// Centralized interceptor for authentication and user ID
 api.interceptors.request.use(async (config) => {
+  // Add auth token to all requests
   const token = await getAuthToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // Add user ID from Redux store or localStorage to all requests
+  const userId = localStorage.getItem("userId");
+  if (userId) {
+    config.headers["x-user-id"] = userId;
+  }
+
   return config;
 });
 
