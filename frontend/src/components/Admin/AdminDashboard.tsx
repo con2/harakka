@@ -10,11 +10,14 @@ import { DataTable } from "../ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
 import { LoaderCircle, MoveRight, Plus } from "lucide-react";
+import { selectAllOrders } from "@/store/slices/ordersSlice";
+import { Badge } from "../ui/badge";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
   const users = useAppSelector(selectAllUsers);
   const loading = useAppSelector(selectLoading);
+  const orders = useAppSelector(selectAllOrders);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,6 +26,105 @@ const AdminDashboard = () => {
     }
   }, [dispatch, users.length]);
 
+  useEffect(() => {
+    if (orders.length === 0) {
+      dispatch(fetchAllUsers());
+    }
+  }, [dispatch, orders.length]);
+
+  const StatusBadge = ({ status }: { status?: string }) => {
+    if (!status) return <Badge variant="outline">Unknown</Badge>;
+  
+    switch (status) {
+      case "pending":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-yellow-100 text-yellow-800 border-yellow-300"
+          >
+            Pending
+          </Badge>
+        );
+      case "confirmed":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-green-100 text-green-800 border-green-300"
+          >
+            Confirmed
+          </Badge>
+        );
+      case "cancelled":
+      case "cancelled by user":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 border-red-300"
+          >
+            Cancelled
+          </Badge>
+        );
+      case "rejected":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 border-red-300"
+          >
+            Rejected
+          </Badge>
+        );
+      case "completed":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-blue-100 text-blue-800 border-blue-300"
+          >
+            Completed
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };  
+
+  // Define columns for the DataTable
+  // Orders table
+  const ordersColumns: ColumnDef<any>[] = [
+    {
+      accessorKey: "order_number",
+      header: "Order #",
+    },
+    {
+      accessorKey: "user_profile.name",
+      header: "Customer",
+      cell: ({ row }) => (
+        <div>
+          <div>{row.original.user_profile?.name || "Unknown"}</div>
+          <div className="text-xs text-gray-500">
+            {row.original.user_profile?.email}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    },
+    {
+      accessorKey: "created_at",
+      header: "Date",
+      cell: ({ row }) => {
+        const date = new Date(row.original.created_at);
+        return date.toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        });
+      },
+    },
+  ];  
+  // Users table
   const columns: ColumnDef<any>[] = [
     { accessorKey: "full_name", header: "Name" },
     { accessorKey: "phone", header: "Phone" },
@@ -46,7 +148,7 @@ const AdminDashboard = () => {
         <h2>Recent Orders</h2>
         {loading && <p><LoaderCircle className="animate-spin" /></p>}
         <div className="w-full mx-auto">
-          <DataTable columns={columns} data={regularUsers} />
+          <DataTable columns={ordersColumns} data={orders.slice(0,5)} />
         </div>
         <div className="flex items-center justify-center mt-4">
           <Button
