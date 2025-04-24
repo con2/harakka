@@ -287,9 +287,9 @@ export class BookingService {
     }
 
     return order;
-  } // end of createBooking
+  }
 
-  // confirm a Booking
+  // 4. confirm a Booking
   async confirmBooking(orderId: string, userId: string) {
     const supabase = await this.supabaseService.getClientByRole(userId);
 
@@ -362,7 +362,7 @@ export class BookingService {
     return { message: "Booking confirmed" };
   }
 
-  // update a Booking (Admin/SuperVera OR Owner)
+  // 5. update a Booking (Admin/SuperVera OR Owner)
   async updateBooking(orderId: string, userId: string, updatedItems: any[]) {
     const supabase = await this.supabaseService.getClientByRole(userId);
 
@@ -379,12 +379,10 @@ export class BookingService {
       .select("role")
       .eq("id", userId)
       .single();
-    // there is no user: console log: user=null
-    if (!user) {
-      throw new BadRequestException("User not found"); // this is where the request fails
-    }
 
-    // const isAdmin = user?.role === "admin" || user?.role === "superVera";
+    if (!user) {
+      throw new BadRequestException("User not found");
+    }
 
     const isAdmin = user?.role === "admin" || user?.role === "superVera";
     if (
@@ -438,7 +436,7 @@ export class BookingService {
     return { message: "Booking updated" };
   }
 
-  // reject a Booking (Admin/SuperVera only)
+  // 6. reject a Booking (Admin/SuperVera only)
   async rejectBooking(orderId: string, userId: string) {
     const supabase = await this.supabaseService.getClientByRole(userId);
 
@@ -464,7 +462,7 @@ export class BookingService {
     return { message: "Booking rejected" };
   }
 
-  // cancel a Booking (User if not confirmed, Admins/SuperVera always)
+  // 7. cancel a Booking (User if not confirmed, Admins/SuperVera always)
   async cancelBooking(orderId: string, userId: string) {
     const supabase = await this.supabaseService.getClientByRole(userId);
 
@@ -518,7 +516,7 @@ export class BookingService {
     };
   }
 
-  // delete a Booking and mark it as deleted
+  // 8. delete a Booking and mark it as deleted
   async deleteBooking(orderId: string, userId: string) {
     const supabase = await this.supabaseService.getClientByRole(userId);
 
@@ -562,7 +560,7 @@ export class BookingService {
     return { message: "Booking deleted" };
   }
 
-  // return items (when items are brought back)
+  // 9. return items (when items are brought back)
   async returnItems(orderId: string, userId: string) {
     const supabase = await this.supabaseService.getClientByRole(userId);
 
@@ -585,7 +583,7 @@ export class BookingService {
     return { message: "Items returned successfully" };
   }
 
-  // check availability of item by date range
+  // 10. check availability of item by date range
   async checkAvailability(
     itemId: string,
     startDate: string,
