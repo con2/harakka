@@ -9,6 +9,7 @@ import {
   Req,
   Query,
   UnauthorizedException,
+  BadRequestException,
 } from "@nestjs/common";
 import { BookingService } from "../services/booking.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
@@ -44,6 +45,9 @@ export class BookingController {
   @Post()
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: any) {
     const userId = req.headers["x-user-id"] ?? req.user?.id;
+    if (!userId) {
+      throw new BadRequestException("No userId found: user_id is required");
+    }
     return this.bookingService.createBooking({ ...dto, user_id: userId });
   }
 
