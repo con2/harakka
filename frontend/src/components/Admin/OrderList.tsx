@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { selectSelectedUser } from "@/store/slices/usersSlice";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -38,6 +39,7 @@ const OrderList = () => {
   const loading = useAppSelector(selectOrdersLoading);
   const error = useAppSelector(selectOrdersError);
   const ordersLoadedRef = useRef(false);
+  const user = useAppSelector(selectSelectedUser);
   const { authLoading } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<BookingOrder | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -46,13 +48,15 @@ const OrderList = () => {
     // Only fetch orders once when the component mounts and auth is ready
     if (
       !authLoading &&
+      user &&
+      user.id &&
       (!orders || orders.length === 0) &&
       !ordersLoadedRef.current
     ) {
-      dispatch(getAllOrders());
+      dispatch(getAllOrders(user.id));
       ordersLoadedRef.current = true;
     }
-  }, [authLoading, dispatch]);
+  }, [authLoading, dispatch, user]);
 
   const formatDate = (dateString?: string): string => {
     if (!dateString) return "N/A";
@@ -133,7 +137,9 @@ const OrderList = () => {
                   },
                 });
                 // Refresh orders list after successful deletion
-                dispatch(getAllOrders());
+                if (user && user.id) {
+                  dispatch(getAllOrders(user.id));
+                }
               } catch (error) {
                 console.error("Error deleting order:", error);
               }
@@ -338,7 +344,7 @@ const OrderList = () => {
           <h1 className="text-2xl font-bold">Order Management</h1>
 
           <Button
-            onClick={() => dispatch(getAllOrders())}
+            onClick={() => user && user?.id && dispatch(getAllOrders(user.id))}
             variant="outline"
             className="ml-auto mr-2"
           >
