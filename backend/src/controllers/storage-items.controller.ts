@@ -22,22 +22,12 @@ export class StorageItemsController {
     }
 
     @Put(':id')
-    async update (@Param('id') id: string, @Body() item: any){
-        return this.storageItemsService.updateItem(id, item); // PUT /storage-items/:id (update item)
-    }
-
-    @Delete(':id')
-    async delete(@Param('id') id: string): Promise<any> {
-        try {
-        const result = await this.storageItemsService.deleteItem(id);
-        return result;  // Return the result, which will include the success status and ID
-        } catch (error) {
-        return { success: false, message: error.message };
+        async update (@Param('id') id: string, @Body() item: any){
+            return this.storageItemsService.updateItem(id, item); // PUT /storage-items/:id (update item)
         }
-    }
     
-    @Get('by-tag/:tagId')
-    async getItemsByTag(@Param('tagId') tagId: string) {
-        return this.storageItemsService.getItemsByTag(tagId);
-    }
+    @Delete(':id')
+        async delete(@Param('id') id: string){
+            return this.storageItemsService.deleteItem(id); // DELETE /storage-items/:id (delete item)
+        }
 }

@@ -1,10 +1,7 @@
 import { Session, User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../config/supabase";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAppDispatch } from "@/store/hooks";
-import { clearSelectedUser } from "@/store/slices/usersSlice";
-import { LoaderCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
   session: Session | null;
@@ -19,10 +16,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-
   const navigate = useNavigate();
-  const location = useLocation();
-  const dispatch = useAppDispatch();
 
   const handleSessionUpdate = (session: Session | null) => {
     const user = session?.user ?? null;
@@ -45,34 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (!user) {
-      dispatch(clearSelectedUser());
-    }
-
-    if (user && location.pathname === "/login") {
-      navigate("/"); 
-    }
-  }, [user, location.pathname, dispatch, navigate]);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleSessionUpdate(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      handleSessionUpdate(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   const signOut = async () => {
     await supabase.auth.signOut();
-    // No need to dispatch clearSelectedUser here directly,
-    // since handleSessionUpdate will run after auth change
     navigate("/");
   };
 
@@ -83,19 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
   };
 
-  // return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-  return (
-    <AuthContext.Provider value={value}>
-      {authLoading ? (
-        <div className="flex justify-center items-center h-screen">
-          <LoaderCircle className="animate-spin w-6 h-6" />
-        </div>
-      ) : (
-        children
-      )}
-    </AuthContext.Provider>
-  );
-  
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

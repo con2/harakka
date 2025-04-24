@@ -4,8 +4,6 @@ import {
   getCoreRowModel,
   useReactTable,
   getPaginationRowModel,
-  getSortedRowModel,
-  SortingState
 } from "@tanstack/react-table"
 
 import {
@@ -18,8 +16,6 @@ import {
 } from "@/components/ui/table"
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react"
-import { ArrowDown, ArrowUp } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -30,15 +26,9 @@ export function PaginatedDataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
   const table = useReactTable({
     data,
     columns,
-    state: {
-      sorting,
-    },
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
@@ -57,26 +47,14 @@ export function PaginatedDataTable<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const isSorted = header.column.getIsSorted();
                   return (
-                    <TableHead
-                    onClick={header.column.getToggleSortingHandler()}
-                    className="cursor-pointer select-none hover:text-highlight2 transition-colors items-center gap-1"
-                    key={header.id}
-                    >
-                      <div className="flex items-center gap-1">
-                        <span>
-                          {flexRender(
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
                             header.column.columnDef.header,
                             header.getContext()
                           )}
-                        </span>
-                        {isSorted === "asc" ? (
-                        <ArrowUp className="w-3 h-3 text-muted-foreground" />
-                      ) : isSorted === "desc" ? (
-                        <ArrowDown className="w-3 h-3 text-muted-foreground" />
-                      ) : null}
-                    </div>
                     </TableHead>
                   )
                 })}
