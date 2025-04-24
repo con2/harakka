@@ -36,16 +36,10 @@ const AdminItemsTable = () => {
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleOpenAssignTagsModal = (itemId: string) => {
-    setCurrentItemId(itemId);
-    setAssignTagsModalOpen(true);
-  };
-
   const handleCloseAssignTagsModal = () => {
     setAssignTagsModalOpen(false);
     setCurrentItemId(null);
   };
-
 
   const itemsColumns: ColumnDef<Item>[] = [
     // {
@@ -71,7 +65,7 @@ const AdminItemsTable = () => {
     //   cell: ({ row }) => (
     //     <div className="flex items-center gap-1 text-sm text-muted-foreground">
     //       <Box className="h-4 w-4" />
-    //       {row.original.location_id}
+    //       {row.original.location_id_name || 'N/A'}
     //     </div>
     //   ),
     // },
@@ -111,7 +105,6 @@ const AdminItemsTable = () => {
               id: item.id,
               data: {
                 is_active: checked,
-                // tagIds: (item.storage_item_tags ?? []).map(tag => tag.id),
               },
             })).unwrap();
             dispatch(fetchAllItems());
@@ -147,19 +140,7 @@ const AdminItemsTable = () => {
           </div>
         );
       },
-    },   
-    // {
-    //   id: 'manageTags',
-    //   header: 'Manage Tags',
-    //   cell: ({ row }) => (
-    //     <Button 
-    //       className="bg-background rounded-2xl px-6 text-highlight2 border-highlight2 border-1 hover:text-background hover:bg-highlight2"
-    //       onClick={() => handleOpenAssignTagsModal(row.original.id)}
-    //     >
-    //       Edit Tags
-    //     </Button>
-    //   )
-    // },        
+    },      
     {
       id: 'edit',
       header: 'Edit',
