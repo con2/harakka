@@ -6,6 +6,16 @@ import { useAppDispatch } from "@/store/hooks";
 import { updateItem } from "@/store/slices/itemsSlice";
 import { Item } from "@/types/item";
 import { toast } from "sonner";
+import { Switch } from '@/components/ui/switch';
+import {
+  fetchAllTags,
+  fetchTagsForItem,
+  assignTagToItem,
+  selectAllTags,
+  selectSelectedTags,
+} from '@/store/slices/tagSlice';
+import { useAppSelector } from '@/store/hooks';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type UpdateItemModalProps = {
   onClose: () => void;
@@ -16,6 +26,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<Item>(initialData);  // Initialize directly from initialData
   const [loading, setLoading] = useState(false);
+  const tags = useAppSelector(selectAllTags);
+  const selectedTags = useAppSelector(selectSelectedTags);
+  const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]);
 
   // Prefill the form with initial data if available
   useEffect(() => {
@@ -23,6 +36,25 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
       setFormData(initialData);  // Set form data directly from initialData
     }
   }, [initialData]);
+
+  useEffect(() => {
+    dispatch(fetchAllTags());
+    dispatch(fetchTagsForItem(formData.id)); // fetch tags for this item
+  }, [dispatch, formData.id]);
+
+  useEffect(() => {
+    if (selectedTags) {
+      setLocalSelectedTags(selectedTags.map(tag => tag.id));
+    }
+  }, [selectedTags]);
+
+  const handleTagToggle = (tagId: string) => {
+    setLocalSelectedTags(prev =>
+      prev.includes(tagId)
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
 
   // Handle changes in input fields
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,20 +84,24 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   // Handle form submission (only for updating)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setLoading(true);
+  
     try {
-      // Call the updateItem action for editing
-      await dispatch(updateItem({ id: formData.id, data: formData })).unwrap();
-      toast.success("Item updated successfully!");
+      // Exclude tags from updateItem payload
+      const { storage_item_tags, ...cleanedData } = formData;
+  
+      await dispatch(updateItem({ id: formData.id, data: cleanedData })).unwrap();
+      await dispatch(assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags })).unwrap();
+  
+      toast.success('Item updated successfully!');
       onClose();
     } catch (error) {
-      console.error(error);  // Log error
-      toast.error("Failed to update item.");
+      console.error(error);
+      toast.error('Failed to update item.');
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -139,6 +175,40 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 required
               />
             </div>
+          </div>
+
+          {/* Tag Selection */}
+          <div>
+            <h3 className="text-lg font-medium">Assign Tags</h3>
+            <div className="flex flex-col space-y-2">
+              {tags.map((tag) => (
+                <label key={tag.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    className="border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
+                    checked={localSelectedTags.includes(tag.id)}
+                    onCheckedChange={() => handleTagToggle(tag.id)}
+                  />
+                  <span>{tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed'}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Active Toggle */}
+          <div className="flex flex-col">
+            <label htmlFor="is_active" className="text-secondary font-medium">
+              Active
+            </label>
+            <Switch
+              id="is_active"
+              checked={formData.is_active}
+              onCheckedChange={(checked: boolean) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  is_active: checked,
+                }))
+              }
+            />
           </div>
 
           {/* Submit Button */}
