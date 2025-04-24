@@ -68,6 +68,16 @@ const ItemsList: React.FC = () => {
       item.translations.en.item_name.toLowerCase().includes(userQuery) ||
       item.translations.en.item_type?.toLowerCase().includes(userQuery) ||
       item.translations.en.item_description?.toLowerCase().includes(userQuery);
+    // Filter by item types
+    const matchesItemTypes =
+    !filters.itemTypes?.length ||
+    filters.itemTypes.includes(item.translations.fi.item_type);
+    // Filter by tags
+    const matchesTags =
+      !filters.tagIds?.length ||
+      (item.storage_item_tags || []).some((tag) =>
+        filters.tagIds.includes(tag.id)
+      );
     // add tags filter here
     // right now the englih tags are not found
     return (
@@ -75,7 +85,9 @@ const ItemsList: React.FC = () => {
       isActive &&
       isWithinAvailabilityRange &&
       matchesRating &&
-      matchesSearch
+      matchesSearch &&
+      matchesItemTypes &&
+      matchesTags
     );
   });
 
