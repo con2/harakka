@@ -440,25 +440,31 @@ export class BookingService {
   async rejectBooking(orderId: string, userId: string) {
     const supabase = await this.supabaseService.getClientByRole(userId);
 
-    const { data: user } = await supabase
+    const { data: user, error: userError } = await supabase
       .from("user_profiles")
       .select("role")
       .eq("id", userId)
       .single();
 
-    if (!user || (user.role !== "admin" && user.role !== "superVera")) {
+    if (!user) {
+      throw new ForbiddenException("User not found");
+    }
+
+    const role = user.role?.trim();
+
+    if (role !== "admin" && role !== "superVera") {
       throw new ForbiddenException("Only admins can reject bookings");
     }
 
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from("orders")
       .update({ status: "rejected" })
       .eq("id", orderId);
 
-    if (error) {
+    if (updateError) {
+      console.error("Failed to reject booking:", updateError);
       throw new BadRequestException("Could not reject the booking");
     }
-
     return { message: "Booking rejected" };
   }
 
