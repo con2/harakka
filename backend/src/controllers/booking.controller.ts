@@ -66,8 +66,7 @@ export class BookingController {
   // rejects a booking by admin
   @Put(":id/reject")
   async reject(@Param("id") id: string, @Req() req: any) {
-    // const userId = req.user?.id;
-    const userId = req.headers["x-user-id"];
+    const userId = req.user?.id;
     return this.bookingService.rejectBooking(id, userId);
   }
 
