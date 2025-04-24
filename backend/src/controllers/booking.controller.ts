@@ -43,13 +43,20 @@ export class BookingController {
   // creates a booking
   @Post()
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: any) {
-    return this.bookingService.createBooking(dto);
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
+    return this.bookingService.createBooking({ ...dto, user_id: userId });
   }
 
   // confirms a booking
   @Put(":id/confirm") // admin confirms booking
   async confirm(@Param("id") id: string, @Req() req: any) {
+    console.log("Headers:", req.headers);
+    console.log("x-user-id header:", req.headers["x-user-id"]);
+    console.log("user.id:", req.user?.id);
+
     const userId = req.headers["x-user-id"] ?? req.user?.id;
+    console.log("Final userId:", userId);
+
     return this.bookingService.confirmBooking(id, userId);
   }
 
@@ -100,11 +107,12 @@ export class BookingController {
     @Query("end_date") endDate: string,
     @Req() req: any,
   ) {
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.checkAvailability(
       itemId,
       startDate,
       endDate,
-      req.user?.id,
+      userId, //TODO: check if userId is needed here
     );
   }
 }
