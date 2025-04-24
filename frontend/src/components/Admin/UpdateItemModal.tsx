@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAppDispatch } from "@/store/hooks";
-import { updateItem } from "@/store/slices/itemsSlice";
+import { fetchAllItems, updateItem } from "@/store/slices/itemsSlice";
 import { Item } from "@/types/item";
 import { toast } from "sonner";
 import { Switch } from '@/components/ui/switch';
@@ -92,7 +92,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   
       await dispatch(updateItem({ id: formData.id, data: cleanedData })).unwrap();
       await dispatch(assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags })).unwrap();
-  
+      dispatch(fetchAllItems());
       toast.success('Item updated successfully!');
       onClose();
     } catch (error) {

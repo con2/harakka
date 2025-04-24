@@ -114,6 +114,7 @@ const AdminItemsTable = () => {
                 // tagIds: (item.storage_item_tags ?? []).map(tag => tag.id),
               },
             })).unwrap();
+            dispatch(fetchAllItems());
             toast.success(`Item ${checked ? 'activated' : 'deactivated'} successfully`);
           } catch (error) {
             toast.error('Failed to update item status');
