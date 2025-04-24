@@ -19,6 +19,7 @@ export const Navigation = () => {
   const cartItemsCount = useAppSelector(selectCartItemsCount);
 
   const isAdmin = ["admin", "superVera"].includes(selectedUser?.role ?? "");
+  const isLoggedIn = !!selectedUser;
 
   return (
     <nav className="shadow-sm">
@@ -34,13 +35,17 @@ export const Navigation = () => {
                   <Link to="/">Home</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link to="/orders" className="flex items-center gap-1">
-                    My orders
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
+
+              {/* Show My orders link only for logged in users */}
+              {isLoggedIn && (
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link to="/orders" className="flex items-center gap-1">
+                      My orders
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              )}
 
               {/* Show Admin Panel link only for admins/superVera */}
               {isAdmin && (
