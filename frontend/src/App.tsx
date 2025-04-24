@@ -22,6 +22,7 @@ import AuthCallback from "./components/Auth/AuthCallback";
 import PasswordReset from "./components/Auth/PasswordReset";
 import PasswordResetResult from "./components/Auth/PasswordResetResult";
 import OrderList from "./components/Admin/OrderList";
+import { UserGuide } from "./components/UserGuidelines";
 
 function App() {
   return (
@@ -60,6 +61,7 @@ function App() {
                 <Route path="/storage" element={<ItemsList />} />
                 <Route path="/items/:id" element={<ItemDetails />} />
               </Route>
+              <Route path="/howItWorks" element={<UserGuide />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route path="/cart" element={<Cart />} />
               <Route

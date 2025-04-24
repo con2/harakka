@@ -38,6 +38,9 @@ const LandingPage = () => {
           <div className="max-w-4xl mx-auto px-4 text-center">
             <p>&copy; 2024 Illusia. All rights reserved.</p>
           </div>
+          <div className="max-w-xl mx-auto px-2 text-center">
+            
+          </div>
         </footer>
       </div>
   </div>
