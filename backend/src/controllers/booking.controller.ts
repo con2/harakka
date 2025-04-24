@@ -19,13 +19,16 @@ export class BookingController {
 
   @Get()
   async getAll(@Req() req: any) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
+    // const userId = req.user?.id;
     return this.bookingService.getAllOrders(userId);
   }
 
   @Get("my") // gets the bookings of the logged-in user
   async getOwnBookings(@Req() req: any) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
+
+    // const userId = req.user?.id;
     return this.bookingService.getUserBookings(userId);
   }
 
@@ -53,7 +56,9 @@ export class BookingController {
     @Body("items") items: any[],
     @Req() req: any,
   ) {
-    const userId = req.user?.id;
+    // const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
+
     return this.bookingService.updateBooking(id, userId, items);
   }
 
