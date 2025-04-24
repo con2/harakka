@@ -23,8 +23,12 @@ export const ordersApi = {
   },
 
   // Get all orders (admin only)
-  getAllOrders: async () => {
-    const response = await api.get("/bookings");
+  getAllOrders: async (userId: string) => {
+    const response = await api.get("/bookings", {
+      headers: {
+        "x-user-id": userId,
+      },
+    });
     return response;
   },
 
