@@ -105,34 +105,20 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Item</DialogTitle>
-          <DialogDescription>Update item details below.</DialogDescription>
+          <DialogDescription className="text-center">Update item details below.</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Price */}
-          <div>
-            <label htmlFor="price">Price</label>
-            <Input
-              id="price"
-              name="price"
-              type="number"
-              value={formData.price}
-              onChange={handleChange}
-              placeholder="Price"
-              required
-            />
-          </div>
-
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Item Translation Fields */}
-          <div>
+          <div className="space-y-2">
             <h3 className="text-lg font-medium">Translations</h3>
 
             {/* Finnish Translation */}
             <div>
-              <h4 className="text-sm font-medium">Finnish (fi)</h4>
+              <h4 className="text-sm font-medium">Finnish</h4>
               <label htmlFor="translations.fi.item_name">Item Name</label>
               <Input
                 id="translations.fi.item_name"
@@ -155,7 +141,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
 
             {/* English Translation */}
             <div>
-              <h4 className="text-sm font-medium">English (en)</h4>
+              <h4 className="text-sm font-medium">English</h4>
               <label htmlFor="translations.en.item_name">Item Name</label>
               <Input
                 id="translations.en.item_name"
@@ -176,26 +162,20 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
               />
             </div>
           </div>
-
-          {/* Tag Selection */}
-          <div>
-            <h3 className="text-lg font-medium">Assign Tags</h3>
-            <div className="flex flex-col space-y-2">
-              {tags.map((tag) => (
-                <label key={tag.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    className="border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
-                    checked={localSelectedTags.includes(tag.id)}
-                    onCheckedChange={() => handleTagToggle(tag.id)}
-                  />
-                  <span>{tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed'}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Active Toggle */}
-          <div className="flex flex-col">
+          {/* Price */}
+          <div className="flex flex-row items-center space-x-4">
+            <label htmlFor="price">Price</label>
+            <Input
+              id="price"
+              name="price"
+              type="number"
+              value={formData.price}
+              onChange={handleChange}
+              placeholder="Price"
+              required
+              className="w-60"
+            />
+            {/* Active Toggle */}
             <label htmlFor="is_active" className="text-secondary font-medium">
               Active
             </label>
@@ -209,6 +189,23 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 }))
               }
             />
+          </div>
+
+          {/* Tag Selection */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">Assign Tags</h3>
+            <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
+              {tags.map((tag) => (
+                <label key={tag.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    className="border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
+                    checked={localSelectedTags.includes(tag.id)}
+                    onCheckedChange={() => handleTagToggle(tag.id)}
+                  />
+                  <span>{tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed'}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* Submit Button */}
