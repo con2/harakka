@@ -73,23 +73,23 @@ export class BookingController {
   // cancels own booking by user or admin cancels any booking
   @Delete(":id/cancel")
   async cancel(@Param("id") id: string, @Req() req: any) {
-    // const userId = req.user?.id;
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
+    const userId = req.user?.id;
     return this.bookingService.cancelBooking(id, userId);
   }
 
   // admin deletes booking
   @Delete(":id/delete")
   async delete(@Param("id") id: string, @Req() req: any) {
-    // const userId = req.user?.id;
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
+    const userId = req.user?.id;
     return this.bookingService.deleteBooking(id, userId);
   }
 
   // admin returns items
   @Post(":id/return")
   async returnItems(@Param("id") id: string, @Req() req: any) {
-    return this.bookingService.returnItems(id, req.user?.id);
+    // const userId = req.headers["x-user-id"] ?? req.user?.id; for testing with POSTMAN
+    const userId = req.user?.id;
+    return this.bookingService.returnItems(id, userId);
   }
 
   // checks availability of items by date range
