@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchAllTags, selectAllTags } from '@/store/slices/tagSlice';
+import { selectAllItems } from '@/store/slices/itemsSlice';
 import { Link, Outlet } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -7,17 +10,39 @@ import { Slider } from '@/components/ui/slider';
 import { Star } from "lucide-react";
 
 const UserPanel = () => {
+  const tags = useAppSelector(selectAllTags);
+  const items = useAppSelector(selectAllItems);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(fetchAllTags());
+  }, [dispatch]);
+
+  // Unique item_type.fi values from items
+  const uniqueItemTypes = Array.from(
+    new Set(items.map(item => item.translations?.fi?.item_type).filter(Boolean))
+  );
+  const [showAllItemTypes, setShowAllItemTypes] = useState(false);
+  const visibleItemTypes = showAllItemTypes ? uniqueItemTypes : uniqueItemTypes.slice(0, 5);
+
+  // sort the types alphabetically
+  uniqueItemTypes.sort((a, b) => a.localeCompare(b));
+
   // filter states
   const [filters, setFilters] = useState<{
     priceRange: [number, number];
     isActive: boolean;
     averageRating: number[];
     itemsNumberAvailable: [number, number];
+    itemTypes: string[],
+    tagIds: string[];
   }>({
     priceRange: [0, 100],  // edit price range filter [min, max]
     isActive: true,        // Is item active or not filter
     averageRating: [],
     itemsNumberAvailable: [0, 100], // add a range for number of items
+    itemTypes: [],
+    tagIds: [],
   });
 
   // Handle filter change (you can modify this based on your filter UI)
@@ -31,7 +56,7 @@ const UserPanel = () => {
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-76 p-4 border-r bg-white shadow-md">
+      <aside className="hidden md:flex flex-col w-76 p-4 border-r bg-white shadow-md overflow-y-auto max-h-screen">
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
 
           {/* Filter Section */}
@@ -42,33 +67,38 @@ const UserPanel = () => {
             </div>
             <Separator className="my-4" />
 
-            {/* Categories/tags to be updated */}
+            {/* Categories / item_types*/}
             <div className="flex flex-col flex-wrap gap-3 text-md my-6">
-              <span
-                className="cursor-pointer text-slate-500 hover:text-secondary justify-between flex items-center"
-                // onClick={() => handleCategoryClick('costumes')}
-              >
-                Costumes <ChevronRight className="w-4 h-4 inline" />
-              </span>
-              <span
-                className="cursor-pointer text-slate-500 hover:text-secondary justify-between flex items-center"
-                // onClick={() => handleCategoryClick('costumes')}
-              >
-                Accessories <ChevronRight className="w-4 h-4 inline" />
-              </span>
-              <span
-                className="cursor-pointer text-slate-500 hover:text-secondary justify-between flex items-center"
-                // onClick={() => handleCategoryClick('costumes')}
-              >
-                Furniture <ChevronRight className="w-4 h-4 inline" />
-              </span>
-              <span
-                className="cursor-pointer text-slate-500 hover:text-secondary justify-between flex items-center"
-                // onClick={() => handleCategoryClick('costumes')}
-              >
-                Gadgets <ChevronRight className="w-4 h-4 inline" />
-              </span>
+              {visibleItemTypes.map((typeName) => {
+                const isSelected = filters.itemTypes?.includes(typeName);
+                return (
+                  <span
+                    key={typeName}
+                    className={`cursor-pointer justify-between flex items-center ${
+                      isSelected ? 'text-secondary font-bold' : 'text-slate-500 hover:text-secondary'
+                    }`}
+                    onClick={() => {
+                      const updated = isSelected
+                        ? filters.itemTypes.filter((t) => t !== typeName)
+                        : [...(filters.itemTypes || []), typeName];
+                      handleFilterChange('itemTypes', updated);
+                    }}
+                  >
+                    {typeName} <ChevronRight className="w-4 h-4 inline" />
+                  </span>
+                );
+              })}
+              {uniqueItemTypes.length > 5 && (
+                <Button
+                  variant="ghost"
+                  className="text-left text-sm text-secondary mt-2"
+                  onClick={() => setShowAllItemTypes((prev) => !prev)}
+                >
+                  {showAllItemTypes ? 'Show less' : 'See all'}
+                </Button>
+              )}
             </div>
+
             <Separator className="my-4" />
 
             {/* Price filter */}
@@ -159,18 +189,35 @@ const UserPanel = () => {
             </div>
             <Separator className="my-4" />
               
-            {/* second idea for tags, should be clickable or like above? */}
+            {/* Tags */}
             <div className="my-4">
               <label className="text-secondary font-bold block mb-6">Tags</label>
               <div className='flex flex-wrap gap-2'>
-                <Button className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white">Wigs</Button>
-                <Button className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white">War</Button>
-                <Button className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white">Military</Button>
-                <Button className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white">Lorem</Button>
-                <Button className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white">Ipsum</Button>
+                {tags.map(tag => {
+                  const tagName = tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed';
+                  return (
+                    <Button
+                      key={tag.id}
+                      className={`px-6 border-secondary border-1 rounded-2xl ${
+                        (filters.tagIds || []).includes(tag.id)
+                          ? 'bg-secondary text-white'
+                          : 'bg-white text-secondary hover:bg-secondary hover:text-white'
+                      }`}
+                      onClick={() => {
+                        const selected = filters.tagIds || [];
+                        const isSelected = selected.includes(tag.id);
+                        const updated = isSelected
+                          ? selected.filter((id) => id !== tag.id)
+                          : [...selected, tag.id];
+                        handleFilterChange('tagIds', updated);
+                      }}
+                    >
+                      {tagName.toLowerCase()}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
-
           </div>
         </nav>
       </aside>

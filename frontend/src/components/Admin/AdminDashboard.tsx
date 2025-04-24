@@ -3,21 +3,24 @@ import {
   fetchAllUsers,
   selectAllUsers,
   selectLoading,
+  selectSelectedUser,
 } from "@/store/slices/usersSlice";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { DataTable } from "../ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
-import { LoaderCircle, MoveRight, Plus } from "lucide-react";
-import { selectAllOrders } from "@/store/slices/ordersSlice";
+import { LoaderCircle, MoveRight } from "lucide-react";
+import { getAllOrders, selectAllOrders, selectOrdersLoading } from "@/store/slices/ordersSlice";
 import { Badge } from "../ui/badge";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
   const users = useAppSelector(selectAllUsers);
   const loading = useAppSelector(selectLoading);
+  const user = useAppSelector(selectSelectedUser);
   const orders = useAppSelector(selectAllOrders);
+  const ordersLoading = useAppSelector(selectOrdersLoading);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,10 +30,10 @@ const AdminDashboard = () => {
   }, [dispatch, users.length]);
 
   useEffect(() => {
-    if (orders.length === 0) {
-      dispatch(fetchAllUsers());
+    if (!ordersLoading && user?.id && orders.length === 0) {
+      dispatch(getAllOrders());
     }
-  }, [dispatch, orders.length]);
+  }, [dispatch, user?.id, orders.length, ordersLoading]);  
 
   const StatusBadge = ({ status }: { status?: string }) => {
     if (!status) return <Badge variant="outline">Unknown</Badge>;
@@ -146,10 +149,18 @@ const AdminDashboard = () => {
       {/* Recent Orders Section */}
       <div className="mb-8">
         <h2>Recent Orders</h2>
-        {loading && <p><LoaderCircle className="animate-spin" /></p>}
-        <div className="w-full mx-auto">
-          <DataTable columns={ordersColumns} data={orders.slice(0,5)} />
-        </div>
+        {ordersLoading ? (
+          <div className="flex justify-center items-center py-6">
+            <LoaderCircle className="animate-spin" />
+          </div>
+        ) : (
+        <DataTable
+          columns={ordersColumns}
+          data={[...orders]
+            .sort((a, b) => new Date(b.created_at || "").getTime() - new Date(a.created_at || "").getTime())
+            .slice(0, 5)}
+        />
+        )}
         <div className="flex items-center justify-center mt-4">
           <Button
             className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
