@@ -15,7 +15,6 @@ import { Trash2, Calendar, LoaderCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useAuth } from "../context/AuthContext";
 
 const Cart: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -24,7 +23,7 @@ const Cart: React.FC = () => {
   const cartTotal = useAppSelector(selectCartTotal);
   const orderLoading = useAppSelector(selectOrdersLoading);
   const userProfile = useAppSelector(selectSelectedUser);
-  const { user } = useAuth();
+  const user = useAppSelector(selectSelectedUser);
 
   // Get start and end dates from the timeframe Redux slice
   const { startDate: startDateStr, endDate: endDateStr } = useAppSelector(
@@ -60,6 +59,19 @@ const Cart: React.FC = () => {
         "Your profile is being loaded. Please try again in a moment.",
       );
       return;
+    }
+
+    //check to ensure valid user ID
+    console.log("Using user ID for order:", userProfile.id);
+
+    // Try to read stored user ID from localStorage
+    const storedUserId = localStorage.getItem("userId");
+    console.log("User ID in localStorage:", storedUserId);
+
+    if (storedUserId !== userProfile.id) {
+      // Synchronize the localStorage ID with profile ID
+      localStorage.setItem("userId", userProfile.id);
+      console.log("Updated localStorage user ID to match profile");
     }
 
     if (!startDate || !endDate || cartItems.length === 0) {

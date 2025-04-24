@@ -83,6 +83,11 @@ const MyOrders = () => {
               } catch (error) {
                 console.error("Error cancelling order:", error);
               }
+
+              // After successful cancel refresh the list of orders
+              if (user?.id) {
+                dispatch(getUserOrders(user.id));
+              }
             }}
           >
             Cancel Order
