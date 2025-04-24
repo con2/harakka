@@ -63,24 +63,27 @@ export class BookingController {
     return this.bookingService.updateBooking(id, userId, items);
   }
 
-  // jects a booking by admin
-  @Put(":id/reject") // admin rejects booking
+  // rejects a booking by admin
+  @Put(":id/reject")
   async reject(@Param("id") id: string, @Req() req: any) {
-    const userId = req.user?.id;
+    // const userId = req.user?.id;
+    const userId = req.headers["x-user-id"];
     return this.bookingService.rejectBooking(id, userId);
   }
 
   // cancels own booking by user or admin cancels any booking
   @Delete(":id/cancel")
   async cancel(@Param("id") id: string, @Req() req: any) {
-    const userId = req.user?.id;
+    // const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.cancelBooking(id, userId);
   }
 
   // admin deletes booking
   @Delete(":id/delete")
   async delete(@Param("id") id: string, @Req() req: any) {
-    const userId = req.user?.id;
+    // const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.deleteBooking(id, userId);
   }
 
