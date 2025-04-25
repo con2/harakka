@@ -9,6 +9,7 @@ import {
   Req,
   Query,
   UnauthorizedException,
+  BadRequestException,
 } from "@nestjs/common";
 import { BookingService } from "../services/booking.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
@@ -20,14 +21,14 @@ export class BookingController {
   // gets all bookings - use case: admin
   @Get()
   async getAll(@Req() req: any) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.getAllOrders(userId);
   }
 
   // gets the bookings of the logged-in user
   @Get("my")
   async getOwnBookings(@Req() req: any) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.getUserBookings(userId);
   }
 
@@ -43,13 +44,24 @@ export class BookingController {
   // creates a booking
   @Post()
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: any) {
-    return this.bookingService.createBooking(dto);
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
+    if (!userId) {
+      throw new BadRequestException("No userId found: user_id is required");
+    }
+    return this.bookingService.createBooking({ ...dto, user_id: userId });
   }
 
   // confirms a booking
   @Put(":id/confirm") // admin confirms booking
   async confirm(@Param("id") id: string, @Req() req: any) {
-    return this.bookingService.confirmBooking(id, req.user?.id);
+    console.log("Headers:", req.headers);
+    console.log("x-user-id header:", req.headers["x-user-id"]);
+    console.log("user.id:", req.user?.id);
+
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
+    console.log("Final userId:", userId);
+
+    return this.bookingService.confirmBooking(id, userId);
   }
 
   // updates a booking
@@ -59,35 +71,36 @@ export class BookingController {
     @Body("items") items: any[],
     @Req() req: any,
   ) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.updateBooking(id, userId, items);
   }
 
-  // jects a booking by admin
-  @Put(":id/reject") // admin rejects booking
+  // rejects a booking by admin
+  @Put(":id/reject")
   async reject(@Param("id") id: string, @Req() req: any) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.rejectBooking(id, userId);
   }
 
   // cancels own booking by user or admin cancels any booking
   @Delete(":id/cancel")
   async cancel(@Param("id") id: string, @Req() req: any) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.cancelBooking(id, userId);
   }
 
   // admin deletes booking
   @Delete(":id/delete")
   async delete(@Param("id") id: string, @Req() req: any) {
-    const userId = req.user?.id;
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.deleteBooking(id, userId);
   }
 
   // admin returns items
   @Post(":id/return")
   async returnItems(@Param("id") id: string, @Req() req: any) {
-    return this.bookingService.returnItems(id, req.user?.id);
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
+    return this.bookingService.returnItems(id, userId);
   }
 
   // checks availability of items by date range
@@ -98,11 +111,12 @@ export class BookingController {
     @Query("end_date") endDate: string,
     @Req() req: any,
   ) {
+    const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.checkAvailability(
       itemId,
       startDate,
       endDate,
-      req.user?.id,
+      userId, //TODO: check if userId is needed here
     );
   }
 }

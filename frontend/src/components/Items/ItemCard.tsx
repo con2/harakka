@@ -99,20 +99,11 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         <h2 className="text-xl font-semibold text-center">
           {item.translations.fi.item_name}
         </h2>
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        {/* TODO: return this span when back will provide location name */}
+        {/* <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <BoxIcon className="h-4 w-4" />
           <span>{item.location_id}</span>
-        </div>
-        <p className="text-sm text-slate-400 italic m-0">
-          Available from:{" "}
-          {item.available_from
-            ? format(new Date(item.available_from), "PPP")
-            : "N/A"}{" "}
-          to{" "}
-          {item.available_until
-            ? format(new Date(item.available_until), "PPP")
-            : "N/A"}
-        </p>
+        </div> */}
         <p className="text-sm text-slate-400 italic m-0">
           Bookable units: {item.items_number_available}
         </p>

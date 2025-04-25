@@ -287,10 +287,18 @@ export const ordersSlice = createSlice({
       })
       .addCase(cancelOrder.fulfilled, (state, action) => {
         state.loading = false;
+
         ordersAdapter.updateOne(state, {
           id: action.payload.id,
           changes: { status: "cancelled by user" },
         });
+
+        // Also update the userOrders array
+        state.userOrders = state.userOrders.map((order) =>
+          order.id === action.payload.id
+            ? { ...order, status: "cancelled by user" }
+            : order,
+        );
       })
       .addCase(cancelOrder.rejected, (state, action) => {
         state.loading = false;
