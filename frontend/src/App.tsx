@@ -23,6 +23,7 @@ import PasswordResetResult from "./components/Auth/PasswordResetResult";
 import OrderList from "./components/Admin/OrderList";
 import TagList from "./components/Admin/TagList";
 import MyOrders from "./components/MyOrders";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -76,6 +77,7 @@ function App() {
               />
             </Routes>
           </main>
+          <Footer />
           <Toaster position="top-right" duration={1000} richColors />
         </div>
       </AuthProvider>
