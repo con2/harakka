@@ -68,6 +68,15 @@ export const Navigation = () => {
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
+
+          {/* User GuideLines */}
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild>
+              <Link to="/howItWorks" className="flex items-center gap-1">
+                User Guide
+              </Link>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
         </div>
         {/* Always show Cart */}
         <div className="flex items-center gap-4">
