@@ -44,14 +44,14 @@ const UsersList = () => {
     new Date(dateString).toLocaleDateString("en-GB");
 
   const visibleUsers = users.filter((u) => {
-    if (isSuperVera) return u.role !== "superVera" || u.id === user?.id; 
+    if (isSuperVera) return u.role !== "superVera" || u.id === user?.id;
     if (isAdmin) return u.role === "user";
     return false;
   });
 
-  const canEdit = isSuperVera || isAdmin;
+  //const canEdit = isSuperVera || isAdmin;
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<UserProfile>[] = [
     { accessorKey: "full_name", header: "Name" },
     { accessorKey: "phone", header: "Phone" },
     {
@@ -72,7 +72,11 @@ const UsersList = () => {
       header: "Role",
       cell: ({ row }) => {
         const userRole = row.original.role;
-        return userRole ? userRole : <span className="text-slate-500">N/A</span>;
+        return userRole ? (
+          userRole
+        ) : (
+          <span className="text-slate-500">N/A</span>
+        );
       },
     },
     {
@@ -89,8 +93,11 @@ const UsersList = () => {
       header: "Delete",
       cell: ({ row }) => {
         const targetUser = row.original;
-        const canDelete = isSuperVera || (isAdmin && targetUser.role === "user");
-        return canDelete ? <UserDeleteButton id={targetUser.id} closeModal={closeModal} /> : null;
+        const canDelete =
+          isSuperVera || (isAdmin && targetUser.role === "user");
+        return canDelete ? (
+          <UserDeleteButton id={targetUser.id} closeModal={closeModal} />
+        ) : null;
       },
     },
   ];
@@ -117,7 +124,11 @@ const UsersList = () => {
           </Button>
         </AddUserModal>
       </div>
-      {loading && <p><LoaderCircle className="animate-spin" /></p>}
+      {loading && (
+        <p>
+          <LoaderCircle className="animate-spin" />
+        </p>
+      )}
       {error && <p className="text-red-500">Error: {error}</p>}
       <PaginatedDataTable columns={columns} data={visibleUsers} />
     </>

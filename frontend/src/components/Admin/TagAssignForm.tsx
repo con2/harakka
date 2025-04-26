@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { assignTagToItem, fetchTagsForItem } from '@/store/slices/tagSlice'; // Make sure the action is imported correctly
-import { Checkbox } from '../ui/checkbox'; // Assuming you have a Checkbox component
-import { Button } from '../ui/button'; // Assuming you have a Button component
+import React, { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { assignTagToItem, fetchTagsForItem } from "@/store/slices/tagSlice";
+import { Checkbox } from "../ui/checkbox";
+import { Button } from "../ui/button";
 
-type Props = {
+/**
+ * Props for TagAssignmentForm component
+ */
+interface TagAssignFormProps {
   itemId: string;
-};
+}
 
-const TagAssignmentForm = ({ itemId }: Props) => {
+const TagAssignmentForm: React.FC<TagAssignFormProps> = ({ itemId }) => {
   const dispatch = useAppDispatch();
   const [selectedTags, setSelectedTags] = useState<string[]>([]); // Track selected tag ids
 
@@ -46,10 +49,16 @@ const TagAssignmentForm = ({ itemId }: Props) => {
           {tags.map((tag) => (
             <div key={tag.id} className="flex items-center gap-2">
               <Checkbox
-                checked={selectedTags.includes(tag.id) || existingTags.includes(tag.id)} // Pre-check if tag is assigned
+                checked={
+                  selectedTags.includes(tag.id) || existingTags.includes(tag.id)
+                } // Pre-check if tag is assigned
                 onChange={() => handleCheckboxChange(tag.id)}
               />
-              <label>{tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed'}</label>
+              <label>
+                {tag.translations?.fi?.name ||
+                  tag.translations?.en?.name ||
+                  "Unnamed"}
+              </label>
             </div>
           ))}
         </div>
