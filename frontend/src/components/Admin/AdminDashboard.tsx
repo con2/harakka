@@ -11,8 +11,13 @@ import { DataTable } from "../ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
 import { LoaderCircle, MoveRight } from "lucide-react";
-import { getAllOrders, selectAllOrders, selectOrdersLoading } from "@/store/slices/ordersSlice";
+import {
+  getAllOrders,
+  selectAllOrders,
+  selectOrdersLoading,
+} from "@/store/slices/ordersSlice";
 import { Badge } from "../ui/badge";
+import { BookingOrder, UserProfile } from "@/types";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
@@ -33,11 +38,11 @@ const AdminDashboard = () => {
     if (!ordersLoading && user?.id && orders.length === 0) {
       dispatch(getAllOrders(user.id));
     }
-  }, [dispatch, user?.id, orders.length, ordersLoading]);  
+  }, [dispatch, user?.id, orders.length, ordersLoading]);
 
   const StatusBadge = ({ status }: { status?: string }) => {
     if (!status) return <Badge variant="outline">Unknown</Badge>;
-  
+
     switch (status) {
       case "pending":
         return (
@@ -88,11 +93,11 @@ const AdminDashboard = () => {
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
-  };  
+  };
 
   // Define columns for the DataTable
   // Orders table
-  const ordersColumns: ColumnDef<any>[] = [
+  const ordersColumns: ColumnDef<BookingOrder>[] = [
     {
       accessorKey: "order_number",
       header: "Order #",
@@ -118,7 +123,7 @@ const AdminDashboard = () => {
       accessorKey: "created_at",
       header: "Date",
       cell: ({ row }) => {
-        const date = new Date(row.original.created_at);
+        const date = new Date(row.original.created_at || "");
         return date.toLocaleDateString("en-GB", {
           day: "numeric",
           month: "short",
@@ -126,9 +131,9 @@ const AdminDashboard = () => {
         });
       },
     },
-  ];  
+  ];
   // Users table
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<UserProfile>[] = [
     { accessorKey: "full_name", header: "Name" },
     { accessorKey: "phone", header: "Phone" },
     { accessorKey: "email", header: "Email" },
@@ -154,12 +159,16 @@ const AdminDashboard = () => {
             <LoaderCircle className="animate-spin" />
           </div>
         ) : (
-        <DataTable
-          columns={ordersColumns}
-          data={[...orders]
-            .sort((a, b) => new Date(b.created_at || "").getTime() - new Date(a.created_at || "").getTime())
-            .slice(0, 5)}
-        />
+          <DataTable
+            columns={ordersColumns}
+            data={[...orders]
+              .sort(
+                (a, b) =>
+                  new Date(b.created_at || "").getTime() -
+                  new Date(a.created_at || "").getTime(),
+              )
+              .slice(0, 5)}
+          />
         )}
         <div className="flex items-center justify-center mt-4">
           <Button
@@ -178,7 +187,11 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center">
             <h2>Users</h2>
           </div>
-          {loading && <p><LoaderCircle className="animate-spin" /></p>}
+          {loading && (
+            <p>
+              <LoaderCircle className="animate-spin" />
+            </p>
+          )}
           <div className="w-full max-w-4xl mx-auto">
             <DataTable columns={columns} data={regularUsers} />
           </div>
@@ -197,7 +210,11 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center">
             <h2>Your Team</h2>
           </div>
-          {loading && <p><LoaderCircle className="animate-spin"/></p>}
+          {loading && (
+            <p>
+              <LoaderCircle className="animate-spin" />
+            </p>
+          )}
           <div className="w-full max-w-4xl mx-auto">
             <DataTable columns={columns} data={teamUsers} />
           </div>
