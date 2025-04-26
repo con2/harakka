@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -6,45 +6,63 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { createItem } from '@/store/slices/itemsSlice';
-import { toast } from 'sonner';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Switch } from '../ui/switch';
-import { fetchAllTags, selectAllTags } from '@/store/slices/tagSlice';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  createItem,
+  selectItemsLoading,
+  selectItemsError,
+  selectItemsErrorContext,
+} from "@/store/slices/itemsSlice";
+import { toast } from "sonner";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { Switch } from "../ui/switch";
+import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
+import { Loader2 } from "lucide-react";
+import { ItemFormData } from "@/types";
 
-const initialFormState = {
-  location_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479', // Default location ID
-  compartment_id: '0ffa5562-82a9-4352-b804-1adebbb7d80c', // Default compartment ID
-  items_number_total: 1, // Default total quantity
-  items_number_available: 1, // Default available quantity
-  price: 0, // Default price
-  is_active: true, // Default active status
+const initialFormState: ItemFormData = {
+  location_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  compartment_id: "0ffa5562-82a9-4352-b804-1adebbb7d80c",
+  items_number_total: 1,
+  items_number_available: 1,
+  price: 0,
+  is_active: true,
   translations: {
     fi: {
-      item_type: '',
-      item_name: '',
-      item_description: '',
+      item_type: "",
+      item_name: "",
+      item_description: "",
     },
     en: {
-      item_type: '',
-      item_name: '',
-      item_description: '',
+      item_type: "",
+      item_name: "",
+      item_description: "",
     },
   },
-  tagIds: [] as string[], // Initially no tags selected
+  tagIds: [],
 };
 
 const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
   const availableTags = useAppSelector(selectAllTags);
-  const [formData, setFormData] = useState(initialFormState);
+  const loading = useAppSelector(selectItemsLoading);
+  const error = useAppSelector(selectItemsError);
+  const errorContext = useAppSelector(selectItemsErrorContext);
+
+  const [formData, setFormData] = useState<ItemFormData>(initialFormState);
   const [open, setOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  // Display errors when they occur
+  useEffect(() => {
+    if (error && errorContext === "create") {
+      toast.error(error);
+    }
+  }, [error, errorContext]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -52,36 +70,48 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
     const { name, value } = e.target;
 
     // Handle nested fields for translations (FI and EN)
-    if (name.includes('.')) {
-      const [parent, child, field] = name.split('.');
-      setFormData({
-        ...formData,
-        [parent]: {
-          ...formData[parent as keyof typeof formData],
-          [child]: {
-            ...formData[parent as keyof typeof formData][
-              child as keyof (typeof formData)[typeof parent]
-            ],
-            [field]: value,
-          },
-        },
-      });
+    if (name.includes(".")) {
+      const [parent, child, field] = name.split(".");
+
+      if (parent === "translations") {
+        if (child === "fi" || child === "en") {
+          setFormData({
+            ...formData,
+            translations: {
+              ...formData.translations,
+              [child]: {
+                ...formData.translations[child],
+                [field]: value,
+              },
+            },
+          });
+        }
+      }
     } else {
       // Handle numeric values
       if (
-        name === 'price' ||
-        name === 'items_number_total' ||
-        name === 'items_number_available'
+        name === "price" ||
+        name === "items_number_total" ||
+        name === "items_number_available"
       ) {
-        setFormData({ ...formData, [name]: parseFloat(value) || 0 });
-      } else {
-        setFormData({ ...formData, [name]: value });
+        setFormData({
+          ...formData,
+          [name]: parseFloat(value) || 0,
+        } as ItemFormData); // Type assertion helps TypeScript understand
+      } else if (name === "location_id" || name === "compartment_id") {
+        setFormData({
+          ...formData,
+          [name]: value,
+        } as ItemFormData); // Type assertion helps TypeScript understand
       }
     }
   };
 
   const handleToggleChange = (checked: boolean) => {
-    setFormData({ ...formData, is_active: checked });
+    setFormData({
+      ...formData,
+      is_active: checked,
+    });
   };
 
   const resetForm = () => {
@@ -92,18 +122,22 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   const handleSubmit = async () => {
     try {
       // Dispatch create item action, adding the selected tags to the form data
-      await dispatch(createItem({ ...formData, tagIds: selectedTags })).unwrap();
-      toast.success('Item created successfully!');
+      await dispatch(
+        createItem({ ...formData, tagIds: selectedTags }),
+      ).unwrap();
+      toast.success("Item created successfully!");
       resetForm();
       setOpen(false);
-    } catch (error: any) {
-      toast.error(typeof error === 'string' ? error : 'Failed to create item.');
+    } catch {
+      // Error is already handled by the redux slice and displayed via useEffect
     }
   };
 
   useEffect(() => {
-    dispatch(fetchAllTags()); // Fetch all tags when component is mounted
-  }, [dispatch]);
+    if (open) {
+      dispatch(fetchAllTags()); // Fetch all tags when modal opens
+    }
+  }, [dispatch, open]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -120,7 +154,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               <h3 className="font-medium mb-2">Finnish</h3>
               <div className="space-y-3">
                 <div>
-                  <Label htmlFor="translations.fi.item_name">Item Name (FI)</Label>
+                  <Label htmlFor="translations.fi.item_name">
+                    Item Name (FI)
+                  </Label>
                   <Input
                     id="translations.fi.item_name"
                     name="translations.fi.item_name"
@@ -130,7 +166,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="translations.fi.item_type">Item Type (FI)</Label>
+                  <Label htmlFor="translations.fi.item_type">
+                    Item Type (FI)
+                  </Label>
                   <Input
                     id="translations.fi.item_type"
                     name="translations.fi.item_type"
@@ -140,7 +178,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="translations.fi.item_description">Description (FI)</Label>
+                  <Label htmlFor="translations.fi.item_description">
+                    Description (FI)
+                  </Label>
                   <Textarea
                     id="translations.fi.item_description"
                     name="translations.fi.item_description"
@@ -157,7 +197,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               <h3 className="font-medium mb-2">English</h3>
               <div className="space-y-3">
                 <div>
-                  <Label htmlFor="translations.en.item_name">Item Name (EN)</Label>
+                  <Label htmlFor="translations.en.item_name">
+                    Item Name (EN)
+                  </Label>
                   <Input
                     id="translations.en.item_name"
                     name="translations.en.item_name"
@@ -167,7 +209,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="translations.en.item_type">Item Type (EN)</Label>
+                  <Label htmlFor="translations.en.item_type">
+                    Item Type (EN)
+                  </Label>
                   <Input
                     id="translations.en.item_type"
                     name="translations.en.item_type"
@@ -177,7 +221,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="translations.en.item_description">Description (EN)</Label>
+                  <Label htmlFor="translations.en.item_description">
+                    Description (EN)
+                  </Label>
                   <Textarea
                     id="translations.en.item_description"
                     name="translations.en.item_description"
@@ -269,14 +315,18 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                       checked={selectedTags.includes(tag.id)}
                       onChange={() => {
                         if (selectedTags.includes(tag.id)) {
-                          setSelectedTags(selectedTags.filter((id) => id !== tag.id));
+                          setSelectedTags(
+                            selectedTags.filter((id) => id !== tag.id),
+                          );
                         } else {
                           setSelectedTags([...selectedTags, tag.id]);
                         }
                       }}
                     />
                     <label htmlFor={tag.id}>
-                      {tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed Tag'}
+                      {tag.translations?.fi?.name ||
+                        tag.translations?.en?.name ||
+                        "Unnamed Tag"}
                     </label>
                   </div>
                 ))}
@@ -289,8 +339,16 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
           <Button
             className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
             onClick={handleSubmit}
+            disabled={loading}
           >
-            Add Item
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Add Item"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
