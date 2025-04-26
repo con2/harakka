@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllTags,
   assignTagToItem,
@@ -9,24 +14,31 @@ import {
   fetchTagsForItem,
   selectLoading,
   selectSelectedTags,
-} from '@/store/slices/tagSlice';
-import { Tag } from '@/types/tag';
-import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from 'sonner';
-import { updateItemTags } from '@/store/slices/itemsSlice';
+} from "@/store/slices/tagSlice";
+import { Tag } from "@/types/tag";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { updateItemTags } from "@/store/slices/itemsSlice";
 
-interface Props {
+/**
+ * Props for AssignTagsModal component
+ */
+interface AssignTagsModalProps {
   itemId: string;
   onClose: () => void;
   open: boolean;
 }
 
-const AssignTagsModal = ({ itemId, open, onClose }: Props) => {
+const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
+  itemId,
+  open,
+  onClose,
+}) => {
   const dispatch = useAppDispatch();
   const tags = useAppSelector(selectAllTags);
   const selectedTags = useAppSelector(selectSelectedTags);
   const loading = useAppSelector(selectLoading);
-  const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]); 
+  const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -37,38 +49,43 @@ const AssignTagsModal = ({ itemId, open, onClose }: Props) => {
 
   useEffect(() => {
     if (selectedTags) {
-      setLocalSelectedTags(selectedTags.map(tag => tag.id));
+      setLocalSelectedTags(selectedTags.map((tag) => tag.id));
     }
   }, [selectedTags]);
 
   const handleCheckboxChange = (tagId: string) => {
-    setLocalSelectedTags(prev =>
-      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+    setLocalSelectedTags((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId],
     );
   };
   const handleSubmit = async () => {
     try {
-      await dispatch(assignTagToItem({ itemId, tagIds: localSelectedTags })).unwrap();
-  
-      const updatedTags = tags.filter(tag => localSelectedTags.includes(tag.id));
+      await dispatch(
+        assignTagToItem({ itemId, tagIds: localSelectedTags }),
+      ).unwrap();
+
+      const updatedTags = tags.filter((tag) =>
+        localSelectedTags.includes(tag.id),
+      );
       dispatch(updateItemTags({ itemId, tags: updatedTags }));
-  
-      toast.success('Tags assigned successfully!');
+
+      toast.success("Tags assigned successfully!");
       onClose();
-    } catch (err) {
-      toast.error('Failed to assign tags');
+    } catch {
+      toast.error("Failed to assign tags");
     }
   };
-  
-  
+
   // const handleSubmit = async () => {
   //   try {
   //     await dispatch(assignTagToItem({ itemId, tagIds: selectedTags })).unwrap();
-  
+
   //     // Immediately update the item’s tags in Redux
   //     const updatedTags = tags.filter(tag => selectSelectedTags.includes(tag.id));
   //     dispatch(updateItemTags({ itemId, tags: updatedTags }));
-  
+
   //     toast.success('Tags assigned successfully!');
   //     onClose();
   //   } catch (err) {
@@ -90,10 +107,14 @@ const AssignTagsModal = ({ itemId, open, onClose }: Props) => {
             {tags.map((tag: Tag) => (
               <label key={tag.id} className="flex items-center space-x-2">
                 <Checkbox
-                  checked={localSelectedTags.includes(tag.id)}  // Check if the tag is in the selected list
+                  checked={localSelectedTags.includes(tag.id)} // Check if the tag is in the selected list
                   onCheckedChange={() => handleCheckboxChange(tag.id)}
                 />
-                <span>{tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed'}</span>
+                <span>
+                  {tag.translations?.fi?.name ||
+                    tag.translations?.en?.name ||
+                    "Unnamed"}
+                </span>
               </label>
             ))}
           </div>
