@@ -1,42 +1,53 @@
-// to be updated
+import { BaseEntity, ErrorContext } from "./common";
 
-// returned user object
-export interface UserProfile {
-  id?: string;
-  role: "user" | "admin" | "superVera";
-  full_name: string;
-  visible_name: string;
-  phone?: string;
-  email: string;
-  saved_lists: string[];
-  preferences?: Record<string, any>;
-  createdAt: string;
-}
+/**
+ * User roles in the application
+ * Used for permission control throughout the system
+ */
+export type UserRole = "user" | "admin" | "superVera";
 
-// type for creating a user, matching backedn DTO
-export interface CreateUserDto {
-  email: string;
-  password?: string; //optional because backend only needs password at submit time
-  full_name: string;
+/**
+ * User profile interface that represents a user in the system
+ */
+export interface UserProfile extends BaseEntity {
+  role: UserRole;
+  full_name?: string;
   visible_name?: string;
   phone?: string;
-  role?: "user" | "admin" | "superVera";
-  preferences?: Record<string, any>;
+  email: string;
+  saved_lists?: string[];
+  preferences?: Record<string, string>;
 }
 
-export interface UserAddresses {
-  address_type: "billing" | "shipping" | "both";
-  street_address: string;
-  city: string;
-  postal_code: string;
-  country: string;
-  is_default: boolean;
-}
-
+/**
+ * User state in Redux store
+ */
 export interface UserState {
   users: UserProfile[];
   loading: boolean;
   error: string | null;
+  errorContext: ErrorContext;
   selectedUser: UserProfile | null;
   selectedUserLoading?: boolean;
 }
+
+/**
+ * Data required to create a new user
+ */
+export interface CreateUserDto {
+  email: string;
+  password: string;
+  role: UserRole;
+  full_name?: string;
+  visible_name?: string;
+  phone?: string;
+  preferences?: Record<string, unknown>;
+  saved_lists?: string[];
+}
+
+/**
+ * Data for updating an existing user
+ */
+export type UpdateUserDto = Partial<
+  Omit<CreateUserDto, "id" | "created_at" | "updated_at">
+>; // Exclude 'id', 'created_at', 'updated_at' from the update type.
