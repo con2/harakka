@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   deleteItem,
   fetchAllItems,
@@ -7,18 +7,18 @@ import {
   selectItemsError,
   selectItemsLoading,
   updateItem,
-} from '@/store/slices/itemsSlice';
-import { PaginatedDataTable } from '../ui/data-table-paginated';
-import { ColumnDef } from '@tanstack/react-table';
-import { LoaderCircle } from 'lucide-react';
-import { Button } from '../ui/button';
-import AddItemModal from './AddItemModal';
-import { toast } from 'sonner';
-import UpdateItemModal from './UpdateItemModal';
-import { Switch } from '@/components/ui/switch';
-import { selectAllTags } from '@/store/slices/tagSlice';
-import { Item } from '@/types/item';
-import AssignTagsModal from './AssignTagsModal';
+} from "@/store/slices/itemsSlice";
+import { PaginatedDataTable } from "../ui/data-table-paginated";
+import { ColumnDef } from "@tanstack/react-table";
+import { LoaderCircle } from "lucide-react";
+import { Button } from "../ui/button";
+import AddItemModal from "./AddItemModal";
+import { toast } from "sonner";
+import UpdateItemModal from "./UpdateItemModal";
+import { Switch } from "@/components/ui/switch";
+import { selectAllTags } from "@/store/slices/tagSlice";
+import { Item } from "@/types/item";
+import AssignTagsModal from "./AssignTagsModal";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -32,9 +32,11 @@ const AdminItemsTable = () => {
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   // filtering states:
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleCloseAssignTagsModal = () => {
     setAssignTagsModalOpen(false);
@@ -70,22 +72,22 @@ const AdminItemsTable = () => {
     //   ),
     // },
     {
-      header: 'Item Name (FI)',
+      header: "Item Name (FI)",
       accessorFn: (row) => row.translations.fi.item_name,
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableSorting: true,
       cell: ({ row }) => row.original.translations.fi.item_name,
     },
     {
-      header: 'Item Type (FI)',
+      header: "Item Type (FI)",
       accessorFn: (row) => row.translations.fi.item_type,
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableSorting: true,
       cell: ({ row }) => row.original.translations.fi.item_type,
     },
     {
-      header: 'Price',
-      accessorKey: 'price',
+      header: "Price",
+      accessorKey: "price",
       cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
     },
     // {
@@ -94,56 +96,64 @@ const AdminItemsTable = () => {
     //   cell: ({ row }) => row.original.average_rating ?? 'N/A', // Handle if no average rating
     // },
     {
-      id: 'status',
-      header: 'Active',
+      id: "status",
+      header: "Active",
       cell: ({ row }) => {
         const item = row.original;
-    
+
         const handleToggle = async (checked: boolean) => {
           try {
-            await dispatch(updateItem({
-              id: item.id,
-              data: {
-                is_active: checked,
-              },
-            })).unwrap();
+            await dispatch(
+              updateItem({
+                id: item.id,
+                data: {
+                  is_active: checked,
+                },
+              }),
+            ).unwrap();
             dispatch(fetchAllItems());
-            toast.success(`Item ${checked ? 'activated' : 'deactivated'} successfully`);
-          } catch (error) {
-            toast.error('Failed to update item status');
+            toast.success(
+              `Item ${checked ? "activated" : "deactivated"} successfully`,
+            );
+          } catch {
+            toast.error("Failed to update item status");
           }
         };
-    
+
         return (
-          <Switch
-            checked={item.is_active}
-            onCheckedChange={handleToggle}
-          />
+          <Switch checked={item.is_active} onCheckedChange={handleToggle} />
         );
       },
     },
     {
-      id: 'tags',
-      header: 'Tags',
+      id: "tags",
+      header: "Tags",
       cell: ({ row }) => {
+        // Deduplicate tags by ID to prevent React key warnings
         const tags = row.original.storage_item_tags ?? [];
+        const uniqueTags = Array.from(
+          new Map(tags.map((tag) => [tag.id, tag])).values(),
+        );
+
         return (
           <div className="flex flex-wrap gap-1">
-            {tags.map(tag => (
+            {uniqueTags.map((tag) => (
               <span
                 key={tag.id}
                 className="text-xs rounded px-2 py-1 text-secondary"
               >
-                {tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed'}
+                {tag.translations?.fi?.name ||
+                  tag.translations?.en?.name ||
+                  "Unnamed"}
               </span>
             ))}
           </div>
         );
       },
-    },      
+    },
     {
-      id: 'edit',
-      header: 'Edit',
+      id: "edit",
+      header: "Edit",
       cell: ({ row }) => (
         <Button
           className="bg-background rounded-2xl px-6 text-highlight2 border-highlight2 border-1 hover:text-background hover:bg-highlight2"
@@ -154,8 +164,8 @@ const AdminItemsTable = () => {
       ),
     },
     {
-      id: 'delete',
-      header: 'Delete',
+      id: "delete",
+      header: "Delete",
       cell: ({ row }) => (
         <Button
           className="bg-background rounded-2xl px-6 text-destructive border-destructive border hover:text-background"
@@ -172,11 +182,11 @@ const AdminItemsTable = () => {
     if (items.length === 0) {
       dispatch(fetchAllItems());
     }
-  }, [dispatch, items.length]);  
-  
+  }, [dispatch, items.length]);
+
   const handleEdit = (item: Item) => {
-    setSelectedItem(item);  // Set the selected item
-    setShowModal(true);      // Show the modal
+    setSelectedItem(item); // Set the selected item
+    setShowModal(true); // Show the modal
   };
 
   const handleDelete = async (id: string) => {
@@ -209,7 +219,7 @@ const AdminItemsTable = () => {
                 });
                 // After successful deletion, refetch or update state
                 dispatch(fetchAllItems());
-              } catch (error) {
+              } catch {
                 toast.error("Error deleting item.");
               }
             }}
@@ -251,24 +261,24 @@ const AdminItemsTable = () => {
   }
 
   const filteredItems = items
-  .filter(item => {
-    if (statusFilter === 'active') return item.is_active;
-    if (statusFilter === 'inactive') return !item.is_active;
-    return true;
-  })
-  .filter(item => {
-    const name = item.translations.fi.item_name.toLowerCase();
-    const type = item.translations.fi.item_type.toLowerCase();
-    return (
-      name.includes(searchTerm.toLowerCase()) ||
-      type.includes(searchTerm.toLowerCase())
-    );
-  })
-  .filter(item => {
-    if (tagFilter.length === 0) return true;
-    const itemTagIds = (item.storage_item_tags ?? []).map(t => t.id);
-    return tagFilter.every(tag => itemTagIds.includes(tag));
-  });
+    .filter((item) => {
+      if (statusFilter === "active") return item.is_active;
+      if (statusFilter === "inactive") return !item.is_active;
+      return true;
+    })
+    .filter((item) => {
+      const name = item.translations.fi.item_name.toLowerCase();
+      const type = item.translations.fi.item_type.toLowerCase();
+      return (
+        name.includes(searchTerm.toLowerCase()) ||
+        type.includes(searchTerm.toLowerCase())
+      );
+    })
+    .filter((item) => {
+      if (tagFilter.length === 0) return true;
+      const itemTagIds = (item.storage_item_tags ?? []).map((t) => t.id);
+      return tagFilter.every((tag) => itemTagIds.includes(tag));
+    });
 
   return (
     <div className="space-y-4">
@@ -293,7 +303,9 @@ const AdminItemsTable = () => {
         {/* Filter by active status */}
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+          onChange={(e) =>
+            setStatusFilter(e.target.value as "all" | "active" | "inactive")
+          }
           className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
         >
           <option value="all">All</option>
@@ -305,36 +317,42 @@ const AdminItemsTable = () => {
         <div className="flex flex-wrap gap-2">
           {tagFilter.length > 0 && (
             <span className="text-sm text-muted-foreground">
-              Filtered by {tagFilter.length} tag{tagFilter.length > 1 ? 's' : ''}
+              Filtered by {tagFilter.length} tag
+              {tagFilter.length > 1 ? "s" : ""}
             </span>
           )}
-          {tags.map(tag => (
+          {tags.map((tag) => (
             <button
               key={tag.id}
               onClick={() => {
-                setTagFilter(prev => prev.includes(tag.id)
-                  ? prev.filter(t => t !== tag.id)
-                  : [...prev, tag.id]);
+                setTagFilter((prev) =>
+                  prev.includes(tag.id)
+                    ? prev.filter((t) => t !== tag.id)
+                    : [...prev, tag.id],
+                );
               }}
               className={`px-3 py-2 rounded-2xl text-xs border ${
-                tagFilter.includes(tag.id) ? 'bg-secondary text-white' : 'border-secondary text-secondary'
+                tagFilter.includes(tag.id)
+                  ? "bg-secondary text-white"
+                  : "border-secondary text-secondary"
               }`}
             >
-              {tag.translations?.fi?.name?.toLowerCase() || tag.translations?.en?.name?.toLowerCase()}
+              {tag.translations?.fi?.name?.toLowerCase() ||
+                tag.translations?.en?.name?.toLowerCase()}
             </button>
           ))}
         </div>
         <Button
           onClick={() => {
-            setSearchTerm('');
-            setStatusFilter('all');
+            setSearchTerm("");
+            setStatusFilter("all");
             setTagFilter([]);
           }}
           className="ml-4 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
         >
           Clear Filters
         </Button>
-    </div>
+      </div>
 
       <PaginatedDataTable columns={itemsColumns} data={filteredItems} />
 
@@ -342,17 +360,16 @@ const AdminItemsTable = () => {
       {showModal && selectedItem && (
         <UpdateItemModal
           onClose={handleCloseModal}
-          initialData={selectedItem}  // Pass the selected item data to the modal
+          initialData={selectedItem} // Pass the selected item data to the modal
         />
       )}
       {assignTagsModalOpen && currentItemId && (
-      <AssignTagsModal
-        open={assignTagsModalOpen}
-        itemId={currentItemId}
-        onClose={handleCloseAssignTagsModal}
-      />
-    )}
-
+        <AssignTagsModal
+          open={assignTagsModalOpen}
+          itemId={currentItemId}
+          onClose={handleCloseAssignTagsModal}
+        />
+      )}
     </div>
   );
 };

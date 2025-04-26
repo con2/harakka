@@ -1,15 +1,28 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { useAppDispatch } from "@/store/hooks";
 import { updateUser } from "@/store/slices/usersSlice";
 import { Label } from "../ui/label";
 import { MultiSelect } from "../ui/multi-select";
 
-const UserEditModal = ({ user }: { user: any }) => {
+const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();
 
   const [formData, setFormData] = useState({
@@ -65,7 +78,7 @@ const UserEditModal = ({ user }: { user: any }) => {
     try {
       await dispatch(updateUser({ id: user.id, data: formData })).unwrap();
       toast.success("User updated successfully!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update user. Please try again.");
     }
   };
@@ -112,7 +125,10 @@ const UserEditModal = ({ user }: { user: any }) => {
           </div>
           <div>
             <Label htmlFor="role">Role</Label>
-            <Select onValueChange={handleRoleChange} defaultValue={formData.role}>
+            <Select
+              onValueChange={handleRoleChange}
+              defaultValue={formData.role}
+            >
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="Select Role" />
               </SelectTrigger>
@@ -154,10 +170,11 @@ const UserEditModal = ({ user }: { user: any }) => {
                 </Button>
               </div>
             ))}
-            <Button 
+            <Button
               className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
               type="button"
-              onClick={addPreference}>
+              onClick={addPreference}
+            >
               Add Preference
             </Button>
           </div>
