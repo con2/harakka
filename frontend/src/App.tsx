@@ -24,6 +24,7 @@ import OrderList from "./components/Admin/OrderList";
 import TagList from "./components/Admin/TagList";
 import MyOrders from "./components/MyOrders";
 import Footer from "./components/Footer";
+import { UserGuide } from "./components/UserGuidelines";
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
                 <Route path="/storage" element={<ItemsList />} />
                 <Route path="/items/:id" element={<ItemDetails />} />
               </Route>
+              <Route path="/howItWorks" element={<UserGuide />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route path="/cart" element={<Cart />} />
               <Route
