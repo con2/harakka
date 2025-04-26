@@ -22,7 +22,7 @@ import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { useAuth } from "@/context/AuthContext";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "../ui/button";
-import { BookingOrder, BookingItem } from "@/types/orders";
+import { BookingOrder, BookingItem } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -45,14 +45,8 @@ const OrderList = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   useEffect(() => {
-    // Only fetch orders once when the component mounts and auth is ready
-    if (
-      !authLoading &&
-      user &&
-      user.id &&
-      (!orders || orders.length === 0) &&
-      !ordersLoadedRef.current
-    ) {
+    // Always fetch orders when the admin component mounts and auth is ready
+    if (!authLoading && user && user.id && !ordersLoadedRef.current) {
       dispatch(getAllOrders(user.id));
       ordersLoadedRef.current = true;
     }
@@ -136,10 +130,6 @@ const OrderList = () => {
                     return "Failed to delete order";
                   },
                 });
-                // Refresh orders list after successful deletion
-                if (user && user.id) {
-                  dispatch(getAllOrders(user.id));
-                }
               } catch (error) {
                 console.error("Error deleting order:", error);
               }

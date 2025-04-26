@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -9,12 +9,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAppDispatch } from "@/store/hooks";
-import { createUser } from "@/store/slices/usersSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  createUser,
+  selectLoading,
+  selectError,
+  selectErrorContext,
+} from "@/store/slices/usersSlice";
 import { toast } from "sonner";
 import { CreateUserDto } from "@/types/user";
 import { Label } from "../ui/label";
 import { useAuth } from "@/context/AuthContext";
+import { Loader2 } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -23,7 +29,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-const initialFormState: CreateUserDto = {
+const initialFormState: Omit<CreateUserDto, "password"> = {
   full_name: "",
   visible_name: "",
   email: "",
@@ -35,10 +41,21 @@ const initialFormState: CreateUserDto = {
 const AddUserModal = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const dispatch = useAppDispatch();
+  const loading = useAppSelector(selectLoading);
+  const error = useAppSelector(selectError);
+  const errorContext = useAppSelector(selectErrorContext);
 
-  const [formData, setFormData] = useState<CreateUserDto>(initialFormState);
+  const [formData, setFormData] =
+    useState<Omit<CreateUserDto, "password">>(initialFormState);
   const [password, setPassword] = useState("");
   const [open, setOpen] = useState(false);
+
+  // Display errors when they occur
+  useEffect(() => {
+    if (error && errorContext === "create") {
+      toast.error(error);
+    }
+  }, [error, errorContext]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -68,14 +85,14 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
       return;
     }
     try {
-      const payload = { ...formData, password };
+      const payload: CreateUserDto = { ...formData, password };
       await dispatch(createUser(payload)).unwrap();
 
       toast.success(`User ${payload.email} created successfully!`);
       resetForm();
       setOpen(false);
-    } catch (error: any) {
-      toast.error(typeof error === "string" ? error : "Failed to add user.");
+    } catch {
+      // Error is already handled by the redux slice and displayed via useEffect
     }
   };
 
@@ -163,10 +180,18 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
 
         <DialogFooter>
           <Button
-            className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+            className="w-full bg-background rounded-2xl text-secondary border-secondary border hover:text-background hover:bg-secondary"
             onClick={handleSubmit}
+            disabled={loading}
           >
-            Add User
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Add User"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
