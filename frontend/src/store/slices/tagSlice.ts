@@ -1,121 +1,151 @@
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'; 
-import { tagsApi } from '../../api/services/tags'; 
-import { Tag, TagState } from '../../types/tag'; 
-import { RootState } from '../store'; 
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { tagsApi } from "../../api/services/tags";
+import { RootState } from "../store";
+import {
+  CreateTagDto,
+  Tag,
+  TagAssignment,
+  TagState,
+  UpdateTagDto,
+} from "@/types";
+import { extractErrorMessage } from "@/store/utils/errorHandlers";
 
 const initialState: TagState = {
   tags: [],
   loading: false,
   error: null,
+  errorContext: null,
   selectedTags: [], // initialized as an empty array
 };
 
 // Async Thunks (API Calls)
 // get all tags
 export const fetchAllTags = createAsyncThunk(
-  'tags/fetchAllTags',
+  "tags/fetchAllTags",
   async (_, { rejectWithValue }) => {
     try {
       return await tagsApi.getAllTags();
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch tags');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch tags"),
+      );
     }
-  }
+  },
 );
 
 // Create a new tag
 export const createTag = createAsyncThunk(
-  'tags/createTag',
-  async (tag: Partial<Tag>, { rejectWithValue }) => {
+  "tags/createTag",
+  async (tag: CreateTagDto, { rejectWithValue }) => {
     try {
       return await tagsApi.createTag(tag);
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to create tag');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to create tag"),
+      );
     }
-  }
+  },
 );
 
 // Update an existing tag
 export const updateTag = createAsyncThunk(
-  'tags/updateTag',
-  async ({ id, tagData }: { id: string; tagData: Partial<Tag> }, { rejectWithValue }) => {
+  "tags/updateTag",
+  async (
+    { id, tagData }: { id: string; tagData: UpdateTagDto },
+    { rejectWithValue },
+  ) => {
     try {
       return await tagsApi.updateTag(id, tagData);
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update tag');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to update tag"),
+      );
     }
-  }
+  },
 );
 
 // Delete a tag
 export const deleteTag = createAsyncThunk(
-  'tags/deleteTag',
+  "tags/deleteTag",
   async (id: string, { rejectWithValue }) => {
     try {
       await tagsApi.deleteTag(id);
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error?.response?.data?.message || 'Failed to delete tag');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to delete tag"),
+      );
     }
-  }
+  },
 );
 
 // Assign a tag to an item
 export const assignTagToItem = createAsyncThunk(
-  'tags/assignTagToItem',
-  async ({ itemId, tagIds }: { itemId: string; tagIds: string[] }, { rejectWithValue }) => {
+  "tags/assignTagToItem",
+  async ({ itemId, tagIds }: TagAssignment, { rejectWithValue }) => {
     try {
       await tagsApi.assignTagToItem(itemId, tagIds);
       return { itemId, tagIds };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to assign tags');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to assign tags"),
+      );
     }
-  }
+  },
 );
 
 // Remove a tag from an item
 export const removeTagFromItem = createAsyncThunk(
-  'tags/removeTagFromItem',
-  async ({ itemId, tagId }: { itemId: string; tagId: string }, { rejectWithValue }) => {
+  "tags/removeTagFromItem",
+  async (
+    { itemId, tagId }: { itemId: string; tagId: string },
+    { rejectWithValue },
+  ) => {
     try {
       await tagsApi.removeTagFromItem(itemId, tagId);
       return { itemId, tagId };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to remove tag');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to remove tag"),
+      );
     }
-  }
+  },
 );
 
 // Fetch tags for a specific item
 export const fetchTagsForItem = createAsyncThunk(
-  'tags/fetchTagsForItem',
+  "tags/fetchTagsForItem",
   async (itemId: string, { rejectWithValue }) => {
     try {
       const data = await tagsApi.getTagsByItem(itemId);
       return data;
-    } catch (error: any) {
-      return rejectWithValue(error?.response?.data?.message || 'Failed to fetch tags for item');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch tags for item"),
+      );
     }
-  }
+  },
 );
 
 export const tagSlice = createSlice({
-  name: 'tags',
+  name: "tags",
   initialState,
   reducers: {
     clearSelectedTags: (state) => {
       state.selectedTags = []; // Clear selected tags
       state.error = null;
+      state.errorContext = null;
     },
     selectTag: (state, action: PayloadAction<Tag>) => {
       state.selectedTags = [action.payload]; // Assuming one tag can be selected at a time
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
-      // Fetch All tags
       .addCase(fetchAllTags.pending, (state) => {
         state.loading = true;
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(fetchAllTags.fulfilled, (state, action) => {
         state.loading = false;
@@ -124,89 +154,106 @@ export const tagSlice = createSlice({
       .addCase(fetchAllTags.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.errorContext = "fetch";
       })
-      // create a new tag
       .addCase(createTag.pending, (state) => {
         state.loading = true;
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(createTag.fulfilled, (state, action) => {
+        state.loading = false;
         state.tags.push(action.payload);
       })
       .addCase(createTag.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string | null;
+        state.error = action.payload as string;
+        state.errorContext = "create";
       })
-      // update tag
       .addCase(updateTag.pending, (state) => {
         state.loading = true;
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(updateTag.fulfilled, (state, action) => {
         state.tags = state.tags.map((tag) =>
-          tag.id === action.payload.id ? action.payload : tag
+          tag.id === action.payload.id ? action.payload : tag,
         );
         state.loading = false;
       })
       .addCase(updateTag.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string | null;
+        state.error = action.payload as string;
+        state.errorContext = "update";
       })
-      //delete tag
       .addCase(deleteTag.pending, (state) => {
         state.loading = true;
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(deleteTag.fulfilled, (state, action) => {
         const tagId = action.payload;
         state.tags = state.tags.filter((tag) => tag.id !== tagId);
-        state.selectedTags = state.selectedTags ? state.selectedTags.filter((tag) => tag.id !== tagId) : [];
+        state.selectedTags = state.selectedTags
+          ? state.selectedTags.filter((tag) => tag.id !== tagId)
+          : [];
         state.loading = false;
-      })      
+      })
       .addCase(deleteTag.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.errorContext = "delete";
       })
-      // assign tag to item
       .addCase(assignTagToItem.pending, (state) => {
         state.loading = true;
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(assignTagToItem.fulfilled, (state, action) => {
-        state.loading = false;
         const { tagIds } = action.payload;
-        state.selectedTags = state.tags.filter((tag) => tagIds.includes(tag.id));
-      })      
+        state.selectedTags = state.tags.filter((tag) =>
+          tagIds.includes(tag.id),
+        );
+        state.loading = false;
+      })
       .addCase(assignTagToItem.rejected, (state, action) => {
         state.error = action.payload as string;
+        state.errorContext = "assign";
       })
-      // fetch tags for item
       .addCase(fetchTagsForItem.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchTagsForItem.fulfilled, (state, action) => {
-        state.loading = false;
         state.selectedTags = action.payload; // Store the fetched tags in the Redux state
+        state.loading = false;
       })
       .addCase(fetchTagsForItem.rejected, (state, action) => {
-        state.error = action.payload as string | null;
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+        state.loading = false;
       })
-      // remove tag from item
       .addCase(removeTagFromItem.pending, (state) => {
         state.loading = true;
       })
       .addCase(removeTagFromItem.fulfilled, (state, action) => {
-        const { itemId, tagId } = action.payload;
+        const { tagId } = action.payload;
         state.tags = state.tags.map((tag) => {
           if (tag.id === tagId) {
             return { ...tag, assignedTo: null }; // Assuming we want to clear the assignedTo property
           }
           return tag;
         });
-        state.selectedTags = state.selectedTags ? state.selectedTags.filter((tag) => tag.id !== tagId) : []; // Remove the tag from selected tags
+        state.selectedTags = state.selectedTags
+          ? state.selectedTags.filter((tag) => tag.id !== tagId)
+          : []; // Remove the tag from selected tags
         state.loading = false;
       })
       .addCase(removeTagFromItem.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.errorContext = "delete";
       });
-  }
+  },
 });
 
 // Selectors

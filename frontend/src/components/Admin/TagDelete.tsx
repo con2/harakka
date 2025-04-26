@@ -1,10 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
-import {
-  deleteTag,
-  fetchAllTags,
-} from "@/store/slices/tagSlice";
+import { deleteTag, fetchAllTags } from "@/store/slices/tagSlice";
 
 const TagDelete = ({
   id,
@@ -26,7 +23,8 @@ const TagDelete = ({
       <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
         <div className="font-semibold text-lg">Confirm Deletion</div>
         <div className="text-sm text-muted-foreground">
-        This will permanently delete the tag and remove it from all associated items. Are you sure?
+          This will permanently delete the tag and remove it from all associated
+          items. Are you sure?
         </div>
         <div className="flex justify-end gap-2">
           <Button
@@ -42,7 +40,7 @@ const TagDelete = ({
             size="sm"
             className="rounded-md"
             onClick={async () => {
-              toast.dismiss(t);  
+              toast.dismiss(t);
               try {
                 await toast.promise(dispatch(deleteTag(id)).unwrap(), {
                   loading: "Deleting tag...",
@@ -52,7 +50,7 @@ const TagDelete = ({
                 dispatch(fetchAllTags());
                 onDeleted?.();
                 closeModal?.();
-              } catch (error) {
+              } catch {
                 toast.error("Error deleting tag.");
               }
             }}
