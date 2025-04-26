@@ -35,7 +35,7 @@ const TeamList = () => {
   }, [authLoading, isSuperVera, users.length, dispatch]);
 
   const teamUsers = users.filter(
-    (user) => user.role === "admin" || user.role === "superVera"
+    (user) => user.role === "admin" || user.role === "superVera",
   );
 
   const formatDate = (dateString: string): string =>
@@ -51,7 +51,7 @@ const TeamList = () => {
     setShowModal(true);
   };
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<UserProfile>[] = [
     { accessorKey: "full_name", header: "Name" },
     { accessorKey: "phone", header: "Phone" },
     {
@@ -72,7 +72,11 @@ const TeamList = () => {
       header: "Role",
       cell: ({ row }) => {
         const userRole = row.original.role;
-        return userRole ? userRole : <span className="text-slate-500">N/A</span>;
+        return userRole ? (
+          userRole
+        ) : (
+          <span className="text-slate-500">N/A</span>
+        );
       },
     },
     {
@@ -124,14 +128,14 @@ const TeamList = () => {
           Add New Team Member
         </Button>
       </div>
-        {showModal && (
-          <AddTeamMemberModal
-            onClose={() => setShowModal(false)}
-            initialData={selectedUser || undefined}
-          />
-        )}
+      {showModal && (
+        <AddTeamMemberModal
+          onClose={() => setShowModal(false)}
+          initialData={selectedUser || undefined}
+        />
+      )}
 
-        <PaginatedDataTable columns={columns} data={teamUsers} />
+      <PaginatedDataTable columns={columns} data={teamUsers} />
     </>
   );
 };

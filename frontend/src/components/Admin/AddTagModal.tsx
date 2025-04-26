@@ -47,7 +47,7 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
             fi: fiName ? { name: fiName } : undefined,
             en: enName ? { name: enName } : undefined,
           },
-        })
+        }),
       ).unwrap();
 
       toast.success("Tag created successfully!");
@@ -55,7 +55,7 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
       onCreated?.(result);
       resetForm();
       setOpen(false);
-    } catch (err: any) {
+    } catch {
       toast.error("Failed to create tag.");
     } finally {
       setSubmitting(false);
@@ -67,7 +67,9 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center mb-4">Create a New Tag</DialogTitle>
+          <DialogTitle className="text-center mb-4">
+            Create a New Tag
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
