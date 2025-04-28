@@ -475,7 +475,7 @@ export class BookingService {
         );
       }
 
-      // insert new order item:
+      // insert new order item
       const { error: itemInsertError } = await supabase
         .from("order_items")
         .insert({
