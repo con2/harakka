@@ -166,8 +166,6 @@ export class BookingService {
       throw new BadRequestException("No userId found: user_id is required");
     }
 
-    const unavailableItems: string[] = [];
-
     // check for overlapping bookings
     for (const item of dto.items) {
       const start = new Date(item.start_date);
@@ -193,18 +191,35 @@ export class BookingService {
       // get max availability from storage_items - USE SERVICE CLIENT
       const { data: itemData, error: itemError } = await supabase
         .from("storage_items")
-        .select("items_number_total")
+        .select("items_number_total, items_number_available")
         .eq("id", item.item_id)
         .single();
 
       if (itemError || !itemData) {
+        console.error("Storage item fetch error:", itemError);
         throw new BadRequestException("Item data not found");
       }
 
-      // check availability
+      /* // check availability
       if (alreadyBookedQuantity + item.quantity > itemData.items_number_total) {
         throw new BadRequestException(
           `Not enough quantity available for item ${item.item_id}`,
+        );
+      }
+    } */
+      // 3. Prüfe, ob genügend verfügbar ist
+      const freeQuantity = itemData.items_number_total - alreadyBookedQuantity;
+
+      if (item.quantity > freeQuantity) {
+        throw new BadRequestException(
+          `Not enough available quantity for item ${item.item_id}`,
+        );
+      }
+
+      // 4. Optional: Prüfen, ob auch items_number_available logisch passt
+      if (item.quantity > itemData.items_number_available) {
+        throw new BadRequestException(
+          `Not enough real available stock for item ${item.item_id}`,
         );
       }
     }
@@ -246,7 +261,7 @@ export class BookingService {
       // get location_id from storage_items - USE SERVICE CLIENT
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
-        .select("location_id")
+        .select("location_id, items_number_available")
         .eq("id", item.item_id)
         .single();
 
@@ -257,6 +272,29 @@ export class BookingService {
         );
       }
 
+      // Bestand sofort reduzieren
+      // reduce availability directly in `storage_items` with quantity check (just in case)
+
+      const newAvailable = storageItem.items_number_available - item.quantity;
+      if (newAvailable < 0) {
+        throw new BadRequestException(
+          `Negative stock detected for item ${item.item_id}`,
+        );
+      }
+
+      const { error: reduceError } = await supabase
+        .from("storage_items")
+        .update({ items_number_available: newAvailable })
+        .eq("id", item.item_id);
+
+      if (reduceError) {
+        console.error("Stock reduce error:", reduceError);
+        throw new BadRequestException(
+          `Failed to reserve stock for item ${item.item_id}`,
+        );
+      }
+
+      // create order-item
       const { error: itemInsertError } = await supabase
         .from("order_items")
         .insert({
@@ -315,7 +353,7 @@ export class BookingService {
       }
 
       // reduce availability directly in `storage_items`
-      const { error: reduceError } = await supabase
+      /* const { error: reduceError } = await supabase
         .from("storage_items")
         .update({
           items_number_available:
@@ -327,7 +365,7 @@ export class BookingService {
         throw new BadRequestException(
           `Failed to reduce stock for item ${item.item_id}`,
         );
-      }
+      } */
     }
 
     // Change the order status to 'confirmed'
@@ -449,6 +487,21 @@ export class BookingService {
       throw new ForbiddenException("Only admins can reject bookings");
     }
 
+    // get all items of the order to book them back
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("item_id, quantity")
+      .eq("order_id", orderId);
+
+    if (items && items.length > 0) {
+      for (const item of items) {
+        await supabase.rpc("increment_item_quantity", {
+          item_id: item.item_id,
+          quantity: item.quantity,
+        });
+      }
+    }
+
     const { error: updateError } = await supabase
       .from("orders")
       .update({ status: "rejected" })
@@ -502,6 +555,21 @@ export class BookingService {
       }
     }
 
+    // get all items of the order to book them back
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("item_id, quantity")
+      .eq("order_id", orderId);
+
+    if (items && items.length > 0) {
+      for (const item of items) {
+        await supabase.rpc("increment_item_quantity", {
+          item_id: item.item_id,
+          quantity: item.quantity,
+        });
+      }
+    }
+
     const { error } = await supabase
       .from("orders")
       .update({ status: isAdmin ? "cancelled by admin" : "cancelled by user" })
@@ -547,6 +615,21 @@ export class BookingService {
       throw new ForbiddenException(
         "You are not allowed to delete this booking",
       );
+    }
+
+    // get all items of the order to book them back
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("item_id, quantity")
+      .eq("order_id", orderId);
+
+    if (items && items.length > 0) {
+      for (const item of items) {
+        await supabase.rpc("increment_item_quantity", {
+          item_id: item.item_id,
+          quantity: item.quantity,
+        });
+      }
     }
 
     // Delete all items
@@ -634,4 +717,3 @@ export class BookingService {
     };
   }
 }
-// This service handles the logic for creating, confirming, rejecting, and cancelling bookings.
