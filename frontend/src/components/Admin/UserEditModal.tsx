@@ -21,11 +21,12 @@ import { useAppDispatch } from "@/store/hooks";
 import { updateUser } from "@/store/slices/usersSlice";
 import { Label } from "../ui/label";
 import { MultiSelect } from "../ui/multi-select";
+import { UserFormData, UserProfile } from "@/types";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
     email: user.email || "",
     role: user.role || "user",
@@ -182,7 +183,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
           <div>
             <Label>Saved Lists</Label>
             <MultiSelect
-              selected={formData.saved_lists}
+              selected={formData.saved_lists || []}
               options={["List 1", "List 2", "List 3", "List 4"]} // Replace with actual saved list options
               onChange={handleSavedListsChange}
             />

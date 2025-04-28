@@ -1,3 +1,11 @@
 {
-	"cSpell.words": ["plpgsql", "SUPABASE", "superadmin", "varchar"]
+  "cSpell.words": ["plpgsql", "SUPABASE", "superadmin", "varchar"],
+  "cSpell.customDictionaries": {
+    "custom-dictionary-workspace": {
+      "name": "custom-dictionary-workspace",
+      "path": "${workspaceFolder:FullStack_Storage_and_Booking_App}/.cspell/custom-dictionary-workspace.txt",
+      "addWords": true,
+      "scope": "workspace"
+    }
+  }
 }

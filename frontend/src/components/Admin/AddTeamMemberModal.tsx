@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAppDispatch } from "@/store/hooks";
 import { createUser, updateUser } from "@/store/slices/usersSlice";
-import { CreateUserDto, UserProfile } from "@/types/user";
+import { CreateUserDto, UserProfile, UserFormData } from "@/types";
 import { toast } from "sonner";
 import {
   Select,
@@ -29,15 +29,15 @@ type TeamMemberFormProps = {
 const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
   const dispatch = useAppDispatch();
 
-  const [formData, setFormData] = useState<CreateUserDto>({
-    full_name: "",
-    visible_name: "",
-    email: "",
-    phone: "",
-    role: "user",
-    preferences: {},
-    ...(initialData || {}),
-  });
+  const [formData, setFormData] = useState<UserFormData>(() => ({
+    full_name: initialData?.full_name || "",
+    visible_name: initialData?.visible_name || "",
+    email: initialData?.email || "",
+    phone: initialData?.phone || "",
+    role: initialData?.role || "user",
+    preferences: initialData?.preferences || {},
+    saved_lists: initialData?.saved_lists,
+  }));
 
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -45,12 +45,13 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
   useEffect(() => {
     if (initialData) {
       setFormData({
-        full_name: initialData.full_name,
-        visible_name: initialData.visible_name,
-        email: initialData.email,
-        phone: initialData.phone,
+        full_name: initialData.full_name || "",
+        visible_name: initialData.visible_name || "",
+        email: initialData.email || "",
+        phone: initialData.phone || "",
         role: initialData.role,
         preferences: initialData.preferences || {},
+        saved_lists: initialData.saved_lists,
       });
     }
   }, [initialData]);
@@ -115,26 +116,27 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
       return;
     }
 
-    const payload: CreateUserDto = {
-      ...formData,
-      // Only add password for new users
-      ...(!initialData && password ? { password } : {}),
-    };
-
     setLoading(true);
 
     try {
       if (initialData) {
+        // For updates, use the UserFormData directly
         if (!initialData?.id) {
           toast.error("User ID is missing.");
           return;
         }
         await dispatch(
-          updateUser({ id: initialData.id, data: payload }),
+          updateUser({ id: initialData.id, data: formData }),
         ).unwrap();
         toast.success("User updated successfully!");
       } else {
-        await dispatch(createUser(payload)).unwrap();
+        // For new users, create a proper CreateUserDto with password
+        const createPayload: CreateUserDto = {
+          ...formData,
+          password, // Password required for new users
+        };
+
+        await dispatch(createUser(createPayload)).unwrap();
         toast.success("User added successfully!");
       }
       onClose();
