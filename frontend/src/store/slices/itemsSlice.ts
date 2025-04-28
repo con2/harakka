@@ -84,7 +84,8 @@ export const updateItem = createAsyncThunk<
   { id: string; data: UpdateItemDto }
 >("items/updateItem", async ({ id, data }, { rejectWithValue }) => {
   try {
-    return await itemsApi.updateItem(id, data);
+    const { ...cleanData } = data;
+    return await itemsApi.updateItem(id, cleanData);
   } catch (error: unknown) {
     return rejectWithValue(extractErrorMessage(error, "Failed to update item"));
   }
