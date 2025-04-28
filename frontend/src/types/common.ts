@@ -7,8 +7,8 @@
  */
 export interface Translatable<T> {
   translations: {
-    fi?: T;
-    en?: T;
+    fi: T;
+    en: T;
   };
 }
 
@@ -30,7 +30,7 @@ export type FilterStatus = "all" | "active" | "inactive";
  */
 export interface BaseEntity {
   id: string;
-  created_at?: string;
+  created_at: string;
   updated_at?: string;
 }
 
