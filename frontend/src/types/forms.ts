@@ -1,4 +1,6 @@
-import { Tag } from "./tag";
+import { Tag, TagTranslation } from "./tag";
+import { Item, ItemTranslation } from "./item";
+import { UserRole } from "./user";
 
 /**
  * Base form state for all forms in the application
@@ -10,28 +12,70 @@ export interface BaseFormState {
 }
 
 /**
+ * User form data structure for create/edit operations
+ * Used for both AddTeamMemberModal and UserEditModal
+ */
+export interface UserFormData {
+  full_name: string;
+  visible_name: string;
+  email: string;
+  phone: string;
+  role: UserRole;
+  preferences: Record<string, string>;
+  saved_lists?: string[];
+}
+
+/**
+ * Form data with optional password - used when creating a new user
+ */
+export interface CreateUserFormData extends UserFormData {
+  password?: string;
+}
+
+// -- Item form types below --
+
+/**
  * Item form data structure for create/edit operations
  */
-export interface ItemFormData {
-  location_id: string;
-  compartment_id: string;
-  items_number_total: number;
-  items_number_available: number;
-  price: number;
-  is_active: boolean;
+export interface ItemFormData
+  extends Omit<
+    Item,
+    | "id"
+    | "created_at"
+    | "updated_at"
+    | "storage_item_tags"
+    | "tagIds"
+    | "average_rating"
+  > {
+  // Override translations to ensure they always exist with required fields
   translations: {
-    fi: {
-      item_type: string;
-      item_name: string;
-      item_description: string;
-    };
-    en: {
-      item_type: string;
-      item_name: string;
-      item_description: string;
-    };
+    fi: ItemTranslation;
+    en: ItemTranslation;
   };
+  // Add tagIds as a separate field for form handling
   tagIds: string[];
+}
+
+/**
+ * Tag form data for creating/editing tags
+ */
+export interface TagFormData {
+  translations: {
+    fi: TagTranslation | null;
+    en: TagTranslation | null;
+  };
+}
+
+/**
+ * Helper function to create tag form data with proper typing
+ */
+export function createTagPayload(fiName: string, enName: string): TagFormData {
+  return {
+    translations: {
+      fi: fiName ? { name: fiName } : null,
+      en: enName ? { name: enName } : null,
+    },
+  };
 }
 
 /**
@@ -52,3 +96,10 @@ export type ToggleChangeHandler = (checked: boolean) => void;
  * Tag selection handler type
  */
 export type TagSelectionHandler = (tag: Tag, selected: boolean) => void;
+
+/**
+ * Props for TagAssignmentForm component
+ */
+export interface TagAssignFormProps {
+  itemId: string;
+}
