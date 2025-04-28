@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
-import { tagsApi } from '@/api/services/tags';
-import { Tag } from '@/types/tag';
-import { Item } from '@/types/item';
-import { LoaderCircle } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { itemsApi } from "@/api/services/items";
+import { Tag, Item } from "@/types";
+import { LoaderCircle } from "lucide-react";
 
 const TagDetail = ({ tag }: { tag: Tag }) => {
   const [items, setItems] = useState<Item[]>([]);
@@ -11,7 +10,7 @@ const TagDetail = ({ tag }: { tag: Tag }) => {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const relatedItems = await tagsApi.getItemsByTag(tag.id);
+        const relatedItems = await itemsApi.getItemsByTag(tag.id);
         setItems(relatedItems);
       } catch (err) {
         console.error(err);
@@ -37,12 +36,16 @@ const TagDetail = ({ tag }: { tag: Tag }) => {
         <div>
           <h3 className="font-medium mb-2">Assigned Items:</h3>
           {items.length === 0 ? (
-            <p className="text-muted-foreground">No items assigned to this tag.</p>
+            <p className="text-muted-foreground">
+              No items assigned to this tag.
+            </p>
           ) : (
             <ul className="list-disc pl-5 space-y-1">
               {items.map((item) => (
                 <li key={item.id}>
-                  {item.translations.fi?.name ?? item.translations.en?.name ?? 'Unnamed Item'}
+                  {item.translations.fi?.item_name ??
+                    item.translations.en?.item_name ??
+                    "Unnamed Item"}
                 </li>
               ))}
             </ul>
