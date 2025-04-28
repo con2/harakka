@@ -19,6 +19,7 @@ import AddUserModal from "./AddUserModal";
 import { LoaderCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Navigate } from "react-router-dom";
+import { UserProfile } from "@/types";
 
 const UsersList = () => {
   const dispatch = useAppDispatch();
@@ -30,15 +31,20 @@ const UsersList = () => {
   const isAdmin = useAppSelector(selectIsAdmin);
   const isSuperVera = useAppSelector(selectIsSuperVera);
   const isUser = useAppSelector(selectIsUser);
-  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(true); //TODO: what was it supposed to do? Added it to the useEffect dependency array for some reason...
   const closeModal = () => setIsModalOpen(false);
   const isAuthorized = isAdmin || isSuperVera || isUser;
 
   useEffect(() => {
-    if (!authLoading && isAuthorized && users.length === 0) {
+    if (
+      !authLoading &&
+      isAuthorized &&
+      users.length === 0 &&
+      isModalOpen === true
+    ) {
       dispatch(fetchAllUsers());
     }
-  }, [authLoading, isAuthorized, users.length, dispatch]);
+  }, [authLoading, isAuthorized, users.length, isModalOpen, dispatch]);
 
   const formatDate = (dateString: string): string =>
     new Date(dateString).toLocaleDateString("en-GB");
@@ -48,8 +54,6 @@ const UsersList = () => {
     if (isAdmin) return u.role === "user";
     return false;
   });
-
-  //const canEdit = isSuperVera || isAdmin;
 
   const columns: ColumnDef<UserProfile>[] = [
     { accessorKey: "full_name", header: "Name" },
