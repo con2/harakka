@@ -434,6 +434,7 @@ export class BookingService {
     // Delete existing items from order_items to avoid douplicates
     await supabase.from("order_items").delete().eq("order_id", orderId);
 
+    // insert updated items and reduce stock
     for (const item of updatedItems) {
       const start = new Date(item.start_date);
       const end = new Date(item.end_date);
@@ -441,26 +442,56 @@ export class BookingService {
         (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
       );
 
-      const { data: storageItem } = await supabase
+      const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
-        .select("location_id")
+        .select("location_id, items_number_available")
         .eq("id", item.item_id)
         .single();
 
-      if (!storageItem) {
-        throw new Error("Storage item not found");
+      if (storageError || !storageItem) {
+        console.error("Fetch storage item error:", storageError);
+        throw new BadRequestException(
+          `Storage item not found for item ${item.item_id}`,
+        );
       }
 
-      await supabase.from("order_items").insert({
-        order_id: orderId,
-        item_id: item.item_id,
-        location_id: storageItem.location_id,
-        quantity: item.quantity,
-        start_date: item.start_date,
-        end_date: item.end_date,
-        total_days: totalDays,
-        status: "pending",
-      });
+      // reduce available stock
+      const newAvailable = storageItem.items_number_available - item.quantity;
+      if (newAvailable < 0) {
+        throw new BadRequestException(
+          `Negative stock detected for item ${item.item_id}`,
+        );
+      }
+
+      const { error: reduceError } = await supabase
+        .from("storage_items")
+        .update({ items_number_available: newAvailable })
+        .eq("id", item.item_id);
+
+      if (reduceError) {
+        console.error("Stock reduce error:", reduceError);
+        throw new BadRequestException(
+          `Failed to reserve stock for item ${item.item_id}`,
+        );
+      }
+
+      // insert new order item:
+      const { error: itemInsertError } = await supabase
+        .from("order_items")
+        .insert({
+          order_id: orderId,
+          item_id: item.item_id,
+          location_id: storageItem.location_id,
+          quantity: item.quantity,
+          start_date: item.start_date,
+          end_date: item.end_date,
+          total_days: totalDays,
+          status: "pending",
+        });
+      if (itemInsertError) {
+        console.error("Order item insert error:", itemInsertError);
+        throw new BadRequestException("Could not create updated order items");
+      }
     }
 
     return { message: "Booking updated" };
