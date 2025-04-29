@@ -15,7 +15,7 @@ async function bootstrap() {
     // Get allowed origins from config with combined default value
     const allowedOrigins = configService.get<string>(
       "ALLOWED_ORIGINS",
-      "https://agreeable-grass-049dc8010.4.azurestaticapps.net,http://localhost:5180",
+      "https://agreeable-grass-049dc8010.4.azurestaticapps.net,https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180",
     );
     const origins = allowedOrigins.split(",").map((origin) => origin.trim());
 
