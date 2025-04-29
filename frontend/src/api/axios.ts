@@ -1,5 +1,6 @@
 import axios from "axios";
 import { supabase } from "../config/supabase";
+import { getRuntimeConfig } from "../types/runtime-config";
 
 // Cache the token to avoid unnecessary async calls
 let cachedToken: string | null = null;
@@ -13,8 +14,17 @@ export async function getAuthToken(): Promise<string | null> {
   return cachedToken;
 }
 
+// Get API URL from runtime config with fallback to development URL
+const { apiUrl } = getRuntimeConfig();
+const baseURL = apiUrl
+  ? // Ensure URL has proper protocol
+    apiUrl.startsWith("http")
+    ? apiUrl
+    : `https://${apiUrl}`
+  : "http://localhost:3000";
+
 export const api = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL,
   headers: {
     "Content-Type": "application/json",
   },
