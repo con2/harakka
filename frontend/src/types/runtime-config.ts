@@ -20,8 +20,13 @@ export function getRuntimeConfig(): RuntimeConfig {
     apiUrl: (import.meta.env.VITE_API_URL as string) || "",
   };
 
-  return {
-    ...defaultConfig,
-    ...(window.__RUNTIME_CONFIG__ || {}),
-  };
+  // Merge with runtime config if available
+  if (typeof window !== "undefined" && window.__RUNTIME_CONFIG__) {
+    return {
+      ...defaultConfig,
+      ...window.__RUNTIME_CONFIG__,
+    };
+  }
+
+  return defaultConfig;
 }
