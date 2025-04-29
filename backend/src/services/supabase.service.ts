@@ -19,12 +19,13 @@ export class SupabaseService {
       this.configService.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     this.anonKey = this.configService.get("SUPABASE_ANON_KEY") ?? "";
 
+    // Change from error to warning to prevent application crash
     if (!this.supabaseUrl) {
-      this.logger.error("SUPABASE_URL is not configured");
+      this.logger.warn("SUPABASE_URL is not configured");
     }
 
     if (!this.serviceRoleKey) {
-      this.logger.error("SUPABASE_SERVICE_ROLE_KEY is not configured");
+      this.logger.warn("SUPABASE_SERVICE_ROLE_KEY is not configured");
     }
 
     if (!this.anonKey) {
