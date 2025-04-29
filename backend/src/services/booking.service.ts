@@ -282,15 +282,23 @@ export class BookingService {
         );
       }
 
-      const { error: reduceError } = await supabase
+      const { data: updatedItems, error: reduceError } = await supabase
         .from("storage_items")
         .update({ items_number_available: newAvailable })
-        .eq("id", item.item_id);
+        .eq("id", item.item_id)
+        .select();
 
       if (reduceError) {
         console.error("Stock reduce error:", reduceError);
         throw new BadRequestException(
           `Failed to reserve stock for item ${item.item_id}`,
+        );
+      }
+
+      if (!updatedItems || updatedItems.length === 0) {
+        console.error("No stock item updated for item:", item.item_id);
+        throw new BadRequestException(
+          `Failed to update stock for item ${item.item_id}`,
         );
       }
 
@@ -579,26 +587,24 @@ export class BookingService {
       if (!isOwner) {
         throw new ForbiddenException("You can only cancel your own bookings");
       }
-      if (order.status === "confirmed") {
+      if (!isAdmin && order.status === "confirmed") {
         throw new ForbiddenException(
           "You can't cancel a booking that has already been confirmed",
         );
       }
     }
 
-    // get all items of the order to book them back
-    const { data: items } = await supabase
+    // Cancel related order_items to trigger stock restoration
+    const { error: itemUpdateError } = await supabase
       .from("order_items")
-      .select("item_id, quantity")
+      .update({ status: "cancelled" }) // Trigger watches for this change
       .eq("order_id", orderId);
 
-    if (items && items.length > 0) {
-      for (const item of items) {
-        await supabase.rpc("increment_item_quantity", {
-          item_id: item.item_id,
-          quantity: item.quantity,
-        });
-      }
+    if (itemUpdateError) {
+      console.error("Order items update error:", itemUpdateError);
+      throw new BadRequestException(
+        "Could not update order items for cancellation",
+      );
     }
 
     const { error } = await supabase
@@ -648,19 +654,17 @@ export class BookingService {
       );
     }
 
-    // get all items of the order to book them back
-    const { data: items } = await supabase
+    // Cancel related order_items to trigger stock restoration
+    const { error: itemUpdateError } = await supabase
       .from("order_items")
-      .select("item_id, quantity")
+      .update({ status: "cancelled" }) // Trigger watches for change
       .eq("order_id", orderId);
 
-    if (items && items.length > 0) {
-      for (const item of items) {
-        await supabase.rpc("increment_item_quantity", {
-          item_id: item.item_id,
-          quantity: item.quantity,
-        });
-      }
+    if (itemUpdateError) {
+      console.error("Order items update error:", itemUpdateError);
+      throw new BadRequestException(
+        "Could not update order items for cancellation",
+      );
     }
 
     // Delete all items
