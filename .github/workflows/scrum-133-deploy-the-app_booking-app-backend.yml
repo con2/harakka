@@ -120,3 +120,5 @@ jobs:
           app-name: "booking-app-backend"
           slot-name: "Production"
           package: .
+          # Add startup command with environment variables
+          startup-command: "SUPABASE_URL=${{ secrets.SUPABASE_URL }} SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} npm run start:prod"
