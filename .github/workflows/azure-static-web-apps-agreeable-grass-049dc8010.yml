@@ -34,7 +34,21 @@ jobs:
           cd frontend
           npm ci
 
-        # Build manually with environment variables
+        # Add runtime config file generation
+      - name: Create runtime config
+        run: |
+          cd frontend
+          echo "window.__RUNTIME_CONFIG__ = {" > ./public/runtime-config.js
+          echo "  supabaseUrl: \"$VITE_SUPABASE_URL\"," >> ./public/runtime-config.js
+          echo "  supabaseAnonKey: \"$VITE_SUPABASE_ANON_KEY\"," >> ./public/runtime-config.js 
+          echo "  apiUrl: \"$VITE_API_URL\"" >> ./public/runtime-config.js
+          echo "};" >> ./public/runtime-config.js
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          VITE_API_URL: booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net
+
+      # Build frontend with environment variables
       - name: Build frontend
         run: |
           cd frontend
