@@ -3,7 +3,6 @@ import { AppModule } from "./app.module";
 import { ConfigService } from "@nestjs/config";
 import { Logger } from "@nestjs/common";
 import { SupabaseService } from "./services/supabase.service";
-
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
   try {
@@ -31,7 +30,7 @@ async function bootstrap() {
       try {
         // Test Supabase connection
         const supabase = app.get(SupabaseService).getServiceClient();
-        const { data: error } = await supabase
+        const { error } = await supabase
           .from("storage_items")
           .select("count", { count: "exact", head: true });
 
@@ -48,9 +47,11 @@ async function bootstrap() {
           },
         });
       } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
         res.status(500).json({
           status: "error",
-          message: error.message,
+          message: errorMessage,
           timestamp: new Date().toISOString(),
         });
       }
