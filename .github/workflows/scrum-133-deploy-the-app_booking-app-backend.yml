@@ -183,8 +183,38 @@ jobs:
             ]
 
       # Post-deployment steps optimization
-      - name: Restart App Service
-        run: az webapp restart --name booking-app-backend --resource-group testGroup
+      - name: Restart App Service with retry logic
+        run: |
+          max_attempts=3
+          attempt=1
+          until az webapp restart --name booking-app-backend --resource-group testGroup --debug || [ $attempt -ge $max_attempts ]
+          do
+            echo "Restart attempt $attempt failed. Retrying in 30 seconds..."
+            sleep 30
+            ((attempt++))
+          done
+
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Failed to restart app service after $max_attempts attempts"
+            exit 1
+          fi
+
+      - name: Verify service is healthy after restart
+        run: |
+          echo "Waiting for service to become available..."
+          attempt=1
+          max_attempts=10
+          until curl -s -f https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net/health || [ $attempt -ge $max_attempts ]
+          do
+            echo "Health check attempt $attempt failed. Retrying in 15 seconds..."
+            sleep 15
+            ((attempt++))
+          done
+
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Service failed to become healthy after restart"
+            exit 1
+          fi
 
       - name: Validate Azure configuration
         run: |
@@ -258,6 +288,54 @@ jobs:
           package: app/
           startup-command: "pm2 start dist/main.js --no-daemon"
 
+      # Configure Azure App Service CORS settings at platform level
+      - name: Configure Azure App Service CORS
+        run: |
+          az webapp cors add --allowed-origins "*" \
+            --resource-group testGroup \
+            --name booking-app-backend
+
+          # Also explicitly allow your frontend origin
+          az webapp cors add --allowed-origins "https://agreeable-grass-049dc8010.6.azurestaticapps.net" \
+            --resource-group testGroup \
+            --name booking-app-backend
+
+          # Configure CORS headers in web.config for all responses
+          echo '<?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <webSocket enabled="false" />
+              <handlers>
+                <add name="iisnode" path="dist/main.js" verb="*" modules="iisnode" />
+              </handlers>
+              <rewrite>
+                <rules>
+                  <rule name="DynamicContent">
+                    <match url="/*" />
+                    <action type="Rewrite" url="dist/main.js" />
+                  </rule>
+                </rules>
+              </rewrite>
+              <httpProtocol>
+                <customHeaders>
+                  <add name="Access-Control-Allow-Origin" value="*" />
+                  <add name="Access-Control-Allow-Headers" value="Content-Type,Authorization,x-user-id" />
+                  <add name="Access-Control-Allow-Methods" value="GET,POST,PUT,DELETE,PATCH,OPTIONS" />
+                  <add name="Access-Control-Allow-Credentials" value="true" />
+                </customHeaders>
+              </httpProtocol>
+              <security>
+                <requestFiltering>
+                  <hiddenSegments>
+                    <remove segment="bin" />
+                  </hiddenSegments>
+                </requestFiltering>
+              </security>
+              <httpErrors existingResponse="PassThrough" />
+              <iisnode nodeProcessCommandLine="node.exe --max-old-space-size=4096" watchedFiles="web.config;*.js" />
+            </system.webServer>
+          </configuration>' > app/web.config
+
       - name: Configure additional Azure App Service settings for CORS
         uses: azure/appservice-settings@v1
         with:
@@ -270,8 +348,51 @@ jobs:
                 "slotSetting": false
               },
               {
+                "name": "WEBSITE_CORS_ALLOWED_ORIGINS", 
+                "value": "*",
+                "slotSetting": false
+              },
+              {
+                "name": "WEBSITE_CORS_SUPPORT_CREDENTIALS",
+                "value": "true",
+                "slotSetting": false
+              },
+              {
                 "name": "CORS_FORCE_DYNAMIC_REFLECTION",
                 "value": "true",
                 "slotSetting": false
               }
             ]
+      - name: Add CORS diagnostic helper
+        run: |
+          echo '// cors-debug.js - Helps diagnose CORS issues
+          const fs = require("fs");
+          const path = require("path");
+
+          // Append to main.js to create a diagnostic endpoint
+          const appendPath = path.join("app", "dist", "main.js");
+
+          const corsDebugCode = `
+          // CORS Debug endpoint added during deployment
+          app.getHttpAdapter().get("/cors-debug", (req, res) => {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Content-Type", "application/json");
+            res.send({
+              message: "CORS diagnostic endpoint",
+              environment: process.env.NODE_ENV,
+              allowedOrigins: process.env.ALLOWED_ORIGINS || "not configured",
+              receivedOrigin: req.headers.origin || "none",
+              nodeVersion: process.version,
+              appSettings: {
+                websiteNodeDefaultVersion: process.env.WEBSITE_NODE_DEFAULT_VERSION || "not set",
+                corsForceReflection: process.env.CORS_FORCE_DYNAMIC_REFLECTION || "not set",
+                websiteCorsAllowedOrigins: process.env.WEBSITE_CORS_ALLOWED_ORIGINS || "not set"
+              }
+            });
+          });`;
+
+          // Read the existing file
+          fs.appendFileSync(appendPath, corsDebugCode);
+          console.log("CORS diagnostic endpoint added");` > app/cors-debug.js
+
+          node app/cors-debug.js
