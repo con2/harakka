@@ -30,7 +30,9 @@ export const supabase = (() => {
       );
       // Provide meaningful error message in production
       if (import.meta.env.PROD) {
-        alert("Authentication configuration error. Please contact support.");
+        console.error(
+          "Authentication configuration error. Please contact support.",
+        );
       }
     }
 
