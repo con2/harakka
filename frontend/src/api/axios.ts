@@ -1,6 +1,5 @@
 import axios from "axios";
 import { supabase } from "../config/supabase";
-import { getRuntimeConfig } from "../types/runtime-config";
 
 // Cache the token to avoid unnecessary async calls
 let cachedToken: string | null = null;
