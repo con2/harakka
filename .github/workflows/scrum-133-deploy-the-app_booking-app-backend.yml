@@ -1,307 +1,43 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy Node.js app to Azure Web App - booking-app-backend
+name: Deploy Backend to Azure
 
 on:
   push:
-    branches:
-      - SCRUM-133-deploy-the-app
+    branches: [SCRUM-133-deploy-the-app]
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js version
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "20.x" # Update to Node.js 20.x to meet NestJS requirements
+          node-version: "20.x"
           cache: "npm"
           cache-dependency-path: "backend/package-lock.json"
 
-      # Install dependencies without skipping dev dependencies needed for build
       - name: Install dependencies
         run: |
           cd backend
           npm ci
 
-      # Build with properly installed NestJS CLI
-      - name: Build application
+      - name: Build
         run: |
           cd backend
-          npx nest build
+          npm run build
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
-      # Create slim deployment package by excluding unnecessary files
-      - name: Create slim deployment package
+      - name: Create Azure configuration files
         run: |
           cd backend
-          # Install pm2 for production process management
-          npm install pm2 --save
-          # Clean up development dependencies and files
-          npm prune --production
-          # Remove development files but keep important ones
-          rm -rf .git .github .vscode tests test .eslintrc*
-          # Ensure critical files exist
-          [ ! -f "web.config" ] && cp ../web.config .
-          # Create iisnode.yml with Azure best practices
-          cat > iisnode.yml << 'EOL'
-          nodeProcessCommandLine: "D:\Program Files\nodejs\%WEBSITE_NODE_DEFAULT_VERSION%\node.exe --max-old-space-size=4096"
-          nodeProcessCountPerApplication: 1
-          maxConcurrentRequestsPerProcess: 1024
-          maxNamedPipeConnectionRetry: 100
-          namedPipeConnectionRetryDelay: 1000
-          maxNamedPipeConnectionPoolSize: 512
-          maxNamedPipePooledConnectionAge: 30000
-          asyncCompletionThreadCount: 0
-          initialRequestBufferSize: 4096
-          maxRequestBufferSize: 65536
-          watchedFiles: *.js;web.config
-          uncFileChangesPollingInterval: 5000
-          gracefulShutdownTimeout: 60000
-          loggingEnabled: true
-          logDirectory: iisnode
-          hiddenFiles: web.config;*.js;iisnode;node_modules;.git
-          EOL
-          # Create an optimized tarball
-          cd ..
-          tar -czf release.tgz -C backend .
-        env:
-          NODE_OPTIONS: "--max-old-space-size=6144"
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-app
-          path: release.tgz
-          retention-days: 1
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: "Production"
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: node-app
-
-      - name: Unpack artifact efficiently
-        run: mkdir -p app && tar -xzf release.tgz -C app
-
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_9F8DBAB572D14E1685EE75B41915FCD2 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_BAD9EECA19F943F18A65D60C0C3448AF }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7BC8E4BEADA04C2EA793E85FD9389394 }}
-
-      # First, configure Azure app settings instead of using startup command for env variables
-      - name: Configure Azure App Service settings
-        uses: azure/appservice-settings@v1
-        with:
-          app-name: "booking-app-backend"
-          app-settings-json: |
-            [
-              {
-                "name": "SUPABASE_URL", 
-                "value": "${{ secrets.SUPABASE_URL }}",
-                "slotSetting": false
-              },
-              {
-                "name": "SUPABASE_SERVICE_ROLE_KEY",
-                "value": "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}",
-                "slotSetting": false
-              },
-              {
-                "name": "SUPABASE_ANON_KEY",
-                "value": "${{ secrets.SUPABASE_ANON_KEY }}",
-                "slotSetting": false
-              },
-              {
-                "name": "ALLOWED_ORIGINS",
-                "value": "https://agreeable-grass-049dc8010.4.azurestaticapps.net,https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180",
-                "slotSetting": false
-              },
-              {
-                "name": "NODE_OPTIONS",
-                "value": "--max-old-space-size=4096",
-                "slotSetting": false
-              },
-              {
-                "name": "WEBSITES_CONTAINER_START_TIME_LIMIT",
-                "value": "600",
-                "slotSetting": false
-              },
-              {
-                "name": "WEBSITE_NODE_DEFAULT_VERSION", 
-                "value": "~20",
-                "slotSetting": false
-              }
-            ]
-        id: settings
-
-      # Then use simplified startup command
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: "booking-app-backend"
-          slot-name: "Production"
-          package: app/
-          startup-command: "pm2 start dist/main.js --no-daemon"
-
-      - name: Configure App Insights with proper default
-        uses: azure/appservice-settings@v1
-        with:
-          app-name: "booking-app-backend"
-          app-settings-json: |
-            [
-              {
-                "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-                "value": "${{ secrets.APPLICATION_INSIGHTS_CONNECTION_STRING || 'InstrumentationKey=00000000-0000-0000-0000-000000000000' }}",
-                "slotSetting": false
-              },
-              {
-                "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
-                "value": "~3",
-                "slotSetting": false
-              }
-            ]
-
-      # Post-deployment steps optimization
-      - name: Restart App Service with retry logic
-        run: |
-          max_attempts=3
-          attempt=1
-          until az webapp restart --name booking-app-backend --resource-group testGroup --debug || [ $attempt -ge $max_attempts ]
-          do
-            echo "Restart attempt $attempt failed. Retrying in 30 seconds..."
-            sleep 30
-            ((attempt++))
-          done
-
-          if [ $attempt -ge $max_attempts ]; then
-            echo "Failed to restart app service after $max_attempts attempts"
-            exit 1
-          fi
-
-      - name: Verify service is healthy after restart
-        run: |
-          echo "Waiting for service to become available..."
-          attempt=1
-          max_attempts=10
-          until curl -s -f https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net/health || [ $attempt -ge $max_attempts ]
-          do
-            echo "Health check attempt $attempt failed. Retrying in 15 seconds..."
-            sleep 15
-            ((attempt++))
-          done
-
-          if [ $attempt -ge $max_attempts ]; then
-            echo "Service failed to become healthy after restart"
-            exit 1
-          fi
-
-      - name: Validate Azure configuration
-        run: |
-          # Don't cd to backend - work directly with the app/ directory
-          mkdir -p app/dist
-          # Create web.config file directly in the app directory
-          echo '<?xml version="1.0" encoding="utf-8"?>
-          <configuration>
-            <system.webServer>
-              <webSocket enabled="false" />
-              <handlers>
-                <add name="iisnode" path="dist/main.js" verb="*" modules="iisnode" />
-              </handlers>
-              <rewrite>
-                <rules>
-                  <rule name="DynamicContent">
-                    <match url="/*" />
-                    <action type="Rewrite" url="dist/main.js" />
-                  </rule>
-                </rules>
-              </rewrite>
-              <security>
-                <requestFiltering>
-                  <hiddenSegments>
-                    <remove segment="bin" />
-                  </hiddenSegments>
-                </requestFiltering>
-              </security>
-              <httpErrors existingResponse="PassThrough" />
-              <iisnode nodeProcessCommandLine="node.exe --max-old-space-size=4096" watchedFiles="web.config;*.js" />
-            </system.webServer>
-          </configuration>' > app/web.config
-
-      - name: Add app warmup script
-        run: |
-          # Create warmup script directly in the app/dist directory
-          echo '// warmup.js - Ensures Azure App Service is properly warmed up
-          const https = require("https");
-          const http = require("http");
-
-          // Make a request to our own health endpoint
-          const options = {
-            hostname: process.env.WEBSITE_HOSTNAME || "localhost",
-            port: process.env.PORT || 8080,
-            path: "/health",
-            method: "GET"
-          };
-
-          const protocol = options.port === 443 ? https : http;
-          const req = protocol.request(options, (res) => {
-            console.log(`Warmup status: ${res.statusCode}`);
-            let data = "";
-            res.on("data", (chunk) => { data += chunk; });
-            res.on("end", () => {
-              console.log("App warmup complete");
-              console.log(data);
-            });
-          });
-
-          req.on("error", (e) => {
-            console.error(`Warmup error: ${e.message}`);
-          });
-
-          req.end();' > app/dist/warmup.js
-
-      - name: Upload modified files to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: "booking-app-backend"
-          slot-name: "Production"
-          package: app/
-          startup-command: "pm2 start dist/main.js --no-daemon"
-
-      # Configure Azure App Service CORS settings at platform level
-      - name: Configure Azure App Service CORS
-        run: |
-          az webapp cors add --allowed-origins "*" \
-            --resource-group testGroup \
-            --name booking-app-backend
-
-          # Also explicitly allow your frontend origin
-          az webapp cors add --allowed-origins "https://agreeable-grass-049dc8010.6.azurestaticapps.net" \
-            --resource-group testGroup \
-            --name booking-app-backend
-
-          # Configure CORS headers in web.config for all responses
-          echo '<?xml version="1.0" encoding="utf-8"?>
+          # Create web.config if not exists
+          cat > web.config << 'EOL'
+          <?xml version="1.0" encoding="utf-8"?>
           <configuration>
             <system.webServer>
               <webSocket enabled="false" />
@@ -334,65 +70,14 @@ jobs:
               <httpErrors existingResponse="PassThrough" />
               <iisnode nodeProcessCommandLine="node.exe --max-old-space-size=4096" watchedFiles="web.config;*.js" />
             </system.webServer>
-          </configuration>' > app/web.config
+          </configuration>
+          EOL
 
-      - name: Configure additional Azure App Service settings for CORS
-        uses: azure/appservice-settings@v1
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
         with:
           app-name: "booking-app-backend"
-          app-settings-json: |
-            [
-              {
-                "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
-                "value": "true",
-                "slotSetting": false
-              },
-              {
-                "name": "WEBSITE_CORS_ALLOWED_ORIGINS", 
-                "value": "*",
-                "slotSetting": false
-              },
-              {
-                "name": "WEBSITE_CORS_SUPPORT_CREDENTIALS",
-                "value": "true",
-                "slotSetting": false
-              },
-              {
-                "name": "CORS_FORCE_DYNAMIC_REFLECTION",
-                "value": "true",
-                "slotSetting": false
-              }
-            ]
-      - name: Add CORS diagnostic helper
-        run: |
-          echo '// cors-debug.js - Helps diagnose CORS issues
-          const fs = require("fs");
-          const path = require("path");
-
-          // Append to main.js to create a diagnostic endpoint
-          const appendPath = path.join("app", "dist", "main.js");
-
-          const corsDebugCode = `
-          // CORS Debug endpoint added during deployment
-          app.getHttpAdapter().get("/cors-debug", (req, res) => {
-            res.header("Access-Control-Allow-Origin", "*");
-            res.header("Content-Type", "application/json");
-            res.send({
-              message: "CORS diagnostic endpoint",
-              environment: process.env.NODE_ENV,
-              allowedOrigins: process.env.ALLOWED_ORIGINS || "not configured",
-              receivedOrigin: req.headers.origin || "none",
-              nodeVersion: process.version,
-              appSettings: {
-                websiteNodeDefaultVersion: process.env.WEBSITE_NODE_DEFAULT_VERSION || "not set",
-                corsForceReflection: process.env.CORS_FORCE_DYNAMIC_REFLECTION || "not set",
-                websiteCorsAllowedOrigins: process.env.WEBSITE_CORS_ALLOWED_ORIGINS || "not set"
-              }
-            });
-          });`;
-
-          // Read the existing file
-          fs.appendFileSync(appendPath, corsDebugCode);
-          console.log("CORS diagnostic endpoint added");` > app/cors-debug.js
-
-          node app/cors-debug.js
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: "./backend"
+          startup-command: "node dist/main.js"
