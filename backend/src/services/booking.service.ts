@@ -5,10 +5,14 @@ import {
 } from "@nestjs/common";
 import { SupabaseService } from "./supabase.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
+import { MailService } from "./mail.service";
 
 @Injectable()
 export class BookingService {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(
+    private readonly supabaseService: SupabaseService,
+    private readonly mailService: MailService,
+  ) {}
 
   // TODO!:
   // use getClientByRole again!
@@ -645,6 +649,14 @@ export class BookingService {
     if (error) {
       throw new BadRequestException("Could not cancel the booking");
     }
+
+    // ✅ Mail versenden
+    await this.mailService.sendEmail(
+      "garschtubald@gmail.com", // TODO: get from db dynymically
+      "Order was cancelled sucessfully",
+      `<p>The order was cancelled by ${isAdmin ? "an admin" : "yourself"}.</p>`,
+    );
+    console.log("E-Mail erfolgreich gesendet an garschtubald@gmail.com");
 
     return {
       message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
