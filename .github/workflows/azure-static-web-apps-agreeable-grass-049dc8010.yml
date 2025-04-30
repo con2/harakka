@@ -19,16 +19,6 @@ jobs:
         with:
           submodules: true
           lfs: false
-
-      # Add Node.js setup step
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
-
-      # Build and Deploy to Azure Static Web Apps
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -45,7 +35,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          VITE_API_URL: "https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net"
+          VITE_API_URL: https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
