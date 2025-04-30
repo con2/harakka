@@ -21,16 +21,21 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          node-version: "20.x" # Update to Node.js 20.x to meet NestJS requirements
           cache: "npm"
           cache-dependency-path: "backend/package-lock.json"
 
-      # Use production flag for leaner builds
-      - name: npm install and build
+      # Install dependencies without skipping dev dependencies needed for build
+      - name: Install dependencies
         run: |
           cd backend
-          npm ci --production
-          npm run build
+          npm ci
+
+      # Build with properly installed NestJS CLI
+      - name: Build application
+        run: |
+          cd backend
+          npx nest build
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
@@ -38,8 +43,12 @@ jobs:
       - name: Create slim deployment package
         run: |
           cd backend
+          # Keep the dist folder but remove dev files
+          rm -rf node_modules/
+          # Install production dependencies only
+          npm ci --omit=dev
           # Remove development files not needed in production
-          rm -rf tests/ test/ .eslintrc* tsconfig.json
+          rm -rf tests/ test/ .eslintrc* tsconfig.json tsconfig.build.json
           # Create an optimized zip file with parallel compression
           apt-get update && apt-get install -y pigz
           tar cf - . | pigz -9 > ../release.tgz
@@ -84,4 +93,4 @@ jobs:
           app-name: "booking-app-backend"
           slot-name: "Production"
           package: app/
-          startup-command: "NODE_OPTIONS='--max-old-space-size=4096' SUPABASE_URL=${{ secrets.SUPABASE_URL }} SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} ALLOWED_ORIGINS=https://agreeable-grass-049dc8010.4.azurestaticapps.net,https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180 npm run start:prod"
+          startup-command: "NODE_OPTIONS='--max-old-space-size=4096' SUPABASE_URL=${{ secrets.SUPABASE_URL }} SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} ALLOWED_ORIGINS=https://agreeable-grass-049dc8010.4.azurestaticapps.net,https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180 node dist/main.js"
