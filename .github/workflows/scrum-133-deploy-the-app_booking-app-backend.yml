@@ -187,10 +187,12 @@ jobs:
       # Post-deployment steps optimization
       - name: Restart App Service
         run: az webapp restart --name booking-app-backend --resource-group testGroup
+
       - name: Validate Azure configuration
         run: |
+          # Don't cd to backend - work directly with the app/ directory
           mkdir -p app/dist
-          # Create web.config file directly in the app directory after deployment
+          # Create web.config file directly in the app directory
           echo '<?xml version="1.0" encoding="utf-8"?>
           <configuration>
             <system.webServer>
