@@ -26,6 +26,35 @@ async function bootstrap() {
       allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
     });
 
+    app.getHttpAdapter().get("/health", async (req, res) => {
+      try {
+        // Test Supabase connection
+        const supabase = await app.get(SupabaseService).getServiceClient();
+        const { data, error } = await supabase
+          .from("storage_items")
+          .select("count", { count: "exact", head: true });
+
+        const dbStatus = error ? "error" : "connected";
+
+        res.status(200).json({
+          status: "ok",
+          timestamp: new Date().toISOString(),
+          environment: process.env.NODE_ENV || "development",
+          supabase: {
+            status: dbStatus,
+            url: process.env.SUPABASE_URL ? "configured" : "missing",
+            error: error ? error.message : null,
+          },
+        });
+      } catch (error) {
+        res.status(500).json({
+          status: "error",
+          message: error.message,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    });
+
     await app.listen(port, "0.0.0.0");
     logger.log(`Backend is running on port ${port}`);
   } catch (error: unknown) {
