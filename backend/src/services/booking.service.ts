@@ -10,6 +10,11 @@ import { CreateBookingDto } from "../dto/create-booking.dto";
 export class BookingService {
   constructor(private readonly supabaseService: SupabaseService) {}
 
+  // TODO!:
+  // use getClientByRole again!
+  // refactor code so that the supabase client is not created in every function
+  // every function should update the order_items status to "pending", "confirmed" or "cancelled"
+
   // 1. get all orders
   async getAllOrders(userId: string) {
     //const supabase = await this.supabaseService.getClientByRole(userId);
@@ -200,7 +205,7 @@ export class BookingService {
         throw new BadRequestException("Item data not found");
       }
 
-      // 3. Prüfe, ob genügend verfügbar ist
+      // check if there is enough available stock
       const freeQuantity = itemData.items_number_total - alreadyBookedQuantity;
 
       if (item.quantity > freeQuantity) {
@@ -209,7 +214,7 @@ export class BookingService {
         );
       }
 
-      // 4. Optional: Prüfen, ob auch items_number_available logisch passt
+      // check if items_number_available is logical
       if (item.quantity > itemData.items_number_available) {
         throw new BadRequestException(
           `Not enough real available stock for item ${item.item_id}`,
@@ -266,7 +271,6 @@ export class BookingService {
       }
 
       // reduce availability directly in `storage_items` with quantity check (just in case)
-
       const newAvailable = storageItem.items_number_available - item.quantity;
       if (newAvailable < 0) {
         throw new BadRequestException(
@@ -503,6 +507,57 @@ export class BookingService {
       throw new ForbiddenException("Only admins can reject bookings");
     }
 
+    // TODO: refactor back to the version using the trigger function
+    // get all items of order
+    const { data: orderItems, error: fetchError } = await supabase
+      .from("order_items")
+      .select("id, item_id, quantity, status")
+      .eq("order_id", orderId);
+
+    if (fetchError || !orderItems) {
+      console.error("Failed to fetch order items:", fetchError);
+      throw new BadRequestException("Could not retrieve order items");
+    }
+
+    // book items back manually
+    for (const item of orderItems) {
+      if (item.status === "confirmed") {
+        const { data: stockItem, error: stockFetchError } = await supabase
+          .from("storage_items")
+          .select("items_number_available")
+          .eq("id", item.item_id)
+          .single();
+
+        if (stockFetchError || !stockItem) {
+          console.error("Failed to fetch stock for item", item.item_id);
+          throw new BadRequestException(
+            `Could not fetch stock for item ${item.item_id}`,
+          );
+        }
+
+        const updatedQuantity =
+          (stockItem.items_number_available ?? 0) + (item.quantity ?? 0);
+
+        // increase stock
+        const { error: updateError } = await supabase
+          .from("storage_items")
+          .update({ items_number_available: updatedQuantity })
+          .eq("id", item.item_id);
+
+        if (updateError) {
+          console.error(
+            `Failed to restore stock for item ${item.item_id}:`,
+            updateError,
+          );
+          throw new BadRequestException(
+            "Could not restore stock for some items",
+          );
+        }
+      }
+    }
+    // end of the part: booking items back manually (TODO)
+
+    // for using the trigger function: TODO: make it work
     // Cancel related order_items to trigger stock restoration
     const { error: itemUpdateError } = await supabase
       .from("order_items")
