@@ -4,6 +4,14 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
+// Debug logging
+console.log("Supabase configuration check:", {
+  hasUrl: !!supabaseUrl,
+  urlLength: supabaseUrl?.length || 0,
+  hasAnonKey: !!supabaseAnonKey,
+  anonKeyLength: supabaseAnonKey?.length || 0,
+});
+
 // Check if we're on a password reset URL before creating the Supabase client
 const isPasswordResetFlow = () => {
   return (
