@@ -11,6 +11,10 @@ module.exports = {
       env: {
         NODE_ENV: "production",
       },
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      error_file: "/home/LogFiles/application/error.log",
+      out_file: "/home/LogFiles/application/out.log",
+      merge_logs: true,
       post_update: ["node dist/warmup.js"],
     },
   ],

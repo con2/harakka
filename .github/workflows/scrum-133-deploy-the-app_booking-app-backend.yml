@@ -47,13 +47,36 @@ jobs:
           npm install pm2 --save
           # Clean up development dependencies and files
           npm prune --production
-          # Remove development files
-          rm -rf .git .github .vscode tests test .eslintrc* tsconfig.json tsconfig.build.json
-          # Create a tarball for deployment (important step that was missing!)
+          # Remove development files but keep important ones
+          rm -rf .git .github .vscode tests test .eslintrc*
+          # Ensure critical files exist
+          [ ! -f "web.config" ] && cp ../web.config .
+          # Create iisnode.yml with Azure best practices
+          run: |
+            cd backend
+            cat > iisnode.yml << 'EOL'
+            nodeProcessCommandLine: "D:\Program Files\nodejs\%WEBSITE_NODE_DEFAULT_VERSION%\node.exe --max-old-space-size=4096"
+            nodeProcessCountPerApplication: 1
+            maxConcurrentRequestsPerProcess: 1024
+            maxNamedPipeConnectionRetry: 100
+            namedPipeConnectionRetryDelay: 1000
+            maxNamedPipeConnectionPoolSize: 512
+            maxNamedPipePooledConnectionAge: 30000
+            asyncCompletionThreadCount: 0
+            initialRequestBufferSize: 4096
+            maxRequestBufferSize: 65536
+            watchedFiles: *.js;web.config
+            uncFileChangesPollingInterval: 5000
+            gracefulShutdownTimeout: 60000
+            loggingEnabled: true
+            logDirectory: iisnode
+            hiddenFiles: web.config;*.js;iisnode;node_modules;.git
+            EOL
+          # Create an optimized tarball
           cd ..
           tar -czf release.tgz -C backend .
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=6144"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -143,7 +166,7 @@ jobs:
           package: app/
           startup-command: "pm2 start dist/main.js --no-daemon"
 
-      - name: Configure App Insights
+      - name: Configure App Insights with proper default
         uses: azure/appservice-settings@v1
         with:
           app-name: "booking-app-backend"
@@ -151,7 +174,7 @@ jobs:
             [
               {
                 "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-                "value": "${{ secrets.APPLICATION_INSIGHTS_CONNECTION_STRING }}",
+                "value": "${{ secrets.APPLICATION_INSIGHTS_CONNECTION_STRING || 'InstrumentationKey=00000000-0000-0000-0000-000000000000' }}",
                 "slotSetting": false
               },
               {
@@ -160,45 +183,44 @@ jobs:
                 "slotSetting": false
               }
             ]
+
+      # Post-deployment steps optimization
       - name: Restart App Service
         run: az webapp restart --name booking-app-backend --resource-group testGroup
       - name: Validate Azure configuration
         run: |
-          cd backend
-          if [ ! -f "web.config" ]; then
-            echo "Warning: web.config not found, creating default file"
-            # Create a default web.config file for Azure
-            echo '<?xml version="1.0" encoding="utf-8"?>
-            <configuration>
-              <system.webServer>
-                <webSocket enabled="false" />
-                <handlers>
-                  <add name="iisnode" path="dist/main.js" verb="*" modules="iisnode" />
-                </handlers>
-                <rewrite>
-                  <rules>
-                    <rule name="DynamicContent">
-                      <match url="/*" />
-                      <action type="Rewrite" url="dist/main.js" />
-                    </rule>
-                  </rules>
-                </rewrite>
-                <security>
-                  <requestFiltering>
-                    <hiddenSegments>
-                      <remove segment="bin" />
-                    </hiddenSegments>
-                  </requestFiltering>
-                </security>
-                <httpErrors existingResponse="PassThrough" />
-                <iisnode nodeProcessCommandLine="node.exe --max-old-space-size=4096" watchedFiles="web.config;*.js" />
-              </system.webServer>
-            </configuration>' > web.config
-          fi
+          mkdir -p app/dist
+          # Create web.config file directly in the app directory after deployment
+          echo '<?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <webSocket enabled="false" />
+              <handlers>
+                <add name="iisnode" path="dist/main.js" verb="*" modules="iisnode" />
+              </handlers>
+              <rewrite>
+                <rules>
+                  <rule name="DynamicContent">
+                    <match url="/*" />
+                    <action type="Rewrite" url="dist/main.js" />
+                  </rule>
+                </rules>
+              </rewrite>
+              <security>
+                <requestFiltering>
+                  <hiddenSegments>
+                    <remove segment="bin" />
+                  </hiddenSegments>
+                </requestFiltering>
+              </security>
+              <httpErrors existingResponse="PassThrough" />
+              <iisnode nodeProcessCommandLine="node.exe --max-old-space-size=4096" watchedFiles="web.config;*.js" />
+            </system.webServer>
+          </configuration>' > app/web.config
+
       - name: Add app warmup script
         run: |
-          cd backend
-          # Create warmup script
+          # Create warmup script directly in the app/dist directory
           echo '// warmup.js - Ensures Azure App Service is properly warmed up
           const https = require("https");
           const http = require("http");
@@ -226,4 +248,30 @@ jobs:
             console.error(`Warmup error: ${e.message}`);
           });
 
-          req.end();' > dist/warmup.js
+          req.end();' > app/dist/warmup.js
+
+      - name: Upload modified files to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "booking-app-backend"
+          slot-name: "Production"
+          package: app/
+          startup-command: "pm2 start dist/main.js --no-daemon"
+
+      - name: Configure additional Azure App Service settings for CORS
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: "booking-app-backend"
+          app-settings-json: |
+            [
+              {
+                "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                "value": "true",
+                "slotSetting": false
+              },
+              {
+                "name": "CORS_FORCE_DYNAMIC_REFLECTION",
+                "value": "true",
+                "slotSetting": false
+              }
+            ]
