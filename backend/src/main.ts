@@ -15,35 +15,17 @@ async function bootstrap() {
 
     // Enhanced CORS configuration with explicit Azure domain handling
     app.enableCors({
-      origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps, curl requests)
-        if (!origin) return callback(null, true);
-
-        // Parse allowed origins from config
-        const allowedOrigins = configService.get<string>(
-          "ALLOWED_ORIGINS",
-          "https://agreeable-grass-049dc8010.4.azurestaticapps.net,https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180",
-        );
-        const origins = allowedOrigins.split(",").map((o) => o.trim());
-
-        // Check if origin is allowed
-        if (
-          origins.indexOf(origin) !== -1 ||
-          process.env.NODE_ENV !== "production"
-        ) {
-          callback(null, true);
-        } else {
-          logger.warn(
-            `Blocked origin: ${origin} - not in allowed list: ${origins.join(", ")}`,
-          );
-          callback(null, false);
-        }
-      },
+      origin: true, // Allow all origins temporarily to debug
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
       maxAge: 86400, // Cache preflight response for 24 hours
     });
+
+    // Log CORS settings for debugging
+    logger.log(
+      `CORS enabled: ${configService.get<string>("ALLOWED_ORIGINS", "all origins allowed")}`,
+    );
 
     // Add a comprehensive health check endpoint for Azure monitoring
     app.getHttpAdapter().get("/health", async (req, res) => {
