@@ -265,7 +265,6 @@ export class BookingService {
         );
       }
 
-      // Bestand sofort reduzieren
       // reduce availability directly in `storage_items` with quantity check (just in case)
 
       const newAvailable = storageItem.items_number_available - item.quantity;
