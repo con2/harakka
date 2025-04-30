@@ -9,18 +9,21 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     const configService = app.get(ConfigService);
 
-    const port = configService.get<number>("PORT", 8080 | 3000);
+    const port = process.env.PORT || configService.get<number>("PORT", 3000);
+    logger.log(
+      `Using port: ${port} (Environment: ${process.env.NODE_ENV || "development"})`,
+    );
 
     // Simplified CORS configuration
     const allowedOrigins = configService.get<string>("ALLOWED_ORIGINS", "*");
     const origins = allowedOrigins.split(",");
+    logger.log(`CORS enabled for origins: ${origins.join(", ")}`);
 
     app.enableCors({
       origin: origins,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
-      maxAge: 86400,
     });
 
     await app.listen(port, "0.0.0.0");
