@@ -200,13 +200,6 @@ export class BookingService {
         throw new BadRequestException("Item data not found");
       }
 
-      /* // check availability
-      if (alreadyBookedQuantity + item.quantity > itemData.items_number_total) {
-        throw new BadRequestException(
-          `Not enough quantity available for item ${item.item_id}`,
-        );
-      }
-    } */
       // 3. Prüfe, ob genügend verfügbar ist
       const freeQuantity = itemData.items_number_total - alreadyBookedQuantity;
 
@@ -359,21 +352,6 @@ export class BookingService {
           `Not enough available quantity for item ${item.item_id}`,
         );
       }
-
-      // reduce availability directly in `storage_items`
-      /* const { error: reduceError } = await supabase
-        .from("storage_items")
-        .update({
-          items_number_available:
-            storageItem.items_number_available - item.quantity,
-        })
-        .eq("id", item.item_id);
-
-      if (reduceError) {
-        throw new BadRequestException(
-          `Failed to reduce stock for item ${item.item_id}`,
-        );
-      } */
     }
 
     // Change the order status to 'confirmed'
@@ -501,7 +479,7 @@ export class BookingService {
         throw new BadRequestException("Could not create updated order items");
       }
     }
-
+    // hier einfügen updated mit time stamp
     return { message: "Booking updated" };
   }
 
@@ -526,19 +504,17 @@ export class BookingService {
       throw new ForbiddenException("Only admins can reject bookings");
     }
 
-    // get all items of the order to book them back
-    const { data: items } = await supabase
+    // Cancel related order_items to trigger stock restoration
+    const { error: itemUpdateError } = await supabase
       .from("order_items")
-      .select("item_id, quantity")
+      .update({ status: "cancelled" }) // Trigger watches for change
       .eq("order_id", orderId);
 
-    if (items && items.length > 0) {
-      for (const item of items) {
-        await supabase.rpc("increment_item_quantity", {
-          item_id: item.item_id,
-          quantity: item.quantity,
-        });
-      }
+    if (itemUpdateError) {
+      console.error("Order items update error:", itemUpdateError);
+      throw new BadRequestException(
+        "Could not update order items for cancellation",
+      );
     }
 
     const { error: updateError } = await supabase
