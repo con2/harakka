@@ -13,10 +13,10 @@ export default function SupabaseDebug() {
           : "missing",
       );
 
-      // Try to get an anonymous Supabase connection
-      const { data, error } = await supabase
+      // Updated query: Using the proper method for count
+      const { count, error } = await supabase
         .from("storage_items")
-        .select("count", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true });
 
       if (error) {
         console.error("Supabase test failed:", error);
@@ -24,8 +24,9 @@ export default function SupabaseDebug() {
           `Error: ${error.message || "Authentication failed (401)"}`,
         );
       } else {
+        // Properly access the count from response
         setTestResult(
-          `Connection successful! Items: ${data?.count || "unknown"}`,
+          `Connection successful! Items: ${count !== null ? count : "unknown"}`,
         );
       }
     } catch (err) {
