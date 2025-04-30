@@ -6,16 +6,27 @@ export default function SupabaseDebug() {
 
   const testConnection = async () => {
     try {
+      console.log(
+        "Testing with anon key:",
+        import.meta.env.VITE_SUPABASE_ANON_KEY
+          ? `${import.meta.env.VITE_SUPABASE_ANON_KEY.substring(0, 5)}...`
+          : "missing",
+      );
+
       // Try to get an anonymous Supabase connection
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("storage_items")
         .select("count", { count: "exact", head: true });
 
       if (error) {
         console.error("Supabase test failed:", error);
-        setTestResult(`Error: ${error.message}`);
+        setTestResult(
+          `Error: ${error.message || "Authentication failed (401)"}`,
+        );
       } else {
-        setTestResult("Connection successful!");
+        setTestResult(
+          `Connection successful! Items: ${data?.count || "unknown"}`,
+        );
       }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
