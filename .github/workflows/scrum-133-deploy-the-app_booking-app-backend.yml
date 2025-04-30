@@ -43,13 +43,41 @@ jobs:
       - name: Create slim deployment package
         run: |
           cd backend
+          # Copy web.config if it doesn't exist
+          [ ! -f "web.config" ] && echo '<?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <webSocket enabled="false" />
+              <handlers>
+                <add name="iisnode" path="dist/main.js" verb="*" modules="iisnode" />
+              </handlers>
+              <rewrite>
+                <rules>
+                  <rule name="DynamicContent">
+                    <match url="/*" />
+                    <action type="Rewrite" url="dist/main.js" />
+                  </rule>
+                </rules>
+              </rewrite>
+              <security>
+                <requestFiltering>
+                  <hiddenSegments>
+                    <remove segment="bin" />
+                  </hiddenSegments>
+                </requestFiltering>
+              </security>
+              <httpErrors existingResponse="PassThrough" />
+              <iisnode node_env="%NODE_ENV%" nodeProcessCommandLine="node.exe --max-old-space-size=4096" watchedFiles="web.config;*.js" />
+            </system.webServer>
+          </configuration>' > web.config
+
           # Keep the dist folder but remove dev files
           rm -rf node_modules/
           # Install production dependencies only
           npm ci --omit=dev
           # Remove development files not needed in production
           rm -rf tests/ test/ .eslintrc* tsconfig.json tsconfig.build.json
-          # Create an optimized zip file with parallel compression
+          # Create an optimized tar package
           apt-get update && apt-get install -y pigz
           tar cf - . | pigz -9 > ../release.tgz
 
@@ -86,6 +114,52 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_BAD9EECA19F943F18A65D60C0C3448AF }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7BC8E4BEADA04C2EA793E85FD9389394 }}
 
+      # First, configure Azure app settings instead of using startup command for env variables
+      - name: Configure Azure App Service settings
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: "booking-app-backend"
+          app-settings-json: |
+            [
+              {
+                "name": "SUPABASE_URL", 
+                "value": "${{ secrets.SUPABASE_URL }}",
+                "slotSetting": false
+              },
+              {
+                "name": "SUPABASE_SERVICE_ROLE_KEY",
+                "value": "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}",
+                "slotSetting": false
+              },
+              {
+                "name": "SUPABASE_ANON_KEY",
+                "value": "${{ secrets.SUPABASE_ANON_KEY }}",
+                "slotSetting": false
+              },
+              {
+                "name": "ALLOWED_ORIGINS",
+                "value": "https://agreeable-grass-049dc8010.4.azurestaticapps.net,https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180",
+                "slotSetting": false
+              },
+              {
+                "name": "NODE_OPTIONS",
+                "value": "--max-old-space-size=4096",
+                "slotSetting": false
+              },
+              {
+                "name": "WEBSITES_CONTAINER_START_TIME_LIMIT",
+                "value": "600",
+                "slotSetting": false
+              },
+              {
+                "name": "WEBSITE_NODE_DEFAULT_VERSION", 
+                "value": "~20",
+                "slotSetting": false
+              }
+            ]
+        id: settings
+
+      # Then use simplified startup command
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
@@ -93,4 +167,4 @@ jobs:
           app-name: "booking-app-backend"
           slot-name: "Production"
           package: app/
-          startup-command: "NODE_OPTIONS='--max-old-space-size=4096' SUPABASE_URL=${{ secrets.SUPABASE_URL }} SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} ALLOWED_ORIGINS=https://agreeable-grass-049dc8010.4.azurestaticapps.net,https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180 node dist/main.js"
+          startup-command: "node dist/main.js"
