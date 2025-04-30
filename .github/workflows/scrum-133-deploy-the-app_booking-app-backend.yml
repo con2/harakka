@@ -45,6 +45,15 @@ jobs:
           cd backend
           # Install pm2 for production process management
           npm install pm2 --save
+          # Clean up development dependencies and files
+          npm prune --production
+          # Remove development files
+          rm -rf .git .github .vscode tests test .eslintrc* tsconfig.json tsconfig.build.json
+          # Create a tarball for deployment (important step that was missing!)
+          cd ..
+          tar -czf release.tgz -C backend .
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -153,3 +162,68 @@ jobs:
             ]
       - name: Restart App Service
         run: az webapp restart --name booking-app-backend --resource-group testGroup
+      - name: Validate Azure configuration
+        run: |
+          cd backend
+          if [ ! -f "web.config" ]; then
+            echo "Warning: web.config not found, creating default file"
+            # Create a default web.config file for Azure
+            echo '<?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <system.webServer>
+                <webSocket enabled="false" />
+                <handlers>
+                  <add name="iisnode" path="dist/main.js" verb="*" modules="iisnode" />
+                </handlers>
+                <rewrite>
+                  <rules>
+                    <rule name="DynamicContent">
+                      <match url="/*" />
+                      <action type="Rewrite" url="dist/main.js" />
+                    </rule>
+                  </rules>
+                </rewrite>
+                <security>
+                  <requestFiltering>
+                    <hiddenSegments>
+                      <remove segment="bin" />
+                    </hiddenSegments>
+                  </requestFiltering>
+                </security>
+                <httpErrors existingResponse="PassThrough" />
+                <iisnode nodeProcessCommandLine="node.exe --max-old-space-size=4096" watchedFiles="web.config;*.js" />
+              </system.webServer>
+            </configuration>' > web.config
+          fi
+      - name: Add app warmup script
+        run: |
+          cd backend
+          # Create warmup script
+          echo '// warmup.js - Ensures Azure App Service is properly warmed up
+          const https = require("https");
+          const http = require("http");
+
+          // Make a request to our own health endpoint
+          const options = {
+            hostname: process.env.WEBSITE_HOSTNAME || "localhost",
+            port: process.env.PORT || 8080,
+            path: "/health",
+            method: "GET"
+          };
+
+          const protocol = options.port === 443 ? https : http;
+          const req = protocol.request(options, (res) => {
+            console.log(`Warmup status: ${res.statusCode}`);
+            let data = "";
+            res.on("data", (chunk) => { data += chunk; });
+            res.on("end", () => {
+              console.log("App warmup complete");
+              console.log(data);
+            });
+          });
+
+          req.on("error", (e) => {
+            console.error(`Warmup error: ${e.message}`);
+          });
+
+          req.end();' > dist/warmup.js
