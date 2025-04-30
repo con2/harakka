@@ -42,13 +42,13 @@ jobs:
             <system.webServer>
               <webSocket enabled="false" />
               <handlers>
-                <add name="iisnode" path="dist/main.js" verb="*" modules="iisnode" />
+                <add name="iisnode" path="dist/src/main.js" verb="*" modules="iisnode" />
               </handlers>
               <rewrite>
                 <rules>
                   <rule name="DynamicContent">
                     <match url="/*" />
-                    <action type="Rewrite" url="dist/main.js" />
+                    <action type="Rewrite" url="dist/src/main.js" />
                   </rule>
                 </rules>
               </rewrite>
