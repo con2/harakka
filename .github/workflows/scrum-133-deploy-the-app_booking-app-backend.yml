@@ -43,43 +43,8 @@ jobs:
       - name: Create slim deployment package
         run: |
           cd backend
-          # Copy web.config if it doesn't exist
-          [ ! -f "web.config" ] && echo '<?xml version="1.0" encoding="utf-8"?>
-          <configuration>
-            <system.webServer>
-              <webSocket enabled="false" />
-              <handlers>
-                <add name="iisnode" path="dist/main.js" verb="*" modules="iisnode" />
-              </handlers>
-              <rewrite>
-                <rules>
-                  <rule name="DynamicContent">
-                    <match url="/*" />
-                    <action type="Rewrite" url="dist/main.js" />
-                  </rule>
-                </rules>
-              </rewrite>
-              <security>
-                <requestFiltering>
-                  <hiddenSegments>
-                    <remove segment="bin" />
-                  </hiddenSegments>
-                </requestFiltering>
-              </security>
-              <httpErrors existingResponse="PassThrough" />
-              <iisnode node_env="%NODE_ENV%" nodeProcessCommandLine="node.exe --max-old-space-size=4096" watchedFiles="web.config;*.js" />
-            </system.webServer>
-          </configuration>' > web.config
-
-          # Keep the dist folder but remove dev files
-          rm -rf node_modules/
-          # Install production dependencies only
-          npm ci --omit=dev
-          # Remove development files not needed in production
-          rm -rf tests/ test/ .eslintrc* tsconfig.json tsconfig.build.json
-          # Create an optimized tar package
-          apt-get update && apt-get install -y pigz
-          tar cf - . | pigz -9 > ../release.tgz
+          # Install pm2 for production process management
+          npm install pm2 --save
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -167,4 +132,24 @@ jobs:
           app-name: "booking-app-backend"
           slot-name: "Production"
           package: app/
-          startup-command: "node dist/main.js"
+          startup-command: "pm2 start dist/main.js --no-daemon"
+
+      - name: Configure App Insights
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: "booking-app-backend"
+          app-settings-json: |
+            [
+              {
+                "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                "value": "${{ secrets.APPLICATION_INSIGHTS_CONNECTION_STRING }}",
+                "slotSetting": false
+              },
+              {
+                "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+                "value": "~3",
+                "slotSetting": false
+              }
+            ]
+      - name: Restart App Service
+        run: az webapp restart --name booking-app-backend --resource-group testGroup
