@@ -2,6 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { ConfigService } from "@nestjs/config";
 import { Logger } from "@nestjs/common";
+import { SupabaseService } from "./services/supabase.service";
 
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
@@ -29,8 +30,8 @@ async function bootstrap() {
     app.getHttpAdapter().get("/health", async (req, res) => {
       try {
         // Test Supabase connection
-        const supabase = await app.get(SupabaseService).getServiceClient();
-        const { data, error } = await supabase
+        const supabase = app.get(SupabaseService).getServiceClient();
+        const { data: error } = await supabase
           .from("storage_items")
           .select("count", { count: "exact", head: true });
 
