@@ -1,56 +1,56 @@
-describe('Admin Panel', () => {
+describe("Admin Panel", () => {
   // Test users configuration
   const users = {
     admin: {
-      email: 'ermegilius4@gmail.com',
-      password: '12345678',
-      role: 'admin',
+      email: "ermegilius4@gmail.com",
+      password: "12345678",
+      role: "admin",
     },
     superVera: {
-      email: 'ermegilius5@gmail.com',
-      password: '12345678',
-      role: 'superVera',
+      email: "ermegilius5@gmail.com",
+      password: "12345678",
+      role: "superVera",
     },
     regular: {
-      email: 'ermegilius3@gmail.com',
-      password: '12345678',
-      role: 'user',
+      email: "ermegilius3@gmail.com",
+      password: "12345678",
+      role: "user",
     },
   };
 
   // Protected routes that should be tested
   const protectedRoutes = [
-    '/admin',
-    '/admin/users',
-    '/admin/items',
-    '/admin/settings',
-    '/admin/team',
+    "/admin",
+    "/admin/users",
+    "/admin/items",
+    "/admin/settings",
+    "/admin/team",
   ];
 
   // Define route access permissions
-  const routePermissions = {
-    '/admin': ['admin', 'superVera'],
-    '/admin/users': ['admin', 'superVera'],
-    '/admin/items': ['admin', 'superVera'],
-    '/admin/settings': ['admin', 'superVera'],
-    '/admin/team': ['superVera'],
-  };
+  // const routePermissions = {
+  //   '/admin': ['admin', 'superVera'],
+  //   '/admin/users': ['admin', 'superVera'],
+  //   '/admin/items': ['admin', 'superVera'],
+  //   '/admin/settings': ['admin', 'superVera'],
+  //   '/admin/team': ['superVera'],
+  // };
 
   /**
    * Custom commands
    */
   // Login through Supabase Auth UI with improved session handling
-  Cypress.Commands.add('loginWithSupabase', (email, password) => {
+  Cypress.Commands.add("loginWithSupabase", (email, password) => {
     cy.session(
       [email, password],
       () => {
-        cy.visit('/login');
-        cy.get('input[name="email"]').should('be.visible').type(email);
-        cy.get('input[type="password"]').should('be.visible').type(password);
-        cy.get('button[type="submit"]').should('be.visible').click();
+        cy.visit("/login");
+        cy.get('input[name="email"]').should("be.visible").type(email);
+        cy.get('input[type="password"]').should("be.visible").type(password);
+        cy.get('button[type="submit"]').should("be.visible").click();
 
         // Wait for login to complete - using a more reliable approach
-        cy.url().should('not.include', '/login', { timeout: 10000 });
+        cy.url().should("not.include", "/login", { timeout: 10000 });
       },
       {
         cacheAcrossSpecs: false,
@@ -59,87 +59,87 @@ describe('Admin Panel', () => {
   });
 
   // Setup user role and fixtures
-  Cypress.Commands.add('setupUserRole', (role) => {
-    if (role === 'admin') {
-      cy.intercept('GET', '**/users/current', {
-        fixture: 'admin-user.json',
+  Cypress.Commands.add("setupUserRole", (role) => {
+    if (role === "admin") {
+      cy.intercept("GET", "**/users/current", {
+        fixture: "admin-user.json",
         statusCode: 200,
-      }).as('getCurrentUserAdmin');
-    } else if (role === 'superVera') {
-      cy.intercept('GET', '**/users/current', {
-        fixture: 'supervera-user.json',
+      }).as("getCurrentUserAdmin");
+    } else if (role === "superVera") {
+      cy.intercept("GET", "**/users/current", {
+        fixture: "supervera-user.json",
         statusCode: 200,
-      }).as('getCurrentUserSuperVera');
+      }).as("getCurrentUserSuperVera");
     } else {
-      cy.intercept('GET', '**/users/current', {
-        fixture: 'regular-user.json',
+      cy.intercept("GET", "**/users/current", {
+        fixture: "regular-user.json",
         statusCode: 200,
-      }).as('getCurrentUserRegular');
+      }).as("getCurrentUserRegular");
     }
 
     // Common intercept for all users
-    cy.intercept('GET', '**/users', {
-      fixture: 'users-list.json',
+    cy.intercept("GET", "**/users", {
+      fixture: "users-list.json",
       statusCode: 200,
-    }).as('getUsers');
+    }).as("getUsers");
   });
 
   /**
    * Test scenarios
    */
-  describe('Authentication and Authorization', () => {
+  describe("Authentication and Authorization", () => {
     // Test anonymous users
-    it('should redirect anonymous users to unauthorized page when accessing protected routes', () => {
+    it("should redirect anonymous users to unauthorized page when accessing protected routes", () => {
       // Test each protected route with clearer failure messages
       protectedRoutes.forEach((route) => {
         cy.visit(route, { failOnStatusCode: false });
         cy.url().should(
-          'include',
-          '/unauthorized',
+          "include",
+          "/unauthorized",
           `Expected ${route} to redirect to unauthorized page`,
         );
 
         // Verify "Access Denied" message is displayed
-        cy.get('h1').should('contain.text', 'Access Denied');
+        cy.get("h1").should("contain.text", "Access Denied");
         cy.contains(
-          'p',
-          'You do not have permission to view this page.',
-        ).should('be.visible');
+          "p",
+          "You do not have permission to view this page.",
+        ).should("be.visible");
       });
     });
 
     // Test regular user access - improved assertions
     it('should show "Access Denied" when regular users try to access admin panel', () => {
-      cy.setupUserRole('user');
+      cy.setupUserRole("user");
       cy.loginWithSupabase(users.regular.email, users.regular.password);
 
-      cy.visit('/admin', { failOnStatusCode: false });
+      cy.visit("/admin", { failOnStatusCode: false });
 
       // Verify redirect to unauthorized page
-      cy.url().should('include', '/unauthorized');
+      cy.url().should("include", "/unauthorized");
 
       // Verify specific Access Denied message
-      cy.get('h1').should('contain.text', 'Access Denied');
-      cy.contains('p', 'You do not have permission to view this page.').should(
-        'be.visible',
+      cy.get("h1").should("contain.text", "Access Denied");
+      cy.contains("p", "You do not have permission to view this page.").should(
+        "be.visible",
       );
     });
 
     // Test regular user accessing other admin routes
     it('should show "Access Denied" when regular users try to access any admin routes', () => {
-      cy.setupUserRole('user');
+      cy.setupUserRole("user");
       cy.loginWithSupabase(users.regular.email, users.regular.password);
 
       // Test each admin route
       [
-        '/admin/users',
-        '/admin/items',
-        '/admin/settings',
-        '/admin/team',
+        "/admin/users",
+        "/admin/items",
+        "/admin/settings",
+        "/admin/team",
       ].forEach((route) => {
         cy.visit(route, { failOnStatusCode: false });
-        cy.url().should('include', '/unauthorized');
-        cy.get('h1').should('contain.text', 'Access Denied');
+        cy.url().should("include", "/unauthorized");
+        cy.get("h1").should("contain.text", "Access Denied");
       });
     });
 

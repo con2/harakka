@@ -7,7 +7,7 @@ import {
   cancelOrder,
   selectUserOrders,
 } from "@/store/slices/ordersSlice";
-import { BookingOrder, BookingItem } from "@/types/orders";
+import { BookingOrder, BookingItem } from "@/types";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "./ui/button";
