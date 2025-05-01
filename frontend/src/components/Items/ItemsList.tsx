@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import React, { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   fetchAllItems,
   selectAllItems,
   selectItemsLoading,
   selectItemsError,
-} from '../../store/slices/itemsSlice';
-import ItemCard from './ItemCard';
-import { Button } from '../../components/ui/button';
-import { Input } from '../ui/input';
-import { useNavigate, useOutletContext } from 'react-router-dom';
-import ItemsLoader from '../../context/ItemsLoader';
-import { useAuth } from '../../context/AuthContext';
-import TimeframeSelector from '../TimeframeSelector';
+} from "../../store/slices/itemsSlice";
+import ItemCard from "./ItemCard";
+import { Button } from "../../components/ui/button";
+import { Input } from "../ui/input";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import ItemsLoader from "../../context/ItemsLoader";
+import { useAuth } from "../../context/AuthContext";
+import TimeframeSelector from "../TimeframeSelector";
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
@@ -26,13 +26,13 @@ const ItemsList: React.FC = () => {
   const error = useAppSelector(selectItemsError);
 
   // Auth state from AuthContext
-  const { user, authLoading } = useAuth();
+  const { user } = useAuth();
 
   // Check if the user is an admin
   // const isAdmin = user?.user_metadata?.role === 'admin';
-  const isAdmin = user?.role === 'admin' || user?.role === 'superVera';
+  const isAdmin = user?.role === "admin" || user?.role === "superVera";
   //state for search query
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch all items when the component mounts
   useEffect(() => {
@@ -70,13 +70,13 @@ const ItemsList: React.FC = () => {
       item.translations.en.item_description?.toLowerCase().includes(userQuery);
     // Filter by item types
     const matchesItemTypes =
-    !filters.itemTypes?.length ||
-    filters.itemTypes.includes(item.translations.fi.item_type);
+      !filters.itemTypes?.length ||
+      filters.itemTypes.includes(item.translations.fi.item_type);
     // Filter by tags
     const matchesTags =
       !filters.tagIds?.length ||
       (item.storage_item_tags || []).some((tag) =>
-        filters.tagIds.includes(tag.id)
+        filters.tagIds.includes(tag.id),
       );
     // add tags filter here
     // right now the englih tags are not found
@@ -111,7 +111,7 @@ const ItemsList: React.FC = () => {
       {isAdmin && (
         <Button
           className="mb-4"
-          onClick={() => navigate('/admin/items/create')}
+          onClick={() => navigate("/admin/items/create")}
         >
           Create New Item
         </Button>
