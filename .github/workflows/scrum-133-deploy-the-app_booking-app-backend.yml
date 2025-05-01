@@ -2,7 +2,7 @@ name: Deploy Backend to Azure
 
 on:
   push:
-    branches: [SCRUM-133-deploy-the-app]
+    branches: [deployment]
   workflow_dispatch:
 
 jobs:
