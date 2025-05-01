@@ -6,10 +6,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 // Debug logging
 console.log("Supabase configuration check:", {
-  hasUrl: !!supabaseUrl,
-  urlLength: supabaseUrl?.length || 0,
+  url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : "missing",
   hasAnonKey: !!supabaseAnonKey,
-  anonKeyLength: supabaseAnonKey?.length || 0,
+  mode: import.meta.env.MODE,
 });
 
 // Check if we're on a password reset URL before creating the Supabase client
@@ -22,34 +21,13 @@ const isPasswordResetFlow = () => {
 };
 
 // Create Supabase client with graceful fallback
-export const supabase = (() => {
-  try {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error(
-        "Missing Supabase environment variables. Authentication will not work properly.",
-      );
-      // Provide meaningful error message in production
-      if (import.meta.env.PROD) {
-        console.error(
-          "Authentication configuration error. Please contact support.",
-        );
-      }
-    }
-
-    return createClient(supabaseUrl || "", supabaseAnonKey || "", {
-      auth: {
-        autoRefreshToken: !isPasswordResetFlow(),
-        persistSession: !isPasswordResetFlow(),
-        detectSessionInUrl: !isPasswordResetFlow(),
-      },
-    });
-  } catch (error) {
-    console.error("Failed to initialize Supabase client:", error);
-    throw new Error(
-      "Unable to initialize authentication services. Please refresh the page or try again later.",
-    );
-  }
-})();
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: !isPasswordResetFlow(),
+    persistSession: !isPasswordResetFlow(),
+    detectSessionInUrl: !isPasswordResetFlow(),
+  },
+});
 
 // More detailed error logging for authentication failures
 supabase.auth.onAuthStateChange((event) => {
@@ -74,7 +52,10 @@ export async function testSupabaseConnection() {
     const { error } = await supabase
       .from("storage_items")
       .select("count", { count: "exact", head: true });
-    console.log("Supabase connection test:", { success: !error, error });
+    console.log("Supabase connection test:", {
+      success: !error,
+      error: error?.message,
+    });
     return !error;
   } catch (err) {
     console.error("Supabase connection test failed:", err);
