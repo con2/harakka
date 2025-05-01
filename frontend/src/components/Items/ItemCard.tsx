@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
-import { Box as BoxIcon, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getItemById, deleteItem } from "@/store/slices/itemsSlice";
