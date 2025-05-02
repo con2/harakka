@@ -1,30 +1,36 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchAllItems, updateItem } from "@/store/slices/itemsSlice";
-import { Item } from "@/types/item";
+import { Item } from "@/types";
 import { toast } from "sonner";
-import { Switch } from '@/components/ui/switch';
+import { Switch } from "@/components/ui/switch";
 import {
   fetchAllTags,
   fetchTagsForItem,
   assignTagToItem,
   selectAllTags,
   selectSelectedTags,
-} from '@/store/slices/tagSlice';
-import { useAppSelector } from '@/store/hooks';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/store/slices/tagSlice";
+import { useAppSelector } from "@/store/hooks";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type UpdateItemModalProps = {
   onClose: () => void;
-  initialData: Item;  // Assume initialData is always passed for updating
+  initialData: Item; // Assume initialData is always passed for updating
 };
 
 const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   const dispatch = useAppDispatch();
-  const [formData, setFormData] = useState<Item>(initialData);  // Initialize directly from initialData
+  const [formData, setFormData] = useState<Item>(initialData); // Initialize directly from initialData
   const [loading, setLoading] = useState(false);
   const tags = useAppSelector(selectAllTags);
   const selectedTags = useAppSelector(selectSelectedTags);
@@ -33,7 +39,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   // Prefill the form with initial data if available
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);  // Set form data directly from initialData
+      setFormData(initialData); // Set form data directly from initialData
     }
   }, [initialData]);
 
@@ -44,15 +50,15 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
 
   useEffect(() => {
     if (selectedTags) {
-      setLocalSelectedTags(selectedTags.map(tag => tag.id));
+      setLocalSelectedTags(selectedTags.map((tag) => tag.id));
     }
   }, [selectedTags]);
 
   const handleTagToggle = (tagId: string) => {
-    setLocalSelectedTags(prev =>
+    setLocalSelectedTags((prev) =>
       prev.includes(tagId)
-        ? prev.filter(id => id !== tagId)
-        : [...prev, tagId]
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId],
     );
   };
 
@@ -85,30 +91,39 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-  
+
     try {
-      // Exclude tags from updateItem payload
-      const { storage_item_tags, ...cleanedData } = formData;
-  
-      await dispatch(updateItem({ id: formData.id, data: cleanedData })).unwrap();
-      await dispatch(assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags })).unwrap();
+      // Create a clean copy of the data without the properties that should not be sent
+      const cleanedData = { ...formData };
+      // Remove properties that don't exist as columns in the database table
+      delete cleanedData.storage_item_tags;
+      delete cleanedData.tagIds;
+
+      await dispatch(
+        updateItem({ id: formData.id, data: cleanedData }),
+      ).unwrap();
+      await dispatch(
+        assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
+      ).unwrap();
       dispatch(fetchAllItems());
-      toast.success('Item updated successfully!');
+      toast.success("Item updated successfully!");
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to update item.');
+      toast.error("Failed to update item.");
     } finally {
       setLoading(false);
     }
-  };  
+  };
 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Item</DialogTitle>
-          <DialogDescription className="text-center">Update item details below.</DialogDescription>
+          <DialogDescription className="text-center">
+            Update item details below.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -128,7 +143,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 placeholder="Item Name (fi)"
                 required
               />
-              <label htmlFor="translations.fi.item_description">Item Description</label>
+              <label htmlFor="translations.fi.item_description">
+                Item Description
+              </label>
               <Input
                 id="translations.fi.item_description"
                 name="translations.fi.item_description"
@@ -151,7 +168,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 placeholder="Item Name (en)"
                 required
               />
-              <label htmlFor="translations.en.item_description">Item Description</label>
+              <label htmlFor="translations.en.item_description">
+                Item Description
+              </label>
               <Input
                 id="translations.en.item_description"
                 name="translations.en.item_description"
@@ -202,7 +221,11 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                     checked={localSelectedTags.includes(tag.id)}
                     onCheckedChange={() => handleTagToggle(tag.id)}
                   />
-                  <span>{tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed'}</span>
+                  <span>
+                    {tag.translations?.fi?.name ||
+                      tag.translations?.en?.name ||
+                      "Unnamed"}
+                  </span>
                 </label>
               ))}
             </div>
