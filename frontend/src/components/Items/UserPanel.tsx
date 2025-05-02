@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ChevronRight, SlidersIcon } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Star } from "lucide-react";
+import { count } from "console";
 
 const UserPanel = () => {
   const tags = useAppSelector(selectAllTags);
@@ -21,16 +22,17 @@ const UserPanel = () => {
   // Unique item_type.fi values from items
   const uniqueItemTypes = Array.from(
     new Set(
-      items.map((item) => item.translations?.fi?.item_type).filter(Boolean),
+      items
+        .map((item) => item.translations?.fi?.item_type)
+        .filter(Boolean)
+        .map((type) => type.charAt(0).toUpperCase() + type.slice(1))
+        .sort((a, b) => a.localeCompare(b)),
     ),
   );
   const [showAllItemTypes, setShowAllItemTypes] = useState(false);
   const visibleItemTypes = showAllItemTypes
     ? uniqueItemTypes
-    : uniqueItemTypes.slice(0, 5);
-
-  // sort the types alphabetically
-  uniqueItemTypes.sort((a, b) => a.localeCompare(b));
+    : uniqueItemTypes.slice(0, 7);
 
   // filter states
   const [filters, setFilters] = useState<{
@@ -57,21 +59,55 @@ const UserPanel = () => {
     }));
   };
 
+  const countActiveFilters = () => {
+    let count = 0;
+    if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== 100) count++;
+    if (filters.itemsNumberAvailable[0] !== 0 || filters.itemsNumberAvailable[1] !== 100) count++;
+    if (filters.averageRating.length > 0) count++;
+    if (filters.itemTypes.length > 0) count++;
+    if (filters.tagIds.length > 0) count++;
+    return count;
+  };  
+
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-76 p-4 border-r bg-white shadow-md overflow-y-auto max-h-screen">
+      <aside className="hidden md:flex flex-col w-76 p-4 border-r bg-white shadow-md overflow-y-auto max-h-screen pb-10">
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
           {/* Filter Section */}
           <div>
             <div className="flex items-center justify-between my-2">
-              <h3 className="text-secondary font-bold">Filters</h3>
-              <SlidersIcon className="w-5 h-5 text-slate-500" />
+              <h3 className="text-secondary font-bold mb-0">Filters</h3>
+              <div className="flex items-center gap-2">
+                <div className="text-xs text-muted-foreground">
+                  {countActiveFilters()} active
+                </div>
+                <SlidersIcon className="w-5 h-5 text-slate-500" />
+              </div>
             </div>
+            {countActiveFilters() > 0 && (
+              <div className="flex justify-end">
+                <Button
+                  className="text-xs px-1 py-0.5 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white"
+                  onClick={() =>
+                    setFilters({
+                      priceRange: [0, 100],
+                      isActive: true,
+                      averageRating: [],
+                      itemsNumberAvailable: [0, 100],
+                      itemTypes: [],
+                      tagIds: [],
+                    })
+                  }
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            )}
             <Separator className="my-4" />
 
             {/* Categories / item_types*/}
-            <div className="flex flex-col flex-wrap gap-3 text-md my-6">
+            <div className="flex flex-col flex-wrap gap-3 text-sm my-6">
               {visibleItemTypes.map((typeName) => {
                 const isSelected = filters.itemTypes?.includes(typeName);
                 return (
@@ -261,6 +297,28 @@ const UserPanel = () => {
                 })}
               </div>
             </div>
+            {countActiveFilters() > 0 && (
+              <div>
+                <Separator className="my-4" />
+                <div className="flex justify-center mt-4">
+                  <Button
+                    className="text-xs px-1 py-0.5 bg-white text-highlight2 border-1 border-highlight2 hover:bg-highlight2 hover:text-white"
+                    onClick={() =>
+                      setFilters({
+                        priceRange: [0, 100],
+                        isActive: true,
+                        averageRating: [],
+                        itemsNumberAvailable: [0, 100],
+                        itemTypes: [],
+                        tagIds: [],
+                      })
+                    }
+                  >
+                    Clear All Filters
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </nav>
       </aside>
