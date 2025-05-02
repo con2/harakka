@@ -8,6 +8,8 @@ import DatePickerButton from "./ui/DatePickerButton";
 import { Button } from "./ui/button";
 import { selectCartItems } from "../store/slices/cartSlice";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Info } from "lucide-react";
 
 const TimeframeSelector: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -55,81 +57,101 @@ const TimeframeSelector: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-50 p-4 rounded-lg mb-6">
-      <h2 className="text-lg font-semibold mb-3">Select Booking Timeframe</h2>
-      <div className="flex flex-col md:flex-row gap-4 items-center">
+    <div className="w-full max-w-screen-lg mx-auto px-4 bg-slate-50 p-6 rounded-lg mb-6 flex flex-col items-center">
+      <h2 className="text-lg font-semibold mb-3 flex items-center justify-center">
+        Select Booking Timeframe
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="cursor-pointer text-muted-foreground">
+              <Info className="ml-1 text-secondary w-4 h-4" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" align="start" className="max-w-sm break-words">
+            Select a timeframe to see available items. All items in your cart will use this booking period.
+          </TooltipContent>
+        </Tooltip>
+      </h2>
+      <div className="flex flex-col md:flex-row flex-wrap gap-4 w-full justify-center">
         {/* Start Date Picker */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Start Date:</span>
-          <Popover>
-            <PopoverTrigger asChild>
-              <DatePickerButton
-                value={startDate ? format(startDate, "PPP") : null}
-                placeholder="Select start date"
-              />
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={startDate || undefined}
-                onSelect={(date) => handleDateChange("start", date)}
-                initialFocus
-                disabled={(date) =>
-                  date < new Date(new Date().setHours(0, 0, 0, 0))
-                }
-              />
-            </PopoverContent>
-          </Popover>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-start">
+            <span className="text-xs font-small mb-1 text-muted-foreground">Start Date</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <DatePickerButton
+                  value={startDate ? format(startDate, "PPP") : null}
+                  placeholder="Select start date"
+                />
+              </PopoverTrigger>
+              <PopoverContent className="w-auto max-w-xs p-0 break-words">
+                <Calendar
+                  mode="single"
+                  selected={startDate || undefined}
+                  onSelect={(date) => handleDateChange("start", date)}
+                  initialFocus
+                  disabled={(date) =>
+                    date < new Date(new Date().setHours(0, 0, 0, 0))
+                  }
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         {/* End Date Picker */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">End Date:</span>
-          <Popover>
-            <PopoverTrigger asChild>
-              <DatePickerButton
-                value={endDate ? format(endDate, "PPP") : null}
-                placeholder="Select end date"
-              />
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={endDate || undefined}
-                onSelect={(date) => handleDateChange("end", date)}
-                initialFocus
-                disabled={(date) => {
-                  // Always return a boolean value:
-                  const isBeforeToday =
-                    date < new Date(new Date().setHours(0, 0, 0, 0));
-                  const isBeforeStartDate = startDate
-                    ? date < startDate
-                    : false;
-                  return isBeforeToday || isBeforeStartDate;
-                }}
-              />
-            </PopoverContent>
-          </Popover>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-start">
+            <span className="text-xs font-small mb-1 text-muted-foreground">End Date</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <DatePickerButton
+                  value={endDate ? format(endDate, "PPP") : null}
+                  placeholder="Select end date"
+                />
+              </PopoverTrigger>
+              <PopoverContent className="w-auto max-w-xs p-0 break-words">
+                <Calendar
+                  mode="single"
+                  selected={endDate || undefined}
+                  onSelect={(date) => handleDateChange("end", date)}
+                  initialFocus
+                  disabled={(date) => {
+                    // Always return a boolean value:
+                    const isBeforeToday =
+                      date < new Date(new Date().setHours(0, 0, 0, 0));
+                    const isBeforeStartDate = startDate
+                      ? date < startDate
+                      : false;
+                    return isBeforeToday || isBeforeStartDate;
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         {/* Clear Button */}
-        {(startDate || endDate) && (
+        {/* {(startDate || endDate) && (
           <Button
-            variant="outline"
             size="sm"
             onClick={handleClearTimeframe}
-            className="ml-auto"
+            className="mt-5 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white"
           >
             Clear Dates
           </Button>
-        )}
+        )} */}
+        <div className="w-full lg:w-auto">
+          <Button
+            size="sm"
+            onClick={handleClearTimeframe}
+            className={`mt-5 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white ${
+              startDate || endDate ? "visible" : "invisible"
+            }`}
+          >
+            Clear Dates
+          </Button>
+        </div>
       </div>
-
-      {/* Instructions */}
-      <p className="text-sm text-muted-foreground mt-2">
-        Select a timeframe to see available items. All items in your cart will
-        use this booking period.
-      </p>
     </div>
   );
 };
