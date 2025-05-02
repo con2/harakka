@@ -62,8 +62,12 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
   };
   const handleSubmit = async () => {
     try {
+      // Only send the tag IDs, nothing else
       await dispatch(
-        assignTagToItem({ itemId, tagIds: localSelectedTags }),
+        assignTagToItem({
+          itemId,
+          tagIds: localSelectedTags,
+        }),
       ).unwrap();
 
       const updatedTags = tags.filter((tag) =>
@@ -73,25 +77,11 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
 
       toast.success("Tags assigned successfully!");
       onClose();
-    } catch {
+    } catch (error) {
       toast.error("Failed to assign tags");
+      console.error("Tag assignment error:", error);
     }
   };
-
-  // const handleSubmit = async () => {
-  //   try {
-  //     await dispatch(assignTagToItem({ itemId, tagIds: selectedTags })).unwrap();
-
-  //     // Immediately update the item’s tags in Redux
-  //     const updatedTags = tags.filter(tag => selectSelectedTags.includes(tag.id));
-  //     dispatch(updateItemTags({ itemId, tags: updatedTags }));
-
-  //     toast.success('Tags assigned successfully!');
-  //     onClose();
-  //   } catch (err) {
-  //     toast.error('Failed to assign tags');
-  //   }
-  // };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

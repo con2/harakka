@@ -25,6 +25,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
 
   const handleSessionUpdate = (session: Session | null) => {
+    // Check if this is a recovery flow by examining the URL
+    const isRecoveryFlow =
+      window.location.href.includes("type=recovery") ||
+      window.location.hash.includes("type=recovery");
+
+    if (isRecoveryFlow) {
+      // Don't save user or session for recovery flows
+      console.log("Recovery flow detected, preventing automatic login");
+      setSession(null);
+      setUser(null);
+      setAuthLoading(false);
+      return;
+    }
+
     const user = session?.user ?? null;
     setSession(session);
     setUser(user);

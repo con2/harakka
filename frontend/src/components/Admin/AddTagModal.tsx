@@ -13,7 +13,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { createTag, fetchAllTags } from "@/store/slices/tagSlice";
 import { toast } from "sonner";
 import { Label } from "../ui/label";
-import { Tag } from "@/types/tag";
+import { CreateTagDto, Tag } from "@/types/tag";
+import { createTagPayload } from "@/types/forms";
 
 interface AddTagModalProps {
   children: React.ReactNode;
@@ -41,14 +42,17 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
 
     setSubmitting(true);
     try {
-      const result = await dispatch(
-        createTag({
-          translations: {
-            fi: fiName ? { name: fiName } : undefined,
-            en: enName ? { name: enName } : undefined,
-          },
-        }),
-      ).unwrap();
+      // Use the helper function to create a properly typed payload
+      const tagData = createTagPayload(fiName, enName);
+
+      // Convert TagFormData to CreateTagDto explicitly
+      const createTagDto: CreateTagDto = {
+        translations: {
+          fi: tagData.translations.fi || { name: "" },
+          en: tagData.translations.en || { name: "" },
+        },
+      };
+      const result = await dispatch(createTag(createTagDto)).unwrap();
 
       toast.success("Tag created successfully!");
       dispatch(fetchAllTags());
