@@ -13,8 +13,17 @@ export async function getAuthToken(): Promise<string | null> {
   return cachedToken;
 }
 
+// Get API URL from runtime config with fallback to development URL
+const apiUrl = import.meta.env.VITE_API_URL as string;
+const baseURL = apiUrl
+  ? // Ensure URL has proper protocol
+    apiUrl.startsWith("http")
+    ? apiUrl
+    : `https://${apiUrl}`
+  : "http://localhost:3000";
+
 export const api = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL,
   headers: {
     "Content-Type": "application/json",
   },

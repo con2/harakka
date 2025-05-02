@@ -15,7 +15,7 @@ const OrderConfirmation: React.FC = () => {
         <div className="flex justify-center mb-4">
           <CheckCircle className="h-16 w-16 text-green-500" />
         </div>
-        <h2 className="text-2xl font-bold mb-4">Order Confirmed!</h2>
+        <h2 className="text-2xl font-bold mb-4">Order Created!</h2>
         <p className="mb-4">
           Your order has been successfully placed. You will receive a
           confirmation email shortly.
