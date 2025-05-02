@@ -10,6 +10,11 @@ import { CreateBookingDto } from "../dto/create-booking.dto";
 export class BookingService {
   constructor(private readonly supabaseService: SupabaseService) {}
 
+  // TODO!:
+  // use getClientByRole again!
+  // refactor code so that the supabase client is not created in every function
+  // every function should update the order_items status to "pending", "confirmed" or "cancelled"
+
   // 1. get all orders
   async getAllOrders(userId: string) {
     //const supabase = await this.supabaseService.getClientByRole(userId);
@@ -166,8 +171,6 @@ export class BookingService {
       throw new BadRequestException("No userId found: user_id is required");
     }
 
-    const unavailableItems: string[] = [];
-
     // check for overlapping bookings
     for (const item of dto.items) {
       const start = new Date(item.start_date);
@@ -193,18 +196,28 @@ export class BookingService {
       // get max availability from storage_items - USE SERVICE CLIENT
       const { data: itemData, error: itemError } = await supabase
         .from("storage_items")
-        .select("items_number_total")
+        .select("items_number_total, items_number_available")
         .eq("id", item.item_id)
         .single();
 
       if (itemError || !itemData) {
+        console.error("Storage item fetch error:", itemError);
         throw new BadRequestException("Item data not found");
       }
 
-      // check availability
-      if (alreadyBookedQuantity + item.quantity > itemData.items_number_total) {
+      // check if there is enough available stock
+      const freeQuantity = itemData.items_number_total - alreadyBookedQuantity;
+
+      if (item.quantity > freeQuantity) {
         throw new BadRequestException(
-          `Not enough quantity available for item ${item.item_id}`,
+          `Not enough available quantity for item ${item.item_id}`,
+        );
+      }
+
+      // check if items_number_available is logical
+      if (item.quantity > itemData.items_number_available) {
+        throw new BadRequestException(
+          `Not enough real available stock for item ${item.item_id}`,
         );
       }
     }
@@ -246,7 +259,7 @@ export class BookingService {
       // get location_id from storage_items - USE SERVICE CLIENT
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
-        .select("location_id")
+        .select("location_id, items_number_available")
         .eq("id", item.item_id)
         .single();
 
@@ -257,6 +270,35 @@ export class BookingService {
         );
       }
 
+      // reduce availability directly in `storage_items` with quantity check (just in case)
+      const newAvailable = storageItem.items_number_available - item.quantity;
+      if (newAvailable < 0) {
+        throw new BadRequestException(
+          `Negative stock detected for item ${item.item_id}`,
+        );
+      }
+
+      const { data: updatedItems, error: reduceError } = await supabase
+        .from("storage_items")
+        .update({ items_number_available: newAvailable })
+        .eq("id", item.item_id)
+        .select();
+
+      if (reduceError) {
+        console.error("Stock reduce error:", reduceError);
+        throw new BadRequestException(
+          `Failed to reserve stock for item ${item.item_id}`,
+        );
+      }
+
+      if (!updatedItems || updatedItems.length === 0) {
+        console.error("No stock item updated for item:", item.item_id);
+        throw new BadRequestException(
+          `Failed to update stock for item ${item.item_id}`,
+        );
+      }
+
+      // create order-item
       const { error: itemInsertError } = await supabase
         .from("order_items")
         .insert({
@@ -311,21 +353,6 @@ export class BookingService {
       if (storageItem.items_number_available < item.quantity) {
         throw new BadRequestException(
           `Not enough available quantity for item ${item.item_id}`,
-        );
-      }
-
-      // reduce availability directly in `storage_items`
-      const { error: reduceError } = await supabase
-        .from("storage_items")
-        .update({
-          items_number_available:
-            storageItem.items_number_available - item.quantity,
-        })
-        .eq("id", item.item_id);
-
-      if (reduceError) {
-        throw new BadRequestException(
-          `Failed to reduce stock for item ${item.item_id}`,
         );
       }
     }
@@ -396,6 +423,7 @@ export class BookingService {
     // Delete existing items from order_items to avoid douplicates
     await supabase.from("order_items").delete().eq("order_id", orderId);
 
+    // insert updated items and reduce stock
     for (const item of updatedItems) {
       const start = new Date(item.start_date);
       const end = new Date(item.end_date);
@@ -403,28 +431,58 @@ export class BookingService {
         (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
       );
 
-      const { data: storageItem } = await supabase
+      const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
-        .select("location_id")
+        .select("location_id, items_number_available")
         .eq("id", item.item_id)
         .single();
 
-      if (!storageItem) {
-        throw new Error("Storage item not found");
+      if (storageError || !storageItem) {
+        console.error("Fetch storage item error:", storageError);
+        throw new BadRequestException(
+          `Storage item not found for item ${item.item_id}`,
+        );
       }
 
-      await supabase.from("order_items").insert({
-        order_id: orderId,
-        item_id: item.item_id,
-        location_id: storageItem.location_id,
-        quantity: item.quantity,
-        start_date: item.start_date,
-        end_date: item.end_date,
-        total_days: totalDays,
-        status: "pending",
-      });
-    }
+      // reduce available stock
+      const newAvailable = storageItem.items_number_available - item.quantity;
+      if (newAvailable < 0) {
+        throw new BadRequestException(
+          `Negative stock detected for item ${item.item_id}`,
+        );
+      }
 
+      const { error: reduceError } = await supabase
+        .from("storage_items")
+        .update({ items_number_available: newAvailable })
+        .eq("id", item.item_id);
+
+      if (reduceError) {
+        console.error("Stock reduce error:", reduceError);
+        throw new BadRequestException(
+          `Failed to reserve stock for item ${item.item_id}`,
+        );
+      }
+
+      // insert new order item
+      const { error: itemInsertError } = await supabase
+        .from("order_items")
+        .insert({
+          order_id: orderId,
+          item_id: item.item_id,
+          location_id: storageItem.location_id,
+          quantity: item.quantity,
+          start_date: item.start_date,
+          end_date: item.end_date,
+          total_days: totalDays,
+          status: "pending",
+        });
+      if (itemInsertError) {
+        console.error("Order item insert error:", itemInsertError);
+        throw new BadRequestException("Could not create updated order items");
+      }
+    }
+    // hier einfügen updated mit time stamp
     return { message: "Booking updated" };
   }
 
@@ -447,6 +505,70 @@ export class BookingService {
 
     if (role !== "admin" && role !== "superVera") {
       throw new ForbiddenException("Only admins can reject bookings");
+    }
+
+    // TODO: refactor back to the version using the trigger function
+    // get all items of order
+    const { data: orderItems, error: fetchError } = await supabase
+      .from("order_items")
+      .select("id, item_id, quantity, status")
+      .eq("order_id", orderId);
+
+    if (fetchError || !orderItems) {
+      console.error("Failed to fetch order items:", fetchError);
+      throw new BadRequestException("Could not retrieve order items");
+    }
+
+    // book items back manually
+    for (const item of orderItems) {
+      if (item.status === "confirmed") {
+        const { data: stockItem, error: stockFetchError } = await supabase
+          .from("storage_items")
+          .select("items_number_available")
+          .eq("id", item.item_id)
+          .single();
+
+        if (stockFetchError || !stockItem) {
+          console.error("Failed to fetch stock for item", item.item_id);
+          throw new BadRequestException(
+            `Could not fetch stock for item ${item.item_id}`,
+          );
+        }
+
+        const updatedQuantity =
+          (stockItem.items_number_available ?? 0) + (item.quantity ?? 0);
+
+        // increase stock
+        const { error: updateError } = await supabase
+          .from("storage_items")
+          .update({ items_number_available: updatedQuantity })
+          .eq("id", item.item_id);
+
+        if (updateError) {
+          console.error(
+            `Failed to restore stock for item ${item.item_id}:`,
+            updateError,
+          );
+          throw new BadRequestException(
+            "Could not restore stock for some items",
+          );
+        }
+      }
+    }
+    // end of the part: booking items back manually (TODO)
+
+    // for using the trigger function: TODO: make it work
+    // Cancel related order_items to trigger stock restoration
+    const { error: itemUpdateError } = await supabase
+      .from("order_items")
+      .update({ status: "cancelled" }) // Trigger watches for change
+      .eq("order_id", orderId);
+
+    if (itemUpdateError) {
+      console.error("Order items update error:", itemUpdateError);
+      throw new BadRequestException(
+        "Could not update order items for cancellation",
+      );
     }
 
     const { error: updateError } = await supabase
@@ -495,11 +617,24 @@ export class BookingService {
       if (!isOwner) {
         throw new ForbiddenException("You can only cancel your own bookings");
       }
-      if (order.status === "confirmed") {
+      if (!isAdmin && order.status === "confirmed") {
         throw new ForbiddenException(
           "You can't cancel a booking that has already been confirmed",
         );
       }
+    }
+
+    // Cancel related order_items to trigger stock restoration
+    const { error: itemUpdateError } = await supabase
+      .from("order_items")
+      .update({ status: "cancelled" }) // Trigger watches for this change
+      .eq("order_id", orderId);
+
+    if (itemUpdateError) {
+      console.error("Order items update error:", itemUpdateError);
+      throw new BadRequestException(
+        "Could not update order items for cancellation",
+      );
     }
 
     const { error } = await supabase
@@ -546,6 +681,19 @@ export class BookingService {
     if (!isAdmin) {
       throw new ForbiddenException(
         "You are not allowed to delete this booking",
+      );
+    }
+
+    // Cancel related order_items to trigger stock restoration
+    const { error: itemUpdateError } = await supabase
+      .from("order_items")
+      .update({ status: "cancelled" }) // Trigger watches for change
+      .eq("order_id", orderId);
+
+    if (itemUpdateError) {
+      console.error("Order items update error:", itemUpdateError);
+      throw new BadRequestException(
+        "Could not update order items for cancellation",
       );
     }
 
@@ -634,4 +782,3 @@ export class BookingService {
     };
   }
 }
-// This service handles the logic for creating, confirming, rejecting, and cancelling bookings.
