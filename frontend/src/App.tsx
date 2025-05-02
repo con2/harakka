@@ -86,7 +86,7 @@ function App() {
           <Footer />
           <Toaster
             position="top-right"
-            duration={10000}
+            duration={3000}
             richColors
             toastOptions={{
               className: "custom-toast",
