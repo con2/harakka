@@ -57,7 +57,7 @@ const TimeframeSelector: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-screen-lg mx-auto px-4 bg-slate-50 p-6 rounded-lg mb-6 flex flex-col items-center">
+    <div className="w-full max-w-screen-xl mx-auto px-4 bg-slate-50 p-6 rounded-lg mb-6 flex flex-col items-center">
       <h2 className="text-lg font-semibold mb-3 flex items-center justify-center">
         Select Booking Timeframe
         <Tooltip>
@@ -144,7 +144,7 @@ const TimeframeSelector: React.FC = () => {
           <Button
             size="sm"
             onClick={handleClearTimeframe}
-            className={`mt-5 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white ${
+            className={`mt-6 bg-white text-highlight2 border border-highlight2 hover:bg-highlight2 hover:text-white ${
               startDate || endDate ? "visible" : "invisible"
             }`}
           >
