@@ -16,6 +16,11 @@ export class BookingService {
   // refactor code so that the supabase client is not created in every function
   // every function should update the order_items status to "pending", "confirmed" or "cancelled"
 
+  /*
+ORDER ITEM STATUS:
+status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character varying, 'cancelled'::character varying, 'picked_up'::character varying, 'returned'::character varying]::text[])
+  */
+
   // 1. get all orders
   async getAllOrders(userId: string) {
     //const supabase = await this.supabaseService.getClientByRole(userId);
@@ -189,7 +194,7 @@ export class BookingService {
         );
       }
 
-      // 3.2. Optional: check physical stock (currently in storage)
+      // 3.2. Check physical stock (currently in storage)
       const { data: storageItem, error: itemError } = await supabase
         .from("storage_items")
         .select("items_number_currently_in_storage")
@@ -207,12 +212,12 @@ export class BookingService {
       }
     }
 
-    // 3.3. Generate shorter order number
+    // 3.3. generate the order number
     const orderNumber = `ORD-${Math.floor(Math.random() * 10000)
       .toString()
       .padStart(4, "0")}`;
 
-    // 3.4. Create order
+    // 3.4. Create the order
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
@@ -288,7 +293,7 @@ export class BookingService {
       // get availability of item
       const { data: storageItem, error: storageItemError } = await supabase
         .from("storage_items")
-        .select("items_number_available")
+        .select("items_number_currently_in_storage")
         .eq("id", item.item_id)
         .single();
 
@@ -297,7 +302,7 @@ export class BookingService {
       }
 
       // check if stock is enough
-      if (storageItem.items_number_available < item.quantity) {
+      if (storageItem.items_number_currently_in_storage < item.quantity) {
         throw new BadRequestException(
           `Not enough available quantity for item ${item.item_id}`,
         );
@@ -332,6 +337,7 @@ export class BookingService {
     //const supabase = await this.supabaseService.getClientByRole(userId);
     const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
+    // 5.1 check the order
     const { data: order } = await supabase
       .from("orders")
       .select("user_id")
@@ -340,6 +346,7 @@ export class BookingService {
 
     if (!order) throw new BadRequestException("Order not found");
 
+    // 5.2. check the user role
     const { data: user } = await supabase
       .from("user_profiles")
       .select("role")
@@ -367,51 +374,46 @@ export class BookingService {
       throw new ForbiddenException("Not allowed to update this booking");
     }
 
-    // Delete existing items from order_items to avoid douplicates
+    // 5.3. Delete existing items from order_items to avoid douplicates
     await supabase.from("order_items").delete().eq("order_id", orderId);
 
-    // insert updated items and reduce stock
+    // 5.4. insert updated items with availability check
     for (const item of updatedItems) {
-      const start = new Date(item.start_date);
-      const end = new Date(item.end_date);
+      const { item_id, quantity, start_date, end_date } = item;
+
       const totalDays = Math.ceil(
-        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+        (new Date(end_date).getTime() - new Date(start_date).getTime()) /
+          (1000 * 60 * 60 * 24),
       );
 
+      // 5.5. Check virtual availability for the time range
+      const available = await calculateAvailableQuantity(
+        supabase,
+        item_id,
+        start_date,
+        end_date,
+      );
+
+      if (quantity > available) {
+        throw new BadRequestException(
+          `Not enough virtual stock available for item ${item_id}`,
+        );
+      }
+
+      // 5.6. Fetch location_id
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
-        .select("location_id, items_number_available")
-        .eq("id", item.item_id)
+        .select("location_id")
+        .eq("id", item_id)
         .single();
 
       if (storageError || !storageItem) {
-        console.error("Fetch storage item error:", storageError);
         throw new BadRequestException(
-          `Storage item not found for item ${item.item_id}`,
+          `Could not find storage item for item ${item_id}`,
         );
       }
 
-      // reduce available stock
-      const newAvailable = storageItem.items_number_available - item.quantity;
-      if (newAvailable < 0) {
-        throw new BadRequestException(
-          `Negative stock detected for item ${item.item_id}`,
-        );
-      }
-
-      const { error: reduceError } = await supabase
-        .from("storage_items")
-        .update({ items_number_available: newAvailable })
-        .eq("id", item.item_id);
-
-      if (reduceError) {
-        console.error("Stock reduce error:", reduceError);
-        throw new BadRequestException(
-          `Failed to reserve stock for item ${item.item_id}`,
-        );
-      }
-
-      // insert new order item
+      // 5.7. insert new order item
       const { error: itemInsertError } = await supabase
         .from("order_items")
         .insert({
@@ -429,7 +431,6 @@ export class BookingService {
         throw new BadRequestException("Could not create updated order items");
       }
     }
-    // hier einfügen updated mit time stamp
     return { message: "Booking updated" };
   }
 
