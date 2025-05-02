@@ -106,7 +106,7 @@ const ItemsList: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
       {/* Show the create button only for admins */}
       {isAdmin && (
         <Button
