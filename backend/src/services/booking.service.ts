@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { SupabaseService } from "./supabase.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
+import { calculateAvailableQuantity } from "src/utils/booking.utils";
 
 @Injectable()
 export class BookingService {
@@ -171,6 +172,102 @@ export class BookingService {
       throw new BadRequestException("No userId found: user_id is required");
     }
 
+    for (const item of dto.items) {
+      const { item_id, quantity, start_date, end_date } = item;
+
+      // 3.1. Check availability for requested date range
+      const available = await calculateAvailableQuantity(
+        supabase,
+        item_id,
+        start_date,
+        end_date,
+      );
+
+      if (quantity > available) {
+        throw new BadRequestException(
+          `Not enough virtual stock available for item ${item_id}`,
+        );
+      }
+
+      // 3.2. Optional: check physical stock (currently in storage)
+      const { data: storageItem, error: itemError } = await supabase
+        .from("storage_items")
+        .select("items_number_currently_in_storage")
+        .eq("id", item_id)
+        .single();
+
+      if (itemError || !storageItem) {
+        throw new BadRequestException("Storage item data not found");
+      }
+
+      if (quantity > storageItem.items_number_currently_in_storage) {
+        throw new BadRequestException(
+          `Not enough physical stock in storage for item ${item_id}`,
+        );
+      }
+    }
+
+    // 3.3. Generate shorter order number
+    const orderNumber = `ORD-${Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, "0")}`;
+
+    // 3.4. Create order
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .insert({
+        user_id: userId,
+        status: "pending",
+        order_number: orderNumber,
+      })
+      .select()
+      .single();
+
+    if (orderError || !order) {
+      throw new BadRequestException("Could not create order");
+    }
+
+    // 3.5. Create order items
+    for (const item of dto.items) {
+      const start = new Date(item.start_date);
+      const end = new Date(item.end_date);
+      const totalDays = Math.ceil(
+        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      // get location_id
+      const { data: storageItem, error: locationError } = await supabase
+        .from("storage_items")
+        .select("location_id")
+        .eq("id", item.item_id)
+        .single();
+
+      if (locationError || !storageItem) {
+        throw new BadRequestException(
+          `Location ID not found for item ${item.item_id}`,
+        );
+      }
+
+      // insert order item
+      const { error: insertError } = await supabase.from("order_items").insert({
+        order_id: order.id,
+        item_id: item.item_id,
+        location_id: storageItem.location_id,
+        quantity: item.quantity,
+        start_date: item.start_date,
+        end_date: item.end_date,
+        total_days: totalDays,
+        status: "pending",
+      });
+
+      if (insertError) {
+        throw new BadRequestException("Could not create order items");
+      }
+    }
+
+    return order;
+  }
+  /*
     // check for overlapping bookings
     for (const item of dto.items) {
       const start = new Date(item.start_date);
@@ -320,6 +417,7 @@ export class BookingService {
 
     return order;
   }
+*/
 
   // 4. confirm a Booking
   async confirmBooking(orderId: string, userId: string) {
