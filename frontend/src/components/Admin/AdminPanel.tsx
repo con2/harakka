@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -24,22 +24,39 @@ const AdminPanel = () => {
     <div className="flex h-screen">
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-64 p-4 border-r bg-white shadow-md">
-        <div className="flex justify-center items-center gap-2">
-          <h2 className="text-lg font-bold">Admin Panel</h2>
-        </div>
-        <Separator className="my-4" />
         <nav className="flex flex-col space-y-4">
           <SidebarLink
             to="/admin"
             icon={<LayoutDashboard />}
             label="Dashboard"
           />
-          <SidebarLink to="/admin/users" icon={<Users />} label="Users" />
+          
+          <SidebarLink
+            to="/admin/users"
+            icon={<Users />}
+            label="Users"
+          />
+
           {isSuperVera && (
-            <SidebarLink to="/admin/team" icon={<Users />} label="Team" />
+            <SidebarLink
+              to="/admin/team"
+              icon={<Users />}
+              label="Team"
+            />
           )}
-          <SidebarLink to="/admin/items" icon={<Warehouse />} label="Items" />
-          <SidebarLink to="/admin/tags" icon={<PinIcon />} label="Tags" />
+
+          <SidebarLink
+            to="/admin/items"
+            icon={<Warehouse />}
+            label="Items"
+          />
+
+          <SidebarLink
+            to="/admin/tags"
+            icon={<PinIcon />}
+            label="Tags"
+          />
+
           <SidebarLink
             to="/admin/orders"
             icon={<ShoppingBag />}
@@ -105,18 +122,25 @@ const SidebarLink = ({
   to,
   icon,
   label,
+  end=false,
 }: {
   to: string;
   icon: React.ReactNode;
   label: string;
+  end?:boolean;
 }) => (
-  <Link
+  <NavLink
     to={to}
-    className="flex items-center gap-3 p-2 rounded hover:bg-gray-200"
+    end={end} // Ensures exact match
+    className={({ isActive }: { isActive: boolean }) =>
+      `flex items-center gap-3 p-2 rounded hover:bg-gray-200 ${
+        isActive ? "text-highlight2" : "text-gray-700"
+      }`
+    }
   >
     <span className="w-5 h-5">{icon}</span>
     {label}
-  </Link>
+  </NavLink>
 );
 
 export default AdminPanel;

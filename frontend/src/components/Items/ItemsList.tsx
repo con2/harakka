@@ -13,6 +13,7 @@ import { useNavigate, useOutletContext } from "react-router-dom";
 import ItemsLoader from "../../context/ItemsLoader";
 import { useAuth } from "../../context/AuthContext";
 import TimeframeSelector from "../TimeframeSelector";
+import { Search } from "lucide-react";
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
@@ -90,6 +91,7 @@ const ItemsList: React.FC = () => {
       matchesTags
     );
   });
+  console.log("Filtered items:", filteredItems);
 
   // Loading state
   if (loading) {
@@ -119,12 +121,15 @@ const ItemsList: React.FC = () => {
 
       {/* Search Bar */}
       <div className="flex justify-center mb-4">
-        <Input
-          placeholder="Search items by name, category, tags, or description"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-        />
+        <div className="relative w-full sm:max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search items by name, category, tags, or description"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary"
+          />
+        </div>
       </div>
 
       {/* Global Timeframe Selector */}
