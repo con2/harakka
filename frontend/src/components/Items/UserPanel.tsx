@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { ChevronRight, SlidersIcon } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Star } from "lucide-react";
-import { count } from "console";
 
 const UserPanel = () => {
   const tags = useAppSelector(selectAllTags);
@@ -70,7 +69,7 @@ const UserPanel = () => {
   };  
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen">
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-76 p-4 border-r bg-white shadow-md overflow-y-auto max-h-screen pb-10">
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
@@ -324,7 +323,7 @@ const UserPanel = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 bg-gray-100 overflow-y-auto">
+      <div className="flex-1 p-6 bg-gray-100 overflow-y-auto max-h-screen">
         {/* Pass filters to the ItemsList via Outlet context */}
         <Outlet context={filters} />
       </div>
