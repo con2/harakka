@@ -18,3 +18,11 @@ curl -X POST 'https://api.resend.com/emails' \
     "html": "<p>Congrats on sending your <strong>first email</strong>!</p>"
   }'
 ```
+
+## 2. Create MailService in NestJs
+
+- install dependencies
+
+```sh
+npm i resend
+```
