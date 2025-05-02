@@ -3,11 +3,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
   --radius: 0.625rem;
-  --background: #ffffff;
+  --background: white;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -114,29 +112,96 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Global styles */
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border: var(--border);
+    outline: 50% solid var(--ring);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
   }
   button {
-    @apply cursor-pointer;
+    cursor: pointer;
   }
   h2 {
-    @apply text-center text-lg font-bold text-secondary mb-2;
+    text-align: center;
+    font-size: var(--text-lg);
+    font-weight: bold;
+    color: var(--secondary);
+    margin-bottom: 0.5rem;
   }
-  /* h1, nav {
-    @apply font-robotoSlab;
-  } */
+  h3 {
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  li {
+    list-style-type: none;
+    margin: 0.5rem 0;
+  }
   label {
-    @apply mb-1;
+    margin-bottom: 0.25rem;
   }
-  th {
-    @apply text-secondary;
+  /* th {
+    color: var(--secondary);
+  } */
+}
+
+/* Custom Toast Styling */
+/* @layer components { */
+  .custom-toast {
+    position: relative;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    color: white;
+    overflow: hidden;
   }
-  .delete-toast {
-    @apply text-red-500 transition duration-200;
+
+  .custom-toast.success {
+    background-color: var(--color-green-500);
+  }
+
+  .custom-toast.error {
+    background-color: var(--color-red-500);
+  }
+
+  .custom-toast.custom::after {
+    display: none;
+  }
+/*  */
+
+/* Note: Tailwind cannot apply styles to pseudo-elements, so keep these outside Tailwind layers */
+.custom-toast.success::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 20px;
+  width: 0;
+  background-color: #388e3c;
+  animation: progressBar 10s linear forwards;
+  z-index: 1;
+}
+
+.custom-toast.error::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 20px;
+  width: 0;
+  background-color: #d32f2f;
+  animation: progressBar 10s linear forwards;
+  z-index: 1;
+}
+
+/* Keep keyframes globally defined */
+@keyframes progressBar {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
   }
 }
