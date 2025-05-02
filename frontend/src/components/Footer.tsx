@@ -57,7 +57,7 @@ const Footer = () => {
             </div>
           </div>
         </div>
-        <p className="mt-10 text-sm">&copy; {new Date().getFullYear()} Illusia. All rights reserved.</p>
+        <p className="mt-10 text-xs">&copy; {new Date().getFullYear()} Illusia. All rights reserved.</p>
       </div>
     </footer>
   );
