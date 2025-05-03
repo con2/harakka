@@ -212,7 +212,7 @@ const AdminDashboard = () => {
         {/* Users Table */}
         <div>
           <div className="flex justify-between items-center">
-            <h2>Users</h2>
+            <h2>Recent Users</h2>
           </div>
           {loading && (
             <p>
