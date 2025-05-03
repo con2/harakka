@@ -151,6 +151,54 @@
   } */
 }
 
+.deleteBtn {
+  background-color: var(--background);
+  color: var(--color-red-500);
+  border-radius: 1rem;
+  border: 1px solid var(--color-red-500);
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+  font-size: smaller;
+}
+.deleteBtn:hover {
+  background-color: var(--color-red-600);
+  color: white;
+}
+
+.editBtn {
+  background-color: var(--background);
+  color: var(--highlight2);
+  border-radius: 1rem;
+  border: 1px solid var(--highlight2);
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+  font-size: smaller
+}
+.editBtn:hover {
+  background-color: var(--highlight2);
+  color: white;
+}
+
+.addBtn {
+  background-color: var(--highlight2);
+  color: white;
+  border-radius: 1rem;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+  font-size: smaller;
+}
+.addBtn:hover {
+  background-color: white;
+  color: var(--highlight2);
+}
+
 /* Custom Toast Styling */
 /* @layer components { */
   .custom-toast {

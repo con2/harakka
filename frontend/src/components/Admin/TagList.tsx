@@ -2,7 +2,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle } from "lucide-react";
+import { Edit, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "../ui/data-table-paginated";
 import { Tag } from "@/types";
 import {
@@ -144,18 +144,16 @@ const TagList = () => {
     },
     {
       id: "actions",
-      header: "Actions",
       cell: ({ row }) => {
         const tag = row.original;
         return (
           <div className="flex gap-2">
             <Button
               size="sm"
-              variant="outline"
               onClick={() => handleEditClick(tag)}
-              className="bg-background rounded-2xl px-6 text-highlight2 border-highlight2 border-1 hover:text-background hover:bg-highlight2"
+              className="editBtn"
             >
-              Edit
+              <Edit size={10} className="mr-1" /> Edit
             </Button>
             <TagDelete
               id={tag.id}
@@ -182,7 +180,8 @@ const TagList = () => {
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      {/* Loading state */}
       {loading ? (
         <div className="flex justify-center p-8">
           <LoaderCircle className="animate-spin text-muted" />
@@ -192,45 +191,54 @@ const TagList = () => {
           {/* Header and actions */}
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-xl">Manage Tags</h1>
-            <AddTagModal>
-              <Button className="bg-highlight2 text-background rounded-2xl px-6">
-                Add New Tag
-              </Button>
-            </AddTagModal>
           </div>
 
           {/* Filters */}
-          <div className="flex flex-wrap gap-4 items-center mb-4">
-            <input
-              type="text"
-              className="w-full sm:max-w-sm text-sm p-2 bg-white rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-              placeholder="Search by name (FI or EN)"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex gap-4 items-center">
+              <input
+                type="text"
+                size={50}
+                className="w-full sm:max-w-sm text-sm p-2 bg-white rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+                placeholder="Search by name (FI or EN)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
 
-            <select
-              value={assignmentFilter}
-              onChange={(e) =>
-                setAssignmentFilter(
-                  e.target.value as "all" | "assigned" | "unassigned",
-                )
-              }
-              className="text-sm p-2 rounded-md border bg-white focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-            >
-              <option value="all">All</option>
-              <option value="assigned">Assigned</option>
-              <option value="unassigned">Unassigned</option>
-            </select>
-
-            {searchTerm && (
-              <Button
-                onClick={() => setSearchTerm("")}
-                className="text-secondary border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+              <select
+                value={assignmentFilter}
+                onChange={(e) =>
+                  setAssignmentFilter(
+                    e.target.value as "all" | "assigned" | "unassigned",
+                  )
+                }
+                className="text-sm p-2 rounded-md border bg-white focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
               >
-                Clear
-              </Button>
-            )}
+                <option value="all">All</option>
+                <option value="assigned">Assigned</option>
+                <option value="unassigned">Unassigned</option>
+              </select>
+
+              {(searchTerm || assignmentFilter !== "all") && (
+                <Button
+                  size={"sm"}
+                  onClick={() => {
+                    setSearchTerm("");
+                    setAssignmentFilter("all");
+                  }}
+                  className="text-secondary border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          <div className="flex gap-4">
+            <AddTagModal>
+                <Button className="addBtn" size={"sm"}>
+                  Add New Tag
+                </Button>
+              </AddTagModal>
+          </div>
           </div>
 
           {/* Table */}
@@ -262,17 +270,17 @@ const TagList = () => {
                   </div>
                 </div>
                 <DialogFooter className="mt-4">
-                  <Button variant="ghost" onClick={() => setEditTag(null)}>
+                  {/* <Button size={"sm"} className="" onClick={() => setEditTag(null)}>
                     Cancel
-                  </Button>
-                  <Button onClick={handleUpdate}>Save Changes</Button>
+                  </Button> */}
+                  <Button size={"sm"} className="px-3 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl" onClick={handleUpdate}>Save Changes</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           )}
         </>
       )}
-    </>
+    </div>
   );
 };
 
