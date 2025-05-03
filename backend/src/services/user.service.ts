@@ -76,7 +76,7 @@ export class UserService {
           throw new Error(`Email ${user.email} is already registered`);
         }
 
-        // For 500 errors, provide a more helpful message
+        // For 500 errors, more helpful messages
         if (authError.status === 500) {
           this.logger.error(
             "Supabase server error. Check your configuration and Supabase service status.",
