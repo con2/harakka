@@ -439,6 +439,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
     //const supabase = await this.supabaseService.getClientByRole(userId);
     const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
+    // 6.1 user role check
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
       .select("role")
@@ -455,58 +456,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       throw new ForbiddenException("Only admins can reject bookings");
     }
 
-    // TODO: refactor back to the version using the trigger function
-    // get all items of order
-    const { data: orderItems, error: fetchError } = await supabase
-      .from("order_items")
-      .select("id, item_id, quantity, status")
-      .eq("order_id", orderId);
-
-    if (fetchError || !orderItems) {
-      console.error("Failed to fetch order items:", fetchError);
-      throw new BadRequestException("Could not retrieve order items");
-    }
-
-    // book items back manually
-    for (const item of orderItems) {
-      if (item.status === "confirmed") {
-        const { data: stockItem, error: stockFetchError } = await supabase
-          .from("storage_items")
-          .select("items_number_available")
-          .eq("id", item.item_id)
-          .single();
-
-        if (stockFetchError || !stockItem) {
-          console.error("Failed to fetch stock for item", item.item_id);
-          throw new BadRequestException(
-            `Could not fetch stock for item ${item.item_id}`,
-          );
-        }
-
-        const updatedQuantity =
-          (stockItem.items_number_available ?? 0) + (item.quantity ?? 0);
-
-        // increase stock
-        const { error: updateError } = await supabase
-          .from("storage_items")
-          .update({ items_number_available: updatedQuantity })
-          .eq("id", item.item_id);
-
-        if (updateError) {
-          console.error(
-            `Failed to restore stock for item ${item.item_id}:`,
-            updateError,
-          );
-          throw new BadRequestException(
-            "Could not restore stock for some items",
-          );
-        }
-      }
-    }
-    // end of the part: booking items back manually (TODO)
-
-    // for using the trigger function: TODO: make it work
-    // Cancel related order_items to trigger stock restoration
+    // 6.2 set order_item status to cancelled
     const { error: itemUpdateError } = await supabase
       .from("order_items")
       .update({ status: "cancelled" }) // Trigger watches for change
@@ -519,6 +469,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       );
     }
 
+    // 6.3 set order status to rejected
     const { error: updateError } = await supabase
       .from("orders")
       .update({ status: "rejected" })
@@ -528,6 +479,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       console.error("Failed to reject booking:", updateError);
       throw new BadRequestException("Could not reject the booking");
     }
+
     return { message: "Booking rejected" };
   }
 
@@ -536,6 +488,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
     //const supabase = await this.supabaseService.getClientByRole(userId);
     const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
+    // 7.1 check user role
     const { data: order } = await supabase
       .from("orders")
       .select("user_id")
@@ -561,6 +514,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       userProfile.role === "admin" || userProfile.role === "superVera";
     const isOwner = order.user_id === userId;
 
+    // 7.2 permissions check
     if (!isAdmin) {
       if (!isOwner) {
         throw new ForbiddenException("You can only cancel your own bookings");
@@ -572,10 +526,10 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       }
     }
 
-    // Cancel related order_items to trigger stock restoration
+    // 7.5 Cancel all related order_items
     const { error: itemUpdateError } = await supabase
       .from("order_items")
-      .update({ status: "cancelled" }) // Trigger watches for this change
+      .update({ status: "cancelled" })
       .eq("order_id", orderId);
 
     if (itemUpdateError) {
@@ -585,6 +539,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       );
     }
 
+    // 7.4 update order_items
     const { error } = await supabase
       .from("orders")
       .update({ status: isAdmin ? "cancelled by admin" : "cancelled by user" })
@@ -604,7 +559,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
     //const supabase = await this.supabaseService.getClientByRole(userId);
     const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
-    // check if order is in database
+    // 8.1 check order in database
     const { data: order } = await supabase
       .from("orders")
       .select("user_id")
@@ -613,6 +568,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
 
     if (!order) throw new BadRequestException("Order not found");
 
+    // 8.2 check user role
     const { data: userProfile, error: userProfileError } = await supabase
       .from("user_profiles")
       .select("role")
@@ -632,29 +588,33 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       );
     }
 
-    // Cancel related order_items to trigger stock restoration
+    // 8.3 ancel all related order_items to restore virtual stock
     const { error: itemUpdateError } = await supabase
       .from("order_items")
-      .update({ status: "cancelled" }) // Trigger watches for change
+      .update({ status: "cancelled" })
       .eq("order_id", orderId);
 
     if (itemUpdateError) {
       console.error("Order items update error:", itemUpdateError);
-      throw new BadRequestException(
-        "Could not update order items for cancellation",
-      );
+      throw new BadRequestException("Could not cancel related order items");
     }
 
-    // Delete all items
-    await supabase.from("order_items").delete().eq("order_id", orderId);
-
-    // Mark order as deleted
-    await supabase
+    // 8.4 Soft-delete the order (update only)
+    const deletedAt = new Date().toISOString();
+    const { error: deleteError } = await supabase
       .from("orders")
-      .update({ status: "deleted" })
+      .update({
+        status: "deleted",
+      })
       .eq("id", orderId);
 
-    return { message: "Booking deleted" };
+    if (deleteError) {
+      throw new BadRequestException("Could not mark booking as deleted");
+    }
+
+    return {
+      message: "Booking deleted (soft delete)",
+    };
   }
 
   // 9. return items (when items are brought back)
