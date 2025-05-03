@@ -50,9 +50,9 @@ export function PaginatedDataTable<TData, TValue>({
   })
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="rounded-md border-none">
-        <Table>
+        <Table className="w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -88,6 +88,7 @@ export function PaginatedDataTable<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
+                  className="h-10"
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -109,9 +110,7 @@ export function PaginatedDataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-center space-x-2">
         <Button
-          className="border-1 border-secondary text-secondary"
-          variant="outline"
-          size="sm"
+          className="px-2 py-1 bg-background border-1 border-secondary text-secondary hover:bg-secondary hover:text-white"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
@@ -121,9 +120,7 @@ export function PaginatedDataTable<TData, TValue>({
           Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
         </span>
         <Button
-          className="border-1 border-secondary text-secondary"
-          variant="outline"
-          size="sm"
+          className="px-2 py-1 bg-background border-1 border-secondary text-secondary hover:bg-secondary hover:text-white"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
