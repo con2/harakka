@@ -103,6 +103,7 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
             className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
             onClick={handleSubmit}
             disabled={submitting}
+            size={"sm"}
           >
             {submitting ? "Creating..." : "Create Tag"}
           </Button>

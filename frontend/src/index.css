@@ -3,11 +3,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
   --radius: 0.625rem;
-  --background: #ffffff;
+  --background: white;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -25,7 +23,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: #9537c7;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -97,7 +95,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
-  --color-input: var(--input);
+  --color-input: var(--color-background);
   --color-ring: var(--ring);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -114,29 +112,148 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Global styles */
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border: var(--border);
+    outline: 50% solid var(--ring);
+    overflow-x: hidden;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
   }
   button {
-    @apply cursor-pointer;
+    cursor: pointer;
   }
   h2 {
-    @apply text-center text-lg font-bold text-secondary mb-2;
+    text-align: center;
+    font-size: var(--text-lg);
+    font-weight: bold;
+    color: var(--secondary);
+    margin-bottom: 0.5rem;
   }
-  /* h1, nav {
-    @apply font-robotoSlab;
-  } */
+  h3 {
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  li {
+    list-style-type: none;
+    margin: 0.5rem 0;
+  }
+  input {
+    background-color: var(--background);
+  }
   label {
-    @apply mb-1;
+    margin-bottom: 0.25rem;
   }
-  th {
-    @apply text-secondary;
+  /* th {
+    color: var(--secondary);
+  } */
+}
+
+.deleteBtn {
+  background-color: var(--background);
+  color: var(--color-red-500);
+  border-radius: 1rem;
+  border: 1px solid var(--color-red-500);
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+  font-size: smaller;
+}
+.deleteBtn:hover {
+  background-color: var(--color-red-600);
+  color: white;
+}
+
+.editBtn {
+  background-color: var(--background);
+  color: var(--highlight2);
+  border-radius: 1rem;
+  border: 1px solid var(--highlight2);
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+  font-size: smaller
+}
+.editBtn:hover {
+  background-color: var(--highlight2);
+  color: white;
+}
+
+.addBtn {
+  background-color: var(--highlight2);
+  color: white;
+  border-radius: 1rem;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+  font-size: smaller;
+}
+.addBtn:hover {
+  background-color: white;
+  color: var(--highlight2);
+}
+
+/* Custom Toast Styling */
+/* @layer components { */
+  .custom-toast {
+    position: relative;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    color: white;
+    overflow: hidden;
   }
-  .delete-toast {
-    @apply text-red-500 transition duration-200;
+
+  .custom-toast.success {
+    background-color: var(--color-green-500);
+  }
+
+  .custom-toast.error {
+    background-color: var(--color-red-500);
+  }
+
+  .custom-toast.custom::after {
+    display: none;
+  }
+/*  */
+
+/* Note: Tailwind cannot apply styles to pseudo-elements, so keep these outside Tailwind layers */
+.custom-toast.success::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 20px;
+  width: 0;
+  background-color: #388e3c;
+  animation: progressBar 10s linear forwards;
+  z-index: 1;
+}
+
+.custom-toast.error::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 20px;
+  width: 0;
+  background-color: #d32f2f;
+  animation: progressBar 10s linear forwards;
+  z-index: 1;
+}
+
+/* Keep keyframes globally defined */
+@keyframes progressBar {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
   }
 }
