@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { deleteTag, fetchAllTags } from "@/store/slices/tagSlice";
+import { Trash2 } from "lucide-react";
 
 const TagDelete = ({
   id,
@@ -65,10 +66,10 @@ const TagDelete = ({
   return (
     <Button
       onClick={handleDelete}
-      className="bg-background rounded-2xl px-6 text-destructive border-destructive border hover:text-background"
-      variant="destructive"
+      className="deleteBtn"
+      size={"sm"}
     >
-      Delete
+      <Trash2 size={10} className="mr-1" /> Delete
     </Button>
   );
 };
