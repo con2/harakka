@@ -301,7 +301,21 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
     //const supabase = await this.supabaseService.getClientByRole(userId);
     const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
-    // Get all the order items
+    // 4.1 check if already confirmed
+    const { data: order } = await supabase
+      .from("orders")
+      .select("status, user_id")
+      .eq("id", orderId)
+      .single();
+
+    if (!order) throw new BadRequestException("Order not found");
+
+    // prevent re-confirmation
+    if (order.status === "confirmed") {
+      throw new BadRequestException("Booking is already confirmed");
+    }
+
+    // 4.2 Get all the order items
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
       .select("item_id, quantity")
@@ -311,7 +325,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       throw new BadRequestException("Could not load order items");
     }
 
-    // check availability of the items
+    // 4.3 check availability of the items
     for (const item of items) {
       // get availability of item
       const { data: storageItem, error: storageItemError } = await supabase
@@ -332,7 +346,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       }
     }
 
-    // Change the order status to 'confirmed'
+    // 4.4 Change the order status to 'confirmed'
     const { error: updateError } = await supabase
       .from("orders")
       .update({ status: "confirmed" })
@@ -462,6 +476,20 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
     //const supabase = await this.supabaseService.getClientByRole(userId);
     const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
+    // check if already rejected
+    const { data: order } = await supabase
+      .from("orders")
+      .select("status, user_id")
+      .eq("id", orderId)
+      .single();
+
+    if (!order) throw new BadRequestException("Order not found");
+
+    // prevent re-rejection
+    if (order.status === "rejected") {
+      throw new BadRequestException("Booking is already rejected");
+    }
+
     // 6.1 user role check
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
@@ -514,7 +542,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
     // 7.1 check user role
     const { data: order } = await supabase
       .from("orders")
-      .select("user_id")
+      .select("status, user_id")
       .eq("id", orderId)
       .single<{
         user_id: string;
@@ -522,6 +550,13 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       }>();
 
     if (!order) throw new BadRequestException("Order not found");
+
+    // prevent re-cancellation
+    const finalStates = new Set(["cancelled by user", "cancelled by admin"]);
+
+    if (finalStates.has(order.status)) {
+      throw new BadRequestException(`Booking has already been ${order.status}`);
+    }
 
     const { data: userProfile, error: userProfileError } = await supabase
       .from("user_profiles")
@@ -585,11 +620,16 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
     // 8.1 check order in database
     const { data: order } = await supabase
       .from("orders")
-      .select("user_id")
+      .select("status, user_id")
       .eq("id", orderId)
       .single();
 
     if (!order) throw new BadRequestException("Order not found");
+
+    // prevent re-deletion
+    if (order.status === "deleted") {
+      throw new BadRequestException("Booking is already deleted");
+    }
 
     // 8.2 check user role
     const { data: userProfile, error: userProfileError } = await supabase
@@ -647,11 +687,17 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
 
     const { data: items } = await supabase
       .from("order_items")
-      .select("item_id, quantity")
+      .select("item_id, quantity, status")
       .eq("order_id", orderId);
 
     if (!items || items.length === 0) {
       throw new BadRequestException("No items found for return");
+    }
+
+    for (const item of items) {
+      if (item.status === "returned") {
+        throw new BadRequestException("Items are already returned");
+      }
     }
 
     for (const item of items) {
