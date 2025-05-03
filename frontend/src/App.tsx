@@ -27,6 +27,7 @@ import Footer from "./components/Footer";
 import { UserGuide } from "./components/UserGuidelines";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfUse from "./pages/TermsOfUse";
+import MyProfile from "./components/MyProfile";
 
 function App() {
   return (
@@ -40,10 +41,10 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
               <Route
-                path="/orders"
+                path="/profile"
                 element={
                   <ProtectedRoute allowedRoles={["user", "admin", "superVera"]}>
-                    <MyOrders />
+                    <MyProfile />
                   </ProtectedRoute>
                 }
               />

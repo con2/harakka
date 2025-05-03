@@ -46,8 +46,8 @@ return (
               {isLoggedIn && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link to="/orders" className="flex items-center gap-1">
-                      My orders
+                    <Link to="/profile" className="flex items-center gap-1">
+                      My Profile
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
@@ -97,8 +97,8 @@ return (
           </Link>
 
           {selectedUser ? (
-            <Button className="hover:text-secondary hover:bg-white" variant="ghost" onClick={signOut}>
-              {selectedUser.full_name} <LogOutIcon />
+            <Button className="bg-white text-secondary hover:text-secondary hover:bg-slate-50" onClick={signOut}>
+              {selectedUser.full_name} <LogOutIcon className="ml-2" />
             </Button>
           ) : (
             <Button className="hover:text-secondary hover:bg-white" variant="ghost" asChild>

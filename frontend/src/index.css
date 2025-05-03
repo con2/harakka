@@ -117,6 +117,7 @@
   * {
     border: var(--border);
     outline: 50% solid var(--ring);
+    overflow-x: hidden;
   }
   body {
     background-color: var(--background);
