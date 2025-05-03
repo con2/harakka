@@ -133,8 +133,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
 
             {/* Finnish Translation */}
             <div>
-              <h4 className="text-sm font-medium">Finnish</h4>
-              <label htmlFor="translations.fi.item_name">Item Name</label>
+              <label htmlFor="translations.fi.item_name">Item Name (FI)</label>
               <Input
                 id="translations.fi.item_name"
                 name="translations.fi.item_name"
@@ -144,7 +143,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 required
               />
               <label htmlFor="translations.fi.item_description">
-                Item Description
+                Item Description (FI)
               </label>
               <Input
                 id="translations.fi.item_description"
@@ -157,9 +156,8 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
             </div>
 
             {/* English Translation */}
-            <div>
-              <h4 className="text-sm font-medium">English</h4>
-              <label htmlFor="translations.en.item_name">Item Name</label>
+            <div className="space-y-2">
+              <label htmlFor="translations.en.item_name">Item Name (EN)</label>
               <Input
                 id="translations.en.item_name"
                 name="translations.en.item_name"
@@ -169,7 +167,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 required
               />
               <label htmlFor="translations.en.item_description">
-                Item Description
+                Item Description (EN)
               </label>
               <Input
                 id="translations.en.item_description"
@@ -236,6 +234,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
             type="submit"
             className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
             disabled={loading}
+            size={"sm"}
           >
             {loading ? "Updating..." : "Update Item"}
           </Button>

@@ -22,6 +22,7 @@ import { updateUser } from "@/store/slices/usersSlice";
 import { Label } from "../ui/label";
 import { MultiSelect } from "../ui/multi-select";
 import { UserFormData, UserProfile } from "@/types";
+import { Edit } from "lucide-react";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();
@@ -87,8 +88,8 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="bg-background rounded-2xl px-6 text-highlight2 border-highlight2 border-1 hover:text-background hover:bg-highlight2">
-          Edit
+        <Button className="editBtn" size={"sm"}>
+          <Edit size={10} className="mr-1"/> Edit
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -164,8 +165,9 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                 />
                 <Button
                   type="button"
-                  className="bg-background rounded-2xl px-6 text-destructive border-destructive border hover:text-background"
+                  className="deleteBtn"
                   onClick={() => removePreference(key)}
+                  size={"sm"}
                 >
                   Remove
                 </Button>
@@ -175,6 +177,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
               className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
               type="button"
               onClick={addPreference}
+              size={"sm"}
             >
               Add Preference
             </Button>
@@ -194,6 +197,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
           <Button
             className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
             onClick={handleSave}
+            size={"sm"}
           >
             Save Changes
           </Button>

@@ -10,7 +10,7 @@ import {
 } from "@/store/slices/itemsSlice";
 import { PaginatedDataTable } from "../ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle } from "lucide-react";
+import { Edit, LoaderCircle, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import AddItemModal from "./AddItemModal";
 import { toast } from "sonner";
@@ -19,6 +19,9 @@ import { Switch } from "@/components/ui/switch";
 import { selectAllTags } from "@/store/slices/tagSlice";
 import { Item } from "@/types/item";
 import AssignTagsModal from "./AssignTagsModal";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Command, CommandGroup, CommandItem } from "../ui/command";
+import { Checkbox } from "../ui/checkbox";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -61,6 +64,22 @@ const AdminItemsTable = () => {
     //     );
     //   },
     // },
+    {
+      header: "Item Name (FI)",
+      size: 150,
+      accessorFn: (row) => row.translations.fi.item_name,
+      sortingFn: "alphanumeric",
+      enableSorting: true,
+      cell: ({ row }) => row.original.translations.fi.item_name,
+    },
+    {
+      header: "Item Type (FI)",
+      size: 150,
+      accessorFn: (row) => row.translations.fi.item_type,
+      sortingFn: "alphanumeric",
+      enableSorting: true,
+      cell: ({ row }) => row.original.translations.fi.item_type,
+    },
     // {
     //   header: 'Location',
     //   accessorKey: 'location',
@@ -72,29 +91,15 @@ const AdminItemsTable = () => {
     //   ),
     // },
     {
-      header: "Item Name (FI)",
-      accessorFn: (row) => row.translations.fi.item_name,
-      sortingFn: "alphanumeric",
-      enableSorting: true,
-      cell: ({ row }) => row.original.translations.fi.item_name,
-    },
-    {
-      header: "Item Type (FI)",
-      accessorFn: (row) => row.translations.fi.item_type,
-      sortingFn: "alphanumeric",
-      enableSorting: true,
-      cell: ({ row }) => row.original.translations.fi.item_type,
-    },
-    {
       header: "Price",
       accessorKey: "price",
       cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
     },
-    // {
-    //   header: 'Average Rating',
-    //   accessorFn: (row) => row.average_rating,
-    //   cell: ({ row }) => row.original.average_rating ?? 'N/A', // Handle if no average rating
-    // },
+    {
+      header: 'Quantity',
+      accessorFn: (row) => row.items_number_available,
+      cell: ({ row }) => `${row.original.items_number_available} pcs`,
+    },
     {
       id: "status",
       header: "Active",
@@ -121,58 +126,67 @@ const AdminItemsTable = () => {
         };
 
         return (
-          <Switch checked={item.is_active} onCheckedChange={handleToggle} />
+          <Switch
+            checked={item.is_active}
+            onCheckedChange={handleToggle}
+            />
         );
       },
     },
-    {
-      id: "tags",
-      header: "Tags",
-      cell: ({ row }) => {
-        // Deduplicate tags by ID to prevent React key warnings
-        const tags = row.original.storage_item_tags ?? [];
-        const uniqueTags = Array.from(
-          new Map(tags.map((tag) => [tag.id, tag])).values(),
-        );
+    // {
+    //   id: "tags",
+    //   header: "Tags",
+    //   cell: ({ row }) => {
+    //     // Deduplicate tags by ID to prevent React key warnings
+    //     const tags = row.original.storage_item_tags ?? [];
+    //     const uniqueTags = Array.from(
+    //       new Map(tags.map((tag) => [tag.id, tag])).values(),
+    //     );
 
-        return (
-          <div className="flex flex-wrap gap-1">
-            {uniqueTags.map((tag) => (
-              <span
-                key={tag.id}
-                className="text-xs rounded px-2 py-1 text-secondary"
-              >
-                {tag.translations?.fi?.name ||
-                  tag.translations?.en?.name ||
-                  "Unnamed"}
-              </span>
-            ))}
-          </div>
-        );
-      },
-    },
+    //     return (
+    //       <div className="flex flex-wrap gap-1">
+    //         {uniqueTags.map((tag) => (
+    //           <span
+    //             key={tag.id}
+    //             className="text-xs rounded px-2 py-1 text-secondary"
+    //           >
+    //             {tag.translations?.fi?.name ||
+    //               tag.translations?.en?.name ||
+    //               "Unnamed"}
+    //           </span>
+    //         ))}
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       id: "edit",
-      header: "Edit",
+      size: 30,
+      enableSorting: false,
+      enableColumnFilter: false,
       cell: ({ row }) => (
         <Button
-          className="bg-background rounded-2xl px-6 text-highlight2 border-highlight2 border-1 hover:text-background hover:bg-highlight2"
+          className="editBtn"
+          size={"sm"}
           onClick={() => handleEdit(row.original)}
         >
-          Edit
+          <Edit size={10} className="mr-1"/> Edit
         </Button>
       ),
     },
     {
       id: "delete",
-      header: "Delete",
+      size: 30,
+      enableSorting: false,
+      enableColumnFilter: false,
       cell: ({ row }) => (
         <Button
-          className="bg-background rounded-2xl px-6 text-destructive border-destructive border hover:text-background"
+          className="deleteBtn"
+          size={"sm"}
           variant="destructive"
           onClick={() => handleDelete(row.original.id)}
         >
-          Delete
+          <Trash2 size={10} className="mr-1"/> Delete
         </Button>
       ),
     },
@@ -199,7 +213,6 @@ const AdminItemsTable = () => {
         <div className="flex justify-end gap-2">
           <Button
             variant="ghost"
-            size="sm"
             onClick={() => toast.dismiss(t)}
             className="bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-md"
           >
@@ -207,7 +220,6 @@ const AdminItemsTable = () => {
           </Button>
           <Button
             variant="destructive"
-            size="sm"
             className="rounded-md"
             onClick={async () => {
               toast.dismiss(t); // dismiss confirmation toast
@@ -284,74 +296,111 @@ const AdminItemsTable = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-xl">Manage Storage Items</h1>
-        <AddItemModal>
-          <Button className="text-white rounded-2xl bg-highlight2 hover:bg-white hover:text-highlight2">
-            Add New Item
-          </Button>
-        </AddItemModal>
       </div>
-      <div className="flex flex-wrap gap-4 items-center">
-        {/* Search by item name/type */}
-        <input
-          type="text"
-          className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-          placeholder="Search by name or type"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
+        <div className="flex gap-4 items-center">
+          {/* Search by item name/type */}
+          <input
+            type="text"
+            size={50}
+            className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            placeholder="Search by name or type"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
 
-        {/* Filter by active status */}
-        <select
-          value={statusFilter}
-          onChange={(e) =>
-            setStatusFilter(e.target.value as "all" | "active" | "inactive")
-          }
-          className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-        >
-          <option value="all">All</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+          {/* Filter by active status */}
+          <select
+            value={statusFilter}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as "all" | "active" | "inactive")
+            }
+            className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+          >
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
 
-        {/* Filter by tags */}
-        <div className="flex flex-wrap gap-2">
-          {tagFilter.length > 0 && (
-            <span className="text-sm text-muted-foreground">
-              Filtered by {tagFilter.length} tag
-              {tagFilter.length > 1 ? "s" : ""}
-            </span>
-          )}
-          {tags.map((tag) => (
-            <button
-              key={tag.id}
+          {/* Filter by tags */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button className="px-3 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl" size={"sm"}>
+                {tagFilter.length > 0
+                  ? `Filtered by ${tagFilter.length} tag${tagFilter.length > 1 ? "s" : ""}`
+                  : "Filter by tags"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[250px] p-0">
+              <Command>
+                <CommandGroup>
+                  {tags.map((tag) => {
+                    const label =
+                      tag.translations?.fi?.name?.toLowerCase() ||
+                      tag.translations?.en?.name?.toLowerCase() ||
+                      "Unnamed";
+                    function cn(...classes: (string | undefined)[]): string {
+                      return classes.filter(Boolean).join(" ");
+                    }
+                    return (
+                      <CommandItem
+                        key={tag.id}
+                        onSelect={() =>
+                          setTagFilter((prev) =>
+                            prev.includes(tag.id)
+                              ? prev.filter((t) => t !== tag.id)
+                              : [...prev, tag.id]
+                          )
+                        }
+                        className="cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={tagFilter.includes(tag.id)}
+                          onCheckedChange={() =>
+                            setTagFilter((prev) =>
+                              prev.includes(tag.id)
+                                ? prev.filter((t) => t !== tag.id)
+                                : [...prev, tag.id]
+                            )
+                          }
+                          className={cn(
+                            "mr-2 h-4 w-4 border border-secondary bg-white text-white",
+                            "data-[state=checked]:bg-secondary",
+                            "data-[state=checked]:text-white"
+                          )}
+                        />
+                        <span>{label}</span>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
+          {/* Clear filters button */}
+          {(searchTerm || statusFilter !== "all" || tagFilter.length > 0) && (
+            <Button
               onClick={() => {
-                setTagFilter((prev) =>
-                  prev.includes(tag.id)
-                    ? prev.filter((t) => t !== tag.id)
-                    : [...prev, tag.id],
-                );
+                setSearchTerm("");
+                setStatusFilter("all");
+                setTagFilter([]);
               }}
-              className={`px-3 py-2 rounded-2xl text-xs border ${
-                tagFilter.includes(tag.id)
-                  ? "bg-secondary text-white"
-                  : "border-secondary text-secondary"
-              }`}
+              size={"sm"}
+              className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
             >
-              {tag.translations?.fi?.name?.toLowerCase() ||
-                tag.translations?.en?.name?.toLowerCase()}
-            </button>
-          ))}
+              Clear Filters
+            </Button>
+          )}
         </div>
-        <Button
-          onClick={() => {
-            setSearchTerm("");
-            setStatusFilter("all");
-            setTagFilter([]);
-          }}
-          className="ml-4 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
-        >
-          Clear Filters
-        </Button>
+        {/* Add New Item button */}
+        <div className="flex gap-4 justify-end">
+          <AddItemModal>
+            <Button className="addBtn" size={"sm"}>
+              Add New Item
+            </Button>
+          </AddItemModal>
+        </div>
       </div>
 
       <PaginatedDataTable columns={itemsColumns} data={filteredItems} />
