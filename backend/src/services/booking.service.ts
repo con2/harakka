@@ -176,9 +176,32 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
     }
+    // variables for date check
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // normalize to midnight
+
+    let warningMessage: string | null = null;
 
     for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
+
+      const start = new Date(start_date);
+      start.setHours(0, 0, 0, 0);
+
+      const differenceInDays = Math.ceil(
+        (start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      if (differenceInDays <= 0) {
+        throw new BadRequestException(
+          "Bookings must start at least one day in the future",
+        );
+      }
+
+      if (differenceInDays <= 2) {
+        warningMessage =
+          "This is a short-notice booking. Please be aware that it might not be fulfilled in time.";
+      }
 
       // 3.1. Check availability for requested date range
       const available = await calculateAvailableQuantity(
@@ -270,7 +293,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       }
     }
 
-    return order;
+    return warningMessage ? { order, warning: warningMessage } : order;
   }
 
   // 4. confirm a Booking
