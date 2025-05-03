@@ -90,45 +90,42 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       className="w-full max-w-[350px] flex flex-col justify-between p-4"
     >
       {/* Image Section */}
-      <div className="h-40 bg-gray-200 mb-4 flex items-center justify-center rounded">
+      <div className="h-40 bg-gray-200 flex items-center justify-center rounded">
         <span className="text-gray-500">Image Placeholder</span>
       </div>
 
       {/* Item Details */}
-      <div className="space-y-2 mb-4">
-        <h2 className="text-xl font-semibold text-center">
-          {item.translations.fi.item_name}
+      <div>
+        <h2 className="text-lg font-semibold text-center mb-0">
+          {item.translations.fi.item_name.charAt(0).toUpperCase() + item.translations.fi.item_name.slice(1)}
         </h2>
         {/* TODO: return this span when back will provide location name */}
         {/* <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <BoxIcon className="h-4 w-4" />
           <span>{item.location_id}</span>
         </div> */}
-        <p className="text-sm text-slate-400 italic m-0">
-          Bookable units: {item.items_number_available}
-        </p>
-        <p className="text-lg font-semibold text-center text-primary mt-2">
+        {/* <p className="text-lg font-semibold text-center text-primary">
           €{item.price.toFixed(2)} / day
-        </p>
+        </p> */}
       </div>
 
       {/* Display selected booking timeframe if it exists */}
       {startDate && endDate && (
-        <div className="mb-3 bg-slate-100 p-2 rounded-md">
-          <div className="flex items-center text-sm text-slate-600 mb-1">
+        <div className="bg-slate-100 p-2 rounded-md mb-2">
+          <div className="flex items-center text-sm text-slate-400">
             <Clock className="h-4 w-4 mr-1" />
-            <span className="font-medium">Selected booking:</span>
+            <span className="font-medium text-xs">Selected booking</span>
           </div>
-          <p className="text-xs m-0">
+          <p className="text-sm font-medium m-0">
             {format(startDate, "PPP")} - {format(endDate, "PPP")}
           </p>
         </div>
       )}
 
       {/* Quantity Input */}
-      <div className="space-y-3 mb-4">
+      <div>
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold w-20">Quantity:</span>
+          <span className="text-sm font-semibold w-20">Quantity</span>
           <div className="flex items-center">
             <Button
               variant="outline"
@@ -140,7 +137,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
               -
             </Button>
             <Input
-              type="number"
+              type="text"
               value={quantity}
               onChange={(e) => {
                 const value = parseInt(e.target.value) || 0;
@@ -148,7 +145,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                   Math.min(item.items_number_available, Math.max(0, value)),
                 );
               }}
-              className="w-16 h-8 mx-2 text-center"
+              className="w-11 h-8 mx-2 text-center"
               min="0"
               max={item.items_number_available}
             />
@@ -166,6 +163,12 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           </div>
         </div>
 
+        <div className="flex items-center justify-end mb-3 mt-1">
+        <p className="text-xs text-slate-400 italic m-0">
+          Bookable units: {item.items_number_available}
+        </p>
+        </div>
+
         {/* Add to Cart Button with Tooltip */}
         <TooltipProvider>
           <Tooltip open={isAddToCartDisabled ? undefined : false}>
@@ -180,7 +183,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
               >
                 <Button
                   onClick={handleAddToCart}
-                  className="w-full bg-background rounded-2xl text-primary border-primary border-1 hover:text-background hover:bg-primary"
+                  className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-white hover:bg-secondary"
                   disabled={isAddToCartDisabled}
                   style={{
                     pointerEvents: isAddToCartDisabled ? "none" : "auto",
@@ -206,14 +209,14 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       {/* View Details Button */}
       <Button
         onClick={() => handleItemClick(item.id)}
-        className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+        className="w-full bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
       >
         View Details
       </Button>
 
       {/* Admin Actions */}
       {isAdmin && (
-        <div className="mt-2 flex gap-2">
+        <div className="flex">
           <Button variant="outline" onClick={handleUpdate}>
             Edit
           </Button>
