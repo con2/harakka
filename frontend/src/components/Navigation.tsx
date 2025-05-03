@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useAppSelector } from "@/store/hooks";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -9,7 +10,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import logo from "../assets/logo.png";
+import logo from "../assets/logoNav.png";
 import { LogInIcon, LogOutIcon, ShoppingCart } from "lucide-react";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
 
@@ -17,17 +18,22 @@ export const Navigation = () => {
   const { signOut } = useAuth();
   const selectedUser = useAppSelector(selectSelectedUser);
   const cartItemsCount = useAppSelector(selectCartItemsCount);
+  const location = useLocation();
 
   const isAdmin = ["admin", "superVera"].includes(selectedUser?.role ?? "");
   const isLoggedIn = !!selectedUser;
+  const isLandingPage = location.pathname === "/";
+  const navClasses = isLandingPage
+    ? "absolute top-0 left-0 w-full z-50 bg-black/40 text-white transition-all duration-300"
+    : "relative w-full z-50 bg-white text-primary shadow-sm transition-all duration-300";
 
-  return (
-    <nav className="shadow-sm">
-      <div className="container mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/">
-            <img src={logo} alt="Logo" className="h-20" />
-          </Link>
+return (
+  <nav className={navClasses}>
+    <div className="container mx-auto flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <Link to="/">
+          <img src={logo} alt="Logo" className="h-20" />
+        </Link>
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
@@ -40,8 +46,8 @@ export const Navigation = () => {
               {isLoggedIn && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link to="/orders" className="flex items-center gap-1">
-                      My orders
+                    <Link to="/profile" className="flex items-center gap-1">
+                      My Profile
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
@@ -91,11 +97,11 @@ export const Navigation = () => {
           </Link>
 
           {selectedUser ? (
-            <Button variant="ghost" onClick={signOut}>
-              {selectedUser.full_name} <LogOutIcon />
+            <Button className="bg-white text-secondary hover:text-secondary hover:bg-slate-50" onClick={signOut}>
+              {selectedUser.full_name} <LogOutIcon className="ml-2" />
             </Button>
           ) : (
-            <Button variant="ghost" asChild>
+            <Button className="hover:text-secondary hover:bg-white" variant="ghost" asChild>
               <Link to="/login">
                 Login <LogInIcon />
               </Link>

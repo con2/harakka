@@ -10,7 +10,7 @@ import { Button } from "../ui/button";
 import { DataTable } from "../ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
-import { LoaderCircle, MoveRight } from "lucide-react";
+import { LoaderCircle, MoveRight, ShoppingBag, Users, Warehouse } from "lucide-react";
 import {
   getAllOrders,
   selectAllOrders,
@@ -18,15 +18,21 @@ import {
 } from "@/store/slices/ordersSlice";
 import { Badge } from "../ui/badge";
 import { BookingOrder, UserProfile } from "@/types";
+import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
   const users = useAppSelector(selectAllUsers);
   const loading = useAppSelector(selectLoading);
+  const items = useAppSelector(selectAllItems);
   const user = useAppSelector(selectSelectedUser);
   const orders = useAppSelector(selectAllOrders);
   const ordersLoading = useAppSelector(selectOrdersLoading);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    dispatch(fetchAllItems());
+  }, [dispatch]);
 
   useEffect(() => {
     if (users.length === 0) {
@@ -149,11 +155,38 @@ const AdminDashboard = () => {
 
   return (
     <div>
-      <h1 className="text-xl mb-4">Admin Dashboard</h1>
-
+      <div className="flex flex-row flex-wrap justify-evenly items-center mb-8 gap-1">
+        <div className="flex flex-row items-center justify-center box-border border-gray-300 bg-white rounded-lg p-4 w-2/9">
+          <div className="flex-1/3 pl-4 items-center">
+           <Users className="h-10 w-10 text-highlight2" />
+          </div>
+          <div className="flex flex-2/3 flex-col items-center">
+            <p className="text-slate-500">Total Users</p>
+            <span className="text-2xl">{users.length}</span>
+          </div>
+        </div>
+        <div className="flex flex-row items-center justify-center box-border border-gray-300 bg-white rounded-lg p-4 w-2/9">
+          <div className="flex-1/3 pl-4 items-center">
+           <Warehouse className="h-10 w-10 text-highlight2" />
+          </div>
+          <div className="flex flex-2/3 flex-col items-center">
+            <p className="text-slate-500">Total Items</p>
+            <span className="text-2xl">{items.length}</span>
+          </div>
+        </div>
+        <div className="flex flex-row items-center justify-center box-border border-gray-300 bg-white rounded-lg p-4 w-2/9">
+          <div className="flex-1/3 pl-4 items-center">
+           <ShoppingBag className="h-10 w-10 text-highlight2" />
+          </div>
+          <div className="flex flex-2/3 flex-col items-center">
+            <p className="text-slate-500">Total Orders</p>
+            <span className="text-2xl">{orders.length}</span>
+          </div>
+        </div>
+      </div>
       {/* Recent Orders Section */}
       <div className="mb-8">
-        <h2>Recent Orders</h2>
+        <h2 className="text-left">Recent Orders</h2>
         {ordersLoading ? (
           <div className="flex justify-center items-center py-6">
             <LoaderCircle className="animate-spin" />
@@ -185,7 +218,7 @@ const AdminDashboard = () => {
         {/* Users Table */}
         <div>
           <div className="flex justify-between items-center">
-            <h2>Users</h2>
+            <h2>Recent Users</h2>
           </div>
           {loading && (
             <p>
@@ -208,7 +241,7 @@ const AdminDashboard = () => {
         {/* Team Table */}
         <div>
           <div className="flex justify-between items-center">
-            <h2>Your Team</h2>
+            <h2>My Team</h2>
           </div>
           {loading && (
             <p>

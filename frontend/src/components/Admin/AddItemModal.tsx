@@ -23,6 +23,7 @@ import { Switch } from "../ui/switch";
 import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
 import { Loader2 } from "lucide-react";
 import { ItemFormData } from "@/types";
+import { Checkbox } from "../ui/checkbox";
 
 const initialFormState: ItemFormData = {
   location_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
@@ -142,7 +143,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center mb-4">Add New Item</DialogTitle>
         </DialogHeader>
@@ -304,34 +305,40 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
             </div>
 
             {/* Tags Section */}
-            <div className="space-y-2">
-              <Label>Assign Tags</Label>
-              <div className="border p-2 rounded max-h-40 overflow-y-auto space-y-2">
-                {availableTags.map((tag) => (
-                  <div key={tag.id} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id={tag.id}
-                      checked={selectedTags.includes(tag.id)}
-                      onChange={() => {
-                        if (selectedTags.includes(tag.id)) {
-                          setSelectedTags(
-                            selectedTags.filter((id) => id !== tag.id),
-                          );
-                        } else {
-                          setSelectedTags([...selectedTags, tag.id]);
-                        }
-                      }}
-                    />
-                    <label htmlFor={tag.id}>
-                      {tag.translations?.fi?.name ||
-                        tag.translations?.en?.name ||
-                        "Unnamed Tag"}
+            <div>
+              <h3 className="text-lg font-medium">Assign Tags</h3>
+              <div className="rounded max-h-60 overflow-y-auto">
+                <div className="grid grid-cols-2 grid-flow-row">
+                  {availableTags.map((tag) => (
+                    <label
+                      key={tag.id}
+                      htmlFor={tag.id}
+                      className="flex items-center space-x-2"
+                    >
+                      <Checkbox
+                        className="border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
+                        checked={selectedTags.includes(tag.id)}
+                        onCheckedChange={() => {
+                          if (selectedTags.includes(tag.id)) {
+                            setSelectedTags(
+                              selectedTags.filter((id) => id !== tag.id),
+                            );
+                          } else {
+                            setSelectedTags([...selectedTags, tag.id]);
+                          }
+                        }}
+                      />
+                      <span>
+                        {tag.translations?.fi?.name ||
+                          tag.translations?.en?.name ||
+                          "Unnamed Tag"}
+                      </span>
                     </label>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
+
           </div>
         </div>
 
@@ -340,6 +347,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
             className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
             onClick={handleSubmit}
             disabled={loading}
+            size={"sm"}
           >
             {loading ? (
               <>
