@@ -166,7 +166,6 @@ const MyOrders = () => {
     },
     {
       id: "actions",
-      header: "Actions",
       cell: ({ row }) => {
         const order = row.original;
         const isPending = order.status === "pending";
@@ -230,8 +229,8 @@ const MyOrders = () => {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">My Orders</h1>
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white">
+      {/* <h1 className="text-2xl font-bold mb-6 text-secondary ml-4">My Orders</h1> */}
 
       {orders.length === 0 ? (
         <div className="text-center py-8 bg-slate-50 rounded-lg">
@@ -253,7 +252,7 @@ const MyOrders = () => {
       {/* Order Details Modal */}
       {selectedOrder && (
         <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>Order #{selectedOrder.order_number}</DialogTitle>
             </DialogHeader>
@@ -338,7 +337,8 @@ const MyOrders = () => {
               <DialogFooter>
                 {selectedOrder.status === "pending" && (
                   <Button
-                    variant="destructive"
+                    size={"sm"}
+                    className="deleteBtn"
                     onClick={() => handleCancelOrder(selectedOrder.id)}
                   >
                     Cancel Order
@@ -347,7 +347,8 @@ const MyOrders = () => {
 
                 <Button
                   onClick={() => setShowDetailsModal(false)}
-                  variant="outline"
+                  size={"sm"}
+                  className="editBtn"
                 >
                   Close
                 </Button>
