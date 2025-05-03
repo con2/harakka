@@ -27,45 +27,46 @@ const AdminPanel = () => {
         <nav className="flex flex-col space-y-4">
           <SidebarLink
             to="/admin"
-            icon={<LayoutDashboard />}
+            icon={<LayoutDashboard className="w-5 h-5"/>}
             label="Dashboard"
+            end={true}
           />
           
           <SidebarLink
             to="/admin/users"
-            icon={<Users />}
+            icon={<Users className="w-5 h-5"/>}
             label="Users"
           />
 
           {isSuperVera && (
             <SidebarLink
               to="/admin/team"
-              icon={<Users />}
+              icon={<Users className="w-5 h-5"/>}
               label="Team"
             />
           )}
 
           <SidebarLink
             to="/admin/items"
-            icon={<Warehouse />}
+            icon={<Warehouse className="w-5 h-5"/>}
             label="Items"
           />
 
           <SidebarLink
             to="/admin/tags"
-            icon={<PinIcon />}
+            icon={<PinIcon className="w-5 h-5"/>}
             label="Tags"
           />
 
           <SidebarLink
             to="/admin/orders"
-            icon={<ShoppingBag />}
+            icon={<ShoppingBag className="w-5 h-5"/>}
             label="Orders"
           />
 
           <SidebarLink
             to="/admin/settings"
-            icon={<Settings />}
+            icon={<Settings className="w-5 h-5"/>}
             label="Settings"
           />
         </nav>
