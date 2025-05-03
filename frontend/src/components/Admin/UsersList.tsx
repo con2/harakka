@@ -103,30 +103,29 @@ const UsersList = () => {
       },
     },
     {
-      id: "edit",
+      id: "actions",
       size: 30,
       enableSorting: false,
       enableColumnFilter: false,
       cell: ({ row }) => {
         const targetUser = row.original;
         const canEdit = isSuperVera || (isAdmin && targetUser.role === "user");
-        return canEdit ? <UserEditModal user={targetUser} /> : null;
-      },
-    },
-    {
-      id: "delete",
-      size: 30,
-      enableSorting: false,
-      enableColumnFilter: false,
-      cell: ({ row }) => {
-        const targetUser = row.original;
         const canDelete =
           isSuperVera || (isAdmin && targetUser.role === "user");
-        return canDelete ? (
-          <UserDeleteButton id={targetUser.id} closeModal={closeModal} />
-        ) : null;
+    
+        return (
+          <div className="flex gap-2">
+            {canEdit && (
+              <UserEditModal user={targetUser} />
+            )}
+            {canDelete && (
+              <UserDeleteButton id={targetUser.id} closeModal={closeModal} />
+            )}
+          </div>
+        );
       },
-    },
+    }
+    
   ];
 
   if (authLoading || loading) {
