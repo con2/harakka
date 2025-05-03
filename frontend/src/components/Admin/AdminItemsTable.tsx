@@ -22,6 +22,7 @@ import AssignTagsModal from "./AssignTagsModal";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Command, CommandGroup, CommandItem } from "../ui/command";
 import { Checkbox } from "../ui/checkbox";
+import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -31,6 +32,8 @@ const AdminItemsTable = () => {
   const tags = useAppSelector(selectAllTags);
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const isAdmin = useAppSelector(selectIsAdmin);
+  const isSuperVera = useAppSelector(selectIsSuperVera);
 
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
@@ -160,36 +163,40 @@ const AdminItemsTable = () => {
     //   },
     // },
     {
-      id: "edit",
+      id: "actions",
       size: 30,
       enableSorting: false,
       enableColumnFilter: false,
-      cell: ({ row }) => (
-        <Button
-          className="editBtn"
-          size={"sm"}
-          onClick={() => handleEdit(row.original)}
-        >
-          <Edit size={10} className="mr-1"/> Edit
-        </Button>
-      ),
-    },
-    {
-      id: "delete",
-      size: 30,
-      enableSorting: false,
-      enableColumnFilter: false,
-      cell: ({ row }) => (
-        <Button
-          className="deleteBtn"
-          size={"sm"}
-          variant="destructive"
-          onClick={() => handleDelete(row.original.id)}
-        >
-          <Trash2 size={10} className="mr-1"/> Delete
-        </Button>
-      ),
-    },
+      cell: ({ row }) => {
+        const targetUser = row.original;
+        const canEdit = isSuperVera || isAdmin;
+        const canDelete = isSuperVera || isAdmin;
+    
+        return (
+          <div className="flex gap-2">
+            {canEdit && (
+              <Button
+                className="editBtn"
+                size="sm"
+                onClick={() => handleEdit(targetUser)}
+              >
+                <Edit size={10} className="mr-1" /> Edit
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                className="deleteBtn"
+                size="sm"
+                variant="destructive"
+                onClick={() => handleDelete(targetUser.id)}
+              >
+                <Trash2 size={10} className="mr-1" /> Delete
+              </Button>
+            )}
+          </div>
+        );
+      },
+    }    
   ];
 
   useEffect(() => {
