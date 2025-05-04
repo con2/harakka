@@ -377,7 +377,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
     // 5.1 check the order
     const { data: order } = await supabase
       .from("orders")
-      .select("user_id")
+      .select("status, user_id")
       .eq("id", orderId)
       .single();
 
@@ -409,6 +409,13 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
 
     if (!isAdmin && !isOwner) {
       throw new ForbiddenException("Not allowed to update this booking");
+    }
+
+    // 5.4 Status check (users are restricted)
+    if (!isAdmin && order.status !== "pending") {
+      throw new ForbiddenException(
+        "Your order has been confirmed. You can't update it.",
+      );
     }
 
     // 5.3. Delete existing items from order_items to avoid douplicates
