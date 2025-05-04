@@ -331,7 +331,7 @@ const OrderList = () => {
     <>
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Order Management</h1>
+          <h1 className="text-xl">Manage Orders</h1>
 
           <Button
             onClick={() => user && user?.id && dispatch(getAllOrders(user.id))}
