@@ -183,6 +183,7 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
             className="w-full bg-background rounded-2xl text-secondary border-secondary border hover:text-background hover:bg-secondary"
             onClick={handleSubmit}
             disabled={loading}
+            size={"sm"}
           >
             {loading ? (
               <>
