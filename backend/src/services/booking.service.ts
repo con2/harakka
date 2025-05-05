@@ -5,7 +5,6 @@ import {
 } from "@nestjs/common";
 import { SupabaseService } from "./supabase.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
-import { MailService } from "./mail.service";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
 
 @Injectable()
