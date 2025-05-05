@@ -34,7 +34,7 @@ export class MailService {
     });
 
     const mailOptions = {
-      from: `BookingApp 📦 <${process.env.EMAIL_FROM}>`,
+      from: `BookingApp <${process.env.EMAIL_FROM}>`,
       to,
       subject,
       html,
