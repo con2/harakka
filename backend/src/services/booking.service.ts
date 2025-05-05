@@ -292,6 +292,12 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
         throw new BadRequestException("Could not create order items");
       }
     }
+    // send mail:
+    await this.mailService.sendMail(
+      user.email,
+      "Booking is successful!",
+      `<h1>Hello</h1><p>Order is sent to admins, please have a bit patience, until someone answers your request</p>`,
+    );
 
     return warningMessage ? { order, warning: warningMessage } : order;
   }
