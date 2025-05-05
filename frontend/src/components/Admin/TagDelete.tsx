@@ -29,7 +29,6 @@ const TagDelete = ({
         </div>
         <div className="flex justify-end gap-2">
           <Button
-            variant="ghost"
             size="sm"
             onClick={() => toast.dismiss(t)}
             className="bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-md"
@@ -37,7 +36,6 @@ const TagDelete = ({
             Cancel
           </Button>
           <Button
-            variant="destructive"
             size="sm"
             className="rounded-md"
             onClick={async () => {
