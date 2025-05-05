@@ -87,7 +87,8 @@ const UserPanel = () => {
             {countActiveFilters() > 0 && (
               <div className="flex justify-end">
                 <Button
-                  className="text-xs px-1 py-0.5 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white"
+                  size={"sm"}
+                  className="text-xs px-1 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white"
                   onClick={() =>
                     setFilters({
                       priceRange: [0, 100],

@@ -22,7 +22,6 @@ import PasswordReset from "./components/Auth/PasswordReset";
 import PasswordResetResult from "./components/Auth/PasswordResetResult";
 import OrderList from "./components/Admin/OrderList";
 import TagList from "./components/Admin/TagList";
-import MyOrders from "./components/MyOrders";
 import Footer from "./components/Footer";
 import { UserGuide } from "./components/UserGuidelines";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -90,7 +89,9 @@ function App() {
             duration={3000}
             richColors
             toastOptions={{
-              className: "custom-toast",
+              classNames: {
+                toast: 'custom-toast',
+              },
             }}
           />
         </div>
