@@ -843,4 +843,39 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       newStorageCount: newCount,
     };
   }
+
+  // 12. virtual number of items for a specific date
+  async getBookedQuantityForDate(
+    itemId: number,
+    date: string,
+  ): Promise<number> {
+    const supabase = this.supabaseService.getServiceClient();
+
+    const targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+
+    // get booking date
+    const { data, error } = await supabase
+      .from("order_items")
+      .select("quantity, start_date, end_date")
+      .eq("item_id", itemId)
+      .gte("start_date", targetDate.toISOString())
+      .lte("end_date", targetDate.toISOString());
+
+    if (error) {
+      throw new Error("Error retrieving the booking data: " + error.message);
+    }
+
+    // calculate quantity for date
+    let bookedQuantity = 0;
+    for (const item of data) {
+      const startDate = new Date(item.start_date);
+      const endDate = new Date(item.end_date);
+      // check if the date is inside the date range of booking
+      if (targetDate >= startDate && targetDate <= endDate) {
+        bookedQuantity += item.quantity;
+      }
+    }
+    return bookedQuantity;
+  }
 }
