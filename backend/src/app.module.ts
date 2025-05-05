@@ -14,6 +14,7 @@ import { BookingController } from "./controllers/booking.controller";
 import { BookingService } from "./services/booking.service";
 import { TagController } from "./controllers/tag.controller";
 import { TagService } from "./services/tag.service";
+import { MailService } from './mail/mail.service';
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local");
@@ -41,6 +42,7 @@ dotenvExpand.expand(env);
     UserService,
     BookingService,
     TagService,
+    MailService,
   ],
 })
 export class AppModule {}
