@@ -117,7 +117,6 @@
   * {
     border: var(--border);
     outline: 50% solid var(--ring);
-    overflow-x: hidden;
   }
   body {
     background-color: var(--background);
@@ -201,59 +200,32 @@
 }
 
 /* Custom Toast Styling */
-/* @layer components { */
-  .custom-toast {
-    position: relative;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    color: white;
-    overflow: hidden;
-  }
-
-  .custom-toast.success {
-    background-color: var(--color-green-500);
-  }
-
-  .custom-toast.error {
-    background-color: var(--color-red-500);
-  }
-
-  .custom-toast.custom::after {
-    display: none;
-  }
-/*  */
-
-/* Note: Tailwind cannot apply styles to pseudo-elements, so keep these outside Tailwind layers */
-.custom-toast.success::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 20px;
-  width: 0;
-  background-color: #388e3c;
-  animation: progressBar 10s linear forwards;
-  z-index: 1;
+.custom-toast {
+  position: relative;
+  overflow: hidden;
 }
 
-.custom-toast.error::after {
+.custom-toast::after {
   content: '';
   position: absolute;
+  border-radius: 0.5rem;
   bottom: 0;
   left: 0;
-  height: 20px;
+  height: 5px;
   width: 0;
+  background-color: #4CAF50;
+  animation: progressBar 3s linear forwards; 
+}
+
+.custom-toast[data-type="error"]::after {
   background-color: #d32f2f;
-  animation: progressBar 10s linear forwards;
-  z-index: 1;
 }
 
-/* Keep keyframes globally defined */
 @keyframes progressBar {
-  from {
-    width: 0;
+  0% {
+    width: 0%;
   }
-  to {
+  100% {
     width: 100%;
   }
 }
