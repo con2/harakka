@@ -6,10 +6,14 @@ import {
 import { SupabaseService } from "./supabase.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
+import { MailService } from "./mail.service";
 
 @Injectable()
 export class BookingService {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(
+    private readonly supabaseService: SupabaseService,
+    private readonly mailService: MailService,
+  ) {}
 
   // TODO!:
   // use getClientByRole again!
@@ -292,7 +296,18 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
         throw new BadRequestException("Could not create order items");
       }
     }
-    // send mail:
+
+    // send mail to user:
+    const { data: user, error: userError } = await supabase
+      .from("user_profiles")
+      .select("email")
+      .eq("id", userId)
+      .single();
+
+    if (userError || !user) {
+      throw new BadRequestException("User not found");
+    }
+
     await this.mailService.sendMail(
       user.email,
       "Booking is successful!",
