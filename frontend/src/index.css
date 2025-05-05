@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto+Slab:wght@100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto+Slab:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -117,7 +117,7 @@
   * {
     border: var(--border);
     outline: 50% solid var(--ring);
-    overflow-x: hidden;
+    /* overflow-x: hidden; */
   }
   body {
     background-color: var(--background);
@@ -152,6 +152,22 @@
   } */
 }
 
+.infoBtn {
+  background-color: var(--background);
+  color: var(--secondary);
+  border-radius: 1rem;
+  border: 1px solid var(--secondary);
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+  font-size: smaller;
+}
+.infoBtn:hover {
+  background-color: var(--secondary);
+  color: white;
+}
+
 .deleteBtn {
   background-color: var(--background);
   color: var(--color-red-500);
@@ -177,7 +193,7 @@
   font-size: var(--text-sm);
   cursor: pointer;
   padding: 0.2rem 0.7rem;
-  font-size: smaller
+  font-size: smaller;
 }
 .editBtn:hover {
   background-color: var(--highlight2);
@@ -202,30 +218,30 @@
 
 /* Custom Toast Styling */
 /* @layer components { */
-  .custom-toast {
-    position: relative;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    color: white;
-    overflow: hidden;
-  }
+.custom-toast {
+  position: relative;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  color: white;
+  overflow: hidden;
+}
 
-  .custom-toast.success {
-    background-color: var(--color-green-500);
-  }
+.custom-toast.success {
+  background-color: var(--color-green-500);
+}
 
-  .custom-toast.error {
-    background-color: var(--color-red-500);
-  }
+.custom-toast.error {
+  background-color: var(--color-red-500);
+}
 
-  .custom-toast.custom::after {
-    display: none;
-  }
+.custom-toast.custom::after {
+  display: none;
+}
 /*  */
 
 /* Note: Tailwind cannot apply styles to pseudo-elements, so keep these outside Tailwind layers */
 .custom-toast.success::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -237,7 +253,7 @@
 }
 
 .custom-toast.error::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
