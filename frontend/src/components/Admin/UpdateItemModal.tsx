@@ -1,27 +1,29 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { useAppDispatch } from "@/store/hooks";
-import { fetchAllItems, updateItem } from "@/store/slices/itemsSlice";
-import { Item } from "@/types";
-import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchAllItems, updateItem } from '@/store/slices/itemsSlice';
+import { Item } from '@/types';
+import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
 import {
   fetchAllTags,
   fetchTagsForItem,
   assignTagToItem,
   selectAllTags,
   selectSelectedTags,
-} from "@/store/slices/tagSlice";
-import { useAppSelector } from "@/store/hooks";
-import { Checkbox } from "@/components/ui/checkbox";
+} from '@/store/slices/tagSlice';
+import { useAppSelector } from '@/store/hooks';
+import { Checkbox } from '@/components/ui/checkbox';
+import ItemImageManager from './ItemImageManager';
 
 type UpdateItemModalProps = {
   onClose: () => void;
@@ -35,6 +37,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   const tags = useAppSelector(selectAllTags);
   const selectedTags = useAppSelector(selectSelectedTags);
   const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<'details' | 'images'>('details');
 
   // Prefill the form with initial data if available
   useEffect(() => {
@@ -67,15 +70,15 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
     const { name, value } = e.target;
 
     // Handle nested fields (like translations) separately
-    if (name.startsWith("translations")) {
-      const language = name.split(".")[1] as keyof typeof formData.translations;
+    if (name.startsWith('translations')) {
+      const language = name.split('.')[1] as keyof typeof formData.translations;
       setFormData((prev) => ({
         ...prev,
         translations: {
           ...prev.translations,
           [language]: {
             ...prev.translations[language],
-            [name.split(".")[2]]: value,
+            [name.split('.')[2]]: value,
           },
         },
       }));
@@ -106,11 +109,11 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
         assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
       ).unwrap();
       dispatch(fetchAllItems());
-      toast.success("Item updated successfully!");
+      toast.success('Item updated successfully!');
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update item.");
+      toast.error('Failed to update item.');
     } finally {
       setLoading(false);
     }
@@ -126,119 +129,171 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Item Translation Fields */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">Translations</h3>
-
-            {/* Finnish Translation */}
-            <div>
-              <label htmlFor="translations.fi.item_name">Item Name (FI)</label>
-              <Input
-                id="translations.fi.item_name"
-                name="translations.fi.item_name"
-                value={formData.translations.fi.item_name}
-                onChange={handleChange}
-                placeholder="Item Name (fi)"
-                required
-              />
-              <label htmlFor="translations.fi.item_description">
-                Item Description (FI)
-              </label>
-              <Input
-                id="translations.fi.item_description"
-                name="translations.fi.item_description"
-                value={formData.translations.fi.item_description}
-                onChange={handleChange}
-                placeholder="Item Description (fi)"
-                required
-              />
-            </div>
-
-            {/* English Translation */}
-            <div className="space-y-2">
-              <label htmlFor="translations.en.item_name">Item Name (EN)</label>
-              <Input
-                id="translations.en.item_name"
-                name="translations.en.item_name"
-                value={formData.translations.en.item_name}
-                onChange={handleChange}
-                placeholder="Item Name (en)"
-                required
-              />
-              <label htmlFor="translations.en.item_description">
-                Item Description (EN)
-              </label>
-              <Input
-                id="translations.en.item_description"
-                name="translations.en.item_description"
-                value={formData.translations.en.item_description}
-                onChange={handleChange}
-                placeholder="Item Description (en)"
-                required
-              />
-            </div>
-          </div>
-          {/* Price */}
-          <div className="flex flex-row items-center space-x-4">
-            <label htmlFor="price">Price</label>
-            <Input
-              id="price"
-              name="price"
-              type="number"
-              value={formData.price}
-              onChange={handleChange}
-              placeholder="Price"
-              required
-              className="w-60"
-            />
-            {/* Active Toggle */}
-            <label htmlFor="is_active" className="text-secondary font-medium">
-              Active
-            </label>
-            <Switch
-              id="is_active"
-              checked={formData.is_active}
-              onCheckedChange={(checked: boolean) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  is_active: checked,
-                }))
-              }
-            />
-          </div>
-
-          {/* Tag Selection */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">Assign Tags</h3>
-            <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
-              {tags.map((tag) => (
-                <label key={tag.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    className="border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
-                    checked={localSelectedTags.includes(tag.id)}
-                    onCheckedChange={() => handleTagToggle(tag.id)}
-                  />
-                  <span>
-                    {tag.translations?.fi?.name ||
-                      tag.translations?.en?.name ||
-                      "Unnamed"}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
-            disabled={loading}
-            size={"sm"}
+        {/* Tab Navigation */}
+        <div className="flex border-b mb-4">
+          <button
+            className={`px-4 py-2 ${
+              activeTab === 'details'
+                ? 'border-b-2 border-secondary font-medium'
+                : 'text-gray-500'
+            }`}
+            onClick={() => setActiveTab('details')}
           >
-            {loading ? "Updating..." : "Update Item"}
-          </Button>
-        </form>
+            Details
+          </button>
+          <button
+            className={`px-4 py-2 ${
+              activeTab === 'images'
+                ? 'border-b-2 border-secondary font-medium'
+                : 'text-gray-500'
+            }`}
+            onClick={() => setActiveTab('images')}
+          >
+            Images
+          </button>
+        </div>
+
+        {activeTab === 'details' ? (
+          // Your existing form content
+          <div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Item Translation Fields */}
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Translations</h3>
+
+                {/* Finnish Translation */}
+                <div>
+                  <label htmlFor="translations.fi.item_name">
+                    Item Name (FI)
+                  </label>
+                  <Input
+                    id="translations.fi.item_name"
+                    name="translations.fi.item_name"
+                    value={formData.translations.fi.item_name}
+                    onChange={handleChange}
+                    placeholder="Item Name (fi)"
+                    required
+                  />
+                  <label htmlFor="translations.fi.item_description">
+                    Item Description (FI)
+                  </label>
+                  <Input
+                    id="translations.fi.item_description"
+                    name="translations.fi.item_description"
+                    value={formData.translations.fi.item_description}
+                    onChange={handleChange}
+                    placeholder="Item Description (fi)"
+                    required
+                  />
+                </div>
+
+                {/* English Translation */}
+                <div className="space-y-2">
+                  <label htmlFor="translations.en.item_name">
+                    Item Name (EN)
+                  </label>
+                  <Input
+                    id="translations.en.item_name"
+                    name="translations.en.item_name"
+                    value={formData.translations.en.item_name}
+                    onChange={handleChange}
+                    placeholder="Item Name (en)"
+                    required
+                  />
+                  <label htmlFor="translations.en.item_description">
+                    Item Description (EN)
+                  </label>
+                  <Input
+                    id="translations.en.item_description"
+                    name="translations.en.item_description"
+                    value={formData.translations.en.item_description}
+                    onChange={handleChange}
+                    placeholder="Item Description (en)"
+                    required
+                  />
+                </div>
+              </div>
+              {/* Price */}
+              <div className="flex flex-row items-center space-x-4">
+                <label htmlFor="price">Price</label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  value={formData.price}
+                  onChange={handleChange}
+                  placeholder="Price"
+                  required
+                  className="w-60"
+                />
+                {/* Active Toggle */}
+                <label
+                  htmlFor="is_active"
+                  className="text-secondary font-medium"
+                >
+                  Active
+                </label>
+                <Switch
+                  id="is_active"
+                  checked={formData.is_active}
+                  onCheckedChange={(checked: boolean) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      is_active: checked,
+                    }))
+                  }
+                />
+              </div>
+
+              {/* Tag Selection */}
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Assign Tags</h3>
+                <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
+                  {tags.map((tag) => (
+                    <label key={tag.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        className="border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
+                        checked={localSelectedTags.includes(tag.id)}
+                        onCheckedChange={() => handleTagToggle(tag.id)}
+                      />
+                      <span>
+                        {tag.translations?.fi?.name ||
+                          tag.translations?.en?.name ||
+                          'Unnamed'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+                disabled={loading}
+                size={'sm'}
+              >
+                {loading ? 'Updating...' : 'Update Item'}
+              </Button>
+            </form>
+          </div>
+        ) : (
+          // Image manager component
+          <ItemImageManager itemId={formData.id} />
+        )}
+
+        <DialogFooter>
+          {activeTab === 'details' && (
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+              size={'sm'}
+            >
+              {loading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
