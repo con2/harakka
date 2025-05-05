@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from 'react';
 import {
   Dialog,
   DialogTrigger,
@@ -6,42 +6,60 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   createItem,
   selectItemsLoading,
   selectItemsError,
   selectItemsErrorContext,
-} from "@/store/slices/itemsSlice";
-import { toast } from "sonner";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
-import { Switch } from "../ui/switch";
-import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
-import { Loader2 } from "lucide-react";
-import { ItemFormData } from "@/types";
-import { Checkbox } from "../ui/checkbox";
+} from '@/store/slices/itemsSlice';
+import { toast } from 'sonner';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Switch } from '../ui/switch';
+import { fetchAllTags, selectAllTags } from '@/store/slices/tagSlice';
+import { Loader2, Upload, X, ImageIcon } from 'lucide-react';
+import { ItemFormData } from '@/types';
+import { Checkbox } from '../ui/checkbox';
+// Import the upload action
+import { uploadItemImage } from '@/store/slices/itemImagesSlice';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+// Constants for file upload
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_FILE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+];
 
 const initialFormState: ItemFormData = {
-  location_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  compartment_id: "0ffa5562-82a9-4352-b804-1adebbb7d80c",
+  location_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+  compartment_id: '0ffa5562-82a9-4352-b804-1adebbb7d80c',
   items_number_total: 1,
   items_number_available: 1,
   price: 0,
   is_active: true,
   translations: {
     fi: {
-      item_type: "",
-      item_name: "",
-      item_description: "",
+      item_type: '',
+      item_name: '',
+      item_description: '',
     },
     en: {
-      item_type: "",
-      item_name: "",
-      item_description: "",
+      item_type: '',
+      item_name: '',
+      item_description: '',
     },
   },
   tagIds: [],
@@ -58,12 +76,36 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   const [open, setOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+  // Image upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imageType, setImageType] = useState<'main' | 'thumbnail' | 'detail'>(
+    'main',
+  );
+  const [altText, setAltText] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   // Display errors when they occur
   useEffect(() => {
-    if (error && errorContext === "create") {
+    if (error && errorContext === 'create') {
       toast.error(error);
     }
   }, [error, errorContext]);
+
+  // Create preview when file is selected
+  useEffect(() => {
+    if (selectedFile) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(selectedFile);
+    } else {
+      setImagePreview(null);
+    }
+  }, [selectedFile]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -71,11 +113,11 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
     const { name, value } = e.target;
 
     // Handle nested fields for translations (FI and EN)
-    if (name.includes(".")) {
-      const [parent, child, field] = name.split(".");
+    if (name.includes('.')) {
+      const [parent, child, field] = name.split('.');
 
-      if (parent === "translations") {
-        if (child === "fi" || child === "en") {
+      if (parent === 'translations') {
+        if (child === 'fi' || child === 'en') {
           setFormData({
             ...formData,
             translations: {
@@ -91,15 +133,15 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
     } else {
       // Handle numeric values
       if (
-        name === "price" ||
-        name === "items_number_total" ||
-        name === "items_number_available"
+        name === 'price' ||
+        name === 'items_number_total' ||
+        name === 'items_number_available'
       ) {
         setFormData({
           ...formData,
           [name]: parseFloat(value) || 0,
         } as ItemFormData); // Type assertion helps TypeScript understand
-      } else if (name === "location_id" || name === "compartment_id") {
+      } else if (name === 'location_id' || name === 'compartment_id') {
         setFormData({
           ...formData,
           [name]: value,
@@ -117,20 +159,125 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
   const resetForm = () => {
     setFormData(initialFormState);
-    setSelectedTags([]); // Reset selected tags
+    setSelectedTags([]);
+    setSelectedFile(null);
+    setImagePreview(null);
+    setAltText('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // File validation
+  const validateFile = (file: File): boolean => {
+    // Check file type
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      toast.error(
+        'Invalid file type. Only JPG, PNG, WebP, and GIF are allowed.',
+      );
+      return false;
+    }
+
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(
+        `File is too large. Maximum size is ${
+          MAX_FILE_SIZE / (1024 * 1024)
+        }MB.`,
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (validateFile(file)) {
+        setSelectedFile(file);
+
+        // Auto-generate alt text from filename
+        const nameWithoutExt = file.name.split('.').slice(0, -1).join('.');
+        const formattedName = nameWithoutExt
+          .replace(/[-_]/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+
+        setAltText(formattedName);
+      }
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (validateFile(file)) {
+        setSelectedFile(file);
+
+        // Auto-generate alt text from filename
+        const nameWithoutExt = file.name.split('.').slice(0, -1).join('.');
+        const formattedName = nameWithoutExt
+          .replace(/[-_]/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+
+        setAltText(formattedName);
+      }
+    }
   };
 
   const handleSubmit = async () => {
     try {
-      // Dispatch create item action, adding the selected tags to the form data
-      await dispatch(
+      // First create the item
+      const createdItem = await dispatch(
         createItem({ ...formData, tagIds: selectedTags }),
       ).unwrap();
-      toast.success("Item created successfully!");
+
+      // If there's a file selected, upload it to the newly created item
+      if (selectedFile && createdItem.id) {
+        setUploadingImage(true);
+        try {
+          const metadata = {
+            image_type: imageType,
+            display_order: 1,
+            alt_text: altText,
+          };
+
+          await dispatch(
+            uploadItemImage({
+              itemId: createdItem.id,
+              file: selectedFile,
+              metadata,
+            }),
+          ).unwrap();
+
+          toast.success('Item and image uploaded successfully!');
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          toast.error('Item created but failed to upload image.');
+        } finally {
+          setUploadingImage(false);
+        }
+      } else {
+        toast.success('Item created successfully!');
+      }
+
       resetForm();
       setOpen(false);
-    } catch {
+    } catch (error) {
       // Error is already handled by the redux slice and displayed via useEffect
+      console.error('Error creating item:', error);
     }
   };
 
@@ -149,6 +296,98 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
+          {/* Image Upload Section */}
+          <div className="col-span-full bg-white p-4 rounded-md border">
+            <h3 className="text-lg font-medium mb-4">Item Image (Optional)</h3>
+
+            {/* Drag & Drop Area */}
+            <div
+              className={`border-2 border-dashed rounded-md p-6 mb-4 text-center transition-colors ${
+                isDragging
+                  ? 'border-secondary bg-secondary/5'
+                  : 'border-gray-300 hover:border-secondary'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {imagePreview ? (
+                <div className="relative">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="mx-auto max-h-40 object-contain mb-2"
+                  />
+                  <button
+                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedFile(null);
+                      setImagePreview(null);
+                      setAltText('');
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <p className="text-sm text-gray-500">{selectedFile?.name}</p>
+                </div>
+              ) : (
+                <div>
+                  <ImageIcon className="h-10 w-10 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">
+                    Drag and drop an image here or click to browse
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    JPG, PNG, WebP, GIF up to 5MB
+                  </p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                id="imageInput"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </div>
+
+            {/* Image settings */}
+            {selectedFile && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="imageType">Image Type</Label>
+                  <Select
+                    value={imageType}
+                    onValueChange={(val: 'main' | 'thumbnail' | 'detail') =>
+                      setImageType(val)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="main">Main</SelectItem>
+                      <SelectItem value="thumbnail">Thumbnail</SelectItem>
+                      <SelectItem value="detail">Detail</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="altText">Alt Text (Accessibility)</Label>
+                  <Input
+                    id="altText"
+                    placeholder="Describe the image for accessibility"
+                    value={altText}
+                    onChange={(e) => setAltText(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Finnish Information */}
             <div>
@@ -331,14 +570,13 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                       <span>
                         {tag.translations?.fi?.name ||
                           tag.translations?.en?.name ||
-                          "Unnamed Tag"}
+                          'Unnamed Tag'}
                       </span>
                     </label>
                   ))}
                 </div>
               </div>
             </div>
-
           </div>
         </div>
 
@@ -346,16 +584,16 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
           <Button
             className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
             onClick={handleSubmit}
-            disabled={loading}
-            size={"sm"}
+            disabled={loading || uploadingImage}
+            size={'sm'}
           >
-            {loading ? (
+            {loading || uploadingImage ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                {selectedFile ? 'Creating and uploading...' : 'Creating...'}
               </>
             ) : (
-              "Add Item"
+              'Add Item'
             )}
           </Button>
         </DialogFooter>
