@@ -14,12 +14,13 @@ import { BookingController } from "./controllers/booking.controller";
 import { BookingService } from "./services/booking.service";
 import { TagController } from "./controllers/tag.controller";
 import { TagService } from "./services/tag.service";
+import { MailService } from "./services/mail.service";
 import { ItemImagesController } from "./controllers/item-images.controller";
 import { ItemImagesService } from "./services/item-images.service";
 import { S3Service } from "./services/s3-supabase.service";
 
 // Load and expand environment variables before NestJS modules initialize
-const envFile = path.resolve(process.cwd(), "../.env.local");
+const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
 const env = dotenv.config({ path: envFile });
 dotenvExpand.expand(env);
 
@@ -45,6 +46,7 @@ dotenvExpand.expand(env);
     UserService,
     BookingService,
     TagService,
+    MailService,
     ItemImagesService,
     S3Service,
   ],

@@ -32,7 +32,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (isRecoveryFlow) {
       // Don't save user or session for recovery flows
-      console.log("Recovery flow detected, preventing automatic login");
       setSession(null);
       setUser(null);
       setAuthLoading(false);
@@ -46,7 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Save user ID to localStorage when session updates
     if (user?.id) {
       localStorage.setItem("userId", user.id);
-      console.log("User ID saved to localStorage:", user.id);
 
       // Load the full user profile from backend immediately after login
       dispatch(getUserById(user.id));
