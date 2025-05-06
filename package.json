@@ -6,7 +6,7 @@
   "scripts": {
     "start": "echo 'Run frontend and backend separately!'",
     "frontend": "npm --prefix frontend run dev",
-    "backend": "npm --prefix backend start",
+    "backend": "npm --prefix backend run start:dev",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
     "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend",
     "deploy": "echo 'Add deployment scripts here'"
