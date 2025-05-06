@@ -229,7 +229,7 @@ const MyOrders = () => {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg">
       {/* <h1 className="text-2xl font-bold mb-6 text-secondary ml-4">My Orders</h1> */}
 
       {orders.length === 0 ? (
