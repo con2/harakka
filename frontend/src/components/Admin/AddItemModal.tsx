@@ -21,10 +21,9 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
 import { fetchAllTags, selectAllTags } from '@/store/slices/tagSlice';
-import { Loader2, Upload, X, ImageIcon } from 'lucide-react';
+import { Loader2, X, ImageIcon } from 'lucide-react';
 import { ItemFormData } from '@/types';
 import { Checkbox } from '../ui/checkbox';
-// Import the upload action
 import { uploadItemImage } from '@/store/slices/itemImagesSlice';
 import {
   Select,
@@ -33,15 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-// Constants for file upload
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_FILE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-];
+import { ImageType, FILE_CONSTRAINTS } from '@/types/storage';
 
 const initialFormState: ItemFormData = {
   location_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
@@ -79,9 +70,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   // Image upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [imageType, setImageType] = useState<'main' | 'thumbnail' | 'detail'>(
-    'main',
-  );
+  const [imageType, setImageType] = useState<ImageType>('main');
   const [altText, setAltText] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -169,7 +158,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   // File validation
   const validateFile = (file: File): boolean => {
     // Check file type
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    if (!FILE_CONSTRAINTS.ALLOWED_FILE_TYPES.includes(file.type as any)) {
       toast.error(
         'Invalid file type. Only JPG, PNG, WebP, and GIF are allowed.',
       );
@@ -177,10 +166,10 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
     }
 
     // Check file size
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > FILE_CONSTRAINTS.MAX_FILE_SIZE) {
       toast.error(
         `File is too large. Maximum size is ${
-          MAX_FILE_SIZE / (1024 * 1024)
+          FILE_CONSTRAINTS.MAX_FILE_SIZE / (1024 * 1024)
         }MB.`,
       );
       return false;
