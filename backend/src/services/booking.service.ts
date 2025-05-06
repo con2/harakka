@@ -166,7 +166,6 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
           "Unknown Location",
       })),
     }));
-
     return ordersWithNames;
   }
 
@@ -816,13 +815,11 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       );
     }
 
-    // 7.7 send email to user or admin (depends on who cancelled the booking)
-    if (isAdmin) {
-      // If the admin cancels booking:
-      await this.mailService.sendMail(
-        userProfile.email,
-        "Your booking has been cancelled",
-        `<h1>Hello,</h1>
+    // 7.7 send email to user
+    await this.mailService.sendMail(
+      userProfile.email,
+      "Your booking has been cancelled",
+      `<h1>Hello,</h1>
     <p>Your booking with order number <strong>${orderId}</strong> has been cancelled.</p>
     <p>Details of the cancelled booking:</p>
     <ul>
@@ -835,13 +832,15 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
     </ul>
         <p>If this cancellation was unintended, you can restore it from your booking history.</p>
     <p>If you have any questions, please feel free to contact us.</p>`,
-      );
-    } else {
-      // if the user cancels the booking:
-      await this.mailService.sendMail(
-        userProfile.email,
-        "The booking has been cancelled",
-        `<h1>Hello,</h1>
+    );
+
+    // 7.8 email to admin
+    const adminEmail = "illusia.rental.service@gmail.com";
+
+    await this.mailService.sendMail(
+      adminEmail,
+      "The booking has been cancelled",
+      `<h1>Hello,</h1>
     <p>The booking with order number <strong>${orderId}</strong> has been successfully cancelled.</p>
     <p>Details of the cancelled booking:</p>
     <ul>
@@ -853,8 +852,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
         .join("")}
     </ul>
     <p>If this cancellation was unintended, you can restore it from your booking history.</p>`,
-      );
-    }
+    );
 
     return {
       message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
