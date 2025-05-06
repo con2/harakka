@@ -1,3 +1,4 @@
+import { Address } from "./address";
 import { BaseEntity, ErrorContext } from "./common";
 
 /**
@@ -17,6 +18,7 @@ export interface UserProfile extends BaseEntity {
   email: string;
   saved_lists?: string[];
   preferences?: Record<string, string>;
+  addresses?: Address[];
 }
 
 /**
@@ -29,6 +31,7 @@ export interface UserState {
   errorContext: ErrorContext;
   selectedUser: UserProfile | null;
   selectedUserLoading?: boolean;
+  selectedUserAddresses?: Address[];
 }
 
 /**
