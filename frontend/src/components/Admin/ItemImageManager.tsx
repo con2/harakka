@@ -1,29 +1,29 @@
-import { useState, useEffect, useRef } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useState, useEffect, useRef } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getItemImages,
   uploadItemImage,
   deleteItemImage,
-  selectItemImages,
+  selectItemImagesById,
   selectItemImagesLoading,
-} from '@/store/slices/itemImagesSlice';
-import { Button } from '@/components/ui/button';
+} from "@/store/slices/itemImagesSlice";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Loader2,
   Plus,
@@ -31,8 +31,8 @@ import {
   Image as ImageIcon,
   Upload,
   X,
-} from 'lucide-react';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,14 +42,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Progress } from '@/components/ui/progress';
+} from "@/components/ui/alert-dialog";
+import { Progress } from "@/components/ui/progress";
 import {
   ImageType,
   ItemImage,
   FILE_CONSTRAINTS,
   AllowedMimeType,
-} from '@/types/storage';
+} from "@/types/storage";
 
 interface ItemImageManagerProps {
   itemId: string;
@@ -62,14 +62,14 @@ interface ItemImageManagerProps {
 
 const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
   const dispatch = useAppDispatch();
-  const images = useAppSelector(selectItemImages);
+  const images = useAppSelector((state) => selectItemImagesById(state, itemId));
   const loading = useAppSelector(selectItemImagesLoading);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imageType, setImageType] = useState<ImageType>('main');
+  const [imageType, setImageType] = useState<ImageType>("main");
   const [sortedImages, setSortedImages] = useState<ItemImage[]>([]);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [altText, setAltText] = useState('');
+  const [altText, setAltText] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -97,22 +97,22 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
 
   useEffect(() => {
     if (itemId) {
-      console.log('Fetching images for item:', itemId);
+      console.log("Fetching images for item:", itemId);
 
       try {
         dispatch(getItemImages(itemId))
           .unwrap()
           .then((response) => {
-            console.log('Images fetched successfully:', response);
+            console.log("Images fetched successfully:", response);
           })
           .catch((error) => {
-            console.error('Error fetching images:', error);
+            console.error("Error fetching images:", error);
             toast.error(
-              'Failed to load images. You can still upload new ones.',
+              "Failed to load images. You can still upload new ones.",
             );
           });
       } catch (err) {
-        console.error('Error dispatching action:', err);
+        console.error("Error dispatching action:", err);
       }
     }
   }, [dispatch, itemId]);
@@ -157,7 +157,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
       )
     ) {
       toast.error(
-        'Invalid file type. Only JPG, PNG, WebP, and GIF are allowed.',
+        "Invalid file type. Only JPG, PNG, WebP, and GIF are allowed.",
       );
       return false;
     }
@@ -182,9 +182,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
         setSelectedFile(file);
 
         // Auto-generate alt text from filename
-        const nameWithoutExt = file.name.split('.').slice(0, -1).join('.');
+        const nameWithoutExt = file.name.split(".").slice(0, -1).join(".");
         const formattedName = nameWithoutExt
-          .replace(/[-_]/g, ' ')
+          .replace(/[-_]/g, " ")
           .replace(/\b\w/g, (c) => c.toUpperCase());
 
         setAltText(formattedName);
@@ -211,9 +211,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
         setSelectedFile(file);
 
         // Auto-generate alt text from filename
-        const nameWithoutExt = file.name.split('.').slice(0, -1).join('.');
+        const nameWithoutExt = file.name.split(".").slice(0, -1).join(".");
         const formattedName = nameWithoutExt
-          .replace(/[-_]/g, ' ')
+          .replace(/[-_]/g, " ")
           .replace(/\b\w/g, (c) => c.toUpperCase());
 
         setAltText(formattedName);
@@ -224,13 +224,13 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
   const resetUploadForm = () => {
     setSelectedFile(null);
     setImagePreview(null);
-    setAltText('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    setAltText("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      toast.error('Please select a file to upload');
+      toast.error("Please select a file to upload");
       return;
     }
 
@@ -253,16 +253,16 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
           uploadItemImage({ itemId, file: selectedFile, metadata }),
         ).unwrap(),
         {
-          loading: 'Uploading image...',
-          success: 'Image uploaded successfully!',
-          error: 'Failed to upload image',
+          loading: "Uploading image...",
+          success: "Image uploaded successfully!",
+          error: "Failed to upload image",
         },
       );
 
       // Reset form after successful upload
       resetUploadForm();
     } catch (err) {
-      console.error('Image upload failed:', err);
+      console.error("Image upload failed:", err);
     }
   };
 
@@ -276,12 +276,12 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
 
     try {
       await toast.promise(dispatch(deleteItemImage(imageToDelete)).unwrap(), {
-        loading: 'Deleting image...',
-        success: 'Image deleted successfully!',
-        error: 'Failed to delete image',
+        loading: "Deleting image...",
+        success: "Image deleted successfully!",
+        error: "Failed to delete image",
       });
     } catch (err) {
-      console.error('Image deletion failed:', err);
+      console.error("Image deletion failed:", err);
     } finally {
       setImageToDelete(null);
       setDeleteConfirmOpen(false);
@@ -298,8 +298,8 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
         <div
           className={`border-2 border-dashed rounded-md p-6 mb-4 text-center transition-colors ${
             isDragging
-              ? 'border-secondary bg-secondary/5'
-              : 'border-gray-300 hover:border-secondary'
+              ? "border-secondary bg-secondary/5"
+              : "border-gray-300 hover:border-secondary"
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -351,7 +351,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
               <Label htmlFor="imageType">Image Type</Label>
               <Select
                 value={imageType}
-                onValueChange={(val: 'main' | 'thumbnail' | 'detail') =>
+                onValueChange={(val: "main" | "thumbnail" | "detail") =>
                   setImageType(val)
                 }
               >
@@ -380,7 +380,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
             <div className="space-y-1">
               <Progress value={uploadProgress} className="h-2" />
               <div className="text-xs text-right text-gray-500">
-                {uploadProgress === 100 ? 'Complete!' : `${uploadProgress}%`}
+                {uploadProgress === 100 ? "Complete!" : `${uploadProgress}%`}
               </div>
             </div>
           )}
@@ -425,7 +425,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
         )}
 
         {/* Grouped by image type */}
-        {['main', 'thumbnail', 'detail'].map((type) => {
+        {["main", "thumbnail", "detail"].map((type) => {
           const typeImages = sortedImages.filter(
             (img) => img.image_type === type,
           );
@@ -453,7 +453,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
                     <CardContent className="p-2">
                       <img
                         src={image.image_url}
-                        alt={image.alt_text || 'Item image'}
+                        alt={image.alt_text || "Item image"}
                         className="w-full h-40 object-cover rounded-md"
                         loading="lazy"
                       />
@@ -463,7 +463,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
                         className="text-xs truncate max-w-[70%]"
                         title={image.alt_text}
                       >
-                        {image.alt_text || 'No description'}
+                        {image.alt_text || "No description"}
                       </div>
                       <Button
                         variant="ghost"
