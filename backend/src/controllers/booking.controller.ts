@@ -119,5 +119,20 @@ export class BookingController {
       userId, //TODO: check if userId is needed here
     );
   }
+
+  // get virtual number of items for a specific date
+  @Get("available-quantity")
+  async getAvailableQuantity(
+    @Query("item_id") itemId: string,
+    @Query("date") date: string,
+  ) {
+    if (!itemId || !date) {
+      throw new BadRequestException("item_id and date are mendatory");
+    }
+    // Calling the method from the service class and returning the booked quantity
+    const availableQuantity =
+      await this.bookingService.getAvailableQuantityForDate(itemId, date);
+    return { availableQuantity };
+  }
 }
 // handles the booking process, including creating, confirming, rejecting, and canceling bookings.

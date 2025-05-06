@@ -5,7 +5,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { CheckCircle2, InfoIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import LoginTest from "./LoginTest"; // Import the test component
+//import LoginTest from "./LoginTest"; // Import the test component
 
 export const Login = () => {
   const [searchParams] = useSearchParams();
@@ -60,8 +60,8 @@ export const Login = () => {
             redirectTo={`${window.location.origin}/auth/callback`}
           />
 
-          {/* Always show test component for debugging */}
-          <LoginTest />
+          {/* Show test component for debugging */}
+          {/* <LoginTest /> */}
         </CardContent>
       </Card>
     </div>

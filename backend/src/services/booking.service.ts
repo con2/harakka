@@ -5,15 +5,25 @@ import {
 } from "@nestjs/common";
 import { SupabaseService } from "./supabase.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
+import { calculateAvailableQuantity } from "src/utils/booking.utils";
+import { MailService } from "./mail.service";
 
 @Injectable()
 export class BookingService {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(
+    private readonly supabaseService: SupabaseService,
+    private readonly mailService: MailService,
+  ) {}
 
   // TODO!:
   // use getClientByRole again!
   // refactor code so that the supabase client is not created in every function
   // every function should update the order_items status to "pending", "confirmed" or "cancelled"
+
+  /*
+ORDER ITEM STATUS:
+status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character varying, 'cancelled'::character varying, 'picked_up'::character varying, 'returned'::character varying]::text[])
+  */
 
   // 1. get all orders
   async getAllOrders(userId: string) {
@@ -170,85 +180,86 @@ export class BookingService {
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
     }
+    // variables for date check
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // normalize to midnight
 
-    // check for overlapping bookings
+    let warningMessage: string | null = null;
+
     for (const item of dto.items) {
-      const start = new Date(item.start_date);
-      const end = new Date(item.end_date);
+      const { item_id, quantity, start_date, end_date } = item;
 
-      // get all overlapping orders and their quantities - USE SERVICE CLIENT
-      const { data: overlappingOrders, error: overlapError } = await supabase
-        .from("order_items")
-        .select("quantity")
-        .eq("item_id", item.item_id)
-        .or(
-          `and(start_date.lte.${item.end_date},end_date.gte.${item.start_date})`,
+      const start = new Date(start_date);
+      start.setHours(0, 0, 0, 0);
+
+      const differenceInDays = Math.ceil(
+        (start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      if (differenceInDays <= 0) {
+        throw new BadRequestException(
+          "Bookings must start at least one day in the future",
         );
-
-      if (overlapError) {
-        console.error("Overlap check error:", overlapError);
-        throw new BadRequestException("Could not check overlapping bookings");
       }
 
-      const alreadyBookedQuantity =
-        overlappingOrders?.reduce((sum, o) => sum + (o.quantity ?? 0), 0) ?? 0;
+      if (differenceInDays <= 2) {
+        warningMessage =
+          "This is a short-notice booking. Please be aware that it might not be fulfilled in time.";
+      }
 
-      // get max availability from storage_items - USE SERVICE CLIENT
-      const { data: itemData, error: itemError } = await supabase
+      // 3.1. Check availability for requested date range
+      const available = await calculateAvailableQuantity(
+        supabase,
+        item_id,
+        start_date,
+        end_date,
+      );
+
+      if (quantity > available) {
+        throw new BadRequestException(
+          `Not enough virtual stock available for item ${item_id}`,
+        );
+      }
+
+      // 3.2. Check physical stock (currently in storage)
+      const { data: storageItem, error: itemError } = await supabase
         .from("storage_items")
-        .select("items_number_total, items_number_available")
-        .eq("id", item.item_id)
+        .select("items_number_currently_in_storage")
+        .eq("id", item_id)
         .single();
 
-      if (itemError || !itemData) {
-        console.error("Storage item fetch error:", itemError);
-        throw new BadRequestException("Item data not found");
+      if (itemError || !storageItem) {
+        throw new BadRequestException("Storage item data not found");
       }
 
-      // check if there is enough available stock
-      const freeQuantity = itemData.items_number_total - alreadyBookedQuantity;
-
-      if (item.quantity > freeQuantity) {
+      if (quantity > storageItem.items_number_currently_in_storage) {
         throw new BadRequestException(
-          `Not enough available quantity for item ${item.item_id}`,
-        );
-      }
-
-      // check if items_number_available is logical
-      if (item.quantity > itemData.items_number_available) {
-        throw new BadRequestException(
-          `Not enough real available stock for item ${item.item_id}`,
+          `Not enough physical stock in storage for item ${item_id}`,
         );
       }
     }
 
-    // generate the order number
-    const generateOrderNumber = () => {
-      const now = new Date();
-      const datePart = now.toISOString().split("T")[0].replace(/-/g, "");
-      const randomPart = Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0");
-      return `ORD-${datePart}-${randomPart}`;
-    };
+    // 3.3. generate the order number
+    const orderNumber = `ORD-${Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, "0")}`;
 
-    // insert new order
+    // 3.4. Create the order
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
         user_id: userId,
         status: "pending",
-        order_number: generateOrderNumber(),
+        order_number: orderNumber,
       })
       .select()
       .single();
 
     if (orderError || !order) {
-      console.error("Order creation error:", orderError);
       throw new BadRequestException("Could not create order");
     }
 
-    // Insert order items and calculate days - USE SERVICE CLIENT
+    // 3.5. Create order items
     for (const item of dto.items) {
       const start = new Date(item.start_date);
       const end = new Date(item.end_date);
@@ -256,69 +267,86 @@ export class BookingService {
         (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
       );
 
-      // get location_id from storage_items - USE SERVICE CLIENT
-      const { data: storageItem, error: storageError } = await supabase
+      // get location_id
+      const { data: storageItem, error: locationError } = await supabase
         .from("storage_items")
-        .select("location_id, items_number_available")
+        .select("location_id")
         .eq("id", item.item_id)
         .single();
 
-      if (storageError || !storageItem) {
-        console.error("Storage item fetch error (location_id):", storageError);
+      if (locationError || !storageItem) {
         throw new BadRequestException(
-          `Could not fetch location_id for item ${item.item_id}`,
+          `Location ID not found for item ${item.item_id}`,
         );
       }
 
-      // reduce availability directly in `storage_items` with quantity check (just in case)
-      const newAvailable = storageItem.items_number_available - item.quantity;
-      if (newAvailable < 0) {
-        throw new BadRequestException(
-          `Negative stock detected for item ${item.item_id}`,
-        );
-      }
+      // insert order item
+      const { error: insertError } = await supabase.from("order_items").insert({
+        order_id: order.id,
+        item_id: item.item_id,
+        location_id: storageItem.location_id,
+        quantity: item.quantity,
+        start_date: item.start_date,
+        end_date: item.end_date,
+        total_days: totalDays,
+        status: "pending",
+      });
 
-      const { data: updatedItems, error: reduceError } = await supabase
-        .from("storage_items")
-        .update({ items_number_available: newAvailable })
-        .eq("id", item.item_id)
-        .select();
-
-      if (reduceError) {
-        console.error("Stock reduce error:", reduceError);
-        throw new BadRequestException(
-          `Failed to reserve stock for item ${item.item_id}`,
-        );
-      }
-
-      if (!updatedItems || updatedItems.length === 0) {
-        console.error("No stock item updated for item:", item.item_id);
-        throw new BadRequestException(
-          `Failed to update stock for item ${item.item_id}`,
-        );
-      }
-
-      // create order-item
-      const { error: itemInsertError } = await supabase
-        .from("order_items")
-        .insert({
-          order_id: order.id,
-          item_id: item.item_id,
-          location_id: storageItem.location_id,
-          quantity: item.quantity,
-          start_date: item.start_date,
-          end_date: item.end_date,
-          total_days: totalDays,
-          status: "pending",
-        });
-
-      if (itemInsertError) {
-        console.error("Order item insert error:", itemInsertError);
+      if (insertError) {
         throw new BadRequestException("Could not create order items");
       }
     }
 
-    return order;
+    // 3.6 send mail to user:
+    const { data: user, error: userError } = await supabase
+      .from("user_profiles")
+      .select("email")
+      .eq("id", userId)
+      .single();
+
+    if (userError || !user) {
+      throw new BadRequestException("User not found");
+    }
+
+    await this.mailService.sendMail(
+      user.email,
+      "Booking is successful!",
+      `<h1>Hello <strong></strong></h1><p>Your booking has been received. The order has been sent to the admins. </p>
+      <p>Order Number: <strong>${orderNumber}</strong></p>
+      <p>Details:</p>
+      <ul>
+      ${dto.items
+        .map(
+          (item) =>
+            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
+        )
+        .join("")}
+    </ul>
+    <p>Please be patient while someone reviews your request.</p>`,
+    );
+
+    // 3.7 send email to admin about new booking
+    const adminEmail = "illusia.rental.service@gmail.com";
+
+    await this.mailService.sendMail(
+      adminEmail,
+      "New Booking Awaiting Action",
+      `<h1>New Booking Received</h1>
+     <p>A new booking has been created with the order number: <strong>${orderNumber}</strong>.</p>
+     <p>The order is pending and awaiting your action.</p>
+     <p>Details:</p>
+     <ul>
+       ${dto.items
+         .map(
+           (item) =>
+             `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
+         )
+         .join("")}
+     </ul>
+     <p>Please review the booking and take necessary action.</p>`,
+    );
+
+    return warningMessage ? { order, warning: warningMessage } : order;
   }
 
   // 4. confirm a Booking
@@ -326,7 +354,21 @@ export class BookingService {
     //const supabase = await this.supabaseService.getClientByRole(userId);
     const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
-    // Get all the order items
+    // 4.1 check if already confirmed
+    const { data: order } = await supabase
+      .from("orders")
+      .select("status, user_id")
+      .eq("id", orderId)
+      .single();
+
+    if (!order) throw new BadRequestException("Order not found");
+
+    // prevent re-confirmation
+    if (order.status === "confirmed") {
+      throw new BadRequestException("Booking is already confirmed");
+    }
+
+    // 4.2 Get all the order items
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
       .select("item_id, quantity")
@@ -336,12 +378,12 @@ export class BookingService {
       throw new BadRequestException("Could not load order items");
     }
 
-    // check availability of the items
+    // 4.3 check availability of the items
     for (const item of items) {
       // get availability of item
       const { data: storageItem, error: storageItemError } = await supabase
         .from("storage_items")
-        .select("items_number_available")
+        .select("items_number_currently_in_storage")
         .eq("id", item.item_id)
         .single();
 
@@ -350,14 +392,14 @@ export class BookingService {
       }
 
       // check if stock is enough
-      if (storageItem.items_number_available < item.quantity) {
+      if (storageItem.items_number_currently_in_storage < item.quantity) {
         throw new BadRequestException(
           `Not enough available quantity for item ${item.item_id}`,
         );
       }
     }
 
-    // Change the order status to 'confirmed'
+    // 4.4 Change the order status to 'confirmed'
     const { error: updateError } = await supabase
       .from("orders")
       .update({ status: "confirmed" })
@@ -377,6 +419,53 @@ export class BookingService {
       throw new BadRequestException("Could not confirm order items");
     }
 
+    // 4.5 send mail to user:
+    const { data: user, error: userError } = await supabase
+      .from("user_profiles")
+      .select("email")
+      .eq("id", userId)
+      .single();
+
+    if (userError || !user) {
+      throw new BadRequestException("User not found");
+    }
+
+    await this.mailService.sendMail(
+      user.email,
+      "Booking is confirmed!",
+      `<h1>Hello <strong></strong></h1><p>Your booking has been confirmed. </p>
+      <p>Details:</p>
+     <ul>
+       ${items
+         .map(
+           (item) =>
+             `<li>Item: ${item.item_id}, Quantity: ${item.quantity}</li>`,
+         )
+         .join("")}
+     </ul>
+      <p>Please make sure you can pick them up on the booked start date</p>`,
+    );
+
+    // 4.6 send email to admin about new booking
+    const adminEmail = "illusia.rental.service@gmail.com";
+
+    await this.mailService.sendMail(
+      adminEmail,
+      "Booking confirmed",
+      `<h1>New Booking Received</h1>
+     <p>You have successfully confirmed the booking</p>
+     <p>Details:</p>
+     <ul>
+       ${items
+         .map(
+           (item) =>
+             `<li>Item: ${item.item_id}, Quantity: ${item.quantity}</li>`,
+         )
+         .join("")}
+     </ul>
+     <p>Please review the booking and take necessary action.</p>`,
+    );
+
     return { message: "Booking confirmed" };
   }
 
@@ -385,17 +474,19 @@ export class BookingService {
     //const supabase = await this.supabaseService.getClientByRole(userId);
     const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
+    // 5.1 check the order
     const { data: order } = await supabase
       .from("orders")
-      .select("user_id")
+      .select("status, user_id, order_number")
       .eq("id", orderId)
       .single();
 
     if (!order) throw new BadRequestException("Order not found");
 
+    // 5.2. check the user role
     const { data: user } = await supabase
       .from("user_profiles")
-      .select("role")
+      .select("role, email")
       .eq("id", userId)
       .single();
 
@@ -420,51 +511,53 @@ export class BookingService {
       throw new ForbiddenException("Not allowed to update this booking");
     }
 
-    // Delete existing items from order_items to avoid douplicates
+    // 5.4 Status check (users are restricted)
+    if (!isAdmin && order.status !== "pending") {
+      throw new ForbiddenException(
+        "Your order has been confirmed. You can't update it.",
+      );
+    }
+
+    // 5.3. Delete existing items from order_items to avoid douplicates
     await supabase.from("order_items").delete().eq("order_id", orderId);
 
-    // insert updated items and reduce stock
+    // 5.4. insert updated items with availability check
     for (const item of updatedItems) {
-      const start = new Date(item.start_date);
-      const end = new Date(item.end_date);
+      const { item_id, quantity, start_date, end_date } = item;
+
       const totalDays = Math.ceil(
-        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+        (new Date(end_date).getTime() - new Date(start_date).getTime()) /
+          (1000 * 60 * 60 * 24),
       );
 
+      // 5.5. Check virtual availability for the time range
+      const available = await calculateAvailableQuantity(
+        supabase,
+        item_id,
+        start_date,
+        end_date,
+      );
+
+      if (quantity > available) {
+        throw new BadRequestException(
+          `Not enough virtual stock available for item ${item_id}`,
+        );
+      }
+
+      // 5.6. Fetch location_id
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
-        .select("location_id, items_number_available")
-        .eq("id", item.item_id)
+        .select("location_id")
+        .eq("id", item_id)
         .single();
 
       if (storageError || !storageItem) {
-        console.error("Fetch storage item error:", storageError);
         throw new BadRequestException(
-          `Storage item not found for item ${item.item_id}`,
+          `Could not find storage item for item ${item_id}`,
         );
       }
 
-      // reduce available stock
-      const newAvailable = storageItem.items_number_available - item.quantity;
-      if (newAvailable < 0) {
-        throw new BadRequestException(
-          `Negative stock detected for item ${item.item_id}`,
-        );
-      }
-
-      const { error: reduceError } = await supabase
-        .from("storage_items")
-        .update({ items_number_available: newAvailable })
-        .eq("id", item.item_id);
-
-      if (reduceError) {
-        console.error("Stock reduce error:", reduceError);
-        throw new BadRequestException(
-          `Failed to reserve stock for item ${item.item_id}`,
-        );
-      }
-
-      // insert new order item
+      // 5.7. insert new order item
       const { error: itemInsertError } = await supabase
         .from("order_items")
         .insert({
@@ -482,7 +575,47 @@ export class BookingService {
         throw new BadRequestException("Could not create updated order items");
       }
     }
-    // hier einfügen updated mit time stamp
+    // 5.8 send mail to user:
+
+    await this.mailService.sendMail(
+      user.email,
+      "Your booking has been updated!",
+      `<h1>Hello <strong></strong></h1>
+       <p>Your booking has been successfully updated. The order has been sent to the admins for further review.</p>
+       <p>Order Number: <strong>${order.order_number}</strong></p>
+       <p>Updated Details:</p>
+       <ul>
+         ${updatedItems
+           .map(
+             (item) =>
+               `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
+           )
+           .join("")}
+       </ul>
+       <p>Please be patient while someone reviews the updated booking.</p>`,
+    );
+
+    // 5.9 send email to admin about new booking
+    const adminEmail = "illusia.rental.service@gmail.com";
+
+    await this.mailService.sendMail(
+      adminEmail,
+      "Booking Updated - Awaiting Your Action",
+      `<h1>Booking Update Received</h1>
+   <p>An existing booking has been updated with the order number: <strong>${order.order_number}</strong>.</p>
+   <p>The order is now pending and awaiting your action.</p>
+   <p>Updated Details:</p>
+   <ul>
+     ${updatedItems
+       .map(
+         (item) =>
+           `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
+       )
+       .join("")}
+   </ul>
+   <p>Please review the updated booking and take the necessary action.</p>`,
+    );
+
     return { message: "Booking updated" };
   }
 
@@ -491,9 +624,24 @@ export class BookingService {
     //const supabase = await this.supabaseService.getClientByRole(userId);
     const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
+    // check if already rejected
+    const { data: order } = await supabase
+      .from("orders")
+      .select("status, user_id, order_number")
+      .eq("id", orderId)
+      .single();
+
+    if (!order) throw new BadRequestException("Order not found");
+
+    // prevent re-rejection
+    if (order.status === "rejected") {
+      throw new BadRequestException("Booking is already rejected");
+    }
+
+    // 6.1 user role check
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
-      .select("role")
+      .select("role, email")
       .eq("id", userId)
       .single();
 
@@ -507,58 +655,19 @@ export class BookingService {
       throw new ForbiddenException("Only admins can reject bookings");
     }
 
-    // TODO: refactor back to the version using the trigger function
-    // get all items of order
-    const { data: orderItems, error: fetchError } = await supabase
+    // fetch order items for email
+    const { data: orderItems, error: orderItemsError } = await supabase
       .from("order_items")
-      .select("id, item_id, quantity, status")
+      .select("item_id, quantity, start_date, end_date")
       .eq("order_id", orderId);
 
-    if (fetchError || !orderItems) {
-      console.error("Failed to fetch order items:", fetchError);
-      throw new BadRequestException("Could not retrieve order items");
+    if (orderItemsError || !orderItems) {
+      throw new BadRequestException(
+        "Could not fetch order items for rejection",
+      );
     }
 
-    // book items back manually
-    for (const item of orderItems) {
-      if (item.status === "confirmed") {
-        const { data: stockItem, error: stockFetchError } = await supabase
-          .from("storage_items")
-          .select("items_number_available")
-          .eq("id", item.item_id)
-          .single();
-
-        if (stockFetchError || !stockItem) {
-          console.error("Failed to fetch stock for item", item.item_id);
-          throw new BadRequestException(
-            `Could not fetch stock for item ${item.item_id}`,
-          );
-        }
-
-        const updatedQuantity =
-          (stockItem.items_number_available ?? 0) + (item.quantity ?? 0);
-
-        // increase stock
-        const { error: updateError } = await supabase
-          .from("storage_items")
-          .update({ items_number_available: updatedQuantity })
-          .eq("id", item.item_id);
-
-        if (updateError) {
-          console.error(
-            `Failed to restore stock for item ${item.item_id}:`,
-            updateError,
-          );
-          throw new BadRequestException(
-            "Could not restore stock for some items",
-          );
-        }
-      }
-    }
-    // end of the part: booking items back manually (TODO)
-
-    // for using the trigger function: TODO: make it work
-    // Cancel related order_items to trigger stock restoration
+    // 6.2 set order_item status to cancelled
     const { error: itemUpdateError } = await supabase
       .from("order_items")
       .update({ status: "cancelled" }) // Trigger watches for change
@@ -571,6 +680,7 @@ export class BookingService {
       );
     }
 
+    // 6.3 set order status to rejected
     const { error: updateError } = await supabase
       .from("orders")
       .update({ status: "rejected" })
@@ -580,6 +690,44 @@ export class BookingService {
       console.error("Failed to reject booking:", updateError);
       throw new BadRequestException("Could not reject the booking");
     }
+
+    // 6.4 Send mail to user about booking rejection:
+    await this.mailService.sendMail(
+      user.email,
+      "Your booking has been rejected",
+      `<h1>Hello</h1>
+    <p>We regret to inform you that your booking has been rejected. The order has been cancelled.</p>
+    <p>Order Number: <strong>${order.order_number}</strong></p>
+    <p>Details of the rejected booking:</p>
+    <ul>
+      ${orderItems
+        .map(
+          (item) =>
+            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
+        )
+        .join("")}
+    </ul>
+    <p>If you have any questions, please feel free to contact us.</p>`,
+    );
+
+    // 6.6 Send email to admin about rejected booking
+    const adminEmail = "illusia.rental.service@gmail.com";
+
+    await this.mailService.sendMail(
+      adminEmail,
+      "Booking Rejected - Action Taken",
+      `<h1>Booking Rejection Confirmation</h1>
+    <p>The booking with the order number: <strong>${order.order_number}</strong> has been rejected.</p>
+    <p>The following items were part of the rejected booking:</p>
+    <ul>
+      ${orderItems
+        .map(
+          (item) =>
+            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
+        )
+        .join("")}
+    </ul>`,
+    );
     return { message: "Booking rejected" };
   }
 
@@ -588,9 +736,10 @@ export class BookingService {
     //const supabase = await this.supabaseService.getClientByRole(userId);
     const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
+    // 7.1 check user role
     const { data: order } = await supabase
       .from("orders")
-      .select("user_id")
+      .select("status, user_id")
       .eq("id", orderId)
       .single<{
         user_id: string;
@@ -599,9 +748,16 @@ export class BookingService {
 
     if (!order) throw new BadRequestException("Order not found");
 
+    // prevent re-cancellation
+    const finalStates = new Set(["cancelled by user", "cancelled by admin"]);
+
+    if (finalStates.has(order.status)) {
+      throw new BadRequestException(`Booking has already been ${order.status}`);
+    }
+
     const { data: userProfile, error: userProfileError } = await supabase
       .from("user_profiles")
-      .select("role")
+      .select("role, email")
       .eq("id", userId)
       .single();
 
@@ -613,6 +769,7 @@ export class BookingService {
       userProfile.role === "admin" || userProfile.role === "superVera";
     const isOwner = order.user_id === userId;
 
+    // 7.2 permissions check
     if (!isAdmin) {
       if (!isOwner) {
         throw new ForbiddenException("You can only cancel your own bookings");
@@ -624,10 +781,10 @@ export class BookingService {
       }
     }
 
-    // Cancel related order_items to trigger stock restoration
+    // 7.5 Cancel all related order_items
     const { error: itemUpdateError } = await supabase
       .from("order_items")
-      .update({ status: "cancelled" }) // Trigger watches for this change
+      .update({ status: "cancelled" })
       .eq("order_id", orderId);
 
     if (itemUpdateError) {
@@ -637,6 +794,7 @@ export class BookingService {
       );
     }
 
+    // 7.4 update order_items
     const { error } = await supabase
       .from("orders")
       .update({ status: isAdmin ? "cancelled by admin" : "cancelled by user" })
@@ -644,6 +802,58 @@ export class BookingService {
 
     if (error) {
       throw new BadRequestException("Could not cancel the booking");
+    }
+
+    // 7.6 Fetch order items for email details
+    const { data: orderItems, error: orderItemsError } = await supabase
+      .from("order_items")
+      .select("item_id, quantity, start_date, end_date")
+      .eq("order_id", orderId);
+
+    if (orderItemsError || !orderItems) {
+      throw new BadRequestException(
+        "Could not fetch order items for cancellation",
+      );
+    }
+
+    // 7.7 send email to user or admin (depends on who cancelled the booking)
+    if (isAdmin) {
+      // If the admin cancels booking:
+      await this.mailService.sendMail(
+        userProfile.email,
+        "Your booking has been cancelled",
+        `<h1>Hello,</h1>
+    <p>Your booking with order number <strong>${orderId}</strong> has been cancelled.</p>
+    <p>Details of the cancelled booking:</p>
+    <ul>
+      ${orderItems
+        .map(
+          (item) =>
+            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
+        )
+        .join("")}
+    </ul>
+        <p>If this cancellation was unintended, you can restore it from your booking history.</p>
+    <p>If you have any questions, please feel free to contact us.</p>`,
+      );
+    } else {
+      // if the user cancels the booking:
+      await this.mailService.sendMail(
+        userProfile.email,
+        "The booking has been cancelled",
+        `<h1>Hello,</h1>
+    <p>The booking with order number <strong>${orderId}</strong> has been successfully cancelled.</p>
+    <p>Details of the cancelled booking:</p>
+    <ul>
+      ${orderItems
+        .map(
+          (item) =>
+            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
+        )
+        .join("")}
+    </ul>
+    <p>If this cancellation was unintended, you can restore it from your booking history.</p>`,
+      );
     }
 
     return {
@@ -656,15 +866,21 @@ export class BookingService {
     //const supabase = await this.supabaseService.getClientByRole(userId);
     const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
 
-    // check if order is in database
+    // 8.1 check order in database
     const { data: order } = await supabase
       .from("orders")
-      .select("user_id")
+      .select("status, user_id")
       .eq("id", orderId)
       .single();
 
     if (!order) throw new BadRequestException("Order not found");
 
+    // prevent re-deletion
+    if (order.status === "deleted") {
+      throw new BadRequestException("Booking is already deleted");
+    }
+
+    // 8.2 check user role
     const { data: userProfile, error: userProfileError } = await supabase
       .from("user_profiles")
       .select("role")
@@ -684,29 +900,63 @@ export class BookingService {
       );
     }
 
-    // Cancel related order_items to trigger stock restoration
+    // 8.3 ancel all related order_items to restore virtual stock
     const { error: itemUpdateError } = await supabase
       .from("order_items")
-      .update({ status: "cancelled" }) // Trigger watches for change
+      .update({ status: "cancelled" })
       .eq("order_id", orderId);
 
     if (itemUpdateError) {
       console.error("Order items update error:", itemUpdateError);
-      throw new BadRequestException(
-        "Could not update order items for cancellation",
-      );
+      throw new BadRequestException("Could not cancel related order items");
     }
 
-    // Delete all items
-    await supabase.from("order_items").delete().eq("order_id", orderId);
+    // 8.4 fetch order_items for email
+    const { data: orderItems, error: orderItemsError } = await supabase
+      .from("order_items")
+      .select("item_id, quantity, start_date, end_date")
+      .eq("order_id", orderId);
 
-    // Mark order as deleted
-    await supabase
+    if (orderItemsError || !orderItems) {
+      throw new BadRequestException("Could not fetch order items for email");
+    }
+
+    // 8.5 Soft-delete the order (update only)
+    const deletedAt = new Date().toISOString();
+    const { error: deleteError } = await supabase
       .from("orders")
-      .update({ status: "deleted" })
+      .update({
+        status: "deleted",
+      })
       .eq("id", orderId);
 
-    return { message: "Booking deleted" };
+    if (deleteError) {
+      throw new BadRequestException("Could not mark booking as deleted");
+    }
+
+    // 8.6 8.5 send notification email to admin
+    const adminEmail = "illusia.rental.service@gmail.com";
+
+    await this.mailService.sendMail(
+      adminEmail,
+      "Booking deleted",
+      `<h1>Booking deleted successfully</h1>
+    <p>The following booking (ID: <strong>${orderId}</strong>) was successfully deleted.</p>
+    <p>Details:</p>
+    <ul>
+      ${orderItems
+        .map(
+          (item) =>
+            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
+        )
+        .join("")}
+    </ul>
+    <p>The booking remains in the system but is marked as deleted and not longer visible for the user.</p>`,
+    );
+
+    return {
+      message: "Booking deleted",
+    };
   }
 
   // 9. return items (when items are brought back)
@@ -716,11 +966,17 @@ export class BookingService {
 
     const { data: items } = await supabase
       .from("order_items")
-      .select("item_id, quantity")
+      .select("item_id, quantity, status")
       .eq("order_id", orderId);
 
     if (!items || items.length === 0) {
       throw new BadRequestException("No items found for return");
+    }
+
+    for (const item of items) {
+      if (item.status === "returned") {
+        throw new BadRequestException("Items are already returned");
+      }
     }
 
     for (const item of items) {
@@ -729,6 +985,54 @@ export class BookingService {
         quantity: item.quantity,
       });
     }
+
+    // 3. Fetch user email
+    const { data: user, error: userError } = await supabase
+      .from("user_profiles")
+      .select("email")
+      .eq("id", userId)
+      .single();
+
+    if (userError || !user) {
+      throw new BadRequestException(
+        "User profile not found for email notification",
+      );
+    }
+
+    // 4. email to the user
+    await this.mailService.sendMail(
+      user.email,
+      "Items Returned – Thank You!",
+      `<h1>Thank you!</h1>
+  <p>Your returned items for booking <strong>${orderId}</strong> have been received.</p>
+  <p>Returned Items:</p>
+  <ul>
+    ${items
+      .map(
+        (item) => `<li>Item: ${item.item_id}, Quantity: ${item.quantity}</li>`,
+      )
+      .join("")}
+  </ul>
+  <p>We appreciate your punctuality. Feel free to book with us again anytime!</p>`,
+    );
+
+    // 5. Email to the admin
+    const adminEmail = "illusia.rental.service@gmail.com";
+
+    await this.mailService.sendMail(
+      adminEmail,
+      "Items Returned – Back in Stock",
+      `<h1>Items Returned</h1>
+  <p>The following items have been returned for order <strong>${orderId}</strong> and are now back in stock:</p>
+  <ul>
+    ${items
+      .map(
+        (item) => `<li>Item: ${item.item_id}, Quantity: ${item.quantity}</li>`,
+      )
+      .join("")}
+  </ul>
+  <p>Inventory has been updated accordingly.</p>`,
+    );
 
     return { message: "Items returned successfully" };
   }
@@ -780,5 +1084,150 @@ export class BookingService {
       startDate,
       endDate,
     };
+  }
+
+  // 11. confirm pickup of items
+  async confirmPickup(orderItemId: string) {
+    const supabase = this.supabaseService.getServiceClient();
+    const today = new Date().toISOString().split("T")[0];
+
+    // 11.1. Get the order item
+    const { data: orderItem, error: itemError } = await supabase
+      .from("order_items")
+      .select("item_id, quantity, start_date, end_date, status, order_id")
+      .eq("id", orderItemId)
+      .single();
+
+    if (itemError || !orderItem) {
+      throw new BadRequestException("Order item not found");
+    }
+
+    if (orderItem.status !== "confirmed") {
+      throw new BadRequestException("Order item is not confirmed");
+    }
+
+    if (orderItem.start_date > today) {
+      throw new BadRequestException(
+        "Cannot confirm pickup before the booking start date",
+      );
+    }
+
+    if (orderItem.end_date < today) {
+      throw new BadRequestException(
+        "Booking period has already ended. Pickup not allowed.",
+      );
+    }
+
+    // 11.2. Get associated storage item
+    const { data: storageItem, error: storageError } = await supabase
+      .from("storage_items")
+      .select("items_number_currently_in_storage")
+      .eq("id", orderItem.item_id)
+      .eq("status", "confirmed")
+      .single();
+
+    if (storageError || !storageItem) {
+      throw new BadRequestException("Storage item not found or not confirmed");
+    }
+
+    const newCount =
+      (storageItem.items_number_currently_in_storage || 0) -
+      (orderItem.quantity || 0);
+
+    if (newCount < 0) {
+      throw new BadRequestException("Not enough stock to confirm pickup");
+    }
+
+    // 11.3. Update storage stock
+    const { error: updateStockError } = await supabase
+      .from("storage_items")
+      .update({ items_number_currently_in_storage: newCount })
+      .eq("id", orderItem.item_id);
+
+    if (updateStockError) {
+      throw new BadRequestException("Failed to update storage stock");
+    }
+
+    // 11.4. Update order item status to "picked_up"
+    const { error: updateStatusError } = await supabase
+      .from("order_items")
+      .update({ status: "picked_up" })
+      .eq("id", orderItemId);
+
+    if (updateStatusError) {
+      throw new BadRequestException("Failed to update order item status");
+    }
+
+    // 11.5. Get user email from related order
+    const { data: order } = await supabase
+      .from("orders")
+      .select("user_id")
+      .eq("id", orderItem.order_id)
+      .single();
+
+    if (!order) {
+      throw new BadRequestException("Order not found");
+    }
+
+    const { data: user, error: userError } = await supabase
+      .from("user_profiles")
+      .select("email")
+      .eq("id", order.user_id)
+      .single();
+
+    if (userError || !user) {
+      throw new BadRequestException(
+        "User profile not found for email notification",
+      );
+    }
+
+    // 11.6 email to the user
+    await this.mailService.sendMail(
+      user.email,
+      "Pickup Confirmed",
+      `<h1>Pickup Confirmed</h1>
+  <p>Your item with ID <strong>${orderItem.item_id}</strong> has been picked up.</p>
+  <p>Quantity: ${orderItem.quantity}</p>
+  <p>We wish you a nice event. Enjoy!</p>`,
+    );
+
+    // 11.7 Email to the admin
+    const adminEmail = "illusia.rental.service@gmail.com";
+
+    await this.mailService.sendMail(
+      adminEmail,
+      "Item Picked Up",
+      `<h1>Item Pickup Notification</h1>
+  <p>The following item was picked up:</p>
+  <ul>
+    <li>Item ID: ${orderItem.item_id}</li>
+    <li>Quantity: ${orderItem.quantity}</li>
+    <li>Order ID: ${orderItem.order_id}</li>
+  </ul>
+  <p>Updated storage stock: ${newCount}</p>`,
+    );
+
+    return {
+      message: `Pickup confirmed for item ${orderItem.item_id}`,
+      newStorageCount: newCount,
+    };
+  }
+
+  // 12. virtual number of items for a specific date
+  async getAvailableQuantityForDate(itemId: string, date: string) {
+    const supabase = this.supabaseService.getServiceClient();
+
+    if (!itemId || !date) {
+      throw new BadRequestException("item_id and date are mandatory");
+    }
+
+    const num_available = await calculateAvailableQuantity(
+      supabase,
+      itemId,
+      date,
+      date,
+    );
+
+    return num_available ?? 0;
   }
 }
