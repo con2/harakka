@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -8,22 +8,22 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { useAppDispatch } from '@/store/hooks';
-import { fetchAllItems, updateItem } from '@/store/slices/itemsSlice';
-import { Item } from '@/types';
-import { toast } from 'sonner';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/dialog";
+import { useAppDispatch } from "@/store/hooks";
+import { fetchAllItems, updateItem } from "@/store/slices/itemsSlice";
+import { Item } from "@/types";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 import {
   fetchAllTags,
   fetchTagsForItem,
   assignTagToItem,
   selectAllTags,
   selectSelectedTags,
-} from '@/store/slices/tagSlice';
-import { useAppSelector } from '@/store/hooks';
-import { Checkbox } from '@/components/ui/checkbox';
-import ItemImageManager from './ItemImageManager';
+} from "@/store/slices/tagSlice";
+import { useAppSelector } from "@/store/hooks";
+import { Checkbox } from "@/components/ui/checkbox";
+import ItemImageManager from "./ItemImageManager";
 
 type UpdateItemModalProps = {
   onClose: () => void;
@@ -37,7 +37,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   const tags = useAppSelector(selectAllTags);
   const selectedTags = useAppSelector(selectSelectedTags);
   const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'details' | 'images'>('details');
+  const [activeTab, setActiveTab] = useState<"details" | "images">("details");
 
   // Prefill the form with initial data if available
   useEffect(() => {
@@ -70,15 +70,15 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
     const { name, value } = e.target;
 
     // Handle nested fields (like translations) separately
-    if (name.startsWith('translations')) {
-      const language = name.split('.')[1] as keyof typeof formData.translations;
+    if (name.startsWith("translations")) {
+      const language = name.split(".")[1] as keyof typeof formData.translations;
       setFormData((prev) => ({
         ...prev,
         translations: {
           ...prev.translations,
           [language]: {
             ...prev.translations[language],
-            [name.split('.')[2]]: value,
+            [name.split(".")[2]]: value,
           },
         },
       }));
@@ -109,11 +109,11 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
         assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
       ).unwrap();
       dispatch(fetchAllItems());
-      toast.success('Item updated successfully!');
+      toast.success("Item updated successfully!");
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to update item.');
+      toast.error("Failed to update item.");
     } finally {
       setLoading(false);
     }
@@ -133,84 +133,123 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
         <div className="flex border-b mb-4">
           <button
             className={`px-4 py-2 ${
-              activeTab === 'details'
-                ? 'border-b-2 border-secondary font-medium'
-                : 'text-gray-500'
+              activeTab === "details"
+                ? "border-b-2 border-secondary font-medium"
+                : "text-gray-500"
             }`}
-            onClick={() => setActiveTab('details')}
+            onClick={() => setActiveTab("details")}
           >
             Details
           </button>
           <button
             className={`px-4 py-2 ${
-              activeTab === 'images'
-                ? 'border-b-2 border-secondary font-medium'
-                : 'text-gray-500'
+              activeTab === "images"
+                ? "border-b-2 border-secondary font-medium"
+                : "text-gray-500"
             }`}
-            onClick={() => setActiveTab('images')}
+            onClick={() => setActiveTab("images")}
           >
             Images
           </button>
         </div>
 
-        {activeTab === 'details' ? (
+        {activeTab === "details" ? (
           // Your existing form content
           <div>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Item Translation Fields */}
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <h3 className="text-lg font-medium">Translations</h3>
 
-                {/* Finnish Translation */}
-                <div>
-                  <label htmlFor="translations.fi.item_name">
-                    Item Name (FI)
-                  </label>
-                  <Input
-                    id="translations.fi.item_name"
-                    name="translations.fi.item_name"
-                    value={formData.translations.fi.item_name}
-                    onChange={handleChange}
-                    placeholder="Item Name (fi)"
-                    required
-                  />
-                  <label htmlFor="translations.fi.item_description">
-                    Item Description (FI)
-                  </label>
-                  <Input
-                    id="translations.fi.item_description"
-                    name="translations.fi.item_description"
-                    value={formData.translations.fi.item_description}
-                    onChange={handleChange}
-                    placeholder="Item Description (fi)"
-                    required
-                  />
+                {/* Item Names - Side by Side */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="translations.fi.item_name">
+                      Item Name (FI)
+                    </label>
+                    <Input
+                      id="translations.fi.item_name"
+                      name="translations.fi.item_name"
+                      value={formData.translations.fi.item_name}
+                      onChange={handleChange}
+                      placeholder="Item Name (fi)"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="translations.en.item_name">
+                      Item Name (EN)
+                    </label>
+                    <Input
+                      id="translations.en.item_name"
+                      name="translations.en.item_name"
+                      value={formData.translations.en.item_name}
+                      onChange={handleChange}
+                      placeholder="Item Name (en)"
+                      required
+                    />
+                  </div>
                 </div>
 
-                {/* English Translation */}
-                <div className="space-y-2">
-                  <label htmlFor="translations.en.item_name">
-                    Item Name (EN)
-                  </label>
-                  <Input
-                    id="translations.en.item_name"
-                    name="translations.en.item_name"
-                    value={formData.translations.en.item_name}
-                    onChange={handleChange}
-                    placeholder="Item Name (en)"
-                    required
-                  />
-                  <label htmlFor="translations.en.item_description">
-                    Item Description (EN)
-                  </label>
-                  <Input
-                    id="translations.en.item_description"
-                    name="translations.en.item_description"
-                    value={formData.translations.en.item_description}
-                    onChange={handleChange}
-                    placeholder="Item Description (en)"
-                    required
-                  />
+                {/* Item Types - Side by Side (if they exist in your schema) */}
+                {(formData.translations.fi.item_type !== undefined ||
+                  formData.translations.en.item_type !== undefined) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="translations.fi.item_type">
+                        Item Type (FI)
+                      </label>
+                      <Input
+                        id="translations.fi.item_type"
+                        name="translations.fi.item_type"
+                        value={formData.translations.fi.item_type || ""}
+                        onChange={handleChange}
+                        placeholder="Item Type (fi)"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="translations.en.item_type">
+                        Item Type (EN)
+                      </label>
+                      <Input
+                        id="translations.en.item_type"
+                        name="translations.en.item_type"
+                        value={formData.translations.en.item_type || ""}
+                        onChange={handleChange}
+                        placeholder="Item Type (en)"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Item Descriptions - Side by Side */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="translations.fi.item_description">
+                      Item Description (FI)
+                    </label>
+                    <Input
+                      id="translations.fi.item_description"
+                      name="translations.fi.item_description"
+                      value={formData.translations.fi.item_description}
+                      onChange={handleChange}
+                      placeholder="Item Description (fi)"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="translations.en.item_description">
+                      Item Description (EN)
+                    </label>
+                    <Input
+                      id="translations.en.item_description"
+                      name="translations.en.item_description"
+                      value={formData.translations.en.item_description}
+                      onChange={handleChange}
+                      placeholder="Item Description (en)"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
               {/* Price */}
@@ -259,7 +298,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                       <span>
                         {tag.translations?.fi?.name ||
                           tag.translations?.en?.name ||
-                          'Unnamed'}
+                          "Unnamed"}
                       </span>
                     </label>
                   ))}
@@ -271,9 +310,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 type="submit"
                 className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
                 disabled={loading}
-                size={'sm'}
+                size={"sm"}
               >
-                {loading ? 'Updating...' : 'Update Item'}
+                {loading ? "Updating..." : "Update Item"}
               </Button>
             </form>
           </div>
@@ -283,14 +322,14 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
         )}
 
         <DialogFooter>
-          {activeTab === 'details' && (
+          {activeTab === "details" && (
             <Button
               onClick={handleSubmit}
               disabled={loading}
               className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
-              size={'sm'}
+              size={"sm"}
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? "Saving..." : "Save Changes"}
             </Button>
           )}
         </DialogFooter>
