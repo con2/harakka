@@ -863,4 +863,22 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       newStorageCount: newCount,
     };
   }
+
+  // 12. virtual number of items for a specific date
+  async getAvailableQuantityForDate(itemId: string, date: string) {
+    const supabase = this.supabaseService.getServiceClient();
+
+    if (!itemId || !date) {
+      throw new BadRequestException("item_id and date are mandatory");
+    }
+
+    const num_available = await calculateAvailableQuantity(
+      supabase,
+      itemId,
+      date,
+      date,
+    );
+
+    return num_available ?? 0;
+  }
 }
