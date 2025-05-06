@@ -11,6 +11,7 @@ import {
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { User } from '../interfaces/user.interface';
+import { CreateAddressDto } from 'src/dto/create-address.dto';
 
 @Controller('users')
 export class UserController {
@@ -51,5 +52,39 @@ export class UserController {
   @Delete(':id')
   async deleteUser(@Param('id') id: string): Promise<void> {
     return this.userService.deleteUser(id);
+  }
+
+  // Address Endpoints
+
+  @Get(':id/addresses')
+  async getAddresses(@Param('id') id: string) {
+    const addresses = await this.userService.getAddressesByid(id);
+    // Return only the addresses array (empty or populated)
+    return addresses;
+  }
+
+  @Post(':id/addresses')
+  async addAddress(
+    @Param('id') id: string,
+    @Body() address: CreateAddressDto,
+  ) {
+    return this.userService.addAddress(id, address);
+  }
+
+  @Put(':id/addresses/:addressId')
+  async updateAddress(
+    @Param('id') id: string,
+    @Param('addressId') addressId: string,
+    @Body() address: CreateAddressDto,
+  ) {
+    return this.userService.updateAddress(id, addressId, address);
+  }
+
+  @Delete(':id/addresses/:addressId')
+  async deleteAddress(
+    @Param('id') id: string,
+    @Param('addressId') addressId: string,
+  ) {
+    return this.userService.deleteAddress(id, addressId);
   }
 }
