@@ -1,29 +1,29 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/card';
-import { Clock } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { getItemById, deleteItem } from '@/store/slices/itemsSlice';
-import { Item } from '../../types/item';
-import { format } from 'date-fns';
-import { Input } from '../ui/input';
-import { addToCart } from '@/store/slices/cartSlice';
-import { toast } from 'sonner';
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
+import { Clock } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { getItemById, deleteItem } from "@/store/slices/itemsSlice";
+import { Item } from "../../types/item";
+import { format } from "date-fns";
+import { Input } from "../ui/input";
+import { addToCart } from "@/store/slices/cartSlice";
+import { toast } from "sonner";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 import {
   getItemImages,
   selectItemImages,
-} from '../../store/slices/itemImagesSlice';
-import imagePlaceholder from '@/assets/defaultImage.jpg';
-import { ordersApi } from '@/api/services/orders';
-import { ItemImageAvailabilityInfo } from '@/types/storage';
+} from "../../store/slices/itemImagesSlice";
+import imagePlaceholder from "@/assets/defaultImage.jpg";
+import { ordersApi } from "@/api/services/orders";
+import { ItemImageAvailabilityInfo } from "@/types/storage";
 
 interface ItemsCardProps {
   item: Item;
@@ -33,7 +33,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user } = useAuth();
-  const isAdmin = user?.user_metadata?.role === 'admin'; // Admin check
+  const isAdmin = user?.user_metadata?.role === "admin"; // Admin check
   const itemImages = useAppSelector(selectItemImages);
 
   // Get global timeframe from Redux
@@ -67,19 +67,19 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
     // Find thumbnail image for this item
     const thumbnailImage = validImages.find(
-      (img) => img.image_type === 'thumbnail',
+      (img) => img.image_type === "thumbnail",
     );
 
     // If no thumbnail found, try to get main image
     const mainImage =
-      !thumbnailImage && validImages.find((img) => img.image_type === 'main');
+      !thumbnailImage && validImages.find((img) => img.image_type === "main");
 
     // Use thumbnail or main image URL
-    return thumbnailImage?.image_url || mainImage?.image_url || '';
+    return thumbnailImage?.image_url || mainImage?.image_url || "";
   }, [itemImagesForCurrentItem]);
 
   // Image handling states
-  const [currentImageUrl, setCurrentImageUrl] = useState('');
+  const [currentImageUrl, setCurrentImageUrl] = useState("");
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const imageLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -104,7 +104,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       }, 5000); // 5 seconds timeout
     } else {
       // If no URL or URL previously failed
-      setCurrentImageUrl('');
+      setCurrentImageUrl("");
       setIsImageLoading(false);
       setLoadFailed(true);
     }
@@ -124,7 +124,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       dispatch(getItemImages(item.id))
         .unwrap()
         .catch((error) => {
-          console.error('Failed to fetch item images:', error);
+          console.error("Failed to fetch item images:", error);
         });
     }
   }, [dispatch, item.id, itemImagesForCurrentItem.length]);
@@ -137,13 +137,13 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   // Handle item deletion
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this item?')) return;
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
     try {
       await dispatch(deleteItem(item.id)).unwrap(); // Delete item via Redux action
-      toast.success('Item deleted successfully');
+      toast.success("Item deleted successfully");
     } catch (error) {
-      console.error('Error deleting item:', error);
-      toast.error('Failed to delete item');
+      console.error("Error deleting item:", error);
+      toast.error("Failed to delete item");
     }
   };
 
@@ -188,11 +188,11 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           });
         })
         .catch((error) => {
-          console.error('Error checking availability:', error);
+          console.error("Error checking availability:", error);
           setAvailabilityInfo({
             availableQuantity: item.items_number_available,
             isChecking: false,
-            error: 'Failed to check availability',
+            error: "Failed to check availability",
           });
         });
     }
@@ -222,7 +222,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         )}
         <img
           src={currentImageUrl || imagePlaceholder}
-          alt={item.translations?.en?.item_name || 'Storage item'}
+          alt={item.translations?.en?.item_name || "Storage item"}
           className="w-full h-full object-cover transition-opacity duration-300"
           onLoad={() => {
             if (imageLoadingTimeoutRef.current) {
@@ -281,7 +281,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             <span className="font-medium text-xs">Selected booking</span>
           </div>
           <p className="text-sm font-medium m-0">
-            {format(startDate, 'PPP')} - {format(endDate, 'PPP')}
+            {format(startDate, "PPP")} - {format(endDate, "PPP")}
           </p>
         </div>
       )}
@@ -358,8 +358,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                 tabIndex={0}
                 className={
                   isAddToCartDisabled
-                    ? 'inline-block w-full cursor-not-allowed'
-                    : 'inline-block w-full'
+                    ? "inline-block w-full cursor-not-allowed"
+                    : "inline-block w-full"
                 }
               >
                 <Button
@@ -367,7 +367,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                   className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-white hover:bg-secondary"
                   disabled={isAddToCartDisabled}
                   style={{
-                    pointerEvents: isAddToCartDisabled ? 'none' : 'auto',
+                    pointerEvents: isAddToCartDisabled ? "none" : "auto",
                   }}
                 >
                   Add to Cart
