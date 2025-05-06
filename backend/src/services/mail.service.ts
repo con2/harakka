@@ -19,28 +19,33 @@ export class MailService {
   }
 
   async sendMail(to: string, subject: string, html: string) {
-    const accessToken = await this.oAuth2Client.getAccessToken();
+    try {
+      const accessToken = await this.oAuth2Client.getAccessToken();
 
-    const transport = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.EMAIL_FROM,
-        clientId: process.env.GMAIL_CLIENT_ID,
-        clientSecret: process.env.GMAIL_CLIENT_SECRET,
-        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-        accessToken: accessToken.token,
-      },
-    });
+      const transport = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          type: "OAuth2",
+          user: process.env.EMAIL_FROM,
+          clientId: process.env.GMAIL_CLIENT_ID,
+          clientSecret: process.env.GMAIL_CLIENT_SECRET,
+          refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+          accessToken: accessToken.token,
+        },
+      });
 
-    const mailOptions = {
-      from: `BookingApp <${process.env.EMAIL_FROM}>`,
-      to,
-      subject,
-      html,
-    };
+      const mailOptions = {
+        from: `BookingApp <${process.env.EMAIL_FROM}>`,
+        to,
+        subject,
+        html,
+      };
 
-    const result = await transport.sendMail(mailOptions);
-    return result;
+      const result = await transport.sendMail(mailOptions);
+      return result;
+    } catch (error) {
+      console.error("Failed to send email:", error); // 👈 Logging!
+      throw new Error("Mail sending failed: " + error.message);
+    }
   }
 }

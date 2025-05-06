@@ -297,7 +297,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       }
     }
 
-    // send mail to user:
+    // 3.6 send mail to user:
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
       .select("email")
@@ -311,7 +311,28 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
     await this.mailService.sendMail(
       user.email,
       "Booking is successful!",
-      `<h1>Hello</h1><p>Order is sent to admins, please have a bit patience, until someone answers your request</p>`,
+      `<h1>Hello <strong></strong></h1><p>Your booking has been received. The order has been sent to the admins. Please be patient while someone reviews your request.</p>`,
+    );
+
+    // 3.7 send email to admin about new booking
+    const adminEmail = "illusia.rental.service@gmail.com";
+
+    await this.mailService.sendMail(
+      adminEmail,
+      "New Booking Awaiting Action",
+      `<h1>New Booking Received</h1>
+     <p>A new booking has been created with the order number: <strong>${orderNumber}</strong>.</p>
+     <p>The order is pending and awaiting your action.</p>
+     <p>Details:</p>
+     <ul>
+       ${dto.items
+         .map(
+           (item) =>
+             `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
+         )
+         .join("")}
+     </ul>
+     <p>Please review the booking and take necessary action.</p>`,
     );
 
     return warningMessage ? { order, warning: warningMessage } : order;
