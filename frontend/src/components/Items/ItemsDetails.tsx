@@ -1,24 +1,24 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import React, { useEffect, useState, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   getItemById,
   selectSelectedItem,
   selectItemsLoading,
   selectItemsError,
-} from '../../store/slices/itemsSlice';
+} from "../../store/slices/itemsSlice";
 import {
   getItemImages,
   selectItemImages,
-} from '../../store/slices/itemImagesSlice';
-import { Button } from '../../components/ui/button';
-import { Clock, LoaderCircle } from 'lucide-react';
-import Rating from '../ui/rating';
-import { addToCart } from '../../store/slices/cartSlice';
-import { Input } from '../ui/input';
-import { toast } from 'sonner';
-import { format } from 'date-fns';
-import imagePlaceholder from '@/assets/defaultImage.jpg';
+} from "../../store/slices/itemImagesSlice";
+import { Button } from "../../components/ui/button";
+import { Clock, LoaderCircle } from "lucide-react";
+import Rating from "../ui/rating";
+import { addToCart } from "../../store/slices/cartSlice";
+import { Input } from "../ui/input";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import imagePlaceholder from "@/assets/defaultImage.jpg";
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -33,7 +33,7 @@ const ItemsDetails: React.FC = () => {
   const itemImages = useAppSelector(selectItemImages);
 
   // State for selected tab
-  const [selectedTab, setSelectedTab] = useState('description');
+  const [selectedTab, setSelectedTab] = useState("description");
   // State for cart quantity
   const [quantity, setQuantity] = useState(1);
   // Image tracking states
@@ -47,7 +47,7 @@ const ItemsDetails: React.FC = () => {
 
   // Get all detail images for the gallery
   const detailImages = useMemo(
-    () => itemImagesForCurrentItem.filter((img) => img.image_type === 'detail'),
+    () => itemImagesForCurrentItem.filter((img) => img.image_type === "detail"),
     [itemImagesForCurrentItem],
   );
 
@@ -58,13 +58,13 @@ const ItemsDetails: React.FC = () => {
 
     // First try to find a main image
     const mainImg = itemImagesForCurrentItem.find(
-      (img) => img.image_type === 'main',
+      (img) => img.image_type === "main",
     );
 
     // If no main image, try thumbnail
     const thumbnailImg =
       !mainImg &&
-      itemImagesForCurrentItem.find((img) => img.image_type === 'thumbnail');
+      itemImagesForCurrentItem.find((img) => img.image_type === "thumbnail");
 
     // Then try any image
     const anyImg = !mainImg && !thumbnailImg && itemImagesForCurrentItem[0];
@@ -102,7 +102,7 @@ const ItemsDetails: React.FC = () => {
       dispatch(getItemImages(id))
         .unwrap()
         .catch((error) => {
-          console.error('Failed to fetch item images:', error);
+          console.error("Failed to fetch item images:", error);
         });
     }
   }, [id, dispatch]);
@@ -139,7 +139,7 @@ const ItemsDetails: React.FC = () => {
           <div className="border rounded-md overflow-hidden bg-slate-50 mb-4">
             <img
               src={mainImage}
-              alt={item.translations.en.item_name || 'Item image'}
+              alt={item.translations.en.item_name || "Item image"}
               className="w-full h-[300px] object-contain"
               onError={(e) => {
                 console.warn(`Failed to load image: ${mainImage}`);
@@ -160,7 +160,7 @@ const ItemsDetails: React.FC = () => {
                 >
                   <img
                     src={img.image_url}
-                    alt={img.alt_text || 'Detail image'}
+                    alt={img.alt_text || "Detail image"}
                     className="w-full h-20 object-cover"
                     loading="lazy"
                     onError={(e) => {
@@ -191,7 +191,7 @@ const ItemsDetails: React.FC = () => {
                 <span className="font-medium">Selected booking:</span>
               </div>
               <p className="text-xs m-0">
-                {format(startDate, 'PPP')} - {format(endDate, 'PPP')}
+                {format(startDate, "PPP")} - {format(endDate, "PPP")}
               </p>
             </div>
           )}
@@ -250,21 +250,21 @@ const ItemsDetails: React.FC = () => {
       <div className="mt-10 w-full">
         <div className="flex gap-4">
           <Button
-            onClick={() => setSelectedTab('description')}
+            onClick={() => setSelectedTab("description")}
             className={`${
-              selectedTab === 'description'
-                ? 'bg-secondary text-white'
-                : 'bg-transparent text-secondary'
+              selectedTab === "description"
+                ? "bg-secondary text-white"
+                : "bg-transparent text-secondary"
             } hover:bg-secondary hover:text-white`}
           >
             Description
           </Button>
           <Button
-            onClick={() => setSelectedTab('reviews')}
+            onClick={() => setSelectedTab("reviews")}
             className={`${
-              selectedTab === 'reviews'
-                ? 'bg-secondary text-white'
-                : 'bg-transparent text-secondary'
+              selectedTab === "reviews"
+                ? "bg-secondary text-white"
+                : "bg-transparent text-secondary"
             } hover:bg-secondary hover:text-white`}
           >
             Reviews
@@ -273,10 +273,10 @@ const ItemsDetails: React.FC = () => {
 
         {/* Tab Content */}
         <div className="mt-4 bg-slate-50 p-4 rounded-lg">
-          {selectedTab === 'description' && (
+          {selectedTab === "description" && (
             <p>{item.translations.fi.item_description}</p>
           )}
-          {selectedTab === 'reviews' && <p>Reviews will be displayed here</p>}
+          {selectedTab === "reviews" && <p>Reviews will be displayed here</p>}
         </div>
       </div>
     </div>

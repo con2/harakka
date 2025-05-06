@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -7,43 +7,49 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   createItem,
-  selectItemsLoading,
   selectItemsError,
   selectItemsErrorContext,
-} from '@/store/slices/itemsSlice';
-import { toast } from 'sonner';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Switch } from '../ui/switch';
-import { fetchAllTags, selectAllTags } from '@/store/slices/tagSlice';
-import { Loader2 } from 'lucide-react';
-import { ItemFormData, Item } from '@/types';
-import { Checkbox } from '../ui/checkbox';
-import ItemImageManager from './ItemImageManager';
+} from "@/store/slices/itemsSlice";
+import { toast } from "sonner";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { Switch } from "../ui/switch";
+import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
+import { Loader2 } from "lucide-react";
+import { ItemFormData } from "@/types";
+import { Checkbox } from "../ui/checkbox";
+import ItemImageManager from "./ItemImageManager";
+import {
+  openItemModal,
+  closeItemModal,
+  setItemModalStep,
+  setCreatedItemId,
+  selectItemModalState,
+} from "@/store/slices/uiSlice";
 
 const initialFormState: ItemFormData = {
-  location_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-  compartment_id: '0ffa5562-82a9-4352-b804-1adebbb7d80c',
+  location_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  compartment_id: "0ffa5562-82a9-4352-b804-1adebbb7d80c",
   items_number_total: 1,
   items_number_available: 1,
   price: 0,
   is_active: true,
   translations: {
     fi: {
-      item_type: '',
-      item_name: '',
-      item_description: '',
+      item_type: "",
+      item_name: "",
+      item_description: "",
     },
     en: {
-      item_type: '',
-      item_name: '',
-      item_description: '',
+      item_type: "",
+      item_name: "",
+      item_description: "",
     },
   },
   tagIds: [],
@@ -52,26 +58,35 @@ const initialFormState: ItemFormData = {
 const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
   const availableTags = useAppSelector(selectAllTags);
-  const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
   const errorContext = useAppSelector(selectItemsErrorContext);
 
+  // Use global modal state from Redux
+  const modalState = useAppSelector(selectItemModalState);
+
   const [formData, setFormData] = useState<ItemFormData>(initialFormState);
-  const [open, setOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Tab management
-  const [activeTab, setActiveTab] = useState<'details' | 'images'>('details');
-
-  // State to track created item for image management
-  const [createdItem, setCreatedItem] = useState<Item | null>(null);
+  // Fetch the created item from Redux store when we have the ID
+  const createdItem = useAppSelector((state) =>
+    modalState.createdItemId
+      ? state.items.items.find((item) => item.id === modalState.createdItemId)
+      : null,
+  );
 
   // Display errors when they occur
   useEffect(() => {
-    if (error && errorContext === 'create') {
+    if (error && errorContext === "create") {
       toast.error(error);
     }
   }, [error, errorContext]);
+
+  useEffect(() => {
+    if (modalState.isOpen) {
+      dispatch(fetchAllTags()); // Fetch all tags when modal opens
+    }
+  }, [dispatch, modalState.isOpen]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -79,11 +94,11 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
     const { name, value } = e.target;
 
     // Handle nested fields for translations (FI and EN)
-    if (name.includes('.')) {
-      const [parent, child, field] = name.split('.');
+    if (name.includes(".")) {
+      const [parent, child, field] = name.split(".");
 
-      if (parent === 'translations') {
-        if (child === 'fi' || child === 'en') {
+      if (parent === "translations") {
+        if (child === "fi" || child === "en") {
           setFormData({
             ...formData,
             translations: {
@@ -99,15 +114,15 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
     } else {
       // Handle numeric values
       if (
-        name === 'price' ||
-        name === 'items_number_total' ||
-        name === 'items_number_available'
+        name === "price" ||
+        name === "items_number_total" ||
+        name === "items_number_available"
       ) {
         setFormData({
           ...formData,
           [name]: parseFloat(value) || 0,
         } as ItemFormData); // Type assertion helps TypeScript understand
-      } else if (name === 'location_id' || name === 'compartment_id') {
+      } else if (name === "location_id" || name === "compartment_id") {
         setFormData({
           ...formData,
           [name]: value,
@@ -123,15 +138,14 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
-  const resetForm = () => {
-    setFormData(initialFormState);
-    setSelectedTags([]);
-    setCreatedItem(null);
-    setActiveTab('details');
-  };
-
+  // Handle form submission
   const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    setLoading(true);
 
     try {
       // Create the item
@@ -139,116 +153,110 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
         createItem({ ...formData, tagIds: selectedTags }),
       ).unwrap();
 
-      // Log the newly created item to verify what's returned
-      console.log('Item created successfully:', newItem);
+      console.log("Item created successfully:", newItem);
 
-      // Store the created item and move to image management
-      setCreatedItem(newItem);
-      toast.success('Item created successfully! You can now add images.');
-      setActiveTab('images');
+      // Update the global state
+      dispatch(setCreatedItemId(newItem.id));
+      dispatch(setItemModalStep("images"));
 
-      // Make sure modal stays open - don't call setOpen(false) here!
+      toast.success(
+        `Item "${newItem.translations.en.item_name}" created successfully! You can now add images.`,
+      );
     } catch (error) {
-      // Error is already handled by redux slice and displayed via useEffect
-      console.error('Error creating item:', error);
+      console.error("Error creating item:", error);
+      toast.error("Failed to create item");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle modal close with confirmation if needed
-  const handleClose = () => {
-    if (activeTab === 'images' && createdItem) {
-      if (
-        window.confirm(
-          'Are you sure you want to close? Any unsaved image changes will be lost.',
-        )
-      ) {
-        resetForm();
-        setOpen(false);
-      }
-    } else {
-      resetForm();
-      setOpen(false);
-    }
+  // Reset form and close modal
+  const resetForm = () => {
+    setFormData(initialFormState);
+    setSelectedTags([]);
+    dispatch(closeItemModal());
   };
-
-  useEffect(() => {
-    if (open) {
-      dispatch(fetchAllTags()); // Fetch all tags when modal opens
-    }
-  }, [dispatch, open]);
 
   return (
     <Dialog
-      open={open}
+      open={modalState.isOpen}
       onOpenChange={(isOpen) => {
-        // If trying to close
-        if (!isOpen) {
-          // Only if we're not in the middle of item creation/image management workflow
-          if (
-            !(activeTab === 'images' && createdItem) ||
-            window.confirm(
-              'Are you sure you want to close? Any unsaved image changes will be lost.',
-            )
-          ) {
-            resetForm();
-            setOpen(false);
-          }
+        if (isOpen) {
+          dispatch(openItemModal());
         } else {
-          setOpen(true);
+          // Handle close confirmation
+          if (modalState.currentStep === "images" && modalState.createdItemId) {
+            if (
+              confirm(
+                "Are you sure you want to close? Any unsaved image changes will be lost.",
+              )
+            ) {
+              resetForm();
+            }
+          } else {
+            resetForm();
+          }
         }
       }}
     >
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger asChild onClick={() => dispatch(openItemModal())}>
+        {children}
+      </DialogTrigger>
+
       <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {createdItem ? 'Manage Item Images' : 'Add New Item'}
+            {modalState.currentStep === "details"
+              ? "Add New Item"
+              : "Add Images"}
           </DialogTitle>
-          {createdItem && (
+          {modalState.currentStep === "images" && createdItem && (
             <DialogDescription className="text-center">
               Item "{createdItem.translations.en.item_name}" created
-              successfully. You can now add images.
+              successfully. Please add images.
             </DialogDescription>
           )}
         </DialogHeader>
 
-        {/* Tab Navigation */}
-        <div className="flex border-b mb-4">
+        {/* Steps indicator */}
+        <div className="flex mb-6 bg-gray-100 rounded-md p-1">
           <button
-            className={`px-4 py-2 ${
-              activeTab === 'details'
-                ? 'border-b-2 border-secondary font-medium'
-                : 'text-gray-500'
-            } ${createdItem ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex-1 py-2 px-4 rounded-md text-center ${
+              modalState.currentStep === "details"
+                ? "bg-white shadow-sm font-medium"
+                : "text-gray-500"
+            }`}
             onClick={() => {
-              if (!createdItem) setActiveTab('details');
+              if (createdItem) dispatch(setItemModalStep("details"));
             }}
-            disabled={!!createdItem}
+            disabled={!createdItem && modalState.currentStep === "images"}
           >
-            Details
+            1. Item Details
           </button>
           <button
-            className={`px-4 py-2 ${
-              activeTab === 'images'
-                ? 'border-b-2 border-secondary font-medium'
-                : 'text-gray-500'
-            } ${!createdItem ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex-1 py-2 px-4 rounded-md text-center ${
+              modalState.currentStep === "images"
+                ? "bg-white shadow-sm font-medium"
+                : "text-gray-500"
+            }`}
             onClick={() => {
-              if (createdItem) {
-                setActiveTab('images');
-              } else {
-                toast.error('Please create an item first before adding images');
-              }
+              if (createdItem) dispatch(setItemModalStep("images"));
             }}
             disabled={!createdItem}
           >
-            Images
+            2. Add Images
           </button>
         </div>
 
-        {activeTab === 'details' ? (
-          // Details Form Tab
-          <form onSubmit={handleSubmit} className="space-y-6">
+        {modalState.currentStep === "details" ? (
+          // Details Form
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit(e);
+            }}
+            className="space-y-6"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Finnish Information */}
               <div>
@@ -435,7 +443,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                         <span>
                           {tag.translations?.fi?.name ||
                             tag.translations?.en?.name ||
-                            'Unnamed Tag'}
+                            "Unnamed Tag"}
                         </span>
                       </label>
                     ))}
@@ -449,7 +457,6 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                 type="submit"
                 className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
                 disabled={loading}
-                size={'sm'}
               >
                 {loading ? (
                   <>
@@ -457,31 +464,39 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     Creating...
                   </>
                 ) : (
-                  'Create Item'
+                  "Create Item & Continue to Images"
                 )}
               </Button>
             </DialogFooter>
           </form>
-        ) : // Image Manager Tab
-        createdItem ? (
-          <ItemImageManager
-            itemId={createdItem.id}
-            setAvailabilityInfo={(info) => {
-              // Optional callback - can provide feedback on availability
-              console.log('Image availability updated:', info);
-            }}
-          />
+        ) : modalState.createdItemId ? (
+          <>
+            <ItemImageManager
+              itemId={modalState.createdItemId}
+              setAvailabilityInfo={(info) => {
+                console.log("Image availability updated:", info);
+              }}
+            />
+
+            <DialogFooter className="mt-4 gap-2">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={resetForm}
+              >
+                Done & Close
+              </Button>
+            </DialogFooter>
+          </>
         ) : (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">
-              Please create an item first before managing images
-            </p>
+            <p>Please create an item first</p>
             <Button
               className="mt-4"
               variant="outline"
-              onClick={() => setActiveTab('details')}
+              onClick={() => dispatch(setItemModalStep("details"))}
             >
-              Go back to item details
+              Go back to details
             </Button>
           </div>
         )}
