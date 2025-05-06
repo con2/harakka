@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
@@ -23,33 +23,7 @@ import {
 } from '../../store/slices/itemImagesSlice';
 import imagePlaceholder from '@/assets/defaultImage.jpg';
 import { ordersApi } from '@/api/services/orders';
-
-// Add this utility function near the top of your file
-const transformSupabaseUrl = (url: string): string => {
-  if (!url) return '';
-
-  // Check if it's already a proper URL with the correct format
-  if (url.includes('/object/public/')) return url;
-
-  try {
-    // Extract the project ID and path components
-    const urlObj = new URL(url);
-    const projectId = urlObj.hostname.split('.')[0];
-
-    // Find the bucket name in the path
-    const pathParts = urlObj.pathname.split('/');
-    const bucketIndex = pathParts.findIndex((part) => part === 'item-images');
-
-    if (bucketIndex === -1) return url; // Can't find bucket, return original
-
-    // Create the proper public URL format
-    const filePath = pathParts.slice(bucketIndex).join('/');
-    return `https://${projectId}.supabase.co/storage/v1/object/public/${filePath}`;
-  } catch (e) {
-    console.warn('Invalid URL format:', url, e);
-    return url;
-  }
-};
+import { ItemImageAvailabilityInfo } from '@/types/storage';
 
 interface ItemsCardProps {
   item: Item;
@@ -68,15 +42,12 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   // Only keep quantity as local state
   const [quantity, setQuantity] = useState(0);
 
-  const [availabilityInfo, setAvailabilityInfo] = useState<{
-    availableQuantity: number;
-    isChecking: boolean;
-    error: string | null;
-  }>({
-    availableQuantity: item.items_number_available,
-    isChecking: false,
-    error: null,
-  });
+  const [availabilityInfo, setAvailabilityInfo] =
+    useState<ItemImageAvailabilityInfo>({
+      availableQuantity: item.items_number_available,
+      isChecking: false,
+      error: null,
+    });
 
   // Enhanced image finding with memoization to prevent recalculation on every render
   const itemImagesForCurrentItem = useMemo(
@@ -84,32 +55,66 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
     [itemImages, item.id],
   );
 
+  // Add this persistent ref to track already-failed image URLs
+  const failedImageUrlsRef = useRef<Set<string>>(new Set());
+
   // Stable URL calculation that won't change between renders
   const stableImageUrl = useMemo(() => {
+    // Get all possible images for this item
+    const validImages = itemImagesForCurrentItem.filter(
+      (img) => !failedImageUrlsRef.current.has(img.image_url),
+    );
+
     // Find thumbnail image for this item
-    const thumbnailImage = itemImagesForCurrentItem.find(
+    const thumbnailImage = validImages.find(
       (img) => img.image_type === 'thumbnail',
     );
 
     // If no thumbnail found, try to get main image
     const mainImage =
-      !thumbnailImage &&
-      itemImagesForCurrentItem.find((img) => img.image_type === 'main');
+      !thumbnailImage && validImages.find((img) => img.image_type === 'main');
 
     // Use thumbnail or main image URL
     return thumbnailImage?.image_url || mainImage?.image_url || '';
   }, [itemImagesForCurrentItem]);
 
-  // Use this stable reference in your JSX
+  // Image handling states
   const [currentImageUrl, setCurrentImageUrl] = useState('');
   const [isImageLoading, setIsImageLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const imageLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Set the image URL just once when it changes
   useEffect(() => {
-    if (stableImageUrl) {
+    if (stableImageUrl && !failedImageUrlsRef.current.has(stableImageUrl)) {
+      // Clear any existing timeout
+      if (imageLoadingTimeoutRef.current) {
+        clearTimeout(imageLoadingTimeoutRef.current);
+      }
+
       setCurrentImageUrl(stableImageUrl);
-      setIsImageLoading(true); // Reset loading state when URL changes
+      setIsImageLoading(true);
+      setLoadFailed(false);
+
+      // Set a timeout to prevent infinite loading
+      imageLoadingTimeoutRef.current = setTimeout(() => {
+        setIsImageLoading(false);
+        failedImageUrlsRef.current.add(stableImageUrl); // Mark as failed due to timeout
+        console.warn(`Image loading timed out for ${stableImageUrl}`);
+      }, 5000); // 5 seconds timeout
+    } else {
+      // If no URL or URL previously failed
+      setCurrentImageUrl('');
+      setIsImageLoading(false);
+      setLoadFailed(true);
     }
+
+    // Cleanup function to clear timeout
+    return () => {
+      if (imageLoadingTimeoutRef.current) {
+        clearTimeout(imageLoadingTimeoutRef.current);
+      }
+    };
   }, [stableImageUrl]);
 
   // Fetch images only once per item
@@ -210,27 +215,45 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
     >
       {/* Image Section */}
       <div className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden">
-        {isImageLoading && (
+        {isImageLoading && !loadFailed && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            {/* Simple loading indicator */}
             <div className="w-8 h-8 border-4 border-gray-300 border-t-secondary rounded-full animate-spin"></div>
           </div>
         )}
         <img
           src={currentImageUrl || imagePlaceholder}
           alt={item.translations?.en?.item_name || 'Storage item'}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
-            isImageLoading && currentImageUrl ? 'opacity-0' : 'opacity-100'
-          }`}
+          className="w-full h-full object-cover transition-opacity duration-300"
           onLoad={() => {
+            if (imageLoadingTimeoutRef.current) {
+              clearTimeout(imageLoadingTimeoutRef.current);
+              imageLoadingTimeoutRef.current = null;
+            }
             setIsImageLoading(false);
+            setLoadFailed(false);
           }}
           onError={(e) => {
-            console.warn(`Failed to load image: ${currentImageUrl}`);
+            // Prevent infinite loops by tracking which URLs have failed
+            if (currentImageUrl) {
+              console.warn(`Failed to load image: ${currentImageUrl}`);
+              failedImageUrlsRef.current.add(currentImageUrl);
+            }
+
+            // Clear the timeout
+            if (imageLoadingTimeoutRef.current) {
+              clearTimeout(imageLoadingTimeoutRef.current);
+              imageLoadingTimeoutRef.current = null;
+            }
+
+            // Critical: remove the error handler before changing the source
             e.currentTarget.onerror = null;
+
+            // Set to placeholder directly - only once
             e.currentTarget.src = imagePlaceholder;
             setIsImageLoading(false);
+            setLoadFailed(true);
           }}
+          loading="lazy"
         />
       </div>
 

@@ -1,30 +1,40 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import {
-  itemImagesApi,
-  ItemImage,
-  UploadItemImageDto,
-} from '@/api/services/itemImages';
+import { itemImagesApi } from '@/api/services/itemImages';
+import { ItemImage, UploadItemImageDto } from '@/types/storage';
 import { RootState } from '../store';
+import { ErrorContext } from '@/types/common';
 
 interface ItemImagesState {
   images: ItemImage[];
+  itemsWithLoadedImages: string[]; // Track which items have loaded images
   loading: boolean;
   error: string | null;
   currentItemId: string | null;
+  errorContext: ErrorContext;
 }
 
 const initialState: ItemImagesState = {
   images: [],
+  itemsWithLoadedImages: [], // Add this to track loaded items
   loading: false,
   error: null,
   currentItemId: null,
+  errorContext: null,
 };
 
 export const getItemImages = createAsyncThunk(
   'itemImages/getItemImages',
-  async (itemId: string, { rejectWithValue }) => {
+  async (itemId: string, { rejectWithValue, getState }) => {
     try {
-      return await itemImagesApi.getItemImages(itemId);
+      // Optional: Check if we already have images for this item to avoid unnecessary fetches
+      const state = getState() as RootState;
+      if (state.itemImages.itemsWithLoadedImages.includes(itemId)) {
+        // Return null to indicate we don't need to update the state
+        return { images: null, itemId };
+      }
+
+      const images = await itemImagesApi.getItemImages(itemId);
+      return { images, itemId };
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to fetch item images',
@@ -70,7 +80,16 @@ export const deleteItemImage = createAsyncThunk(
 const itemImagesSlice = createSlice({
   name: 'itemImages',
   initialState,
-  reducers: {},
+  reducers: {
+    // Add a reducer to reset the state when needed (e.g., on logout)
+    resetItemImages: (state) => {
+      state.images = [];
+      state.itemsWithLoadedImages = [];
+      state.loading = false;
+      state.error = null;
+      state.currentItemId = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Get Item Images
@@ -81,14 +100,29 @@ const itemImagesSlice = createSlice({
       })
       .addCase(getItemImages.fulfilled, (state, action) => {
         state.loading = false;
-        state.images = action.payload;
+
+        // If we received actual images, add them to the state
+        if (action.payload.images) {
+          // Filter out any existing images for this item to avoid duplicates
+          const otherImages = state.images.filter(
+            (img) => img.item_id !== action.payload.itemId,
+          );
+
+          // Add the new images to the state
+          state.images = [...otherImages, ...action.payload.images];
+
+          // Mark this item as having loaded images
+          if (!state.itemsWithLoadedImages.includes(action.payload.itemId)) {
+            state.itemsWithLoadedImages.push(action.payload.itemId);
+          }
+        }
       })
       .addCase(getItemImages.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      // Upload Item Image
+      // Upload Item Image - Fix this to update the correct item's images
       .addCase(uploadItemImage.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -96,13 +130,18 @@ const itemImagesSlice = createSlice({
       .addCase(uploadItemImage.fulfilled, (state, action) => {
         state.loading = false;
         state.images.push(action.payload);
+
+        // Make sure we track this item
+        if (!state.itemsWithLoadedImages.includes(action.payload.item_id)) {
+          state.itemsWithLoadedImages.push(action.payload.item_id);
+        }
       })
       .addCase(uploadItemImage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      // Delete Item Image
+      // Delete Item Image - This should remain mostly the same
       .addCase(deleteItemImage.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -120,6 +159,13 @@ const itemImagesSlice = createSlice({
   },
 });
 
+export const { resetItemImages } = itemImagesSlice.actions;
+
+// Selector to get images for a specific item
+export const selectItemImagesById = (state: RootState, itemId: string) =>
+  state.itemImages.images.filter((img) => img.item_id === itemId);
+
+// Existing selectors
 export const selectItemImages = (state: RootState) => state.itemImages.images;
 export const selectItemImagesLoading = (state: RootState) =>
   state.itemImages.loading;
