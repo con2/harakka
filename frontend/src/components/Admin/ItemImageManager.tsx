@@ -6,7 +6,6 @@ import {
   deleteItemImage,
   selectItemImages,
   selectItemImagesLoading,
-  selectItemImagesError,
 } from '@/store/slices/itemImagesSlice';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,7 +29,6 @@ import {
   Plus,
   Trash2,
   Image as ImageIcon,
-  AlertTriangle,
   Upload,
   X,
 } from 'lucide-react';
@@ -46,59 +44,31 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
+import {
+  ImageType,
+  ItemImage,
+  FILE_CONSTRAINTS,
+  AllowedMimeType,
+} from '@/types/storage';
 
 interface ItemImageManagerProps {
   itemId: string;
+  setAvailabilityInfo?: (info: {
+    availableQuantity: number;
+    isChecking: boolean;
+    error: string | null;
+  }) => void;
 }
-
-// Constants
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_FILE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-];
-
-// Add these utility functions to handle S3 URLs
-const getS3KeyFromUrl = (url: string): string | null => {
-  try {
-    // Extract the key portion from S3 URL
-    // Format: https://domain/bucket/key
-    const urlObj = new URL(url);
-    const pathParts = urlObj.pathname.split('/');
-    const bucketIndex = pathParts.findIndex((p) => p === 'item-images');
-
-    if (bucketIndex >= 0 && pathParts.length > bucketIndex + 1) {
-      return pathParts.slice(bucketIndex + 1).join('/');
-    }
-    return null;
-  } catch {
-    return null;
-  }
-};
-
-// Use this function when displaying image info
-const getImageFilename = (imageUrl: string): string => {
-  const key = getS3KeyFromUrl(imageUrl);
-  if (!key) return 'Unknown';
-
-  // Just get the filename part
-  const parts = key.split('/');
-  return parts[parts.length - 1];
-};
 
 const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
   const dispatch = useAppDispatch();
   const images = useAppSelector(selectItemImages);
   const loading = useAppSelector(selectItemImagesLoading);
-  const error = useAppSelector(selectItemImagesError);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageType, setImageType] = useState<ImageType>('main');
+  const [sortedImages, setSortedImages] = useState<ItemImage[]>([]);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [imageType, setImageType] = useState<'main' | 'thumbnail' | 'detail'>(
-    'main',
-  );
   const [altText, setAltText] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -107,15 +77,23 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
   const [uploadProgress, setUploadProgress] = useState(0);
 
   // Sort images by type and display order
-  const sortedImages = [...images].sort((a, b) => {
-    if (a.image_type !== b.image_type) {
-      // Order by type: main, thumbnail, detail
-      const typeOrder = { main: 0, thumbnail: 1, detail: 2 };
-      return typeOrder[a.image_type] - typeOrder[b.image_type];
-    }
-    // If same type, order by display_order
-    return a.display_order - b.display_order;
-  });
+  useEffect(() => {
+    const sorted = [...images].sort((a: ItemImage, b: ItemImage) => {
+      if (a.image_type !== b.image_type) {
+        // Order by type: main, thumbnail, detail
+        const typeOrder: Record<ImageType, number> = {
+          main: 0,
+          thumbnail: 1,
+          detail: 2,
+        };
+        return typeOrder[a.image_type] - typeOrder[b.image_type];
+      }
+      // If same type, order by display_order
+      return a.display_order - b.display_order;
+    });
+
+    setSortedImages(sorted);
+  }, [images]);
 
   useEffect(() => {
     if (itemId) {
@@ -173,7 +151,11 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
 
   const validateFile = (file: File): boolean => {
     // Check file type
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    if (
+      !FILE_CONSTRAINTS.ALLOWED_FILE_TYPES.includes(
+        file.type as AllowedMimeType,
+      )
+    ) {
       toast.error(
         'Invalid file type. Only JPG, PNG, WebP, and GIF are allowed.',
       );
@@ -181,10 +163,10 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
     }
 
     // Check file size
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > FILE_CONSTRAINTS.MAX_FILE_SIZE) {
       toast.error(
         `File is too large. Maximum size is ${
-          MAX_FILE_SIZE / (1024 * 1024)
+          FILE_CONSTRAINTS.MAX_FILE_SIZE / (1024 * 1024)
         }MB.`,
       );
       return false;
