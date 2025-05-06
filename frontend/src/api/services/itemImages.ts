@@ -1,21 +1,5 @@
 import { api } from '../axios';
-
-export interface ItemImage {
-  id: string;
-  item_id: string;
-  image_url: string;
-  image_type: 'main' | 'thumbnail' | 'detail';
-  display_order: number;
-  alt_text?: string;
-  is_active: boolean;
-  created_at: string;
-}
-
-export interface UploadItemImageDto {
-  image_type: 'main' | 'thumbnail' | 'detail';
-  display_order: number;
-  alt_text?: string;
-}
+import { ItemImage, UploadItemImageDto } from '@/types/storage';
 
 export const itemImagesApi = {
   /**
