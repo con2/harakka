@@ -78,23 +78,14 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
     error: null,
   });
 
-  // Add a state to track if we've successfully loaded an image
-  const [hasLoadedImage, setHasLoadedImage] = useState(false);
-  const [loadedImageUrl, setLoadedImageUrl] = useState<string | null>(null);
-
   // Enhanced image finding with memoization to prevent recalculation on every render
   const itemImagesForCurrentItem = useMemo(
     () => itemImages.filter((img) => img.item_id === item.id),
     [itemImages, item.id],
   );
 
-  // Memoize the image URL calculation to prevent flickering
-  const imageToDisplay = useMemo(() => {
-    // If we've already successfully loaded an image, use that
-    if (hasLoadedImage && loadedImageUrl) {
-      return loadedImageUrl;
-    }
-
+  // Stable URL calculation that won't change between renders
+  const stableImageUrl = useMemo(() => {
     // Find thumbnail image for this item
     const thumbnailImage = itemImagesForCurrentItem.find(
       (img) => img.image_type === 'thumbnail',
@@ -105,17 +96,24 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       !thumbnailImage &&
       itemImagesForCurrentItem.find((img) => img.image_type === 'main');
 
-    // Use thumbnail, main, or placeholder image
-    const rawImageUrl = thumbnailImage?.image_url || mainImage?.image_url || '';
-    return rawImageUrl ? transformSupabaseUrl(rawImageUrl) : imagePlaceholder;
-  }, [itemImagesForCurrentItem, hasLoadedImage, loadedImageUrl]);
+    // Use thumbnail or main image URL
+    return thumbnailImage?.image_url || mainImage?.image_url || '';
+  }, [itemImagesForCurrentItem]);
+
+  // Use this stable reference in your JSX
+  const [currentImageUrl, setCurrentImageUrl] = useState('');
+  const [isImageLoading, setIsImageLoading] = useState(true);
+
+  // Set the image URL just once when it changes
+  useEffect(() => {
+    if (stableImageUrl) {
+      setCurrentImageUrl(stableImageUrl);
+      setIsImageLoading(true); // Reset loading state when URL changes
+    }
+  }, [stableImageUrl]);
 
   // Fetch images only once per item
   useEffect(() => {
-    // Clear loaded image state when item changes
-    setHasLoadedImage(false);
-    setLoadedImageUrl(null);
-
     // Only fetch if we don't already have images for this item
     if (!itemImagesForCurrentItem.length) {
       dispatch(getItemImages(item.id))
@@ -124,7 +122,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           console.error('Failed to fetch item images:', error);
         });
     }
-  }, [dispatch, item.id]); // Remove itemImages from dependencies
+  }, [dispatch, item.id, itemImagesForCurrentItem.length]);
 
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
@@ -211,24 +209,28 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       className="w-full max-w-[350px] flex flex-col justify-between p-4"
     >
       {/* Image Section */}
-      <div className="h-40 bg-gray-200 flex items-center justify-center rounded">
+      <div className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden">
+        {isImageLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            {/* Simple loading indicator */}
+            <div className="w-8 h-8 border-4 border-gray-300 border-t-secondary rounded-full animate-spin"></div>
+          </div>
+        )}
         <img
-          src={imageToDisplay}
+          src={currentImageUrl || imagePlaceholder}
           alt={item.translations?.en?.item_name || 'Storage item'}
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover transition-opacity duration-300 ${
+            isImageLoading && currentImageUrl ? 'opacity-0' : 'opacity-100'
+          }`}
           onLoad={() => {
-            // Mark this image as successfully loaded
-            if (imageToDisplay !== imagePlaceholder) {
-              setHasLoadedImage(true);
-              setLoadedImageUrl(imageToDisplay);
-            }
+            setIsImageLoading(false);
           }}
           onError={(e) => {
-            console.warn(`Failed to load image: ${imageToDisplay}`);
+            console.warn(`Failed to load image: ${currentImageUrl}`);
             e.currentTarget.onerror = null;
             e.currentTarget.src = imagePlaceholder;
+            setIsImageLoading(false);
           }}
-          loading="lazy"
         />
       </div>
 
