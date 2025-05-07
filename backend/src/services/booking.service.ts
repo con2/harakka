@@ -856,6 +856,18 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
 
     return {
       message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
+      orderId,
+      recipient: {
+        email: userProfile.email,
+        role: userProfile.role,
+      },
+      cancelledBy: isAdmin ? "admin" : "user",
+      items: orderItems.map((item) => ({
+        item_id: item.item_id,
+        quantity: item.quantity,
+        start_date: item.start_date,
+        end_date: item.end_date,
+      })),
     };
   }
 
