@@ -145,143 +145,145 @@ const Cart: React.FC = () => {
       : 0;
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl mb-4">Your Cart</h2>
-
-      {/* Booking Timeframe Summary */}
-      <div className="bg-slate-50 p-4 rounded-lg mb-6">
-        <div className="flex items-center mb-2">
-          <Calendar className="h-5 w-5 mr-2 text-secondary" />
-          <h3 className="text-lg font-semibold">Booking Timeframe</h3>
-        </div>
-        {startDate && endDate ? (
-          <div>
-            <p className="text-md">
-              <span className="font-medium">From:</span>{" "}
-              {format(new Date(startDate), "PPP")}
-            </p>
-            <p className="text-md">
-              <span className="font-medium">To:</span>{" "}
-              {format(new Date(endDate), "PPP")}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              ({rentalDays} {rentalDays === 1 ? "day" : "days"} total)
-            </p>
-          </div>
-        ) : (
-          <p className="text-amber-600">
-            No booking period selected. Please select dates first.
-          </p>
-        )}
-      </div>
-
-      {/* Cart Items */}
-      <div className="space-y-4">
-        {cartItems.map((cartItem) => (
-          <div key={cartItem.item.id} className="flex flex-col border-b pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h3 className="font-medium">
-                  {cartItem.item.translations.fi.item_name}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {cartItem.item.translations.fi.item_type}
-                </p>
-                <p className="text-xs text-slate-400">
-                  {cartItem.item.items_number_available} units available
-                </p>
+    <div className="w-full max-w-6xl mx-auto px-10 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white">
+      <h2 className="text-2xl mb-4">Your Cart</h2>
+      <div className="flex flex-col md:flex-row gap-10 mb-2">
+        <div className="flex flex-col flex-2/3">
+          {/* Booking Timeframe Summary */}
+          <div className="bg-slate-50 p-4 rounded-lg mb-6">
+            {startDate && endDate ? (
+              <div className="flex items-center my-1">
+                <div className="flex items-center gap-2 flex-1/3">
+                  <Calendar className="h-5 w-5 text-secondary" />
+                  <span className="text-md">Booking Timeframe</span>
+                </div>
+                <div className="flex items-center justify-end flex-2/3">
+                  <p className="text-md font-semibold mr-3">
+                    {format(new Date(startDate), "PPP")}
+                    <span className="font-semibold"> -</span>{" "}
+                    {format(new Date(endDate), "PPP")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    ({rentalDays} {rentalDays === 1 ? "day" : "days"} total)
+                  </p>
+                </div>
               </div>
+            ) : (
+              <p className="text-amber-600">
+                No booking period selected. Please select dates first.
+              </p>
+            )}
+          </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex items-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handleQuantityChange(
-                        cartItem.item.id,
-                        cartItem.quantity - 1,
-                      )
-                    }
-                  >
-                    -
-                  </Button>
-                  <Input
-                    type="number"
-                    value={cartItem.quantity}
-                    onChange={(e) =>
-                      handleQuantityChange(
-                        cartItem.item.id,
-                        parseInt(e.target.value),
-                      )
-                    }
-                    className="w-16 mx-2 text-center"
-                    max={cartItem.item.items_number_available}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handleQuantityChange(
-                        cartItem.item.id,
-                        cartItem.quantity + 1,
-                      )
-                    }
-                    disabled={
-                      cartItem.quantity >= cartItem.item.items_number_available
-                    }
-                  >
-                    +
-                  </Button>
+          {/* Cart Items */}
+          <div className="space-y-4 p-4">
+            {cartItems.map((cartItem) => (
+              <div key={cartItem.item.id} className="flex flex-col border-b pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-medium mb-2">
+                      {cartItem.item.translations.fi.item_name}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {cartItem.item.translations.fi.item_type}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Total {cartItem.item.items_number_available} units available
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handleQuantityChange(
+                            cartItem.item.id,
+                            cartItem.quantity - 1,
+                          )
+                        }
+                      >
+                        -
+                      </Button>
+                      <Input
+                        type="text"
+                        value={cartItem.quantity}
+                        onChange={(e) =>
+                          handleQuantityChange(
+                            cartItem.item.id,
+                            parseInt(e.target.value),
+                          )
+                        }
+                        className="w-12 mx-2 text-center"
+                        max={cartItem.item.items_number_available}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handleQuantityChange(
+                            cartItem.item.id,
+                            cartItem.quantity + 1,
+                          )
+                        }
+                        disabled={
+                          cartItem.quantity >= cartItem.item.items_number_available
+                        }
+                      >
+                        +
+                      </Button>
+                    </div>
+                    <div className="w-20 text-right">
+                      €{(cartItem.item.price * cartItem.quantity).toFixed(2)}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveItem(cartItem.item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="w-20 text-right">
-                  €{(cartItem.item.price * cartItem.quantity).toFixed(2)}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveItem(cartItem.item.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col w-full md:w-1/3 items-start mt-6 md:mt-0">
+          {/* Order Summary */}
+          <div className="bg-slate-50 p-4 rounded-lg mb-6 w-full">
+            <h3 className="font-semibold mb-3">Order Summary</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Items subtotal:</span>
+                <span>€{cartTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Rental period:</span>
+                <span>
+                  {rentalDays} {rentalDays === 1 ? "day" : "days"}
+                </span>
+              </div>
+              <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
+                <span>Total:</span>
+                <span>€{(cartTotal * rentalDays).toFixed(2)}</span>
               </div>
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Order Summary */}
-      <div className="mt-8 bg-slate-50 p-4 rounded-lg">
-        <h3 className="font-semibold mb-3">Order Summary</h3>
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Items subtotal:</span>
-            <span>€{cartTotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span>Rental period:</span>
-            <span>
-              {rentalDays} {rentalDays === 1 ? "day" : "days"}
-            </span>
-          </div>
-          <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
-            <span>Total:</span>
-            <span>€{(cartTotal * rentalDays).toFixed(2)}</span>
-          </div>
         </div>
       </div>
-
       {/* Action Buttons */}
-      <div className="flex gap-4">
+      <div className="flex flex-row items-center justify-between gap-4">
         <Button
-          variant="outline"
           onClick={handleClearCart}
-          className="text-secondary border-secondary hover:bg-secondary hover:text-white"
+          className="text-primary/50 bg-background rounded-2xl border-1 border-primary/50 hover:bg-primary hover:text-white ml-4"
         >
           Clear Cart
         </Button>
         <Button
-          className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary flex-1"
+          className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary w-1/3"
           disabled={
             !startDate || !endDate || orderLoading || cartItems.length === 0
           }
