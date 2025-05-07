@@ -5,6 +5,7 @@ export interface StorageItem {
   location_id: string;
   compartment_id: string;
   items_number_total: number;
+  items_number_currently_in_storage: number;
   items_number_available: number;
   price: number;
   is_active: boolean;
@@ -36,6 +37,7 @@ export interface StorageItemWithJoin {
   location_id: string;
   compartment_id: string;
   items_number_total: number;
+  items_number_currently_in_storage: number;
   items_number_available: number;
   price: number;
   is_active: boolean;
