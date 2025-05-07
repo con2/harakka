@@ -20,17 +20,25 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.802.0",
+    "@aws-sdk/lib-storage": "^3.802.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@supabase/supabase-js": "^2.49.4",
+    "@types/multer": "^1.4.12",
+    "@types/nodemailer": "^6.4.17",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "full-stack-booking-app": "file:..",
+    "googleapis": "^148.0.0",
+    "multer": "^1.4.5-lts.2",
+    "nodemailer": "^7.0.2",
     "reflect-metadata": "^0.2.2",
     "resend": "^4.4.1",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
