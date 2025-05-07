@@ -1,37 +1,25 @@
-import { Card } from "@/components/ui/card";
-import illusiaImage from '@/assets/illusiaImage.jpg';
+import illusiaImage from "@/assets/illusiaImage.jpg"
+import { Button } from "./ui/button"
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen flex">
-    {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Hero Banner */}
-        <div className="relative h-96">
-          <div 
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${illusiaImage})` }}
-          />
-          {/* <div className="relative h-full flex items-center justify-center">
-            <h1 className="text-4xl font-bold text-white drop-shadow-lg">
-              Welcome to ILLUSIA
-            </h1>
-          </div> */}
-        </div>
+    <div className="relative min-h-screen w-full overflow-hidden">
+    {/* Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center -z-10"
+        style={{ backgroundImage: `url(${illusiaImage})` }}
+      />
 
-        {/* Main Content */}
-        <main className="flex-1 p-8 bg-gray-50">
-          <Card className="max-w-8xl mx-auto p-6">
-            <h2 className="text-2xl font-semibold mb-4">Featured Content</h2>
-            <p className="text-gray-800">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor 
-              incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis 
-              nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-              Lorem, ipsum dolor sit amet consectetur adipisicing elit. Consequatur perspiciatis atque perferendis, sint asperiores ut doloribus expedita temporibus. Autem minus inventore corporis quae deserunt delectus tenetur labore incidunt! Id, adipisci.
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Fugiat est labore et dolorem provident veritatis eos ea aut, assumenda sunt fugit laborum corporis unde distinctio aspernatur dolorum perferendis omnis cupiditate!
-            </p>
-          </Card>
-        </main>
+      {/* Content on top of image */}
+      <div className="flex flex-col justify-center items-center min-h-screen bg-black/50 text-white text-center px-4 gap-2">
+        <h2 className="text-5xl font-bold mb-4 text-white">Ready to level up your next LARP?</h2>
+        <p className="mb-6 text-xl">Browse our gear, book online, and bring your world to life.</p>
+        <Button
+          onClick={() => (window.location.href = "/storage")}
+          className="bg-secondary text-white font-semibold px-6 py-5 rounded-lg shadow hover:bg-white hover:text-secondary transition"
+        >
+          Browse Storage
+        </Button>
       </div>
   </div>
   )
