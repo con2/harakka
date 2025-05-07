@@ -8,6 +8,7 @@ import {
   SupabaseClient,
   UserResponse,
 } from "@supabase/supabase-js";
+import { CreateAddressDto } from "src/dto/create-address.dto";
 
 @Injectable()
 export class UserService {
@@ -76,7 +77,7 @@ export class UserService {
           throw new Error(`Email ${user.email} is already registered`);
         }
 
-        // For 500 errors, provide a more helpful message
+        // For 500 errors, more helpful messages
         if (authError.status === 500) {
           this.logger.error(
             "Supabase server error. Check your configuration and Supabase service status.",
@@ -201,5 +202,55 @@ export class UserService {
     // Also delete from auth.users
     /* const { error: authError } = await this.supabase.auth.admin.deleteUser(id);
     if (authError) throw new Error(authError.message); */
+  }
+
+  // get all addresses for a specific user
+  async getAddressesByid(id: string): Promise<any[]> {
+    const { data, error }: PostgrestResponse<any> = await this.supabase
+      .from("user_addresses")
+      .select("*")
+      .eq("user_id", id);
+    if (error) {
+      throw new Error(error.message);
+    }
+    return data || [];
+    }
+
+  // add a new address
+  async addAddress(id: string, address: CreateAddressDto): Promise<any> {
+    const { data, error }: PostgrestSingleResponse<any> = await this.supabase
+      .from("user_addresses")
+      .insert([{ ...address, user_id: id }])
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  // update an existing address
+  async updateAddress(
+    id: string,
+    addressId: string,
+    address: CreateAddressDto,
+  ): Promise<any> {
+    const { data, error }: PostgrestSingleResponse<any> = await this.supabase
+      .from("user_addresses")
+      .update(address)
+      .eq("user_id", id)
+      .eq("id", addressId)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  // delete an address
+  async deleteAddress(id: string, addressId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from("user_addresses")
+      .delete()
+      .eq("user_id", id)
+      .eq("id", addressId);
+    if (error) throw new Error(error.message);
   }
 }

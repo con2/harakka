@@ -30,7 +30,7 @@ const OrderConfirmation: React.FC = () => {
         )}
         <div className="flex gap-4 justify-center">
           <Button
-            onClick={() => navigate("/orders")}
+            onClick={() => navigate("/profile?tab=orders")}
             className="flex-1 bg-background text-secondary border-secondary border hover:bg-secondary hover:text-white"
           >
             View My Orders
@@ -39,7 +39,7 @@ const OrderConfirmation: React.FC = () => {
             onClick={() => navigate("/storage")}
             className="flex-1 bg-background text-primary border-primary border hover:bg-primary hover:text-white"
           >
-            Continue Shopping
+            Continue Browsing
           </Button>
         </div>
       </div>

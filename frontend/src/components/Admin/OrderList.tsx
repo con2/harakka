@@ -4,20 +4,9 @@ import {
   getAllOrders,
   selectOrdersLoading,
   selectOrdersError,
-  confirmOrder,
-  rejectOrder,
-  deleteOrder,
-  returnItems,
   selectAllOrders,
 } from "@/store/slices/ordersSlice";
-import {
-  LoaderCircle,
-  CheckCircle,
-  XCircle,
-  Trash2,
-  RotateCcw,
-  Eye,
-} from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { useAuth } from "@/context/AuthContext";
 import { ColumnDef } from "@tanstack/react-table";
@@ -30,8 +19,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
+import OrderReturnButton from "./OrderReturnButton";
+import OrderConfirmButton from "./OrderConfirmButton";
+import OrderRejectButton from "./OrderRejectButton";
+import OrderDeleteButton from "./OrderDeleteButton";
+import OrderDetailsButton from "./OrderDetailsButton";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -43,6 +36,8 @@ const OrderList = () => {
   const { authLoading } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<BookingOrder | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     // Always fetch orders when the admin component mounts and auth is ready
@@ -64,96 +59,6 @@ const OrderList = () => {
   const handleViewDetails = (order: BookingOrder) => {
     setSelectedOrder(order);
     setShowDetailsModal(true);
-  };
-
-  const handleConfirmOrder = async (orderId?: string) => {
-    if (!orderId) return;
-
-    try {
-      await toast.promise(dispatch(confirmOrder(orderId)).unwrap(), {
-        loading: "Confirming order...",
-        success: "Order confirmed successfully",
-        error: "Failed to confirm order",
-      });
-    } catch (error) {
-      console.error("Error confirming order:", error);
-    }
-  };
-
-  const handleRejectOrder = async (orderId?: string) => {
-    if (!orderId) return;
-
-    try {
-      await toast.promise(dispatch(rejectOrder(orderId)).unwrap(), {
-        loading: "Rejecting order...",
-        success: "Order rejected",
-        error: "Failed to reject order",
-      });
-    } catch (error) {
-      console.error("Error rejecting order:", error);
-    }
-  };
-
-  const handleDeleteOrder = async (orderId?: string) => {
-    if (!orderId) return;
-
-    toast.custom((t) => (
-      <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
-        <div className="font-semibold text-lg">Confirm Order Deletion</div>
-        <div className="text-sm text-muted-foreground">
-          Are you sure you want to delete this order? This action cannot be
-          undone.
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => toast.dismiss(t)}
-            className="bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-md"
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="rounded-md"
-            onClick={async () => {
-              toast.dismiss(t); // dismiss confirmation toast
-              try {
-                await toast.promise(dispatch(deleteOrder(orderId)).unwrap(), {
-                  loading: "Deleting order...",
-                  success: "Order deleted successfully",
-                  error: (err) => {
-                    if (err.includes("403") || err.includes("Forbidden")) {
-                      return "Permission denied: Only admins can delete orders";
-                    }
-                    return "Failed to delete order";
-                  },
-                });
-              } catch (error) {
-                console.error("Error deleting order:", error);
-              }
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      </div>
-    ));
-  };
-
-  const handleReturnItems = async (orderId?: string) => {
-    if (!orderId) return;
-
-    try {
-      await toast.promise(dispatch(returnItems(orderId)).unwrap(), {
-        loading: "Processing return...",
-        success: "Items returned successfully",
-        error: "Failed to process return",
-      });
-    } catch (error) {
-      console.error("Error processing return:", error);
-    }
   };
 
   // Render a status badge with appropriate color
@@ -212,6 +117,29 @@ const OrderList = () => {
     }
   };
 
+  // Apply filters to orders before passing to table
+  const filteredOrders = orders.filter((order) => {
+    // Filter by status
+    if (statusFilter !== "all" && order.status !== statusFilter) {
+      return false;
+    }
+    // Filter by search query (order number or customer name)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const orderNumber = String(order.order_number || "").toLowerCase();
+      const customerName = (order.user_profile?.name || "").toLowerCase();
+      const customerEmail = (order.user_profile?.email || "").toLowerCase();
+
+      return (
+        orderNumber.includes(query) ||
+        customerName.includes(query) ||
+        customerEmail.includes(query)
+      );
+    }
+
+    return true;
+  });
+
   const columns: ColumnDef<BookingOrder>[] = [
     {
       accessorKey: "order_number",
@@ -254,60 +182,35 @@ const OrderList = () => {
 
         return (
           <div className="flex space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleViewDetails(order)}
-              title="View Details"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
+            <OrderDetailsButton
+              order={order}
+              onViewDetails={handleViewDetails}
+            />
 
             {isPending && (
               <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleConfirmOrder(order.id)}
-                  title="Confirm Order"
-                  className="text-green-600 hover:text-green-800 hover:bg-green-100"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRejectOrder(order.id)}
-                  title="Reject Order"
-                  className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                >
-                  <XCircle className="h-4 w-4" />
-                </Button>
+                <OrderConfirmButton
+                  id={order.id}
+                  closeModal={() => setShowDetailsModal(false)}
+                />
+                <OrderRejectButton
+                  id={order.id}
+                  closeModal={() => setShowDetailsModal(false)}
+                />
               </>
             )}
 
             {isConfirmed && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleReturnItems(order.id)}
-                title="Process Return"
-                className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
+              <OrderReturnButton
+                id={order.id}
+                closeModal={() => setShowDetailsModal(false)}
+              />
             )}
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDeleteOrder(order.id)}
-              title="Delete Order"
-              className="text-red-600 hover:text-red-800 hover:bg-red-100"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <OrderDeleteButton
+              id={order.id}
+              closeModal={() => setShowDetailsModal(false)}
+            />
           </div>
         );
       },
@@ -331,18 +234,54 @@ const OrderList = () => {
     <>
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Order Management</h1>
+          <h1 className="text-xl">Manage Orders</h1>
 
-          <Button
+          <Button //TODO: remove later. Button for debugging purposes
             onClick={() => user && user?.id && dispatch(getAllOrders(user.id))}
-            variant="outline"
-            className="ml-auto mr-2"
+            className="bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
           >
             Refresh Orders
           </Button>
         </div>
-
-        <PaginatedDataTable columns={columns} data={orders} />
+        <div className="flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex gap-4 items-center">
+            <input
+              type="text"
+              placeholder="Search order # or customer name"
+              value={searchQuery}
+              size={50}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            >
+              <option value="all">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="rejected">Rejected</option>
+              <option value="completed">Completed</option>
+              <option value="deleted">Deleted</option>
+              <option value="cancelled by admin">Cancelled by admin</option>
+            </select>
+            {(searchQuery || statusFilter !== "all") && (
+              <Button
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                }}
+                size={"sm"}
+                className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        </div>
+        <PaginatedDataTable columns={columns} data={filteredOrders} />
       </div>
 
       {/* Order Details Modal */}
@@ -437,49 +376,32 @@ const OrderList = () => {
                 </div>
               </div>
 
-              {/* Order Actions */}
+              {/* Order Modal Actions */}
               <div className="flex justify-end space-x-2">
                 {selectedOrder.status === "pending" && (
                   <>
-                    <Button
-                      onClick={() => {
-                        handleConfirmOrder(selectedOrder.id);
-                        setShowDetailsModal(false);
-                      }}
-                      variant="default"
-                    >
-                      Confirm Order
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        handleRejectOrder(selectedOrder.id);
-                        setShowDetailsModal(false);
-                      }}
-                      variant="destructive"
-                    >
-                      Reject Order
-                    </Button>
+                    <OrderConfirmButton
+                      id={selectedOrder.id}
+                      closeModal={() => setShowDetailsModal(false)}
+                    />
+                    <OrderRejectButton
+                      id={selectedOrder.id}
+                      closeModal={() => setShowDetailsModal(false)}
+                    />
                   </>
                 )}
 
                 {selectedOrder.status === "confirmed" && (
-                  <Button
-                    onClick={() => {
-                      handleReturnItems(selectedOrder.id);
-                      setShowDetailsModal(false);
-                    }}
-                    variant="default"
-                  >
-                    Process Return
-                  </Button>
+                  <OrderReturnButton
+                    id={selectedOrder.id}
+                    closeModal={() => setShowDetailsModal(false)}
+                  />
                 )}
 
-                <Button
-                  onClick={() => setShowDetailsModal(false)}
-                  variant="outline"
-                >
-                  Close
-                </Button>
+                <OrderDeleteButton
+                  id={selectedOrder.id}
+                  closeModal={() => setShowDetailsModal(false)}
+                />
               </div>
             </div>
           </DialogContent>
