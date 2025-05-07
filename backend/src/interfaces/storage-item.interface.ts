@@ -27,10 +27,10 @@ export interface StorageItem {
   storage_item_tags?: Tag[];
 }
 
-// separate DTO that includes tagIds
-export interface CreateStorageItemDto extends Partial<StorageItem> {
-  tagIds?: string[];
-}
+// // separate DTO that includes tagIds
+// export interface CreateStorageItemDto extends Partial<StorageItem> {
+//   tagIds?: string[];
+// }
 
 export interface StorageItemWithJoin {
   id: string;
