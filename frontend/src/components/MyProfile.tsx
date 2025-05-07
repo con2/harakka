@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { selectSelectedUser, updateUser } from "@/store/slices/usersSlice";
+import { addAddress, deleteAddress, getUserAddresses, selectSelectedUser, selectUserAddresses, updateAddress, updateUser } from "@/store/slices/usersSlice";
 import { Button } from "@/components/ui/button";
 import MyOrders from "./MyOrders";
 import { useEffect, useState } from "react";
@@ -8,10 +8,17 @@ import { Avatar } from "./ui/avatar";
 import profilePlaceholder from "../assets/profilePlaceholder.png";
 import { toast } from "sonner";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { Address, AddressForm } from "@/types/address";
+import { LoaderCircle, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Label } from "./ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Input } from "./ui/input";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();
   const selectedUser = useAppSelector(selectSelectedUser);
+  const userAddresses = useAppSelector(selectUserAddresses);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -25,6 +32,8 @@ const MyProfile = () => {
     selectedUser?.visible_name || "",
   );
   // const [preferences, setPreferences] = useState(selectedUser?.preferences || "");
+  const [addresses, setAddresses] = useState<AddressForm[]>(userAddresses || []);
+  const [showAddAddressForm, setShowAddAddressForm] = useState(false);
   const profileImage = profilePlaceholder;
 
   useEffect(() => {
@@ -34,8 +43,23 @@ const MyProfile = () => {
       setPhone(selectedUser.phone || "");
       setVisibleName(selectedUser.visible_name || "");
       // setPreferences(selectedUser.preferences || "");
+      dispatch(getUserAddresses(selectedUser.id));
     }
-  }, [selectedUser]);
+  }, [selectedUser, dispatch]);
+
+  useEffect(() => {
+    setAddresses(userAddresses || []);
+  }, [userAddresses]);  
+
+  const [newAddress, setNewAddress] = useState<AddressForm>({
+    user_id: selectedUser?.id || "",
+    address_type: "both",
+    street_address: "",
+    city: "",
+    postal_code: "",
+    country: "",
+    is_default: false,
+  });  
 
   // Handle tab change with URL update
   const handleTabChange = (value: string) => {
@@ -51,17 +75,65 @@ const MyProfile = () => {
         visible_name: visibleName,
         // preferences: typeof preferences === "string" ? undefined : preferences
       };
-
-      // Dispatch the updateUser action
-      dispatch(updateUser({ id: selectedUser.id, data: updatedUserData }))
-        .unwrap()
-        .then(() => {
-          toast.success("Profile updated successfully!");
-        })
-        .catch(() => {
-          toast.error("Failed to update profile.");
-        });
+      try {
+        dispatch(updateUser({ id: selectedUser.id, data: updatedUserData })).unwrap();
+  
+        // Loop through addresses and update or add them
+        for (const addr of addresses) {
+          if (addr.id) {
+            dispatch(updateAddress({ id: selectedUser.id, addressId: addr.id, address: addr })).unwrap();
+          } else {
+            dispatch(addAddress({ id: selectedUser.id, address: addr })).unwrap();
+          }
+        }
+        // refresh addresses after all updates/adds
+        dispatch(getUserAddresses(selectedUser.id));
+        toast.success("Profile updated successfully!");
+      } catch (err) {
+        toast.error("Failed to update profile.");
+        }
     }
+  };
+
+  const handleAddressChange = (index: number, field: keyof Address, value: any) => {
+    const updatedAddresses = [...addresses];
+    updatedAddresses[index] = { ...updatedAddresses[index], [field]: value };
+    setAddresses(updatedAddresses);
+  };
+  
+  const handleDeleteAddress = (index: number) => {
+    const address = addresses[index];
+    toast(
+      `Do you really want to delete this address from your profile?`,
+      {
+        action: {
+          label: "Delete",
+          onClick: async () => {
+            try {
+              const updatedAddresses = [...addresses];
+              updatedAddresses.splice(index, 1);
+              setAddresses(updatedAddresses);
+              // Only call deleteAddress if it exists in backend
+              if (address.id) {
+                dispatch(
+                  deleteAddress({
+                    id: selectedUser?.id || "",
+                    addressId: address.id,
+                  })
+                ).unwrap();
+              }
+              toast.success("Address deleted successfully.");
+            } catch (err) {
+              toast.error("Failed to delete address.");
+            }
+          },
+        },
+        cancel: {
+          label: "Cancel",
+          onClick: () => toast.dismiss(),
+        },
+      }
+    );
   };
 
   return (
@@ -78,10 +150,9 @@ const MyProfile = () => {
 
         {/* User Details Tab */}
         <TabsContent value="user-details">
-          <div className="space-y-4">
             {selectedUser ? (
-              <div className="flex flex-row items-start">
-                <div className="flex flex-1 items-center justify-left p-2 space-y-4">
+              <div className="flex flex-col md:flex-row items-start">
+                <div className="flex md:w-1/4 justify-center p-2">
                   <Avatar className="w-24 h-24 rounded-full border-1 border-secondary flex">
                     <img
                       src={profileImage || ""}
@@ -91,108 +162,326 @@ const MyProfile = () => {
                   </Avatar>
                 </div>
 
-                {/* Editable Fields for Name, Email, and Phone */}
-                <div className="flex flex-2 flex-col p-2 space-y-4">
-                  <div>
-                    <label
+                <div className="flex flex-col md:flex-1 space-y-4 p-2">
+                  {/* Editable Fields for Details */}
+                  <h3 className="text-md font-semibold text-gray-700">Personal Details</h3>
+                  <div className="flex flex-row flex-wrap gap-4">
+                    <div>
+                      <label
                       htmlFor="name"
                       className="block text-xs font-medium text-gray-700"
                     >
                       Full Name
                     </label>
-                    <input
-                      id="name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="mt-1 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                      style={{ fontSize: "0.875rem", height: "40px" }}
-                    />
-                  </div>
+                      <input
+                        id="name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                        style={{ fontSize: "0.875rem", height: "40px", minWidth: '300px' }}
+                      />
+                    </div>
 
-                  <div>
-                    <label
+                    <div>
+                      <label
                       htmlFor="email"
                       className="block text-xs font-medium text-gray-700"
                     >
                       Email
                     </label>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="mt-1 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                      style={{ fontSize: "0.875rem", height: "40px" }}
-                    />
-                  </div>
+                      <input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                        style={{ fontSize: "0.875rem", height: "40px", minWidth: '300px' }}
+                      />
+                    </div>
 
-                  <div>
-                    <label
+                    <div>
+                      <label
                       htmlFor="phone"
                       className="block text-xs font-medium text-gray-700"
                     >
                       Phone
                     </label>
-                    <input
-                      id="phone"
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="mt-1 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                      style={{ fontSize: "0.875rem", height: "40px" }}
-                    />
-                  </div>
-                </div>
+                      <input
+                        id="phone"
+                        type="text"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                        style={{ fontSize: "0.875rem", height: "40px", minWidth: '300px' }}
+                      />
+                    </div>
 
-                {/* Placeholder div for spacing */}
-                <div className="flex flex-2 flex-col p-2 space-y-4">
-                  <div>
-                    <label
+                    <div>
+                      <label
                       htmlFor="visibleName"
                       className="block text-xs font-medium text-gray-700"
                     >
                       Visible Name
                     </label>
-                    <input
-                      id="visibleName"
-                      type="text"
-                      value={visibleName}
-                      onChange={(e) => setVisibleName(e.target.value)}
-                      className="mt-1 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                      style={{ fontSize: "0.875rem", height: "40px" }}
-                    />
+                      <input
+                        id="visibleName"
+                        type="text"
+                        value={visibleName}
+                        onChange={(e) => setVisibleName(e.target.value)}
+                        className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                        style={{ fontSize: "0.875rem", height: "40px", minWidth: '300px' }}
+                      />
+                    </div>
+
+                    {/* <div>
+                      <label htmlFor="preferences" className="block text-xs font-medium text-gray-700">Preferences</label>
+                      <input
+                        id="preferences"
+                        type="text"
+                        value={preferences}
+                        onChange={(e) => setPreferences(e.target.value)}
+                        className="mt-1 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                        style={{ fontSize: '0.875rem', height: '40px' }}
+                      />
+                    </div> */}
                   </div>
-                  {/* <div>
-                    <label htmlFor="preferences" className="block text-xs font-medium text-gray-700">Preferences</label>
-                    <input
-                      id="preferences"
-                      type="text"
-                      value={preferences}
-                      onChange={(e) => setPreferences(e.target.value)}
-                      className="mt-1 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                      style={{ fontSize: '0.875rem', height: '40px' }}
-                    />
-                  </div> */}
+
+                  {/* Addresses */}
+                  {userAddresses && userAddresses.length > 0 ? (
+                  <div className="flex flex-row flex-wrap gap-4">
+                    <div className="block w-full">
+                      <h3 className="text-md font-semibold text-gray-700">Addresses</h3>
+                    </div>
+                    {addresses.map((address, index) => (
+                      <div key={index}>
+                        <div className="flex gap-2 items-center mb-4">
+                          <label className="block text-xs font-medium text-gray-700">Type</label>
+                          <select
+                            value={address.address_type}
+                            onChange={(e) => handleAddressChange(index, "address_type", e.target.value)}
+                            className="border p-2 rounded text-sm w-full"
+                          >
+                            <option value="both">Both</option>
+                            <option value="billing">Billing</option>
+                            <option value="shipping">Shipping</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label htmlFor="street" className="block text-xs font-medium text-gray-700">Street Address</label>
+                          <input
+                            id="street"
+                            type="text"
+                            value={address.street_address}
+                            onChange={(e) => handleAddressChange(index, "street_address", e.target.value)}
+                            placeholder="Street Address"
+                            className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            style={{ fontSize: '0.875rem', height: '40px', minWidth: '300px' }}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="city" className="block text-xs font-medium text-gray-700">City</label>
+                          <input
+                            id="city"
+                            type="text"
+                            value={address.city}
+                            onChange={(e) => handleAddressChange(index, "city", e.target.value)}
+                            placeholder="City"
+                            className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            style={{ fontSize: '0.875rem', height: '40px', minWidth: '300px' }}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="postal" className="block text-xs font-medium text-gray-700">Postal Code</label>
+                          <input
+                            id="postal"
+                            type="text"
+                            value={address.postal_code}
+                            onChange={(e) => handleAddressChange(index, "postal_code", e.target.value)}
+                            placeholder="Postal Code"
+                            className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            style={{ fontSize: '0.875rem', height: '40px', minWidth: '300px' }}
+                          />
+                        </div><div>
+                        <label htmlFor="country" className="block text-xs font-medium text-gray-700">Country</label>  
+                          <input
+                            id="country"
+                            type="text"
+                            value={address.country}
+                            onChange={(e) => handleAddressChange(index, "country", e.target.value)}
+                            placeholder="Country"
+                            className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            style={{ fontSize: '0.875rem', height: '40px', minWidth: '300px' }}
+                          />
+                        </div>
+                        <div className="flex justify-between items-center mt-4">
+                          <div>
+                            <label className="flex items-center gap-2 text-sm">
+                              <input
+                                className="accent-secondary"
+                                type="checkbox"
+                                checked={address.is_default}
+                                onChange={(e) => handleAddressChange(index, "is_default", e.target.checked)}
+                              />
+                              Default Address
+                            </label>
+                          </div>
+                          <div>
+                            <Button
+                              size="sm"
+                              className="deleteBtn opacity-50 hover:opacity-100 transition-opacity duration-300"
+                              onClick={() => {
+                                handleDeleteAddress(index);
+                              }}
+                            >
+                              <Trash2 className="mr-1"/> Delete
+                            </Button>
+                          </div>
+                        </div>
+
+                      </div>
+                    ))}
+                  </div>) : (
+                    <p className="text-gray-500 mt-4">You have no saved addresses.</p>
+                  )}
+                  {/* Buttons */}
+                  <div className="w-full mt-6 flex justify-between gap-2">
+                    {/* Save Button */}
+                    <Button
+                      onClick={() => setShowAddAddressForm(true)}
+                      size={"sm"}
+                      className="editBtn"
+                    >
+                      Add New Address
+                    </Button>
+                    <Button
+                      onClick={handleSaveChanges}
+                      size={"sm"}
+                      className="addBtn"
+                    >
+                      Save Changes
+                    </Button>
+                  </div>
+                  
                 </div>
+
+                {showAddAddressForm && (
+                <Dialog open={showAddAddressForm} onOpenChange={setShowAddAddressForm}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>New Address</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label>Address Type</Label>
+                        <Select
+                          value={newAddress.address_type}
+                          onValueChange={(value) =>
+                            setNewAddress({ ...newAddress, address_type: value as Address["address_type"] })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="both">Both</SelectItem>
+                            <SelectItem value="billing">Billing</SelectItem>
+                            <SelectItem value="shipping">Shipping</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label>Street Address</Label>
+                        <Input
+                          value={newAddress.street_address}
+                          onChange={(e) =>
+                            setNewAddress({ ...newAddress, street_address: e.target.value })
+                          }
+                          placeholder="Street Address"
+                        />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label>City</Label>
+                        <Input
+                          value={newAddress.city}
+                          onChange={(e) =>
+                            setNewAddress({ ...newAddress, city: e.target.value })
+                          }
+                          placeholder="City"
+                        />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label>Postal Code</Label>
+                        <Input
+                          value={newAddress.postal_code}
+                          onChange={(e) =>
+                            setNewAddress({ ...newAddress, postal_code: e.target.value })
+                          }
+                          placeholder="Postal Code"
+                        />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label>Country</Label>
+                        <Input
+                          value={newAddress.country}
+                          onChange={(e) =>
+                            setNewAddress({ ...newAddress, country: e.target.value })
+                          }
+                          placeholder="Country"
+                        />
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button
+                        onClick={() => {
+                          if (!newAddress.street_address || !newAddress.city) {
+                            toast.error("Please fill all required fields.");
+                            return;
+                          }
+
+                          dispatch(addAddress({ id: selectedUser?.id || "", address: newAddress }))
+                            .unwrap()
+                            .then(() => {
+                              dispatch(getUserAddresses(selectedUser?.id || ""));
+                              setNewAddress({
+                                user_id: selectedUser?.id || "",
+                                address_type: "both",
+                                street_address: "",
+                                city: "",
+                                postal_code: "",
+                                country: "",
+                                is_default: false,
+                              });
+                              toast.success("New address added.");
+                            })
+                            .catch(() => {
+                              toast.error("Failed to add new address.");
+                            });
+
+                          setShowAddAddressForm(false);
+                        }}
+                      >
+                        Save Address
+                      </Button>
+                      <Button variant="outline" onClick={() => setShowAddAddressForm(false)}>
+                        Cancel
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                )}
               </div>
             ) : (
-              <div className="animate-spin text-center">Loading...</div>
+              <LoaderCircle className="animate-spin text-secondary w-8 h-8" />
             )}
-          </div>
-
-          {/* Save Button */}
-          <div className="mt-6 text-right">
-            <Button
-              onClick={handleSaveChanges}
-              size={"sm"}
-              className="bg-secondary text-white border-secondary border hover:bg-white hover:text-secondary"
-            >
-              Save Changes
-            </Button>
-          </div>
         </TabsContent>
-
+        
         {/* Orders Tab */}
         <TabsContent value="orders">
           <MyOrders /> {/* Embedding your existing MyOrders component */}
