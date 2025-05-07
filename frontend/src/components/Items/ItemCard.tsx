@@ -71,8 +71,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
     );
 
     // If no thumbnail found, try to get main image
-    const mainImage =
-      !thumbnailImage && validImages.find((img) => img.image_type === "main");
+    const mainImage = thumbnailImage
+      ? null
+      : validImages.find((img) => img.image_type === "main");
 
     // Use thumbnail or main image URL
     return thumbnailImage?.image_url || mainImage?.image_url || "";
