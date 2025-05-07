@@ -41,7 +41,7 @@ function TabsTrigger({
       data-slot="tabs-trigger"
       className={cn(
         // Active Tab Styles
-        "data-[state=active]:text-secondary data-[state=active]:border-b-8 data-[state=active]:border-secondary data-[state=active]:bg-none text-md py-2 px-4 cursor-pointer text-muted-foreground hover:text-secondary focus:outline-none transition-all duration-200",
+        "data-[state=active]:text-secondary data-[state=active]:border-b-4 data-[state=active]:border-secondary data-[state=active]:bg-none text-md py-2 px-4 cursor-pointer text-muted-foreground hover:text-secondary focus:outline-none transition-all duration-200",
 
         // Non-active Tab Styles
         "border-b border-transparent hover:border-muted-foreground hover:text-secondary",
