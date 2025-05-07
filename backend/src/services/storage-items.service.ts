@@ -6,7 +6,6 @@ import {
   SupabaseClient,
 } from "@supabase/supabase-js";
 import {
-  CreateStorageItemDto,
   StorageItem,
   StorageItemWithJoin,
 } from "src/interfaces/storage-item.interface";
@@ -104,40 +103,35 @@ export class StorageItemsService {
   //   return data || [];
   // }
 
-  async createItem(createStorageItemDto: any) {
-    // extract tagIds and remove them from the actual insert payload
-    const { tagIds, ...rest } = createStorageItemDto;
-    // clone and strip tagIds at runtime
-    const storageItemData = JSON.parse(JSON.stringify(rest));
-    delete storageItemData.tagIds;
-    // 1. Insert item into storage_items
-    const { data: insertedItems, error: itemInsertError } = await this.supabase
+  async createItem(item: Partial<StorageItem> & { tagIds?: string[] }) {
+    // Extract tagIds from the item object
+    // and keep the rest of the item data in storageItemData
+    const { tagIds, ...storageItemData } = item;
+    // Insert the item into the storage_items table
+    const { data: insertedItems, error } = await this.supabase
       .from("storage_items")
-      .insert([storageItemData]) // No tagIds here
+      .insert(storageItemData)
       .select();
+    if (error) throw new Error(error.message);
 
-    if (itemInsertError) {
-      throw new Error(itemInsertError.message);
-    }
     const insertedItem = insertedItems?.[0];
-    if (!insertedItem) {
-      throw new Error("Failed to insert storage item.");
-    }
-    // 2. Insert related tags into storage_item_tags
-    if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
-      const itemTags = tagIds.map((tagId) => ({
+    if (!insertedItem) throw new Error("Failed to insert storage item");
+    // If tagIds are provided, insert them into the storage_item_tags table
+    if (tagIds && tagIds.length > 0) {
+      const tagLinks = tagIds.map((tagId) => ({
         item_id: insertedItem.id,
         tag_id: tagId,
       }));
-      const { error: tagInsertError } = await this.supabase
+      // Insert the tag links into the storage_item_tags table
+      const { error: tagError } = await this.supabase
         .from("storage_item_tags")
-        .insert(itemTags);
-      if (tagInsertError) {
-        throw new Error(tagInsertError.message);
-      }
+        .insert(tagLinks);
+  
+      if (tagError) throw new Error(tagError.message);
     }
+  
     return insertedItem;
-  }
+  }  
 
   // async updateItem(
   //   id: string,
