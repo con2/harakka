@@ -6,13 +6,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   createItem,
-  selectItemsLoading,
   selectItemsError,
   selectItemsErrorContext,
 } from "@/store/slices/itemsSlice";
@@ -24,6 +24,13 @@ import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
 import { Loader2 } from "lucide-react";
 import { ItemFormData } from "@/types";
 import { Checkbox } from "../ui/checkbox";
+import ItemImageManager from "./ItemImageManager";
+import {
+  openItemModal,
+  closeItemModal,
+  setCreatedItemId,
+  selectItemModalState,
+} from "@/store/slices/uiSlice";
 
 const initialFormState: ItemFormData = {
   location_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
@@ -50,13 +57,23 @@ const initialFormState: ItemFormData = {
 const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
   const availableTags = useAppSelector(selectAllTags);
-  const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
   const errorContext = useAppSelector(selectItemsErrorContext);
 
+  // Use global modal state from Redux
+  const modalState = useAppSelector(selectItemModalState);
+
   const [formData, setFormData] = useState<ItemFormData>(initialFormState);
-  const [open, setOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"details" | "images">("details");
+
+  // Fetch the created item from Redux store when we have the ID
+  const createdItem = useAppSelector((state) =>
+    modalState.createdItemId
+      ? state.items.items.find((item) => item.id === modalState.createdItemId)
+      : null,
+  );
 
   // Display errors when they occur
   useEffect(() => {
@@ -64,6 +81,19 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
       toast.error(error);
     }
   }, [error, errorContext]);
+
+  useEffect(() => {
+    if (modalState.isOpen) {
+      dispatch(fetchAllTags()); // Fetch all tags when modal opens
+    }
+  }, [dispatch, modalState.isOpen]);
+
+  // When item is created, switch to images tab
+  useEffect(() => {
+    if (modalState.createdItemId) {
+      setActiveTab("images");
+    }
+  }, [modalState.createdItemId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -98,12 +128,12 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
         setFormData({
           ...formData,
           [name]: parseFloat(value) || 0,
-        } as ItemFormData); // Type assertion helps TypeScript understand
+        } as ItemFormData);
       } else if (name === "location_id" || name === "compartment_id") {
         setFormData({
           ...formData,
           [name]: value,
-        } as ItemFormData); // Type assertion helps TypeScript understand
+        } as ItemFormData);
       }
     }
   };
@@ -115,45 +145,131 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
-  const resetForm = () => {
-    setFormData(initialFormState);
-    setSelectedTags([]); // Reset selected tags
+  const handleTagToggle = (tagId: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId],
+    );
   };
 
-  const handleSubmit = async () => {
+  // Handle form submission
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    setLoading(true);
+
     try {
-      // Dispatch create item action, adding the selected tags to the form data
-      await dispatch(
+      // Create the item
+      const newItem = await dispatch(
         createItem({ ...formData, tagIds: selectedTags }),
       ).unwrap();
-      toast.success("Item created successfully!");
-      resetForm();
-      setOpen(false);
-    } catch {
-      // Error is already handled by the redux slice and displayed via useEffect
+
+      console.log("Item created successfully:", newItem);
+
+      // Update the global state
+      dispatch(setCreatedItemId(newItem.id));
+      setActiveTab("images");
+
+      toast.success(
+        `Item "${newItem.translations.en.item_name}" created successfully! You can now add images.`,
+      );
+    } catch (error) {
+      console.error("Error creating item:", error);
+      toast.error("Failed to create item");
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (open) {
-      dispatch(fetchAllTags()); // Fetch all tags when modal opens
-    }
-  }, [dispatch, open]);
+  // Reset form and close modal
+  const resetForm = () => {
+    setFormData(initialFormState);
+    setSelectedTags([]);
+    setActiveTab("details");
+    dispatch(closeItemModal());
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog
+      open={modalState.isOpen}
+      onOpenChange={(isOpen) => {
+        if (isOpen) {
+          dispatch(openItemModal());
+        } else {
+          // Handle close confirmation
+          if (activeTab === "images" && modalState.createdItemId) {
+            if (
+              confirm(
+                "Are you sure you want to close? Any unsaved image changes will be lost.",
+              )
+            ) {
+              resetForm();
+            }
+          } else {
+            resetForm();
+          }
+        }
+      }}
+    >
+      <DialogTrigger asChild onClick={() => dispatch(openItemModal())}>
+        {children}
+      </DialogTrigger>
+
       <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-center mb-4">Add New Item</DialogTitle>
+          <DialogTitle>Add New Item</DialogTitle>
+          <DialogDescription className="text-center">
+            {activeTab === "details"
+              ? "Fill in the details to create a new item"
+              : createdItem
+              ? `Add images for "${createdItem.translations.en.item_name}"`
+              : "Please create an item first"}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Finnish Information */}
-            <div>
-              <h3 className="font-medium mb-2">Finnish</h3>
-              <div className="space-y-3">
+        {/* Tab Navigation - matching UpdateItemModal style */}
+        <div className="flex border-b mb-4">
+          <button
+            className={`px-4 py-2 ${
+              activeTab === "details"
+                ? "border-b-2 border-secondary font-medium"
+                : "text-gray-500"
+            }`}
+            onClick={() => setActiveTab("details")}
+          >
+            Details
+          </button>
+          <button
+            className={`px-4 py-2 ${
+              activeTab === "images"
+                ? "border-b-2 border-secondary font-medium"
+                : "text-gray-500"
+            }`}
+            onClick={() => modalState.createdItemId && setActiveTab("images")}
+            disabled={!modalState.createdItemId}
+          >
+            Images
+          </button>
+        </div>
+
+        {activeTab === "details" ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit(e);
+            }}
+            className="space-y-6"
+          >
+            {/* Item Translation Fields */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Translations</h3>
+
+              {/* Item Names - Side by Side */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="translations.fi.item_name">
                     Item Name (FI)
@@ -163,40 +279,10 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     name="translations.fi.item_name"
                     value={formData.translations.fi.item_name}
                     onChange={handleChange}
+                    placeholder="Item Name (FI)"
+                    required
                   />
                 </div>
-
-                <div>
-                  <Label htmlFor="translations.fi.item_type">
-                    Item Type (FI)
-                  </Label>
-                  <Input
-                    id="translations.fi.item_type"
-                    name="translations.fi.item_type"
-                    value={formData.translations.fi.item_type}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="translations.fi.item_description">
-                    Description (FI)
-                  </Label>
-                  <Textarea
-                    id="translations.fi.item_description"
-                    name="translations.fi.item_description"
-                    value={formData.translations.fi.item_description}
-                    onChange={handleChange}
-                    rows={3}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* English Information */}
-            <div>
-              <h3 className="font-medium mb-2">English</h3>
-              <div className="space-y-3">
                 <div>
                   <Label htmlFor="translations.en.item_name">
                     Item Name (EN)
@@ -206,9 +292,26 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     name="translations.en.item_name"
                     value={formData.translations.en.item_name}
                     onChange={handleChange}
+                    placeholder="Item Name (EN)"
+                    required
                   />
                 </div>
+              </div>
 
+              {/* Item Types - Side by Side */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="translations.fi.item_type">
+                    Item Type (FI)
+                  </Label>
+                  <Input
+                    id="translations.fi.item_type"
+                    name="translations.fi.item_type"
+                    value={formData.translations.fi.item_type}
+                    onChange={handleChange}
+                    placeholder="Item Type (FI)"
+                  />
+                </div>
                 <div>
                   <Label htmlFor="translations.en.item_type">
                     Item Type (EN)
@@ -218,120 +321,143 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     name="translations.en.item_type"
                     value={formData.translations.en.item_type}
                     onChange={handleChange}
+                    placeholder="Item Type (EN)"
                   />
                 </div>
+              </div>
 
+              {/* Item Descriptions - Side by Side */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="translations.fi.item_description">
+                    Item Description (FI)
+                  </Label>
+                  <Textarea
+                    id="translations.fi.item_description"
+                    name="translations.fi.item_description"
+                    value={formData.translations.fi.item_description}
+                    onChange={handleChange}
+                    placeholder="Item Description (FI)"
+                    rows={3}
+                  />
+                </div>
                 <div>
                   <Label htmlFor="translations.en.item_description">
-                    Description (EN)
+                    Item Description (EN)
                   </Label>
                   <Textarea
                     id="translations.en.item_description"
                     name="translations.en.item_description"
                     value={formData.translations.en.item_description}
                     onChange={handleChange}
+                    placeholder="Item Description (EN)"
                     rows={3}
                   />
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Item Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div>
-              <Label htmlFor="location_id">Location ID</Label>
-              <Input
-                id="location_id"
-                name="location_id"
-                value={formData.location_id}
-                onChange={handleChange}
-              />
-            </div>
+            {/* Item Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Item Details</h3>
 
-            <div>
-              <Label htmlFor="compartment_id">Compartment ID</Label>
-              <Input
-                id="compartment_id"
-                name="compartment_id"
-                value={formData.compartment_id}
-                onChange={handleChange}
-              />
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="location_id">Location ID</Label>
+                  <Input
+                    id="location_id"
+                    name="location_id"
+                    value={formData.location_id}
+                    onChange={handleChange}
+                    placeholder="Location ID"
+                  />
+                </div>
 
-            <div>
-              <Label htmlFor="price">Price (€)</Label>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                value={formData.price}
-                onChange={handleChange}
-              />
-            </div>
+                <div>
+                  <Label htmlFor="compartment_id">Compartment ID</Label>
+                  <Input
+                    id="compartment_id"
+                    name="compartment_id"
+                    value={formData.compartment_id}
+                    onChange={handleChange}
+                    placeholder="Compartment ID"
+                  />
+                </div>
+              </div>
 
-            <div>
-              <Label htmlFor="items_number_total">Total Quantity</Label>
-              <Input
-                id="items_number_total"
-                name="items_number_total"
-                type="number"
-                value={formData.items_number_total}
-                onChange={handleChange}
-                min="1"
-              />
-            </div>
+              {/* Price and Active Status */}
+              <div className="flex flex-row items-center space-x-4">
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  value={formData.price}
+                  onChange={handleChange}
+                  placeholder="Price"
+                  required
+                  className="w-60"
+                />
+                <Label
+                  htmlFor="is_active"
+                  className="text-secondary font-medium"
+                >
+                  Active
+                </Label>
+                <Switch
+                  id="is_active"
+                  checked={formData.is_active}
+                  onCheckedChange={handleToggleChange}
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="items_number_available">Available Quantity</Label>
-              <Input
-                id="items_number_available"
-                name="items_number_available"
-                type="number"
-                value={formData.items_number_available}
-                onChange={handleChange}
-                min="0"
-                max={formData.items_number_total}
-              />
-            </div>
+              {/* Quantity */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="items_number_total">Total Quantity</Label>
+                  <Input
+                    id="items_number_total"
+                    name="items_number_total"
+                    type="number"
+                    value={formData.items_number_total}
+                    onChange={handleChange}
+                    min="1"
+                    placeholder="Total quantity"
+                  />
+                </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is_active"
-                checked={formData.is_active}
-                onCheckedChange={handleToggleChange}
-              />
-              <Label htmlFor="is_active">Active</Label>
-            </div>
+                <div>
+                  <Label htmlFor="items_number_available">
+                    Available Quantity
+                  </Label>
+                  <Input
+                    id="items_number_available"
+                    name="items_number_available"
+                    type="number"
+                    value={formData.items_number_available}
+                    onChange={handleChange}
+                    min="0"
+                    max={formData.items_number_total}
+                    placeholder="Available quantity"
+                  />
+                </div>
+              </div>
 
-            {/* Tags Section */}
-            <div>
-              <h3 className="text-lg font-medium">Assign Tags</h3>
-              <div className="rounded max-h-60 overflow-y-auto">
-                <div className="grid grid-cols-2 grid-flow-row">
+              {/* Tag Selection */}
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Assign Tags</h3>
+                <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
                   {availableTags.map((tag) => (
-                    <label
-                      key={tag.id}
-                      htmlFor={tag.id}
-                      className="flex items-center space-x-2"
-                    >
+                    <label key={tag.id} className="flex items-center space-x-2">
                       <Checkbox
                         className="border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
                         checked={selectedTags.includes(tag.id)}
-                        onCheckedChange={() => {
-                          if (selectedTags.includes(tag.id)) {
-                            setSelectedTags(
-                              selectedTags.filter((id) => id !== tag.id),
-                            );
-                          } else {
-                            setSelectedTags([...selectedTags, tag.id]);
-                          }
-                        }}
+                        onCheckedChange={() => handleTagToggle(tag.id)}
                       />
                       <span>
                         {tag.translations?.fi?.name ||
                           tag.translations?.en?.name ||
-                          "Unnamed Tag"}
+                          "Unnamed"}
                       </span>
                     </label>
                   ))}
@@ -339,26 +465,51 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               </div>
             </div>
 
-          </div>
-        </div>
+            <DialogFooter>
+              <Button
+                type="submit"
+                className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+                disabled={loading}
+                size="sm"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Item"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        ) : modalState.createdItemId ? (
+          <>
+            <ItemImageManager itemId={modalState.createdItemId} />
 
-        <DialogFooter>
-          <Button
-            className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
-            onClick={handleSubmit}
-            disabled={loading}
-            size={"sm"}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Add Item"
-            )}
-          </Button>
-        </DialogFooter>
+            <DialogFooter className="mt-4">
+              <Button
+                variant="secondary"
+                className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+                onClick={resetForm}
+                size="sm"
+              >
+                Done & Close
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <p>Please create an item first</p>
+            <Button
+              className="mt-4 text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+              onClick={() => setActiveTab("details")}
+              size="sm"
+            >
+              Go back to details
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
