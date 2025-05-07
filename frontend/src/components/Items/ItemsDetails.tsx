@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
@@ -7,6 +7,10 @@ import {
   selectItemsLoading,
   selectItemsError,
 } from "../../store/slices/itemsSlice";
+import {
+  getItemImages,
+  selectItemImages,
+} from "../../store/slices/itemImagesSlice";
 import { Button } from "../../components/ui/button";
 import { Clock, LoaderCircle } from "lucide-react";
 import Rating from "../ui/rating";
@@ -14,6 +18,7 @@ import { addToCart } from "../../store/slices/cartSlice";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import imagePlaceholder from "@/assets/defaultImage.jpg";
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -25,55 +30,148 @@ const ItemsDetails: React.FC = () => {
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
+  const itemImages = useAppSelector(selectItemImages);
 
   // State for selected tab
   const [selectedTab, setSelectedTab] = useState("description");
   // State for cart quantity
   const [quantity, setQuantity] = useState(1);
+  // Image tracking states
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
 
+  // Get images for this specific item
+  const itemImagesForCurrentItem = useMemo(
+    () => itemImages.filter((img) => img.item_id === id),
+    [itemImages, id],
+  );
+
+  // Get all detail images for the gallery
+  const detailImages = useMemo(
+    () => itemImagesForCurrentItem.filter((img) => img.image_type === "detail"),
+    [itemImagesForCurrentItem],
+  );
+
+  // Get the main image - no transformation needed
+  const mainImage = useMemo(() => {
+    // If user selected an image, use that
+    if (selectedImageUrl) return selectedImageUrl;
+
+    // First try to find a main image
+    const mainImg = itemImagesForCurrentItem.find(
+      (img) => img.image_type === "main",
+    );
+
+    // If no main image, try thumbnail
+    const thumbnailImg =
+      !mainImg &&
+      itemImagesForCurrentItem.find((img) => img.image_type === "thumbnail");
+
+    // Then try any image
+    const anyImg = !mainImg && !thumbnailImg && itemImagesForCurrentItem[0];
+
+    // Return image URL or placeholder
+    return (
+      mainImg?.image_url ||
+      thumbnailImg?.image_url ||
+      anyImg?.image_url ||
+      imagePlaceholder
+    );
+  }, [itemImagesForCurrentItem, selectedImageUrl]);
+
+  // Handle cart actions
   const handleAddToCart = () => {
     if (item) {
       dispatch(
         addToCart({
           item: item,
           quantity: quantity,
-          startDate: startDate, // Use global timeframe
-          endDate: endDate, // Use global timeframe
+          startDate: startDate,
+          endDate: endDate,
         }),
       );
       toast.success(`${item.translations.fi.item_name} added to cart`);
     }
   };
 
+  // Fetch item and images
   useEffect(() => {
     if (id) {
       dispatch(getItemById(id));
+
+      // Fetch images for this item
+      dispatch(getItemImages(id))
+        .unwrap()
+        .catch((error) => {
+          console.error("Failed to fetch item images:", error);
+        });
     }
   }, [id, dispatch]);
 
   // Loading and error states
   if (loading) {
     return (
-      <div>
+      <div className="flex items-center justify-center h-[50vh]">
         <LoaderCircle className="animate-spin h-8 w-8" />
       </div>
     );
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <div className="container mx-auto p-12 text-center text-red-500">
+        Error: {error}
+      </div>
+    );
   }
 
   if (!item) {
-    return <div>Item not found</div>;
+    return (
+      <div className="container mx-auto p-12 text-center">Item not found</div>
+    );
   }
 
   return (
     <div className="container mx-auto p-12">
       <div className="flex flex-col md:flex-row gap-8">
         {/* Item Images - Positioned Left */}
-        <div className="md:w-1/3 w-full flex justify-center items-center border rounded-md">
-          <p>Image comes here</p>
+        <div className="md:w-1/3 w-full">
+          {/* Main Image */}
+          <div className="border rounded-md overflow-hidden bg-slate-50 mb-4">
+            <img
+              src={mainImage}
+              alt={item.translations.en.item_name || "Item image"}
+              className="w-full h-[300px] object-contain"
+              onError={(e) => {
+                console.warn(`Failed to load image: ${mainImage}`);
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = imagePlaceholder;
+              }}
+            />
+          </div>
+
+          {/* Detail Images Gallery */}
+          {detailImages.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {detailImages.map((img) => (
+                <div
+                  key={img.id}
+                  className="border rounded-md overflow-hidden bg-slate-50 cursor-pointer"
+                  onClick={() => setSelectedImageUrl(img.image_url)}
+                >
+                  <img
+                    src={img.image_url}
+                    alt={img.alt_text || "Detail image"}
+                    className="w-full h-20 object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = imagePlaceholder;
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Side - Item Details */}
@@ -148,18 +246,26 @@ const ItemsDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs and Tab Contents - Positioned Below */}
+      {/* Tabs and Tab Contents */}
       <div className="mt-10 w-full">
         <div className="flex gap-4">
           <Button
             onClick={() => setSelectedTab("description")}
-            className="bg-transparent text-secondary hover:bg-secondary hover:text-white"
+            className={`${
+              selectedTab === "description"
+                ? "bg-secondary text-white"
+                : "bg-transparent text-secondary"
+            } hover:bg-secondary hover:text-white`}
           >
             Description
           </Button>
           <Button
             onClick={() => setSelectedTab("reviews")}
-            className="bg-transparent text-secondary hover:bg-secondary hover:text-white"
+            className={`${
+              selectedTab === "reviews"
+                ? "bg-secondary text-white"
+                : "bg-transparent text-secondary"
+            } hover:bg-secondary hover:text-white`}
           >
             Reviews
           </Button>
