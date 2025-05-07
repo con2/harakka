@@ -1,5 +1,6 @@
 import { CreateUserDto, UserProfile } from "@/types/user";
 import { api } from "../axios";
+import { Address } from "@/types/address";
 
 /**
  * API service for user-related endpoints
@@ -40,4 +41,39 @@ export const usersApi = {
    * @param id - User ID to delete
    */
   deleteUser: (id: string): Promise<void> => api.delete(`/users/${id}`),
+
+   /**
+   * Get addresses for a specific user
+   * @param id - User ID to fetch addresses for
+   * @returns Promise with an array of addresses
+   */
+   getAddresses: (id: string): Promise<Address[]> => api.get(`/users/${id}/addresses`),
+  
+  /**
+     * Add a new address for a user
+     * @param id - User ID to add the address to
+     * @param address - Address data to add
+     * @returns Promise with the newly added address
+     */
+  addAddress: (id: string, address: Address): Promise<Address> => 
+    api.post(`/users/${id}/addresses`, address),
+
+  /**
+   * Update an existing address for a user
+   * @param id - User ID to update the address for
+   * @param addressId - Address ID to update
+   * @param address - Updated address data
+   * @returns Promise with the updated address
+   */
+  updateAddress: (id: string, addressId: string, address: Address): Promise<Address> =>
+    api.put(`/users/${id}/addresses/${addressId}`, address),
+
+  /**
+   * Delete an address for a user
+   * @param id - User ID to delete the address from
+   * @param addressId - Address ID to delete
+   * @returns Promise indicating completion
+   */
+  deleteAddress: (id: string, addressId: string): Promise<void> =>
+    api.delete(`/users/${id}/addresses/${addressId}`),
 };
