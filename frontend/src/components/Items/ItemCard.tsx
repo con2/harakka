@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -17,6 +17,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  getItemImages,
+  selectItemImages,
+} from "../../store/slices/itemImagesSlice";
+import imagePlaceholder from "@/assets/defaultImage.jpg";
+import { ordersApi } from "@/api/services/orders";
+import { ItemImageAvailabilityInfo } from "@/types/storage";
 
 interface ItemsCardProps {
   item: Item;
@@ -27,12 +34,100 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   const dispatch = useAppDispatch();
   const { user } = useAuth();
   const isAdmin = user?.user_metadata?.role === "admin"; // Admin check
+  const itemImages = useAppSelector(selectItemImages);
 
   // Get global timeframe from Redux
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
 
   // Only keep quantity as local state
   const [quantity, setQuantity] = useState(0);
+
+  const [availabilityInfo, setAvailabilityInfo] =
+    useState<ItemImageAvailabilityInfo>({
+      availableQuantity: item.items_number_available,
+      isChecking: false,
+      error: null,
+    });
+
+  // Enhanced image finding with memoization to prevent recalculation on every render
+  const itemImagesForCurrentItem = useMemo(
+    () => itemImages.filter((img) => img.item_id === item.id),
+    [itemImages, item.id],
+  );
+
+  // Add this persistent ref to track already-failed image URLs
+  const failedImageUrlsRef = useRef<Set<string>>(new Set());
+
+  // Stable URL calculation that won't change between renders
+  const stableImageUrl = useMemo(() => {
+    // Get all possible images for this item
+    const validImages = itemImagesForCurrentItem.filter(
+      (img) => !failedImageUrlsRef.current.has(img.image_url),
+    );
+
+    // Find thumbnail image for this item
+    const thumbnailImage = validImages.find(
+      (img) => img.image_type === "thumbnail",
+    );
+
+    // If no thumbnail found, try to get main image
+    const mainImage =
+      !thumbnailImage && validImages.find((img) => img.image_type === "main");
+
+    // Use thumbnail or main image URL
+    return thumbnailImage?.image_url || mainImage?.image_url || "";
+  }, [itemImagesForCurrentItem]);
+
+  // Image handling states
+  const [currentImageUrl, setCurrentImageUrl] = useState("");
+  const [isImageLoading, setIsImageLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const imageLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Set the image URL just once when it changes
+  useEffect(() => {
+    if (stableImageUrl && !failedImageUrlsRef.current.has(stableImageUrl)) {
+      // Clear any existing timeout
+      if (imageLoadingTimeoutRef.current) {
+        clearTimeout(imageLoadingTimeoutRef.current);
+      }
+
+      setCurrentImageUrl(stableImageUrl);
+      setIsImageLoading(true);
+      setLoadFailed(false);
+
+      // Set a timeout to prevent infinite loading
+      imageLoadingTimeoutRef.current = setTimeout(() => {
+        setIsImageLoading(false);
+        failedImageUrlsRef.current.add(stableImageUrl); // Mark as failed due to timeout
+        console.warn(`Image loading timed out for ${stableImageUrl}`);
+      }, 5000); // 5 seconds timeout
+    } else {
+      // If no URL or URL previously failed
+      setCurrentImageUrl("");
+      setIsImageLoading(false);
+      setLoadFailed(true);
+    }
+
+    // Cleanup function to clear timeout
+    return () => {
+      if (imageLoadingTimeoutRef.current) {
+        clearTimeout(imageLoadingTimeoutRef.current);
+      }
+    };
+  }, [stableImageUrl]);
+
+  // Fetch images only once per item
+  useEffect(() => {
+    // Only fetch if we don't already have images for this item
+    if (!itemImagesForCurrentItem.length) {
+      dispatch(getItemImages(item.id))
+        .unwrap()
+        .catch((error) => {
+          console.error("Failed to fetch item images:", error);
+        });
+    }
+  }, [dispatch, item.id, itemImagesForCurrentItem.length]);
 
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
@@ -74,15 +169,44 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   };
 
   // Check if the item is available for the selected timeframe
-  // This would then come from an API call in a real application
-  const isItemAvailableForTimeframe = true; // TODO: replace placeholder logic
+  useEffect(() => {
+    // Only check availability if dates are selected
+    if (startDate && endDate) {
+      setAvailabilityInfo((prev) => ({
+        ...prev,
+        isChecking: true,
+        error: null,
+      }));
+
+      ordersApi
+        .checkAvailability(item.id, startDate, endDate)
+        .then((response) => {
+          setAvailabilityInfo({
+            availableQuantity: response.availableQuantity,
+            isChecking: false,
+            error: null,
+          });
+        })
+        .catch((error) => {
+          console.error("Error checking availability:", error);
+          setAvailabilityInfo({
+            availableQuantity: item.items_number_available,
+            isChecking: false,
+            error: "Failed to check availability",
+          });
+        });
+    }
+  }, [item.id, startDate, endDate]);
+
+  const isItemAvailableForTimeframe = availabilityInfo.availableQuantity > 0;
 
   const isAddToCartDisabled =
     !startDate ||
     !endDate ||
-    quantity > item.items_number_available ||
+    quantity > availabilityInfo.availableQuantity ||
     quantity <= 0 ||
-    !isItemAvailableForTimeframe;
+    !isItemAvailableForTimeframe ||
+    availabilityInfo.isChecking;
 
   return (
     <Card
@@ -90,14 +214,54 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       className="w-full max-w-[350px] flex flex-col justify-between p-4"
     >
       {/* Image Section */}
-      <div className="h-40 bg-gray-200 flex items-center justify-center rounded">
-        <span className="text-gray-500">Image Placeholder</span>
+      <div className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden">
+        {isImageLoading && !loadFailed && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <div className="w-8 h-8 border-4 border-gray-300 border-t-secondary rounded-full animate-spin"></div>
+          </div>
+        )}
+        <img
+          src={currentImageUrl || imagePlaceholder}
+          alt={item.translations?.en?.item_name || "Storage item"}
+          className="w-full h-full object-cover transition-opacity duration-300"
+          onLoad={() => {
+            if (imageLoadingTimeoutRef.current) {
+              clearTimeout(imageLoadingTimeoutRef.current);
+              imageLoadingTimeoutRef.current = null;
+            }
+            setIsImageLoading(false);
+            setLoadFailed(false);
+          }}
+          onError={(e) => {
+            // Prevent infinite loops by tracking which URLs have failed
+            if (currentImageUrl) {
+              console.warn(`Failed to load image: ${currentImageUrl}`);
+              failedImageUrlsRef.current.add(currentImageUrl);
+            }
+
+            // Clear the timeout
+            if (imageLoadingTimeoutRef.current) {
+              clearTimeout(imageLoadingTimeoutRef.current);
+              imageLoadingTimeoutRef.current = null;
+            }
+
+            // Critical: remove the error handler before changing the source
+            e.currentTarget.onerror = null;
+
+            // Set to placeholder directly - only once
+            e.currentTarget.src = imagePlaceholder;
+            setIsImageLoading(false);
+            setLoadFailed(true);
+          }}
+          loading="lazy"
+        />
       </div>
 
       {/* Item Details */}
       <div>
         <h2 className="text-lg font-semibold text-center mb-0">
-          {item.translations.fi.item_name.charAt(0).toUpperCase() + item.translations.fi.item_name.slice(1)}
+          {item.translations.fi.item_name.charAt(0).toUpperCase() +
+            item.translations.fi.item_name.slice(1)}
         </h2>
         {/* TODO: return this span when back will provide location name */}
         {/* <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -142,21 +306,26 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
               onChange={(e) => {
                 const value = parseInt(e.target.value) || 0;
                 setQuantity(
-                  Math.min(item.items_number_available, Math.max(0, value)),
+                  Math.min(
+                    availabilityInfo.availableQuantity,
+                    Math.max(0, value),
+                  ),
                 );
               }}
               className="w-11 h-8 mx-2 text-center"
               min="0"
-              max={item.items_number_available}
+              max={availabilityInfo.availableQuantity}
             />
             <Button
               variant="outline"
               size="sm"
               onClick={() =>
-                setQuantity(Math.min(item.items_number_available, quantity + 1))
+                setQuantity(
+                  Math.min(availabilityInfo.availableQuantity, quantity + 1),
+                )
               }
               className="h-8 w-8 p-0"
-              disabled={quantity >= item.items_number_available}
+              disabled={quantity >= availabilityInfo.availableQuantity}
             >
               +
             </Button>
@@ -164,9 +333,21 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         </div>
 
         <div className="flex items-center justify-end mb-3 mt-1">
-        <p className="text-xs text-slate-400 italic m-0">
-          Bookable units: {item.items_number_available}
-        </p>
+          {availabilityInfo.isChecking ? (
+            <p className="text-xs text-slate-400 italic m-0">
+              Checking availability...
+            </p>
+          ) : availabilityInfo.error ? (
+            <p className="text-xs text-red-500 italic m-0">
+              {availabilityInfo.error}
+            </p>
+          ) : (
+            <p className="text-xs text-slate-400 italic m-0">
+              {startDate && endDate
+                ? `Available: ${availabilityInfo.availableQuantity} units`
+                : `Total units: ${item.items_number_available}`}
+            </p>
+          )}
         </div>
 
         {/* Add to Cart Button with Tooltip */}
@@ -216,7 +397,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
       {/* Admin Actions */}
       {isAdmin && (
-        <div className="flex">
+        <div className="flex justify-between mt-4">
           <Button variant="outline" onClick={handleUpdate}>
             Edit
           </Button>
