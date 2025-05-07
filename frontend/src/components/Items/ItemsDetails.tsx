@@ -62,12 +62,11 @@ const ItemsDetails: React.FC = () => {
     );
 
     // If no main image, try thumbnail
-    const thumbnailImg =
-      !mainImg &&
-      itemImagesForCurrentItem.find((img) => img.image_type === "thumbnail");
+    const thumbnailImg = mainImg
+      ? null
+      : itemImagesForCurrentItem.find((img) => img.image_type === "thumbnail");
 
-    // Then try any image
-    const anyImg = !mainImg && !thumbnailImg && itemImagesForCurrentItem[0];
+    const anyImg = mainImg || thumbnailImg ? null : itemImagesForCurrentItem[0];
 
     // Return image URL or placeholder
     return (
