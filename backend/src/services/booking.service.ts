@@ -932,7 +932,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       throw new BadRequestException("Could not mark booking as deleted");
     }
 
-    // 8.6 8.5 send notification email to admin
+    // 8.6 send notification email to admin
     const adminEmail = "illusia.rental.service@gmail.com";
 
     await this.mailService.sendMail(
