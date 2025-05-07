@@ -1,8 +1,8 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { itemImagesApi } from '@/api/services/itemImages';
-import { ItemImage, UploadItemImageDto } from '@/types/storage';
-import { RootState } from '../store';
-import { ErrorContext } from '@/types/common';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { itemImagesApi } from "@/api/services/itemImages";
+import { ItemImage, UploadItemImageDto } from "@/types/storage";
+import { RootState } from "../store";
+import { ErrorContext } from "@/types/common";
 
 interface ItemImagesState {
   images: ItemImage[];
@@ -23,7 +23,7 @@ const initialState: ItemImagesState = {
 };
 
 export const getItemImages = createAsyncThunk(
-  'itemImages/getItemImages',
+  "itemImages/getItemImages",
   async (itemId: string, { rejectWithValue, getState }) => {
     try {
       // Optional: Check if we already have images for this item to avoid unnecessary fetches
@@ -37,14 +37,14 @@ export const getItemImages = createAsyncThunk(
       return { images, itemId };
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to fetch item images',
+        error.response?.data?.message || "Failed to fetch item images",
       );
     }
   },
 );
 
 export const uploadItemImage = createAsyncThunk(
-  'itemImages/uploadItemImage',
+  "itemImages/uploadItemImage",
   async (
     {
       itemId,
@@ -57,28 +57,28 @@ export const uploadItemImage = createAsyncThunk(
       return await itemImagesApi.uploadItemImage(itemId, file, metadata);
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to upload image',
+        error.response?.data?.message || "Failed to upload image",
       );
     }
   },
 );
 
 export const deleteItemImage = createAsyncThunk(
-  'itemImages/deleteItemImage',
-  async (imageId: string, { rejectWithValue, getState }) => {
+  "itemImages/deleteItemImage",
+  async (imageId: string, { rejectWithValue }) => {
     try {
       await itemImagesApi.deleteItemImage(imageId);
       return imageId;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to delete image',
+        error.response?.data?.message || "Failed to delete image",
       );
     }
   },
 );
 
 const itemImagesSlice = createSlice({
-  name: 'itemImages',
+  name: "itemImages",
   initialState,
   reducers: {
     // Add a reducer to reset the state when needed (e.g., on logout)
