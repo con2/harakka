@@ -5,6 +5,7 @@ export interface StorageItem {
   location_id: string;
   compartment_id: string;
   items_number_total: number;
+  items_number_currently_in_storage: number;
   items_number_available: number;
   price: number;
   is_active: boolean;
@@ -26,16 +27,17 @@ export interface StorageItem {
   storage_item_tags?: Tag[];
 }
 
-// separate DTO that includes tagIds
-export interface CreateStorageItemDto extends Partial<StorageItem> {
-  tagIds?: string[];
-}
+// // separate DTO that includes tagIds
+// export interface CreateStorageItemDto extends Partial<StorageItem> {
+//   tagIds?: string[];
+// }
 
 export interface StorageItemWithJoin {
   id: string;
   location_id: string;
   compartment_id: string;
   items_number_total: number;
+  items_number_currently_in_storage: number;
   items_number_available: number;
   price: number;
   is_active: boolean;

@@ -1,5 +1,5 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { itemsApi } from "../../api/services/items";
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { itemsApi } from '../../api/services/items';
 import {
   ItemState,
   Item,
@@ -7,8 +7,9 @@ import {
   UpdateItemDto,
   Tag,
   RootState,
-} from "@/types";
-import { extractErrorMessage } from "@/store/utils/errorHandlers";
+  ItemFormData,
+} from '@/types';
+import { extractErrorMessage } from '@/store/utils/errorHandlers';
 
 /**
  * Initial state for items slice
@@ -23,13 +24,13 @@ const initialState: ItemState = {
 
 // Fetch all available items
 export const fetchAllItems = createAsyncThunk<Item[], void>(
-  "items/fetchAllItems",
+  'items/fetchAllItems',
   async (_, { rejectWithValue }) => {
     try {
       return await itemsApi.getAllItems();
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch items"),
+        extractErrorMessage(error, 'Failed to fetch items'),
       );
     }
   },
@@ -37,27 +38,29 @@ export const fetchAllItems = createAsyncThunk<Item[], void>(
 
 // Fetch single item by ID
 export const getItemById = createAsyncThunk<Item, string>(
-  "items/getItemById",
+  'items/getItemById',
   async (id: string, { rejectWithValue }) => {
     try {
       return await itemsApi.getItemById(id);
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch item"),
+        extractErrorMessage(error, 'Failed to fetch item'),
       );
     }
   },
 );
 
 // create Item
-export const createItem = createAsyncThunk<Item, CreateItemDto>(
-  "items/createItem",
-  async (newItem, { rejectWithValue }) => {
+export const createItem = createAsyncThunk(
+  'items/createItem',
+  async (itemData: ItemFormData, { rejectWithValue }) => {
     try {
-      return await itemsApi.createItem(newItem);
+      const createdItem = await itemsApi.createItem(itemData);
+      console.log('Item created in API:', createdItem); // Debug log
+      return createdItem;
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to create item"),
+        extractErrorMessage(error, 'Failed to create item'),
       );
     }
   },
@@ -65,14 +68,14 @@ export const createItem = createAsyncThunk<Item, CreateItemDto>(
 
 // Delete item by ID
 export const deleteItem = createAsyncThunk<string, string>(
-  "items/deleteItem",
+  'items/deleteItem',
   async (id: string, { rejectWithValue }) => {
     try {
       await itemsApi.deleteItem(id);
       return id;
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to delete item"),
+        extractErrorMessage(error, 'Failed to delete item'),
       );
     }
   },
@@ -82,24 +85,24 @@ export const deleteItem = createAsyncThunk<string, string>(
 export const updateItem = createAsyncThunk<
   Item,
   { id: string; data: UpdateItemDto }
->("items/updateItem", async ({ id, data }, { rejectWithValue }) => {
+>('items/updateItem', async ({ id, data }, { rejectWithValue }) => {
   try {
     const { ...cleanData } = data;
     return await itemsApi.updateItem(id, cleanData);
   } catch (error: unknown) {
-    return rejectWithValue(extractErrorMessage(error, "Failed to update item"));
+    return rejectWithValue(extractErrorMessage(error, 'Failed to update item'));
   }
 });
 
 // Get items with a specific tag
 export const getItemsByTag = createAsyncThunk<Item[], string>(
-  "items/getItemsByTag",
+  'items/getItemsByTag',
   async (tagId: string, { rejectWithValue }) => {
     try {
       return await itemsApi.getItemsByTag(tagId);
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch items by tag"),
+        extractErrorMessage(error, 'Failed to fetch items by tag'),
       );
     }
   },
@@ -110,20 +113,20 @@ export const getAvailableItems = createAsyncThunk<
   Item[],
   { startDate?: Date | null; endDate?: Date | null }
 >(
-  "items/getAvailableItems",
+  'items/getAvailableItems',
   async ({ startDate, endDate }, { rejectWithValue }) => {
     try {
       return await itemsApi.getAvailableItems(startDate, endDate);
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch available items"),
+        extractErrorMessage(error, 'Failed to fetch available items'),
       );
     }
   },
 );
 
 export const itemsSlice = createSlice({
-  name: "items",
+  name: 'items',
   initialState,
   reducers: {
     clearSelectedItem: (state) => {
@@ -156,7 +159,7 @@ export const itemsSlice = createSlice({
       .addCase(fetchAllItems.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.errorContext = "fetch";
+        state.errorContext = 'fetch';
       })
       .addCase(getItemById.pending, (state) => {
         state.loading = true;
@@ -169,7 +172,7 @@ export const itemsSlice = createSlice({
       .addCase(getItemById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.errorContext = "fetch";
+        state.errorContext = 'fetch';
       })
       .addCase(createItem.pending, (state) => {
         state.loading = true;
@@ -182,7 +185,7 @@ export const itemsSlice = createSlice({
       .addCase(createItem.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.errorContext = "create";
+        state.errorContext = 'create';
       })
       .addCase(deleteItem.pending, (state) => {
         state.loading = true;
@@ -195,7 +198,7 @@ export const itemsSlice = createSlice({
       .addCase(deleteItem.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.errorContext = "delete";
+        state.errorContext = 'delete';
       })
       .addCase(updateItem.pending, (state) => {
         state.loading = true;
@@ -224,7 +227,7 @@ export const itemsSlice = createSlice({
       .addCase(updateItem.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.errorContext = "update";
+        state.errorContext = 'update';
       })
       .addCase(getAvailableItems.pending, (state) => {
         state.loading = true;
@@ -237,7 +240,7 @@ export const itemsSlice = createSlice({
       .addCase(getAvailableItems.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.errorContext = "fetch";
+        state.errorContext = 'fetch';
       })
       .addCase(getItemsByTag.pending, (state) => {
         state.loading = true;
@@ -250,7 +253,7 @@ export const itemsSlice = createSlice({
       .addCase(getItemsByTag.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.errorContext = "fetch";
+        state.errorContext = 'fetch';
       });
   },
 });

@@ -4,7 +4,6 @@ import {
   getUserOrders,
   selectOrdersLoading,
   selectOrdersError,
-  cancelOrder,
   selectUserOrders,
 } from "@/store/slices/ordersSlice";
 import { BookingOrder, BookingItem } from "@/types";
@@ -12,18 +11,14 @@ import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "./ui/dialog";
-import { LoaderCircle, Eye, XCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { LoaderCircle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
+import OrderCancelButton from "./OrderCancelButton";
+import OrderDetailsButton from "./Admin/OrderDetailsButton";
 
 const MyOrders = () => {
   const dispatch = useAppDispatch();
@@ -34,6 +29,8 @@ const MyOrders = () => {
   const error = useAppSelector(selectOrdersError);
   const [selectedOrder, setSelectedOrder] = useState<BookingOrder | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -46,6 +43,24 @@ const MyOrders = () => {
     dispatch(getUserOrders(user.id));
   }, [dispatch, navigate, user]);
 
+  // Apply filters to orders
+  const filteredOrders = orders.filter((order) => {
+    // Filter by status
+    if (statusFilter !== "all" && order.status !== statusFilter) {
+      return false;
+    }
+
+    // Filter by search query (order number)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const orderNumber = String(order.order_number || "").toLowerCase();
+
+      return orderNumber.includes(query);
+    }
+
+    return true;
+  });
+
   const formatDate = (dateString?: string): string => {
     if (!dateString) return "N/A";
     return format(new Date(dateString), "PPP");
@@ -56,48 +71,7 @@ const MyOrders = () => {
     setShowDetailsModal(true);
   };
 
-  const handleCancelOrder = async (orderId: string) => {
-    toast.custom((t) => (
-      <div className="bg-white rounded-xl p-4 shadow-lg">
-        <h3 className="font-semibold mb-2">Confirm Cancellation</h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          Are you sure you want to cancel this order?
-        </p>
-        <div className="flex justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={() => toast.dismiss(t)}>
-            Keep Order
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={async () => {
-              toast.dismiss(t);
-              try {
-                await toast.promise(dispatch(cancelOrder(orderId)).unwrap(), {
-                  loading: "Cancelling order...",
-                  success: "Order cancelled successfully",
-                  error: "Failed to cancel order",
-                });
-
-                if (showDetailsModal) setShowDetailsModal(false);
-              } catch (error) {
-                console.error("Error cancelling order:", error);
-              }
-
-              // After successful cancel refresh the list of orders
-              if (user?.id) {
-                dispatch(getUserOrders(user.id));
-              }
-            }}
-          >
-            Cancel Order
-          </Button>
-        </div>
-      </div>
-    ));
-  };
-
-  // Status badge component
+  // Render a status badge with appropriate color
   const StatusBadge = ({ status }: { status?: string }) => {
     if (!status) return <Badge variant="outline">Unknown</Badge>;
 
@@ -150,15 +124,16 @@ const MyOrders = () => {
       header: "Order #",
     },
     {
-      accessorKey: "created_at",
-      header: "Date",
-      cell: ({ row }) => formatDate(row.original.created_at),
-    },
-    {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
+    {
+      accessorKey: "created_at",
+      header: "Date",
+      cell: ({ row }) => formatDate(row.original.created_at),
+    },
+
     {
       accessorKey: "final_amount",
       header: "Total",
@@ -166,32 +141,22 @@ const MyOrders = () => {
     },
     {
       id: "actions",
-      header: "Actions",
       cell: ({ row }) => {
         const order = row.original;
         const isPending = order.status === "pending";
 
         return (
           <div className="flex space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleViewDetails(order)}
-              title="View Details"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
+            <OrderDetailsButton
+              order={order}
+              onViewDetails={handleViewDetails}
+            />
 
             {isPending && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleCancelOrder(order.id)}
-                title="Cancel Order"
-                className="text-red-600 hover:text-red-800 hover:bg-red-100"
-              >
-                <XCircle className="h-4 w-4" />
-              </Button>
+              <OrderCancelButton
+                id={order.id}
+                closeModal={() => setShowDetailsModal(false)}
+              />
             )}
           </div>
         );
@@ -230,45 +195,92 @@ const MyOrders = () => {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">My Orders</h1>
-
-      {orders.length === 0 ? (
-        <div className="text-center py-8 bg-slate-50 rounded-lg">
-          <p className="text-lg mb-2">You don't have any orders yet</p>
-          <p className="text-muted-foreground mb-4">
-            Items you order will appear here
-          </p>
-          <Button
-            onClick={() => (window.location.href = "/storage")}
-            className="bg-background text-secondary border-secondary border hover:bg-secondary hover:text-white"
-          >
-            Browse Storage Items
-          </Button>
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg">
+      {/* <h1 className="text-2xl font-bold mb-6 text-secondary ml-4">My Orders</h1> */}
+      <div className="space-y-4">
+        {/* Filtering UI */}
+        <div className="flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex gap-4 items-center">
+            <input
+              type="text"
+              placeholder="Search order #"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            >
+              <option value="all">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="rejected">Rejected</option>
+              <option value="completed">Completed</option>
+              <option value="deleted">Deleted</option>
+              <option value="cancelled by admin">Cancelled by admin</option>
+            </select>
+            {(searchQuery || statusFilter !== "all") && (
+              <Button
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                }}
+                size={"sm"}
+                className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
         </div>
-      ) : (
-        <PaginatedDataTable columns={columns} data={orders} />
-      )}
+
+        {/* Orders table or empty state */}
+        {orders.length === 0 ? (
+          <div className="text-center py-8 bg-slate-50 rounded-lg">
+            <p className="text-lg mb-2">You don't have any orders yet</p>
+            <p className="text-muted-foreground mb-4">
+              Items you order will appear here
+            </p>
+            <Button
+              onClick={() => (window.location.href = "/storage")}
+              className="bg-background text-secondary border-secondary border hover:bg-secondary hover:text-white"
+            >
+              Browse Storage Items
+            </Button>
+          </div>
+        ) : (
+          <PaginatedDataTable columns={columns} data={filteredOrders} />
+        )}
+      </div>
 
       {/* Order Details Modal */}
       {selectedOrder && (
         <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Order #{selectedOrder.order_number}</DialogTitle>
+              <DialogTitle>
+                Order Details #{selectedOrder.order_number}
+              </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
               {/* Order Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 className="font-semibold">Order Date</h3>
-                  <p>{formatDate(selectedOrder.created_at)}</p>
+                  <p className="text-sm text-gray-500">
+                    {selectedOrder.user_profile?.email}
+                  </p>
                 </div>
 
                 <div>
-                  <h3 className="font-semibold">Status</h3>
-                  <StatusBadge status={selectedOrder.status} />
+                  <h3 className="font-semibold">Order Information</h3>
+                  <p>
+                    Status: <StatusBadge status={selectedOrder.status} />
+                  </p>
+                  <p>Date: {formatDate(selectedOrder.created_at)}</p>
                 </div>
               </div>
 
@@ -334,24 +346,15 @@ const MyOrders = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <DialogFooter>
+              {/* Order Modal Actions */}
+              <div className="flex justify-end space-x-2">
                 {selectedOrder.status === "pending" && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleCancelOrder(selectedOrder.id)}
-                  >
-                    Cancel Order
-                  </Button>
+                  <OrderCancelButton
+                    id={selectedOrder.id}
+                    closeModal={() => setShowDetailsModal(false)}
+                  />
                 )}
-
-                <Button
-                  onClick={() => setShowDetailsModal(false)}
-                  variant="outline"
-                >
-                  Close
-                </Button>
-              </DialogFooter>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

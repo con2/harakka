@@ -22,9 +22,11 @@ import PasswordReset from "./components/Auth/PasswordReset";
 import PasswordResetResult from "./components/Auth/PasswordResetResult";
 import OrderList from "./components/Admin/OrderList";
 import TagList from "./components/Admin/TagList";
-import MyOrders from "./components/MyOrders";
 import Footer from "./components/Footer";
 import { UserGuide } from "./components/UserGuidelines";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfUse from "./pages/TermsOfUse";
+import MyProfile from "./components/MyProfile";
 
 function App() {
   return (
@@ -38,10 +40,10 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
               <Route
-                path="/orders"
+                path="/profile"
                 element={
                   <ProtectedRoute allowedRoles={["user", "admin", "superVera"]}>
-                    <MyOrders />
+                    <MyProfile />
                   </ProtectedRoute>
                 }
               />
@@ -65,6 +67,8 @@ function App() {
                 <Route path="/items/:id" element={<ItemDetails />} />
               </Route>
               <Route path="/howItWorks" element={<UserGuide />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-use" element={<TermsOfUse />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route path="/cart" element={<Cart />} />
               <Route
@@ -80,7 +84,16 @@ function App() {
             </Routes>
           </main>
           <Footer />
-          <Toaster position="top-right" duration={1000} richColors />
+          <Toaster
+            position="top-right"
+            duration={3000}
+            richColors
+            toastOptions={{
+              classNames: {
+                toast: 'custom-toast',
+              },
+            }}
+          />
         </div>
       </AuthProvider>
     </BrowserRouter>
