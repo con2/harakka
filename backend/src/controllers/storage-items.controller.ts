@@ -6,6 +6,8 @@ import {
   Delete,
   Body,
   Param,
+  HttpException,
+  HttpStatus,
 } from "@nestjs/common";
 import { StorageItemsService } from "src/services/storage-items.service";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
@@ -40,12 +42,29 @@ export class StorageItemsController {
       const result = await this.storageItemsService.deleteItem(id);
       return result; // Return the result, which will include the success status and ID
     } catch (error) {
-      return { success: false, message: error.message };
+      // Throw an HTTP exception rather than returning an object
+      throw new HttpException(
+        error.message || "Failed to delete item",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
   @Get("by-tag/:tagId")
   async getItemsByTag(@Param("tagId") tagId: string) {
     return this.storageItemsService.getItemsByTag(tagId);
+  }
+
+  @Get(":id/can-delete")
+  async canDelete(@Param("id") id: string): Promise<any> {
+    try {
+      const result = await this.storageItemsService.canDeleteItem(id);
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || "Failed to check if item can be deleted",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

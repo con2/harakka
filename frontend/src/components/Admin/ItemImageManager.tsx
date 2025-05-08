@@ -370,6 +370,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
               <Input
                 id="altText"
                 placeholder="Describe the image for accessibility"
+                className="placeholder:text-xs"
                 value={altText}
                 onChange={(e) => setAltText(e.target.value)}
               />
@@ -388,6 +389,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
           <Button
             onClick={handleUpload}
             className="addBtn"
+            size={"sm"}
             disabled={!selectedFile || loading}
           >
             {loading ? (

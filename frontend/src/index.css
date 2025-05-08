@@ -216,10 +216,10 @@
 }
 
 /* Custom Toast Styling */
-=======
 .custom-toast {
   position: relative;
   overflow: hidden;
+  border-radius: 0.75rem;
 }
 
 .custom-toast::after {
@@ -231,12 +231,23 @@
   height: 5px;
   width: 0;
   background-color: #4CAF50;
-  animation: progressBar 3s linear forwards; 
+  animation: progressBar 3s linear forwards;
+  animation-play-state: running;
+}
+
+/* Use the :hover state to pause animation */
+.custom-toast:hover::after {
+  animation-play-state: paused;
 }
 
 .custom-toast[data-type="error"]::after {
   background-color: #d32f2f;
 }
+
+.custom-toast:not([data-type])::after {
+  background-color: var(--highlight2); /* Neutral grey */
+}
+
 
 @keyframes progressBar {
   0% {
