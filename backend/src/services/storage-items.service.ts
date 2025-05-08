@@ -126,12 +126,12 @@ export class StorageItemsService {
       const { error: tagError } = await this.supabase
         .from("storage_item_tags")
         .insert(tagLinks);
-  
+
       if (tagError) throw new Error(tagError.message);
     }
-  
+
     return insertedItem;
-  }  
+  }
 
   // async updateItem(
   //   id: string,
@@ -280,5 +280,33 @@ export class StorageItemsService {
 
     // The data will now have the related 'items' fetched in the same query
     return data.map((entry) => entry.items); // Extract items from the relation
+  }
+
+  //check if the item can be deleted (if it exists in some orders)
+  async canDeleteItem(
+    id: string,
+  ): Promise<{ deletable: boolean; reason?: string }> {
+    // Check if item exists in any orders
+    const { data, error } = await this.supabase
+      .from("order_items")
+      .select("id")
+      .eq("item_id", id)
+      .limit(1);
+
+    if (error) {
+      throw new Error(
+        `Error checking if item can be deleted: ${error.message}`,
+      );
+    }
+
+    // If data array has items, it means the item is referenced in orders
+    const hasOrders = data && data.length > 0;
+
+    return {
+      deletable: !hasOrders,
+      reason: hasOrders
+        ? "Item cannot be deleted because it has existing bookings"
+        : undefined,
+    };
   }
 }
