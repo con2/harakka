@@ -856,6 +856,18 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
 
     return {
       message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
+      orderId,
+      recipient: {
+        email: userProfile.email,
+        role: userProfile.role,
+      },
+      cancelledBy: isAdmin ? "admin" : "user",
+      items: orderItems.map((item) => ({
+        item_id: item.item_id,
+        quantity: item.quantity,
+        start_date: item.start_date,
+        end_date: item.end_date,
+      })),
     };
   }
 
@@ -932,7 +944,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       throw new BadRequestException("Could not mark booking as deleted");
     }
 
-    // 8.6 8.5 send notification email to admin
+    // 8.6 send notification email to admin
     const adminEmail = "illusia.rental.service@gmail.com";
 
     await this.mailService.sendMail(
