@@ -234,7 +234,7 @@ const TagList = () => {
             </div>
           <div className="flex gap-4">
             <AddTagModal>
-                <Button className="addBtn" size={"sm"}>
+                <Button variant="outline" size={"sm"}>
                   Add New Tag
                 </Button>
               </AddTagModal>
