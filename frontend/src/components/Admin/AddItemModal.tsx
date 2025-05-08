@@ -37,6 +37,7 @@ const initialFormState: ItemFormData = {
   compartment_id: "0ffa5562-82a9-4352-b804-1adebbb7d80c",
   items_number_total: 1,
   items_number_available: 1,
+  items_number_currently_in_storage: 1,
   price: 0,
   is_active: true,
   translations: {
