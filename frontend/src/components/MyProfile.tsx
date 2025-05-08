@@ -329,7 +329,8 @@ const MyProfile = () => {
                           <div>
                             <Button
                               size="sm"
-                              className="deleteBtn opacity-50 hover:opacity-100 transition-opacity duration-300"
+                              variant={"destructive"}
+                              className="opacity-50 hover:opacity-100 transition-opacity duration-300"
                               onClick={() => {
                                 handleDeleteAddress(index);
                               }}
@@ -357,7 +358,7 @@ const MyProfile = () => {
                     <Button
                       onClick={handleSaveChanges}
                       size={"sm"}
-                      className="addBtn"
+                      variant={"outline"}
                     >
                       Save Changes
                     </Button>
@@ -439,6 +440,8 @@ const MyProfile = () => {
 
                     <DialogFooter>
                       <Button
+                        variant="outline"
+                        size={"sm"}
                         onClick={() => {
                           if (!newAddress.street_address || !newAddress.city) {
                             toast.error("Please fill all required fields.");
@@ -469,7 +472,7 @@ const MyProfile = () => {
                       >
                         Save Address
                       </Button>
-                      <Button variant="outline" onClick={() => setShowAddAddressForm(false)}>
+                      <Button variant="destructive" size={"sm"} onClick={() => setShowAddAddressForm(false)}>
                         Cancel
                       </Button>
                     </DialogFooter>
