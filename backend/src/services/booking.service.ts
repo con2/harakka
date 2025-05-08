@@ -418,7 +418,10 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       throw new BadRequestException("Could not confirm order items");
     }
 
-    // 4.5 send mail to user:
+    // 4.5 create invoice
+    // await this.invoiceService.generateInvoice(bookingId);
+
+    // 4.6 send mail to user:
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
       .select("email")
@@ -445,7 +448,7 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       <p>Please make sure you can pick them up on the booked start date</p>`,
     );
 
-    // 4.6 send email to admin about new booking
+    // 4.7 send email to admin about new booking
     const adminEmail = "illusia.rental.service@gmail.com";
 
     await this.mailService.sendMail(
