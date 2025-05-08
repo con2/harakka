@@ -18,6 +18,7 @@ import { MailService } from "./services/mail.service";
 import { ItemImagesController } from "./controllers/item-images.controller";
 import { ItemImagesService } from "./services/item-images.service";
 import { S3Service } from "./services/s3-supabase.service";
+import { InvoiceService } from "./services/invoice.service";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -49,6 +50,7 @@ dotenvExpand.expand(env);
     MailService,
     ItemImagesService,
     S3Service,
+    InvoiceService,
   ],
 })
 export class AppModule {}
