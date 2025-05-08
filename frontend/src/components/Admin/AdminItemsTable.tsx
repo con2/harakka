@@ -199,7 +199,7 @@ const AdminItemsTable = () => {
                       <Button
                         className="deleteBtn"
                         size="sm"
-                        variant="destructive"
+                        // variant="destructive"
                         onClick={() => handleDelete(targetUser.id)}
                         disabled={!isDeletable}
                         aria-label={`Delete ${targetUser.translations.fi.item_name}`}
@@ -291,46 +291,6 @@ const AdminItemsTable = () => {
       </Card>
     ));
   };
-
-  // const handleDelete = async (id: string) => {
-  //   toast.custom((t) => (
-  //     <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
-  //       <div className="font-semibold text-lg">Confirm Deletion</div>
-  //       <div className="text-sm text-muted-foreground">
-  //         Are you sure you want to delete this item?
-  //       </div>
-  //       <div className="flex justify-end gap-2">
-  //         <Button
-  //           variant="ghost"
-  //           onClick={() => toast.dismiss(t)}
-  //           className="bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-md"
-  //         >
-  //           Cancel
-  //         </Button>
-  //         <Button
-  //           variant="destructive"
-  //           className="rounded-md"
-  //           onClick={async () => {
-  //             toast.dismiss(t); // dismiss confirmation toast
-  //             try {
-  //               await toast.promise(dispatch(deleteItem(id)).unwrap(), {
-  //                 loading: "Deleting item...",
-  //                 success: "Item has been successfully deleted.",
-  //                 error: "Failed to delete item.",
-  //               });
-  //               // After successful deletion, refetch or update state
-  //               dispatch(fetchAllItems());
-  //             } catch {
-  //               toast.error("Error deleting item.");
-  //             }
-  //           }}
-  //         >
-  //           Confirm
-  //         </Button>
-  //       </div>
-  //     </div>
-  //   ));
-  // };
 
   const handleCloseModal = () => {
     setShowModal(false);
