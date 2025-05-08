@@ -32,6 +32,7 @@ export interface ItemState {
   error: string | null;
   selectedItem: Item | null;
   errorContext: ErrorContext;
+  deletableItems: Record<string, boolean>;
 }
 
 /**
