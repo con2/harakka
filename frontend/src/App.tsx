@@ -29,6 +29,7 @@ import TermsOfUse from "./pages/TermsOfUse";
 import MyProfile from "./components/MyProfile";
 
 function App() {
+
   return (
     <BrowserRouter>
       <AuthProvider>

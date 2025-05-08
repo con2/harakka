@@ -13,6 +13,7 @@ import {
 import logo from "../assets/logoNav.png";
 import { LogInIcon, LogOutIcon, ShoppingCart } from "lucide-react";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
+import {ThemeToggle} from "@/components/ThemeToggle"
 
 export const Navigation = () => {
   const { signOut } = useAuth();
@@ -95,6 +96,7 @@ return (
               </span>
             )}
           </Link>
+          <ThemeToggle />
 
           {selectedUser ? (
             <Button className="bg-white text-secondary hover:text-secondary hover:bg-slate-50" onClick={signOut}>
