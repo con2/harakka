@@ -124,7 +124,8 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
       if (
         name === "price" ||
         name === "items_number_total" ||
-        name === "items_number_available"
+        name === "items_number_available" ||
+        name === "items_number_currently_in_storage"
       ) {
         setFormData({
           ...formData,
@@ -424,6 +425,22 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     onChange={handleChange}
                     min="1"
                     placeholder="Total quantity"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="items_number_currently_in_storage">
+                    Currently In Storage
+                  </Label>
+                  <Input
+                    id="items_number_currently_in_storage"
+                    name="items_number_currently_in_storage"
+                    type="number"
+                    value={formData.items_number_currently_in_storage}
+                    onChange={handleChange}
+                    min="0"
+                    max={formData.items_number_total}
+                    placeholder="Currently in storage"
                   />
                 </div>
 
