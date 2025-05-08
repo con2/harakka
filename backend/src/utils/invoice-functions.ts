@@ -1,6 +1,9 @@
-import bwipjs from "bwip-js";
-import PDFDocument from "pdfkit";
+// import bwipjs from "bwip-js";
+// import PDFDocument from "pdfkit";
 import { Buffer } from "buffer";
+
+const bwipjs = require("bwip-js");
+const PDFDocument = require("pdfkit");
 
 export async function generateBarcodeImage(data: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -55,12 +58,11 @@ export async function generateInvoicePDF({
     .text(`Invoice Number: ${invoiceNumber}`)
     .text(`Reference Number: ${referenceNumber}`)
     .text(`Due Date: ${dueDate.toISOString().split("T")[0]}`)
-    .text(`Customer: ${user.name || user.email}`);
-
+    .text(`Customer: ${user.full_name || user.email}`);
   doc.moveDown().text("Items:");
 
   items.forEach((item, index) => {
-    const name = item.storage_items?.name || "Item";
+    const name = item.storage_items?.translations.fi.name || "Item";
     doc.text(`${index + 1}. ${name}`);
   });
 

@@ -1,5 +1,5 @@
 import { SupabaseService } from "./supabase.service";
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import {
   generateFinnishReferenceNumber,
   generateVirtualBarcode,
@@ -9,23 +9,44 @@ import {
 
 @Injectable()
 export class InvoiceService {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(private readonly supabaseService: SupabaseService) {} // TODO refactor
 
-  async generateInvoice(bookingId: string): Promise<Buffer> {
+  async generateInvoice(orderId: string): Promise<string> {
     const supabase = this.supabaseService.getServiceClient();
 
-    // 1. Lade Booking, User, Items
-    const { data: booking } = await supabase
+    // Load order
+    const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("*, order_items(*, storage_items(*)), user_profiles(*)")
-      .eq("id", bookingId)
+      .select("*")
+      .eq("id", orderId)
       .single();
 
-    if (!booking) throw new Error("Booking not found");
+    if (!order || orderError) {
+      throw new BadRequestException("Order not found");
+    }
 
-    // 2. Generiere Rechnungsnummer + Viitenumero
+    // load related order items
+    const { data: orderItems, error: itemsError } = await supabase
+      .from("order_items")
+      .select("*, storage_items(*)") // funktioniert nur, wenn storage_items FK ist
+      .eq("order_id", orderId);
+    if (!orderItems || itemsError) {
+      throw new BadRequestException("Order items not found");
+    }
+
+    // load user
+    const { data: user, error: userError } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("id", order.user_id)
+      .single();
+    if (!user || userError) {
+      throw new BadRequestException("User not found");
+    }
+
+    // generate invoice number + Viitenumero
     const invoiceNumber = `INV-${new Date().getFullYear()}-${Math.floor(
-      Math.random() * 10000,
+      Math.random() * 10000, // andere berechnung für Rechnungsnummer
     )
       .toString()
       .padStart(4, "0")}`;
@@ -33,13 +54,13 @@ export class InvoiceService {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 14);
 
-    // 3. Berechne Preis (hier Dummy-Werte, später dynamisch)
-    const subtotal = 100; // z. B. aus den Item-Preisen
+    // calculate price (dummy values here, dynamic later) // TODO: use real values
+    const subtotal = 100; // e.g. from the item prices
     const vatRate = 0.24;
     const vatAmount = subtotal * vatRate;
     const total = subtotal + vatAmount;
 
-    // 4. Barcode generieren (z. B. via bwip-js)
+    // generate barcode (eg. via bwip-js) // TODO: use bwip-js
     const barcodeString = generateVirtualBarcode({
       iban: "FI2112345600000785",
       amount: total,
@@ -48,11 +69,11 @@ export class InvoiceService {
     });
     const barcodeImage = await generateBarcodeImage(barcodeString); // Buffer or Base64
 
-    // 5. PDF generieren (z. B. mit pdfkit)
+    // generate pdf mit pdfkit
     const pdfBuffer = await generateInvoicePDF({
       invoiceNumber,
-      user: booking.user_profiles,
-      items: booking.order_items,
+      user: user,
+      items: orderItems,
       total,
       vatAmount,
       barcodeImage,
@@ -60,7 +81,7 @@ export class InvoiceService {
       dueDate,
     });
 
-    // 6. Upload to Supabase Storage or store URL
+    // upload to Supabase Storage or store URL
     const filePath = `invoices/${invoiceNumber}.pdf`;
     await supabase.storage.from("invoices").upload(filePath, pdfBuffer, {
       contentType: "application/pdf",
@@ -68,14 +89,18 @@ export class InvoiceService {
 
     await supabase.from("invoices").insert({
       invoice_number: invoiceNumber,
-      booking_id: booking.id,
-      user_id: booking.user_id,
+      booking_id: order.id,
+      user_id: order.user_id,
       reference_number: referenceNumber,
       total_amount: total,
       due_date: dueDate.toISOString().split("T")[0],
       pdf_url: filePath,
     });
 
-    return pdfBuffer;
+    const { data: publicUrlData } = supabase.storage
+      .from("invoices")
+      .getPublicUrl(filePath);
+
+    return publicUrlData.publicUrl;
   }
 }
