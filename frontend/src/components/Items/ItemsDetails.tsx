@@ -135,17 +135,30 @@ const ItemsDetails: React.FC = () => {
         {/* Item Images - Positioned Left */}
         <div className="md:w-1/3 w-full">
           {/* Main Image */}
-          <div className="border rounded-md overflow-hidden bg-slate-50 mb-4 h-[300px]">
-            <img
-              src={mainImage}
-              alt={item.translations.en.item_name || "Item image"}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                console.warn(`Failed to load image: ${mainImage}`);
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = imagePlaceholder;
-              }}
-            />
+          <div className="relative mb-4 h-[300px] group">
+            {/* Main Image Container */}
+            <div className="border rounded-md bg-slate-50 overflow-hidden h-full">
+              <img
+                src={mainImage}
+                alt={item.translations.en.item_name || "Item image"}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = imagePlaceholder;
+                }}
+              />
+            </div>
+
+            {/* Floating Enlarged Preview on Hover */}
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-500 ease-in-out z-50 pointer-events">
+              <div className="w-[400px] h-[400px] border rounded-lg shadow-lg bg-white flex justify-center items-center">
+                <img
+                  src={mainImage}
+                  alt="Full preview"
+                  className="object-contain max-w-full max-h-full"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Detail Images Gallery */}
