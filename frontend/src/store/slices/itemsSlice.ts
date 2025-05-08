@@ -19,6 +19,7 @@ const initialState: ItemState = {
   error: null,
   errorContext: null,
   selectedItem: null,
+  deletableItems: {},
 };
 
 // Fetch all available items
@@ -253,8 +254,25 @@ export const itemsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";
+      })
+      .addCase(checkItemDeletability.fulfilled, (state, action) => {
+        state.deletableItems[action.payload.id] = action.payload.deletable;
       });
   },
+});
+
+export const checkItemDeletability = createAsyncThunk<
+  { id: string; deletable: boolean; reason?: string },
+  string
+>("items/checkItemDeletability", async (id: string, { rejectWithValue }) => {
+  try {
+    const result = await itemsApi.canDeleteItem(id);
+    return { id, ...result };
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to check if item can be deleted"),
+    );
+  }
 });
 
 // Selectors
