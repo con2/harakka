@@ -135,11 +135,11 @@ const ItemsDetails: React.FC = () => {
         {/* Item Images - Positioned Left */}
         <div className="md:w-1/3 w-full">
           {/* Main Image */}
-          <div className="border rounded-md overflow-hidden bg-slate-50 mb-4">
+          <div className="border rounded-md overflow-hidden bg-slate-50 mb-4 h-[300px]">
             <img
               src={mainImage}
               alt={item.translations.en.item_name || "Item image"}
-              className="w-full h-[300px] object-contain"
+              className="w-full h-full object-cover"
               onError={(e) => {
                 console.warn(`Failed to load image: ${mainImage}`);
                 e.currentTarget.onerror = null;
@@ -228,9 +228,9 @@ const ItemsDetails: React.FC = () => {
           </div>
 
           {/* Rating Component */}
-          <div className="flex items-center">
+          <div className="flex items-center justify-start">
             <span className="text-sm text-gray-600">Average Rating: </span>
-            <div className="ml-2">
+            <div className="ml-2 flex justify-center items-center space-x-1">
               <Rating value={item.average_rating ?? 0} readOnly />
             </div>
           </div>
