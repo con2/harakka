@@ -155,30 +155,32 @@ const AdminDashboard = () => {
 
   return (
     <div>
-      <div className="flex flex-row flex-wrap justify-evenly items-center mb-8 gap-1">
-        <div className="flex flex-row items-center justify-center box-border border-gray-300 bg-white rounded-lg p-4 w-2/9">
-          <div className="flex-1/3 pl-4 items-center">
-           <Users className="h-10 w-10 text-highlight2" />
+      <div className="flex flex-wrap justify-evenly items-center mb-8 gap-4">
+        <div className="flex items-center justify-center bg-white rounded-lg p-4 w-[30%] min-w-[300px]">
+          <div className="basis-1/3 flex justify-center items-center">
+            <Users className="h-10 w-10 text-highlight2 shrink-0" />
           </div>
-          <div className="flex flex-2/3 flex-col items-center">
+          <div className="basis-2/3 flex flex-col items-center">
             <p className="text-slate-500">Total Users</p>
             <span className="text-2xl">{users.length}</span>
           </div>
         </div>
-        <div className="flex flex-row items-center justify-center box-border border-gray-300 bg-white rounded-lg p-4 w-2/9">
-          <div className="flex-1/3 pl-4 items-center">
-           <Warehouse className="h-10 w-10 text-highlight2" />
+
+        <div className="flex items-center justify-center bg-white rounded-lg p-4 w-[30%] min-w-[300px]">
+          <div className="basis-1/3 flex justify-center items-center">
+            <Warehouse className="h-10 w-10 text-highlight2 shrink-0" />
           </div>
-          <div className="flex flex-2/3 flex-col items-center">
+          <div className="basis-2/3 flex flex-col items-center">
             <p className="text-slate-500">Total Items</p>
             <span className="text-2xl">{items.length}</span>
           </div>
         </div>
-        <div className="flex flex-row items-center justify-center box-border border-gray-300 bg-white rounded-lg p-4 w-2/9">
-          <div className="flex-1/3 pl-4 items-center">
-           <ShoppingBag className="h-10 w-10 text-highlight2" />
+
+        <div className="flex items-center justify-center bg-white rounded-lg p-4 w-[30%] min-w-[300px]">
+          <div className="basis-1/3 flex justify-center items-center">
+            <ShoppingBag className="h-10 w-10 text-highlight2 shrink-0" />
           </div>
-          <div className="flex flex-2/3 flex-col items-center">
+          <div className="basis-2/3 flex flex-col items-center">
             <p className="text-slate-500">Total Orders</p>
             <span className="text-2xl">{orders.length}</span>
           </div>
@@ -225,7 +227,7 @@ const AdminDashboard = () => {
               <LoaderCircle className="animate-spin" />
             </p>
           )}
-          <div className="w-full max-w-4xl mx-auto">
+          <div className="w-full max-w-6xl mx-auto">
             <DataTable columns={columns} data={regularUsers} />
           </div>
           <div className="flex items-center justify-center mt-4 space-x-4">
@@ -248,7 +250,7 @@ const AdminDashboard = () => {
               <LoaderCircle className="animate-spin" />
             </p>
           )}
-          <div className="w-full max-w-4xl mx-auto">
+          <div className="w-full max-w-6xl mx-auto">
             <DataTable columns={columns} data={teamUsers} />
           </div>
           <div className="flex items-center justify-center mt-4 space-x-4">

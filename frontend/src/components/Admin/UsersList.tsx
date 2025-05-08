@@ -187,7 +187,7 @@ const UsersList = () => {
         </div>
         <div className="flex gap-4">
           <AddUserModal>
-            <Button className="addBtn" size={"sm"}>
+            <Button variant="outline" size={"sm"}>
               Add New User
             </Button>
           </AddUserModal>

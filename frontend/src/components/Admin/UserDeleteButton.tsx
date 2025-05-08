@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { deleteUser } from "@/store/slices/usersSlice";
 import { Trash2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 const DeleteUserButton = ({ id, closeModal }: { id: string; closeModal: () => void }) => {
   const dispatch = useAppDispatch();
@@ -14,36 +15,43 @@ const DeleteUserButton = ({ id, closeModal }: { id: string; closeModal: () => vo
     }
 
     toast.custom((t) => (
-      <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
-        <div className="font-semibold text-lg">Confirm Deletion</div>
-        <div className="text-sm">
-          Are you sure you want to delete this user?
-        </div>
-        <div className="flex justify-between gap-2">
-          <Button
-            className="addBtn"
-            size="md"
-            onClick={() => toast.dismiss(t)}
-          >
-            Cancel
-          </Button>
-          <Button
-            className="bg-red-500 text-white hover:bg-red-700 border-1 border-red-500 rounded-2xl"
-            onClick={async () => {
-              toast.dismiss(t); // dismiss confirmation toast
-              await toast.promise(dispatch(deleteUser(id)).unwrap(), {
-                loading: "Deleting user...",
-                success: "User has been successfully removed.",
-                error: "Failed to delete user.",
-              });
-              closeModal();
-            }}
-          >
-            Confirm
-          </Button>
-        </div>
-      </div>
-    ));
+      <Card className="w-[360px] shadow-lg border">
+        <CardHeader>
+          <CardTitle className="text-lg">Confirm Deletion</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete this user?
+          </p>
+          <div className="flex justify-between gap-2">
+            <Button
+              variant="outline"
+              onClick={() => toast.dismiss(t)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                toast.dismiss(t);
+                try {
+                  await toast.promise(dispatch(deleteUser(id)).unwrap(), {
+                    loading: "Deleting user...",
+                    success: "User has been successfully removed.",
+                    error: "Failed to delete user.",
+                  });
+                  closeModal();
+                } catch {
+                  toast.error("Error deleting user.");
+                }
+              }}
+            >
+              Confirm
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    ));    
   };
 
   return (
