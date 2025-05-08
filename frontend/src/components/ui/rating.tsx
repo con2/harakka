@@ -40,7 +40,7 @@ const Rating: React.FC<RatingProps> = ({ value, onChange, readOnly = false }) =>
             viewBox="0 0 24 24"
             fill={isFilled ? "currentColor" : "none"}
             stroke="currentColor"
-            className={`w-6 h-6 cursor-pointer ${isFilled ? "text-yellow-400" : "text-gray-300"}`}
+            className={`w-6 h-6 ${isFilled ? "text-yellow-400" : "text-gray-300"} flex-shrink-0`}
             onClick={() => handleClick(starValue)}
             onMouseEnter={() => handleMouseEnter(starValue)}
             onMouseLeave={handleMouseLeave}
