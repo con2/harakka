@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
+  checkItemDeletability,
   deleteItem,
   fetchAllItems,
   selectAllItems,
@@ -23,6 +24,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Command, CommandGroup, CommandItem } from "../ui/command";
 import { Checkbox } from "../ui/checkbox";
 import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -99,7 +106,7 @@ const AdminItemsTable = () => {
       cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
     },
     {
-      header: 'Quantity',
+      header: "Quantity",
       accessorFn: (row) => row.items_number_available,
       cell: ({ row }) => `${row.original.items_number_available} pcs`,
     },
@@ -129,10 +136,7 @@ const AdminItemsTable = () => {
         };
 
         return (
-          <Switch
-            checked={item.is_active}
-            onCheckedChange={handleToggle}
-            />
+          <Switch checked={item.is_active} onCheckedChange={handleToggle} />
         );
       },
     },
@@ -171,7 +175,10 @@ const AdminItemsTable = () => {
         const targetUser = row.original;
         const canEdit = isSuperVera || isAdmin;
         const canDelete = isSuperVera || isAdmin;
-    
+        const isDeletable = useAppSelector(
+          (state) => state.items.deletableItems[targetUser.id] !== false,
+        );
+
         return (
           <div className="flex gap-2">
             {canEdit && (
@@ -184,19 +191,37 @@ const AdminItemsTable = () => {
               </Button>
             )}
             {canDelete && (
-              <Button
-                className="deleteBtn"
-                size="sm"
-                variant="destructive"
-                onClick={() => handleDelete(targetUser.id)}
-              >
-                <Trash2 size={10} className="mr-1" /> Delete
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        className="deleteBtn"
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(targetUser.id)}
+                        disabled={!isDeletable}
+                        aria-label={`Delete ${targetUser.translations.fi.item_name}`}
+                      >
+                        <Trash2 size={10} className="mr-1" /> Delete
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {!isDeletable && (
+                    <TooltipContent
+                      side="top"
+                      className="90 text-white border-0 p-2"
+                    >
+                      <p>Can't delete, it has existing bookings</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         );
       },
-    }    
+    },
   ];
 
   useEffect(() => {
@@ -209,6 +234,21 @@ const AdminItemsTable = () => {
     setSelectedItem(item); // Set the selected item
     setShowModal(true); // Show the modal
   };
+
+  const deletableItems = useAppSelector((state) => state.items.deletableItems);
+
+  useEffect(() => {
+    const newItemIds = items
+      .filter(
+        (item) =>
+          !Object.prototype.hasOwnProperty.call(deletableItems, item.id),
+      )
+      .map((item) => item.id);
+
+    if (newItemIds.length > 0) {
+      newItemIds.forEach((id) => dispatch(checkItemDeletability(id)));
+    }
+  }, [dispatch, items, deletableItems]);
 
   const handleDelete = async (id: string) => {
     toast.custom((t) => (
@@ -332,9 +372,14 @@ const AdminItemsTable = () => {
           {/* Filter by tags */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button className="px-3 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl" size={"sm"}>
+              <Button
+                className="px-3 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+                size={"sm"}
+              >
                 {tagFilter.length > 0
-                  ? `Filtered by ${tagFilter.length} tag${tagFilter.length > 1 ? "s" : ""}`
+                  ? `Filtered by ${tagFilter.length} tag${
+                      tagFilter.length > 1 ? "s" : ""
+                    }`
                   : "Filter by tags"}
               </Button>
             </PopoverTrigger>
@@ -356,7 +401,7 @@ const AdminItemsTable = () => {
                           setTagFilter((prev) =>
                             prev.includes(tag.id)
                               ? prev.filter((t) => t !== tag.id)
-                              : [...prev, tag.id]
+                              : [...prev, tag.id],
                           )
                         }
                         className="cursor-pointer"
@@ -367,13 +412,13 @@ const AdminItemsTable = () => {
                             setTagFilter((prev) =>
                               prev.includes(tag.id)
                                 ? prev.filter((t) => t !== tag.id)
-                                : [...prev, tag.id]
+                                : [...prev, tag.id],
                             )
                           }
                           className={cn(
                             "mr-2 h-4 w-4 border border-secondary bg-white text-white",
                             "data-[state=checked]:bg-secondary",
-                            "data-[state=checked]:text-white"
+                            "data-[state=checked]:text-white",
                           )}
                         />
                         <span>{label}</span>
