@@ -65,4 +65,9 @@ export const itemsApi = {
 
     return api.get(`/storage-items/available?${params.toString()}`);
   },
+
+  canDeleteItem: (
+    id: string,
+  ): Promise<{ deletable: boolean; reason?: string }> =>
+    api.get(`/storage-items/${id}/can-delete`),
 };
