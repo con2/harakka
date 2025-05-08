@@ -31,12 +31,14 @@ import {
   setCreatedItemId,
   selectItemModalState,
 } from "@/store/slices/uiSlice";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 const initialFormState: ItemFormData = {
   location_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
   compartment_id: "0ffa5562-82a9-4352-b804-1adebbb7d80c",
   items_number_total: 1,
   items_number_available: 1,
+  items_number_currently_in_storage: 1,
   price: 0,
   is_active: true,
   translations: {
@@ -123,7 +125,8 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
       if (
         name === "price" ||
         name === "items_number_total" ||
-        name === "items_number_available"
+        name === "items_number_available" ||
+        name === "items_number_currently_in_storage"
       ) {
         setFormData({
           ...formData,
@@ -243,17 +246,30 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
           >
             Details
           </button>
-          <button
-            className={`px-4 py-2 ${
-              activeTab === "images"
-                ? "border-b-2 border-secondary font-medium"
-                : "text-gray-500"
-            }`}
-            onClick={() => modalState.createdItemId && setActiveTab("images")}
-            disabled={!modalState.createdItemId}
-          >
-            Images
-          </button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`px-4 py-2 ${
+                    activeTab === "images"
+                      ? "border-b-2 border-secondary font-medium"
+                      : "text-gray-500"
+                  }`}
+                  onClick={() =>
+                    modalState.createdItemId && setActiveTab("images")
+                  }
+                  disabled={!modalState.createdItemId}
+                >
+                  Images
+                </button>
+              </TooltipTrigger>
+              {!modalState.createdItemId && (
+                <TooltipContent side="top">
+                  Please fill in item details first.
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {activeTab === "details" ? (
@@ -262,11 +278,10 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               e.preventDefault();
               handleSubmit(e);
             }}
-            className="space-y-6"
+            className="space-y-4"
           >
             {/* Item Translation Fields */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Translations</h3>
 
               {/* Item Names - Side by Side */}
               <div className="grid grid-cols-2 gap-4">
@@ -279,7 +294,8 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     name="translations.fi.item_name"
                     value={formData.translations.fi.item_name}
                     onChange={handleChange}
-                    placeholder="Item Name (FI)"
+                    placeholder="Item (FI)"
+                    className="placeholder:text-xs italic p-2"
                     required
                   />
                 </div>
@@ -292,7 +308,8 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     name="translations.en.item_name"
                     value={formData.translations.en.item_name}
                     onChange={handleChange}
-                    placeholder="Item Name (EN)"
+                    placeholder="Item (EN)"
+                    className="placeholder:text-xs italic p-2"
                     required
                   />
                 </div>
@@ -310,6 +327,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     value={formData.translations.fi.item_type}
                     onChange={handleChange}
                     placeholder="Item Type (FI)"
+                    className="placeholder:text-xs italic p-2"
                   />
                 </div>
                 <div>
@@ -322,6 +340,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     value={formData.translations.en.item_type}
                     onChange={handleChange}
                     placeholder="Item Type (EN)"
+                    className="placeholder:text-xs italic p-2"
                   />
                 </div>
               </div>
@@ -330,27 +349,29 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="translations.fi.item_description">
-                    Item Description (FI)
+                    Description (FI)
                   </Label>
                   <Textarea
                     id="translations.fi.item_description"
                     name="translations.fi.item_description"
                     value={formData.translations.fi.item_description}
                     onChange={handleChange}
-                    placeholder="Item Description (FI)"
+                    placeholder="Description (FI)"
+                    className="placeholder:text-xs italic p-2 shadow-sm ring-1 ring-inset ring-muted"
                     rows={3}
                   />
                 </div>
                 <div>
                   <Label htmlFor="translations.en.item_description">
-                    Item Description (EN)
+                    Description (EN)
                   </Label>
                   <Textarea
                     id="translations.en.item_description"
                     name="translations.en.item_description"
                     value={formData.translations.en.item_description}
                     onChange={handleChange}
-                    placeholder="Item Description (EN)"
+                    placeholder="Description (EN)"
+                    className="placeholder:text-xs italic p-2 shadow-sm ring-1 ring-inset ring-muted"
                     rows={3}
                   />
                 </div>
@@ -359,9 +380,8 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
             {/* Item Details */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Item Details</h3>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="location_id">Location ID</Label>
                   <Input
@@ -383,84 +403,109 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     placeholder="Compartment ID"
                   />
                 </div>
-              </div>
+              </div> */}
 
               {/* Price and Active Status */}
-              <div className="flex flex-row items-center space-x-4">
-                <Label htmlFor="price">Price</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  value={formData.price}
-                  onChange={handleChange}
-                  placeholder="Price"
-                  required
-                  className="w-60"
-                />
-                <Label
-                  htmlFor="is_active"
-                  className="text-secondary font-medium"
-                >
-                  Active
-                </Label>
-                <Switch
-                  id="is_active"
-                  checked={formData.is_active}
-                  onCheckedChange={handleToggleChange}
-                />
+              <div className="flex flex-row items-baseline space-x-4 space-y-4">
+                <div className="flex flex-row items-baseline space-x-2">
+                  <Label htmlFor="price" className="font-medium">Price</Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder="Price"
+                    required
+                    className="w-60"
+                  />
+                </div>
+                <div className="flex flex-row items-center space-x-2">
+                  <Label
+                    htmlFor="is_active"
+                    className="font-medium"
+                  >
+                    Active
+                  </Label>
+                  <Switch
+                    id="is_active"
+                    checked={formData.is_active}
+                    onCheckedChange={handleToggleChange}
+                  />
+                </div>
               </div>
 
               {/* Quantity */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="items_number_total">Total Quantity</Label>
-                  <Input
-                    id="items_number_total"
-                    name="items_number_total"
-                    type="number"
-                    value={formData.items_number_total}
-                    onChange={handleChange}
-                    min="1"
-                    placeholder="Total quantity"
-                  />
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="items_number_total">Total Quantity</Label>
+                    <Input
+                      id="items_number_total"
+                      name="items_number_total"
+                      type="number"
+                      value={formData.items_number_total}
+                      onChange={handleChange}
+                      min="1"
+                      placeholder="Total quantity"
+                      className="value:text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="items_number_currently_in_storage">
+                      Currently In Storage
+                    </Label>
+                    <Input
+                      id="items_number_currently_in_storage"
+                      name="items_number_currently_in_storage"
+                      type="number"
+                      value={formData.items_number_currently_in_storage}
+                      onChange={handleChange}
+                      min="0"
+                      max={formData.items_number_total}
+                      placeholder="Currently in storage"
+                      className="value:text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="items_number_available">
+                      Available Quantity
+                    </Label>
+                    <Input
+                      id="items_number_available"
+                      name="items_number_available"
+                      type="number"
+                      value={formData.items_number_available}
+                      onChange={handleChange}
+                      min="0"
+                      max={formData.items_number_total}
+                      placeholder="Available quantity"
+                      className="value:text-xs"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="items_number_available">
-                    Available Quantity
-                  </Label>
-                  <Input
-                    id="items_number_available"
-                    name="items_number_available"
-                    type="number"
-                    value={formData.items_number_available}
-                    onChange={handleChange}
-                    min="0"
-                    max={formData.items_number_total}
-                    placeholder="Available quantity"
-                  />
-                </div>
-              </div>
-
-              {/* Tag Selection */}
-              <div className="space-y-2">
-                <h3 className="text-lg font-medium">Assign Tags</h3>
-                <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
-                  {availableTags.map((tag) => (
-                    <label key={tag.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        className="border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
-                        checked={selectedTags.includes(tag.id)}
-                        onCheckedChange={() => handleTagToggle(tag.id)}
-                      />
-                      <span>
-                        {tag.translations?.fi?.name ||
-                          tag.translations?.en?.name ||
-                          "Unnamed"}
-                      </span>
-                    </label>
-                  ))}
+                {/* Tag Selection */}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Assign Tags</h3>
+                  <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
+                    {availableTags.map((tag) => (
+                      <label key={tag.id} className="flex items-center">
+                        <Checkbox
+                          className="m-0.75 border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
+                          checked={selectedTags.includes(tag.id)}
+                          onCheckedChange={() => handleTagToggle(tag.id)}
+                        />
+                        <span className="text-sm">
+                          {tag.translations?.fi?.name ||
+                            tag.translations?.en?.name ||
+                            "Unnamed"}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -489,7 +534,6 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
             <DialogFooter className="mt-4">
               <Button
-                variant="secondary"
                 className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
                 onClick={resetForm}
                 size="sm"

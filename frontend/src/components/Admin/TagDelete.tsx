@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { deleteTag, fetchAllTags } from "@/store/slices/tagSlice";
 import { Trash2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 const TagDelete = ({
   id,
@@ -21,26 +22,27 @@ const TagDelete = ({
     }
 
     toast.custom((t) => (
-      <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
-        <div className="font-semibold text-lg">Confirm Deletion</div>
-        <div className="text-sm text-muted-foreground">
+      <Card className="w-[360px] shadow-lg border">
+        <CardHeader>
+          <CardTitle className="text-lg">Confirm Deletion</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
           This will permanently delete the tag and remove it from all associated
           items. Are you sure?
-        </div>
+        </p>
         <div className="flex justify-end gap-2">
           <Button
-            size="sm"
-            onClick={() => toast.dismiss(t)}
-            className="bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-md"
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            className="rounded-md"
-            onClick={async () => {
-              toast.dismiss(t);
-              try {
+              variant="outline"
+              onClick={() => toast.dismiss(t)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                toast.dismiss(t); // close the confirm toast
+                try {
                 await toast.promise(dispatch(deleteTag(id)).unwrap(), {
                   loading: "Deleting tag...",
                   success: "Tag has been successfully deleted.",
@@ -57,7 +59,8 @@ const TagDelete = ({
             Confirm
           </Button>
         </div>
-      </div>
+        </CardContent>
+      </Card>
     ));
   };
 
