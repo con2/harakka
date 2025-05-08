@@ -24,6 +24,7 @@ import {
 import { useAppSelector } from "@/store/hooks";
 import { Checkbox } from "@/components/ui/checkbox";
 import ItemImageManager from "./ItemImageManager";
+import { Label } from "../ui/label";
 
 type UpdateItemModalProps = {
   onClose: () => void;
@@ -156,36 +157,37 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
         {activeTab === "details" ? (
           // Your existing form content
           <div>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Item Translation Fields */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">Translations</h3>
 
                 {/* Item Names - Side by Side */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="translations.fi.item_name">
+                    <Label htmlFor="translations.fi.item_name">
                       Item Name (FI)
-                    </label>
+                    </Label>
                     <Input
                       id="translations.fi.item_name"
                       name="translations.fi.item_name"
                       value={formData.translations.fi.item_name}
                       onChange={handleChange}
-                      placeholder="Item Name (fi)"
+                      placeholder="Item (FI)"
+                      className="placeholder:text-xs p-2"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="translations.en.item_name">
+                    <Label htmlFor="translations.en.item_name">
                       Item Name (EN)
-                    </label>
+                    </Label>
                     <Input
                       id="translations.en.item_name"
                       name="translations.en.item_name"
                       value={formData.translations.en.item_name}
                       onChange={handleChange}
-                      placeholder="Item Name (en)"
+                      placeholder="Item (EN)"
+                      className="placeholder:text-xs p-2"
                       required
                     />
                   </div>
@@ -196,27 +198,28 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                   formData.translations.en.item_type !== undefined) && (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="translations.fi.item_type">
+                      <Label htmlFor="translations.fi.item_type">
                         Item Type (FI)
-                      </label>
+                      </Label>
                       <Input
                         id="translations.fi.item_type"
                         name="translations.fi.item_type"
                         value={formData.translations.fi.item_type || ""}
                         onChange={handleChange}
-                        placeholder="Item Type (fi)"
+                        placeholder="Item Type (FI)"
+                        className="placeholder:text-xs p-2" 
                       />
                     </div>
                     <div>
-                      <label htmlFor="translations.en.item_type">
+                      <Label htmlFor="translations.en.item_type">
                         Item Type (EN)
-                      </label>
+                      </Label>
                       <Input
                         id="translations.en.item_type"
                         name="translations.en.item_type"
                         value={formData.translations.en.item_type || ""}
-                        onChange={handleChange}
-                        placeholder="Item Type (en)"
+                        placeholder="Item Type (EN)"
+                        className="placeholder:text-xs p-2"
                       />
                     </div>
                   </div>
@@ -225,63 +228,115 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 {/* Item Descriptions - Side by Side */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="translations.fi.item_description">
+                    <Label htmlFor="translations.fi.item_description">
                       Item Description (FI)
-                    </label>
+                    </Label>
                     <Input
                       id="translations.fi.item_description"
                       name="translations.fi.item_description"
                       value={formData.translations.fi.item_description}
                       onChange={handleChange}
-                      placeholder="Item Description (fi)"
+                      placeholder="Item Description (FI)"
+                      className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="translations.en.item_description">
+                    <Label htmlFor="translations.en.item_description">
                       Item Description (EN)
-                    </label>
+                    </Label>
                     <Input
                       id="translations.en.item_description"
                       name="translations.en.item_description"
                       value={formData.translations.en.item_description}
                       onChange={handleChange}
                       placeholder="Item Description (en)"
+                      className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted"
                       required
                     />
                   </div>
                 </div>
               </div>
               {/* Price */}
-              <div className="flex flex-row items-center space-x-4">
-                <label htmlFor="price">Price</label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  value={formData.price}
-                  onChange={handleChange}
-                  placeholder="Price"
-                  required
-                  className="w-60"
-                />
+              <div className="flex flex-row items-baseline space-y-4 space-x-4">
+                <div className="flex flex-row items-baseline space-x-2">
+                  <Label htmlFor="price" className="font-medium">Price</Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder="Price"
+                    required
+                    className="w-60"
+                  />
+                  </div>
                 {/* Active Toggle */}
-                <label
-                  htmlFor="is_active"
-                  className="text-secondary font-medium"
-                >
-                  Active
-                </label>
-                <Switch
-                  id="is_active"
-                  checked={formData.is_active}
-                  onCheckedChange={(checked: boolean) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      is_active: checked,
-                    }))
-                  }
-                />
+                <div className="flex flex-row items-center space-x-2">
+                  <Label
+                    htmlFor="is_active"
+                    className="font-medium"
+                  >
+                    Active
+                  </Label>
+                  <Switch
+                    id="is_active"
+                    checked={formData.is_active}
+                    onCheckedChange={(checked: boolean) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        is_active: checked,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Quantity Fields */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="items_number_total">Total Quantity</Label>
+                    <Input
+                      id="items_number_total"
+                      name="items_number_total"
+                      type="number"
+                      value={formData.items_number_total}
+                      onChange={handleChange}
+                      placeholder="Total quantity"
+                      className="value:text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="items_number_currently_in_storage">
+                      Currently In Storage
+                    </Label>
+                    <Input
+                      id="items_number_currently_in_storage"
+                      name="items_number_currently_in_storage"
+                      type="number"
+                      value={formData.items_number_currently_in_storage || 0}
+                      onChange={handleChange}
+                      placeholder="Currently in storage"
+                      className="value:text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="items_number_available">Available</Label>
+                    <Input
+                      id="items_number_available"
+                      name="items_number_available"
+                      type="number"
+                      value={formData.items_number_available}
+                      onChange={handleChange}
+                      placeholder="Available quantity"
+                      className="value:text-xs"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Tag Selection */}
@@ -289,13 +344,13 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 <h3 className="text-lg font-medium">Assign Tags</h3>
                 <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
                   {tags.map((tag) => (
-                    <label key={tag.id} className="flex items-center space-x-2">
+                    <label key={tag.id} className="flex items-center">
                       <Checkbox
-                        className="border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
+                        className="m-0.75 border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
                         checked={localSelectedTags.includes(tag.id)}
                         onCheckedChange={() => handleTagToggle(tag.id)}
                       />
-                      <span>
+                      <span className="text-sm">
                         {tag.translations?.fi?.name ||
                           tag.translations?.en?.name ||
                           "Unnamed"}
@@ -318,21 +373,22 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
           </div>
         ) : (
           // Image manager component
+          <>
           <ItemImageManager itemId={formData.id} />
-        )}
-
-        <DialogFooter>
-          {activeTab === "details" && (
+          <DialogFooter>
             <Button
               onClick={handleSubmit}
               disabled={loading}
               className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
               size={"sm"}
             >
-              {loading ? "Saving..." : "Save Changes"}
+              {loading ? "Updating..." : "Update Item"}
             </Button>
-          )}
         </DialogFooter>
+          </>
+        )}
+
+        
       </DialogContent>
     </Dialog>
   );
