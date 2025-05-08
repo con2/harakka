@@ -140,17 +140,11 @@ export class BookingController {
     return { availableQuantity };
   }
 
-  @Get("generate/:bookingId")
-  async generateInvoice(@Param("bookingId") bookingId: string) {
-    const buffer = await this.invoiceService.generateInvoice(bookingId);
+  @Get(":orderId/generate") // unsafe - anyone can create files
+  async generateInvoice(@Param("orderId") orderId: string) {
+    const url = await this.invoiceService.generateInvoice(orderId);
 
-    return {
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="invoice-${bookingId}.pdf"`,
-      },
-      body: buffer,
-    };
+    return url; // should not send url, becaause it is not a public url - will get new endpoint with auth and so on...
   }
 }
 // handles the booking process, including creating, confirming, rejecting, and canceling bookings.
