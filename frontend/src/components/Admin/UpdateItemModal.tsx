@@ -284,6 +284,47 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 />
               </div>
 
+              {/* Quantity Fields */}
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <div>
+                  <label htmlFor="items_number_total">Total Quantity</label>
+                  <Input
+                    id="items_number_total"
+                    name="items_number_total"
+                    type="number"
+                    value={formData.items_number_total}
+                    onChange={handleChange}
+                    placeholder="Total quantity"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="items_number_currently_in_storage">
+                    Currently In Storage
+                  </label>
+                  <Input
+                    id="items_number_currently_in_storage"
+                    name="items_number_currently_in_storage"
+                    type="number"
+                    value={formData.items_number_currently_in_storage || 0}
+                    onChange={handleChange}
+                    placeholder="Currently in storage"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="items_number_available">Available</label>
+                  <Input
+                    id="items_number_available"
+                    name="items_number_available"
+                    type="number"
+                    value={formData.items_number_available}
+                    onChange={handleChange}
+                    placeholder="Available quantity"
+                  />
+                </div>
+              </div>
+
               {/* Tag Selection */}
               <div className="space-y-2">
                 <h3 className="text-lg font-medium">Assign Tags</h3>
