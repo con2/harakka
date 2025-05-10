@@ -140,11 +140,12 @@ export class BookingController {
     return { availableQuantity };
   }
 
-  @Get(":orderId/generate") // unsafe - anyone can create files
+  // commented out because it is not used atm
+  /* @Get(":orderId/generate") // unsafe - anyone can create files
   async generateInvoice(@Param("orderId") orderId: string) {
     const url = await this.invoiceService.generateInvoice(orderId);
 
     return url; // should not send url, becaause it is not a public url - will get new endpoint with auth and so on...
-  }
+  } */
 }
 // handles the booking process, including creating, confirming, rejecting, and canceling bookings.
