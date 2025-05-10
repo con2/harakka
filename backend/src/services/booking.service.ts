@@ -25,12 +25,6 @@ export class BookingService {
   // TODO!:
   // use getClientByRole again!
   // refactor code so that the supabase client is not created in every function
-  // every function should update the order_items status to "pending", "confirmed" or "cancelled"
-
-  /*
-ORDER ITEM STATUS:
-status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character varying, 'cancelled'::character varying, 'picked_up'::character varying, 'returned'::character varying]::text[])
-  */
 
   // 1. get all orders
   async getAllOrders(userId: string) {
@@ -425,9 +419,10 @@ status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character v
       throw new BadRequestException("Could not confirm order items");
     }
 
-    // 4.5 create invoice and save to database
+    // uncomment this when you want the invoice generation inside the app
+    /*  // 4.5 create invoice and save to database
     const invoice = new InvoiceService(this.supabaseService);
-    invoice.generateInvoice(orderId);
+    invoice.generateInvoice(orderId); */
 
     // 4.6 send mail to user:
     const { data: user, error: userError } = await supabase
