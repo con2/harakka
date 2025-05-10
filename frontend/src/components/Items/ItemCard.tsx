@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Clock } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getItemById, deleteItem } from "@/store/slices/itemsSlice";
 import { Item } from "../../types/item";
@@ -32,8 +31,6 @@ interface ItemsCardProps {
 const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { user } = useAuth();
-  const isAdmin = user?.user_metadata?.role === "admin"; // Admin check
   const itemImages = useAppSelector(selectItemImages);
 
   // Get global timeframe from Redux
@@ -260,7 +257,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
       {/* Item Details */}
       <div>
-        <h2 className="text-lg font-semibold text-center mb-0">
+        <h2 className="text-lg text-primary font-normal text-center mb-0">
           {item.translations.fi.item_name.charAt(0).toUpperCase() +
             item.translations.fi.item_name.slice(1)}
         </h2>
@@ -281,7 +278,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             <Clock className="h-4 w-4 mr-1" />
             <span className="font-medium text-xs">Selected booking</span>
           </div>
-          <p className="text-sm font-medium m-0">
+          <p className="text-xs font-medium m-0">
             {format(startDate, "PPP")} - {format(endDate, "PPP")}
           </p>
         </div>
@@ -289,8 +286,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
       {/* Quantity Input */}
       <div>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold w-20">Quantity</span>
+        <div className="flex flex-wrap items-center space-y-2 justify-between">
+          <div className="flex items-center">
+            <span className="text-sm font-medium w-20">Quantity</span>
+          </div>
           <div className="flex items-center">
             <Button
               variant="outline"
@@ -395,18 +394,6 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       >
         View Details
       </Button>
-
-      {/* Admin Actions */}
-      {isAdmin && (
-        <div className="flex justify-between mt-4">
-          <Button variant="outline" onClick={handleUpdate}>
-            Edit
-          </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            Delete
-          </Button>
-        </div>
-      )}
     </Card>
   );
 };
