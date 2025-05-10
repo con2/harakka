@@ -30,7 +30,7 @@ and this one for watching the pdf invoice:
 
 ```ts
 @Get("invoice/:orderId/pdf")
-@UseGuards(AuthGuard) // Sicherstellen, dass Nutzer eingeloggt ist
+@UseGuards(AuthGuard) // make sure that the user is logged in
 async getInvoicePdfUrl(
   @Param("orderId") orderId: string,
   @Req() req: RequestWithUser,
@@ -39,32 +39,27 @@ async getInvoicePdfUrl(
 }
 ```
 
-#### suppaa. dann hier weiter machen:
+# ToDo:
 
-ich hab einen private bucket erstellt.
-ich möchte gerne nur bestimmten personen zugriff auf die pdf rechnung geben, damit nicht jeder user andere rechnungen sehen kann.
-admins sollen zugang zu allen pdfs haben
-was muss ich dafür tun?
+#### works, then continue with this one:
 
-Sehr gut, dass du einen privaten Bucket erstellt hast – das ist genau der richtige Schritt, um Zugriff gezielt zu steuern. Damit du Rechnungs-PDFs nur autorisierten Nutzern zugänglich machst (z. B. Admins oder dem Nutzer, der die Rechnung erstellt hat), solltest du signierte URLs verwenden, kombiniert mit deiner eigenen Rollen-/Berechtigungslogik in der App.
-✅ Ziel
+we have a private bucket in supabase and we create invoices that can be downloaded as pdfs.
+they have a timewise limit so that they can only be downloaded for a certain time.
+and we want to make sure that only certain users can access the pdf invoice, so that not every user can see other invoices.
+admins should have access to all pdfs
 
-    🔒 PDFs im privaten Bucket → nicht öffentlich zugänglich
+what to do:
 
-    👤 Nur Nutzer, die zur Rechnung gehören (z. B. order.user_id === req.user.id) oder Admins (role === 'admin'), dürfen sie anfordern
+createSignedUrls combined with your own roles/permissions logic in the app
 
-    🔑 Du gibst ihnen dann eine zeitlich begrenzte signierte URL zurück
+1. PDF is only available via backend route
 
-🔧 Umsetzung in Supabase + NestJS
-
-1. 📁 PDF nur per Backend-Route verfügbar machen
-
-Erlaube niemals direkten Zugriff auf die Supabase-Storage-URL im Frontend. Stattdessen:
-Schreib eine Route wie:
+   - never allow direct access to the Supabase storage URL in the frontend
+   - instead, write a route like:
 
 ```ts
 @Get("invoice/:orderId/pdf")
-@UseGuards(AuthGuard) // Sicherstellen, dass Nutzer eingeloggt ist
+@UseGuards(AuthGuard) // Make sure user is logged in
 async getInvoicePdfUrl(
   @Param("orderId") orderId: string,
   @Req() req: RequestWithUser,
@@ -73,13 +68,13 @@ async getInvoicePdfUrl(
 }
 ```
 
-2. 🧠 In invoice.service.ts:
+2. in invoice.service.ts we should change:
 
 ```ts
 async getSignedInvoiceUrl(orderId: string, user: { id: string; role: string }): Promise<string> {
   const supabase = this.supabaseService.getServiceClient();
 
-  // Prüfen, ob der Nutzer zur Rechnung gehört
+  // check if user is the same that created the order
   const { data: order, error } = await supabase
     .from("orders")
     .select("id, user_id")
@@ -90,7 +85,7 @@ async getSignedInvoiceUrl(orderId: string, user: { id: string; role: string }): 
     throw new BadRequestException("Order not found");
   }
 
-  // Nur Eigentümer oder Admin darf die PDF sehen
+  // only owner or admin can see the PDF
   const isOwner = order.user_id === user.id;
   const isAdmin = user.role === "admin";
 
@@ -102,7 +97,7 @@ async getSignedInvoiceUrl(orderId: string, user: { id: string; role: string }): 
 
   const { data, error: urlError } = await supabase.storage
     .from("invoices")
-    .createSignedUrl(filePath, 60 * 5); // Gültig für 5 Minuten
+    .createSignedUrl(filePath, 60 * 5); // available for 5 minutes --- or put more time
 
   if (!data?.signedUrl || urlError) {
     throw new BadRequestException("Failed to generate signed URL");
@@ -112,23 +107,21 @@ async getSignedInvoiceUrl(orderId: string, user: { id: string; role: string }): 
 }
 ```
 
-3. 🔐 Authentifizierung sicherstellen
+3. Make sure the auth works correctly
+   with @UseGuards(AuthGuard) (JWT, session, Supabase client, etc.)
 
-   Nutze @UseGuards(AuthGuard) (JWT, session, Supabase client, etc.)
+   Ensure that req.user.id and req.user.role are available
 
-   Stelle sicher, dass req.user.id und req.user.role verfügbar sind
+4. save the file correctly
+   Make sure to save the file path in the database, not the public URL.
+   For example, when uploading, ensure you save pdf_url: invoices/INV-xxx.pdf and not the public URL.
 
-4. 📁 Datei korrekt speichern
+### Example flow:
 
-Stelle sicher, dass du bei Upload pdf_url: invoices/INV-xxx.pdf speicherst, und nicht die public URL.
-🧪 Beispiel-Ablauf
+1. User calls the endpoint to generate the invoice (/invoice/abc-123/generate)
+2. Server checks if user.id === order.user_id or user.role === 'admin'
+3. If yes, a signed URL is generated for the PDF file
+4. The user can open the PDF in the browser or download it
+5. The signed URL is valid for a limited time (e.g., 5 minutes)
 
-    👤 User ruft /invoice/abc-123/pdf
-
-    🔒 Server prüft, ob user.id === order.user_id oder user.role === 'admin'
-
-    ✅ Wenn ja, wird ein temporärer Link (z. B. 5 Minuten gültig) zurückgegeben
-
-    🧾 Der User kann die PDF im Browser oder per Download öffnen
-
-Möchtest du, dass ich dir ein vollständiges Beispiel mit AuthGuard und DTO schreibe?
+maybe use auth guard and DTO for that.
