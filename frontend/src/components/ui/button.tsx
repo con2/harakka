@@ -10,16 +10,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+          "bg-highlight2 text-white border border-transparent shadow-xs px-3 py-1 hover:bg-white hover:text-highlight2 hover:border-highlight2 transition-colors",
         destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-destructive text-white rounded-[1rem] shadow-xs px-3 py-1 border border-transparent hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "border-1 border-highlight2 bg-white shadow-xs hover:bg-highlight2 hover:text-white dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "bg-highlight2 text-white rounded-[1rem] border border-transparent shadow-xs px-3 py-1 hover:bg-white hover:text-highlight2 hover:border-highlight2 transition-colors",
         secondary:
-          "border-1 border-secondary bg-white text-secondary shadow-xs hover:bg-secondary hover:text-white dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "bg-white text-secondary border border-secondary shadow-xs px-3 py-1 hover:bg-secondary hover:text-white transition-colors dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
         ghost:
-          "hover:bg-white hover:text-accent-foreground dark:hover:bg-white",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-transparent text-highlight2 hover:bg-highlight2/10 px-3 py-1 transition-colors",
+        link:
+          "text-highlight2 underline-offset-4 hover:underline px-0 py-0",
       },
       size: {
         sm: "h-8 px-3 text-sm",
