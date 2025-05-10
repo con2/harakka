@@ -88,8 +88,11 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="editBtn" size={"sm"}>
-          <Edit size={10} className="mr-1"/> Edit
+        <Button size={"sm"}
+          title="Edit Tag"
+          className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
+        >
+          <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>
