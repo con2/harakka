@@ -78,12 +78,12 @@ export async function generateInvoicePDF({
   doc.on("data", buffers.push.bind(buffers));
   doc.on("end", () => {});
 
-  // === LOGO ===
+  // logo
 
   const logoPath = path.join(__dirname, "..", "..", "assets", "logo1.png");
   doc.image(logoPath, 50, 45, { width: 100 });
 
-  // === HEADER ===
+  // header
   doc.fontSize(20).text("Invoice", 200, 50, { align: "right" });
 
   doc
@@ -94,7 +94,7 @@ export async function generateInvoicePDF({
     .text(`Due Date: ${dueDate.toISOString().split("T")[0]}`)
     .text(`Customer: ${user.full_name || user.email}`);
 
-  // === ITEMS ===
+  // items
   doc.moveDown().fontSize(12).text("Items", { underline: true });
   items.forEach((item, index) => {
     const name = item.storage_items?.translations.fi.name || "Item";
@@ -105,14 +105,14 @@ export async function generateInvoicePDF({
     );
   });
 
-  // === TOTALS ===
+  // totals
   doc
     .moveDown()
     .text(`Subtotal: €${(total - vatAmount).toFixed(2)}`)
     .text(`VAT (24%): €${vatAmount.toFixed(2)}`)
     .text(`Total: €${total.toFixed(2)}`);
 
-  // === BARCODE on first page ===
+  // barcode
   doc.moveDown().moveDown();
   doc.fontSize(14).text("Maksuviivakoodi", { align: "center" });
   doc.image(barcodeImage, {
