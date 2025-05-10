@@ -25,16 +25,16 @@ export class InvoiceService {
       throw new BadRequestException("Order not found");
     }
 
-    // load related order items
+    // Load related order items
     const { data: orderItems, error: itemsError } = await supabase
       .from("order_items")
-      .select("*, storage_items(*)") // funktioniert nur, wenn storage_items FK ist
+      .select("*, storage_items(*)") // only works if storage_items is a foreign key
       .eq("order_id", orderId);
     if (!orderItems || itemsError) {
       throw new BadRequestException("Order items not found");
     }
 
-    // load user
+    // Load user
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
       .select("*")
@@ -44,23 +44,23 @@ export class InvoiceService {
       throw new BadRequestException("User not found");
     }
 
-    // generate invoice number + Viitenumero
+    // Generate invoice number + Viitenumero
     const invoiceNumber = `INV-${new Date().getFullYear()}-${Math.floor(
-      Math.random() * 10000, // andere berechnung für Rechnungsnummer
+      Math.random() * 10000, // different logic for invoice number generation
     )
       .toString()
       .padStart(4, "0")}`;
-    const referenceNumber = generateFinnishReferenceNumber(invoiceNumber); // eigene Hilfsfunktion
+    const referenceNumber = generateFinnishReferenceNumber(invoiceNumber); // custom helper function
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 14);
 
-    // calculate price (dummy values here, dynamic later) // TODO: use real values
+    // Calculate price (dummy values here, dynamic later) // TODO: use real values
     const subtotal = 100; // e.g. from the item prices
     const vatRate = 0.24;
     const vatAmount = subtotal * vatRate;
     const total = subtotal + vatAmount;
 
-    // generate barcode (eg. via bwip-js) // TODO: use bwip-js
+    // Generate barcode (e.g. via bwip-js) // TODO: use bwip-js
     const barcodeString = generateVirtualBarcode({
       iban: "FI2112345600000785",
       amount: total,
@@ -69,7 +69,7 @@ export class InvoiceService {
     });
     const barcodeImage = await generateBarcodeImage(barcodeString); // Buffer or Base64
 
-    // generate pdf mit pdfkit
+    // Generate PDF with pdfkit
     const pdfBuffer = await generateInvoicePDF({
       invoiceNumber,
       user: user,
@@ -81,7 +81,7 @@ export class InvoiceService {
       dueDate,
     });
 
-    // upload to Supabase Storage or store URL
+    // Upload to Supabase Storage or store URL
     const filePath = `invoices/${invoiceNumber}.pdf`;
     await supabase.storage.from("invoices").upload(filePath, pdfBuffer, {
       contentType: "application/pdf",
