@@ -24,12 +24,36 @@ jobs:
           cd backend
           npm install
 
+      - name: Clean unnecessary files
+        run: |
+          cd backend
+          # Remove temp directories and test files to reduce package size
+          rm -rf .stryker-tmp coverage test .nyc_output || true
+          find . -name "*.spec.ts" -type f -delete || true
+          find . -name "*.test.ts" -type f -delete || true
+
       - name: Build
         run: |
           cd backend
           npm run build
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Prepare for clean deployment
+        run: |
+          cd backend
+          # Create .deployment file to instruct Kudu to skip auto-detection
+          echo -e "[config]\ncommand = npm start" > .deployment
+
+          # Create .skipNodeModules to tell Kudu not to run npm install again
+          touch .skipNodeModules
+
+          # Add deployment marker file for cache busting
+          echo "Deployment time: $(date)" > .deployment-marker-$(date +%s)
+
+          # Clean node_modules and reinstall production only
+          rm -rf node_modules
+          npm ci --production --no-optional
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
