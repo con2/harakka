@@ -19,17 +19,47 @@ jobs:
           cache: "npm"
           cache-dependency-path: "backend/package-lock.json"
 
-      - name: Install dependencies
+      - name: Build backend
         run: |
           cd backend
           npm ci
-
-      - name: Build
-        run: |
-          cd backend
           npm run build
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Create production package
+        run: |
+          # Create deployment directory
+          mkdir -p deploy
+
+          # Copy only production files
+          cp -r backend/dist deploy/
+          cp backend/package.json deploy/
+          cp backend/package-lock.json deploy/
+          cp backend/Procfile deploy/
+
+          # Create web.config for Azure App Service
+          echo '<?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <handlers>
+                <add name="iisnode" path="dist/src/main.js" verb="*" modules="iisnode" />
+              </handlers>
+              <rewrite>
+                <rules>
+                  <rule name="nodejs">
+                    <match url="/*" />
+                    <action type="Rewrite" url="dist/src/main.js" />
+                  </rule>
+                </rules>
+              </rewrite>
+              <iisnode nodeProcessCommandLine="node" />
+            </system.webServer>
+          </configuration>' > deploy/web.config
+
+          # Install production-only dependencies
+          cd deploy
+          npm ci --only=production --no-optional
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -37,7 +67,7 @@ jobs:
         with:
           app-name: "booking-app-backend"
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: "./backend"
+          package: "./deploy"
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
