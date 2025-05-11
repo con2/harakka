@@ -45,7 +45,13 @@ export class MailService {
       return result;
     } catch (error) {
       console.error("Failed to send email:", error);
-      throw new Error("Mail sending failed: " + error.message);
+
+      // Don't throw in production environments
+      if (process.env.NODE_ENV === "production") {
+        return { success: false, error: error.message };
+      } else {
+        throw new Error("Mail sending failed: " + error.message);
+      }
     }
   }
 }
