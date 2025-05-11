@@ -16,7 +16,7 @@ const LandingPage = () => {
         <p className="mb-6 text-xl">Browse our gear, book online, and bring your world to life.</p>
         <Button
           onClick={() => (window.location.href = "/storage")}
-          className="bg-secondary text-white font-semibold px-6 py-5 rounded-lg shadow hover:bg-white hover:text-secondary transition"
+          className="bg-secondary text-white border:secondary font-semibold px-6 py-5 rounded-lg shadow hover:bg-white hover:text-secondary hover:border-secondary transition"
         >
           Browse Storage
         </Button>
