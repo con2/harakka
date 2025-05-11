@@ -7,16 +7,21 @@ import {
   Post,
   Put,
   Req,
+  Res,
   Query,
   UnauthorizedException,
   BadRequestException,
 } from "@nestjs/common";
 import { BookingService } from "../services/booking.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
+import { InvoiceService } from "../services/invoice.service";
 
 @Controller("bookings")
 export class BookingController {
-  constructor(private readonly bookingService: BookingService) {}
+  constructor(
+    private readonly bookingService: BookingService,
+    private readonly invoiceService: InvoiceService,
+  ) {}
 
   // gets all bookings - use case: admin
   @Get()
@@ -134,5 +139,13 @@ export class BookingController {
       await this.bookingService.getAvailableQuantityForDate(itemId, date);
     return { availableQuantity };
   }
+
+  // commented out because it is not used atm
+  /* @Get(":orderId/generate") // unsafe - anyone can create files
+  async generateInvoice(@Param("orderId") orderId: string) {
+    const url = await this.invoiceService.generateInvoice(orderId);
+
+    return url; // should not send url, becaause it is not a public url - will get new endpoint with auth and so on...
+  } */
 }
 // handles the booking process, including creating, confirming, rejecting, and canceling bookings.
