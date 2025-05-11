@@ -6,7 +6,7 @@ import {
   selectOrdersError,
   selectAllOrders,
 } from "@/store/slices/ordersSlice";
-import { LoaderCircle } from "lucide-react";
+import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { useAuth } from "@/context/AuthContext";
 import { ColumnDef } from "@tanstack/react-table";
@@ -25,6 +25,8 @@ import OrderConfirmButton from "./OrderConfirmButton";
 import OrderRejectButton from "./OrderRejectButton";
 import OrderDeleteButton from "./OrderDeleteButton";
 import OrderDetailsButton from "./OrderDetailsButton";
+import { DataTable } from "../ui/data-table";
+import { Separator } from "@radix-ui/react-select";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -174,18 +176,20 @@ const OrderList = () => {
     },
     {
       id: "actions",
-      header: "Actions",
       cell: ({ row }) => {
         const order = row.original;
         const isPending = order.status === "pending";
         const isConfirmed = order.status === "confirmed";
 
         return (
-          <div className="flex space-x-2">
-            <OrderDetailsButton
-              order={order}
-              onViewDetails={handleViewDetails}
-            />
+          <div className="flex space-x-1">
+            <Button
+              size="sm"
+              onClick={() => handleViewDetails(order)}
+              title="View Details"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
 
             {isPending && (
               <>
@@ -214,6 +218,36 @@ const OrderList = () => {
           </div>
         );
       },
+    },
+  ];
+
+  const orderColumns: ColumnDef<BookingItem>[] = [
+    {
+      accessorKey: "item_name",
+      header: "Item",
+      cell: (i) => {
+        const itemName = i.getValue();
+        return String(itemName).charAt(0).toUpperCase() + String(itemName).slice(1);
+      },
+    },
+    {
+      accessorKey: "quantity",
+      header: "Quantity",
+    },
+    {
+      accessorKey: "start_date",
+      header: "Start Date",
+      cell: ({ row }) => formatDate(row.original.start_date),
+    },
+    {
+      accessorKey: "end_date",
+      header: "End Date",
+      cell: ({ row }) => formatDate(row.original.end_date),
+    },
+    {
+      accessorKey: "subtotal",
+      header: "Subtotal",
+      cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
     },
   ];
 
@@ -286,98 +320,45 @@ const OrderList = () => {
 
       {/* Order Details Modal */}
       {selectedOrder && (
+        <div className="min-w-[320px]">
         <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-5xl">
             <DialogHeader>
-              <DialogTitle>
-                Order Details #{selectedOrder.order_number}
+              <DialogTitle className="text-left">
+                Order #{selectedOrder.order_number}
               </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
               {/* Order Info */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold">Customer</h3>
-                  <p>{selectedOrder.user_profile?.name || "Unknown"}</p>
+                <div className="space-y-2">
+                  <h3 className="font-normal">Customer</h3>
+                  <p className="text-sm  mb-0">{selectedOrder.user_profile?.name || "Unknown"}</p>
                   <p className="text-sm text-gray-500">
                     {selectedOrder.user_profile?.email}
                   </p>
                 </div>
 
-                <div>
-                  <h3 className="font-semibold">Order Information</h3>
-                  <p>
+                <div className="space-y-2">
+                  <h3 className="font-normal">Order Information</h3>
+                  <p className="text-sm mb-0">
                     Status: <StatusBadge status={selectedOrder.status} />
                   </p>
-                  <p>Date: {formatDate(selectedOrder.created_at)}</p>
+                  <p className="text-sm">Date: {formatDate(selectedOrder.created_at)}</p>
                 </div>
               </div>
 
               {/* Order Items */}
               <div>
-                <h3 className="font-semibold mb-2">Items</h3>
-                <div className="border rounded-md overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Item
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Quantity
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Start Date
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          End Date
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Subtotal
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {selectedOrder.order_items?.map(
-                        (item: BookingItem, index: number) => (
-                          <tr key={index}>
-                            <td className="px-4 py-2">
-                              {item.item_name || `Item ${item.item_id}`}
-                            </td>
-                            <td className="px-4 py-2">{item.quantity}</td>
-                            <td className="px-4 py-2">
-                              {formatDate(item.start_date)}
-                            </td>
-                            <td className="px-4 py-2">
-                              {formatDate(item.end_date)}
-                            </td>
-                            <td className="px-4 py-2">
-                              €{item.subtotal?.toFixed(2) || "0.00"}
-                            </td>
-                          </tr>
-                        ),
-                      )}
-                    </tbody>
-                    <tfoot className="bg-gray-50">
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-4 py-2 text-right font-medium"
-                        >
-                          Total:
-                        </td>
-                        <td className="px-4 py-2 font-bold">
-                          €{selectedOrder.final_amount?.toFixed(2) || "0.00"}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
+                <DataTable
+                  columns={orderColumns}
+                  data={selectedOrder.order_items || []}
+                />
               </div>
 
               {/* Order Modal Actions */}
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-center space-x-4">
                 {selectedOrder.status === "pending" && (
                   <>
                     <OrderConfirmButton
@@ -406,6 +387,7 @@ const OrderList = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       )}
     </>
   );

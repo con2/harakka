@@ -5,7 +5,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./ui/accordion";
-import { Separator } from "./ui/separator";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
 
 export const UserGuide: React.FC = () => {
@@ -87,7 +86,6 @@ export const UserGuide: React.FC = () => {
             </AccordionItem>
           </Accordion>
 
-          <Separator className="my-10" />
           {isAdmin && (
             <>
               <h2 className="text-2xl font-bold text-center mb-6">
@@ -157,7 +155,6 @@ export const UserGuide: React.FC = () => {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-              <Separator className="my-10" />
             </>
           )}
         </section>
@@ -165,7 +162,7 @@ export const UserGuide: React.FC = () => {
 
       {/* FAQ Section */}
       <div className="flex flex-col items-start">
-        <section className="w-full max-w-xl px-4 sm:px-6 md:px-8 mx-auto mb-20">
+        <section className="w-full max-w-xl px-4 sm:px-6 md:px-8 mx-auto mb-10">
           <h2 className="text-2xl font-bold text-center mb-6">
             Frequently Asked Questions
           </h2>
