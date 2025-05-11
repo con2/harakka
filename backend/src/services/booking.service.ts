@@ -308,10 +308,11 @@ export class BookingService {
       throw new BadRequestException("User not found");
     }
 
-    await this.mailService.sendMail(
-      user.email,
-      "Booking is successful!",
-      `<h1>Hello <strong></strong></h1><p>Your booking has been received. The order has been sent to the admins. </p>
+    try {
+      await this.mailService.sendMail(
+        user.email,
+        "Booking is successful!",
+        `<h1>Hello <strong></strong></h1><p>Your booking has been received. The order has been sent to the admins. </p>
       <p>Order Number: <strong>${orderNumber}</strong></p>
       <p>Details:</p>
       <ul>
@@ -323,15 +324,19 @@ export class BookingService {
         .join("")}
     </ul>
     <p>Please be patient while someone reviews your request.</p>`,
-    );
+      );
+    } catch (emailError) {
+      console.error("Failed to send email notifications:", emailError);
+    }
 
     // 3.7 send email to admin about new booking
     const adminEmail = "illusia.rental.service@gmail.com";
 
-    await this.mailService.sendMail(
-      adminEmail,
-      "New Booking Awaiting Action",
-      `<h1>New Booking Received</h1>
+    try {
+      await this.mailService.sendMail(
+        adminEmail,
+        "New Booking Awaiting Action",
+        `<h1>New Booking Received</h1>
      <p>A new booking has been created with the order number: <strong>${orderNumber}</strong>.</p>
      <p>The order is pending and awaiting your action.</p>
      <p>Details:</p>
@@ -344,7 +349,11 @@ export class BookingService {
          .join("")}
      </ul>
      <p>Please review the booking and take necessary action.</p>`,
-    );
+      );
+    } catch (emailError) {
+      console.error("Failed to send email notifications:", emailError);
+      // Don't throw, let the operation complete successfully
+    }
 
     return warningMessage ? { order, warning: warningMessage } : order;
   }
