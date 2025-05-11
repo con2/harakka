@@ -24,7 +24,6 @@ import OrderReturnButton from "./OrderReturnButton";
 import OrderConfirmButton from "./OrderConfirmButton";
 import OrderRejectButton from "./OrderRejectButton";
 import OrderDeleteButton from "./OrderDeleteButton";
-import OrderDetailsButton from "./OrderDetailsButton";
 import { DataTable } from "../ui/data-table";
 
 const OrderList = () => {
