@@ -4,7 +4,7 @@ import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Clock } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { getItemById, deleteItem } from "@/store/slices/itemsSlice";
+import { getItemById } from "@/store/slices/itemsSlice";
 import { Item } from "../../types/item";
 import { format } from "date-fns";
 import { Input } from "../ui/input";
@@ -134,22 +134,22 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   };
 
   // Handle item deletion
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
-    try {
-      await dispatch(deleteItem(item.id)).unwrap(); // Delete item via Redux action
-      toast.success("Item deleted successfully");
-    } catch (error) {
-      console.error("Error deleting item:", error);
-      toast.error("Failed to delete item");
-    }
-  };
+  // const handleDelete = async () => {
+  //   if (!window.confirm("Are you sure you want to delete this item?")) return;
+  //   try {
+  //     await dispatch(deleteItem(item.id)).unwrap(); // Delete item via Redux action
+  //     toast.success("Item deleted successfully");
+  //   } catch (error) {
+  //     console.error("Error deleting item:", error);
+  //     toast.error("Failed to delete item");
+  //   }
+  // };
 
-  // Handle item update (for admin only)
-  const handleUpdate = () => {
-    // Navigate to the update form or trigger a modal to edit the item
-    navigate(`/admin/items/${item.id}/edit`);
-  };
+  // // Handle item update (for admin only)
+  // const handleUpdate = () => {
+  //   // Navigate to the update form or trigger a modal to edit the item
+  //   navigate(`/admin/items/${item.id}/edit`);
+  // };
 
   // Handle adding item to cart
   const handleAddToCart = () => {
