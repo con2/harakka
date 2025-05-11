@@ -35,14 +35,12 @@ const UserPanel = () => {
 
   // filter states
   const [filters, setFilters] = useState<{
-    priceRange: [number, number];
     isActive: boolean;
     averageRating: number[];
     itemsNumberAvailable: [number, number];
     itemTypes: string[];
     tagIds: string[];
   }>({
-    priceRange: [0, 100], // edit price range filter [min, max]
     isActive: true, // Is item active or not filter
     averageRating: [],
     itemsNumberAvailable: [0, 100], // add a range for number of items
@@ -60,7 +58,6 @@ const UserPanel = () => {
 
   const countActiveFilters = () => {
     let count = 0;
-    if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== 100) count++;
     if (filters.itemsNumberAvailable[0] !== 0 || filters.itemsNumberAvailable[1] !== 100) count++;
     if (filters.averageRating.length > 0) count++;
     if (filters.itemTypes.length > 0) count++;
@@ -68,12 +65,21 @@ const UserPanel = () => {
     return count;
   };  
 
+  // Mobile filter toggle visibility state
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
+
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-76 p-4 border-r bg-white shadow-md overflow-y-auto max-h-screen pb-10">
+    <div className="flex min-h-screen w-full overflow-y-auto md:px-10">
+      {/* Sidebar: Filters Panel */}
+      {/* TODO: fix mobile view filter toggle */}
+      <aside
+        className={`${
+          isFilterVisible ? "block" : "hidden"
+        } md:flex flex-col w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-20 md:static transition-all duration-300 ease-in-out`}
+        style={{ maxHeight: 'calc(100vh - 50px)' }} // to make the sidebar scroll
+      >
+        {/* Filter Section */}
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
-          {/* Filter Section */}
           <div>
             <div className="flex items-center justify-between my-2">
               <h3 className="text-secondary font-bold mb-0">Filters</h3>
@@ -84,14 +90,15 @@ const UserPanel = () => {
                 <SlidersIcon className="w-5 h-5 text-slate-500" />
               </div>
             </div>
+
+            {/* Clear filters button */}
             {countActiveFilters() > 0 && (
-              <div className="flex justify-end">
+              <div className="flex justify-start">
                 <Button
                   size={"sm"}
                   className="text-xs px-1 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white"
                   onClick={() =>
                     setFilters({
-                      priceRange: [0, 100],
                       isActive: true,
                       averageRating: [],
                       itemsNumberAvailable: [0, 100],
@@ -141,31 +148,67 @@ const UserPanel = () => {
             </div>
 
             <Separator className="my-4" />
-
-            {/* Price filter */}
+            
+            {/* availability filter */}
             <div className="my-4">
-              <label className="text-secondary font-bold block mb-6">
-                Price
+              <label className="text-primary block mb-6">
+                Items Available
               </label>
               <Slider
                 min={0}
-                max={100}
-                step={1}
-                value={filters.priceRange}
+                max={100} // edit upper limit
+                value={filters.itemsNumberAvailable}
                 onValueChange={([min, max]) =>
-                  handleFilterChange("priceRange", [min, max])
+                  handleFilterChange("itemsNumberAvailable", [min, max])
                 }
                 className="w-full"
               />
               <div className="mt-2 text-secondary text-center">
-                €{filters.priceRange[0]} - €{filters.priceRange[1]}
+                {filters.itemsNumberAvailable[0]} -{" "}
+                {filters.itemsNumberAvailable[1]} items
+              </div>
+            </div>
+            <Separator className="my-4" />
+
+            {/* Tags */}
+            <div className="my-4">
+              <label className="text-primary block mb-6">
+                Tags
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => {
+                  const tagName =
+                    tag.translations?.fi?.name ||
+                    tag.translations?.en?.name ||
+                    "Unnamed";
+                  return (
+                    <Button
+                      key={tag.id}
+                      className={`px-4 border-secondary border-1 rounded-2xl ${
+                        (filters.tagIds || []).includes(tag.id)
+                          ? "bg-secondary text-white hover:bg-secondary/80 hover:text-white hover:border-secondary"
+                          : "bg-white text-secondary hover:bg-secondary hover:text-white hover:border-secondary"
+                      }`}
+                      onClick={() => {
+                        const selected = filters.tagIds || [];
+                        const isSelected = selected.includes(tag.id);
+                        const updated = isSelected
+                          ? selected.filter((id) => id !== tag.id)
+                          : [...selected, tag.id];
+                        handleFilterChange("tagIds", updated);
+                      }}
+                    >
+                      {tagName.toLowerCase()}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
             <Separator className="my-4" />
 
             {/* Rating filter */}
             <div className="my-4">
-              <label className="text-secondary font-bold block mb-4">
+              <label className="text-primary block mb-4">
                 Average Rating
               </label>
               <div className="flex flex-col gap-3">
@@ -202,30 +245,9 @@ const UserPanel = () => {
             </div>
             <Separator className="my-4" />
 
-            {/* availability filter */}
-            <div className="my-4">
-              <label className="text-secondary font-bold block mb-6">
-                Items Available
-              </label>
-              <Slider
-                min={0}
-                max={100} // edit upper limit
-                value={filters.itemsNumberAvailable}
-                onValueChange={([min, max]) =>
-                  handleFilterChange("itemsNumberAvailable", [min, max])
-                }
-                className="w-full"
-              />
-              <div className="mt-2 text-secondary text-center">
-                {filters.itemsNumberAvailable[0]} -{" "}
-                {filters.itemsNumberAvailable[1]} items
-              </div>
-            </div>
-            <Separator className="my-4" />
-
             {/* color filter */}
             <div className="my-4">
-              <label className="text-secondary font-bold block mb-6">
+              <label className="text-primary font-medium block mb-6">
                 Colors
               </label>
               <div className="mt-2 mb-6 text-secondary text-center">
@@ -244,59 +266,24 @@ const UserPanel = () => {
                   ></Button>
                   <Button
                     className="bg-yellow-500 w-8 h-8 rounded-full border-1 border-primary"
-                    onClick={() => handleFilterChange("color", "blue")}
+                    onClick={() => handleFilterChange("color", "yellow")}
                   ></Button>
                   <Button
                     className="bg-purple-500 w-8 h-8 rounded-full border-1 border-primary"
-                    onClick={() => handleFilterChange("color", "blue")}
+                    onClick={() => handleFilterChange("color", "purple")}
                   ></Button>
                   <Button
                     className="bg-black w-8 h-8 rounded-full border-1 border-primary"
-                    onClick={() => handleFilterChange("color", "blue")}
+                    onClick={() => handleFilterChange("color", "black")}
                   ></Button>
                   <Button
                     className="bg-white-500 w-8 h-8 rounded-full border-1 border-primary"
-                    onClick={() => handleFilterChange("color", "blue")}
+                    onClick={() => handleFilterChange("color", "white")}
                   ></Button>
                 </div>
               </div>
             </div>
-            <Separator className="my-4" />
 
-            {/* Tags */}
-            <div className="my-4">
-              <label className="text-secondary font-bold block mb-6">
-                Tags
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => {
-                  const tagName =
-                    tag.translations?.fi?.name ||
-                    tag.translations?.en?.name ||
-                    "Unnamed";
-                  return (
-                    <Button
-                      key={tag.id}
-                      className={`px-6 border-secondary border-1 rounded-2xl ${
-                        (filters.tagIds || []).includes(tag.id)
-                          ? "bg-secondary text-white"
-                          : "bg-white text-secondary hover:bg-secondary hover:text-white"
-                      }`}
-                      onClick={() => {
-                        const selected = filters.tagIds || [];
-                        const isSelected = selected.includes(tag.id);
-                        const updated = isSelected
-                          ? selected.filter((id) => id !== tag.id)
-                          : [...selected, tag.id];
-                        handleFilterChange("tagIds", updated);
-                      }}
-                    >
-                      {tagName.toLowerCase()}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
             {countActiveFilters() > 0 && (
               <div>
                 <Separator className="my-4" />
@@ -305,7 +292,6 @@ const UserPanel = () => {
                     className="text-xs px-1 py-0.5 bg-white text-highlight2 border-1 border-highlight2 hover:bg-highlight2 hover:text-white"
                     onClick={() =>
                       setFilters({
-                        priceRange: [0, 100],
                         isActive: true,
                         averageRating: [],
                         itemsNumberAvailable: [0, 100],
@@ -319,24 +305,41 @@ const UserPanel = () => {
                 </div>
               </div>
             )}
+
+            {/* Close Filter Button */}
+            <div className="md:hidden">
+              <Button
+                onClick={() => setIsFilterVisible(false)}
+                variant="outline"
+                size="sm"
+                className="text-white"
+              >
+                Close Filters
+              </Button>
+            </div>
           </div>
         </nav>
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 bg-gray-100 overflow-y-auto max-h-screen">
+      <div className="flex-1 md:p-4 relative">
+        {/* Filter Button visible on mobile */}
+        <div className="md:hidden absolute top-4 left-4 z-10">
+          <Button
+            onClick={() => setIsFilterVisible(true)}
+            variant="outline"
+            size="sm"
+            className="text-white"
+          >
+            <SlidersIcon className="w-5 h-5" />
+          </Button>
+        </div>
+
         {/* Pass filters to the ItemsList via Outlet context */}
         <Outlet context={filters} />
       </div>
     </div>
   );
 };
-
-// const SidebarLink = ({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) => (
-//   <Link to={to} className="flex items-center gap-3 p-2 rounded hover:bg-gray-200">
-//     <span className="w-5 h-5">{icon}</span>
-//     {label}
-//   </Link>
-// );
 
 export default UserPanel;
