@@ -150,221 +150,190 @@ const MyProfile = () => {
 
         {/* User Details Tab */}
         <TabsContent value="user-details">
-            {selectedUser ? (
-              <div className="flex flex-col md:flex-row items-start">
-                <div className="flex md:w-1/4 justify-center p-2">
-                  <Avatar className="w-24 h-24 rounded-full border-1 border-secondary flex">
-                    <img
-                      src={profileImage || ""}
-                      alt="Profile"
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  </Avatar>
+        {selectedUser ? (
+          <div className="flex flex-col md:flex-row items-start">
+            {/* user avatar */}
+            <div className="flex md:w-1/4 justify-center p-2">
+              <Avatar className="w-24 h-24 rounded-full border-1 border-secondary flex">
+                <img
+                  src={profileImage || ""}
+                  alt="Profile"
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </Avatar>
+            </div>
+
+            {/* user details */}
+            <div className="flex flex-col md:flex-1 space-y-6 p-2 w-full">
+              {/* Editable Fields for Details */}
+              <h3 className="text-md font-semibold text-gray-700">Personal Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="name" className="block text-xs font-medium text-gray-700">
+                    Full Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                  />
                 </div>
 
-                <div className="flex flex-col md:flex-1 space-y-4 p-2">
-                  {/* Editable Fields for Details */}
-                  <h3 className="text-md font-semibold text-gray-700">Personal Details</h3>
-                  <div className="flex flex-row flex-wrap gap-4">
-                    <div>
-                      <label
-                      htmlFor="name"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      Full Name
-                    </label>
-                      <input
-                        id="name"
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                        style={{ fontSize: "0.875rem", height: "40px", minWidth: '300px' }}
-                      />
-                    </div>
+                <div>
+                  <label htmlFor="email" className="block text-xs font-medium text-gray-700">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                  />
+                </div>
 
-                    <div>
-                      <label
-                      htmlFor="email"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      Email
-                    </label>
-                      <input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                        style={{ fontSize: "0.875rem", height: "40px", minWidth: '300px' }}
-                      />
-                    </div>
+                <div>
+                  <label htmlFor="phone" className="block text-xs font-medium text-gray-700">
+                    Phone
+                  </label>
+                  <input
+                    id="phone"
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                  />
+                </div>
 
-                    <div>
-                      <label
-                      htmlFor="phone"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      Phone
-                    </label>
-                      <input
-                        id="phone"
-                        type="text"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                        style={{ fontSize: "0.875rem", height: "40px", minWidth: '300px' }}
-                      />
-                    </div>
+                <div>
+                  <label htmlFor="visibleName" className="block text-xs font-medium text-gray-700">
+                    Visible Name
+                  </label>
+                  <input
+                    id="visibleName"
+                    type="text"
+                    value={visibleName}
+                    onChange={(e) => setVisibleName(e.target.value)}
+                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                  />
+                </div>
+              </div>
 
-                    <div>
-                      <label
-                      htmlFor="visibleName"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      Visible Name
-                    </label>
-                      <input
-                        id="visibleName"
-                        type="text"
-                        value={visibleName}
-                        onChange={(e) => setVisibleName(e.target.value)}
-                        className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                        style={{ fontSize: "0.875rem", height: "40px", minWidth: '300px' }}
-                      />
-                    </div>
+              {/* Addresses */}
+              <div>
+                <h3 className="text-md font-semibold text-gray-700 mb-4">Addresses</h3>
 
-                    {/* <div>
-                      <label htmlFor="preferences" className="block text-xs font-medium text-gray-700">Preferences</label>
-                      <input
-                        id="preferences"
-                        type="text"
-                        value={preferences}
-                        onChange={(e) => setPreferences(e.target.value)}
-                        className="mt-1 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                        style={{ fontSize: '0.875rem', height: '40px' }}
-                      />
-                    </div> */}
-                  </div>
-
-                  {/* Addresses */}
-                  {userAddresses && userAddresses.length > 0 ? (
-                  <div className="flex flex-row flex-wrap gap-4">
-                    <div className="block w-full">
-                      <h3 className="text-md font-semibold text-gray-700">Addresses</h3>
-                    </div>
+                {userAddresses && userAddresses.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {addresses.map((address, index) => (
-                      <div key={index}>
-                        <div className="flex gap-2 items-center mb-4">
-                          <label className="block text-xs font-medium text-gray-700">Type</label>
-                          <select
-                            value={address.address_type}
-                            onChange={(e) => handleAddressChange(index, "address_type", e.target.value)}
-                            className="border p-2 rounded text-sm w-full"
-                          >
-                            <option value="both">Both</option>
-                            <option value="billing">Billing</option>
-                            <option value="shipping">Shipping</option>
-                          </select>
+                      <div key={index} className="border p-4 rounded-md bg-slate-50">
+                        <div className="mb-2">
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              className="accent-secondary"
+                              type="checkbox"
+                              checked={address.is_default}
+                              onChange={(e) =>
+                                handleAddressChange(index, "is_default", e.target.checked)
+                              }
+                            />
+                            Default Address
+                          </label>
                         </div>
-                        <div>
-                          <label htmlFor="street" className="block text-xs font-medium text-gray-700">Street Address</label>
-                          <input
-                            id="street"
-                            type="text"
-                            value={address.street_address}
-                            onChange={(e) => handleAddressChange(index, "street_address", e.target.value)}
-                            placeholder="Street Address"
-                            className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                            style={{ fontSize: '0.875rem', height: '40px', minWidth: '300px' }}
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="city" className="block text-xs font-medium text-gray-700">City</label>
-                          <input
-                            id="city"
-                            type="text"
-                            value={address.city}
-                            onChange={(e) => handleAddressChange(index, "city", e.target.value)}
-                            placeholder="City"
-                            className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                            style={{ fontSize: '0.875rem', height: '40px', minWidth: '300px' }}
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="postal" className="block text-xs font-medium text-gray-700">Postal Code</label>
-                          <input
-                            id="postal"
-                            type="text"
-                            value={address.postal_code}
-                            onChange={(e) => handleAddressChange(index, "postal_code", e.target.value)}
-                            placeholder="Postal Code"
-                            className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                            style={{ fontSize: '0.875rem', height: '40px', minWidth: '300px' }}
-                          />
-                        </div><div>
-                        <label htmlFor="country" className="block text-xs font-medium text-gray-700">Country</label>  
-                          <input
-                            id="country"
-                            type="text"
-                            value={address.country}
-                            onChange={(e) => handleAddressChange(index, "country", e.target.value)}
-                            placeholder="Country"
-                            className="mb-3 p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                            style={{ fontSize: '0.875rem', height: '40px', minWidth: '300px' }}
-                          />
-                        </div>
-                        <div className="flex justify-between items-center mt-4">
+
+                        <div className="space-y-2">
                           <div>
-                            <label className="flex items-center gap-2 text-sm">
-                              <input
-                                className="accent-secondary"
-                                type="checkbox"
-                                checked={address.is_default}
-                                onChange={(e) => handleAddressChange(index, "is_default", e.target.checked)}
-                              />
-                              Default Address
-                            </label>
+                            <label className="block text-xs font-medium text-gray-700">Street Address</label>
+                            <input
+                              type="text"
+                              value={address.street_address}
+                              onChange={(e) => handleAddressChange(index, "street_address", e.target.value)}
+                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            />
                           </div>
+
                           <div>
+                            <label className="block text-xs font-medium text-gray-700">City</label>
+                            <input
+                              type="text"
+                              value={address.city}
+                              onChange={(e) => handleAddressChange(index, "city", e.target.value)}
+                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700">Postal Code</label>
+                            <input
+                              type="text"
+                              value={address.postal_code}
+                              onChange={(e) => handleAddressChange(index, "postal_code", e.target.value)}
+                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700">Country</label>
+                            <input
+                              type="text"
+                              value={address.country}
+                              onChange={(e) => handleAddressChange(index, "country", e.target.value)}
+                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700">Type</label>
+                            <select
+                              value={address.address_type}
+                              onChange={(e) => handleAddressChange(index, "address_type", e.target.value)}
+                              className="border p-2 rounded text-sm w-full bg-white text-gray-600"
+                            >
+                              <option value="both">Both</option>
+                              <option value="billing">Billing</option>
+                              <option value="shipping">Shipping</option>
+                            </select>
+                          </div>
+
+                          <div className="flex justify-end mt-4">
                             <Button
                               size="sm"
-                              variant={"destructive"}
-                              className="opacity-50 hover:opacity-100 transition-opacity duration-300"
-                              onClick={() => {
-                                handleDeleteAddress(index);
-                              }}
+                              variant="destructive"
+                              className="text-xs"
+                              onClick={() => handleDeleteAddress(index)}
                             >
-                              <Trash2 className="mr-1"/> Delete
+                              <Trash2 className="mr-1" /> Remove
                             </Button>
                           </div>
                         </div>
-
                       </div>
                     ))}
-                  </div>) : (
-                    <p className="text-gray-500 mt-4">You have no saved addresses.</p>
-                  )}
-                  {/* Buttons */}
-                  <div className="w-full mt-6 flex justify-between gap-2">
-                    {/* Save Button */}
-                    <Button
-                      onClick={() => setShowAddAddressForm(true)}
-                      size={"sm"}
-                      className="editBtn"
-                    >
-                      Add New Address
-                    </Button>
-                    <Button
-                      onClick={handleSaveChanges}
-                      size={"sm"}
-                      variant={"outline"}
-                    >
-                      Save Changes
-                    </Button>
                   </div>
-                  
-                </div>
+                ) : (
+                  <p className="text-gray-500 mt-4">You have no saved addresses.</p>
+                )}
+              </div>
+
+              {/* Buttons */}
+              <div className="mt-6 flex flex-col md:flex-row md:justify-end gap-3">
+                <Button
+                  onClick={() => setShowAddAddressForm(true)}
+                  size="sm"
+                  className="editBtn"
+                >
+                  Add New Address
+                </Button>
+                <Button
+                  onClick={handleSaveChanges}
+                  size="sm"
+                  variant="outline"
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
 
                 {showAddAddressForm && (
                 <Dialog open={showAddAddressForm} onOpenChange={setShowAddAddressForm}>
