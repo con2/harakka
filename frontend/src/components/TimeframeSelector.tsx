@@ -57,7 +57,7 @@ const TimeframeSelector: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-screen-xl mx-auto px-4 bg-slate-50 p-6 rounded-lg mb-6 flex flex-col items-center">
+    <div className="w-full max-w-screen-2xl mx-auto px-4 bg-slate-50 p-6 rounded-lg mb-6 flex flex-col items-center">
       <h2 className="text-lg font-semibold mb-3 flex items-center justify-center">
         Select Booking Timeframe
         <Tooltip>
@@ -71,7 +71,7 @@ const TimeframeSelector: React.FC = () => {
           </TooltipContent>
         </Tooltip>
       </h2>
-      <div className="flex flex-col md:flex-row flex-wrap gap-4 w-full justify-center">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-4 w-full justify-center">
         {/* Start Date Picker */}
         <div className="flex flex-col items-center gap-2">
           <div className="flex flex-col items-start">
@@ -140,7 +140,7 @@ const TimeframeSelector: React.FC = () => {
             Clear Dates
           </Button>
         )} */}
-        <div className="w-full lg:w-auto">
+        <div className="flex w-full lg:w-auto items-center justify-center">
           <Button
             size="sm"
             onClick={handleClearTimeframe}
