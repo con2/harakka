@@ -184,11 +184,11 @@ const AdminItemsTable = () => {
           <div className="flex gap-2">
             {canEdit && (
               <Button
-                className="editBtn"
                 size="sm"
                 onClick={() => handleEdit(targetUser)}
+                className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
               >
-                <Edit size={10} className="mr-1" /> Edit
+                <Edit className="h-4 w-4" />
               </Button>
             )}
             {canDelete && (
@@ -197,14 +197,14 @@ const AdminItemsTable = () => {
                   <TooltipTrigger asChild>
                     <div>
                       <Button
-                        className="deleteBtn"
                         size="sm"
-                        // variant="destructive"
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-800 hover:bg-red-100"
                         onClick={() => handleDelete(targetUser.id)}
                         disabled={!isDeletable}
                         aria-label={`Delete ${targetUser.translations.fi.item_name}`}
                       >
-                        <Trash2 size={10} className="mr-1" /> Delete
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TooltipTrigger>

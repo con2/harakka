@@ -155,34 +155,34 @@ const AdminDashboard = () => {
 
   return (
     <div>
-      <div className="flex flex-wrap justify-evenly items-center mb-8 gap-4">
-        <div className="flex items-center justify-center bg-white rounded-lg p-4 w-[30%] min-w-[300px]">
-          <div className="basis-1/3 flex justify-center items-center">
+      <div className="w-full flex flex-wrap justify-evenly items-center mb-8 gap-4">
+        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
+          <div className="flex justify-center items-center">
+            <p className="text-slate-500">Users</p>
+          </div>
+          <div className="flex flex-row items-center gap-2">
             <Users className="h-10 w-10 text-highlight2 shrink-0" />
-          </div>
-          <div className="basis-2/3 flex flex-col items-center">
-            <p className="text-slate-500">Total Users</p>
-            <span className="text-2xl">{users.length}</span>
+            <span className="text-4xl font-normal">{users.length}</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-center bg-white rounded-lg p-4 w-[30%] min-w-[300px]">
-          <div className="basis-1/3 flex justify-center items-center">
+        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
+          <div className="flex justify-center items-center">
+            <p className="text-slate-500">Items</p>
+          </div>
+          <div className="flex flex-row items-center gap-2">
             <Warehouse className="h-10 w-10 text-highlight2 shrink-0" />
-          </div>
-          <div className="basis-2/3 flex flex-col items-center">
-            <p className="text-slate-500">Total Items</p>
-            <span className="text-2xl">{items.length}</span>
+            <span className="text-4xl font-normal">{items.length}</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-center bg-white rounded-lg p-4 w-[30%] min-w-[300px]">
-          <div className="basis-1/3 flex justify-center items-center">
-            <ShoppingBag className="h-10 w-10 text-highlight2 shrink-0" />
+        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
+          <div className="flex justify-center items-center">
+            <p className="text-slate-500">Orders</p>
           </div>
-          <div className="basis-2/3 flex flex-col items-center">
-            <p className="text-slate-500">Total Orders</p>
-            <span className="text-2xl">{orders.length}</span>
+          <div className="flex flex-row items-center gap-2">
+            <ShoppingBag className="h-10 w-10 text-highlight2 shrink-0" />
+            <span className="text-4xl font-normal">{orders.length}</span>
           </div>
         </div>
       </div>
@@ -216,9 +216,9 @@ const AdminDashboard = () => {
       </div>
 
       {/* Users and Team Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-8"> */}
         {/* Users Table */}
-        <div>
+        {/* <div>
           <div className="flex justify-between items-center">
             <h2>Recent Users</h2>
           </div>
@@ -238,10 +238,10 @@ const AdminDashboard = () => {
               Manage Users <MoveRight />
             </Button>
           </div>
-        </div>
+        </div> */}
 
         {/* Team Table */}
-        <div>
+        {/* <div>
           <div className="flex justify-between items-center">
             <h2>My Team</h2>
           </div>
@@ -261,8 +261,8 @@ const AdminDashboard = () => {
               Manage Team <MoveRight />
             </Button>
           </div>
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
     </div>
   );
 };
