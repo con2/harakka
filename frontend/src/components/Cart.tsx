@@ -15,6 +15,7 @@ import { Trash2, Calendar, LoaderCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { toastConfirm } from "./ui/toastConfirm";
 
 const Cart: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -44,7 +45,19 @@ const Cart: React.FC = () => {
   };
 
   const handleClearCart = () => {
-    dispatch(clearCart());
+    toastConfirm({
+      title: "Clear Cart",
+      description: "Are you sure you want to clear your cart? This action cannot be undone.",
+      confirmText: "Yes, clear it",
+      cancelText: "No, keep it",
+      onConfirm: () => {
+        dispatch(clearCart());
+        toast.success("Cart cleared");
+      },
+      onCancel: () => {
+        toast.success("Cart not cleared");
+      },
+    });
   };
 
   const handleCheckout = async () => {
@@ -128,9 +141,17 @@ const Cart: React.FC = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="p-6 text-center">
-        <h2 className="text-xl mb-4">Your cart is empty</h2>
+      <div className="p-8 text-center space-y-4">
+        <h2 className="text-xl">Your cart is empty</h2>
         <p>Add some items to your cart to see them here.</p>
+        <div className="mt-4">
+        <Button
+          onClick={() => (navigate("/storage"))}
+          className="bg-secondary text-white border:secondary font-semibold px-6 py-5 rounded-lg shadow hover:bg-white hover:text-secondary hover:border-secondary transition"
+        >
+          Browse Storage
+        </Button>
+        </div>
       </div>
     );
   }
@@ -146,7 +167,7 @@ const Cart: React.FC = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-10 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white">
-      <h2 className="text-2xl mb-4">Your Cart</h2>
+      <p className="text-xl mb-4 text-left pl-2 text-secondary">Review your cart before checkout</p>
       <div className="flex flex-col md:flex-row gap-10 mb-2">
         <div className="flex flex-col flex-2/3">
           {/* Booking Timeframe Summary */}
@@ -176,16 +197,18 @@ const Cart: React.FC = () => {
           </div>
 
           {/* Cart Items */}
-          <div className="space-y-4 p-4">
+          <div className="space-y-4 p-2">
             {cartItems.map((cartItem) => (
               <div key={cartItem.item.id} className="flex flex-col border-b pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="font-medium mb-2">
-                      {cartItem.item.translations.fi.item_name}
+                    {cartItem.item.translations.fi.item_name.toLowerCase().replace(/^./, c => c.toUpperCase())}
+
                     </h3>
                     <p className="text-sm text-gray-500">
-                      {cartItem.item.translations.fi.item_type}
+                    {cartItem.item.translations.fi.item_type.toLowerCase().replace(/^./, c => c.toUpperCase())}
+
                     </p>
                     <p className="text-xs text-slate-400">
                       Total {cartItem.item.items_number_available} units available
@@ -250,9 +273,48 @@ const Cart: React.FC = () => {
             ))}
           </div>
         </div>
+        <div className="flex flex-col w-full md:w-1/3 mt-6 md:mt-0 max-h-[80vh] overflow-y-auto sticky top-24">
+          <div className="bg-slate-50 p-4 rounded-lg w-full mb-4">
+            <h3 className="font-semibold mb-3">Order Summary</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Items subtotal:</span>
+                <span>€{cartTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Rental period:</span>
+                <span>
+                  {rentalDays} {rentalDays === 1 ? "day" : "days"}
+                </span>
+              </div>
+              <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
+                <span>Total:</span>
+                <span>€{(cartTotal * rentalDays).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
 
-        <div className="flex flex-col w-full md:w-1/3 items-start mt-6 md:mt-0">
-          {/* Order Summary */}
+          {/* Checkout Button Below Summary */}
+          <Button
+            className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary w-full"
+            disabled={
+              !startDate || !endDate || orderLoading || cartItems.length === 0
+            }
+            onClick={handleCheckout}
+          >
+            {orderLoading ? (
+              <>
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              "Checkout"
+            )}
+          </Button>
+        </div>
+
+        {/* <div className="flex flex-col w-full md:w-1/3 items-start mt-6 md:mt-0"> */}
+          {/* Order Summary
           <div className="bg-slate-50 p-4 rounded-lg mb-6 w-full">
             <h3 className="font-semibold mb-3">Order Summary</h3>
             <div className="space-y-2">
@@ -272,7 +334,7 @@ const Cart: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
       {/* Action Buttons */}
       <div className="flex flex-row items-center justify-between gap-4">
@@ -282,7 +344,7 @@ const Cart: React.FC = () => {
         >
           Clear Cart
         </Button>
-        <Button
+        {/* <Button
           className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary w-1/3"
           disabled={
             !startDate || !endDate || orderLoading || cartItems.length === 0
@@ -297,7 +359,7 @@ const Cart: React.FC = () => {
           ) : (
             "Checkout"
           )}
-        </Button>
+        </Button> */}
       </div>
     </div>
   );
