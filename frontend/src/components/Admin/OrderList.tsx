@@ -26,7 +26,6 @@ import OrderRejectButton from "./OrderRejectButton";
 import OrderDeleteButton from "./OrderDeleteButton";
 import OrderDetailsButton from "./OrderDetailsButton";
 import { DataTable } from "../ui/data-table";
-import { Separator } from "@radix-ui/react-select";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -184,9 +183,11 @@ const OrderList = () => {
         return (
           <div className="flex space-x-1">
             <Button
+              variant={"ghost"}
               size="sm"
               onClick={() => handleViewDetails(order)}
               title="View Details"
+              className="hover:text-slate-900 hover:bg-slate-300"
             >
               <Eye className="h-4 w-4" />
             </Button>
