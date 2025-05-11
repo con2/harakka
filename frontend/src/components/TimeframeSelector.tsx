@@ -9,7 +9,7 @@ import { Button } from "./ui/button";
 import { selectCartItems } from "../store/slices/cartSlice";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { CalendarIcon, Info } from "lucide-react";
+import { Info } from "lucide-react";
 
 const TimeframeSelector: React.FC = () => {
   const dispatch = useAppDispatch();

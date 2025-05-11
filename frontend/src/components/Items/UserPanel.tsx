@@ -65,12 +65,21 @@ const UserPanel = () => {
     return count;
   };  
 
+  // Mobile filter toggle visibility state
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
+
   return (
     <div className="flex min-h-screen w-full overflow-y-auto md:px-10">
-      {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-76 p-4 bg-white pb-10">
+      {/* Sidebar: Filters Panel */}
+      {/* TODO: fix mobile view filter toggle */}
+      <aside
+        className={`${
+          isFilterVisible ? "block" : "hidden"
+        } md:flex flex-col w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-20 md:static transition-all duration-300 ease-in-out`}
+        style={{ maxHeight: 'calc(100vh - 50px)' }} // to make the sidebar scroll
+      >
+        {/* Filter Section */}
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
-          {/* Filter Section */}
           <div>
             <div className="flex items-center justify-between my-2">
               <h3 className="text-secondary font-bold mb-0">Filters</h3>
@@ -81,8 +90,10 @@ const UserPanel = () => {
                 <SlidersIcon className="w-5 h-5 text-slate-500" />
               </div>
             </div>
+
+            {/* Clear filters button */}
             {countActiveFilters() > 0 && (
-              <div className="flex justify-end">
+              <div className="flex justify-start">
                 <Button
                   size={"sm"}
                   className="text-xs px-1 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white"
@@ -255,19 +266,19 @@ const UserPanel = () => {
                   ></Button>
                   <Button
                     className="bg-yellow-500 w-8 h-8 rounded-full border-1 border-primary"
-                    onClick={() => handleFilterChange("color", "blue")}
+                    onClick={() => handleFilterChange("color", "yellow")}
                   ></Button>
                   <Button
                     className="bg-purple-500 w-8 h-8 rounded-full border-1 border-primary"
-                    onClick={() => handleFilterChange("color", "blue")}
+                    onClick={() => handleFilterChange("color", "purple")}
                   ></Button>
                   <Button
                     className="bg-black w-8 h-8 rounded-full border-1 border-primary"
-                    onClick={() => handleFilterChange("color", "blue")}
+                    onClick={() => handleFilterChange("color", "black")}
                   ></Button>
                   <Button
                     className="bg-white-500 w-8 h-8 rounded-full border-1 border-primary"
-                    onClick={() => handleFilterChange("color", "blue")}
+                    onClick={() => handleFilterChange("color", "white")}
                   ></Button>
                 </div>
               </div>
@@ -294,24 +305,41 @@ const UserPanel = () => {
                 </div>
               </div>
             )}
+
+            {/* Close Filter Button */}
+            <div className="md:hidden">
+              <Button
+                onClick={() => setIsFilterVisible(false)}
+                variant="outline"
+                size="sm"
+                className="text-white"
+              >
+                Close Filters
+              </Button>
+            </div>
           </div>
         </nav>
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 p-4">
+      <div className="flex-1 md:p-4 relative">
+        {/* Filter Button visible on mobile */}
+        <div className="md:hidden absolute top-4 left-4 z-10">
+          <Button
+            onClick={() => setIsFilterVisible(true)}
+            variant="outline"
+            size="sm"
+            className="text-white"
+          >
+            <SlidersIcon className="w-5 h-5" />
+          </Button>
+        </div>
+
         {/* Pass filters to the ItemsList via Outlet context */}
         <Outlet context={filters} />
       </div>
     </div>
   );
 };
-
-// const SidebarLink = ({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) => (
-//   <Link to={to} className="flex items-center gap-3 p-2 rounded hover:bg-gray-200">
-//     <span className="w-5 h-5">{icon}</span>
-//     {label}
-//   </Link>
-// );
 
 export default UserPanel;

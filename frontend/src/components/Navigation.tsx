@@ -15,7 +15,6 @@ import smallLogo from "../assets/illusiaLogo.png";
 import { LogInIcon, LogOutIcon, ShoppingCart, UserIcon } from "lucide-react";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { toastConfirm } from "./ui/toastConfirm";
 
 export const Navigation = () => {
