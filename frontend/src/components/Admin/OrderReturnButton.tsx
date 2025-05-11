@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { returnItems } from "@/store/slices/ordersSlice";
-import { ArrowLeftSquare, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 
 const OrderReturnButton = ({
   id,
