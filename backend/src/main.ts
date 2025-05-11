@@ -3,11 +3,16 @@ import { AppModule } from "./app.module";
 import { ConfigService } from "@nestjs/config";
 import { Logger } from "@nestjs/common";
 import { SupabaseService } from "./services/supabase.service";
+import { AllExceptionsFilter } from "./filters/all-exceptions.filter";
+
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
   try {
     const app = await NestFactory.create(AppModule);
     const configService = app.get(ConfigService);
+
+    // Add the global exception filter
+    app.useGlobalFilters(new AllExceptionsFilter());
 
     const port = process.env.PORT || configService.get<number>("PORT", 3000);
     logger.log(
