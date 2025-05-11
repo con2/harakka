@@ -61,7 +61,6 @@ jobs:
           app-name: "booking-app-backend"
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: "./deploy"
-          startup-command: "node ./dist/src/main.js"
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
