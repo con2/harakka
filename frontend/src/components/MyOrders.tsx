@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
 import OrderCancelButton from "./OrderCancelButton";
 import OrderDetailsButton from "./Admin/OrderDetailsButton";
+import { DataTable } from "./ui/data-table";
 
 const MyOrders = () => {
   const dispatch = useAppDispatch();
@@ -164,6 +165,37 @@ const MyOrders = () => {
     },
   ];
 
+  const bookingColumns: ColumnDef<BookingItem>[] = [
+    {
+      accessorKey: "item_name",
+      header: "Item",
+      cell: ({ row }) =>
+        (row.original.item_name || `Item ${row.original.item_id}`)
+          .charAt(0)
+          .toUpperCase() +
+        (row.original.item_name || `Item ${row.original.item_id}`).slice(1),
+    },
+    {
+      accessorKey: "quantity",
+      header: "Quantity",
+    },
+    {
+      accessorKey: "start_date",
+      header: "Start Date",
+      cell: ({ row }) => formatDate(row.original.start_date),
+    },
+    {
+      accessorKey: "end_date",
+      header: "End Date",
+      cell: ({ row }) => formatDate(row.original.end_date),
+    },
+    {
+      accessorKey: "subtotal",
+      header: "Subtotal",
+      cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
+    },
+  ];
+
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -261,7 +293,7 @@ const MyOrders = () => {
         <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-left">
                 Order Details #{selectedOrder.order_number}
               </DialogTitle>
             </DialogHeader>
@@ -270,84 +302,37 @@ const MyOrders = () => {
               {/* Order Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs text-gray-500">
                     {selectedOrder.user_profile?.email}
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="font-semibold">Order Information</h3>
-                  <p>
+                  <h3 className="font-normal mb-1">Order Information</h3>
+                  <p className="text-xs">
                     Status: <StatusBadge status={selectedOrder.status} />
                   </p>
-                  <p>Date: {formatDate(selectedOrder.created_at)}</p>
+                  <p className="text-xs">Date: {formatDate(selectedOrder.created_at)}</p>
                 </div>
               </div>
 
               {/* Order Items */}
               <div>
-                <h3 className="font-semibold mb-2">Items</h3>
+                <h3 className="font-normal mb-2">Items</h3>
                 <div className="border rounded-md overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Item
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Quantity
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Start Date
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          End Date
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Subtotal
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {selectedOrder.order_items?.map(
-                        (item: BookingItem, index: number) => (
-                          <tr key={index}>
-                            <td className="px-4 py-2">
-                              {item.item_name || `Item ${item.item_id}`}
-                            </td>
-                            <td className="px-4 py-2">{item.quantity}</td>
-                            <td className="px-4 py-2">
-                              {formatDate(item.start_date)}
-                            </td>
-                            <td className="px-4 py-2">
-                              {formatDate(item.end_date)}
-                            </td>
-                            <td className="px-4 py-2">
-                              €{item.subtotal?.toFixed(2) || "0.00"}
-                            </td>
-                          </tr>
-                        ),
-                      )}
-                    </tbody>
-                    <tfoot className="bg-gray-50">
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-4 py-2 text-right font-medium"
-                        >
-                          Total:
-                        </td>
-                        <td className="px-4 py-2 font-bold">
-                          €{selectedOrder.final_amount?.toFixed(2) || "0.00"}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                  <DataTable columns={bookingColumns} data={selectedOrder.order_items || []} />
+                </div>
+
+                <div className="flex justify-end mt-4 pr-4">
+                  <div className="text-sm font-medium">Total:</div>
+                  <div className="ml-2 font-bold">
+                    €{selectedOrder.final_amount?.toFixed(2) || "0.00"}
+                  </div>
                 </div>
               </div>
 
               {/* Order Modal Actions */}
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-center space-x-2">
                 {selectedOrder.status === "pending" && (
                   <OrderCancelButton
                     id={selectedOrder.id}
