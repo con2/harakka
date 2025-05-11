@@ -7,9 +7,8 @@ import {
   selectItemsError,
 } from "../../store/slices/itemsSlice";
 import ItemCard from "./ItemCard";
-import { Button } from "../../components/ui/button";
 import { Input } from "../ui/input";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";
 import TimeframeSelector from "../TimeframeSelector";
 import { LoaderCircle, Search } from "lucide-react";
 
@@ -17,7 +16,6 @@ import { LoaderCircle, Search } from "lucide-react";
 const ItemsList: React.FC = () => {
   const filters = useOutletContext<any>(); // Get filters from context
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
 
   // Redux state selectors
   const items = useAppSelector(selectAllItems);
