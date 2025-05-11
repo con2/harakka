@@ -31,6 +31,29 @@ jobs:
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
+      - name: Prepare optimized deployment package
+        run: |
+          # Create minimal deployment package structure
+          mkdir -p deploy
+
+          # Copy only essential production files
+          cp -r backend/dist deploy/
+          cp backend/package.json deploy/
+          cp backend/package-lock.json deploy/
+
+          # Create production-only node_modules
+          cd deploy
+          npm ci --production --no-optional
+
+          # Add Azure configuration
+          echo 'node ./dist/src/main.js' > ./startup.sh
+          chmod +x ./startup.sh
+
+          # Remove unnecessary files to save space
+          find . -name "*.map" -type f -delete
+          find . -name "*.spec.*" -type f -delete
+          find . -name "*.test.*" -type f -delete
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
@@ -44,3 +67,10 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           ALLOWED_ORIGINS: "https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180"
           NODE_ENV: "production"
+
+      - name: Post-deployment verification
+        if: success()
+        run: |
+          echo "Deployment completed, waiting for app to start..."
+          sleep 15
+          curl -s "https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net/health" || echo "App may still be starting"
