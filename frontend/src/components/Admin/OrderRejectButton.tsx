@@ -49,8 +49,13 @@ const OrderRejectButton = ({
   };
 
   return (
-    <Button onClick={handleRejectOrder} className="deleteBtn" size={"sm"}>
-      <XCircle size={10} className="mr-1" /> Reject
+    <Button
+      size="sm"
+      onClick={() => handleRejectOrder()}
+      title="Reject Order"
+      className="text-red-600 hover:text-red-800 hover:bg-red-100"
+    >
+      <XCircle className="h-4 w-4" />
     </Button>
   );
 };

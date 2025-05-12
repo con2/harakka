@@ -67,10 +67,11 @@ const TagDelete = ({
   return (
     <Button
       onClick={handleDelete}
-      className="deleteBtn"
       size={"sm"}
+      title="Delete Tag"
+      className="text-red-600 hover:text-red-800 hover:bg-red-100"
     >
-      <Trash2 size={10} className="mr-1" /> Delete
+      <Trash2 className="h-4 w-4" />
     </Button>
   );
 };
