@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   getItemById,
@@ -223,7 +223,8 @@ const ItemsDetails: React.FC = () => {
           </p>
 
           {/* Display selected booking timeframe if it exists */}
-          {startDate && endDate && (
+          {startDate && endDate ? (
+            <div className="flex flex-col justify-center items-start mt-4 gap-4">
             <div className="bg-slate-100 max-w-[250px] rounded-md mb-2 p-2">
               <div className="flex items-center text-sm text-slate-400">
                 <Clock className="h-4 w-4 mr-1" />
@@ -233,10 +234,8 @@ const ItemsDetails: React.FC = () => {
                 {format(startDate, "PPP")} - {format(endDate, "PPP")}
               </p>
             </div>
-          )}
-
-          {/* Booking Section */}
-          <div className="flex flex-col justify-center items-start mt-4 gap-4">
+            {/* Booking Section */}
+            
             <div className="flex flex-row justify-center items-center">
               <span className="text-sm font-medium w-20">Quantity</span>
               <Button
@@ -272,6 +271,11 @@ const ItemsDetails: React.FC = () => {
               </Button>
             </div>
           </div>
+          ) : (
+            <p>
+              To book this item, please first select booking dates <Link to="/storage" className="text-secondary underline">here</Link>.
+            </p>
+          )}
         </div>
       </div>
 
