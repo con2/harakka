@@ -9,13 +9,18 @@ import {
   HttpException,
   HttpStatus,
   Query,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { StorageItemsService } from "src/services/storage-items.service";
+import { SupabaseService } from "../services/supabase.service";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
 export class StorageItemsController {
-  constructor(private readonly storageItemsService: StorageItemsService) {}
+  constructor(
+    private readonly storageItemsService: StorageItemsService,
+    private readonly supabaseService: SupabaseService,
+  ) {}
 
   @Get()
   async getAll() {
@@ -37,22 +42,10 @@ export class StorageItemsController {
     return this.storageItemsService.updateItem(id, item); // PUT /storage-items/:id (update item)
   }
 
-  // with Query Parameter: DELETE /storage-items/:id?confirm=yes
-  @Delete(":id")
-  async delete(
-    @Param("id") id: string,
-    @Query("confirm") confirm?: string,
-  ): Promise<any> {
-    try {
-      const result = await this.storageItemsService.deleteItem(id, confirm);
-      return result; // Return the result, which will include the success status and ID
-    } catch (error) {
-      // Throw an HTTP exception rather than returning an object
-      throw new HttpException(
-        error.message || "Failed to delete item",
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+  // soft delete
+  @Post(":id/soft-delete")
+  async softDeleteStorageItem(@Param("id") id: string) {
+    return this.storageItemsService.softDeleteItem(id);
   }
 
   @Get("by-tag/:tagId")
