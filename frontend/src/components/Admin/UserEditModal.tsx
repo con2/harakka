@@ -89,7 +89,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     <Dialog>
       <DialogTrigger asChild>
         <Button size={"sm"}
-          title="Edit Tag"
+          title="Edit User"
           className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
         >
           <Edit className="h-4 w-4" />
