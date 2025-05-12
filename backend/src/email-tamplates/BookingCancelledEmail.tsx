@@ -6,8 +6,8 @@ import {
   Heading,
   Text,
 } from "@react-email/components";
-import type { UserRole } from "../types/user";
-import type { BookingItem } from "../types/order";
+import type { UserRole } from "../../../frontend/src/types/user";
+import type { BookingItem } from "../../../frontend/src/types/order";
 
 type BookingCancelledEmailProps = {
   orderId: string;
