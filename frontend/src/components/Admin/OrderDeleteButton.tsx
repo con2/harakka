@@ -49,8 +49,14 @@ const OrderDeleteButton = ({
   };
 
   return (
-    <Button onClick={handleDelete} className="deleteBtn" size={"sm"}>
-      <Trash2 size={10} className="mr-1" /> Delete
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => handleDelete()}
+      title="Delete Order"
+      className="text-red-600 hover:text-red-800 hover:bg-red-100"
+    >
+      <Trash2 className="h-4 w-4" />
     </Button>
   );
 };
