@@ -25,6 +25,17 @@ import { useAppSelector } from "@/store/hooks";
 import { Checkbox } from "@/components/ui/checkbox";
 import ItemImageManager from "./ItemImageManager";
 import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  fetchAllLocations,
+  selectAllLocations,
+} from "@/store/slices/locationsSlice";
 
 type UpdateItemModalProps = {
   onClose: () => void;
@@ -39,6 +50,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   const selectedTags = useAppSelector(selectSelectedTags);
   const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"details" | "images">("details");
+  const locations = useAppSelector(selectAllLocations);
 
   // Prefill the form with initial data if available
   useEffect(() => {
@@ -50,6 +62,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   useEffect(() => {
     dispatch(fetchAllTags());
     dispatch(fetchTagsForItem(formData.id)); // fetch tags for this item
+    dispatch(fetchAllLocations());
   }, [dispatch, formData.id]);
 
   useEffect(() => {
@@ -102,9 +115,18 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
       // Remove properties that don't exist as columns in the database table
       delete cleanedData.storage_item_tags;
       delete cleanedData.tagIds;
+      delete (cleanedData as any).storage_locations;
+
+      // Explicitly ensure location_id is included
+      const updateData = {
+        ...cleanedData,
+        location_id: formData.location_id,
+      };
+
+      console.log("Sending update with location_id:", formData.location_id);
 
       await dispatch(
-        updateItem({ id: formData.id, data: cleanedData }),
+        updateItem({ id: formData.id, data: updateData }),
       ).unwrap();
       await dispatch(
         assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
@@ -160,7 +182,6 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Item Translation Fields */}
               <div className="space-y-4">
-
                 {/* Item Names - Side by Side */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -207,7 +228,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                         value={formData.translations.fi.item_type || ""}
                         onChange={handleChange}
                         placeholder="Item Type (FI)"
-                        className="placeholder:text-xs p-2" 
+                        className="placeholder:text-xs p-2"
                       />
                     </div>
                     <div>
@@ -257,10 +278,35 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                   </div>
                 </div>
               </div>
+
+              {/* Location */}
+              <div className="space-y-2">
+                <Label htmlFor="location_id">Location</Label>
+                <Select
+                  value={formData.location_id || ""}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, location_id: value })
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((location) => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Price */}
               <div className="flex flex-row items-baseline space-y-4 space-x-4">
                 <div className="flex flex-row items-baseline space-x-2">
-                  <Label htmlFor="price" className="font-medium">Price</Label>
+                  <Label htmlFor="price" className="font-medium">
+                    Price
+                  </Label>
                   <Input
                     id="price"
                     name="price"
@@ -271,13 +317,10 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                     required
                     className="w-60"
                   />
-                  </div>
+                </div>
                 {/* Active Toggle */}
                 <div className="flex flex-row items-center space-x-2">
-                  <Label
-                    htmlFor="is_active"
-                    className="font-medium"
-                  >
+                  <Label htmlFor="is_active" className="font-medium">
                     Active
                   </Label>
                   <Switch
@@ -374,21 +417,19 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
         ) : (
           // Image manager component
           <>
-          <ItemImageManager itemId={formData.id} />
-          <DialogFooter>
-            <Button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
-              size={"sm"}
-            >
-              {loading ? "Updating..." : "Update Item"}
-            </Button>
-        </DialogFooter>
+            <ItemImageManager itemId={formData.id} />
+            <DialogFooter>
+              <Button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+                size={"sm"}
+              >
+                {loading ? "Updating..." : "Update Item"}
+              </Button>
+            </DialogFooter>
           </>
         )}
-
-        
       </DialogContent>
     </Dialog>
   );
