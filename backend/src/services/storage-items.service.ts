@@ -171,7 +171,10 @@ export class StorageItemsService {
     id: string,
     item: Partial<StorageItem> & { tagIds?: string[] },
   ): Promise<StorageItem> {
-    const { tagIds, ...itemData } = item;
+    // Extract properties that shouldn't be sent to the database
+    const { tagIds, location_details, storage_item_tags, ...itemData } = item;
+
+    console.log("Updating item with data:", JSON.stringify(itemData, null, 2));
 
     // Update the main item
     const { data: updatedItemData, error: updateError } = await this.supabase
