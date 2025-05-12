@@ -302,13 +302,17 @@ const MyOrders = () => {
               {/* Order Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                <h3 className="font-normal text-sm mb-1">Customer Information</h3>
+                  <p className="text-xs text-grey-500">
+                    {user?.full_name}
+                  </p>
                   <p className="text-xs text-gray-500">
-                    {selectedOrder.user_profile?.email}
+                    {user?.email}
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="font-normal mb-1">Order Information</h3>
+                  <h3 className="font-normal text-sm mb-1">Order Information</h3>
                   <p className="text-xs">
                     Status: <StatusBadge status={selectedOrder.status} />
                   </p>
@@ -318,12 +322,12 @@ const MyOrders = () => {
 
               {/* Order Items */}
               <div>
-                <h3 className="font-normal mb-2">Items</h3>
+                <h3 className="font-normal text-sm mb-2">Items</h3>
                 <div className="border rounded-md overflow-hidden">
                   <DataTable columns={bookingColumns} data={selectedOrder.order_items || []} />
                 </div>
 
-                <div className="flex justify-end mt-4 pr-4">
+                <div className="flex items-center justify-end mt-4 pr-4">
                   <div className="text-sm font-medium">Total:</div>
                   <div className="ml-2 font-bold">
                     €{selectedOrder.final_amount?.toFixed(2) || "0.00"}
