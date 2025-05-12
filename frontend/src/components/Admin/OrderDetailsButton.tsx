@@ -18,7 +18,7 @@ const OrderDetailsButton = ({
       className="hover:text-slate-900 hover:bg-slate-300"
       size="sm"
     >
-      <Eye size={10} className="mr-1" /> Details
+      <Eye size={10} className="mr-1" />
     </Button>
   );
 };
