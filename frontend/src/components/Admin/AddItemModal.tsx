@@ -31,7 +31,23 @@ import {
   setCreatedItemId,
   selectItemModalState,
 } from "@/store/slices/uiSlice";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  fetchAllLocations,
+  selectAllLocations,
+} from "@/store/slices/locationsSlice";
 
 const initialFormState: ItemFormData = {
   location_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
@@ -76,6 +92,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
       ? state.items.items.find((item) => item.id === modalState.createdItemId)
       : null,
   );
+  const locations = useAppSelector(selectAllLocations);
 
   // Display errors when they occur
   useEffect(() => {
@@ -87,6 +104,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (modalState.isOpen) {
       dispatch(fetchAllTags()); // Fetch all tags when modal opens
+      dispatch(fetchAllLocations()); // Fetch all locations when the modal opens
     }
   }, [dispatch, modalState.isOpen]);
 
@@ -229,8 +247,8 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
             {activeTab === "details"
               ? "Fill in the details to create a new item"
               : createdItem
-              ? `Add images for "${createdItem.translations.en.item_name}"`
-              : "Please create an item first"}
+                ? `Add images for "${createdItem.translations.en.item_name}"`
+                : "Please create an item first"}
           </DialogDescription>
         </DialogHeader>
 
@@ -282,7 +300,6 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
           >
             {/* Item Translation Fields */}
             <div className="space-y-4">
-
               {/* Item Names - Side by Side */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -378,37 +395,35 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               </div>
             </div>
 
-            {/* Item Details */}
+            {/* Location Details */}
             <div className="space-y-4">
-
-              {/* <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="location_id">Location ID</Label>
-                  <Input
-                    id="location_id"
-                    name="location_id"
-                    value={formData.location_id}
-                    onChange={handleChange}
-                    placeholder="Location ID"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="compartment_id">Compartment ID</Label>
-                  <Input
-                    id="compartment_id"
-                    name="compartment_id"
-                    value={formData.compartment_id}
-                    onChange={handleChange}
-                    placeholder="Compartment ID"
-                  />
-                </div>
-              </div> */}
+              <div className="space-y-2">
+                <Label htmlFor="location_id">Location</Label>
+                <Select
+                  value={formData.location_id || ""}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, location_id: value })
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((location) => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Price and Active Status */}
               <div className="flex flex-row items-baseline space-x-4 space-y-4">
                 <div className="flex flex-row items-baseline space-x-2">
-                  <Label htmlFor="price" className="font-medium">Price</Label>
+                  <Label htmlFor="price" className="font-medium">
+                    Price
+                  </Label>
                   <Input
                     id="price"
                     name="price"
@@ -421,10 +436,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                   />
                 </div>
                 <div className="flex flex-row items-center space-x-2">
-                  <Label
-                    htmlFor="is_active"
-                    className="font-medium"
-                  >
+                  <Label htmlFor="is_active" className="font-medium">
                     Active
                   </Label>
                   <Switch
