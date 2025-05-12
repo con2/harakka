@@ -24,7 +24,7 @@ export const toastConfirm = ({
       <CardHeader>
         <CardTitle className="text-lg">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex flex-col gap-2">
         <p className="text-sm text-muted-foreground">{description}</p>
         <div className="flex justify-end gap-2">
           <Button
