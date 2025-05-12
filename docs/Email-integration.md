@@ -14,9 +14,9 @@ we need mails for:
 - payment received mail
 - items successfully returned
 - Booking cancelled by admin mail
-- booking cancelled by you mail
 - booking details successfully updated, new items pending
-- confirmation of email change (not sure if necessary)
+
+- booking cancelled by you mail
 
 Setup with:
 
