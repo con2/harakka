@@ -2,7 +2,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllUsers,
   selectAllUsers,
-  selectLoading,
+  //selectLoading,
   selectSelectedUser,
 } from "@/store/slices/usersSlice";
 import { useNavigate } from "react-router-dom";
@@ -10,20 +10,26 @@ import { Button } from "../ui/button";
 import { DataTable } from "../ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
-import { LoaderCircle, MoveRight, ShoppingBag, Users, Warehouse } from "lucide-react";
+import {
+  LoaderCircle,
+  MoveRight,
+  ShoppingBag,
+  Users,
+  Warehouse,
+} from "lucide-react";
 import {
   getAllOrders,
   selectAllOrders,
   selectOrdersLoading,
 } from "@/store/slices/ordersSlice";
 import { Badge } from "../ui/badge";
-import { BookingOrder, UserProfile } from "@/types";
+import { BookingOrder } from "@/types";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
   const users = useAppSelector(selectAllUsers);
-  const loading = useAppSelector(selectLoading);
+  //const loading = useAppSelector(selectLoading);
   const items = useAppSelector(selectAllItems);
   const user = useAppSelector(selectSelectedUser);
   const orders = useAppSelector(selectAllOrders);
@@ -139,19 +145,19 @@ const AdminDashboard = () => {
     },
   ];
   // Users table
-  const columns: ColumnDef<UserProfile>[] = [
-    { accessorKey: "full_name", header: "Name" },
-    { accessorKey: "phone", header: "Phone" },
-    { accessorKey: "email", header: "Email" },
-  ];
+  // const columns: ColumnDef<UserProfile>[] = [
+  //   { accessorKey: "full_name", header: "Name" },
+  //   { accessorKey: "phone", header: "Phone" },
+  //   { accessorKey: "email", header: "Email" },
+  // ];
 
-  // Users table: only role === "user"
-  const regularUsers = users.filter((user) => user.role === "user").slice(0, 3);
+  // // Users table: only role === "user"
+  // const regularUsers = users.filter((user) => user.role === "user").slice(0, 3);
 
-  // Team table: role === "admin" or "superVera"
-  const teamUsers = users
-    .filter((user) => user.role === "admin" || user.role === "superVera")
-    .slice(0, 3);
+  // // Team table: role === "admin" or "superVera"
+  // const teamUsers = users
+  //   .filter((user) => user.role === "admin" || user.role === "superVera")
+  //   .slice(0, 3);
 
   return (
     <div>
@@ -217,8 +223,8 @@ const AdminDashboard = () => {
 
       {/* Users and Team Section */}
       {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-8"> */}
-        {/* Users Table */}
-        {/* <div>
+      {/* Users Table */}
+      {/* <div>
           <div className="flex justify-between items-center">
             <h2>Recent Users</h2>
           </div>
@@ -240,8 +246,8 @@ const AdminDashboard = () => {
           </div>
         </div> */}
 
-        {/* Team Table */}
-        {/* <div>
+      {/* Team Table */}
+      {/* <div>
           <div className="flex justify-between items-center">
             <h2>My Team</h2>
           </div>
