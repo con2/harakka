@@ -262,7 +262,7 @@ const AdminItemsTable = () => {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete this item?
+            Are you sure you want to delete this item? (Soft Delete)
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => toast.dismiss(t)}>
