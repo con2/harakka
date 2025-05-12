@@ -115,9 +115,18 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
       // Remove properties that don't exist as columns in the database table
       delete cleanedData.storage_item_tags;
       delete cleanedData.tagIds;
+      delete (cleanedData as any).storage_locations;
+
+      // Explicitly ensure location_id is included
+      const updateData = {
+        ...cleanedData,
+        location_id: formData.location_id,
+      };
+
+      console.log("Sending update with location_id:", formData.location_id);
 
       await dispatch(
-        updateItem({ id: formData.id, data: cleanedData }),
+        updateItem({ id: formData.id, data: updateData }),
       ).unwrap();
       await dispatch(
         assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
