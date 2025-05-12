@@ -22,10 +22,25 @@ export const fetchAllLocations = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       return await locationsApi.getAllLocations();
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch locations",
-      );
+    } catch (error: unknown) {
+      let errorMessage = "Failed to fetch locations";
+
+      if (error && typeof error === "object" && "response" in error) {
+        const typedError = error as {
+          response?: {
+            data?: {
+              message?: string;
+            };
+          };
+        };
+        if (typedError.response?.data?.message) {
+          errorMessage = typedError.response.data.message;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+
+      return rejectWithValue(errorMessage);
     }
   },
 );
