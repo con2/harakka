@@ -186,13 +186,16 @@ export class StorageItemsService {
     return updatedItem;
   }
 
-  async deleteItem(id: string): Promise<{ success: boolean; id: string }> {
+  async deleteItem(
+    id: string,
+    confirm?: string,
+  ): Promise<{ success: boolean; id: string }> {
     if (!id) {
       throw new Error("No item ID provided for deletion");
     }
 
     // Safety check: only allow deletion if confirmed
-    const check = await this.canDeleteItem(id, "yes");
+    const check = await this.canDeleteItem(id, confirm);
     if (!check.success) {
       throw new Error(
         check.reason || "Item cannot be deleted due to unknown restrictions",
@@ -302,16 +305,16 @@ export class StorageItemsService {
     const hasBookings = data?.length > 0;
 
     if (hasBookings && confirm !== "yes") {
-      throw new Error(
-        "This item is linked to existing bookings. Pass confirm='yes' to delete anyway.",
-      );
+      return {
+        success: false,
+        reason:
+          "This item is linked to existing bookings. Pass confirm='yes' to delete anyway.",
+        id,
+      };
     }
 
     return {
-      success: !hasBookings,
-      reason: hasBookings
-        ? "Item cannot be deleted because it has existing bookings"
-        : undefined,
+      success: true,
       id,
     };
   }

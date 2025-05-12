@@ -8,6 +8,7 @@ import {
   Param,
   HttpException,
   HttpStatus,
+  Query,
 } from "@nestjs/common";
 import { StorageItemsService } from "src/services/storage-items.service";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
@@ -38,9 +39,12 @@ export class StorageItemsController {
 
   // with Query Parameter: DELETE /storage-items/:id?confirm=yes
   @Delete(":id")
-  async delete(@Param("id") id: string): Promise<any> {
+  async delete(
+    @Param("id") id: string,
+    @Query("confirm") confirm?: string,
+  ): Promise<any> {
     try {
-      const result = await this.storageItemsService.deleteItem(id);
+      const result = await this.storageItemsService.deleteItem(id, confirm);
       return result; // Return the result, which will include the success status and ID
     } catch (error) {
       // Throw an HTTP exception rather than returning an object
