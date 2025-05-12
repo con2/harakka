@@ -36,6 +36,7 @@ export class StorageItemsController {
     return this.storageItemsService.updateItem(id, item); // PUT /storage-items/:id (update item)
   }
 
+  // with Query Parameter: DELETE /storage-items/:id?confirm=yes
   @Delete(":id")
   async delete(@Param("id") id: string): Promise<any> {
     try {
