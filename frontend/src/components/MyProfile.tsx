@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Input } from "./ui/input";
+import { toastConfirm } from "./ui/toastConfirm";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();
@@ -103,37 +104,33 @@ const MyProfile = () => {
   
   const handleDeleteAddress = (index: number) => {
     const address = addresses[index];
-    toast(
-      `Do you really want to delete this address from your profile?`,
-      {
-        action: {
-          label: "Delete",
-          onClick: async () => {
-            try {
-              const updatedAddresses = [...addresses];
-              updatedAddresses.splice(index, 1);
-              setAddresses(updatedAddresses);
-              // Only call deleteAddress if it exists in backend
-              if (address.id) {
-                dispatch(
-                  deleteAddress({
-                    id: selectedUser?.id || "",
-                    addressId: address.id,
-                  })
-                ).unwrap();
-              }
-              toast.success("Address deleted successfully.");
-            } catch (err) {
-              toast.error("Failed to delete address.");
-            }
-          },
-        },
-        cancel: {
-          label: "Cancel",
-          onClick: () => toast.dismiss(),
-        },
-      }
-    );
+    toastConfirm({
+      title: "Remove Address",
+      description: "Do you really want to remove this address from your profile?",
+      confirmText: "Remove",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        try {
+          const updatedAddresses = [...addresses];
+          updatedAddresses.splice(index, 1);
+          setAddresses(updatedAddresses);
+    
+          if (address.id) {
+            await dispatch(
+              deleteAddress({
+                id: selectedUser?.id || "",
+                addressId: address.id,
+              })
+            ).unwrap();
+          }
+    
+          toast.success("Address removed successfully.");
+        } catch (err) {
+          toast.error("Failed to remove address.");
+        }
+      },
+    });
+    
   };
 
   return (
@@ -334,124 +331,123 @@ const MyProfile = () => {
                 </Button>
               </div>
             </div>
+              {showAddAddressForm && (
+              <Dialog open={showAddAddressForm} onOpenChange={setShowAddAddressForm}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>New Address</DialogTitle>
+                  </DialogHeader>
 
-                {showAddAddressForm && (
-                <Dialog open={showAddAddressForm} onOpenChange={setShowAddAddressForm}>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>New Address</DialogTitle>
-                    </DialogHeader>
-
-                    <div className="grid gap-4 py-4">
-                      <div className="grid gap-2">
-                        <Label>Address Type</Label>
-                        <Select
-                          value={newAddress.address_type}
-                          onValueChange={(value) =>
-                            setNewAddress({ ...newAddress, address_type: value as Address["address_type"] })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="both">Both</SelectItem>
-                            <SelectItem value="billing">Billing</SelectItem>
-                            <SelectItem value="shipping">Shipping</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label>Street Address</Label>
-                        <Input
-                          value={newAddress.street_address}
-                          onChange={(e) =>
-                            setNewAddress({ ...newAddress, street_address: e.target.value })
-                          }
-                          placeholder="Street Address"
-                        />
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label>City</Label>
-                        <Input
-                          value={newAddress.city}
-                          onChange={(e) =>
-                            setNewAddress({ ...newAddress, city: e.target.value })
-                          }
-                          placeholder="City"
-                        />
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label>Postal Code</Label>
-                        <Input
-                          value={newAddress.postal_code}
-                          onChange={(e) =>
-                            setNewAddress({ ...newAddress, postal_code: e.target.value })
-                          }
-                          placeholder="Postal Code"
-                        />
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label>Country</Label>
-                        <Input
-                          value={newAddress.country}
-                          onChange={(e) =>
-                            setNewAddress({ ...newAddress, country: e.target.value })
-                          }
-                          placeholder="Country"
-                        />
-                      </div>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label>Address Type</Label>
+                      <Select
+                        value={newAddress.address_type}
+                        onValueChange={(value) =>
+                          setNewAddress({ ...newAddress, address_type: value as Address["address_type"] })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="both">Both</SelectItem>
+                          <SelectItem value="billing">Billing</SelectItem>
+                          <SelectItem value="shipping">Shipping</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
-                    <DialogFooter>
-                      <Button
-                        variant="outline"
-                        size={"sm"}
-                        onClick={() => {
-                          if (!newAddress.street_address || !newAddress.city) {
-                            toast.error("Please fill all required fields.");
-                            return;
-                          }
+                    <div className="grid gap-2">
+                      <Label>Street Address</Label>
+                      <Input
+                        value={newAddress.street_address}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, street_address: e.target.value })
+                        }
+                        placeholder="Street Address"
+                      />
+                    </div>
 
-                          dispatch(addAddress({ id: selectedUser?.id || "", address: newAddress }))
-                            .unwrap()
-                            .then(() => {
-                              dispatch(getUserAddresses(selectedUser?.id || ""));
-                              setNewAddress({
-                                user_id: selectedUser?.id || "",
-                                address_type: "both",
-                                street_address: "",
-                                city: "",
-                                postal_code: "",
-                                country: "",
-                                is_default: false,
-                              });
-                              toast.success("New address added.");
-                            })
-                            .catch(() => {
-                              toast.error("Failed to add new address.");
+                    <div className="grid gap-2">
+                      <Label>City</Label>
+                      <Input
+                        value={newAddress.city}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, city: e.target.value })
+                        }
+                        placeholder="City"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>Postal Code</Label>
+                      <Input
+                        value={newAddress.postal_code}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, postal_code: e.target.value })
+                        }
+                        placeholder="Postal Code"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>Country</Label>
+                      <Input
+                        value={newAddress.country}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, country: e.target.value })
+                        }
+                        placeholder="Country"
+                      />
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      size={"sm"}
+                      onClick={() => {
+                        if (!newAddress.street_address || !newAddress.city) {
+                          toast.error("Please fill all required fields.");
+                          return;
+                        }
+
+                        dispatch(addAddress({ id: selectedUser?.id || "", address: newAddress }))
+                          .unwrap()
+                          .then(() => {
+                            dispatch(getUserAddresses(selectedUser?.id || ""));
+                            setNewAddress({
+                              user_id: selectedUser?.id || "",
+                              address_type: "both",
+                              street_address: "",
+                              city: "",
+                              postal_code: "",
+                              country: "",
+                              is_default: false,
                             });
+                            toast.success("New address added.");
+                          })
+                          .catch(() => {
+                            toast.error("Failed to add new address.");
+                          });
 
-                          setShowAddAddressForm(false);
-                        }}
-                      >
-                        Save Address
-                      </Button>
-                      <Button variant="destructive" size={"sm"} onClick={() => setShowAddAddressForm(false)}>
-                        Cancel
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-                )}
-              </div>
-            ) : (
-              <LoaderCircle className="animate-spin text-secondary w-8 h-8" />
-            )}
+                        setShowAddAddressForm(false);
+                      }}
+                    >
+                      Save Address
+                    </Button>
+                    <Button variant="destructive" size={"sm"} onClick={() => setShowAddAddressForm(false)}>
+                      Cancel
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              )}
+            </div>
+          ) : (
+            <LoaderCircle className="animate-spin text-secondary w-8 h-8" />
+          )}
         </TabsContent>
         
         {/* Orders Tab */}
