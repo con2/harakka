@@ -1,9 +1,8 @@
 import { Button } from "./ui/button";
 import { XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { cancelOrder, getUserOrders } from "@/store/slices/ordersSlice";
-import { selectSelectedUser } from "@/store/slices/usersSlice";
+import { useAppDispatch } from "@/store/hooks";
+import { cancelOrder } from "@/store/slices/ordersSlice";
 import { toastConfirm } from "./ui/toastConfirm";
 
 interface OrderCancelButtonProps {
@@ -13,7 +12,6 @@ interface OrderCancelButtonProps {
 
 const OrderCancelButton = ({ id, closeModal }: OrderCancelButtonProps) => {
   const dispatch = useAppDispatch();
-  const user = useAppSelector(selectSelectedUser);
 
   const handleCancelOrder = () => {
     if (!id) {
@@ -27,20 +25,21 @@ const OrderCancelButton = ({ id, closeModal }: OrderCancelButtonProps) => {
       confirmText: "Cancel Order",
       cancelText: "Keep Order",
       onConfirm: async () => {
-        await toast.promise(dispatch(cancelOrder(id)).unwrap(), {
-          loading: "Cancelling order...",
-          success: "Order cancelled successfully",
-          error: "Failed to cancel order",
-        });
-    
-        if (closeModal) closeModal();
-    
-        if (user?.id) {
-          dispatch(getUserOrders(user.id));
+        try {
+          // Use unwrap() to properly handle the promise and catch errors
+          await toast.promise(dispatch(cancelOrder(id)).unwrap(), {
+            loading: "Cancelling order...",
+            success: "Order cancelled successfully",
+            error: "Failed to cancel order",
+          });
+
+          // Close modal after successful cancellation if provided
+          if (closeModal) closeModal();
+        } catch (error) {
+          console.error("Error cancelling order:", error);
         }
       },
-      onCancel: () => {
-      },
+      onCancel: () => {},
     });
   };
 
@@ -48,7 +47,8 @@ const OrderCancelButton = ({ id, closeModal }: OrderCancelButtonProps) => {
     <Button
       onClick={handleCancelOrder}
       className="text-red-600 hover:text-red-800 hover:bg-red-100"
-      size={"sm"}>
+      size={"sm"}
+    >
       <XCircle size={10} className="mr-1" />
     </Button>
   );
