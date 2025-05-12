@@ -39,6 +39,15 @@ export class StorageItemsService {
             id,
             translations
           )
+        ),
+        storage_locations (
+          id,
+          name, 
+          description,
+          address,
+          latitude,
+          longitude,
+          is_active
         )
       `); // Explicitly select tags and their translations by joining the tags table
 
@@ -46,13 +55,14 @@ export class StorageItemsService {
       throw new Error(error.message);
     }
 
-    // Structure the result to match your backend interface
+    // Structure the result to include both tags and location data
     return data.map((item) => ({
       ...item,
       storage_item_tags:
         item.storage_item_tags?.map(
           (tagLink) => tagLink.tags, // Flatten out the tags object to just be the tag itself
         ) ?? [], // Fallback to empty array if no tags are available
+      location_details: item.storage_locations || null,
     }));
   }
 
@@ -72,6 +82,15 @@ export class StorageItemsService {
             id,
             translations
           )
+        ),
+        storage_locations (
+          id,
+          name, 
+          description,
+          address,
+          latitude,
+          longitude,
+          is_active
         )
       `,
         ) // Join storage_item_tags and tags table to get full tag data
@@ -89,6 +108,7 @@ export class StorageItemsService {
       storage_item_tags: data?.storage_item_tags
         ? data.storage_item_tags.map((tagLink) => tagLink.tags) // Extract just the tag itself
         : [],
+      location_details: data?.storage_locations || null,
     };
   }
 
@@ -126,7 +146,10 @@ export class StorageItemsService {
     id: string,
     item: Partial<StorageItem> & { tagIds?: string[] },
   ): Promise<StorageItem> {
-    const { tagIds, ...itemData } = item;
+    // Extract properties that shouldn't be sent to the database
+    const { tagIds, location_details, storage_item_tags, ...itemData } = item;
+
+    console.log("Updating item with data:", JSON.stringify(itemData, null, 2));
 
     // Update the main item
     const { data: updatedItemData, error: updateError } = await this.supabase
