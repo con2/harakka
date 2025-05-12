@@ -9,6 +9,7 @@ import {
   Req,
   Res,
   Query,
+  Patch,
   UnauthorizedException,
   BadRequestException,
   ForbiddenException,
@@ -16,6 +17,7 @@ import {
 import { BookingService } from "../services/booking.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
 import { InvoiceService } from "../services/invoice.service";
+import { UpdatePaymentStatusDto } from "src/dto/update-payment-status.dto";
 
 @Controller("bookings")
 export class BookingController {
@@ -154,6 +156,12 @@ export class BookingController {
     const availableQuantity =
       await this.bookingService.getAvailableQuantityForDate(itemId, date);
     return { availableQuantity };
+  }
+
+  // change payment status
+  @Patch("payment-status")
+  async updatePaymentStatus(@Body() dto: UpdatePaymentStatusDto) {
+    return this.bookingService.updatePaymentStatus(dto.orderId, dto.status);
   }
 
   // commented out because it is not used atm
