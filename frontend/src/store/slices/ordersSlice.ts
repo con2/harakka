@@ -76,18 +76,26 @@ export const getAllOrders = createAsyncThunk<BookingOrder[], string>(
 );
 
 // Confirm order thunk
-export const confirmOrder = createAsyncThunk<BookingOrder, string>(
-  "orders/confirmOrder",
-  async (orderId, { rejectWithValue }) => {
-    try {
-      return await ordersApi.confirmOrder(orderId);
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to confirm order"),
-      );
-    }
-  },
-);
+export const confirmOrder = createAsyncThunk<
+  { message: string; orderId: string },
+  string,
+  { rejectValue: string }
+>("orders/confirmOrder", async (orderId, { rejectWithValue }) => {
+  try {
+    // The backend returns { message: "Booking confirmed" }
+    const response = await ordersApi.confirmOrder(orderId);
+
+    // Make sure we return the expected type
+    return {
+      ...response, // This contains the message from backend
+      orderId: orderId, // add the orderId
+    };
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to confirm order"),
+    );
+  }
+});
 
 // Update order thunk
 export const updateOrder = createAsyncThunk<
@@ -104,32 +112,47 @@ export const updateOrder = createAsyncThunk<
 });
 
 // Reject order thunk
-export const rejectOrder = createAsyncThunk<BookingOrder, string>(
-  "orders/rejectOrder",
-  async (orderId, { rejectWithValue }) => {
-    try {
-      return await ordersApi.rejectOrder(orderId);
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to reject order"),
-      );
-    }
-  },
-);
+export const rejectOrder = createAsyncThunk<
+  { message: string; orderId: string },
+  string,
+  { rejectValue: string }
+>("orders/rejectOrder", async (orderId, { rejectWithValue }) => {
+  try {
+    // The backend returns { message: "Booking rejected" }
+    const response = await ordersApi.rejectOrder(orderId);
+
+    // Make sure we return the expected type
+    return {
+      ...response, // This contains the message from backend
+      orderId: orderId, // We add the orderId ourselves
+    };
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to reject order"),
+    );
+  }
+});
 
 // Cancel order thunk
-export const cancelOrder = createAsyncThunk<BookingOrder, string>(
-  "orders/cancelOrder",
-  async (orderId, { rejectWithValue }) => {
-    try {
-      return await ordersApi.cancelOrder(orderId);
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to cancel order"),
-      );
-    }
-  },
-);
+export const cancelOrder = createAsyncThunk<
+  { message?: string; orderId: string },
+  string,
+  { rejectValue: string }
+>("orders/cancelOrder", async (orderId, { rejectWithValue }) => {
+  try {
+    const response = await ordersApi.cancelOrder(orderId);
+
+    // Always add the orderId to the response
+    return {
+      message: response.message || "Order cancelled successfully",
+      orderId: orderId, // add the orderId
+    };
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to cancel order"),
+    );
+  }
+});
 
 // Delete order thunk
 export const deleteOrder = createAsyncThunk<string, string>(
@@ -226,12 +249,18 @@ export const ordersSlice = createSlice({
       })
       .addCase(confirmOrder.fulfilled, (state, action) => {
         state.loading = false;
-        // Using upsertOne ensures the entire order object is updated in the normalized state
-        ordersAdapter.upsertOne(state, action.payload);
+        // Use the orderId from payload
+        const orderId = action.payload.orderId;
 
-        // Also update the non-normalized array if you're using it
+        // Update the order status in the normalized state
+        ordersAdapter.updateOne(state, {
+          id: orderId,
+          changes: { status: "confirmed" },
+        });
+
+        // Also update in the user orders array
         state.userOrders = state.userOrders.map((order) =>
-          order.id === action.payload.id ? action.payload : order,
+          order.id === orderId ? { ...order, status: "confirmed" } : order,
         );
       })
       .addCase(confirmOrder.rejected, (state, action) => {
@@ -268,9 +297,18 @@ export const ordersSlice = createSlice({
       })
       .addCase(rejectOrder.fulfilled, (state, action) => {
         state.loading = false;
-        ordersAdapter.upsertOne(state, action.payload);
+        // Use the orderId from payload
+        const orderId = action.payload.orderId;
+
+        // Update the order status in the normalized state
+        ordersAdapter.updateOne(state, {
+          id: orderId,
+          changes: { status: "rejected" },
+        });
+
+        // Also update in the user orders array
         state.userOrders = state.userOrders.map((order) =>
-          order.id === action.payload.id ? action.payload : order,
+          order.id === orderId ? { ...order, status: "rejected" } : order,
         );
       })
       .addCase(rejectOrder.rejected, (state, action) => {
@@ -286,12 +324,19 @@ export const ordersSlice = createSlice({
       })
       .addCase(cancelOrder.fulfilled, (state, action) => {
         state.loading = false;
+
+        // Use the orderId we added to the payload
+        const orderId = action.payload.orderId;
+
+        // Update the order status in the normalized state
         ordersAdapter.updateOne(state, {
-          id: action.payload.id,
+          id: orderId,
           changes: { status: "cancelled by user" },
         });
+
+        // Also update in the user orders array
         state.userOrders = state.userOrders.map((order) =>
-          order.id === action.payload.id
+          order.id === orderId
             ? { ...order, status: "cancelled by user" }
             : order,
         );
