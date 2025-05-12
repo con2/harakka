@@ -31,7 +31,10 @@ export class StorageItemsService {
 
     // Updated query to join storage_item_tags with tags table
     const { data, error }: PostgrestResponse<StorageItemWithJoin> =
-      await supabase.from("storage_items").select(`
+      await supabase
+        .from("storage_items")
+        .select(
+          `
         *,
         storage_item_tags (
           tag_id,
@@ -49,7 +52,9 @@ export class StorageItemsService {
           longitude,
           is_active
         )
-      `); // Explicitly select tags and their translations by joining the tags table
+      `,
+        )
+        .eq("is_deleted", false); // Explicitly select tags and their translations by joining the tags table - show only undeleted items
 
     if (error) {
       throw new Error(error.message);
@@ -95,6 +100,7 @@ export class StorageItemsService {
       `,
         ) // Join storage_item_tags and tags table to get full tag data
         .eq("id", id)
+        .eq("is_deleted", false) // Only get undeleted items
         .single();
 
     if (error) {
@@ -253,17 +259,16 @@ export class StorageItemsService {
       );
     }
 
-    // Step 3: Delete the item itself
-    const { error: itemDeleteError } = await this.supabase
+    // Step 3: Delete the item itself - soft delete
+    const { error: softDeleteError } = await this.supabase
       .from("storage_items")
-      .delete()
+      .update({ is_deleted: true })
       .eq("id", id);
 
-    if (itemDeleteError) {
-      throw new Error(`Failed to delete item: ${itemDeleteError.message}`);
+    if (softDeleteError) {
+      throw new Error(`Failed to soft-delete item: ${softDeleteError.message}`);
     }
 
-    // Return success response with the deleted item ID
     return { success: true, id };
   }
 
@@ -278,6 +283,19 @@ export class StorageItemsService {
 
     // The data will now have the related 'items' fetched in the same query
     return data.map((entry) => entry.items); // Extract items from the relation
+  }
+
+  async softDeleteItem(id: string): Promise<{ success: boolean; id: string }> {
+    const { error } = await this.supabase
+      .from("storage_items")
+      .update({ is_deleted: true })
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(`Soft delete failed: ${error.message}`);
+    }
+
+    return { success: true, id };
   }
 
   //check if the item can be deleted (if it exists in some orders)
