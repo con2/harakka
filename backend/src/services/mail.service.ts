@@ -20,6 +20,17 @@ export class MailService {
 
   async sendMail(to: string, subject: string, html: string) {
     try {
+      console.log("Email configuration:", {
+        clientId: process.env.GMAIL_CLIENT_ID ? "Configured" : "Missing",
+        clientSecret: process.env.GMAIL_CLIENT_SECRET
+          ? "Configured"
+          : "Missing",
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN
+          ? "Configured"
+          : "Missing",
+        emailFrom: process.env.EMAIL_FROM,
+      });
+
       const accessToken = await this.oAuth2Client.getAccessToken();
 
       const transport = nodemailer.createTransport({
@@ -45,7 +56,18 @@ export class MailService {
       return result;
     } catch (error) {
       console.error("Failed to send email:", error);
-      throw new Error("Mail sending failed: " + error.message);
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+
+      // Don't throw in production environments
+      if (process.env.NODE_ENV === "production") {
+        return { success: false, error: error.message };
+      } else {
+        throw new Error("Mail sending failed: " + error.message);
+      }
     }
   }
 }
