@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { confirmOrder } from "@/store/slices/ordersSlice";
 import { CheckCircle } from "lucide-react";
+//import { toastConfirm } from "../ui/toastConfirm";
 
 const OrderConfirmButton = ({
   id,
@@ -48,8 +49,13 @@ const OrderConfirmButton = ({
     ));
   };
   return (
-    <Button onClick={handleConfirmOrder} className="addBtn" size={"sm"}>
-      <CheckCircle size={10} className="mr-1" /> Confirm
+    <Button
+      size="sm"
+      onClick={() => handleConfirmOrder()}
+      title="Confirm Order"
+      className="text-green-600 hover:text-green-800 hover:bg-green-100"
+    >
+      <CheckCircle className="h-4 w-4" />
     </Button>
   );
 };

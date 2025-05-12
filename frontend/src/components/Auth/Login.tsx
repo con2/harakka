@@ -16,7 +16,7 @@ export const Login = () => {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
-          <CardTitle className="text-center text-xl">Welcome</CardTitle>
+          <CardTitle className="text-center text-xl">Login to your account</CardTitle>
         </CardHeader>
         <CardContent>
           {reset === "success" && (
@@ -49,6 +49,12 @@ export const Login = () => {
                     brand: "#9537c7",
                     brandAccent: "#44195b",
                   },
+                  fonts: {
+                    bodyFontFamily: "var(--main-font)",
+                    inputFontFamily: "var(--main-font)",
+                    labelFontFamily: "var(--main-font)",
+                    buttonFontFamily: "var(--main-font)",
+                  }
                 },
               },
             }}
