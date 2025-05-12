@@ -11,6 +11,7 @@ import {
   Query,
   UnauthorizedException,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { BookingService } from "../services/booking.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
@@ -49,11 +50,26 @@ export class BookingController {
   // creates a booking
   @Post()
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: any) {
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
-    if (!userId) {
-      throw new BadRequestException("No userId found: user_id is required");
+    try {
+      const userId = req.headers["x-user-id"] ?? req.user?.id;
+      if (!userId) {
+        throw new BadRequestException("No userId found: user_id is required");
+      }
+      return this.bookingService.createBooking({ ...dto, user_id: userId });
+    } catch (error) {
+      console.error("Booking creation failed:", error);
+
+      // Return a structured error but avoid 500
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error; // Keep the original error if it's already properly typed
+      }
+      throw new BadRequestException(
+        "There was an issue processing your booking. If this persists, please contact support.",
+      );
     }
-    return this.bookingService.createBooking({ ...dto, user_id: userId });
   }
 
   // confirms a booking
