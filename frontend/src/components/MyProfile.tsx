@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { addAddress, deleteAddress, getUserAddresses, selectSelectedUser, selectUserAddresses, updateAddress, updateUser } from "@/store/slices/usersSlice";
+import { addAddress, deleteAddress, deleteUser, getUserAddresses, selectSelectedUser, selectUserAddresses, updateAddress, updateUser } from "@/store/slices/usersSlice";
 import { Button } from "@/components/ui/button";
 import MyOrders from "./MyOrders";
 import { useEffect, useState } from "react";
@@ -15,6 +15,7 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Input } from "./ui/input";
 import { toastConfirm } from "./ui/toastConfirm";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();
@@ -130,7 +131,29 @@ const MyProfile = () => {
         }
       },
     });
-    
+  };
+
+  const handleDeleteUser = () => {
+    toastConfirm({
+      title: "Delete Your Account",
+      description:
+        "This action will permanently delete your account. This action is irreversible.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        try {
+          if (selectedUser?.id) {
+            await dispatch(deleteUser(selectedUser.id)).unwrap();
+          } else {
+            toast.error("User ID is missing. Unable to delete account.");
+          }
+          toast.success("Your account has been successfully deleted.");
+          navigate("/");
+        } catch (error) {
+          toast.error("Failed to delete user account.");
+        }
+      },
+    });
   };
 
   return (
@@ -312,137 +335,162 @@ const MyProfile = () => {
                   <p className="text-gray-500 mt-4">You have no saved addresses.</p>
                 )}
               </div>
-
+              
               {/* Buttons */}
-              <div className="mt-6 flex flex-col md:flex-row md:justify-end gap-3">
-                <Button
-                  onClick={() => setShowAddAddressForm(true)}
-                  size="sm"
-                  className="editBtn"
-                >
-                  Add New Address
-                </Button>
-                <Button
-                  onClick={handleSaveChanges}
-                  size="sm"
-                  variant="outline"
-                >
-                  Save Changes
-                </Button>
+              <div className="flex justify-between items-center mt-6 gap-3">
+                {/* Delete Account */}
+                <div className="flex justify-start items-center p-4 rounded-md bg-slate-50 mb-0">
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="danger-zone" className="mb-0">
+                      <AccordionTrigger className="text-red-200 mb-0">
+                        Danger Zone
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-muted-foreground">
+                        <p className="mb-4">
+                          You can delete your account here. This action is permanent and cannot be undone.
+                        </p>
+                        <Button
+                          size={"sm"}
+                          variant="destructive"
+                          onClick={handleDeleteUser}>
+                          Delete Account
+                        </Button>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+                <div className="items-center flex flex-col md:flex-row md:justify-end gap-4">
+                  <Button
+                    onClick={() => setShowAddAddressForm(true)}
+                    size="sm"
+                    className="editBtn"
+                  >
+                    Add New Address
+                  </Button>
+                  <Button
+                    onClick={handleSaveChanges}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Save Changes
+                  </Button>
+                </div>
               </div>
+
             </div>
-              {showAddAddressForm && (
-              <Dialog open={showAddAddressForm} onOpenChange={setShowAddAddressForm}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>New Address</DialogTitle>
-                  </DialogHeader>
+            
+            {showAddAddressForm && (
+            <Dialog open={showAddAddressForm} onOpenChange={setShowAddAddressForm}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>New Address</DialogTitle>
+                </DialogHeader>
 
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label>Address Type</Label>
-                      <Select
-                        value={newAddress.address_type}
-                        onValueChange={(value) =>
-                          setNewAddress({ ...newAddress, address_type: value as Address["address_type"] })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="both">Both</SelectItem>
-                          <SelectItem value="billing">Billing</SelectItem>
-                          <SelectItem value="shipping">Shipping</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label>Street Address</Label>
-                      <Input
-                        value={newAddress.street_address}
-                        onChange={(e) =>
-                          setNewAddress({ ...newAddress, street_address: e.target.value })
-                        }
-                        placeholder="Street Address"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label>City</Label>
-                      <Input
-                        value={newAddress.city}
-                        onChange={(e) =>
-                          setNewAddress({ ...newAddress, city: e.target.value })
-                        }
-                        placeholder="City"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label>Postal Code</Label>
-                      <Input
-                        value={newAddress.postal_code}
-                        onChange={(e) =>
-                          setNewAddress({ ...newAddress, postal_code: e.target.value })
-                        }
-                        placeholder="Postal Code"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label>Country</Label>
-                      <Input
-                        value={newAddress.country}
-                        onChange={(e) =>
-                          setNewAddress({ ...newAddress, country: e.target.value })
-                        }
-                        placeholder="Country"
-                      />
-                    </div>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label>Address Type</Label>
+                    <Select
+                      value={newAddress.address_type}
+                      onValueChange={(value) =>
+                        setNewAddress({ ...newAddress, address_type: value as Address["address_type"] })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="both">Both</SelectItem>
+                        <SelectItem value="billing">Billing</SelectItem>
+                        <SelectItem value="shipping">Shipping</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      size={"sm"}
-                      onClick={() => {
-                        if (!newAddress.street_address || !newAddress.city) {
-                          toast.error("Please fill all required fields.");
-                          return;
-                        }
+                  <div className="grid gap-2">
+                    <Label>Street Address</Label>
+                    <Input
+                      value={newAddress.street_address}
+                      onChange={(e) =>
+                        setNewAddress({ ...newAddress, street_address: e.target.value })
+                      }
+                      placeholder="Street Address"
+                    />
+                  </div>
 
-                        dispatch(addAddress({ id: selectedUser?.id || "", address: newAddress }))
-                          .unwrap()
-                          .then(() => {
-                            dispatch(getUserAddresses(selectedUser?.id || ""));
-                            setNewAddress({
-                              user_id: selectedUser?.id || "",
-                              address_type: "both",
-                              street_address: "",
-                              city: "",
-                              postal_code: "",
-                              country: "",
-                              is_default: false,
-                            });
-                            toast.success("New address added.");
-                          })
-                          .catch(() => {
-                            toast.error("Failed to add new address.");
+                  <div className="grid gap-2">
+                    <Label>City</Label>
+                    <Input
+                      value={newAddress.city}
+                      onChange={(e) =>
+                        setNewAddress({ ...newAddress, city: e.target.value })
+                      }
+                      placeholder="City"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Postal Code</Label>
+                    <Input
+                      value={newAddress.postal_code}
+                      onChange={(e) =>
+                        setNewAddress({ ...newAddress, postal_code: e.target.value })
+                      }
+                      placeholder="Postal Code"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Country</Label>
+                    <Input
+                      value={newAddress.country}
+                      onChange={(e) =>
+                        setNewAddress({ ...newAddress, country: e.target.value })
+                      }
+                      placeholder="Country"
+                    />
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    size={"sm"}
+                    onClick={() => {
+                      if (!newAddress.street_address || !newAddress.city) {
+                        toast.error("Please fill all required fields.");
+                        return;
+                      }
+
+                      dispatch(addAddress({ id: selectedUser?.id || "", address: newAddress }))
+                        .unwrap()
+                        .then(() => {
+                          dispatch(getUserAddresses(selectedUser?.id || ""));
+                          setNewAddress({
+                            user_id: selectedUser?.id || "",
+                            address_type: "both",
+                            street_address: "",
+                            city: "",
+                            postal_code: "",
+                            country: "",
+                            is_default: false,
                           });
+                          toast.success("New address added.");
+                        })
+                        .catch(() => {
+                          toast.error("Failed to add new address.");
+                        });
 
-                        setShowAddAddressForm(false);
-                      }}
-                    >
-                      Save Address
-                    </Button>
-                    <Button variant="destructive" size={"sm"} onClick={() => setShowAddAddressForm(false)}>
-                      Cancel
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                      setShowAddAddressForm(false);
+                    }}
+                  >
+                    Save Address
+                  </Button>
+                  <Button variant="destructive" size={"sm"} onClick={() => setShowAddAddressForm(false)}>
+                    Cancel
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
               )}
             </div>
           ) : (
