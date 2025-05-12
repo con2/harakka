@@ -210,6 +210,30 @@ const ItemsDetails: React.FC = () => {
             {item.translations.fi.item_name.charAt(0).toUpperCase() +
               item.translations.fi.item_name.slice(1)}
           </h2>
+
+          {/* Location Details Section */}
+          {item.location_details && (
+            <div className="mt-4 border-t pt-4">
+              <h3 className="text-lg font-medium mb-2">Location Information</h3>
+
+              <div className="space-y-2">
+                {item.location_details.name && (
+                  <div className="flex items-start">
+                    <span className="font-medium w-24">Location:</span>
+                    <span>{item.location_details.name}</span>
+                  </div>
+                )}
+
+                {item.location_details.address && (
+                  <div className="flex items-start">
+                    <span className="font-medium w-24">Address:</span>
+                    <span>{item.location_details.address}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Rating Component */}
           {item.average_rating ? (
             <div className="flex items-center justify-start">
@@ -225,55 +249,59 @@ const ItemsDetails: React.FC = () => {
           {/* Display selected booking timeframe if it exists */}
           {startDate && endDate ? (
             <div className="flex flex-col justify-center items-start mt-4 gap-4">
-            <div className="bg-slate-100 max-w-[250px] rounded-md mb-2 p-2">
-              <div className="flex items-center text-sm text-slate-400">
-                <Clock className="h-4 w-4 mr-1" />
-                <span className="font-medium text-xs">Selected booking</span>
+              <div className="bg-slate-100 max-w-[250px] rounded-md mb-2 p-2">
+                <div className="flex items-center text-sm text-slate-400">
+                  <Clock className="h-4 w-4 mr-1" />
+                  <span className="font-medium text-xs">Selected booking</span>
+                </div>
+                <p className="text-xs font-medium m-0">
+                  {format(startDate, "PPP")} - {format(endDate, "PPP")}
+                </p>
               </div>
-              <p className="text-xs font-medium m-0">
-                {format(startDate, "PPP")} - {format(endDate, "PPP")}
-              </p>
+              {/* Booking Section */}
+
+              <div className="flex flex-row justify-center items-center">
+                <span className="text-sm font-medium w-20">Quantity</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="h-8 w-8 p-0"
+                  disabled={quantity <= 1}
+                >
+                  -
+                </Button>
+                <Input
+                  type="text"
+                  value={quantity}
+                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                  className="w-11 h-8 mx-2 text-center"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="h-8 w-8 p-0"
+                >
+                  +
+                </Button>
+              </div>
+              <div className="flex items-center justify-start">
+                <Button
+                  className="bg-secondary rounded-2xl text-white border-secondary border-1 hover:text-secondary hover:bg-white flex-1 mt-6"
+                  onClick={handleAddToCart}
+                >
+                  Add to Cart
+                </Button>
+              </div>
             </div>
-            {/* Booking Section */}
-            
-            <div className="flex flex-row justify-center items-center">
-              <span className="text-sm font-medium w-20">Quantity</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="h-8 w-8 p-0"
-                disabled={quantity <= 1}
-              >
-                -
-              </Button>
-              <Input
-                type="text"
-                value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                className="w-11 h-8 mx-2 text-center"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setQuantity(quantity + 1)}
-                className="h-8 w-8 p-0"
-              >
-                +
-              </Button>
-            </div>
-            <div className="flex items-center justify-start">
-              <Button
-                className="bg-secondary rounded-2xl text-white border-secondary border-1 hover:text-secondary hover:bg-white flex-1 mt-6"
-                onClick={handleAddToCart}
-              >
-                Add to Cart
-              </Button>
-            </div>
-          </div>
           ) : (
             <p>
-              To book this item, please first select booking dates <Link to="/storage" className="text-secondary underline">here</Link>.
+              To book this item, please first select booking dates{" "}
+              <Link to="/storage" className="text-secondary underline">
+                here
+              </Link>
+              .
             </p>
           )}
         </div>
