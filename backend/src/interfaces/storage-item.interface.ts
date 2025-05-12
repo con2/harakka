@@ -25,6 +25,16 @@ export interface StorageItem {
   created_at?: string;
   updated_at?: string;
   storage_item_tags?: Tag[];
+
+  location_details?: {
+    id: string;
+    name: string;
+    description: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    is_active: boolean;
+  } | null;
 }
 
 // // separate DTO that includes tagIds
@@ -62,4 +72,15 @@ export interface StorageItemWithJoin {
     tag_id: string;
     tags: Tag;
   }[];
+
+  // Raw Supabase join result for location
+  storage_locations?: {
+    id: string;
+    name: string;
+    description: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    is_active: boolean;
+  };
 }

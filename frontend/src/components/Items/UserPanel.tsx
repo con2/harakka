@@ -5,17 +5,23 @@ import { selectAllItems } from "@/store/slices/itemsSlice";
 import { Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ChevronRight, SlidersIcon } from "lucide-react";
+import { ChevronRight, MapPin, SlidersIcon } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Star } from "lucide-react";
+import {
+  fetchAllLocations,
+  selectAllLocations,
+} from "@/store/slices/locationsSlice";
 
 const UserPanel = () => {
   const tags = useAppSelector(selectAllTags);
   const items = useAppSelector(selectAllItems);
+  const locations = useAppSelector(selectAllLocations);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(fetchAllTags());
+    dispatch(fetchAllLocations());
   }, [dispatch]);
 
   // Unique item_type.fi values from items
@@ -40,12 +46,14 @@ const UserPanel = () => {
     itemsNumberAvailable: [number, number];
     itemTypes: string[];
     tagIds: string[];
+    locationIds: string[];
   }>({
     isActive: true, // Is item active or not filter
     averageRating: [],
     itemsNumberAvailable: [0, 100], // add a range for number of items
     itemTypes: [],
     tagIds: [],
+    locationIds: [],
   });
 
   // Handle filter change (you can modify this based on your filter UI)
@@ -58,12 +66,17 @@ const UserPanel = () => {
 
   const countActiveFilters = () => {
     let count = 0;
-    if (filters.itemsNumberAvailable[0] !== 0 || filters.itemsNumberAvailable[1] !== 100) count++;
+    if (
+      filters.itemsNumberAvailable[0] !== 0 ||
+      filters.itemsNumberAvailable[1] !== 100
+    )
+      count++;
     if (filters.averageRating.length > 0) count++;
     if (filters.itemTypes.length > 0) count++;
     if (filters.tagIds.length > 0) count++;
+    if (filters.locationIds.length > 0) count++;
     return count;
-  };  
+  };
 
   // Mobile filter toggle visibility state
   const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -76,7 +89,7 @@ const UserPanel = () => {
         className={`${
           isFilterVisible ? "block" : "hidden"
         } md:flex flex-col w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-20 md:static transition-all duration-300 ease-in-out`}
-        style={{ maxHeight: 'calc(100vh - 50px)' }} // to make the sidebar scroll
+        style={{ maxHeight: "calc(100vh - 50px)" }} // to make the sidebar scroll
       >
         {/* Filter Section */}
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
@@ -104,6 +117,7 @@ const UserPanel = () => {
                       itemsNumberAvailable: [0, 100],
                       itemTypes: [],
                       tagIds: [],
+                      locationIds: [],
                     })
                   }
                 >
@@ -148,12 +162,10 @@ const UserPanel = () => {
             </div>
 
             <Separator className="my-4" />
-            
+
             {/* availability filter */}
             <div className="my-4">
-              <label className="text-primary block mb-6">
-                Items Available
-              </label>
+              <label className="text-primary block mb-6">Items Available</label>
               <Slider
                 min={0}
                 max={100} // edit upper limit
@@ -169,12 +181,50 @@ const UserPanel = () => {
               </div>
             </div>
             <Separator className="my-4" />
+            {/* Locations filter section */}
+            <div className="my-4">
+              <label className="text-primary font-medium block mb-4">
+                Locations
+              </label>
+              <div className="flex flex-col gap-2">
+                {locations.map((location) => {
+                  const isSelected = filters.locationIds?.includes(location.id);
+                  return (
+                    <label
+                      key={location.id}
+                      className={`flex items-center gap-2 cursor-pointer ${
+                        isSelected
+                          ? "text-secondary font-medium"
+                          : "text-slate-600 hover:text-secondary"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          const updated = isSelected
+                            ? filters.locationIds.filter(
+                                (id) => id !== location.id,
+                              )
+                            : [...filters.locationIds, location.id];
+                          handleFilterChange("locationIds", updated);
+                        }}
+                        className="accent-secondary"
+                      />
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span>{location.name}</span>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
 
+            <Separator className="my-4" />
             {/* Tags */}
             <div className="my-4">
-              <label className="text-primary block mb-6">
-                Tags
-              </label>
+              <label className="text-primary block mb-6">Tags</label>
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => {
                   const tagName =
@@ -208,9 +258,7 @@ const UserPanel = () => {
 
             {/* Rating filter */}
             <div className="my-4">
-              <label className="text-primary block mb-4">
-                Average Rating
-              </label>
+              <label className="text-primary block mb-4">Average Rating</label>
               <div className="flex flex-col gap-3">
                 {[5, 4, 3, 2, 1].map((rating) => {
                   const isChecked = filters.averageRating.includes(rating);
@@ -297,6 +345,7 @@ const UserPanel = () => {
                         itemsNumberAvailable: [0, 100],
                         itemTypes: [],
                         tagIds: [],
+                        locationIds: [],
                       })
                     }
                   >
