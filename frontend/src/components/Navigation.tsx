@@ -38,8 +38,7 @@ export const Navigation = () => {
       confirmText: "Log Out",
       cancelText: "Cancel",
       onConfirm: () => {
-        signOut(),
-        toast.success("You have been logged out.");
+        signOut()
       },
       onCancel: () => {
         toast.success("Logout canceled.");
