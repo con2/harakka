@@ -7,16 +7,22 @@ import {
   Post,
   Put,
   Req,
+  Res,
   Query,
   UnauthorizedException,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { BookingService } from "../services/booking.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
+import { InvoiceService } from "../services/invoice.service";
 
 @Controller("bookings")
 export class BookingController {
-  constructor(private readonly bookingService: BookingService) {}
+  constructor(
+    private readonly bookingService: BookingService,
+    private readonly invoiceService: InvoiceService,
+  ) {}
 
   // gets all bookings - use case: admin
   @Get()
@@ -44,11 +50,26 @@ export class BookingController {
   // creates a booking
   @Post()
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: any) {
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
-    if (!userId) {
-      throw new BadRequestException("No userId found: user_id is required");
+    try {
+      const userId = req.headers["x-user-id"] ?? req.user?.id;
+      if (!userId) {
+        throw new BadRequestException("No userId found: user_id is required");
+      }
+      return this.bookingService.createBooking({ ...dto, user_id: userId });
+    } catch (error) {
+      console.error("Booking creation failed:", error);
+
+      // Return a structured error but avoid 500
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error; // Keep the original error if it's already properly typed
+      }
+      throw new BadRequestException(
+        "There was an issue processing your booking. If this persists, please contact support.",
+      );
     }
-    return this.bookingService.createBooking({ ...dto, user_id: userId });
   }
 
   // confirms a booking
@@ -134,5 +155,13 @@ export class BookingController {
       await this.bookingService.getAvailableQuantityForDate(itemId, date);
     return { availableQuantity };
   }
+
+  // commented out because it is not used atm
+  /* @Get(":orderId/generate") // unsafe - anyone can create files
+  async generateInvoice(@Param("orderId") orderId: string) {
+    const url = await this.invoiceService.generateInvoice(orderId);
+
+    return url; // should not send url, becaause it is not a public url - will get new endpoint with auth and so on...
+  } */
 }
 // handles the booking process, including creating, confirming, rejecting, and canceling bookings.

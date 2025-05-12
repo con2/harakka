@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { returnItems } from "@/store/slices/ordersSlice";
-import { ArrowLeftSquare } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 
 const OrderReturnButton = ({
   id,
@@ -53,8 +53,14 @@ const OrderReturnButton = ({
   };
 
   return (
-    <Button onClick={handleReturnItems} className="editBtn" size={"sm"}>
-      <ArrowLeftSquare size={10} className="mr-1" /> Return
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => handleReturnItems()}
+      title="Process Return"
+      className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+    >
+      <RotateCcw className="h-4 w-4" />
     </Button>
   );
 };

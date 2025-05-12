@@ -13,9 +13,10 @@ const OrderDetailsButton = ({
 }: OrderDetailsButtonProps) => {
   return (
     <Button
+      variant="ghost"
       onClick={() => onViewDetails(order)}
-      className="infoBtn"
-      size={"sm"}
+      className="hover:text-slate-900 hover:bg-slate-300"
+      size="sm"
     >
       <Eye size={10} className="mr-1" /> Details
     </Button>

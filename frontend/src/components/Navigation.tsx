@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useAppSelector } from "@/store/hooks";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -11,32 +11,53 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import logo from "../assets/logoNav.png";
-import { LogInIcon, LogOutIcon, ShoppingCart } from "lucide-react";
+import smallLogo from "../assets/illusiaLogo.png";
+import { LogInIcon, LogOutIcon, ShoppingCart, UserIcon } from "lucide-react";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
+import { toast } from "sonner";
+import { toastConfirm } from "./ui/toastConfirm";
 
 export const Navigation = () => {
   const { signOut } = useAuth();
   const selectedUser = useAppSelector(selectSelectedUser);
   const cartItemsCount = useAppSelector(selectCartItemsCount);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isAdmin = ["admin", "superVera"].includes(selectedUser?.role ?? "");
   const isLoggedIn = !!selectedUser;
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
-    ? "absolute top-0 left-0 w-full z-50 bg-black/40 text-white transition-all duration-300"
-    : "relative w-full z-50 bg-white text-primary shadow-sm transition-all duration-300";
+    ? "absolute top-0 left-0 w-full z-50 bg-black/40 text-white px-2 md:px-10 py-4 md:py-0"
+    : "relative w-full z-50 bg-white text-primary shadow-sm px-2 md:px-10 py-4 md:py-0";
+
+  const handleSignOut = () => {
+    toastConfirm({
+      title: "Confirm Logout",
+      description: "Are you sure you want to log out? This will end your current session.",
+      confirmText: "Log Out",
+      cancelText: "Cancel",
+      onConfirm: () => {
+        signOut(),
+        toast.success("You have been logged out.");
+      },
+      onCancel: () => {
+        toast.success("Logout canceled.");
+      },
+    });
+  };
 
 return (
   <nav className={navClasses}>
     <div className="container mx-auto flex items-center justify-between">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <Link to="/">
-          <img src={logo} alt="Logo" className="h-20" />
+          <img src={logo} alt="Logo" className="h-[90px] w-auto object-contain hidden md:flex" />
+          <img src={smallLogo} alt="smallLogo" className="h-[40px] w-auto object-contain md:hidden" />
         </Link>
           <NavigationMenu>
             <NavigationMenuList>
-              <NavigationMenuItem>
+              <NavigationMenuItem className="hidden md:flex">
                 <NavigationMenuLink asChild>
                   <Link to="/">Home</Link>
                 </NavigationMenuLink>
@@ -44,7 +65,7 @@ return (
 
               {/* Show My orders link only for logged in users */}
               {isLoggedIn && (
-                <NavigationMenuItem>
+                <NavigationMenuItem className="hidden md:flex">
                   <NavigationMenuLink asChild>
                     <Link to="/profile" className="flex items-center gap-1">
                       My Profile
@@ -58,7 +79,7 @@ return (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
                     <Link to="/admin" className="flex items-center gap-1">
-                      Admin Panel
+                      Admin
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
@@ -68,7 +89,7 @@ return (
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/storage" className="flex items-center gap-1">
-                    Storage Items
+                    Storage
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -77,7 +98,7 @@ return (
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/howItWorks" className="flex items-center gap-1">
-                    User Guide
+                    Guides
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -87,7 +108,7 @@ return (
         </div>
         {/* Always show Cart */}
         <div className="flex items-center gap-4">
-          <Link to="/cart" className="flex items-center gap-1">
+          <Link to="/cart" className="flex items-center gap-1 hover:text-secondary">
             <ShoppingCart className="h-5 w-5" />
             {cartItemsCount > 0 && (
               <span className="ml-1 rounded-full bg-secondary text-white px-2 py-1 text-xs">
@@ -97,13 +118,28 @@ return (
           </Link>
 
           {selectedUser ? (
-            <Button className="bg-white text-secondary hover:text-secondary hover:bg-slate-50" onClick={signOut}>
-              {selectedUser.full_name} <LogOutIcon className="ml-2" />
+            <div className="flex items-center">
+              <Button
+                variant={"ghost"}
+                size={"sm"}
+                onClick={() => {navigate("/profile")}}
+              >
+                {/* Show name on desktop, icon on mobile */}
+                <UserIcon className="inline sm:hidden h-5 w-5" />
+                <span className="hidden sm:inline">{selectedUser.full_name}</span>
+              </Button>
+            <Button
+              variant={"ghost"}
+              size={"sm"}
+              onClick={handleSignOut}
+            >
+              <LogOutIcon className="h-5 w-5" />
             </Button>
+            </div>
           ) : (
-            <Button className="hover:text-secondary hover:bg-white" variant="ghost" asChild>
+            <Button variant={"ghost"} className="bg-white" asChild>
               <Link to="/login">
-                Login <LogInIcon />
+                Login <LogInIcon  className="ml-1 h-5 w-5"/>
               </Link>
             </Button>
           )}

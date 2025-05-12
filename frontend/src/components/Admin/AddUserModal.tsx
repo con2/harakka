@@ -146,6 +146,7 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
               value={formData.phone}
               onChange={handleChange}
               placeholder="Phone Number"
+              autoComplete="new-phone"
             />
           </div>
 
@@ -158,6 +159,7 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
+              autoComplete="new-password"
             />
           </div>
 

@@ -151,9 +151,10 @@ const TagList = () => {
             <Button
               size="sm"
               onClick={() => handleEditClick(tag)}
-              className="editBtn"
-            >
-              <Edit size={10} className="mr-1" /> Edit
+              title="Edit Tag"
+              className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
+              >
+                <Edit className="h-4 w-4" />
             </Button>
             <TagDelete
               id={tag.id}
