@@ -291,7 +291,7 @@ const MyOrders = () => {
       {/* Order Details Modal */}
       {selectedOrder && (
         <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-3xl overflow-x-auto">
             <DialogHeader>
               <DialogTitle className="text-left">
                 Order Details #{selectedOrder.order_number}
