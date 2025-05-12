@@ -227,7 +227,9 @@ const OrderList = () => {
       header: "Item",
       cell: (i) => {
         const itemName = i.getValue();
-        return String(itemName).charAt(0).toUpperCase() + String(itemName).slice(1);
+        return (
+          String(itemName).charAt(0).toUpperCase() + String(itemName).slice(1)
+        );
       },
     },
     {
@@ -321,72 +323,76 @@ const OrderList = () => {
       {/* Order Details Modal */}
       {selectedOrder && (
         <div className="min-w-[320px]">
-        <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-          <DialogContent className="max-w-5xl">
-            <DialogHeader>
-              <DialogTitle className="text-left">
-                Order #{selectedOrder.order_number}
-              </DialogTitle>
-            </DialogHeader>
+          <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+            <DialogContent className="max-w-5xl">
+              <DialogHeader>
+                <DialogTitle className="text-left">
+                  Order #{selectedOrder.order_number}
+                </DialogTitle>
+              </DialogHeader>
 
-            <div className="space-y-4">
-              {/* Order Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <h3 className="font-normal">Customer</h3>
-                  <p className="text-sm  mb-0">{selectedOrder.user_profile?.name || "Unknown"}</p>
-                  <p className="text-sm text-gray-500">
-                    {selectedOrder.user_profile?.email}
-                  </p>
+              <div className="space-y-4">
+                {/* Order Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h3 className="font-normal">Customer</h3>
+                    <p className="text-sm  mb-0">
+                      {selectedOrder.user_profile?.name || "Unknown"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {selectedOrder.user_profile?.email}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="font-normal">Order Information</h3>
+                    <p className="text-sm mb-0">
+                      Status: <StatusBadge status={selectedOrder.status} />
+                    </p>
+                    <p className="text-sm">
+                      Date: {formatDate(selectedOrder.created_at)}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="font-normal">Order Information</h3>
-                  <p className="text-sm mb-0">
-                    Status: <StatusBadge status={selectedOrder.status} />
-                  </p>
-                  <p className="text-sm">Date: {formatDate(selectedOrder.created_at)}</p>
+                {/* Order Items */}
+                <div>
+                  <DataTable
+                    columns={orderColumns}
+                    data={selectedOrder.order_items || []}
+                  />
                 </div>
-              </div>
 
-              {/* Order Items */}
-              <div>
-                <DataTable
-                  columns={orderColumns}
-                  data={selectedOrder.order_items || []}
-                />
-              </div>
+                {/* Order Modal Actions */}
+                <div className="flex justify-center space-x-4">
+                  {selectedOrder.status === "pending" && (
+                    <>
+                      <OrderConfirmButton
+                        id={selectedOrder.id}
+                        closeModal={() => setShowDetailsModal(false)}
+                      />
+                      <OrderRejectButton
+                        id={selectedOrder.id}
+                        closeModal={() => setShowDetailsModal(false)}
+                      />
+                    </>
+                  )}
 
-              {/* Order Modal Actions */}
-              <div className="flex justify-center space-x-4">
-                {selectedOrder.status === "pending" && (
-                  <>
-                    <OrderConfirmButton
+                  {selectedOrder.status === "confirmed" && (
+                    <OrderReturnButton
                       id={selectedOrder.id}
                       closeModal={() => setShowDetailsModal(false)}
                     />
-                    <OrderRejectButton
-                      id={selectedOrder.id}
-                      closeModal={() => setShowDetailsModal(false)}
-                    />
-                  </>
-                )}
+                  )}
 
-                {selectedOrder.status === "confirmed" && (
-                  <OrderReturnButton
+                  <OrderDeleteButton
                     id={selectedOrder.id}
                     closeModal={() => setShowDetailsModal(false)}
                   />
-                )}
-
-                <OrderDeleteButton
-                  id={selectedOrder.id}
-                  closeModal={() => setShowDetailsModal(false)}
-                />
+                </div>
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </>
