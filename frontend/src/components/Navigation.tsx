@@ -28,8 +28,8 @@ export const Navigation = () => {
   const isLoggedIn = !!selectedUser;
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
-    ? "absolute top-0 left-0 w-full z-50 bg-black/40 text-white px-2 md:px-10 py-4 md:py-0"
-    : "relative w-full z-50 bg-white text-primary shadow-sm px-2 md:px-10 py-4 md:py-0";
+    ? "absolute top-0 left-0 w-full z-50 bg-black/40 text-white px-2 md:px-10 py-2 md:py-3"
+    : "relative w-full z-50 bg-white text-primary shadow-sm px-2 md:px-10 py-2 md:py-3";
 
   const handleSignOut = () => {
     toastConfirm({
@@ -38,8 +38,7 @@ export const Navigation = () => {
       confirmText: "Log Out",
       cancelText: "Cancel",
       onConfirm: () => {
-        signOut(),
-        toast.success("You have been logged out.");
+        signOut()
       },
       onCancel: () => {
         toast.success("Logout canceled.");
@@ -52,7 +51,7 @@ return (
     <div className="container mx-auto flex items-center justify-between">
       <div className="flex items-center gap-2">
         <Link to="/">
-          <img src={logo} alt="Logo" className="h-[90px] w-auto object-contain hidden md:flex" />
+          <img src={logo} alt="Logo" className="h-[60px] w-auto object-contain hidden md:flex" />
           <img src={smallLogo} alt="smallLogo" className="h-[40px] w-auto object-contain md:hidden" />
         </Link>
           <NavigationMenu>
