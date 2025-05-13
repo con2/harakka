@@ -67,13 +67,20 @@ const ItemsList: React.FC = () => {
       );
     // add tags filter here
     // right now the englih tags are not found
+
+    // Filter by location
+    const matchesLocation =
+      !filters.locationIds?.length ||
+      filters.locationIds.includes(item.location_id);
+
     return (
       isActive &&
       isWithinAvailabilityRange &&
       matchesRating &&
       matchesSearch &&
       matchesItemTypes &&
-      matchesTags
+      matchesTags &&
+      matchesLocation
     );
   });
 
@@ -81,7 +88,8 @@ const ItemsList: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center">
-        <LoaderCircle className="animate-spin w-10 h-10 text-secondary" /> {/* Displaying loader component */}
+        <LoaderCircle className="animate-spin w-10 h-10 text-secondary" />{" "}
+        {/* Displaying loader component */}
       </div>
     );
   }
