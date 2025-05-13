@@ -1,0 +1,11 @@
+node_modules/
+test/
+.git/
+.github/
+.vscode/
+*.log
+*.md
+.gitignore
+.prettierrc
+eslint.config.mjs
+tsconfig*
