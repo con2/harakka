@@ -27,6 +27,7 @@ import { UserGuide } from "./components/UserGuidelines";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfUse from "./pages/TermsOfUse";
 import MyProfile from "./components/MyProfile";
+import ContactForm from "./components/ContactForm";
 
 function App() {
   return (
@@ -67,6 +68,7 @@ function App() {
                 <Route path="/items/:id" element={<ItemDetails />} />
               </Route>
               <Route path="/howItWorks" element={<UserGuide />} />
+              <Route path="/contact-us" element={<ContactForm />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-use" element={<TermsOfUse />} />
               <Route path="/unauthorized" element={<Unauthorized />} />

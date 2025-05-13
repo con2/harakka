@@ -101,6 +101,16 @@ return (
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
+
+              {/* Contact Form */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link to="/contact-us" className="flex items-center gap-1">
+                    Contact Us
+                  </Link>
+                </NavigationMenuLink>
+
+              </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
 
