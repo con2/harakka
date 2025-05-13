@@ -12,7 +12,7 @@ import {
   selectItemImages,
 } from "../../store/slices/itemImagesSlice";
 import { Button } from "../../components/ui/button";
-import { ChevronLeft, Clock, LoaderCircle } from "lucide-react";
+import { ChevronLeft, Clock, Info, LoaderCircle } from "lucide-react";
 import Rating from "../ui/rating";
 import { addToCart } from "../../store/slices/cartSlice";
 import { Input } from "../ui/input";
@@ -206,20 +206,21 @@ const ItemsDetails: React.FC = () => {
 
         {/* Right Side - Item Details */}
         <div className="md:w-2/3 w-full space-y-6 order-1 md:order-2">
-          <h2 className="text-2xl font-normal text-left">
+          <h2 className="text-2xl font-normal text-left mb-0">
             {item.translations.fi.item_name.charAt(0).toUpperCase() +
               item.translations.fi.item_name.slice(1)}
           </h2>
           {/* Rating Component */}
           {item.average_rating ? (
             <div className="flex items-center justify-start">
-              <Rating value={item.average_rating ?? 0} readOnly />
+              <Rating rating={item.average_rating ?? 0} readOnly />
             </div>
           ) : (
             ""
           )}
           <p className="text-md text-primary">
-            {item.translations.fi.item_description}
+            {item.translations.fi.item_description.charAt(0).toUpperCase() + 
+            item.translations.fi.item_description.slice(1)}
           </p>
 
           {/* Display selected booking timeframe if it exists */}
@@ -272,9 +273,9 @@ const ItemsDetails: React.FC = () => {
             </div>
           </div>
           ) : (
-            <p>
-              To book this item, please first select booking dates <Link to="/storage" className="text-secondary underline">here</Link>.
-            </p>
+            <div className="flex flex-row items-center">
+              <Info className="mr-1 text-secondary size-4" /> To book this item, please first select booking dates <Link to="/storage" className="ml-1 text-secondary underline"> here</Link>.
+            </div>
           )}
         </div>
       </div>
