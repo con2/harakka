@@ -1,13 +1,17 @@
 import React from "react";
 import { useAppSelector } from "../store/hooks";
-import { selectCurrentOrder } from "../store/slices/ordersSlice";
+import {
+  selectCurrentOrder,
+  selectOrdersLoading,
+} from "../store/slices/ordersSlice";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, LoaderCircle } from "lucide-react";
 
 const OrderConfirmation: React.FC = () => {
   const navigate = useNavigate();
   const order = useAppSelector(selectCurrentOrder);
+  const isLoading = useAppSelector(selectOrdersLoading);
 
   return (
     <div className="container mx-auto p-8 max-w-md">
@@ -20,12 +24,23 @@ const OrderConfirmation: React.FC = () => {
           Your order has been successfully placed. You will receive a
           confirmation email shortly.
         </p>
-        {order && (
+        {isLoading ? (
+          <div className="bg-slate-50 p-4 rounded-md flex justify-center items-center mb-6 h-12">
+            <LoaderCircle className="animate-spin h-5 w-5 mr-2" />
+            <span className="text-sm text-gray-600">
+              Loading order details...
+            </span>
+          </div>
+        ) : order ? (
           <div className="bg-slate-50 p-4 rounded-md text-left mb-6">
             <p>
               <span className="font-semibold">Order Number:</span>{" "}
               {order.order_number}
             </p>
+          </div>
+        ) : (
+          <div className="bg-slate-50 p-4 rounded-md text-left mb-6 text-amber-600">
+            <p>Order details not available.</p>
           </div>
         )}
         <div className="flex gap-4 justify-center">
