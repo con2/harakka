@@ -1,5 +1,10 @@
-import { BaseEntity, ErrorContext, Translatable } from "./common";
-import { Tag } from "./tag";
+import {
+  BaseEntity,
+  ErrorContext,
+  Translatable,
+  Tag,
+  LocationDetails,
+} from "@/types";
 
 /**
  * Item translations content
@@ -21,6 +26,7 @@ export interface Item extends BaseEntity, Translatable<ItemTranslation> {
   average_rating?: number;
   tagIds?: string[];
   storage_item_tags?: Tag[];
+  location_details?: LocationDetails | null;
 }
 
 /**
