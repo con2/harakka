@@ -37,7 +37,7 @@ jobs:
           # Create deployment package without dev dependencies
           mkdir deployment
           cp -r dist Procfile package.json package-lock.json assets dbSetStatements deployment/
-          cp config.mts deployment/
+          cp config.mts .deployment deployment/  # Added .deployment file
           cd deployment
           npm ci --omit=dev
 
