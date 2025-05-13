@@ -8,7 +8,6 @@ import {
   selectIsAdmin,
   selectIsSuperVera,
   selectIsUser,
-  selectSelectedUser,
 } from "@/store/slices/usersSlice";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
@@ -27,15 +26,14 @@ const UsersList = () => {
   const users = useAppSelector(selectAllUsers);
   const loading = useAppSelector(selectLoading);
   const error = useAppSelector(selectError);
-  const user = useAppSelector(selectSelectedUser);
   const isAdmin = useAppSelector(selectIsAdmin);
   const isSuperVera = useAppSelector(selectIsSuperVera);
   const isUser = useAppSelector(selectIsUser);
-  const [isModalOpen, setIsModalOpen] = useState(true); //TODO: what was it supposed to do? Added it to the useEffect dependency array for some reason...
-  const closeModal = () => setIsModalOpen(false);
+  const [isModalOpen, setIsModalOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const isAuthorized = isAdmin || isSuperVera || isUser;
+  const closeModal = () => setIsModalOpen(false);
 
   useEffect(() => {
     if (
@@ -52,11 +50,6 @@ const UsersList = () => {
     new Date(dateString).toLocaleDateString("en-GB");
 
   const filteredUsers = users
-  .filter((u) => {
-    if (isSuperVera) return u.role !== "superVera" || u.id === user?.id;
-    if (isAdmin) return u.role === "user";
-    return false;
-  })
   .filter((u) => {
     const query = searchQuery.toLowerCase();
     return (
