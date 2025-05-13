@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { deleteOrder } from "@/store/slices/ordersSlice";
 import { Trash2 } from "lucide-react";
+import { toastConfirm } from "../ui/toastConfirm";
 
 const OrderDeleteButton = ({
   id,
@@ -19,33 +20,20 @@ const OrderDeleteButton = ({
       return;
     }
 
-    toast.custom((t) => (
-      <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
-        <div className="font-semibold text-lg">Confirm Deletion</div>
-        <div className="text-sm">
-          Are you sure you want to delete this order?
-        </div>
-        <div className="flex justify-between gap-2">
-          <Button className="addBtn" size="md" onClick={() => toast.dismiss(t)}>
-            Cancel
-          </Button>
-          <Button
-            className="bg-red-500 text-white hover:bg-red-700 border-1 border-red-500 rounded-2xl"
-            onClick={async () => {
-              toast.dismiss(t); // dismiss confirmation toast
-              await toast.promise(dispatch(deleteOrder(id)).unwrap(), {
-                loading: "Deleting order...",
-                success: "Order has been successfully deleted.",
-                error: "Failed to delete order.",
-              });
-              closeModal();
-            }}
-          >
-            Confirm
-          </Button>
-        </div>
-      </div>
-    ));
+    toastConfirm({
+      title: "Confirm Deletion",
+      description: "Are you sure you want to delete this order?",
+      confirmText: "Confirm",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        await toast.promise(dispatch(deleteOrder(id)).unwrap(), {
+          loading: "Deleting order...",
+          success: "Order has been successfully deleted.",
+          error: "Failed to delete order.",
+        });
+        closeModal();
+      },
+    });
   };
 
   return (
