@@ -1246,4 +1246,38 @@ export class BookingService {
 
     return num_available ?? 0;
   }
+
+  // 13. Update payment status
+  async updatePaymentStatus(
+    orderId: string,
+    status: "invoice-sent" | "paid" | "payment-rejected" | "overdue",
+  ) {
+    const supabase = this.supabaseService.getServiceClient();
+
+    // Check if order exists
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("id", orderId)
+      .single();
+
+    if (!order || orderError) {
+      throw new BadRequestException("Order not found");
+    }
+
+    // Update payment_status
+    const { error: updateError } = await supabase
+      .from("orders")
+      .update({ payment_status: status })
+      .eq("id", orderId);
+
+    if (updateError) {
+      console.error("Supabase error in updatePaymentStatus():", updateError);
+      throw new BadRequestException("Failed to update payment status");
+    }
+
+    return {
+      message: `Payment status updated to '${status}' for order ${orderId}`,
+    };
+  }
 }
