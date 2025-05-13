@@ -39,7 +39,8 @@ export const itemsApi = {
    * Delete an item
    * @param id - Item ID to delete
    */
-  deleteItem: (id: string): Promise<void> => api.delete(`/storage-items/${id}`),
+  deleteItem: (id: string): Promise<void> =>
+    api.post(`/storage-items/${id}/soft-delete`),
 
   /**
    * Get all items with a specific tag
