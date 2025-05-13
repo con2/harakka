@@ -33,12 +33,16 @@ const OrderRejectButton = ({
             className="bg-red-500 text-white hover:bg-red-700 border-1 border-red-500 rounded-2xl"
             onClick={async () => {
               toast.dismiss(t); // dismiss confirmation toast
-              await toast.promise(dispatch(rejectOrder(id)).unwrap(), {
-                loading: "Rejecting order...",
-                success: "Order has been successfully rejected.",
-                error: "Failed to reject the order.",
-              });
-              closeModal();
+              try {
+                await toast.promise(dispatch(rejectOrder(id)).unwrap(), {
+                  loading: "Rejecting order...",
+                  success: "Order has been successfully rejected.",
+                  error: "Failed to reject the order.",
+                });
+                closeModal();
+              } catch (error) {
+                console.error("Error rejecting order:", error);
+              }
             }}
           >
             Confirm
