@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { deleteTag, fetchAllTags } from "@/store/slices/tagSlice";
 import { Trash2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { toastConfirm } from "../ui/toastConfirm";
 
 const TagDelete = ({
   id,
@@ -21,47 +21,27 @@ const TagDelete = ({
       return;
     }
 
-    toast.custom((t) => (
-      <Card className="w-[360px] shadow-lg border">
-        <CardHeader>
-          <CardTitle className="text-lg">Confirm Deletion</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">
-          This will permanently delete the tag and remove it from all associated
-          items. Are you sure?
-        </p>
-        <div className="flex justify-end gap-2">
-          <Button
-              variant="outline"
-              onClick={() => toast.dismiss(t)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                toast.dismiss(t); // close the confirm toast
-                try {
-                await toast.promise(dispatch(deleteTag(id)).unwrap(), {
-                  loading: "Deleting tag...",
-                  success: "Tag has been successfully deleted.",
-                  error: "Failed to delete tag.",
-                });
-                dispatch(fetchAllTags());
-                onDeleted?.();
-                closeModal?.();
-              } catch {
-                toast.error("Error deleting tag.");
-              }
-            }}
-          >
-            Confirm
-          </Button>
-        </div>
-        </CardContent>
-      </Card>
-    ));
+    toastConfirm({
+      title: "Confirm Deletion",
+      description:
+        "This will permanently delete the tag and remove it from all associated items. Are you sure?",
+      confirmText: "Confirm",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        try {
+          await toast.promise(dispatch(deleteTag(id)).unwrap(), {
+            loading: "Deleting tag...",
+            success: "Tag has been successfully deleted.",
+            error: "Failed to delete tag.",
+          });
+          dispatch(fetchAllTags());
+          onDeleted?.();
+          closeModal?.();
+        } catch {
+          toast.error("Error deleting tag.");
+        }
+      },
+    });    
   };
 
   return (
