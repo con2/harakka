@@ -31,6 +31,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { MapPin } from "lucide-react";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -91,16 +92,18 @@ const AdminItemsTable = () => {
       enableSorting: true,
       cell: ({ row }) => row.original.translations.fi.item_type,
     },
-    // {
-    //   header: 'Location',
-    //   accessorKey: 'location',
-    //   cell: ({ row }) => (
-    //     <div className="flex items-center gap-1 text-sm text-muted-foreground">
-    //       <Box className="h-4 w-4" />
-    //       {row.original.location_id_name || 'N/A'}
-    //     </div>
-    //   ),
-    // },
+    {
+      header: "Location",
+      size: 150,
+      accessorFn: (row) => row.location_details?.name || "N/A", // For sorting
+      enableSorting: true,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1 text-sm">
+          <MapPin className="h-4 w-4" />
+          {row.original.location_details?.name || "N/A"}
+        </div>
+      ),
+    },
     {
       header: "Price",
       accessorKey: "price",
@@ -259,13 +262,10 @@ const AdminItemsTable = () => {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete this item?
+            Are you sure you want to delete this item? (Soft Delete)
           </p>
           <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => toast.dismiss(t)}
-            >
+            <Button variant="outline" onClick={() => toast.dismiss(t)}>
               Cancel
             </Button>
             <Button
