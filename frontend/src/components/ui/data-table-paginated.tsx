@@ -43,7 +43,7 @@ export function PaginatedDataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
       pagination: {
-        pageSize: 8,
+        pageSize: 10,
         pageIndex: 0,
       },
     },
@@ -52,7 +52,7 @@ export function PaginatedDataTable<TData, TValue>({
   return (
     <div className="space-y-2">
       <div className="rounded-md border-none">
-        <Table className="w-full">
+        <Table className="w-full overflow-x-auto">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -92,7 +92,7 @@ export function PaginatedDataTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="w-40 min-w-[160px] truncate">
+                    <TableCell key={cell.id} className="truncate">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

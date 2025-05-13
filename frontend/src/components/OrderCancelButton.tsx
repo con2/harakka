@@ -48,6 +48,7 @@ const OrderCancelButton = ({ id, closeModal }: OrderCancelButtonProps) => {
       onClick={handleCancelOrder}
       className="text-red-600 hover:text-red-800 hover:bg-red-100"
       size={"sm"}
+      title="Cancel Order"
     >
       <XCircle size={10} className="mr-1" />
     </Button>
