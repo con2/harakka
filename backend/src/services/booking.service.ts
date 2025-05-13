@@ -7,13 +7,15 @@ import { SupabaseService } from "./supabase.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
 import { MailService } from "./mail.service";
-import {
+/*import {
   generateBarcodeImage,
   generateInvoicePDF,
   generateVirtualBarcode,
   generateFinnishReferenceNumber,
 } from "../utils/invoice-functions";
-import { InvoiceService } from "./invoice.service";
+ import { InvoiceService } from "./invoice.service"; */
+import { render } from "@react-email/render";
+import BookingConfirmationEmail from "../emails/BookingConfirmationEmail";
 
 @Injectable()
 export class BookingService {
@@ -435,7 +437,7 @@ export class BookingService {
       throw new BadRequestException("User not found");
     }
 
-    await this.mailService.sendMail(
+    /* await this.mailService.sendMail(
       user.email,
       "Booking is confirmed!",
       `<h1>Hello <strong></strong></h1><p>Your booking has been confirmed. </p>
@@ -469,7 +471,7 @@ export class BookingService {
          .join("")}
      </ul>
      <p>Please review the booking and take necessary action.</p>`,
-    );
+    ); */
 
     return { message: "Booking confirmed" };
   }
