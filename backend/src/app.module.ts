@@ -19,6 +19,8 @@ import { ItemImagesController } from "./controllers/item-images.controller";
 import { ItemImagesService } from "./services/item-images.service";
 import { S3Service } from "./services/s3-supabase.service";
 import { InvoiceService } from "./services/invoice.service";
+import { StorageLocationsController } from "./controllers/storage-locations.controller";
+import { StorageLocationsService } from "./services/storage-locations.service";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -39,6 +41,7 @@ dotenvExpand.expand(env);
     BookingController,
     TagController,
     ItemImagesController,
+    StorageLocationsController,
   ],
   providers: [
     AppService,
@@ -51,6 +54,7 @@ dotenvExpand.expand(env);
     ItemImagesService,
     S3Service,
     InvoiceService,
+    StorageLocationsService,
   ],
 })
 export class AppModule {}

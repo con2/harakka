@@ -23,6 +23,7 @@ import {
 import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { ordersApi } from "@/api/services/orders";
 import { ItemImageAvailabilityInfo } from "@/types/storage";
+import { MapPin } from "lucide-react";
 
 interface ItemsCardProps {
   item: Item;
@@ -261,14 +262,13 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           {item.translations.fi.item_name.charAt(0).toUpperCase() +
             item.translations.fi.item_name.slice(1)}
         </h2>
-        {/* TODO: return this span when back will provide location name */}
-        {/* <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <BoxIcon className="h-4 w-4" />
-          <span>{item.location_id}</span>
-        </div> */}
-        {/* <p className="text-lg font-semibold text-center text-primary">
-          €{item.price.toFixed(2)} / day
-        </p> */}
+        {/* Display location name */}
+        {item.location_details && (
+          <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5" />
+            <span>{item.location_details.name}</span>
+          </div>
+        )}
       </div>
 
       {/* Display selected booking timeframe if it exists */}
