@@ -30,8 +30,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { MapPin } from "lucide-react";
+import { toastConfirm } from "../ui/toastConfirm";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -78,23 +78,29 @@ const AdminItemsTable = () => {
     // },
     {
       header: "Item Name (FI)",
-      size: 150,
+      size: 120,
       accessorFn: (row) => row.translations.fi.item_name,
       sortingFn: "alphanumeric",
       enableSorting: true,
-      cell: ({ row }) => row.original.translations.fi.item_name,
+      cell: ({ row }) => {
+        const name = row.original.translations.fi.item_name || "";
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      },
     },
     {
       header: "Item Type (FI)",
-      size: 150,
+      size: 120,
       accessorFn: (row) => row.translations.fi.item_type,
       sortingFn: "alphanumeric",
       enableSorting: true,
-      cell: ({ row }) => row.original.translations.fi.item_type,
+      cell: ({ row }) => {
+        const type = row.original.translations.fi.item_type || "";
+        return type.charAt(0).toUpperCase() + type.slice(1);
+      },
     },
     {
       header: "Location",
-      size: 150,
+      size: 70,
       accessorFn: (row) => row.location_details?.name || "N/A", // For sorting
       enableSorting: true,
       cell: ({ row }) => (
@@ -107,16 +113,19 @@ const AdminItemsTable = () => {
     {
       header: "Price",
       accessorKey: "price",
+      size: 30,
       cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
     },
     {
       header: "Quantity",
+      size: 30,
       accessorFn: (row) => row.items_number_available,
       cell: ({ row }) => `${row.original.items_number_available} pcs`,
     },
     {
       id: "status",
       header: "Active",
+      size: 30,
       cell: ({ row }) => {
         const item = row.original;
 
@@ -255,41 +264,27 @@ const AdminItemsTable = () => {
   }, [dispatch, items, deletableItems]);
 
   const handleDelete = async (id: string) => {
-    toast.custom((t) => (
-      <Card className="w-[360px] shadow-lg border">
-        <CardHeader>
-          <CardTitle className="text-lg">Confirm Deletion</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete this item? (Soft Delete)
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => toast.dismiss(t)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                toast.dismiss(t); // close the confirm toast
-                try {
-                  await toast.promise(dispatch(deleteItem(id)).unwrap(), {
-                    loading: "Deleting item...",
-                    success: "Item has been successfully deleted.",
-                    error: "Failed to delete item.",
-                  });
-                  dispatch(fetchAllItems());
-                } catch {
-                  toast.error("Error deleting item.");
-                }
-              }}
-            >
-              Confirm
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    ));
+    toastConfirm({
+      title: "Confirm Deletion",
+      description: "Are you sure you want to delete this item? (Soft Delete)",
+      confirmText: "Confirm",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        try {
+          await toast.promise(dispatch(deleteItem(id)).unwrap(), {
+            loading: "Deleting item...",
+            success: "Item has been successfully deleted.",
+            error: "Failed to delete item.",
+          });
+          dispatch(fetchAllItems());
+        } catch {
+          toast.error("Error deleting item.");
+        }
+      },
+      onCancel: () => {
+        // Optional: handle cancel if needed
+      }
+    });
   };
 
   const handleCloseModal = () => {
