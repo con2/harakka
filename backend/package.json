@@ -41,7 +41,6 @@
     "pdfkit": "^0.17.1",
     "react-mail": "^0.0.1",
     "reflect-metadata": "^0.2.2",
-    "resend": "^4.4.1",
     "rxjs": "^7.8.1",
     "uuid": "^11.1.0"
   },
@@ -89,5 +88,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "overrides": {
+    "wrap-ansi": "7.0.0",
+    "string-width": "4.1.0"
   }
 }
