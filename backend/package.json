@@ -35,6 +35,8 @@
     "bwip-js": "^4.6.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "dayjs": "^1.11.13",
+    "dayjs-plugin-utc": "^0.1.2",
     "full-stack-booking-app": "file:..",
     "googleapis": "^148.0.0",
     "multer": "^1.4.5-lts.2",

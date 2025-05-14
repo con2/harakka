@@ -7,22 +7,14 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-
-interface BookingConfirmationEmailProps {
-  name: string;
-  date: string;
-  location: string;
-  items: {
-    item_id: string;
-    quantity: number;
-  }[];
-}
+import { BookingConfirmationEmailProps } from "../interfaces/confirmation-mail.interface";
 
 const BookingConfirmationEmail = ({
   name,
-  date,
+  pickupDate,
   location,
   items,
+  today,
 }: BookingConfirmationEmailProps) => (
   <Html>
     <Head>
@@ -33,66 +25,129 @@ const BookingConfirmationEmail = ({
     </Head>
     <Body
       style={{
-        fontFamily: "'Lato', sans-serif",
-        backgroundColor: "#f9f9f9",
+        fontFamily: "'Lato', Arial, sans-serif",
+        // backgroundColor: "#9537C7",
+        backgroundColor: "###d0c1d8",
         margin: 0,
-        padding: "20px",
-        color: "#252525", // ersetzt: oklch(0.145 0 0)
+        padding: "40px 20px",
+        color: "#333333",
       }}
     >
       <Container
         style={{
           backgroundColor: "#ffffff",
-          borderRadius: "10px",
-          padding: "30px",
+          borderRadius: "8px",
+          padding: "40px 30px",
           maxWidth: "600px",
           margin: "0 auto",
-          border: "1px solid #ebebeb", // ersetzt: oklch(0.922 0 0)
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+          // border: "2px solid #D87AFF",
         }}
       >
-        {/* Logo entfernt */}
+        <Section
+          style={{
+            backgroundImage:
+              "url('https://www.flickr.com/photos/hrns/53914430976/in/album-72177720319440057/lightbox/')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            height: "250px",
+            borderRadius: "8px",
+            marginBottom: "20px",
+          }}
+        ></Section>
 
         <Text
           style={{
-            fontFamily: "'Roboto Slab', serif",
+            fontFamily: "'Roboto'",
             fontSize: "24px",
-            fontWeight: 700,
-            color: "#9537c7", // secondary
+            fontWeight: 400,
+            color: "#9537C7",
             textAlign: "center",
-            marginBottom: "20px",
+            marginBottom: "24px",
           }}
         >
-          Buchungsbestätigung
+          Booking confirmation
         </Text>
 
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          Hallo <strong>{name}</strong>,
+          Hei <strong>{name}</strong>,
         </Text>
-
-        <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
-          Deine Buchung wurde erfolgreich bestätigt.
+        <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
+          Vahvistamme varauksesi. Tervetuloa noutamaan varauksesi.
         </Text>
 
         <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
-          Bestellte Artikel:
+          Varaustiedot:
         </Text>
         <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
           {items.map((item, index) => (
-            <li key={index} style={{ marginBottom: "4px" }}>
-              Artikel-ID: <strong>{item.item_id}</strong>, Menge:{" "}
-              <strong>{item.quantity}</strong>
+            <li key={index} style={{ marginBottom: "4px", fontSize: "16px" }}>
+              {item.translations.fi.name} (x{item.quantity})
             </li>
           ))}
         </ul>
 
-        <Text style={{ marginBottom: "20px" }}>
-          <strong>Datum:</strong> {date}
+        <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
+          <strong>Noutopäivä:</strong> {pickupDate}
           <br />
-          <strong>Ort:</strong> {location}
+          <strong>Noutopaikka:</strong> {location}
+          <br />
+          <strong>Varaus tehty:</strong> {today}
         </Text>
 
-        <Text style={{ fontSize: "16px", marginTop: "20px" }}>
-          Vielen Dank für deine Buchung.
+        <hr style={{ margin: "30px 0" }} />
+
+        <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
+          Hello <strong>{name}</strong>,
+        </Text>
+        <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
+          Your booking has been confirmed. You're welcome to pick up your items.
+        </Text>
+
+        <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
+          Booking details:
+        </Text>
+        <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
+          {items.map((item, index) => (
+            <li key={index} style={{ marginBottom: "4px", fontSize: "16px" }}>
+              {item.translations.en.name} (x{item.quantity})
+            </li>
+          ))}
+        </ul>
+
+        <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
+          <strong>Pickup Date:</strong> {pickupDate}
+          <br />
+          <strong>Pickup Location:</strong> {location}
+          <br />
+          <strong>Booking made:</strong> {today}
+        </Text>
+
+        <Section style={{ textAlign: "center", marginTop: "30px" }}>
+          <a
+            href="http://localhost:5180/profile?tab=orders" // TODO: replace with actual link
+            style={{
+              backgroundColor: "#9537C7",
+              color: "#ffffff",
+              padding: "12px 24px",
+              borderRadius: "4px",
+              textDecoration: "none",
+              fontWeight: "bold",
+              display: "inline-block",
+              fontSize: "16px",
+            }}
+          >
+            View your Booking
+          </a>
+        </Section>
+        {/*  TODO: add contact form link */}
+        <Text style={{ fontSize: "14px", color: "#666666", marginTop: "30px" }}>
+          If you have any questions, contact us by answering this mail or use
+          the
+          <a href="" style={{ color: "#9537C7" }}>
+            contact form
+          </a>
+          in our website.
         </Text>
       </Container>
     </Body>
