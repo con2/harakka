@@ -1,8 +1,16 @@
 import { SendMailDto } from "../dto/send-mail.dto";
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+} from "@nestjs/common";
 import { MailService } from "../services/mail.service";
 import BookingConfirmationEmail from "../emails/BookingConfirmationEmail";
 import WelcomeEmail from "../emails/WelcomeEmail";
+import { BookingConfirmationEmailProps } from "src/interfaces/confirmation-mail.interface";
+import { ReactElement } from "react";
 
 @Controller()
 export class AppController {
@@ -10,15 +18,24 @@ export class AppController {
 
   @Post("send-email") // TODO: send-email dieser endpoint soll für alle emails verwendet werden.
   async sendMail(@Body() sendMailDto: SendMailDto): Promise<string> {
+    const { email, subject, type, data } = sendMailDto;
+
+    let templateHtml: ReactElement;
+
+    if (type === "bookingConfirmation") {
+      templateHtml = BookingConfirmationEmail(
+        data as BookingConfirmationEmailProps,
+      );
+    } else if (type === "welcome") {
+      templateHtml = WelcomeEmail(data);
+    } else {
+      throw new BadRequestException("Unknown email type"); // BEIDE MAILCONTROLLER VERBINDEN!!!
+    }
+
     await this.mailService.sendMail({
-      to: sendMailDto.email,
-      subject: sendMailDto.subject,
-      template: BookingConfirmationEmail({
-        name: "Test User",
-        date: "01.06.2025",
-        location: "Berlin",
-        items: [],
-      }),
+      to: email,
+      subject,
+      template: templateHtml,
     });
 
     return "Email sent successfully";
