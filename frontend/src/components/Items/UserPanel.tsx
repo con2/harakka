@@ -12,12 +12,16 @@ import {
   fetchAllLocations,
   selectAllLocations,
 } from "@/store/slices/locationsSlice";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
+import { FilterValue } from "@/types";
 
 const UserPanel = () => {
   const tags = useAppSelector(selectAllTags);
   const items = useAppSelector(selectAllItems);
   const locations = useAppSelector(selectAllLocations);
   const dispatch = useAppDispatch();
+  const { lang } = useLanguage();
 
   useEffect(() => {
     dispatch(fetchAllTags());
@@ -57,7 +61,7 @@ const UserPanel = () => {
   });
 
   // Handle filter change (you can modify this based on your filter UI)
-  const handleFilterChange = (filterKey: string, value: any) => {
+  const handleFilterChange = (filterKey: string, value: FilterValue) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
       [filterKey]: value,
@@ -98,7 +102,7 @@ const UserPanel = () => {
               <h3 className="text-secondary font-bold mb-0">Filters</h3>
               <div className="flex items-center gap-2">
                 <div className="text-xs text-muted-foreground">
-                  {countActiveFilters()} active
+                  {countActiveFilters()} {t.userPanel.filters.active[lang]}
                 </div>
                 <SlidersIcon className="w-5 h-5 text-slate-500" />
               </div>
@@ -156,7 +160,9 @@ const UserPanel = () => {
                   className="text-left text-sm text-secondary mt-2"
                   onClick={() => setShowAllItemTypes((prev) => !prev)}
                 >
-                  {showAllItemTypes ? "Show less" : "See all"}
+                  {showAllItemTypes
+                    ? t.userPanel.categories.showLess[lang]
+                    : t.userPanel.categories.seeAll[lang]}
                 </Button>
               )}
             </div>
@@ -165,7 +171,10 @@ const UserPanel = () => {
 
             {/* availability filter */}
             <div className="my-4">
-              <label className="text-primary block mb-6">Items Available</label>
+              <label className="text-primary block mb-6">
+                {" "}
+                {t.userPanel.availability.title[lang]}
+              </label>
               <Slider
                 min={0}
                 max={100} // edit upper limit
@@ -177,14 +186,16 @@ const UserPanel = () => {
               />
               <div className="mt-2 text-secondary text-center">
                 {filters.itemsNumberAvailable[0]} -{" "}
-                {filters.itemsNumberAvailable[1]} items
+                {filters.itemsNumberAvailable[1]}{" "}
+                {t.userPanel.availability.items[lang]}
               </div>
             </div>
             <Separator className="my-4" />
+
             {/* Locations filter section */}
             <div className="my-4">
               <label className="text-primary font-medium block mb-4">
-                Locations
+                {t.userPanel.locations.title[lang]}
               </label>
               <div className="flex flex-col gap-2">
                 {locations.map((location) => {
@@ -224,13 +235,16 @@ const UserPanel = () => {
             <Separator className="my-4" />
             {/* Tags */}
             <div className="my-4">
-              <label className="text-primary block mb-6">Tags</label>
+              <label className="text-primary block mb-6">
+                {" "}
+                {t.userPanel.tags.title[lang]}
+              </label>
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => {
                   const tagName =
-                    tag.translations?.fi?.name ||
-                    tag.translations?.en?.name ||
-                    "Unnamed";
+                    tag.translations?.[lang]?.name ||
+                    tag.translations?.[lang === "fi" ? "en" : "fi"]?.name ||
+                    t.userPanel.tags.unnamed[lang];
                   return (
                     <Button
                       key={tag.id}
@@ -258,7 +272,10 @@ const UserPanel = () => {
 
             {/* Rating filter */}
             <div className="my-4">
-              <label className="text-primary block mb-4">Average Rating</label>
+              <label className="text-primary block mb-4">
+                {" "}
+                {t.userPanel.rating.title[lang]}
+              </label>
               <div className="flex flex-col gap-3">
                 {[5, 4, 3, 2, 1].map((rating) => {
                   const isChecked = filters.averageRating.includes(rating);
@@ -296,7 +313,7 @@ const UserPanel = () => {
             {/* color filter */}
             <div className="my-4">
               <label className="text-primary font-medium block mb-6">
-                Colors
+                {t.userPanel.colors.title[lang]}
               </label>
               <div className="mt-2 mb-6 text-secondary text-center">
                 <div className="flex flex-row flex-wrap gap-3">
@@ -349,7 +366,7 @@ const UserPanel = () => {
                       })
                     }
                   >
-                    Clear All Filters
+                    {t.userPanel.filters.clearAllFilters[lang]}
                   </Button>
                 </div>
               </div>
@@ -363,7 +380,7 @@ const UserPanel = () => {
                 size="sm"
                 className="text-white"
               >
-                Close Filters
+                {t.userPanel.filters.closeFilters[lang]}
               </Button>
             </div>
           </div>

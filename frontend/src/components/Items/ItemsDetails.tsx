@@ -277,7 +277,8 @@ const ItemsDetails: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-xs font-medium m-0">
-                  {format(startDate, "PPP")} - {format(endDate, "PPP")}
+                  {format(startDate, "d MMM yyyy")} -{" "}
+                  {format(endDate, "d MMM yyyy")}
                 </p>
               </div>
               {/* Booking Section */}
