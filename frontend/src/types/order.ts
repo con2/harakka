@@ -16,7 +16,7 @@ export type OrderStatus =
 /**
  * Payment status values
  */
-export type PaymentStatus = "pending" | "partial" | "paid" | "refunded";
+export type PaymentStatus = "invoice-sent" | "paid" | "payment-rejected" | "overdue"
 
 /**
  * Booked item in an order
