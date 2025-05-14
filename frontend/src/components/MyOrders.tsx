@@ -5,6 +5,9 @@ import {
   selectOrdersLoading,
   selectOrdersError,
   selectUserOrders,
+  updateOrder,
+  deleteOrder,
+  cancelOrder,
 } from "@/store/slices/ordersSlice";
 import { BookingOrder, BookingItem } from "@/types";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
@@ -27,6 +30,12 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"; 
 import { useIsMobile } from "@/hooks/use-mobile";
+import OrderEditButton from "./OrderEditButton";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import DatePickerButton from "./ui/DatePickerButton";
+import { Calendar } from "./ui/calendar";
 
 const MyOrders = () => {
   const dispatch = useAppDispatch();
@@ -39,6 +48,17 @@ const MyOrders = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [editingOrder, setEditingOrder] = useState<BookingOrder | null>(null);
+  const [editFormItems, setEditFormItems] = useState<BookingItem[]>([]);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [globalStartDate, setGlobalStartDate] = useState<string | null>(null);
+  const [globalEndDate, setGlobalEndDate] = useState<string | null>(null);
+  const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
+  const [startPickerOpen, setStartPickerOpen] = useState(false);
+  const [endPickerOpen, setEndPickerOpen] = useState(false);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -49,7 +69,11 @@ const MyOrders = () => {
       return;
     }
 
-    dispatch(getUserOrders(user.id));
+    if (user?.id) {
+      if (user?.id) {
+        dispatch(getUserOrders(user.id));
+      }
+    }
   }, [dispatch, navigate, user]);
 
   // Apply filters to orders
@@ -78,6 +102,64 @@ const MyOrders = () => {
   const handleViewDetails = (order: BookingOrder) => {
     setSelectedOrder(order);
     setShowDetailsModal(true);
+  };
+
+  const handleEditOrder = (order: BookingOrder) => {
+    setItemQuantities(
+      Object.fromEntries(order.order_items.map(item => [String(item.id), item.quantity]))
+    );    
+    setGlobalStartDate(order.order_items?.[0]?.start_date ?? null);
+    setGlobalEndDate(order.order_items?.[0]?.end_date ?? null);
+    setEditingOrder(order);
+    setEditFormItems(order.order_items || []);
+    setShowEditModal(true);
+  };
+
+  const handleSubmitEdit = async () => {
+    if (!editingOrder) return;
+
+    const updatedItems = editFormItems.map(item => ({
+      ...item,
+      quantity: item.id !== undefined ? itemQuantities[item.id] ?? item.quantity : item.quantity,
+      start_date: globalStartDate || item.start_date,
+      end_date: globalEndDate || item.end_date,
+    })).filter(item => item.quantity > 0);
+  
+    if (updatedItems.length === 0) {
+      try {
+        dispatch(updateOrder({
+          orderId: editingOrder.id,
+          items: updatedItems,
+        }));
+        dispatch(cancelOrder(editingOrder.id))
+        toast.warning("All items removed — order cancelled.");
+        if (user?.id) {
+          dispatch(getUserOrders(user.id));
+        }
+      } catch {
+        toast.error("Failed to cancel order.");
+      } finally {
+        setShowEditModal(false);
+        setEditingOrder(null);
+      }
+      return;
+    }
+  
+    try {
+      await dispatch(updateOrder({
+        orderId: editingOrder.id,
+        items: updatedItems,
+      })).unwrap();
+  
+      toast.success("Order updated!");
+      setShowEditModal(false);
+      setEditingOrder(null);
+      if (user?.id) {
+        dispatch(getUserOrders(user.id));
+      }
+    } catch (err) {
+      toast.error("Failed to update order");
+    }
   };
 
   // Render a status badge with appropriate color
@@ -162,10 +244,16 @@ const MyOrders = () => {
             />
 
             {isPending && (
-              <OrderCancelButton
-                id={order.id}
-                closeModal={() => setShowDetailsModal(false)}
-              />
+              <>
+                <OrderEditButton
+                  order={order}
+                  onEdit={handleEditOrder}
+                />
+                <OrderCancelButton
+                  id={order.id}
+                  closeModal={() => setShowDetailsModal(false)}
+                />
+              </>
             )}
           </div>
         );
@@ -349,7 +437,16 @@ const MyOrders = () => {
                     {/* Actions */}
                     <div className="flex justify-end gap-2 mt-3">
                       {order.status === "pending" && (
-                        <OrderCancelButton id={order.id} closeModal={() => {}} />
+                        <>
+                          <OrderEditButton
+                            order={order}
+                            onEdit={handleEditOrder}
+                          />
+                          <OrderCancelButton
+                            id={order.id}
+                            closeModal={() => {}}
+                          />
+                        </>
                       )}
                     </div>
                   </div>
@@ -361,6 +458,183 @@ const MyOrders = () => {
           <PaginatedDataTable columns={columns} data={filteredOrders} />
         )}        
       </div>
+
+      {/* Editing Order Modal */}
+      {editingOrder && (
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-sm overflow-visible">
+          <DialogHeader className="items-start">
+            <DialogTitle>Edit Order #{editingOrder.order_number}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex flex-row gap-4">
+              <div>
+                <Label className="block text-sm font-medium mb-1">Start</Label>
+                <Popover open={startPickerOpen} onOpenChange={setStartPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <DatePickerButton
+                      value={globalStartDate ? format(new Date(globalStartDate), "PPP") : null}
+                      placeholder="Select start date"
+                    />
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0"
+                    side="bottom"
+                    align="start"
+                    style={{ zIndex: 50, pointerEvents: "auto" }}
+                  >
+                  <Calendar
+                    mode="single"
+                    defaultMonth={globalStartDate ? new Date(globalStartDate) : undefined}
+                    selected={
+                      globalStartDate && !isNaN(Date.parse(globalStartDate))
+                        ? new Date(globalStartDate)
+                        : undefined
+                    }
+                    onSelect={(date) => {
+                      setGlobalStartDate(date?.toISOString() ?? null);
+                      // setStartPickerOpen(false);
+                    }}
+                    disabled={(date) => date < today}
+                  />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-1">End</Label>
+                <Popover open={endPickerOpen} onOpenChange={setEndPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <DatePickerButton
+                      value={globalEndDate ? format(new Date(globalEndDate), "PPP") : null}
+                      placeholder="Select end date"
+                    />
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0"
+                    side="bottom"
+                    align="start"
+                    style={{ zIndex: 50, pointerEvents: "auto" }}
+                  >
+                    <Calendar
+                      mode="single"
+                      defaultMonth={globalStartDate ? new Date(globalStartDate) : undefined}
+                      selected={
+                        globalEndDate && !isNaN(Date.parse(globalEndDate))
+                          ? new Date(globalEndDate)
+                          : undefined
+                      }
+                      onSelect={(date) => {
+                        setGlobalEndDate(date?.toISOString() ?? null);
+                        // setEndPickerOpen(false);
+                      }}
+                      disabled={(date) => {
+                        const isBeforeToday = date < today;
+                        const isBeforeStart =
+                          globalStartDate && !isNaN(Date.parse(globalStartDate))
+                            ? date < new Date(globalStartDate)
+                            : false;
+                        return isBeforeToday || isBeforeStart;
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            {editFormItems.map((item) => (
+              <div key={item.id} className="grid grid-cols-5 gap-4 items-center">
+                <div className="col-span-2">
+                  <Label className="block text-xs font-medium">Item</Label>
+                  <p className="text-sm">
+                    {(item.item_name ? item.item_name.charAt(0).toUpperCase() + item.item_name.slice(1) : "Unnamed Item")}
+                  </p>
+                </div>
+                <div style={{ zIndex: 50, pointerEvents: "auto" }}>
+                  <Label className="block text-sm font-medium">Qty</Label>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (item.id !== undefined) {
+                          const newQty = (itemQuantities[item.id] || item.quantity) - 1;
+                          // if (newQty === 0) {
+                          //   toastConfirm({
+                          //     title: "Remove Item?",
+                          //     description: "Setting quantity to 0 will remove this item from your order.",
+                          //     confirmText: "Remove",
+                          //     cancelText: "Keep",
+                          //     onConfirm: () => {
+                          //       const updatedItems = [...editFormItems];
+                          //       updatedItems.splice(idx, 1);
+                          //       setEditFormItems(updatedItems);
+                          //       // remove from itemQuantities too?
+                          //       const updatedQuantities = { ...itemQuantities };
+                          //       if (item.id !== undefined) {
+                          //         delete updatedQuantities[item.id];
+                          //       }
+                          //       setItemQuantities(updatedQuantities);
+                          //     },
+                          //   });
+                          // }
+                          //  else {
+                            setItemQuantities({ ...itemQuantities, [item.id]: newQty });
+                          
+                        }
+                      }}
+                    >
+                      –
+                    </Button>
+                    <Input
+                      value={item.id !== undefined ? itemQuantities[item.id] ?? item.quantity : item.quantity}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        if (!isNaN(val)) {
+                          setItemQuantities({ ...itemQuantities, [String(item.id)]: val });
+                        }
+                      }}
+                      className="w-[50px] text-center"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (item.id !== undefined) {
+                          const newQty = (itemQuantities[item.id] || item.quantity) + 1;
+                          setItemQuantities({ ...itemQuantities, [item.id]: newQty });
+                        }
+                      }}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+
+              </div>
+            ))}
+
+            <div className="flex justify-between gap-2 mt-4">
+              <Button
+                variant={"secondary"}
+                onClick={() => setShowEditModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant={"outline"}
+                onClick={handleSubmitEdit}
+                disabled={!editingOrder}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )}
 
       {/* Order Details Modal */}
       {selectedOrder && (
