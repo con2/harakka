@@ -1,5 +1,192 @@
 export const t = {
-  common: {},
+  // General translations
+  common: {
+    add: {
+      fi: "Lisää",
+      en: "Add",
+    },
+    cancel: {
+      fi: "Peruuta",
+      en: "Cancel",
+    },
+    save: {
+      fi: "Tallenna",
+      en: "Save",
+    },
+    delete: {
+      fi: "Poista",
+      en: "Delete",
+    },
+    edit: {
+      fi: "Muokkaa",
+      en: "Edit",
+    },
+  },
+
+  // Login related translations
+  login: {
+    title: {
+      fi: "Kirjaudu tilillesi",
+      en: "Login to your account",
+    },
+    resetSuccess: {
+      fi: "Salasana on päivitetty onnistuneesti. Ole hyvä ja kirjaudu sisään uudella salasanallasi.",
+      en: "Password has been updated successfully. Please log in with your new password.",
+    },
+    expiredLink: {
+      fi: 'Salasanan nollauslinkki on vanhentunut. Pyydä uusi linkki käyttämällä "Unohditko salasanasi" -vaihtoehtoa alla.',
+      en: 'Your password reset link has expired. Please request a new one using the "Forgot password" option below.',
+    },
+    login: {
+      fi: "Kirjaudu sisään",
+      en: "Login",
+    },
+    logout: {
+      fi: "Kirjaudu ulos",
+      en: "Logout",
+    },
+    // Auth UI translations
+    auth_ui: {
+      sign_in: {
+        email_label: {
+          fi: "Sähköpostiosoite",
+          en: "Email Address",
+        },
+        email_input_placeholder: {
+          fi: "Sähköpostisi",
+          en: "Your email",
+        },
+        password_label: {
+          fi: "Salasana",
+          en: "Password",
+        },
+        password_input_placeholder: {
+          fi: "Salasanasi",
+          en: "Your password",
+        },
+        button_label: {
+          fi: "Kirjaudu sisään",
+          en: "Sign In",
+        },
+        social_provider_text: {
+          fi: "Jatka palvelulla {{provider}}",
+          en: "Continue with {{provider}}",
+        },
+        link_text: {
+          fi: "Onko sinulla jo tili? Kirjaudu sisään",
+          en: "Already have an account? Sign in",
+        },
+      },
+      sign_up: {
+        email_label: {
+          fi: "Sähköpostiosoite",
+          en: "Email Address",
+        },
+        email_input_placeholder: {
+          fi: "Sähköpostisi",
+          en: "Your email",
+        },
+        password_label: {
+          fi: "Salasana",
+          en: "Create a Password",
+        },
+        password_input_placeholder: {
+          fi: "Salasanasi",
+          en: "Your password",
+        },
+        button_label: {
+          fi: "Rekisteröidy",
+          en: "Sign Up",
+        },
+        link_text: {
+          fi: "Eikö sinulla ole tiliä? Rekisteröidy",
+          en: "Don't have an account? Sign up",
+        },
+      },
+      forgotten_password: {
+        email_label: {
+          fi: "Sähköpostiosoite",
+          en: "Email Address",
+        },
+        email_input_placeholder: {
+          fi: "Sähköpostisi",
+          en: "Your email",
+        },
+        button_label: {
+          fi: "Lähetä ohjeet",
+          en: "Send Instructions",
+        },
+        link_text: {
+          fi: "Unohditko salasanasi?",
+          en: "Forgot your password?",
+        },
+      },
+      magic_link: {
+        email_input_label: {
+          fi: "Sähköpostiosoite",
+          en: "Email Address",
+        },
+        email_input_placeholder: {
+          fi: "Sähköpostisi",
+          en: "Your email",
+        },
+        button_label: {
+          fi: "Lähetä taikalinkkisähköposti",
+          en: "Send a magic link email",
+        },
+        link_text: {
+          fi: "Lähetä taikalinkki sähköpostitse",
+          en: "Send a magic link email",
+        },
+      },
+    },
+  },
+
+  // ItemCard translations
+  itemCard: {
+    timeframe: {
+      fi: "Valittu varaus",
+      en: "Selected booking",
+    },
+    viewDetails: {
+      fi: "Katso tiedot",
+      en: "View Details",
+    },
+    addedToCart: {
+      fi: "lisätty koriin",
+      en: "added to cart",
+    },
+    checkingAvailability: {
+      fi: "Tarkistetaan saatavuutta...",
+      en: "Checking availability...",
+    },
+    availabilityError: {
+      fi: "Saatavuuden tarkistaminen epäonnistui",
+      en: "Failed to check availability",
+    },
+    available: {
+      fi: "Saatavilla kpl",
+      en: "Available units",
+    },
+    selectDatesFirst: {
+      fi: "Valitse ensin varauspäivät",
+      en: "Please select booking dates first",
+    },
+    selectValidQuantity: {
+      fi: "Valitse kelvollinen määrä",
+      en: "Please select valid quantity",
+    },
+    notAvailable: {
+      fi: "Ei saatavilla valitulle ajanjaksolle",
+      en: "Not available for selected period",
+    },
+    totalUnits: {
+      fi: "Yhteensä",
+      en: "Total units",
+    },
+  },
+
+  // ItemDetails translations
   itemDetails: {
     buttons: {
       save: {
@@ -58,6 +245,8 @@ export const t = {
       },
     },
   },
+
+  // ItemsList translations
   itemsList: {
     searchPlaceholder: {
       fi: "Hae tuotteita nimellä, kategorialla, tageilla tai kuvauksella",
@@ -72,6 +261,8 @@ export const t = {
       en: "Error: ",
     },
   },
+
+  // Navigation translations
   navigation: {
     home: {
       fi: "Etusivu",
@@ -92,6 +283,10 @@ export const t = {
     guides: {
       fi: "Oppaat",
       en: "Guides",
+    },
+    contactUs: {
+      fi: "Ota yhteyttä",
+      en: "Contact Us",
     },
     toast: {
       title: {
@@ -116,62 +311,8 @@ export const t = {
       },
     },
   },
-  login: {
-    login: {
-      fi: "Kirjaudu sisään",
-      en: "Login",
-    },
-    logout: {
-      fi: "Kirjaudu ulos",
-      en: "Logout",
-    },
-  },
-  itemCard: {
-    timeframe: {
-      fi: "Valittu varaus",
-      en: "Selected booking",
-    },
-    viewDetails: {
-      fi: "Katso tiedot",
-      en: "View Details",
-    },
-    addedToCart: {
-      fi: "lisätty koriin",
-      en: "added to cart",
-    },
-    checkingAvailability: {
-      fi: "Tarkistetaan saatavuutta...",
-      en: "Checking availability...",
-    },
-    availabilityError: {
-      fi: "Saatavuuden tarkistaminen epäonnistui",
-      en: "Failed to check availability",
-    },
-    available: {
-      fi: "Saatavilla",
-      en: "Available",
-    },
-    units: {
-      fi: "kpl",
-      en: "units",
-    },
-    totalUnits: {
-      fi: "Yhteensä",
-      en: "Total units",
-    },
-    selectDatesFirst: {
-      fi: "Valitse ensin varauspäivät",
-      en: "Please select booking dates first",
-    },
-    selectValidQuantity: {
-      fi: "Valitse kelvollinen määrä",
-      en: "Please select valid quantity",
-    },
-    notAvailable: {
-      fi: "Ei saatavilla valitulle ajanjaksolle",
-      en: "Not available for selected period",
-    },
-  },
+
+  // UserPanel translations
   userPanel: {
     filters: {
       title: {
@@ -241,6 +382,791 @@ export const t = {
       title: {
         fi: "Värit",
         en: "Colors",
+      },
+    },
+  },
+
+  // PasswordReset translations
+  passwordReset: {
+    title: {
+      fi: "Nollaa salasana",
+      en: "Reset Password",
+    },
+    updating: {
+      fi: "Päivitetään salasanaasi...",
+      en: "Updating your password...",
+    },
+    errors: {
+      emptyPassword: {
+        fi: "Salasanakenttä on tyhjä tai sitä ei löydy",
+        en: "Password field not found or empty",
+      },
+      noToken: {
+        fi: "URL:ssa ei ole pääsytunnistetta",
+        en: "No access token found in URL",
+      },
+      updateFailed: {
+        fi: "Virhe salasanan päivityksessä",
+        en: "Error updating password",
+      },
+      unexpected: {
+        fi: "Tapahtui odottamaton virhe",
+        en: "An unexpected error occurred",
+      },
+    },
+    // Auth UI translations for update_password view
+    auth_ui: {
+      password_label: {
+        fi: "Uusi salasana",
+        en: "New Password",
+      },
+      password_input_placeholder: {
+        fi: "Syötä uusi salasanasi",
+        en: "Enter your new password",
+      },
+      button_label: {
+        fi: "Päivitä salasana",
+        en: "Update Password",
+      },
+    },
+  },
+
+  // PasswordResetResult translations
+  passwordResetResult: {
+    success: {
+      title: {
+        fi: "Salasanan nollaus onnistui",
+        en: "Password Reset Successful",
+      },
+      description: {
+        fi: "Salasanasi on nollattu onnistuneesti. Voit nyt käyttää uutta salasanaasi tilillesi kirjautumiseen.",
+        en: "Your password has been reset successfully. You can now use your new password to access your account.",
+      },
+      button: {
+        fi: "Siirry etusivulle",
+        en: "Go to Dashboard",
+      },
+    },
+    error: {
+      title: {
+        fi: "Salasanan nollaus epäonnistui",
+        en: "Password Reset Failed",
+      },
+      description: {
+        fi: "Pyydä uusi salasanan nollauslinkki.",
+        en: "Please request a new password reset link.",
+      },
+      linkExpired: {
+        fi: "Linkki on vanhentunut tai virheellinen",
+        en: "Link has expired or is invalid",
+      },
+      button: {
+        fi: "Takaisin kirjautumissivulle",
+        en: "Back to Login",
+      },
+    },
+  },
+
+  // Cart translations
+  cart: {
+    empty: {
+      title: {
+        fi: "Ostoskorisi on tyhjä",
+        en: "Your cart is empty",
+      },
+      description: {
+        fi: "Lisää tuotteita ostoskoriisi nähdäksesi ne täällä.",
+        en: "Add some items to your cart to see them here.",
+      },
+      browseButton: {
+        fi: "Selaa varastoa",
+        en: "Browse Storage",
+      },
+    },
+    review: {
+      title: {
+        fi: "Tarkista ostoskorisi ennen kassalle siirtymistä",
+        en: "Review your cart before checkout",
+      },
+    },
+    booking: {
+      timeframe: {
+        fi: "Varausajankohta",
+        en: "Booking Timeframe",
+      },
+      day: {
+        fi: "päivä",
+        en: "day",
+      },
+      days: {
+        fi: "päivää",
+        en: "days",
+      },
+      total: {
+        fi: "yhteensä",
+        en: "total",
+      },
+      noDates: {
+        fi: "Varausaikaa ei ole valittu. Valitse ensin päivämäärät.",
+        en: "No booking period selected. Please select dates first.",
+      },
+    },
+    item: {
+      available: {
+        fi: "Yhteensä saatavilla",
+        en: "Total available",
+      },
+      units: {
+        fi: "kpl",
+        en: "units",
+      },
+    },
+    summary: {
+      title: {
+        fi: "Tilauksen yhteenveto",
+        en: "Order Summary",
+      },
+      subtotal: {
+        fi: "Tuotteet yhteensä:",
+        en: "Items subtotal:",
+      },
+      rentalPeriod: {
+        fi: "Vuokra-aika:",
+        en: "Rental period:",
+      },
+      total: {
+        fi: "Yhteensä:",
+        en: "Total:",
+      },
+    },
+    buttons: {
+      checkout: {
+        fi: "Kassalle",
+        en: "Checkout",
+      },
+      processing: {
+        fi: "Käsitellään...",
+        en: "Processing...",
+      },
+      clearCart: {
+        fi: "Tyhjennä ostoskori",
+        en: "Clear Cart",
+      },
+    },
+    toast: {
+      clearCartTitle: {
+        fi: "Tyhjennä ostoskori",
+        en: "Clear Cart",
+      },
+      clearCartDescription: {
+        fi: "Haluatko varmasti tyhjentää ostoskorisi? Tätä toimenpidettä ei voi kumota.",
+        en: "Are you sure you want to clear your cart? This action cannot be undone.",
+      },
+      confirmClear: {
+        fi: "Kyllä, tyhjennä",
+        en: "Yes, clear it",
+      },
+      cancelClear: {
+        fi: "Ei, säilytä",
+        en: "No, keep it",
+      },
+      cartCleared: {
+        fi: "Ostoskori tyhjennetty",
+        en: "Cart cleared",
+      },
+      cartNotCleared: {
+        fi: "Ostoskoria ei tyhjennetty",
+        en: "Cart not cleared",
+      },
+      loginRequired: {
+        fi: "Kirjaudu sisään suorittaaksesi tilauksesi loppuun",
+        en: "Please log in to complete your order",
+      },
+      profileLoading: {
+        fi: "Profiiliasi ladataan. Yritä uudelleen hetken kuluttua.",
+        en: "Your profile is being loaded. Please try again in a moment.",
+      },
+      selectDatesAndItems: {
+        fi: "Valitse päivämäärät ja lisää tuotteita ostoskoriin",
+        en: "Please select dates and add items to cart",
+      },
+      itemsExceedQuantity: {
+        fi: "Jotkin tuotteet ylittävät saatavilla olevan määrän",
+        en: "Some items exceed available quantity",
+      },
+      creatingOrder: {
+        fi: "Luodaan tilaustasi...",
+        en: "Creating your order...",
+      },
+      orderCreated: {
+        fi: "Tilaus luotu onnistuneesti!",
+        en: "Order created successfully!",
+      },
+      orderError: {
+        fi: "Virhe: ",
+        en: "Error: ",
+      },
+      checkoutError: {
+        fi: "Tilausvirhe: ",
+        en: "Checkout error: ",
+      },
+    },
+  },
+
+  // ContactForm translations
+  contactForm: {
+    title: {
+      fi: "Ota yhteyttä",
+      en: "Contact Us",
+    },
+    email: {
+      label: {
+        fi: "Sähköpostiosoitteesi",
+        en: "Your Email",
+      },
+      placeholder: {
+        fi: "sinä@esimerkki.fi",
+        en: "you@example.com",
+      },
+    },
+    subject: {
+      label: {
+        fi: "Aihe",
+        en: "Subject",
+      },
+      placeholder: {
+        fi: "Viestisi aihe",
+        en: "Subject of your message",
+      },
+    },
+    message: {
+      label: {
+        fi: "Viesti",
+        en: "Message",
+      },
+      placeholder: {
+        fi: "Kirjoita viestisi tähän...",
+        en: "Your message...",
+      },
+    },
+    button: {
+      sending: {
+        fi: "Lähetetään...",
+        en: "Sending...",
+      },
+      send: {
+        fi: "Lähetä viesti",
+        en: "Send Message",
+      },
+    },
+    toast: {
+      success: {
+        fi: "Viesti lähetetty onnistuneesti!",
+        en: "Message sent successfully!",
+      },
+      error: {
+        fi: "Viestin lähetys epäonnistui.",
+        en: "Failed to send message.",
+      },
+      serverError: {
+        fi: "Palvelinvirhe.",
+        en: "Server error.",
+      },
+      genericError: {
+        fi: "Jotain meni vikaan.",
+        en: "Something went wrong.",
+      },
+    },
+  },
+
+  // Footer translations
+  footer: {
+    sections: {
+      shop: {
+        title: {
+          fi: "KAUPPA",
+          en: "SHOP",
+        },
+        links: {
+          products: {
+            fi: "Tuotteet",
+            en: "Products",
+          },
+          cart: {
+            fi: "Ostoskori",
+            en: "Cart",
+          },
+          checkout: {
+            fi: "Kassa",
+            en: "Checkout",
+          },
+        },
+      },
+      about: {
+        title: {
+          fi: "TIETOA",
+          en: "ABOUT",
+        },
+        links: {
+          userGuides: {
+            fi: "Käyttöohjeet",
+            en: "User Guides",
+          },
+          privacyPolicy: {
+            fi: "Tietosuojakäytäntö",
+            en: "Privacy Policy",
+          },
+          termsOfUse: {
+            fi: "Käyttöehdot",
+            en: "Terms of Use",
+          },
+        },
+      },
+      stayUpdated: {
+        title: {
+          fi: "PYSY AJAN TASALLA",
+          en: "STAY UP TO DATE",
+        },
+        description: {
+          fi: "Ole ensimmäinen, joka tietää uusista LARP-tapahtumista, tuotteista tai paikoista Suomessa:",
+          en: "Be the first to know about new LARP events, products, or venues in Finland:",
+        },
+        newsletter: {
+          fi: "Tilaa uutiskirjeemme",
+          en: "Subscribe to our newsletter",
+        },
+        followUs: {
+          fi: "SEURAA MEITÄ",
+          en: "FOLLOW US ON",
+        },
+      },
+    },
+    copyright: {
+      fi: "Kaikki oikeudet pidätetään.",
+      en: "All rights reserved.",
+    },
+  },
+
+  // LandingPage translations
+  landingPage: {
+    heading: {
+      fi: "Valmiina viemään LARPisi seuraavalle tasolle?",
+      en: "Ready to level up your next LARP?",
+    },
+    subheading: {
+      fi: "Selaa varustevalikoimaamme, tee varaus verkossa ja herätä maailmasi eloon.",
+      en: "Browse our gear, book online, and bring your world to life.",
+    },
+    button: {
+      fi: "Selaa varastoa",
+      en: "Browse Storage",
+    },
+  },
+
+  // MyOrders translations
+  myOrders: {
+    title: {
+      fi: "Tilaukseni",
+      en: "My Orders",
+    },
+    loading: {
+      fi: "Ladataan tilauksiasi...",
+      en: "Loading your orders...",
+    },
+    error: {
+      loadingError: {
+        fi: "Virhe tilausten lataamisessa",
+        en: "Error loading your orders",
+      },
+      loginRequired: {
+        fi: "Kirjaudu sisään nähdäksesi tilauksesi",
+        en: "Please log in to view your orders",
+      },
+    },
+    buttons: {
+      tryAgain: {
+        fi: "Yritä uudelleen",
+        en: "Try Again",
+      },
+      browseItems: {
+        fi: "Selaa varastotuotteita",
+        en: "Browse Storage Items",
+      },
+      clearFilters: {
+        fi: "Tyhjennä suodattimet",
+        en: "Clear Filters",
+      },
+    },
+    status: {
+      unknown: {
+        fi: "Tuntematon",
+        en: "Unknown",
+      },
+      pending: {
+        fi: "Odottaa",
+        en: "Pending",
+      },
+      confirmed: {
+        fi: "Vahvistettu",
+        en: "Confirmed",
+      },
+      cancelled: {
+        fi: "Peruutettu",
+        en: "Cancelled",
+      },
+      cancelledByUser: {
+        fi: "Käyttäjän peruuttama",
+        en: "Cancelled by user",
+      },
+      cancelledByAdmin: {
+        fi: "Ylläpitäjän peruuttama",
+        en: "Cancelled by admin",
+      },
+      completed: {
+        fi: "Valmis",
+        en: "Completed",
+      },
+      rejected: {
+        fi: "Hylätty",
+        en: "Rejected",
+      },
+      deleted: {
+        fi: "Poistettu",
+        en: "Deleted",
+      },
+    },
+    columns: {
+      orderNumber: {
+        fi: "Tilaus #",
+        en: "Order #",
+      },
+      status: {
+        fi: "Tila",
+        en: "Status",
+      },
+      date: {
+        fi: "Päivämäärä",
+        en: "Date",
+      },
+      total: {
+        fi: "Yhteensä",
+        en: "Total",
+      },
+      item: {
+        fi: "Tuote",
+        en: "Item",
+      },
+      quantity: {
+        fi: "Määrä",
+        en: "Quantity",
+      },
+      startDate: {
+        fi: "Alkupäivä",
+        en: "Start Date",
+      },
+      endDate: {
+        fi: "Loppupäivä",
+        en: "End Date",
+      },
+      subtotal: {
+        fi: "Välisumma",
+        en: "Subtotal",
+      },
+    },
+    emptyState: {
+      title: {
+        fi: "Sinulla ei ole vielä tilauksia",
+        en: "You don't have any orders yet",
+      },
+      description: {
+        fi: "Tilauksesi näkyvät täällä",
+        en: "Items you order will appear here",
+      },
+    },
+    orderDetails: {
+      title: {
+        fi: "Tilauksen tiedot #",
+        en: "Order Details #",
+      },
+      customerInfo: {
+        fi: "Asiakkaan tiedot",
+        en: "Customer Information",
+      },
+      orderInfo: {
+        fi: "Tilauksen tiedot",
+        en: "Order Information",
+      },
+      items: {
+        fi: "Tuotteet",
+        en: "Items",
+      },
+      total: {
+        fi: "Yhteensä:",
+        en: "Total:",
+      },
+    },
+    mobile: {
+      status: {
+        fi: "Tila:",
+        en: "Status:",
+      },
+      total: {
+        fi: "Yhteensä:",
+        en: "Total:",
+      },
+      item: {
+        fi: "Tuote:",
+        en: "Item:",
+      },
+      quantity: {
+        fi: "Määrä:",
+        en: "Quantity:",
+      },
+      start: {
+        fi: "Alku:",
+        en: "Start:",
+      },
+      end: {
+        fi: "Loppu:",
+        en: "End:",
+      },
+      subtotal: {
+        fi: "Välisumma:",
+        en: "Subtotal:",
+      },
+    },
+    filter: {
+      searchPlaceholder: {
+        fi: "Hae tilausnumerolla",
+        en: "Search order #",
+      },
+      allStatuses: {
+        fi: "Kaikki tilat",
+        en: "All statuses",
+      },
+    },
+  },
+
+  // MyProfile translations
+  myProfile: {
+    tabs: {
+      userDetails: {
+        fi: "Profiilini",
+        en: "My Profile",
+      },
+      orders: {
+        fi: "Tilaukseni",
+        en: "My Orders",
+      },
+    },
+    personalDetails: {
+      title: {
+        fi: "Henkilötiedot",
+        en: "Personal Details",
+      },
+      fullName: {
+        label: {
+          fi: "Koko nimi",
+          en: "Full Name",
+        },
+      },
+      email: {
+        label: {
+          fi: "Sähköposti",
+          en: "Email",
+        },
+      },
+      phone: {
+        label: {
+          fi: "Puhelin",
+          en: "Phone",
+        },
+      },
+      visibleName: {
+        label: {
+          fi: "Näkyvä nimi",
+          en: "Visible Name",
+        },
+      },
+    },
+    addresses: {
+      title: {
+        fi: "Osoitteet",
+        en: "Addresses",
+      },
+      noAddresses: {
+        fi: "Sinulla ei ole tallennettuja osoitteita.",
+        en: "You have no saved addresses.",
+      },
+      defaultAddress: {
+        fi: "Oletusosoite",
+        en: "Default Address",
+      },
+      streetAddress: {
+        label: {
+          fi: "Katuosoite",
+          en: "Street Address",
+        },
+        placeholder: {
+          fi: "Katuosoite",
+          en: "Street Address",
+        },
+      },
+      city: {
+        label: {
+          fi: "Kaupunki",
+          en: "City",
+        },
+        placeholder: {
+          fi: "Kaupunki",
+          en: "City",
+        },
+      },
+      postalCode: {
+        label: {
+          fi: "Postinumero",
+          en: "Postal Code",
+        },
+        placeholder: {
+          fi: "Postinumero",
+          en: "Postal Code",
+        },
+      },
+      country: {
+        label: {
+          fi: "Maa",
+          en: "Country",
+        },
+        placeholder: {
+          fi: "Maa",
+          en: "Country",
+        },
+      },
+      type: {
+        label: {
+          fi: "Tyyppi",
+          en: "Type",
+        },
+        options: {
+          both: {
+            fi: "Molemmat",
+            en: "Both",
+          },
+          billing: {
+            fi: "Laskutus",
+            en: "Billing",
+          },
+          shipping: {
+            fi: "Toimitus",
+            en: "Shipping",
+          },
+        },
+      },
+      remove: {
+        fi: "Poista",
+        en: "Remove",
+      },
+    },
+    newAddress: {
+      title: {
+        fi: "Uusi osoite",
+        en: "New Address",
+      },
+      selectType: {
+        fi: "Valitse tyyppi",
+        en: "Select type",
+      },
+      save: {
+        fi: "Tallenna osoite",
+        en: "Save Address",
+      },
+      cancel: {
+        fi: "Peruuta",
+        en: "Cancel",
+      },
+    },
+    buttons: {
+      addNewAddress: {
+        fi: "Lisää uusi osoite",
+        en: "Add New Address",
+      },
+      saveChanges: {
+        fi: "Tallenna muutokset",
+        en: "Save Changes",
+      },
+    },
+    dangerZone: {
+      title: {
+        fi: "Vaarallinen alue",
+        en: "Danger Zone",
+      },
+      description: {
+        fi: "Voit poistaa tilisi täältä. Tämä toiminto on pysyvä, eikä sitä voi kumota.",
+        en: "You can delete your account here. This action is permanent and cannot be undone.",
+      },
+      deleteAccount: {
+        fi: "Poista tili",
+        en: "Delete Account",
+      },
+    },
+    toast: {
+      updateSuccess: {
+        fi: "Profiili päivitetty onnistuneesti!",
+        en: "Profile updated successfully!",
+      },
+      updateError: {
+        fi: "Profiilin päivitys epäonnistui.",
+        en: "Failed to update profile.",
+      },
+      addressRemoved: {
+        fi: "Osoite poistettu onnistuneesti.",
+        en: "Address removed successfully.",
+      },
+      addressRemovalError: {
+        fi: "Osoitteen poisto epäonnistui.",
+        en: "Failed to remove address.",
+      },
+      fillAllRequiredFields: {
+        fi: "Täytä kaikki pakolliset kentät.",
+        en: "Please fill all required fields.",
+      },
+      addressAddSuccess: {
+        fi: "Uusi osoite lisätty.",
+        en: "New address added.",
+      },
+      addressAddError: {
+        fi: "Uuden osoitteen lisäys epäonnistui.",
+        en: "Failed to add new address.",
+      },
+    },
+    deleteUser: {
+      title: {
+        fi: "Poista tilisi",
+        en: "Delete Your Account",
+      },
+      description: {
+        fi: "Tämä toiminto poistaa tilisi pysyvästi. Tätä toimintoa ei voi kumota.",
+        en: "This action will permanently delete your account. This action is irreversible.",
+      },
+      confirmText: {
+        fi: "Poista",
+        en: "Delete",
+      },
+      cancelText: {
+        fi: "Peruuta",
+        en: "Cancel",
+      },
+      success: {
+        fi: "Tilisi on poistettu onnistuneesti.",
+        en: "Your account has been successfully deleted.",
+      },
+      error: {
+        fi: "Tilin poisto epäonnistui.",
+        en: "Failed to delete user account.",
+      },
+      missingId: {
+        fi: "Käyttäjätunnus puuttuu. Tiliä ei voida poistaa.",
+        en: "User ID is missing. Unable to delete account.",
       },
     },
   },
