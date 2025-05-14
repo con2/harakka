@@ -173,6 +173,11 @@ const OrderList = () => {
       cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
     },
     {
+      accessorKey: "invoice_status",
+      header: "Invoice",
+      cell: ({ row }) => row.original.payment_status || "N/A",
+    },
+    {
       id: "actions",
       cell: ({ row }) => {
         const order = row.original;

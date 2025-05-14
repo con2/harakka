@@ -10,12 +10,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const PasswordResetSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Translation
+  const { lang } = useLanguage();
 
   useEffect(() => {
     // Check for error parameters in the URL hash
@@ -26,11 +31,13 @@ const PasswordResetSuccess = () => {
 
       if (error) {
         setHasError(true);
-        setErrorMessage(errorDescription || "Link has expired or is invalid");
+        setErrorMessage(
+          errorDescription || t.passwordResetResult.error.linkExpired[lang],
+        );
         console.error("Password reset error:", error, errorDescription);
       }
     }
-  }, [location]);
+  }, [location, lang]);
 
   if (hasError) {
     return (
@@ -38,12 +45,15 @@ const PasswordResetSuccess = () => {
         <Card className="w-full max-w-md shadow-lg">
           <CardHeader className="text-center">
             <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-2" />
-            <CardTitle className="text-xl">Password Reset Failed</CardTitle>
+            <CardTitle className="text-xl">
+              {" "}
+              {t.passwordResetResult.error.title[lang]}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Alert variant="destructive" className="mb-4">
               <AlertDescription>
-                {errorMessage}. Please request a new password reset link.
+                {errorMessage}. {t.passwordResetResult.error.description[lang]}
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -52,7 +62,7 @@ const PasswordResetSuccess = () => {
               onClick={() => navigate("/login")}
               className="bg-secondary hover:bg-secondary/90"
             >
-              Back to Login
+              {t.passwordResetResult.error.button[lang]}
             </Button>
           </CardFooter>
         </Card>
@@ -66,12 +76,13 @@ const PasswordResetSuccess = () => {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-green-500 mb-2" />
-          <CardTitle className="text-xl">Password Reset Successful</CardTitle>
+          <CardTitle className="text-xl">
+            {t.passwordResetResult.success.title[lang]}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-center text-muted-foreground">
-            Your password has been reset successfully. You can now use your new
-            password to access your account.
+            {t.passwordResetResult.success.description[lang]}
           </p>
         </CardContent>
         <CardFooter className="flex justify-center">
@@ -79,7 +90,7 @@ const PasswordResetSuccess = () => {
             onClick={() => navigate("/")}
             className="bg-secondary hover:bg-secondary/90"
           >
-            Go to Dashboard
+            {t.passwordResetResult.success.button[lang]}
           </Button>
         </CardFooter>
       </Card>

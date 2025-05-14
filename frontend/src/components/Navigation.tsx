@@ -16,6 +16,9 @@ import { LogInIcon, LogOutIcon, ShoppingCart, UserIcon } from "lucide-react";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
 import { toast } from "sonner";
 import { toastConfirm } from "./ui/toastConfirm";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { t } from "@/translations";
+import { useLanguage } from "@/context/LanguageContext";
 
 export const Navigation = () => {
   const { signOut } = useAuth();
@@ -33,32 +36,43 @@ export const Navigation = () => {
 
   const handleSignOut = () => {
     toastConfirm({
-      title: "Confirm Logout",
-      description: "Are you sure you want to log out? This will end your current session.",
-      confirmText: "Log Out",
-      cancelText: "Cancel",
+      title: t.navigation.toast.title[lang],
+      description: t.navigation.toast.description[lang],
+      confirmText: t.navigation.toast.confirmText[lang],
+      cancelText: t.navigation.toast.cancelText[lang],
       onConfirm: () => {
-        signOut()
+        signOut();
       },
       onCancel: () => {
-        toast.success("Logout canceled.");
+        toast.success(t.navigation.toast.success[lang]);
       },
     });
   };
 
-return (
-  <nav className={navClasses}>
-    <div className="container mx-auto flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <Link to="/">
-          <img src={logo} alt="Logo" className="h-[60px] w-auto object-contain hidden md:flex" />
-          <img src={smallLogo} alt="smallLogo" className="h-[40px] w-auto object-contain md:hidden" />
-        </Link>
+  // Translation hook
+  const { lang } = useLanguage();
+
+  return (
+    <nav className={navClasses}>
+      <div className="container mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Link to="/">
+            <img
+              src={logo}
+              alt="Logo"
+              className="h-[60px] w-auto object-contain hidden md:flex"
+            />
+            <img
+              src={smallLogo}
+              alt="smallLogo"
+              className="h-[40px] w-auto object-contain md:hidden"
+            />
+          </Link>
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem className="hidden md:flex">
                 <NavigationMenuLink asChild>
-                  <Link to="/">Home</Link>
+                  <Link to="/"> {t.navigation.home[lang]} </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
@@ -67,7 +81,7 @@ return (
                 <NavigationMenuItem className="hidden md:flex">
                   <NavigationMenuLink asChild>
                     <Link to="/profile" className="flex items-center gap-1">
-                      My Profile
+                      {t.navigation.myProfile[lang]}
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
@@ -78,7 +92,7 @@ return (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
                     <Link to="/admin" className="flex items-center gap-1">
-                      Admin
+                      {t.navigation.admin[lang]}
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
@@ -88,7 +102,7 @@ return (
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/storage" className="flex items-center gap-1">
-                    Storage
+                    {t.navigation.storage[lang]}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -97,17 +111,34 @@ return (
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/howItWorks" className="flex items-center gap-1">
-                    Guides
+                    {t.navigation.guides[lang]}
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
+              {/* Contact Form */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link to="/contact-us" className="flex items-center gap-1">
+                    {t.navigation.contactUs[lang]}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
-
         </div>
+
+        {/* Language switcher */}
+        <div className="flex items-center space-x-4">
+          <LanguageSwitcher />
+        </div>
+
         {/* Always show Cart */}
         <div className="flex items-center gap-4">
-          <Link to="/cart" className="flex items-center gap-1 hover:text-secondary">
+          <Link
+            to="/cart"
+            className="flex items-center gap-1 hover:text-secondary"
+          >
             <ShoppingCart className="h-5 w-5" />
             {cartItemsCount > 0 && (
               <span className="ml-1 rounded-full bg-secondary text-white px-2 py-1 text-xs">
@@ -121,24 +152,24 @@ return (
               <Button
                 variant={"ghost"}
                 size={"sm"}
-                onClick={() => {navigate("/profile")}}
+                onClick={() => {
+                  navigate("/profile");
+                }}
               >
                 {/* Show name on desktop, icon on mobile */}
                 <UserIcon className="inline sm:hidden h-5 w-5" />
-                <span className="hidden sm:inline">{selectedUser.full_name}</span>
+                <span className="hidden sm:inline">
+                  {selectedUser.full_name}
+                </span>
               </Button>
-            <Button
-              variant={"ghost"}
-              size={"sm"}
-              onClick={handleSignOut}
-            >
-              <LogOutIcon className="h-5 w-5" />
-            </Button>
+              <Button variant={"ghost"} size={"sm"} onClick={handleSignOut}>
+                <LogOutIcon className="h-5 w-5" />
+              </Button>
             </div>
           ) : (
             <Button variant={"ghost"} className="bg-white" asChild>
               <Link to="/login">
-                Login <LogInIcon  className="ml-1 h-5 w-5"/>
+                {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
               </Link>
             </Button>
           )}
