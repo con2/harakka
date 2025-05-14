@@ -5,6 +5,8 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { CheckCircle2, InfoIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 //import LoginTest from "./LoginTest"; // Import the test component
 
 export const Login = () => {
@@ -12,30 +14,29 @@ export const Login = () => {
   const reset = searchParams.get("reset");
   const error = searchParams.get("error");
 
+  // Translation
+  const { lang } = useLanguage();
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
-          <CardTitle className="text-center text-xl">Login to your account</CardTitle>
+          <CardTitle className="text-center text-xl">
+            {t.login.title[lang]}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {reset === "success" && (
             <Alert className="mb-4 bg-green-50 border-green-200">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <AlertDescription>
-                Password has been updated successfully. Please log in with your
-                new password.
-              </AlertDescription>
+              <AlertDescription>{t.login.resetSuccess[lang]}</AlertDescription>
             </Alert>
           )}
 
           {error === "expired_link" && (
             <Alert className="mb-4 bg-amber-50 border-amber-200">
               <InfoIcon className="h-4 w-4 text-amber-500" />
-              <AlertDescription>
-                Your password reset link has expired. Please request a new one
-                using the "Forgot password" option below.
-              </AlertDescription>
+              <AlertDescription>{t.login.expiredLink[lang]}</AlertDescription>
             </Alert>
           )}
 
@@ -54,7 +55,7 @@ export const Login = () => {
                     inputFontFamily: "var(--main-font)",
                     labelFontFamily: "var(--main-font)",
                     buttonFontFamily: "var(--main-font)",
-                  }
+                  },
                 },
               },
             }}
@@ -64,6 +65,51 @@ export const Login = () => {
             showLinks={true}
             magicLink={true}
             redirectTo={`${window.location.origin}/auth/callback`}
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: t.login.auth_ui.sign_in.email_label[lang],
+                  email_input_placeholder:
+                    t.login.auth_ui.sign_in.email_input_placeholder[lang],
+                  password_label: t.login.auth_ui.sign_in.password_label[lang],
+                  password_input_placeholder:
+                    t.login.auth_ui.sign_in.password_input_placeholder[lang],
+                  button_label: t.login.auth_ui.sign_in.button_label[lang],
+                  social_provider_text:
+                    t.login.auth_ui.sign_in.social_provider_text[lang],
+                  link_text: t.login.auth_ui.sign_in.link_text[lang],
+                },
+                sign_up: {
+                  email_label: t.login.auth_ui.sign_up.email_label[lang],
+                  email_input_placeholder:
+                    t.login.auth_ui.sign_up.email_input_placeholder[lang],
+                  password_label: t.login.auth_ui.sign_up.password_label[lang],
+                  password_input_placeholder:
+                    t.login.auth_ui.sign_up.password_input_placeholder[lang],
+                  button_label: t.login.auth_ui.sign_up.button_label[lang],
+                  link_text: t.login.auth_ui.sign_up.link_text[lang],
+                },
+                forgotten_password: {
+                  email_label:
+                    t.login.auth_ui.forgotten_password.email_label[lang],
+                  email_input_placeholder:
+                    t.login.auth_ui.forgotten_password.email_input_placeholder[
+                      lang
+                    ],
+                  button_label:
+                    t.login.auth_ui.forgotten_password.button_label[lang],
+                  link_text: t.login.auth_ui.forgotten_password.link_text[lang],
+                },
+                magic_link: {
+                  email_input_label:
+                    t.login.auth_ui.magic_link.email_input_label[lang],
+                  email_input_placeholder:
+                    t.login.auth_ui.magic_link.email_input_placeholder[lang],
+                  button_label: t.login.auth_ui.magic_link.button_label[lang],
+                  link_text: t.login.auth_ui.magic_link.link_text[lang],
+                },
+              },
+            }}
           />
 
           {/* Show test component for debugging */}
