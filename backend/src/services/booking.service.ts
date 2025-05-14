@@ -310,7 +310,7 @@ export class BookingService {
       throw new BadRequestException("User not found");
     }
 
-    await this.mailService.sendMail(
+    /* await this.mailService.sendMail(
       user.email,
       "Booking is successful!",
       `<h1>Hello <strong></strong></h1><p>Your booking has been received. The order has been sent to the admins. </p>
@@ -346,7 +346,7 @@ export class BookingService {
          .join("")}
      </ul>
      <p>Please review the booking and take necessary action.</p>`,
-    );
+    ); */
 
     return warningMessage ? { order, warning: warningMessage } : order;
   }
@@ -473,6 +473,17 @@ export class BookingService {
      <p>Please review the booking and take necessary action.</p>`,
     ); */
 
+    await this.mailService.sendMail({
+      to: user.email,
+      subject: "Booking confirmed!",
+      template: BookingConfirmationEmail({
+        name: user.email ?? "Customer",
+        date: "01.06.2025",
+        location: "Helsinki",
+        items,
+      }),
+    });
+
     return { message: "Booking confirmed" };
   }
 
@@ -584,7 +595,7 @@ export class BookingService {
     }
     // 5.8 send mail to user:
 
-    await this.mailService.sendMail(
+    /* await this.mailService.sendMail(
       user.email,
       "Your booking has been updated!",
       `<h1>Hello <strong></strong></h1>
@@ -621,7 +632,7 @@ export class BookingService {
        .join("")}
    </ul>
    <p>Please review the updated booking and take the necessary action.</p>`,
-    );
+    ); */
 
     return { message: "Booking updated" };
   }
@@ -699,7 +710,7 @@ export class BookingService {
     }
 
     // 6.4 Send mail to user about booking rejection:
-    await this.mailService.sendMail(
+    /*  await this.mailService.sendMail(
       user.email,
       "Your booking has been rejected",
       `<h1>Hello</h1>
@@ -734,7 +745,7 @@ export class BookingService {
         )
         .join("")}
     </ul>`,
-    );
+    ); */
     return { message: "Booking rejected" };
   }
 
@@ -824,7 +835,7 @@ export class BookingService {
     }
 
     // 7.7 send email to user
-    await this.mailService.sendMail(
+    /* await this.mailService.sendMail(
       userProfile.email,
       "Your booking has been cancelled",
       `<h1>Hello,</h1>
@@ -860,7 +871,7 @@ export class BookingService {
         .join("")}
     </ul>
     <p>If this cancellation was unintended, you can restore it from your booking history.</p>`,
-    );
+    ); */
 
     return {
       message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
@@ -955,7 +966,7 @@ export class BookingService {
     // 8.6 send notification email to admin
     const adminEmail = "illusia.rental.service@gmail.com";
 
-    await this.mailService.sendMail(
+    /* await this.mailService.sendMail(
       adminEmail,
       "Booking deleted",
       `<h1>Booking deleted successfully</h1>
@@ -971,7 +982,7 @@ export class BookingService {
     </ul>
     <p>The booking remains in the system but is marked as deleted and not longer visible for the user.</p>`,
     );
-
+ */
     return {
       message: "Booking deleted",
     };
@@ -1018,7 +1029,7 @@ export class BookingService {
     }
 
     // 4. email to the user
-    await this.mailService.sendMail(
+    /*  await this.mailService.sendMail(
       user.email,
       "Items Returned – Thank You!",
       `<h1>Thank you!</h1>
@@ -1050,7 +1061,7 @@ export class BookingService {
       .join("")}
   </ul>
   <p>Inventory has been updated accordingly.</p>`,
-    );
+    ); */
 
     return { message: "Items returned successfully" };
   }
@@ -1200,7 +1211,7 @@ export class BookingService {
     }
 
     // 11.6 email to the user
-    await this.mailService.sendMail(
+    /* await this.mailService.sendMail(
       user.email,
       "Pickup Confirmed",
       `<h1>Pickup Confirmed</h1>
@@ -1223,7 +1234,7 @@ export class BookingService {
     <li>Order ID: ${orderItem.order_id}</li>
   </ul>
   <p>Updated storage stock: ${newCount}</p>`,
-    );
+    ); */
 
     return {
       message: `Pickup confirmed for item ${orderItem.item_id}`,
