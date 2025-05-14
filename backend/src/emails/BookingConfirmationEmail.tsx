@@ -1,3 +1,4 @@
+import * as React from "react";
 import {
   Html,
   Head,
@@ -11,12 +12,17 @@ interface BookingConfirmationEmailProps {
   name: string;
   date: string;
   location: string;
+  items: {
+    item_id: string;
+    quantity: number;
+  }[];
 }
 
-export const BookingConfirmationEmail = ({
+const BookingConfirmationEmail = ({
   name,
   date,
   location,
+  items,
 }: BookingConfirmationEmailProps) => (
   <Html>
     <Head />
@@ -30,6 +36,17 @@ export const BookingConfirmationEmail = ({
       <Container>
         <Text>Hallo {name},</Text>
         <Text>Deine Buchung wurde erfolgreich bestätigt!</Text>
+        <Text>
+          <strong>Bestellte Artikel:</strong>
+        </Text>
+        <ul>
+          {items.map((item, index) => (
+            <li key={index}>
+              Artikel-ID: {item.item_id}, Menge: {item.quantity}
+            </li>
+          ))}
+        </ul>
+
         <Text>
           <strong>Datum:</strong> {date}
           <br />
