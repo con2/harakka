@@ -11,16 +11,22 @@ import { Input } from "../ui/input";
 import { useOutletContext } from "react-router-dom";
 import TimeframeSelector from "../TimeframeSelector";
 import { LoaderCircle, Search } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
+import { FiltersState } from "@/types";
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
-  const filters = useOutletContext<any>(); // Get filters from context
+  const filters = useOutletContext<FiltersState>(); // Get filters from context
   const dispatch = useAppDispatch();
 
   // Redux state selectors
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
+
+  // Translation
+  const { lang } = useLanguage();
 
   //state for search query
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,7 +45,6 @@ const ItemsList: React.FC = () => {
     const isWithinAvailabilityRange =
       item.items_number_available >= filters.itemsNumberAvailable[0] &&
       item.items_number_available <= filters.itemsNumberAvailable[1];
-    // Filter by timeframe availability (TODO: replace placeholder - needs backend implementation)
 
     // filter by average rating
     const matchesRating =
@@ -66,7 +71,7 @@ const ItemsList: React.FC = () => {
         filters.tagIds.includes(tag.id),
       );
     // add tags filter here
-    // right now the englih tags are not found
+    // right now the english tags are not found
 
     // Filter by location
     const matchesLocation =
@@ -89,14 +94,18 @@ const ItemsList: React.FC = () => {
     return (
       <div className="flex justify-center items-center">
         <LoaderCircle className="animate-spin w-10 h-10 text-secondary" />{" "}
-        {/* Displaying loader component */}
       </div>
     );
   }
 
   // Error handling
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <div>
+        {t.itemsList.error[lang]}
+        {error}
+      </div>
+    );
   }
 
   return (
@@ -106,7 +115,7 @@ const ItemsList: React.FC = () => {
         <div className="relative w-full sm:max-w-md bg-white">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
           <Input
-            placeholder="Search items by name, category, tags, or description"
+            placeholder={t.itemsList.searchPlaceholder[lang]}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
@@ -120,7 +129,7 @@ const ItemsList: React.FC = () => {
       {/* Render the list of filtered items */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8">
         {filteredItems.length === 0 ? (
-          <p>No items found</p> // Message when no items exist
+          <p>{t.itemsList.noItemsFound[lang]}</p> // Message when no items exist
         ) : (
           filteredItems.map((item) => <ItemCard key={item.id} item={item} />)
         )}
