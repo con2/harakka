@@ -53,7 +53,6 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   // Translation
   const { getTranslation } = useTranslation<ItemTranslation>();
-  // Get the translated item content
   const itemContent = getTranslation(item, "fi") as ItemTranslation | undefined;
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
@@ -365,7 +364,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             <p className="text-xs text-slate-400 italic m-0">
               {startDate && endDate
                 ? availabilityInfo.availableQuantity > 0
-                  ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity} ${t.itemCard.units[lang]}`
+                  ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
                   : `${t.itemCard.notAvailable[lang]}`
                 : `${t.itemCard.totalUnits[lang]}: ${item.items_number_available}`}
             </p>
@@ -401,7 +400,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                 {!startDate || !endDate ? (
                   <p>{t.itemCard.selectDatesFirst[lang]}</p>
                 ) : (
-                  <p>{t.itemCard.selectValidQuantity[lang]}</p>
+                  <p>{t.itemCard.selectValidQuantity[lang]} </p>
                 )}
               </TooltipContent>
             )}
