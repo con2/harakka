@@ -284,6 +284,10 @@ export const t = {
       fi: "Oppaat",
       en: "Guides",
     },
+    contactUs: {
+      fi: "Ota yhteyttä",
+      en: "Contact Us",
+    },
     toast: {
       title: {
         fi: "Vahvista uloskirjautuminen",
@@ -740,6 +744,206 @@ export const t = {
     copyright: {
       fi: "Kaikki oikeudet pidätetään.",
       en: "All rights reserved.",
+    },
+  },
+
+  // LandingPage translations
+  landingPage: {
+    heading: {
+      fi: "Valmiina viemään LARPisi seuraavalle tasolle?",
+      en: "Ready to level up your next LARP?",
+    },
+    subheading: {
+      fi: "Selaa varustevalikoimaamme, tee varaus verkossa ja herätä maailmasi eloon.",
+      en: "Browse our gear, book online, and bring your world to life.",
+    },
+    button: {
+      fi: "Selaa varastoa",
+      en: "Browse Storage",
+    },
+  },
+
+  // MyOrders translations
+  myOrders: {
+    title: {
+      fi: "Tilaukseni",
+      en: "My Orders",
+    },
+    loading: {
+      fi: "Ladataan tilauksiasi...",
+      en: "Loading your orders...",
+    },
+    error: {
+      loadingError: {
+        fi: "Virhe tilausten lataamisessa",
+        en: "Error loading your orders",
+      },
+      loginRequired: {
+        fi: "Kirjaudu sisään nähdäksesi tilauksesi",
+        en: "Please log in to view your orders",
+      },
+    },
+    buttons: {
+      tryAgain: {
+        fi: "Yritä uudelleen",
+        en: "Try Again",
+      },
+      browseItems: {
+        fi: "Selaa varastotuotteita",
+        en: "Browse Storage Items",
+      },
+      clearFilters: {
+        fi: "Tyhjennä suodattimet",
+        en: "Clear Filters",
+      },
+    },
+    status: {
+      unknown: {
+        fi: "Tuntematon",
+        en: "Unknown",
+      },
+      pending: {
+        fi: "Odottaa",
+        en: "Pending",
+      },
+      confirmed: {
+        fi: "Vahvistettu",
+        en: "Confirmed",
+      },
+      cancelled: {
+        fi: "Peruutettu",
+        en: "Cancelled",
+      },
+      cancelledByUser: {
+        fi: "Käyttäjän peruuttama",
+        en: "Cancelled by user",
+      },
+      cancelledByAdmin: {
+        fi: "Ylläpitäjän peruuttama",
+        en: "Cancelled by admin",
+      },
+      completed: {
+        fi: "Valmis",
+        en: "Completed",
+      },
+      rejected: {
+        fi: "Hylätty",
+        en: "Rejected",
+      },
+      deleted: {
+        fi: "Poistettu",
+        en: "Deleted",
+      },
+    },
+    columns: {
+      orderNumber: {
+        fi: "Tilaus #",
+        en: "Order #",
+      },
+      status: {
+        fi: "Tila",
+        en: "Status",
+      },
+      date: {
+        fi: "Päivämäärä",
+        en: "Date",
+      },
+      total: {
+        fi: "Yhteensä",
+        en: "Total",
+      },
+      item: {
+        fi: "Tuote",
+        en: "Item",
+      },
+      quantity: {
+        fi: "Määrä",
+        en: "Quantity",
+      },
+      startDate: {
+        fi: "Alkupäivä",
+        en: "Start Date",
+      },
+      endDate: {
+        fi: "Loppupäivä",
+        en: "End Date",
+      },
+      subtotal: {
+        fi: "Välisumma",
+        en: "Subtotal",
+      },
+    },
+    emptyState: {
+      title: {
+        fi: "Sinulla ei ole vielä tilauksia",
+        en: "You don't have any orders yet",
+      },
+      description: {
+        fi: "Tilauksesi näkyvät täällä",
+        en: "Items you order will appear here",
+      },
+    },
+    orderDetails: {
+      title: {
+        fi: "Tilauksen tiedot #",
+        en: "Order Details #",
+      },
+      customerInfo: {
+        fi: "Asiakkaan tiedot",
+        en: "Customer Information",
+      },
+      orderInfo: {
+        fi: "Tilauksen tiedot",
+        en: "Order Information",
+      },
+      items: {
+        fi: "Tuotteet",
+        en: "Items",
+      },
+      total: {
+        fi: "Yhteensä:",
+        en: "Total:",
+      },
+    },
+    mobile: {
+      status: {
+        fi: "Tila:",
+        en: "Status:",
+      },
+      total: {
+        fi: "Yhteensä:",
+        en: "Total:",
+      },
+      item: {
+        fi: "Tuote:",
+        en: "Item:",
+      },
+      quantity: {
+        fi: "Määrä:",
+        en: "Quantity:",
+      },
+      start: {
+        fi: "Alku:",
+        en: "Start:",
+      },
+      end: {
+        fi: "Loppu:",
+        en: "End:",
+      },
+      subtotal: {
+        fi: "Välisumma:",
+        en: "Subtotal:",
+      },
+    },
+    filter: {
+      searchPlaceholder: {
+        fi: "Hae tilausnumerolla",
+        en: "Search order #",
+      },
+      allStatuses: {
+        fi: "Kaikki tilat",
+        en: "All statuses",
+      },
     },
   },
 };
