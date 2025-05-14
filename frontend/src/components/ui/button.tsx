@@ -16,7 +16,7 @@ const buttonVariants = cva(
         outline:
           "bg-highlight2 text-white rounded-[1rem] border border-transparent shadow-xs px-3 py-1 hover:bg-white hover:text-highlight2 hover:border-highlight2 transition-colors",
         secondary:
-          "bg-white text-secondary border-1 border-secondary shadow-xs px-3 py-1 hover:bg-secondary hover:text-white hover:border-secondary dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "bg-white text-secondary rounded-[1rem] border border-secondary shadow-xs px-3 py-1 hover:bg-secondary hover:text-white hover:border-secondary",
         ghost:
           "bg-transparent text-secondary hover:bg-secondary hover:text-white px-3 py-1 transition-colors",
       },
