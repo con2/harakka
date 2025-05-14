@@ -35,7 +35,7 @@ const BookingConfirmationEmail = ({
     >
       <Container>
         <Text>Hallo {name},</Text>
-        <Text>Deine Buchung wurde erfolgreich bestätigt!</Text>
+        <Text>Deine Buchung wurde erfolgreich bestätigt! mit react email</Text>
         <Text>
           <strong>Bestellte Artikel:</strong>
         </Text>
