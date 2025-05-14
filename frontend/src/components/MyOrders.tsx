@@ -6,6 +6,8 @@ import {
   selectOrdersError,
   selectUserOrders,
   updateOrder,
+  deleteOrder,
+  cancelOrder,
 } from "@/store/slices/ordersSlice";
 import { BookingOrder, BookingItem } from "@/types";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
@@ -129,6 +131,7 @@ const MyOrders = () => {
           orderId: editingOrder.id,
           items: updatedItems,
         }));
+        dispatch(cancelOrder(editingOrder.id))
         toast.warning("All items removed — order cancelled.");
         if (user?.id) {
           dispatch(getUserOrders(user.id));
