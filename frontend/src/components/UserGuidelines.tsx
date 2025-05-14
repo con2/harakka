@@ -23,7 +23,7 @@ export const UserGuide: React.FC = () => {
               <AccordionContent>
                 <ol className="list-decimal ml-6 space-y-2 text-gray-700">
                   <li>
-                    Go to the <strong>Login</strong> page ➡️
+                    Go to the <strong>Login</strong> page
                   </li>
                   <li>
                     You can register or create your account using Google email.
@@ -99,11 +99,10 @@ export const UserGuide: React.FC = () => {
                       Click on <strong>Admin Panel</strong> to manage:
                     </p>
                     <ul className="list-disc ml-6 space-y-1 text-gray-700">
-                      <li>Users</li>
-                      <li>Teams</li>
                       <li>Orders</li>
                       <li>Items</li>
                       <li>Tags</li>
+                      <li>Users</li>
                       <li>Settings</li>
                     </ul>
                   </AccordionContent>
