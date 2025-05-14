@@ -21,7 +21,7 @@ import { S3Service } from "./services/s3-supabase.service";
 import { InvoiceService } from "./services/invoice.service";
 import { StorageLocationsController } from "./controllers/storage-locations.controller";
 import { StorageLocationsService } from "./services/storage-locations.service";
-import { MailModule } from './mail/mail.module';
+import { MailModule } from "./mail/mail.module";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
