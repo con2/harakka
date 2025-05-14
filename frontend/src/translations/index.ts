@@ -381,4 +381,85 @@ export const t = {
       },
     },
   },
+
+  // PasswordReset translations
+  passwordReset: {
+    title: {
+      fi: "Nollaa salasana",
+      en: "Reset Password",
+    },
+    updating: {
+      fi: "Päivitetään salasanaasi...",
+      en: "Updating your password...",
+    },
+    errors: {
+      emptyPassword: {
+        fi: "Salasanakenttä on tyhjä tai sitä ei löydy",
+        en: "Password field not found or empty",
+      },
+      noToken: {
+        fi: "URL:ssa ei ole pääsytunnistetta",
+        en: "No access token found in URL",
+      },
+      updateFailed: {
+        fi: "Virhe salasanan päivityksessä",
+        en: "Error updating password",
+      },
+      unexpected: {
+        fi: "Tapahtui odottamaton virhe",
+        en: "An unexpected error occurred",
+      },
+    },
+    // Auth UI translations for update_password view
+    auth_ui: {
+      password_label: {
+        fi: "Uusi salasana",
+        en: "New Password",
+      },
+      password_input_placeholder: {
+        fi: "Syötä uusi salasanasi",
+        en: "Enter your new password",
+      },
+      button_label: {
+        fi: "Päivitä salasana",
+        en: "Update Password",
+      },
+    },
+  },
+
+  // PasswordResetResult translations
+  passwordResetResult: {
+    success: {
+      title: {
+        fi: "Salasanan nollaus onnistui",
+        en: "Password Reset Successful",
+      },
+      description: {
+        fi: "Salasanasi on nollattu onnistuneesti. Voit nyt käyttää uutta salasanaasi tilillesi kirjautumiseen.",
+        en: "Your password has been reset successfully. You can now use your new password to access your account.",
+      },
+      button: {
+        fi: "Siirry etusivulle",
+        en: "Go to Dashboard",
+      },
+    },
+    error: {
+      title: {
+        fi: "Salasanan nollaus epäonnistui",
+        en: "Password Reset Failed",
+      },
+      description: {
+        fi: "Pyydä uusi salasanan nollauslinkki.",
+        en: "Please request a new password reset link.",
+      },
+      linkExpired: {
+        fi: "Linkki on vanhentunut tai virheellinen",
+        en: "Link has expired or is invalid",
+      },
+      button: {
+        fi: "Takaisin kirjautumissivulle",
+        en: "Back to Login",
+      },
+    },
+  },
 };
