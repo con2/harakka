@@ -20,37 +20,39 @@ export const toastConfirm = ({
   onCancel,
 }: ToastConfirmOptions) => {
   toast.custom((t) => (
-    <Card className="w-[360px] shadow-lg border">
-      <CardHeader>
-        <CardTitle className="text-lg">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2">
-        <p className="text-sm text-muted-foreground">{description}</p>
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              toast.dismiss(t);
-              onCancel?.();
-            }}
-          >
-            {cancelText}
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={async () => {
-              toast.dismiss(t);
-              try {
-                await onConfirm();
-              } catch (err) {
-                toast.error("Action failed.");
-              }
-            }}
-          >
-            {confirmText}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <div onMouseDown={(e) => e.stopPropagation()}>
+      <Card className="w-[360px] shadow-lg border">
+        <CardHeader>
+          <CardTitle className="text-lg" style={{ zIndex: 9999, pointerEvents: "auto" }}>{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2">
+          <p className="text-sm text-muted-foreground">{description}</p>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                toast.dismiss(t);
+                onCancel?.();
+              }}
+            >
+              {cancelText}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                toast.dismiss(t);
+                try {
+                  await onConfirm();
+                } catch (err) {
+                  toast.error("Action failed.");
+                }
+              }}
+            >
+              {confirmText}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   ));
 };
