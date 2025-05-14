@@ -4,7 +4,9 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LoaderCircle } from "lucide-react"; // Import the loader icon
+import { LoaderCircle } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const PasswordReset = () => {
   const navigate = useNavigate();
@@ -15,6 +17,9 @@ const PasswordReset = () => {
   // Add states to manage loading and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Translation
+  const { lang } = useLanguage();
 
   useEffect(() => {
     // Ensure we're not authenticated when on password reset page
@@ -149,7 +154,9 @@ const PasswordReset = () => {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
-          <CardTitle className="text-center text-xl">Reset Password</CardTitle>
+          <CardTitle className="text-center text-xl">
+            {t.passwordReset.title[lang]}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {error && (
@@ -162,7 +169,7 @@ const PasswordReset = () => {
             <div className="flex flex-col items-center justify-center py-8">
               <LoaderCircle className="h-8 w-8 animate-spin text-primary mb-4" />
               <p className="text-center text-muted-foreground">
-                Updating your password...
+                {t.passwordReset.updating[lang]}
               </p>
             </div>
           ) : (
@@ -177,11 +184,28 @@ const PasswordReset = () => {
                       brand: "#9537c7",
                       brandAccent: "#44195b",
                     },
+                    fonts: {
+                      bodyFontFamily: "var(--main-font)",
+                      inputFontFamily: "var(--main-font)",
+                      labelFontFamily: "var(--main-font)",
+                      buttonFontFamily: "var(--main-font)",
+                    },
                   },
                 },
               }}
               queryParams={{
                 disableAutoLogin: "true",
+              }}
+              localization={{
+                variables: {
+                  update_password: {
+                    password_label:
+                      t.passwordReset.auth_ui.password_label[lang],
+                    password_input_placeholder:
+                      t.passwordReset.auth_ui.password_input_placeholder[lang],
+                    button_label: t.passwordReset.auth_ui.button_label[lang],
+                  },
+                },
               }}
             />
           )}

@@ -12,13 +12,17 @@ import {
   selectItemImages,
 } from "../../store/slices/itemImagesSlice";
 import { Button } from "../../components/ui/button";
-import { ChevronLeft, Clock, LoaderCircle } from "lucide-react";
+import { ChevronLeft, Clock, Info, LoaderCircle } from "lucide-react";
 import Rating from "../ui/rating";
 import { addToCart } from "../../store/slices/cartSlice";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import imagePlaceholder from "@/assets/defaultImage.jpg";
+import { useTranslation } from "@/hooks/useTranslation";
+import { t } from "@/translations";
+import { useLanguage } from "@/context/LanguageContext";
+import { ItemTranslation } from "@/types";
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -94,9 +98,15 @@ const ItemsDetails: React.FC = () => {
           endDate: endDate,
         }),
       );
-      toast.success(`${item.translations.fi.item_name} added to cart`);
+      toast.success(`${itemContent?.item_name || "Item"} added to cart`); //item added to cart
     }
   };
+
+  // Translation
+  const { getTranslation } = useTranslation<ItemTranslation>();
+  // Get the translated item content
+  const itemContent = getTranslation(item, "fi") as ItemTranslation | undefined;
+  const { lang } = useLanguage();
 
   // Fetch item and images
   useEffect(() => {
@@ -143,7 +153,7 @@ const ItemsDetails: React.FC = () => {
           onClick={() => navigate(-1)}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
         >
-          <ChevronLeft /> Back
+          <ChevronLeft /> {t.itemDetails.buttons.back[lang]}
         </Button>
       </div>
       <div className="flex flex-col md:flex-row gap-8">
@@ -155,7 +165,7 @@ const ItemsDetails: React.FC = () => {
             <div className="border rounded-md bg-slate-50 overflow-hidden h-full w-full">
               <img
                 src={mainImage}
-                alt={item.translations.en.item_name || "Item image"}
+                alt={itemContent?.item_name || "Tuotteen kuva"}
                 className="w-full h-full object-cover cursor-pointer hover:opacity-90 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-in-out"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
@@ -172,7 +182,7 @@ const ItemsDetails: React.FC = () => {
               <div className="w-[400px] h-[400px] border rounded-lg shadow-lg bg-white flex justify-center items-center enlarged-image">
                 <img
                   src={mainImage}
-                  alt="Full preview"
+                  alt={itemContent?.item_name || "Tuotteen kuva"}
                   className="object-contain max-w-full max-h-full"
                 />
               </div>
@@ -190,7 +200,7 @@ const ItemsDetails: React.FC = () => {
                 >
                   <img
                     src={img.image_url}
-                    alt={img.alt_text || "Detail image"}
+                    alt={itemContent?.item_name || "Tuotteen kuva"}
                     className="w-full h-20 object-cover"
                     loading="lazy"
                     onError={(e) => {
@@ -206,27 +216,35 @@ const ItemsDetails: React.FC = () => {
 
         {/* Right Side - Item Details */}
         <div className="md:w-2/3 w-full space-y-6 order-1 md:order-2">
-          <h2 className="text-2xl font-normal text-left">
-            {item.translations.fi.item_name.charAt(0).toUpperCase() +
-              item.translations.fi.item_name.slice(1)}
+          <h2 className="text-2xl font-normal text-left mb-0">
+            {itemContent?.item_name
+              ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
+              : "Tuote"}
           </h2>
 
           {/* Location Details Section */}
           {item.location_details && (
             <div className="mt-4 border-t pt-4">
-              <h3 className="text-lg font-medium mb-2">Location Information</h3>
+              <h3 className="text-lg font-medium mb-2">
+                {t.itemDetails.locations.locationInfo[lang]}
+              </h3>
 
               <div className="space-y-2">
                 {item.location_details.name && (
                   <div className="flex items-start">
-                    <span className="font-medium w-24">Location:</span>
+                    <span className="font-medium w-24">
+                      {t.itemDetails.locations.location[lang]}:
+                    </span>
                     <span>{item.location_details.name}</span>
                   </div>
                 )}
 
                 {item.location_details.address && (
                   <div className="flex items-start">
-                    <span className="font-medium w-24">Address:</span>
+                    <span className="font-medium w-24">
+                      {" "}
+                      {t.itemDetails.locations.address[lang]}:
+                    </span>
                     <span>{item.location_details.address}</span>
                   </div>
                 )}
@@ -237,13 +255,15 @@ const ItemsDetails: React.FC = () => {
           {/* Rating Component */}
           {item.average_rating ? (
             <div className="flex items-center justify-start">
-              <Rating value={item.average_rating ?? 0} readOnly />
+              <Rating rating={item.average_rating ?? 0} readOnly />
             </div>
           ) : (
             ""
           )}
           <p className="text-md text-primary">
-            {item.translations.fi.item_description}
+            {itemContent?.item_description
+              ? `${itemContent.item_description.charAt(0).toUpperCase()}${itemContent.item_description.slice(1)}`
+              : "Ei kuvausta saatavilla"}
           </p>
 
           {/* Display selected booking timeframe if it exists */}
@@ -252,16 +272,21 @@ const ItemsDetails: React.FC = () => {
               <div className="bg-slate-100 max-w-[250px] rounded-md mb-2 p-2">
                 <div className="flex items-center text-sm text-slate-400">
                   <Clock className="h-4 w-4 mr-1" />
-                  <span className="font-medium text-xs">Selected booking</span>
+                  <span className="font-medium text-xs">
+                    {t.itemDetails.info.timeframe[lang]}
+                  </span>
                 </div>
                 <p className="text-xs font-medium m-0">
-                  {format(startDate, "PPP")} - {format(endDate, "PPP")}
+                  {format(startDate, "d MMM yyyy")} -{" "}
+                  {format(endDate, "d MMM yyyy")}
                 </p>
               </div>
               {/* Booking Section */}
 
               <div className="flex flex-row justify-center items-center">
-                <span className="text-sm font-medium w-20">Quantity</span>
+                <span className="text-sm font-medium w-20">
+                  {t.itemDetails.items.quantity[lang]}
+                </span>
                 <Button
                   variant="outline"
                   size="sm"
@@ -291,18 +316,19 @@ const ItemsDetails: React.FC = () => {
                   className="bg-secondary rounded-2xl text-white border-secondary border-1 hover:text-secondary hover:bg-white flex-1 mt-6"
                   onClick={handleAddToCart}
                 >
-                  Add to Cart
+                  {t.itemDetails.items.addToCart[lang]}
                 </Button>
               </div>
             </div>
           ) : (
-            <p>
-              To book this item, please first select booking dates{" "}
-              <Link to="/storage" className="text-secondary underline">
-                here
+            <div className="flex flex-row items-center">
+              <Info className="mr-1 text-secondary size-4" />{" "}
+              {t.itemDetails.info.noDates[lang]}
+              <Link to="/storage" className="ml-1 text-secondary underline">
+                {t.itemDetails.info.here[lang]}
               </Link>
               .
-            </p>
+            </div>
           )}
         </div>
       </div>

@@ -67,3 +67,19 @@ export interface ErrorState {
   message: string | null;
   context: ErrorContext;
 }
+
+export type FilterValue =
+  | boolean
+  | number[]
+  | [number, number]
+  | string[]
+  | string;
+
+export interface FiltersState {
+  isActive: boolean;
+  averageRating: number[];
+  itemsNumberAvailable: [number, number];
+  itemTypes: string[];
+  tagIds: string[];
+  locationIds: string[];
+}

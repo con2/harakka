@@ -21,6 +21,8 @@ import { S3Service } from "./services/s3-supabase.service";
 import { InvoiceService } from "./services/invoice.service";
 import { StorageLocationsController } from "./controllers/storage-locations.controller";
 import { StorageLocationsService } from "./services/storage-locations.service";
+import { MailController } from "./controllers/mail.controller";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { MailModule } from "./mail/mail.module";
 
 // Load and expand environment variables before NestJS modules initialize
@@ -34,6 +36,14 @@ dotenvExpand.expand(env);
       isGlobal: true,
       ignoreEnvFile: true,
     }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000, // time to live in milliseconds (1 minute)
+          limit: 5, // max 5 requests per minute
+        },
+      ],
+    }),
     MailModule,
   ],
   controllers: [
@@ -44,6 +54,7 @@ dotenvExpand.expand(env);
     TagController,
     ItemImagesController,
     StorageLocationsController,
+    MailController,
   ],
   providers: [
     AppService,
