@@ -20,6 +20,13 @@ import { selectSelectedUser } from "@/store/slices/usersSlice";
 import OrderCancelButton from "./OrderCancelButton";
 import OrderDetailsButton from "./Admin/OrderDetailsButton";
 import { DataTable } from "./ui/data-table";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"; 
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const MyOrders = () => {
   const dispatch = useAppDispatch();
@@ -32,6 +39,7 @@ const MyOrders = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -283,9 +291,75 @@ const MyOrders = () => {
               Browse Storage Items
             </Button>
           </div>
+        ) : isMobile ? (
+          <Accordion type="multiple" className="w-full space-y-2">
+            {filteredOrders.map((order) => (
+              <AccordionItem key={order.id} value={String(order.id)}>
+                <AccordionTrigger className="text-left">
+                  <div className="flex flex-col w-full">
+                    <span className="text-sm font-medium">Order #{order.order_number}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(order.created_at)} · {order.status}
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-1">
+                    {/* Order Info */}
+                    <div className="text-sm">
+                      <p>
+                        <strong>Status:</strong> <StatusBadge status={order.status} />
+                      </p>
+                      {/* <p>
+                        <strong>Total:</strong> €{order.final_amount?.toFixed(2) || "0.00"}
+                      </p> */}
+                    </div>
+        
+                    {/* Order Items */}
+                    <div className="bg-slate-50 rounded-md">
+                      <p className="text-md font-semibold">Items:</p>
+                      <div className="space-y-2 p-1">
+                        {order.order_items?.map((item) => (
+                          <div
+                            key={item.id}
+                            className="text-xs space-y-1 border-b pb-2 last:border-b-0 last:pb-0"
+                          >
+                            <p>
+                              <strong>Item:</strong>{" "}
+                              {(item.item_name || `Item ${item.item_id}`).charAt(0).toUpperCase() +
+                                (item.item_name || `Item ${item.item_id}`).slice(1)}
+                            </p>
+                            <p>
+                              <strong>Quantity:</strong> {item.quantity}
+                            </p>
+                            <p>
+                              <strong>Start:</strong> {formatDate(item.start_date)}
+                            </p>
+                            <p>
+                              <strong>End:</strong> {formatDate(item.end_date)}
+                            </p>
+                            <p>
+                              <strong>Subtotal:</strong> €{item.subtotal?.toFixed(2) || "0.00"}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+        
+                    {/* Actions */}
+                    <div className="flex justify-end gap-2 mt-3">
+                      {order.status === "pending" && (
+                        <OrderCancelButton id={order.id} closeModal={() => {}} />
+                      )}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         ) : (
           <PaginatedDataTable columns={columns} data={filteredOrders} />
-        )}
+        )}        
       </div>
 
       {/* Order Details Modal */}
@@ -333,16 +407,6 @@ const MyOrders = () => {
                     €{selectedOrder.final_amount?.toFixed(2) || "0.00"}
                   </div>
                 </div>
-              </div>
-
-              {/* Order Modal Actions */}
-              <div className="flex justify-center space-x-2">
-                {selectedOrder.status === "pending" && (
-                  <OrderCancelButton
-                    id={selectedOrder.id}
-                    closeModal={() => setShowDetailsModal(false)}
-                  />
-                )}
               </div>
             </div>
           </DialogContent>

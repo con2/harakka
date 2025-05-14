@@ -17,6 +17,7 @@ const OrderDetailsButton = ({
       onClick={() => onViewDetails(order)}
       className="hover:text-slate-900 hover:bg-slate-300"
       size="sm"
+      title="View Details"
     >
       <Eye size={10} className="mr-1" />
     </Button>
