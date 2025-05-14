@@ -5,7 +5,7 @@ import {
   Body,
   Container,
   Text,
-  Preview,
+  Section,
 } from "@react-email/components";
 
 interface BookingConfirmationEmailProps {
@@ -25,34 +25,75 @@ const BookingConfirmationEmail = ({
   items,
 }: BookingConfirmationEmailProps) => (
   <Html>
-    <Head />
-    <Preview>Buchungsbestätigung für {name}</Preview>
+    <Head>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Roboto+Slab:wght@400;700&display=swap"
+        rel="stylesheet"
+      />
+    </Head>
     <Body
       style={{
-        fontFamily: "Helvetica, Arial, sans-serif",
+        fontFamily: "'Lato', sans-serif",
         backgroundColor: "#f9f9f9",
+        margin: 0,
+        padding: "20px",
+        color: "#252525", // ersetzt: oklch(0.145 0 0)
       }}
     >
-      <Container>
-        <Text>Hallo {name},</Text>
-        <Text>Deine Buchung wurde erfolgreich bestätigt! mit react email</Text>
-        <Text>
-          <strong>Bestellte Artikel:</strong>
+      <Container
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "10px",
+          padding: "30px",
+          maxWidth: "600px",
+          margin: "0 auto",
+          border: "1px solid #ebebeb", // ersetzt: oklch(0.922 0 0)
+        }}
+      >
+        {/* Logo entfernt */}
+
+        <Text
+          style={{
+            fontFamily: "'Roboto Slab', serif",
+            fontSize: "24px",
+            fontWeight: 700,
+            color: "#9537c7", // secondary
+            textAlign: "center",
+            marginBottom: "20px",
+          }}
+        >
+          Buchungsbestätigung
         </Text>
-        <ul>
+
+        <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
+          Hallo <strong>{name}</strong>,
+        </Text>
+
+        <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
+          Deine Buchung wurde erfolgreich bestätigt.
+        </Text>
+
+        <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
+          Bestellte Artikel:
+        </Text>
+        <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
           {items.map((item, index) => (
-            <li key={index}>
-              Artikel-ID: {item.item_id}, Menge: {item.quantity}
+            <li key={index} style={{ marginBottom: "4px" }}>
+              Artikel-ID: <strong>{item.item_id}</strong>, Menge:{" "}
+              <strong>{item.quantity}</strong>
             </li>
           ))}
         </ul>
 
-        <Text>
+        <Text style={{ marginBottom: "20px" }}>
           <strong>Datum:</strong> {date}
           <br />
           <strong>Ort:</strong> {location}
         </Text>
-        <Text>Vielen Dank für deine Buchung.</Text>
+
+        <Text style={{ fontSize: "16px", marginTop: "20px" }}>
+          Vielen Dank für deine Buchung.
+        </Text>
       </Container>
     </Body>
   </Html>
