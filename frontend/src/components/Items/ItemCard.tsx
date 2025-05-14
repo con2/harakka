@@ -53,7 +53,6 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   // Translation
   const { getTranslation } = useTranslation<ItemTranslation>();
-  // Get the translated item content
   const itemContent = getTranslation(item, "fi") as ItemTranslation | undefined;
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
