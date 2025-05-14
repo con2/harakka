@@ -14,7 +14,7 @@ import { MailService } from "./mail.service";
   generateFinnishReferenceNumber,
 } from "../utils/invoice-functions";
  import { InvoiceService } from "./invoice.service"; */
-import { render } from "@react-email/render";
+import { EmailTemplateHelper } from "../utils/email-template-functions";
 import BookingConfirmationEmail from "../emails/BookingConfirmationEmail";
 
 @Injectable()
@@ -427,61 +427,13 @@ export class BookingService {
     invoice.generateInvoice(orderId); */
 
     // 4.6 send mail to user:
-    const { data: user, error: userError } = await supabase
-      .from("user_profiles")
-      .select("email")
-      .eq("id", userId)
-      .single();
-
-    if (userError || !user) {
-      throw new BadRequestException("User not found");
-    }
-
-    /* await this.mailService.sendMail(
-      user.email,
-      "Booking is confirmed!",
-      `<h1>Hello <strong></strong></h1><p>Your booking has been confirmed. </p>
-      <p>Details:</p>
-     <ul>
-       ${items
-         .map(
-           (item) =>
-             `<li>Item: ${item.item_id}, Quantity: ${item.quantity}</li>`,
-         )
-         .join("")}
-     </ul>
-      <p>Please make sure you can pick them up on the booked start date</p>`,
-    );
-
-    // 4.7 send email to admin about new booking
-    const adminEmail = "illusia.rental.service@gmail.com";
-
-    await this.mailService.sendMail(
-      adminEmail,
-      "Booking confirmed",
-      `<h1>New Booking Received</h1>
-     <p>You have successfully confirmed the booking</p>
-     <p>Details:</p>
-     <ul>
-       ${items
-         .map(
-           (item) =>
-             `<li>Item: ${item.item_id}, Quantity: ${item.quantity}</li>`,
-         )
-         .join("")}
-     </ul>
-     <p>Please review the booking and take necessary action.</p>`,
-    ); */
+    const emailHelper = new EmailTemplateHelper(this.supabaseService);
+    const emailData = await emailHelper.prepareDataForConfirmationMail(orderId);
 
     await this.mailService.sendMail({
-      to: user.email,
+      to: emailData.email,
       subject: "Booking confirmed!",
-      template: BookingConfirmationEmail({
-        name: user.email ?? "Customer",
-        date: "01.06.2025",
-        location: "Helsinki",
-        items,
-      }),
+      template: BookingConfirmationEmail(emailData),
     });
 
     return { message: "Booking confirmed" };
