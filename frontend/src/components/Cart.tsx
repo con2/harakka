@@ -12,10 +12,14 @@ import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Trash2, Calendar, LoaderCircle } from "lucide-react";
-import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { toastConfirm } from "./ui/toastConfirm";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { useTranslation } from "@/hooks/useTranslation";
+import { ItemTranslation } from "@/types";
 
 const Cart: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -25,6 +29,11 @@ const Cart: React.FC = () => {
   const orderLoading = useAppSelector(selectOrdersLoading);
   const userProfile = useAppSelector(selectSelectedUser);
   const user = useAppSelector(selectSelectedUser);
+
+  // Translation
+  const { getTranslation } = useTranslation<ItemTranslation>();
+  const { lang } = useLanguage();
+  const { formatDate } = useFormattedDate();
 
   // Get start and end dates from the timeframe Redux slice
   const { startDate: startDateStr, endDate: endDateStr } = useAppSelector(
@@ -46,49 +55,47 @@ const Cart: React.FC = () => {
 
   const handleClearCart = () => {
     toastConfirm({
-      title: "Clear Cart",
-      description: "Are you sure you want to clear your cart? This action cannot be undone.",
-      confirmText: "Yes, clear it",
-      cancelText: "No, keep it",
+      title: t.cart.toast.clearCartTitle[lang],
+      description: t.cart.toast.clearCartDescription[lang],
+      confirmText: t.cart.toast.confirmClear[lang],
+      cancelText: t.cart.toast.cancelClear[lang],
       onConfirm: () => {
         dispatch(clearCart());
-        toast.success("Cart cleared");
+        toast.success(t.cart.toast.cartCleared[lang]);
       },
       onCancel: () => {
-        toast.success("Cart not cleared");
+        toast.success(t.cart.toast.cartNotCleared[lang]);
       },
     });
   };
 
   const handleCheckout = async () => {
     if (!user) {
-      toast.error("Please log in to complete your order");
+      toast.error(t.cart.toast.loginRequired[lang]);
       navigate("/login");
       return;
     }
 
     if (!userProfile || !userProfile.id) {
-      toast.error(
-        "Your profile is being loaded. Please try again in a moment.",
-      );
+      toast.error(t.cart.toast.profileLoading[lang]);
       return;
     }
 
     //check to ensure valid user ID
-    console.log("Using user ID for order:", userProfile.id);
+    //console.log("Using user ID for order:", userProfile.id);
 
     // Try to read stored user ID from localStorage
     const storedUserId = localStorage.getItem("userId");
-    console.log("User ID in localStorage:", storedUserId);
+    //console.log("User ID in localStorage:", storedUserId);
 
     if (storedUserId !== userProfile.id) {
       // Synchronize the localStorage ID with profile ID
       localStorage.setItem("userId", userProfile.id);
-      console.log("Updated localStorage user ID to match profile");
+      //console.log("Updated localStorage user ID to match profile");
     }
 
     if (!startDate || !endDate || cartItems.length === 0) {
-      toast.error("Please select dates and add items to cart");
+      toast.error(t.cart.toast.selectDatesAndItems[lang]);
       return;
     }
 
@@ -98,7 +105,7 @@ const Cart: React.FC = () => {
     );
 
     if (invalidItems.length > 0) {
-      toast.error(`Some items exceed available quantity`);
+      toast.error(t.cart.toast.itemsExceedQuantity[lang]);
       return;
     }
 
@@ -113,14 +120,15 @@ const Cart: React.FC = () => {
       })),
     };
 
-    console.log("User object:", user);
-    console.log("User ID:", user.id);
+    //console.log("User object:", user);
+    //console.log("User ID:", user.id);
 
     try {
       await toast.promise(dispatch(createOrder(orderData)).unwrap(), {
-        loading: "Creating your order...",
-        success: "Order created successfully!",
-        error: (err) => `Error: ${err || "Failed to create order"}`,
+        loading: t.cart.toast.creatingOrder[lang],
+        success: t.cart.toast.orderCreated[lang],
+        error: (err) =>
+          `${t.cart.toast.orderError[lang]}${err || t.cart.toast.orderError[lang]}`,
       });
 
       // Clear cart after successful order
@@ -142,15 +150,15 @@ const Cart: React.FC = () => {
   if (cartItems.length === 0) {
     return (
       <div className="p-8 text-center space-y-4">
-        <h2 className="text-xl">Your cart is empty</h2>
-        <p>Add some items to your cart to see them here.</p>
+        <h2 className="text-xl">{t.cart.empty.title[lang]}</h2>
+        <p>{t.cart.empty.description[lang]}</p>
         <div className="mt-4">
-        <Button
-          onClick={() => (navigate("/storage"))}
-          className="bg-secondary text-white border:secondary font-semibold px-6 py-5 rounded-lg shadow hover:bg-white hover:text-secondary hover:border-secondary transition"
-        >
-          Browse Storage
-        </Button>
+          <Button
+            onClick={() => navigate("/storage")}
+            className="bg-secondary text-white border:secondary font-semibold px-6 py-5 rounded-lg shadow hover:bg-white hover:text-secondary hover:border-secondary transition"
+          >
+            {t.cart.empty.browseButton[lang]}
+          </Button>
         </div>
       </div>
     );
@@ -167,7 +175,9 @@ const Cart: React.FC = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-10 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white">
-      <p className="text-xl mb-4 text-left pl-2 text-secondary">Review your cart before checkout</p>
+      <p className="text-xl mb-4 text-left pl-2 text-secondary">
+        {t.cart.review.title[lang]}
+      </p>
       <div className="flex flex-col md:flex-row gap-10 mb-2">
         <div className="flex flex-col flex-2/3">
           {/* Booking Timeframe Summary */}
@@ -176,119 +186,140 @@ const Cart: React.FC = () => {
               <div className="flex items-center my-1">
                 <div className="flex items-center gap-2 flex-1/3">
                   <Calendar className="h-5 w-5 text-secondary" />
-                  <span className="text-md">Booking Timeframe</span>
+                  <span className="text-md">
+                    {t.cart.booking.timeframe[lang]}
+                  </span>
                 </div>
                 <div className="flex items-center justify-end flex-2/3">
                   <p className="text-md font-semibold mr-3">
-                    {format(new Date(startDate), "PPP")}
+                    {formatDate(startDate, "d MMM yyyy")}
                     <span className="font-semibold"> -</span>{" "}
-                    {format(new Date(endDate), "PPP")}
+                    {formatDate(endDate, "d MMM yyyy")}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    ({rentalDays} {rentalDays === 1 ? "day" : "days"} total)
+                    ({rentalDays}{" "}
+                    {rentalDays === 1
+                      ? t.cart.booking.day[lang]
+                      : t.cart.booking.days[lang]}{" "}
+                    {t.cart.booking.total[lang]})
                   </p>
                 </div>
               </div>
             ) : (
-              <p className="text-amber-600">
-                No booking period selected. Please select dates first.
-              </p>
+              <p className="text-amber-600">{t.cart.booking.noDates[lang]}</p>
             )}
           </div>
 
           {/* Cart Items */}
           <div className="space-y-4 p-2">
-            {cartItems.map((cartItem) => (
-              <div key={cartItem.item.id} className="flex flex-col border-b pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-medium mb-2">
-                    {cartItem.item.translations.fi.item_name.toLowerCase().replace(/^./, c => c.toUpperCase())}
+            {cartItems.map((cartItem) => {
+              const itemContent = getTranslation(cartItem.item, lang) as
+                | ItemTranslation
+                | undefined;
 
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                    {cartItem.item.translations.fi.item_type.toLowerCase().replace(/^./, c => c.toUpperCase())}
+              return (
+                <div
+                  key={cartItem.item.id}
+                  className="flex flex-col border-b pb-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-medium mb-2">
+                        {itemContent?.item_name
+                          .toLowerCase()
+                          .replace(/^./, (c) => c.toUpperCase())}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {itemContent?.item_type
+                          .toLowerCase()
+                          .replace(/^./, (c) => c.toUpperCase())}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {t.cart.item.available[lang]}{" "}
+                        {cartItem.item.items_number_available}{" "}
+                        {t.cart.item.units[lang]}
+                      </p>
+                    </div>
 
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      Total {cartItem.item.items_number_available} units available
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleQuantityChange(
+                              cartItem.item.id,
+                              cartItem.quantity - 1,
+                            )
+                          }
+                        >
+                          -
+                        </Button>
+                        <Input
+                          type="text"
+                          value={cartItem.quantity}
+                          onChange={(e) =>
+                            handleQuantityChange(
+                              cartItem.item.id,
+                              parseInt(e.target.value),
+                            )
+                          }
+                          className="w-12 mx-2 text-center"
+                          max={cartItem.item.items_number_available}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleQuantityChange(
+                              cartItem.item.id,
+                              cartItem.quantity + 1,
+                            )
+                          }
+                          disabled={
+                            cartItem.quantity >=
+                            cartItem.item.items_number_available
+                          }
+                        >
+                          +
+                        </Button>
+                      </div>
+                      <div className="w-20 text-right">
+                        €{(cartItem.item.price * cartItem.quantity).toFixed(2)}
+                      </div>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        onClick={() =>
-                          handleQuantityChange(
-                            cartItem.item.id,
-                            cartItem.quantity - 1,
-                          )
-                        }
+                        onClick={() => handleRemoveItem(cartItem.item.id)}
                       >
-                        -
-                      </Button>
-                      <Input
-                        type="text"
-                        value={cartItem.quantity}
-                        onChange={(e) =>
-                          handleQuantityChange(
-                            cartItem.item.id,
-                            parseInt(e.target.value),
-                          )
-                        }
-                        className="w-12 mx-2 text-center"
-                        max={cartItem.item.items_number_available}
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handleQuantityChange(
-                            cartItem.item.id,
-                            cartItem.quantity + 1,
-                          )
-                        }
-                        disabled={
-                          cartItem.quantity >= cartItem.item.items_number_available
-                        }
-                      >
-                        +
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="w-20 text-right">
-                      €{(cartItem.item.price * cartItem.quantity).toFixed(2)}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveItem(cartItem.item.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
         <div className="flex flex-col w-full md:w-1/3 mt-6 md:mt-0 max-h-[80vh] overflow-y-auto sticky top-24">
           <div className="bg-slate-50 p-4 rounded-lg w-full mb-4">
-            <h3 className="font-semibold mb-3">Order Summary</h3>
+            <h3 className="font-semibold mb-3">{t.cart.summary.title[lang]}</h3>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Items subtotal:</span>
+                <span>{t.cart.summary.subtotal[lang]}</span>
                 <span>€{cartTotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Rental period:</span>
+                <span>{t.cart.summary.rentalPeriod[lang]}</span>
                 <span>
-                  {rentalDays} {rentalDays === 1 ? "day" : "days"}
+                  {rentalDays}{" "}
+                  {rentalDays === 1
+                    ? t.cart.booking.day[lang]
+                    : t.cart.booking.days[lang]}
                 </span>
               </div>
               <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
-                <span>Total:</span>
+                <span>{t.cart.summary.total[lang]}</span>
                 <span>€{(cartTotal * rentalDays).toFixed(2)}</span>
               </div>
             </div>
@@ -305,61 +336,23 @@ const Cart: React.FC = () => {
             {orderLoading ? (
               <>
                 <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
+                {t.cart.buttons.processing[lang]}
               </>
             ) : (
-              "Checkout"
+              t.cart.buttons.checkout[lang]
             )}
           </Button>
         </div>
-
-        {/* <div className="flex flex-col w-full md:w-1/3 items-start mt-6 md:mt-0"> */}
-          {/* Order Summary
-          <div className="bg-slate-50 p-4 rounded-lg mb-6 w-full">
-            <h3 className="font-semibold mb-3">Order Summary</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Items subtotal:</span>
-                <span>€{cartTotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Rental period:</span>
-                <span>
-                  {rentalDays} {rentalDays === 1 ? "day" : "days"}
-                </span>
-              </div>
-              <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
-                <span>Total:</span>
-                <span>€{(cartTotal * rentalDays).toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-        </div> */}
       </div>
+
       {/* Action Buttons */}
       <div className="flex flex-row items-center justify-between gap-4">
         <Button
           onClick={handleClearCart}
           className="text-primary/50 bg-background rounded-2xl border-1 border-primary/50 hover:bg-primary hover:text-white ml-4"
         >
-          Clear Cart
+          {t.cart.buttons.clearCart[lang]}
         </Button>
-        {/* <Button
-          className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary w-1/3"
-          disabled={
-            !startDate || !endDate || orderLoading || cartItems.length === 0
-          }
-          onClick={handleCheckout}
-        >
-          {orderLoading ? (
-            <>
-              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            "Checkout"
-          )}
-        </Button> */}
       </div>
     </div>
   );

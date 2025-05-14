@@ -6,7 +6,7 @@ import { Clock } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getItemById } from "@/store/slices/itemsSlice";
 import { Item } from "../../types/item";
-import { format } from "date-fns";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { Input } from "../ui/input";
 import { addToCart } from "@/store/slices/cartSlice";
 import { toast } from "sonner";
@@ -24,6 +24,10 @@ import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { ordersApi } from "@/api/services/orders";
 import { ItemImageAvailabilityInfo } from "@/types/storage";
 import { MapPin } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
+import { t } from "@/translations";
+import { useLanguage } from "@/context/LanguageContext";
+import { ItemTranslation } from "@/types";
 
 interface ItemsCardProps {
   item: Item;
@@ -46,6 +50,12 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       isChecking: false,
       error: null,
     });
+
+  // Translation
+  const { getTranslation } = useTranslation<ItemTranslation>();
+  const itemContent = getTranslation(item, "fi") as ItemTranslation | undefined;
+  const { lang } = useLanguage();
+  const { formatDate } = useFormattedDate();
 
   // Enhanced image finding with memoization to prevent recalculation on every render
   const itemImagesForCurrentItem = useMemo(
@@ -163,7 +173,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           endDate: endDate ? endDate : undefined,
         }),
       );
-      toast.success(`${item.translations.fi.item_name} added to cart`);
+      toast.success(
+        `${itemContent?.item_name} ${t.itemCard.addedToCart[lang]}`,
+      );
     }
   };
 
@@ -221,7 +233,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         )}
         <img
           src={currentImageUrl || imagePlaceholder}
-          alt={item.translations?.en?.item_name || "Storage item"}
+          alt={itemContent?.item_name || "Tuotteen kuva"}
           className="w-full h-full object-cover transition-opacity duration-300"
           onLoad={() => {
             if (imageLoadingTimeoutRef.current) {
@@ -259,8 +271,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       {/* Item Details */}
       <div>
         <h2 className="text-lg text-primary font-normal text-center mb-0">
-          {item.translations.fi.item_name.charAt(0).toUpperCase() +
-            item.translations.fi.item_name.slice(1)}
+          {itemContent?.item_name
+            ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
+            : "Tuote"}
         </h2>
         {/* Display location name */}
         {item.location_details && (
@@ -276,10 +289,13 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         <div className="bg-slate-100 p-2 rounded-md mb-2">
           <div className="flex items-center text-sm text-slate-400">
             <Clock className="h-4 w-4 mr-1" />
-            <span className="font-medium text-xs">Selected booking</span>
+            <span className="font-medium text-xs">
+              {t.itemCard.timeframe[lang]}
+            </span>
           </div>
           <p className="text-xs font-medium m-0">
-            {format(startDate, "PPP")} - {format(endDate, "PPP")}
+            {formatDate(startDate, "d MMM yyyy")} -{" "}
+            {formatDate(endDate, "d MMM yyyy")}
           </p>
         </div>
       )}
@@ -288,7 +304,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       <div>
         <div className="flex flex-wrap items-center space-y-2 justify-between">
           <div className="flex items-center">
-            <span className="text-sm font-medium w-20">Quantity</span>
+            <span className="text-sm font-medium w-20">
+              {" "}
+              {t.itemDetails.items.quantity[lang]}
+            </span>
           </div>
           <div className="flex items-center">
             <Button
@@ -335,17 +354,19 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         <div className="flex items-center justify-end mb-3 mt-1">
           {availabilityInfo.isChecking ? (
             <p className="text-xs text-slate-400 italic m-0">
-              Checking availability...
+              {t.itemCard.checkingAvailability[lang]}
             </p>
           ) : availabilityInfo.error ? (
             <p className="text-xs text-red-500 italic m-0">
-              {availabilityInfo.error}
+              {t.itemCard.availabilityError[lang]}
             </p>
           ) : (
             <p className="text-xs text-slate-400 italic m-0">
               {startDate && endDate
-                ? `Available: ${availabilityInfo.availableQuantity} units`
-                : `Total units: ${item.items_number_available}`}
+                ? availabilityInfo.availableQuantity > 0
+                  ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
+                  : `${t.itemCard.notAvailable[lang]}`
+                : `${t.itemCard.totalUnits[lang]}: ${item.items_number_available}`}
             </p>
           )}
         </div>
@@ -370,16 +391,16 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                     pointerEvents: isAddToCartDisabled ? "none" : "auto",
                   }}
                 >
-                  Add to Cart
+                  {t.itemDetails.items.addToCart[lang]}
                 </Button>
               </span>
             </TooltipTrigger>
             {isAddToCartDisabled && (
               <TooltipContent>
                 {!startDate || !endDate ? (
-                  <p>Please select booking dates first</p>
+                  <p>{t.itemCard.selectDatesFirst[lang]}</p>
                 ) : (
-                  <p>Please select valid quantity</p>
+                  <p>{t.itemCard.selectValidQuantity[lang]} </p>
                 )}
               </TooltipContent>
             )}
@@ -392,7 +413,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         onClick={() => handleItemClick(item.id)}
         className="w-full bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
       >
-        View Details
+        {t.itemCard.viewDetails ? t.itemCard.viewDetails[lang] : "Katso tiedot"}
       </Button>
     </Card>
   );
