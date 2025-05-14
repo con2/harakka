@@ -11,16 +11,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
+} from "@/components/ui/form";
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 type ContactFormData = z.infer<typeof contactSchema>;
 
 export const ContactForm = () => {
+  // Translation
+  const { lang } = useLanguage();
+
   // 1. define the form
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
@@ -44,36 +49,45 @@ export const ContactForm = () => {
         `, // The actual message body
         to: "illusia.rental.service@gmail.com", // Admin email where contact form is sent
       });
-  
+
       // Handle success or failure
       if (response.data.accepted && response.data.accepted.length > 0) {
-        toast.success("Message sent successfully!");
+        toast.success(t.contactForm.toast.success[lang]);
         form.reset();
       } else {
-        toast.error("Failed to send message.");
+        toast.error(t.contactForm.toast.error[lang]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || "Server error.");
+        toast.error(
+          error.response?.data?.message ||
+            t.contactForm.toast.serverError[lang],
+        );
       } else {
-        toast.error("Something went wrong.");
+        toast.error(t.contactForm.toast.genericError[lang]);
       }
     }
-  };  
+  };
 
   return (
     <div className="max-w-md w-full mx-auto px-4 sm:px-6 md:px-8 m-10">
-      <h2 className="text-2xl font-bold mb-4">Contact Us</h2>
+      <h2 className="text-2xl font-bold mb-4">{t.contactForm.title[lang]}</h2>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-[400px] mx-auto">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4 max-w-[400px] mx-auto"
+        >
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Your Email</FormLabel>
+                <FormLabel>{t.contactForm.email.label[lang]}</FormLabel>
                 <FormControl>
-                  <Input placeholder="you@example.com" {...field} />
+                  <Input
+                    placeholder={t.contactForm.email.placeholder[lang]}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -85,9 +99,12 @@ export const ContactForm = () => {
             name="subject"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Subject</FormLabel>
+                <FormLabel>{t.contactForm.subject.label[lang]}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Subject of your message" {...field} />
+                  <Input
+                    placeholder={t.contactForm.subject.placeholder[lang]}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -99,9 +116,13 @@ export const ContactForm = () => {
             name="message"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Message</FormLabel>
+                <FormLabel>{t.contactForm.message.label[lang]}</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Your message..." rows={5} {...field} />
+                  <Textarea
+                    placeholder={t.contactForm.message.placeholder[lang]}
+                    rows={5}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -114,7 +135,9 @@ export const ContactForm = () => {
               size={"sm"}
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? "Sending..." : "Send Message"}
+              {form.formState.isSubmitting
+                ? t.contactForm.button.sending[lang]
+                : t.contactForm.button.send[lang]}
             </Button>
           </div>
         </form>
