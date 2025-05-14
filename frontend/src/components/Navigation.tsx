@@ -120,10 +120,9 @@ export const Navigation = () => {
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/contact-us" className="flex items-center gap-1">
-                    Contact Us
+                    {t.navigation.contactUs[lang]}
                   </Link>
                 </NavigationMenuLink>
-
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
