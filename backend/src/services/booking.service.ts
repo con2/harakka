@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   ForbiddenException,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { SupabaseService } from "./supabase.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
@@ -427,14 +428,28 @@ export class BookingService {
     invoice.generateInvoice(orderId); */
 
     // 4.6 send mail to user:
-    const emailHelper = new EmailTemplateHelper(this.supabaseService);
-    const emailData = await emailHelper.prepareDataForConfirmationMail(orderId);
+    let emailData;
 
-    await this.mailService.sendMail({
-      to: emailData.email,
-      subject: "Booking confirmed!",
-      template: BookingConfirmationEmail(emailData),
-    });
+    try {
+      const emailHelper = new EmailTemplateHelper(this.supabaseService);
+      emailData = await emailHelper.prepareDataForConfirmationMail(orderId);
+    } catch (error) {
+      console.error("Failed to prepare email data:", error);
+      throw new InternalServerErrorException(
+        "Could not generate email content",
+      );
+    }
+
+    try {
+      await this.mailService.sendMail({
+        to: emailData.email,
+        subject: "Booking confirmed!",
+        template: BookingConfirmationEmail(emailData),
+      });
+    } catch (error) {
+      console.error("Failed to send booking email:", error);
+      throw new InternalServerErrorException("Email could not be sent");
+    }
 
     return { message: "Booking confirmed" };
   }
