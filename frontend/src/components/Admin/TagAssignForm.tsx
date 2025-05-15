@@ -5,19 +5,26 @@ import {
   fetchTagsForItem,
   selectAllTags,
   selectSelectedTags,
+  selectLoading,
 } from "@/store/slices/tagSlice";
 import { Checkbox } from "../ui/checkbox";
 import { Button } from "../ui/button";
 import { TagAssignFormProps } from "@/types";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const TagAssignmentForm: React.FC<TagAssignFormProps> = ({ itemId }) => {
   const dispatch = useAppDispatch();
   const [selectedTags, setSelectedTags] = useState<string[]>([]); // Track selected tag ids
+  const loading = useAppSelector(selectLoading);
 
   // Get all tags and the selected tags for the specific item
   const tags = useAppSelector(selectAllTags); // Get all available tags
   const existingTags = useAppSelector(selectSelectedTags); // Tags assigned to this item
+  // Translation
+  const { lang } = useLanguage();
 
   useEffect(() => {
     dispatch(fetchTagsForItem(itemId)); // Fetch existing tags assigned to the item
@@ -42,45 +49,54 @@ const TagAssignmentForm: React.FC<TagAssignFormProps> = ({ itemId }) => {
   };
 
   // Update the handleSubmit function
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       // Dispatch the action to assign selected tags to the item
-      dispatch(assignTagToItem({ itemId, tagIds: selectedTags }));
-      toast.success("Tags assigned successfully!");
+      await dispatch(
+        assignTagToItem({ itemId, tagIds: selectedTags }),
+      ).unwrap();
+      toast.success(t.tagAssignForm.messages.success[lang]);
     } catch (error) {
-      toast.error("Failed to assign tags");
+      toast.error(t.tagAssignForm.messages.error[lang]);
       console.error("Tag assignment error:", error);
     }
   };
 
   return (
     <div>
-      <h2>Assign Tags to Item</h2>
+      <h2>{t.tagAssignForm.title[lang]}</h2>
       <form onSubmit={handleSubmit}>
-        <div>
-          {tags.map((tag) => (
-            <div key={tag.id} className="flex items-center gap-2">
-              <Checkbox
-                checked={
-                  selectedTags.includes(tag.id) ||
-                  existingTags?.some(
-                    (existingTag) => existingTag.id === tag.id,
-                  ) ||
-                  false
-                } // Pre-check if tag is assigned
-                onChange={() => handleCheckboxChange(tag.id)}
-              />
-              <label>
-                {tag.translations?.fi?.name ||
-                  tag.translations?.en?.name ||
-                  "Unnamed"}
-              </label>
-            </div>
-          ))}
-        </div>
+        {tags.length > 0 ? (
+          <div className="space-y-2 my-4">
+            {tags.map((tag) => (
+              <div key={tag.id} className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedTags.includes(tag.id)}
+                  onCheckedChange={() => handleCheckboxChange(tag.id)}
+                />
+                <label>
+                  {tag.translations?.fi?.name ||
+                    tag.translations?.en?.name ||
+                    "Unnamed"}
+                </label>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 my-4">{t.tagAssignForm.noTags[lang]}</p>
+        )}
 
-        <Button type="submit">Save</Button>
+        <Button type="submit" disabled={loading} className="mt-4">
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {t.tagAssignForm.buttons.saving[lang]}
+            </>
+          ) : (
+            t.tagAssignForm.buttons.save[lang]
+          )}
+        </Button>
       </form>
     </div>
   );
