@@ -22,7 +22,8 @@ import { InvoiceService } from "./services/invoice.service";
 import { StorageLocationsController } from "./controllers/storage-locations.controller";
 import { StorageLocationsService } from "./services/storage-locations.service";
 import { MailController } from "./controllers/mail.controller";
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from "@nestjs/throttler";
+import { MailModule } from "./mail/mail.module";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -40,9 +41,10 @@ dotenvExpand.expand(env);
         {
           ttl: 60000, // time to live in milliseconds (1 minute)
           limit: 5, // max 5 requests per minute
-        }
-      ]
+        },
+      ],
     }),
+    MailModule,
   ],
   controllers: [
     AppController,

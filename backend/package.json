@@ -17,7 +17,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "email:dev": "email dev -p 3001"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.802.0",
@@ -28,20 +29,23 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/throttler": "^6.4.0",
     "@react-email/components": "^0.0.38",
-    "@react-email/render": "^1.1.0",
+    "@react-email/render": "^1.1.2",
     "@supabase/supabase-js": "^2.49.4",
     "@types/multer": "^1.4.12",
     "@types/nodemailer": "^6.4.17",
     "bwip-js": "^4.6.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "dayjs": "^1.11.13",
+    "dayjs-plugin-utc": "^0.1.2",
     "full-stack-booking-app": "file:..",
     "googleapis": "^148.0.0",
     "multer": "^1.4.5-lts.2",
     "nodemailer": "^7.0.2",
     "pdfkit": "^0.17.1",
+    "react-email": "^4.0.13",
+    "react-mail": "^0.0.1",
     "reflect-metadata": "^0.2.2",
-    "resend": "^4.4.1",
     "rxjs": "^7.8.1",
     "uuid": "^11.1.0"
   },
@@ -89,5 +93,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "overrides": {
+    "wrap-ansi": "7.0.0",
+    "string-width": "4.1.0"
   }
 }

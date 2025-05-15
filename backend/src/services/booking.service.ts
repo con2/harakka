@@ -7,13 +7,21 @@ import { SupabaseService } from "./supabase.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
 import { MailService } from "./mail.service";
-import {
+/*import {
   generateBarcodeImage,
   generateInvoicePDF,
   generateVirtualBarcode,
   generateFinnishReferenceNumber,
 } from "../utils/invoice-functions";
-import { InvoiceService } from "./invoice.service";
+ import { InvoiceService } from "./invoice.service"; */
+import * as dayjs from "dayjs";
+import * as utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
+import BookingConfirmationEmail from "../emails/BookingConfirmationEmail";
+import { EmailProps } from "src/interfaces/mail.interface";
+import { BookingCancelledEmail } from "src/emails/BookingCancelledEmail";
+import { start } from "repl";
+import e from "express";
 
 @Injectable()
 export class BookingService {
@@ -308,7 +316,7 @@ export class BookingService {
       throw new BadRequestException("User not found");
     }
 
-    await this.mailService.sendMail(
+    /* await this.mailService.sendMail(
       user.email,
       "Booking is successful!",
       `<h1>Hello <strong></strong></h1><p>Your booking has been received. The order has been sent to the admins. </p>
@@ -344,7 +352,7 @@ export class BookingService {
          .join("")}
      </ul>
      <p>Please review the booking and take necessary action.</p>`,
-    );
+    ); */
 
     return warningMessage ? { order, warning: warningMessage } : order;
   }
@@ -371,7 +379,7 @@ export class BookingService {
     // 4.2 Get all the order items
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
-      .select("item_id, quantity")
+      .select("item_id, quantity, start_date, item_id, quantity")
       .eq("order_id", orderId);
 
     if (itemsError) {
@@ -425,51 +433,83 @@ export class BookingService {
     invoice.generateInvoice(orderId); */
 
     // 4.6 send mail to user:
+    const today = dayjs().format("DD.MM.YYYY");
+
+    // get user profile
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
-      .select("email")
-      .eq("id", userId)
+      .select("full_name, email")
+      .eq("id", order.user_id)
       .single();
 
     if (userError || !user) {
-      throw new BadRequestException("User not found");
+      throw new BadRequestException("Could not load user profile");
     }
 
-    await this.mailService.sendMail(
-      user.email,
-      "Booking is confirmed!",
-      `<h1>Hello <strong></strong></h1><p>Your booking has been confirmed. </p>
-      <p>Details:</p>
-     <ul>
-       ${items
-         .map(
-           (item) =>
-             `<li>Item: ${item.item_id}, Quantity: ${item.quantity}</li>`,
-         )
-         .join("")}
-     </ul>
-      <p>Please make sure you can pick them up on the booked start date</p>`,
-    );
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
 
-    // 4.7 send email to admin about new booking
-    const adminEmail = "illusia.rental.service@gmail.com";
+    const enrichedItems: EnrichedItem[] = items || [];
 
-    await this.mailService.sendMail(
-      adminEmail,
-      "Booking confirmed",
-      `<h1>New Booking Received</h1>
-     <p>You have successfully confirmed the booking</p>
-     <p>Details:</p>
-     <ul>
-       ${items
-         .map(
-           (item) =>
-             `<li>Item: ${item.item_id}, Quantity: ${item.quantity}</li>`,
-         )
-         .join("")}
-     </ul>
-     <p>Please review the booking and take necessary action.</p>`,
-    );
+    for (const item of enrichedItems) {
+      const { data: storageItem, error: storageItemError } = await supabase
+        .from("storage_items")
+        .select("translations, location_id")
+        .eq("id", item.item_id)
+        .single();
+
+      if (storageItemError || !storageItem) {
+        throw new BadRequestException("Could not fetch storage item details");
+      }
+
+      item.translations = storageItem.translations;
+      item.location_id = storageItem.location_id;
+    }
+
+    // adapt to email:
+    const pickupDate = dayjs(enrichedItems[0].start_date).format("DD.MM.YYYY");
+
+    const { data: location, error: locationError } = await supabase
+      .from("storage_locations")
+      .select("name, address")
+      .eq("id", enrichedItems[0].location_id)
+      .single();
+
+    const emailItems = enrichedItems.map((item) => ({
+      item_id: item.item_id,
+      quantity: item.quantity,
+      translations: {
+        fi: {
+          name: item.translations?.fi.item_name ?? "Unknown",
+        },
+        en: {
+          name: item.translations?.en.item_name ?? "Unknown",
+        },
+      },
+    }));
+
+    const emailData: EmailProps = {
+      name: user.full_name,
+      email: user.email,
+      pickupDate,
+      today,
+      location: location?.name,
+      items: emailItems,
+    };
+
+    await this.mailService.sendMail({
+      to: emailData.email,
+      subject: "Booking confirmed!",
+      template: BookingConfirmationEmail(emailData),
+    });
 
     return { message: "Booking confirmed" };
   }
@@ -582,7 +622,7 @@ export class BookingService {
     }
     // 5.8 send mail to user:
 
-    await this.mailService.sendMail(
+    /* await this.mailService.sendMail(
       user.email,
       "Your booking has been updated!",
       `<h1>Hello <strong></strong></h1>
@@ -619,7 +659,7 @@ export class BookingService {
        .join("")}
    </ul>
    <p>Please review the updated booking and take the necessary action.</p>`,
-    );
+    ); */
 
     return { message: "Booking updated" };
   }
@@ -697,7 +737,7 @@ export class BookingService {
     }
 
     // 6.4 Send mail to user about booking rejection:
-    await this.mailService.sendMail(
+    /*  await this.mailService.sendMail(
       user.email,
       "Your booking has been rejected",
       `<h1>Hello</h1>
@@ -732,7 +772,7 @@ export class BookingService {
         )
         .join("")}
     </ul>`,
-    );
+    ); */
     return { message: "Booking rejected" };
   }
 
@@ -762,7 +802,7 @@ export class BookingService {
 
     const { data: userProfile, error: userProfileError } = await supabase
       .from("user_profiles")
-      .select("role, email")
+      .select("role, email, full_name")
       .eq("id", userId)
       .single();
 
@@ -822,43 +862,68 @@ export class BookingService {
     }
 
     // 7.7 send email to user
-    await this.mailService.sendMail(
-      userProfile.email,
-      "Your booking has been cancelled",
-      `<h1>Hello,</h1>
-    <p>Your booking with order number <strong>${orderId}</strong> has been cancelled.</p>
-    <p>Details of the cancelled booking:</p>
-    <ul>
-      ${orderItems
-        .map(
-          (item) =>
-            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
-        )
-        .join("")}
-    </ul>
-        <p>If this cancellation was unintended, you can restore it from your booking history.</p>
-    <p>If you have any questions, please feel free to contact us.</p>`,
-    );
 
-    // 7.8 email to admin
-    const adminEmail = "illusia.rental.service@gmail.com";
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      end_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
 
-    await this.mailService.sendMail(
-      adminEmail,
-      "The booking has been cancelled",
-      `<h1>Hello,</h1>
-    <p>The booking with order number <strong>${orderId}</strong> has been successfully cancelled.</p>
-    <p>Details of the cancelled booking:</p>
-    <ul>
-      ${orderItems
-        .map(
-          (item) =>
-            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
-        )
-        .join("")}
-    </ul>
-    <p>If this cancellation was unintended, you can restore it from your booking history.</p>`,
-    );
+    const enrichedItems: EnrichedItem[] = orderItems || [];
+
+    for (const item of enrichedItems) {
+      const { data: storageItem, error: storageItemError } = await supabase
+        .from("storage_items")
+        .select("translations, location_id")
+        .eq("id", item.item_id)
+        .single();
+
+      if (storageItemError || !storageItem) {
+        throw new BadRequestException("Could not fetch storage item details");
+      }
+      item.translations = storageItem.translations;
+    }
+
+    const startDate = dayjs(orderItems[0].start_date).format("DD.MM.YYYY");
+
+    const emailItems = enrichedItems.map((item) => ({
+      item_id: item.item_id,
+      quantity: item.quantity,
+      start_date: item.start_date,
+      end_date: item.end_date,
+      translations: {
+        fi: {
+          name: item.translations?.fi.item_name ?? "Unknown",
+        },
+        en: {
+          name: item.translations?.en.item_name ?? "Unknown",
+        },
+      },
+    }));
+
+    const { data: orderNum } = await supabase
+      .from("orders")
+      .select("order_number")
+      .eq("id", orderId)
+      .single();
+
+    // send mail
+    await this.mailService.sendMail({
+      to: userProfile.email,
+      subject: "Booking Cancelled",
+      template: BookingCancelledEmail({
+        orderId: orderNum?.order_number?.toString() ?? "Unknown",
+        startDate,
+        items: emailItems,
+        recipientRole: "user", // oder dynamisch bestimmen, falls nötig
+      }),
+    });
 
     return {
       message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
@@ -953,7 +1018,7 @@ export class BookingService {
     // 8.6 send notification email to admin
     const adminEmail = "illusia.rental.service@gmail.com";
 
-    await this.mailService.sendMail(
+    /* await this.mailService.sendMail(
       adminEmail,
       "Booking deleted",
       `<h1>Booking deleted successfully</h1>
@@ -969,7 +1034,7 @@ export class BookingService {
     </ul>
     <p>The booking remains in the system but is marked as deleted and not longer visible for the user.</p>`,
     );
-
+ */
     return {
       message: "Booking deleted",
     };
@@ -1016,7 +1081,7 @@ export class BookingService {
     }
 
     // 4. email to the user
-    await this.mailService.sendMail(
+    /*  await this.mailService.sendMail(
       user.email,
       "Items Returned – Thank You!",
       `<h1>Thank you!</h1>
@@ -1048,7 +1113,7 @@ export class BookingService {
       .join("")}
   </ul>
   <p>Inventory has been updated accordingly.</p>`,
-    );
+    ); */
 
     return { message: "Items returned successfully" };
   }
@@ -1198,7 +1263,7 @@ export class BookingService {
     }
 
     // 11.6 email to the user
-    await this.mailService.sendMail(
+    /* await this.mailService.sendMail(
       user.email,
       "Pickup Confirmed",
       `<h1>Pickup Confirmed</h1>
@@ -1221,7 +1286,7 @@ export class BookingService {
     <li>Order ID: ${orderItem.order_id}</li>
   </ul>
   <p>Updated storage stock: ${newCount}</p>`,
-    );
+    ); */
 
     return {
       message: `Pickup confirmed for item ${orderItem.item_id}`,
