@@ -1,7 +1,6 @@
 import React from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setTimeframe, clearTimeframe } from "../store/slices/timeframeSlice";
-import { format } from "date-fns";
 import { Calendar } from "./ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import DatePickerButton from "./ui/DatePickerButton";
@@ -10,6 +9,9 @@ import { selectCartItems } from "../store/slices/cartSlice";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Info } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
 
 const TimeframeSelector: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -21,11 +23,13 @@ const TimeframeSelector: React.FC = () => {
 
   const cartItems = useAppSelector(selectCartItems);
 
+  // Translation
+  const { lang } = useLanguage();
+  const { formatDate } = useFormattedDate();
+
   const handleDateChange = (type: "start" | "end", date: Date | undefined) => {
     if (cartItems.length > 0) {
-      toast.warning(
-        "Changing dates will clear your cart. Please complete or clear your current booking first.",
-      );
+      toast.warning(t.timeframeSelector.toast.warning[lang]);
       return;
     }
 
@@ -48,9 +52,7 @@ const TimeframeSelector: React.FC = () => {
 
   const handleClearTimeframe = () => {
     if (cartItems.length > 0) {
-      toast.warning(
-        "Clearing dates will clear your cart. Please complete or clear your current booking first.",
-      );
+      toast.warning(t.timeframeSelector.toast.warning[lang]);
       return;
     }
     dispatch(clearTimeframe());
@@ -59,15 +61,19 @@ const TimeframeSelector: React.FC = () => {
   return (
     <div className="w-full max-w-screen-2xl mx-auto px-4 bg-slate-50 p-6 rounded-lg mb-6 flex flex-col items-center">
       <h2 className="text-lg font-semibold mb-3 flex items-center justify-center">
-        Select Booking Timeframe
+        {t.timeframeSelector.title[lang]}
         <Tooltip>
           <TooltipTrigger asChild>
             <span className="cursor-pointer text-muted-foreground">
               <Info className="ml-1 text-secondary w-4 h-4" />
             </span>
           </TooltipTrigger>
-          <TooltipContent side="top" align="start" className="max-w-sm break-words">
-            Select a timeframe to see available items. All items in your cart will use this booking period.
+          <TooltipContent
+            side="top"
+            align="start"
+            className="max-w-sm break-words"
+          >
+            {t.timeframeSelector.tooltip[lang]}
           </TooltipContent>
         </Tooltip>
       </h2>
@@ -75,12 +81,14 @@ const TimeframeSelector: React.FC = () => {
         {/* Start Date Picker */}
         <div className="flex flex-col items-center gap-2">
           <div className="flex flex-col items-start">
-            <span className="text-xs font-small mb-1 text-muted-foreground">Start Date</span>
+            <span className="text-xs font-small mb-1 text-muted-foreground">
+              {t.timeframeSelector.startDate.label[lang]}
+            </span>
             <Popover>
               <PopoverTrigger asChild>
                 <DatePickerButton
-                  value={startDate ? format(startDate, "PPP") : null}
-                  placeholder="Select start date"
+                  value={startDate ? formatDate(startDate, "d MMM yyyy") : null}
+                  placeholder={t.timeframeSelector.startDate.placeholder[lang]}
                 />
               </PopoverTrigger>
               <PopoverContent className="w-auto max-w-xs p-0 break-words">
@@ -101,12 +109,14 @@ const TimeframeSelector: React.FC = () => {
         {/* End Date Picker */}
         <div className="flex flex-col items-center gap-2">
           <div className="flex flex-col items-start">
-            <span className="text-xs font-small mb-1 text-muted-foreground">End Date</span>
+            <span className="text-xs font-small mb-1 text-muted-foreground">
+              {t.timeframeSelector.endDate.label[lang]}
+            </span>
             <Popover>
               <PopoverTrigger asChild>
                 <DatePickerButton
-                  value={endDate ? format(endDate, "PPP") : null}
-                  placeholder="Select end date"
+                  value={endDate ? formatDate(endDate, "d MMM yyyy") : null}
+                  placeholder={t.timeframeSelector.endDate.placeholder[lang]}
                 />
               </PopoverTrigger>
               <PopoverContent className="w-auto max-w-xs p-0 break-words">
@@ -130,16 +140,6 @@ const TimeframeSelector: React.FC = () => {
           </div>
         </div>
 
-        {/* Clear Button */}
-        {/* {(startDate || endDate) && (
-          <Button
-            size="sm"
-            onClick={handleClearTimeframe}
-            className="mt-5 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white"
-          >
-            Clear Dates
-          </Button>
-        )} */}
         <div className="flex w-full lg:w-auto items-center justify-center">
           <Button
             size="sm"
@@ -148,7 +148,7 @@ const TimeframeSelector: React.FC = () => {
               startDate || endDate ? "visible" : "invisible"
             }`}
           >
-            Clear Dates
+            {t.timeframeSelector.clearDates[lang]}
           </Button>
         </div>
       </div>
