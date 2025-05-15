@@ -18,7 +18,7 @@ import * as dayjs from "dayjs";
 import * as utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 import BookingConfirmationEmail from "../emails/BookingConfirmationEmail";
-import { BookingConfirmationEmailProps } from "src/interfaces/confirmation-mail.interface";
+import { EmailProps } from "src/interfaces/mail.interface";
 
 @Injectable()
 export class BookingService {
@@ -493,7 +493,7 @@ export class BookingService {
       },
     }));
 
-    const emailData: BookingConfirmationEmailProps = {
+    const emailData: EmailProps = {
       name: user.full_name,
       email: user.email,
       pickupDate,

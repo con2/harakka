@@ -10,7 +10,7 @@ import { MailService } from "../services/mail.service";
 import { SendEmailDto } from "src/dto/mail.dto";
 // import { RecaptchaGuard } from "../guards/recaptcha.guard";
 import { Throttle, ThrottlerGuard } from "@nestjs/throttler";
-import { BookingConfirmationEmailProps } from "src/interfaces/confirmation-mail.interface";
+import { EmailProps } from "src/interfaces/mail.interface";
 import { SendMailDto } from "src/dto/send-mail.dto";
 import BookingConfirmationEmail from "src/emails/BookingConfirmationEmail";
 import WelcomeEmail from "../emails/WelcomeEmail";
@@ -51,9 +51,7 @@ export class MailController {
       let templateHtml: React.ReactElement;
 
       if (type === "bookingConfirmation") {
-        templateHtml = BookingConfirmationEmail(
-          data as BookingConfirmationEmailProps,
-        );
+        templateHtml = BookingConfirmationEmail(data as EmailProps);
       } else if (type === "welcome") {
         templateHtml = WelcomeEmail(data);
       } else {
