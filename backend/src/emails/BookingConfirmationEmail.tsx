@@ -7,7 +7,7 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-import { BookingConfirmationEmailProps } from "../interfaces/confirmation-mail.interface";
+import { EmailProps } from "../interfaces/mail.interface";
 
 const BookingConfirmationEmail = ({
   name,
@@ -15,7 +15,7 @@ const BookingConfirmationEmail = ({
   location,
   items,
   today,
-}: BookingConfirmationEmailProps) => (
+}: EmailProps) => (
   <Html>
     <Head>
       <link
@@ -46,7 +46,7 @@ const BookingConfirmationEmail = ({
         <Section
           style={{
             backgroundImage:
-              "url('https://www.flickr.com/photos/hrns/53914430976/in/album-72177720319440057/lightbox/')",
+              "url('https://i0.wp.com/nordiclarp.org/wp-content/uploads/2023/11/Odysseus-warp-core-scaled.jpeg?resize=900%2C1200&ssl=1')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             height: "250px",
@@ -154,9 +154,10 @@ const BookingConfirmationEmail = ({
         </Section>
         <Text style={{ fontSize: "14px", color: "#666666", marginTop: "30px" }}>
           If you have any questions, contact us by answering this mail or use
-          the
+          the{" "}
           <a href="" style={{ color: "#9537C7" }}>
-            contact form
+            {" "}
+            contact form{" "}
           </a>
           in our website.
         </Text>
