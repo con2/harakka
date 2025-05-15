@@ -2,7 +2,6 @@ import {
   Injectable,
   BadRequestException,
   ForbiddenException,
-  InternalServerErrorException,
 } from "@nestjs/common";
 import { SupabaseService } from "./supabase.service";
 import { CreateBookingDto } from "../dto/create-booking.dto";
@@ -15,8 +14,11 @@ import { MailService } from "./mail.service";
   generateFinnishReferenceNumber,
 } from "../utils/invoice-functions";
  import { InvoiceService } from "./invoice.service"; */
-import { EmailTemplateHelper } from "../utils/email-template-functions";
+import * as dayjs from "dayjs";
+import * as utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 import BookingConfirmationEmail from "../emails/BookingConfirmationEmail";
+import { BookingConfirmationEmailProps } from "src/interfaces/confirmation-mail.interface";
 
 @Injectable()
 export class BookingService {
@@ -374,7 +376,7 @@ export class BookingService {
     // 4.2 Get all the order items
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
-      .select("item_id, quantity")
+      .select("item_id, quantity, start_date, item_id, quantity")
       .eq("order_id", orderId);
 
     if (itemsError) {
@@ -428,28 +430,83 @@ export class BookingService {
     invoice.generateInvoice(orderId); */
 
     // 4.6 send mail to user:
-    let emailData;
+    const today = dayjs().format("DD.MM.YYYY");
 
-    try {
-      const emailHelper = new EmailTemplateHelper(this.supabaseService);
-      emailData = await emailHelper.prepareDataForConfirmationMail(orderId);
-    } catch (error) {
-      console.error("Failed to prepare email data:", error);
-      throw new InternalServerErrorException(
-        "Could not generate email content",
-      );
+    // get user profile
+    const { data: user, error: userError } = await supabase
+      .from("user_profiles")
+      .select("full_name, email")
+      .eq("id", order.user_id)
+      .single();
+
+    if (userError || !user) {
+      throw new BadRequestException("Could not load user profile");
     }
 
-    try {
-      await this.mailService.sendMail({
-        to: emailData.email,
-        subject: "Booking confirmed!",
-        template: BookingConfirmationEmail(emailData),
-      });
-    } catch (error) {
-      console.error("Failed to send booking email:", error);
-      throw new InternalServerErrorException("Email could not be sent");
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
+
+    const enrichedItems: EnrichedItem[] = items || [];
+
+    for (const item of enrichedItems) {
+      const { data: storageItem, error: storageItemError } = await supabase
+        .from("storage_items")
+        .select("translations, location_id")
+        .eq("id", item.item_id)
+        .single();
+
+      if (storageItemError || !storageItem) {
+        throw new BadRequestException("Could not fetch storage item details");
+      }
+
+      item.translations = storageItem.translations;
+      item.location_id = storageItem.location_id;
     }
+
+    // adapt to email:
+    const pickupDate = dayjs(enrichedItems[0].start_date).format("DD.MM.YYYY");
+
+    const { data: location, error: locationError } = await supabase
+      .from("storage_locations")
+      .select("name, address")
+      .eq("id", enrichedItems[0].location_id)
+      .single();
+
+    const emailItems = enrichedItems.map((item) => ({
+      item_id: item.item_id,
+      quantity: item.quantity,
+      translations: {
+        fi: {
+          name: item.translations?.fi.item_name ?? "Unknown",
+        },
+        en: {
+          name: item.translations?.en.item_name ?? "Unknown",
+        },
+      },
+    }));
+
+    const emailData: BookingConfirmationEmailProps = {
+      name: user.full_name,
+      email: user.email,
+      pickupDate,
+      today,
+      location: location?.name,
+      items: emailItems,
+    };
+
+    await this.mailService.sendMail({
+      to: emailData.email,
+      subject: "Booking confirmed!",
+      template: BookingConfirmationEmail(emailData),
+    });
 
     return { message: "Booking confirmed" };
   }
