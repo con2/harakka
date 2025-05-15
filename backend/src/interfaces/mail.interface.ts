@@ -1,4 +1,4 @@
-export interface BookingConfirmationEmailProps {
+export interface EmailProps {
   name: string;
   email: string;
   pickupDate: string; // pickup date
