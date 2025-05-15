@@ -24,6 +24,8 @@ import { Input } from "../ui/input";
 import { toast } from "sonner";
 import TagDelete from "./TagDelete";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const TagList = () => {
   const dispatch = useAppDispatch();
@@ -35,6 +37,8 @@ const TagList = () => {
   const [assignmentFilter, setAssignmentFilter] = useState<
     "all" | "assigned" | "unassigned"
   >("all");
+  // Translation
+  const { lang } = useLanguage();
 
   const [editTag, setEditTag] = useState<Tag | null>(null);
   const [editNameFi, setEditNameFi] = useState("");
@@ -94,56 +98,68 @@ const TagList = () => {
       await dispatch(
         updateTag({ id: editTag.id, tagData: updatedTag }),
       ).unwrap();
-      toast.success("Tag updated successfully");
+      toast.success(t.tagList.editModal.messages.success[lang]);
       dispatch(fetchAllTags());
       setEditTag(null);
     } catch {
-      toast.error("Failed to update tag");
+      toast.error(t.tagList.editModal.messages.error[lang]);
     }
   };
 
   const columns: ColumnDef<Tag>[] = [
     {
-      header: "Tag Name (FI)",
+      header: t.tagList.columns.nameFi[lang],
       accessorFn: (row) => row.translations?.fi?.name ?? "—",
       cell: ({ row }) => row.original.translations?.fi?.name ?? "—",
     },
     {
-      header: "Tag Name (EN)",
+      header: t.tagList.columns.nameEn[lang],
       accessorFn: (row) => row.translations?.en?.name ?? "—",
       cell: ({ row }) => row.original.translations?.en?.name ?? "—",
     },
     {
-      header: "Created At",
+      header: t.tagList.columns.createdAt[lang],
       accessorKey: "created_at",
       cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
     },
     {
-      header: "Assigned",
+      header: t.tagList.columns.assigned[lang],
       id: "assigned",
       cell: ({ row }) => {
         const tag = row.original;
         const isUsed = !!tagUsage[tag.id];
         return isUsed ? (
-          <span className="text-highlight2 font-medium">Yes</span>
+          <span className="text-highlight2 font-medium">
+            {t.tagList.assignment.yes[lang]}
+          </span>
         ) : (
-          <span className="text-red-400 font-medium">No</span>
+          <span className="text-red-400 font-medium">
+            {t.tagList.assignment.no[lang]}
+          </span>
         );
       },
     },
     {
-      header: "Assigned To",
+      header: t.tagList.columns.assignedTo[lang],
       id: "assignedTo",
       accessorFn: (row) => tagUsage[row.id] || 0,
       cell: ({ row }) => {
         const count = tagUsage[row.original.id] || 0;
-        return <span className="text-sm">{count} items</span>;
+        return (
+          <span className="text-sm">
+            {t.tagList.assignment.count[lang].replace(
+              "{count}",
+              count.toString(),
+            )}
+          </span>
+        );
       },
       sortingFn: "basic",
       enableSorting: true,
     },
     {
       id: "actions",
+      header: t.tagList.columns.actions[lang],
       cell: ({ row }) => {
         const tag = row.original;
         return (
@@ -151,10 +167,10 @@ const TagList = () => {
             <Button
               size="sm"
               onClick={() => handleEditClick(tag)}
-              title="Edit Tag"
+              title={t.tagList.buttons.edit[lang]}
               className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
-              >
-                <Edit className="h-4 w-4" />
+            >
+              <Edit className="h-4 w-4" />
             </Button>
             <TagDelete
               id={tag.id}
@@ -191,7 +207,7 @@ const TagList = () => {
         <>
           {/* Header and actions */}
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-xl">Manage Tags</h1>
+            <h1 className="text-xl">{t.tagList.title[lang]}</h1>
           </div>
 
           {/* Filters */}
@@ -201,7 +217,7 @@ const TagList = () => {
                 type="text"
                 size={50}
                 className="w-full sm:max-w-sm text-sm p-2 bg-white rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-                placeholder="Search by name (FI or EN)"
+                placeholder={t.tagList.filters.search[lang]}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -215,9 +231,15 @@ const TagList = () => {
                 }
                 className="text-sm p-2 rounded-md border bg-white focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
               >
-                <option value="all">All</option>
-                <option value="assigned">Assigned</option>
-                <option value="unassigned">Unassigned</option>
+                <option value="all">
+                  {t.tagList.filters.assignment.all[lang]}
+                </option>
+                <option value="assigned">
+                  {t.tagList.filters.assignment.assigned[lang]}
+                </option>
+                <option value="unassigned">
+                  {t.tagList.filters.assignment.unassigned[lang]}
+                </option>
               </select>
 
               {(searchTerm || assignmentFilter !== "all") && (
@@ -229,17 +251,17 @@ const TagList = () => {
                   }}
                   className="text-secondary border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
                 >
-                  Clear Filters
+                  {t.tagList.filters.clear[lang]}
                 </Button>
               )}
             </div>
-          <div className="flex gap-4">
-            <AddTagModal>
+            <div className="flex gap-4">
+              <AddTagModal>
                 <Button variant="outline" size={"sm"}>
-                  Add New Tag
+                  {t.tagList.buttons.add[lang]}
                 </Button>
               </AddTagModal>
-          </div>
+            </div>
           </div>
 
           {/* Table */}
@@ -250,31 +272,42 @@ const TagList = () => {
             <Dialog open onOpenChange={() => setEditTag(null)}>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Edit Tag</DialogTitle>
+                  <DialogTitle>{t.tagList.editModal.title[lang]}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 mt-2">
                   <div>
-                    <label className="text-sm font-medium">Finnish Name</label>
+                    <label className="text-sm font-medium">
+                      {t.tagList.editModal.labels.fiName[lang]}
+                    </label>
                     <Input
                       value={editNameFi}
                       onChange={(e) => setEditNameFi(e.target.value)}
-                      placeholder="Tag name in Finnish"
+                      placeholder={
+                        t.tagList.editModal.placeholders.fiName[lang]
+                      }
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium">English Name</label>
+                    <label className="text-sm font-medium">
+                      {t.tagList.editModal.labels.enName[lang]}
+                    </label>
                     <Input
                       value={editNameEn}
                       onChange={(e) => setEditNameEn(e.target.value)}
-                      placeholder="Tag name in English"
+                      placeholder={
+                        t.tagList.editModal.placeholders.enName[lang]
+                      }
                     />
                   </div>
                 </div>
                 <DialogFooter className="mt-4">
-                  {/* <Button size={"sm"} className="" onClick={() => setEditTag(null)}>
-                    Cancel
-                  </Button> */}
-                  <Button size={"sm"} className="px-3 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl" onClick={handleUpdate}>Save Changes</Button>
+                  <Button
+                    size={"sm"}
+                    className="px-3 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+                    onClick={handleUpdate}
+                  >
+                    {t.tagList.editModal.buttons.save[lang]}
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

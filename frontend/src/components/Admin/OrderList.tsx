@@ -25,6 +25,9 @@ import OrderConfirmButton from "./OrderConfirmButton";
 import OrderRejectButton from "./OrderRejectButton";
 import OrderDeleteButton from "./OrderDeleteButton";
 import { DataTable } from "../ui/data-table";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -38,6 +41,9 @@ const OrderList = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  // Translation
+  const { lang } = useLanguage();
+  const { formatDate } = useFormattedDate();
 
   useEffect(() => {
     // Always fetch orders when the admin component mounts and auth is ready
@@ -47,15 +53,6 @@ const OrderList = () => {
     }
   }, [authLoading, dispatch, user]);
 
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
   const handleViewDetails = (order: BookingOrder) => {
     setSelectedOrder(order);
     setShowDetailsModal(true);
@@ -63,7 +60,10 @@ const OrderList = () => {
 
   // Render a status badge with appropriate color
   const StatusBadge = ({ status }: { status?: string }) => {
-    if (!status) return <Badge variant="outline">Unknown</Badge>;
+    if (!status)
+      return (
+        <Badge variant="outline">{t.orderList.status.unknown[lang]}</Badge>
+      );
 
     switch (status) {
       case "pending":
@@ -72,7 +72,7 @@ const OrderList = () => {
             variant="outline"
             className="bg-yellow-100 text-yellow-800 border-yellow-300"
           >
-            Pending
+            {t.orderList.status.pending[lang]}
           </Badge>
         );
       case "confirmed":
@@ -81,17 +81,34 @@ const OrderList = () => {
             variant="outline"
             className="bg-green-100 text-green-800 border-green-300"
           >
-            Confirmed
+            {t.orderList.status.confirmed[lang]}
           </Badge>
         );
       case "cancelled":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 border-red-300"
+          >
+            {t.orderList.status.cancelled[lang]}
+          </Badge>
+        );
       case "cancelled by user":
         return (
           <Badge
             variant="outline"
             className="bg-red-100 text-red-800 border-red-300"
           >
-            Cancelled
+            {t.orderList.status.cancelledByUser[lang]}
+          </Badge>
+        );
+      case "cancelled by admin":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 border-red-300"
+          >
+            {t.orderList.status.cancelledByAdmin[lang]}
           </Badge>
         );
       case "rejected":
@@ -100,7 +117,7 @@ const OrderList = () => {
             variant="outline"
             className="bg-red-100 text-red-800 border-red-300"
           >
-            Rejected
+            {t.orderList.status.rejected[lang]}
           </Badge>
         );
       case "completed":
@@ -109,7 +126,7 @@ const OrderList = () => {
             variant="outline"
             className="bg-blue-100 text-blue-800 border-blue-300"
           >
-            Completed
+            {t.orderList.status.completed[lang]}
           </Badge>
         );
       default:
@@ -143,14 +160,17 @@ const OrderList = () => {
   const columns: ColumnDef<BookingOrder>[] = [
     {
       accessorKey: "order_number",
-      header: "Order #",
+      header: t.orderList.columns.orderNumber[lang],
     },
     {
       accessorKey: "user_profile.name",
-      header: "Customer",
+      header: t.orderList.columns.customer[lang],
       cell: ({ row }) => (
         <div>
-          <div>{row.original.user_profile?.name || "Unknown"}</div>
+          <div>
+            {row.original.user_profile?.name ||
+              t.orderList.status.unknown[lang]}
+          </div>
           <div className="text-xs text-gray-500">
             {row.original.user_profile?.email}
           </div>
@@ -159,26 +179,29 @@ const OrderList = () => {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t.orderList.columns.status[lang],
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "created_at",
-      header: "Order Date",
-      cell: ({ row }) => formatDate(row.original.created_at),
+      header: t.orderList.columns.orderDate[lang],
+      cell: ({ row }) =>
+        formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
     {
       accessorKey: "final_amount",
-      header: "Total",
+      header: t.orderList.columns.total[lang],
       cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
     },
     {
       accessorKey: "invoice_status",
-      header: "Invoice",
-      cell: ({ row }) => row.original.payment_status || "N/A",
+      header: t.orderList.columns.invoice[lang],
+      cell: ({ row }) =>
+        row.original.payment_status || t.orderList.status.na[lang],
     },
     {
       id: "actions",
+      header: t.orderList.columns.actions[lang],
       cell: ({ row }) => {
         const order = row.original;
         const isPending = order.status === "pending";
@@ -190,7 +213,7 @@ const OrderList = () => {
               variant={"ghost"}
               size="sm"
               onClick={() => handleViewDetails(order)}
-              title="View Details"
+              title={t.orderList.buttons.viewDetails[lang]}
               className="hover:text-slate-900 hover:bg-slate-300"
             >
               <Eye className="h-4 w-4" />
@@ -229,7 +252,7 @@ const OrderList = () => {
   const orderColumns: ColumnDef<BookingItem>[] = [
     {
       accessorKey: "item_name",
-      header: "Item",
+      header: t.orderList.modal.orderItems.columns.item[lang],
       cell: (i) => {
         const itemName = i.getValue();
         return (
@@ -239,21 +262,23 @@ const OrderList = () => {
     },
     {
       accessorKey: "quantity",
-      header: "Quantity",
+      header: t.orderList.modal.orderItems.columns.quantity[lang],
     },
     {
       accessorKey: "start_date",
-      header: "Start Date",
-      cell: ({ row }) => formatDate(row.original.start_date),
+      header: t.orderList.modal.orderItems.columns.startDate[lang],
+      cell: ({ row }) =>
+        formatDate(new Date(row.original.start_date || ""), "d MMM yyyy"),
     },
     {
       accessorKey: "end_date",
-      header: "End Date",
-      cell: ({ row }) => formatDate(row.original.end_date),
+      header: t.orderList.modal.orderItems.columns.endDate[lang],
+      cell: ({ row }) =>
+        formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
     },
     {
       accessorKey: "subtotal",
-      header: "Subtotal",
+      header: t.orderList.modal.orderItems.columns.subtotal[lang],
       cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
     },
   ];
@@ -262,7 +287,7 @@ const OrderList = () => {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <LoaderCircle className="animate-spin h-8 w-8 mr-2" />
-        <span>Loading orders...</span>
+        <span>{t.orderList.loading[lang]}</span>
       </div>
     );
   }
@@ -275,20 +300,20 @@ const OrderList = () => {
     <>
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl">Manage Orders</h1>
+          <h1 className="text-xl">{t.orderList.title[lang]}</h1>
 
-          <Button //TODO: remove later. Button for debugging purposes
+          <Button
             onClick={() => user && user?.id && dispatch(getAllOrders(user.id))}
             className="bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
           >
-            Refresh Orders
+            {t.orderList.buttons.refresh[lang]}
           </Button>
         </div>
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex gap-4 items-center">
             <input
               type="text"
-              placeholder="Search order # or customer name"
+              placeholder={t.orderList.filters.search[lang]}
               value={searchQuery}
               size={50}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -299,14 +324,30 @@ const OrderList = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             >
-              <option value="all">All statuses</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="rejected">Rejected</option>
-              <option value="completed">Completed</option>
-              <option value="deleted">Deleted</option>
-              <option value="cancelled by admin">Cancelled by admin</option>
+              <option value="all">
+                {t.orderList.filters.status.all[lang]}
+              </option>
+              <option value="pending">
+                {t.orderList.filters.status.pending[lang]}
+              </option>
+              <option value="confirmed">
+                {t.orderList.filters.status.confirmed[lang]}
+              </option>
+              <option value="cancelled">
+                {t.orderList.filters.status.cancelled[lang]}
+              </option>
+              <option value="rejected">
+                {t.orderList.filters.status.rejected[lang]}
+              </option>
+              <option value="completed">
+                {t.orderList.filters.status.completed[lang]}
+              </option>
+              <option value="deleted">
+                {t.orderList.filters.status.deleted[lang]}
+              </option>
+              <option value="cancelled by admin">
+                {t.orderList.filters.status.cancelledByAdmin[lang]}
+              </option>
             </select>
             {(searchQuery || statusFilter !== "all") && (
               <Button
@@ -317,7 +358,7 @@ const OrderList = () => {
                 size={"sm"}
                 className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
               >
-                Clear Filters
+                {t.orderList.filters.clear[lang]}
               </Button>
             )}
           </div>
@@ -332,7 +373,8 @@ const OrderList = () => {
             <DialogContent className="max-w-5xl">
               <DialogHeader>
                 <DialogTitle className="text-left">
-                  Order #{selectedOrder.order_number}
+                  {t.orderList.columns.orderNumber[lang]}{" "}
+                  {selectedOrder.order_number}
                 </DialogTitle>
               </DialogHeader>
 
@@ -340,9 +382,12 @@ const OrderList = () => {
                 {/* Order Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <h3 className="font-normal">Customer</h3>
-                    <p className="text-sm  mb-0">
-                      {selectedOrder.user_profile?.name || "Unknown"}
+                    <h3 className="font-normal">
+                      {t.orderList.modal.customer[lang]}
+                    </h3>
+                    <p className="text-sm mb-0">
+                      {selectedOrder.user_profile?.name ||
+                        t.orderList.status.unknown[lang]}
                     </p>
                     <p className="text-sm text-gray-500">
                       {selectedOrder.user_profile?.email}
@@ -350,12 +395,19 @@ const OrderList = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className="font-normal">Order Information</h3>
+                    <h3 className="font-normal">
+                      {t.orderList.modal.orderInfo[lang]}
+                    </h3>
                     <p className="text-sm mb-0">
-                      Status: <StatusBadge status={selectedOrder.status} />
+                      {t.orderList.modal.status[lang]}{" "}
+                      <StatusBadge status={selectedOrder.status} />
                     </p>
                     <p className="text-sm">
-                      Date: {formatDate(selectedOrder.created_at)}
+                      {t.orderList.modal.date[lang]}{" "}
+                      {formatDate(
+                        new Date(selectedOrder.created_at || ""),
+                        "d MMM yyyy",
+                      )}
                     </p>
                   </div>
                 </div>

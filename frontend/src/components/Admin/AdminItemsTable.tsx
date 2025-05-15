@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/tooltip";
 import { MapPin } from "lucide-react";
 import { toastConfirm } from "../ui/toastConfirm";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -43,6 +45,8 @@ const AdminItemsTable = () => {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const isAdmin = useAppSelector(selectIsAdmin);
   const isSuperVera = useAppSelector(selectIsSuperVera);
+  // Translation
+  const { lang } = useLanguage();
 
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
@@ -59,25 +63,8 @@ const AdminItemsTable = () => {
   };
 
   const itemsColumns: ColumnDef<Item>[] = [
-    // {
-    //   header: 'Image',
-    //   accessorKey: 'imageUrl',
-    //   cell: ({ row }) => {
-    //     const url = row.original.imageUrl || defaultImage;
-    //     return (
-    //       <img
-    //         src={url}
-    //         alt="Item"
-    //         className="h-12 w-12 object-cover rounded-md"
-    //         onError={(e) => {
-    //           (e.target as HTMLImageElement).src = defaultImage;
-    //         }}
-    //       />
-    //     );
-    //   },
-    // },
     {
-      header: "Item Name (FI)",
+      header: t.adminItemsTable.columns.namefi[lang],
       size: 120,
       accessorFn: (row) => row.translations.fi.item_name,
       sortingFn: "alphanumeric",
@@ -88,7 +75,7 @@ const AdminItemsTable = () => {
       },
     },
     {
-      header: "Item Type (FI)",
+      header: t.adminItemsTable.columns.typefi[lang],
       size: 120,
       accessorFn: (row) => row.translations.fi.item_type,
       sortingFn: "alphanumeric",
@@ -99,7 +86,7 @@ const AdminItemsTable = () => {
       },
     },
     {
-      header: "Location",
+      header: t.adminItemsTable.columns.location[lang],
       size: 70,
       accessorFn: (row) => row.location_details?.name || "N/A", // For sorting
       enableSorting: true,
@@ -111,20 +98,21 @@ const AdminItemsTable = () => {
       ),
     },
     {
-      header: "Price",
+      header: t.adminItemsTable.columns.price[lang],
       accessorKey: "price",
       size: 30,
       cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
     },
     {
-      header: "Quantity",
+      header: t.adminItemsTable.columns.quantity[lang],
       size: 30,
       accessorFn: (row) => row.items_number_available,
-      cell: ({ row }) => `${row.original.items_number_available} pcs`,
+      cell: ({ row }) =>
+        `${row.original.items_number_available} ${t.adminItemsTable.messages.units[lang]}`,
     },
     {
       id: "status",
-      header: "Active",
+      header: t.adminItemsTable.columns.active[lang],
       size: 30,
       cell: ({ row }) => {
         const item = row.original;
@@ -141,10 +129,14 @@ const AdminItemsTable = () => {
             ).unwrap();
             dispatch(fetchAllItems());
             toast.success(
-              `Item ${checked ? "activated" : "deactivated"} successfully`,
+              checked
+                ? t.adminItemsTable.messages.toast.activateSuccess[lang]
+                : t.adminItemsTable.messages.toast.deactivateSuccess[lang],
             );
           } catch {
-            toast.error("Failed to update item status");
+            toast.error(
+              t.adminItemsTable.messages.toast.statusUpdateFail[lang],
+            );
           }
         };
 
@@ -153,32 +145,6 @@ const AdminItemsTable = () => {
         );
       },
     },
-    // {
-    //   id: "tags",
-    //   header: "Tags",
-    //   cell: ({ row }) => {
-    //     // Deduplicate tags by ID to prevent React key warnings
-    //     const tags = row.original.storage_item_tags ?? [];
-    //     const uniqueTags = Array.from(
-    //       new Map(tags.map((tag) => [tag.id, tag])).values(),
-    //     );
-
-    //     return (
-    //       <div className="flex flex-wrap gap-1">
-    //         {uniqueTags.map((tag) => (
-    //           <span
-    //             key={tag.id}
-    //             className="text-xs rounded px-2 py-1 text-secondary"
-    //           >
-    //             {tag.translations?.fi?.name ||
-    //               tag.translations?.en?.name ||
-    //               "Unnamed"}
-    //           </span>
-    //         ))}
-    //       </div>
-    //     );
-    //   },
-    // },
     {
       id: "actions",
       size: 30,
@@ -225,7 +191,7 @@ const AdminItemsTable = () => {
                       side="top"
                       className="90 text-white border-0 p-2"
                     >
-                      <p>Can't delete, it has existing bookings</p>
+                      <p>{t.adminItemsTable.tooltips.cantDelete[lang]}</p>
                     </TooltipContent>
                   )}
                 </Tooltip>
@@ -265,25 +231,25 @@ const AdminItemsTable = () => {
 
   const handleDelete = async (id: string) => {
     toastConfirm({
-      title: "Confirm Deletion",
-      description: "Are you sure you want to delete this item? (Soft Delete)",
-      confirmText: "Confirm",
-      cancelText: "Cancel",
+      title: t.adminItemsTable.messages.deletion.title[lang],
+      description: t.adminItemsTable.messages.deletion.description[lang],
+      confirmText: t.adminItemsTable.messages.deletion.confirm[lang],
+      cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
       onConfirm: async () => {
         try {
           await toast.promise(dispatch(deleteItem(id)).unwrap(), {
-            loading: "Deleting item...",
-            success: "Item has been successfully deleted.",
-            error: "Failed to delete item.",
+            loading: t.adminItemsTable.messages.toast.deleting[lang],
+            success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
+            error: t.adminItemsTable.messages.toast.deleteFail[lang],
           });
           dispatch(fetchAllItems());
         } catch {
-          toast.error("Error deleting item.");
+          toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
         }
       },
       onCancel: () => {
         // Optional: handle cancel if needed
-      }
+      },
     });
   };
 
@@ -339,7 +305,7 @@ const AdminItemsTable = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl">Manage Storage Items</h1>
+        <h1 className="text-xl">{t.adminItemsTable.title[lang]}</h1>
       </div>
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
         <div className="flex gap-4 items-center">
@@ -348,7 +314,7 @@ const AdminItemsTable = () => {
             type="text"
             size={50}
             className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-            placeholder="Search by name or type"
+            placeholder={t.adminItemsTable.filters.searchPlaceholder[lang]}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -361,9 +327,15 @@ const AdminItemsTable = () => {
             }
             className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           >
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="all">
+              {t.adminItemsTable.filters.status.all[lang]}
+            </option>
+            <option value="active">
+              {t.adminItemsTable.filters.status.active[lang]}
+            </option>
+            <option value="inactive">
+              {t.adminItemsTable.filters.status.inactive[lang]}
+            </option>
           </select>
 
           {/* Filter by tags */}
@@ -374,10 +346,11 @@ const AdminItemsTable = () => {
                 size={"sm"}
               >
                 {tagFilter.length > 0
-                  ? `Filtered by ${tagFilter.length} tag${
-                      tagFilter.length > 1 ? "s" : ""
-                    }`
-                  : "Filter by tags"}
+                  ? t.adminItemsTable.filters.tags.filtered[lang].replace(
+                      "{count}",
+                      tagFilter.length.toString(),
+                    )
+                  : t.adminItemsTable.filters.tags.filter[lang]}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[250px] p-0">
@@ -438,7 +411,7 @@ const AdminItemsTable = () => {
               size={"sm"}
               className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
             >
-              Clear Filters
+              {t.adminItemsTable.filters.clear[lang]}
             </Button>
           )}
         </div>
@@ -446,7 +419,7 @@ const AdminItemsTable = () => {
         <div className="flex gap-4 justify-end">
           <AddItemModal>
             <Button className="addBtn" size={"sm"}>
-              Add New Item
+              {t.adminItemsTable.buttons.addNew[lang]}
             </Button>
           </AddItemModal>
         </div>
