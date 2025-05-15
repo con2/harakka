@@ -16,7 +16,7 @@ import { ReactElement } from "react";
 export class AppController {
   constructor(private readonly mailService: MailService) {}
 
-  @Post("send-email") // TODO: send-email dieser endpoint soll für alle emails verwendet werden.
+  @Post("send-email")
   async sendMail(@Body() sendMailDto: SendMailDto): Promise<string> {
     const { email, subject, type, data } = sendMailDto;
 
