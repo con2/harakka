@@ -32,7 +32,12 @@ const UserPanel = () => {
   const uniqueItemTypes = Array.from(
     new Set(
       items
-        .map((item) => item.translations?.fi?.item_type)
+        .map((item) => {
+          const itemType =
+            item.translations?.[lang]?.item_type ||
+            item.translations?.[lang === "fi" ? "en" : "fi"]?.item_type;
+          return itemType;
+        })
         .filter(Boolean)
         .map((type) => type.charAt(0).toUpperCase() + type.slice(1))
         .sort((a, b) => a.localeCompare(b)),
