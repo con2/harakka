@@ -918,7 +918,7 @@ export class BookingService {
       to: userProfile.email,
       subject: "Booking Cancelled",
       template: BookingCancelledEmail({
-        orderId: orderNum?.toString() ?? "Unknown",
+        orderId: orderNum?.order_number?.toString() ?? "Unknown",
         startDate,
         items: emailItems,
         recipientRole: "user", // oder dynamisch bestimmen, falls nötig

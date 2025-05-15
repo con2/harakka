@@ -108,7 +108,7 @@ export const BookingCancelledEmail = ({
             ))}
           </ul>
 
-          {/* --- Englisch --- */}
+          {/* --- english --- */}
           <Text
             style={{
               fontFamily: "'Roboto Slab'",
