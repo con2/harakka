@@ -1,4 +1,5 @@
 import { BaseEntity, ErrorContext } from "./common";
+import { ItemTranslation } from "./item";
 
 /**
  * Order status values
@@ -16,7 +17,11 @@ export type OrderStatus =
 /**
  * Payment status values
  */
-export type PaymentStatus = "invoice-sent" | "paid" | "payment-rejected" | "overdue"
+export type PaymentStatus =
+  | "invoice-sent"
+  | "paid"
+  | "payment-rejected"
+  | "overdue";
 
 /**
  * Booked item in an order
@@ -33,6 +38,13 @@ export interface BookingItem {
   status?: "pending" | "confirmed" | "cancelled";
   location_id?: string;
   item_name?: string;
+  storage_items?: {
+    location_id?: string;
+    translations?: {
+      fi: ItemTranslation;
+      en: ItemTranslation;
+    };
+  };
 }
 
 /**
