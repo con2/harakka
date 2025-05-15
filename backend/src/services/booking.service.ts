@@ -19,6 +19,9 @@ import * as utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 import BookingConfirmationEmail from "../emails/BookingConfirmationEmail";
 import { EmailProps } from "src/interfaces/mail.interface";
+import { BookingCancelledEmail } from "src/emails/BookingCancelledEmail";
+import { start } from "repl";
+import e from "express";
 
 @Injectable()
 export class BookingService {
@@ -799,7 +802,7 @@ export class BookingService {
 
     const { data: userProfile, error: userProfileError } = await supabase
       .from("user_profiles")
-      .select("role, email")
+      .select("role, email, full_name")
       .eq("id", userId)
       .single();
 
@@ -859,43 +862,68 @@ export class BookingService {
     }
 
     // 7.7 send email to user
-    /* await this.mailService.sendMail(
-      userProfile.email,
-      "Your booking has been cancelled",
-      `<h1>Hello,</h1>
-    <p>Your booking with order number <strong>${orderId}</strong> has been cancelled.</p>
-    <p>Details of the cancelled booking:</p>
-    <ul>
-      ${orderItems
-        .map(
-          (item) =>
-            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
-        )
-        .join("")}
-    </ul>
-        <p>If this cancellation was unintended, you can restore it from your booking history.</p>
-    <p>If you have any questions, please feel free to contact us.</p>`,
-    );
 
-    // 7.8 email to admin
-    const adminEmail = "illusia.rental.service@gmail.com";
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      end_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
 
-    await this.mailService.sendMail(
-      adminEmail,
-      "The booking has been cancelled",
-      `<h1>Hello,</h1>
-    <p>The booking with order number <strong>${orderId}</strong> has been successfully cancelled.</p>
-    <p>Details of the cancelled booking:</p>
-    <ul>
-      ${orderItems
-        .map(
-          (item) =>
-            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
-        )
-        .join("")}
-    </ul>
-    <p>If this cancellation was unintended, you can restore it from your booking history.</p>`,
-    ); */
+    const enrichedItems: EnrichedItem[] = orderItems || [];
+
+    for (const item of enrichedItems) {
+      const { data: storageItem, error: storageItemError } = await supabase
+        .from("storage_items")
+        .select("translations, location_id")
+        .eq("id", item.item_id)
+        .single();
+
+      if (storageItemError || !storageItem) {
+        throw new BadRequestException("Could not fetch storage item details");
+      }
+      item.translations = storageItem.translations;
+    }
+
+    const startDate = dayjs(orderItems[0].start_date).format("DD.MM.YYYY");
+
+    const emailItems = enrichedItems.map((item) => ({
+      item_id: item.item_id,
+      quantity: item.quantity,
+      start_date: item.start_date,
+      end_date: item.end_date,
+      translations: {
+        fi: {
+          name: item.translations?.fi.item_name ?? "Unknown",
+        },
+        en: {
+          name: item.translations?.en.item_name ?? "Unknown",
+        },
+      },
+    }));
+
+    const { data: orderNum } = await supabase
+      .from("orders")
+      .select("order_number")
+      .eq("id", orderId)
+      .single();
+
+    // send mail
+    await this.mailService.sendMail({
+      to: userProfile.email,
+      subject: "Booking Cancelled",
+      template: BookingCancelledEmail({
+        orderId: orderNum?.toString() ?? "Unknown",
+        startDate,
+        items: emailItems,
+        recipientRole: "user", // oder dynamisch bestimmen, falls nötig
+      }),
+    });
 
     return {
       message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
