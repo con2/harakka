@@ -1,27 +1,26 @@
 import { useLanguage } from "@/context/LanguageContext";
-import { Button } from "@/components/ui/button";
+import { Switch } from "./ui/switch";
 
 export const LanguageSwitcher: React.FC = () => {
   const { lang, setLanguage } = useLanguage();
 
   return (
-    <div className="flex items-center space-x-2">
-      <Button
-        variant={lang === "fi" ? "default" : "outline"}
-        size="sm"
-        onClick={() => setLanguage("fi")}
-        className="text-xs px-2 py-1 h-8"
+    <div className="flex items-center gap-2 bg-white/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-secondary/20 shadow-sm">
+      <span
+        className={`text-xs font-medium transition-colors ${lang === "fi" ? "text-secondary font-bold" : "text-muted-foreground"}`}
       >
-        Suomi
-      </Button>
-      <Button
-        variant={lang === "en" ? "default" : "outline"}
-        size="sm"
-        onClick={() => setLanguage("en")}
-        className="text-xs px-2 py-1 h-8"
+        FI
+      </span>
+      <Switch
+        checked={lang === "en"}
+        onCheckedChange={() => setLanguage(lang === "fi" ? "en" : "fi")}
+        className="data-[state=checked]:bg-secondary data-[state=unchecked]:bg-secondary/30"
+      />
+      <span
+        className={`text-xs font-medium transition-colors ${lang === "en" ? "text-secondary font-bold" : "text-muted-foreground"}`}
       >
-        English
-      </Button>
+        EN
+      </span>
     </div>
   );
 };
