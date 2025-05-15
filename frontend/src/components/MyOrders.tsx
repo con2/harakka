@@ -148,12 +148,12 @@ const MyOrders = () => {
           }),
         );
         dispatch(cancelOrder(editingOrder.id));
-        toast.warning("All items removed — order cancelled.");
+        toast.warning(t.myOrders.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
           dispatch(getUserOrders(user.id));
         }
       } catch {
-        toast.error("Failed to cancel order.");
+        toast.error(t.myOrders.edit.toast.cancelFailed[lang]);
       } finally {
         setShowEditModal(false);
         setEditingOrder(null);
@@ -169,14 +169,14 @@ const MyOrders = () => {
         }),
       ).unwrap();
 
-      toast.success("Order updated!");
+      toast.success(t.myOrders.edit.toast.orderUpdated[lang]);
       setShowEditModal(false);
       setEditingOrder(null);
       if (user?.id) {
         dispatch(getUserOrders(user.id));
       }
     } catch {
-      toast.error("Failed to update order");
+      toast.error(t.myOrders.edit.toast.updateFailed[lang]);
     }
   };
 
@@ -220,6 +220,15 @@ const MyOrders = () => {
             className="bg-red-100 text-red-800 border-red-300"
           >
             {t.myOrders.status.cancelledByUser[lang]}
+          </Badge>
+        );
+      case "cancelled by admin":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 border-red-300"
+          >
+            {t.myOrders.status.cancelledByAdmin[lang]}
           </Badge>
         );
       case "completed":
@@ -288,11 +297,34 @@ const MyOrders = () => {
     {
       accessorKey: "item_name",
       header: t.myOrders.columns.item[lang],
-      cell: ({ row }) =>
-        (row.original.item_name || `Item ${row.original.item_id}`)
-          .charAt(0)
-          .toUpperCase() +
-        (row.original.item_name || `Item ${row.original.item_id}`).slice(1),
+      cell: ({ row }) => {
+        const itemData = row.original;
+        let itemName = null;
+
+        // Try to get from translations in current language
+        if (
+          itemData.storage_items?.translations &&
+          itemData.storage_items.translations[lang]?.item_name
+        ) {
+          itemName = itemData.storage_items.translations[lang].item_name;
+        }
+        // Fall back to alternate language
+        else if (
+          itemData.storage_items?.translations &&
+          itemData.storage_items.translations[lang === "fi" ? "en" : "fi"]
+            ?.item_name
+        ) {
+          itemName =
+            itemData.storage_items.translations[lang === "fi" ? "en" : "fi"]
+              .item_name;
+        }
+        // Fall back to stored item_name
+        else {
+          itemName = itemData.item_name || `Item ${itemData.item_id}`;
+        }
+
+        return itemName.charAt(0).toUpperCase() + itemName.slice(1);
+      },
     },
     {
       accessorKey: "quantity",
@@ -449,12 +481,40 @@ const MyOrders = () => {
                           >
                             <p>
                               <strong>{t.myOrders.mobile.item[lang]}</strong>{" "}
-                              {(item.item_name || `Item ${item.item_id}`)
-                                .charAt(0)
-                                .toUpperCase() +
-                                (
-                                  item.item_name || `Item ${item.item_id}`
-                                ).slice(1)}
+                              {(() => {
+                                let itemName;
+
+                                // Try to get translated name from storage_items
+                                if (
+                                  item.storage_items?.translations?.[lang]
+                                    ?.item_name
+                                ) {
+                                  itemName =
+                                    item.storage_items.translations[lang]
+                                      .item_name;
+                                }
+                                // Fall back to alternate language
+                                else if (
+                                  item.storage_items?.translations?.[
+                                    lang === "fi" ? "en" : "fi"
+                                  ]?.item_name
+                                ) {
+                                  itemName =
+                                    item.storage_items.translations[
+                                      lang === "fi" ? "en" : "fi"
+                                    ].item_name;
+                                }
+                                // Fall back to stored item_name
+                                else {
+                                  itemName =
+                                    item.item_name || `Item ${item.item_id}`;
+                                }
+
+                                return (
+                                  itemName.charAt(0).toUpperCase() +
+                                  itemName.slice(1)
+                                );
+                              })()}
                             </p>
                             <p>
                               <strong>
@@ -511,14 +571,17 @@ const MyOrders = () => {
         <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
           <DialogContent className="max-w-sm overflow-visible">
             <DialogHeader className="items-start">
-              <DialogTitle>Edit Order #{editingOrder.order_number}</DialogTitle>
+              <DialogTitle>
+                {t.myOrders.edit.title[lang]}
+                {editingOrder.order_number}
+              </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="flex flex-row gap-4">
                 <div>
                   <Label className="block text-sm font-medium mb-1">
-                    Start
+                    {t.myOrders.edit.startDate[lang]}
                   </Label>
                   <Popover
                     open={startPickerOpen}
@@ -534,7 +597,7 @@ const MyOrders = () => {
                               )
                             : null
                         }
-                        placeholder="Select start date"
+                        placeholder={t.myOrders.edit.selectStartDate[lang]}
                       />
                     </PopoverTrigger>
                     <PopoverContent
@@ -566,7 +629,9 @@ const MyOrders = () => {
                 </div>
 
                 <div>
-                  <Label className="block text-sm font-medium mb-1">End</Label>
+                  <Label className="block text-sm font-medium mb-1">
+                    {t.myOrders.edit.endDate[lang]}
+                  </Label>
                   <Popover open={endPickerOpen} onOpenChange={setEndPickerOpen}>
                     <PopoverTrigger asChild>
                       <DatePickerButton
@@ -578,7 +643,7 @@ const MyOrders = () => {
                               )
                             : null
                         }
-                        placeholder="Select end date"
+                        placeholder={t.myOrders.edit.selectEndDate[lang]}
                       />
                     </PopoverTrigger>
                     <PopoverContent
@@ -623,16 +688,47 @@ const MyOrders = () => {
                   className="grid grid-cols-5 gap-4 items-center"
                 >
                   <div className="col-span-2">
-                    <Label className="block text-xs font-medium">Item</Label>
+                    <Label className="block text-xs font-medium">
+                      {t.myOrders.edit.item[lang]}
+                    </Label>
                     <p className="text-sm">
-                      {item.item_name
-                        ? item.item_name.charAt(0).toUpperCase() +
-                          item.item_name.slice(1)
-                        : "Unnamed Item"}
+                      {(() => {
+                        let itemName;
+
+                        // Try to get translated name from storage_items
+                        if (
+                          item.storage_items?.translations?.[lang]?.item_name
+                        ) {
+                          itemName =
+                            item.storage_items.translations[lang].item_name;
+                        }
+                        // Fall back to alternate language
+                        else if (
+                          item.storage_items?.translations?.[
+                            lang === "fi" ? "en" : "fi"
+                          ]?.item_name
+                        ) {
+                          itemName =
+                            item.storage_items.translations[
+                              lang === "fi" ? "en" : "fi"
+                            ].item_name;
+                        }
+                        // Fall back to stored item_name
+                        else {
+                          itemName =
+                            item.item_name || t.myOrders.edit.unnamedItem[lang];
+                        }
+
+                        return (
+                          itemName.charAt(0).toUpperCase() + itemName.slice(1)
+                        );
+                      })()}
                     </p>
                   </div>
                   <div style={{ zIndex: 50, pointerEvents: "auto" }}>
-                    <Label className="block text-sm font-medium">Qty</Label>
+                    <Label className="block text-sm font-medium">
+                      {t.myOrders.edit.quantity[lang]}
+                    </Label>
                     <div className="flex items-center gap-1">
                       <Button
                         type="button"
@@ -642,30 +738,12 @@ const MyOrders = () => {
                           if (item.id !== undefined) {
                             const newQty =
                               (itemQuantities[item.id] || item.quantity) - 1;
-                            // if (newQty === 0) {
-                            //   toastConfirm({
-                            //     title: "Remove Item?",
-                            //     description: "Setting quantity to 0 will remove this item from your order.",
-                            //     confirmText: "Remove",
-                            //     cancelText: "Keep",
-                            //     onConfirm: () => {
-                            //       const updatedItems = [...editFormItems];
-                            //       updatedItems.splice(idx, 1);
-                            //       setEditFormItems(updatedItems);
-                            //       // remove from itemQuantities too?
-                            //       const updatedQuantities = { ...itemQuantities };
-                            //       if (item.id !== undefined) {
-                            //         delete updatedQuantities[item.id];
-                            //       }
-                            //       setItemQuantities(updatedQuantities);
-                            //     },
-                            //   });
-                            // }
-                            //  else {
-                            setItemQuantities({
-                              ...itemQuantities,
-                              [item.id]: newQty,
-                            });
+                            if (newQty >= 0) {
+                              setItemQuantities({
+                                ...itemQuantities,
+                                [String(item.id)]: newQty,
+                              });
+                            }
                           }
                         }}
                       >
@@ -679,7 +757,7 @@ const MyOrders = () => {
                         }
                         onChange={(e) => {
                           const val = Number(e.target.value);
-                          if (!isNaN(val)) {
+                          if (!isNaN(val) && val >= 0) {
                             setItemQuantities({
                               ...itemQuantities,
                               [String(item.id)]: val,
@@ -698,7 +776,7 @@ const MyOrders = () => {
                               (itemQuantities[item.id] || item.quantity) + 1;
                             setItemQuantities({
                               ...itemQuantities,
-                              [item.id]: newQty,
+                              [String(item.id)]: newQty,
                             });
                           }
                         }}
@@ -715,14 +793,14 @@ const MyOrders = () => {
                   variant={"secondary"}
                   onClick={() => setShowEditModal(false)}
                 >
-                  Cancel
+                  {t.myOrders.edit.buttons.cancel[lang]}
                 </Button>
                 <Button
                   variant={"outline"}
                   onClick={handleSubmitEdit}
                   disabled={!editingOrder}
                 >
-                  Save Changes
+                  {t.myOrders.edit.buttons.saveChanges[lang]}
                 </Button>
               </div>
             </div>
