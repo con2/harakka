@@ -31,7 +31,10 @@ export class StorageItemsService {
 
     // Updated query to join storage_item_tags with tags table
     const { data, error }: PostgrestResponse<StorageItemWithJoin> =
-      await supabase.from("storage_items").select(`
+      await supabase
+        .from("storage_items")
+        .select(
+          `
         *,
         storage_item_tags (
           tag_id,
@@ -49,7 +52,9 @@ export class StorageItemsService {
           longitude,
           is_active
         )
-      `); // Explicitly select tags and their translations by joining the tags table
+      `,
+        )
+        .eq("is_deleted", false); // Explicitly select tags and their translations by joining the tags table - show only undeleted items
 
     if (error) {
       throw new Error(error.message);
@@ -95,6 +100,7 @@ export class StorageItemsService {
       `,
         ) // Join storage_item_tags and tags table to get full tag data
         .eq("id", id)
+        .eq("is_deleted", false) // Only get undeleted items
         .single();
 
     if (error) {
@@ -111,17 +117,6 @@ export class StorageItemsService {
       location_details: data?.storage_locations || null,
     };
   }
-
-  //previously createItem commented out
-  // async createItem(item: Partial<StorageItem>): Promise<StorageItem[]> {
-  //   const supabase = this.supabaseService.getServiceClient(); // Write operation
-  //   const { data, error }: PostgrestResponse<StorageItem> = await supabase
-  //     .from('storage_items')
-  //     .insert([item])
-  //     .select();
-  //   if (error) throw new Error(error.message);
-  //   return data || [];
-  // }
 
   async createItem(item: Partial<StorageItem> & { tagIds?: string[] }) {
     // Extract tagIds from the item object
@@ -152,20 +147,6 @@ export class StorageItemsService {
 
     return insertedItem;
   }
-
-  // async updateItem(
-  //   id: string,
-  //   item: Partial<StorageItem>,
-  // ): Promise<StorageItem[]> {
-  //   const supabase = this.supabaseService.getServiceClient(); // Write operation
-  //   const { data, error }: PostgrestResponse<StorageItem> = await supabase
-  //     .from('storage_items')
-  //     .update(item)
-  //     .eq('id', id)
-  //     .select();
-  //   if (error) throw new Error(error.message);
-  //   return data || [];
-  // }
 
   async updateItem(
     id: string,
@@ -211,20 +192,20 @@ export class StorageItemsService {
     return updatedItem;
   }
 
-  // async deleteItem(id: string): Promise<StorageItem[]> {
-  //   const supabase = this.supabaseService.getServiceClient();
-  //   const { data, error }: PostgrestResponse<StorageItem> = await supabase
-  //     .from('storage_items')
-  //     .delete()
-  //     .eq('id', id)
-  //     .select(); // Add this to return deleted data
-  //   if (error) throw new Error(error.message);
-  //   return data || [];
-  // }
-
-  async deleteItem(id: string): Promise<{ success: boolean; id: string }> {
+  async deleteItem(
+    id: string,
+    confirm?: string,
+  ): Promise<{ success: boolean; id: string }> {
     if (!id) {
       throw new Error("No item ID provided for deletion");
+    }
+
+    // Safety check: only allow deletion if confirmed
+    const check = await this.canDeleteItem(id, confirm);
+    if (!check.success) {
+      throw new Error(
+        check.reason || "Item cannot be deleted due to unknown restrictions",
+      );
     }
 
     // Step 1: Delete images associated with the item
@@ -278,17 +259,16 @@ export class StorageItemsService {
       );
     }
 
-    // Step 3: Delete the item itself
-    const { error: itemDeleteError } = await this.supabase
+    // Step 3: Delete the item itself - soft delete
+    const { error: softDeleteError } = await this.supabase
       .from("storage_items")
-      .delete()
+      .update({ is_deleted: true })
       .eq("id", id);
 
-    if (itemDeleteError) {
-      throw new Error(`Failed to delete item: ${itemDeleteError.message}`);
+    if (softDeleteError) {
+      throw new Error(`Failed to soft-delete item: ${softDeleteError.message}`);
     }
 
-    // Return success response with the deleted item ID
     return { success: true, id };
   }
 
@@ -305,10 +285,28 @@ export class StorageItemsService {
     return data.map((entry) => entry.items); // Extract items from the relation
   }
 
+  async softDeleteItem(id: string): Promise<{ success: boolean; id: string }> {
+    const { error } = await this.supabase
+      .from("storage_items")
+      .update({ is_deleted: true })
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(`Soft delete failed: ${error.message}`);
+    }
+
+    return { success: true, id };
+  }
+
   //check if the item can be deleted (if it exists in some orders)
   async canDeleteItem(
     id: string,
-  ): Promise<{ deletable: boolean; reason?: string }> {
+    confirm?: string,
+  ): Promise<{ success: boolean; reason?: string; id: string }> {
+    if (!id) {
+      throw new Error("No item ID provided for deletion");
+    }
+
     // Check if item exists in any orders
     const { data, error } = await this.supabase
       .from("order_items")
@@ -322,14 +320,20 @@ export class StorageItemsService {
       );
     }
 
-    // If data array has items, it means the item is referenced in orders
-    const hasOrders = data && data.length > 0;
+    const hasBookings = data?.length > 0;
+
+    if (hasBookings && confirm !== "yes") {
+      return {
+        success: false,
+        reason:
+          "This item is linked to existing bookings. Pass confirm='yes' to delete anyway.",
+        id,
+      };
+    }
 
     return {
-      deletable: !hasOrders,
-      reason: hasOrders
-        ? "Item cannot be deleted because it has existing bookings"
-        : undefined,
+      success: true,
+      id,
     };
   }
 }
