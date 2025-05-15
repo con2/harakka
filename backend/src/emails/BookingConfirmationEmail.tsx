@@ -27,7 +27,7 @@ const BookingConfirmationEmail = ({
       style={{
         fontFamily: "'Lato', Arial, sans-serif",
         // backgroundColor: "#9537C7",
-        backgroundColor: "###d0c1d8",
+        backgroundColor: "#d0c1d8",
         margin: 0,
         padding: "40px 20px",
         color: "#333333",
@@ -41,7 +41,6 @@ const BookingConfirmationEmail = ({
           maxWidth: "600px",
           margin: "0 auto",
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-          // border: "2px solid #D87AFF",
         }}
       >
         <Section
@@ -69,11 +68,23 @@ const BookingConfirmationEmail = ({
           Booking confirmation
         </Text>
 
+        <Text
+          style={{
+            fontSize: "14px",
+            textAlign: "center",
+            marginBottom: "24px",
+            fontStyle: "italic",
+          }}
+        >
+          English below
+        </Text>
+
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
           Hei <strong>{name}</strong>,
         </Text>
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          Vahvistamme varauksesi. Tervetuloa noutamaan varauksesi.
+          Vahvistamme varauksesi. Tervetuloa noutamaan varauksesi noutopäivänä.
+          Ota yhteyttä meihin saadaksesi tarkan ajan kyseisenä päivänä.
         </Text>
 
         <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
@@ -101,7 +112,8 @@ const BookingConfirmationEmail = ({
           Hello <strong>{name}</strong>,
         </Text>
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          Your booking has been confirmed. You're welcome to pick up your items.
+          Your booking has been confirmed. You're welcome to pick up your items
+          on the pickup date. Please contact us for the exact time on that day.
         </Text>
 
         <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
@@ -140,7 +152,6 @@ const BookingConfirmationEmail = ({
             View your Booking
           </a>
         </Section>
-        {/*  TODO: add contact form link */}
         <Text style={{ fontSize: "14px", color: "#666666", marginTop: "30px" }}>
           If you have any questions, contact us by answering this mail or use
           the
