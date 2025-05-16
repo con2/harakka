@@ -164,6 +164,22 @@ export class BookingController {
     return this.bookingService.updatePaymentStatus(dto.orderId, dto.status);
   }
 
+  @Get(":itemId/virtual-quantity")
+  async getAvailableQuantityForDate(
+    @Param("itemId") itemId: string,
+    @Query("date") date: string,
+  ) {
+    if (!itemId || !date) {
+      throw new BadRequestException("Query parameter 'date' is required");
+    }
+    // Calling the method from the service class and returning the booked quantity
+    const quantity = await this.bookingService.getAvailableQuantityForDate(
+      itemId,
+      date,
+    );
+    return { availableQuantity: quantity };
+  }
+
   // commented out because it is not used atm
   /* @Get(":orderId/generate") // unsafe - anyone can create files
   async generateInvoice(@Param("orderId") orderId: string) {
