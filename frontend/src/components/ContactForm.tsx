@@ -51,7 +51,7 @@ export const ContactForm = () => {
       });
 
       // Handle success or failure
-      if (response.data.accepted && response.data.accepted.length > 0) {
+      if (response.data.success) {
         toast.success(t.contactForm.toast.success[lang]);
         form.reset();
       } else {
