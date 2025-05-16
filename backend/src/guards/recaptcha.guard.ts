@@ -1,4 +1,4 @@
-import {
+/* import {
   CanActivate,
   ExecutionContext,
   Injectable,
@@ -41,4 +41,4 @@ export class RecaptchaGuard implements CanActivate {
       throw new BadRequestException("reCAPTCHA validation failed.");
     }
   }
-}
+} */
