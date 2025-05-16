@@ -9,13 +9,18 @@ import {
   UserResponse,
 } from "@supabase/supabase-js";
 import { CreateAddressDto } from "src/dto/create-address.dto";
+import WelcomeEmail from "src/emails/WelcomeEmail";
+import { MailService } from "./mail.service";
 
 @Injectable()
 export class UserService {
   private supabase: SupabaseClient;
   private readonly logger = new Logger(UserService.name);
 
-  constructor(private supabaseService: SupabaseService) {
+  constructor(
+    private supabaseService: SupabaseService,
+    private readonly mailService: MailService,
+  ) {
     this.supabase = supabaseService.getServiceClient(); // Use the service client for admin operations
   }
 
@@ -55,6 +60,24 @@ export class UserService {
 
       // Log the attempt to create a user
       this.logger.log(`Attempting to create user with email: ${user.email}`);
+
+      // send mail to user
+      console.log(`User: ${user}`);
+      try {
+        await this.mailService.sendMail({
+          to: user.email,
+          subject: "Welcome, friend!",
+          template: WelcomeEmail({ name: user.email }),
+        });
+      } catch (mailError) {
+        this.logger.error(
+          `Sending welcome email failed: ${
+            mailError instanceof Error
+              ? mailError.message
+              : JSON.stringify(mailError)
+          }`,
+        );
+      }
 
       // Create a user in Supabase Auth
       const { data: authData, error: authError }: UserResponse =
@@ -214,7 +237,7 @@ export class UserService {
       throw new Error(error.message);
     }
     return data || [];
-    }
+  }
 
   // add a new address
   async addAddress(id: string, address: CreateAddressDto): Promise<any> {
