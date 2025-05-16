@@ -1550,4 +1550,1615 @@ export const t = {
       },
     },
   },
+
+  // Admin translations
+  //AddItemModal translations
+  addItemModal: {
+    title: {
+      fi: "Lisää uusi tuote",
+      en: "Add New Item",
+    },
+    description: {
+      details: {
+        fi: "Täytä tiedot luodaksesi uuden tuotteen",
+        en: "Fill in the details to create a new item",
+      },
+      images: {
+        fi: 'Lisää kuvia tuotteelle "{name}"',
+        en: 'Add images for "{name}"',
+      },
+      createFirst: {
+        fi: "Luo ensin tuote",
+        en: "Please create an item first",
+      },
+    },
+    tabs: {
+      details: {
+        fi: "Tiedot",
+        en: "Details",
+      },
+      images: {
+        fi: "Kuvat",
+        en: "Images",
+      },
+    },
+    tooltips: {
+      createFirst: {
+        fi: "Täytä ensin tuotteen tiedot",
+        en: "Please fill in item details first",
+      },
+    },
+    labels: {
+      itemNameFi: {
+        fi: "Tuotteen nimi (FI)",
+        en: "Item Name (FI)",
+      },
+      itemNameEn: {
+        fi: "Tuotteen nimi (EN)",
+        en: "Item Name (EN)",
+      },
+      itemTypeFi: {
+        fi: "Tuotteen tyyppi (FI)",
+        en: "Item Type (FI)",
+      },
+      itemTypeEn: {
+        fi: "Tuotteen tyyppi (EN)",
+        en: "Item Type (EN)",
+      },
+      descriptionFi: {
+        fi: "Kuvaus (FI)",
+        en: "Description (FI)",
+      },
+      descriptionEn: {
+        fi: "Kuvaus (EN)",
+        en: "Description (EN)",
+      },
+      location: {
+        fi: "Sijainti",
+        en: "Location",
+      },
+      price: {
+        fi: "Hinta",
+        en: "Price",
+      },
+      active: {
+        fi: "Aktiivinen",
+        en: "Active",
+      },
+      totalQuantity: {
+        fi: "Kokonaismäärä",
+        en: "Total Quantity",
+      },
+      inStorage: {
+        fi: "Varastossa",
+        en: "Currently In Storage",
+      },
+      available: {
+        fi: "Saatavilla",
+        en: "Available Quantity",
+      },
+      assignTags: {
+        fi: "Määritä tagit",
+        en: "Assign Tags",
+      },
+    },
+    buttons: {
+      create: {
+        fi: "Luo tuote",
+        en: "Create Item",
+      },
+      creating: {
+        fi: "Luodaan...",
+        en: "Creating...",
+      },
+      done: {
+        fi: "Valmis & Sulje",
+        en: "Done & Close",
+      },
+      back: {
+        fi: "Palaa tietoihin",
+        en: "Go back to details",
+      },
+    },
+    placeholders: {
+      itemFi: {
+        fi: "Tuote (FI)",
+        en: "Item (FI)",
+      },
+      itemEn: {
+        fi: "Tuote (EN)",
+        en: "Item (EN)",
+      },
+      typeFi: {
+        fi: "Tuotteen tyyppi (FI)",
+        en: "Item Type (FI)",
+      },
+      typeEn: {
+        fi: "Tuotteen tyyppi (EN)",
+        en: "Item Type (EN)",
+      },
+      descriptionFi: {
+        fi: "Kuvaus (FI)",
+        en: "Description (FI)",
+      },
+      descriptionEn: {
+        fi: "Kuvaus (EN)",
+        en: "Description (EN)",
+      },
+      selectLocation: {
+        fi: "Valitse sijainti",
+        en: "Select a location",
+      },
+    },
+    messages: {
+      success: {
+        fi: 'Tuote "{name}" luotu onnistuneesti! Voit nyt lisätä kuvia.',
+        en: 'Item "{name}" created successfully! You can now add images.',
+      },
+      error: {
+        fi: "Tuotteen luominen epäonnistui",
+        en: "Failed to create item",
+      },
+      closeConfirm: {
+        fi: "Haluatko varmasti sulkea? Kaikki tallentamattomat kuvamuutokset menetetään.",
+        en: "Are you sure you want to close? Any unsaved image changes will be lost.",
+      },
+    },
+  },
+
+  //addTagModal translations
+  addTagModal: {
+    title: {
+      fi: "Luo uusi tagi",
+      en: "Create a New Tag",
+    },
+    labels: {
+      fiName: {
+        fi: "Suomenkielinen nimi",
+        en: "Finnish Name",
+      },
+      enName: {
+        fi: "Englanninkielinen nimi",
+        en: "English Name",
+      },
+    },
+    placeholders: {
+      fiName: {
+        fi: "esim. Suosittu",
+        en: "e.g. Suosittu",
+      },
+      enName: {
+        fi: "esim. Popular",
+        en: "e.g. Popular",
+      },
+    },
+    buttons: {
+      create: {
+        fi: "Luo tagi",
+        en: "Create Tag",
+      },
+      creating: {
+        fi: "Luodaan...",
+        en: "Creating...",
+      },
+    },
+    messages: {
+      success: {
+        fi: "Tagi luotu onnistuneesti!",
+        en: "Tag created successfully!",
+      },
+      error: {
+        fi: "Tagin luominen epäonnistui",
+        en: "Failed to create tag.",
+      },
+      validationError: {
+        fi: "Vähintään yksi käännös vaaditaan.",
+        en: "At least one translation is required.",
+      },
+    },
+  },
+
+  //addUserModal translations
+  addUserModal: {
+    title: {
+      fi: "Lisää uusi käyttäjä",
+      en: "Add New User",
+    },
+    labels: {
+      fullName: {
+        fi: "Koko nimi",
+        en: "Full Name",
+      },
+      visibleName: {
+        fi: "Näkyvä nimi",
+        en: "Visible Name",
+      },
+      email: {
+        fi: "Sähköposti",
+        en: "Email",
+      },
+      phone: {
+        fi: "Puhelin",
+        en: "Phone",
+      },
+      password: {
+        fi: "Salasana",
+        en: "Password",
+      },
+      role: {
+        fi: "Rooli",
+        en: "Role",
+      },
+    },
+    placeholders: {
+      fullName: {
+        fi: "Koko nimi",
+        en: "Full Name",
+      },
+      visibleName: {
+        fi: "Näkyvä nimi",
+        en: "Visible Name",
+      },
+      email: {
+        fi: "Sähköposti",
+        en: "Email",
+      },
+      phone: {
+        fi: "Puhelinnumero",
+        en: "Phone Number",
+      },
+      password: {
+        fi: "Salasana",
+        en: "Password",
+      },
+      selectRole: {
+        fi: "Valitse rooli",
+        en: "Select Role",
+      },
+    },
+    roles: {
+      user: {
+        fi: "Käyttäjä",
+        en: "User",
+      },
+      admin: {
+        fi: "Ylläpitäjä",
+        en: "Admin",
+      },
+      superVera: {
+        fi: "Super Vera",
+        en: "Super Vera",
+      },
+    },
+    buttons: {
+      create: {
+        fi: "Lisää käyttäjä",
+        en: "Add User",
+      },
+      creating: {
+        fi: "Luodaan...",
+        en: "Creating...",
+      },
+    },
+    messages: {
+      success: {
+        fi: "Käyttäjä {email} luotu onnistuneesti!",
+        en: "User {email} created successfully!",
+      },
+      passwordRequired: {
+        fi: "Salasana vaaditaan.",
+        en: "Password is required.",
+      },
+      invalidEmail: {
+        fi: "Virheellinen sähköpostiosoite.",
+        en: "Invalid email address.",
+      },
+    },
+  },
+
+  //adminDashboard translations
+  adminDashboard: {
+    cards: {
+      users: {
+        fi: "Käyttäjät",
+        en: "Users",
+      },
+      items: {
+        fi: "Tuotteet",
+        en: "Items",
+      },
+      orders: {
+        fi: "Tilaukset",
+        en: "Orders",
+      },
+    },
+    sections: {
+      recentOrders: {
+        fi: "Viimeisimmät tilaukset",
+        en: "Recent Orders",
+      },
+      manageOrders: {
+        fi: "Hallitse tilauksia",
+        en: "Manage Orders",
+      },
+    },
+    status: {
+      unknown: {
+        fi: "Tuntematon",
+        en: "Unknown",
+      },
+      pending: {
+        fi: "Odottaa",
+        en: "Pending",
+      },
+      confirmed: {
+        fi: "Vahvistettu",
+        en: "Confirmed",
+      },
+      cancelled: {
+        fi: "Peruutettu",
+        en: "Cancelled",
+      },
+      cancelledByUser: {
+        fi: "Käyttäjän peruuttama",
+        en: "Cancelled by user",
+      },
+      cancelledByAdmin: {
+        fi: "Ylläpitäjän peruuttama",
+        en: "Cancelled by admin",
+      },
+      rejected: {
+        fi: "Hylätty",
+        en: "Rejected",
+      },
+      completed: {
+        fi: "Valmis",
+        en: "Completed",
+      },
+    },
+    columns: {
+      orderNumber: {
+        fi: "Tilaus #",
+        en: "Order #",
+      },
+      customer: {
+        fi: "Asiakas",
+        en: "Customer",
+      },
+      status: {
+        fi: "Tila",
+        en: "Status",
+      },
+      date: {
+        fi: "Päivämäärä",
+        en: "Date",
+      },
+    },
+  },
+
+  //adminItemsTable translations
+  adminItemsTable: {
+    title: {
+      fi: "Hallinnoi varastotuotteita",
+      en: "Manage Storage Items",
+    },
+    filters: {
+      searchPlaceholder: {
+        fi: "Hae nimellä tai tyypillä",
+        en: "Search by name or type",
+      },
+      status: {
+        all: {
+          fi: "Kaikki",
+          en: "All",
+        },
+        active: {
+          fi: "Aktiiviset",
+          en: "Active",
+        },
+        inactive: {
+          fi: "Ei-aktiiviset",
+          en: "Inactive",
+        },
+      },
+      tags: {
+        filter: {
+          fi: "Suodata tageilla",
+          en: "Filter by tags",
+        },
+        filtered: {
+          fi: "Suodatettu {count} tagilla",
+          en: "Filtered by {count} tag(s)",
+        },
+      },
+      clear: {
+        fi: "Tyhjennä suodattimet",
+        en: "Clear Filters",
+      },
+    },
+    buttons: {
+      addNew: {
+        fi: "Lisää uusi tuote",
+        en: "Add New Item",
+      },
+    },
+    columns: {
+      namefi: {
+        fi: "Tuotteen nimi (FI)",
+        en: "Item Name (FI)",
+      },
+      typefi: {
+        fi: "Tuotteen tyyppi (FI)",
+        en: "Item Type (FI)",
+      },
+      location: {
+        fi: "Sijainti",
+        en: "Location",
+      },
+      price: {
+        fi: "Hinta",
+        en: "Price",
+      },
+      quantity: {
+        fi: "Määrä",
+        en: "Quantity",
+      },
+      active: {
+        fi: "Aktiivinen",
+        en: "Active",
+      },
+      actions: {
+        fi: "Toiminnot",
+        en: "Actions",
+      },
+    },
+    tooltips: {
+      cantDelete: {
+        fi: "Ei voida poistaa, tuotteella on varauksia",
+        en: "Can't delete, it has existing bookings",
+      },
+    },
+    messages: {
+      deletion: {
+        title: {
+          fi: "Vahvista poistaminen",
+          en: "Confirm Deletion",
+        },
+        description: {
+          fi: "Haluatko varmasti poistaa tämän tuotteen? (Pehmeä poisto)",
+          en: "Are you sure you want to delete this item? (Soft Delete)",
+        },
+        confirm: {
+          fi: "Vahvista",
+          en: "Confirm",
+        },
+        cancel: {
+          fi: "Peruuta",
+          en: "Cancel",
+        },
+      },
+      toast: {
+        deleting: {
+          fi: "Poistetaan tuotetta...",
+          en: "Deleting item...",
+        },
+        deleteSuccess: {
+          fi: "Tuote on poistettu onnistuneesti.",
+          en: "Item has been successfully deleted.",
+        },
+        deleteFail: {
+          fi: "Tuotteen poistaminen epäonnistui.",
+          en: "Failed to delete item.",
+        },
+        deleteError: {
+          fi: "Virhe tuotteen poistamisessa.",
+          en: "Error deleting item.",
+        },
+        activateSuccess: {
+          fi: "Tuote aktivoitu onnistuneesti",
+          en: "Item activated successfully",
+        },
+        deactivateSuccess: {
+          fi: "Tuote deaktivoitu onnistuneesti",
+          en: "Item deactivated successfully",
+        },
+        statusUpdateFail: {
+          fi: "Tuotteen tilan päivittäminen epäonnistui",
+          en: "Failed to update item status",
+        },
+      },
+      units: {
+        fi: "kpl",
+        en: "pcs",
+      },
+    },
+  },
+  // adminPanel translations
+  adminPanel: {
+    title: {
+      fi: "Ylläpitäjän paneeli",
+      en: "Admin Panel",
+    },
+    navigation: {
+      dashboard: {
+        fi: "Kojelauta",
+        en: "Dashboard",
+      },
+      orders: {
+        fi: "Tilaukset",
+        en: "Orders",
+      },
+      items: {
+        fi: "Tuotteet",
+        en: "Items",
+      },
+      tags: {
+        fi: "Tagit",
+        en: "Tags",
+      },
+      users: {
+        fi: "Käyttäjät",
+        en: "Users",
+      },
+      team: {
+        fi: "Tiimi",
+        en: "Team",
+      },
+      settings: {
+        fi: "Asetukset",
+        en: "Settings",
+      },
+    },
+  },
+
+  assignTagsModal: {
+    title: {
+      fi: "Määritä Tagit",
+      en: "Assign Tags",
+    },
+    loading: {
+      fi: "Ladataan tageja...",
+      en: "Loading tags...",
+    },
+    buttons: {
+      cancel: {
+        fi: "Peruuta",
+        en: "Cancel",
+      },
+      assign: {
+        fi: "Määritä",
+        en: "Assign",
+      },
+    },
+    messages: {
+      success: {
+        fi: "Tagit määritetty onnistuneesti!",
+        en: "Tags assigned successfully!",
+      },
+      error: {
+        fi: "Tagien määrittäminen epäonnistui",
+        en: "Failed to assign tags",
+      },
+    },
+  },
+
+  itemImageManager: {
+    title: {
+      uploadNew: {
+        fi: "Lataa uusi kuva",
+        en: "Upload New Image",
+      },
+      gallery: {
+        fi: "Tuotteen kuvat ({count})",
+        en: "Item Images ({count})",
+      },
+      sections: {
+        main: {
+          fi: "Pääkuvat ({count})",
+          en: "Main Images ({count})",
+        },
+        thumbnail: {
+          fi: "Pikkukuvat ({count})",
+          en: "Thumbnail Images ({count})",
+        },
+        detail: {
+          fi: "Yksityiskohtakuvat ({count})",
+          en: "Detail Images ({count})",
+        },
+      },
+    },
+    dropzone: {
+      instructions: {
+        fi: "Vedä ja pudota kuva tähän tai klikkaa selataksesi",
+        en: "Drag and drop an image here or click to browse",
+      },
+      fileInfo: {
+        fi: "JPG, PNG, WebP, GIF max 5MB",
+        en: "JPG, PNG, WebP, GIF up to 5MB",
+      },
+    },
+    labels: {
+      imageType: {
+        fi: "Kuvan tyyppi",
+        en: "Image Type",
+      },
+      altText: {
+        fi: "Vaihtoehtoinen teksti (Saavutettavuus)",
+        en: "Alt Text (Accessibility)",
+      },
+    },
+    placeholders: {
+      altText: {
+        fi: "Kuvaile kuva saavutettavuutta varten",
+        en: "Describe the image for accessibility",
+      },
+    },
+    options: {
+      main: {
+        fi: "Pääkuva",
+        en: "Main",
+      },
+      thumbnail: {
+        fi: "Pikkukuva",
+        en: "Thumbnail",
+      },
+      detail: {
+        fi: "Yksityiskohta",
+        en: "Detail",
+      },
+    },
+    buttons: {
+      upload: {
+        fi: "Lataa kuva",
+        en: "Upload Image",
+      },
+      uploading: {
+        fi: "Ladataan...",
+        en: "Uploading...",
+      },
+      deleteImage: {
+        fi: "Poista",
+        en: "Delete",
+      },
+      cancel: {
+        fi: "Peruuta",
+        en: "Cancel",
+      },
+    },
+    messages: {
+      uploadComplete: {
+        fi: "Valmis!",
+        en: "Complete!",
+      },
+      noImages: {
+        fi: "Ei ladattuja kuvia",
+        en: "No images uploaded yet",
+      },
+      noDescription: {
+        fi: "Ei kuvausta",
+        en: "No description",
+      },
+      validation: {
+        fileType: {
+          fi: "Virheellinen tiedostotyyppi. Vain JPG, PNG, WebP ja GIF ovat sallittuja.",
+          en: "Invalid file type. Only JPG, PNG, WebP, and GIF are allowed.",
+        },
+        fileSize: {
+          fi: "Tiedosto on liian suuri. Maksimikoko on {size}MB.",
+          en: "File is too large. Maximum size is {size}MB.",
+        },
+        noFile: {
+          fi: "Valitse tiedosto ladattavaksi",
+          en: "Please select a file to upload",
+        },
+      },
+      toast: {
+        upload: {
+          loading: {
+            fi: "Ladataan kuvaa...",
+            en: "Uploading image...",
+          },
+          success: {
+            fi: "Kuva ladattu onnistuneesti!",
+            en: "Image uploaded successfully!",
+          },
+          error: {
+            fi: "Kuvan lataaminen epäonnistui",
+            en: "Failed to upload image",
+          },
+        },
+        delete: {
+          loading: {
+            fi: "Poistetaan kuvaa...",
+            en: "Deleting image...",
+          },
+          success: {
+            fi: "Kuva poistettu onnistuneesti!",
+            en: "Image deleted successfully!",
+          },
+          error: {
+            fi: "Kuvan poistaminen epäonnistui",
+            en: "Failed to delete image",
+          },
+        },
+        loadError: {
+          fi: "Kuvien lataaminen epäonnistui. Voit silti ladata uusia.",
+          en: "Failed to load images. You can still upload new ones.",
+        },
+      },
+      deleteConfirm: {
+        title: {
+          fi: "Oletko varma?",
+          en: "Are you sure?",
+        },
+        description: {
+          fi: "Tätä toimintoa ei voi kumota. Kuva poistetaan pysyvästi palvelimelta.",
+          en: "This action cannot be undone. This will permanently delete the image from the server.",
+        },
+      },
+    },
+  },
+
+  orderList: {
+    title: {
+      fi: "Hallinnoi tilauksia",
+      en: "Manage Orders",
+    },
+    filters: {
+      search: {
+        fi: "Hae tilausnumeroa tai asiakasta",
+        en: "Search order # or customer name",
+      },
+      status: {
+        all: {
+          fi: "Kaikki tilat",
+          en: "All statuses",
+        },
+        pending: {
+          fi: "Käsittelyssä",
+          en: "Pending",
+        },
+        confirmed: {
+          fi: "Vahvistettu",
+          en: "Confirmed",
+        },
+        cancelled: {
+          fi: "Peruutettu",
+          en: "Cancelled",
+        },
+        cancelledByUser: {
+          fi: "Käyttäjän peruuttama",
+          en: "Cancelled by user",
+        },
+        cancelledByAdmin: {
+          fi: "Ylläpitäjän peruuttama",
+          en: "Cancelled by admin",
+        },
+        rejected: {
+          fi: "Hylätty",
+          en: "Rejected",
+        },
+        completed: {
+          fi: "Valmis",
+          en: "Completed",
+        },
+        deleted: {
+          fi: "Poistettu",
+          en: "Deleted",
+        },
+      },
+      clear: {
+        fi: "Tyhjennä suodattimet",
+        en: "Clear Filters",
+      },
+    },
+    columns: {
+      orderNumber: {
+        fi: "Tilaus #",
+        en: "Order #",
+      },
+      customer: {
+        fi: "Asiakas",
+        en: "Customer",
+      },
+      status: {
+        fi: "Tila",
+        en: "Status",
+      },
+      orderDate: {
+        fi: "Tilauspäivä",
+        en: "Order Date",
+      },
+      total: {
+        fi: "Summa",
+        en: "Total",
+      },
+      invoice: {
+        fi: "Lasku",
+        en: "Invoice",
+      },
+      actions: {
+        fi: "Toiminnot",
+        en: "Actions",
+      },
+    },
+    buttons: {
+      refresh: {
+        fi: "Päivitä tilaukset",
+        en: "Refresh Orders",
+      },
+      viewDetails: {
+        fi: "Näytä tiedot",
+        en: "View Details",
+      },
+    },
+    status: {
+      unknown: {
+        fi: "Tuntematon",
+        en: "Unknown",
+      },
+      pending: {
+        fi: "Käsittelyssä",
+        en: "Pending",
+      },
+      confirmed: {
+        fi: "Vahvistettu",
+        en: "Confirmed",
+      },
+      cancelled: {
+        fi: "Peruutettu",
+        en: "Cancelled",
+      },
+      cancelledByUser: {
+        fi: "Käyttäjän peruuttama",
+        en: "Cancelled by user",
+      },
+      cancelledByAdmin: {
+        fi: "Ylläpitäjän peruuttama",
+        en: "Cancelled by admin",
+      },
+      rejected: {
+        fi: "Hylätty",
+        en: "Rejected",
+      },
+      completed: {
+        fi: "Valmis",
+        en: "Completed",
+      },
+      na: {
+        fi: "Ei saatavilla",
+        en: "N/A",
+      },
+    },
+    modal: {
+      customer: {
+        fi: "Asiakas",
+        en: "Customer",
+      },
+      orderInfo: {
+        fi: "Tilaustiedot",
+        en: "Order Information",
+      },
+      status: {
+        fi: "Tila:",
+        en: "Status:",
+      },
+      date: {
+        fi: "Päivämäärä:",
+        en: "Date:",
+      },
+      orderItems: {
+        columns: {
+          item: {
+            fi: "Tuote",
+            en: "Item",
+          },
+          quantity: {
+            fi: "Määrä",
+            en: "Quantity",
+          },
+          startDate: {
+            fi: "Alkupäivä",
+            en: "Start Date",
+          },
+          endDate: {
+            fi: "Loppupäivä",
+            en: "End Date",
+          },
+          subtotal: {
+            fi: "Välisumma",
+            en: "Subtotal",
+          },
+        },
+      },
+    },
+    loading: {
+      fi: "Ladataan tilauksia...",
+      en: "Loading orders...",
+    },
+  },
+
+  pagination: {
+    previous: {
+      fi: "Edellinen",
+      en: "Previous",
+    },
+    next: {
+      fi: "Seuraava",
+      en: "Next",
+    },
+    pageInfo: {
+      fi: "Sivu {page} / {total}",
+      en: "Page {page} of {total}",
+    },
+  },
+
+  tagAssignForm: {
+    title: {
+      fi: "Määritä tagit tuotteelle",
+      en: "Assign Tags to Item",
+    },
+    buttons: {
+      save: {
+        fi: "Tallenna",
+        en: "Save",
+      },
+      saving: {
+        fi: "Tallennetaan...",
+        en: "Saving...",
+      },
+    },
+    messages: {
+      success: {
+        fi: "Tagit määritetty onnistuneesti!",
+        en: "Tags assigned successfully!",
+      },
+      error: {
+        fi: "Tagien määrittäminen epäonnistui",
+        en: "Failed to assign tags",
+      },
+    },
+    noTags: {
+      fi: "Tageja ei löytynyt",
+      en: "No tags found",
+    },
+  },
+
+  tagDelete: {
+    messages: {
+      invalidId: {
+        fi: "Virheellinen tagin tunnus.",
+        en: "Invalid tag ID.",
+      },
+      generalError: {
+        fi: "Virhe poistettaessa tagia.",
+        en: "Error deleting tag.",
+      },
+    },
+    confirmation: {
+      title: {
+        fi: "Vahvista poistaminen",
+        en: "Confirm Deletion",
+      },
+      description: {
+        fi: "Tämä poistaa tagin pysyvästi ja poistaa sen kaikista liitetyistä kohteista. Oletko varma?",
+        en: "This will permanently delete the tag and remove it from all associated items. Are you sure?",
+      },
+      confirmText: {
+        fi: "Vahvista",
+        en: "Confirm",
+      },
+      cancelText: {
+        fi: "Peruuta",
+        en: "Cancel",
+      },
+    },
+    toast: {
+      loading: {
+        fi: "Poistetaan tagia...",
+        en: "Deleting tag...",
+      },
+      success: {
+        fi: "Tagi on poistettu onnistuneesti.",
+        en: "Tag has been successfully deleted.",
+      },
+      error: {
+        fi: "Tagin poistaminen epäonnistui.",
+        en: "Failed to delete tag.",
+      },
+    },
+    button: {
+      title: {
+        fi: "Poista tagi",
+        en: "Delete Tag",
+      },
+    },
+  },
+
+  tagDetail: {
+    title: {
+      fi: "Tagi:",
+      en: "Tag:",
+    },
+    assignedItems: {
+      header: {
+        fi: "Liitetyt tuotteet:",
+        en: "Assigned Items:",
+      },
+      empty: {
+        fi: "Tähän tagiin ei ole liitetty tuotteita.",
+        en: "No items assigned to this tag.",
+      },
+    },
+    loading: {
+      fi: "Ladataan tuotteita...",
+      en: "Loading items...",
+    },
+  },
+
+  tagList: {
+    title: {
+      fi: "Hallinnoi tageja",
+      en: "Manage Tags",
+    },
+    filters: {
+      search: {
+        fi: "Hae nimellä (FI tai EN)",
+        en: "Search by name (FI or EN)",
+      },
+      assignment: {
+        all: {
+          fi: "Kaikki",
+          en: "All",
+        },
+        assigned: {
+          fi: "Liitetyt",
+          en: "Assigned",
+        },
+        unassigned: {
+          fi: "Ei liitetyt",
+          en: "Unassigned",
+        },
+      },
+      clear: {
+        fi: "Tyhjennä suodattimet",
+        en: "Clear Filters",
+      },
+    },
+    columns: {
+      nameFi: {
+        fi: "Tagin nimi (FI)",
+        en: "Tag Name (FI)",
+      },
+      nameEn: {
+        fi: "Tagin nimi (EN)",
+        en: "Tag Name (EN)",
+      },
+      createdAt: {
+        fi: "Luotu",
+        en: "Created At",
+      },
+      assigned: {
+        fi: "Liitetty",
+        en: "Assigned",
+      },
+      assignedTo: {
+        fi: "Liitetty kohteisiin",
+        en: "Assigned To",
+      },
+      actions: {
+        fi: "Toiminnot",
+        en: "Actions",
+      },
+    },
+    assignment: {
+      yes: {
+        fi: "Kyllä",
+        en: "Yes",
+      },
+      no: {
+        fi: "Ei",
+        en: "No",
+      },
+      count: {
+        fi: "{count} kohdetta",
+        en: "{count} items",
+      },
+    },
+    buttons: {
+      add: {
+        fi: "Lisää uusi tagi",
+        en: "Add New Tag",
+      },
+      edit: {
+        fi: "Muokkaa tagia",
+        en: "Edit Tag",
+      },
+    },
+    editModal: {
+      title: {
+        fi: "Muokkaa tagia",
+        en: "Edit Tag",
+      },
+      labels: {
+        fiName: {
+          fi: "Suomalainen nimi",
+          en: "Finnish Name",
+        },
+        enName: {
+          fi: "Englantilainen nimi",
+          en: "English Name",
+        },
+      },
+      placeholders: {
+        fiName: {
+          fi: "Tagin nimi suomeksi",
+          en: "Tag name in Finnish",
+        },
+        enName: {
+          fi: "Tagin nimi englanniksi",
+          en: "Tag name in English",
+        },
+      },
+      buttons: {
+        save: {
+          fi: "Tallenna muutokset",
+          en: "Save Changes",
+        },
+      },
+      messages: {
+        success: {
+          fi: "Tagi päivitetty onnistuneesti",
+          en: "Tag updated successfully",
+        },
+        error: {
+          fi: "Tagin päivittäminen epäonnistui",
+          en: "Failed to update tag",
+        },
+      },
+    },
+  },
+
+  teamList: {
+    title: {
+      fi: "Hallinnoi tiimiä",
+      en: "Manage Team",
+    },
+    buttons: {
+      addNew: {
+        fi: "Lisää uusi tiimin jäsen",
+        en: "Add New Team Member",
+      },
+      edit: {
+        fi: "Muokkaa",
+        en: "Edit",
+      },
+    },
+    columns: {
+      name: {
+        fi: "Nimi",
+        en: "Name",
+      },
+      phone: {
+        fi: "Puhelinnumero",
+        en: "Phone",
+      },
+      email: {
+        fi: "Sähköposti",
+        en: "Email",
+      },
+      userSince: {
+        fi: "Käyttäjä alkaen",
+        en: "User Since",
+      },
+      role: {
+        fi: "Rooli",
+        en: "Role",
+      },
+      edit: {
+        fi: "Muokkaa",
+        en: "Edit",
+      },
+      delete: {
+        fi: "Poista",
+        en: "Delete",
+      },
+    },
+    status: {
+      unverified: {
+        fi: "Vahvistamaton",
+        en: "Unverified",
+      },
+      na: {
+        fi: "Ei saatavilla",
+        en: "N/A",
+      },
+    },
+    loading: {
+      fi: "Ladataan tiimin tietoja...",
+      en: "Loading team information...",
+    },
+    error: {
+      unauthorized: {
+        fi: "Ei käyttöoikeuksia tiimin hallintaan",
+        en: "No permission to manage team",
+      },
+    },
+  },
+
+  updateItemModal: {
+    title: {
+      fi: "Muokkaa tuotetta",
+      en: "Edit Item",
+    },
+    description: {
+      fi: "Päivitä tuotteen tiedot alla.",
+      en: "Update item details below.",
+    },
+    tabs: {
+      details: {
+        fi: "Tiedot",
+        en: "Details",
+      },
+      images: {
+        fi: "Kuvat",
+        en: "Images",
+      },
+    },
+    labels: {
+      itemNameFi: {
+        fi: "Tuotteen nimi (FI)",
+        en: "Item Name (FI)",
+      },
+      itemNameEn: {
+        fi: "Tuotteen nimi (EN)",
+        en: "Item Name (EN)",
+      },
+      itemTypeFi: {
+        fi: "Tuotteen tyyppi (FI)",
+        en: "Item Type (FI)",
+      },
+      itemTypeEn: {
+        fi: "Tuotteen tyyppi (EN)",
+        en: "Item Type (EN)",
+      },
+      itemDescFi: {
+        fi: "Tuotteen kuvaus (FI)",
+        en: "Item Description (FI)",
+      },
+      itemDescEn: {
+        fi: "Tuotteen kuvaus (EN)",
+        en: "Item Description (EN)",
+      },
+      location: {
+        fi: "Sijainti",
+        en: "Location",
+      },
+      price: {
+        fi: "Hinta",
+        en: "Price",
+      },
+      active: {
+        fi: "Aktiivinen",
+        en: "Active",
+      },
+      totalQuantity: {
+        fi: "Kokonaismäärä",
+        en: "Total Quantity",
+      },
+      currentlyInStorage: {
+        fi: "Varastossa",
+        en: "Currently In Storage",
+      },
+      available: {
+        fi: "Saatavilla",
+        en: "Available",
+      },
+    },
+    placeholders: {
+      itemNameFi: {
+        fi: "Tuote (FI)",
+        en: "Item (FI)",
+      },
+      itemNameEn: {
+        fi: "Tuote (EN)",
+        en: "Item (EN)",
+      },
+      itemTypeFi: {
+        fi: "Tuotteen tyyppi (FI)",
+        en: "Item Type (FI)",
+      },
+      itemTypeEn: {
+        fi: "Tuotteen tyyppi (EN)",
+        en: "Item Type (EN)",
+      },
+      itemDescFi: {
+        fi: "Tuotteen kuvaus (FI)",
+        en: "Item Description (FI)",
+      },
+      itemDescEn: {
+        fi: "Tuotteen kuvaus (EN)",
+        en: "Item Description (EN)",
+      },
+      selectLocation: {
+        fi: "Valitse sijainti",
+        en: "Select a location",
+      },
+      price: {
+        fi: "Hinta",
+        en: "Price",
+      },
+      totalQuantity: {
+        fi: "Kokonaismäärä",
+        en: "Total quantity",
+      },
+      currentlyInStorage: {
+        fi: "Varastossa oleva määrä",
+        en: "Currently in storage",
+      },
+      available: {
+        fi: "Saatavilla oleva määrä",
+        en: "Available quantity",
+      },
+    },
+    tags: {
+      title: {
+        fi: "Valitse tagit",
+        en: "Assign Tags",
+      },
+    },
+    buttons: {
+      update: {
+        fi: "Päivitä tuote",
+        en: "Update Item",
+      },
+      updating: {
+        fi: "Päivitetään...",
+        en: "Updating...",
+      },
+    },
+    messages: {
+      success: {
+        fi: "Tuote päivitetty onnistuneesti!",
+        en: "Item updated successfully!",
+      },
+      error: {
+        fi: "Tuotteen päivittäminen epäonnistui.",
+        en: "Failed to update item.",
+      },
+    },
+  },
+
+  userEditModal: {
+    title: {
+      fi: "Muokkaa käyttäjää",
+      en: "Edit User",
+    },
+    labels: {
+      fullName: {
+        fi: "Koko nimi",
+        en: "Full Name",
+      },
+      email: {
+        fi: "Sähköposti",
+        en: "Email",
+      },
+      phone: {
+        fi: "Puhelinnumero",
+        en: "Phone Number",
+      },
+      role: {
+        fi: "Rooli",
+        en: "Role",
+      },
+      visibleName: {
+        fi: "Näkyvä nimi",
+        en: "Visible Name",
+      },
+      preferences: {
+        fi: "Asetukset",
+        en: "Preferences",
+      },
+      savedLists: {
+        fi: "Tallennetut listat",
+        en: "Saved Lists",
+      },
+    },
+    placeholders: {
+      fullName: {
+        fi: "Koko nimi",
+        en: "Full Name",
+      },
+      email: {
+        fi: "Sähköposti",
+        en: "Email",
+      },
+      phone: {
+        fi: "Puhelinnumero",
+        en: "Phone Number",
+      },
+      visibleName: {
+        fi: "Näkyvä nimi",
+        en: "Visible Name",
+      },
+      preference: {
+        fi: "Syötä uusi asetus",
+        en: "Enter a new preference",
+      },
+      selectRole: {
+        fi: "Valitse rooli",
+        en: "Select Role",
+      },
+    },
+    roles: {
+      admin: {
+        fi: "Ylläpitäjä",
+        en: "Admin",
+      },
+      user: {
+        fi: "Käyttäjä",
+        en: "User",
+      },
+      superVera: {
+        fi: "Super Vera",
+        en: "Super Vera",
+      },
+    },
+    buttons: {
+      save: {
+        fi: "Tallenna muutokset",
+        en: "Save Changes",
+      },
+      remove: {
+        fi: "Poista",
+        en: "Remove",
+      },
+      addPreference: {
+        fi: "Lisää asetus",
+        en: "Add Preference",
+      },
+    },
+    messages: {
+      success: {
+        fi: "Käyttäjä päivitetty onnistuneesti!",
+        en: "User updated successfully!",
+      },
+      error: {
+        fi: "Käyttäjän päivitys epäonnistui. Yritä uudelleen.",
+        en: "Failed to update user. Please try again.",
+      },
+    },
+  },
+
+  usersList: {
+    title: {
+      fi: "Hallinnoi käyttäjiä",
+      en: "Manage Users",
+    },
+    filters: {
+      search: {
+        fi: "Hae nimellä tai sähköpostilla",
+        en: "Search by name or email",
+      },
+      roles: {
+        all: {
+          fi: "Kaikki roolit",
+          en: "All Roles",
+        },
+        user: {
+          fi: "Käyttäjä",
+          en: "User",
+        },
+        admin: {
+          fi: "Ylläpitäjä",
+          en: "Admin",
+        },
+        superVera: {
+          fi: "Super Vera",
+          en: "Super Vera",
+        },
+      },
+      clear: {
+        fi: "Tyhjennä suodattimet",
+        en: "Clear Filters",
+      },
+    },
+    buttons: {
+      addNew: {
+        fi: "Lisää uusi käyttäjä",
+        en: "Add New User",
+      },
+    },
+    columns: {
+      name: {
+        fi: "Nimi",
+        en: "Name",
+      },
+      phone: {
+        fi: "Puhelinnumero",
+        en: "Phone",
+      },
+      email: {
+        fi: "Sähköposti",
+        en: "Email",
+      },
+      userSince: {
+        fi: "Käyttäjä alkaen",
+        en: "User Since",
+      },
+      role: {
+        fi: "Rooli",
+        en: "Role",
+      },
+      actions: {
+        fi: "Toiminnot",
+        en: "Actions",
+      },
+    },
+    status: {
+      unverified: {
+        fi: "Vahvistamaton",
+        en: "Unverified",
+      },
+      na: {
+        fi: "Ei saatavilla",
+        en: "N/A",
+      },
+    },
+    loading: {
+      fi: "Ladataan käyttäjiä...",
+      en: "Loading users...",
+    },
+  },
+
+  userDelete: {
+    messages: {
+      invalidId: {
+        fi: "Virheellinen käyttäjän tunnus.",
+        en: "Invalid user ID.",
+      },
+      generalError: {
+        fi: "Virhe poistettaessa käyttäjää.",
+        en: "Error deleting user.",
+      },
+    },
+    confirmation: {
+      title: {
+        fi: "Vahvista käyttäjän poistaminen",
+        en: "Confirm User Deletion",
+      },
+      description: {
+        fi: "Tämä poistaa käyttäjän ja kaikki hänen tietonsa pysyvästi. Tätä toimintoa ei voi kumota. Oletko varma?",
+        en: "This will permanently delete the user and all their data. This action cannot be undone. Are you sure?",
+      },
+      confirmText: {
+        fi: "Poista käyttäjä",
+        en: "Delete User",
+      },
+      cancelText: {
+        fi: "Peruuta",
+        en: "Cancel",
+      },
+    },
+    toast: {
+      loading: {
+        fi: "Poistetaan käyttäjää...",
+        en: "Deleting user...",
+      },
+      success: {
+        fi: "Käyttäjä poistettu onnistuneesti.",
+        en: "User deleted successfully.",
+      },
+      error: {
+        fi: "Käyttäjän poistaminen epäonnistui.",
+        en: "Failed to delete user.",
+      },
+    },
+    button: {
+      title: {
+        fi: "Poista käyttäjä",
+        en: "Delete User",
+      },
+    },
+  },
 };
