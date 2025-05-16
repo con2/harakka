@@ -182,6 +182,23 @@ export const returnItems = createAsyncThunk<BookingOrder, string>(
   },
 );
 
+// update Payment Status thunk
+export const updatePaymentStatus = createAsyncThunk<
+  { orderId: string; status: string },
+  { orderId: string; status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | "N/A" }
+>(
+  "bookings/payment-status",
+  async ({ orderId, status }, { rejectWithValue }) => {
+    try {
+      return await ordersApi.updatePaymentStatus(orderId, status);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to update the payment status")
+      );
+    }
+  }
+);
+
 export const ordersSlice = createSlice({
   name: "orders",
   initialState,
@@ -386,7 +403,30 @@ export const ordersSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "return";
+      })
+      // Update payment status
+      .addCase(updatePaymentStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(updatePaymentStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        const { orderId, status } = action.payload;
+
+        // Update the order in the normalized state
+        ordersAdapter.updateOne(state, {
+          id: orderId,
+          changes: { payment_status: status as BookingOrder["payment_status"] },
+        });
+      })
+      .addCase(updatePaymentStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "update-payment-status";
       });
+
+      ;
   },
 });
 
