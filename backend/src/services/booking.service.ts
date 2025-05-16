@@ -21,7 +21,6 @@ import BookingConfirmationEmail from "../emails/BookingConfirmationEmail";
 import { EmailProps } from "src/interfaces/mail.interface";
 import { BookingCancelledEmail } from "src/emails/BookingCancelledEmail";
 import { start } from "repl";
-import e from "express";
 
 @Injectable()
 export class BookingService {
@@ -921,7 +920,7 @@ export class BookingService {
         orderId: orderNum?.order_number?.toString() ?? "Unknown",
         startDate,
         items: emailItems,
-        recipientRole: "user", // oder dynamisch bestimmen, falls nötig
+        recipientRole: "user", // TODO: set dynamically!!!
       }),
     });
 
