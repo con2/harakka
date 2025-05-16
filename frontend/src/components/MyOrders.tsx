@@ -835,7 +835,14 @@ const isFormValid = editFormItems.every((item) => {
                         +
                       </Button>
                     </div>
+                    {loadingAvailability[item.item_id] && (
+                      <div className="flex items-center justify-center mt-2">
+                        <LoaderCircle className="animate-spin h-4 w-4" />
+                      </div>
+                    )}
+                    {!loadingAvailability[item.item_id] && (
                     <p className="text-xs italic text-slate-400 mt-1">Total of {availability[item.item_id]} items bookable</p>
+                    )}
                   </div>
                 </div>
               ))}
