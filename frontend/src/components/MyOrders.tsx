@@ -190,14 +190,22 @@ const MyOrders = () => {
 
     for (const item of editFormItems) {
       const itemId = item.item_id;
+      const currentOrderQty = item.quantity ?? 0;
 
       setLoadingAvailability(prev => ({ ...prev, [itemId]: true }));
 
       try {
-        const data = await ordersApi.checkAvailability(itemId, globalStartDate, globalEndDate);
+        const data = await ordersApi.checkAvailability(
+          itemId,
+          globalStartDate,
+          globalEndDate
+        );
+
+        const correctedAvailableQuantity = data.availableQuantity + currentOrderQty;
+
         setAvailability(prev => ({
           ...prev,
-          [itemId]: data.availableQuantity,
+          [itemId]: correctedAvailableQuantity,
         }));
       } catch (err) {
         console.error(`Error checking availability for item ${itemId}:`, err);
@@ -208,9 +216,7 @@ const MyOrders = () => {
   };
 
   fetchAvailability();
-}, [globalStartDate, globalEndDate]);
-
-
+}, [globalStartDate, globalEndDate, editFormItems]);
 
 const isFormValid = editFormItems.every((item) => {
   const inputQty = item.id !== undefined ? (itemQuantities[item.id] ?? item.quantity) : item.quantity;
@@ -725,9 +731,9 @@ const isFormValid = editFormItems.every((item) => {
               {editFormItems.map((item) => (
                 <div
                   key={item.id}
-                  className="grid grid-cols-5 gap-4 items-center"
+                  className="grid grid-cols-5 gap-4"
                 >
-                  <div className="col-span-2">
+                  <div className="col-span-2 items-center">
                     <Label className="block text-xs font-medium">
                       {t.myOrders.edit.item[lang]}
                     </Label>
@@ -765,26 +771,17 @@ const isFormValid = editFormItems.every((item) => {
                       })()}
                     </p>
                   </div>
-                  <div>
-                    {availability[item.item_id] !== undefined &&
-                    item.id !== undefined &&
-                    itemQuantities[item.id] > availability[item.item_id] && (
-                      <p className="text-xs text-red-400">
-                        
-                        {availability[item.item_id]} units available for chosen dates
-                        
-                      </p>
-                    )}
-                  </div>
-                  <div style={{ zIndex: 50, pointerEvents: "auto" }}>
+                  <div className="flex flex-col h-full" style={{ zIndex: 50, pointerEvents: "auto" }}>
                     {/* <Label className="block text-sm font-medium">
                       {t.myOrders.edit.quantity[lang]}
                     </Label> */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 mt-auto">
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
+                        disabled={item.id !== undefined &&
+                          itemQuantities[item.id] === 0}
                         onClick={() => {
                           if (item.id !== undefined) {
                             const newQty =
@@ -823,7 +820,7 @@ const isFormValid = editFormItems.every((item) => {
                         variant="outline"
                         disabled={availability[item.item_id] !== undefined &&
                           item.id !== undefined &&
-                          itemQuantities[item.id] > availability[item.item_id]}
+                          itemQuantities[item.id] === availability[item.item_id]}
                         onClick={() => {
                           if (item.id !== undefined) {
                             const newQty =
@@ -838,6 +835,7 @@ const isFormValid = editFormItems.every((item) => {
                         +
                       </Button>
                     </div>
+                    <p className="text-xs italic text-slate-400 mt-1">Total of {availability[item.item_id]} items bookable</p>
                   </div>
                 </div>
               ))}
