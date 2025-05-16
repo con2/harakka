@@ -22,6 +22,7 @@ import { EmailProps } from "src/interfaces/mail.interface";
 import { BookingCancelledEmail } from "src/emails/BookingCancelledEmail";
 import { start } from "repl";
 import BookingCreationEmail from "src/emails/BookingCreationEmail";
+import BookingUpdateEmail from "src/emails/BookingUpdateEmail";
 
 @Injectable()
 export class BookingService {
@@ -382,43 +383,18 @@ export class BookingService {
       template: BookingCreationEmail(emailData),
     });
 
-    /* await this.mailService.sendMail(
-      user.email,
-      "Booking is successful!",
-      `<h1>Hello <strong></strong></h1><p>Your booking has been received. The order has been sent to the admins. </p>
-      <p>Order Number: <strong>${orderNumber}</strong></p>
-      <p>Details:</p>
-      <ul>
-      ${dto.items
-        .map(
-          (item) =>
-            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
-        )
-        .join("")}
-    </ul>
-    <p>Please be patient while someone reviews your request.</p>`,
-    );
+    // send mail to admin
+    const adminEmailData = {
+      ...emailData,
+      email: "illusia.rental.service@gmail.com",
+      name: "Admin",
+    };
 
-    // 3.7 send email to admin about new booking
-    const adminEmail = "illusia.rental.service@gmail.com";
-
-    await this.mailService.sendMail(
-      adminEmail,
-      "New Booking Awaiting Action",
-      `<h1>New Booking Received</h1>
-     <p>A new booking has been created with the order number: <strong>${orderNumber}</strong>.</p>
-     <p>The order is pending and awaiting your action.</p>
-     <p>Details:</p>
-     <ul>
-       ${dto.items
-         .map(
-           (item) =>
-             `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
-         )
-         .join("")}
-     </ul>
-     <p>Please review the booking and take necessary action.</p>`,
-    ); */
+    await this.mailService.sendMail({
+      to: "illusia.rental.service@gmail.com",
+      subject: "New booking received (copy) - waiting for action",
+      template: BookingCreationEmail(adminEmailData),
+    });
 
     return warningMessage ? { order, warning: warningMessage } : order;
   }
@@ -597,7 +573,7 @@ export class BookingService {
     // 5.2. check the user role
     const { data: user } = await supabase
       .from("user_profiles")
-      .select("role, email")
+      .select("role, email, full_name")
       .eq("id", userId)
       .single();
 
@@ -687,7 +663,70 @@ export class BookingService {
       }
     }
     // 5.8 send mail to user:
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
 
+    const enrichedItems: EnrichedItem[] = updatedItems || [];
+
+    for (const item of enrichedItems) {
+      const { data: storageItem, error: storageItemError } = await supabase
+        .from("storage_items")
+        .select("translations, location_id")
+        .eq("id", item.item_id)
+        .single();
+
+      if (storageItemError || !storageItem) {
+        throw new BadRequestException("Could not fetch storage item details");
+      }
+
+      item.translations = storageItem.translations;
+      item.location_id = storageItem.location_id;
+    }
+
+    // adapt to email:
+    const pickupDate = dayjs(enrichedItems[0].start_date).format("DD.MM.YYYY");
+
+    const { data: location, error: locationError } = await supabase
+      .from("storage_locations")
+      .select("name, address")
+      .eq("id", enrichedItems[0].location_id)
+      .single();
+
+    const emailItems = enrichedItems.map((item) => ({
+      item_id: item.item_id,
+      quantity: item.quantity,
+      translations: {
+        fi: {
+          name: item.translations?.fi.item_name ?? "Unknown",
+        },
+        en: {
+          name: item.translations?.en.item_name ?? "Unknown",
+        },
+      },
+    }));
+
+    const emailData: EmailProps = {
+      name: user.full_name,
+      email: user.email,
+      pickupDate,
+      today: dayjs().format("DD.MM.YYYY"),
+      location: location?.name,
+      items: emailItems,
+    };
+
+    await this.mailService.sendMail({
+      to: emailData.email,
+      subject: "Booking recieved!",
+      template: BookingUpdateEmail(emailData),
+    });
     /* await this.mailService.sendMail(
       user.email,
       "Your booking has been updated!",

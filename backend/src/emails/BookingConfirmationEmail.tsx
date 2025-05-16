@@ -153,7 +153,10 @@ const BookingConfirmationEmail = ({
         <Text style={{ fontSize: "14px", color: "#666666", marginTop: "30px" }}>
           If you have any questions, contact us by answering this mail or use
           the{" "}
-          <a href="" style={{ color: "#9537C7" }}>
+          <a
+            href="http://localhost:5180/contact-us" // TODO: replace with actual link
+            style={{ color: "#9537C7" }}
+          >
             {" "}
             contact form{" "}
           </a>
