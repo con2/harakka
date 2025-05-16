@@ -7,12 +7,19 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-import type { UserRole } from "../../../frontend/src/types/user";
-import type { BookingItem } from "../../../frontend/src/types/order";
+import type { UserRole } from "../types/user";
+import type { BookingItem } from "../types/order";
+
+type ExtendedBookingItem = BookingItem & {
+  translations?: {
+    fi: { name: string };
+    en: { name: string };
+  };
+};
 
 type BookingCancelledEmailProps = {
   orderId: string;
-  items: BookingItem[];
+  items: ExtendedBookingItem[];
   recipientRole: Extract<UserRole, "user" | "admin" | "superVera">;
   startDate: string;
 };
@@ -52,21 +59,19 @@ export const BookingCancelledEmail = ({
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
           }}
         >
-          <Section style={{ textAlign: "center", marginBottom: "20px" }}>
-            <img
-              src="https://live.staticflickr.com/65535/53914430976_9a4350d987_h.jpg"
-              alt="Header"
-              width="100%"
-              height="auto"
-              style={{
-                borderRadius: "8px",
-                maxHeight: "250px",
-                objectFit: "cover",
-              }}
-            />
-          </Section>
+          <Section
+            style={{
+              backgroundImage:
+                "url('https://larppikuvat.fi/odysseus-2024-run-3/lenne-eeronketo/day-1/odysseus-7')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              height: "250px",
+              borderRadius: "8px",
+              marginBottom: "20px",
+            }}
+          ></Section>
 
-          {/* --- Finnisch --- */}
+          {/* --- finnish --- */}
           <Text
             style={{
               fontFamily: "'Roboto Slab'",
@@ -102,8 +107,8 @@ export const BookingCancelledEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {items.map((item, index) => (
               <li key={index} style={{ fontSize: "16px", marginBottom: "6px" }}>
-                Item: {item.item_id}, Quantity: {item.quantity}, Dates:{" "}
-                {item.start_date} to {item.end_date}
+                Item: {item.translations?.en.name ?? "Unknown"}, Quantity:{" "}
+                {item.quantity}, Dates: {item.start_date} to {item.end_date}
               </li>
             ))}
           </ul>
@@ -133,8 +138,8 @@ export const BookingCancelledEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {items.map((item, index) => (
               <li key={index} style={{ fontSize: "16px", marginBottom: "6px" }}>
-                Item: {item.item_id}, Quantity: {item.quantity}, Dates:{" "}
-                {item.start_date} to {item.end_date}
+                Item: {item.translations?.en.name ?? "Unknown"}, Quantity:{" "}
+                {item.quantity}, Dates: {item.start_date} to {item.end_date}
               </li>
             ))}
           </ul>
