@@ -73,7 +73,9 @@ export class MailController {
         throw error;
       }
 
-      throw new InternalServerErrorException("Failed to send email");
+      throw new InternalServerErrorException(
+        "This Error: Failed to send email",
+      );
     }
   }
 }
