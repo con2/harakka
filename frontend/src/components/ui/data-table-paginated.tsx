@@ -118,7 +118,7 @@ export function PaginatedDataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-center space-x-2">
+      <div className="flex items-center justify-center mt-5 space-x-2">
         <Button
           className="px-2 py-1 bg-background border-1 border-secondary text-secondary hover:bg-secondary hover:text-white"
           onClick={() => table.previousPage()}
