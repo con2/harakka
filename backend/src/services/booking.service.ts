@@ -23,6 +23,8 @@ import { BookingCancelledEmail } from "src/emails/BookingCancelledEmail";
 import { start } from "repl";
 import BookingCreationEmail from "src/emails/BookingCreationEmail";
 import BookingUpdateEmail from "src/emails/BookingUpdateEmail";
+import BookingRejectionEmail from "src/emails/BookingRejectionEmail";
+import BookingDeleteMail from "src/emails/BookingDeleteMail";
 
 @Injectable()
 export class BookingService {
@@ -379,7 +381,7 @@ export class BookingService {
 
     await this.mailService.sendMail({
       to: emailData.email,
-      subject: "Booking recieved!",
+      subject: "Vastaanotettu varaus - Booking received!",
       template: BookingCreationEmail(emailData),
     });
 
@@ -392,7 +394,8 @@ export class BookingService {
 
     await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
-      subject: "New booking received (copy) - waiting for action",
+      subject:
+        "Uusi varaus vastaanotettu (kopio) - odottamassa toimenpiteitä -- New booking received (copy) - waiting for action",
       template: BookingCreationEmail(adminEmailData),
     });
 
@@ -549,8 +552,21 @@ export class BookingService {
 
     await this.mailService.sendMail({
       to: emailData.email,
-      subject: "Booking confirmed!",
+      subject: "Varausvahvistus! - Booking confirmed!",
       template: BookingConfirmationEmail(emailData),
+    });
+
+    // send mail to admin
+    const adminEmailData = {
+      ...emailData,
+      email: "illusia.rental.service@gmail.com",
+      name: "Admin",
+    };
+
+    await this.mailService.sendMail({
+      to: "illusia.rental.service@gmail.com",
+      subject: "Varausvahvistus onnistui - Booking confirmed successfully",
+      template: BookingConfirmationEmail(adminEmailData),
     });
 
     return { message: "Booking confirmed" };
@@ -724,47 +740,22 @@ export class BookingService {
 
     await this.mailService.sendMail({
       to: emailData.email,
-      subject: "Booking recieved!",
+      subject: "Varaus päivitetty - Booking updated",
       template: BookingUpdateEmail(emailData),
     });
-    /* await this.mailService.sendMail(
-      user.email,
-      "Your booking has been updated!",
-      `<h1>Hello <strong></strong></h1>
-       <p>Your booking has been successfully updated. The order has been sent to the admins for further review.</p>
-       <p>Order Number: <strong>${order.order_number}</strong></p>
-       <p>Updated Details:</p>
-       <ul>
-         ${updatedItems
-           .map(
-             (item) =>
-               `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
-           )
-           .join("")}
-       </ul>
-       <p>Please be patient while someone reviews the updated booking.</p>`,
-    );
 
-    // 5.9 send email to admin about new booking
-    const adminEmail = "illusia.rental.service@gmail.com";
+    // send mail to admin
+    const adminEmailData = {
+      ...emailData,
+      email: "illusia.rental.service@gmail.com",
+      name: "Admin",
+    };
 
-    await this.mailService.sendMail(
-      adminEmail,
-      "Booking Updated - Awaiting Your Action",
-      `<h1>Booking Update Received</h1>
-   <p>An existing booking has been updated with the order number: <strong>${order.order_number}</strong>.</p>
-   <p>The order is now pending and awaiting your action.</p>
-   <p>Updated Details:</p>
-   <ul>
-     ${updatedItems
-       .map(
-         (item) =>
-           `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
-       )
-       .join("")}
-   </ul>
-   <p>Please review the updated booking and take the necessary action.</p>`,
-    ); */
+    await this.mailService.sendMail({
+      to: "illusia.rental.service@gmail.com",
+      subject: "Varaus päivitetty - Booking updated - waiting to be confirmed",
+      template: BookingUpdateEmail(adminEmailData),
+    });
 
     return { message: "Booking updated" };
   }
@@ -791,7 +782,7 @@ export class BookingService {
     // 6.1 user role check
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
-      .select("role, email")
+      .select("role, email, full_name")
       .eq("id", userId)
       .single();
 
@@ -841,43 +832,88 @@ export class BookingService {
       throw new BadRequestException("Could not reject the booking");
     }
 
-    // 6.4 Send mail to user about booking rejection:
-    /*  await this.mailService.sendMail(
-      user.email,
-      "Your booking has been rejected",
-      `<h1>Hello</h1>
-    <p>We regret to inform you that your booking has been rejected. The order has been cancelled.</p>
-    <p>Order Number: <strong>${order.order_number}</strong></p>
-    <p>Details of the rejected booking:</p>
-    <ul>
-      ${orderItems
-        .map(
-          (item) =>
-            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
-        )
-        .join("")}
-    </ul>
-    <p>If you have any questions, please feel free to contact us.</p>`,
-    );
+    // 4.6 send mail to user:
+    const today = dayjs().format("DD.MM.YYYY");
 
-    // 6.6 Send email to admin about rejected booking
-    const adminEmail = "illusia.rental.service@gmail.com";
+    // get user profile
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
 
-    await this.mailService.sendMail(
-      adminEmail,
-      "Booking Rejected - Action Taken",
-      `<h1>Booking Rejection Confirmation</h1>
-    <p>The booking with the order number: <strong>${order.order_number}</strong> has been rejected.</p>
-    <p>The following items were part of the rejected booking:</p>
-    <ul>
-      ${orderItems
-        .map(
-          (item) =>
-            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
-        )
-        .join("")}
-    </ul>`,
-    ); */
+    const enrichedItems: EnrichedItem[] = orderItems || [];
+
+    for (const item of enrichedItems) {
+      const { data: storageItem, error: storageItemError } = await supabase
+        .from("storage_items")
+        .select("translations, location_id")
+        .eq("id", item.item_id)
+        .single();
+
+      if (storageItemError || !storageItem) {
+        throw new BadRequestException("Could not fetch storage item details");
+      }
+
+      item.translations = storageItem.translations;
+      item.location_id = storageItem.location_id;
+    }
+
+    // adapt to email:
+    const pickupDate = dayjs(enrichedItems[0].start_date).format("DD.MM.YYYY");
+
+    const { data: location, error: locationError } = await supabase
+      .from("storage_locations")
+      .select("name, address")
+      .eq("id", enrichedItems[0].location_id)
+      .single();
+
+    const emailItems = enrichedItems.map((item) => ({
+      item_id: item.item_id,
+      quantity: item.quantity,
+      translations: {
+        fi: {
+          name: item.translations?.fi.item_name ?? "Unknown",
+        },
+        en: {
+          name: item.translations?.en.item_name ?? "Unknown",
+        },
+      },
+    }));
+
+    const emailData: EmailProps = {
+      name: user.full_name,
+      email: user.email,
+      pickupDate,
+      today,
+      location: location?.name,
+      items: emailItems,
+    };
+
+    await this.mailService.sendMail({
+      to: emailData.email,
+      subject: "Varaus hylätty - Booking rejected!",
+      template: BookingRejectionEmail(emailData),
+    });
+
+    // send mail to admin
+    const adminEmailData = {
+      ...emailData,
+      email: "illusia.rental.service@gmail.com",
+      name: "Admin",
+    };
+
+    await this.mailService.sendMail({
+      to: "illusia.rental.service@gmail.com",
+      subject: "Varaus hylätty - Booking rejected sucessfully - (copy)",
+      template: BookingRejectionEmail(adminEmailData),
+    });
+
     return { message: "Booking rejected" };
   }
 
@@ -967,7 +1003,6 @@ export class BookingService {
     }
 
     // 7.7 send email to user
-
     type EnrichedItem = {
       item_id: string;
       quantity: number;
@@ -1021,12 +1056,24 @@ export class BookingService {
     // send mail
     await this.mailService.sendMail({
       to: userProfile.email,
-      subject: "Booking Cancelled",
+      subject: "Varaus peruttu - Booking Cancelled",
       template: BookingCancelledEmail({
         orderId: orderNum?.order_number?.toString() ?? "Unknown",
         startDate,
         items: emailItems,
         recipientRole: "user", // TODO: set dynamically!!!
+      }),
+    });
+
+    // send mail to admin
+    await this.mailService.sendMail({
+      to: "illusia.rental.service@gmail.com",
+      subject: "Varaus peruttu - Booking Cancelled",
+      template: BookingCancelledEmail({
+        orderId: orderNum?.order_number?.toString() ?? "Unknown",
+        startDate,
+        items: emailItems,
+        recipientRole: "admin",
       }),
     });
 
@@ -1055,7 +1102,7 @@ export class BookingService {
     // 8.1 check order in database
     const { data: order } = await supabase
       .from("orders")
-      .select("status, user_id")
+      .select("status, user_id, order_number")
       .eq("id", orderId)
       .single();
 
@@ -1086,7 +1133,7 @@ export class BookingService {
       );
     }
 
-    // 8.3 ancel all related order_items to restore virtual stock
+    // 8.3 cancel all related order_items to restore virtual stock
     const { error: itemUpdateError } = await supabase
       .from("order_items")
       .update({ status: "cancelled" })
@@ -1121,25 +1168,18 @@ export class BookingService {
     }
 
     // 8.6 send notification email to admin
-    const adminEmail = "illusia.rental.service@gmail.com";
+    const adminEmailDataObject = {
+      order: order.order_number,
+      email: "illusia.rental.service@gmail.com",
+      name: "Admin",
+    };
 
-    /* await this.mailService.sendMail(
-      adminEmail,
-      "Booking deleted",
-      `<h1>Booking deleted successfully</h1>
-    <p>The following booking (ID: <strong>${orderId}</strong>) was successfully deleted.</p>
-    <p>Details:</p>
-    <ul>
-      ${orderItems
-        .map(
-          (item) =>
-            `<li>Item: ${item.item_id}, Quantity: ${item.quantity}, Dates: ${item.start_date} to ${item.end_date}</li>`,
-        )
-        .join("")}
-    </ul>
-    <p>The booking remains in the system but is marked as deleted and not longer visible for the user.</p>`,
-    );
- */
+    await this.mailService.sendMail({
+      to: "illusia.rental.service@gmail.com",
+      subject: "Varaus poistettu - Booking deleted",
+      template: BookingDeleteMail(adminEmailDataObject),
+    });
+
     return {
       message: "Booking deleted",
     };

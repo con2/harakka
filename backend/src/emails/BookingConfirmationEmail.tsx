@@ -65,7 +65,7 @@ const BookingConfirmationEmail = ({
             marginBottom: "24px",
           }}
         >
-          Booking confirmation
+          Varausvahvistus - Booking confirmation
         </Text>
 
         <Text
