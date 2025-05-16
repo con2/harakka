@@ -7,8 +7,8 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-import type { UserRole } from "../../../frontend/src/types/user";
-import type { BookingItem } from "../../../frontend/src/types/order";
+import type { UserRole } from "../types/user";
+import type { BookingItem } from "../types/order";
 
 type ExtendedBookingItem = BookingItem & {
   translations?: {
@@ -108,7 +108,7 @@ export const BookingCancelledEmail = ({
             {items.map((item, index) => (
               <li key={index} style={{ fontSize: "16px", marginBottom: "6px" }}>
                 Item: {item.translations?.en.name ?? "Unknown"}, Quantity:{" "}
-                {item.quantity}, Date: {item.start_date} to {item.end_date}
+                {item.quantity}, Dates: {item.start_date} to {item.end_date}
               </li>
             ))}
           </ul>
