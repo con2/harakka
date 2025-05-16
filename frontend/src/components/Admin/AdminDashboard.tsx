@@ -25,6 +25,9 @@ import {
 import { Badge } from "../ui/badge";
 import { BookingOrder } from "@/types";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
@@ -35,6 +38,9 @@ const AdminDashboard = () => {
   const orders = useAppSelector(selectAllOrders);
   const ordersLoading = useAppSelector(selectOrdersLoading);
   const navigate = useNavigate();
+  // Translation
+  const { lang } = useLanguage();
+  const { formatDate } = useFormattedDate();
 
   useEffect(() => {
     dispatch(fetchAllItems());
@@ -53,7 +59,10 @@ const AdminDashboard = () => {
   }, [dispatch, user?.id, orders.length, ordersLoading]);
 
   const StatusBadge = ({ status }: { status?: string }) => {
-    if (!status) return <Badge variant="outline">Unknown</Badge>;
+    if (!status)
+      return (
+        <Badge variant="outline">{t.adminDashboard.status.unknown[lang]}</Badge>
+      );
 
     switch (status) {
       case "pending":
@@ -62,7 +71,7 @@ const AdminDashboard = () => {
             variant="outline"
             className="bg-yellow-100 text-yellow-800 border-yellow-300"
           >
-            Pending
+            {t.adminDashboard.status.pending[lang]}
           </Badge>
         );
       case "confirmed":
@@ -71,17 +80,34 @@ const AdminDashboard = () => {
             variant="outline"
             className="bg-green-100 text-green-800 border-green-300"
           >
-            Confirmed
+            {t.adminDashboard.status.confirmed[lang]}
           </Badge>
         );
       case "cancelled":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 border-red-300"
+          >
+            {t.adminDashboard.status.cancelled[lang]}
+          </Badge>
+        );
       case "cancelled by user":
         return (
           <Badge
             variant="outline"
             className="bg-red-100 text-red-800 border-red-300"
           >
-            Cancelled
+            {t.adminDashboard.status.cancelled[lang]}
+          </Badge>
+        );
+      case "cancelled by admin":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 border-red-300"
+          >
+            {t.adminDashboard.status.cancelledByAdmin[lang]}
           </Badge>
         );
       case "rejected":
@@ -90,7 +116,7 @@ const AdminDashboard = () => {
             variant="outline"
             className="bg-red-100 text-red-800 border-red-300"
           >
-            Rejected
+            {t.adminDashboard.status.rejected[lang]}
           </Badge>
         );
       case "completed":
@@ -99,7 +125,7 @@ const AdminDashboard = () => {
             variant="outline"
             className="bg-blue-100 text-blue-800 border-blue-300"
           >
-            Completed
+            {t.adminDashboard.status.completed[lang]}
           </Badge>
         );
       default:
@@ -112,14 +138,17 @@ const AdminDashboard = () => {
   const ordersColumns: ColumnDef<BookingOrder>[] = [
     {
       accessorKey: "order_number",
-      header: "Order #",
+      header: t.adminDashboard.columns.orderNumber[lang],
     },
     {
       accessorKey: "user_profile.name",
-      header: "Customer",
+      header: t.adminDashboard.columns.customer[lang],
       cell: ({ row }) => (
         <div>
-          <div>{row.original.user_profile?.name || "Unknown"}</div>
+          <div>
+            {row.original.user_profile?.name ||
+              t.adminDashboard.status.unknown[lang]}
+          </div>
           <div className="text-xs text-gray-500">
             {row.original.user_profile?.email}
           </div>
@@ -128,19 +157,15 @@ const AdminDashboard = () => {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t.adminDashboard.columns.status[lang],
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "created_at",
-      header: "Date",
+      header: t.adminDashboard.columns.date[lang],
       cell: ({ row }) => {
         const date = new Date(row.original.created_at || "");
-        return date.toLocaleDateString("en-GB", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        });
+        return formatDate(date, "d MMM yyyy");
       },
     },
   ];
@@ -164,7 +189,9 @@ const AdminDashboard = () => {
       <div className="w-full flex flex-wrap justify-evenly items-center mb-8 gap-4">
         <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
           <div className="flex justify-center items-center">
-            <p className="text-slate-500">Users</p>
+            <p className="text-slate-500">
+              {t.adminDashboard.cards.users[lang]}
+            </p>
           </div>
           <div className="flex flex-row items-center gap-2">
             <Users className="h-10 w-10 text-highlight2 shrink-0" />
@@ -174,7 +201,9 @@ const AdminDashboard = () => {
 
         <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
           <div className="flex justify-center items-center">
-            <p className="text-slate-500">Items</p>
+            <p className="text-slate-500">
+              {t.adminDashboard.cards.items[lang]}
+            </p>
           </div>
           <div className="flex flex-row items-center gap-2">
             <Warehouse className="h-10 w-10 text-highlight2 shrink-0" />
@@ -184,7 +213,9 @@ const AdminDashboard = () => {
 
         <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
           <div className="flex justify-center items-center">
-            <p className="text-slate-500">Orders</p>
+            <p className="text-slate-500">
+              {t.adminDashboard.cards.orders[lang]}
+            </p>
           </div>
           <div className="flex flex-row items-center gap-2">
             <ShoppingBag className="h-10 w-10 text-highlight2 shrink-0" />
@@ -194,7 +225,9 @@ const AdminDashboard = () => {
       </div>
       {/* Recent Orders Section */}
       <div className="mb-8">
-        <h2 className="text-left">Recent Orders</h2>
+        <h2 className="text-left">
+          {t.adminDashboard.sections.recentOrders[lang]}
+        </h2>
         {ordersLoading ? (
           <div className="flex justify-center items-center py-6">
             <LoaderCircle className="animate-spin" />
@@ -216,7 +249,7 @@ const AdminDashboard = () => {
             className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
             onClick={() => navigate("/admin/orders")}
           >
-            Manage Orders <MoveRight />
+            {t.adminDashboard.sections.manageOrders[lang]} <MoveRight />
           </Button>
         </div>
       </div>

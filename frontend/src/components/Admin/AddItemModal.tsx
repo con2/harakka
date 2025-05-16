@@ -48,6 +48,9 @@ import {
   fetchAllLocations,
   selectAllLocations,
 } from "@/store/slices/locationsSlice";
+// Import translation utilities
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const initialFormState: ItemFormData = {
   location_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
@@ -77,6 +80,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   const availableTags = useAppSelector(selectAllTags);
   const error = useAppSelector(selectItemsError);
   const errorContext = useAppSelector(selectItemsErrorContext);
+  const { lang } = useLanguage(); // Get current language
 
   // Use global modal state from Redux
   const modalState = useAppSelector(selectItemModalState);
@@ -196,11 +200,14 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
       setActiveTab("images");
 
       toast.success(
-        `Item "${newItem.translations.en.item_name}" created successfully! You can now add images.`,
+        t.addItemModal.messages.success[lang].replace(
+          "{name}",
+          newItem.translations.en.item_name,
+        ),
       );
     } catch (error) {
       console.error("Error creating item:", error);
-      toast.error("Failed to create item");
+      toast.error(t.addItemModal.messages.error[lang]);
     } finally {
       setLoading(false);
     }
@@ -223,11 +230,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
         } else {
           // Handle close confirmation
           if (activeTab === "images" && modalState.createdItemId) {
-            if (
-              confirm(
-                "Are you sure you want to close? Any unsaved image changes will be lost.",
-              )
-            ) {
+            if (confirm(t.addItemModal.messages.closeConfirm[lang])) {
               resetForm();
             }
           } else {
@@ -242,17 +245,20 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
       <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Item</DialogTitle>
+          <DialogTitle>{t.addItemModal.title[lang]}</DialogTitle>
           <DialogDescription className="text-center">
             {activeTab === "details"
-              ? "Fill in the details to create a new item"
+              ? t.addItemModal.description.details[lang]
               : createdItem
-                ? `Add images for "${createdItem.translations.en.item_name}"`
-                : "Please create an item first"}
+                ? t.addItemModal.description.images[lang].replace(
+                    "{name}",
+                    createdItem.translations.en.item_name,
+                  )
+                : t.addItemModal.description.createFirst[lang]}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Tab Navigation - matching UpdateItemModal style */}
+        {/* Tab Navigation */}
         <div className="flex border-b mb-4">
           <button
             className={`px-4 py-2 ${
@@ -262,7 +268,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
             }`}
             onClick={() => setActiveTab("details")}
           >
-            Details
+            {t.addItemModal.tabs.details[lang]}
           </button>
           <TooltipProvider>
             <Tooltip>
@@ -278,12 +284,12 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                   }
                   disabled={!modalState.createdItemId}
                 >
-                  Images
+                  {t.addItemModal.tabs.images[lang]}
                 </button>
               </TooltipTrigger>
               {!modalState.createdItemId && (
                 <TooltipContent side="top">
-                  Please fill in item details first.
+                  {t.addItemModal.tooltips.createFirst[lang]}
                 </TooltipContent>
               )}
             </Tooltip>
@@ -304,28 +310,28 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="translations.fi.item_name">
-                    Item Name (FI)
+                    {t.addItemModal.labels.itemNameFi[lang]}
                   </Label>
                   <Input
                     id="translations.fi.item_name"
                     name="translations.fi.item_name"
                     value={formData.translations.fi.item_name}
                     onChange={handleChange}
-                    placeholder="Item (FI)"
+                    placeholder={t.addItemModal.placeholders.itemFi[lang]}
                     className="placeholder:text-xs italic p-2"
                     required
                   />
                 </div>
                 <div>
                   <Label htmlFor="translations.en.item_name">
-                    Item Name (EN)
+                    {t.addItemModal.labels.itemNameEn[lang]}
                   </Label>
                   <Input
                     id="translations.en.item_name"
                     name="translations.en.item_name"
                     value={formData.translations.en.item_name}
                     onChange={handleChange}
-                    placeholder="Item (EN)"
+                    placeholder={t.addItemModal.placeholders.itemEn[lang]}
                     className="placeholder:text-xs italic p-2"
                     required
                   />
@@ -336,27 +342,27 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="translations.fi.item_type">
-                    Item Type (FI)
+                    {t.addItemModal.labels.itemTypeFi[lang]}
                   </Label>
                   <Input
                     id="translations.fi.item_type"
                     name="translations.fi.item_type"
                     value={formData.translations.fi.item_type}
                     onChange={handleChange}
-                    placeholder="Item Type (FI)"
+                    placeholder={t.addItemModal.placeholders.typeFi[lang]}
                     className="placeholder:text-xs italic p-2"
                   />
                 </div>
                 <div>
                   <Label htmlFor="translations.en.item_type">
-                    Item Type (EN)
+                    {t.addItemModal.labels.itemTypeEn[lang]}
                   </Label>
                   <Input
                     id="translations.en.item_type"
                     name="translations.en.item_type"
                     value={formData.translations.en.item_type}
                     onChange={handleChange}
-                    placeholder="Item Type (EN)"
+                    placeholder={t.addItemModal.placeholders.typeEn[lang]}
                     className="placeholder:text-xs italic p-2"
                   />
                 </div>
@@ -366,28 +372,32 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="translations.fi.item_description">
-                    Description (FI)
+                    {t.addItemModal.labels.descriptionFi[lang]}
                   </Label>
                   <Textarea
                     id="translations.fi.item_description"
                     name="translations.fi.item_description"
                     value={formData.translations.fi.item_description}
                     onChange={handleChange}
-                    placeholder="Description (FI)"
+                    placeholder={
+                      t.addItemModal.placeholders.descriptionFi[lang]
+                    }
                     className="placeholder:text-xs italic p-2 shadow-sm ring-1 ring-inset ring-muted"
                     rows={3}
                   />
                 </div>
                 <div>
                   <Label htmlFor="translations.en.item_description">
-                    Description (EN)
+                    {t.addItemModal.labels.descriptionEn[lang]}
                   </Label>
                   <Textarea
                     id="translations.en.item_description"
                     name="translations.en.item_description"
                     value={formData.translations.en.item_description}
                     onChange={handleChange}
-                    placeholder="Description (EN)"
+                    placeholder={
+                      t.addItemModal.placeholders.descriptionEn[lang]
+                    }
                     className="placeholder:text-xs italic p-2 shadow-sm ring-1 ring-inset ring-muted"
                     rows={3}
                   />
@@ -398,7 +408,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
             {/* Location Details */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="location_id">Location</Label>
+                <Label htmlFor="location_id">
+                  {t.addItemModal.labels.location[lang]}
+                </Label>
                 <Select
                   value={formData.location_id || ""}
                   onValueChange={(value) =>
@@ -406,7 +418,11 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a location" />
+                    <SelectValue
+                      placeholder={
+                        t.addItemModal.placeholders.selectLocation[lang]
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {locations.map((location) => (
@@ -422,7 +438,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               <div className="flex flex-row items-baseline space-x-4 space-y-4">
                 <div className="flex flex-row items-baseline space-x-2">
                   <Label htmlFor="price" className="font-medium">
-                    Price
+                    {t.addItemModal.labels.price[lang]}
                   </Label>
                   <Input
                     id="price"
@@ -430,14 +446,14 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     type="number"
                     value={formData.price}
                     onChange={handleChange}
-                    placeholder="Price"
+                    placeholder={t.addItemModal.labels.price[lang]}
                     required
                     className="w-60"
                   />
                 </div>
                 <div className="flex flex-row items-center space-x-2">
                   <Label htmlFor="is_active" className="font-medium">
-                    Active
+                    {t.addItemModal.labels.active[lang]}
                   </Label>
                   <Switch
                     id="is_active"
@@ -451,7 +467,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="items_number_total">Total Quantity</Label>
+                    <Label htmlFor="items_number_total">
+                      {t.addItemModal.labels.totalQuantity[lang]}
+                    </Label>
                     <Input
                       id="items_number_total"
                       name="items_number_total"
@@ -459,14 +477,14 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                       value={formData.items_number_total}
                       onChange={handleChange}
                       min="1"
-                      placeholder="Total quantity"
+                      placeholder={t.addItemModal.labels.totalQuantity[lang]}
                       className="value:text-xs"
                     />
                   </div>
 
                   <div>
                     <Label htmlFor="items_number_currently_in_storage">
-                      Currently In Storage
+                      {t.addItemModal.labels.inStorage[lang]}
                     </Label>
                     <Input
                       id="items_number_currently_in_storage"
@@ -476,14 +494,14 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                       onChange={handleChange}
                       min="0"
                       max={formData.items_number_total}
-                      placeholder="Currently in storage"
+                      placeholder={t.addItemModal.labels.inStorage[lang]}
                       className="value:text-xs"
                     />
                   </div>
 
                   <div>
                     <Label htmlFor="items_number_available">
-                      Available Quantity
+                      {t.addItemModal.labels.available[lang]}
                     </Label>
                     <Input
                       id="items_number_available"
@@ -493,7 +511,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                       onChange={handleChange}
                       min="0"
                       max={formData.items_number_total}
-                      placeholder="Available quantity"
+                      placeholder={t.addItemModal.labels.available[lang]}
                       className="value:text-xs"
                     />
                   </div>
@@ -501,7 +519,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
                 {/* Tag Selection */}
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Assign Tags</h3>
+                  <h3 className="text-sm font-medium">
+                    {t.addItemModal.labels.assignTags[lang]}
+                  </h3>
                   <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
                     {availableTags.map((tag) => (
                       <label key={tag.id} className="flex items-center">
@@ -511,8 +531,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                           onCheckedChange={() => handleTagToggle(tag.id)}
                         />
                         <span className="text-sm">
-                          {tag.translations?.fi?.name ||
-                            tag.translations?.en?.name ||
+                          {tag.translations?.[lang]?.name ||
+                            tag.translations?.[lang === "fi" ? "en" : "fi"]
+                              ?.name ||
                             "Unnamed"}
                         </span>
                       </label>
@@ -532,10 +553,10 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {t.addItemModal.buttons.creating[lang]}
                   </>
                 ) : (
-                  "Create Item"
+                  t.addItemModal.buttons.create[lang]
                 )}
               </Button>
             </DialogFooter>
@@ -550,19 +571,19 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                 onClick={resetForm}
                 size="sm"
               >
-                Done & Close
+                {t.addItemModal.buttons.done[lang]}
               </Button>
             </DialogFooter>
           </>
         ) : (
           <div className="text-center py-12">
-            <p>Please create an item first</p>
+            <p>{t.addItemModal.description.createFirst[lang]}</p>
             <Button
               className="mt-4 text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
               onClick={() => setActiveTab("details")}
               size="sm"
             >
-              Go back to details
+              {t.addItemModal.buttons.back[lang]}
             </Button>
           </div>
         )}
