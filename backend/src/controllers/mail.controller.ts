@@ -14,6 +14,7 @@ import { EmailProps } from "src/interfaces/mail.interface";
 import { SendMailDto } from "src/dto/send-mail.dto";
 import BookingConfirmationEmail from "src/emails/BookingConfirmationEmail";
 import WelcomeEmail from "../emails/WelcomeEmail";
+import * as React from "react";
 
 @Controller("mail")
 @UseGuards(ThrottlerGuard)
@@ -73,7 +74,9 @@ export class MailController {
         throw error;
       }
 
-      throw new InternalServerErrorException("Failed to send email");
+      throw new InternalServerErrorException(
+        "This Error: Failed to send email",
+      );
     }
   }
 }
