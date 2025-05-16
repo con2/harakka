@@ -37,6 +37,7 @@ import { Calendar } from "./ui/calendar";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { ordersApi } from "@/api/services/orders";
 
 const MyOrders = () => {
   const dispatch = useAppDispatch();
@@ -59,6 +60,9 @@ const MyOrders = () => {
   );
   const [startPickerOpen, setStartPickerOpen] = useState(false);
   const [endPickerOpen, setEndPickerOpen] = useState(false);
+  const [availability, setAvailability] = useState<{ [itemId: string]: number }>({});
+  const [loadingAvailability, setLoadingAvailability] = useState<{ [itemId: string]: boolean }>({});
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -179,6 +183,48 @@ const MyOrders = () => {
       toast.error(t.myOrders.edit.toast.updateFailed[lang]);
     }
   };
+  // fetch availability for an item on a given date
+  useEffect(() => {
+  const fetchAvailability = async () => {
+    if (!globalStartDate || !globalEndDate) return;
+
+    for (const item of editFormItems) {
+      const itemId = item.item_id;
+      const currentOrderQty = item.quantity ?? 0;
+
+      setLoadingAvailability(prev => ({ ...prev, [itemId]: true }));
+
+      try {
+        const data = await ordersApi.checkAvailability(
+          itemId,
+          globalStartDate,
+          globalEndDate
+        );
+
+        const correctedAvailableQuantity = data.availableQuantity + currentOrderQty;
+
+        setAvailability(prev => ({
+          ...prev,
+          [itemId]: correctedAvailableQuantity,
+        }));
+      } catch (err) {
+        console.error(`Error checking availability for item ${itemId}:`, err);
+      } finally {
+        setLoadingAvailability(prev => ({ ...prev, [itemId]: false }));
+      }
+    }
+  };
+
+  fetchAvailability();
+}, [globalStartDate, globalEndDate, editFormItems]);
+
+const isFormValid = editFormItems.every((item) => {
+  const inputQty = item.id !== undefined ? (itemQuantities[item.id] ?? item.quantity) : item.quantity;
+  const availQty = availability[item.item_id];
+
+  return availQty === undefined || inputQty <= availQty;
+});
+
 
   // Render a status badge with appropriate color
   const StatusBadge = ({ status }: { status?: string }) => {
@@ -685,9 +731,9 @@ const MyOrders = () => {
               {editFormItems.map((item) => (
                 <div
                   key={item.id}
-                  className="grid grid-cols-5 gap-4 items-center"
+                  className="grid grid-cols-5 gap-4"
                 >
-                  <div className="col-span-2">
+                  <div className="col-span-2 items-center">
                     <Label className="block text-xs font-medium">
                       {t.myOrders.edit.item[lang]}
                     </Label>
@@ -725,15 +771,17 @@ const MyOrders = () => {
                       })()}
                     </p>
                   </div>
-                  <div style={{ zIndex: 50, pointerEvents: "auto" }}>
-                    <Label className="block text-sm font-medium">
+                  <div className="flex flex-col h-full" style={{ zIndex: 50, pointerEvents: "auto" }}>
+                    {/* <Label className="block text-sm font-medium">
                       {t.myOrders.edit.quantity[lang]}
-                    </Label>
-                    <div className="flex items-center gap-1">
+                    </Label> */}
+                    <div className="flex items-center gap-1 mt-auto">
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
+                        disabled={item.id !== undefined &&
+                          itemQuantities[item.id] === 0}
                         onClick={() => {
                           if (item.id !== undefined) {
                             const newQty =
@@ -770,6 +818,9 @@ const MyOrders = () => {
                         type="button"
                         size="sm"
                         variant="outline"
+                        disabled={availability[item.item_id] !== undefined &&
+                          item.id !== undefined &&
+                          itemQuantities[item.id] === availability[item.item_id]}
                         onClick={() => {
                           if (item.id !== undefined) {
                             const newQty =
@@ -784,6 +835,14 @@ const MyOrders = () => {
                         +
                       </Button>
                     </div>
+                    {loadingAvailability[item.item_id] && (
+                      <div className="flex items-center justify-center mt-2">
+                        <LoaderCircle className="animate-spin h-4 w-4" />
+                      </div>
+                    )}
+                    {!loadingAvailability[item.item_id] && (
+                    <p className="text-xs italic text-slate-400 mt-1">Total of {availability[item.item_id]} items bookable</p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -798,7 +857,7 @@ const MyOrders = () => {
                 <Button
                   variant={"outline"}
                   onClick={handleSubmitEdit}
-                  disabled={!editingOrder}
+                  disabled={!editingOrder || !isFormValid}
                 >
                   {t.myOrders.edit.buttons.saveChanges[lang]}
                 </Button>
