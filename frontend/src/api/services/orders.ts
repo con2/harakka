@@ -169,4 +169,28 @@ export const ordersApi = {
       )}&end_date=${encodeURIComponent(endDate)}`,
     );
   },
+
+  /**
+ * Update payment status of an order (admin only)
+ * @param orderId - Order ID to update
+ * @param status - New payment status
+ * @returns Promise with confirmation message
+ */
+  updatePaymentStatus: async (
+    orderId: string,
+    status: "invoice-sent" | "paid" | "payment-rejected" | "overdue"
+  ): Promise<{ orderId: string; status: string }> => {
+    const userId = localStorage.getItem("userId");
+
+    await api.patch(
+      `/bookings/payment-status`,
+      { orderId, status },
+      {
+        headers: {
+          "x-user-id": userId || "",
+        },
+      }
+    );
+    return { orderId, status };
+  },
 };

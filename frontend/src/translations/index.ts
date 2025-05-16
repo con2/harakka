@@ -2374,6 +2374,28 @@ export const t = {
         en: "Total",
       },
       invoice: {
+        invoiceStatus: {
+          sent: {
+            fi: "Lähetetty",
+            en: "Invoice Sent",
+          },
+          paid: {
+            fi: "Maksettu",
+            en: "Paid",
+          },
+          rejected: {
+            fi: "Maksu hylätty",
+            en: "Payment Rejected",
+          },
+          overdue: {
+            fi: "Erääntynyt",
+            en: "Overdue",
+          },
+          NA: {
+            fi: "N/A",
+            en: "N/A",
+          },
+        },
         fi: "Lasku",
         en: "Invoice",
       },
