@@ -4,6 +4,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { deleteTag, fetchAllTags } from "@/store/slices/tagSlice";
 import { Trash2 } from "lucide-react";
 import { toastConfirm } from "../ui/toastConfirm";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const TagDelete = ({
   id,
@@ -15,40 +17,42 @@ const TagDelete = ({
   onDeleted?: () => void;
 }) => {
   const dispatch = useAppDispatch();
+  // Translation
+  const { lang } = useLanguage();
+
   const handleDelete = () => {
     if (!id) {
-      toast.error("Invalid tag ID.");
+      toast.error(t.tagDelete.messages.invalidId[lang]);
       return;
     }
 
     toastConfirm({
-      title: "Confirm Deletion",
-      description:
-        "This will permanently delete the tag and remove it from all associated items. Are you sure?",
-      confirmText: "Confirm",
-      cancelText: "Cancel",
+      title: t.tagDelete.confirmation.title[lang],
+      description: t.tagDelete.confirmation.description[lang],
+      confirmText: t.tagDelete.confirmation.confirmText[lang],
+      cancelText: t.tagDelete.confirmation.cancelText[lang],
       onConfirm: async () => {
         try {
           await toast.promise(dispatch(deleteTag(id)).unwrap(), {
-            loading: "Deleting tag...",
-            success: "Tag has been successfully deleted.",
-            error: "Failed to delete tag.",
+            loading: t.tagDelete.toast.loading[lang],
+            success: t.tagDelete.toast.success[lang],
+            error: t.tagDelete.toast.error[lang],
           });
           dispatch(fetchAllTags());
           onDeleted?.();
           closeModal?.();
         } catch {
-          toast.error("Error deleting tag.");
+          toast.error(t.tagDelete.messages.generalError[lang]);
         }
       },
-    });    
+    });
   };
 
   return (
     <Button
       onClick={handleDelete}
       size={"sm"}
-      title="Delete Tag"
+      title={t.tagDelete.button.title[lang]}
       className="text-red-600 hover:text-red-800 hover:bg-red-100"
     >
       <Trash2 className="h-4 w-4" />

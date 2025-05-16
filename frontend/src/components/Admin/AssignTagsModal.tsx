@@ -19,6 +19,8 @@ import { Tag } from "@/types/tag";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { updateItemTags } from "@/store/slices/itemsSlice";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 /**
  * Props for AssignTagsModal component
@@ -39,6 +41,8 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
   const selectedTags = useAppSelector(selectSelectedTags);
   const loading = useAppSelector(selectLoading);
   const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]);
+  // Translation
+  const { lang } = useLanguage();
 
   useEffect(() => {
     if (open) {
@@ -75,10 +79,10 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
       );
       dispatch(updateItemTags({ itemId, tags: updatedTags }));
 
-      toast.success("Tags assigned successfully!");
+      toast.success(t.assignTagsModal.messages.success[lang]);
       onClose();
     } catch (error) {
-      toast.error("Failed to assign tags");
+      toast.error(t.assignTagsModal.messages.error[lang]);
       console.error("Tag assignment error:", error);
     }
   };
@@ -87,17 +91,17 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Assign Tags</DialogTitle>
+          <DialogTitle>{t.assignTagsModal.title[lang]}</DialogTitle>
         </DialogHeader>
 
         {loading ? (
-          <p>Loading tags...</p>
+          <p>{t.assignTagsModal.loading[lang]}</p>
         ) : (
           <div className="flex flex-col space-y-2">
             {tags.map((tag: Tag) => (
               <label key={tag.id} className="flex items-center space-x-2">
                 <Checkbox
-                  checked={localSelectedTags.includes(tag.id)} // Check if the tag is in the selected list
+                  checked={localSelectedTags.includes(tag.id)}
                   onCheckedChange={() => handleCheckboxChange(tag.id)}
                 />
                 <span>
@@ -112,9 +116,11 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
 
         <div className="mt-4 flex justify-end space-x-2">
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {t.assignTagsModal.buttons.cancel[lang]}
           </Button>
-          <Button onClick={handleSubmit}>Assign</Button>
+          <Button onClick={handleSubmit}>
+            {t.assignTagsModal.buttons.assign[lang]}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
