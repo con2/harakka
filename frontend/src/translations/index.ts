@@ -2374,6 +2374,28 @@ export const t = {
         en: "Total",
       },
       invoice: {
+        invoiceStatus: {
+          sent: {
+            fi: "Lähetetty",
+            en: "Invoice Sent",
+          },
+          paid: {
+            fi: "Maksettu",
+            en: "Paid",
+          },
+          rejected: {
+            fi: "Maksu hylätty",
+            en: "Payment Rejected",
+          },
+          overdue: {
+            fi: "Erääntynyt",
+            en: "Overdue",
+          },
+          NA: {
+            fi: "N/A",
+            en: "N/A",
+          },
+        },
         fi: "Lasku",
         en: "Invoice",
       },
@@ -2471,6 +2493,24 @@ export const t = {
           },
         },
       },
+      buttons: {
+        confirm: {
+          fi: "Vahvistaa",
+          en: "Confirm",
+        },
+        reject: {
+          fi: "Hylkää",
+          en: "Reject",
+        },
+        return: {
+          fi: "Palautaa",
+          en: "Return",
+        },
+        delete: {
+          fi: "Poistaa",
+          en: "Delete",
+        },
+      }
     },
     loading: {
       fi: "Ladataan tilauksia...",
