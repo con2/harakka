@@ -37,6 +37,7 @@ import { Calendar } from "./ui/calendar";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { ordersApi } from "@/api/services/orders";
 
 const MyOrders = () => {
   const dispatch = useAppDispatch();
@@ -59,6 +60,9 @@ const MyOrders = () => {
   );
   const [startPickerOpen, setStartPickerOpen] = useState(false);
   const [endPickerOpen, setEndPickerOpen] = useState(false);
+  const [availability, setAvailability] = useState<{ [itemId: string]: number }>({});
+  const [loadingAvailability, setLoadingAvailability] = useState<{ [itemId: string]: boolean }>({});
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -179,6 +183,42 @@ const MyOrders = () => {
       toast.error(t.myOrders.edit.toast.updateFailed[lang]);
     }
   };
+  // fetch availability for an item on a given date
+  useEffect(() => {
+  const fetchAvailability = async () => {
+    if (!globalStartDate || !globalEndDate) return;
+
+    for (const item of editFormItems) {
+      const itemId = item.item_id;
+
+      setLoadingAvailability(prev => ({ ...prev, [itemId]: true }));
+
+      try {
+        const data = await ordersApi.checkAvailability(itemId, globalStartDate, globalEndDate);
+        setAvailability(prev => ({
+          ...prev,
+          [itemId]: data.availableQuantity,
+        }));
+      } catch (err) {
+        console.error(`Error checking availability for item ${itemId}:`, err);
+      } finally {
+        setLoadingAvailability(prev => ({ ...prev, [itemId]: false }));
+      }
+    }
+  };
+
+  fetchAvailability();
+}, [globalStartDate, globalEndDate]);
+
+
+
+const isFormValid = editFormItems.every((item) => {
+  const inputQty = item.id !== undefined ? (itemQuantities[item.id] ?? item.quantity) : item.quantity;
+  const availQty = availability[item.item_id];
+
+  return availQty === undefined || inputQty <= availQty;
+});
+
 
   // Render a status badge with appropriate color
   const StatusBadge = ({ status }: { status?: string }) => {
@@ -725,10 +765,21 @@ const MyOrders = () => {
                       })()}
                     </p>
                   </div>
+                  <div>
+                    {availability[item.item_id] !== undefined &&
+                    item.id !== undefined &&
+                    itemQuantities[item.id] > availability[item.item_id] && (
+                      <p className="text-xs text-red-400">
+                        
+                        {availability[item.item_id]} units available for chosen dates
+                        
+                      </p>
+                    )}
+                  </div>
                   <div style={{ zIndex: 50, pointerEvents: "auto" }}>
-                    <Label className="block text-sm font-medium">
+                    {/* <Label className="block text-sm font-medium">
                       {t.myOrders.edit.quantity[lang]}
-                    </Label>
+                    </Label> */}
                     <div className="flex items-center gap-1">
                       <Button
                         type="button"
@@ -770,6 +821,9 @@ const MyOrders = () => {
                         type="button"
                         size="sm"
                         variant="outline"
+                        disabled={availability[item.item_id] !== undefined &&
+                          item.id !== undefined &&
+                          itemQuantities[item.id] > availability[item.item_id]}
                         onClick={() => {
                           if (item.id !== undefined) {
                             const newQty =
@@ -798,7 +852,7 @@ const MyOrders = () => {
                 <Button
                   variant={"outline"}
                   onClick={handleSubmitEdit}
-                  disabled={!editingOrder}
+                  disabled={!editingOrder || !isFormValid}
                 >
                   {t.myOrders.edit.buttons.saveChanges[lang]}
                 </Button>
