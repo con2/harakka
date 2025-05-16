@@ -17,10 +17,7 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-    "jsx": "react",
-    "paths": {
-      "@/types": ["../frontend/src/types"]
-    }
+    "jsx": "react"
   },
   "include": ["src/**/*"],
   "exclude": ["../frontend", "node_modules", "dist"]
