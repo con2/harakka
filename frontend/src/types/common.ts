@@ -61,6 +61,7 @@ export type ErrorContext =
   | "cancel"
   | "reject"
   | "return"
+  | "update-payment-status"
   | null;
 
 export interface ErrorState {
