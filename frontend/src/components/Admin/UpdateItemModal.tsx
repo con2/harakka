@@ -36,6 +36,8 @@ import {
   fetchAllLocations,
   selectAllLocations,
 } from "@/store/slices/locationsSlice";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 type UpdateItemModalProps = {
   onClose: () => void;
@@ -51,6 +53,8 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"details" | "images">("details");
   const locations = useAppSelector(selectAllLocations);
+  // Translation
+  const { lang } = useLanguage();
 
   // Prefill the form with initial data if available
   useEffect(() => {
@@ -132,11 +136,11 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
         assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
       ).unwrap();
       dispatch(fetchAllItems());
-      toast.success("Item updated successfully!");
+      toast.success(t.updateItemModal.messages.success[lang]);
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update item.");
+      toast.error(t.updateItemModal.messages.error[lang]);
     } finally {
       setLoading(false);
     }
@@ -146,9 +150,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Item</DialogTitle>
+          <DialogTitle>{t.updateItemModal.title[lang]}</DialogTitle>
           <DialogDescription className="text-center">
-            Update item details below.
+            {t.updateItemModal.description[lang]}
           </DialogDescription>
         </DialogHeader>
 
@@ -162,7 +166,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
             }`}
             onClick={() => setActiveTab("details")}
           >
-            Details
+            {t.updateItemModal.tabs.details[lang]}
           </button>
           <button
             className={`px-4 py-2 ${
@@ -172,7 +176,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
             }`}
             onClick={() => setActiveTab("images")}
           >
-            Images
+            {t.updateItemModal.tabs.images[lang]}
           </button>
         </div>
 
@@ -186,28 +190,32 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="translations.fi.item_name">
-                      Item Name (FI)
+                      {t.updateItemModal.labels.itemNameFi[lang]}
                     </Label>
                     <Input
                       id="translations.fi.item_name"
                       name="translations.fi.item_name"
                       value={formData.translations.fi.item_name}
                       onChange={handleChange}
-                      placeholder="Item (FI)"
+                      placeholder={
+                        t.updateItemModal.placeholders.itemNameFi[lang]
+                      }
                       className="placeholder:text-xs p-2"
                       required
                     />
                   </div>
                   <div>
                     <Label htmlFor="translations.en.item_name">
-                      Item Name (EN)
+                      {t.updateItemModal.labels.itemNameEn[lang]}
                     </Label>
                     <Input
                       id="translations.en.item_name"
                       name="translations.en.item_name"
                       value={formData.translations.en.item_name}
                       onChange={handleChange}
-                      placeholder="Item (EN)"
+                      placeholder={
+                        t.updateItemModal.placeholders.itemNameEn[lang]
+                      }
                       className="placeholder:text-xs p-2"
                       required
                     />
@@ -220,26 +228,30 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="translations.fi.item_type">
-                        Item Type (FI)
+                        {t.updateItemModal.labels.itemTypeFi[lang]}
                       </Label>
                       <Input
                         id="translations.fi.item_type"
                         name="translations.fi.item_type"
                         value={formData.translations.fi.item_type || ""}
                         onChange={handleChange}
-                        placeholder="Item Type (FI)"
+                        placeholder={
+                          t.updateItemModal.placeholders.itemTypeFi[lang]
+                        }
                         className="placeholder:text-xs p-2"
                       />
                     </div>
                     <div>
                       <Label htmlFor="translations.en.item_type">
-                        Item Type (EN)
+                        {t.updateItemModal.labels.itemTypeEn[lang]}
                       </Label>
                       <Input
                         id="translations.en.item_type"
                         name="translations.en.item_type"
                         value={formData.translations.en.item_type || ""}
-                        placeholder="Item Type (EN)"
+                        placeholder={
+                          t.updateItemModal.placeholders.itemTypeEn[lang]
+                        }
                         className="placeholder:text-xs p-2"
                       />
                     </div>
@@ -250,28 +262,32 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="translations.fi.item_description">
-                      Item Description (FI)
+                      {t.updateItemModal.labels.itemDescFi[lang]}
                     </Label>
                     <Input
                       id="translations.fi.item_description"
                       name="translations.fi.item_description"
                       value={formData.translations.fi.item_description}
                       onChange={handleChange}
-                      placeholder="Item Description (FI)"
+                      placeholder={
+                        t.updateItemModal.placeholders.itemDescFi[lang]
+                      }
                       className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted"
                       required
                     />
                   </div>
                   <div>
                     <Label htmlFor="translations.en.item_description">
-                      Item Description (EN)
+                      {t.updateItemModal.labels.itemDescEn[lang]}
                     </Label>
                     <Input
                       id="translations.en.item_description"
                       name="translations.en.item_description"
                       value={formData.translations.en.item_description}
                       onChange={handleChange}
-                      placeholder="Item Description (en)"
+                      placeholder={
+                        t.updateItemModal.placeholders.itemDescEn[lang]
+                      }
                       className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted"
                       required
                     />
@@ -281,7 +297,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
 
               {/* Location */}
               <div className="space-y-2">
-                <Label htmlFor="location_id">Location</Label>
+                <Label htmlFor="location_id">
+                  {t.updateItemModal.labels.location[lang]}
+                </Label>
                 <Select
                   value={formData.location_id || ""}
                   onValueChange={(value) =>
@@ -289,7 +307,11 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a location" />
+                    <SelectValue
+                      placeholder={
+                        t.updateItemModal.placeholders.selectLocation[lang]
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {locations.map((location) => (
@@ -305,7 +327,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
               <div className="flex flex-row items-baseline space-y-4 space-x-4">
                 <div className="flex flex-row items-baseline space-x-2">
                   <Label htmlFor="price" className="font-medium">
-                    Price
+                    {t.updateItemModal.labels.price[lang]}
                   </Label>
                   <Input
                     id="price"
@@ -313,7 +335,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                     type="number"
                     value={formData.price}
                     onChange={handleChange}
-                    placeholder="Price"
+                    placeholder={t.updateItemModal.placeholders.price[lang]}
                     required
                     className="w-60"
                   />
@@ -321,7 +343,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 {/* Active Toggle */}
                 <div className="flex flex-row items-center space-x-2">
                   <Label htmlFor="is_active" className="font-medium">
-                    Active
+                    {t.updateItemModal.labels.active[lang]}
                   </Label>
                   <Switch
                     id="is_active"
@@ -340,21 +362,25 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="items_number_total">Total Quantity</Label>
+                    <Label htmlFor="items_number_total">
+                      {t.updateItemModal.labels.totalQuantity[lang]}
+                    </Label>
                     <Input
                       id="items_number_total"
                       name="items_number_total"
                       type="number"
                       value={formData.items_number_total}
                       onChange={handleChange}
-                      placeholder="Total quantity"
+                      placeholder={
+                        t.updateItemModal.placeholders.totalQuantity[lang]
+                      }
                       className="value:text-xs"
                     />
                   </div>
 
                   <div>
                     <Label htmlFor="items_number_currently_in_storage">
-                      Currently In Storage
+                      {t.updateItemModal.labels.currentlyInStorage[lang]}
                     </Label>
                     <Input
                       id="items_number_currently_in_storage"
@@ -362,20 +388,26 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                       type="number"
                       value={formData.items_number_currently_in_storage || 0}
                       onChange={handleChange}
-                      placeholder="Currently in storage"
+                      placeholder={
+                        t.updateItemModal.placeholders.currentlyInStorage[lang]
+                      }
                       className="value:text-xs"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="items_number_available">Available</Label>
+                    <Label htmlFor="items_number_available">
+                      {t.updateItemModal.labels.available[lang]}
+                    </Label>
                     <Input
                       id="items_number_available"
                       name="items_number_available"
                       type="number"
                       value={formData.items_number_available}
                       onChange={handleChange}
-                      placeholder="Available quantity"
+                      placeholder={
+                        t.updateItemModal.placeholders.available[lang]
+                      }
                       className="value:text-xs"
                     />
                   </div>
@@ -384,7 +416,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
 
               {/* Tag Selection */}
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">Assign Tags</h3>
+                <h3 className="text-lg font-medium">
+                  {t.updateItemModal.tags.title[lang]}
+                </h3>
                 <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
                   {tags.map((tag) => (
                     <label key={tag.id} className="flex items-center">
@@ -410,7 +444,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 disabled={loading}
                 size={"sm"}
               >
-                {loading ? "Updating..." : "Update Item"}
+                {loading
+                  ? t.updateItemModal.buttons.updating[lang]
+                  : t.updateItemModal.buttons.update[lang]}
               </Button>
             </form>
           </div>
@@ -425,7 +461,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
                 size={"sm"}
               >
-                {loading ? "Updating..." : "Update Item"}
+                {loading
+                  ? t.updateItemModal.buttons.updating[lang]
+                  : t.updateItemModal.buttons.update[lang]}
               </Button>
             </DialogFooter>
           </>
