@@ -8,22 +8,11 @@ import {
   Section,
 } from "@react-email/components";
 
-interface BookingConfirmationEmailProps {
+interface WelcomeEmailProps {
   name: string;
-  date: string;
-  location: string;
-  items: {
-    item_id: string;
-    quantity: number;
-  }[];
 }
 
-const BookingConfirmationEmail = ({
-  name,
-  date,
-  location,
-  items,
-}: BookingConfirmationEmailProps) => (
+const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
   <Html>
     <Head>
       <link
@@ -116,4 +105,4 @@ const BookingConfirmationEmail = ({
   </Html>
 );
 
-export default BookingConfirmationEmail;
+export default WelcomeEmail;
