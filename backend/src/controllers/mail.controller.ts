@@ -14,6 +14,7 @@ import { EmailProps } from "src/interfaces/mail.interface";
 import { SendMailDto } from "src/dto/send-mail.dto";
 import BookingConfirmationEmail from "src/emails/BookingConfirmationEmail";
 import WelcomeEmail from "../emails/WelcomeEmail";
+import * as React from "react";
 
 @Controller("mail")
 @UseGuards(ThrottlerGuard)
