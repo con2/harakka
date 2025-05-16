@@ -833,7 +833,7 @@ export class BookingService {
       throw new BadRequestException("Could not reject the booking");
     }
 
-    // 4.6 send mail to user:
+    // 6.6 send mail to user:
     const today = dayjs().format("DD.MM.YYYY");
 
     // get user profile
