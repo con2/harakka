@@ -2471,6 +2471,24 @@ export const t = {
           },
         },
       },
+      buttons: {
+        confirm: {
+          fi: "Vahvistaa",
+          en: "Confirm",
+        },
+        reject: {
+          fi: "Hylkää",
+          en: "Reject",
+        },
+        return: {
+          fi: "Palautaa",
+          en: "Return",
+        },
+        delete: {
+          fi: "Poistaa",
+          en: "Delete",
+        },
+      }
     },
     loading: {
       fi: "Ladataan tilauksia...",

@@ -28,6 +28,7 @@ import { DataTable } from "../ui/data-table";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { Separator } from "../ui/separator";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -421,31 +422,45 @@ const OrderList = () => {
                 </div>
 
                 {/* Order Modal Actions */}
-                <div className="flex justify-center space-x-4">
+                <div className="flex flex-col justify-center space-x-4">
+                  <Separator />
+                  <div className="flex flex-row items-center gap-4 mt-4 justify-center">
                   {selectedOrder.status === "pending" && (
                     <>
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">Confirm</span>
                       <OrderConfirmButton
                         id={selectedOrder.id}
                         closeModal={() => setShowDetailsModal(false)}
                       />
+                      </div>
+                      <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">Reject</span>
                       <OrderRejectButton
                         id={selectedOrder.id}
                         closeModal={() => setShowDetailsModal(false)}
                       />
+                      </div>
                     </>
                   )}
 
                   {selectedOrder.status === "confirmed" && (
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">Return</span>
                     <OrderReturnButton
                       id={selectedOrder.id}
                       closeModal={() => setShowDetailsModal(false)}
                     />
+                    </div>
                   )}
-
+                  <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">Delete</span>
                   <OrderDeleteButton
                     id={selectedOrder.id}
                     closeModal={() => setShowDetailsModal(false)}
                   />
+                  </div>
+                </div>
                 </div>
               </div>
             </DialogContent>
