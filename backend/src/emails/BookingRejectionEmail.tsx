@@ -9,7 +9,7 @@ import {
 } from "@react-email/components";
 import { EmailProps } from "../interfaces/mail.interface";
 
-const BookingUpdateEmail = ({
+const BookingRejectionEmail = ({
   name,
   pickupDate,
   location,
@@ -46,7 +46,7 @@ const BookingUpdateEmail = ({
         <Section
           style={{
             backgroundImage:
-              "url('https://larppikuvat.fi/media/previews/odysseus-2024-run-3-vssomnx7/lenne-eeronketo/day-1/odysseus-141.preview.avif')",
+              "url('https://larppikuvat.fi/media/previews/odysseus-2024-run-3-vssomnx7/santtu-pajukanta/saturday-endgame/dsc-9562.preview.avif')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             height: "250px",
@@ -65,7 +65,7 @@ const BookingUpdateEmail = ({
             marginBottom: "24px",
           }}
         >
-          Varaus päivitetty - Booking updated
+          Varaus hylätty - Booking rejected!
         </Text>
 
         <Text
@@ -83,10 +83,9 @@ const BookingUpdateEmail = ({
           Hei <strong>{name}</strong>,
         </Text>
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          Varauksesi päivitettiin onnistuneesti. Varauksen vahvistaminen voi
-          kestää muutaman päivän, koska meidän on varmistettava, että kaikki
-          kohteet ovat saatavilla kyseisenä päivänä. Jos sinulla on kysyttävää,
-          ota meihin yhteyttä.
+          Ylläpito on hylännyt varauksesi. Meillä saattaa olla ongelmia
+          joidenkin varaamiesi kohteiden kanssa. Ota yhteyttä, niin voimme
+          keskustella vaihtoehdoista. Löydämme ratkaisun yhdessä.
         </Text>
 
         <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
@@ -101,7 +100,9 @@ const BookingUpdateEmail = ({
         </ul>
 
         <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
-          <strong>Noutopäivämääräsi pysyy samana:</strong> {pickupDate}
+          <strong>Alkamispäivä:</strong> {pickupDate}
+          <br />
+          <strong>Varaus tehty:</strong> {today}
         </Text>
 
         <hr style={{ margin: "30px 0" }} />
@@ -110,10 +111,9 @@ const BookingUpdateEmail = ({
           Hello <strong>{name}</strong>,
         </Text>
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          Your booking was successfully updated. It is still pending and might
-          take a few days to confirm the booking, since we have to make sure
-          that all items are available on that date. If you have any questions,
-          please contact us.
+          Your booking has been rejected by an admin. We might have issues with
+          some items you wanted to book. Please contact us, so we can discuss
+          some alternatives. We will find a solution together.
         </Text>
 
         <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
@@ -128,7 +128,9 @@ const BookingUpdateEmail = ({
         </ul>
 
         <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
-          <strong>Your Pick up date stays the same:</strong> {pickupDate}
+          <strong>Start Date:</strong> {pickupDate}
+          <br />
+          <strong>Booking made:</strong> {today}
         </Text>
 
         <Section style={{ textAlign: "center", marginTop: "30px" }}>
@@ -165,4 +167,4 @@ const BookingUpdateEmail = ({
   </Html>
 );
 
-export default BookingUpdateEmail;
+export default BookingRejectionEmail;

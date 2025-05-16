@@ -62,7 +62,7 @@ export const BookingCancelledEmail = ({
           <Section
             style={{
               backgroundImage:
-                "url('https://larppikuvat.fi/odysseus-2024-run-3/lenne-eeronketo/day-1/odysseus-7')",
+                "url('https://larppikuvat.fi/media/previews/odysseus-2024-run-3-vssomnx7/lenne-eeronketo/day-1/odysseus-7.preview.avif')",
               backgroundSize: "cover",
               backgroundPosition: "center",
               height: "250px",
@@ -82,7 +82,7 @@ export const BookingCancelledEmail = ({
               marginBottom: "16px",
             }}
           >
-            Varaus peruttu
+            Varaus peruttu - Booking Cancelled
           </Text>
 
           <Text
@@ -107,26 +107,16 @@ export const BookingCancelledEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {items.map((item, index) => (
               <li key={index} style={{ fontSize: "16px", marginBottom: "6px" }}>
-                Item: {item.translations?.en.name ?? "Unknown"}, Quantity:{" "}
-                {item.quantity}, Dates: {item.start_date} to {item.end_date}
+                Kohde: {item.translations?.en.name ?? "Unknown"}, <br />
+                Määrä: {item.quantity}, <br />
+                Päivämäärät: {item.start_date} to {item.end_date}
               </li>
             ))}
           </ul>
 
-          {/* --- english --- */}
-          <Text
-            style={{
-              fontFamily: "'Roboto Slab'",
-              fontSize: "24px",
-              fontWeight: 400,
-              color: "#9537C7",
-              textAlign: "center",
-              margin: "30px 0 16px",
-            }}
-          >
-            Booking Cancelled
-          </Text>
+          <hr style={{ margin: "30px 0" }} />
 
+          {/* --- english --- */}
           <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
             A booking with order number <strong>{orderId}</strong> for the date{" "}
             <strong>{startDate}</strong> has been cancelled.
@@ -138,8 +128,9 @@ export const BookingCancelledEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {items.map((item, index) => (
               <li key={index} style={{ fontSize: "16px", marginBottom: "6px" }}>
-                Item: {item.translations?.en.name ?? "Unknown"}, Quantity:{" "}
-                {item.quantity}, Dates: {item.start_date} to {item.end_date}
+                Item: {item.translations?.en.name ?? "Unknown"}, <br />
+                Quantity: {item.quantity}, <br />
+                Dates: {item.start_date} to {item.end_date}
               </li>
             ))}
           </ul>
