@@ -1294,18 +1294,22 @@ export class BookingService {
   }
 
   // 12. virtual number of items for a specific date
-  async getAvailableQuantityForDate(itemId: string, date: string) {
+  async getAvailableQuantityForDate(
+    itemId: string,
+    startdate: string,
+    enddate: string,
+  ) {
     const supabase = this.supabaseService.getServiceClient();
 
-    if (!itemId || !date) {
+    if (!itemId || !startdate) {
       throw new BadRequestException("item_id and date are mandatory");
     }
 
     const num_available = await calculateAvailableQuantity(
       supabase,
       itemId,
-      date,
-      date,
+      startdate,
+      enddate,
     );
 
     return num_available ?? 0;

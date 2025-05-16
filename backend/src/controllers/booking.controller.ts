@@ -144,17 +144,22 @@ export class BookingController {
   }
 
   // get virtual number of items for a specific date
-  @Get("available-quantity")
+  @Get("virtual-quantity")
   async getAvailableQuantity(
     @Query("item_id") itemId: string,
-    @Query("date") date: string,
+    @Query("startdate") startdate: string,
+    @Query("enddate") enddate: string,
   ) {
-    if (!itemId || !date) {
+    if (!itemId || !startdate) {
       throw new BadRequestException("item_id and date are mendatory");
     }
     // Calling the method from the service class and returning the booked quantity
     const availableQuantity =
-      await this.bookingService.getAvailableQuantityForDate(itemId, date);
+      await this.bookingService.getAvailableQuantityForDate(
+        itemId,
+        startdate,
+        enddate,
+      );
     return { availableQuantity };
   }
 
@@ -162,22 +167,6 @@ export class BookingController {
   @Patch("payment-status")
   async updatePaymentStatus(@Body() dto: UpdatePaymentStatusDto) {
     return this.bookingService.updatePaymentStatus(dto.orderId, dto.status);
-  }
-
-  @Get(":itemId/virtual-quantity")
-  async getAvailableQuantityForDate(
-    @Param("itemId") itemId: string,
-    @Query("date") date: string,
-  ) {
-    if (!itemId || !date) {
-      throw new BadRequestException("Query parameter 'date' is required");
-    }
-    // Calling the method from the service class and returning the booked quantity
-    const quantity = await this.bookingService.getAvailableQuantityForDate(
-      itemId,
-      date,
-    );
-    return { availableQuantity: quantity };
   }
 
   // commented out because it is not used atm
