@@ -21,6 +21,7 @@ import BookingConfirmationEmail from "../emails/BookingConfirmationEmail";
 import { EmailProps } from "src/interfaces/mail.interface";
 import { BookingCancelledEmail } from "src/emails/BookingCancelledEmail";
 import { start } from "repl";
+import BookingCreationEmail from "src/emails/BookingCreationEmail";
 
 @Injectable()
 export class BookingService {
@@ -32,6 +33,7 @@ export class BookingService {
   // TODO!:
   // use getClientByRole again!
   // refactor code so that the supabase client is not created in every function
+  // clean up the entire code and slpit the methods to sepetarte files
 
   // 1. get all orders
   async getAllOrders(userId: string) {
@@ -307,13 +309,78 @@ export class BookingService {
     // 3.6 send mail to user:
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
-      .select("email")
+      .select("full_name, email")
       .eq("id", userId)
       .single();
 
     if (userError || !user) {
       throw new BadRequestException("User not found");
     }
+
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
+
+    const enrichedItems: EnrichedItem[] = dto.items || [];
+
+    for (const item of enrichedItems) {
+      const { data: storageItem, error: storageItemError } = await supabase
+        .from("storage_items")
+        .select("translations, location_id")
+        .eq("id", item.item_id)
+        .single();
+
+      if (storageItemError || !storageItem) {
+        throw new BadRequestException("Could not fetch storage item details");
+      }
+
+      item.translations = storageItem.translations;
+      item.location_id = storageItem.location_id;
+    }
+
+    // adapt to email:
+    const pickupDate = dayjs(enrichedItems[0].start_date).format("DD.MM.YYYY");
+
+    const { data: location, error: locationError } = await supabase
+      .from("storage_locations")
+      .select("name, address")
+      .eq("id", enrichedItems[0].location_id)
+      .single();
+
+    const emailItems = enrichedItems.map((item) => ({
+      item_id: item.item_id,
+      quantity: item.quantity,
+      translations: {
+        fi: {
+          name: item.translations?.fi.item_name ?? "Unknown",
+        },
+        en: {
+          name: item.translations?.en.item_name ?? "Unknown",
+        },
+      },
+    }));
+
+    const emailData: EmailProps = {
+      name: user.full_name,
+      email: user.email,
+      pickupDate,
+      today: dayjs().format("DD.MM.YYYY"),
+      location: location?.name,
+      items: emailItems,
+    };
+
+    await this.mailService.sendMail({
+      to: emailData.email,
+      subject: "Booking recieved!",
+      template: BookingCreationEmail(emailData),
+    });
 
     /* await this.mailService.sendMail(
       user.email,
