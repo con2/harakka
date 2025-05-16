@@ -25,6 +25,7 @@ import BookingCreationEmail from "src/emails/BookingCreationEmail";
 import BookingUpdateEmail from "src/emails/BookingUpdateEmail";
 import BookingRejectionEmail from "src/emails/BookingRejectionEmail";
 import BookingDeleteMail from "src/emails/BookingDeleteMail";
+import ItemsReturnedMail from "src/emails/ItemsReturned";
 
 @Injectable()
 export class BookingService {
@@ -1212,10 +1213,10 @@ export class BookingService {
       });
     }
 
-    // 3. Fetch user email
+    //  Fetch user email
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
-      .select("email")
+      .select("email, full_name")
       .eq("id", userId)
       .single();
 
@@ -1225,40 +1226,83 @@ export class BookingService {
       );
     }
 
-    // 4. email to the user
-    /*  await this.mailService.sendMail(
-      user.email,
-      "Items Returned – Thank You!",
-      `<h1>Thank you!</h1>
-  <p>Your returned items for booking <strong>${orderId}</strong> have been received.</p>
-  <p>Returned Items:</p>
-  <ul>
-    ${items
-      .map(
-        (item) => `<li>Item: ${item.item_id}, Quantity: ${item.quantity}</li>`,
-      )
-      .join("")}
-  </ul>
-  <p>We appreciate your punctuality. Feel free to book with us again anytime!</p>`,
-    );
+    // send mail to user:
+    const today = dayjs().format("DD.MM.YYYY");
 
-    // 5. Email to the admin
-    const adminEmail = "illusia.rental.service@gmail.com";
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      status: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
 
-    await this.mailService.sendMail(
-      adminEmail,
-      "Items Returned – Back in Stock",
-      `<h1>Items Returned</h1>
-  <p>The following items have been returned for order <strong>${orderId}</strong> and are now back in stock:</p>
-  <ul>
-    ${items
-      .map(
-        (item) => `<li>Item: ${item.item_id}, Quantity: ${item.quantity}</li>`,
-      )
-      .join("")}
-  </ul>
-  <p>Inventory has been updated accordingly.</p>`,
-    ); */
+    const enrichedItems: EnrichedItem[] = items || [];
+
+    for (const item of enrichedItems) {
+      const { data: storageItem, error: storageItemError } = await supabase
+        .from("storage_items")
+        .select("translations, location_id")
+        .eq("id", item.item_id)
+        .single();
+
+      if (storageItemError || !storageItem) {
+        throw new BadRequestException("Could not fetch storage item details");
+      }
+
+      item.translations = storageItem.translations;
+      item.location_id = storageItem.location_id;
+    }
+
+    // adapt to email:
+    const { data: location, error: locationError } = await supabase
+      .from("storage_locations")
+      .select("name, address")
+      .eq("id", enrichedItems[0].location_id)
+      .single();
+
+    const emailItems = enrichedItems.map((item) => ({
+      item_id: item.item_id,
+      quantity: item.quantity,
+      translations: {
+        fi: {
+          name: item.translations?.fi.item_name ?? "Unknown",
+        },
+        en: {
+          name: item.translations?.en.item_name ?? "Unknown",
+        },
+      },
+    }));
+
+    const emailData = {
+      name: user.full_name,
+      email: user.email,
+      today,
+      location: location?.name,
+      items: emailItems,
+    };
+
+    await this.mailService.sendMail({
+      to: emailData.email,
+      subject: "Palautetut tuotteet - Items returned",
+      template: ItemsReturnedMail(emailData),
+    });
+
+    // send mail to admin
+    const adminEmailData = {
+      ...emailData,
+      email: "illusia.rental.service@gmail.com",
+      name: "Admin",
+    };
+
+    await this.mailService.sendMail({
+      to: "illusia.rental.service@gmail.com",
+      subject: "Palautetut tuotteet - Items returned",
+      template: ItemsReturnedMail(adminEmailData),
+    });
 
     return { message: "Items returned successfully" };
   }
@@ -1397,7 +1441,7 @@ export class BookingService {
 
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
-      .select("email")
+      .select("email, full_name")
       .eq("id", order.user_id)
       .single();
 
@@ -1406,33 +1450,84 @@ export class BookingService {
         "User profile not found for email notification",
       );
     }
+    // TODO: refactor code above to pickup whole order instead of single items
 
-    // 11.6 email to the user
-    /* await this.mailService.sendMail(
-      user.email,
-      "Pickup Confirmed",
-      `<h1>Pickup Confirmed</h1>
-  <p>Your item with ID <strong>${orderItem.item_id}</strong> has been picked up.</p>
-  <p>Quantity: ${orderItem.quantity}</p>
-  <p>We wish you a nice event. Enjoy!</p>`,
-    );
+    // send mail to user:
+    /* type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      status: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
 
-    // 11.7 Email to the admin
-    const adminEmail = "illusia.rental.service@gmail.com";
+    const enrichedItems: EnrichedItem[] = orderItem || [];
 
-    await this.mailService.sendMail(
-      adminEmail,
-      "Item Picked Up",
-      `<h1>Item Pickup Notification</h1>
-  <p>The following item was picked up:</p>
-  <ul>
-    <li>Item ID: ${orderItem.item_id}</li>
-    <li>Quantity: ${orderItem.quantity}</li>
-    <li>Order ID: ${orderItem.order_id}</li>
-  </ul>
-  <p>Updated storage stock: ${newCount}</p>`,
-    ); */
+    for (const item of enrichedItems) {
+      const { data: storageItem, error: storageItemError } = await supabase
+        .from("storage_items")
+        .select("translations, location_id")
+        .eq("id", item.item_id)
+        .single();
 
+      if (storageItemError || !storageItem) {
+        throw new BadRequestException("Could not fetch storage item details");
+      }
+
+      item.translations = storageItem.translations;
+      item.location_id = storageItem.location_id;
+    }
+
+    // adapt to email:
+    const { data: location, error: locationError } = await supabase
+      .from("storage_locations")
+      .select("name, address")
+      .eq("id", enrichedItems[0].location_id)
+      .single();
+
+    const emailItems = enrichedItems.map((item) => ({
+      item_id: item.item_id,
+      quantity: item.quantity,
+      translations: {
+        fi: {
+          name: item.translations?.fi.item_name ?? "Unknown",
+        },
+        en: {
+          name: item.translations?.en.item_name ?? "Unknown",
+        },
+      },
+    }));
+
+    const emailData = {
+      name: user.full_name,
+      email: user.email,
+      today,
+      location: location?.name,
+      items: emailItems,
+    };
+
+    await this.mailService.sendMail({
+      to: emailData.email,
+      subject: "Noudetut tuotteet - Items picked up",
+      template: ItemsReturnedMail(emailData),
+    });
+
+    // send mail to admin
+    const adminEmailData = {
+      ...emailData,
+      email: "illusia.rental.service@gmail.com",
+      name: "Admin",
+    };
+
+    await this.mailService.sendMail({
+      to: "illusia.rental.service@gmail.com",
+      subject: "Noudetut tuotteet - Items picked up",
+      template: ItemsReturnedMail(adminEmailData),
+    });
+ */
     return {
       message: `Pickup confirmed for item ${orderItem.item_id}`,
       newStorageCount: newCount,
