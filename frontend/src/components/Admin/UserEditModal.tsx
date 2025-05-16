@@ -23,9 +23,13 @@ import { Label } from "../ui/label";
 import { MultiSelect } from "../ui/multi-select";
 import { UserFormData, UserProfile } from "@/types";
 import { Edit } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();
+  // Translation
+  const { lang } = useLanguage();
 
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
@@ -79,17 +83,18 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   const handleSave = async () => {
     try {
       await dispatch(updateUser({ id: user.id, data: formData })).unwrap();
-      toast.success("User updated successfully!");
+      toast.success(t.userEditModal.messages.success[lang]);
     } catch {
-      toast.error("Failed to update user. Please try again.");
+      toast.error(t.userEditModal.messages.error[lang]);
     }
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size={"sm"}
-          title="Edit User"
+        <Button
+          size={"sm"}
+          title={t.userEditModal.title[lang]}
           className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
         >
           <Edit className="h-4 w-4" />
@@ -97,66 +102,80 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="mb-4 text-center">Edit User</DialogTitle>
+          <DialogTitle className="mb-4 text-center">
+            {t.userEditModal.title[lang]}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="full_name">Full Name</Label>
+            <Label htmlFor="full_name">
+              {t.userEditModal.labels.fullName[lang]}
+            </Label>
             <Input
               name="full_name"
               value={formData.full_name}
               onChange={handleChange}
-              placeholder="Full Name"
+              placeholder={t.userEditModal.placeholders.fullName[lang]}
             />
           </div>
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t.userEditModal.labels.email[lang]}</Label>
             <Input
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Email"
+              placeholder={t.userEditModal.placeholders.email[lang]}
             />
           </div>
           <div>
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">{t.userEditModal.labels.phone[lang]}</Label>
             <Input
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="Phone Number"
+              placeholder={t.userEditModal.placeholders.phone[lang]}
             />
           </div>
           <div>
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="role">{t.userEditModal.labels.role[lang]}</Label>
             <Select
               onValueChange={handleRoleChange}
               defaultValue={formData.role}
             >
               <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Select Role" />
+                <SelectValue
+                  placeholder={t.userEditModal.placeholders.selectRole[lang]}
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="superVera">Super Vera</SelectItem>
+                <SelectItem value="admin">
+                  {t.userEditModal.roles.admin[lang]}
+                </SelectItem>
+                <SelectItem value="user">
+                  {t.userEditModal.roles.user[lang]}
+                </SelectItem>
+                <SelectItem value="superVera">
+                  {t.userEditModal.roles.superVera[lang]}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor="visible_name">Visible Name</Label>
+            <Label htmlFor="visible_name">
+              {t.userEditModal.labels.visibleName[lang]}
+            </Label>
             <Input
               name="visible_name"
               value={formData.visible_name}
               onChange={handleChange}
-              placeholder="Visible Name"
+              placeholder={t.userEditModal.placeholders.visibleName[lang]}
             />
           </div>
 
           <div>
-            <Label>Preferences</Label>
+            <Label>{t.userEditModal.labels.preferences[lang]}</Label>
             {Object.keys(formData.preferences).map((key) => (
               <div key={key} className="flex space-x-2">
                 <Input
@@ -164,7 +183,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                   name={`preference_${key}`}
                   value={formData.preferences[key]}
                   onChange={(e) => handlePreferencesChange(key, e.target.value)}
-                  placeholder={"Enter a new preference"}
+                  placeholder={t.userEditModal.placeholders.preference[lang]}
                 />
                 <Button
                   type="button"
@@ -172,7 +191,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                   onClick={() => removePreference(key)}
                   size={"sm"}
                 >
-                  Remove
+                  {t.userEditModal.buttons.remove[lang]}
                 </Button>
               </div>
             ))}
@@ -182,12 +201,12 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
               onClick={addPreference}
               size={"sm"}
             >
-              Add Preference
+              {t.userEditModal.buttons.addPreference[lang]}
             </Button>
           </div>
 
           <div>
-            <Label>Saved Lists</Label>
+            <Label>{t.userEditModal.labels.savedLists[lang]}</Label>
             <MultiSelect
               selected={formData.saved_lists || []}
               options={["List 1", "List 2", "List 3", "List 4"]} // Replace with actual saved list options
@@ -202,7 +221,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
             onClick={handleSave}
             size={"sm"}
           >
-            Save Changes
+            {t.userEditModal.buttons.save[lang]}
           </Button>
         </DialogFooter>
       </DialogContent>

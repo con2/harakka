@@ -50,6 +50,8 @@ import {
   FILE_CONSTRAINTS,
   AllowedMimeType,
 } from "@/types/storage";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 interface ItemImageManagerProps {
   itemId: string;
@@ -67,6 +69,8 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageType, setImageType] = useState<ImageType>("main");
   const [sortedImages, setSortedImages] = useState<ItemImage[]>([]);
+  // Translation
+  const { lang } = useLanguage();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [altText, setAltText] = useState("");
@@ -107,15 +111,13 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
           })
           .catch((error) => {
             console.error("Error fetching images:", error);
-            toast.error(
-              "Failed to load images. You can still upload new ones.",
-            );
+            toast.error(t.itemImageManager.messages.toast.loadError[lang]);
           });
       } catch (err) {
         console.error("Error dispatching action:", err);
       }
     }
-  }, [dispatch, itemId]);
+  }, [dispatch, itemId, lang]);
 
   // Create preview when file is selected
   useEffect(() => {
@@ -156,18 +158,17 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
         file.type as AllowedMimeType,
       )
     ) {
-      toast.error(
-        "Invalid file type. Only JPG, PNG, WebP, and GIF are allowed.",
-      );
+      toast.error(t.itemImageManager.messages.validation.fileType[lang]);
       return false;
     }
 
     // Check file size
     if (file.size > FILE_CONSTRAINTS.MAX_FILE_SIZE) {
       toast.error(
-        `File is too large. Maximum size is ${
-          FILE_CONSTRAINTS.MAX_FILE_SIZE / (1024 * 1024)
-        }MB.`,
+        t.itemImageManager.messages.validation.fileSize[lang].replace(
+          "{size}",
+          String(FILE_CONSTRAINTS.MAX_FILE_SIZE / (1024 * 1024)),
+        ),
       );
       return false;
     }
@@ -230,7 +231,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      toast.error("Please select a file to upload");
+      toast.error(t.itemImageManager.messages.validation.noFile[lang]);
       return;
     }
 
@@ -253,9 +254,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
           uploadItemImage({ itemId, file: selectedFile, metadata }),
         ).unwrap(),
         {
-          loading: "Uploading image...",
-          success: "Image uploaded successfully!",
-          error: "Failed to upload image",
+          loading: t.itemImageManager.messages.toast.upload.loading[lang],
+          success: t.itemImageManager.messages.toast.upload.success[lang],
+          error: t.itemImageManager.messages.toast.upload.error[lang],
         },
       );
 
@@ -276,9 +277,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
 
     try {
       await toast.promise(dispatch(deleteItemImage(imageToDelete)).unwrap(), {
-        loading: "Deleting image...",
-        success: "Image deleted successfully!",
-        error: "Failed to delete image",
+        loading: t.itemImageManager.messages.toast.delete.loading[lang],
+        success: t.itemImageManager.messages.toast.delete.success[lang],
+        error: t.itemImageManager.messages.toast.delete.error[lang],
       });
     } catch (err) {
       console.error("Image deletion failed:", err);
@@ -292,7 +293,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
     <div className="space-y-6">
       {/* Upload Section */}
       <div className="bg-white p-4 rounded-md border">
-        <h3 className="text-lg font-medium mb-4">Upload New Image</h3>
+        <h3 className="text-lg font-medium mb-4">
+          {t.itemImageManager.title.uploadNew[lang]}
+        </h3>
 
         {/* Drag & Drop Area */}
         <div
@@ -328,10 +331,10 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
             <div>
               <Upload className="h-10 w-10 mx-auto text-gray-400 mb-2" />
               <p className="text-sm text-gray-500">
-                Drag and drop an image here or click to browse
+                {t.itemImageManager.dropzone.instructions[lang]}
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                JPG, PNG, WebP, GIF up to 5MB
+                {t.itemImageManager.dropzone.fileInfo[lang]}
               </p>
             </div>
           )}
@@ -348,7 +351,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <Label htmlFor="imageType">Image Type</Label>
+              <Label htmlFor="imageType">
+                {t.itemImageManager.labels.imageType[lang]}
+              </Label>
               <Select
                 value={imageType}
                 onValueChange={(val: "main" | "thumbnail" | "detail") =>
@@ -359,17 +364,25 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="main">Main</SelectItem>
-                  <SelectItem value="thumbnail">Thumbnail</SelectItem>
-                  <SelectItem value="detail">Detail</SelectItem>
+                  <SelectItem value="main">
+                    {t.itemImageManager.options.main[lang]}
+                  </SelectItem>
+                  <SelectItem value="thumbnail">
+                    {t.itemImageManager.options.thumbnail[lang]}
+                  </SelectItem>
+                  <SelectItem value="detail">
+                    {t.itemImageManager.options.detail[lang]}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor="altText">Alt Text (Accessibility)</Label>
+              <Label htmlFor="altText">
+                {t.itemImageManager.labels.altText[lang]}
+              </Label>
               <Input
                 id="altText"
-                placeholder="Describe the image for accessibility"
+                placeholder={t.itemImageManager.placeholders.altText[lang]}
                 className="placeholder:text-xs"
                 value={altText}
                 onChange={(e) => setAltText(e.target.value)}
@@ -381,7 +394,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
             <div className="space-y-1">
               <Progress value={uploadProgress} className="h-2" />
               <div className="text-xs text-right text-gray-500">
-                {uploadProgress === 100 ? "Complete!" : `${uploadProgress}%`}
+                {uploadProgress === 100
+                  ? t.itemImageManager.messages.uploadComplete[lang]
+                  : `${uploadProgress}%`}
               </div>
             </div>
           )}
@@ -394,11 +409,13 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
           >
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                {t.itemImageManager.buttons.uploading[lang]}
               </>
             ) : (
               <>
-                <Plus className="mr-2 h-4 w-4" /> Upload Image
+                <Plus className="mr-2 h-4 w-4" />{" "}
+                {t.itemImageManager.buttons.upload[lang]}
               </>
             )}
           </Button>
@@ -408,7 +425,10 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
       {/* Images Gallery Section */}
       <div>
         <h3 className="text-lg font-medium mb-4">
-          Item Images ({sortedImages.length})
+          {t.itemImageManager.title.gallery[lang].replace(
+            "{count}",
+            sortedImages.length.toString(),
+          )}
         </h3>
 
         {loading && images.length === 0 && (
@@ -421,7 +441,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
           <div className="text-center py-8 bg-slate-50 rounded-lg">
             <ImageIcon className="mx-auto h-12 w-12 text-slate-400" />
             <p className="mt-2 text-sm text-slate-600">
-              No images uploaded yet
+              {t.itemImageManager.messages.noImages[lang]}
             </p>
           </div>
         )}
@@ -436,7 +456,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
           return (
             <div key={type} className="mb-6">
               <h4 className="text-md font-medium capitalize mb-2">
-                {type} Images ({typeImages.length})
+                {t.itemImageManager.title.sections[type as ImageType][
+                  lang
+                ].replace("{count}", typeImages.length.toString())}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {typeImages.map((image) => (
@@ -446,7 +468,13 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
                   >
                     <CardHeader className="p-2">
                       <CardTitle className="text-sm flex justify-between items-center">
-                        <span className="capitalize">{image.image_type}</span>
+                        <span className="capitalize">
+                          {
+                            t.itemImageManager.options[
+                              image.image_type as ImageType
+                            ][lang]
+                          }
+                        </span>
                         <span className="text-xs text-gray-500">
                           #{image.display_order}
                         </span>
@@ -465,7 +493,8 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
                         className="text-xs truncate max-w-[70%]"
                         title={image.alt_text}
                       >
-                        {image.alt_text || "No description"}
+                        {image.alt_text ||
+                          t.itemImageManager.messages.noDescription[lang]}
                       </div>
                       <Button
                         variant="ghost"
@@ -488,19 +517,22 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t.itemImageManager.messages.deleteConfirm.title[lang]}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              image from the server.
+              {t.itemImageManager.messages.deleteConfirm.description[lang]}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>
+              {t.itemImageManager.buttons.cancel[lang]}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-red-500 hover:bg-red-600"
             >
-              Delete
+              {t.itemImageManager.buttons.deleteImage[lang]}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
