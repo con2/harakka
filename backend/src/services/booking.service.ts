@@ -1559,7 +1559,7 @@ export class BookingService {
   // 13. Update payment status
   async updatePaymentStatus(
     orderId: string,
-    status: "invoice-sent" | "paid" | "payment-rejected" | "overdue",
+    status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
   ) {
     const supabase = this.supabaseService.getServiceClient();
 
