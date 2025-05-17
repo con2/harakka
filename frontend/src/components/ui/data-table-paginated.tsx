@@ -49,6 +49,7 @@ export function PaginatedDataTable<TData, TValue>({
         pageIndex: 0,
       },
     },
+    getRowId: (row) => (row as { id?: string | number })?.id?.toString() ?? JSON.stringify(row),
   });
   // Translation
   const { lang } = useLanguage();

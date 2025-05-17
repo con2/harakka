@@ -216,19 +216,21 @@
   position: relative;
   overflow: hidden;
   border-radius: 0.75rem;
+  z-index: 1;
 }
 
 .custom-toast::after {
   content: '';
   position: absolute;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   bottom: 0;
   left: 0;
-  height: 5px;
+  height: 4px;
   width: 0;
   background-color: #4CAF50;
   animation: progressBar 3s linear forwards;
   animation-play-state: running;
+  z-index: 0;
 }
 
 /* Use the :hover state to pause animation */
@@ -243,7 +245,6 @@
 .custom-toast:not([data-type])::after {
   background-color: var(--highlight2); /* Neutral grey */
 }
-
 
 @keyframes progressBar {
   0% {
