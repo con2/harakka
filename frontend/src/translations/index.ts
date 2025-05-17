@@ -2369,6 +2369,10 @@ export const t = {
         fi: "Tilauspäivä",
         en: "Order Date",
       },
+      dateRange: {
+        fi: "Aika",
+        en: "Booking Time",
+      },
       total: {
         fi: "Summa",
         en: "Total",
