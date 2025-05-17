@@ -4,5 +4,5 @@ export interface LogMessage {
   level: "error" | "warning" | "info" | "debug";
   message: string;
   source?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
