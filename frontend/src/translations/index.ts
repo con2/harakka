@@ -2108,6 +2108,10 @@ export const t = {
         fi: "Asetukset",
         en: "Settings",
       },
+      logs: {
+        fi: "Lokit",
+        en: "Logs",
+      },
     },
   },
 
@@ -2510,7 +2514,7 @@ export const t = {
           fi: "Poistaa",
           en: "Delete",
         },
-      }
+      },
     },
     loading: {
       fi: "Ladataan tilauksia...",
@@ -3199,6 +3203,44 @@ export const t = {
         fi: "Poista käyttäjä",
         en: "Delete User",
       },
+    },
+  },
+  logs: {
+    columns: {
+      timestamp: {
+        fi: "Aikaleima",
+        en: "Timestamp",
+      },
+      level: {
+        fi: "Taso",
+        en: "Level",
+      },
+      message: {
+        fi: "Viesti",
+        en: "Message",
+      },
+      source: {
+        fi: "Lähde",
+        en: "Source",
+      },
+    },
+    buttons: {
+      retry: {
+        fi: "Yritä uudelleen",
+        en: "Retry",
+      },
+      refresh: {
+        fi: "Päivitä",
+        en: "Refresh",
+      },
+    },
+    title: {
+      fi: "Lokitiedot",
+      en: "Log Data",
+    },
+    noData: {
+      fi: "Ei lokitietoja saatavilla.",
+      en: "No log data available.",
     },
   },
 };
