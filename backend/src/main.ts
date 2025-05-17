@@ -4,6 +4,7 @@ import { ConfigService } from "@nestjs/config";
 import { Logger } from "@nestjs/common";
 import { SupabaseService } from "./services/supabase.service";
 import { AllExceptionsFilter } from "./filters/all-exceptions.filter";
+import { LogsService } from "./services/logs.service";
 
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
@@ -11,8 +12,11 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     const configService = app.get(ConfigService);
 
+    // Get LogsService first so we can pass it to the filter
+    const logsService = app.get(LogsService);
+
     // Add the global exception filter
-    app.useGlobalFilters(new AllExceptionsFilter());
+    app.useGlobalFilters(new AllExceptionsFilter(logsService));
 
     const port = process.env.PORT || configService.get<number>("PORT", 3000);
     logger.log(

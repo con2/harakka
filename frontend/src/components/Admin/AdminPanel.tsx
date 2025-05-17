@@ -15,7 +15,6 @@ import {
 import logo from "@/assets/logo.png";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import Logs from "./Logs";
 //import { useAppSelector } from "@/store/hooks";
 //import { selectIsSuperVera } from "@/store/slices/usersSlice";
 
