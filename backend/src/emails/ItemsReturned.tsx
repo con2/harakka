@@ -9,13 +9,7 @@ import {
 } from "@react-email/components";
 import { EmailProps } from "../interfaces/mail.interface";
 
-const BookingConfirmationEmail = ({
-  name,
-  pickupDate,
-  location,
-  items,
-  today,
-}: EmailProps) => (
+const ItemsReturnedMail = ({ name, location, items, today }) => (
   <Html>
     <Head>
       <link
@@ -46,7 +40,7 @@ const BookingConfirmationEmail = ({
         <Section
           style={{
             backgroundImage:
-              "url('https://i0.wp.com/nordiclarp.org/wp-content/uploads/2023/11/Odysseus-warp-core-scaled.jpeg?resize=900%2C1200&ssl=1')",
+              "url('https://larppikuvat.fi/media/previews/odysseus-2024-run-2-ebazgnl7/santtu-pajukanta/thursday-lm1-solaris-pickup/dsc-5472.preview.avif')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             height: "250px",
@@ -65,7 +59,7 @@ const BookingConfirmationEmail = ({
             marginBottom: "24px",
           }}
         >
-          Varausvahvistus - Booking confirmation
+          Palautetut tuotteet - Items returned
         </Text>
 
         <Text
@@ -83,12 +77,12 @@ const BookingConfirmationEmail = ({
           Hei <strong>{name}</strong>,
         </Text>
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          Vahvistamme varauksesi. Tervetuloa noutamaan varauksesi noutopäivänä.
-          Ota yhteyttä meihin saadaksesi tarkan ajan kyseisenä päivänä.
+          Kaikki varauksesi kohteet on palautettu onnistuneesti. Osoitteeseen
+          sijainti: {location}.
         </Text>
 
         <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
-          Varaustiedot:
+          Tavaraluettelo:
         </Text>
         <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
           {items.map((item, index) => (
@@ -98,25 +92,18 @@ const BookingConfirmationEmail = ({
           ))}
         </ul>
 
-        <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
-          <strong>Noutopäivä:</strong> {pickupDate}
-          <br />
-          <strong>Noutopaikka:</strong> {location}
-          <br />
-        </Text>
-
         <hr style={{ margin: "30px 0" }} />
 
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
           Hello <strong>{name}</strong>,
         </Text>
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          Your booking has been confirmed. You're welcome to pick up your items
-          on the pickup date. Please contact us for the exact time on that day.
+          All items of your booking have been returned successfully. To
+          location: {location}.
         </Text>
 
         <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
-          Booking details:
+          List of items:
         </Text>
         <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
           {items.map((item, index) => (
@@ -125,13 +112,6 @@ const BookingConfirmationEmail = ({
             </li>
           ))}
         </ul>
-
-        <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
-          <strong>Pickup Date:</strong> {pickupDate}
-          <br />
-          <strong>Pickup Location:</strong> {location}
-          <br />
-        </Text>
 
         <Section style={{ textAlign: "center", marginTop: "30px" }}>
           <a
@@ -147,7 +127,7 @@ const BookingConfirmationEmail = ({
               fontSize: "16px",
             }}
           >
-            View your Booking
+            View your Bookings
           </a>
         </Section>
         <Text style={{ fontSize: "14px", color: "#666666", marginTop: "30px" }}>
@@ -167,4 +147,4 @@ const BookingConfirmationEmail = ({
   </Html>
 );
 
-export default BookingConfirmationEmail;
+export default ItemsReturnedMail;
