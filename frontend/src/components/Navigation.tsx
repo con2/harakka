@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useAppSelector } from "@/store/hooks";
-import { selectSelectedUser } from "@/store/slices/usersSlice";
+import { selectIsAdmin, selectIsSuperVera, selectSelectedUser } from "@/store/slices/usersSlice";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,16 +22,18 @@ import { useLanguage } from "@/context/LanguageContext";
 
 export const Navigation = () => {
   const { signOut } = useAuth();
+  const isAdmin = useAppSelector(selectIsAdmin);
+  const isSuperVera = useAppSelector(selectIsSuperVera);
   const selectedUser = useAppSelector(selectSelectedUser);
   const cartItemsCount = useAppSelector(selectCartItemsCount);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isAdmin = ["admin", "superVera"].includes(selectedUser?.role ?? "");
+  const admin = isAdmin || isSuperVera;
   const isLoggedIn = !!selectedUser;
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
-    ? "absolute top-0 left-0 w-full z-50 bg-black/40 text-white px-2 md:px-10 py-2 md:py-3"
+    ? "absolute top-0 left-0 w-full z-50 bg-white/80 text-white px-2 md:px-10 py-2 md:py-3"
     : "relative w-full z-50 bg-white text-primary shadow-sm px-2 md:px-10 py-2 md:py-3";
 
   const handleSignOut = () => {
@@ -70,17 +72,17 @@ export const Navigation = () => {
           </Link>
           <NavigationMenu>
             <NavigationMenuList>
-              <NavigationMenuItem className="hidden md:flex">
+              {/* <NavigationMenuItem className="hidden md:flex">
                 <NavigationMenuLink asChild>
                   <Link to="/"> {t.navigation.home[lang]} </Link>
                 </NavigationMenuLink>
-              </NavigationMenuItem>
+              </NavigationMenuItem> */}
 
               {/* Show My orders link only for logged in users */}
               {isLoggedIn && (
                 <NavigationMenuItem className="hidden md:flex">
                   <NavigationMenuLink asChild>
-                    <Link to="/profile" className="flex items-center gap-1">
+                    <Link to="/profile" className="flex items-center gap-1 text-secondary font-medium">
                       {t.navigation.myProfile[lang]}
                     </Link>
                   </NavigationMenuLink>
@@ -88,10 +90,10 @@ export const Navigation = () => {
               )}
 
               {/* Show Admin Panel link only for admins/superVera */}
-              {isAdmin && (
+              {admin && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link to="/admin" className="flex items-center gap-1">
+                    <Link to="/admin" className="flex items-center gap-1 text-secondary font-medium">
                       {t.navigation.admin[lang]}
                     </Link>
                   </NavigationMenuLink>
@@ -101,7 +103,7 @@ export const Navigation = () => {
               {/* Always show Storage */}
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
-                  <Link to="/storage" className="flex items-center gap-1">
+                  <Link to="/storage" className="flex items-center gap-1 text-secondary font-medium">
                     {t.navigation.storage[lang]}
                   </Link>
                 </NavigationMenuLink>
@@ -110,34 +112,34 @@ export const Navigation = () => {
               {/* User GuideLines */}
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
-                  <Link to="/howItWorks" className="flex items-center gap-1">
+                  <Link to="/howItWorks" className="flex items-center gap-1 text-secondary font-medium">
                     {t.navigation.guides[lang]}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
               {/* Contact Form */}
+              {!admin && (
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
-                  <Link to="/contact-us" className="flex items-center gap-1">
+                  <Link to="/contact-us" className="flex items-center gap-1 text-secondary font-medium">
                     {t.navigation.contactUs[lang]}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
+              )}
             </NavigationMenuList>
           </NavigationMenu>
         </div>
 
-        {/* Language switcher */}
-        <div className="flex items-center space-x-4">
-          <LanguageSwitcher />
-        </div>
-
         {/* Always show Cart */}
         <div className="flex items-center gap-4">
+          <div className="flex items-center md:mr-6">
+            <LanguageSwitcher />
+          </div>
           <Link
             to="/cart"
-            className="flex items-center gap-1 hover:text-secondary"
+            className="flex items-center gap-1 text-secondary font-medium hover:text-secondary"
           >
             <ShoppingCart className="h-5 w-5" />
             {cartItemsCount > 0 && (
@@ -167,7 +169,7 @@ export const Navigation = () => {
               </Button>
             </div>
           ) : (
-            <Button variant={"ghost"} className="bg-white" asChild>
+            <Button variant={"ghost"} asChild>
               <Link to="/login">
                 {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
               </Link>

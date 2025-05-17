@@ -90,7 +90,6 @@ function App() {
             position="top-right"
             duration={3000}
             richColors
-            closeButton
             toastOptions={{
               classNames: {
                 toast: 'custom-toast',
