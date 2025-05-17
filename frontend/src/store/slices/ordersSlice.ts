@@ -10,6 +10,7 @@ import {
   BookingItem,
   OrdersState,
   CreateOrderDto,
+  PaymentStatus,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 
@@ -184,13 +185,18 @@ export const returnItems = createAsyncThunk<BookingOrder, string>(
 
 // update Payment Status thunk
 export const updatePaymentStatus = createAsyncThunk<
-  { orderId: string; status: string },
-  { orderId: string; status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | "N/A" }
+  { orderId: string; status: PaymentStatus },
+  { orderId: string; status: PaymentStatus }
 >(
   "bookings/payment-status",
   async ({ orderId, status }, { rejectWithValue }) => {
     try {
-      return await ordersApi.updatePaymentStatus(orderId, status);
+      const response = await ordersApi.updatePaymentStatus(orderId, status);
+      // Ensure the returned status is of type PaymentStatus
+      return {
+        orderId,
+        status: response.status as PaymentStatus,
+      };
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to update the payment status")
@@ -425,7 +431,6 @@ export const ordersSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "update-payment-status";
       });
-
       ;
   },
 });
