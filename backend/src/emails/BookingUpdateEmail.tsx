@@ -9,7 +9,7 @@ import {
 } from "@react-email/components";
 import { EmailProps } from "../interfaces/mail.interface";
 
-const BookingConfirmationEmail = ({
+const BookingUpdateEmail = ({
   name,
   pickupDate,
   location,
@@ -46,7 +46,7 @@ const BookingConfirmationEmail = ({
         <Section
           style={{
             backgroundImage:
-              "url('https://i0.wp.com/nordiclarp.org/wp-content/uploads/2023/11/Odysseus-warp-core-scaled.jpeg?resize=900%2C1200&ssl=1')",
+              "url('https://larppikuvat.fi/media/previews/odysseus-2024-run-3-vssomnx7/lenne-eeronketo/day-1/odysseus-141.preview.avif')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             height: "250px",
@@ -65,7 +65,7 @@ const BookingConfirmationEmail = ({
             marginBottom: "24px",
           }}
         >
-          Varausvahvistus - Booking confirmation
+          Varaus päivitetty - Booking updated
         </Text>
 
         <Text
@@ -83,8 +83,10 @@ const BookingConfirmationEmail = ({
           Hei <strong>{name}</strong>,
         </Text>
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          Vahvistamme varauksesi. Tervetuloa noutamaan varauksesi noutopäivänä.
-          Ota yhteyttä meihin saadaksesi tarkan ajan kyseisenä päivänä.
+          Varauksesi päivitettiin onnistuneesti. Varauksen vahvistaminen voi
+          kestää muutaman päivän, koska meidän on varmistettava, että kaikki
+          kohteet ovat saatavilla kyseisenä päivänä. Jos sinulla on kysyttävää,
+          ota meihin yhteyttä.
         </Text>
 
         <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
@@ -99,10 +101,7 @@ const BookingConfirmationEmail = ({
         </ul>
 
         <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
-          <strong>Noutopäivä:</strong> {pickupDate}
-          <br />
-          <strong>Noutopaikka:</strong> {location}
-          <br />
+          <strong>Noutopäivämääräsi pysyy samana:</strong> {pickupDate}
         </Text>
 
         <hr style={{ margin: "30px 0" }} />
@@ -111,8 +110,10 @@ const BookingConfirmationEmail = ({
           Hello <strong>{name}</strong>,
         </Text>
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          Your booking has been confirmed. You're welcome to pick up your items
-          on the pickup date. Please contact us for the exact time on that day.
+          Your booking was successfully updated. It is still pending and might
+          take a few days to confirm the booking, since we have to make sure
+          that all items are available on that date. If you have any questions,
+          please contact us.
         </Text>
 
         <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
@@ -127,10 +128,7 @@ const BookingConfirmationEmail = ({
         </ul>
 
         <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
-          <strong>Pickup Date:</strong> {pickupDate}
-          <br />
-          <strong>Pickup Location:</strong> {location}
-          <br />
+          <strong>Your Pick up date stays the same:</strong> {pickupDate}
         </Text>
 
         <Section style={{ textAlign: "center", marginTop: "30px" }}>
@@ -167,4 +165,4 @@ const BookingConfirmationEmail = ({
   </Html>
 );
 
-export default BookingConfirmationEmail;
+export default BookingUpdateEmail;
