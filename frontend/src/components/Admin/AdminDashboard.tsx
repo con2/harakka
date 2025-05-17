@@ -478,7 +478,7 @@ const AdminDashboard = () => {
             </DialogContent>
           </Dialog>
         </div>
-        )};
+        )}
       </div>
   );
 }
