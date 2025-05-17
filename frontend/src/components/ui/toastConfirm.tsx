@@ -27,7 +27,7 @@ export const toastConfirm = ({
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <p className="text-sm text-muted-foreground">{description}</p>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-between gap-2 mt-2">
             <Button
               variant="outline"
               onClick={() => {
