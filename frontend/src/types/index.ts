@@ -27,3 +27,6 @@ export * from "./storage";
 
 // Location-related types
 export * from "./location";
+
+// Logging-related types
+export * from "./log";
