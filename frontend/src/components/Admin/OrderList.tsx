@@ -12,7 +12,7 @@ import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { useAuth } from "@/context/AuthContext";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "../ui/button";
-import { BookingOrder, BookingItem } from "@/types";
+import { BookingOrder, BookingItem, PaymentStatus } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -191,6 +191,33 @@ const OrderList = () => {
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
+    // {
+    //   accessorKey: "date_range",
+    //   header: t.orderList.columns.dateRange[lang],
+    //   cell: ({ row }) => {
+    //     const items = row.original.order_items || [];
+    //     if (items.length === 0) return "-";
+
+    //     // Get earliest start_date
+    //     const minStartDate = items.reduce((minDate, item) => {
+    //       const date = new Date(item.start_date);
+    //       return date < minDate ? date : minDate;
+    //     }, new Date(items[0].start_date));
+
+    //     // Get latest end_date
+    //     const maxEndDate = items.reduce((maxDate, item) => {
+    //       const date = new Date(item.end_date);
+    //       return date > maxDate ? date : maxDate;
+    //     }, new Date(items[0].end_date));
+
+    //     return (
+    //       <div className="text-xs flex flex-col">
+    //         <span>{`${formatDate(minStartDate, "d MMM yyyy")} -`}</span>
+    //         <span>{`${formatDate(maxEndDate, "d MMM yyyy")}`}</span>
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       accessorKey: "final_amount",
       header: t.orderList.columns.total[lang],
@@ -200,30 +227,32 @@ const OrderList = () => {
       accessorKey: "invoice_status",
       header: t.orderList.columns.invoice[lang],
       cell: ({ row }) => {
+        const paymentStatus = row.original.payment_status ?? "N/A";
+
         const handleStatusChange = (newStatus: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | "N/A") => {
           dispatch(updatePaymentStatus({
             orderId: row.original.id,
-            status: newStatus,
+            status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
           }));
         };
 
         return (
-          <Select onValueChange={handleStatusChange} defaultValue={row.original.payment_status || "N/A"}>
-            <SelectTrigger className="w-[120px] text-sm">
-              <SelectValue className="text-sm" placeholder="Select status" />
+          <Select onValueChange={handleStatusChange} value={paymentStatus}>
+            <SelectTrigger className="w-[120px] text-xs">
+              <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              {["invoice-sent", "paid", "payment-rejected", "overdue"].map((status) => {
-                // Map status string to invoiceStatus key
+              {["invoice-sent", "paid", "payment-rejected", "overdue", "N/A"].map((status) => {
                 const statusKeyMap: Record<string, keyof typeof t.orderList.columns.invoice.invoiceStatus> = {
                   "invoice-sent": "sent",
                   "paid": "paid",
                   "payment-rejected": "rejected",
                   "overdue": "overdue",
+                  "N/A": "NA",
                 };
                 const statusKey = statusKeyMap[status];
                 return (
-                  <SelectItem key={status} value={status}>
+                  <SelectItem className="text-xs" key={status} value={status}>
                     {t.orderList.columns.invoice.invoiceStatus?.[statusKey]?.[lang] || status}
                   </SelectItem>
                 );
@@ -478,6 +507,7 @@ const OrderList = () => {
                   )}
 
                   {selectedOrder.status === "confirmed" && (
+                    <>
                     <div className="flex flex-col items-center text-center">
                       <span className="text-xs text-slate-600">Return</span>
                     <OrderReturnButton
@@ -485,6 +515,7 @@ const OrderList = () => {
                       closeModal={() => setShowDetailsModal(false)}
                     />
                     </div>
+                    </>
                   )}
                   <div className="flex flex-col items-center text-center">
                       <span className="text-xs text-slate-600">Delete</span>
