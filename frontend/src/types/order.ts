@@ -21,7 +21,8 @@ export type PaymentStatus =
   | "invoice-sent"
   | "paid"
   | "payment-rejected"
-  | "overdue";
+  | "overdue"
+  | null;
 
 /**
  * Booked item in an order

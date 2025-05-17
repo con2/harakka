@@ -178,7 +178,7 @@ export const ordersApi = {
  */
   updatePaymentStatus: async (
     orderId: string,
-    status: "invoice-sent" | "paid" | "payment-rejected" | "overdue"
+    status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
   ): Promise<{ orderId: string; status: string }> => {
     const userId = localStorage.getItem("userId");
 
@@ -191,6 +191,6 @@ export const ordersApi = {
         },
       }
     );
-    return { orderId, status };
+    return { orderId, status: status ?? "" };
   },
 };
