@@ -5,6 +5,7 @@ import {
   selectOrdersLoading,
   selectOrdersError,
   selectAllOrders,
+  updatePaymentStatus,
 } from "@/store/slices/ordersSlice";
 import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
@@ -28,6 +29,8 @@ import { DataTable } from "../ui/data-table";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { Separator } from "../ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -196,8 +199,39 @@ const OrderList = () => {
     {
       accessorKey: "invoice_status",
       header: t.orderList.columns.invoice[lang],
-      cell: ({ row }) =>
-        row.original.payment_status || t.orderList.status.na[lang],
+      cell: ({ row }) => {
+        const handleStatusChange = (newStatus: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | "N/A") => {
+          dispatch(updatePaymentStatus({
+            orderId: row.original.id,
+            status: newStatus,
+          }));
+        };
+
+        return (
+          <Select onValueChange={handleStatusChange} defaultValue={row.original.payment_status || "N/A"}>
+            <SelectTrigger className="w-[120px] text-sm">
+              <SelectValue className="text-sm" placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              {["invoice-sent", "paid", "payment-rejected", "overdue"].map((status) => {
+                // Map status string to invoiceStatus key
+                const statusKeyMap: Record<string, keyof typeof t.orderList.columns.invoice.invoiceStatus> = {
+                  "invoice-sent": "sent",
+                  "paid": "paid",
+                  "payment-rejected": "rejected",
+                  "overdue": "overdue",
+                };
+                const statusKey = statusKeyMap[status];
+                return (
+                  <SelectItem key={status} value={status}>
+                    {t.orderList.columns.invoice.invoiceStatus?.[statusKey]?.[lang] || status}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        );
+      },
     },
     {
       id: "actions",
@@ -421,31 +455,45 @@ const OrderList = () => {
                 </div>
 
                 {/* Order Modal Actions */}
-                <div className="flex justify-center space-x-4">
+                <div className="flex flex-col justify-center space-x-4">
+                  <Separator />
+                  <div className="flex flex-row items-center gap-4 mt-4 justify-center">
                   {selectedOrder.status === "pending" && (
                     <>
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">Confirm</span>
                       <OrderConfirmButton
                         id={selectedOrder.id}
                         closeModal={() => setShowDetailsModal(false)}
                       />
+                      </div>
+                      <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">Reject</span>
                       <OrderRejectButton
                         id={selectedOrder.id}
                         closeModal={() => setShowDetailsModal(false)}
                       />
+                      </div>
                     </>
                   )}
 
                   {selectedOrder.status === "confirmed" && (
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">Return</span>
                     <OrderReturnButton
                       id={selectedOrder.id}
                       closeModal={() => setShowDetailsModal(false)}
                     />
+                    </div>
                   )}
-
+                  <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">Delete</span>
                   <OrderDeleteButton
                     id={selectedOrder.id}
                     closeModal={() => setShowDetailsModal(false)}
                   />
+                  </div>
+                </div>
                 </div>
               </div>
             </DialogContent>
