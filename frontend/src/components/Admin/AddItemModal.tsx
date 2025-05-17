@@ -245,7 +245,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
       <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t.addItemModal.title[lang]}</DialogTitle>
+          <DialogTitle className="mb-0">{t.addItemModal.title[lang]}</DialogTitle>
           <DialogDescription className="text-center">
             {activeTab === "details"
               ? t.addItemModal.description.details[lang]
@@ -259,9 +259,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
         </DialogHeader>
 
         {/* Tab Navigation */}
-        <div className="flex border-b mb-4">
+        <div className="flex border-b mb-2">
           <button
-            className={`px-4 py-2 ${
+            className={`px-4 py-1 text-sm ${
               activeTab === "details"
                 ? "border-b-2 border-secondary font-medium"
                 : "text-gray-500"
@@ -274,7 +274,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className={`px-4 py-2 ${
+                  className={`px-4 py-1 text-sm ${
                     activeTab === "images"
                       ? "border-b-2 border-secondary font-medium"
                       : "text-gray-500"
@@ -318,7 +318,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     value={formData.translations.fi.item_name}
                     onChange={handleChange}
                     placeholder={t.addItemModal.placeholders.itemFi[lang]}
-                    className="placeholder:text-xs italic p-2"
+                    className="placeholder:text-xs p-2"
                     required
                   />
                 </div>
@@ -332,7 +332,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     value={formData.translations.en.item_name}
                     onChange={handleChange}
                     placeholder={t.addItemModal.placeholders.itemEn[lang]}
-                    className="placeholder:text-xs italic p-2"
+                    className="placeholder:text-xs p-2"
                     required
                   />
                 </div>
@@ -350,7 +350,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     value={formData.translations.fi.item_type}
                     onChange={handleChange}
                     placeholder={t.addItemModal.placeholders.typeFi[lang]}
-                    className="placeholder:text-xs italic p-2"
+                    className="placeholder:text-xs p-2"
                   />
                 </div>
                 <div>
@@ -363,7 +363,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     value={formData.translations.en.item_type}
                     onChange={handleChange}
                     placeholder={t.addItemModal.placeholders.typeEn[lang]}
-                    className="placeholder:text-xs italic p-2"
+                    className="placeholder:text-xs p-2"
                   />
                 </div>
               </div>
@@ -382,7 +382,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     placeholder={
                       t.addItemModal.placeholders.descriptionFi[lang]
                     }
-                    className="placeholder:text-xs italic p-2 shadow-sm ring-1 ring-inset ring-muted"
+                    className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted"
                     rows={3}
                   />
                 </div>
@@ -406,8 +406,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
             </div>
 
             {/* Location Details */}
-            <div className="space-y-4">
-              <div className="space-y-2">
+            <div>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="flex flex-row items-baseline space-x-2">
                 <Label htmlFor="location_id">
                   {t.addItemModal.labels.location[lang]}
                 </Label>
@@ -417,7 +418,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     setFormData({ ...formData, location_id: value })
                   }
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-40">
                     <SelectValue
                       placeholder={
                         t.addItemModal.placeholders.selectLocation[lang]
@@ -435,7 +436,6 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               </div>
 
               {/* Price and Active Status */}
-              <div className="flex flex-row items-baseline space-x-4 space-y-4">
                 <div className="flex flex-row items-baseline space-x-2">
                   <Label htmlFor="price" className="font-medium">
                     {t.addItemModal.labels.price[lang]}
@@ -448,7 +448,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     onChange={handleChange}
                     placeholder={t.addItemModal.labels.price[lang]}
                     required
-                    className="w-60"
+                    className="w-40"
                   />
                 </div>
                 <div className="flex flex-row items-center space-x-2">
@@ -462,9 +462,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Quantity */}
-              <div className="space-y-4">
+              {/* Quantity */} 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="items_number_total">
@@ -518,10 +518,10 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                 </div>
 
                 {/* Tag Selection */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">
+              <div className="space-y-2">
+                  <Label>
                     {t.addItemModal.labels.assignTags[lang]}
-                  </h3>
+                  </Label>
                   <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
                     {availableTags.map((tag) => (
                       <label key={tag.id} className="flex items-center">
@@ -539,14 +539,12 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                       </label>
                     ))}
                   </div>
-                </div>
               </div>
-            </div>
-
             <DialogFooter>
               <Button
                 type="submit"
-                className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+                variant={"secondary"}
+                className="w-full"
                 disabled={loading}
                 size="sm"
               >
@@ -567,8 +565,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
             <DialogFooter className="mt-4">
               <Button
-                className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+                variant={"secondary"}
                 onClick={resetForm}
+                className="w-full"
                 size="sm"
               >
                 {t.addItemModal.buttons.done[lang]}
@@ -579,7 +578,8 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
           <div className="text-center py-12">
             <p>{t.addItemModal.description.createFirst[lang]}</p>
             <Button
-              className="mt-4 text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+              variant={"secondary"}
+              className="w-full"
               onClick={() => setActiveTab("details")}
               size="sm"
             >
