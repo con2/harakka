@@ -8,6 +8,7 @@ import tagsReducer from "./slices/tagSlice";
 import itemImagesReducer from "./slices/itemImagesSlice";
 import uiReducer from "./slices/uiSlice";
 import locationsReducer from "./slices/locationsSlice";
+import logsReducer from "./slices/logsSlice";
 
 // add slices in the reducer object
 export const store = configureStore({
@@ -21,6 +22,7 @@ export const store = configureStore({
     itemImages: itemImagesReducer,
     ui: uiReducer,
     locations: locationsReducer,
+    logs: logsReducer,
   },
 });
 
