@@ -14,7 +14,7 @@ type LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType>({
   lang: "fi", // Default to Finnish
   setLanguage: () => {},
-  t: (fi, en) => fi,
+  t: (fi) => fi,
 });
 
 // Custom hook to use the language context
