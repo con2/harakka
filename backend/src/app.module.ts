@@ -24,6 +24,8 @@ import { StorageLocationsService } from "./services/storage-locations.service";
 import { MailController } from "./controllers/mail.controller";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { MailModule } from "./mail/mail.module";
+import { LogsController } from "./controllers/logs.controller";
+import { LogsService } from "./services/logs.service";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -55,6 +57,7 @@ dotenvExpand.expand(env);
     ItemImagesController,
     StorageLocationsController,
     MailController,
+    LogsController,
   ],
   providers: [
     AppService,
@@ -68,6 +71,7 @@ dotenvExpand.expand(env);
     S3Service,
     InvoiceService,
     StorageLocationsService,
+    LogsService,
   ],
 })
 export class AppModule {}
