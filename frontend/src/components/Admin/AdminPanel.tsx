@@ -10,6 +10,7 @@ import {
   Warehouse,
   PinIcon,
   ShoppingBag,
+  FileText,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useLanguage } from "@/context/LanguageContext";
@@ -72,6 +73,12 @@ const AdminPanel = () => {
             icon={<Settings className="w-5 h-5" />}
             label={t.adminPanel.navigation.settings[lang]}
           />
+
+          <SidebarLink
+            to="/admin/logs"
+            icon={<FileText className="w-5 h-5" />}
+            label={t.adminPanel.navigation.logs[lang] || "Logs"}
+          />
         </nav>
       </aside>
 
@@ -129,6 +136,12 @@ const AdminPanel = () => {
               to="/profile"
               icon={<Settings />}
               label={t.adminPanel.navigation.settings[lang]}
+            />
+
+            <SidebarLink
+              to="/admin/logs"
+              icon={<FileText />}
+              label={t.adminPanel.navigation.logs[lang] || "Logs"}
             />
           </nav>
         </SheetContent>
