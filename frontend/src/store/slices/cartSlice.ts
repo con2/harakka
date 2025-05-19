@@ -8,15 +8,46 @@ import {
   ErrorContext,
 } from "@/types";
 
+// Load cart from localStorage (if available)
+const loadCartFromStorage = (): CartState => {
+  try {
+    const cartData = localStorage.getItem("cart");
+    if (cartData) {
+      return JSON.parse(cartData);
+    }
+  } catch (e) {
+    console.error("Error loading cart from localStorage:", e);
+  }
+  // Default state if nothing in localStorage
+  return {
+    items: [],
+    loading: false,
+    error: null,
+    errorContext: null,
+  };
+};
+
+// Function to save cart to localStorage
+const saveCartToStorage = (items: CartItem[]) => {
+  try {
+    localStorage.setItem(
+      "cart",
+      JSON.stringify({
+        items,
+        loading: false,
+        error: null,
+        errorContext: null,
+      }),
+    );
+  } catch (e) {
+    console.error("Error saving cart to localStorage:", e);
+  }
+};
+
 /**
  * Initial state for cart
  */
-const initialState: CartState = {
-  items: [],
-  loading: false,
-  error: null,
-  errorContext: null,
-};
+const initialState: CartState = loadCartFromStorage();
 
 export const cartSlice = createSlice({
   name: "cart",
@@ -38,6 +69,9 @@ export const cartSlice = createSlice({
         // Add new item to cart
         state.items.push(action.payload);
       }
+
+      // Save to localStorage
+      saveCartToStorage(state.items);
     },
 
     // Remove item from cart
@@ -48,6 +82,9 @@ export const cartSlice = createSlice({
       state.items = state.items.filter(
         (item) => item.item.id !== action.payload,
       );
+
+      // Save to localStorage
+      saveCartToStorage(state.items);
     },
 
     // Update item quantity
@@ -61,6 +98,9 @@ export const cartSlice = createSlice({
       if (itemIndex >= 0) {
         state.items[itemIndex].quantity = quantity;
       }
+
+      // Save to localStorage
+      saveCartToStorage(state.items);
     },
 
     // Clear all items from cart
@@ -68,6 +108,9 @@ export const cartSlice = createSlice({
       state.items = [];
       state.error = null;
       state.errorContext = null;
+
+      // Save to localStorage
+      saveCartToStorage(state.items);
     },
 
     // Set loading state
@@ -103,6 +146,9 @@ export const cartSlice = createSlice({
           state.items[itemIndex].startDate = startDate;
         if (endDate !== undefined) state.items[itemIndex].endDate = endDate;
       }
+
+      // Save to localStorage
+      saveCartToStorage(state.items);
     },
   },
 });

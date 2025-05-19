@@ -38,8 +38,10 @@ export const ContactForm = () => {
   // 2. define a submit handler, type-safe and validated
   const onSubmit = async (values: ContactFormData) => {
     try {
+      // Use the environment variable for API URL
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
       // Send the data to backend to trigger the email sending
-      const response = await axios.post("http://localhost:3000/mail/send", {
+      const response = await axios.post(`${apiUrl}/mail/send`, {
         from: values.email, // The user's email will be the sender
         subject: values.subject, // Subject of the email
         message: `
