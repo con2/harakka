@@ -28,6 +28,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfUse from "./pages/TermsOfUse";
 import MyProfile from "./components/MyProfile";
 import ContactForm from "./components/ContactForm";
+import Logs from "./components/Admin/Logs";
 
 function App() {
   return (
@@ -62,6 +63,7 @@ function App() {
                 <Route path="items" element={<AdminItemsTable />} />
                 <Route path="orders" element={<OrderList />} />
                 <Route path="tags" element={<TagList />} />
+                <Route path="logs" element={<Logs />} />
               </Route>
               <Route path="/" element={<UserPanel />}>
                 <Route path="/storage" element={<ItemsList />} />
@@ -90,10 +92,9 @@ function App() {
             position="top-right"
             duration={3000}
             richColors
-            closeButton
             toastOptions={{
               classNames: {
-                toast: 'custom-toast',
+                toast: "custom-toast",
               },
             }}
           />

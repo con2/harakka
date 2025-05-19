@@ -24,7 +24,7 @@ import {
   updatePaymentStatus,
 } from "@/store/slices/ordersSlice";
 import { Badge } from "../ui/badge";
-import { BookingItem, BookingOrder } from "@/types";
+import { BookingItem, BookingOrder, PaymentStatus } from "@/types";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
@@ -189,30 +189,32 @@ const AdminDashboard = () => {
       accessorKey: "invoice_status",
       header: t.orderList.columns.invoice[lang],
       cell: ({ row }) => {
+        const paymentStatus = row.original.payment_status ?? "N/A";
+
         const handleStatusChange = (newStatus: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | "N/A") => {
           dispatch(updatePaymentStatus({
             orderId: row.original.id,
-            status: newStatus,
+            status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
           }));
         };
 
         return (
-          <Select onValueChange={handleStatusChange} defaultValue={row.original.payment_status || "N/A"}>
-            <SelectTrigger className="w-[120px]">
+          <Select onValueChange={handleStatusChange} value={paymentStatus}>
+            <SelectTrigger className="w-[120px] text-xs">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              {["invoice-sent", "paid", "payment-rejected", "overdue"].map((status) => {
-                // Map status string to invoiceStatus key
+              {["invoice-sent", "paid", "payment-rejected", "overdue", "N/A"].map((status) => {
                 const statusKeyMap: Record<string, keyof typeof t.orderList.columns.invoice.invoiceStatus> = {
                   "invoice-sent": "sent",
                   "paid": "paid",
                   "payment-rejected": "rejected",
                   "overdue": "overdue",
+                  "N/A": "NA",
                 };
                 const statusKey = statusKeyMap[status];
                 return (
-                  <SelectItem key={status} value={status}>
+                  <SelectItem className="text-xs" key={status} value={status}>
                     {t.orderList.columns.invoice.invoiceStatus?.[statusKey]?.[lang] || status}
                   </SelectItem>
                 );
@@ -476,7 +478,7 @@ const AdminDashboard = () => {
             </DialogContent>
           </Dialog>
         </div>
-        )};
+        )}
       </div>
   );
 }

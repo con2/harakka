@@ -38,6 +38,7 @@ import {
 } from "@/store/slices/locationsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { Textarea } from "../ui/textarea";
 
 type UpdateItemModalProps = {
   onClose: () => void;
@@ -83,8 +84,10 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
     );
   };
 
-  // Handle changes in input fields
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle changes in input fields (works for both input and textarea)
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
 
     // Handle nested fields (like translations) separately
@@ -150,16 +153,16 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t.updateItemModal.title[lang]}</DialogTitle>
+          <DialogTitle className="mb-0">{t.updateItemModal.title[lang]}</DialogTitle>
           <DialogDescription className="text-center">
             {t.updateItemModal.description[lang]}
           </DialogDescription>
         </DialogHeader>
 
         {/* Tab Navigation */}
-        <div className="flex border-b mb-4">
+        <div className="flex border-b mb-2">
           <button
-            className={`px-4 py-2 ${
+            className={`px-4 py-1 text-sm ${
               activeTab === "details"
                 ? "border-b-2 border-secondary font-medium"
                 : "text-gray-500"
@@ -169,7 +172,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
             {t.updateItemModal.tabs.details[lang]}
           </button>
           <button
-            className={`px-4 py-2 ${
+            className={`px-4 py-1 text-sm ${
               activeTab === "images"
                 ? "border-b-2 border-secondary font-medium"
                 : "text-gray-500"
@@ -264,15 +267,15 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                     <Label htmlFor="translations.fi.item_description">
                       {t.updateItemModal.labels.itemDescFi[lang]}
                     </Label>
-                    <Input
+                    <Textarea
                       id="translations.fi.item_description"
                       name="translations.fi.item_description"
-                      value={formData.translations.fi.item_description}
+                      value={formData.translations.fi.item_description.toLowerCase()}
                       onChange={handleChange}
                       placeholder={
                         t.updateItemModal.placeholders.itemDescFi[lang]
                       }
-                      className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted"
+                      className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted h-16 align-top text-wrap"
                       required
                     />
                   </div>
@@ -280,51 +283,23 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                     <Label htmlFor="translations.en.item_description">
                       {t.updateItemModal.labels.itemDescEn[lang]}
                     </Label>
-                    <Input
+                    <Textarea
                       id="translations.en.item_description"
                       name="translations.en.item_description"
-                      value={formData.translations.en.item_description}
+                      value={formData.translations.en.item_description.toLowerCase()}
                       onChange={handleChange}
                       placeholder={
                         t.updateItemModal.placeholders.itemDescEn[lang]
                       }
-                      className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted"
+                      className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted h-16 align-top text-wrap"
                       required
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Location */}
-              <div className="space-y-2">
-                <Label htmlFor="location_id">
-                  {t.updateItemModal.labels.location[lang]}
-                </Label>
-                <Select
-                  value={formData.location_id || ""}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, location_id: value })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue
-                      placeholder={
-                        t.updateItemModal.placeholders.selectLocation[lang]
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem key={location.id} value={location.id}>
-                        {location.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Price */}
-              <div className="flex flex-row items-baseline space-y-4 space-x-4">
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="flex flex-row items-baseline space-x-2">
                   <Label htmlFor="price" className="font-medium">
                     {t.updateItemModal.labels.price[lang]}
@@ -337,8 +312,35 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                     onChange={handleChange}
                     placeholder={t.updateItemModal.placeholders.price[lang]}
                     required
-                    className="w-60"
+                    className="w-40"
                   />
+                </div>
+                {/* Location */}
+                <div className="flex flex-row items-baseline space-x-2">
+                  <Label htmlFor="location_id">
+                    {t.updateItemModal.labels.location[lang]}
+                  </Label>
+                  <Select
+                    value={formData.location_id || ""}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, location_id: value })
+                    }
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue
+                        placeholder={
+                          t.updateItemModal.placeholders.selectLocation[lang]
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map((location) => (
+                        <SelectItem key={location.id} value={location.id}>
+                          {location.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 {/* Active Toggle */}
                 <div className="flex flex-row items-center space-x-2">
@@ -416,9 +418,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
 
               {/* Tag Selection */}
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">
+                <Label>
                   {t.updateItemModal.tags.title[lang]}
-                </h3>
+                </Label>
                 <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
                   {tags.map((tag) => (
                     <label key={tag.id} className="flex items-center">
