@@ -26,6 +26,7 @@ import BookingUpdateEmail from "src/emails/BookingUpdateEmail";
 import BookingRejectionEmail from "src/emails/BookingRejectionEmail";
 import BookingDeleteMail from "src/emails/BookingDeleteMail";
 import ItemsReturnedMail from "src/emails/ItemsReturned";
+import ItemsPickedUpMail from "src/emails/ItemsPickedUp";
 
 @Injectable()
 export class BookingService {
@@ -1409,7 +1410,7 @@ export class BookingService {
           "Order item is not confirmed and can't be picked up",
         );
       }
-      /* if (item.start_date > today) {
+      /* if (item.start_date > today) { // TODO uncomment this when the booking system is ready!!!!!!!!!!!
         throw new BadRequestException(
           "Cannot confirm pickup before the booking start date",
         );
@@ -1537,15 +1538,15 @@ export class BookingService {
     const emailData = {
       name: user.full_name,
       email: user.email,
-      today,
       location: location?.name,
+      pickupDate: items[0].start_date,
       items: emailItems,
     };
 
     await this.mailService.sendMail({
       to: emailData.email,
       subject: "Noudetut tuotteet - Items picked up",
-      template: ItemsReturnedMail(emailData),
+      template: ItemsPickedUpMail(emailData),
     });
 
     // send mail to admin
@@ -1558,7 +1559,7 @@ export class BookingService {
     await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
       subject: "Noudetut tuotteet - Items picked up",
-      template: ItemsReturnedMail(adminEmailData),
+      template: ItemsPickedUpMail(adminEmailData),
     });
 
     return {
