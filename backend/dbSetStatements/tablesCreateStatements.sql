@@ -29,8 +29,14 @@ CREATE TABLE storage_items (
   average_rating DECIMAL DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  translations JSONB
+  translations JSONB,
+  items_number_currently_in_storage NUMERIC,
+  is_deleted BOOLEAN DEFAULT FALSE
 );
+
+-- Create indexes for storage_items
+CREATE INDEX idx_storage_items_location ON storage_items USING btree (location_id);
+CREATE INDEX idx_storage_items_translations ON storage_items USING gin (translations);
 
 -- Create working hours table
 CREATE TABLE storage_working_hours (
@@ -64,7 +70,8 @@ CREATE TABLE storage_item_images (
   display_order INTEGER NOT NULL,
   alt_text VARCHAR,
   is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  storage_path VARCHAR
 );
 
 -- Create tags table
@@ -73,6 +80,9 @@ CREATE TABLE tags (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   translations JSONB
 );
+
+-- Create index for tags
+CREATE INDEX idx_tags_translations ON tags USING gin (translations);
 
 -- Create item-tags table
 CREATE TABLE storage_item_tags (
@@ -96,6 +106,9 @@ CREATE TABLE user_profiles (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create unique constraint for email
+CREATE UNIQUE INDEX user_profiles_email_key ON user_profiles USING btree (email);
+
 -- Create user addresses table
 CREATE TABLE user_addresses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -115,17 +128,20 @@ CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_number VARCHAR UNIQUE NOT NULL,
   user_id UUID REFERENCES auth.users(id) NOT NULL,
-  status VARCHAR NOT NULL CHECK (status IN ('pending', 'confirmed', 'paid', 'completed', 'cancelled', 'refunded')),
-  total_amount DECIMAL NOT NULL,
+  status VARCHAR NOT NULL CHECK (status IN ('pending', 'confirmed', 'paid', 'completed', 'deleted', 'rejected', 'cancelled', 'cancelled by admin', 'cancelled by user', 'refunded')),
+  total_amount DECIMAL,
   discount_amount DECIMAL DEFAULT 0,
   discount_code VARCHAR,
-  final_amount DECIMAL NOT NULL,
-  payment_status VARCHAR NOT NULL CHECK (payment_status IN ('pending', 'partial', 'paid', 'refunded')),
+  final_amount DECIMAL,
+  payment_status VARCHAR CHECK (payment_status IN ('invoice-sent', 'partial', 'overdue', 'payment-rejected', 'paid', 'refunded')),
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE,
   payment_details JSONB
 );
+
+-- Create indexes for orders
+CREATE INDEX idx_orders_user ON orders USING btree (user_id);
 
 -- Create order items table
 CREATE TABLE order_items (
@@ -133,15 +149,18 @@ CREATE TABLE order_items (
   order_id UUID REFERENCES orders(id) NOT NULL,
   item_id UUID REFERENCES storage_items(id) NOT NULL,
   quantity INTEGER DEFAULT 1,
-  unit_price DECIMAL NOT NULL,
+  unit_price DECIMAL,
   start_date TIMESTAMP WITH TIME ZONE NOT NULL,
   end_date TIMESTAMP WITH TIME ZONE NOT NULL,
   total_days INTEGER NOT NULL,
-  subtotal DECIMAL NOT NULL,
-  status VARCHAR NOT NULL CHECK (status IN ('pending', 'confirmed', 'cancelled')),
+  subtotal DECIMAL,
+  status VARCHAR NOT NULL CHECK (status IN ('pending', 'confirmed', 'cancelled', 'picked_up', 'returned')),
   location_id UUID REFERENCES storage_locations(id) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Create index for order_items
+CREATE INDEX idx_order_items_order ON order_items USING btree (order_id);
 
 -- Create payments table
 CREATE TABLE payments (
@@ -156,6 +175,22 @@ CREATE TABLE payments (
   metadata JSONB
 );
 
+-- Create index for payments
+CREATE INDEX idx_payments_order ON payments USING btree (order_id);
+
+-- Create invoices table (new)
+CREATE TABLE invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  invoice_number TEXT NOT NULL UNIQUE,
+  order_id UUID REFERENCES orders(id),
+  user_id UUID REFERENCES user_profiles(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  due_date DATE,
+  reference_number TEXT,
+  total_amount NUMERIC,
+  pdf_url TEXT
+);
+
 -- Create reviews table
 CREATE TABLE reviews (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -167,6 +202,9 @@ CREATE TABLE reviews (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Create index for reviews
+CREATE INDEX idx_reviews_item ON reviews USING btree (item_id);
 
 -- Create notifications table
 CREATE TABLE notifications (
@@ -181,6 +219,9 @@ CREATE TABLE notifications (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   read_at TIMESTAMP WITH TIME ZONE
 );
+
+-- Create index for notifications
+CREATE INDEX idx_notifications_user ON notifications USING btree (user_id);
 
 -- Create promotions table
 CREATE TABLE promotions (
