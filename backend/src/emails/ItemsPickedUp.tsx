@@ -7,15 +7,14 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-import { EmailProps } from "../interfaces/mail.interface";
+import { PickUpEmail } from "../interfaces/mail.interface";
 
 const ItemsPickedUpMail = ({
   name,
   pickupDate,
   location,
   items,
-  today,
-}: EmailProps) => (
+}: PickUpEmail) => (
   <Html>
     <Head>
       <link
@@ -46,7 +45,7 @@ const ItemsPickedUpMail = ({
         <Section
           style={{
             backgroundImage:
-              "url('https://larppikuvat.fi/media/previews/odysseus-2024-run-2-ebazgnl7/santtu-pajukanta/friday-lm5-natives/dsc-6393.preview.avif')",
+              "url('https://www.odysseuslarp.com/uploads/1/1/7/1/117136993/characters4-japsu_1.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             height: "250px",
