@@ -276,4 +276,18 @@ export class UserService {
       .eq("id", addressId);
     if (error) throw new Error(error.message);
   }
+
+  /* async sendWelcomeEmail(userId: string): Promise<void> {
+    const user = await this.getUserById(userId);
+    if (!user || !user.email) {
+      this.logger.warn(`Cannot send welcome email. User not found: ${userId}`);
+      return;
+    }
+
+    await this.mailService.sendMail({
+      to: user.email,
+      subject: "Welcome, friend!",
+      template: WelcomeEmail({ name: user.name || user.email }),
+    });
+  } */
 }
