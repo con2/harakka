@@ -170,17 +170,22 @@ export const deleteOrder = createAsyncThunk<string, string>(
 );
 
 // Return items thunk
-export const returnItems = createAsyncThunk<BookingOrder, string>(
+export const returnItems = createAsyncThunk<
+  { orderId: string },
+  string,
+  { rejectValue: string }
+>(
   "orders/returnItems",
   async (orderId, { rejectWithValue }) => {
     try {
-      return await ordersApi.returnItems(orderId);
+      await ordersApi.returnItems(orderId); // Just fire and forget
+      return { orderId };
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to process returns"),
+        extractErrorMessage(error, "Failed to process returns")
       );
     }
-  },
+  }
 );
 
 // update Payment Status thunk
@@ -395,14 +400,15 @@ export const ordersSlice = createSlice({
       })
       .addCase(returnItems.fulfilled, (state, action) => {
         state.loading = false;
+        const { orderId } = action.payload;
+
         ordersAdapter.updateOne(state, {
-          id: action.payload.id,
+          id: orderId,
           changes: { status: "completed" },
         });
+
         state.userOrders = state.userOrders.map((order) =>
-          order.id === action.payload.id
-            ? { ...order, status: "completed" }
-            : order,
+          order.id === orderId ? { ...order, status: "completed" } : order
         );
       })
       .addCase(returnItems.rejected, (state, action) => {
