@@ -1409,7 +1409,7 @@ export class BookingService {
           "Order item is not confirmed and can't be picked up",
         );
       }
-      if (item.start_date > today) {
+      /* if (item.start_date > today) {
         throw new BadRequestException(
           "Cannot confirm pickup before the booking start date",
         );
@@ -1419,14 +1419,13 @@ export class BookingService {
         throw new BadRequestException(
           "Booking period has already ended. Pickup not allowed.",
         );
-      }
+      } */
 
       // 11.2. Get associated storage item
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
         .select("items_number_currently_in_storage")
         .eq("id", item.item_id)
-        .eq("status", "confirmed")
         .single();
 
       if (storageError || !storageItem) {
@@ -1486,10 +1485,8 @@ export class BookingService {
         "User profile not found for email notification",
       );
     }
-    // TODO: refactor code above to pickup whole order instead of single items
-
     // send mail to user:
-    /* type EnrichedItem = {
+    type EnrichedItem = {
       item_id: string;
       quantity: number;
       status: string;
@@ -1500,7 +1497,7 @@ export class BookingService {
       location_id?: string;
     };
 
-    const enrichedItems: EnrichedItem[] = orderItem || [];
+    const enrichedItems: EnrichedItem[] = items || [];
 
     for (const item of enrichedItems) {
       const { data: storageItem, error: storageItemError } = await supabase
@@ -1563,10 +1560,9 @@ export class BookingService {
       subject: "Noudetut tuotteet - Items picked up",
       template: ItemsReturnedMail(adminEmailData),
     });
- */
+
     return {
-      message: `Pickup confirmed for item ${orderItem.item_id}`,
-      newStorageCount: newCount,
+      message: `Pickup confirmed for order ${orderId}`,
     };
   }
 
