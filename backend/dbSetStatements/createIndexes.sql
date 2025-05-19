@@ -1,9 +1,33 @@
 -- Add indexes for frequently queried columns
-CREATE INDEX idx_storage_items_location ON storage_items(location_id);
-CREATE INDEX idx_orders_user ON orders(user_id);
-CREATE INDEX idx_order_items_order ON order_items(order_id);
-CREATE INDEX idx_payments_order ON payments(order_id);
-CREATE INDEX idx_notifications_user ON notifications(user_id);
-CREATE INDEX idx_reviews_item ON reviews(item_id);
-CREATE INDEX idx_storage_items_translations ON storage_items USING GIN (translations);
-CREATE INDEX idx_tags_translations ON tags USING GIN (translations);
+CREATE UNIQUE INDEX audit_logs_pkey ON public.audit_logs USING btree (id)
+CREATE INDEX idx_notifications_user ON public.notifications USING btree (user_id)
+CREATE INDEX idx_order_items_order ON public.order_items USING btree (order_id)
+CREATE INDEX idx_orders_user ON public.orders USING btree (user_id)
+CREATE INDEX idx_payments_order ON public.payments USING btree (order_id)
+CREATE INDEX idx_reviews_item ON public.reviews USING btree (item_id)
+CREATE INDEX idx_storage_items_location ON public.storage_items USING btree (location_id)
+CREATE INDEX idx_storage_items_translations ON public.storage_items USING gin (translations)
+CREATE INDEX idx_tags_translations ON public.tags USING gin (translations)
+CREATE UNIQUE INDEX invoices_invoice_number_key ON public.invoices USING btree (invoice_number)
+CREATE UNIQUE INDEX invoices_pkey ON public.invoices USING btree (id)
+CREATE UNIQUE INDEX notifications_pkey ON public.notifications USING btree (id)
+CREATE UNIQUE INDEX order_items_pkey ON public.order_items USING btree (id)
+CREATE UNIQUE INDEX orders_order_number_key ON public.orders USING btree (order_number)
+CREATE UNIQUE INDEX payments_pkey ON public.payments USING btree (id)
+CREATE UNIQUE INDEX payments_pkey ON public.payments USING btree (id)
+CREATE UNIQUE INDEX promotions_code_key ON public.promotions USING btree (code)
+CREATE UNIQUE INDEX promotions_pkey ON public.promotions USING btree (id)
+CREATE UNIQUE INDEX reviews_pkey ON public.reviews USING btree (id)
+CREATE UNIQUE INDEX saved_list_items_pkey ON public.saved_list_items USING btree (id)
+CREATE UNIQUE INDEX saved_lists_pkey ON public.saved_lists USING btree (id)
+CREATE UNIQUE INDEX storage_compartments_pkey ON public.storage_compartments USING btree (id)
+CREATE UNIQUE INDEX storage_images_pkey ON public.storage_images USING btree (id)
+CREATE UNIQUE INDEX storage_item_images_pkey ON public.storage_item_images USING btree (id)
+CREATE UNIQUE INDEX storage_item_tags_pkey ON public.storage_item_tags USING btree (id)
+CREATE UNIQUE INDEX storage_items_pkey ON public.storage_items USING btree (id)
+CREATE UNIQUE INDEX storage_locations_pkey ON public.storage_locations USING btree (id)
+CREATE UNIQUE INDEX storage_working_hours_pkey ON public.storage_working_hours USING btree (id)
+CREATE UNIQUE INDEX tags_pkey ON public.tags USING btree (id)
+CREATE UNIQUE INDEX user_addresses_pkey ON public.user_addresses USING btree (id)
+CREATE UNIQUE INDEX user_profiles_email_key ON public.user_profiles USING btree (email)
+CREATE UNIQUE INDEX user_profiles_pkey ON public.user_profiles USING btree (id)
