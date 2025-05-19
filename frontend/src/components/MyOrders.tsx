@@ -307,10 +307,37 @@ const isFormValid = editFormItems.every((item) => {
       cell: ({ row }) => formatDate(row.original.created_at),
     },
     {
-      accessorKey: "final_amount",
-      header: t.myOrders.columns.total[lang],
-      cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
+      accessorKey: "date_range",
+      header: t.orderList.columns.dateRange[lang],
+      cell: ({ row }) => {
+        const items = row.original.order_items || [];
+        if (items.length === 0) return "-";
+
+        // Get earliest start_date
+        const minStartDate = items.reduce((minDate, item) => {
+          const date = new Date(item.start_date);
+          return date < minDate ? date : minDate;
+        }, new Date(items[0].start_date));
+
+        // Get latest end_date
+        const maxEndDate = items.reduce((maxDate, item) => {
+          const date = new Date(item.end_date);
+          return date > maxDate ? date : maxDate;
+        }, new Date(items[0].end_date));
+
+        return (
+          <div className="text-sm flex flex-col">
+            <span>{`${formatDate(minStartDate.toISOString())} -`}</span>
+            <span>{`${formatDate(maxEndDate.toISOString())}`}</span>
+          </div>
+        );
+      },
     },
+    // {
+    //   accessorKey: "final_amount",
+    //   header: t.myOrders.columns.total[lang],
+    //   cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
+    // },
     {
       id: "actions",
       cell: ({ row }) => {
@@ -386,11 +413,11 @@ const isFormValid = editFormItems.every((item) => {
       header: t.myOrders.columns.endDate[lang],
       cell: ({ row }) => formatDate(row.original.end_date),
     },
-    {
-      accessorKey: "subtotal",
-      header: t.myOrders.columns.subtotal[lang],
-      cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
-    },
+    // {
+    //   accessorKey: "subtotal",
+    //   header: t.myOrders.columns.subtotal[lang],
+    //   cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
+    // },
   ];
 
   if (loading) {
@@ -916,14 +943,14 @@ const isFormValid = editFormItems.every((item) => {
                   />
                 </div>
 
-                <div className="flex items-center justify-end mt-4 pr-4">
+                {/* <div className="flex items-center justify-end mt-4 pr-4">
                   <div className="text-sm font-medium">
                     {t.myOrders.orderDetails.total[lang]}
                   </div>
                   <div className="ml-2 font-bold">
                     €{selectedOrder.final_amount?.toFixed(2) || "0.00"}
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </DialogContent>
