@@ -1206,7 +1206,7 @@ export class BookingService {
       }
     }
 
-    // 6.3 set order status to completed
+    // set order status to completed
     const { error: updateError } = await supabase
       .from("orders")
       .update({ status: "completed" })
