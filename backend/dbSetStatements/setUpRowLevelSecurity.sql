@@ -96,10 +96,15 @@ USING (
   expires_at > NOW()
 );
 
+-- storage_items - Allow anonymous read access
+CREATE POLICY "Allow anonymous read access to storage_items"
+ON storage_items FOR SELECT
+USING (TRUE);
+
 -- user_profiles - Public can create user profiles
 CREATE POLICY "Anyone can insert user profiles" ON user_profiles 
 FOR INSERT TO authenticated 
-WITH CHECK (true);
+WITH CHECK (TRUE);
 
 -- ==== User-specific Data Policies ====
 
@@ -132,11 +137,18 @@ USING (user_id = auth.uid());
 -- orders - Users can view and create their own orders
 CREATE POLICY "Users can view their own orders"
 ON orders FOR SELECT
-USING (user_id = auth.uid());
+USING (
+  user_id = auth.uid() OR 
+  user_id IN (
+    SELECT user_profiles.id 
+    FROM user_profiles 
+    WHERE user_profiles.id = auth.uid()
+  )
+);
 
 CREATE POLICY "Users can create their own orders"
 ON orders FOR INSERT
-WITH CHECK (user_id = auth.uid());
+WITH CHECK ((auth.uid() = user_id) OR (user_id = auth.uid()));
 
 CREATE POLICY "Users can update their pending orders"
 ON orders FOR UPDATE
@@ -226,8 +238,8 @@ ON notifications FOR UPDATE
 USING (user_id = auth.uid())
 WITH CHECK (
   user_id = auth.uid() AND 
-  is_read = TRUE AND  -- Can only set to TRUE
-  read_at IS NOT NULL  -- Must set read_at when marking as read
+  is_read = TRUE AND
+  read_at IS NOT NULL
 );
 
 -- saved_lists - Users can manage their own lists
@@ -286,17 +298,12 @@ USING (
 
 -- ==== superVera Policies ====
 
--- SuperVera has full access to all data
-
 -- Create specific superVera policy for user_profiles
 CREATE POLICY "SuperVera has full access to user_profiles"
 ON user_profiles FOR ALL
 USING (is_super_vera());
 
 -- ==== Admin Policies ====
-
--- Drop existing admin policy on user_profiles
-DROP POLICY IF EXISTS "Admins have full access to user_profiles" ON user_profiles;
 
 -- Create new admin policies for user_profiles
 CREATE POLICY "Admins can view all user profiles"
@@ -307,14 +314,14 @@ CREATE POLICY "Admins can modify regular user profiles"
 ON user_profiles FOR UPDATE
 USING (
   is_admin_only() AND 
-  (SELECT role FROM user_profiles WHERE id = user_profiles.id) = 'user'
+  role = 'user'
 );
 
 CREATE POLICY "Admins can delete regular user profiles"
 ON user_profiles FOR DELETE
 USING (
   is_admin_only() AND 
-  (SELECT role FROM user_profiles WHERE id = user_profiles.id) = 'user'
+  role = 'user'
 );
 
 -- Admin can do everything on all tables
@@ -325,10 +332,6 @@ USING (is_admin());
 CREATE POLICY "Admins have full access to storage_items"
 ON storage_items FOR ALL
 USING (is_admin());
-
-CREATE POLICY "Allow anonymous read access to storage_items"
-ON storage_items FOR SELECT
-USING (true);
 
 CREATE POLICY "Admins have full access to tags"
 ON tags FOR ALL
