@@ -270,14 +270,14 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
       {/* Item Details */}
       <div>
-        <h2 className="text-lg text-primary font-normal text-center mb-0">
+        <h2 className="text-lg text-primary font-normal text-center mb-1">
           {itemContent?.item_name
             ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
             : "Tuote"}
         </h2>
         {/* Display location name */}
         {item.location_details && (
-          <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
             <span>{item.location_details.name}</span>
           </div>
@@ -286,7 +286,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
       {/* Display selected booking timeframe if it exists */}
       {startDate && endDate && (
-        <div className="bg-slate-100 p-2 rounded-md mb-2">
+        <div className="bg-slate-100 p-2 rounded-md mb-1 flex flex-col items-center">
           <div className="flex items-center text-sm text-slate-400">
             <Clock className="h-4 w-4 mr-1" />
             <span className="font-medium text-xs">
@@ -302,13 +302,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
       {/* Quantity Input */}
       <div>
-        <div className="flex flex-wrap items-center space-y-2 justify-between">
-          <div className="flex items-center">
-            <span className="text-sm font-medium w-20">
-              {" "}
-              {t.itemDetails.items.quantity[lang]}
-            </span>
-          </div>
+        <div className="flex flex-col flex-wrap items-center space-y-2 justify-between">
           <div className="flex items-center">
             <Button
               variant="outline"
@@ -349,7 +343,6 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
               +
             </Button>
           </div>
-        </div>
 
         <div className="flex items-center justify-end mb-3 mt-1">
           {availabilityInfo.isChecking ? (
@@ -370,6 +363,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             </p>
           )}
         </div>
+      </div>
 
         {/* Add to Cart Button with Tooltip */}
         <TooltipProvider>

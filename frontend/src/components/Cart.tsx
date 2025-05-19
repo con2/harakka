@@ -2,7 +2,7 @@ import React from "react";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import {
   selectCartItems,
-  selectCartTotal,
+  // selectCartTotal,
   removeFromCart,
   updateQuantity,
   clearCart,
@@ -25,7 +25,7 @@ const Cart: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const cartItems = useAppSelector(selectCartItems);
-  const cartTotal = useAppSelector(selectCartTotal);
+  // const cartTotal = useAppSelector(selectCartTotal);
   const orderLoading = useAppSelector(selectOrdersLoading);
   const userProfile = useAppSelector(selectSelectedUser);
   const user = useAppSelector(selectSelectedUser);
@@ -284,9 +284,10 @@ const Cart: React.FC = () => {
                           +
                         </Button>
                       </div>
-                      <div className="w-20 text-right">
+                      {/* item price commented out */}
+                      {/* <div className="w-20 text-right">
                         €{(cartItem.item.price * cartItem.quantity).toFixed(2)}
-                      </div>
+                      </div> */}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -305,10 +306,10 @@ const Cart: React.FC = () => {
           <div className="bg-slate-50 p-4 rounded-lg w-full mb-4">
             <h3 className="font-semibold mb-3">{t.cart.summary.title[lang]}</h3>
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+              {/* <div className="flex justify-between text-sm">
                 <span>{t.cart.summary.subtotal[lang]}</span>
                 <span>€{cartTotal.toFixed(2)}</span>
-              </div>
+              </div> */}
               <div className="flex justify-between text-sm">
                 <span>{t.cart.summary.rentalPeriod[lang]}</span>
                 <span>
@@ -318,10 +319,13 @@ const Cart: React.FC = () => {
                     : t.cart.booking.days[lang]}
                 </span>
               </div>
-              <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
+              <div className="border-t pt-2 mt-2 flex justify-between text-xs">
+                <span className="mt-2">{t.cart.booking.explanation[lang]}</span>
+              </div>
+              {/* <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
                 <span>{t.cart.summary.total[lang]}</span>
                 <span>€{(cartTotal * rentalDays).toFixed(2)}</span>
-              </div>
+              </div> */}
             </div>
           </div>
 
