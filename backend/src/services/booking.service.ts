@@ -1386,82 +1386,89 @@ export class BookingService {
   }
 
   // 11. confirm pickup of items
-  async confirmPickup(orderItemId: string) {
+  async confirmPickup(orderId: string) {
     const supabase = this.supabaseService.getServiceClient();
     const today = new Date().toISOString().split("T")[0];
 
     // 11.1. Get the order item
-    const { data: orderItem, error: itemError } = await supabase
+    const { data: items } = await supabase
       .from("order_items")
-      .select("item_id, quantity, start_date, end_date, status, order_id")
-      .eq("id", orderItemId)
-      .single();
+      .select("item_id, quantity, status, start_date, end_date")
+      .eq("order_id", orderId);
 
-    if (itemError || !orderItem) {
-      throw new BadRequestException("Order item not found");
+    if (!items || items.length === 0) {
+      throw new BadRequestException("No items found for return");
     }
 
-    if (orderItem.status !== "confirmed") {
-      throw new BadRequestException("Order item is not confirmed");
-    }
+    for (const item of items) {
+      if (item.status === "picked_up")
+        throw new BadRequestException("Items are already picked_up");
 
-    if (orderItem.start_date > today) {
-      throw new BadRequestException(
-        "Cannot confirm pickup before the booking start date",
-      );
-    }
+      if (item.status !== "confirmed") {
+        throw new BadRequestException(
+          "Order item is not confirmed and can't be picked up",
+        );
+      }
+      if (item.start_date > today) {
+        throw new BadRequestException(
+          "Cannot confirm pickup before the booking start date",
+        );
+      }
 
-    if (orderItem.end_date < today) {
-      throw new BadRequestException(
-        "Booking period has already ended. Pickup not allowed.",
-      );
-    }
+      if (item.end_date < today) {
+        throw new BadRequestException(
+          "Booking period has already ended. Pickup not allowed.",
+        );
+      }
 
-    // 11.2. Get associated storage item
-    const { data: storageItem, error: storageError } = await supabase
-      .from("storage_items")
-      .select("items_number_currently_in_storage")
-      .eq("id", orderItem.item_id)
-      .eq("status", "confirmed")
-      .single();
+      // 11.2. Get associated storage item
+      const { data: storageItem, error: storageError } = await supabase
+        .from("storage_items")
+        .select("items_number_currently_in_storage")
+        .eq("id", item.item_id)
+        .eq("status", "confirmed")
+        .single();
 
-    if (storageError || !storageItem) {
-      throw new BadRequestException("Storage item not found or not confirmed");
-    }
+      if (storageError || !storageItem) {
+        throw new BadRequestException(
+          "Storage item not found or not confirmed",
+        );
+      }
 
-    const newCount =
-      (storageItem.items_number_currently_in_storage || 0) -
-      (orderItem.quantity || 0);
+      const newCount =
+        (storageItem.items_number_currently_in_storage || 0) -
+        (item.quantity || 0);
 
-    if (newCount < 0) {
-      throw new BadRequestException("Not enough stock to confirm pickup");
-    }
+      if (newCount < 0) {
+        throw new BadRequestException("Not enough stock to confirm pickup");
+      }
 
-    // 11.3. Update storage stock
-    const { error: updateStockError } = await supabase
-      .from("storage_items")
-      .update({ items_number_currently_in_storage: newCount })
-      .eq("id", orderItem.item_id);
+      // 11.3. Update storage stock
+      const { error: updateStockError } = await supabase
+        .from("storage_items")
+        .update({ items_number_currently_in_storage: newCount })
+        .eq("id", item.item_id);
 
-    if (updateStockError) {
-      throw new BadRequestException("Failed to update storage stock");
-    }
+      if (updateStockError) {
+        throw new BadRequestException("Failed to update storage stock");
+      }
 
-    // 11.4. Update order item status to "picked_up"
-    const { error: updateStatusError } = await supabase
-      .from("order_items")
-      .update({ status: "picked_up" })
-      .eq("id", orderItemId);
+      // 11.4. Update order item status to "picked_up"
+      const { error: updateStatusError } = await supabase
+        .from("order_items")
+        .update({ status: "picked_up" })
+        .eq("id", item.item_id);
 
-    if (updateStatusError) {
-      throw new BadRequestException("Failed to update order item status");
+      if (updateStatusError) {
+        throw new BadRequestException("Failed to update order item status");
+      }
     }
 
     // 11.5. Get user email from related order
     const { data: order } = await supabase
       .from("orders")
       .select("user_id")
-      .eq("id", orderItem.order_id)
+      .eq("id", orderId)
       .single();
 
     if (!order) {
