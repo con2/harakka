@@ -1206,13 +1206,6 @@ export class BookingService {
       }
     }
 
-    /* for (const item of items) {
-      await supabase.rpc("increment_item_quantity", {
-        item_id: item.item_id,
-        quantity: item.quantity,
-      });
-    } */
-
     // 6.3 set order status to completed
     const { error: updateError } = await supabase
       .from("orders")
@@ -1225,28 +1218,30 @@ export class BookingService {
     }
 
     // update number currently in storage
-    /* const { data: storageItem, error } = await supabase
-      .from("storage_items")
-      .select("items_number_currently_in_storage")
-      .eq("id", itemId)
-      .single();
+    for (const item of items) {
+      const { data: storageItem, error } = await supabase
+        .from("storage_items")
+        .select("items_number_currently_in_storage")
+        .eq("id", item.item_id)
+        .single();
 
-    if (error || !storageItem) {
-      throw new BadRequestException("Could not find item in storage");
+      if (error || !storageItem) {
+        throw new BadRequestException("Could not find item in storage");
+      }
+
+      const updatedCount =
+        (storageItem.items_number_currently_in_storage || 0) + item.quantity;
+
+      const { error: updateItemsError } = await supabase
+        .from("storage_items")
+        .update({ items_number_currently_in_storage: updatedCount })
+        .eq("id", item.item_id);
+
+      if (updateItemsError) {
+        throw new BadRequestException("Failed to update storage stock");
+      }
     }
 
-    const updatedCount =
-      (storageItem.items_number_currently_in_storage || 0) + quantity;
-
-    const { error: updateItemsError } = await supabase
-      .from("storage_items")
-      .update({ items_number_currently_in_storage: updatedCount })
-      .eq("id", itemId);
-
-    if (updateItemsError) {
-      throw new BadRequestException("Failed to update storage stock");
-    }
- */
     //  Fetch user email
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
