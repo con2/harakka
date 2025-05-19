@@ -4,8 +4,8 @@ RETURNS TRIGGER AS $$
 DECLARE
   current_user_id UUID;
 BEGIN
-  -- Get current user if available in session
-  current_user_id := auth.uid();
+  -- Get current user from our custom function instead of directly using auth.uid()
+  current_user_id := public.get_request_user_id();
   
   IF TG_OP = 'UPDATE' THEN
     INSERT INTO audit_logs (
