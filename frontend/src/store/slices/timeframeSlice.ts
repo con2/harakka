@@ -2,16 +2,51 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { TimeframeState, ErrorContext } from "@/types";
 
+// Load timeframe from localStorage (if available)
+const loadTimeframeFromStorage = (): TimeframeState => {
+  try {
+    const timeframeData = localStorage.getItem("timeframe");
+    if (timeframeData) {
+      return JSON.parse(timeframeData);
+    }
+  } catch (e) {
+    console.error("Error loading timeframe from localStorage:", e);
+  }
+  // Default state if nothing in localStorage
+  return {
+    startDate: undefined,
+    endDate: undefined,
+    loading: false,
+    error: null,
+    errorContext: null,
+  };
+};
+
+// Function to save cart to localStorage
+const saveTimeframeToStorage = (
+  startDate: string | undefined,
+  endDate: string | undefined,
+) => {
+  try {
+    localStorage.setItem(
+      "timeframe",
+      JSON.stringify({
+        startDate,
+        endDate,
+        loading: false,
+        error: null,
+        errorContext: null,
+      }),
+    );
+  } catch (e) {
+    console.error("Error saving timeframe to localStorage:", e);
+  }
+};
+
 /**
  * Initial state for timeframe slice
  */
-const initialState: TimeframeState = {
-  startDate: undefined,
-  endDate: undefined,
-  loading: false,
-  error: null,
-  errorContext: null,
-};
+const initialState: TimeframeState = loadTimeframeFromStorage();
 
 const timeframeSlice = createSlice({
   name: "timeframe",
@@ -31,6 +66,9 @@ const timeframeSlice = createSlice({
       state.errorContext = null;
       state.startDate = action.payload.startDate;
       state.endDate = action.payload.endDate;
+
+      // Save to localStorage
+      saveTimeframeToStorage(state.startDate, state.endDate);
     },
 
     /**
@@ -41,6 +79,9 @@ const timeframeSlice = createSlice({
       state.endDate = undefined;
       state.error = null;
       state.errorContext = null;
+
+      // Save to localStorage
+      saveTimeframeToStorage(undefined, undefined);
     },
 
     /**
