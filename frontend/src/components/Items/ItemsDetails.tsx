@@ -22,7 +22,8 @@ import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { useTranslation } from "@/hooks/useTranslation";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
-import { ItemTranslation } from "@/types";
+import { ItemImageAvailabilityInfo, ItemTranslation } from "@/types";
+import { ordersApi } from "@/api/services/orders";
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -44,6 +45,13 @@ const ItemsDetails: React.FC = () => {
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   // State for larger image view
   const [isImageVisible, setIsImageVisible] = useState(false);
+
+  const [availabilityInfo, setAvailabilityInfo] =
+    useState<ItemImageAvailabilityInfo>({
+      availableQuantity: item?.items_number_available ?? 0,
+      isChecking: false,
+      error: null,
+    });
 
   const toggleImageVisibility = () => {
     setIsImageVisible(!isImageVisible);
@@ -102,6 +110,38 @@ const ItemsDetails: React.FC = () => {
     }
   };
 
+  // Check if the item is available for the selected timeframe
+  useEffect(() => {
+    // Only check availability if item and dates are selected
+    if (item && startDate && endDate) {
+      setAvailabilityInfo((prev) => ({
+        ...prev,
+        isChecking: true,
+        error: null,
+      }));
+
+      ordersApi
+        .checkAvailability(item.id, startDate, endDate)
+        .then((response) => {
+          setAvailabilityInfo({
+            availableQuantity: response.availableQuantity,
+            isChecking: false,
+            error: null,
+          });
+        })
+        .catch((error) => {
+          console.error("Error checking availability:", error);
+          setAvailabilityInfo({
+            availableQuantity: item.items_number_available,
+            isChecking: false,
+            error: "Failed to check availability",
+          });
+        });
+    }
+  }, [item, startDate, endDate]);
+
+  const isItemAvailableForTimeframe = availabilityInfo.availableQuantity > 0;
+
   // Translation
   const { getTranslation } = useTranslation<ItemTranslation>();
   // Get the translated item content
@@ -148,7 +188,7 @@ const ItemsDetails: React.FC = () => {
   return (
     <div className="container mx-auto px-4">
       {/* Back Button */}
-      <div className="mb-3">
+      <div className="mb-3 mt-4 md:mt-0">
         <Button
           onClick={() => navigate(-1)}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
@@ -160,7 +200,7 @@ const ItemsDetails: React.FC = () => {
         {/* Item Images - Positioned Left */}
         <div className="md:w-1/3 w-full">
           {/* Main Image */}
-          <div className="relative mb-4 h-[300px] group">
+          <div className="relative mb-4 h-[300px] group w-full max-w-md mx-auto md:max-w-none aspect-[4/3]">
             {/* Main Image Container */}
             <div className="border rounded-md bg-slate-50 overflow-hidden h-full w-full">
               <img
@@ -215,52 +255,47 @@ const ItemsDetails: React.FC = () => {
         </div>
 
         {/* Right Side - Item Details */}
-        <div className="md:w-2/3 w-full space-y-6 order-1 md:order-2">
+        <div className="md:w-2/3 w-full space-y-4 order-1 md:order-2">
           <h2 className="text-2xl font-normal text-left mb-0">
             {itemContent?.item_name
               ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
               : "Tuote"}
           </h2>
-
-          {/* Location Details Section */}
-          {item.location_details && (
-            <div className="mt-4 border-t pt-4">
-              <h3 className="text-lg font-medium mb-2">
-                {t.itemDetails.locations.locationInfo[lang]}
-              </h3>
-
-              <div className="space-y-2">
-                {item.location_details.name && (
-                  <div className="flex items-start">
-                    <span className="font-medium w-24">
-                      {t.itemDetails.locations.location[lang]}:
-                    </span>
-                    <span>{item.location_details.name}</span>
-                  </div>
-                )}
-
-                {item.location_details.address && (
-                  <div className="flex items-start">
-                    <span className="font-medium w-24">
-                      {" "}
-                      {t.itemDetails.locations.address[lang]}:
-                    </span>
-                    <span>{item.location_details.address}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
+          
           {/* Rating Component */}
           {item.average_rating ? (
-            <div className="flex items-center justify-start">
+            <div className="flex items-center justify-start mt-1">
               <Rating rating={item.average_rating ?? 0} readOnly />
             </div>
           ) : (
             ""
           )}
-          <p className="text-md text-primary">
+
+          {/* Location Details Section */}
+          {item.location_details && (
+            <div className="text-sm mt-2">
+              {item.location_details.name && (
+                <div className="flex items-start">
+                  <span>
+                    {t.itemDetails.locations.location[lang]}:
+                  </span>
+                  <span className="ml-1">{item.location_details.name}</span>
+                </div>
+              )}
+
+              {item.location_details.address && (
+                <div className="flex items-start">
+                  <span>
+                    {" "}
+                    {t.itemDetails.locations.address[lang]}:
+                  </span>
+                  <span className="ml-1">{item.location_details.address}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <p>
             {itemContent?.item_description
               ? `${itemContent.item_description.charAt(0).toUpperCase()}${itemContent.item_description.slice(1)}`
               : "Ei kuvausta saatavilla"}
@@ -268,8 +303,8 @@ const ItemsDetails: React.FC = () => {
 
           {/* Display selected booking timeframe if it exists */}
           {startDate && endDate ? (
-            <div className="flex flex-col justify-center items-start mt-4 gap-4">
-              <div className="bg-slate-100 max-w-[250px] rounded-md mb-2 p-2">
+            <div className="flex flex-col justify-center items-start mt-4">
+              <div className="bg-slate-100 max-w-[250px] rounded-md p-2">
                 <div className="flex items-center text-sm text-slate-400">
                   <Clock className="h-4 w-4 mr-1" />
                   <span className="font-medium text-xs">
@@ -281,12 +316,12 @@ const ItemsDetails: React.FC = () => {
                   {format(endDate, "d MMM yyyy")}
                 </p>
               </div>
-              {/* Booking Section */}
 
-              <div className="flex flex-row justify-center items-center">
-                <span className="text-sm font-medium w-20">
+              {/* Booking Section */}
+              <div className="flex flex-row justify-center items-center mt-3">
+                {/* <span className="text-sm mr-4">
                   {t.itemDetails.items.quantity[lang]}
-                </span>
+                </span> */}
                 <Button
                   variant="outline"
                   size="sm"
@@ -299,22 +334,62 @@ const ItemsDetails: React.FC = () => {
                 <Input
                   type="text"
                   value={quantity}
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0;
+                    setQuantity(
+                      Math.min(
+                        availabilityInfo.availableQuantity,
+                        Math.max(0, value),
+                      ),
+                    );
+                  }}
+                  min={1}
+                  max={availabilityInfo.availableQuantity}
                   className="w-11 h-8 mx-2 text-center"
                 />
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setQuantity(quantity + 1)}
+                      onClick={() =>
+                    setQuantity(
+                      Math.min(availabilityInfo.availableQuantity, quantity + 1),
+                    )
+                  }
+                  disabled={quantity >= availabilityInfo.availableQuantity}
                   className="h-8 w-8 p-0"
                 >
                   +
                 </Button>
               </div>
-              <div className="flex items-center justify-start">
+              {/* Availability Info */}
+              <div className="flex items-center justify-end mt-1">
+                {availabilityInfo.isChecking ? (
+                  <p className="text-xs text-slate-400 italic m-0">
+                    <LoaderCircle className="animate-spin h-4 w-4 mr-1" />
+                    {t.itemCard.checkingAvailability[lang]}
+                  </p>
+                ) : availabilityInfo.error ? (
+                  <p className="text-xs text-red-500 italic m-0">
+                    {t.itemCard.availabilityError[lang]}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-400 italic m-0">
+                    {startDate && endDate
+                      ? availabilityInfo.availableQuantity > 0
+                        ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
+                        : `${t.itemCard.notAvailable[lang]}`
+                      : `${t.itemCard.totalUnits[lang]}: ${item.items_number_available}`}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center justify-start mt-1 mb-4 md:mb-0">
                 <Button
-                  className="bg-secondary rounded-2xl text-white border-secondary border-1 hover:text-secondary hover:bg-white flex-1 mt-6"
+                  className={`bg-secondary rounded-2xl text-white border-secondary border-1 flex-1 mt-3
+                    hover:text-secondary hover:bg-white
+                    ${!isItemAvailableForTimeframe ? "opacity-50 cursor-not-allowed hover:text-white hover:bg-secondary" : ""}
+                  `}
                   onClick={handleAddToCart}
+                  disabled={!isItemAvailableForTimeframe}
                 >
                   {t.itemDetails.items.addToCart[lang]}
                 </Button>

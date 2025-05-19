@@ -145,7 +145,7 @@ export const t = {
   // ItemCard translations
   itemCard: {
     timeframe: {
-      fi: "Valittu varaus",
+      fi: "Valittu ajanjakso",
       en: "Selected booking",
     },
     viewDetails: {
@@ -165,8 +165,8 @@ export const t = {
       en: "Failed to check availability",
     },
     available: {
-      fi: "Saatavilla kpl",
-      en: "Available units",
+      fi: "Saatavilla olevat tuotteet valitulle ajanjaksolle",
+      en: "Available units for selected dates",
     },
     selectDatesFirst: {
       fi: "Valitse ensin varauspäivät",
@@ -486,7 +486,7 @@ export const t = {
     review: {
       title: {
         fi: "Tarkista ostoskorisi ennen kassalle siirtymistä",
-        en: "Review your cart before checkout",
+        en: "Review your cart before booking",
       },
     },
     booking: {
@@ -510,6 +510,10 @@ export const t = {
         fi: "Varausaikaa ei ole valittu. Valitse ensin päivämäärät.",
         en: "No booking period selected. Please select dates first.",
       },
+      explanation: {
+        fi: "Alla olevan painikkeen napsauttaminen ei ole sitova. Kyseessä on vain varauspyyntö – tarkistamme sen ja otamme sinuun pian yhteyttä.",
+        en: "Clicking the button below is not a commitment. It's just a request — we'll review it and get back to you shortly.",
+      },
     },
     item: {
       available: {
@@ -524,24 +528,24 @@ export const t = {
     summary: {
       title: {
         fi: "Tilauksen yhteenveto",
-        en: "Order Summary",
+        en: "Booking Summary",
       },
       subtotal: {
-        fi: "Tuotteet yhteensä:",
-        en: "Items subtotal:",
+        fi: "Tuotteet yhteensä",
+        en: "Items subtotal",
       },
       rentalPeriod: {
-        fi: "Vuokra-aika:",
-        en: "Rental period:",
+        fi: "Vuokra-aika",
+        en: "Rental period",
       },
       total: {
-        fi: "Yhteensä:",
-        en: "Total:",
+        fi: "Yhteensä",
+        en: "Total",
       },
     },
     buttons: {
       checkout: {
-        fi: "Kassalle",
+        fi: "Lähetä pyyntö",
         en: "Checkout",
       },
       processing: {
@@ -595,12 +599,12 @@ export const t = {
         en: "Some items exceed available quantity",
       },
       creatingOrder: {
-        fi: "Luodaan tilaustasi...",
-        en: "Creating your order...",
+        fi: "Luodaan varaustasi...",
+        en: "Creating your booking...",
       },
       orderCreated: {
-        fi: "Tilaus luotu onnistuneesti!",
-        en: "Order created successfully!",
+        fi: "Varaus luotu onnistuneesti!",
+        en: "Booking created successfully!",
       },
       orderError: {
         fi: "Virhe: ",
@@ -1341,6 +1345,10 @@ export const t = {
       warning: {
         fi: "Päivämäärien muuttaminen tyhjentää ostoskorisi. Viimeistele tai tyhjennä nykyinen varauksesi ensin.",
         en: "Changing dates will clear your cart. Please complete or clear your current booking first.",
+      },
+      timeframeExceeded: {
+        fi: "Varaus ei voi ylittää 14 päivää.",
+        en: "Booking cannot exceed 14 days.",
       },
     },
   },
