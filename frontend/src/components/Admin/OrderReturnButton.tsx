@@ -4,6 +4,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { returnItems } from "@/store/slices/ordersSlice";
 import { RotateCcw } from "lucide-react";
 import { toastConfirm } from "../ui/toastConfirm";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const OrderReturnButton = ({
   id,
@@ -13,6 +15,7 @@ const OrderReturnButton = ({
   closeModal: () => void;
 }) => {
   const dispatch = useAppDispatch();
+  const { lang } = useLanguage();
 
   const handleReturnItems = () => {
     if (!id) {
@@ -41,7 +44,7 @@ const OrderReturnButton = ({
       variant="ghost"
       size="sm"
       onClick={() => handleReturnItems()}
-      title="Process Return"
+      title={t.orderList.buttons.return[lang]}
       className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
     >
       <RotateCcw className="h-4 w-4" />

@@ -57,7 +57,7 @@ export const Navigation = () => {
   return (
     <nav className={navClasses}>
       <div className="container mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Link to="/">
             <img
               src={logo}
@@ -110,13 +110,13 @@ export const Navigation = () => {
               </NavigationMenuItem>
 
               {/* User GuideLines */}
-              <NavigationMenuItem>
+              {/* <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/howItWorks" className="flex items-center gap-1 text-secondary font-medium">
                     {t.navigation.guides[lang]}
                   </Link>
                 </NavigationMenuLink>
-              </NavigationMenuItem>
+              </NavigationMenuItem> */}
 
               {/* Contact Form */}
               {!admin && (
@@ -133,7 +133,7 @@ export const Navigation = () => {
         </div>
 
         {/* Always show Cart */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div className="flex items-center md:mr-6">
             <LanguageSwitcher />
           </div>
@@ -153,6 +153,7 @@ export const Navigation = () => {
             <div className="flex items-center">
               <Button
                 variant={"ghost"}
+                className="p-o m-0"
                 size={"sm"}
                 onClick={() => {
                   navigate("/profile");
