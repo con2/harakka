@@ -319,6 +319,10 @@ export const t = {
         fi: "Suodattimet",
         en: "Filters",
       },
+      itemTypes: {
+        fi: "Tuotetyypit",
+        en: "Categories",
+      },
       active: {
         fi: "aktiivinen",
         en: "active",
@@ -689,20 +693,20 @@ export const t = {
       shop: {
         title: {
           fi: "KAUPPA",
-          en: "SHOP",
+          en: "STORAGE",
         },
         links: {
           products: {
             fi: "Tuotteet",
-            en: "Products",
+            en: "Items",
           },
           cart: {
             fi: "Ostoskori",
             en: "Cart",
           },
-          checkout: {
-            fi: "Kassa",
-            en: "Checkout",
+          contactUs: {
+            fi: "OTA YHTEYTTÄ",
+            en: "CONTACT US",
           },
         },
       },
@@ -2429,6 +2433,22 @@ export const t = {
         fi: "Näytä tiedot",
         en: "View Details",
       },
+      return: {
+        fi: "Merkitse palautetuiksi",
+        en: "Mark Items Returned",
+      },
+      delete: {
+        fi: "Poista tilaus",
+        en: "Delete Order",
+      },
+      reject: {
+        fi: "Hylkää tilaus",
+        en: "Reject Order",
+      },
+      pickedUp: {
+        fi: "Merkitse noudetuksi",
+        en: "Mark as Picked Up",
+      },
     },
     status: {
       unknown: {
@@ -2466,6 +2486,10 @@ export const t = {
       na: {
         fi: "Ei saatavilla",
         en: "N/A",
+      },
+      pickedUp: {
+        fi: "Noudettu",
+        en: "Picked Up",
       },
     },
     modal: {
@@ -2525,6 +2549,10 @@ export const t = {
         delete: {
           fi: "Poistaa",
           en: "Delete",
+        },
+        pickedUp: {
+          fi: "Noudettu",
+          en: "Picked Up",
         },
       },
     },

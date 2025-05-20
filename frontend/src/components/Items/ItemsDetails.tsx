@@ -17,18 +17,19 @@ import Rating from "../ui/rating";
 import { addToCart } from "../../store/slices/cartSlice";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { useTranslation } from "@/hooks/useTranslation";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { ItemImageAvailabilityInfo, ItemTranslation } from "@/types";
 import { ordersApi } from "@/api/services/orders";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { formatDate } = useFormattedDate();
 
   // Redux selectors
   const item = useAppSelector(selectSelectedItem);
@@ -297,7 +298,9 @@ const ItemsDetails: React.FC = () => {
 
           <p>
             {itemContent?.item_description
-              ? `${itemContent.item_description.charAt(0).toUpperCase()}${itemContent.item_description.slice(1)}`
+              ? `${itemContent.item_description
+                  .toLowerCase()
+                  .replace(/^./, (c) => c.toUpperCase())}`
               : "Ei kuvausta saatavilla"}
           </p>
 
@@ -312,8 +315,9 @@ const ItemsDetails: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-xs font-medium m-0">
-                  {format(startDate, "d MMM yyyy")} -{" "}
-                  {format(endDate, "d MMM yyyy")}
+                  {formatDate(startDate, "d MMM yyyy")}
+                    <span> -</span>{" "}
+                    {formatDate(endDate, "d MMM yyyy")}
                 </p>
               </div>
 
