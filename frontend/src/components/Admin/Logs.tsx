@@ -37,7 +37,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Input } from "../ui/input";
 
 const Logs: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -278,7 +277,7 @@ const Logs: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
         <div className="flex gap-4 items-center">
           {/* Search by log message/source */}
-          <Input
+          <input
             id="search-logs"
             placeholder={
               t.logs.filters.searchPlaceholder[lang] ||
