@@ -319,6 +319,10 @@ export const t = {
         fi: "Suodattimet",
         en: "Filters",
       },
+      itemTypes: {
+        fi: "Tuotetyypit",
+        en: "Categories",
+      },
       active: {
         fi: "aktiivinen",
         en: "active",

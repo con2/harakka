@@ -61,9 +61,13 @@ const ItemsList: React.FC = () => {
       item.translations.en.item_type?.toLowerCase().includes(userQuery) ||
       item.translations.en.item_description?.toLowerCase().includes(userQuery);
     // Filter by item types
+    const itemType =
+      item.translations?.[lang]?.item_type ||
+      item.translations?.[lang === "fi" ? "en" : "fi"]?.item_type;
+
     const matchesItemTypes =
-      !filters.itemTypes?.length ||
-      filters.itemTypes.includes(item.translations.fi.item_type);
+      !filters.itemTypes?.length || filters.itemTypes.includes(itemType?.toLowerCase());
+
     // Filter by tags
     const matchesTags =
       !filters.tagIds?.length ||
@@ -127,7 +131,7 @@ const ItemsList: React.FC = () => {
       <TimeframeSelector />
 
       {/* Render the list of filtered items */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 mb-4">
         {filteredItems.length === 0 ? (
           <p>{t.itemsList.noItemsFound[lang]}</p> // Message when no items exist
         ) : (
