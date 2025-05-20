@@ -36,6 +36,7 @@ import OrderConfirmButton from "./OrderConfirmButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Separator } from "../ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import OrderPickupButton from "./OrderPickupButton";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
@@ -142,6 +143,15 @@ const AdminDashboard = () => {
             {t.adminDashboard.status.completed[lang]}
           </Badge>
         );
+      case "picked up":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-green-100 text-green-800 border-green-300"
+          >
+            {t.orderList.status.pickedUp[lang]}
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -226,7 +236,6 @@ const AdminDashboard = () => {
     },
     {
       id: "actions",
-      header: t.orderList.columns.actions[lang],
       cell: ({ row }) => {
         const order = row.original;
         const isPending = order.status === "pending";
@@ -261,6 +270,11 @@ const AdminDashboard = () => {
               <OrderReturnButton
                 id={order.id}
                 closeModal={() => setShowDetailsModal(false)}
+              />
+            )}
+
+            {isConfirmed && (
+              <OrderPickupButton
               />
             )}
 
@@ -464,6 +478,15 @@ const AdminDashboard = () => {
                       closeModal={() => setShowDetailsModal(false)}
                     />
                     </div>
+                    
+                  )}
+                  {selectedOrder.status === "confirmed" && (
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.pickedUp[lang]}</span>
+                    <OrderPickupButton
+                    />
+                    </div>
+                    
                   )}
                   <div className="flex flex-col items-center text-center">
                       <span className="text-xs text-slate-600">{t.orderList.modal.buttons.delete[lang]}</span>

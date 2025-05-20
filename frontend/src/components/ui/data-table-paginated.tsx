@@ -56,8 +56,8 @@ export function PaginatedDataTable<TData, TValue>({
 
   return (
     <div className="space-y-2">
-      <div className="rounded-md border-none">
-        <Table className="w-full overflow-x-auto">
+      <div className="rounded-md border-none overflow-x-auto max-w-full">
+        <Table className="w-full min-w-[600px]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
