@@ -30,7 +30,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MapPin } from "lucide-react";
 import { toastConfirm } from "../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
@@ -92,7 +91,6 @@ const AdminItemsTable = () => {
       enableSorting: true,
       cell: ({ row }) => (
         <div className="flex items-center gap-1 text-sm">
-          <MapPin className="h-4 w-4" />
           {row.original.location_details?.name || "N/A"}
         </div>
       ),
