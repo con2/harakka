@@ -102,16 +102,15 @@ const UserPanel = () => {
     <div className="flex min-h-screen w-full overflow-y-auto md:px-10">
       {/* Sidebar: Filters Panel */}
       <aside
-        ref={filterRef}
-        className={`${
-          isFilterVisible ? "block" : "hidden"
-        } md:flex flex-col w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
-        style={{
-          top: "60px",
-          height: "calc(100vh - 60px)",
-          backgroundColor: "#fff",
-        }}
-      >
+  ref={filterRef}
+  className={`${
+    isFilterVisible ? "block" : "hidden"
+  } md:flex md:flex-col md:min-h-[calc(100vh-60px)] w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
+  style={{
+    top: "60px",
+    backgroundColor: "#fff",
+  }}
+>
         {/* Filter Section */}
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
           <div>
