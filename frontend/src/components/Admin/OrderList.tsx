@@ -31,6 +31,7 @@ import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { Separator } from "../ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import OrderPickupButton from "./OrderPickupButton";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -130,6 +131,15 @@ const OrderList = () => {
             className="bg-blue-100 text-blue-800 border-blue-300"
           >
             {t.orderList.status.completed[lang]}
+          </Badge>
+        );
+        case "picked up":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-green-100 text-green-800 border-green-300"
+          >
+            {t.orderList.status.pickedUp[lang]}
           </Badge>
         );
       default:
@@ -298,6 +308,11 @@ const OrderList = () => {
               <OrderReturnButton
                 id={order.id}
                 closeModal={() => setShowDetailsModal(false)}
+              />
+            )}
+
+            {isConfirmed && (
+              <OrderPickupButton
               />
             )}
 
@@ -489,14 +504,14 @@ const OrderList = () => {
                   {selectedOrder.status === "pending" && (
                     <>
                     <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">Confirm</span>
+                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.confirm[lang]}</span>
                       <OrderConfirmButton
                         id={selectedOrder.id}
                         closeModal={() => setShowDetailsModal(false)}
                       />
                       </div>
                       <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">Reject</span>
+                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.reject[lang]}</span>
                       <OrderRejectButton
                         id={selectedOrder.id}
                         closeModal={() => setShowDetailsModal(false)}
@@ -508,16 +523,21 @@ const OrderList = () => {
                   {selectedOrder.status === "confirmed" && (
                     <>
                     <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">Return</span>
+                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.return[lang]}</span>
                     <OrderReturnButton
                       id={selectedOrder.id}
                       closeModal={() => setShowDetailsModal(false)}
                     />
                     </div>
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.pickedUp[lang]}</span>
+                    <OrderPickupButton
+                    />
+                    </div>
                     </>
                   )}
                   <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">Delete</span>
+                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.delete[lang]}</span>
                   <OrderDeleteButton
                     id={selectedOrder.id}
                     closeModal={() => setShowDetailsModal(false)}

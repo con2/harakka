@@ -56,7 +56,7 @@ export const Navigation = () => {
 
   return (
     <nav className={navClasses}>
-      <div className="container mx-auto flex items-center justify-between">
+      <div className="container md:mx-auto mx-0 flex items-center justify-between">
         <div className="flex items-center gap-1">
           <Link to="/">
             <img
@@ -64,11 +64,11 @@ export const Navigation = () => {
               alt="Logo"
               className="h-[60px] w-auto object-contain hidden md:flex"
             />
-            <img
+            {/* <img
               src={smallLogo}
               alt="smallLogo"
               className="h-[40px] w-auto object-contain md:hidden"
-            />
+            /> */}
           </Link>
           <NavigationMenu>
             <NavigationMenuList>
@@ -110,17 +110,17 @@ export const Navigation = () => {
               </NavigationMenuItem>
 
               {/* User GuideLines */}
-              {/* <NavigationMenuItem>
+              <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/howItWorks" className="flex items-center gap-1 text-secondary font-medium">
                     {t.navigation.guides[lang]}
                   </Link>
                 </NavigationMenuLink>
-              </NavigationMenuItem> */}
+              </NavigationMenuItem>
 
-              {/* Contact Form */}
+              {/* Contact Form Only in Desktop view for non admins*/}
               {!admin && (
-              <NavigationMenuItem>
+              <NavigationMenuItem className="hidden md:flex">
                 <NavigationMenuLink asChild>
                   <Link to="/contact-us" className="flex items-center gap-1 text-secondary font-medium">
                     {t.navigation.contactUs[lang]}
