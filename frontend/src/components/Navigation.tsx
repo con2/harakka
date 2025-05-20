@@ -11,7 +11,6 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import logo from "../assets/logoNav.png";
-import smallLogo from "../assets/illusiaLogo.png";
 import { LogInIcon, LogOutIcon, ShoppingCart, UserIcon } from "lucide-react";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
 import { toast } from "sonner";
@@ -109,7 +108,8 @@ export const Navigation = () => {
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
-              {/* User GuideLines */}
+              {/* User GuideLines in Nav only for regular users */}
+              {!admin && (
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/howItWorks" className="flex items-center gap-1 text-secondary font-medium">
@@ -117,6 +117,7 @@ export const Navigation = () => {
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
+              )}
 
               {/* Contact Form Only in Desktop view for non admins*/}
               {!admin && (
