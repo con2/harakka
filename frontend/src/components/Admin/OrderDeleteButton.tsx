@@ -4,6 +4,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { deleteOrder } from "@/store/slices/ordersSlice";
 import { Trash2 } from "lucide-react";
 import { toastConfirm } from "../ui/toastConfirm";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const OrderDeleteButton = ({
   id,
@@ -13,6 +15,7 @@ const OrderDeleteButton = ({
   closeModal: () => void;
 }) => {
   const dispatch = useAppDispatch();
+  const { lang } = useLanguage();
 
   const handleDelete = () => {
     if (!id) {
@@ -41,7 +44,7 @@ const OrderDeleteButton = ({
       variant="ghost"
       size="sm"
       onClick={() => handleDelete()}
-      title="Delete Order"
+      title={t.orderList.buttons.delete[lang]}
       className="text-red-600 hover:text-red-800 hover:bg-red-100"
     >
       <Trash2 className="h-4 w-4" />

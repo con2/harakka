@@ -115,7 +115,6 @@ const UsersList = () => {
     },
     {
       id: "actions",
-      header: t.usersList.columns.actions[lang],
       size: 30,
       enableSorting: false,
       enableColumnFilter: false,
