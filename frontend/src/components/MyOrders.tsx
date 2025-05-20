@@ -659,7 +659,7 @@ const isFormValid = editFormItems.every((item) => {
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="flex flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <div>
                   <Label className="block text-sm font-medium mb-1">
                     {t.myOrders.edit.startDate[lang]}
