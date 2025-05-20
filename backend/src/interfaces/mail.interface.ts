@@ -13,3 +13,18 @@ export interface EmailProps {
     };
   }[];
 }
+
+export interface PickUpEmail {
+  name: string;
+  email: string;
+  location: string;
+  pickupDate: string;
+  items: {
+    item_id: string;
+    quantity: number;
+    translations: {
+      fi: { name: string };
+      en: { name: string };
+    };
+  }[];
+}
