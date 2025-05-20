@@ -17,7 +17,6 @@ import Rating from "../ui/rating";
 import { addToCart } from "../../store/slices/cartSlice";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { useTranslation } from "@/hooks/useTranslation";
 import { t } from "@/translations";
