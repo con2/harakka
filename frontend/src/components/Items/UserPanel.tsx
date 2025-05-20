@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
 import { selectAllItems } from "@/store/slices/itemsSlice";
 import { Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ChevronRight, MapPin, SlidersIcon } from "lucide-react";
+import { ChevronRight, SlidersIcon } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Star } from "lucide-react";
 import {
@@ -22,13 +22,14 @@ const UserPanel = () => {
   const locations = useAppSelector(selectAllLocations);
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
+  const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
 
   useEffect(() => {
     dispatch(fetchAllTags());
     dispatch(fetchAllLocations());
   }, [dispatch]);
 
-  // Unique item_type.fi values from items
+  // Unique item_type values from items
   const uniqueItemTypes = Array.from(
     new Set(
       items
@@ -91,15 +92,25 @@ const UserPanel = () => {
   // Mobile filter toggle visibility state
   const [isFilterVisible, setIsFilterVisible] = useState(false);
 
+  useEffect(() => {
+    if (isFilterVisible && filterRef.current) {
+      filterRef.current.scrollTop = 0;
+    }
+  }, [isFilterVisible]);
+
   return (
     <div className="flex min-h-screen w-full overflow-y-auto md:px-10">
       {/* Sidebar: Filters Panel */}
-      {/* TODO: fix mobile view filter toggle */}
       <aside
+        ref={filterRef}
         className={`${
           isFilterVisible ? "block" : "hidden"
-        } md:flex flex-col w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-20 md:static transition-all duration-300 ease-in-out`}
-        style={{ maxHeight: "calc(100vh - 50px)" }} // to make the sidebar scroll
+        } md:flex flex-col w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
+        style={{
+          top: "60px",
+          height: "calc(100vh - 60px)",
+          backgroundColor: "#fff",
+        }}
       >
         {/* Filter Section */}
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
@@ -132,7 +143,14 @@ const UserPanel = () => {
                 <div className="text-xs text-muted-foreground">
                   {countActiveFilters()} {t.userPanel.filters.active[lang]}
                 </div>
-                <SlidersIcon className="w-5 h-5 text-slate-500" />
+                {/* SlidersIcon as a close button (only in mobile view) */}
+                <Button
+                  onClick={() => setIsFilterVisible(false)}
+                  className="md:hidden p-1 rounded hover:bg-slate-100 transition-colors"
+                  aria-label="Close Filters"
+                >
+                  <SlidersIcon className="w-5 h-5 text-highlight2" />
+                </Button>
               </div>
             </div>
             <Separator className="my-4" />
@@ -343,12 +361,11 @@ const UserPanel = () => {
             )}
 
             {/* Close Filter Button */}
-            <div className="md:hidden">
+            <div className="md:hidden text-center mt-4">
               <Button
                 onClick={() => setIsFilterVisible(false)}
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="text-white"
               >
                 {t.userPanel.filters.closeFilters[lang]}
               </Button>
@@ -360,14 +377,18 @@ const UserPanel = () => {
       {/* Main Content */}
       <div className="flex-1 md:p-4 relative">
         {/* Filter Button visible on mobile */}
-        <div className="md:hidden absolute top-4 left-4 z-10">
+        <div className="md:hidden absolute top-2 left-2 z-10">
           <Button
             onClick={() => setIsFilterVisible(true)}
             variant="outline"
             size="sm"
-            className="text-white"
+            className="text-white relative"
           >
             <SlidersIcon className="w-5 h-5" />
+            {/* Show badge only if filters are applied and filter panel is closed */}
+            {countActiveFilters() > 0 && !isFilterVisible && (
+              <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
+            )}
           </Button>
         </div>
 
