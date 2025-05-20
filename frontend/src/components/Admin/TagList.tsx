@@ -159,7 +159,6 @@ const TagList = () => {
     },
     {
       id: "actions",
-      header: t.tagList.columns.actions[lang],
       cell: ({ row }) => {
         const tag = row.original;
         return (
