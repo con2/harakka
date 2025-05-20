@@ -42,7 +42,7 @@ export const store = configureStore({
     orders: ordersReducer,
     cart: cartReducer,
     timeframe: timeframeReducer,
-    tags: tagsReducer,
+    tags: tagReducer,
     itemImages: itemImagesReducer,
     ui: uiReducer,
     locations: locationsReducer,
@@ -421,7 +421,13 @@ selectUser: (state, action: PayloadAction<User>) => {
 Use consistent error handling with context:
 
 ```typescript
-export type ErrorContext = "create" | "fetch" | "update" | "delete" | null;
+export type ErrorContext =
+  | "create"
+  | "fetch"
+  | "update"
+  | "delete"
+  | "assign"
+  | null;
 
 interface ErrorState {
   message: string | null;
@@ -452,6 +458,20 @@ Keep your state organized by logical domains. Don't put everything in one big sl
 
 Don't duplicate the same data in multiple parts of the state. Use selectors to derive data from the state.
 
+### 7. Deduplicate Related Entities
+
+When handling arrays of related entities, use deduplication patterns to ensure data consistency:
+
+````typescript
+// Example from itemsSlice.ts - deduplicating tags
+if (updatedItem.storage_item_tags && updatedItem.storage_item_tags.length > 0) {
+  updatedItem.storage_item_tags = Array.from(
+    new Map(
+      updatedItem.storage_item_tags.map((tag) => [tag.id, tag]),
+    ).values(),
+  );
+}
+
 ## Debugging
 
 ### Redux DevTools
@@ -469,7 +489,7 @@ createOrder: async (orderData) => {
   console.log('Order created:', response);
   return response;
 },
-```
+````
 
 ### Common Issues
 
