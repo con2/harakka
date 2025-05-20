@@ -39,6 +39,7 @@ Comprehensive documentation is available in the `docs` directory:
 - [Getting Started Guide](docs/developers/getting-started.md) - Setup instructions
 - [Project Overview](docs/developers/overview.md) - Architectural overview
 - [Project Structure](docs/developers/project-structure.md) - Directory organization
+- [Lessons Learned](docs/developers/lessons-learned.md) - Technical insights and knowledge gained
 
 ### Frontend Documentation
 
