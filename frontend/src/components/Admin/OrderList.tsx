@@ -264,7 +264,6 @@ const OrderList = () => {
     },
     {
       id: "actions",
-      header: t.orderList.columns.actions[lang],
       cell: ({ row }) => {
         const order = row.original;
         const isPending = order.status === "pending";

@@ -2429,6 +2429,18 @@ export const t = {
         fi: "Näytä tiedot",
         en: "View Details",
       },
+      return: {
+        fi: "Merkitse palautetuiksi",
+        en: "Mark Items Returned",
+      },
+      delete: {
+        fi: "Poista tilaus",
+        en: "Delete Order",
+      },
+      reject: {
+        fi: "Hylkää tilaus",
+        en: "Reject Order",
+      },
     },
     status: {
       unknown: {
