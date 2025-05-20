@@ -4,6 +4,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { XCircle } from "lucide-react";
 import { rejectOrder } from "@/store/slices/ordersSlice";
 import { toastConfirm } from "../ui/toastConfirm";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const OrderRejectButton = ({
   id,
@@ -13,6 +15,7 @@ const OrderRejectButton = ({
   closeModal: () => void;
 }) => {
   const dispatch = useAppDispatch();
+  const { lang } = useLanguage();
 
   const handleRejectOrder = () => {
     if (!id) {
@@ -40,7 +43,7 @@ const OrderRejectButton = ({
     <Button
       size="sm"
       onClick={() => handleRejectOrder()}
-      title="Reject Order"
+      title={t.orderList.buttons.reject[lang]}
       className="text-red-600 hover:text-red-800 hover:bg-red-100"
     >
       <XCircle className="h-4 w-4" />
