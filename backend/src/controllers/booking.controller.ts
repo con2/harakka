@@ -126,6 +126,13 @@ export class BookingController {
     return this.bookingService.returnItems(id, userId);
   }
 
+  // admin marks items as picked up
+  @Post(":orderId/pickup")
+  async pickup(@Param("orderId") orderId: string, @Req() req: any) {
+    // const userId = req.headers["x-user-id"] ?? req.user?.id;
+    return this.bookingService.confirmPickup(orderId);
+  }
+
   // checks availability of items by date range
   @Get("availability/:itemId")
   async getItemAvailability(

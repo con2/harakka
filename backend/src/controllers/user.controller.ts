@@ -7,13 +7,13 @@ import {
   Body,
   Param,
   NotFoundException,
-} from '@nestjs/common';
-import { UserService } from '../services/user.service';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { User } from '../interfaces/user.interface';
-import { CreateAddressDto } from 'src/dto/create-address.dto';
+} from "@nestjs/common";
+import { UserService } from "../services/user.service";
+import { CreateUserDto } from "../dto/create-user.dto";
+import { User } from "../interfaces/user.interface";
+import { CreateAddressDto } from "src/dto/create-address.dto";
 
-@Controller('users')
+@Controller("users")
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -22,8 +22,8 @@ export class UserController {
     return this.userService.getAllUsers();
   }
 
-  @Get(':id')
-  async getUserById(@Param('id') id: string): Promise<User> {
+  @Get(":id")
+  async getUserById(@Param("id") id: string): Promise<User> {
     const user = await this.userService.getUserById(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -37,9 +37,9 @@ export class UserController {
     return this.userService.createUser(user);
   }
 
-  @Put(':id')
+  @Put(":id")
   async updateUser(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Body() user: Partial<CreateUserDto>,
   ): Promise<User> {
     const updatedUser = await this.userService.updateUser(id, user);
@@ -49,42 +49,45 @@ export class UserController {
     return updatedUser;
   }
 
-  @Delete(':id')
-  async deleteUser(@Param('id') id: string): Promise<void> {
+  @Delete(":id")
+  async deleteUser(@Param("id") id: string): Promise<void> {
     return this.userService.deleteUser(id);
   }
 
   // Address Endpoints
 
-  @Get(':id/addresses')
-  async getAddresses(@Param('id') id: string) {
+  @Get(":id/addresses")
+  async getAddresses(@Param("id") id: string) {
     const addresses = await this.userService.getAddressesByid(id);
     // Return only the addresses array (empty or populated)
     return addresses;
   }
 
-  @Post(':id/addresses')
-  async addAddress(
-    @Param('id') id: string,
-    @Body() address: CreateAddressDto,
-  ) {
+  @Post(":id/addresses")
+  async addAddress(@Param("id") id: string, @Body() address: CreateAddressDto) {
     return this.userService.addAddress(id, address);
   }
 
-  @Put(':id/addresses/:addressId')
+  @Put(":id/addresses/:addressId")
   async updateAddress(
-    @Param('id') id: string,
-    @Param('addressId') addressId: string,
+    @Param("id") id: string,
+    @Param("addressId") addressId: string,
     @Body() address: CreateAddressDto,
   ) {
     return this.userService.updateAddress(id, addressId, address);
   }
 
-  @Delete(':id/addresses/:addressId')
+  @Delete(":id/addresses/:addressId")
   async deleteAddress(
-    @Param('id') id: string,
-    @Param('addressId') addressId: string,
+    @Param("id") id: string,
+    @Param("addressId") addressId: string,
   ) {
     return this.userService.deleteAddress(id, addressId);
   }
+
+  /* @Post(":id/send-welcome-mail")
+  async sendWelcomeEmail(@Param("id") id: string) {
+    await this.userService.sendWelcomeEmail(id);
+    return { message: `Welcome mail sent to user ${id}` };
+  } */
 }
