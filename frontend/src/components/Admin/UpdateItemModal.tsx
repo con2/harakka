@@ -86,7 +86,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
 
   // Handle changes in input fields (works for both input and textarea)
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
 
@@ -153,7 +153,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="mb-0">{t.updateItemModal.title[lang]}</DialogTitle>
+          <DialogTitle className="mb-0">
+            {t.updateItemModal.title[lang]}
+          </DialogTitle>
           <DialogDescription className="text-center">
             {t.updateItemModal.description[lang]}
           </DialogDescription>
@@ -418,9 +420,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
 
               {/* Tag Selection */}
               <div className="space-y-2">
-                <Label>
-                  {t.updateItemModal.tags.title[lang]}
-                </Label>
+                <Label>{t.updateItemModal.tags.title[lang]}</Label>
                 <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
                   {tags.map((tag) => (
                     <label key={tag.id} className="flex items-center">
@@ -430,8 +430,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                         onCheckedChange={() => handleTagToggle(tag.id)}
                       />
                       <span className="text-sm">
-                        {tag.translations?.fi?.name ||
-                          tag.translations?.en?.name ||
+                        {tag.translations?.[lang]?.name ||
+                          tag.translations?.[lang === "fi" ? "en" : "fi"]
+                            ?.name ||
                           "Unnamed"}
                       </span>
                     </label>
