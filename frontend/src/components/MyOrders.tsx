@@ -539,6 +539,14 @@ const isFormValid = editFormItems.every((item) => {
                         <strong>{t.myOrders.mobile.status[lang]}</strong>{" "}
                         <StatusBadge status={order.status} />
                       </p>
+                      <p>
+                        <strong>{t.myOrders.mobile.start[lang]}</strong>{" "}
+                        {formatDate(order.order_items?.[0]?.start_date)}
+                      </p>
+                      <p>
+                        <strong>{t.myOrders.mobile.end[lang]}</strong>{" "}
+                        {formatDate(order.order_items?.[0]?.end_date)}
+                      </p>
                     </div>
 
                     {/* Order Items */}
@@ -595,20 +603,20 @@ const isFormValid = editFormItems.every((item) => {
                               </strong>{" "}
                               {item.quantity}
                             </p>
-                            <p>
+                            {/* <p>
                               <strong>{t.myOrders.mobile.start[lang]}</strong>{" "}
                               {formatDate(item.start_date)}
                             </p>
                             <p>
                               <strong>{t.myOrders.mobile.end[lang]}</strong>{" "}
                               {formatDate(item.end_date)}
-                            </p>
-                            <p>
+                            </p> */}
+                            {/* <p>
                               <strong>
                                 {t.myOrders.mobile.subtotal[lang]}
                               </strong>{" "}
                               €{item.subtotal?.toFixed(2) || "0.00"}
-                            </p>
+                            </p> */}
                           </div>
                         ))}
                       </div>
@@ -651,7 +659,7 @@ const isFormValid = editFormItems.every((item) => {
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="flex flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <div>
                   <Label className="block text-sm font-medium mb-1">
                     {t.myOrders.edit.startDate[lang]}

@@ -22,8 +22,8 @@ const Footer = () => {
                 <a href="/cart">{t.footer.sections.shop.links.cart[lang]}</a>
               </li>
               <li>
-                <a href="/checkout">
-                  {t.footer.sections.shop.links.checkout[lang]}
+                <a href="/contact-us">
+                  {t.footer.sections.shop.links.contactUs[lang]}
                 </a>
               </li>
             </ul>

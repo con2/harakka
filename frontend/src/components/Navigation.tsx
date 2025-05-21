@@ -11,7 +11,6 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import logo from "../assets/logoNav.png";
-import smallLogo from "../assets/illusiaLogo.png";
 import { LogInIcon, LogOutIcon, ShoppingCart, UserIcon } from "lucide-react";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
 import { toast } from "sonner";
@@ -56,19 +55,19 @@ export const Navigation = () => {
 
   return (
     <nav className={navClasses}>
-      <div className="container mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="container md:mx-auto mx-0 flex items-center justify-between">
+        <div className="flex items-center gap-1">
           <Link to="/">
             <img
               src={logo}
               alt="Logo"
               className="h-[60px] w-auto object-contain hidden md:flex"
             />
-            <img
+            {/* <img
               src={smallLogo}
               alt="smallLogo"
               className="h-[40px] w-auto object-contain md:hidden"
-            />
+            /> */}
           </Link>
           <NavigationMenu>
             <NavigationMenuList>
@@ -109,7 +108,8 @@ export const Navigation = () => {
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
-              {/* User GuideLines */}
+              {/* User GuideLines in Nav only for regular users */}
+              {!admin && (
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/howItWorks" className="flex items-center gap-1 text-secondary font-medium">
@@ -117,10 +117,11 @@ export const Navigation = () => {
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
+              )}
 
-              {/* Contact Form */}
+              {/* Contact Form Only in Desktop view for non admins*/}
               {!admin && (
-              <NavigationMenuItem>
+              <NavigationMenuItem className="hidden md:flex">
                 <NavigationMenuLink asChild>
                   <Link to="/contact-us" className="flex items-center gap-1 text-secondary font-medium">
                     {t.navigation.contactUs[lang]}
@@ -133,7 +134,7 @@ export const Navigation = () => {
         </div>
 
         {/* Always show Cart */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div className="flex items-center md:mr-6">
             <LanguageSwitcher />
           </div>
@@ -153,6 +154,7 @@ export const Navigation = () => {
             <div className="flex items-center">
               <Button
                 variant={"ghost"}
+                className="p-o m-0"
                 size={"sm"}
                 onClick={() => {
                   navigate("/profile");

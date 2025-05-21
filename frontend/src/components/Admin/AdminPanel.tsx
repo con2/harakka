@@ -67,17 +67,16 @@ const AdminPanel = () => {
               label={t.adminPanel.navigation.team[lang]}
             />
           )} */}
+          <SidebarLink
+            to="/admin/logs"
+            icon={<FileText className="w-5 h-5" />}
+            label={t.adminPanel.navigation.logs[lang] || "Logs"}
+          />
 
           <SidebarLink
             to="/profile"
             icon={<Settings className="w-5 h-5" />}
             label={t.adminPanel.navigation.settings[lang]}
-          />
-
-          <SidebarLink
-            to="/admin/logs"
-            icon={<FileText className="w-5 h-5" />}
-            label={t.adminPanel.navigation.logs[lang] || "Logs"}
           />
         </nav>
       </aside>
@@ -85,7 +84,6 @@ const AdminPanel = () => {
       {/* Mobile Sidebar */}
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetTrigger asChild>
-          {/* TODO: Add the button to the navbar in mobile view instead of admin panel */}
           <Button
             variant="ghost"
             className="md:hidden absolute top-4 left-4 z-50"
@@ -131,17 +129,15 @@ const AdminPanel = () => {
                 label={t.adminPanel.navigation.team[lang]} 
               />
             )} */}
-
-            <SidebarLink
-              to="/profile"
-              icon={<Settings />}
-              label={t.adminPanel.navigation.settings[lang]}
-            />
-
             <SidebarLink
               to="/admin/logs"
               icon={<FileText />}
               label={t.adminPanel.navigation.logs[lang] || "Logs"}
+            />
+            <SidebarLink
+              to="/profile"
+              icon={<Settings />}
+              label={t.adminPanel.navigation.settings[lang]}
             />
           </nav>
         </SheetContent>
