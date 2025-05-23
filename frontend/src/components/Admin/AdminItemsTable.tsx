@@ -33,6 +33,7 @@ import {
 import { toastConfirm } from "../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { fetchAllTags } from "@/store/slices/tagSlice";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -60,6 +61,12 @@ const AdminItemsTable = () => {
     setAssignTagsModalOpen(false);
     setCurrentItemId(null);
   };
+
+  //fetch tags list
+  const tagsLoading = useAppSelector((state) => state.tags.loading);
+  useEffect(() => {
+    dispatch(fetchAllTags());
+  }, [dispatch]);
 
   const itemsColumns: ColumnDef<Item>[] = [
     {
@@ -354,45 +361,60 @@ const AdminItemsTable = () => {
             <PopoverContent className="w-[250px] p-0">
               <Command>
                 <CommandGroup>
-                  {tags.map((tag) => {
-                    const label =
-                      tag.translations?.fi?.name?.toLowerCase() ||
-                      tag.translations?.en?.name?.toLowerCase() ||
-                      "Unnamed";
-                    function cn(...classes: (string | undefined)[]): string {
-                      return classes.filter(Boolean).join(" ");
-                    }
-                    return (
-                      <CommandItem
-                        key={tag.id}
-                        onSelect={() =>
-                          setTagFilter((prev) =>
-                            prev.includes(tag.id)
-                              ? prev.filter((t) => t !== tag.id)
-                              : [...prev, tag.id],
-                          )
-                        }
-                        className="cursor-pointer"
-                      >
-                        <Checkbox
-                          checked={tagFilter.includes(tag.id)}
-                          onCheckedChange={() =>
+                  {tagsLoading ? (
+                    <div className="flex justify-center p-4">
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    </div>
+                  ) : tags.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      {t.adminItemsTable.filters.tags.noTags[lang] ||
+                        "No tags found"}
+                    </div>
+                  ) : (
+                    tags.map((tag) => {
+                      const label =
+                        tag.translations?.[lang]?.name?.toLowerCase() || // Try current language first
+                        tag.translations?.[
+                          lang === "fi" ? "en" : "fi"
+                        ]?.name?.toLowerCase() || // Fall back to other language
+                        t.adminItemsTable.filters.tags.unnamed[lang] ||
+                        "Unnamed";
+
+                      function cn(...classes: (string | undefined)[]): string {
+                        return classes.filter(Boolean).join(" ");
+                      }
+                      return (
+                        <CommandItem
+                          key={tag.id}
+                          onSelect={() =>
                             setTagFilter((prev) =>
                               prev.includes(tag.id)
                                 ? prev.filter((t) => t !== tag.id)
                                 : [...prev, tag.id],
                             )
                           }
-                          className={cn(
-                            "mr-2 h-4 w-4 border border-secondary bg-white text-white",
-                            "data-[state=checked]:bg-secondary",
-                            "data-[state=checked]:text-white",
-                          )}
-                        />
-                        <span>{label}</span>
-                      </CommandItem>
-                    );
-                  })}
+                          className="cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={tagFilter.includes(tag.id)}
+                            onCheckedChange={() =>
+                              setTagFilter((prev) =>
+                                prev.includes(tag.id)
+                                  ? prev.filter((t) => t !== tag.id)
+                                  : [...prev, tag.id],
+                              )
+                            }
+                            className={cn(
+                              "mr-2 h-4 w-4 border border-secondary bg-white text-white",
+                              "data-[state=checked]:bg-secondary",
+                              "data-[state=checked]:text-white",
+                            )}
+                          />
+                          <span>{label}</span>
+                        </CommandItem>
+                      );
+                    })
+                  )}
                 </CommandGroup>
               </Command>
             </PopoverContent>
