@@ -1979,9 +1979,22 @@ export const t = {
           en: "Filter by tags",
         },
         filtered: {
-          fi: "Suodatettu {count} tagilla",
-          en: "Filtered by {count} tag(s)",
+          fi: "{count} tagia valittu",
+          en: "{count} tags selected",
         },
+        noTags: {
+          fi: "Ei tageja saatavilla",
+          en: "No tags found",
+        },
+        loading: {
+          fi: "Ladataan tageja...",
+          en: "Loading tags...",
+        },
+        error: {
+          fi: "Virhe ladattaessa tageja",
+          en: "Error loading tags",
+        },
+        unnamed: { fi: "Nimetön", en: "Unnamed" },
       },
       clear: {
         fi: "Tyhjennä suodattimet",
