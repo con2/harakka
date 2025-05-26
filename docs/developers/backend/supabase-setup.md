@@ -55,7 +55,7 @@ VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
 
 ## Database Configuration
 
-### Setting up Database Schema
+### Setup of Database Schema
 
 1. **Access the SQL Editor**:
 
