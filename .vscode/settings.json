@@ -1,17 +1,7 @@
 {
-  "cSpell.words": ["plpgsql", "SUPABASE", "superadmin", "varchar"],
-  "cSpell.customDictionaries": {
-    "custom-dictionary-workspace": {
-      "name": "custom-dictionary-workspace",
-      "path": "${workspaceFolder:FullStack_Storage_and_Booking_App}/.cspell/custom-dictionary-workspace.txt",
-      "addWords": true,
-      "scope": "workspace"
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#081121",
+        "titleBar.activeBackground": "#0A162B",
+        "titleBar.activeForeground": "#FAFBFE"
     }
-  },
-  "github.copilot.enable": {
-    "*": true,
-    "plaintext": true,
-    "markdown": true,
-    "scminput": true
-  }
 }
