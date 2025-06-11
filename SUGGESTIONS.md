@@ -1,6 +1,6 @@
+Random ideas and notes
 
 ### Suggestions for Splitting Down the File
-
 
    
 1. **Modularize Role and Permission Checks:**
