@@ -19,6 +19,6 @@
     "noFallthroughCasesInSwitch": false,
     "jsx": "react",
   },
-  "include": ["src/**/*", "config.mts", "test/**/*.ts", "src/emails/.welcome-mail.ts"],
+  "include": ["src/**/*", "config.mts"],
   "exclude": ["../frontend", "node_modules", "dist"]
 }
