@@ -64,7 +64,7 @@ export class UserService {
 
       // send mail to user
       console.log(`User: ${user}`);
-   /*    try {
+      /*    try {
         await this.mailService.sendMail({
           to: user.email,
           subject: "Welcome, friend!",

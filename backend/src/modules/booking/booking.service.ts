@@ -380,7 +380,7 @@ export class BookingService {
       location: location?.name,
       items: emailItems,
     };
-/* 
+    /* 
     await this.mailService.sendMail({
       to: emailData.email,
       subject: "Vastaanotettu varaus - Booking received!",
@@ -393,7 +393,7 @@ export class BookingService {
       email: "illusia.rental.service@gmail.com",
       name: "Admin",
     };
-/* 
+    /* 
     await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
       subject:
@@ -552,7 +552,7 @@ export class BookingService {
       items: emailItems,
     };
 
-   /*  await this.mailService.sendMail({
+    /*  await this.mailService.sendMail({
       to: emailData.email,
       subject: "Varausvahvistus! - Booking confirmed!",
       template: BookingConfirmationEmail(emailData),
@@ -565,7 +565,7 @@ export class BookingService {
       name: "Admin",
     };
 
-  /*   await this.mailService.sendMail({
+    /*   await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
       subject: "Varausvahvistus onnistui - Booking confirmed successfully",
       template: BookingConfirmationEmail(adminEmailData),
@@ -753,7 +753,7 @@ export class BookingService {
       name: "Admin",
     };
 
-   /*  await this.mailService.sendMail({
+    /*  await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
       subject: "Varaus päivitetty - Booking updated - waiting to be confirmed",
       template: BookingUpdateEmail(adminEmailData),
@@ -897,7 +897,7 @@ export class BookingService {
       items: emailItems,
     };
 
- /*    await this.mailService.sendMail({
+    /*    await this.mailService.sendMail({
       to: emailData.email,
       subject: "Varaus hylätty - Booking rejected!",
       template: BookingRejectionEmail(emailData),
@@ -910,7 +910,7 @@ export class BookingService {
       name: "Admin",
     };
 
-  /*   await this.mailService.sendMail({
+    /*   await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
       subject: "Varaus hylätty - Booking rejected sucessfully - (copy)",
       template: BookingRejectionEmail(adminEmailData),
@@ -1056,7 +1056,7 @@ export class BookingService {
       .single();
 
     // send mail
- /*    await this.mailService.sendMail({
+    /*    await this.mailService.sendMail({
       to: userProfile.email,
       subject: "Varaus peruttu - Booking Cancelled",
       template: BookingCancelledEmail({
@@ -1068,7 +1068,7 @@ export class BookingService {
     }); */
 
     // send mail to admin
-  /*   await this.mailService.sendMail({
+    /*   await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
       subject: "Varaus peruttu - Booking Cancelled",
       template: BookingCancelledEmail({
@@ -1176,7 +1176,7 @@ export class BookingService {
       name: "Admin",
     };
 
-/*     await this.mailService.sendMail({
+    /*     await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
       subject: "Varaus poistettu - Booking deleted",
       template: BookingDeleteMail(adminEmailDataObject),
@@ -1315,7 +1315,7 @@ export class BookingService {
       items: emailItems,
     };
 
-  /*   await this.mailService.sendMail({
+    /*   await this.mailService.sendMail({
       to: emailData.email,
       subject: "Palautetut tuotteet - Items returned",
       template: ItemsReturnedMail(emailData),
@@ -1328,7 +1328,7 @@ export class BookingService {
       name: "Admin",
     };
 
-   /*  await this.mailService.sendMail({
+    /*  await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
       subject: "Palautetut tuotteet - Items returned",
       template: ItemsReturnedMail(adminEmailData),
@@ -1544,7 +1544,7 @@ export class BookingService {
       items: emailItems,
     };
 
-/*     await this.mailService.sendMail({
+    /*     await this.mailService.sendMail({
       to: emailData.email,
       subject: "Noudetut tuotteet - Items picked up",
       template: ItemsPickedUpMail(emailData),
@@ -1557,7 +1557,7 @@ export class BookingService {
       name: "Admin",
     };
 
- /*    await this.mailService.sendMail({
+    /*    await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
       subject: "Noudetut tuotteet - Items picked up",
       template: ItemsPickedUpMail(adminEmailData),
