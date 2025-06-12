@@ -14,7 +14,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ItemImagesService } from "./item-images.service";
 import { SupabaseService } from "../supabase/supabase.service";
-import { AuthRequest } from "../user/interfaces/auth-request.interface";
+import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 
 @Controller("item-images")
 export class ItemImagesController {
@@ -36,13 +36,10 @@ export class ItemImagesController {
       display_order: number;
     },
   ) {
-    // Extract user ID from request headers or auth info
-    const userId = (req.headers["x-user-id"] as string) ?? req.user?.id;
-
-    if (!userId) {
+    if (!req.user || !req.user.id) {
       throw new ForbiddenException("Authentication required");
     }
-
+    const userId = req.user.id;
     // Get user profile to check role
     const supabase = this.supabaseService.getServiceClient();
     const { data: userProfile, error } = await supabase
@@ -78,7 +75,7 @@ export class ItemImagesController {
     @Param("imageId") imageId: string,
   ) {
     // Extract user ID from request headers or auth info
-    const userId = (req.headers["x-user-id"] as string) ?? req.user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       throw new ForbiddenException("Authentication required");

@@ -1,4 +1,9 @@
-import { Module } from "@nestjs/common";
+import {
+  Module,
+  MiddlewareConsumer,
+  NestModule,
+  RequestMethod,
+} from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
@@ -16,6 +21,9 @@ import { StorageLocationsModule } from "../storage-locations/storage-locations.m
 import { TagModule } from "../tag/tag.module";
 import { UserModule } from "../user/user.module";
 import { SupabaseModule } from "../supabase/supabase.module";
+import { AuthMiddleware } from "../../middleware/Auth.middleware";
+import { AuthTestController } from "../AuthTest/authTest.controller";
+import { AuthTestService } from "../AuthTest/authTest.service";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -47,7 +55,14 @@ dotenvExpand.expand(env);
     UserModule,
     SupabaseModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, AuthTestController],
+  providers: [AppService, AuthTestService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AuthMiddleware) // our JWT/RLS middleware
+      .exclude({ path: "/health", method: RequestMethod.ALL }) // public route
+      .forRoutes({ path: "*", method: RequestMethod.ALL }); // protect the rest
+  }
+}
