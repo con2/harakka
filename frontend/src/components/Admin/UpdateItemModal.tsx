@@ -1,63 +1,93 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchAllItems, updateItem } from "@/store/slices/itemsSlice";
-import { Item } from "@/types/item";
+import { Item } from "@/types";
 import { toast } from "sonner";
-import { Switch } from '@/components/ui/switch';
+import { Switch } from "@/components/ui/switch";
 import {
   fetchAllTags,
   fetchTagsForItem,
   assignTagToItem,
   selectAllTags,
   selectSelectedTags,
-} from '@/store/slices/tagSlice';
-import { useAppSelector } from '@/store/hooks';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/store/slices/tagSlice";
+import { useAppSelector } from "@/store/hooks";
+import { Checkbox } from "@/components/ui/checkbox";
+import ItemImageManager from "./ItemImageManager";
+import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  fetchAllLocations,
+  selectAllLocations,
+} from "@/store/slices/locationsSlice";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
+import { Textarea } from "../ui/textarea";
 
 type UpdateItemModalProps = {
   onClose: () => void;
-  initialData: Item;  // Assume initialData is always passed for updating
+  initialData: Item; // Assume initialData is always passed for updating
 };
 
 const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   const dispatch = useAppDispatch();
-  const [formData, setFormData] = useState<Item>(initialData);  // Initialize directly from initialData
+  const [formData, setFormData] = useState<Item>(initialData); // Initialize directly from initialData
   const [loading, setLoading] = useState(false);
   const tags = useAppSelector(selectAllTags);
   const selectedTags = useAppSelector(selectSelectedTags);
   const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<"details" | "images">("details");
+  const locations = useAppSelector(selectAllLocations);
+  // Translation
+  const { lang } = useLanguage();
 
   // Prefill the form with initial data if available
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);  // Set form data directly from initialData
+      setFormData(initialData); // Set form data directly from initialData
     }
   }, [initialData]);
 
   useEffect(() => {
     dispatch(fetchAllTags());
     dispatch(fetchTagsForItem(formData.id)); // fetch tags for this item
+    dispatch(fetchAllLocations());
   }, [dispatch, formData.id]);
 
   useEffect(() => {
     if (selectedTags) {
-      setLocalSelectedTags(selectedTags.map(tag => tag.id));
+      setLocalSelectedTags(selectedTags.map((tag) => tag.id));
     }
   }, [selectedTags]);
 
   const handleTagToggle = (tagId: string) => {
-    setLocalSelectedTags(prev =>
+    setLocalSelectedTags((prev) =>
       prev.includes(tagId)
-        ? prev.filter(id => id !== tagId)
-        : [...prev, tagId]
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId],
     );
   };
 
-  // Handle changes in input fields
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle changes in input fields (works for both input and textarea)
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
 
     // Handle nested fields (like translations) separately
@@ -85,138 +115,362 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-  
+
     try {
-      // Exclude tags from updateItem payload
-      const { storage_item_tags, ...cleanedData } = formData;
-  
-      await dispatch(updateItem({ id: formData.id, data: cleanedData })).unwrap();
-      await dispatch(assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags })).unwrap();
+      // Create a clean copy of the data without the properties that should not be sent
+      const cleanedData = { ...formData };
+      // Remove properties that don't exist as columns in the database table
+      delete cleanedData.storage_item_tags;
+      delete cleanedData.tagIds;
+      delete (cleanedData as any).storage_locations;
+
+      // Explicitly ensure location_id is included
+      const updateData = {
+        ...cleanedData,
+        location_id: formData.location_id,
+      };
+
+      console.log("Sending update with location_id:", formData.location_id);
+
+      await dispatch(
+        updateItem({ id: formData.id, data: updateData }),
+      ).unwrap();
+      await dispatch(
+        assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
+      ).unwrap();
       dispatch(fetchAllItems());
-      toast.success('Item updated successfully!');
+      toast.success(t.updateItemModal.messages.success[lang]);
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to update item.');
+      toast.error(t.updateItemModal.messages.error[lang]);
     } finally {
       setLoading(false);
     }
-  };  
+  };
 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Item</DialogTitle>
-          <DialogDescription className="text-center">Update item details below.</DialogDescription>
+          <DialogTitle className="mb-0">
+            {t.updateItemModal.title[lang]}
+          </DialogTitle>
+          <DialogDescription className="text-center">
+            {t.updateItemModal.description[lang]}
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Item Translation Fields */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">Translations</h3>
-
-            {/* Finnish Translation */}
-            <div>
-              <h4 className="text-sm font-medium">Finnish</h4>
-              <label htmlFor="translations.fi.item_name">Item Name</label>
-              <Input
-                id="translations.fi.item_name"
-                name="translations.fi.item_name"
-                value={formData.translations.fi.item_name}
-                onChange={handleChange}
-                placeholder="Item Name (fi)"
-                required
-              />
-              <label htmlFor="translations.fi.item_description">Item Description</label>
-              <Input
-                id="translations.fi.item_description"
-                name="translations.fi.item_description"
-                value={formData.translations.fi.item_description}
-                onChange={handleChange}
-                placeholder="Item Description (fi)"
-                required
-              />
-            </div>
-
-            {/* English Translation */}
-            <div>
-              <h4 className="text-sm font-medium">English</h4>
-              <label htmlFor="translations.en.item_name">Item Name</label>
-              <Input
-                id="translations.en.item_name"
-                name="translations.en.item_name"
-                value={formData.translations.en.item_name}
-                onChange={handleChange}
-                placeholder="Item Name (en)"
-                required
-              />
-              <label htmlFor="translations.en.item_description">Item Description</label>
-              <Input
-                id="translations.en.item_description"
-                name="translations.en.item_description"
-                value={formData.translations.en.item_description}
-                onChange={handleChange}
-                placeholder="Item Description (en)"
-                required
-              />
-            </div>
-          </div>
-          {/* Price */}
-          <div className="flex flex-row items-center space-x-4">
-            <label htmlFor="price">Price</label>
-            <Input
-              id="price"
-              name="price"
-              type="number"
-              value={formData.price}
-              onChange={handleChange}
-              placeholder="Price"
-              required
-              className="w-60"
-            />
-            {/* Active Toggle */}
-            <label htmlFor="is_active" className="text-secondary font-medium">
-              Active
-            </label>
-            <Switch
-              id="is_active"
-              checked={formData.is_active}
-              onCheckedChange={(checked: boolean) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  is_active: checked,
-                }))
-              }
-            />
-          </div>
-
-          {/* Tag Selection */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">Assign Tags</h3>
-            <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
-              {tags.map((tag) => (
-                <label key={tag.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    className="border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
-                    checked={localSelectedTags.includes(tag.id)}
-                    onCheckedChange={() => handleTagToggle(tag.id)}
-                  />
-                  <span>{tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed'}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
-            disabled={loading}
+        {/* Tab Navigation */}
+        <div className="flex border-b mb-2">
+          <button
+            className={`px-4 py-1 text-sm ${
+              activeTab === "details"
+                ? "border-b-2 border-secondary font-medium"
+                : "text-gray-500"
+            }`}
+            onClick={() => setActiveTab("details")}
           >
-            {loading ? "Updating..." : "Update Item"}
-          </Button>
-        </form>
+            {t.updateItemModal.tabs.details[lang]}
+          </button>
+          <button
+            className={`px-4 py-1 text-sm ${
+              activeTab === "images"
+                ? "border-b-2 border-secondary font-medium"
+                : "text-gray-500"
+            }`}
+            onClick={() => setActiveTab("images")}
+          >
+            {t.updateItemModal.tabs.images[lang]}
+          </button>
+        </div>
+
+        {activeTab === "details" ? (
+          // Your existing form content
+          <div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Item Translation Fields */}
+              <div className="space-y-4">
+                {/* Item Names - Side by Side */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="translations.fi.item_name">
+                      {t.updateItemModal.labels.itemNameFi[lang]}
+                    </Label>
+                    <Input
+                      id="translations.fi.item_name"
+                      name="translations.fi.item_name"
+                      value={formData.translations.fi.item_name}
+                      onChange={handleChange}
+                      placeholder={
+                        t.updateItemModal.placeholders.itemNameFi[lang]
+                      }
+                      className="placeholder:text-xs p-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="translations.en.item_name">
+                      {t.updateItemModal.labels.itemNameEn[lang]}
+                    </Label>
+                    <Input
+                      id="translations.en.item_name"
+                      name="translations.en.item_name"
+                      value={formData.translations.en.item_name}
+                      onChange={handleChange}
+                      placeholder={
+                        t.updateItemModal.placeholders.itemNameEn[lang]
+                      }
+                      className="placeholder:text-xs p-2"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Item Types - Side by Side (if they exist in your schema) */}
+                {(formData.translations.fi.item_type !== undefined ||
+                  formData.translations.en.item_type !== undefined) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="translations.fi.item_type">
+                        {t.updateItemModal.labels.itemTypeFi[lang]}
+                      </Label>
+                      <Input
+                        id="translations.fi.item_type"
+                        name="translations.fi.item_type"
+                        value={formData.translations.fi.item_type || ""}
+                        onChange={handleChange}
+                        placeholder={
+                          t.updateItemModal.placeholders.itemTypeFi[lang]
+                        }
+                        className="placeholder:text-xs p-2"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="translations.en.item_type">
+                        {t.updateItemModal.labels.itemTypeEn[lang]}
+                      </Label>
+                      <Input
+                        id="translations.en.item_type"
+                        name="translations.en.item_type"
+                        value={formData.translations.en.item_type || ""}
+                        placeholder={
+                          t.updateItemModal.placeholders.itemTypeEn[lang]
+                        }
+                        className="placeholder:text-xs p-2"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Item Descriptions - Side by Side */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="translations.fi.item_description">
+                      {t.updateItemModal.labels.itemDescFi[lang]}
+                    </Label>
+                    <Textarea
+                      id="translations.fi.item_description"
+                      name="translations.fi.item_description"
+                      value={formData.translations.fi.item_description.toLowerCase()}
+                      onChange={handleChange}
+                      placeholder={
+                        t.updateItemModal.placeholders.itemDescFi[lang]
+                      }
+                      className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted h-16 align-top text-wrap"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="translations.en.item_description">
+                      {t.updateItemModal.labels.itemDescEn[lang]}
+                    </Label>
+                    <Textarea
+                      id="translations.en.item_description"
+                      name="translations.en.item_description"
+                      value={formData.translations.en.item_description.toLowerCase()}
+                      onChange={handleChange}
+                      placeholder={
+                        t.updateItemModal.placeholders.itemDescEn[lang]
+                      }
+                      className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted h-16 align-top text-wrap"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Price */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="flex flex-row items-baseline space-x-2">
+                  <Label htmlFor="price" className="font-medium">
+                    {t.updateItemModal.labels.price[lang]}
+                  </Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder={t.updateItemModal.placeholders.price[lang]}
+                    required
+                    className="w-40"
+                  />
+                </div>
+                {/* Location */}
+                <div className="flex flex-row items-baseline space-x-2">
+                  <Label htmlFor="location_id">
+                    {t.updateItemModal.labels.location[lang]}
+                  </Label>
+                  <Select
+                    value={formData.location_id || ""}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, location_id: value })
+                    }
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue
+                        placeholder={
+                          t.updateItemModal.placeholders.selectLocation[lang]
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map((location) => (
+                        <SelectItem key={location.id} value={location.id}>
+                          {location.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Active Toggle */}
+                <div className="flex flex-row items-center space-x-2">
+                  <Label htmlFor="is_active" className="font-medium">
+                    {t.updateItemModal.labels.active[lang]}
+                  </Label>
+                  <Switch
+                    id="is_active"
+                    checked={formData.is_active}
+                    onCheckedChange={(checked: boolean) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        is_active: checked,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Quantity Fields */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="items_number_total">
+                      {t.updateItemModal.labels.totalQuantity[lang]}
+                    </Label>
+                    <Input
+                      id="items_number_total"
+                      name="items_number_total"
+                      type="number"
+                      value={formData.items_number_total}
+                      onChange={handleChange}
+                      placeholder={
+                        t.updateItemModal.placeholders.totalQuantity[lang]
+                      }
+                      className="value:text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="items_number_currently_in_storage">
+                      {t.updateItemModal.labels.currentlyInStorage[lang]}
+                    </Label>
+                    <Input
+                      id="items_number_currently_in_storage"
+                      name="items_number_currently_in_storage"
+                      type="number"
+                      value={formData.items_number_currently_in_storage || 0}
+                      onChange={handleChange}
+                      placeholder={
+                        t.updateItemModal.placeholders.currentlyInStorage[lang]
+                      }
+                      className="value:text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="items_number_available">
+                      {t.updateItemModal.labels.available[lang]}
+                    </Label>
+                    <Input
+                      id="items_number_available"
+                      name="items_number_available"
+                      type="number"
+                      value={formData.items_number_available}
+                      onChange={handleChange}
+                      placeholder={
+                        t.updateItemModal.placeholders.available[lang]
+                      }
+                      className="value:text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Tag Selection */}
+              <div className="space-y-2">
+                <Label>{t.updateItemModal.tags.title[lang]}</Label>
+                <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
+                  {tags.map((tag) => (
+                    <label key={tag.id} className="flex items-center">
+                      <Checkbox
+                        className="m-0.75 border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
+                        checked={localSelectedTags.includes(tag.id)}
+                        onCheckedChange={() => handleTagToggle(tag.id)}
+                      />
+                      <span className="text-sm">
+                        {tag.translations?.[lang]?.name ||
+                          tag.translations?.[lang === "fi" ? "en" : "fi"]
+                            ?.name ||
+                          "Unnamed"}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+                disabled={loading}
+                size={"sm"}
+              >
+                {loading
+                  ? t.updateItemModal.buttons.updating[lang]
+                  : t.updateItemModal.buttons.update[lang]}
+              </Button>
+            </form>
+          </div>
+        ) : (
+          // Image manager component
+          <>
+            <ItemImageManager itemId={formData.id} />
+            <DialogFooter>
+              <Button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="w-full text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+                size={"sm"}
+              >
+                {loading
+                  ? t.updateItemModal.buttons.updating[lang]
+                  : t.updateItemModal.buttons.update[lang]}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto+Slab:wght@100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto+Slab:wght@100..900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
+  --main-font: 'Lato', sans-serif;
+  --heading-font: 'Roboto Slab', serif;
   --radius: 0.625rem;
-  --background: #ffffff;
+  --background: white;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -25,12 +25,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --ring: #9537c7;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -60,11 +55,6 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -75,7 +65,9 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-@theme inline {
+@theme {
+  --main-font: var(--main-font);
+  --heading-font: var(--heading-font);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -97,13 +89,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
-  --color-input: var(--input);
+  --color-input: var(--color-background);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -114,29 +101,156 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Global styles */
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border: var(--border);
+    outline: 50% solid var(--ring);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--main-font);
   }
   button {
-    @apply cursor-pointer;
+    cursor: pointer;
+  }
+  h1, h2, h3, nav {
+    font-family: var(--heading-font);
+  }
+  aside>nav {
+    font-family: var(--main-font);
   }
   h2 {
-    @apply text-center text-lg font-bold text-secondary mb-2;
+    text-align: center;
+    font-size: var(--text-lg);
+    font-weight: bold;
+    color: var(--secondary);
+    margin-bottom: 0.5rem;
   }
-  /* h1, nav {
-    @apply font-robotoSlab;
-  } */
+  h3 {
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  li {
+    list-style-type: none;
+    margin: 0.5rem 0;
+  }
+  input {
+    background-color: var(--background);
+  }
   label {
-    @apply mb-1;
+    margin-bottom: 0.25rem;
   }
-  th {
-    @apply text-secondary;
+  /* th {
+    color: var(--secondary);
+  } */
+}
+
+.infoBtn {
+  background-color: var(--background);
+  color: var(--secondary);
+  border-radius: 1rem;
+  border: 1px solid var(--secondary);
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+  font-size: smaller;
+}
+.infoBtn:hover {
+  background-color: var(--secondary);
+  color: white;
+}
+
+.deleteBtn {
+  background-color: var(--background);
+  color: var(--color-red-500);
+  border-radius: 1rem;
+  border: 1px solid var(--color-red-500);
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+  font-size: smaller;
+}
+.deleteBtn:hover {
+  background-color: var(--color-red-600);
+  color: white;
+}
+
+.editBtn {
+  background-color: var(--background);
+  color: var(--highlight2);
+  border-radius: 1rem;
+  border: 1px solid var(--highlight2);
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+  font-size: smaller;
+}
+.editBtn:hover {
+  background-color: var(--highlight2);
+  color: white;
+}
+
+.addBtn {
+  background-color: var(--highlight2);
+  color: white;
+  border-radius: 1rem;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+  font-size: smaller;
+}
+.addBtn:hover {
+  background-color: white;
+  color: var(--highlight2);
+}
+
+/* Custom Toast Styling */
+.custom-toast {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  z-index: 1;
+}
+
+.custom-toast::after {
+  content: '';
+  position: absolute;
+  border-radius: 0.75rem;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  width: 0;
+  background-color: #4CAF50;
+  animation: progressBar 3s linear forwards;
+  animation-play-state: running;
+  z-index: 0;
+}
+
+/* Use the :hover state to pause animation */
+.custom-toast:hover::after {
+  animation-play-state: paused;
+}
+
+.custom-toast[data-type="error"]::after {
+  background-color: #d32f2f;
+}
+
+.custom-toast:not([data-type])::after {
+  background-color: var(--highlight2); /* Neutral grey */
+}
+
+@keyframes progressBar {
+  0% {
+    width: 0%;
   }
-  .delete-toast {
-    @apply text-red-500 transition duration-200;
+  100% {
+    width: 100%;
   }
 }

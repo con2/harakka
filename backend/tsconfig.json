@@ -16,6 +16,9 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "noFallthroughCasesInSwitch": false,
+    "jsx": "react",
+  },
+  "include": ["src/**/*"],
+  "exclude": ["../frontend", "node_modules", "dist"]
 }

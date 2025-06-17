@@ -1,19 +1,20 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit"; // Redux Toolkit utilities for async actions and state slices
-import { usersApi } from "../../api/services/users"; // API service functions to interact with the backend
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { usersApi } from "../../api/services/users";
 import { UserState, UserProfile, CreateUserDto } from "../../types/user";
-import { RootState } from "../store"; // rootState type to access global Redux state
+import { RootState } from "../store";
 import { supabase } from "../../config/supabase";
-import { AxiosError } from "axios";
+import { extractErrorMessage } from "@/store/utils/errorHandlers";
+import { Address } from "@/types/address";
 
 const initialState: UserState = {
-  users: [], // users fetched from the backend
+  users: [],
   loading: false,
   error: null,
+  errorContext: null,
   selectedUser: null,
   selectedUserLoading: false,
+  selectedUserAddresses: [],
 };
-
-// Async Thunks (API Calls)
 
 // fetch all users
 export const fetchAllUsers = createAsyncThunk(
@@ -22,9 +23,8 @@ export const fetchAllUsers = createAsyncThunk(
     try {
       return await usersApi.getAllUsers();
     } catch (error: unknown) {
-      const axiosError = error as AxiosError<{ message?: string }>;
       return rejectWithValue(
-        axiosError.response?.data?.message || "Failed to fetch users",
+        extractErrorMessage(error, "Failed to fetch users"),
       );
     }
   },
@@ -37,18 +37,9 @@ export const createUser = createAsyncThunk(
     try {
       return await usersApi.createUser(user);
     } catch (error: unknown) {
-      console.error("Create user error:", error);
-      const axiosError = error as AxiosError<{
-        message?: string;
-        error?: string;
-      }>;
-      const message =
-        axiosError.response?.data?.message ||
-        axiosError.response?.data?.error ||
-        axiosError.message ||
-        "Failed to create user";
-
-      return rejectWithValue(message);
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to create user"),
+      );
     }
   },
 );
@@ -60,14 +51,14 @@ export const getUserById = createAsyncThunk(
     try {
       return await usersApi.getUserById(id);
     } catch (error: unknown) {
-      const axiosError = error as AxiosError<{ message?: string }>;
       // If we get a 404 on current user, the session might be invalid
+      const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 404) {
         // Clear the auth session
         await supabase.auth.signOut();
       }
       return rejectWithValue(
-        axiosError.response?.data?.message || "Failed to fetch user",
+        extractErrorMessage(error, "Failed to fetch user"),
       );
     }
   },
@@ -81,9 +72,8 @@ export const deleteUser = createAsyncThunk(
       await usersApi.deleteUser(id);
       return id; // Return deleted user ID to remove from state
     } catch (error: unknown) {
-      const axiosError = error as AxiosError<{ message?: string }>;
       return rejectWithValue(
-        axiosError.response?.data?.message || "Failed to delete user",
+        extractErrorMessage(error, "Failed to delete user"),
       );
     }
   },
@@ -99,12 +89,71 @@ export const updateUser = createAsyncThunk(
     try {
       return await usersApi.updateUser(id, data);
     } catch (error: unknown) {
-      const axiosError = error as AxiosError<{ message?: string }>;
       return rejectWithValue(
-        axiosError.response?.data?.message || "Failed to update user",
+        extractErrorMessage(error, "Failed to update user"),
       );
     }
   },
+);
+
+// Get addresses for a specific user thunk
+export const getUserAddresses = createAsyncThunk(
+  "users/getUserAddresses",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      return await usersApi.getAddresses(id);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch user addresses")
+      );
+    }
+  }
+);
+
+// Create new address thunk
+export const addAddress = createAsyncThunk(
+  "users/addAddress",
+  async ({ id, address }: { id: string; address: Address }, { rejectWithValue }) => {
+    try {
+      return await usersApi.addAddress(id, address);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to add address")
+      );
+    }
+  }
+);
+
+// Update address thunk
+export const updateAddress = createAsyncThunk(
+  "users/updateAddress",
+  async (
+    { id, addressId, address }: { id: string; addressId: string; address: Address },
+    { rejectWithValue }
+  ) => {
+    try {
+      return await usersApi.updateAddress(id, addressId, address);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to update address")
+      );
+    }
+  }
+);
+
+// Delete address thunk
+export const deleteAddress = createAsyncThunk(
+  "users/deleteAddress",
+  async ({ id, addressId }: { id: string; addressId: string }, { rejectWithValue }) => {
+    try {
+      await usersApi.deleteAddress(id, addressId);
+      return addressId; // Return the address ID to remove from state
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to delete address")
+      );
+    }
+  }
 );
 
 export const usersSlice = createSlice({
@@ -114,9 +163,13 @@ export const usersSlice = createSlice({
     clearSelectedUser: (state) => {
       state.selectedUser = null;
       state.error = null;
+      state.errorContext = null;
     },
     selectUser: (state, action: PayloadAction<UserProfile>) => {
       state.selectedUser = action.payload;
+    },
+    clearAddresses: (state) => {
+      state.selectedUserAddresses = [];
     },
   },
 
@@ -126,6 +179,8 @@ export const usersSlice = createSlice({
       // fetch All Users
       .addCase(fetchAllUsers.pending, (state) => {
         state.loading = true;
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(fetchAllUsers.fulfilled, (state, action) => {
         state.loading = false;
@@ -134,12 +189,14 @@ export const usersSlice = createSlice({
       .addCase(fetchAllUsers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.errorContext = "fetch";
       })
 
       // fetch user by ID
       .addCase(getUserById.pending, (state) => {
         state.selectedUserLoading = true;
         state.error = null;
+        state.errorContext = null;
       })
       .addCase(getUserById.fulfilled, (state, action) => {
         state.selectedUserLoading = false;
@@ -148,12 +205,14 @@ export const usersSlice = createSlice({
       .addCase(getUserById.rejected, (state, action) => {
         state.selectedUserLoading = false;
         state.error = action.payload as string;
+        state.errorContext = "fetch";
       })
 
       // create User
       .addCase(createUser.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.errorContext = null;
       })
       .addCase(createUser.fulfilled, (state, action) => {
         state.loading = false;
@@ -162,24 +221,109 @@ export const usersSlice = createSlice({
       .addCase(createUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.errorContext = "create";
       })
 
       // delete User
+      .addCase(deleteUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
       .addCase(deleteUser.fulfilled, (state, action) => {
+        state.loading = false;
         state.users = state.users.filter((user) => user.id !== action.payload);
       })
       .addCase(deleteUser.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload as string;
+        state.errorContext = "delete";
       })
 
       // update User
+      .addCase(updateUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
       .addCase(updateUser.fulfilled, (state, action) => {
+        state.loading = false;
         state.users = state.users.map((user) =>
           user.id === action.payload.id ? action.payload : user,
         );
       })
       .addCase(updateUser.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload as string;
+        state.errorContext = "update";
+      })
+
+      // fetch user addresses
+      .addCase(getUserAddresses.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(getUserAddresses.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedUserAddresses = action.payload; 
+      })
+      .addCase(getUserAddresses.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string; 
+        state.errorContext = "fetch";
+      })
+
+      // Add Address
+      .addCase(addAddress.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(addAddress.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedUserAddresses = [...(state.selectedUserAddresses || []), action.payload];
+      })
+      .addCase(addAddress.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "create";
+      })
+
+      // Update Address
+      .addCase(updateAddress.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(updateAddress.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedUserAddresses = (state.selectedUserAddresses || []).map((address) =>
+          address.id === action.payload.id ? action.payload : address
+        );
+      })
+      .addCase(updateAddress.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "update";
+      })
+
+      // Delete Address
+      .addCase(deleteAddress.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(deleteAddress.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedUserAddresses = (state.selectedUserAddresses ?? []).filter(
+          (address) => address.id !== action.payload
+        );
+      })
+      .addCase(deleteAddress.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "delete";
       });
   },
 });
@@ -188,6 +332,12 @@ export const usersSlice = createSlice({
 export const selectAllUsers = (state: RootState) => state.users.users;
 export const selectLoading = (state: RootState) => state.users.loading;
 export const selectError = (state: RootState) => state.users.error;
+export const selectErrorContext = (state: RootState) =>
+  state.users.errorContext;
+export const selectErrorWithContext = (state: RootState) => ({
+  message: state.users.error,
+  context: state.users.errorContext,
+});
 export const selectSelectedUser = (state: RootState) =>
   state.users.selectedUser;
 export const selectUserRole = (state: RootState) =>
@@ -201,8 +351,10 @@ export const selectIsUser = (state: RootState) =>
 export const selectSelectedUserLoading = (state: RootState) =>
   state.users.selectedUserLoading;
 
+export const selectUserAddresses = (state: RootState) => state.users.selectedUserAddresses;
+
 // export actions from the slice
-export const { clearSelectedUser, selectUser } = usersSlice.actions;
+export const { clearSelectedUser, selectUser, clearAddresses } = usersSlice.actions;
 
 // export the reducer to be used in the store
 export default usersSlice.reducer;

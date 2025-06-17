@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -9,12 +9,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAppDispatch } from "@/store/hooks";
-import { createUser } from "@/store/slices/usersSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  createUser,
+  selectLoading,
+  selectError,
+  selectErrorContext,
+} from "@/store/slices/usersSlice";
 import { toast } from "sonner";
 import { CreateUserDto } from "@/types/user";
 import { Label } from "../ui/label";
 import { useAuth } from "@/context/AuthContext";
+import { Loader2 } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -22,8 +28,10 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
-const initialFormState: CreateUserDto = {
+const initialFormState: Omit<CreateUserDto, "password"> = {
   full_name: "",
   visible_name: "",
   email: "",
@@ -35,10 +43,23 @@ const initialFormState: CreateUserDto = {
 const AddUserModal = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const dispatch = useAppDispatch();
+  const loading = useAppSelector(selectLoading);
+  const error = useAppSelector(selectError);
+  const errorContext = useAppSelector(selectErrorContext);
+  // Translation
+  const { lang } = useLanguage();
 
-  const [formData, setFormData] = useState<CreateUserDto>(initialFormState);
+  const [formData, setFormData] =
+    useState<Omit<CreateUserDto, "password">>(initialFormState);
   const [password, setPassword] = useState("");
   const [open, setOpen] = useState(false);
+
+  // Display errors when they occur
+  useEffect(() => {
+    if (error && errorContext === "create") {
+      toast.error(error);
+    }
+  }, [error, errorContext]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -60,22 +81,24 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
 
   const handleSubmit = async () => {
     if (!password) {
-      toast.error("Password is required.");
+      toast.error(t.addUserModal.messages.passwordRequired[lang]);
       return;
     }
     if (!isValidEmail(formData.email)) {
-      toast.error("Invalid email address.");
+      toast.error(t.addUserModal.messages.invalidEmail[lang]);
       return;
     }
     try {
-      const payload = { ...formData, password };
+      const payload: CreateUserDto = { ...formData, password };
       await dispatch(createUser(payload)).unwrap();
 
-      toast.success(`User ${payload.email} created successfully!`);
+      toast.success(
+        t.addUserModal.messages.success[lang].replace("{email}", payload.email),
+      );
       resetForm();
       setOpen(false);
-    } catch (error: any) {
-      toast.error(typeof error === "string" ? error : "Failed to add user.");
+    } catch {
+      // Error is already handled by the redux slice and displayed via useEffect
     }
   };
 
@@ -84,77 +107,95 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center mb-4">Add New User</DialogTitle>
+          <DialogTitle className="text-center mb-4">
+            {t.addUserModal.title[lang]}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="full_name">Full Name</Label>
+            <Label htmlFor="full_name">
+              {t.addUserModal.labels.fullName[lang]}
+            </Label>
             <Input
               id="full_name"
               name="full_name"
               value={formData.full_name}
               onChange={handleChange}
-              placeholder="Full Name"
+              placeholder={t.addUserModal.placeholders.fullName[lang]}
             />
           </div>
 
           <div>
-            <Label htmlFor="visible_name">Visible Name</Label>
+            <Label htmlFor="visible_name">
+              {t.addUserModal.labels.visibleName[lang]}
+            </Label>
             <Input
               id="visible_name"
               name="visible_name"
               value={formData.visible_name}
               onChange={handleChange}
-              placeholder="Visible Name"
+              placeholder={t.addUserModal.placeholders.visibleName[lang]}
             />
           </div>
 
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t.addUserModal.labels.email[lang]}</Label>
             <Input
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Email"
+              placeholder={t.addUserModal.placeholders.email[lang]}
             />
           </div>
 
           <div>
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone">{t.addUserModal.labels.phone[lang]}</Label>
             <Input
               id="phone"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="Phone Number"
+              placeholder={t.addUserModal.placeholders.phone[lang]}
+              autoComplete="new-phone"
             />
           </div>
 
           <div>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">
+              {t.addUserModal.labels.password[lang]}
+            </Label>
             <Input
               id="password"
               name="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder={t.addUserModal.placeholders.password[lang]}
+              autoComplete="new-password"
             />
           </div>
 
           {user?.role === "superVera" && (
             <div>
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role">{t.addUserModal.labels.role[lang]}</Label>
               <Select value={formData.role} onValueChange={handleRoleChange}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Role" />
+                  <SelectValue
+                    placeholder={t.addUserModal.placeholders.selectRole[lang]}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="superVera">Super Vera</SelectItem>
+                  <SelectItem value="user">
+                    {t.addUserModal.roles.user[lang]}
+                  </SelectItem>
+                  <SelectItem value="admin">
+                    {t.addUserModal.roles.admin[lang]}
+                  </SelectItem>
+                  <SelectItem value="superVera">
+                    {t.addUserModal.roles.superVera[lang]}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -163,10 +204,19 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
 
         <DialogFooter>
           <Button
-            className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+            className="w-full bg-background rounded-2xl text-secondary border-secondary border hover:text-background hover:bg-secondary"
             onClick={handleSubmit}
+            disabled={loading}
+            size={"sm"}
           >
-            Add User
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t.addUserModal.buttons.creating[lang]}
+              </>
+            ) : (
+              t.addUserModal.buttons.create[lang]
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

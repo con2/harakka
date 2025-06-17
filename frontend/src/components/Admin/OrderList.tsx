@@ -4,25 +4,15 @@ import {
   getAllOrders,
   selectOrdersLoading,
   selectOrdersError,
-  confirmOrder,
-  rejectOrder,
-  deleteOrder,
-  returnItems,
   selectAllOrders,
+  updatePaymentStatus,
 } from "@/store/slices/ordersSlice";
-import {
-  LoaderCircle,
-  CheckCircle,
-  XCircle,
-  Trash2,
-  RotateCcw,
-  Eye,
-} from "lucide-react";
+import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { useAuth } from "@/context/AuthContext";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "../ui/button";
-import { BookingOrder, BookingItem } from "@/types/orders";
+import { BookingOrder, BookingItem, PaymentStatus } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -30,8 +20,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
+import OrderReturnButton from "./OrderReturnButton";
+import OrderConfirmButton from "./OrderConfirmButton";
+import OrderRejectButton from "./OrderRejectButton";
+import OrderDeleteButton from "./OrderDeleteButton";
+import { DataTable } from "../ui/data-table";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { Separator } from "../ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import OrderPickupButton from "./OrderPickupButton";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -43,132 +43,31 @@ const OrderList = () => {
   const { authLoading } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<BookingOrder | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  // Translation
+  const { lang } = useLanguage();
+  const { formatDate } = useFormattedDate();
 
   useEffect(() => {
-    // Only fetch orders once when the component mounts and auth is ready
-    if (
-      !authLoading &&
-      user &&
-      user.id &&
-      (!orders || orders.length === 0) &&
-      !ordersLoadedRef.current
-    ) {
+    // Always fetch orders when the admin component mounts and auth is ready
+    if (!authLoading && user && user.id && !ordersLoadedRef.current) {
       dispatch(getAllOrders(user.id));
       ordersLoadedRef.current = true;
     }
   }, [authLoading, dispatch, user]);
-
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
 
   const handleViewDetails = (order: BookingOrder) => {
     setSelectedOrder(order);
     setShowDetailsModal(true);
   };
 
-  const handleConfirmOrder = async (orderId?: string) => {
-    if (!orderId) return;
-
-    try {
-      await toast.promise(dispatch(confirmOrder(orderId)).unwrap(), {
-        loading: "Confirming order...",
-        success: "Order confirmed successfully",
-        error: "Failed to confirm order",
-      });
-    } catch (error) {
-      console.error("Error confirming order:", error);
-    }
-  };
-
-  const handleRejectOrder = async (orderId?: string) => {
-    if (!orderId) return;
-
-    try {
-      await toast.promise(dispatch(rejectOrder(orderId)).unwrap(), {
-        loading: "Rejecting order...",
-        success: "Order rejected",
-        error: "Failed to reject order",
-      });
-    } catch (error) {
-      console.error("Error rejecting order:", error);
-    }
-  };
-
-  const handleDeleteOrder = async (orderId?: string) => {
-    if (!orderId) return;
-
-    toast.custom((t) => (
-      <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
-        <div className="font-semibold text-lg">Confirm Order Deletion</div>
-        <div className="text-sm text-muted-foreground">
-          Are you sure you want to delete this order? This action cannot be
-          undone.
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => toast.dismiss(t)}
-            className="bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-md"
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="rounded-md"
-            onClick={async () => {
-              toast.dismiss(t); // dismiss confirmation toast
-              try {
-                await toast.promise(dispatch(deleteOrder(orderId)).unwrap(), {
-                  loading: "Deleting order...",
-                  success: "Order deleted successfully",
-                  error: (err) => {
-                    if (err.includes("403") || err.includes("Forbidden")) {
-                      return "Permission denied: Only admins can delete orders";
-                    }
-                    return "Failed to delete order";
-                  },
-                });
-                // Refresh orders list after successful deletion
-                if (user && user.id) {
-                  dispatch(getAllOrders(user.id));
-                }
-              } catch (error) {
-                console.error("Error deleting order:", error);
-              }
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      </div>
-    ));
-  };
-
-  const handleReturnItems = async (orderId?: string) => {
-    if (!orderId) return;
-
-    try {
-      await toast.promise(dispatch(returnItems(orderId)).unwrap(), {
-        loading: "Processing return...",
-        success: "Items returned successfully",
-        error: "Failed to process return",
-      });
-    } catch (error) {
-      console.error("Error processing return:", error);
-    }
-  };
-
   // Render a status badge with appropriate color
   const StatusBadge = ({ status }: { status?: string }) => {
-    if (!status) return <Badge variant="outline">Unknown</Badge>;
+    if (!status)
+      return (
+        <Badge variant="outline">{t.orderList.status.unknown[lang]}</Badge>
+      );
 
     switch (status) {
       case "pending":
@@ -177,7 +76,7 @@ const OrderList = () => {
             variant="outline"
             className="bg-yellow-100 text-yellow-800 border-yellow-300"
           >
-            Pending
+            {t.orderList.status.pending[lang]}
           </Badge>
         );
       case "confirmed":
@@ -186,17 +85,34 @@ const OrderList = () => {
             variant="outline"
             className="bg-green-100 text-green-800 border-green-300"
           >
-            Confirmed
+            {t.orderList.status.confirmed[lang]}
           </Badge>
         );
       case "cancelled":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 border-red-300"
+          >
+            {t.orderList.status.cancelled[lang]}
+          </Badge>
+        );
       case "cancelled by user":
         return (
           <Badge
             variant="outline"
             className="bg-red-100 text-red-800 border-red-300"
           >
-            Cancelled
+            {t.orderList.status.cancelledByUser[lang]}
+          </Badge>
+        );
+      case "cancelled by admin":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 border-red-300"
+          >
+            {t.orderList.status.cancelledByAdmin[lang]}
           </Badge>
         );
       case "rejected":
@@ -205,7 +121,7 @@ const OrderList = () => {
             variant="outline"
             className="bg-red-100 text-red-800 border-red-300"
           >
-            Rejected
+            {t.orderList.status.rejected[lang]}
           </Badge>
         );
       case "completed":
@@ -214,7 +130,16 @@ const OrderList = () => {
             variant="outline"
             className="bg-blue-100 text-blue-800 border-blue-300"
           >
-            Completed
+            {t.orderList.status.completed[lang]}
+          </Badge>
+        );
+        case "picked up":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-green-100 text-green-800 border-green-300"
+          >
+            {t.orderList.status.pickedUp[lang]}
           </Badge>
         );
       default:
@@ -222,17 +147,43 @@ const OrderList = () => {
     }
   };
 
+  // Apply filters to orders before passing to table
+  const filteredOrders = orders.filter((order) => {
+    // Filter by status
+    if (statusFilter !== "all" && order.status !== statusFilter) {
+      return false;
+    }
+    // Filter by search query (order number or customer name)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const orderNumber = String(order.order_number || "").toLowerCase();
+      const customerName = (order.user_profile?.name || "").toLowerCase();
+      const customerEmail = (order.user_profile?.email || "").toLowerCase();
+
+      return (
+        orderNumber.includes(query) ||
+        customerName.includes(query) ||
+        customerEmail.includes(query)
+      );
+    }
+
+    return true;
+  });
+
   const columns: ColumnDef<BookingOrder>[] = [
     {
       accessorKey: "order_number",
-      header: "Order #",
+      header: t.orderList.columns.orderNumber[lang],
     },
     {
       accessorKey: "user_profile.name",
-      header: "Customer",
+      header: t.orderList.columns.customer[lang],
       cell: ({ row }) => (
         <div>
-          <div>{row.original.user_profile?.name || "Unknown"}</div>
+          <div>
+            {row.original.user_profile?.name ||
+              t.orderList.status.unknown[lang]}
+          </div>
           <div className="text-xs text-gray-500">
             {row.original.user_profile?.email}
           </div>
@@ -241,86 +192,171 @@ const OrderList = () => {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t.orderList.columns.status[lang],
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "created_at",
-      header: "Order Date",
-      cell: ({ row }) => formatDate(row.original.created_at),
+      header: t.orderList.columns.orderDate[lang],
+      cell: ({ row }) =>
+        formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
+    // {
+    //   accessorKey: "date_range",
+    //   header: t.orderList.columns.dateRange[lang],
+    //   cell: ({ row }) => {
+    //     const items = row.original.order_items || [];
+    //     if (items.length === 0) return "-";
+
+    //     // Get earliest start_date
+    //     const minStartDate = items.reduce((minDate, item) => {
+    //       const date = new Date(item.start_date);
+    //       return date < minDate ? date : minDate;
+    //     }, new Date(items[0].start_date));
+
+    //     // Get latest end_date
+    //     const maxEndDate = items.reduce((maxDate, item) => {
+    //       const date = new Date(item.end_date);
+    //       return date > maxDate ? date : maxDate;
+    //     }, new Date(items[0].end_date));
+
+    //     return (
+    //       <div className="text-xs flex flex-col">
+    //         <span>{`${formatDate(minStartDate, "d MMM yyyy")} -`}</span>
+    //         <span>{`${formatDate(maxEndDate, "d MMM yyyy")}`}</span>
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       accessorKey: "final_amount",
-      header: "Total",
+      header: t.orderList.columns.total[lang],
       cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
     },
     {
+      accessorKey: "invoice_status",
+      header: t.orderList.columns.invoice[lang],
+      cell: ({ row }) => {
+        const paymentStatus = row.original.payment_status ?? "N/A";
+
+        const handleStatusChange = (newStatus: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | "N/A") => {
+          dispatch(updatePaymentStatus({
+            orderId: row.original.id,
+            status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
+          }));
+        };
+
+        return (
+          <Select onValueChange={handleStatusChange} value={paymentStatus}>
+            <SelectTrigger className="w-[120px] text-xs">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              {["invoice-sent", "paid", "payment-rejected", "overdue", "N/A"].map((status) => {
+                const statusKeyMap: Record<string, keyof typeof t.orderList.columns.invoice.invoiceStatus> = {
+                  "invoice-sent": "sent",
+                  "paid": "paid",
+                  "payment-rejected": "rejected",
+                  "overdue": "overdue",
+                  "N/A": "NA",
+                };
+                const statusKey = statusKeyMap[status];
+                return (
+                  <SelectItem className="text-xs" key={status} value={status}>
+                    {t.orderList.columns.invoice.invoiceStatus?.[statusKey]?.[lang] || status}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        );
+      },
+    },
+    {
       id: "actions",
-      header: "Actions",
       cell: ({ row }) => {
         const order = row.original;
         const isPending = order.status === "pending";
         const isConfirmed = order.status === "confirmed";
 
         return (
-          <div className="flex space-x-2">
+          <div className="flex space-x-1">
             <Button
-              variant="ghost"
+              variant={"ghost"}
               size="sm"
               onClick={() => handleViewDetails(order)}
-              title="View Details"
+              title={t.orderList.buttons.viewDetails[lang]}
+              className="hover:text-slate-900 hover:bg-slate-300"
             >
               <Eye className="h-4 w-4" />
             </Button>
 
             {isPending && (
               <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleConfirmOrder(order.id)}
-                  title="Confirm Order"
-                  className="text-green-600 hover:text-green-800 hover:bg-green-100"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRejectOrder(order.id)}
-                  title="Reject Order"
-                  className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                >
-                  <XCircle className="h-4 w-4" />
-                </Button>
+                <OrderConfirmButton
+                  id={order.id}
+                  closeModal={() => setShowDetailsModal(false)}
+                />
+                <OrderRejectButton
+                  id={order.id}
+                  closeModal={() => setShowDetailsModal(false)}
+                />
               </>
             )}
 
             {isConfirmed && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleReturnItems(order.id)}
-                title="Process Return"
-                className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
+              <OrderReturnButton
+                id={order.id}
+                closeModal={() => setShowDetailsModal(false)}
+              />
             )}
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDeleteOrder(order.id)}
-              title="Delete Order"
-              className="text-red-600 hover:text-red-800 hover:bg-red-100"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {isConfirmed && (
+              <OrderPickupButton
+              />
+            )}
+
+            <OrderDeleteButton
+              id={order.id}
+              closeModal={() => setShowDetailsModal(false)}
+            />
           </div>
         );
       },
+    },
+  ];
+
+  const orderColumns: ColumnDef<BookingItem>[] = [
+    {
+      accessorKey: "item_name",
+      header: t.orderList.modal.orderItems.columns.item[lang],
+      cell: (i) => {
+        const itemName = i.getValue();
+        return (
+          String(itemName).charAt(0).toUpperCase() + String(itemName).slice(1)
+        );
+      },
+    },
+    {
+      accessorKey: "quantity",
+      header: t.orderList.modal.orderItems.columns.quantity[lang],
+    },
+    {
+      accessorKey: "start_date",
+      header: t.orderList.modal.orderItems.columns.startDate[lang],
+      cell: ({ row }) =>
+        formatDate(new Date(row.original.start_date || ""), "d MMM yyyy"),
+    },
+    {
+      accessorKey: "end_date",
+      header: t.orderList.modal.orderItems.columns.endDate[lang],
+      cell: ({ row }) =>
+        formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
+    },
+    {
+      accessorKey: "subtotal",
+      header: t.orderList.modal.orderItems.columns.subtotal[lang],
+      cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
     },
   ];
 
@@ -328,7 +364,7 @@ const OrderList = () => {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <LoaderCircle className="animate-spin h-8 w-8 mr-2" />
-        <span>Loading orders...</span>
+        <span>{t.orderList.loading[lang]}</span>
       </div>
     );
   }
@@ -341,159 +377,178 @@ const OrderList = () => {
     <>
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Order Management</h1>
+          <h1 className="text-xl">{t.orderList.title[lang]}</h1>
 
           <Button
             onClick={() => user && user?.id && dispatch(getAllOrders(user.id))}
-            variant="outline"
-            className="ml-auto mr-2"
+            className="bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
           >
-            Refresh Orders
+            {t.orderList.buttons.refresh[lang]}
           </Button>
         </div>
-
-        <PaginatedDataTable columns={columns} data={orders} />
+        <div className="flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex gap-4 items-center">
+            <input
+              type="text"
+              placeholder={t.orderList.filters.search[lang]}
+              value={searchQuery}
+              size={50}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            >
+              <option value="all">
+                {t.orderList.filters.status.all[lang]}
+              </option>
+              <option value="pending">
+                {t.orderList.filters.status.pending[lang]}
+              </option>
+              <option value="confirmed">
+                {t.orderList.filters.status.confirmed[lang]}
+              </option>
+              <option value="cancelled">
+                {t.orderList.filters.status.cancelled[lang]}
+              </option>
+              <option value="rejected">
+                {t.orderList.filters.status.rejected[lang]}
+              </option>
+              <option value="completed">
+                {t.orderList.filters.status.completed[lang]}
+              </option>
+              <option value="deleted">
+                {t.orderList.filters.status.deleted[lang]}
+              </option>
+              <option value="cancelled by admin">
+                {t.orderList.filters.status.cancelledByAdmin[lang]}
+              </option>
+            </select>
+            {(searchQuery || statusFilter !== "all") && (
+              <Button
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                }}
+                size={"sm"}
+                className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+              >
+                {t.orderList.filters.clear[lang]}
+              </Button>
+            )}
+          </div>
+        </div>
+        <PaginatedDataTable columns={columns} data={filteredOrders} />
       </div>
 
       {/* Order Details Modal */}
       {selectedOrder && (
-        <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>
-                Order Details #{selectedOrder.order_number}
-              </DialogTitle>
-            </DialogHeader>
+        <div className="min-w-[320px]">
+          <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+            <DialogContent className="max-w-5xl">
+              <DialogHeader>
+                <DialogTitle className="text-left">
+                  {t.orderList.columns.orderNumber[lang]}{" "}
+                  {selectedOrder.order_number}
+                </DialogTitle>
+              </DialogHeader>
 
-            <div className="space-y-4">
-              {/* Order Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold">Customer</h3>
-                  <p>{selectedOrder.user_profile?.name || "Unknown"}</p>
-                  <p className="text-sm text-gray-500">
-                    {selectedOrder.user_profile?.email}
-                  </p>
-                </div>
+              <div className="space-y-4">
+                {/* Order Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h3 className="font-normal">
+                      {t.orderList.modal.customer[lang]}
+                    </h3>
+                    <p className="text-sm mb-0">
+                      {selectedOrder.user_profile?.name ||
+                        t.orderList.status.unknown[lang]}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {selectedOrder.user_profile?.email}
+                    </p>
+                  </div>
 
-                <div>
-                  <h3 className="font-semibold">Order Information</h3>
-                  <p>
-                    Status: <StatusBadge status={selectedOrder.status} />
-                  </p>
-                  <p>Date: {formatDate(selectedOrder.created_at)}</p>
-                </div>
-              </div>
-
-              {/* Order Items */}
-              <div>
-                <h3 className="font-semibold mb-2">Items</h3>
-                <div className="border rounded-md overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Item
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Quantity
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Start Date
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          End Date
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Subtotal
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {selectedOrder.order_items?.map(
-                        (item: BookingItem, index: number) => (
-                          <tr key={index}>
-                            <td className="px-4 py-2">
-                              {item.item_name || `Item ${item.item_id}`}
-                            </td>
-                            <td className="px-4 py-2">{item.quantity}</td>
-                            <td className="px-4 py-2">
-                              {formatDate(item.start_date)}
-                            </td>
-                            <td className="px-4 py-2">
-                              {formatDate(item.end_date)}
-                            </td>
-                            <td className="px-4 py-2">
-                              €{item.subtotal?.toFixed(2) || "0.00"}
-                            </td>
-                          </tr>
-                        ),
+                  <div className="space-y-2">
+                    <h3 className="font-normal">
+                      {t.orderList.modal.orderInfo[lang]}
+                    </h3>
+                    <p className="text-sm mb-0">
+                      {t.orderList.modal.status[lang]}{" "}
+                      <StatusBadge status={selectedOrder.status} />
+                    </p>
+                    <p className="text-sm">
+                      {t.orderList.modal.date[lang]}{" "}
+                      {formatDate(
+                        new Date(selectedOrder.created_at || ""),
+                        "d MMM yyyy",
                       )}
-                    </tbody>
-                    <tfoot className="bg-gray-50">
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-4 py-2 text-right font-medium"
-                        >
-                          Total:
-                        </td>
-                        <td className="px-4 py-2 font-bold">
-                          €{selectedOrder.final_amount?.toFixed(2) || "0.00"}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Order Items */}
+                <div>
+                  <DataTable
+                    columns={orderColumns}
+                    data={selectedOrder.order_items || []}
+                  />
+                </div>
+
+                {/* Order Modal Actions */}
+                <div className="flex flex-col justify-center space-x-4">
+                  <Separator />
+                  <div className="flex flex-row items-center gap-4 mt-4 justify-center">
+                  {selectedOrder.status === "pending" && (
+                    <>
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.confirm[lang]}</span>
+                      <OrderConfirmButton
+                        id={selectedOrder.id}
+                        closeModal={() => setShowDetailsModal(false)}
+                      />
+                      </div>
+                      <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.reject[lang]}</span>
+                      <OrderRejectButton
+                        id={selectedOrder.id}
+                        closeModal={() => setShowDetailsModal(false)}
+                      />
+                      </div>
+                    </>
+                  )}
+
+                  {selectedOrder.status === "confirmed" && (
+                    <>
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.return[lang]}</span>
+                    <OrderReturnButton
+                      id={selectedOrder.id}
+                      closeModal={() => setShowDetailsModal(false)}
+                    />
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.pickedUp[lang]}</span>
+                    <OrderPickupButton
+                    />
+                    </div>
+                    </>
+                  )}
+                  <div className="flex flex-col items-center text-center">
+                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.delete[lang]}</span>
+                  <OrderDeleteButton
+                    id={selectedOrder.id}
+                    closeModal={() => setShowDetailsModal(false)}
+                  />
+                  </div>
+                </div>
                 </div>
               </div>
-
-              {/* Order Actions */}
-              <div className="flex justify-end space-x-2">
-                {selectedOrder.status === "pending" && (
-                  <>
-                    <Button
-                      onClick={() => {
-                        handleConfirmOrder(selectedOrder.id);
-                        setShowDetailsModal(false);
-                      }}
-                      variant="default"
-                    >
-                      Confirm Order
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        handleRejectOrder(selectedOrder.id);
-                        setShowDetailsModal(false);
-                      }}
-                      variant="destructive"
-                    >
-                      Reject Order
-                    </Button>
-                  </>
-                )}
-
-                {selectedOrder.status === "confirmed" && (
-                  <Button
-                    onClick={() => {
-                      handleReturnItems(selectedOrder.id);
-                      setShowDetailsModal(false);
-                    }}
-                    variant="default"
-                  >
-                    Process Return
-                  </Button>
-                )}
-
-                <Button
-                  onClick={() => setShowDetailsModal(false)}
-                  variant="outline"
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       )}
     </>
   );

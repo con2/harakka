@@ -1,24 +1,39 @@
-import { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
+  checkItemDeletability,
   deleteItem,
   fetchAllItems,
   selectAllItems,
   selectItemsError,
   selectItemsLoading,
   updateItem,
-} from '@/store/slices/itemsSlice';
-import { PaginatedDataTable } from '../ui/data-table-paginated';
-import { ColumnDef } from '@tanstack/react-table';
-import { LoaderCircle } from 'lucide-react';
-import { Button } from '../ui/button';
-import AddItemModal from './AddItemModal';
-import { toast } from 'sonner';
-import UpdateItemModal from './UpdateItemModal';
-import { Switch } from '@/components/ui/switch';
-import { selectAllTags } from '@/store/slices/tagSlice';
-import { Item } from '@/types/item';
-import AssignTagsModal from './AssignTagsModal';
+} from "@/store/slices/itemsSlice";
+import { PaginatedDataTable } from "../ui/data-table-paginated";
+import { ColumnDef } from "@tanstack/react-table";
+import { Edit, LoaderCircle, Trash2 } from "lucide-react";
+import { Button } from "../ui/button";
+import AddItemModal from "./AddItemModal";
+import { toast } from "sonner";
+import UpdateItemModal from "./UpdateItemModal";
+import { Switch } from "@/components/ui/switch";
+import { selectAllTags } from "@/store/slices/tagSlice";
+import { Item } from "@/types/item";
+import AssignTagsModal from "./AssignTagsModal";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Command, CommandGroup, CommandItem } from "../ui/command";
+import { Checkbox } from "../ui/checkbox";
+import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { toastConfirm } from "../ui/toastConfirm";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
+import { fetchAllTags } from "@/store/slices/tagSlice";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -28,143 +43,168 @@ const AdminItemsTable = () => {
   const tags = useAppSelector(selectAllTags);
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const isAdmin = useAppSelector(selectIsAdmin);
+  const isSuperVera = useAppSelector(selectIsSuperVera);
+  // Translation
+  const { lang } = useLanguage();
 
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   // filtering states:
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleCloseAssignTagsModal = () => {
     setAssignTagsModalOpen(false);
     setCurrentItemId(null);
   };
 
+  //fetch tags list
+  const tagsLoading = useAppSelector((state) => state.tags.loading);
+  useEffect(() => {
+    dispatch(fetchAllTags());
+  }, [dispatch]);
+
   const itemsColumns: ColumnDef<Item>[] = [
-    // {
-    //   header: 'Image',
-    //   accessorKey: 'imageUrl',
-    //   cell: ({ row }) => {
-    //     const url = row.original.imageUrl || defaultImage;
-    //     return (
-    //       <img
-    //         src={url}
-    //         alt="Item"
-    //         className="h-12 w-12 object-cover rounded-md"
-    //         onError={(e) => {
-    //           (e.target as HTMLImageElement).src = defaultImage;
-    //         }}
-    //       />
-    //     );
-    //   },
-    // },
-    // {
-    //   header: 'Location',
-    //   accessorKey: 'location',
-    //   cell: ({ row }) => (
-    //     <div className="flex items-center gap-1 text-sm text-muted-foreground">
-    //       <Box className="h-4 w-4" />
-    //       {row.original.location_id_name || 'N/A'}
-    //     </div>
-    //   ),
-    // },
     {
-      header: 'Item Name (FI)',
+      header: t.adminItemsTable.columns.namefi[lang],
+      size: 120,
       accessorFn: (row) => row.translations.fi.item_name,
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableSorting: true,
-      cell: ({ row }) => row.original.translations.fi.item_name,
+      cell: ({ row }) => {
+        const name = row.original.translations.fi.item_name || "";
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      },
     },
     {
-      header: 'Item Type (FI)',
+      header: t.adminItemsTable.columns.typefi[lang],
+      size: 120,
       accessorFn: (row) => row.translations.fi.item_type,
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableSorting: true,
-      cell: ({ row }) => row.original.translations.fi.item_type,
+      cell: ({ row }) => {
+        const type = row.original.translations.fi.item_type || "";
+        return type.charAt(0).toUpperCase() + type.slice(1);
+      },
     },
     {
-      header: 'Price',
-      accessorKey: 'price',
+      header: t.adminItemsTable.columns.location[lang],
+      size: 70,
+      accessorFn: (row) => row.location_details?.name || "N/A", // For sorting
+      enableSorting: true,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1 text-sm">
+          {row.original.location_details?.name || "N/A"}
+        </div>
+      ),
+    },
+    {
+      header: t.adminItemsTable.columns.price[lang],
+      accessorKey: "price",
+      size: 30,
       cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
     },
-    // {
-    //   header: 'Average Rating',
-    //   accessorFn: (row) => row.average_rating,
-    //   cell: ({ row }) => row.original.average_rating ?? 'N/A', // Handle if no average rating
-    // },
     {
-      id: 'status',
-      header: 'Active',
+      header: t.adminItemsTable.columns.quantity[lang],
+      size: 30,
+      accessorFn: (row) => row.items_number_available,
+      cell: ({ row }) =>
+        `${row.original.items_number_available} ${t.adminItemsTable.messages.units[lang]}`,
+    },
+    {
+      id: "status",
+      header: t.adminItemsTable.columns.active[lang],
+      size: 30,
       cell: ({ row }) => {
         const item = row.original;
-    
+
         const handleToggle = async (checked: boolean) => {
           try {
-            await dispatch(updateItem({
-              id: item.id,
-              data: {
-                is_active: checked,
-              },
-            })).unwrap();
+            await dispatch(
+              updateItem({
+                id: item.id,
+                data: {
+                  is_active: checked,
+                },
+              }),
+            ).unwrap();
             dispatch(fetchAllItems());
-            toast.success(`Item ${checked ? 'activated' : 'deactivated'} successfully`);
-          } catch (error) {
-            toast.error('Failed to update item status');
+            toast.success(
+              checked
+                ? t.adminItemsTable.messages.toast.activateSuccess[lang]
+                : t.adminItemsTable.messages.toast.deactivateSuccess[lang],
+            );
+          } catch {
+            toast.error(
+              t.adminItemsTable.messages.toast.statusUpdateFail[lang],
+            );
           }
         };
-    
+
         return (
-          <Switch
-            checked={item.is_active}
-            onCheckedChange={handleToggle}
-          />
+          <Switch checked={item.is_active} onCheckedChange={handleToggle} />
         );
       },
     },
     {
-      id: 'tags',
-      header: 'Tags',
+      id: "actions",
+      size: 30,
+      enableSorting: false,
+      enableColumnFilter: false,
       cell: ({ row }) => {
-        const tags = row.original.storage_item_tags ?? [];
+        const targetUser = row.original;
+        const canEdit = isSuperVera || isAdmin;
+        const canDelete = isSuperVera || isAdmin;
+        const isDeletable = useAppSelector(
+          (state) => state.items.deletableItems[targetUser.id] !== false,
+        );
+
         return (
-          <div className="flex flex-wrap gap-1">
-            {tags.map(tag => (
-              <span
-                key={tag.id}
-                className="text-xs rounded px-2 py-1 text-secondary"
+          <div className="flex gap-2">
+            {canEdit && (
+              <Button
+                size="sm"
+                onClick={() => handleEdit(targetUser)}
+                className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
               >
-                {tag.translations?.fi?.name || tag.translations?.en?.name || 'Unnamed'}
-              </span>
-            ))}
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+            {canDelete && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-800 hover:bg-red-100"
+                        onClick={() => handleDelete(targetUser.id)}
+                        disabled={!isDeletable}
+                        aria-label={`Delete ${targetUser.translations.fi.item_name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {!isDeletable && (
+                    <TooltipContent
+                      side="top"
+                      className="90 text-white border-0 p-2"
+                    >
+                      <p>{t.adminItemsTable.tooltips.cantDelete[lang]}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         );
       },
-    },      
-    {
-      id: 'edit',
-      header: 'Edit',
-      cell: ({ row }) => (
-        <Button
-          className="bg-background rounded-2xl px-6 text-highlight2 border-highlight2 border-1 hover:text-background hover:bg-highlight2"
-          onClick={() => handleEdit(row.original)}
-        >
-          Edit
-        </Button>
-      ),
-    },
-    {
-      id: 'delete',
-      header: 'Delete',
-      cell: ({ row }) => (
-        <Button
-          className="bg-background rounded-2xl px-6 text-destructive border-destructive border hover:text-background"
-          variant="destructive"
-          onClick={() => handleDelete(row.original.id)}
-        >
-          Delete
-        </Button>
-      ),
     },
   ];
 
@@ -172,53 +212,50 @@ const AdminItemsTable = () => {
     if (items.length === 0) {
       dispatch(fetchAllItems());
     }
-  }, [dispatch, items.length]);  
-  
+  }, [dispatch, items.length]);
+
   const handleEdit = (item: Item) => {
-    setSelectedItem(item);  // Set the selected item
-    setShowModal(true);      // Show the modal
+    setSelectedItem(item); // Set the selected item
+    setShowModal(true); // Show the modal
   };
 
+  const deletableItems = useAppSelector((state) => state.items.deletableItems);
+
+  useEffect(() => {
+    const newItemIds = items
+      .filter(
+        (item) =>
+          !Object.prototype.hasOwnProperty.call(deletableItems, item.id),
+      )
+      .map((item) => item.id);
+
+    if (newItemIds.length > 0) {
+      newItemIds.forEach((id) => dispatch(checkItemDeletability(id)));
+    }
+  }, [dispatch, items, deletableItems]);
+
   const handleDelete = async (id: string) => {
-    toast.custom((t) => (
-      <div className="bg-white dark:bg-primary text-primary dark:text-white border border-zinc-200 dark:border-primary rounded-xl p-4 w-[360px] shadow-lg flex flex-col gap-3">
-        <div className="font-semibold text-lg">Confirm Deletion</div>
-        <div className="text-sm text-muted-foreground">
-          Are you sure you want to delete this item?
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => toast.dismiss(t)}
-            className="bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-md"
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="rounded-md"
-            onClick={async () => {
-              toast.dismiss(t); // dismiss confirmation toast
-              try {
-                await toast.promise(dispatch(deleteItem(id)).unwrap(), {
-                  loading: "Deleting item...",
-                  success: "Item has been successfully deleted.",
-                  error: "Failed to delete item.",
-                });
-                // After successful deletion, refetch or update state
-                dispatch(fetchAllItems());
-              } catch (error) {
-                toast.error("Error deleting item.");
-              }
-            }}
-          >
-            Confirm
-          </Button>
-        </div>
-      </div>
-    ));
+    toastConfirm({
+      title: t.adminItemsTable.messages.deletion.title[lang],
+      description: t.adminItemsTable.messages.deletion.description[lang],
+      confirmText: t.adminItemsTable.messages.deletion.confirm[lang],
+      cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
+      onConfirm: async () => {
+        try {
+          await toast.promise(dispatch(deleteItem(id)).unwrap(), {
+            loading: t.adminItemsTable.messages.toast.deleting[lang],
+            success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
+            error: t.adminItemsTable.messages.toast.deleteFail[lang],
+          });
+          dispatch(fetchAllItems());
+        } catch {
+          toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
+        }
+      },
+      onCancel: () => {
+        // Optional: handle cancel if needed
+      },
+    });
   };
 
   const handleCloseModal = () => {
@@ -251,90 +288,162 @@ const AdminItemsTable = () => {
   }
 
   const filteredItems = items
-  .filter(item => {
-    if (statusFilter === 'active') return item.is_active;
-    if (statusFilter === 'inactive') return !item.is_active;
-    return true;
-  })
-  .filter(item => {
-    const name = item.translations.fi.item_name.toLowerCase();
-    const type = item.translations.fi.item_type.toLowerCase();
-    return (
-      name.includes(searchTerm.toLowerCase()) ||
-      type.includes(searchTerm.toLowerCase())
-    );
-  })
-  .filter(item => {
-    if (tagFilter.length === 0) return true;
-    const itemTagIds = (item.storage_item_tags ?? []).map(t => t.id);
-    return tagFilter.every(tag => itemTagIds.includes(tag));
-  });
+    .filter((item) => {
+      if (statusFilter === "active") return item.is_active;
+      if (statusFilter === "inactive") return !item.is_active;
+      return true;
+    })
+    .filter((item) => {
+      const name = item.translations.fi.item_name.toLowerCase();
+      const type = item.translations.fi.item_type.toLowerCase();
+      return (
+        name.includes(searchTerm.toLowerCase()) ||
+        type.includes(searchTerm.toLowerCase())
+      );
+    })
+    .filter((item) => {
+      if (tagFilter.length === 0) return true;
+      const itemTagIds = (item.storage_item_tags ?? []).map((t) => t.id);
+      return tagFilter.every((tag) => itemTagIds.includes(tag));
+    });
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl">Manage Storage Items</h1>
-        <AddItemModal>
-          <Button className="text-white rounded-2xl bg-highlight2 hover:bg-white hover:text-highlight2">
-            Add New Item
-          </Button>
-        </AddItemModal>
+        <h1 className="text-xl">{t.adminItemsTable.title[lang]}</h1>
       </div>
-      <div className="flex flex-wrap gap-4 items-center">
-        {/* Search by item name/type */}
-        <input
-          type="text"
-          className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-          placeholder="Search by name or type"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
+        <div className="flex gap-4 items-center">
+          {/* Search by item name/type */}
+          <input
+            type="text"
+            size={50}
+            className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            placeholder={t.adminItemsTable.filters.searchPlaceholder[lang]}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
 
-        {/* Filter by active status */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-          className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-        >
-          <option value="all">All</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+          {/* Filter by active status */}
+          <select
+            value={statusFilter}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as "all" | "active" | "inactive")
+            }
+            className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+          >
+            <option value="all">
+              {t.adminItemsTable.filters.status.all[lang]}
+            </option>
+            <option value="active">
+              {t.adminItemsTable.filters.status.active[lang]}
+            </option>
+            <option value="inactive">
+              {t.adminItemsTable.filters.status.inactive[lang]}
+            </option>
+          </select>
 
-        {/* Filter by tags */}
-        <div className="flex flex-wrap gap-2">
-          {tagFilter.length > 0 && (
-            <span className="text-sm text-muted-foreground">
-              Filtered by {tagFilter.length} tag{tagFilter.length > 1 ? 's' : ''}
-            </span>
-          )}
-          {tags.map(tag => (
-            <button
-              key={tag.id}
+          {/* Filter by tags */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                className="px-3 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+                size={"sm"}
+              >
+                {tagFilter.length > 0
+                  ? t.adminItemsTable.filters.tags.filtered[lang].replace(
+                      "{count}",
+                      tagFilter.length.toString(),
+                    )
+                  : t.adminItemsTable.filters.tags.filter[lang]}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[250px] p-0">
+              <Command>
+                <CommandGroup>
+                  {tagsLoading ? (
+                    <div className="flex justify-center p-4">
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    </div>
+                  ) : tags.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      {t.adminItemsTable.filters.tags.noTags[lang] ||
+                        "No tags found"}
+                    </div>
+                  ) : (
+                    tags.map((tag) => {
+                      const label =
+                        tag.translations?.[lang]?.name?.toLowerCase() || // Try current language first
+                        tag.translations?.[
+                          lang === "fi" ? "en" : "fi"
+                        ]?.name?.toLowerCase() || // Fall back to other language
+                        t.adminItemsTable.filters.tags.unnamed[lang] ||
+                        "Unnamed";
+
+                      function cn(...classes: (string | undefined)[]): string {
+                        return classes.filter(Boolean).join(" ");
+                      }
+                      return (
+                        <CommandItem
+                          key={tag.id}
+                          onSelect={() =>
+                            setTagFilter((prev) =>
+                              prev.includes(tag.id)
+                                ? prev.filter((t) => t !== tag.id)
+                                : [...prev, tag.id],
+                            )
+                          }
+                          className="cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={tagFilter.includes(tag.id)}
+                            onCheckedChange={() =>
+                              setTagFilter((prev) =>
+                                prev.includes(tag.id)
+                                  ? prev.filter((t) => t !== tag.id)
+                                  : [...prev, tag.id],
+                              )
+                            }
+                            className={cn(
+                              "mr-2 h-4 w-4 border border-secondary bg-white text-white",
+                              "data-[state=checked]:bg-secondary",
+                              "data-[state=checked]:text-white",
+                            )}
+                          />
+                          <span>{label}</span>
+                        </CommandItem>
+                      );
+                    })
+                  )}
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
+          {/* Clear filters button */}
+          {(searchTerm || statusFilter !== "all" || tagFilter.length > 0) && (
+            <Button
               onClick={() => {
-                setTagFilter(prev => prev.includes(tag.id)
-                  ? prev.filter(t => t !== tag.id)
-                  : [...prev, tag.id]);
+                setSearchTerm("");
+                setStatusFilter("all");
+                setTagFilter([]);
               }}
-              className={`px-3 py-2 rounded-2xl text-xs border ${
-                tagFilter.includes(tag.id) ? 'bg-secondary text-white' : 'border-secondary text-secondary'
-              }`}
+              size={"sm"}
+              className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
             >
-              {tag.translations?.fi?.name?.toLowerCase() || tag.translations?.en?.name?.toLowerCase()}
-            </button>
-          ))}
+              {t.adminItemsTable.filters.clear[lang]}
+            </Button>
+          )}
         </div>
-        <Button
-          onClick={() => {
-            setSearchTerm('');
-            setStatusFilter('all');
-            setTagFilter([]);
-          }}
-          className="ml-4 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
-        >
-          Clear Filters
-        </Button>
-    </div>
+        {/* Add New Item button */}
+        <div className="flex gap-4 justify-end">
+          <AddItemModal>
+            <Button className="addBtn" size={"sm"}>
+              {t.adminItemsTable.buttons.addNew[lang]}
+            </Button>
+          </AddItemModal>
+        </div>
+      </div>
 
       <PaginatedDataTable columns={itemsColumns} data={filteredItems} />
 
@@ -342,17 +451,16 @@ const AdminItemsTable = () => {
       {showModal && selectedItem && (
         <UpdateItemModal
           onClose={handleCloseModal}
-          initialData={selectedItem}  // Pass the selected item data to the modal
+          initialData={selectedItem} // Pass the selected item data to the modal
         />
       )}
       {assignTagsModalOpen && currentItemId && (
-      <AssignTagsModal
-        open={assignTagsModalOpen}
-        itemId={currentItemId}
-        onClose={handleCloseAssignTagsModal}
-      />
-    )}
-
+        <AssignTagsModal
+          open={assignTagsModalOpen}
+          itemId={currentItemId}
+          onClose={handleCloseAssignTagsModal}
+        />
+      )}
     </div>
   );
 };
