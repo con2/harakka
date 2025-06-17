@@ -1,6 +1,6 @@
 # Setup PDF invoicing
 
-## pdfs
+## PDFs
 
 for the creation we use pdfkit
 install dependencies:
