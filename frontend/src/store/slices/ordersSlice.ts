@@ -5,25 +5,17 @@ import {
 } from "@reduxjs/toolkit";
 import { ordersApi } from "../../api/services/orders";
 import { RootState } from "../store";
-import { BookingOrder, BookingItem } from "../../types/orders";
-import { createApiThunk } from "../utils/thunkCreators";
-
-// Define the DTO type for order creation
-interface CreateOrderDto {
-  user_id: string;
-  items: {
-    item_id: string;
-    quantity: number;
-    start_date: string;
-    end_date: string;
-  }[];
-}
+import {
+  BookingOrder,
+  BookingItem,
+  OrdersState,
+  CreateOrderDto,
+  PaymentStatus,
+} from "@/types";
+import { extractErrorMessage } from "@/store/utils/errorHandlers";
 
 // Create an entity adapter for orders
-const ordersAdapter = createEntityAdapter<BookingOrder, string>({
-  // Select the order ID as the primary key
-  selectId: (order) => order.id,
-  // Sort by creation date, newest first
+const ordersAdapter = createEntityAdapter<BookingOrder>({
   sortComparer: (a, b) => {
     const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -31,47 +23,29 @@ const ordersAdapter = createEntityAdapter<BookingOrder, string>({
   },
 });
 
-// Define the error state interface
-interface OrderError {
-  message: string | null;
-  code?: string;
-  context?:
-    | "create"
-    | "fetch"
-    | "update"
-    | "delete"
-    | "confirm"
-    | "cancel"
-    | "reject"
-    | null;
-}
-
-// Additional state properties beyond EntityState
-interface OrdersAdditionalState {
-  orders: BookingOrder[];
-  userOrders: BookingOrder[];
-  loading: boolean;
-  error: OrderError;
-  currentOrder: string | null;
-}
-
 // Create initial state
-const initialState = ordersAdapter.getInitialState<OrdersAdditionalState>({
-  orders: [], // All orders (admin)
-  userOrders: [], // Single user's orders
+const initialState = ordersAdapter.getInitialState<
+  Omit<OrdersState, "entities" | "ids">
+>({
+  userOrders: [],
   loading: false,
-  error: {
-    message: null,
-    context: null,
-  },
+  error: null,
+  errorContext: null,
   currentOrder: null,
 });
 
 // Create order thunk
-export const createOrder = createApiThunk<BookingOrder, CreateOrderDto>(
+export const createOrder = createAsyncThunk<BookingOrder, CreateOrderDto>(
   "orders/createOrder",
-  ordersApi.createOrder,
-  "Failed to create order",
+  async (orderData, { rejectWithValue }) => {
+    try {
+      return await ordersApi.createOrder(orderData);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to create order"),
+      );
+    }
+  },
 );
 
 // Get user orders thunk
@@ -79,76 +53,161 @@ export const getUserOrders = createAsyncThunk<BookingOrder[], string>(
   "orders/getUserOrders",
   async (userId, { rejectWithValue }) => {
     try {
-      const response = await ordersApi.getUserOrders(userId);
-
-      // Ensure we return the raw array from the API
-      return Array.isArray(response) ? response : [];
+      return await ordersApi.getUserOrders(userId);
     } catch (error: unknown) {
-      let errorMessage = "Failed to fetch orders";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      return rejectWithValue(errorMessage);
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch user orders"),
+      );
     }
   },
 );
 
-// Get all orders (admin) thunk
-export const getAllOrders = createApiThunk<BookingOrder[], void>(
+// Get all orders thunk
+export const getAllOrders = createAsyncThunk<BookingOrder[], string>(
   "orders/getAllOrders",
-  ordersApi.getAllOrders,
-  "Failed to fetch all orders",
+  async (userId, { rejectWithValue }) => {
+    try {
+      return await ordersApi.getAllOrders(userId);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch all orders"),
+      );
+    }
+  },
 );
 
-// Confirm order (admin) thunk
-export const confirmOrder = createApiThunk<BookingOrder, string>(
-  "orders/confirmOrder",
-  ordersApi.confirmOrder,
-  "Failed to confirm order",
-  (response, orderId) => ({ ...response, id: orderId }),
-);
+// Confirm order thunk
+export const confirmOrder = createAsyncThunk<
+  { message: string; orderId: string },
+  string,
+  { rejectValue: string }
+>("orders/confirmOrder", async (orderId, { rejectWithValue }) => {
+  try {
+    // The backend returns { message: "Booking confirmed" }
+    const response = await ordersApi.confirmOrder(orderId);
+
+    // Make sure we return the expected type
+    return {
+      ...response, // This contains the message from backend
+      orderId: orderId, // add the orderId
+    };
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to confirm order"),
+    );
+  }
+});
 
 // Update order thunk
-export const updateOrder = createApiThunk<
+export const updateOrder = createAsyncThunk<
   BookingOrder,
   { orderId: string; items: BookingItem[] }
->(
-  "orders/updateOrder",
-  async ({ orderId, items }) => {
-    const response = await ordersApi.updateOrder(orderId, items);
-    return response;
-  },
-  "Failed to update order",
-  (response, { orderId }) => ({ ...response, id: orderId }),
-);
+>("orders/updateOrder", async ({ orderId, items }, { rejectWithValue }) => {
+  try {
+    return await ordersApi.updateOrder(orderId, items);
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to update order"),
+    );
+  }
+});
 
-// Other thunks follow the same pattern...
-export const rejectOrder = createApiThunk<BookingOrder, string>(
-  "orders/rejectOrder",
-  ordersApi.rejectOrder,
-  "Failed to reject order",
-  (response, orderId) => ({ ...response, id: orderId }),
-);
+// Reject order thunk
+export const rejectOrder = createAsyncThunk<
+  { message: string; orderId: string },
+  string,
+  { rejectValue: string }
+>("orders/rejectOrder", async (orderId, { rejectWithValue }) => {
+  try {
+    // The backend returns { message: "Booking rejected" }
+    const response = await ordersApi.rejectOrder(orderId);
 
-export const cancelOrder = createApiThunk<BookingOrder, string>(
-  "orders/cancelOrder",
-  ordersApi.cancelOrder,
-  "Failed to cancel order",
-  (response, orderId) => ({ ...response, id: orderId }),
-);
+    // Make sure we return the expected type
+    return {
+      ...response, // This contains the message from backend
+      orderId: orderId, // We add the orderId ourselves
+    };
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to reject order"),
+    );
+  }
+});
 
-export const deleteOrder = createApiThunk<string, string>(
+// Cancel order thunk
+export const cancelOrder = createAsyncThunk<
+  { message?: string; orderId: string },
+  string,
+  { rejectValue: string }
+>("orders/cancelOrder", async (orderId, { rejectWithValue }) => {
+  try {
+    const response = await ordersApi.cancelOrder(orderId);
+
+    // Always add the orderId to the response
+    return {
+      message: response.message || "Order cancelled successfully",
+      orderId: orderId, // add the orderId
+    };
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to cancel order"),
+    );
+  }
+});
+
+// Delete order thunk
+export const deleteOrder = createAsyncThunk<string, string>(
   "orders/deleteOrder",
-  ordersApi.deleteOrder,
-  "Failed to delete order",
-  (_, orderId) => orderId, // Just return the ID for deletion
+  async (orderId, { rejectWithValue }) => {
+    try {
+      return await ordersApi.deleteOrder(orderId);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to delete order"),
+      );
+    }
+  },
 );
 
-export const returnItems = createApiThunk<BookingOrder, string>(
+// Return items thunk
+export const returnItems = createAsyncThunk<
+  { orderId: string },
+  string,
+  { rejectValue: string }
+>(
   "orders/returnItems",
-  ordersApi.returnItems,
-  "Failed to process returns",
-  (response, orderId) => ({ ...response, id: orderId }),
+  async (orderId, { rejectWithValue }) => {
+    try {
+      await ordersApi.returnItems(orderId); // Just fire and forget
+      return { orderId };
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to process returns")
+      );
+    }
+  }
+);
+
+// update Payment Status thunk
+export const updatePaymentStatus = createAsyncThunk<
+  { orderId: string; status: PaymentStatus },
+  { orderId: string; status: PaymentStatus }
+>(
+  "bookings/payment-status",
+  async ({ orderId, status }, { rejectWithValue }) => {
+    try {
+      const response = await ordersApi.updatePaymentStatus(orderId, status);
+      // Ensure the returned status is of type PaymentStatus
+      return {
+        orderId,
+        status: response.status as PaymentStatus,
+      };
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to update the payment status")
+      );
+    }
+  }
 );
 
 export const ordersSlice = createSlice({
@@ -157,10 +216,8 @@ export const ordersSlice = createSlice({
   reducers: {
     clearCurrentOrder: (state) => {
       state.currentOrder = null;
-      state.error = {
-        message: null,
-        context: null,
-      };
+      state.error = null;
+      state.errorContext = null;
     },
   },
   extraReducers: (builder) => {
@@ -168,7 +225,8 @@ export const ordersSlice = createSlice({
       // Create order
       .addCase(createOrder.pending, (state) => {
         state.loading = true;
-        state.error = { message: null, context: null };
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(createOrder.fulfilled, (state, action) => {
         state.loading = false;
@@ -177,73 +235,72 @@ export const ordersSlice = createSlice({
       })
       .addCase(createOrder.rejected, (state, action) => {
         state.loading = false;
-        state.error = {
-          message: action.payload as string,
-          context: "create",
-        };
+        state.error = action.payload as string;
+        state.errorContext = "create";
       })
-
       // Get user orders
       .addCase(getUserOrders.pending, (state) => {
         state.loading = true;
-        state.error = { message: null, context: null };
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(getUserOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.error = { message: null, context: null };
         state.userOrders = action.payload;
         ordersAdapter.setAll(state, action.payload);
       })
       .addCase(getUserOrders.rejected, (state, action) => {
         state.loading = false;
-        state.error = {
-          message: action.payload as string,
-          context: "fetch",
-        };
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
       })
-
-      // Get all orders (admin)
+      // Get all orders
       .addCase(getAllOrders.pending, (state) => {
         state.loading = true;
-        state.error = { message: null, context: null };
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(getAllOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
         ordersAdapter.setAll(state, action.payload);
       })
       .addCase(getAllOrders.rejected, (state, action) => {
         state.loading = false;
-        state.error = {
-          message: action.payload as string,
-          context: "fetch",
-        };
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
       })
-
       // Confirm order
       .addCase(confirmOrder.pending, (state) => {
         state.loading = true;
-        state.error = { message: null, context: null };
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(confirmOrder.fulfilled, (state, action) => {
         state.loading = false;
+        // Use the orderId from payload
+        const orderId = action.payload.orderId;
+
+        // Update the order status in the normalized state
         ordersAdapter.updateOne(state, {
-          id: action.payload.id,
+          id: orderId,
           changes: { status: "confirmed" },
         });
+
+        // Also update in the user orders array
+        state.userOrders = state.userOrders.map((order) =>
+          order.id === orderId ? { ...order, status: "confirmed" } : order,
+        );
       })
       .addCase(confirmOrder.rejected, (state, action) => {
         state.loading = false;
-        state.error = {
-          message: action.payload as string,
-          context: "confirm",
-        };
+        state.error = action.payload as string;
+        state.errorContext = "confirm";
       })
-
       // Update order
       .addCase(updateOrder.pending, (state) => {
         state.loading = true;
-        state.error = { message: null, context: null };
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(updateOrder.fulfilled, (state, action) => {
         state.loading = false;
@@ -251,112 +308,149 @@ export const ordersSlice = createSlice({
           id: action.payload.id,
           changes: action.payload,
         });
+        state.userOrders = state.userOrders.map((order) =>
+          order.id === action.payload.id ? action.payload : order,
+        );
       })
       .addCase(updateOrder.rejected, (state, action) => {
         state.loading = false;
-        state.error = {
-          message: action.payload as string,
-          context: "update",
-        };
+        state.error = action.payload as string;
+        state.errorContext = "update";
       })
-
       // Reject order
       .addCase(rejectOrder.pending, (state) => {
         state.loading = true;
-        state.error = { message: null, context: null };
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(rejectOrder.fulfilled, (state, action) => {
         state.loading = false;
+        // Use the orderId from payload
+        const orderId = action.payload.orderId;
+
+        // Update the order status in the normalized state
         ordersAdapter.updateOne(state, {
-          id: action.payload.id,
+          id: orderId,
           changes: { status: "rejected" },
         });
+
+        // Also update in the user orders array
+        state.userOrders = state.userOrders.map((order) =>
+          order.id === orderId ? { ...order, status: "rejected" } : order,
+        );
       })
       .addCase(rejectOrder.rejected, (state, action) => {
         state.loading = false;
-        state.error = {
-          message: action.payload as string,
-          context: "reject",
-        };
+        state.error = action.payload as string;
+        state.errorContext = "reject";
       })
-
       // Cancel order
       .addCase(cancelOrder.pending, (state) => {
         state.loading = true;
-        state.error = { message: null, context: null };
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(cancelOrder.fulfilled, (state, action) => {
         state.loading = false;
 
+        // Use the orderId we added to the payload
+        const orderId = action.payload.orderId;
+
+        // Update the order status in the normalized state
         ordersAdapter.updateOne(state, {
-          id: action.payload.id,
+          id: orderId,
           changes: { status: "cancelled by user" },
         });
 
-        // Also update the userOrders array
+        // Also update in the user orders array
         state.userOrders = state.userOrders.map((order) =>
-          order.id === action.payload.id
+          order.id === orderId
             ? { ...order, status: "cancelled by user" }
             : order,
         );
       })
       .addCase(cancelOrder.rejected, (state, action) => {
         state.loading = false;
-        state.error = {
-          message: action.payload as string,
-          context: "cancel",
-        };
+        state.error = action.payload as string;
+        state.errorContext = "cancel";
       })
-
       // Delete order
       .addCase(deleteOrder.pending, (state) => {
         state.loading = true;
-        state.error = { message: null, context: null };
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(deleteOrder.fulfilled, (state, action) => {
         state.loading = false;
         ordersAdapter.removeOne(state, action.payload);
+        state.userOrders = state.userOrders.filter(
+          (order) => order.id !== action.payload,
+        );
       })
       .addCase(deleteOrder.rejected, (state, action) => {
         state.loading = false;
-        state.error = {
-          message: action.payload as string,
-          context: "delete",
-        };
+        state.error = action.payload as string;
+        state.errorContext = "delete";
       })
-
       // Return items
       .addCase(returnItems.pending, (state) => {
         state.loading = true;
-        state.error = { message: null, context: null };
+        state.error = null;
+        state.errorContext = null;
       })
       .addCase(returnItems.fulfilled, (state, action) => {
         state.loading = false;
+        const { orderId } = action.payload;
+
         ordersAdapter.updateOne(state, {
-          id: action.payload.id,
+          id: orderId,
           changes: { status: "completed" },
         });
+
+        state.userOrders = state.userOrders.map((order) =>
+          order.id === orderId ? { ...order, status: "completed" } : order
+        );
       })
       .addCase(returnItems.rejected, (state, action) => {
         state.loading = false;
-        state.error = {
-          message: action.payload as string,
-          context: "update",
-        };
+        state.error = action.payload as string;
+        state.errorContext = "return";
+      })
+      // Update payment status
+      .addCase(updatePaymentStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(updatePaymentStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        const { orderId, status } = action.payload;
+
+        // Update the order in the normalized state
+        ordersAdapter.updateOne(state, {
+          id: orderId,
+          changes: { payment_status: status as BookingOrder["payment_status"] },
+        });
+      })
+      .addCase(updatePaymentStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "update-payment-status";
       });
+      ;
   },
 });
 
 // Export actions
 export const { clearCurrentOrder } = ordersSlice.actions;
 
-// Get the selector functions
+// Export selectors
 const ordersSelectors = ordersAdapter.getSelectors<RootState>(
   (state) => state.orders,
 );
 
 // Export selectors
-export const selectOrders = ordersSelectors.selectAll;
+export const selectAllOrders = ordersSelectors.selectAll;
 export const selectOrderById = ordersSelectors.selectById;
 export const selectOrderIds = ordersSelectors.selectIds;
 export const selectCurrentOrder = (state: RootState) =>
@@ -364,14 +458,14 @@ export const selectCurrentOrder = (state: RootState) =>
     ? selectOrderById(state, state.orders.currentOrder)
     : null;
 export const selectOrdersLoading = (state: RootState) => state.orders.loading;
-export const selectOrdersError = (state: RootState) =>
-  state.orders.error.message;
+export const selectOrdersError = (state: RootState) => state.orders.error;
 export const selectOrdersErrorContext = (state: RootState) =>
-  state.orders.error.context;
-export const selectOrdersErrorWithContext = (state: RootState) =>
-  state.orders.error;
+  state.orders.errorContext;
+export const selectOrdersErrorWithContext = (state: RootState) => ({
+  message: state.orders.error,
+  context: state.orders.errorContext,
+});
 export const selectOrdersTotal = ordersSelectors.selectTotal;
-export const selectAllOrders = (state: RootState) => state.orders.orders;
 export const selectUserOrders = (state: RootState) => state.orders.userOrders;
 
 // Export reducer

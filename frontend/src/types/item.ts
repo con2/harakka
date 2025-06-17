@@ -1,80 +1,62 @@
-// export interface ItemDetails {
-//     name: string;
-//     description: string;
-//     features?: string[];
-// }
+import {
+  BaseEntity,
+  ErrorContext,
+  Translatable,
+  Tag,
+  LocationDetails,
+} from "@/types";
 
-import { Tag } from "./tag";
+/**
+ * Item translations content
+ */
+export interface ItemTranslation {
+  item_type: string;
+  item_name: string;
+  item_description: string;
+}
 
-// export interface ItemMedia {
-//     images: string[];  // Array of image URLs
-//     thumbnail?: string;
-//     video?: string;
-// }
-
-// export interface Location {
-//     lat: number;
-//     lng: number;
-//     address: {
-//         street: string;
-//         city: string;
-//         state?: string;
-//         postalCode: string;
-//         country: string;
-//     };
-// }
-
-// export interface Pricing {
-//     rate: number;
-//     currency: string;
-//     unit?: 'hour' | 'day' | 'week' | 'month';
-//     minimumPeriod?: number;
-// }
-
-// export interface StorageDimensions {
-//     length: number;
-//     width: number;
-//     height: number;
-//     unit?: 'meter' | 'foot';
-// }
-
-// export interface Availability {
-//     status: 'available' | 'booked' | 'maintenance';
-//     bookedDates?: Date[];
-// }
-
-export interface Item {
-  id: string;
+export interface Item extends BaseEntity, Translatable<ItemTranslation> {
   location_id: string;
   compartment_id: string;
   items_number_total: number;
   items_number_available: number;
+  items_number_currently_in_storage: number;
   price: number;
   is_active: boolean;
-  available_from?: Date | undefined; // optional property for Redux state
-  available_until?: Date | undefined; // optional property for Redux state
-  translations: {
-    fi: {
-      item_type: string;
-      item_name: string;
-      item_description: string;
-    };
-    en: {
-      item_type: string;
-      item_name: string;
-      item_description: string;
-    };
-  };
   average_rating?: number;
-  created_at?: string;
-  updated_at?: string;
-    tagIds?: string[];
-    storage_item_tags?: Tag[];
+  tagIds?: string[];
+  storage_item_tags?: Tag[];
+  location_details?: LocationDetails | null;
 }
 
+/**
+ * Item state in Redux store
+ */
 export interface ItemState {
   items: Item[];
   loading: boolean;
   error: string | null;
   selectedItem: Item | null;
+  errorContext: ErrorContext;
+  deletableItems: Record<string, boolean>;
 }
+
+/**
+ * Data required to create a new item
+ */
+export type CreateItemDto = Omit<
+  Item,
+  "id" | "created_at" | "updated_at" | "storage_item_tags"
+> & {
+  // Exclude 'id', 'created_at', 'updated_at' and 'storage_item_tags' from the create type
+  tagIds?: string[];
+};
+
+/**
+ * Data for updating an existing item
+ */
+export type UpdateItemDto = Partial<
+  Omit<Item, "id" | "created_at" | "updated_at" | "storage_item_tags">
+> & {
+  tagIds?: string[];
+};

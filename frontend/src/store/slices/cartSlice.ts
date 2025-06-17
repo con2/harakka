@@ -1,31 +1,63 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import { Item } from "../../types/item";
+import {
+  CartItem,
+  CartState,
+  UpdateDateRangePayload,
+  UpdateQuantityPayload,
+  ErrorContext,
+} from "@/types";
 
-interface CartItem {
-  item: Item;
-  quantity: number;
-  startDate: string | undefined;
-  endDate: string | undefined;
-}
-
-interface CartState {
-  items: CartItem[];
-  loading: boolean;
-  error: string | null;
-}
-
-const initialState: CartState = {
-  items: [],
-  loading: false,
-  error: null,
+// Load cart from localStorage (if available)
+const loadCartFromStorage = (): CartState => {
+  try {
+    const cartData = localStorage.getItem("cart");
+    if (cartData) {
+      return JSON.parse(cartData);
+    }
+  } catch (e) {
+    console.error("Error loading cart from localStorage:", e);
+  }
+  // Default state if nothing in localStorage
+  return {
+    items: [],
+    loading: false,
+    error: null,
+    errorContext: null,
+  };
 };
+
+// Function to save cart to localStorage
+const saveCartToStorage = (items: CartItem[]) => {
+  try {
+    localStorage.setItem(
+      "cart",
+      JSON.stringify({
+        items,
+        loading: false,
+        error: null,
+        errorContext: null,
+      }),
+    );
+  } catch (e) {
+    console.error("Error saving cart to localStorage:", e);
+  }
+};
+
+/**
+ * Initial state for cart
+ */
+const initialState: CartState = loadCartFromStorage();
 
 export const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
+    // Add item to cart
     addToCart: (state, action: PayloadAction<CartItem>) => {
+      state.error = null;
+      state.errorContext = null;
+
       const existingItemIndex = state.items.findIndex(
         (item) => item.item.id === action.payload.item.id,
       );
@@ -37,32 +69,101 @@ export const cartSlice = createSlice({
         // Add new item to cart
         state.items.push(action.payload);
       }
+
+      // Save to localStorage
+      saveCartToStorage(state.items);
     },
+
+    // Remove item from cart
     removeFromCart: (state, action: PayloadAction<string>) => {
+      state.error = null;
+      state.errorContext = null;
+
       state.items = state.items.filter(
         (item) => item.item.id !== action.payload,
       );
+
+      // Save to localStorage
+      saveCartToStorage(state.items);
     },
-    updateQuantity: (
-      state,
-      action: PayloadAction<{ id: string; quantity: number }>,
-    ) => {
+
+    // Update item quantity
+    updateQuantity: (state, action: PayloadAction<UpdateQuantityPayload>) => {
+      state.error = null;
+      state.errorContext = null;
+
       const { id, quantity } = action.payload;
       const itemIndex = state.items.findIndex((item) => item.item.id === id);
 
       if (itemIndex >= 0) {
         state.items[itemIndex].quantity = quantity;
       }
+
+      // Save to localStorage
+      saveCartToStorage(state.items);
     },
+
+    // Clear all items from cart
     clearCart: (state) => {
       state.items = [];
+      state.error = null;
+      state.errorContext = null;
+
+      // Save to localStorage
+      saveCartToStorage(state.items);
+    },
+
+    // Set loading state
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+
+    // Set error state with context
+    setError: (
+      state,
+      action: PayloadAction<{ message: string | null; context: ErrorContext }>,
+    ) => {
+      state.error = action.payload.message;
+      state.errorContext = action.payload.context;
+    },
+
+    // Clear error state
+    clearError: (state) => {
+      state.error = null;
+      state.errorContext = null;
+    },
+
+    // Update date range for a cart item
+    updateDateRange: (state, action: PayloadAction<UpdateDateRangePayload>) => {
+      state.error = null;
+      state.errorContext = null;
+
+      const { id, startDate, endDate } = action.payload;
+      const itemIndex = state.items.findIndex((item) => item.item.id === id);
+
+      if (itemIndex >= 0) {
+        if (startDate !== undefined)
+          state.items[itemIndex].startDate = startDate;
+        if (endDate !== undefined) state.items[itemIndex].endDate = endDate;
+      }
+
+      // Save to localStorage
+      saveCartToStorage(state.items);
     },
   },
 });
 
 // Export actions
-export const { addToCart, removeFromCart, updateQuantity, clearCart } =
-  cartSlice.actions;
+export const {
+  addToCart,
+  removeFromCart,
+  updateQuantity,
+  clearCart,
+  setLoading,
+  setError,
+  clearError,
+  updateDateRange,
+} = cartSlice.actions;
 
 // Export selectors
 export const selectCartItems = (state: RootState) => state.cart.items;
@@ -73,5 +174,13 @@ export const selectCartTotal = (state: RootState) =>
     (total, item) => total + item.item.price * item.quantity,
     0,
   );
+export const selectCartLoading = (state: RootState) => state.cart.loading;
+export const selectCartError = (state: RootState) => state.cart.error;
+export const selectCartErrorContext = (state: RootState) =>
+  state.cart.errorContext;
+export const selectCartErrorWithContext = (state: RootState) => ({
+  message: state.cart.error,
+  context: state.cart.errorContext,
+});
 
 export default cartSlice.reducer;

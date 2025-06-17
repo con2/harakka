@@ -1,12 +1,24 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useAppDispatch } from "@/store/hooks";
 import { createUser, updateUser } from "@/store/slices/usersSlice";
-import { CreateUserDto, UserProfile } from "@/types/user";
+import { CreateUserDto, UserProfile, UserFormData } from "@/types";
 import { toast } from "sonner";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "../ui/select";
 import { Label } from "@/components/ui/label";
 
 type TeamMemberFormProps = {
@@ -17,15 +29,15 @@ type TeamMemberFormProps = {
 const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
   const dispatch = useAppDispatch();
 
-  const [formData, setFormData] = useState<CreateUserDto>({
-    full_name: "",
-    visible_name: "",
-    email: "",
-    phone: "",
-    role: "user", 
-    preferences: {},
-    ...(initialData || {}),
-  });
+  const [formData, setFormData] = useState<UserFormData>(() => ({
+    full_name: initialData?.full_name || "",
+    visible_name: initialData?.visible_name || "",
+    email: initialData?.email || "",
+    phone: initialData?.phone || "",
+    role: initialData?.role || "user",
+    preferences: initialData?.preferences || {},
+    saved_lists: initialData?.saved_lists,
+  }));
 
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,21 +45,25 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
   useEffect(() => {
     if (initialData) {
       setFormData({
-        full_name: initialData.full_name,
-        visible_name: initialData.visible_name,
-        email: initialData.email,
-        phone: initialData.phone,
+        full_name: initialData.full_name || "",
+        visible_name: initialData.visible_name || "",
+        email: initialData.email || "",
+        phone: initialData.phone || "",
         role: initialData.role,
         preferences: initialData.preferences || {},
+        saved_lists: initialData.saved_lists,
       });
     }
   }, [initialData]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "role" ? (value as "user" | "admin" | "superVera") : value,
+      [name]:
+        name === "role" ? (value as "user" | "admin" | "superVera") : value,
     }));
   };
 
@@ -79,43 +95,53 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    if (!formData.full_name || !formData.email || !formData.phone || !formData.role) {
+
+    if (
+      !formData.full_name ||
+      !formData.email ||
+      !formData.phone ||
+      !formData.role
+    ) {
       toast.error("Please fill in all required fields.");
       return;
     }
-  
+
     if (!isValidEmail(formData.email)) {
       toast.error("Invalid email address.");
       return;
     }
-  
+
     if (!initialData && !password) {
       toast.error("Password is required when creating a new member.");
       return;
     }
-    const payload = { ...formData };
-  
-    if (!initialData) {
-      (payload as any).password = password;
-    }
+
     setLoading(true);
-  
+
     try {
       if (initialData) {
+        // For updates, use the UserFormData directly
         if (!initialData?.id) {
           toast.error("User ID is missing.");
           return;
         }
-        await dispatch(updateUser({ id: initialData.id, data: payload })).unwrap();
+        await dispatch(
+          updateUser({ id: initialData.id, data: formData }),
+        ).unwrap();
         toast.success("User updated successfully!");
       } else {
-        await dispatch(createUser(payload)).unwrap();
+        // For new users, create a proper CreateUserDto with password
+        const createPayload: CreateUserDto = {
+          ...formData,
+          password, // Password required for new users
+        };
+
+        await dispatch(createUser(createPayload)).unwrap();
         toast.success("User added successfully!");
       }
       onClose();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to save user.");
+    } catch (error: unknown) {
+      toast.error(typeof error === "string" ? error : "Failed to save user.");
       console.error("User save error:", error);
     } finally {
       setLoading(false);
@@ -126,9 +152,13 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{initialData ? "Edit Team Member" : "Add Team Member"}</DialogTitle>
+          <DialogTitle>
+            {initialData ? "Edit Team Member" : "Add Team Member"}
+          </DialogTitle>
           <DialogDescription>
-            {initialData ? "Update the user's details below." : "Enter information to create a new team member."}
+            {initialData
+              ? "Update the user's details below."
+              : "Enter information to create a new team member."}
           </DialogDescription>
         </DialogHeader>
 
@@ -175,7 +205,10 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
             <Select
               value={formData.role}
               onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, role: value as "admin" | "superVera" | "user" }))
+                setFormData((prev) => ({
+                  ...prev,
+                  role: value as "admin" | "superVera" | "user",
+                }))
               }
             >
               <SelectTrigger className="w-full">
@@ -220,7 +253,7 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
                 </Button>
               </div>
             ))}
-            <Button 
+            <Button
               className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
               type="button"
               onClick={addPreference}

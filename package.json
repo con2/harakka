@@ -6,7 +6,7 @@
   "scripts": {
     "start": "echo 'Run frontend and backend separately!'",
     "frontend": "npm --prefix frontend run dev",
-    "backend": "npm --prefix backend start",
+    "backend": "npm --prefix backend run start:dev",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
     "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend",
     "deploy": "echo 'Add deployment scripts here'"
@@ -18,8 +18,14 @@
     "supabase": "^2.20.3"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.0.1",
+    "@radix-ui/react-label": "^2.1.6",
+    "@radix-ui/react-slot": "^1.2.2",
     "all": "^0.0.0",
+    "date-fns": "^4.1.0",
     "dotenv-expand": "^12.0.1",
-    "radix-ui": "^1.2.0"
+    "radix-ui": "^1.2.0",
+    "react-hook-form": "^7.56.3",
+    "zod": "^3.24.4"
   }
 }

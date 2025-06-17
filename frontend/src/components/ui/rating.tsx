@@ -1,58 +1,33 @@
-import React, { useState } from "react";
+import StarRatings from "react-star-ratings";
 
-interface RatingProps {
-  value: number; // Average rating value to display
-  onChange?: (value: number) => void; // Optional callback to handle changes
+interface StarRatingProps {
+  rating: number;
+  onChange?: (newRating: number) => void;
+  starDimension?: string;
   readOnly?: boolean;
 }
 
-const Rating: React.FC<RatingProps> = ({ value, onChange, readOnly = false }) => {
-  const [hoverValue, setHoverValue] = useState<number>(0); // Value when hovering
-  const maxRating = 5; // Max stars for the rating
-
-  const handleMouseEnter = (rating: number) => {
-    if (!readOnly) {
-      setHoverValue(rating);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!readOnly) {
-      setHoverValue(0);
-    }
-  };
-
-  const handleClick = (rating: number) => {
-    if (onChange && !readOnly) {
-      onChange(rating);
-    }
-  };
-
+const Rating: React.FC<StarRatingProps> = ({
+  rating,
+  onChange,
+  starDimension = "16px",
+  readOnly = false,
+}) => {
   return (
-    <div className="flex space-x-1">
-      {Array.from({ length: maxRating }).map((_, index) => {
-        const starValue = index + 1;
-        const isFilled = starValue <= (hoverValue || value);
-        return (
-          <svg
-            key={starValue}
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill={isFilled ? "currentColor" : "none"}
-            stroke="currentColor"
-            className={`w-6 h-6 cursor-pointer ${isFilled ? "text-yellow-400" : "text-gray-300"}`}
-            onClick={() => handleClick(starValue)}
-            onMouseEnter={() => handleMouseEnter(starValue)}
-            onMouseLeave={handleMouseLeave}
-          >
-            <path
-              fillRule="evenodd"
-              d="M12 17.278l4.046 2.508-1.081-4.85 3.742-3.35-4.912-.426L12 2.1l-2.795 8.06-4.912.426 3.742 3.35-1.081 4.85L12 17.278z"
-              clipRule="evenodd"
-            />
-          </svg>
-        );
-      })}
+    <div className="flex items-center">
+      <StarRatings
+        rating={rating}
+        starRatedColor="#facc15" // Tailwind's yellow-400
+        starEmptyColor="#e5e7eb" // Tailwind's gray-200
+        starHoverColor="#facc15"
+        changeRating={readOnly ? undefined : onChange}
+        numberOfStars={5}
+        name="rating"
+        starDimension={starDimension}
+        starSpacing="4px"
+        svgIconViewBox="0 0 32 32"
+        svgIconPath="M16 1.6l4.9 9.9 10.9 1.6-7.9 7.7 1.9 10.9-9.8-5.2-9.8 5.2 1.9-10.9-7.9-7.7 10.9-1.6L16 1.6z"
+      />
     </div>
   );
 };

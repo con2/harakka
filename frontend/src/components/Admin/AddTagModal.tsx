@@ -13,7 +13,11 @@ import { useAppDispatch } from "@/store/hooks";
 import { createTag, fetchAllTags } from "@/store/slices/tagSlice";
 import { toast } from "sonner";
 import { Label } from "../ui/label";
-import { Tag } from "@/types/tag";
+import { CreateTagDto, Tag } from "@/types/tag";
+import { createTagPayload } from "@/types/forms";
+// Import translation utilities
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 interface AddTagModalProps {
   children: React.ReactNode;
@@ -22,6 +26,8 @@ interface AddTagModalProps {
 
 const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
   const dispatch = useAppDispatch();
+  // Translation
+  const { lang } = useLanguage();
 
   const [fiName, setFiName] = useState("");
   const [enName, setEnName] = useState("");
@@ -35,28 +41,31 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
 
   const handleSubmit = async () => {
     if (!fiName && !enName) {
-      toast.error("At least one translation is required.");
+      toast.error(t.addTagModal.messages.validationError[lang]);
       return;
     }
 
     setSubmitting(true);
     try {
-      const result = await dispatch(
-        createTag({
-          translations: {
-            fi: fiName ? { name: fiName } : undefined,
-            en: enName ? { name: enName } : undefined,
-          },
-        })
-      ).unwrap();
+      // Use the helper function to create a properly typed payload
+      const tagData = createTagPayload(fiName, enName);
 
-      toast.success("Tag created successfully!");
+      // Convert TagFormData to CreateTagDto explicitly
+      const createTagDto: CreateTagDto = {
+        translations: {
+          fi: tagData.translations.fi || { name: "" },
+          en: tagData.translations.en || { name: "" },
+        },
+      };
+      const result = await dispatch(createTag(createTagDto)).unwrap();
+
+      toast.success(t.addTagModal.messages.success[lang]);
       dispatch(fetchAllTags());
       onCreated?.(result);
       resetForm();
       setOpen(false);
-    } catch (err: any) {
-      toast.error("Failed to create tag.");
+    } catch {
+      toast.error(t.addTagModal.messages.error[lang]);
     } finally {
       setSubmitting(false);
     }
@@ -67,27 +76,29 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center mb-4">Create a New Tag</DialogTitle>
+          <DialogTitle className="text-center mb-4">
+            {t.addTagModal.title[lang]}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="fiName">Finnish Name</Label>
+            <Label htmlFor="fiName">{t.addTagModal.labels.fiName[lang]}</Label>
             <Input
               id="fiName"
               value={fiName}
               onChange={(e) => setFiName(e.target.value)}
-              placeholder="e.g. Suosittu"
+              placeholder={t.addTagModal.placeholders.fiName[lang]}
             />
           </div>
 
           <div>
-            <Label htmlFor="enName">English Name</Label>
+            <Label htmlFor="enName">{t.addTagModal.labels.enName[lang]}</Label>
             <Input
               id="enName"
               value={enName}
               onChange={(e) => setEnName(e.target.value)}
-              placeholder="e.g. Popular"
+              placeholder={t.addTagModal.placeholders.enName[lang]}
             />
           </div>
         </div>
@@ -97,8 +108,11 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
             className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
             onClick={handleSubmit}
             disabled={submitting}
+            size={"sm"}
           >
-            {submitting ? "Creating..." : "Create Tag"}
+            {submitting
+              ? t.addTagModal.buttons.creating[lang]
+              : t.addTagModal.buttons.create[lang]}
           </Button>
         </DialogFooter>
       </DialogContent>
