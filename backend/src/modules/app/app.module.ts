@@ -24,7 +24,6 @@ import { SupabaseModule } from "../supabase/supabase.module";
 import { AuthMiddleware } from "../../middleware/Auth.middleware";
 import { AuthTestController } from "../AuthTest/authTest.controller";
 import { AuthTestService } from "../AuthTest/authTest.service";
-import { OLDAuthMiddleware } from "src/middleware/Old.middleware";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -62,7 +61,7 @@ dotenvExpand.expand(env);
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(OLDAuthMiddleware)
+      .apply(AuthMiddleware)
 
       // ⬇️  List every non-GET verb you want protected
       .forRoutes(
