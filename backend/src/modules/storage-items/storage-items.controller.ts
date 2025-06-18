@@ -12,6 +12,7 @@ import {
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
+import { Tables } from "../../types/supabase" // Import the Database type for type safety
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
@@ -40,7 +41,7 @@ export class StorageItemsController {
   async update(
     @Req() req: Request,
     @Param("id") id: string,
-    @Body() item: any,
+    @Body() item: Tables["storage_items"], // Use the type from your Supabase types
   ) {
     return this.storageItemsService.updateItem(req, id, item); // PUT /storage-items/:id (update item)
   }
