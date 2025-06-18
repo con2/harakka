@@ -2,11 +2,13 @@ import illusiaImage from "@/assets/illusiaImage.jpg";
 import { Button } from "./ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { useAuth } from "@/context/AuthContext";
 
 const LandingPage = () => {
   // Translation
   const { lang } = useLanguage();
-
+  const { user} = useAuth();
+  console.log("User:", user);
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Background Image */}

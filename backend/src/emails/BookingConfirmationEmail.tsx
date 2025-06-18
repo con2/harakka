@@ -7,15 +7,16 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-import { EmailProps } from "../interfaces/mail.interface";
+import { EmailProps } from "src/modules/mail/interfaces/mail.interface";
 
 const BookingConfirmationEmail = ({
   name,
   pickupDate,
   location,
   items,
-  today,
+
 }: EmailProps) => (
+
   <Html>
     <Head>
       <link
@@ -165,6 +166,7 @@ const BookingConfirmationEmail = ({
       </Container>
     </Body>
   </Html>
+  
 );
 
 export default BookingConfirmationEmail;
