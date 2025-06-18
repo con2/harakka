@@ -13,6 +13,7 @@ import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { Tables, TablesUpdate } from "src/types/supabase.types";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
 // this is used by the controller
 
 @Injectable()
@@ -152,11 +153,11 @@ export class StorageItemsService {
   async updateItem(
     req: Request,
     id: string,
-    item: Partial<StorageItem> & { tagIds?: string[] },
+    item: Partial<TablesUpdate<"storage_items">> & { tagIds?: string[] },
   ): Promise<StorageItem> {
     const supabase = req["supabase"] as SupabaseClient;
     // Extract properties that shouldn't be sent to the database
-    const { tagIds, location_details, storage_item_tags, ...itemData } = item;
+    const { tagIds, ...itemData } = item;
 
     console.log("Updating item with data:", JSON.stringify(itemData, null, 2));
 
@@ -296,10 +297,10 @@ export class StorageItemsService {
   }
 
   async softDeleteItem(
-    req: AuthRequest,
+    req: Request,
     id: string,
   ): Promise<{ success: boolean; id: string }> {
-    const supabase = req["supabase"];
+    const supabase = req["supabase"] as SupabaseClient;
     const { error } = await supabase
       .from("storage_items")
       .update({ is_deleted: true })

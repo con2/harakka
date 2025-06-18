@@ -41,8 +41,8 @@ export class StorageItemsController {
   async update(
     @Req() req: Request,
     @Param("id") id: string,
-    @Body() item: Partial<TablesUpdate<"storage_items">>, // Use the type from your Supabase types
-  ): Promise<TablesUpdate<"storage_items">> {
+    @Body() item: Partial<Tables<"storage_items">>, // Use the type from your Supabase types
+  ) {
     return this.storageItemsService.updateItem(req, id, item); // PUT /storage-items/:id (update item)
   }
 
