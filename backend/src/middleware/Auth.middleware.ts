@@ -17,7 +17,7 @@ import { jwtVerify } from "jose";
  *  - `supabase`: A Supabase client scoped with the caller's JWT.
  *  - `user`: The decoded user object returned from Supabase Auth.
  */
-interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends Request {
   supabase: SupabaseClient<Database>;
   user: User;
 }
