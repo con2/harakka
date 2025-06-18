@@ -27,6 +27,9 @@ import BookingRejectionEmail from "src/emails/BookingRejectionEmail";
 import BookingDeleteMail from "src/emails/BookingDeleteMail";
 import ItemsReturnedMail from "src/emails/ItemsReturned";
 import ItemsPickedUpMail from "src/emails/ItemsPickedUp";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "src/types/supabase.types";
+import { Translations } from "../../types/translations.types";
 
 @Injectable()
 export class BookingService {
@@ -35,16 +38,8 @@ export class BookingService {
     private readonly mailService: MailService,
   ) {}
 
-  // TODO!:
-  // use getClientByRole again!
-  // refactor code so that the supabase client is not created in every function
-  // clean up the entire code and slpit the methods to sepetarte files
-
   // 1. get all orders
-  async getAllOrders() {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async getAllOrders(userId: string, supabase: SupabaseClient<Database>) {
     const { data: orders, error } = await supabase.from("orders").select(`
       *,
       order_items (
@@ -80,20 +75,24 @@ export class BookingService {
 
           if (userData) {
             user = {
-              name: userData.full_name,
-              email: userData.email,
+              name: userData.full_name ?? "unknown",
+              email: userData.email ?? "unknown@incognito.fi",
             };
           }
         }
 
         const itemWithNamesAndLocation =
-          order.order_items?.map((item) => ({
-            ...item,
-            item_name:
-              item.storage_items?.translations?.en?.item_name ?? "Unknown",
-            location_name:
-              item.storage_items?.storage_locations?.name ?? "Unknown",
-          })) ?? [];
+          order.order_items?.map((item) => {
+            const translations = item.storage_items
+              ?.translations as Translations | null;
+
+            return {
+              ...item,
+              item_name: translations?.en?.item_name ?? "Unknown",
+              location_name:
+                item.storage_items?.storage_locations?.name ?? "Unknown",
+            };
+          }) ?? [];
 
         return {
           ...order,

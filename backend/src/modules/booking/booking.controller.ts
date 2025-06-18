@@ -17,6 +17,7 @@ import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
 import { InvoiceService } from "./invoice.service";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
+import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
 
 @Controller("bookings")
 export class BookingController {
@@ -27,9 +28,10 @@ export class BookingController {
 
   // gets all bookings - use case: admin
   @Get()
-  async getAll(@Req() req: any) {
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
-    return this.bookingService.getAllOrders();
+  async getAll(@Req() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    const supabase = req.supabase;
+    return this.bookingService.getAllOrders(userId, supabase);
   }
 
   // gets the bookings of the logged-in user
