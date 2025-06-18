@@ -1,6 +1,6 @@
 import { SupabaseClient, User } from "@supabase/supabase-js";
 import { Database } from "src/types/supabase.types";
-
+import { Request } from "express";
 /**
  * Extended Express `Request` with Supabase context.
  *
