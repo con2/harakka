@@ -7,7 +7,9 @@ import {
   Param,
   HttpException,
   HttpStatus,
+  Req,
 } from "@nestjs/common";
+import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
@@ -30,30 +32,34 @@ export class StorageItemsController {
   }
 
   @Post()
-  async create(@Body() item: any) {
-    return this.storageItemsService.createItem(item); // POST /storage-items (new item)
+  async create(@Req() req, @Body() item: any) {
+    return this.storageItemsService.createItem(req, item); // POST /storage-items (new item)
   }
 
   @Put(":id")
-  async update(@Param("id") id: string, @Body() item: any) {
-    return this.storageItemsService.updateItem(id, item); // PUT /storage-items/:id (update item)
+  async update(
+    @Req() req: Request,
+    @Param("id") id: string,
+    @Body() item: any,
+  ) {
+    return this.storageItemsService.updateItem(req, id, item); // PUT /storage-items/:id (update item)
   }
 
   // soft delete
   @Post(":id/soft-delete")
-  async softDeleteStorageItem(@Param("id") id: string) {
-    return this.storageItemsService.softDeleteItem(id);
+  async softDeleteStorageItem(@Req() req: Request, @Param("id") id: string) {
+    return this.storageItemsService.softDeleteItem(req, id);
   }
 
   @Get("by-tag/:tagId")
-  async getItemsByTag(@Param("tagId") tagId: string) {
-    return this.storageItemsService.getItemsByTag(tagId);
+  async getItemsByTag(@Req() req: Request, @Param("tagId") tagId: string) {
+    return this.storageItemsService.getItemsByTag(req, tagId);
   }
 
   @Get(":id/can-delete")
-  async canDelete(@Param("id") id: string): Promise<any> {
+  async canDelete(@Req() req: Request, @Param("id") id: string): Promise<any> {
     try {
-      const result = await this.storageItemsService.canDeleteItem(id);
+      const result = await this.storageItemsService.canDeleteItem(req, id);
       return result;
     } catch (error) {
       throw new HttpException(

@@ -24,6 +24,7 @@ import { SupabaseModule } from "../supabase/supabase.module";
 import { AuthMiddleware } from "../../middleware/Auth.middleware";
 import { AuthTestController } from "../AuthTest/authTest.controller";
 import { AuthTestService } from "../AuthTest/authTest.service";
+import { OLDAuthMiddleware } from "src/middleware/Old.middleware";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -61,8 +62,14 @@ dotenvExpand.expand(env);
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(AuthMiddleware) // our JWT/RLS middleware
-      .exclude({ path: "/health", method: RequestMethod.ALL }) // public route
-      .forRoutes({ path: "*", method: RequestMethod.ALL }); // protect the rest
+      .apply(OLDAuthMiddleware)
+
+      // ⬇️  List every non-GET verb you want protected
+      .forRoutes(
+        { path: "*", method: RequestMethod.POST },
+        { path: "*", method: RequestMethod.PUT },
+        { path: "*", method: RequestMethod.PATCH },
+        { path: "*", method: RequestMethod.DELETE },
+      );
   }
 }

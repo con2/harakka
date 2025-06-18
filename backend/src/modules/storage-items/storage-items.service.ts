@@ -1,5 +1,4 @@
-import { Injectable } from "@nestjs/common";
-import { SupabaseService } from "../supabase/supabase.service";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import {
   PostgrestResponse,
   PostgrestSingleResponse,
@@ -10,24 +9,19 @@ import {
   StorageItemWithJoin,
 } from "./interfaces/storage-item.interface";
 import { S3Service } from "../supabase/s3-supabase.service";
+import { Request } from "express";
+import { SupabaseService } from "../supabase/supabase.service";
 // this is used by the controller
 
 @Injectable()
 export class StorageItemsService {
-  // handles Database queries
-  private supabase: SupabaseClient;
-
   constructor(
-    private supabaseService: SupabaseService,
     private s3Service: S3Service, // handles S3 bucket queries
-  ) {
-    // For read operations, anon client respects RLS
-    // For write operations that need admin access, use service client
-    this.supabase = supabaseService.getServiceClient(); // takes the service key to establish connection to the database for handling CRUD
-  }
+    private readonly supabaseClient: SupabaseService, // Supabase client for database queries
+  ) {}
 
   async getAllItems(): Promise<StorageItem[]> {
-    const supabase = this.supabaseService.getServiceClient(); // For reading data, bypasses RLS if is_admin() returns false, and tags will be empty
+    const supabase = this.supabaseClient.getServiceClient();
 
     // Updated query to join storage_item_tags with tags table
     const { data, error }: PostgrestResponse<StorageItemWithJoin> =
@@ -72,7 +66,7 @@ export class StorageItemsService {
   }
 
   async getItemById(id: string): Promise<StorageItem | null> {
-    const supabase = this.supabaseService.getAnonClient();
+    const supabase = this.supabaseClient.getServiceClient();
 
     // Query to select item along with its tags
     const { data, error }: PostgrestSingleResponse<StorageItemWithJoin> =
@@ -118,12 +112,17 @@ export class StorageItemsService {
     };
   }
 
-  async createItem(item: Partial<StorageItem> & { tagIds?: string[] }) {
+  async createItem(
+    req: Request,
+    item: Partial<StorageItem> & { tagIds?: string[] },
+  ) {
+    const supabase = (req as any)["supabase"] as SupabaseClient;
+
     // Extract tagIds from the item object
     // and keep the rest of the item data in storageItemData
     const { tagIds, ...storageItemData } = item;
     // Insert the item into the storage_items table
-    const { data: insertedItems, error } = await this.supabase
+    const { data: insertedItems, error } = await supabase
       .from("storage_items")
       .insert(storageItemData)
       .select();
@@ -138,7 +137,7 @@ export class StorageItemsService {
         tag_id: tagId,
       }));
       // Insert the tag links into the storage_item_tags table
-      const { error: tagError } = await this.supabase
+      const { error: tagError } = await supabase
         .from("storage_item_tags")
         .insert(tagLinks);
 
@@ -149,32 +148,38 @@ export class StorageItemsService {
   }
 
   async updateItem(
+    req: Request,
     id: string,
     item: Partial<StorageItem> & { tagIds?: string[] },
   ): Promise<StorageItem> {
+    const supabase = (req as any)["supabase"] as SupabaseClient;
     // Extract properties that shouldn't be sent to the database
     const { tagIds, location_details, storage_item_tags, ...itemData } = item;
 
     console.log("Updating item with data:", JSON.stringify(itemData, null, 2));
 
     // Update the main item
-    const { data: updatedItemData, error: updateError } = await this.supabase
+    const { data: updatedItemData, error: updateError } = await supabase
       .from("storage_items")
       .update(itemData)
       .eq("id", id)
       .select();
-
+    
+    console.log(updateError);
     if (updateError) {
       throw new Error(updateError.message);
     }
 
     const updatedItem = updatedItemData?.[0];
-    if (!updatedItem) throw new Error("Failed to update item");
+    if (!updatedItem)
+      throw new BadRequestException(
+        updateError || "Failed to update storage item",
+      );
 
     // Update tag relationships
     if (tagIds) {
       // Remove all old tags
-      await this.supabase.from("storage_item_tags").delete().eq("item_id", id);
+      await supabase.from("storage_item_tags").delete().eq("item_id", id);
 
       // Insert new tag relationships
       if (tagIds.length > 0) {
@@ -182,7 +187,7 @@ export class StorageItemsService {
           item_id: id,
           tag_id: tagId,
         }));
-        const { error: tagError } = await this.supabase
+        const { error: tagError } = await supabase
           .from("storage_item_tags")
           .insert(tagLinks);
         if (tagError) throw new Error(tagError.message);
@@ -193,15 +198,17 @@ export class StorageItemsService {
   }
 
   async deleteItem(
+    req: Request,
     id: string,
     confirm?: string,
   ): Promise<{ success: boolean; id: string }> {
+    const supabase = (req as any)["supabase"] as SupabaseClient;
     if (!id) {
       throw new Error("No item ID provided for deletion");
     }
 
     // Safety check: only allow deletion if confirmed
-    const check = await this.canDeleteItem(id, confirm);
+    const check = await this.canDeleteItem(req, id, confirm);
     if (!check.success) {
       throw new Error(
         check.reason || "Item cannot be deleted due to unknown restrictions",
@@ -209,7 +216,7 @@ export class StorageItemsService {
     }
 
     // Step 1: Delete images associated with the item
-    const { data: images, error: imagesError } = await this.supabase
+    const { data: images, error: imagesError } = await supabase
       .from("storage_item_images")
       .select("id, storage_path")
       .eq("item_id", id);
@@ -235,7 +242,7 @@ export class StorageItemsService {
       }
 
       // Then delete the image records
-      const { error: deleteImagesError } = await this.supabase
+      const { error: deleteImagesError } = await supabase
         .from("storage_item_images")
         .delete()
         .eq("item_id", id);
@@ -248,7 +255,7 @@ export class StorageItemsService {
     }
 
     // Step 2: Delete related tags from the join table
-    const { error: tagDeleteError } = await this.supabase
+    const { error: tagDeleteError } = await supabase
       .from("storage_item_tags")
       .delete()
       .eq("item_id", id);
@@ -260,7 +267,7 @@ export class StorageItemsService {
     }
 
     // Step 3: Delete the item itself - soft delete
-    const { error: softDeleteError } = await this.supabase
+    const { error: softDeleteError } = await supabase
       .from("storage_items")
       .update({ is_deleted: true })
       .eq("id", id);
@@ -273,8 +280,9 @@ export class StorageItemsService {
   }
 
   // TODO: needs to be fixed and updated
-  async getItemsByTag(tagId: string) {
-    const { data, error } = await this.supabase
+  async getItemsByTag(req: Request, tagId: string) {
+    const supabase = (req as any)["supabase"] as SupabaseClient;
+    const { data, error } = await supabase
       .from("storage_item_tags")
       .select("item_id, items(*)") // Select foreign table 'items' if it's a relation
       .eq("tag_id", tagId);
@@ -285,8 +293,12 @@ export class StorageItemsService {
     return data.map((entry) => entry.items); // Extract items from the relation
   }
 
-  async softDeleteItem(id: string): Promise<{ success: boolean; id: string }> {
-    const { error } = await this.supabase
+  async softDeleteItem(
+    req: Request,
+    id: string,
+  ): Promise<{ success: boolean; id: string }> {
+    const supabase = (req as any)["supabase"] as SupabaseClient;
+    const { error } = await supabase
       .from("storage_items")
       .update({ is_deleted: true })
       .eq("id", id);
@@ -300,15 +312,17 @@ export class StorageItemsService {
 
   //check if the item can be deleted (if it exists in some orders)
   async canDeleteItem(
+    req: Request,
     id: string,
     confirm?: string,
   ): Promise<{ success: boolean; reason?: string; id: string }> {
+    const supabase = (req as any)["supabase"] as SupabaseClient;
     if (!id) {
       throw new Error("No item ID provided for deletion");
     }
 
     // Check if item exists in any orders
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from("order_items")
       .select("id")
       .eq("item_id", id)

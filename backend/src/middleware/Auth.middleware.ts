@@ -83,6 +83,12 @@ export class AuthMiddleware implements NestMiddleware {
       } = await supabase.auth.getUser(token);
 
       if (error || !user) {
+        // Error handling for invalid or expired tokens
+        if (error?.code === "ERR_JWT_EXPIRED") {
+          throw new UnauthorizedException(
+            "Session expired - please log in again",
+          );
+        }
         this.logger.warn(
           `[${new Date().toISOString()}] Authentication failed: Invalid or expired token`,
         );
