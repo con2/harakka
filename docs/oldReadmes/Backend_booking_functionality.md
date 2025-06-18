@@ -1,6 +1,5 @@
 🧠 BookingService — Developer Docs
-created by chatGPT and me
-hello I changed something here!
+created by chatGPT
 
 This service handles everything related to bookings: creating them, confirming, rejecting, updating, checking availability, and even returning items. It wraps all Supabase logic behind nice, readable methods so that higher-level components can focus on business logic instead of database wrangling.
 

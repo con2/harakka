@@ -3,8 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Setup: environment variables
 const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, // braucht Service Key für DB-Zugriff
+  Deno.env.get("SUPABASE_URL"),
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"), // braucht Service Key für DB-Zugriff
 );
 
 serve(async (req) => {

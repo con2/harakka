@@ -7,7 +7,6 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-import { EmailProps } from "../interfaces/mail.interface";
 
 const ItemsReturnedMail = ({ name, location, items, today }) => (
   <Html>

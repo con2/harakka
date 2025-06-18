@@ -7,7 +7,7 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-import { PickUpEmail } from "../interfaces/mail.interface";
+import { PickUpEmail } from "src/modules/mail/interfaces/mail.interface";
 
 const ItemsPickedUpMail = ({
   name,

@@ -7,7 +7,7 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-import { EmailProps } from "../interfaces/mail.interface";
+import { EmailProps } from "src/modules/mail/interfaces/mail.interface";
 
 const BookingCreationEmail = ({
   name,
