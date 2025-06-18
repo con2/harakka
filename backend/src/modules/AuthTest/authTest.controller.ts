@@ -1,4 +1,4 @@
-import type { Database } from "src/types/supabase";
+import type { Database } from "src/types/supabase.types";
 import { Controller, Get, Req } from "@nestjs/common";
 import { AuthTestService } from "./authTest.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";

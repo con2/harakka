@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient, SupabaseClient, User } from "@supabase/supabase-js";
-import type { Database } from "src/types/supabase";
+import type { Database } from "src/types/supabase.types";
 import { Request, Response, NextFunction } from "express";
 import { jwtVerify } from "jose";
 

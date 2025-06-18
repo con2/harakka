@@ -12,7 +12,7 @@ import {
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
-import { Tables } from "../../types/supabase" // Import the Database type for type safety
+import { Tables, TablesInsert, TablesUpdate } from "../../types/supabase.types" // Import the Database type for type safety
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
@@ -33,7 +33,7 @@ export class StorageItemsController {
   }
 
   @Post()
-  async create(@Req() req, @Body() item: any) {
+  async create(@Req() req, @Body() item) {
     return this.storageItemsService.createItem(req, item); // POST /storage-items (new item)
   }
 
@@ -41,8 +41,8 @@ export class StorageItemsController {
   async update(
     @Req() req: Request,
     @Param("id") id: string,
-    @Body() item: Tables["storage_items"], // Use the type from your Supabase types
-  ) {
+    @Body() item: Partial<TablesUpdate<"storage_items">>, // Use the type from your Supabase types
+  ): Promise<TablesUpdate<"storage_items">> {
     return this.storageItemsService.updateItem(req, id, item); // PUT /storage-items/:id (update item)
   }
 
@@ -57,7 +57,7 @@ export class StorageItemsController {
     return this.storageItemsService.getItemsByTag(req, tagId);
   }
 
-  @Get(":id/can-delete")
+  @Post(":id/can-delete")
   async canDelete(@Req() req: Request, @Param("id") id: string): Promise<any> {
     try {
       const result = await this.storageItemsService.canDeleteItem(req, id);

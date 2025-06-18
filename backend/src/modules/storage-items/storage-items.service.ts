@@ -11,6 +11,8 @@ import {
 import { S3Service } from "../supabase/s3-supabase.service";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
+import { Tables, TablesUpdate } from "src/types/supabase.types";
+import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 // this is used by the controller
 
 @Injectable()
@@ -114,8 +116,8 @@ export class StorageItemsService {
 
   async createItem(
     req: Request,
-    item: Partial<StorageItem> & { tagIds?: string[] },
-  ) {
+    item: Partial<TablesUpdate<"storage_items">> & { tagIds?: string[] },
+  ): Promise<StorageItem> {
     const supabase = req["supabase"] as SupabaseClient;
 
     // Extract tagIds from the item object
@@ -294,10 +296,10 @@ export class StorageItemsService {
   }
 
   async softDeleteItem(
-    req: Request,
+    req: AuthRequest,
     id: string,
   ): Promise<{ success: boolean; id: string }> {
-    const supabase = (req as any)["supabase"] as SupabaseClient;
+    const supabase = req["supabase"];
     const { error } = await supabase
       .from("storage_items")
       .update({ is_deleted: true })

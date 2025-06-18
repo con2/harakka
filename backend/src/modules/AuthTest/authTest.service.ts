@@ -1,4 +1,4 @@
-import type { Database } from "src/types/supabase";
+import type { Database } from "src/types/supabase.types";
 import {
   Injectable,
   UnauthorizedException,
