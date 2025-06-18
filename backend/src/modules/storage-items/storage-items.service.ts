@@ -116,7 +116,7 @@ export class StorageItemsService {
     req: Request,
     item: Partial<StorageItem> & { tagIds?: string[] },
   ) {
-    const supabase = (req as any)["supabase"] as SupabaseClient;
+    const supabase = req["supabase"] as SupabaseClient;
 
     // Extract tagIds from the item object
     // and keep the rest of the item data in storageItemData
@@ -152,7 +152,7 @@ export class StorageItemsService {
     id: string,
     item: Partial<StorageItem> & { tagIds?: string[] },
   ): Promise<StorageItem> {
-    const supabase = (req as any)["supabase"] as SupabaseClient;
+    const supabase = req["supabase"] as SupabaseClient;
     // Extract properties that shouldn't be sent to the database
     const { tagIds, location_details, storage_item_tags, ...itemData } = item;
 
@@ -164,7 +164,7 @@ export class StorageItemsService {
       .update(itemData)
       .eq("id", id)
       .select();
-    
+
     console.log(updateError);
     if (updateError) {
       throw new Error(updateError.message);
@@ -202,7 +202,7 @@ export class StorageItemsService {
     id: string,
     confirm?: string,
   ): Promise<{ success: boolean; id: string }> {
-    const supabase = (req as any)["supabase"] as SupabaseClient;
+    const supabase = req["supabase"] as SupabaseClient;
     if (!id) {
       throw new Error("No item ID provided for deletion");
     }
@@ -281,7 +281,7 @@ export class StorageItemsService {
 
   // TODO: needs to be fixed and updated
   async getItemsByTag(req: Request, tagId: string) {
-    const supabase = (req as any)["supabase"] as SupabaseClient;
+    const supabase = req["supabase"] as SupabaseClient;
     const { data, error } = await supabase
       .from("storage_item_tags")
       .select("item_id, items(*)") // Select foreign table 'items' if it's a relation
@@ -316,7 +316,7 @@ export class StorageItemsService {
     id: string,
     confirm?: string,
   ): Promise<{ success: boolean; reason?: string; id: string }> {
-    const supabase = (req as any)["supabase"] as SupabaseClient;
+    const supabase = req["supabase"] as SupabaseClient;
     if (!id) {
       throw new Error("No item ID provided for deletion");
     }
