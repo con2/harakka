@@ -53,11 +53,13 @@ export class MailService {
           pass: process.env.GMAIL_APP_PASSWORD, // ← App Password
         },
       });
+      console.log("EMAIL:", process.env.LATEST_APP_PASSWORD);
+      console.log("EMAIL:", process.env.EMAIL_FROM_NEW);
 
       const finalHtml = await this.generateHtml(template, html);
 
       const mailOptions = {
-        from: `BookingApp <${process.env.EMAIL_FROM}>`,
+        from: `BookingApp <${process.env.EMAIL_FROM_2}>`,
         to,
         subject,
         html: finalHtml,
