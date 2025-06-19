@@ -1,16 +1,13 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
-import { User } from "./interfaces/user.interface";
+
 import { CreateUserDto } from "./dto/create-user.dto";
-import {
-  PostgrestResponse,
-  PostgrestSingleResponse,
-  SupabaseClient,
-  UserResponse,
-} from "@supabase/supabase-js";
+import { SupabaseClient, UserResponse } from "@supabase/supabase-js";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import WelcomeEmail from "src/emails/WelcomeEmail";
 import { MailService } from "../mail/mail.service";
+import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { UserAddress, UserProfile } from "./interfaces/user.interface";
 
 @Injectable()
 export class UserService {
@@ -25,16 +22,16 @@ export class UserService {
     this.supabase = supabaseService.getServiceClient(); // Use the service client for admin operations
   }
 
-  async getAllUsers(): Promise<User[]> {
-    const { data, error }: PostgrestResponse<User> = await this.supabase
-      .from("user_profiles")
-      .select("*");
+  async getAllUsers(req: AuthRequest): Promise<UserProfile[]> {
+    const supabase = req.supabase;
+    const { data, error } = await supabase.from("user_profiles").select("*");
     if (error) throw new Error(error.message);
     return data || [];
   }
 
-  async getUserById(id: string): Promise<User | null> {
-    const { data, error }: PostgrestSingleResponse<User> = await this.supabase
+  async getUserById(id: string, req: AuthRequest): Promise<UserProfile | null> {
+    const supabase = req.supabase;
+    const { data, error } = await supabase
       .from("user_profiles")
       .select("*")
       .eq("id", id)
@@ -43,13 +40,17 @@ export class UserService {
       if (error.code === "PGRST116") return null;
       throw new Error(error.message);
     }
-    return data;
+    return data ?? null;
   }
 
-  async createUser(user: CreateUserDto): Promise<User> {
+  async createUser(
+    user: CreateUserDto,
+    req: AuthRequest,
+  ): Promise<UserProfile> {
+    const supabase = req.supabase;
     try {
       // First, check if user already exists to provide better error message
-      const { data: existingUser } = await this.supabase
+      const { data: existingUser } = await supabase
         .from("user_profiles")
         .select("id")
         .eq("email", user.email)
@@ -62,12 +63,11 @@ export class UserService {
       // Log the attempt to create a user
       this.logger.log(`Attempting to create user with email: ${user.email}`);
 
-      // send mail to user
-      console.log(`User: ${user}`);
-      /*    try {
+      try {
         await this.mailService.sendMail({
           to: user.email,
           subject: "Welcome, friend!",
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           template: WelcomeEmail({ name: user.email }),
         });
       } catch (mailError) {
@@ -79,7 +79,7 @@ export class UserService {
           }`,
         );
       }
- */
+
       // Create a user in Supabase Auth
       const { data: authData, error: authError }: UserResponse =
         await this.supabase.auth.admin.createUser({
@@ -115,10 +115,7 @@ export class UserService {
       }
 
       // Check if profile was already created by the database trigger
-      const {
-        data: existingProfile,
-        error: profileError,
-      }: PostgrestSingleResponse<User> = await this.supabase
+      const { data: existingProfile, error: profileError } = await supabase
         .from("user_profiles")
         .select("*")
         .eq("id", authData.user.id)
@@ -135,19 +132,18 @@ export class UserService {
 
       if (existingProfile) {
         // Profile already exists (created by trigger), update it with additional information
-        const { data, error: updateError }: PostgrestSingleResponse<User> =
-          await this.supabase
-            .from("user_profiles")
-            .update({
-              full_name: user.full_name,
-              visible_name: user.visible_name,
-              role: user.role || "user",
-              phone: user.phone,
-              preferences: user.preferences || {},
-            })
-            .eq("id", authData.user.id)
-            .select()
-            .single();
+        const { data, error: updateError } = await supabase
+          .from("user_profiles")
+          .update({
+            full_name: user.full_name,
+            visible_name: user.visible_name,
+            role: user.role || "user",
+            phone: user.phone,
+            preferences: user.preferences || {},
+          })
+          .eq("id", authData.user.id)
+          .select()
+          .single();
 
         if (updateError) {
           this.logger.error(
@@ -161,22 +157,21 @@ export class UserService {
         return data;
       } else {
         // Profile doesn't exist yet, create it
-        const { data, error: profileError }: PostgrestSingleResponse<User> =
-          await this.supabase
-            .from("user_profiles")
-            .insert([
-              {
-                id: authData.user.id, // Auth-generated user ID
-                role: user.role || "user",
-                full_name: user.full_name,
-                visible_name: user.visible_name,
-                phone: user.phone,
-                email: user.email,
-                preferences: user.preferences || {},
-              },
-            ])
-            .select()
-            .single();
+        const { data, error: profileError } = await supabase
+          .from("user_profiles")
+          .insert([
+            {
+              id: authData.user.id, // Auth-generated user ID
+              role: user.role || "user",
+              full_name: user.full_name,
+              visible_name: user.visible_name,
+              phone: user.phone,
+              email: user.email,
+              preferences: user.preferences || {},
+            },
+          ])
+          .select()
+          .single();
 
         if (profileError) {
           this.logger.error(
@@ -202,8 +197,13 @@ export class UserService {
     }
   }
 
-  async updateUser(id: string, user: Partial<User>): Promise<User | null> {
-    const { data, error }: PostgrestSingleResponse<User> = await this.supabase
+  async updateUser(
+    id: string,
+    user: Partial<CreateUserDto>,
+    req: AuthRequest,
+  ): Promise<UserProfile | null> {
+    const supabase = req.supabase;
+    const { data, error } = await supabase
       .from("user_profiles")
       .update(user)
       .eq("id", id)
@@ -216,8 +216,9 @@ export class UserService {
     return data;
   }
 
-  async deleteUser(id: string): Promise<void> {
-    const { error } = await this.supabase
+  async deleteUser(id: string, req: AuthRequest): Promise<void> {
+    const supabase = req.supabase;
+    const { error } = await supabase
       .from("user_profiles")
       .delete()
       .eq("id", id);
@@ -229,8 +230,9 @@ export class UserService {
   }
 
   // get all addresses for a specific user
-  async getAddressesByid(id: string): Promise<any[]> {
-    const { data, error }: PostgrestResponse<any> = await this.supabase
+  async getAddressesByid(id: string, req: AuthRequest): Promise<UserAddress[]> {
+    const supabase = req.supabase;
+    const { data, error } = await supabase
       .from("user_addresses")
       .select("*")
       .eq("user_id", id);
@@ -241,8 +243,13 @@ export class UserService {
   }
 
   // add a new address
-  async addAddress(id: string, address: CreateAddressDto): Promise<any> {
-    const { data, error }: PostgrestSingleResponse<any> = await this.supabase
+  async addAddress(
+    id: string,
+    address: CreateAddressDto,
+    req: AuthRequest,
+  ): Promise<UserAddress> {
+    const supabase = req.supabase;
+    const { data, error } = await supabase
       .from("user_addresses")
       .insert([{ ...address, user_id: id }])
       .select()
@@ -256,8 +263,10 @@ export class UserService {
     id: string,
     addressId: string,
     address: CreateAddressDto,
-  ): Promise<any> {
-    const { data, error }: PostgrestSingleResponse<any> = await this.supabase
+    req: AuthRequest,
+  ): Promise<UserAddress | null> {
+    const supabase = req.supabase;
+    const { data, error } = await supabase
       .from("user_addresses")
       .update(address)
       .eq("user_id", id)
@@ -269,8 +278,13 @@ export class UserService {
   }
 
   // delete an address
-  async deleteAddress(id: string, addressId: string): Promise<void> {
-    const { error } = await this.supabase
+  async deleteAddress(
+    id: string,
+    addressId: string,
+    req: AuthRequest,
+  ): Promise<void> {
+    const supabase = req.supabase;
+    const { error } = await supabase
       .from("user_addresses")
       .delete()
       .eq("user_id", id)
