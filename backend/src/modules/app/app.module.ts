@@ -24,7 +24,7 @@ import { SupabaseModule } from "../supabase/supabase.module";
 import { AuthMiddleware } from "../../middleware/Auth.middleware";
 import { AuthTestController } from "../AuthTest/authTest.controller";
 import { AuthTestService } from "../AuthTest/authTest.service";
-import { UserController } from "../user/user.controller";
+import { BookingController } from "../booking/booking.controller";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -66,7 +66,7 @@ export class AppModule implements NestModule {
 
       // ⬇️  List every non-GET verb you want protected
       .forRoutes(
-        UserController,
+        BookingController,
         { path: "*", method: RequestMethod.POST },
         { path: "*", method: RequestMethod.PUT },
         { path: "*", method: RequestMethod.PATCH },

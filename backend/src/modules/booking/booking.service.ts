@@ -27,6 +27,9 @@ import BookingRejectionEmail from "src/emails/BookingRejectionEmail";
 import BookingDeleteMail from "src/emails/BookingDeleteMail";
 import ItemsReturnedMail from "src/emails/ItemsReturned";
 import ItemsPickedUpMail from "src/emails/ItemsPickedUp";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "src/types/supabase.types";
+import { Translations } from "./types/translations.types";
 
 @Injectable()
 export class BookingService {
@@ -35,16 +38,8 @@ export class BookingService {
     private readonly mailService: MailService,
   ) {}
 
-  // TODO!:
-  // use getClientByRole again!
-  // refactor code so that the supabase client is not created in every function
-  // clean up the entire code and slpit the methods to sepetarte files
-
   // 1. get all orders
-  async getAllOrders() {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async getAllOrders(userId: string, supabase: SupabaseClient<Database>) {
     const { data: orders, error } = await supabase.from("orders").select(`
       *,
       order_items (
@@ -80,20 +75,24 @@ export class BookingService {
 
           if (userData) {
             user = {
-              name: userData.full_name,
-              email: userData.email,
+              name: userData.full_name ?? "unknown",
+              email: userData.email ?? "unknown@incognito.fi",
             };
           }
         }
 
         const itemWithNamesAndLocation =
-          order.order_items?.map((item) => ({
-            ...item,
-            item_name:
-              item.storage_items?.translations?.en?.item_name ?? "Unknown",
-            location_name:
-              item.storage_items?.storage_locations?.name ?? "Unknown",
-          })) ?? [];
+          order.order_items?.map((item) => {
+            const translations = item.storage_items
+              ?.translations as Translations | null;
+
+            return {
+              ...item,
+              item_name: translations?.en?.item_name ?? "Unknown",
+              location_name:
+                item.storage_items?.storage_locations?.name ?? "Unknown",
+            };
+          }) ?? [];
 
         return {
           ...order,
@@ -107,13 +106,12 @@ export class BookingService {
   }
 
   // 2. get all bookings of a user
-  async getUserBookings(userId: string) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  // RLS aktiv ist und user_id ≠ JWT-User-ID
+  async getUserBookings(userId: string, supabase: SupabaseClient<Database>) {
     if (!userId || userId === "undefined") {
       throw new BadRequestException("Valid user ID is required");
     }
+    console.log("Fetching bookings for userId:", userId);
 
     const { data: orders, error } = await supabase
       .from("orders")
@@ -140,6 +138,7 @@ export class BookingService {
     }
 
     if (!orders || orders.length === 0) {
+      console.log(`Orders: ${orders}`);
       return [];
     }
 
@@ -173,14 +172,19 @@ export class BookingService {
     // Add location_name and item_name to each item
     const ordersWithNames = orders.map((order) => ({
       ...order,
-      order_items: order.order_items?.map((item) => ({
-        ...item,
-        item_name: item.storage_items?.translations?.en?.item_name ?? "Unknown",
-        location_name:
-          locationMap.get(item.storage_items?.location_id) ??
-          "Unknown Location",
-      })),
+      order_items: order.order_items?.map((item) => {
+        const translations = item.storage_items
+          ?.translations as Translations | null;
+        return {
+          ...item,
+          item_name: translations?.en?.item_name ?? "Unknown",
+          location_name:
+            locationMap.get(item.storage_items?.location_id ?? "") ??
+            "Unknown Location",
+        };
+      }),
     }));
+
     return ordersWithNames;
   }
 
@@ -380,7 +384,7 @@ export class BookingService {
       location: location?.name,
       items: emailItems,
     };
-    
+
     await this.mailService.sendMail({
       to: emailData.email,
       subject: "Vastaanotettu varaus - Booking received!",
@@ -393,13 +397,13 @@ export class BookingService {
       email: "illusia.rental.service@gmail.com",
       name: "Admin",
     };
-   
+
     await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
       subject:
         "Uusi varaus vastaanotettu (kopio) - odottamassa toimenpiteitä -- New booking received (copy) - waiting for action",
       template: BookingCreationEmail(adminEmailData),
-    }); 
+    });
 
     return warningMessage ? { order, warning: warningMessage } : order;
   }

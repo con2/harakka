@@ -8,7 +8,7 @@ import {
   Section,
 } from "@react-email/components";
 import type { UserRole } from "../modules/user/interfaces/user";
-import type { BookingItem } from "../modules/booking/interfaces/order";
+import type { BookingItem } from "../modules/booking/types/order";
 
 type ExtendedBookingItem = BookingItem & {
   translations?: {
