@@ -380,12 +380,12 @@ export class BookingService {
       location: location?.name,
       items: emailItems,
     };
-    /* 
+    
     await this.mailService.sendMail({
       to: emailData.email,
       subject: "Vastaanotettu varaus - Booking received!",
       template: BookingCreationEmail(emailData),
-    }); */
+    });
 
     // send mail to admin
     const adminEmailData = {
@@ -393,13 +393,13 @@ export class BookingService {
       email: "illusia.rental.service@gmail.com",
       name: "Admin",
     };
-    /* 
+   
     await this.mailService.sendMail({
       to: "illusia.rental.service@gmail.com",
       subject:
         "Uusi varaus vastaanotettu (kopio) - odottamassa toimenpiteitä -- New booking received (copy) - waiting for action",
       template: BookingCreationEmail(adminEmailData),
-    }); */
+    }); 
 
     return warningMessage ? { order, warning: warningMessage } : order;
   }

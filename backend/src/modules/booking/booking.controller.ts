@@ -28,6 +28,7 @@ export class BookingController {
   // gets all bookings - use case: admin
   @Get()
   async getAll(@Req() req: any) {
+    console.log("REQ:", req.user);
     const userId = req.headers["x-user-id"] ?? req.user?.id;
     return this.bookingService.getAllOrders();
   }
