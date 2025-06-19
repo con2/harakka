@@ -36,18 +36,23 @@ export class BookingController {
 
   // gets the bookings of the logged-in user
   @Get("my")
-  async getOwnBookings(@Req() req: any) {
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
-    return this.bookingService.getUserBookings(userId);
+  async getOwnBookings(@Req() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    const supabase = req.supabase;
+    return this.bookingService.getUserBookings(userId, supabase);
   }
 
   // gets the bookings of a specific user
   @Get("user/:userId")
-  async getUserBookings(@Param("userId") userId: string) {
+  async getUserBookings(
+    @Param("userId") userId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
     if (!userId) {
       throw new UnauthorizedException("User ID is required");
     }
-    return this.bookingService.getUserBookings(userId);
+    const supabase = req.supabase;
+    return this.bookingService.getUserBookings(userId, supabase);
   }
 
   // creates a booking
