@@ -29,7 +29,7 @@ import ItemsReturnedMail from "src/emails/ItemsReturned";
 import ItemsPickedUpMail from "src/emails/ItemsPickedUp";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "src/types/supabase.types";
-import { Translations } from "../../types/translations.types";
+import { Translations } from "./types/translations.types";
 
 @Injectable()
 export class BookingService {
