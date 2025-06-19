@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { ConfigService } from "@nestjs/config";
-
+type Roles = "Admin" | "SuperVera" | "User";
 @Injectable()
 export class SupabaseService {
   private readonly logger = new Logger(SupabaseService.name);
@@ -87,7 +87,7 @@ export class SupabaseService {
       throw new Error("Unable to determine user role. Access denied.");
     }
 
-    const userRole = userProfile.role;
+    const userRole: Roles = (userProfile as { role: Roles }).role;
 
     const elevatedRoles = ["admin", "superVera", "service_role"];
 
