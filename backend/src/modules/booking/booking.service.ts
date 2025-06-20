@@ -574,10 +574,12 @@ export class BookingService {
   }
 
   // 5. update a Booking (Admin/SuperVera OR Owner)
-  async updateBooking(orderId: string, userId: string, updatedItems: any[]) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async updateBooking(
+    orderId: string,
+    userId: string,
+    updatedItems: any[],
+    supabase: SupabaseClient,
+  ) {
     // 5.1 check the order
     const { data: order } = await supabase
       .from("orders")
@@ -758,7 +760,30 @@ export class BookingService {
       template: BookingUpdateEmail(adminEmailData),
     }); */
 
-    return { message: "Booking updated" };
+    const { data: updatedOrder, error: orderError } = await supabase
+      .from("orders")
+      .select(
+        `
+    *,
+    order_items (
+      *,
+      storage_items (
+        translations
+      )
+    )
+  `,
+      )
+      .eq("id", orderId)
+      .single();
+
+    if (orderError || !updatedOrder) {
+      throw new BadRequestException("Could not fetch updated booking details");
+    }
+
+    return {
+      message: "Booking updated",
+      booking: updatedOrder,
+    };
   }
 
   // 6. reject a Booking (Admin/SuperVera only)

@@ -101,11 +101,17 @@ export class BookingController {
   @Put(":id/update") // user updates own booking or admin updates booking
   async updateBooking(
     @Param("id") id: string,
-    @Body("items") items: any[],
-    @Req() req: any,
+    @Body("items") updatedItems: any[],
+    @Req() req: AuthenticatedRequest,
   ) {
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
-    return this.bookingService.updateBooking(id, userId, items);
+    const userId = req.user.id;
+    const supabase = req.supabase;
+    return this.bookingService.updateBooking(
+      id,
+      userId,
+      updatedItems,
+      supabase,
+    );
   }
 
   // rejects a booking by admin
