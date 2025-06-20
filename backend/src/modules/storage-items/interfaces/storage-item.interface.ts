@@ -1,4 +1,4 @@
-import { Tag } from "src/modules/tag/interfaces/tag.interface";
+import { TagRow } from "../../tag/interfaces/tag.interface";
 
 export interface StorageItem {
   id: string;
@@ -24,7 +24,7 @@ export interface StorageItem {
   average_rating?: number;
   created_at?: string;
   updated_at?: string;
-  storage_item_tags?: Tag[];
+  storage_item_tags?: TagRow[];
 
   location_details?: {
     id: string;
@@ -70,7 +70,7 @@ export interface StorageItemWithJoin {
   // Raw Supabase join result
   storage_item_tags?: {
     tag_id: string;
-    tags: Tag;
+    tags: TagRow;
   }[];
 
   // Raw Supabase join result for location
