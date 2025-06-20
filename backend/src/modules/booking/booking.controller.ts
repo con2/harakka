@@ -57,13 +57,18 @@ export class BookingController {
 
   // creates a booking
   @Post()
-  async createBooking(@Body() dto: CreateBookingDto, @Req() req: any) {
+  async createBooking(
+    @Body() dto: CreateBookingDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
     try {
-      const userId = req.headers["x-user-id"] ?? req.user?.id;
+      const userId = req.user?.id;
       if (!userId) {
         throw new BadRequestException("No userId found: user_id is required");
       }
-      return this.bookingService.createBooking({ ...dto, user_id: userId });
+      // put user-ID to DTO
+      const dtoWithUserId = { ...dto, user_id: userId };
+      return this.bookingService.createBooking(dtoWithUserId, req.supabase);
     } catch (error) {
       console.error("Booking creation failed:", error);
 
@@ -72,7 +77,7 @@ export class BookingController {
         error instanceof BadRequestException ||
         error instanceof ForbiddenException
       ) {
-        throw error; // Keep the original error if it's already properly typed
+        throw error;
       }
       throw new BadRequestException(
         "There was an issue processing your booking. If this persists, please contact support.",

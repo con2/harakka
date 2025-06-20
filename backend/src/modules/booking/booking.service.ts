@@ -106,12 +106,10 @@ export class BookingService {
   }
 
   // 2. get all bookings of a user
-  // RLS aktiv ist und user_id ≠ JWT-User-ID
   async getUserBookings(userId: string, supabase: SupabaseClient<Database>) {
     if (!userId || userId === "undefined") {
       throw new BadRequestException("Valid user ID is required");
     }
-    console.log("Fetching bookings for userId:", userId);
 
     const { data: orders, error } = await supabase
       .from("orders")
@@ -138,7 +136,6 @@ export class BookingService {
     }
 
     if (!orders || orders.length === 0) {
-      console.log(`Orders: ${orders}`);
       return [];
     }
 
@@ -189,10 +186,7 @@ export class BookingService {
   }
 
   // 3. create a Booking
-  async createBooking(dto: CreateBookingDto) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async createBooking(dto: CreateBookingDto, supabase: SupabaseClient) {
     const userId = dto.user_id;
 
     if (!userId) {
