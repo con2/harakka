@@ -403,10 +403,11 @@ export class BookingService {
   }
 
   // 4. confirm a Booking
-  async confirmBooking(orderId: string, userId: string) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async confirmBooking(
+    orderId: string,
+    userId: string,
+    supabase: SupabaseClient,
+  ) {
     // 4.1 check if already confirmed
     const { data: order } = await supabase
       .from("orders")

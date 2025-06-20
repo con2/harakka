@@ -55,7 +55,7 @@ export class BookingController {
     return this.bookingService.getUserBookings(userId, supabase);
   }
 
-  // creates a booking
+  // any user creates a booking
   @Post()
   async createBooking(
     @Body() dto: CreateBookingDto,
@@ -87,15 +87,14 @@ export class BookingController {
 
   // confirms a booking
   @Put(":id/confirm") // admin confirms booking
-  async confirm(@Param("id") id: string, @Req() req: any) {
-    console.log("Headers:", req.headers);
-    console.log("x-user-id header:", req.headers["x-user-id"]);
-    console.log("user.id:", req.user?.id);
+  async confirm(
+    @Param("id") orderId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const userId = req.user.id;
+    const supabase = req.supabase;
 
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
-    console.log("Final userId:", userId);
-
-    return this.bookingService.confirmBooking(id, userId);
+    return this.bookingService.confirmBooking(orderId, userId, supabase);
   }
 
   // updates a booking
