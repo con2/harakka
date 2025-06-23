@@ -124,9 +124,10 @@ export class BookingController {
 
   // cancels own booking by user or admin cancels any booking
   @Delete(":id/cancel")
-  async cancel(@Param("id") id: string, @Req() req: any) {
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
-    return this.bookingService.cancelBooking(id, userId);
+  async cancel(@Param("id") id: string, @Req() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    const supabase = req.supabase;
+    return this.bookingService.cancelBooking(id, userId, supabase);
   }
 
   // admin deletes booking

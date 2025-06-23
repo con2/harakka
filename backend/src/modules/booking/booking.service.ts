@@ -945,19 +945,17 @@ export class BookingService {
   }
 
   // 7. cancel a Booking (User if not confirmed, Admins/SuperVera always)
-  async cancelBooking(orderId: string, userId: string) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
-    // 7.1 check user role
+  async cancelBooking(
+    orderId: string,
+    userId: string,
+    supabase: SupabaseClient,
+  ) {
+    // 7.1 check order status
     const { data: order } = await supabase
       .from("orders")
-      .select("status, user_id")
+      .select("status, user_id, order_number")
       .eq("id", orderId)
-      .single<{
-        user_id: string;
-        status: string;
-      }>();
+      .single();
 
     if (!order) throw new BadRequestException("Order not found");
 
@@ -968,6 +966,7 @@ export class BookingService {
       throw new BadRequestException(`Booking has already been ${order.status}`);
     }
 
+    // get user profile
     const { data: userProfile, error: userProfileError } = await supabase
       .from("user_profiles")
       .select("role, email, full_name")
@@ -978,20 +977,19 @@ export class BookingService {
       throw new BadRequestException("User profile not found");
     }
 
-    const isAdmin =
-      userProfile.role === "admin" || userProfile.role === "superVera";
+    // 7.2 permissions check
+
+    const isAdmin = ["admin", "superVera"].includes(userProfile.role?.trim());
     const isOwner = order.user_id === userId;
 
-    // 7.2 permissions check
-    if (!isAdmin) {
-      if (!isOwner) {
-        throw new ForbiddenException("You can only cancel your own bookings");
-      }
-      if (!isAdmin && order.status === "confirmed") {
-        throw new ForbiddenException(
-          "You can't cancel a booking that has already been confirmed",
-        );
-      }
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException("You can only cancel your own bookings");
+    }
+
+    if (!isAdmin && order.status === "confirmed") {
+      throw new ForbiddenException(
+        "You can't cancel a booking that has already been confirmed",
+      );
     }
 
     // 7.5 Cancel all related order_items
@@ -1055,10 +1053,10 @@ export class BookingService {
         throw new BadRequestException("Could not fetch storage item details");
       }
       item.translations = storageItem.translations;
+      item.location_id = storageItem.location_id;
     }
 
     const startDate = dayjs(orderItems[0].start_date).format("DD.MM.YYYY");
-
     const emailItems = enrichedItems.map((item) => ({
       item_id: item.item_id,
       quantity: item.quantity,
@@ -1107,10 +1105,6 @@ export class BookingService {
     return {
       message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
       orderId,
-      recipient: {
-        email: userProfile.email,
-        role: userProfile.role,
-      },
       cancelledBy: isAdmin ? "admin" : "user",
       items: orderItems.map((item) => ({
         item_id: item.item_id,
