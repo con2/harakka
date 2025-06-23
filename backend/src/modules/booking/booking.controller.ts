@@ -116,9 +116,10 @@ export class BookingController {
 
   // rejects a booking by admin
   @Put(":id/reject")
-  async reject(@Param("id") id: string, @Req() req: any) {
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
-    return this.bookingService.rejectBooking(id, userId);
+  async reject(@Param("id") id: string, @Req() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    const supabase = req.supabase;
+    return this.bookingService.rejectBooking(id, userId, supabase);
   }
 
   // cancels own booking by user or admin cancels any booking
