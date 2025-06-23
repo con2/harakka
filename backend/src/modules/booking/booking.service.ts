@@ -787,10 +787,11 @@ export class BookingService {
   }
 
   // 6. reject a Booking (Admin/SuperVera only)
-  async rejectBooking(orderId: string, userId: string) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async rejectBooking(
+    orderId: string,
+    userId: string,
+    supabase: SupabaseClient,
+  ) {
     // check if already rejected
     const { data: order } = await supabase
       .from("orders")
@@ -806,7 +807,7 @@ export class BookingService {
     }
 
     // 6.1 user role check
-    const { data: user, error: userError } = await supabase
+    const { data: user } = await supabase
       .from("user_profiles")
       .select("role, email, full_name")
       .eq("id", userId)
@@ -816,9 +817,9 @@ export class BookingService {
       throw new ForbiddenException("User not found");
     }
 
-    const role = user.role?.trim();
+    const isAdmin = ["admin", "superVera"].includes(user.role?.trim());
 
-    if (role !== "admin" && role !== "superVera") {
+    if (!isAdmin) {
       throw new ForbiddenException("Only admins can reject bookings");
     }
 
