@@ -140,16 +140,21 @@ export class BookingController {
 
   // admin returns items
   @Post(":id/return")
-  async returnItems(@Param("id") id: string, @Req() req: any) {
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
-    return this.bookingService.returnItems(id, userId);
+  async returnItems(@Param("id") id: string, @Req() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    const supabase = req.supabase;
+    return this.bookingService.returnItems(id, userId, supabase);
   }
 
   // admin marks items as picked up
   @Post(":orderId/pickup")
-  async pickup(@Param("orderId") orderId: string, @Req() req: any) {
-    // const userId = req.headers["x-user-id"] ?? req.user?.id;
-    return this.bookingService.confirmPickup(orderId);
+  async pickup(
+    @Param("orderId") orderId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    // const userId = req.user.id;
+    const supabase = req.supabase;
+    return this.bookingService.confirmPickup(orderId, supabase);
   }
 
   // checks availability of items by date range

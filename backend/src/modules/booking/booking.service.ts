@@ -1207,10 +1207,7 @@ export class BookingService {
   }
 
   // 9. return items (when items are brought back)
-  async returnItems(orderId: string, userId: string) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async returnItems(orderId: string, userId: string, supabase: SupabaseClient) {
     const { data: items } = await supabase
       .from("order_items")
       .select("item_id, quantity, status")
@@ -1356,62 +1353,11 @@ export class BookingService {
     return { message: "Items returned successfully" };
   }
 
-  // 10. check availability of item by date range
-  async checkAvailability(
-    itemId: string,
-    startDate: string,
-    endDate: string,
-    userId: string,
-  ) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
-    // Sum all overlapping bookings
-    const { data: overlappingOrders, error: overlapError } = await supabase
-      .from("order_items")
-      .select("quantity")
-      .eq("item_id", itemId) // item_id = :itemId
-      .lte("start_date", endDate) // AND start_date <= :endDate
-      .gte("end_date", startDate); // AND end_date   >= :startDate
-
-    if (overlapError) {
-      throw new BadRequestException("Error checking overlapping bookings");
-    }
-
-    const alreadyBookedQuantity =
-      overlappingOrders?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
-      0;
-
-    // Get total quantity of item from storage
-    const { data: itemData, error: itemError } = await supabase
-      .from("storage_items")
-      .select("items_number_total")
-      .eq("id", itemId)
-      .single();
-
-    if (itemError || !itemData) {
-      throw new BadRequestException("Item data not found");
-    }
-
-    const availableQuantity =
-      itemData.items_number_total - alreadyBookedQuantity;
-
-    return {
-      item_id: itemId,
-      availableQuantity,
-      alreadyBookedQuantity,
-      totalQuantity: itemData.items_number_total,
-      startDate,
-      endDate,
-    };
-  }
-
-  // 11. confirm pickup of items
-  async confirmPickup(orderId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+  // 10. confirm pickup of items
+  async confirmPickup(orderId: string, supabase: SupabaseClient) {
     const today = new Date().toISOString().split("T")[0];
 
-    // 11.1. Get the order item
+    // 10.1. Get the order item
     const { data: items } = await supabase
       .from("order_items")
       .select("item_id, quantity, status, start_date, end_date")
@@ -1442,7 +1388,7 @@ export class BookingService {
         );
       } */
 
-      // 11.2. Get associated storage item
+      // 10.2. Get associated storage item
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
         .select("items_number_currently_in_storage")
@@ -1463,7 +1409,7 @@ export class BookingService {
         throw new BadRequestException("Not enough stock to confirm pickup");
       }
 
-      // 11.3. Update storage stock
+      // 10.3. Update storage stock
       const { error: updateStockError } = await supabase
         .from("storage_items")
         .update({ items_number_currently_in_storage: newCount })
@@ -1473,7 +1419,7 @@ export class BookingService {
         throw new BadRequestException("Failed to update storage stock");
       }
 
-      // 11.4. Update order item status to "picked_up"
+      // 10.4. Update order item status to "picked_up"
       const { error: updateStatusError } = await supabase
         .from("order_items")
         .update({ status: "picked_up" })
@@ -1484,7 +1430,7 @@ export class BookingService {
       }
     }
 
-    // 11.5. Get user email from related order
+    // 10.5. Get user email from related order
     const { data: order } = await supabase
       .from("orders")
       .select("user_id")
@@ -1584,6 +1530,56 @@ export class BookingService {
 
     return {
       message: `Pickup confirmed for order ${orderId}`,
+    };
+  }
+
+  // 11. check availability of item by date range
+  async checkAvailability(
+    itemId: string,
+    startDate: string,
+    endDate: string,
+    userId: string,
+  ) {
+    //const supabase = await this.supabaseService.getClientByRole(userId);
+    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
+
+    // Sum all overlapping bookings
+    const { data: overlappingOrders, error: overlapError } = await supabase
+      .from("order_items")
+      .select("quantity")
+      .eq("item_id", itemId) // item_id = :itemId
+      .lte("start_date", endDate) // AND start_date <= :endDate
+      .gte("end_date", startDate); // AND end_date   >= :startDate
+
+    if (overlapError) {
+      throw new BadRequestException("Error checking overlapping bookings");
+    }
+
+    const alreadyBookedQuantity =
+      overlappingOrders?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
+      0;
+
+    // Get total quantity of item from storage
+    const { data: itemData, error: itemError } = await supabase
+      .from("storage_items")
+      .select("items_number_total")
+      .eq("id", itemId)
+      .single();
+
+    if (itemError || !itemData) {
+      throw new BadRequestException("Item data not found");
+    }
+
+    const availableQuantity =
+      itemData.items_number_total - alreadyBookedQuantity;
+
+    return {
+      item_id: itemId,
+      availableQuantity,
+      alreadyBookedQuantity,
+      totalQuantity: itemData.items_number_total,
+      startDate,
+      endDate,
     };
   }
 
