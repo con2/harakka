@@ -198,8 +198,17 @@ export class BookingController {
 
   // change payment status
   @Patch("payment-status")
-  async updatePaymentStatus(@Body() dto: UpdatePaymentStatusDto) {
-    return this.bookingService.updatePaymentStatus(dto.orderId, dto.status);
+  async updatePaymentStatus(
+    @Body() dto: UpdatePaymentStatusDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    // const userId = req.user.id;
+    const supabase = req.supabase;
+    return this.bookingService.updatePaymentStatus(
+      dto.orderId,
+      dto.status,
+      supabase,
+    );
   }
 
   // commented out because it is not used atm

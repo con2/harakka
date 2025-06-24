@@ -1607,9 +1607,8 @@ export class BookingService {
   async updatePaymentStatus(
     orderId: string,
     status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
+    supabase: SupabaseClient,
   ) {
-    const supabase = this.supabaseService.getServiceClient();
-
     // Check if order exists
     const { data: order, error: orderError } = await supabase
       .from("orders")
