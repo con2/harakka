@@ -163,14 +163,16 @@ export class BookingController {
     @Param("itemId") itemId: string,
     @Query("start_date") startDate: string,
     @Query("end_date") endDate: string,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
   ) {
-    const userId = req.headers["x-user-id"] ?? req.user?.id;
+    const userId = req.user.id;
+    const supabase = req.supabase;
     return this.bookingService.checkAvailability(
       itemId,
       startDate,
       endDate,
       userId, //TODO: check if userId is needed here
+      supabase,
     );
   }
 
