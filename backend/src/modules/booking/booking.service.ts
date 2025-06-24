@@ -1539,10 +1539,8 @@ export class BookingService {
     startDate: string,
     endDate: string,
     userId: string,
+    supabase: SupabaseClient,
   ) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
     // Sum all overlapping bookings
     const { data: overlappingOrders, error: overlapError } = await supabase
       .from("order_items")
