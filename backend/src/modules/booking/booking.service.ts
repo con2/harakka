@@ -1116,18 +1116,19 @@ export class BookingService {
   }
 
   // 8. delete a Booking and mark it as deleted
-  async deleteBooking(orderId: string, userId: string) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async deleteBooking(
+    orderId: string,
+    userId: string,
+    supabase: SupabaseClient,
+  ) {
     // 8.1 check order in database
-    const { data: order } = await supabase
+    const { data: order, error: orderError } = await supabase
       .from("orders")
       .select("status, user_id, order_number")
       .eq("id", orderId)
       .single();
 
-    if (!order) throw new BadRequestException("Order not found");
+    if (orderError || !order) throw new BadRequestException("Order not found");
 
     // prevent re-deletion
     if (order.status === "deleted") {
@@ -1145,8 +1146,7 @@ export class BookingService {
       throw new BadRequestException("User profile not found");
     }
 
-    const isAdmin =
-      userProfile.role === "admin" || userProfile.role === "superVera";
+    const isAdmin = ["admin", "superVera"].includes(userProfile.role?.trim());
 
     if (!isAdmin) {
       throw new ForbiddenException(
