@@ -5,8 +5,8 @@ import {
   selectSelectedUser,
 } from "@/store/slices/usersSlice";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../ui/button";
-import { DataTable } from "../ui/data-table";
+import { Button } from "../../components/ui/button";
+import { DataTable } from "../../components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
 import {
@@ -23,20 +23,21 @@ import {
   selectOrdersLoading,
   updatePaymentStatus,
 } from "@/store/slices/ordersSlice";
-import { Badge } from "../ui/badge";
+import { Badge } from "../../components/ui/badge";
 import { BookingItem, BookingOrder, PaymentStatus } from "@/types";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
-import OrderDeleteButton from "./OrderDeleteButton";
-import OrderReturnButton from "./OrderReturnButton";
-import OrderRejectButton from "./OrderRejectButton";
-import OrderConfirmButton from "./OrderConfirmButton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Separator } from "../ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import OrderPickupButton from "./OrderPickupButton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
+import { Separator } from "../../components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+import OrderPickupButton from '@/components/Admin/Orders/OrderPickupButton';
+import OrderConfirmButton from '@/components/Admin/Orders/OrderConfirmButton';
+import OrderRejectButton from '@/components/Admin/Orders/OrderRejectButton';
+import OrderReturnButton from '@/components/Admin/Orders/OrderReturnButton';
+import OrderDeleteButton from '@/components/Admin/Orders/OrderDeleteButton';
+
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
@@ -68,7 +69,7 @@ const AdminDashboard = () => {
     }
   }, [dispatch, user?.id, orders.length, ordersLoading]);
 
-   const handleViewDetails = (order: BookingOrder) => {
+  const handleViewDetails = (order: BookingOrder) => {
     setSelectedOrder(order);
     setShowDetailsModal(true);
   };
@@ -159,7 +160,7 @@ const AdminDashboard = () => {
 
   // Define columns for the DataTable
   // Orders table
-   const columns: ColumnDef<BookingOrder>[] = [
+  const columns: ColumnDef<BookingOrder>[] = [
     {
       accessorKey: "order_number",
       header: t.orderList.columns.orderNumber[lang],
@@ -388,7 +389,7 @@ const AdminDashboard = () => {
             className="flex items-center gap-2"
             onClick={() => navigate("/admin/orders")}
           >
-            {t.adminDashboard.sections.manageOrders[lang]} <MoveRight className="inline-block"/>
+            {t.adminDashboard.sections.manageOrders[lang]} <MoveRight className="inline-block" />
           </Button>
         </div>
       </div>
@@ -451,58 +452,58 @@ const AdminDashboard = () => {
                 <div className="flex flex-col justify-center space-x-4">
                   <Separator />
                   <div className="flex flex-row items-center gap-4 mt-4 justify-center">
-                  {selectedOrder.status === "pending" && (
-                    <>
-                    <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.confirm[lang]}</span>
-                      <OrderConfirmButton
-                        id={selectedOrder.id}
-                        closeModal={() => setShowDetailsModal(false)}
-                      />
-                      </div>
-                      <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.reject[lang]}</span>
-                      <OrderRejectButton
-                        id={selectedOrder.id}
-                        closeModal={() => setShowDetailsModal(false)}
-                      />
-                      </div>
-                    </>
-                  )}
+                    {selectedOrder.status === "pending" && (
+                      <>
+                        <div className="flex flex-col items-center text-center">
+                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.confirm[lang]}</span>
+                          <OrderConfirmButton
+                            id={selectedOrder.id}
+                            closeModal={() => setShowDetailsModal(false)}
+                          />
+                        </div>
+                        <div className="flex flex-col items-center text-center">
+                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.reject[lang]}</span>
+                          <OrderRejectButton
+                            id={selectedOrder.id}
+                            closeModal={() => setShowDetailsModal(false)}
+                          />
+                        </div>
+                      </>
+                    )}
 
-                  {selectedOrder.status === "confirmed" && (
+                    {selectedOrder.status === "confirmed" && (
+                      <div className="flex flex-col items-center text-center">
+                        <span className="text-xs text-slate-600">{t.orderList.modal.buttons.return[lang]}</span>
+                        <OrderReturnButton
+                          id={selectedOrder.id}
+                          closeModal={() => setShowDetailsModal(false)}
+                        />
+                      </div>
+
+                    )}
+                    {selectedOrder.status === "confirmed" && (
+                      <div className="flex flex-col items-center text-center">
+                        <span className="text-xs text-slate-600">{t.orderList.modal.buttons.pickedUp[lang]}</span>
+                        <OrderPickupButton
+                        />
+                      </div>
+
+                    )}
                     <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.return[lang]}</span>
-                    <OrderReturnButton
-                      id={selectedOrder.id}
-                      closeModal={() => setShowDetailsModal(false)}
-                    />
-                    </div>
-                    
-                  )}
-                  {selectedOrder.status === "confirmed" && (
-                    <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.pickedUp[lang]}</span>
-                    <OrderPickupButton
-                    />
-                    </div>
-                    
-                  )}
-                  <div className="flex flex-col items-center text-center">
                       <span className="text-xs text-slate-600">{t.orderList.modal.buttons.delete[lang]}</span>
-                  <OrderDeleteButton
-                    id={selectedOrder.id}
-                    closeModal={() => setShowDetailsModal(false)}
-                  />
+                      <OrderDeleteButton
+                        id={selectedOrder.id}
+                        closeModal={() => setShowDetailsModal(false)}
+                      />
+                    </div>
                   </div>
-                </div>
                 </div>
               </div>
             </DialogContent>
           </Dialog>
         </div>
-        )}
-      </div>
+      )}
+    </div>
   );
 }
 

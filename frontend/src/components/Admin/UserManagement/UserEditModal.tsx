@@ -1,30 +1,30 @@
-import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
+import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch } from "@/store/hooks";
 import { updateUser } from "@/store/slices/usersSlice";
-import { Label } from "../ui/label";
-import { MultiSelect } from "../ui/multi-select";
+import { t } from "@/translations";
 import { UserFormData, UserProfile } from "@/types";
 import { Edit } from "lucide-react";
-import { useLanguage } from "@/context/LanguageContext";
-import { t } from "@/translations";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Label } from "../../ui/label";
+import { MultiSelect } from "../../ui/multi-select";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();

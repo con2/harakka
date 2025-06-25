@@ -1,25 +1,25 @@
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAppDispatch } from "@/store/hooks";
 import { createUser, updateUser } from "@/store/slices/usersSlice";
-import { CreateUserDto, UserProfile, UserFormData } from "@/types";
+import { CreateUserDto, UserFormData, UserProfile } from "@/types";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
-} from "../ui/select";
-import { Label } from "@/components/ui/label";
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 
 type TeamMemberFormProps = {
   onClose: () => void;
@@ -287,8 +287,8 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
                 ? "Updating..."
                 : "Creating..."
               : initialData
-              ? "Update Member"
-              : "Add Member"}
+                ? "Update Member"
+                : "Add Member"}
           </Button>
         </form>
       </DialogContent>
