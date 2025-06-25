@@ -1,4 +1,6 @@
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   addAddress,
@@ -10,40 +12,38 @@ import {
   updateAddress,
   updateUser,
 } from "@/store/slices/usersSlice";
-import { Button } from "@/components/ui/button";
-import MyOrders from "./MyOrders";
-import { useEffect, useState } from "react";
-import { Avatar } from "./ui/avatar";
-import profilePlaceholder from "../assets/profilePlaceholder.png";
-import { toast } from "sonner";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { t } from "@/translations";
 import { Address, AddressForm } from "@/types/address";
 import { LoaderCircle, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../../components/ui/accordion";
+import { Avatar } from "../../components/ui/avatar";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "./ui/dialog";
-import { Label } from "./ui/label";
+} from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { Input } from "./ui/input";
-import { toastConfirm } from "./ui/toastConfirm";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "./ui/accordion";
-import { useLanguage } from "@/context/LanguageContext";
-import { t } from "@/translations";
+} from "../../components/ui/select";
+import { toastConfirm } from "../../components/ui/toastConfirm";
+import profilePlaceholder from "../assets/profilePlaceholder.png";
+import MyOrders from "./MyOrders";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();
@@ -341,7 +341,7 @@ const MyProfile = () => {
                               <label className="block text-xs font-medium text-gray-700">
                                 {
                                   t.myProfile.addresses.streetAddress.label[
-                                    lang
+                                  lang
                                   ]
                                 }
                               </label>
@@ -431,21 +431,21 @@ const MyProfile = () => {
                                 <option value="both">
                                   {
                                     t.myProfile.addresses.type.options.both[
-                                      lang
+                                    lang
                                     ]
                                   }
                                 </option>
                                 <option value="billing">
                                   {
                                     t.myProfile.addresses.type.options.billing[
-                                      lang
+                                    lang
                                     ]
                                   }
                                 </option>
                                 <option value="shipping">
                                   {
                                     t.myProfile.addresses.type.options.shipping[
-                                      lang
+                                    lang
                                     ]
                                   }
                                 </option>
@@ -558,7 +558,7 @@ const MyProfile = () => {
                             <SelectItem value="shipping">
                               {
                                 t.myProfile.addresses.type.options.shipping[
-                                  lang
+                                lang
                                 ]
                               }
                             </SelectItem>
@@ -580,7 +580,7 @@ const MyProfile = () => {
                           }
                           placeholder={
                             t.myProfile.addresses.streetAddress.placeholder[
-                              lang
+                            lang
                             ]
                           }
                         />

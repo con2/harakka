@@ -1,20 +1,20 @@
-import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
-import {
-  LayoutDashboard,
-  Users,
-  Settings,
-  Menu,
-  Warehouse,
-  PinIcon,
-  ShoppingBag,
-  FileText,
-} from "lucide-react";
 import logo from "@/assets/logo.png";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import {
+  FileText,
+  LayoutDashboard,
+  Menu,
+  PinIcon,
+  Settings,
+  ShoppingBag,
+  Users,
+  Warehouse,
+} from "lucide-react";
+import { useState } from "react";
+import { NavLink, Outlet } from "react-router-dom";
 //import { useAppSelector } from "@/store/hooks";
 //import { selectIsSuperVera } from "@/store/slices/usersSlice";
 
@@ -166,8 +166,7 @@ const SidebarLink = ({
     to={to}
     end={end} // Ensures exact match
     className={({ isActive }: { isActive: boolean }) =>
-      `flex items-center gap-3 p-2 rounded hover:bg-gray-200 ${
-        isActive ? "text-highlight2" : "text-gray-700"
+      `flex items-center gap-3 p-2 rounded hover:bg-gray-200 ${isActive ? "text-highlight2" : "text-gray-700"
       }`
     }
   >
