@@ -35,28 +35,7 @@ export class MailController {
     });
     return { success: true };
   }
-  /*  @Post("send")
-  // @UseGuards(RecaptchaGuard) // TODO: add recaptcha on frontend
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per 60 seconds
-  async getMail(@Body() sendEmailDto: SendEmailDto) {
-    const { to, subject, message, from } = sendEmailDto;
 
-    if (!to || !subject || !message || !from) {
-      throw new BadRequestException("Missing required fields.");
-    }
-
-    try {
-      const result = await this.mailService.getMail(to, subject, message, from);
-      return {
-        success: true,
-        message: "Email sent successfully",
-        result,
-      };
-    } catch (error) {
-      console.error("Email sending failed:", error);
-      throw new InternalServerErrorException("Failed to send email.");
-    }
-  } */
 
   @Post("send-email")
   async sendMail(@Body() sendMailDto: SendMailDto): Promise<string> {

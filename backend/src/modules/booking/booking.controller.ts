@@ -29,9 +29,8 @@ export class BookingController {
   // gets all bookings - use case: admin
   @Get()
   async getAll(@Req() req: AuthenticatedRequest) {
-    const userId = req.user.id;
     const supabase = req.supabase;
-    return this.bookingService.getAllOrders(userId, supabase);
+    return this.bookingService.getAllOrders(supabase);
   }
 
   // gets the bookings of the logged-in user
