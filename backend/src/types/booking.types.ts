@@ -11,5 +11,5 @@ export interface EnrichedItem {
 };
 
 export type UserBookingOrder = {
-  orders: { order_items?: { storage_items?: { location_id?: string } }[] }[]
+  order_items?: { storage_items?: { location_id?: string } }[]
 }
