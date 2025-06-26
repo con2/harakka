@@ -27,6 +27,7 @@ export class SupabaseService {
     if (!this.serviceRoleKey) {
       this.logger.warn("SUPABASE_SERVICE_ROLE_KEY is not configured");
     }
+    this.logger.log("SERVICE ROLE KEY: " + this.serviceRoleKey);
 
     if (!this.anonKey) {
       this.logger.warn("SUPABASE_ANON_KEY is not configured");
