@@ -106,12 +106,10 @@ export class BookingService {
   }
 
   // 2. get all bookings of a user
-  // RLS aktiv ist und user_id ≠ JWT-User-ID
   async getUserBookings(userId: string, supabase: SupabaseClient<Database>) {
     if (!userId || userId === "undefined") {
       throw new BadRequestException("Valid user ID is required");
     }
-    console.log("Fetching bookings for userId:", userId);
 
     const { data: orders, error } = await supabase
       .from("orders")
@@ -138,7 +136,6 @@ export class BookingService {
     }
 
     if (!orders || orders.length === 0) {
-      console.log(`Orders: ${orders}`);
       return [];
     }
 
@@ -189,10 +186,7 @@ export class BookingService {
   }
 
   // 3. create a Booking
-  async createBooking(dto: CreateBookingDto) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async createBooking(dto: CreateBookingDto, supabase: SupabaseClient) {
     const userId = dto.user_id;
 
     if (!userId) {
@@ -409,10 +403,11 @@ export class BookingService {
   }
 
   // 4. confirm a Booking
-  async confirmBooking(orderId: string, userId: string) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async confirmBooking(
+    orderId: string,
+    userId: string,
+    supabase: SupabaseClient,
+  ) {
     // 4.1 check if already confirmed
     const { data: order } = await supabase
       .from("orders")
@@ -579,10 +574,12 @@ export class BookingService {
   }
 
   // 5. update a Booking (Admin/SuperVera OR Owner)
-  async updateBooking(orderId: string, userId: string, updatedItems: any[]) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async updateBooking(
+    orderId: string,
+    userId: string,
+    updatedItems: any[],
+    supabase: SupabaseClient,
+  ) {
     // 5.1 check the order
     const { data: order } = await supabase
       .from("orders")
@@ -763,14 +760,38 @@ export class BookingService {
       template: BookingUpdateEmail(adminEmailData),
     }); */
 
-    return { message: "Booking updated" };
+    const { data: updatedOrder, error: orderError } = await supabase
+      .from("orders")
+      .select(
+        `
+    *,
+    order_items (
+      *,
+      storage_items (
+        translations
+      )
+    )
+  `,
+      )
+      .eq("id", orderId)
+      .single();
+
+    if (orderError || !updatedOrder) {
+      throw new BadRequestException("Could not fetch updated booking details");
+    }
+
+    return {
+      message: "Booking updated",
+      booking: updatedOrder,
+    };
   }
 
   // 6. reject a Booking (Admin/SuperVera only)
-  async rejectBooking(orderId: string, userId: string) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async rejectBooking(
+    orderId: string,
+    userId: string,
+    supabase: SupabaseClient,
+  ) {
     // check if already rejected
     const { data: order } = await supabase
       .from("orders")
@@ -786,7 +807,7 @@ export class BookingService {
     }
 
     // 6.1 user role check
-    const { data: user, error: userError } = await supabase
+    const { data: user } = await supabase
       .from("user_profiles")
       .select("role, email, full_name")
       .eq("id", userId)
@@ -796,9 +817,9 @@ export class BookingService {
       throw new ForbiddenException("User not found");
     }
 
-    const role = user.role?.trim();
+    const isAdmin = ["admin", "superVera"].includes(user.role?.trim());
 
-    if (role !== "admin" && role !== "superVera") {
+    if (!isAdmin) {
       throw new ForbiddenException("Only admins can reject bookings");
     }
 
@@ -924,19 +945,17 @@ export class BookingService {
   }
 
   // 7. cancel a Booking (User if not confirmed, Admins/SuperVera always)
-  async cancelBooking(orderId: string, userId: string) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
-    // 7.1 check user role
+  async cancelBooking(
+    orderId: string,
+    userId: string,
+    supabase: SupabaseClient,
+  ) {
+    // 7.1 check order status
     const { data: order } = await supabase
       .from("orders")
-      .select("status, user_id")
+      .select("status, user_id, order_number")
       .eq("id", orderId)
-      .single<{
-        user_id: string;
-        status: string;
-      }>();
+      .single();
 
     if (!order) throw new BadRequestException("Order not found");
 
@@ -947,6 +966,7 @@ export class BookingService {
       throw new BadRequestException(`Booking has already been ${order.status}`);
     }
 
+    // get user profile
     const { data: userProfile, error: userProfileError } = await supabase
       .from("user_profiles")
       .select("role, email, full_name")
@@ -957,20 +977,19 @@ export class BookingService {
       throw new BadRequestException("User profile not found");
     }
 
-    const isAdmin =
-      userProfile.role === "admin" || userProfile.role === "superVera";
+    // 7.2 permissions check
+
+    const isAdmin = ["admin", "superVera"].includes(userProfile.role?.trim());
     const isOwner = order.user_id === userId;
 
-    // 7.2 permissions check
-    if (!isAdmin) {
-      if (!isOwner) {
-        throw new ForbiddenException("You can only cancel your own bookings");
-      }
-      if (!isAdmin && order.status === "confirmed") {
-        throw new ForbiddenException(
-          "You can't cancel a booking that has already been confirmed",
-        );
-      }
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException("You can only cancel your own bookings");
+    }
+
+    if (!isAdmin && order.status === "confirmed") {
+      throw new ForbiddenException(
+        "You can't cancel a booking that has already been confirmed",
+      );
     }
 
     // 7.5 Cancel all related order_items
@@ -1034,10 +1053,10 @@ export class BookingService {
         throw new BadRequestException("Could not fetch storage item details");
       }
       item.translations = storageItem.translations;
+      item.location_id = storageItem.location_id;
     }
 
     const startDate = dayjs(orderItems[0].start_date).format("DD.MM.YYYY");
-
     const emailItems = enrichedItems.map((item) => ({
       item_id: item.item_id,
       quantity: item.quantity,
@@ -1086,10 +1105,6 @@ export class BookingService {
     return {
       message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
       orderId,
-      recipient: {
-        email: userProfile.email,
-        role: userProfile.role,
-      },
       cancelledBy: isAdmin ? "admin" : "user",
       items: orderItems.map((item) => ({
         item_id: item.item_id,
@@ -1101,18 +1116,19 @@ export class BookingService {
   }
 
   // 8. delete a Booking and mark it as deleted
-  async deleteBooking(orderId: string, userId: string) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async deleteBooking(
+    orderId: string,
+    userId: string,
+    supabase: SupabaseClient,
+  ) {
     // 8.1 check order in database
-    const { data: order } = await supabase
+    const { data: order, error: orderError } = await supabase
       .from("orders")
       .select("status, user_id, order_number")
       .eq("id", orderId)
       .single();
 
-    if (!order) throw new BadRequestException("Order not found");
+    if (orderError || !order) throw new BadRequestException("Order not found");
 
     // prevent re-deletion
     if (order.status === "deleted") {
@@ -1130,8 +1146,7 @@ export class BookingService {
       throw new BadRequestException("User profile not found");
     }
 
-    const isAdmin =
-      userProfile.role === "admin" || userProfile.role === "superVera";
+    const isAdmin = ["admin", "superVera"].includes(userProfile.role?.trim());
 
     if (!isAdmin) {
       throw new ForbiddenException(
@@ -1192,10 +1207,7 @@ export class BookingService {
   }
 
   // 9. return items (when items are brought back)
-  async returnItems(orderId: string, userId: string) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
+  async returnItems(orderId: string, userId: string, supabase: SupabaseClient) {
     const { data: items } = await supabase
       .from("order_items")
       .select("item_id, quantity, status")
@@ -1341,62 +1353,11 @@ export class BookingService {
     return { message: "Items returned successfully" };
   }
 
-  // 10. check availability of item by date range
-  async checkAvailability(
-    itemId: string,
-    startDate: string,
-    endDate: string,
-    userId: string,
-  ) {
-    //const supabase = await this.supabaseService.getClientByRole(userId);
-    const supabase = this.supabaseService.getServiceClient(); //TODO:remove later
-
-    // Sum all overlapping bookings
-    const { data: overlappingOrders, error: overlapError } = await supabase
-      .from("order_items")
-      .select("quantity")
-      .eq("item_id", itemId) // item_id = :itemId
-      .lte("start_date", endDate) // AND start_date <= :endDate
-      .gte("end_date", startDate); // AND end_date   >= :startDate
-
-    if (overlapError) {
-      throw new BadRequestException("Error checking overlapping bookings");
-    }
-
-    const alreadyBookedQuantity =
-      overlappingOrders?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
-      0;
-
-    // Get total quantity of item from storage
-    const { data: itemData, error: itemError } = await supabase
-      .from("storage_items")
-      .select("items_number_total")
-      .eq("id", itemId)
-      .single();
-
-    if (itemError || !itemData) {
-      throw new BadRequestException("Item data not found");
-    }
-
-    const availableQuantity =
-      itemData.items_number_total - alreadyBookedQuantity;
-
-    return {
-      item_id: itemId,
-      availableQuantity,
-      alreadyBookedQuantity,
-      totalQuantity: itemData.items_number_total,
-      startDate,
-      endDate,
-    };
-  }
-
-  // 11. confirm pickup of items
-  async confirmPickup(orderId: string) {
-    const supabase = this.supabaseService.getServiceClient();
+  // 10. confirm pickup of items
+  async confirmPickup(orderId: string, supabase: SupabaseClient) {
     const today = new Date().toISOString().split("T")[0];
 
-    // 11.1. Get the order item
+    // 10.1. Get the order item
     const { data: items } = await supabase
       .from("order_items")
       .select("item_id, quantity, status, start_date, end_date")
@@ -1427,7 +1388,7 @@ export class BookingService {
         );
       } */
 
-      // 11.2. Get associated storage item
+      // 10.2. Get associated storage item
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
         .select("items_number_currently_in_storage")
@@ -1448,7 +1409,7 @@ export class BookingService {
         throw new BadRequestException("Not enough stock to confirm pickup");
       }
 
-      // 11.3. Update storage stock
+      // 10.3. Update storage stock
       const { error: updateStockError } = await supabase
         .from("storage_items")
         .update({ items_number_currently_in_storage: newCount })
@@ -1458,7 +1419,7 @@ export class BookingService {
         throw new BadRequestException("Failed to update storage stock");
       }
 
-      // 11.4. Update order item status to "picked_up"
+      // 10.4. Update order item status to "picked_up"
       const { error: updateStatusError } = await supabase
         .from("order_items")
         .update({ status: "picked_up" })
@@ -1469,7 +1430,7 @@ export class BookingService {
       }
     }
 
-    // 11.5. Get user email from related order
+    // 10.5. Get user email from related order
     const { data: order } = await supabase
       .from("orders")
       .select("user_id")
@@ -1572,6 +1533,54 @@ export class BookingService {
     };
   }
 
+  // 11. check availability of item by date range
+  async checkAvailability(
+    itemId: string,
+    startDate: string,
+    endDate: string,
+    userId: string,
+    supabase: SupabaseClient,
+  ) {
+    // Sum all overlapping bookings
+    const { data: overlappingOrders, error: overlapError } = await supabase
+      .from("order_items")
+      .select("quantity")
+      .eq("item_id", itemId) // item_id = :itemId
+      .lte("start_date", endDate) // AND start_date <= :endDate
+      .gte("end_date", startDate); // AND end_date   >= :startDate
+
+    if (overlapError) {
+      throw new BadRequestException("Error checking overlapping bookings");
+    }
+
+    const alreadyBookedQuantity =
+      overlappingOrders?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
+      0;
+
+    // Get total quantity of item from storage
+    const { data: itemData, error: itemError } = await supabase
+      .from("storage_items")
+      .select("items_number_total")
+      .eq("id", itemId)
+      .single();
+
+    if (itemError || !itemData) {
+      throw new BadRequestException("Item data not found");
+    }
+
+    const availableQuantity =
+      itemData.items_number_total - alreadyBookedQuantity;
+
+    return {
+      item_id: itemId,
+      availableQuantity,
+      alreadyBookedQuantity,
+      totalQuantity: itemData.items_number_total,
+      startDate,
+      endDate,
+    };
+  }
+
   // 12. virtual number of items for a specific date
   async getAvailableQuantityForDate(
     itemId: string,
@@ -1598,9 +1607,8 @@ export class BookingService {
   async updatePaymentStatus(
     orderId: string,
     status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
+    supabase: SupabaseClient,
   ) {
-    const supabase = this.supabaseService.getServiceClient();
-
     // Check if order exists
     const { data: order, error: orderError } = await supabase
       .from("orders")
