@@ -114,7 +114,7 @@ export class BookingController {
     );
   }
 
-  // rejects a booking by admin
+  // rejects a booking by admins
   @Put(":id/reject")
   async reject(@Param("id") id: string, @Req() req: AuthenticatedRequest) {
     const userId = req.user.id;
