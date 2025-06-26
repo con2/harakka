@@ -68,45 +68,45 @@ export const Login = () => {
             localization={{
               variables: {
                 sign_in: {
-                  email_label: t.login.auth_ui.sign_in.email_label[lang],
+                  email_label: t.authUi.sign_in.email_label[lang],
                   email_input_placeholder:
-                    t.login.auth_ui.sign_in.email_input_placeholder[lang],
-                  password_label: t.login.auth_ui.sign_in.password_label[lang],
+                    t.authUi.sign_in.email_input_placeholder[lang],
+                  password_label: t.authUi.sign_in.password_label[lang],
                   password_input_placeholder:
-                    t.login.auth_ui.sign_in.password_input_placeholder[lang],
-                  button_label: t.login.auth_ui.sign_in.button_label[lang],
+                    t.authUi.sign_in.password_input_placeholder[lang],
+                  button_label: t.authUi.sign_in.button_label[lang],
                   social_provider_text:
-                    t.login.auth_ui.sign_in.social_provider_text[lang],
-                  link_text: t.login.auth_ui.sign_in.link_text[lang],
+                    t.authUi.sign_in.social_provider_text[lang],
+                  link_text: t.authUi.sign_in.link_text[lang],
                 },
                 sign_up: {
-                  email_label: t.login.auth_ui.sign_up.email_label[lang],
+                  email_label: t.authUi.sign_up.email_label[lang],
                   email_input_placeholder:
-                    t.login.auth_ui.sign_up.email_input_placeholder[lang],
-                  password_label: t.login.auth_ui.sign_up.password_label[lang],
+                    t.authUi.sign_up.email_input_placeholder[lang],
+                  password_label: t.authUi.sign_up.password_label[lang],
                   password_input_placeholder:
-                    t.login.auth_ui.sign_up.password_input_placeholder[lang],
-                  button_label: t.login.auth_ui.sign_up.button_label[lang],
-                  link_text: t.login.auth_ui.sign_up.link_text[lang],
+                    t.authUi.sign_up.password_input_placeholder[lang],
+                  button_label: t.authUi.sign_up.button_label[lang],
+                  link_text: t.authUi.sign_up.link_text[lang],
                 },
                 forgotten_password: {
                   email_label:
-                    t.login.auth_ui.forgotten_password.email_label[lang],
+                    t.authUi.forgotten_password.email_label[lang],
                   email_input_placeholder:
-                    t.login.auth_ui.forgotten_password.email_input_placeholder[
+                    t.authUi.forgotten_password.email_input_placeholder[
                       lang
                     ],
                   button_label:
-                    t.login.auth_ui.forgotten_password.button_label[lang],
-                  link_text: t.login.auth_ui.forgotten_password.link_text[lang],
+                    t.authUi.forgotten_password.button_label[lang],
+                  link_text: t.authUi.forgotten_password.link_text[lang],
                 },
                 magic_link: {
                   email_input_label:
-                    t.login.auth_ui.magic_link.email_input_label[lang],
+                    t.authUi.magic_link.email_input_label[lang],
                   email_input_placeholder:
-                    t.login.auth_ui.magic_link.email_input_placeholder[lang],
-                  button_label: t.login.auth_ui.magic_link.button_label[lang],
-                  link_text: t.login.auth_ui.magic_link.link_text[lang],
+                    t.authUi.magic_link.email_input_placeholder[lang],
+                  button_label: t.authUi.magic_link.button_label[lang],
+                  link_text: t.authUi.magic_link.link_text[lang],
                 },
               },
             }}
