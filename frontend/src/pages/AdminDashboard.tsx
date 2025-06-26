@@ -5,8 +5,8 @@ import {
   selectSelectedUser,
 } from "@/store/slices/usersSlice";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../../components/ui/button";
-import { DataTable } from "../../components/ui/data-table";
+import { Button } from "../components/ui/button";
+import { DataTable } from "../components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
 import {
@@ -23,15 +23,15 @@ import {
   selectOrdersLoading,
   updatePaymentStatus,
 } from "@/store/slices/ordersSlice";
-import { Badge } from "../../components/ui/badge";
+import { Badge } from "../components/ui/badge";
 import { BookingItem, BookingOrder, PaymentStatus } from "@/types";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
-import { Separator } from "../../components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { Separator } from "../components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import OrderPickupButton from '@/components/Admin/Orders/OrderPickupButton';
 import OrderConfirmButton from '@/components/Admin/Orders/OrderConfirmButton';
 import OrderRejectButton from '@/components/Admin/Orders/OrderRejectButton';
