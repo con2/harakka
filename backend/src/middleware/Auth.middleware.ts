@@ -5,7 +5,7 @@ import {
   Logger,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database } from "src/types/supabase.types";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
@@ -19,7 +19,7 @@ import jwt from "jsonwebtoken";
  */
 export interface AuthenticatedRequest extends Request {
   supabase: SupabaseClient<Database>;
-  user: any;
+  user: User;
 }
 
 /**
@@ -75,7 +75,9 @@ export class AuthMiddleware implements NestMiddleware {
           this.logger.warn(
             `[${new Date().toISOString()}] Authentication failed: Session expired`,
           );
-          throw new UnauthorizedException("Session expired - please log in again");
+          throw new UnauthorizedException(
+            "Session expired - please log in again",
+          );
         }
         this.logger.warn(
           `[${new Date().toISOString()}] Authentication failed: Invalid signature`,
