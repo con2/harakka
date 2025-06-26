@@ -12,7 +12,7 @@ const LandingPage = () => {
       {/* Background Image */}
       <div
         className="absolute inset-[-8px] bg-cover bg-center -z-10 blur-[5px]"
-        style={{ 
+        style={{
           backgroundImage: `url(${illusiaImage})`,
         }}
       />

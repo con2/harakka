@@ -1,4 +1,4 @@
-import { LogsService } from "../services/logs.service";
+import { LogsService } from "src/modules/logs_module/logs.service";
 
 export function logInfo(
   logsService: LogsService,
