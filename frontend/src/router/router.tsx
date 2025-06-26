@@ -126,7 +126,7 @@ export const router = createBrowserRouter([
         path: "/password-reset-success",
         element: <PasswordResetResult />,
       },
-      {
+      { // all other routes lead to landing page
         path: "*",
         element: <Navigate to="/" />,
       },
