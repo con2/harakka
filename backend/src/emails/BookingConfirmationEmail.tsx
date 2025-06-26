@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { ReactElement } from "react";
 import {
   Html,
   Head,
@@ -14,9 +14,7 @@ const BookingConfirmationEmail = ({
   pickupDate,
   location,
   items,
-
-}: EmailProps) => (
-
+}: EmailProps): ReactElement => (
   <Html>
     <Head>
       <link
@@ -166,7 +164,6 @@ const BookingConfirmationEmail = ({
       </Container>
     </Body>
   </Html>
-  
 );
 
 export default BookingConfirmationEmail;
