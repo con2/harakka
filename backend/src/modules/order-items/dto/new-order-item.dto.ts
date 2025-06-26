@@ -1,9 +1,15 @@
-import { IsDateString, IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  IsUUID,
+} from "class-validator";
 
 export class NewOrderItemDto {
   @IsNotEmpty()
   @IsString()
-  order_id: string
+  order_id: string;
 
   @IsUUID()
   item_id: string;
@@ -25,7 +31,7 @@ export class NewOrderItemDto {
 
   @IsNotEmpty()
   @IsNumber()
-  total_days: number
+  total_days: number;
 
   @IsNotEmpty()
   @IsString()

@@ -1,4 +1,8 @@
+import { Database } from "src/types/supabase.types";
 import { TagRow } from "../../tag/interfaces/tag.interface";
+
+export type StorageItemRow =
+  Database["public"]["Tables"]["storage_items"]["Row"];
 
 export interface StorageItem {
   id: string;

@@ -68,7 +68,10 @@ export class StorageItemsService {
     }));
   }
 
-  async getItemById(id: string): Promise<StorageItem | null> {
+  async getItemById(
+    id: string,
+    fields?: string[],
+  ): Promise<StorageItem | null> {
     const supabase = this.supabaseClient.getServiceClient();
 
     // Query to select item along with its tags
@@ -76,7 +79,9 @@ export class StorageItemsService {
       await supabase
         .from("storage_items")
         .select(
-          `
+          fields
+            ? fields.join(", ")
+            : `
         *,
         storage_item_tags (
           tag_id,

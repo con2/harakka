@@ -28,14 +28,22 @@ export class BookingController {
 
   // gets all bookings - use case: admin
   @Get()
-  async getAll(@Req() req: AuthenticatedRequest) {
+  async getAll(
+    @Req() req: AuthenticatedRequest,
+    @Query() offset: number,
+    @Query() limit: number,
+  ) {
     const supabase = req.supabase;
-    return this.bookingService.getAllOrders(supabase);
+    return this.bookingService.getAllOrders(supabase, offset, limit);
   }
 
   // gets the bookings of the logged-in user
   @Get("my")
-  async getOwnBookings(@Req() req: AuthenticatedRequest) {
+  async getOwnBookings(
+    @Req() req: AuthenticatedRequest,
+    @Query() offset: number,
+    @Query() limit: number,
+  ) {
     const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.getUserBookings(userId, supabase);
