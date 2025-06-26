@@ -3,6 +3,19 @@ import { Injectable } from "@nestjs/common";
 import * as nodemailer from "nodemailer";
 import { render } from "@react-email/render";
 import { ReactElement } from "react";
+import {
+  BookingMailType,
+  BookingMailParams,
+} from "./interfaces/mail.interface";
+import { BookingEmailAssembler } from "./booking-email-assembler";
+import BookingCreationEmail from "./../../emails/BookingCreationEmail";
+import BookingConfirmationEmail from "./../../emails/BookingConfirmationEmail";
+import BookingCancelledEmail from "./../../emails/BookingCancelledEmail";
+import BookingUpdateEmail from "./../../emails/BookingUpdateEmail";
+import BookingRejectionEmail from "./../../emails/BookingRejectionEmail";
+import BookingDeleteMail from "./../../emails/BookingDeleteMail";
+import ItemsReturnedMail from "./../../emails/ItemsReturned";
+import ItemsPickedUpMail from "./../../emails/ItemsPickedUp";
 
 interface SendMailOptions {
   to: string;
@@ -13,6 +26,8 @@ interface SendMailOptions {
 
 @Injectable()
 export class MailService {
+  constructor(private readonly assembler: BookingEmailAssembler) {}
+
   private generateHtml(template?: ReactElement, html?: string) {
     if (template) {
       return render(template);
@@ -107,5 +122,66 @@ export class MailService {
         );
       }
     }
+  }
+
+  private pickTemplate(type: BookingMailType, payload: any) {
+    switch (type) {
+      case BookingMailType.Creation:
+        return BookingCreationEmail(payload);
+      case BookingMailType.Confirmation:
+        return BookingConfirmationEmail(payload);
+      case BookingMailType.Update:
+        return BookingUpdateEmail(payload);
+      case BookingMailType.Cancellation:
+        return BookingCancelledEmail(payload);
+      case BookingMailType.Rejection:
+        return BookingRejectionEmail(payload);
+      case BookingMailType.Deletion:
+        return BookingDeleteMail(payload);
+      case BookingMailType.ItemsReturned:
+        return ItemsReturnedMail(payload);
+      case BookingMailType.ItemsPickedUp:
+        return ItemsPickedUpMail(payload);
+      default:
+        throw new Error(`Unknown BookingMailType: ${type}`);
+    }
+  }
+
+  private subjectLine(type: BookingMailType): string {
+    switch (type) {
+      case BookingMailType.Creation:
+        return "Varaus vastaanotettu - Booking request received";
+      case BookingMailType.Confirmation:
+        return "Varaus vahvistettu - Booking confirmed";
+      case BookingMailType.Update:
+        return "Varaus päivitetty - Booking updated";
+      case BookingMailType.Cancellation:
+        return "Varaus peruttu - Booking cancelled";
+      case BookingMailType.Rejection:
+        return "Varaus hylätty - Booking rejected";
+      case BookingMailType.Deletion:
+        return "Varaus poistettu - Booking deleted";
+      case BookingMailType.ItemsReturned:
+        return "Palautetut tuotteet - Items returned";
+      case BookingMailType.ItemsPickedUp:
+        return "Noudetut tuotteet - Items picked up";
+      default:
+        return "Booking notification";
+    }
+  }
+
+  public async sendBookingMail(
+    type: BookingMailType,
+    params: BookingMailParams,
+  ) {
+    const payload = await this.assembler.buildPayload(params.orderId);
+    const template = this.pickTemplate(type, payload);
+    const subject = this.subjectLine(type);
+
+    await this.sendMail({
+      to: payload.recipient,
+      subject,
+      template,
+    });
   }
 }
