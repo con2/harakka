@@ -30,7 +30,8 @@ export class UserController {
     @Param("id") id: string,
     @Req() req: AuthRequest,
   ): Promise<UserProfile> {
-    const user = await this.userService.getUserById(id, req);
+    const supabase = req["supabase"];
+    const user = await this.userService.getUserById(id, supabase);
     if (!user) {
       throw new NotFoundException(
         `User with ID ${id} not found or you do not have access to it`,

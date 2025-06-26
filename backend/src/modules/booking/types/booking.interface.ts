@@ -1,3 +1,4 @@
+import { StorageItem } from "src/modules/storage-items/interfaces/storage-item.interface";
 import { Translation } from "src/types/booking.types";
 import { Database } from "src/types/supabase.types";
 
@@ -19,9 +20,9 @@ export type Email = {
   pickupDate: Date;
   today: Date;
   location: string;
-  items: string;
-  quantity: number;
-  translations: Translation[];
+  items: Partial<StorageItem>[];
+  quantity?: number;
+  translations?: Translation[];
 };
 
 export type OrderRow = Database["public"]["Tables"]["order_items"]["Row"];

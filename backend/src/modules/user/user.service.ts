@@ -38,7 +38,10 @@ export class UserService {
     id: string,
     supabase: SupabaseClient,
   ): Promise<UserProfile | null> {
-    const { data, error }: { data: UserProfile; error: PostgrestError } =
+    const {
+      data,
+      error,
+    }: { data: UserProfile | null; error: PostgrestError | null } =
       await supabase.from("user_profiles").select("*").eq("id", id).single();
     if (error) {
       if (error.code === "PGRST116") return null;

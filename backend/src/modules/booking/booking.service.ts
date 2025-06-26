@@ -52,12 +52,6 @@ export class BookingService {
       )
     `);
 
-    const { data: testData } = await supabase.rpc("get_full_order", {
-      order_id: "0ae9f373-c22f-47f4-8474-7e78290c9d40",
-    });
-
-    console.log("testData: ", testData);
-
     if (error) {
       console.error("Supabase error in getAllOrders():", error);
       throw new BadRequestException("Could not load orders");
@@ -255,11 +249,6 @@ export class BookingService {
       }
     }
 
-    // 3.3. generate the order number
-    const orderNumber = `ORD-${Math.floor(Math.random() * 10000)
-      .toString()
-      .padStart(4, "0")}`;
-
     // 3.4. Create the order
     const {
       data: order,
@@ -269,7 +258,7 @@ export class BookingService {
       .insert({
         user_id: userId,
         status: "pending",
-        order_number: orderNumber,
+        order_number: generateOrderNumber(),
       })
       .select()
       .single();
