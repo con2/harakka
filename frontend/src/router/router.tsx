@@ -8,27 +8,27 @@ import PasswordResetResult from "../components/Auth/PasswordResetResult";
 import ProtectedRoute from "../components/Auth/ProtectedRoute";
 
 // Admin
+import AdminDashboard from "@/pages/AdminDashboard";
 import AdminPanel from "../components/Admin/AdminPanel";
-import AdminDashboard from "../components/Admin/AdminDashboard";
-import UsersList from "../components/Admin/UsersList";
-import TeamList from "../components/Admin/TeamList";
+import UsersList from "@/components/Admin/UserManagement/UsersList";
+import TeamList from "@/components/Admin/UserManagement/TeamList";
 import AdminItemsTable from "../components/Admin/AdminItemsTable";
-import OrderList from "../components/Admin/OrderList";
-import TagList from "../components/Admin/TagList";
+import OrderList from "@/components/Admin/Orders/OrderList";
+import TagList from "@/components/Admin/Items/TagList";
 import Logs from "../components/Admin/Logs";
 
 // General
-import LandingPage from "../components/LandingPage";
+import LandingPage from "@/pages/LandingPage";
+import Cart from "@/pages/Cart";
+import MyProfile from "@/pages/MyProfile";
+import PrivacyPolicy from "../pages/PrivacyPolicy";
+import TermsOfUse from "../pages/TermsOfUse";
 import Unauthorized from "../components/Unauthorized";
 import ItemsList from "../components/Items/ItemsList";
 import ItemDetails from "../components/Items/ItemsDetails";
 import UserPanel from "../components/Items/UserPanel";
-import Cart from "../components/Cart";
 import OrderConfirmation from "../components/OrderConfirmation";
 import { UserGuide } from "../components/UserGuidelines";
-import PrivacyPolicy from "../pages/PrivacyPolicy";
-import TermsOfUse from "../pages/TermsOfUse";
-import MyProfile from "../components/MyProfile";
 import ContactForm from "../components/ContactForm";
 
 // Layout
