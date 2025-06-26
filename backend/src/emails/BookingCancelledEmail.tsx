@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { ReactElement } from "react";
 import {
   Html,
   Head,
@@ -29,7 +29,7 @@ export const BookingCancelledEmail = ({
   items,
   recipientRole,
   startDate,
-}: BookingCancelledEmailProps) => {
+}: BookingCancelledEmailProps): ReactElement => {
   const isAdmin = recipientRole === "admin" || recipientRole === "superVera";
 
   return (

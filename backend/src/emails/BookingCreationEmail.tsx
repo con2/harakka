@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { ReactElement } from "react";
 import {
   Html,
   Head,
@@ -15,7 +15,7 @@ const BookingCreationEmail = ({
   location,
   items,
   today,
-}: EmailProps) => (
+}: EmailProps): ReactElement => (
   <Html>
     <Head>
       <link

@@ -28,7 +28,7 @@ export default tseslint.config(
   {
     rules: {
       // Style / best‑practice
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-floating-promises": "warn",
 
       // Disable the strict “unsafe” family – they’re noisy for Supabase typings
