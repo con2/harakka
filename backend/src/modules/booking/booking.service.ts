@@ -21,13 +21,12 @@ import { MailService } from "../mail/mail.service";
  import { InvoiceService } from "./invoice.service"; */
 import * as dayjs from "dayjs";
 import * as utc from "dayjs/plugin/utc";
-import { EmailProps } from "../mail/interfaces/mail.interface";
 import BookingCreationEmail from "src/emails/BookingCreationEmail";
 import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "src/types/supabase.types";
 import { Translations } from "./types/translations.types";
 import { Email, OrderRow } from "./types/booking.interface";
-import { ItemRow } from "src/types/booking.types";
+import { EnrichedItem, ItemRow } from "src/types/booking.types";
 import { UserService } from "../user/user.service";
 dayjs.extend(utc);
 @Injectable()
@@ -260,7 +259,7 @@ export class BookingService {
     const {
       data: order,
       error: orderError,
-    }: { data: OrderRow; error: PostgrestError } = await supabase
+    }: { data: OrderRow | null; error: PostgrestError | null } = await supabase
       .from("orders")
       .insert({
         user_id: userId,
@@ -622,12 +621,12 @@ export class BookingService {
       // 5.5. Check virtual availability for the time range
       const available = await calculateAvailableQuantity(
         supabase,
-        item_id,
-        start_date,
-        end_date,
+        item_id!,
+        start_date!,
+        end_date!,
       );
 
-      if (quantity > available) {
+      if (quantity! > available) {
         throw new BadRequestException(
           `Not enough virtual stock available for item ${item_id}`,
         );
@@ -665,17 +664,6 @@ export class BookingService {
       }
     }
     // 5.8 send mail to user:
-    type EnrichedItem = {
-      item_id: string;
-      quantity: number;
-      start_date: string;
-      translations?: {
-        fi: { item_name: string };
-        en: { item_name: string };
-      };
-      location_id?: string;
-    };
-
     const enrichedItems: EnrichedItem[] = updatedItems || [];
 
     for (const item of enrichedItems) {
@@ -715,7 +703,7 @@ export class BookingService {
       },
     }));
 
-    const emailData: EmailProps = {
+    const emailData: Email = {
       name: user.full_name,
       email: user.email,
       pickupDate,
