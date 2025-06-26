@@ -140,7 +140,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
     dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
-    navigate(`/items/${itemId}`);
+    navigate(`/storage/items/${itemId}`);
   };
 
   // Handle item deletion
