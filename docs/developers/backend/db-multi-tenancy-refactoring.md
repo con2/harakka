@@ -319,7 +319,16 @@ WHERE slug IS NULL;
 ALTER TABLE public.organizations ALTER COLUMN slug SET NOT NULL;
 ```
 
-2. Create organization inventory ownership table
+2. Update roles table with new role types
+
+```sql
+INSERT INTO public.roles (role) VALUES
+('app_admin'),
+('main_admin')
+ON CONFLICT (role) DO NOTHING;
+```
+
+3. Create organization inventory ownership table
 
 ```sql
 CREATE TABLE public.organization_inventory_ownership (
@@ -336,13 +345,10 @@ CREATE TABLE public.organization_inventory_ownership (
 );
 ```
 
-3. Update user profiles structure
+4. Update user_tenant_roles to work with organizations
 
 ```sql
-ALTER TABLE public.user_profiles
-DROP CONSTRAINT user_profiles_role_check,
-ADD CONSTRAINT user_profiles_role_check
-CHECK (role IN ('user', 'admin', 'main_admin', 'app_admin'));
+ALTER TABLE public.user_tenant_roles RENAME TO user_organization_roles;
 ```
 
 4. Create organization memberships table (for admins)
