@@ -9,8 +9,8 @@ export default tseslint.config(
     ignores: ["eslint.config.mjs", "ecosystem.config.js"],
   },
   eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
   eslintPluginPrettierRecommended,
+  ...tseslint.configs.recommendedTypeChecked,
   {
     languageOptions: {
       globals: {
@@ -27,9 +27,18 @@ export default tseslint.config(
   },
   {
     rules: {
+      // Style / best‑practice
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-floating-promises": "warn",
-      "@typescript-eslint/no-unsafe-argument": "off",
+
+      // Disable the strict “unsafe” family – they’re noisy for Supabase typings
+       "@typescript-eslint/no-unsafe-argument": "off",
+       "@typescript-eslint/no-unsafe-assignment": "off",
+      // "@typescript-eslint/no-unsafe-call": "off",
+      // "@typescript-eslint/no-unsafe-member-access": "off",
+      // "@typescript-eslint/no-unsafe-return": "off",
+
+      // Prettier
       "prettier/prettier": [
         "error",
         {

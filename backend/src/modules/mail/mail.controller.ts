@@ -62,16 +62,21 @@ export class MailController {
   async sendMail(@Body() sendMailDto: SendMailDto): Promise<string> {
     try {
       const { email, subject, type, data } = sendMailDto;
-
+      console.log("DATA", data);
       let templateHtml: React.ReactElement;
 
       if (type === "bookingConfirmation") {
-        templateHtml = BookingConfirmationEmail(data as EmailProps);
+        templateHtml = BookingConfirmationEmail(data);
       } else if (type === "welcome") {
         templateHtml = WelcomeEmail(data);
       } else {
         throw new BadRequestException("Unknown email type");
       }
+      console.log("Sending email:", {
+        to: email,
+        subject,
+        templateHtml,
+      });
 
       await this.mailService.sendMail({
         to: email,

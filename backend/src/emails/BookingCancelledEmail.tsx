@@ -107,7 +107,7 @@ export const BookingCancelledEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {items.map((item, index) => (
               <li key={index} style={{ fontSize: "16px", marginBottom: "6px" }}>
-                Kohde: {item.translations?.en.name ?? "Unknown"}, <br />
+                Kohde: {item.translations?.fi.name ?? "Unknown"}, <br />
                 Määrä: {item.quantity}, <br />
                 Päivämäärät: {item.start_date} to {item.end_date}
               </li>
