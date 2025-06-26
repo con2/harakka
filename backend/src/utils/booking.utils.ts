@@ -35,10 +35,7 @@ export async function calculateAvailableQuantity(
   return item.items_number_total - booked;
 }
 
-
-export function getUniqueLocationIDs(
-  orders: UserBookingOrder[]
-): string[] {
+export function getUniqueLocationIDs(orders: UserBookingOrder[]): string[] {
   return Array.from(
     new Set(
       orders
@@ -51,8 +48,8 @@ export function getUniqueLocationIDs(
 
 /**
  * Get the difference in days between a certain date and todays date
- * @param start 
- * @returns 
+ * @param start
+ * @returns
  */
 export function dayDiffFromToday(start: Date) {
   const today = new Date();

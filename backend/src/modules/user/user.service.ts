@@ -2,7 +2,12 @@ import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 
 import { CreateUserDto } from "./dto/create-user.dto";
-import { SupabaseClient, UserResponse } from "@supabase/supabase-js";
+import {
+  PostgrestError,
+  PostgrestSingleResponse,
+  SupabaseClient,
+  UserResponse,
+} from "@supabase/supabase-js";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import WelcomeEmail from "src/emails/WelcomeEmail";
 import { MailService } from "../mail/mail.service";
@@ -29,13 +34,12 @@ export class UserService {
     return data || [];
   }
 
-  async getUserById(id: string, req: AuthRequest): Promise<UserProfile | null> {
-    const supabase = req.supabase; // add here roles
-    const { data, error } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("id", id)
-      .single();
+  async getUserById(
+    id: string,
+    supabase: SupabaseClient,
+  ): Promise<UserProfile | null> {
+    const { data, error }: { data: UserProfile; error: PostgrestError } =
+      await supabase.from("user_profiles").select("*").eq("id", id).single();
     if (error) {
       if (error.code === "PGRST116") return null;
       throw new Error(error.message);

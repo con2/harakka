@@ -8,9 +8,8 @@ import { CreateBookingDto } from "./dto/create-booking.dto";
 import {
   calculateAvailableQuantity,
   calculateDuration,
-  generateOrderNumber,
   dayDiffFromToday,
-  getUniqueLocationIDs,
+  generateOrderNumber,
 } from "src/utils/booking.utils";
 import { MailService } from "../mail/mail.service";
 /*import {
@@ -20,39 +19,28 @@ import { MailService } from "../mail/mail.service";
   generateFinnishReferenceNumber,
 } from "../utils/invoice-functions";
  import { InvoiceService } from "./invoice.service"; */
-import dayjs from "dayjs";
+import * as dayjs from "dayjs";
 import * as utc from "dayjs/plugin/utc";
-dayjs.extend(utc);
-import BookingConfirmationEmail from "src/emails/BookingConfirmationEmail";
 import { EmailProps } from "../mail/interfaces/mail.interface";
-import { BookingCancelledEmail } from "src/emails/BookingCancelledEmail";
-import { start } from "repl";
 import BookingCreationEmail from "src/emails/BookingCreationEmail";
-import BookingUpdateEmail from "src/emails/BookingUpdateEmail";
-import BookingRejectionEmail from "src/emails/BookingRejectionEmail";
-import BookingDeleteMail from "src/emails/BookingDeleteMail";
-import ItemsReturnedMail from "src/emails/ItemsReturned";
-import ItemsPickedUpMail from "src/emails/ItemsPickedUp";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "src/types/supabase.types";
 import { Translations } from "./types/translations.types";
-import { EnrichedItem } from "src/types/booking.types";
-
+import { Email, OrderRow } from "./types/booking.interface";
+import { ItemRow } from "src/types/booking.types";
+import { UserService } from "../user/user.service";
+dayjs.extend(utc);
 @Injectable()
 export class BookingService {
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly mailService: MailService,
+    private readonly userService: UserService,
   ) {}
 
   // 1. get all orders
-  async getAllOrders(
-    supabase: SupabaseClient<Database>,
-  ) {
-    const { data: orders, error } = await supabase
-      .from("orders")
-      .select(
-        `
+  async getAllOrders(userId: string, supabase: SupabaseClient<Database>) {
+    const { data: orders, error } = await supabase.from("orders").select(`
       *,
       order_items (
         *,
@@ -63,8 +51,7 @@ export class BookingService {
           )
         )
       )
-    `,
-      )
+    `);
 
     if (error) {
       console.error("Supabase error in getAllOrders():", error);
@@ -153,7 +140,14 @@ export class BookingService {
     }
 
     // Get unique location_ids from all order_items
-    const locationIds = getUniqueLocationIDs(orders);
+    const locationIds = Array.from(
+      new Set(
+        orders
+          .flatMap((order) => order.order_items ?? [])
+          .map((item) => item.storage_items?.location_id)
+          .filter((id): id is string => !!id),
+      ),
+    );
 
     // Load all relevant storage locations
     const { data: locationsData, error: locationError } = await supabase
@@ -199,13 +193,20 @@ export class BookingService {
       throw new BadRequestException("No userId found: user_id is required");
     }
     // variables for date check
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // normalize to midnight
+
     let warningMessage: string | null = null;
 
     for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
 
       const start = new Date(start_date);
-      const differenceInDays = dayDiffFromToday(start);
+      start.setHours(0, 0, 0, 0);
+
+      const differenceInDays = Math.ceil(
+        (start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+      );
 
       if (differenceInDays <= 0) {
         throw new BadRequestException(
@@ -250,14 +251,21 @@ export class BookingService {
       }
     }
 
-    // 3.4. Create the order
+    // 3.3. generate the order number
+    const orderNumber = `ORD-${Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, "0")}`;
 
-    const { data: order, error: orderError } = await supabase
+    // 3.4. Create the order
+    const {
+      data: order,
+      error: orderError,
+    }: { data: OrderRow; error: PostgrestError } = await supabase
       .from("orders")
       .insert({
         user_id: userId,
         status: "pending",
-        order_number: generateOrderNumber(),
+        order_number: orderNumber,
       })
       .select()
       .single();
@@ -270,7 +278,9 @@ export class BookingService {
     for (const item of dto.items) {
       const start = new Date(item.start_date);
       const end = new Date(item.end_date);
-      const totalDays = calculateDuration(start, end);
+      const totalDays = Math.ceil(
+        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+      );
 
       // get location_id
       const { data: storageItem, error: locationError } = await supabase
@@ -312,6 +322,17 @@ export class BookingService {
     if (userError || !user) {
       throw new BadRequestException("User not found");
     }
+
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
 
     const enrichedItems: EnrichedItem[] = dto.items || [];
 
@@ -474,6 +495,17 @@ export class BookingService {
       throw new BadRequestException("Could not load user profile");
     }
 
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
+
     const enrichedItems: EnrichedItem[] = items || [];
 
     for (const item of enrichedItems) {
@@ -548,25 +580,15 @@ export class BookingService {
   async updateBooking(
     orderId: string,
     userId: string,
-    updatedItems: any[],
+    updatedItems: Partial<ItemRow>[],
     supabase: SupabaseClient,
   ) {
     // 5.1 check the order
-    const { data: order } = await supabase
-      .from("orders")
-      .select("status, user_id, order_number")
-      .eq("id", orderId)
-      .single();
-
+    const order = await this.getBooking(orderId, supabase);
     if (!order) throw new BadRequestException("Order not found");
 
     // 5.2. check the user role
-    const { data: user } = await supabase
-      .from("user_profiles")
-      .select("role, email, full_name")
-      .eq("id", userId)
-      .single();
-
+    const user = await this.userService.getUserById(userId, supabase);
     if (!user) {
       throw new BadRequestException("User not found");
     }
@@ -602,9 +624,9 @@ export class BookingService {
     for (const item of updatedItems) {
       const { item_id, quantity, start_date, end_date } = item;
 
-      const totalDays = calculateDuration(
-        new Date(start_date),
-        new Date(end_date),
+      const totalDays = Math.ceil(
+        (new Date(end_date).getTime() - new Date(start_date).getTime()) /
+          (1000 * 60 * 60 * 24),
       );
 
       // 5.5. Check virtual availability for the time range
@@ -653,6 +675,17 @@ export class BookingService {
       }
     }
     // 5.8 send mail to user:
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
+
     const enrichedItems: EnrichedItem[] = updatedItems || [];
 
     for (const item of enrichedItems) {
@@ -823,6 +856,16 @@ export class BookingService {
     const today = dayjs().format("DD.MM.YYYY");
 
     // get user profile
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
 
     const enrichedItems: EnrichedItem[] = orderItems || [];
 
@@ -863,7 +906,7 @@ export class BookingService {
       },
     }));
 
-    const emailData: EmailProps = {
+    const emailData: Email = {
       name: user.full_name,
       email: user.email,
       pickupDate,
@@ -976,6 +1019,19 @@ export class BookingService {
         "Could not fetch order items for cancellation",
       );
     }
+
+    // 7.7 send email to user
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      start_date: string;
+      end_date: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
 
     const enrichedItems: EnrichedItem[] = orderItems || [];
 
@@ -1211,6 +1267,18 @@ export class BookingService {
 
     // send mail to user:
     const today = dayjs().format("DD.MM.YYYY");
+
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      status: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
+
     const enrichedItems: EnrichedItem[] = items || [];
 
     for (const item of enrichedItems) {
@@ -1378,6 +1446,17 @@ export class BookingService {
       );
     }
     // send mail to user:
+    type EnrichedItem = {
+      item_id: string;
+      quantity: number;
+      status: string;
+      translations?: {
+        fi: { item_name: string };
+        en: { item_name: string };
+      };
+      location_id?: string;
+    };
+
     const enrichedItems: EnrichedItem[] = items || [];
 
     for (const item of enrichedItems) {
@@ -1548,5 +1627,15 @@ export class BookingService {
     return {
       message: `Payment status updated to '${status}' for order ${orderId}`,
     };
+  }
+
+  async getBooking(order_id: string, supabase: SupabaseClient) {
+    const { data: order } = await supabase
+      .from("orders")
+      .select("status, user_id, order_number")
+      .eq("id", order_id)
+      .single();
+
+    return order;
   }
 }

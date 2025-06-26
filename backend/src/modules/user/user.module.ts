@@ -8,5 +8,6 @@ import { MailModule } from "../mail/mail.module";
   imports: [SupabaseModule, MailModule],
   controllers: [UserController],
   providers: [UserService],
+  exports: [UserService],
 })
 export class UserModule {}
