@@ -4,31 +4,31 @@ import Login from "./components/Auth/Login";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import Navigation from "./components/Navigation";
 import AdminPanel from "./components/Admin/AdminPanel";
-import UsersList from "./components/Admin/UsersList";
 import { Toaster } from "sonner";
-import AdminDashboard from "./components/Admin/AdminDashboard";
 import LandingPage from "./components/LandingPage";
 import Unauthorized from "./components/Unauthorized";
 import { UserProfileLoader } from "./context/UserProfileLoader";
-import TeamList from "./components/Admin/TeamList";
 import ItemsList from "./components/Items/ItemsList";
 import ItemDetails from "./components/Items/ItemsDetails";
 import UserPanel from "./components/Items/UserPanel";
 import AdminItemsTable from "./components/Admin/AdminItemsTable";
-import Cart from "./components/Cart";
 import OrderConfirmation from "./components/OrderConfirmation";
 import AuthCallback from "./components/Auth/AuthCallback";
 import PasswordReset from "./components/Auth/PasswordReset";
 import PasswordResetResult from "./components/Auth/PasswordResetResult";
-import OrderList from "./components/Admin/OrderList";
-import TagList from "./components/Admin/TagList";
 import Footer from "./components/Footer";
 import { UserGuide } from "./components/UserGuidelines";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfUse from "./pages/TermsOfUse";
-import MyProfile from "./components/MyProfile";
 import ContactForm from "./components/ContactForm";
 import Logs from "./components/Admin/Logs";
+import UsersList from "./components/Admin/UserManagement/UsersList";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import TeamList from "./components/Admin/UserManagement/TeamList";
+import Cart from "./pages/Cart";
+import OrderList from "./components/Admin/Orders/OrderList";
+import TagList from "./components/Admin/Items/TagList";
+import MyProfile from "./pages/User/MyProfile";
 
 function App() {
   return (
