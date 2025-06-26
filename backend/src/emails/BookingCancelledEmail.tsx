@@ -24,7 +24,7 @@ type BookingCancelledEmailProps = {
   startDate: string;
 };
 
-export const BookingCancelledEmail = ({
+const BookingCancelledEmail = ({
   orderId,
   items,
   recipientRole,
@@ -180,3 +180,5 @@ export const BookingCancelledEmail = ({
     </Html>
   );
 };
+
+export default BookingCancelledEmail;
