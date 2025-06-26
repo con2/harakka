@@ -94,7 +94,7 @@ export const Login = () => {
                     t.login.auth_ui.forgotten_password.email_label[lang],
                   email_input_placeholder:
                     t.login.auth_ui.forgotten_password.email_input_placeholder[
-                      lang
+                    lang
                     ],
                   button_label:
                     t.login.auth_ui.forgotten_password.button_label[lang],

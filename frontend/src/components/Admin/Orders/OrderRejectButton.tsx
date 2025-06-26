@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { XCircle } from "lucide-react";
 import { rejectOrder } from "@/store/slices/ordersSlice";
-import { toastConfirm } from "../ui/toastConfirm";
+import { toastConfirm } from "../../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 

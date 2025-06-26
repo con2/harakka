@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { deleteTag, fetchAllTags } from "@/store/slices/tagSlice";
 import { Trash2 } from "lucide-react";
-import { toastConfirm } from "../ui/toastConfirm";
+import { toastConfirm } from "../../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 

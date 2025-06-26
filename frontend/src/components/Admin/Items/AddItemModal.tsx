@@ -17,13 +17,13 @@ import {
   selectItemsErrorContext,
 } from "@/store/slices/itemsSlice";
 import { toast } from "sonner";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
-import { Switch } from "../ui/switch";
+import { Label } from "../../ui/label";
+import { Textarea } from "../../ui/textarea";
+import { Switch } from "../../ui/switch";
 import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
 import { Loader2 } from "lucide-react";
 import { ItemFormData } from "@/types";
-import { Checkbox } from "../ui/checkbox";
+import { Checkbox } from "../../ui/checkbox";
 import ItemImageManager from "./ItemImageManager";
 import {
   openItemModal,
@@ -36,7 +36,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from "../../ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -251,9 +251,9 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               ? t.addItemModal.description.details[lang]
               : createdItem
                 ? t.addItemModal.description.images[lang].replace(
-                    "{name}",
-                    createdItem.translations.en.item_name,
-                  )
+                  "{name}",
+                  createdItem.translations.en.item_name,
+                )
                 : t.addItemModal.description.createFirst[lang]}
           </DialogDescription>
         </DialogHeader>
@@ -261,11 +261,10 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
         {/* Tab Navigation */}
         <div className="flex border-b mb-2">
           <button
-            className={`px-4 py-1 text-sm ${
-              activeTab === "details"
+            className={`px-4 py-1 text-sm ${activeTab === "details"
                 ? "border-b-2 border-secondary font-medium"
                 : "text-gray-500"
-            }`}
+              }`}
             onClick={() => setActiveTab("details")}
           >
             {t.addItemModal.tabs.details[lang]}
@@ -274,11 +273,10 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className={`px-4 py-1 text-sm ${
-                    activeTab === "images"
+                  className={`px-4 py-1 text-sm ${activeTab === "images"
                       ? "border-b-2 border-secondary font-medium"
                       : "text-gray-500"
-                  }`}
+                    }`}
                   onClick={() =>
                     modalState.createdItemId && setActiveTab("images")
                   }
@@ -407,35 +405,35 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
             {/* Location Details */}
             <div>
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="flex flex-row items-baseline space-x-2">
-                <Label htmlFor="location_id">
-                  {t.addItemModal.labels.location[lang]}
-                </Label>
-                <Select
-                  value={formData.location_id || ""}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, location_id: value })
-                  }
-                >
-                  <SelectTrigger className="w-40">
-                    <SelectValue
-                      placeholder={
-                        t.addItemModal.placeholders.selectLocation[lang]
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem key={location.id} value={location.id}>
-                        {location.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="flex flex-row items-baseline space-x-2">
+                  <Label htmlFor="location_id">
+                    {t.addItemModal.labels.location[lang]}
+                  </Label>
+                  <Select
+                    value={formData.location_id || ""}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, location_id: value })
+                    }
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue
+                        placeholder={
+                          t.addItemModal.placeholders.selectLocation[lang]
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map((location) => (
+                        <SelectItem key={location.id} value={location.id}>
+                          {location.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Price and Active Status */}
+                {/* Price and Active Status */}
                 <div className="flex flex-row items-baseline space-x-2">
                   <Label htmlFor="price" className="font-medium">
                     {t.addItemModal.labels.price[lang]}
@@ -464,82 +462,82 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
               </div>
             </div>
 
-              {/* Quantity */} 
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="items_number_total">
-                      {t.addItemModal.labels.totalQuantity[lang]}
-                    </Label>
-                    <Input
-                      id="items_number_total"
-                      name="items_number_total"
-                      type="number"
-                      value={formData.items_number_total}
-                      onChange={handleChange}
-                      min="1"
-                      placeholder={t.addItemModal.labels.totalQuantity[lang]}
-                      className="value:text-xs"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="items_number_currently_in_storage">
-                      {t.addItemModal.labels.inStorage[lang]}
-                    </Label>
-                    <Input
-                      id="items_number_currently_in_storage"
-                      name="items_number_currently_in_storage"
-                      type="number"
-                      value={formData.items_number_currently_in_storage}
-                      onChange={handleChange}
-                      min="0"
-                      max={formData.items_number_total}
-                      placeholder={t.addItemModal.labels.inStorage[lang]}
-                      className="value:text-xs"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="items_number_available">
-                      {t.addItemModal.labels.available[lang]}
-                    </Label>
-                    <Input
-                      id="items_number_available"
-                      name="items_number_available"
-                      type="number"
-                      value={formData.items_number_available}
-                      onChange={handleChange}
-                      min="0"
-                      max={formData.items_number_total}
-                      placeholder={t.addItemModal.labels.available[lang]}
-                      className="value:text-xs"
-                    />
-                  </div>
-                </div>
-
-                {/* Tag Selection */}
-              <div className="space-y-2">
-                  <Label>
-                    {t.addItemModal.labels.assignTags[lang]}
-                  </Label>
-                  <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
-                    {availableTags.map((tag) => (
-                      <label key={tag.id} className="flex items-center">
-                        <Checkbox
-                          className="m-0.75 border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
-                          checked={selectedTags.includes(tag.id)}
-                          onCheckedChange={() => handleTagToggle(tag.id)}
-                        />
-                        <span className="text-sm">
-                          {tag.translations?.[lang]?.name ||
-                            tag.translations?.[lang === "fi" ? "en" : "fi"]
-                              ?.name ||
-                            "Unnamed"}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
+            {/* Quantity */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="items_number_total">
+                  {t.addItemModal.labels.totalQuantity[lang]}
+                </Label>
+                <Input
+                  id="items_number_total"
+                  name="items_number_total"
+                  type="number"
+                  value={formData.items_number_total}
+                  onChange={handleChange}
+                  min="1"
+                  placeholder={t.addItemModal.labels.totalQuantity[lang]}
+                  className="value:text-xs"
+                />
               </div>
+
+              <div>
+                <Label htmlFor="items_number_currently_in_storage">
+                  {t.addItemModal.labels.inStorage[lang]}
+                </Label>
+                <Input
+                  id="items_number_currently_in_storage"
+                  name="items_number_currently_in_storage"
+                  type="number"
+                  value={formData.items_number_currently_in_storage}
+                  onChange={handleChange}
+                  min="0"
+                  max={formData.items_number_total}
+                  placeholder={t.addItemModal.labels.inStorage[lang]}
+                  className="value:text-xs"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="items_number_available">
+                  {t.addItemModal.labels.available[lang]}
+                </Label>
+                <Input
+                  id="items_number_available"
+                  name="items_number_available"
+                  type="number"
+                  value={formData.items_number_available}
+                  onChange={handleChange}
+                  min="0"
+                  max={formData.items_number_total}
+                  placeholder={t.addItemModal.labels.available[lang]}
+                  className="value:text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Tag Selection */}
+            <div className="space-y-2">
+              <Label>
+                {t.addItemModal.labels.assignTags[lang]}
+              </Label>
+              <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
+                {availableTags.map((tag) => (
+                  <label key={tag.id} className="flex items-center">
+                    <Checkbox
+                      className="m-0.75 border-secondary text-primary data-[state=checked]:bg-secondary data-[state=checked]:text-white"
+                      checked={selectedTags.includes(tag.id)}
+                      onCheckedChange={() => handleTagToggle(tag.id)}
+                    />
+                    <span className="text-sm">
+                      {tag.translations?.[lang]?.name ||
+                        tag.translations?.[lang === "fi" ? "en" : "fi"]
+                          ?.name ||
+                        "Unnamed"}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
             <DialogFooter>
               <Button
                 type="submit"
