@@ -8,7 +8,7 @@ import { ConfigService } from "@nestjs/config";
 import { createClient, SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database } from "src/types/supabase.types";
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import { verify, TokenExpiredError } from "jsonwebtoken";
 
 /**
  * AuthenticatedRequest
@@ -69,9 +69,9 @@ export class AuthMiddleware implements NestMiddleware {
 
       //  Local signature/expiry verification (fast)
       try {
-        jwt.verify(token, this.jwtSecret, { algorithms: ["HS256"] });
+        verify(token, this.jwtSecret, { algorithms: ["HS256"] });
       } catch (verifyErr) {
-        if (verifyErr instanceof jwt.TokenExpiredError) {
+        if (verifyErr instanceof TokenExpiredError) {
           this.logger.warn(
             `[${new Date().toISOString()}] Authentication failed: Session expired`,
           );
