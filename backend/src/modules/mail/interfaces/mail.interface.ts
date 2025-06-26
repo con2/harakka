@@ -28,3 +28,19 @@ export interface PickUpEmail {
     };
   }[];
 }
+
+export enum BookingMailType {
+  Creation = "creation",
+  Confirmation = "confirmation",
+  Update = "update",
+  Cancellation = "cancellation",
+  Rejection = "rejection",
+  Deletion = "deletion",
+  ItemsReturned = "itemsReturned",
+  ItemsPickedUp = "itemsPickedUp",
+}
+
+export interface BookingMailParams {
+  orderId: string; // always required
+  triggeredBy: string; // userId of actor (admin / owner)
+}
