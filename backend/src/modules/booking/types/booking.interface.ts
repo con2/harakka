@@ -24,4 +24,4 @@ export type Email = {
   translations: Translation[];
 };
 
-export type OrderRow = Database["public"]["Tables"]["storage_items"]["Row"];
+export type OrderRow = Database["public"]["Tables"]["order_items"]["Row"];

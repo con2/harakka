@@ -4,12 +4,8 @@ import { NewOrderItemDto } from "./dto/new-order-item.dto";
 
 @Injectable()
 export class OrderItemsService {
-  async getAll(
-    supabase: SupabaseClient
-  ) {
-    const { data, error } = await supabase
-      .from("order_items")
-      .select("*")
+  async getAll(supabase: SupabaseClient) {
+    const { data } = await supabase.from("order_items").select("*");
 
     if (!data) throw new BadRequestException("Could not retrieve order data");
 
@@ -17,7 +13,7 @@ export class OrderItemsService {
   }
 
   async getOrderItems(supabase: SupabaseClient, order_id: string) {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("order_items")
       .select("*")
       .eq("order_id", order_id);
@@ -31,15 +27,35 @@ export class OrderItemsService {
     offset: number = 0,
     limit: number = 20,
   ) {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("order-items")
       .select("*")
       .eq("user_id", user_id)
       .range(offset, offset + limit);
+
+    console.log(data);
   }
 
   async createOrderItem(supabase: SupabaseClient, order_item: NewOrderItemDto) {
-    const {data, error} = await supabase.from("order_items").insert(order_item);
-    if (!data || error) throw new BadRequestException("Could not create order-item");
+    const { data, error } = await supabase
+      .from("order_items")
+      .insert(order_item);
+    if (!data || error)
+      throw new BadRequestException("Could not create order-item");
+  }
+
+  async removeOrderItem(
+    supabase: SupabaseClient,
+    order_id: string,
+    item_id: string,
+  ) {
+    const { data } = await supabase
+      .from("order_items")
+      .delete()
+      .eq("order_id", order_id)
+      .eq("item_id", item_id)
+      .select();
+
+    console.log("removed data: ", data);
   }
 }

@@ -580,7 +580,7 @@ export class BookingService {
   async updateBooking(
     orderId: string,
     userId: string,
-    updatedItems: Partial<ItemRow>[],
+    updatedItems: Partial<OrderRow>[],
     supabase: SupabaseClient,
   ) {
     // 5.1 check the order
@@ -593,17 +593,7 @@ export class BookingService {
       throw new BadRequestException("User not found");
     }
 
-    const isAdmin = user?.role === "admin" || user?.role === "superVera";
-    if (
-      !(
-        user.role === "admin" ||
-        userId === order.user_id ||
-        user.role === "service_role"
-      )
-    ) {
-      throw new ForbiddenException("Not allowed to update this booking");
-    }
-
+    const isAdmin = ["superVera", "admin"].includes(user.role);
     const isOwner = order.user_id === userId;
 
     if (!isAdmin && !isOwner) {
@@ -622,11 +612,11 @@ export class BookingService {
 
     // 5.4. insert updated items with availability check
     for (const item of updatedItems) {
-      const { item_id, quantity, start_date, end_date } = item;
+      const { id: item_id, quantity, start_date, end_date } = item;
 
-      const totalDays = Math.ceil(
-        (new Date(end_date).getTime() - new Date(start_date).getTime()) /
-          (1000 * 60 * 60 * 24),
+      const totalDays = calculateDuration(
+        new Date(start_date!),
+        new Date(end_date!),
       );
 
       // 5.5. Check virtual availability for the time range
