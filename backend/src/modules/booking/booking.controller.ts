@@ -218,6 +218,15 @@ export class BookingController {
     );
   }
 
+  @Get("getFullOrderRPC/:order_id")
+  async getFullOrder(
+    @Req() req: AuthenticatedRequest,
+    @Param() order_id: string,
+  ) {
+    const supabase = req.supabase;
+    return this.bookingService.getFullOrder(supabase, order_id);
+  }
+
   // commented out because it is not used atm
   /* @Get(":orderId/generate") // unsafe - anyone can create files
   async generateInvoice(@Param("orderId") orderId: string) {

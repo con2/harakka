@@ -52,6 +52,12 @@ export class BookingService {
       )
     `);
 
+    const { data: testData } = await supabase.rpc("get_full_order", {
+      order_id: "0ae9f373-c22f-47f4-8474-7e78290c9d40",
+    });
+
+    console.log("testData: ", testData);
+
     if (error) {
       console.error("Supabase error in getAllOrders():", error);
       throw new BadRequestException("Could not load orders");
@@ -100,7 +106,6 @@ export class BookingService {
         };
       }),
     );
-
     return ordersWithUserProfiles;
   }
 
@@ -1615,5 +1620,11 @@ export class BookingService {
       .single();
 
     return order;
+  }
+
+  async getFullOrder(supabase: SupabaseClient, order_id: string) {
+    const result = await supabase.rpc("get_full_order", order_id);
+    console.log("getFullOrder result: ", result);
+    return result;
   }
 }
