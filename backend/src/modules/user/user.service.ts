@@ -67,7 +67,7 @@ export class UserService {
         await this.mailService.sendMail({
           to: user.email,
           subject: "Welcome, friend!",
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
           template: WelcomeEmail({ name: user.email }),
         });
       } catch (mailError) {
