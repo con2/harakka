@@ -5,7 +5,6 @@ import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import Navigation from "./components/Navigation";
 import AdminPanel from "./components/Admin/AdminPanel";
 import { Toaster } from "sonner";
-import LandingPage from "./components/LandingPage";
 import Unauthorized from "./components/Unauthorized";
 import { UserProfileLoader } from "./context/UserProfileLoader";
 import ItemsList from "./components/Items/ItemsList";
@@ -23,12 +22,13 @@ import TermsOfUse from "./pages/TermsOfUse";
 import ContactForm from "./components/ContactForm";
 import Logs from "./components/Admin/Logs";
 import UsersList from "./components/Admin/UserManagement/UsersList";
-import AdminDashboard from "./pages/Admin/AdminDashboard";
 import TeamList from "./components/Admin/UserManagement/TeamList";
 import Cart from "./pages/Cart";
 import OrderList from "./components/Admin/Orders/OrderList";
 import TagList from "./components/Admin/Items/TagList";
-import MyProfile from "./pages/User/MyProfile";
+import LandingPage from "./pages/LandingPage";
+import AdminDashboard from "./pages/AdminDashboard";
+import MyProfile from "./pages/MyProfile";
 
 function App() {
   return (

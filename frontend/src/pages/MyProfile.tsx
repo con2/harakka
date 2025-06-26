@@ -23,27 +23,27 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "../../components/ui/accordion";
-import { Avatar } from "../../components/ui/avatar";
+} from "../components/ui/accordion";
+import { Avatar } from "../components/ui/avatar";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../../components/ui/dialog";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
+} from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/select";
-import { toastConfirm } from "../../components/ui/toastConfirm";
-import profilePlaceholder from "../../assets/profilePlaceholder.png";
-import MyOrders from "./MyOrders";
+} from "../components/ui/select";
+import { toastConfirm } from "../components/ui/toastConfirm";
+import profilePlaceholder from "../assets/profilePlaceholder.png";
+import MyOrders from "@/components/MyOrders";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();

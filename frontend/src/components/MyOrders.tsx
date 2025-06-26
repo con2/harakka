@@ -15,9 +15,9 @@ import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Badge } from "../../components/ui/badge";
-import { Button } from "../../components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 
 import { ordersApi } from "@/api/services/orders";
 import OrderDetailsButton from '@/components/Admin/Orders/OrderDetailsButton';
@@ -33,12 +33,12 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { t } from "@/translations";
-import DatePickerButton from "../../components/ui/DatePickerButton";
-import { Calendar } from "../../components/ui/calendar";
-import { DataTable } from "../../components/ui/data-table";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
+import DatePickerButton from "../components/ui/DatePickerButton";
+import { Calendar } from "../components/ui/calendar";
+import { DataTable } from "../components/ui/data-table";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 
 const MyOrders = () => {
   const dispatch = useAppDispatch();
