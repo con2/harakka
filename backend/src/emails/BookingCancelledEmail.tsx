@@ -7,8 +7,8 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-import type { UserRole } from "../types/user";
-import type { BookingItem } from "../types/order";
+import type { UserRole } from "../modules/user/interfaces/user";
+import type { BookingItem } from "../modules/booking/types/order";
 
 type ExtendedBookingItem = BookingItem & {
   translations?: {

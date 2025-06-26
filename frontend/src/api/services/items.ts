@@ -70,5 +70,5 @@ export const itemsApi = {
   canDeleteItem: (
     id: string,
   ): Promise<{ deletable: boolean; reason?: string }> =>
-    api.get(`/storage-items/${id}/can-delete`),
+    api.post(`/storage-items/${id}/can-delete`),
 };
