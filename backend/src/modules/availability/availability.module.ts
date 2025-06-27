@@ -1,10 +1,11 @@
 import { Module } from "@nestjs/common";
 import { AvailabilityService } from "./availability.service";
 import { AvailabilityController } from "./availability.controller";
-import { StorageItemsService } from "../storage-items/storage-items.service";
+import { StorageItemsModule } from "../storage-items/storage-items.module";
+import { SupabaseModule } from "../supabase/supabase.module";
 
 @Module({
-  imports: [StorageItemsService],
+  imports: [StorageItemsModule, SupabaseModule],
   controllers: [AvailabilityController],
   providers: [AvailabilityService],
   exports: [AvailabilityService],

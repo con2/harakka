@@ -63,6 +63,8 @@ export const itemsApi = {
     const params = new URLSearchParams();
     if (startDate) params.append("startDate", startDate.toISOString());
     if (endDate) params.append("endDate", endDate.toISOString());
+    console.log("start date: ", startDate);
+    console.log("end_date: ", endDate);
 
     return api.get(`/storage-items/available?${params.toString()}`);
   },

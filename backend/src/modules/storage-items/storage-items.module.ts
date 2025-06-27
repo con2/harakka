@@ -7,5 +7,6 @@ import { SupabaseModule } from "../supabase/supabase.module";
   imports: [SupabaseModule],
   controllers: [StorageItemsController],
   providers: [StorageItemsService],
+  exports: [StorageItemsService],
 })
 export class StorageItemsModule {}

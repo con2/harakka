@@ -21,6 +21,8 @@ export class AvailabilityController {
     @Query("start_date") start_date: string,
     @Query("end_date") end_date: string,
   ): Promise<number> {
+    console.log("start_date: ", start_date);
+    console.log("end_date: ", end_date);
     const supabase = this.supabaseService.getServiceClient();
     const result = await this.availabilityService.getItemAvailability(
       supabase,

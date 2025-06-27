@@ -12,7 +12,7 @@ import {
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
-import { Tables, TablesInsert, TablesUpdate } from "../../types/supabase.types" // Import the Database type for type safety
+import { Tables } from "../../types/supabase.types"; // Import the Database type for type safety
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller

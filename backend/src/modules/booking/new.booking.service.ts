@@ -4,12 +4,14 @@ import { UserService } from "../user/user.service";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { OrderRow } from "./types/booking.interface";
 import { OrderItemsRow } from "../order-items/interfaces/order-items.types";
+import { AvailabilityService } from "../availability/availability.service";
 
 @Injectable()
 export class NewBookingService {
   constructor(
     private readonly mailService: MailService,
     private readonly userService: UserService,
+    private readonly availabilityService: AvailabilityService,
   ) {}
 
   async getAllOrders(
@@ -17,7 +19,10 @@ export class NewBookingService {
     offset: number = 0,
     limit: number = 20,
   ) {
-    const result = await supabase.rpc("get_all_full_orders", { offset, limit });
+    const result = await supabase.rpc("get_all_full_orders", {
+      in_offset: offset,
+      in_limit: limit,
+    });
     return result;
   }
 
@@ -32,11 +37,11 @@ export class NewBookingService {
     offset: number = 0,
     limit: number = 20,
   ) {
-    if (!user_id) throw new BadRequestException("Invalid User ID");
+    if (!user_id) throw new BadRequestException("Invalid or missing User ID");
     const result = await supabase.rpc("get_full_user_order", {
-      user_id,
-      offset,
-      limit,
+      in_user_id: user_id,
+      in_offset: offset,
+      in_limit: limit,
     });
     return result;
   }

@@ -7,10 +7,12 @@ import { MailModule } from "../mail/mail.module";
 import { OrderItemsModule } from "../order-items/order-items.module";
 import { UserService } from "../user/user.service";
 import { NewBookingController } from "./new.booking.controller";
+import { NewBookingService } from "./new.booking.service";
+import { AvailabilityModule } from "../availability/availability.module";
 
 @Module({
-  imports: [SupabaseModule, MailModule, OrderItemsModule],
+  imports: [SupabaseModule, MailModule, OrderItemsModule, AvailabilityModule],
   controllers: [NewBookingController],
-  providers: [InvoiceService, UserService],
+  providers: [InvoiceService, UserService, NewBookingService],
 })
 export class BookingModule {}

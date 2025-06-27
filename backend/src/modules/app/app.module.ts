@@ -28,6 +28,8 @@ import { NewBookingController } from "../booking/new.booking.controller";
 // import { BookingController } from "../booking/booking.controller";
 import { UserController } from "../user/user.controller";
 import { StorageLocationsController } from "../storage-locations/storage-locations.controller";
+import { AvailabilityModule } from "../availability/availability.module";
+import { OrderItemsModule } from "../order-items/order-items.module";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -58,6 +60,8 @@ dotenvExpand.expand(env);
     TagModule,
     UserModule,
     SupabaseModule,
+    AvailabilityModule,
+    OrderItemsModule,
   ],
   controllers: [AppController, AuthTestController],
   providers: [AppService, AuthTestService],
