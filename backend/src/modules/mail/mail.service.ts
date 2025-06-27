@@ -42,6 +42,17 @@ export class MailService {
 
   async sendMail({ to, subject, template, html }: SendMailOptions) {
     try {
+      // ==== DEBUG LOGS (remove in production) ====
+      console.log("[MailService] ENV EMAIL_FROM_2 =", process.env.EMAIL_FROM_2);
+      console.log(
+        "[MailService] ENV GMAIL_APP_PASSWORD (first 4 chars) =",
+        process.env.GMAIL_APP_PASSWORD?.slice(0, 4) ?? "undefined",
+      );
+      console.log(
+        "[MailService] Sending to:", to,
+        " | subject:", subject,
+      );
+      // ===========================================
       /*    const accessToken = await this.oAuth2Client.getAccessToken() */
 
       const transport = nodemailer.createTransport({
@@ -53,8 +64,6 @@ export class MailService {
           pass: process.env.GMAIL_APP_PASSWORD, // ← App Password
         },
       });
-      console.log("EMAIL:", process.env.LATEST_APP_PASSWORD);
-      console.log("EMAIL:", process.env.EMAIL_FROM_NEW);
 
       const finalHtml = await this.generateHtml(template, html);
 
@@ -66,6 +75,7 @@ export class MailService {
       };
 
       const result = await transport.sendMail(mailOptions);
+      console.log("[MailService] SMTP sendMail result:", result);
       return result;
     } catch (error) {
       console.error("Failed to send email:", error);
@@ -174,6 +184,7 @@ export class MailService {
     type: BookingMailType,
     params: BookingMailParams,
   ) {
+    console.log("[MailService] sendBookingMail START ⇒", type, params);
     const payload = await this.assembler.buildPayload(params.orderId);
     const template = this.pickTemplate(type, payload);
     const subject = this.subjectLine(type);
@@ -183,5 +194,6 @@ export class MailService {
       subject,
       template,
     });
+    console.log("[MailService] sendBookingMail DONE for order", params.orderId);
   }
 }
