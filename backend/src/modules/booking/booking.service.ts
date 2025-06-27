@@ -7,6 +7,7 @@ import { SupabaseService } from "../supabase/supabase.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
 import { MailService } from "../mail/mail.service";
+import { BookingMailType, EmailProps } from "../mail/interfaces/mail.interface";
 /*import {
   generateBarcodeImage,
   generateInvoicePDF,
@@ -17,18 +18,9 @@ import { MailService } from "../mail/mail.service";
 import * as dayjs from "dayjs";
 import * as utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
-import BookingConfirmationEmail from "src/emails/BookingConfirmationEmail";
-import { EmailProps } from "../mail/interfaces/mail.interface";
-import { BookingCancelledEmail } from "src/emails/BookingCancelledEmail";
-import { start } from "repl";
-import BookingCreationEmail from "src/emails/BookingCreationEmail";
-import BookingUpdateEmail from "src/emails/BookingUpdateEmail";
-import BookingRejectionEmail from "src/emails/BookingRejectionEmail";
-import BookingDeleteMail from "src/emails/BookingDeleteMail";
-import ItemsReturnedMail from "src/emails/ItemsReturned";
-import ItemsPickedUpMail from "src/emails/ItemsPickedUp";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "src/types/supabase.types";
+export type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 import { Translations } from "./types/translations.types";
 
 @Injectable()
@@ -186,7 +178,10 @@ export class BookingService {
   }
 
   // 3. create a Booking
-  async createBooking(dto: CreateBookingDto, supabase: SupabaseClient) {
+  async createBooking(
+    dto: CreateBookingDto,
+    supabase: SupabaseClient<Database>,
+  ) {
     const userId = dto.user_id;
 
     if (!userId) {
@@ -244,7 +239,8 @@ export class BookingService {
         throw new BadRequestException("Storage item data not found");
       }
 
-      if (quantity > storageItem.items_number_currently_in_storage) {
+      const currentStock = storageItem.items_number_currently_in_storage ?? 0;
+      if (quantity > currentStock) {
         throw new BadRequestException(
           `Not enough physical stock in storage for item ${item_id}`,
         );
@@ -265,7 +261,7 @@ export class BookingService {
         order_number: orderNumber,
       })
       .select()
-      .single();
+      .single<OrderRow>();
 
     if (orderError || !order) {
       throw new BadRequestException("Could not create order");
@@ -309,74 +305,10 @@ export class BookingService {
       }
     }
 
-    // 3.6 send mail to user:
-    const { data: user, error: userError } = await supabase
-      .from("user_profiles")
-      .select("full_name, email")
-      .eq("id", userId)
-      .single();
-
-    if (userError || !user) {
-      throw new BadRequestException("User not found");
-    }
-
-    type EnrichedItem = {
-      item_id: string;
-      quantity: number;
-      start_date: string;
-      translations?: {
-        fi: { item_name: string };
-        en: { item_name: string };
-      };
-      location_id?: string;
-    };
-
-    const enrichedItems: EnrichedItem[] = dto.items || [];
-
-    for (const item of enrichedItems) {
-      const { data: storageItem, error: storageItemError } = await supabase
-        .from("storage_items")
-        .select("translations, location_id")
-        .eq("id", item.item_id)
-        .single();
-
-      if (storageItemError || !storageItem) {
-        throw new BadRequestException("Could not fetch storage item details");
-      }
-
-      item.translations = storageItem.translations;
-      item.location_id = storageItem.location_id;
-    }
-
-    // adapt to email:
-    const pickupDate = dayjs(enrichedItems[0].start_date).format("DD.MM.YYYY");
-
-    const { data: location, error: locationError } = await supabase
-      .from("storage_locations")
-      .select("name, address")
-      .eq("id", enrichedItems[0].location_id)
-      .single();
-
-    const emailItems = enrichedItems.map((item) => ({
-      item_id: item.item_id,
-      quantity: item.quantity,
-      translations: {
-        fi: {
-          name: item.translations?.fi.item_name ?? "Unknown",
-        },
-        en: {
-          name: item.translations?.en.item_name ?? "Unknown",
-        },
-      },
-    }));
-
-    // Use the new centralized email method
-    await this.mailService.sendBookingCreationEmail({
-      userEmail: user.email,
-      userName: user.full_name,
-      pickupDate,
-      location: location?.name || "Unknown",
-      items: emailItems,
+    // 3.6 notify user via centralized mail service
+    await this.mailService.sendBookingMail(BookingMailType.Creation, {
+      orderId: order.id,
+      triggeredBy: userId,
     });
 
     return warningMessage ? { order, warning: warningMessage } : order;
@@ -458,79 +390,11 @@ export class BookingService {
     const invoice = new InvoiceService(this.supabaseService);
     invoice.generateInvoice(orderId); */
 
-    // 4.6 send mail to user:
-    const today = dayjs().format("DD.MM.YYYY");
-
-    // get user profile
-    const { data: user, error: userError } = await supabase
-      .from("user_profiles")
-      .select("full_name, email")
-      .eq("id", order.user_id)
-      .single();
-
-    if (userError || !user) {
-      throw new BadRequestException("Could not load user profile");
-    }
-
-    type EnrichedItem = {
-      item_id: string;
-      quantity: number;
-      start_date: string;
-      translations?: {
-        fi: { item_name: string };
-        en: { item_name: string };
-      };
-      location_id?: string;
-    };
-
-    const enrichedItems: EnrichedItem[] = items || [];
-
-    for (const item of enrichedItems) {
-      const { data: storageItem, error: storageItemError } = await supabase
-        .from("storage_items")
-        .select("translations, location_id")
-        .eq("id", item.item_id)
-        .single();
-
-      if (storageItemError || !storageItem) {
-        throw new BadRequestException("Could not fetch storage item details");
-      }
-
-      item.translations = storageItem.translations;
-      item.location_id = storageItem.location_id;
-    }
-
-    // adapt to email:
-    const pickupDate = dayjs(enrichedItems[0].start_date).format("DD.MM.YYYY");
-
-    const { data: location, error: locationError } = await supabase
-      .from("storage_locations")
-      .select("name, address")
-      .eq("id", enrichedItems[0].location_id)
-      .single();
-
-    const emailItems = enrichedItems.map((item) => ({
-      item_id: item.item_id,
-      quantity: item.quantity,
-      translations: {
-        fi: {
-          name: item.translations?.fi.item_name ?? "Unknown",
-        },
-        en: {
-          name: item.translations?.en.item_name ?? "Unknown",
-        },
-      },
-    }));
-
-    // Use the new centralized email method
-    await this.mailService.sendBookingConfirmationEmail({
-      userEmail: user.email,
-      userName: user.full_name,
-      pickupDate,
-      location: location?.name || "Unknown",
-      items: emailItems,
+    // 4.6 notify user via centralized mail service
+    await this.mailService.sendBookingMail(BookingMailType.Confirmation, {
+      orderId,
+      triggeredBy: userId,
     });
-
     return { message: "Booking confirmed" };
   }
 
