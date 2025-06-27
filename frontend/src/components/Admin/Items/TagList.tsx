@@ -1,9 +1,9 @@
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useEffect, useState } from "react";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle } from "lucide-react";
-import { PaginatedDataTable } from "../ui/data-table-paginated";
+import { PaginatedDataTable } from "../../ui/data-table-paginated";
 import { Tag } from "@/types";
 import {
   fetchAllTags,
@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "../ui/input";
+import { Input } from "../../ui/input";
 import { toast } from "sonner";
 import TagDelete from "./TagDelete";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";

@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch } from "@/store/hooks";
 import { deleteUser } from "@/store/slices/usersSlice";
-import { Trash2 } from "lucide-react";
-import { toastConfirm } from "../ui/toastConfirm";
-import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { toastConfirm } from "../../ui/toastConfirm";
 
 const DeleteUserButton = ({
   id,

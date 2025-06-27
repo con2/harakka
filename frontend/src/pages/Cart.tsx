@@ -1,25 +1,25 @@
-import React from "react";
-import { useAppSelector, useAppDispatch } from "../store/hooks";
-import {
-  selectCartItems,
-  // selectCartTotal,
-  removeFromCart,
-  updateQuantity,
-  clearCart,
-} from "../store/slices/cartSlice";
-import { createOrder, selectOrdersLoading } from "../store/slices/ordersSlice";
-import { selectSelectedUser } from "@/store/slices/usersSlice";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Trash2, Calendar, LoaderCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { toastConfirm } from "./ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
-import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { useTranslation } from "@/hooks/useTranslation";
+import { selectSelectedUser } from "@/store/slices/usersSlice";
+import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
+import { Calendar, LoaderCircle, Trash2 } from "lucide-react";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { toastConfirm } from "../components/ui/toastConfirm";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  clearCart,
+  // selectCartTotal,
+  removeFromCart,
+  selectCartItems,
+  updateQuantity,
+} from "../store/slices/cartSlice";
+import { createOrder, selectOrdersLoading } from "../store/slices/ordersSlice";
 
 const Cart: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -140,8 +140,7 @@ const Cart: React.FC = () => {
       console.error("Checkout error:", error);
       console.error("Order data that failed:", orderData);
       toast.error(
-        `Checkout error: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Checkout error: ${error instanceof Error ? error.message : "Unknown error"
         }`,
       );
     }
@@ -168,9 +167,9 @@ const Cart: React.FC = () => {
   const rentalDays =
     startDate && endDate
       ? Math.ceil(
-          (new Date(endDate).getTime() - new Date(startDate).getTime()) /
-            (1000 * 60 * 60 * 24),
-        ) + 1
+        (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+        (1000 * 60 * 60 * 24),
+      ) + 1
       : 0;
 
   return (
