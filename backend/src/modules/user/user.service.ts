@@ -33,7 +33,7 @@ export class UserService {
     const supabase = req.supabase; // add here roles
     const { data, error } = await supabase
       .from("user_profiles")
-      .select("*")
+      .select("*, user_roles(role)")
       .eq("id", id)
       .single();
     if (error) {
