@@ -1,5 +1,5 @@
 import illusiaImage from "@/assets/illusiaImage.jpg";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 
