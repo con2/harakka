@@ -30,15 +30,10 @@ export const ordersApi = {
 
   /**
    * Get all orders (admin only)
-   * @param userId - Admin user ID for authorization
    * @returns Promise with all orders
    */
-  getAllOrders: async (userId: string): Promise<BookingOrder[]> => {
-    return api.get("/bookings", {
-      headers: {
-        "x-user-id": userId,
-      },
-    });
+  getAllOrders: async (): Promise<BookingOrder[]> => {
+    return api.get("/bookings");
   },
 
   /**
@@ -171,11 +166,11 @@ export const ordersApi = {
   },
 
   /**
- * Update payment status of an order (admin only)
- * @param orderId - Order ID to update
- * @param status - New payment status
- * @returns Promise with confirmation message
- */
+   * Update payment status of an order (admin only)
+   * @param orderId - Order ID to update
+   * @param status - New payment status
+   * @returns Promise with confirmation message
+   */
   updatePaymentStatus: async (
     orderId: string,
     status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
@@ -189,7 +184,7 @@ export const ordersApi = {
         headers: {
           "x-user-id": userId || "",
         },
-      }
+      },
     );
     return { orderId, status: status ?? "" };
   },

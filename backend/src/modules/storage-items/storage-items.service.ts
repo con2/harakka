@@ -5,15 +5,15 @@ import {
   SupabaseClient,
 } from "@supabase/supabase-js";
 import {
-  StorageItem,
+  StorageItemRow,
   StorageItemWithJoin,
 } from "./interfaces/storage-item.interface";
 import { S3Service } from "../supabase/s3-supabase.service";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
-import { Tables, TablesUpdate } from "src/types/supabase.types";
-import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
+import { TablesUpdate } from "src/types/supabase.types";
+import { ItemRow } from "src/types/booking.types";
+import { PostgresResponse } from "src/types/response.types";
 // this is used by the controller
 
 @Injectable()
@@ -23,7 +23,7 @@ export class StorageItemsService {
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
   ) {}
 
-  async getAllItems(): Promise<StorageItem[]> {
+  async getAllItems() {
     const supabase = this.supabaseClient.getServiceClient();
 
     // Updated query to join storage_item_tags with tags table
@@ -68,10 +68,7 @@ export class StorageItemsService {
     }));
   }
 
-  async getItemById(
-    id: string,
-    fields?: string[],
-  ): Promise<StorageItem | null> {
+  async getItemById(id: string, fields?: string[]) {
     const supabase = this.supabaseClient.getServiceClient();
 
     // Query to select item along with its tags
@@ -123,7 +120,7 @@ export class StorageItemsService {
   async createItem(
     req: Request,
     item: Partial<TablesUpdate<"storage_items">> & { tagIds?: string[] },
-  ): Promise<StorageItem> {
+  ): Promise<StorageItemRow> {
     const supabase = req["supabase"] as SupabaseClient;
 
     // Extract tagIds from the item object
@@ -159,7 +156,7 @@ export class StorageItemsService {
     req: Request,
     id: string,
     item: Partial<TablesUpdate<"storage_items">> & { tagIds?: string[] },
-  ): Promise<StorageItem> {
+  ): Promise<StorageItemRow> {
     const supabase = req["supabase"] as SupabaseClient;
     // Extract properties that shouldn't be sent to the database
     const { tagIds, ...itemData } = item;
@@ -357,5 +354,25 @@ export class StorageItemsService {
       success: true,
       id,
     };
+  }
+
+  async getItemCount(item_id: string): Promise<number> {
+    const supabase = this.supabaseClient.getServiceClient();
+    const {
+      data,
+      error,
+    }: PostgresResponse<ItemRow["items_number_currently_in_storage"]> =
+      await supabase
+        .from("storage_items")
+        .select("items_number_total")
+        .eq("id", item_id)
+        .single();
+
+    if (error || !data) {
+      console.error("Failed to retrieve item count: ", error);
+      throw new Error("Failed to retrieve item count");
+    }
+
+    return data;
   }
 }

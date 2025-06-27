@@ -15,7 +15,7 @@ import { CustomRequest } from "src/types/request.types";
 export function AuthGuard(...requiredRoles: string[]): Type<CanActivate> {
   @Injectable()
   class RoleGuard implements CanActivate {
-    canActivate(context: ExecutionContext): Promise<boolean> {
+    canActivate(context: ExecutionContext): boolean {
       const req: CustomRequest = context.switchToHttp().getRequest();
       const auth = req.headers["authorization"];
       if (!auth || !auth.startsWith("Bearer ")) {

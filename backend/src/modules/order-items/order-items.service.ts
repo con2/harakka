@@ -6,10 +6,7 @@ import { NewOrderItemDto } from "./dto/new-order-item.dto";
 export class OrderItemsService {
   async getAll(supabase: SupabaseClient) {
     const { data } = await supabase.from("order_items").select("*");
-
     if (!data) throw new BadRequestException("Could not retrieve order data");
-
-    console.log(`Range of order data: `, data);
   }
 
   async getOrderItems(supabase: SupabaseClient, order_id: string) {
@@ -18,7 +15,6 @@ export class OrderItemsService {
       .select("*")
       .eq("order_id", order_id);
     if (!data) throw new BadRequestException("Order not found");
-    console.log(`Singular order data: `, data);
   }
 
   async getUserOrder(

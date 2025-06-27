@@ -1,4 +1,4 @@
-import { StorageItem } from "src/modules/storage-items/interfaces/storage-item.interface";
+import { StorageItemRow } from "src/modules/storage-items/interfaces/storage-item.interface";
 import { Translation } from "src/types/booking.types";
 import { Database } from "src/types/supabase.types";
 
@@ -17,10 +17,10 @@ export interface BookingRequest {
 export type Email = {
   name: string;
   email: string;
-  pickupDate: Date;
-  today: Date;
+  pickupDate: string;
+  today: string;
   location: string;
-  items: Partial<StorageItem>[];
+  items: Partial<StorageItemRow>[];
   quantity?: number;
   translations?: Translation[];
 };

@@ -4,43 +4,6 @@ import { TagRow } from "../../tag/interfaces/tag.interface";
 export type StorageItemRow =
   Database["public"]["Tables"]["storage_items"]["Row"];
 
-export interface StorageItem {
-  id: string;
-  location_id: string;
-  compartment_id: string;
-  items_number_total: number;
-  items_number_currently_in_storage: number;
-  items_number_available: number;
-  price: number;
-  is_active: boolean;
-  translations: {
-    fi: {
-      item_type: string;
-      item_name: string;
-      item_description: string;
-    };
-    en: {
-      item_type: string;
-      item_name: string;
-      item_description: string;
-    };
-  };
-  average_rating?: number;
-  created_at?: string;
-  updated_at?: string;
-  storage_item_tags?: TagRow[];
-
-  location_details?: {
-    id: string;
-    name: string;
-    description: string;
-    address: string;
-    latitude: number;
-    longitude: number;
-    is_active: boolean;
-  } | null;
-}
-
 // // separate DTO that includes tagIds
 // export interface CreateStorageItemDto extends Partial<StorageItem> {
 //   tagIds?: string[];

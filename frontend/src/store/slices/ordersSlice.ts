@@ -67,7 +67,7 @@ export const getAllOrders = createAsyncThunk<BookingOrder[], string>(
   "orders/getAllOrders",
   async (userId, { rejectWithValue }) => {
     try {
-      return await ordersApi.getAllOrders(userId);
+      return await ordersApi.getAllOrders();
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch all orders"),
@@ -174,19 +174,16 @@ export const returnItems = createAsyncThunk<
   { orderId: string },
   string,
   { rejectValue: string }
->(
-  "orders/returnItems",
-  async (orderId, { rejectWithValue }) => {
-    try {
-      await ordersApi.returnItems(orderId); // Just fire and forget
-      return { orderId };
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to process returns")
-      );
-    }
+>("orders/returnItems", async (orderId, { rejectWithValue }) => {
+  try {
+    await ordersApi.returnItems(orderId); // Just fire and forget
+    return { orderId };
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to process returns"),
+    );
   }
-);
+});
 
 // update Payment Status thunk
 export const updatePaymentStatus = createAsyncThunk<
@@ -204,10 +201,10 @@ export const updatePaymentStatus = createAsyncThunk<
       };
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to update the payment status")
+        extractErrorMessage(error, "Failed to update the payment status"),
       );
     }
-  }
+  },
 );
 
 export const ordersSlice = createSlice({
@@ -408,7 +405,7 @@ export const ordersSlice = createSlice({
         });
 
         state.userOrders = state.userOrders.map((order) =>
-          order.id === orderId ? { ...order, status: "completed" } : order
+          order.id === orderId ? { ...order, status: "completed" } : order,
         );
       })
       .addCase(returnItems.rejected, (state, action) => {
@@ -437,7 +434,6 @@ export const ordersSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "update-payment-status";
       });
-      ;
   },
 });
 
