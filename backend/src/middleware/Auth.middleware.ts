@@ -8,7 +8,7 @@ import { ConfigService } from "@nestjs/config";
 import { createClient, SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database } from "src/types/supabase.types";
 import { Request, Response, NextFunction } from "express";
-import { jwtVerify } from "jose";
+import { verify, TokenExpiredError } from "jsonwebtoken";
 
 /**
  * AuthenticatedRequest
@@ -38,7 +38,7 @@ export interface AuthenticatedRequest extends Request {
 export class AuthMiddleware implements NestMiddleware {
   private readonly supabaseUrl: string;
   private readonly anonKey: string;
-  private readonly jwtSecret: Uint8Array;
+  private readonly jwtSecret: string;
   private readonly logger = new Logger(AuthMiddleware.name);
 
   constructor(private readonly config: ConfigService) {
@@ -50,7 +50,7 @@ export class AuthMiddleware implements NestMiddleware {
         "Supabase environment variables SUPABASE_URL, SUPABASE_ANON_KEY, or SUPABASE_JWT_SECRET are missing",
       );
     }
-    this.jwtSecret = new TextEncoder().encode(secret);
+    this.jwtSecret = secret;
   }
 
   async use(req: AuthenticatedRequest, _res: Response, next: NextFunction) {
@@ -68,7 +68,22 @@ export class AuthMiddleware implements NestMiddleware {
       }
 
       //  Local signature/expiry verification (fast)
-      await jwtVerify(token, this.jwtSecret, { algorithms: ["HS256"] });
+      try {
+        verify(token, this.jwtSecret, { algorithms: ["HS256"] });
+      } catch (verifyErr) {
+        if (verifyErr instanceof TokenExpiredError) {
+          this.logger.warn(
+            `[${new Date().toISOString()}] Authentication failed: Session expired`,
+          );
+          throw new UnauthorizedException(
+            "Session expired - please log in again",
+          );
+        }
+        this.logger.warn(
+          `[${new Date().toISOString()}] Authentication failed: Invalid signature`,
+        );
+        throw new UnauthorizedException("Invalid or expired token");
+      }
 
       //  Create a user‑scoped Supabase client (RLS applies)
       const supabase = createClient<Database>(this.supabaseUrl, this.anonKey, {
