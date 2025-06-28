@@ -373,7 +373,7 @@ CREATE TABLE public.ERM_organization_items (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_by UUID REFERENCES auth.users(id),
-  updated_by UUID REFERENCES auth.users(id)
+  updated_by UUID REFERENCES auth.users(id),
 
   -- Unique constraint to prevent duplicate organization-item pairs
   CONSTRAINT unique_org_item UNIQUE(organization_id, storage_item_id),
@@ -397,7 +397,7 @@ CREATE TABLE public.ERM_user_organization_roles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES auth.users(id) NOT NULL,
   organization_id UUID REFERENCES public.ERM_organizations(id) NOT NULL,
-  role USER-DEFINED NOT NULL REFERENCES public.roles(role),
+  role_id UUID REFERENCES public.roles(id) NOT NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -405,7 +405,7 @@ CREATE TABLE public.ERM_user_organization_roles (
   updated_by UUID REFERENCES auth.users(id),
 
   -- Unique constraint to prevent duplicate user-organization-role combinations
-  CONSTRAINT unique_user_org_role UNIQUE(user_id, organization_id, role)
+  CONSTRAINT unique_user_org_role UNIQUE(user_id, organization_id, role_id)
 );
 
 -- Add trigger for updated_at
@@ -439,7 +439,7 @@ CREATE TRIGGER update_ERM_organization_locations_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 ```
 
-5. Update old tables later to reference the new organization structure
+5. Update old tables later to reference the new organization structure TODO: apply later
 
 ```sql
 -- Update order_items to reference the providing organization
