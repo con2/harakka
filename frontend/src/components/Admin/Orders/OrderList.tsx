@@ -1,82 +1,72 @@
+import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchAllUsers,
-  selectAllUsers,
-  selectSelectedUser,
-} from "@/store/slices/usersSlice";
-import { useNavigate } from "react-router-dom";
-import { Button } from "../ui/button";
-import { DataTable } from "../ui/data-table";
-import { ColumnDef } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
-import {
-  Eye,
-  LoaderCircle,
-  MoveRight,
-  ShoppingBag,
-  Users,
-  Warehouse,
-} from "lucide-react";
-import {
   getAllOrders,
-  selectAllOrders,
   selectOrdersLoading,
+  selectOrdersError,
+  selectAllOrders,
   updatePaymentStatus,
 } from "@/store/slices/ordersSlice";
-import { Badge } from "../ui/badge";
-import { BookingItem, BookingOrder, PaymentStatus } from "@/types";
-import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
+import { Eye, LoaderCircle } from "lucide-react";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
+import { useAuth } from "@/context/AuthContext";
+import { ColumnDef } from "@tanstack/react-table";
+import { Button } from "../../ui/button";
+import { BookingOrder, BookingItem, PaymentStatus } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { selectSelectedUser } from "@/store/slices/usersSlice";
+import OrderReturnButton from "./OrderReturnButton";
+import OrderConfirmButton from "./OrderConfirmButton";
+import OrderRejectButton from "./OrderRejectButton";
+import OrderDeleteButton from "./OrderDeleteButton";
+import { DataTable } from "../../ui/data-table";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
-import OrderDeleteButton from "./OrderDeleteButton";
-import OrderReturnButton from "./OrderReturnButton";
-import OrderRejectButton from "./OrderRejectButton";
-import OrderConfirmButton from "./OrderConfirmButton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Separator } from "../ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Separator } from "../../ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import OrderPickupButton from "./OrderPickupButton";
 
-const AdminDashboard = () => {
+const OrderList = () => {
   const dispatch = useAppDispatch();
-  const users = useAppSelector(selectAllUsers);
-  const items = useAppSelector(selectAllItems);
-  const user = useAppSelector(selectSelectedUser);
   const orders = useAppSelector(selectAllOrders);
-  const ordersLoading = useAppSelector(selectOrdersLoading);
-  const navigate = useNavigate();
+  const loading = useAppSelector(selectOrdersLoading);
+  const error = useAppSelector(selectOrdersError);
+  const ordersLoadedRef = useRef(false);
+  const user = useAppSelector(selectSelectedUser);
+  const { authLoading } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<BookingOrder | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
 
   useEffect(() => {
-    dispatch(fetchAllItems());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (users.length === 0) {
-      dispatch(fetchAllUsers());
-    }
-  }, [dispatch, users.length]);
-
-  useEffect(() => {
-    if (!ordersLoading && user?.id && orders.length === 0) {
+    // Always fetch orders when the admin component mounts and auth is ready
+    if (!authLoading && user && user.id && !ordersLoadedRef.current) {
       dispatch(getAllOrders(user.id));
+      ordersLoadedRef.current = true;
     }
-  }, [dispatch, user?.id, orders.length, ordersLoading]);
+  }, [authLoading, dispatch, user]);
 
-   const handleViewDetails = (order: BookingOrder) => {
+  const handleViewDetails = (order: BookingOrder) => {
     setSelectedOrder(order);
     setShowDetailsModal(true);
   };
 
+  // Render a status badge with appropriate color
   const StatusBadge = ({ status }: { status?: string }) => {
     if (!status)
       return (
-        <Badge variant="outline">{t.adminDashboard.status.unknown[lang]}</Badge>
+        <Badge variant="outline">{t.orderList.status.unknown[lang]}</Badge>
       );
 
     switch (status) {
@@ -86,7 +76,7 @@ const AdminDashboard = () => {
             variant="outline"
             className="bg-yellow-100 text-yellow-800 border-yellow-300"
           >
-            {t.adminDashboard.status.pending[lang]}
+            {t.orderList.status.pending[lang]}
           </Badge>
         );
       case "confirmed":
@@ -95,7 +85,7 @@ const AdminDashboard = () => {
             variant="outline"
             className="bg-green-100 text-green-800 border-green-300"
           >
-            {t.adminDashboard.status.confirmed[lang]}
+            {t.orderList.status.confirmed[lang]}
           </Badge>
         );
       case "cancelled":
@@ -104,7 +94,7 @@ const AdminDashboard = () => {
             variant="outline"
             className="bg-red-100 text-red-800 border-red-300"
           >
-            {t.adminDashboard.status.cancelled[lang]}
+            {t.orderList.status.cancelled[lang]}
           </Badge>
         );
       case "cancelled by user":
@@ -113,7 +103,7 @@ const AdminDashboard = () => {
             variant="outline"
             className="bg-red-100 text-red-800 border-red-300"
           >
-            {t.adminDashboard.status.cancelled[lang]}
+            {t.orderList.status.cancelledByUser[lang]}
           </Badge>
         );
       case "cancelled by admin":
@@ -122,7 +112,7 @@ const AdminDashboard = () => {
             variant="outline"
             className="bg-red-100 text-red-800 border-red-300"
           >
-            {t.adminDashboard.status.cancelledByAdmin[lang]}
+            {t.orderList.status.cancelledByAdmin[lang]}
           </Badge>
         );
       case "rejected":
@@ -131,7 +121,7 @@ const AdminDashboard = () => {
             variant="outline"
             className="bg-red-100 text-red-800 border-red-300"
           >
-            {t.adminDashboard.status.rejected[lang]}
+            {t.orderList.status.rejected[lang]}
           </Badge>
         );
       case "completed":
@@ -140,7 +130,7 @@ const AdminDashboard = () => {
             variant="outline"
             className="bg-blue-100 text-blue-800 border-blue-300"
           >
-            {t.adminDashboard.status.completed[lang]}
+            {t.orderList.status.completed[lang]}
           </Badge>
         );
       case "picked up":
@@ -157,9 +147,30 @@ const AdminDashboard = () => {
     }
   };
 
-  // Define columns for the DataTable
-  // Orders table
-   const columns: ColumnDef<BookingOrder>[] = [
+  // Apply filters to orders before passing to table
+  const filteredOrders = orders.filter((order) => {
+    // Filter by status
+    if (statusFilter !== "all" && order.status !== statusFilter) {
+      return false;
+    }
+    // Filter by search query (order number or customer name)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const orderNumber = String(order.order_number || "").toLowerCase();
+      const customerName = (order.user_profile?.name || "").toLowerCase();
+      const customerEmail = (order.user_profile?.email || "").toLowerCase();
+
+      return (
+        orderNumber.includes(query) ||
+        customerName.includes(query) ||
+        customerEmail.includes(query)
+      );
+    }
+
+    return true;
+  });
+
+  const columns: ColumnDef<BookingOrder>[] = [
     {
       accessorKey: "order_number",
       header: t.orderList.columns.orderNumber[lang],
@@ -190,6 +201,33 @@ const AdminDashboard = () => {
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
+    // {
+    //   accessorKey: "date_range",
+    //   header: t.orderList.columns.dateRange[lang],
+    //   cell: ({ row }) => {
+    //     const items = row.original.order_items || [];
+    //     if (items.length === 0) return "-";
+
+    //     // Get earliest start_date
+    //     const minStartDate = items.reduce((minDate, item) => {
+    //       const date = new Date(item.start_date);
+    //       return date < minDate ? date : minDate;
+    //     }, new Date(items[0].start_date));
+
+    //     // Get latest end_date
+    //     const maxEndDate = items.reduce((maxDate, item) => {
+    //       const date = new Date(item.end_date);
+    //       return date > maxDate ? date : maxDate;
+    //     }, new Date(items[0].end_date));
+
+    //     return (
+    //       <div className="text-xs flex flex-col">
+    //         <span>{`${formatDate(minStartDate, "d MMM yyyy")} -`}</span>
+    //         <span>{`${formatDate(maxEndDate, "d MMM yyyy")}`}</span>
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       accessorKey: "final_amount",
       header: t.orderList.columns.total[lang],
@@ -322,75 +360,87 @@ const AdminDashboard = () => {
     },
   ];
 
-  return (
-    <div>
-      <div className="w-full flex flex-wrap justify-evenly items-center mb-8 gap-4">
-        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
-          <div className="flex justify-center items-center">
-            <p className="text-slate-500">
-              {t.adminDashboard.cards.users[lang]}
-            </p>
-          </div>
-          <div className="flex flex-row items-center gap-2">
-            <Users className="h-10 w-10 text-highlight2 shrink-0" />
-            <span className="text-4xl font-normal">{users.length}</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
-          <div className="flex justify-center items-center">
-            <p className="text-slate-500">
-              {t.adminDashboard.cards.items[lang]}
-            </p>
-          </div>
-          <div className="flex flex-row items-center gap-2">
-            <Warehouse className="h-10 w-10 text-highlight2 shrink-0" />
-            <span className="text-4xl font-normal">{items.length}</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
-          <div className="flex justify-center items-center">
-            <p className="text-slate-500">
-              {t.adminDashboard.cards.orders[lang]}
-            </p>
-          </div>
-          <div className="flex flex-row items-center gap-2">
-            <ShoppingBag className="h-10 w-10 text-highlight2 shrink-0" />
-            <span className="text-4xl font-normal">{orders.length}</span>
-          </div>
-        </div>
+  if (authLoading || loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoaderCircle className="animate-spin h-8 w-8 mr-2" />
+        <span>{t.orderList.loading[lang]}</span>
       </div>
-      {/* Recent Orders Section */}
-      <div className="mb-8">
-        <h2 className="text-left">
-          {t.adminDashboard.sections.recentOrders[lang]}
-        </h2>
-        {ordersLoading ? (
-          <div className="flex justify-center items-center py-6">
-            <LoaderCircle className="animate-spin" />
-          </div>
-        ) : (
-          <DataTable
-            columns={columns}
-            data={[...orders]
-              .sort(
-                (a, b) =>
-                  new Date(b.created_at || "").getTime() -
-                  new Date(a.created_at || "").getTime(),
-              )
-              .slice(0, 8)}
-          />
-        )}
-        <div className="flex items-center justify-center mt-4">
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center p-4">{error}</div>;
+  }
+
+  return (
+    <>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl">{t.orderList.title[lang]}</h1>
+
           <Button
-            variant={"secondary"}
-            className="flex items-center gap-2"
-            onClick={() => navigate("/admin/orders")}
+            onClick={() => user && user?.id && dispatch(getAllOrders(user.id))}
+            className="bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
           >
-            {t.adminDashboard.sections.manageOrders[lang]} <MoveRight className="inline-block"/>
+            {t.orderList.buttons.refresh[lang]}
           </Button>
         </div>
+        <div className="flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex gap-4 items-center">
+            <input
+              type="text"
+              placeholder={t.orderList.filters.search[lang]}
+              value={searchQuery}
+              size={50}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            >
+              <option value="all">
+                {t.orderList.filters.status.all[lang]}
+              </option>
+              <option value="pending">
+                {t.orderList.filters.status.pending[lang]}
+              </option>
+              <option value="confirmed">
+                {t.orderList.filters.status.confirmed[lang]}
+              </option>
+              <option value="cancelled">
+                {t.orderList.filters.status.cancelled[lang]}
+              </option>
+              <option value="rejected">
+                {t.orderList.filters.status.rejected[lang]}
+              </option>
+              <option value="completed">
+                {t.orderList.filters.status.completed[lang]}
+              </option>
+              <option value="deleted">
+                {t.orderList.filters.status.deleted[lang]}
+              </option>
+              <option value="cancelled by admin">
+                {t.orderList.filters.status.cancelledByAdmin[lang]}
+              </option>
+            </select>
+            {(searchQuery || statusFilter !== "all") && (
+              <Button
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                }}
+                size={"sm"}
+                className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+              >
+                {t.orderList.filters.clear[lang]}
+              </Button>
+            )}
+          </div>
+        </div>
+        <PaginatedDataTable columns={columns} data={filteredOrders} />
       </div>
 
       {/* Order Details Modal */}
@@ -451,59 +501,57 @@ const AdminDashboard = () => {
                 <div className="flex flex-col justify-center space-x-4">
                   <Separator />
                   <div className="flex flex-row items-center gap-4 mt-4 justify-center">
-                  {selectedOrder.status === "pending" && (
-                    <>
-                    <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.confirm[lang]}</span>
-                      <OrderConfirmButton
-                        id={selectedOrder.id}
-                        closeModal={() => setShowDetailsModal(false)}
-                      />
-                      </div>
-                      <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.reject[lang]}</span>
-                      <OrderRejectButton
-                        id={selectedOrder.id}
-                        closeModal={() => setShowDetailsModal(false)}
-                      />
-                      </div>
-                    </>
-                  )}
+                    {selectedOrder.status === "pending" && (
+                      <>
+                        <div className="flex flex-col items-center text-center">
+                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.confirm[lang]}</span>
+                          <OrderConfirmButton
+                            id={selectedOrder.id}
+                            closeModal={() => setShowDetailsModal(false)}
+                          />
+                        </div>
+                        <div className="flex flex-col items-center text-center">
+                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.reject[lang]}</span>
+                          <OrderRejectButton
+                            id={selectedOrder.id}
+                            closeModal={() => setShowDetailsModal(false)}
+                          />
+                        </div>
+                      </>
+                    )}
 
-                  {selectedOrder.status === "confirmed" && (
+                    {selectedOrder.status === "confirmed" && (
+                      <>
+                        <div className="flex flex-col items-center text-center">
+                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.return[lang]}</span>
+                          <OrderReturnButton
+                            id={selectedOrder.id}
+                            closeModal={() => setShowDetailsModal(false)}
+                          />
+                        </div>
+                        <div className="flex flex-col items-center text-center">
+                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.pickedUp[lang]}</span>
+                          <OrderPickupButton
+                          />
+                        </div>
+                      </>
+                    )}
                     <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.return[lang]}</span>
-                    <OrderReturnButton
-                      id={selectedOrder.id}
-                      closeModal={() => setShowDetailsModal(false)}
-                    />
-                    </div>
-                    
-                  )}
-                  {selectedOrder.status === "confirmed" && (
-                    <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.pickedUp[lang]}</span>
-                    <OrderPickupButton
-                    />
-                    </div>
-                    
-                  )}
-                  <div className="flex flex-col items-center text-center">
                       <span className="text-xs text-slate-600">{t.orderList.modal.buttons.delete[lang]}</span>
-                  <OrderDeleteButton
-                    id={selectedOrder.id}
-                    closeModal={() => setShowDetailsModal(false)}
-                  />
+                      <OrderDeleteButton
+                        id={selectedOrder.id}
+                        closeModal={() => setShowDetailsModal(false)}
+                      />
+                    </div>
                   </div>
-                </div>
                 </div>
               </div>
             </DialogContent>
           </Dialog>
         </div>
-        )}
-      </div>
+      )}
+    </>
   );
-}
+};
 
-export default AdminDashboard;
+export default OrderList;

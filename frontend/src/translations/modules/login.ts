@@ -19,4 +19,98 @@ export const login = {
     fi: "Kirjaudu ulos",
     en: "Logout",
   },
+  auth_ui: {
+    sign_in: {
+      email_label: {
+        fi: "",
+        en: "",
+      },
+      email_input_placeholder: {
+        fi: "",
+        en: "",
+      },
+      password_label: {
+        fi: "",
+        en: "",
+      },
+      password_input_placeholder: {
+        fi: "",
+        en: "",
+      },
+      social_provider_text: {
+        fi: "",
+        en: "",
+      },
+      button_label: {
+        fi: "",
+        en: "",
+      },
+      link_text: {
+        fi: "",
+        en: "",
+      },
+    },
+    sign_up: {
+      email_label: {
+        fi: "",
+        en: "",
+      },
+      email_input_placeholder: {
+        fi: "",
+        en: "",
+      },
+      password_label: {
+        fi: "",
+        en: "",
+      },
+      password_input_placeholder: {
+        fi: "",
+        en: "",
+      },
+      button_label: {
+        fi: "",
+        en: "",
+      },
+      link_text: {
+        fi: "",
+        en: "",
+      },
+    },
+    forgotten_password: {
+      link_text: {
+        fi: "",
+        en: "",
+      },
+      email_label: {
+        fi: "",
+        en: "",
+      },
+      email_input_placeholder: {
+        fi: "",
+        en: "",
+      },
+      button_label: {
+        fi: "",
+        en: "",
+      },
+    },
+    magic_link: {
+      email_input_label: {
+        fi: "",
+        en: "",
+      },
+      email_input_placeholder: {
+        fi: "",
+        en: "",
+      },
+      link_text: {
+        fi: "",
+        en: "",
+      },
+      button_label: {
+        fi: "",
+        en: "",
+      },
+    },
+  },
 };

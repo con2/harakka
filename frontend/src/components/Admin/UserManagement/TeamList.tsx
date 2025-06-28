@@ -1,24 +1,24 @@
-import { useEffect, useState } from "react";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
+import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllUsers,
   selectAllUsers,
-  selectLoading,
   selectError,
   selectIsSuperVera,
+  selectLoading,
 } from "@/store/slices/usersSlice";
-import { LoaderCircle } from "lucide-react";
-import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import UserDeleteButton from "./UserDeleteButton";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { ColumnDef } from "@tanstack/react-table";
-import AddTeamMemberModal from "./AddTeamMemberModal";
-import { Button } from "../ui/button";
-import { UserProfile } from "@/types/user";
-import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { UserProfile } from "@/types/user";
+import { ColumnDef } from "@tanstack/react-table";
+import { LoaderCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { Button } from "../../ui/button";
+import AddTeamMemberModal from "./AddTeamMemberModal";
+import UserDeleteButton from "./UserDeleteButton";
 
 const TeamList = () => {
   const dispatch = useAppDispatch();
@@ -111,7 +111,7 @@ const TeamList = () => {
       id: "delete",
       header: t.teamList.columns.delete[lang],
       cell: ({ row }) => (
-        <UserDeleteButton id={row.original.id} closeModal={() => {}} />
+        <UserDeleteButton id={row.original.id} closeModal={() => { }} />
       ),
     },
   ];
