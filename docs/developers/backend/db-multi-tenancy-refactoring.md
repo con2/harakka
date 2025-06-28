@@ -296,79 +296,231 @@ CREATE TABLE public.user_tenant_roles (
 
 ## Refactoring
 
-1. Refactor tenants
+1. Create new organizations table
 
 ```sql
--- Rename tenants table to organizations
-ALTER TABLE public.tenants RENAME TO organizations;
+-- Create slug generation function (reusable)
+CREATE OR REPLACE FUNCTION generate_slug(input_text TEXT)
+RETURNS TEXT AS $$
+BEGIN
+  RETURN LOWER(
+    REGEXP_REPLACE(
+      REGEXP_REPLACE(
+        TRIM(input_text),
+        '[^a-zA-Z0-9\s-]', '', 'g'  -- Remove special characters
+      ),
+      '\s+', '-', 'g'  -- Replace spaces with hyphens
+    )
+  );
+END;
+$$ LANGUAGE plpgsql;
 
--- Add new fields to organizations
-ALTER TABLE public.organizations
-ADD COLUMN slug VARCHAR UNIQUE,
-ADD COLUMN description TEXT,
-ADD COLUMN is_active BOOLEAN DEFAULT TRUE,
-ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+-- Create trigger for updated_at (reusable)
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
--- Generate slugs
-UPDATE public.tenants
-SET slug = LOWER(REPLACE(name, ' ', '-'))
-WHERE slug IS NULL;
-
--- Make slug not nullable
-ALTER TABLE public.organizations ALTER COLUMN slug SET NOT NULL;
-```
-
-2. Update roles table with new role types
-
-```sql
-INSERT INTO public.roles (role) VALUES
-('app_admin'),
-('main_admin')
-ON CONFLICT (role) DO NOTHING;
-```
-
-3. Create organization inventory ownership table
-
-```sql
-CREATE TABLE public.organization_inventory_ownership (
+-- Create organizations table
+CREATE TABLE public.ERM_organizations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  organization_id UUID REFERENCES public.organizations(id) NOT NULL,
+  name TEXT NOT NULL,
+  slug VARCHAR UNIQUE NOT NULL,
+  description TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users(id),
+  updated_by UUID REFERENCES auth.users(id)
+);
+
+-- Create slug generation trigger function
+CREATE OR REPLACE FUNCTION generate_organization_slug()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Generate slug from name
+  NEW.slug := generate_slug(NEW.name);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create triggers
+CREATE TRIGGER update_organizations_updated_at
+  BEFORE UPDATE ON public.ERM_organizations
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER generate_organizations_slug_trigger
+  BEFORE INSERT OR UPDATE OF name ON public.ERM_organizations
+  FOR EACH ROW
+  EXECUTE FUNCTION generate_organization_slug();
+```
+
+2. Create organization inventory ownership table
+
+```sql
+
+-- Create organization items ownership table
+CREATE TABLE public.ERM_organization_items (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID REFERENCES public.ERM_organizations(id) NOT NULL,
   storage_item_id UUID REFERENCES public.storage_items(id) NOT NULL,
   owned_quantity INTEGER NOT NULL DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users(id),
+  updated_by UUID REFERENCES auth.users(id)
 
-  UNIQUE(organization_id, storage_item_id),
-  CHECK (owned_quantity >= 0),
+  -- Unique constraint to prevent duplicate organization-item pairs
+  CONSTRAINT unique_org_item UNIQUE(organization_id, storage_item_id),
+  -- Check constraint to ensure owned_quantity is non-negative
+  CONSTRAINT positive_quantity CHECK (owned_quantity >= 0)
 );
+
+-- Add trigger for updated_at
+CREATE TRIGGER update_ERM_organization_items_updated_at
+  BEFORE UPDATE ON public.ERM_organization_items
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
 ```
 
-4. Update user_tenant_roles to work with organizations
+3. Create user-organization-role relationships
 
 ```sql
-ALTER TABLE public.user_tenant_roles RENAME TO user_organization_roles;
-```
-
-4. Create organization memberships table (for admins)
-
-```sql
-CREATE TABLE public.organization_memberships (
+-- Create user-organization-role relationship table
+CREATE TABLE public.ERM_user_organization_roles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES auth.users(id) NOT NULL,
-  organization_id UUID REFERENCES public.organizations(id) NOT NULL,
-  role VARCHAR NOT NULL CHECK (role IN ('admin', 'main_admin')),
+  organization_id UUID REFERENCES public.ERM_organizations(id) NOT NULL,
+  role USER-DEFINED NOT NULL REFERENCES public.roles(role),
   is_active BOOLEAN DEFAULT TRUE,
-  joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users(id),
+  updated_by UUID REFERENCES auth.users(id),
 
-  UNIQUE(user_id, organization_id)
+  -- Unique constraint to prevent duplicate user-organization-role combinations
+  CONSTRAINT unique_user_org_role UNIQUE(user_id, organization_id, role)
 );
+
+-- Add trigger for updated_at
+CREATE TRIGGER update_ERM_user_organization_roles_updated_at
+  BEFORE UPDATE ON public.ERM_user_organization_roles
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
 ```
 
-5. Update orders structure
+4. Create organization-location relationships
 
 ```sql
+-- Create organization-location relationship table (many-to-many)
+CREATE TABLE public.ERM_organization_locations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID REFERENCES public.ERM_organizations(id) NOT NULL,
+  storage_location_id UUID REFERENCES public.storage_locations(id) NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+  -- Unique constraint to prevent duplicate organization-location pairs
+  CONSTRAINT unique_org_location UNIQUE(organization_id, storage_location_id)
+);
+
+-- Add trigger for updated_at
+CREATE TRIGGER update_ERM_organization_locations_updated_at
+  BEFORE UPDATE ON public.ERM_organization_locations
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+```
+
+5. Update old tables later to reference the new organization structure
+
+```sql
+-- Update order_items to reference the providing organization
 ALTER TABLE public.order_items
-ADD COLUMN provider_organization_id UUID REFERENCES public.organizations(id);
+ADD COLUMN provider_organization_id UUID REFERENCES public.ERM_organizations(id);
+
+-- Update promotions to reference the organization that created them
+ALTER TABLE public.promotions
+ADD COLUMN owner_organization_id UUID REFERENCES public.ERM_organizations(id);
+
+-- Update audit_logs to include organization context
+ALTER TABLE public.audit_logs
+ADD COLUMN organization_id UUID REFERENCES public.ERM_organizations(id);
+
+-- Create function to calculate total items from organization ownership
+CREATE OR REPLACE FUNCTION calculate_storage_item_total(item_id UUID)
+RETURNS INTEGER AS $$
+BEGIN
+  RETURN COALESCE(
+    (SELECT SUM(owned_quantity)
+     FROM public.ERM_organization_items
+     WHERE storage_item_id = item_id
+     AND is_active = TRUE),
+    0
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger function to update storage_items totals when ERM_organization_items changes
+CREATE OR REPLACE FUNCTION update_storage_item_totals()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Handle INSERT and UPDATE
+  IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+    UPDATE public.storage_items
+    SET items_number_total = calculate_storage_item_total(NEW.storage_item_id)
+    WHERE id = NEW.storage_item_id;
+  END IF;
+
+  -- Handle DELETE and UPDATE (when storage_item_id changes)
+  IF TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD.storage_item_id != NEW.storage_item_id) THEN
+    UPDATE public.storage_items
+    SET items_number_total = calculate_storage_item_total(OLD.storage_item_id)
+    WHERE id = OLD.storage_item_id;
+  END IF;
+
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger on ERM_organization_items to automatically update storage_items totals
+CREATE TRIGGER update_storage_items_totals_trigger
+  AFTER INSERT OR UPDATE OR DELETE ON public.ERM_organization_items
+  FOR EACH ROW
+  EXECUTE FUNCTION update_storage_item_totals();
+
+-- Create a view to easily see organization ownership breakdown per item
+CREATE VIEW ERM_v_item_ownership_summary AS
+SELECT
+  si.id as storage_item_id,
+  si.translations->>'name' as item_name,
+  si.items_number_total,
+  si.items_number_available,
+  COALESCE(org_totals.total_owned, 0) as calculated_total,
+  CASE
+    WHEN si.items_number_total != COALESCE(org_totals.total_owned, 0)
+    THEN 'MISMATCH'
+    ELSE 'OK'
+  END as total_status
+FROM public.storage_items si
+LEFT JOIN (
+  SELECT
+    storage_item_id,
+    SUM(owned_quantity) as total_owned,
+    COUNT(*) as owner_count
+  FROM public.ERM_organization_items
+  WHERE is_active = TRUE
+  GROUP BY storage_item_id
+) org_totals ON si.id = org_totals.storage_item_id;
+
+-- One-time update to sync existing storage_items with organization ownership
+UPDATE public.storage_items
+SET items_number_total = calculate_storage_item_total(id);
 ```
