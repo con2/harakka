@@ -20,7 +20,7 @@ import { MailService } from "../mail/mail.service";
   generateFinnishReferenceNumber,
 } from "../utils/invoice-functions";
  import { InvoiceService } from "./invoice.service"; */
-import dayjs from "dayjs";
+import * as dayjs from "dayjs";
 import * as utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 import BookingConfirmationEmail from "src/emails/BookingConfirmationEmail";
@@ -36,7 +36,7 @@ import ItemsPickedUpMail from "src/emails/ItemsPickedUp";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "src/types/supabase.types";
 import { Translations } from "./types/translations.types";
-import { EnrichedItem } from "src/types/booking.types";
+import { EnrichedItem } from "./types/booking.interface";
 
 @Injectable()
 export class BookingService {
@@ -46,13 +46,9 @@ export class BookingService {
   ) {}
 
   // 1. get all orders
-  async getAllOrders(
-    supabase: SupabaseClient<Database>,
-  ) {
-    const { data: orders, error } = await supabase
-      .from("orders")
-      .select(
-        `
+  async getAllOrders(supabase: SupabaseClient<Database>) {
+    const { data: orders, error } = await supabase.from("orders").select(
+      `
       *,
       order_items (
         *,
@@ -64,7 +60,7 @@ export class BookingService {
         )
       )
     `,
-      )
+    );
 
     if (error) {
       console.error("Supabase error in getAllOrders():", error);
