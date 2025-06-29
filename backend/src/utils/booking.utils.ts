@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { UserBookingOrder } from "src/types/booking.types";
+import { UserBookingOrder } from "src/modules/booking/types/booking.interface";
 
 export async function calculateAvailableQuantity(
   supabase: SupabaseClient,
@@ -35,10 +35,11 @@ export async function calculateAvailableQuantity(
   return item.items_number_total - booked;
 }
 
-
-export function getUniqueLocationIDs(
-  orders: UserBookingOrder[]
-): string[] {
+/**
+ * @param orders
+ * @returns An array of unique location IDs
+ */
+export function getUniqueLocationIDs(orders: UserBookingOrder[]): string[] {
   return Array.from(
     new Set(
       orders
@@ -51,8 +52,8 @@ export function getUniqueLocationIDs(
 
 /**
  * Get the difference in days between a certain date and todays date
- * @param start 
- * @returns 
+ * @param start
+ * @returns
  */
 export function dayDiffFromToday(start: Date) {
   const today = new Date();
