@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getAllLogs,
@@ -7,28 +7,28 @@ import {
   selectLogsLoading,
 } from "@/store/slices/logsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
-import { LogMessage } from "@/types";
-import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { LogMessage } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "../ui/button";
 import {
+  AlertTriangle,
+  Bug,
+  Eye,
+  FileText,
+  Info,
   LoaderCircle,
   RefreshCw,
-  Eye,
-  AlertTriangle,
-  Info,
-  Bug,
-  FileText,
 } from "lucide-react";
-import { PaginatedDataTable } from "../ui/data-table-paginated";
+import React, { useEffect, useMemo, useState } from "react";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { PaginatedDataTable } from "../ui/data-table-paginated";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "../ui/dialog";
 import {
   Select,
@@ -355,18 +355,18 @@ const Logs: React.FC = () => {
           {(searchQuery ||
             logTypeFilter !== "all" ||
             levelFilter !== "all") && (
-            <Button
-              onClick={() => {
-                setLogTypeFilter("all");
-                setLevelFilter("all");
-                setSearchQuery("");
-              }}
-              size="sm"
-              className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
-            >
-              {t.logs.filters.reset[lang] || "Reset Filters"}
-            </Button>
-          )}
+              <Button
+                onClick={() => {
+                  setLogTypeFilter("all");
+                  setLevelFilter("all");
+                  setSearchQuery("");
+                }}
+                size="sm"
+                className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+              >
+                {t.logs.filters.reset[lang] || "Reset Filters"}
+              </Button>
+            )}
         </div>
       </div>
 

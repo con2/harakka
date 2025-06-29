@@ -1,4 +1,11 @@
-import { useEffect, useState } from "react";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   checkItemDeletability,
@@ -9,31 +16,23 @@ import {
   selectItemsLoading,
   updateItem,
 } from "@/store/slices/itemsSlice";
-import { PaginatedDataTable } from "../ui/data-table-paginated";
+import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
+import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
+import { t } from "@/translations";
+import { Item } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle, Trash2 } from "lucide-react";
-import { Button } from "../ui/button";
-import AddItemModal from "./AddItemModal";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import UpdateItemModal from "./UpdateItemModal";
-import { Switch } from "@/components/ui/switch";
-import { selectAllTags } from "@/store/slices/tagSlice";
-import { Item } from "@/types/item";
-import AssignTagsModal from "./AssignTagsModal";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Command, CommandGroup, CommandItem } from "../ui/command";
+import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Command, CommandGroup, CommandItem } from "../ui/command";
+import { PaginatedDataTable } from "../ui/data-table-paginated";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { toastConfirm } from "../ui/toastConfirm";
-import { useLanguage } from "@/context/LanguageContext";
-import { t } from "@/translations";
-import { fetchAllTags } from "@/store/slices/tagSlice";
+import AddItemModal from './Items/AddItemModal';
+import AssignTagsModal from './Items/AssignTagsModal';
+import UpdateItemModal from './Items/UpdateItemModal';
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -352,9 +351,9 @@ const AdminItemsTable = () => {
               >
                 {tagFilter.length > 0
                   ? t.adminItemsTable.filters.tags.filtered[lang].replace(
-                      "{count}",
-                      tagFilter.length.toString(),
-                    )
+                    "{count}",
+                    tagFilter.length.toString(),
+                  )
                   : t.adminItemsTable.filters.tags.filter[lang]}
               </Button>
             </PopoverTrigger>
