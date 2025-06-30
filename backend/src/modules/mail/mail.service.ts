@@ -6,7 +6,7 @@ import {
   BookingMailType,
   BookingMailParams,
 } from "./interfaces/mail.interface";
-import * as dayjs from "dayjs";
+import * as dayjs from "dayjs"; // Keep this as a named import to avoid issues.
 import type { BookingEmailPayload } from "./booking-email-assembler";
 import { BookingEmailAssembler } from "./booking-email-assembler";
 import BookingCreationEmail from "./../../emails/BookingCreationEmail";
@@ -280,8 +280,8 @@ export class MailService {
 
     const formattedPayload = {
       ...rawPayload,
-      pickupDate: formatDate(rawPayload.pickupDate),
-      returnDate: formatDate(rawPayload.returnDate),
+      pickupDate: rawPayload.pickupDate, // already DD.MM.YYYY
+      returnDate: rawPayload.returnDate, // already DD.MM.YYYY
       items: (rawPayload.items ?? []).map((item) => ({
         ...item,
         start_date: formatDate(item.start_date),
