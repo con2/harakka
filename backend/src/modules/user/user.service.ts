@@ -8,6 +8,7 @@ import WelcomeEmail from "src/emails/WelcomeEmail";
 import { MailService } from "../mail/mail.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { UserAddress, UserProfile } from "./interfaces/user.interface";
+import { UserEmailAssembler } from "../mail/user-email-assembler";
 
 @Injectable()
 export class UserService {
@@ -17,6 +18,7 @@ export class UserService {
   constructor(
     private supabaseService: SupabaseService,
     private readonly mailService: MailService,
+    private readonly userEmailAssembler: UserEmailAssembler,
   ) {
     // Major Issue, anyone can see everything.
     this.supabase = supabaseService.getServiceClient(); // Use the service client for admin operations
@@ -48,6 +50,7 @@ export class UserService {
     req: AuthRequest,
   ): Promise<UserProfile> {
     const supabase = req.supabase;
+    let createdProfile: UserProfile | null = null;
     try {
       // First, check if user already exists to provide better error message
       const { data: existingUser } = await supabase
@@ -62,23 +65,6 @@ export class UserService {
 
       // Log the attempt to create a user
       this.logger.log(`Attempting to create user with email: ${user.email}`);
-
-      try {
-        await this.mailService.sendMail({
-          to: user.email,
-          subject: "Welcome, friend!",
-
-          template: WelcomeEmail({ name: user.email }),
-        });
-      } catch (mailError) {
-        this.logger.error(
-          `Sending welcome email failed: ${
-            mailError instanceof Error
-              ? mailError.message
-              : JSON.stringify(mailError)
-          }`,
-        );
-      }
 
       // Create a user in Supabase Auth
       const { data: authData, error: authError }: UserResponse =
@@ -154,7 +140,7 @@ export class UserService {
           );
         }
 
-        return data;
+        createdProfile = data;
       } else {
         // Profile doesn't exist yet, create it
         const { data, error: profileError } = await supabase
@@ -183,8 +169,34 @@ export class UserService {
           );
         }
 
-        return data;
+        createdProfile = data;
       }
+
+      // Send welcome e‑mail once the profile is ready
+      if (createdProfile) {
+        try {
+          const welcomePayload =
+            await this.userEmailAssembler.buildWelcomePayload(
+              createdProfile.id,
+            );
+          await this.mailService.sendMail({
+            to: welcomePayload.email,
+            bcc: process.env.USER_ADMIN_EMAIL ?? process.env.EMAIL_FROM_2, // Admin copy
+            subject: "Welcome, friend!",
+            template: WelcomeEmail({ name: welcomePayload.name }),
+          });
+        } catch (sendErr) {
+          this.logger.error(
+            `Sending welcome email failed: ${
+              sendErr instanceof Error
+                ? sendErr.message
+                : JSON.stringify(sendErr)
+            }`,
+          );
+        }
+      }
+
+      return createdProfile;
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -291,18 +303,4 @@ export class UserService {
       .eq("id", addressId);
     if (error) throw new Error(error.message);
   }
-
-  /* async sendWelcomeEmail(userId: string): Promise<void> {
-    const user = await this.getUserById(userId);
-    if (!user || !user.email) {
-      this.logger.warn(`Cannot send welcome email. User not found: ${userId}`);
-      return;
-    }
-
-    await this.mailService.sendMail({
-      to: user.email,
-      subject: "Welcome, friend!",
-      template: WelcomeEmail({ name: user.name || user.email }),
-    });
-  } */
 }

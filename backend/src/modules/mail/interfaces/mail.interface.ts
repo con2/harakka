@@ -44,3 +44,11 @@ export interface BookingMailParams {
   orderId: string; // always required
   triggeredBy: string; // userId of actor (admin / owner)
 }
+
+/**
+ * Simple payload for one‑off welcome / password‑reset mails.
+ */
+export interface WelcomeEmailPayload {
+  name: string;
+  email: string;
+}
