@@ -1,4 +1,4 @@
-import React, { ReactElement } from "react";
+import * as React from "react";
 import {
   Html,
   Head,
@@ -26,7 +26,7 @@ const ItemsReturnedMail = ({
   name,
   location,
   items,
-}: ItemsReturnedMailProps): ReactElement => (
+}: ItemsReturnedMailProps): React.ReactElement => (
   <Html>
     <Head>
       <link
@@ -103,7 +103,7 @@ const ItemsReturnedMail = ({
         </Text>
         <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
           {items.map(
-            (item, index): ReactElement => (
+            (item, index): React.ReactElement => (
               <li key={index} style={{ marginBottom: "4px", fontSize: "16px" }}>
                 {item.translations?.fi.name ?? "Unknown"} (x{item.quantity})
               </li>
@@ -126,7 +126,7 @@ const ItemsReturnedMail = ({
         </Text>
         <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
           {items.map(
-            (item, index): ReactElement => (
+            (item, index): React.ReactElement => (
               <li key={index} style={{ marginBottom: "4px", fontSize: "16px" }}>
                 {item.translations?.en.name ?? "Unknown"} (x{item.quantity})
               </li>

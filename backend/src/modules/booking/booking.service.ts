@@ -13,7 +13,7 @@ import {
   getUniqueLocationIDs,
 } from "src/utils/booking.utils";
 import { MailService } from "../mail/mail.service";
-import { BookingMailType, EmailProps } from "../mail/interfaces/mail.interface";
+import { BookingMailType } from "../mail/interfaces/mail.interface";
 /*import {
   generateBarcodeImage,
   generateInvoicePDF,
@@ -28,7 +28,16 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "src/types/supabase.types";
 export type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 import { Translations } from "./types/translations.types";
-import { EnrichedItem } from "./types/booking.interface";
+import {
+  CancelBookingResponse,
+  BookingItem,
+  OrderItemInsert,
+  OrderItemRow,
+  OrderItemQuantity,
+  OrderWithItems,
+  StorageItemsRow,
+  UserProfilesRow,
+} from "./types/booking.interface";
 
 @Injectable()
 export class BookingService {
@@ -391,7 +400,7 @@ export class BookingService {
   async updateBooking(
     orderId: string,
     userId: string,
-    updatedItems: any[],
+    updatedItems: BookingItem[],
     supabase: SupabaseClient,
   ) {
     // 5.1 check the order
@@ -469,7 +478,7 @@ export class BookingService {
         .from("storage_items")
         .select("location_id")
         .eq("id", item_id)
-        .single();
+        .single<StorageItemsRow>();
 
       if (storageError || !storageItem) {
         throw new BadRequestException(
@@ -480,7 +489,7 @@ export class BookingService {
       // 5.7. insert new order item
       const { error: itemInsertError } = await supabase
         .from("order_items")
-        .insert({
+        .insert<OrderItemInsert>({
           order_id: orderId,
           item_id: item.item_id,
           location_id: storageItem.location_id,
@@ -490,11 +499,13 @@ export class BookingService {
           total_days: totalDays,
           status: "pending",
         });
+
       if (itemInsertError) {
         console.error("Order item insert error:", itemInsertError);
         throw new BadRequestException("Could not create updated order items");
       }
     }
+
     // 5.8 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Update, {
       orderId,
@@ -515,7 +526,8 @@ export class BookingService {
   `,
       )
       .eq("id", orderId)
-      .single();
+      .single()
+      .overrideTypes<OrderWithItems>();
 
     if (orderError || !updatedOrder) {
       throw new BadRequestException("Could not fetch updated booking details");
@@ -552,7 +564,7 @@ export class BookingService {
       .from("user_profiles")
       .select("role, email, full_name")
       .eq("id", userId)
-      .single();
+      .single<UserProfilesRow>();
 
     if (!user) {
       throw new ForbiddenException("User not found");
@@ -600,77 +612,11 @@ export class BookingService {
       throw new BadRequestException("Could not reject the booking");
     }
 
-    // 6.6 send mail to user:
-    const today = dayjs().format("DD.MM.YYYY");
-
-    // get user profile
-
-    const enrichedItems: EnrichedItem[] = orderItems || [];
-
-    for (const item of enrichedItems) {
-      const { data: storageItem, error: storageItemError } = await supabase
-        .from("storage_items")
-        .select("translations, location_id")
-        .eq("id", item.item_id)
-        .single();
-
-      if (storageItemError || !storageItem) {
-        throw new BadRequestException("Could not fetch storage item details");
-      }
-
-      item.translations = storageItem.translations;
-      item.location_id = storageItem.location_id;
-    }
-
-    // adapt to email:
-    const pickupDate = dayjs(enrichedItems[0].start_date).format("DD.MM.YYYY");
-
-    const { data: location, error: locationError } = await supabase
-      .from("storage_locations")
-      .select("name, address")
-      .eq("id", enrichedItems[0].location_id)
-      .single();
-
-    const emailItems = enrichedItems.map((item) => ({
-      item_id: item.item_id,
-      quantity: item.quantity,
-      translations: {
-        fi: {
-          name: item.translations?.fi.item_name ?? "Unknown",
-        },
-        en: {
-          name: item.translations?.en.item_name ?? "Unknown",
-        },
-      },
-    }));
-
-    const emailData: EmailProps = {
-      name: user.full_name,
-      email: user.email,
-      pickupDate,
-      today,
-      location: location?.name,
-      items: emailItems,
-    };
-
-    /*    await this.mailService.sendMail({
-      to: emailData.email,
-      subject: "Varaus hylätty - Booking rejected!",
-      template: BookingRejectionEmail(emailData),
-    }); */
-
-    // send mail to admin
-    const adminEmailData = {
-      ...emailData,
-      email: "illusia.rental.service@gmail.com",
-      name: "Admin",
-    };
-
-    /*   await this.mailService.sendMail({
-      to: "illusia.rental.service@gmail.com",
-      subject: "Varaus hylätty - Booking rejected sucessfully - (copy)",
-      template: BookingRejectionEmail(adminEmailData),
-    }); */
+    // 6.6 notify via centralized mail service
+    await this.mailService.sendBookingMail(BookingMailType.Rejection, {
+      orderId,
+      triggeredBy: userId,
+    });
 
     return { message: "Booking rejected" };
   }
@@ -680,7 +626,7 @@ export class BookingService {
     orderId: string,
     userId: string,
     supabase: SupabaseClient,
-  ) {
+  ): Promise<CancelBookingResponse> {
     // 7.1 check order status
     const { data: order } = await supabase
       .from("orders")
@@ -698,11 +644,12 @@ export class BookingService {
     }
 
     // get user profile
+    // We should think about replacing these kinds of querries with just checking the request for the information we need. -Jon
     const { data: userProfile, error: userProfileError } = await supabase
       .from("user_profiles")
       .select("role, email, full_name")
       .eq("id", userId)
-      .single();
+      .single<UserProfilesRow>();
 
     if (userProfileError || !userProfile) {
       throw new BadRequestException("User profile not found");
@@ -750,7 +697,8 @@ export class BookingService {
     const { data: orderItems, error: orderItemsError } = await supabase
       .from("order_items")
       .select("item_id, quantity, start_date, end_date")
-      .eq("order_id", orderId);
+      .eq("order_id", orderId)
+      .overrideTypes<OrderItemRow[]>();
 
     if (orderItemsError || !orderItems) {
       throw new BadRequestException(
@@ -758,67 +706,11 @@ export class BookingService {
       );
     }
 
-    const enrichedItems: EnrichedItem[] = orderItems || [];
-
-    for (const item of enrichedItems) {
-      const { data: storageItem, error: storageItemError } = await supabase
-        .from("storage_items")
-        .select("translations, location_id")
-        .eq("id", item.item_id)
-        .single();
-
-      if (storageItemError || !storageItem) {
-        throw new BadRequestException("Could not fetch storage item details");
-      }
-      item.translations = storageItem.translations;
-      item.location_id = storageItem.location_id;
-    }
-
-    const startDate = dayjs(orderItems[0].start_date).format("DD.MM.YYYY");
-    const emailItems = enrichedItems.map((item) => ({
-      item_id: item.item_id,
-      quantity: item.quantity,
-      start_date: item.start_date,
-      end_date: item.end_date,
-      translations: {
-        fi: {
-          name: item.translations?.fi.item_name ?? "Unknown",
-        },
-        en: {
-          name: item.translations?.en.item_name ?? "Unknown",
-        },
-      },
-    }));
-
-    const { data: orderNum } = await supabase
-      .from("orders")
-      .select("order_number")
-      .eq("id", orderId)
-      .single();
-
-    // send mail
-    /*    await this.mailService.sendMail({
-      to: userProfile.email,
-      subject: "Varaus peruttu - Booking Cancelled",
-      template: BookingCancelledEmail({
-        orderId: orderNum?.order_number?.toString() ?? "Unknown",
-        startDate,
-        items: emailItems,
-        recipientRole: "user", // TODO: set dynamically!!!
-      }),
-    }); */
-
-    // send mail to admin
-    /*   await this.mailService.sendMail({
-      to: "illusia.rental.service@gmail.com",
-      subject: "Varaus peruttu - Booking Cancelled",
-      template: BookingCancelledEmail({
-        orderId: orderNum?.order_number?.toString() ?? "Unknown",
-        startDate,
-        items: emailItems,
-        recipientRole: "admin",
-      }),
-    }); */
+    // notify via centralized mail service
+    await this.mailService.sendBookingMail(BookingMailType.Cancellation, {
+      orderId,
+      triggeredBy: userId,
+    });
 
     return {
       message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
@@ -844,7 +736,8 @@ export class BookingService {
       .from("orders")
       .select("status, user_id, order_number")
       .eq("id", orderId)
-      .single();
+      .single()
+      .overrideTypes<OrderRow>();
 
     if (orderError || !order) throw new BadRequestException("Order not found");
 
@@ -858,7 +751,7 @@ export class BookingService {
       .from("user_profiles")
       .select("role")
       .eq("id", userId)
-      .single();
+      .single<UserProfilesRow>();
 
     if (userProfileError || !userProfile) {
       throw new BadRequestException("User profile not found");
@@ -894,7 +787,6 @@ export class BookingService {
     }
 
     // 8.5 Soft-delete the order (update only)
-    const deletedAt = new Date().toISOString();
     const { error: deleteError } = await supabase
       .from("orders")
       .update({
@@ -906,18 +798,11 @@ export class BookingService {
       throw new BadRequestException("Could not mark booking as deleted");
     }
 
-    // 8.6 send notification email to admin
-    const adminEmailDataObject = {
-      order: order.order_number,
-      email: "illusia.rental.service@gmail.com",
-      name: "Admin",
-    };
-
-    /*     await this.mailService.sendMail({
-      to: "illusia.rental.service@gmail.com",
-      subject: "Varaus poistettu - Booking deleted",
-      template: BookingDeleteMail(adminEmailDataObject),
-    }); */
+    // 8.6 send notification email user and admin
+    await this.mailService.sendBookingMail(BookingMailType.Cancellation, {
+      orderId,
+      triggeredBy: userId,
+    });
 
     return {
       message: "Booking deleted",
@@ -929,7 +814,8 @@ export class BookingService {
     const { data: items } = await supabase
       .from("order_items")
       .select("item_id, quantity, status")
-      .eq("order_id", orderId);
+      .eq("order_id", orderId)
+      .overrideTypes<OrderItemRow[]>();
 
     if (!items || items.length === 0) {
       throw new BadRequestException("No items found for return");
@@ -958,14 +844,15 @@ export class BookingService {
         .from("storage_items")
         .select("items_number_currently_in_storage")
         .eq("id", item.item_id)
-        .single();
+        .single<StorageItemsRow>();
 
       if (error || !storageItem) {
         throw new BadRequestException("Could not find item in storage");
       }
 
       const updatedCount =
-        (storageItem.items_number_currently_in_storage || 0) + item.quantity;
+        (storageItem.items_number_currently_in_storage || 0) +
+        (item.quantity ?? 0);
 
       const { error: updateItemsError } = await supabase
         .from("storage_items")
@@ -977,97 +864,23 @@ export class BookingService {
       }
     }
 
-    //  Fetch user email
-    const { data: user, error: userError } = await supabase
-      .from("user_profiles")
-      .select("email, full_name")
-      .eq("id", userId)
-      .single();
-
-    if (userError || !user) {
-      throw new BadRequestException(
-        "User profile not found for email notification",
-      );
-    }
-
-    // send mail to user:
-    const today = dayjs().format("DD.MM.YYYY");
-    const enrichedItems: EnrichedItem[] = items || [];
-
-    for (const item of enrichedItems) {
-      const { data: storageItem, error: storageItemError } = await supabase
-        .from("storage_items")
-        .select("translations, location_id")
-        .eq("id", item.item_id)
-        .single();
-
-      if (storageItemError || !storageItem) {
-        throw new BadRequestException("Could not fetch storage item details");
-      }
-
-      item.translations = storageItem.translations;
-      item.location_id = storageItem.location_id;
-    }
-
-    // adapt to email:
-    const { data: location, error: locationError } = await supabase
-      .from("storage_locations")
-      .select("name, address")
-      .eq("id", enrichedItems[0].location_id)
-      .single();
-
-    const emailItems = enrichedItems.map((item) => ({
-      item_id: item.item_id,
-      quantity: item.quantity,
-      translations: {
-        fi: {
-          name: item.translations?.fi.item_name ?? "Unknown",
-        },
-        en: {
-          name: item.translations?.en.item_name ?? "Unknown",
-        },
-      },
-    }));
-
-    const emailData = {
-      name: user.full_name,
-      email: user.email,
-      today,
-      location: location?.name,
-      items: emailItems,
-    };
-
-    /*   await this.mailService.sendMail({
-      to: emailData.email,
-      subject: "Palautetut tuotteet - Items returned",
-      template: ItemsReturnedMail(emailData),
-    }); */
-
-    // send mail to admin
-    const adminEmailData = {
-      ...emailData,
-      email: "illusia.rental.service@gmail.com",
-      name: "Admin",
-    };
-
-    /*  await this.mailService.sendMail({
-      to: "illusia.rental.service@gmail.com",
-      subject: "Palautetut tuotteet - Items returned",
-      template: ItemsReturnedMail(adminEmailData),
-    }); */
+    // notify via centralized mail service
+    await this.mailService.sendBookingMail(BookingMailType.ItemsReturned, {
+      orderId,
+      triggeredBy: userId,
+    });
 
     return { message: "Items returned successfully" };
   }
 
   // 10. confirm pickup of items
   async confirmPickup(orderId: string, supabase: SupabaseClient) {
-    const today = new Date().toISOString().split("T")[0];
-
     // 10.1. Get the order item
     const { data: items } = await supabase
       .from("order_items")
       .select("item_id, quantity, status, start_date, end_date")
-      .eq("order_id", orderId);
+      .eq("order_id", orderId)
+      .overrideTypes<OrderItemRow[]>();
 
     if (!items || items.length === 0) {
       throw new BadRequestException("No items found for return");
@@ -1136,92 +949,20 @@ export class BookingService {
       }
     }
 
-    // 10.5. Get user email from related order
-    const { data: order } = await supabase
+    // look up the booking owner so we can tag who triggered the mail
+    const { data: orderRow } = await supabase
       .from("orders")
       .select("user_id")
       .eq("id", orderId)
-      .single();
+      .single<OrderRow>();
 
-    if (!order) {
-      throw new BadRequestException("Order not found");
-    }
+    const triggeredBy = orderRow?.user_id ?? "system";
 
-    const { data: user, error: userError } = await supabase
-      .from("user_profiles")
-      .select("email, full_name")
-      .eq("id", order.user_id)
-      .single();
-
-    if (userError || !user) {
-      throw new BadRequestException(
-        "User profile not found for email notification",
-      );
-    }
-    // send mail to user:
-    const enrichedItems: EnrichedItem[] = items || [];
-
-    for (const item of enrichedItems) {
-      const { data: storageItem, error: storageItemError } = await supabase
-        .from("storage_items")
-        .select("translations, location_id")
-        .eq("id", item.item_id)
-        .single();
-
-      if (storageItemError || !storageItem) {
-        throw new BadRequestException("Could not fetch storage item details");
-      }
-
-      item.translations = storageItem.translations;
-      item.location_id = storageItem.location_id;
-    }
-
-    // adapt to email:
-    const { data: location, error: locationError } = await supabase
-      .from("storage_locations")
-      .select("name, address")
-      .eq("id", enrichedItems[0].location_id)
-      .single();
-
-    const emailItems = enrichedItems.map((item) => ({
-      item_id: item.item_id,
-      quantity: item.quantity,
-      translations: {
-        fi: {
-          name: item.translations?.fi.item_name ?? "Unknown",
-        },
-        en: {
-          name: item.translations?.en.item_name ?? "Unknown",
-        },
-      },
-    }));
-
-    const emailData = {
-      name: user.full_name,
-      email: user.email,
-      location: location?.name,
-      pickupDate: items[0].start_date,
-      items: emailItems,
-    };
-
-    /*     await this.mailService.sendMail({
-      to: emailData.email,
-      subject: "Noudetut tuotteet - Items picked up",
-      template: ItemsPickedUpMail(emailData),
+    // notify via centralized mail service
+    await this.mailService.sendBookingMail(BookingMailType.ItemsPickedUp, {
+      orderId,
+      triggeredBy,
     });
- */
-    // send mail to admin
-    const adminEmailData = {
-      ...emailData,
-      email: "illusia.rental.service@gmail.com",
-      name: "Admin",
-    };
-
-    /*    await this.mailService.sendMail({
-      to: "illusia.rental.service@gmail.com",
-      subject: "Noudetut tuotteet - Items picked up",
-      template: ItemsPickedUpMail(adminEmailData),
-    }); */
 
     return {
       message: `Pickup confirmed for order ${orderId}`,
@@ -1242,7 +983,8 @@ export class BookingService {
       .select("quantity")
       .eq("item_id", itemId) // item_id = :itemId
       .lte("start_date", endDate) // AND start_date <= :endDate
-      .gte("end_date", startDate); // AND end_date   >= :startDate
+      .gte("end_date", startDate) // AND end_date   >= :startDate
+      .overrideTypes<OrderItemQuantity[]>();
 
     if (overlapError) {
       throw new BadRequestException("Error checking overlapping bookings");
@@ -1257,7 +999,7 @@ export class BookingService {
       .from("storage_items")
       .select("items_number_total")
       .eq("id", itemId)
-      .single();
+      .single<StorageItemsRow>();
 
     if (itemError || !itemData) {
       throw new BadRequestException("Item data not found");

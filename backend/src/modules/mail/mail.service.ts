@@ -22,6 +22,7 @@ interface SendMailOptions {
   subject: string;
   template?: ReactElement; // React component
   html?: string; // fallback for plain HTML
+  bcc?: string | string[]; // optional blind‑copy (e.g. admins)
 }
 
 @Injectable()
@@ -40,18 +41,11 @@ export class MailService {
     throw new Error("No email template or HTML content provided.");
   }
 
-  async sendMail({ to, subject, template, html }: SendMailOptions) {
+  async sendMail({ to, subject, template, html, bcc }: SendMailOptions) {
     try {
       // ==== DEBUG LOGS (remove in production) ====
       console.log("[MailService] ENV EMAIL_FROM_2 =", process.env.EMAIL_FROM_2);
-      console.log(
-        "[MailService] ENV GMAIL_APP_PASSWORD (first 4 chars) =",
-        process.env.GMAIL_APP_PASSWORD?.slice(0, 4) ?? "undefined",
-      );
-      console.log(
-        "[MailService] Sending to:", to,
-        " | subject:", subject,
-      );
+      console.log("[MailService] Sending to:", to, " | subject:", subject);
       // ===========================================
       /*    const accessToken = await this.oAuth2Client.getAccessToken() */
 
@@ -67,12 +61,13 @@ export class MailService {
 
       const finalHtml = await this.generateHtml(template, html);
 
-      const mailOptions = {
+      const mailOptions: Record<string, unknown> = {
         from: `BookingApp <${process.env.EMAIL_FROM_2}>`,
         to,
         subject,
         html: finalHtml,
       };
+      if (bcc) mailOptions.bcc = bcc;
 
       const result = await transport.sendMail(mailOptions);
       console.log("[MailService] SMTP sendMail result:", result);
@@ -187,12 +182,23 @@ export class MailService {
     console.log("[MailService] sendBookingMail START ⇒", type, params);
     const payload = await this.assembler.buildPayload(params.orderId);
     const template = this.pickTemplate(type, payload);
+    // For cancellation emails, the template expects orderId, startDate, and recipientRole
+    let finalTemplate = template;
+    if (type === BookingMailType.Cancellation) {
+      finalTemplate = BookingCancelledEmail({
+        orderId: params.orderId,
+        startDate: payload.pickupDate,
+        items: payload.items,
+        recipientRole: "user", // identical copy goes to admin via Bcc
+      });
+    }
     const subject = this.subjectLine(type);
 
     await this.sendMail({
       to: payload.recipient,
+      bcc: process.env.BOOKING_ADMIN_EMAIL ?? process.env.EMAIL_FROM_2, // Send to admin as well
       subject,
-      template,
+      template: finalTemplate,
     });
     console.log("[MailService] sendBookingMail DONE for order", params.orderId);
   }
