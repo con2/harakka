@@ -5,7 +5,13 @@ import {
 } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
-import { calculateAvailableQuantity } from "src/utils/booking.utils";
+import {
+  calculateAvailableQuantity,
+  calculateDuration,
+  generateOrderNumber,
+  dayDiffFromToday,
+  getUniqueLocationIDs,
+} from "src/utils/booking.utils";
 import { MailService } from "../mail/mail.service";
 import { BookingMailType, EmailProps } from "../mail/interfaces/mail.interface";
 /*import {
@@ -22,6 +28,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "src/types/supabase.types";
 export type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 import { Translations } from "./types/translations.types";
+import { EnrichedItem } from "./types/booking.interface";
 
 @Injectable()
 export class BookingService {
@@ -31,8 +38,9 @@ export class BookingService {
   ) {}
 
   // 1. get all orders
-  async getAllOrders(userId: string, supabase: SupabaseClient<Database>) {
-    const { data: orders, error } = await supabase.from("orders").select(`
+  async getAllOrders(supabase: SupabaseClient<Database>) {
+    const { data: orders, error } = await supabase.from("orders").select(
+      `
       *,
       order_items (
         *,
@@ -43,7 +51,8 @@ export class BookingService {
           )
         )
       )
-    `);
+    `,
+    );
 
     if (error) {
       console.error("Supabase error in getAllOrders():", error);
@@ -132,14 +141,7 @@ export class BookingService {
     }
 
     // Get unique location_ids from all order_items
-    const locationIds = Array.from(
-      new Set(
-        orders
-          .flatMap((order) => order.order_items ?? [])
-          .map((item) => item.storage_items?.location_id)
-          .filter((id): id is string => !!id),
-      ),
-    );
+    const locationIds = getUniqueLocationIDs(orders);
 
     // Load all relevant storage locations
     const { data: locationsData, error: locationError } = await supabase
@@ -188,20 +190,13 @@ export class BookingService {
       throw new BadRequestException("No userId found: user_id is required");
     }
     // variables for date check
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // normalize to midnight
-
     let warningMessage: string | null = null;
 
     for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
 
       const start = new Date(start_date);
-      start.setHours(0, 0, 0, 0);
-
-      const differenceInDays = Math.ceil(
-        (start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-      );
+      const differenceInDays = dayDiffFromToday(start);
 
       if (differenceInDays <= 0) {
         throw new BadRequestException(
@@ -247,18 +242,14 @@ export class BookingService {
       }
     }
 
-    // 3.3. generate the order number
-    const orderNumber = `ORD-${Math.floor(Math.random() * 10000)
-      .toString()
-      .padStart(4, "0")}`;
-
     // 3.4. Create the order
+
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
         user_id: userId,
         status: "pending",
-        order_number: orderNumber,
+        order_number: generateOrderNumber(),
       })
       .select()
       .single<OrderRow>();
@@ -271,9 +262,7 @@ export class BookingService {
     for (const item of dto.items) {
       const start = new Date(item.start_date);
       const end = new Date(item.end_date);
-      const totalDays = Math.ceil(
-        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
-      );
+      const totalDays = calculateDuration(start, end);
 
       // get location_id
       const { data: storageItem, error: locationError } = await supabase
@@ -456,9 +445,9 @@ export class BookingService {
     for (const item of updatedItems) {
       const { item_id, quantity, start_date, end_date } = item;
 
-      const totalDays = Math.ceil(
-        (new Date(end_date).getTime() - new Date(start_date).getTime()) /
-          (1000 * 60 * 60 * 24),
+      const totalDays = calculateDuration(
+        new Date(start_date),
+        new Date(end_date),
       );
 
       // 5.5. Check virtual availability for the time range
@@ -615,16 +604,6 @@ export class BookingService {
     const today = dayjs().format("DD.MM.YYYY");
 
     // get user profile
-    type EnrichedItem = {
-      item_id: string;
-      quantity: number;
-      start_date: string;
-      translations?: {
-        fi: { item_name: string };
-        en: { item_name: string };
-      };
-      location_id?: string;
-    };
 
     const enrichedItems: EnrichedItem[] = orderItems || [];
 
@@ -778,19 +757,6 @@ export class BookingService {
         "Could not fetch order items for cancellation",
       );
     }
-
-    // 7.7 send email to user
-    type EnrichedItem = {
-      item_id: string;
-      quantity: number;
-      start_date: string;
-      end_date: string;
-      translations?: {
-        fi: { item_name: string };
-        en: { item_name: string };
-      };
-      location_id?: string;
-    };
 
     const enrichedItems: EnrichedItem[] = orderItems || [];
 
@@ -1026,18 +992,6 @@ export class BookingService {
 
     // send mail to user:
     const today = dayjs().format("DD.MM.YYYY");
-
-    type EnrichedItem = {
-      item_id: string;
-      quantity: number;
-      status: string;
-      translations?: {
-        fi: { item_name: string };
-        en: { item_name: string };
-      };
-      location_id?: string;
-    };
-
     const enrichedItems: EnrichedItem[] = items || [];
 
     for (const item of enrichedItems) {
@@ -1205,17 +1159,6 @@ export class BookingService {
       );
     }
     // send mail to user:
-    type EnrichedItem = {
-      item_id: string;
-      quantity: number;
-      status: string;
-      translations?: {
-        fi: { item_name: string };
-        en: { item_name: string };
-      };
-      location_id?: string;
-    };
-
     const enrichedItems: EnrichedItem[] = items || [];
 
     for (const item of enrichedItems) {
