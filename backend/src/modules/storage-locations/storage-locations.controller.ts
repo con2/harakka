@@ -19,8 +19,8 @@ export class StorageLocationsController {
   @Get()
   async getAllLocations(
     @Req() req: AuthRequest,
-    @Query("page") page = "1",
-    @Query("limit") limit = "1",
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
   ): Promise<{
     data: StorageLocation[];
     total: number;
