@@ -1,4 +1,3 @@
-// src/services/mail.service.ts
 import { Injectable } from "@nestjs/common";
 import * as nodemailer from "nodemailer";
 import { render } from "@react-email/render";
@@ -7,6 +6,8 @@ import {
   BookingMailType,
   BookingMailParams,
 } from "./interfaces/mail.interface";
+import dayjs from "dayjs";
+import type { BookingEmailPayload } from "./booking-email-assembler";
 import { BookingEmailAssembler } from "./booking-email-assembler";
 import BookingCreationEmail from "./../../emails/BookingCreationEmail";
 import BookingConfirmationEmail from "./../../emails/BookingConfirmationEmail";
@@ -17,6 +18,25 @@ import BookingDeleteMail from "./../../emails/BookingDeleteMail";
 import ItemsReturnedMail from "./../../emails/ItemsReturned";
 import ItemsPickedUpMail from "./../../emails/ItemsPickedUp";
 
+/**
+ * Options accepted by {@link MailService.sendMail}.
+ *
+ * @property to      - Primary recipient e‑mail address.
+ * @property subject - E‑mail subject line.
+ * @property template - React e‑mail component (preferred).
+ * @property html    - Fallback raw HTML string (if no React template).
+ * @property bcc     - Optional blind‑copy recipient(s) such as admins.
+ *
+ * @example
+ * ```ts
+ * await mailService.sendMail({
+ *   to: "user@example.com",
+ *   bcc: "admin@example.com",
+ *   subject: "Welcome!",
+ *   template: <WelcomeEmail name="Ada" />,
+ * });
+ * ```
+ */
 interface SendMailOptions {
   to: string;
   subject: string;
@@ -25,10 +45,36 @@ interface SendMailOptions {
   bcc?: string | string[]; // optional blind‑copy (e.g. admins)
 }
 
+/**
+ * Central e‑mail helper.
+ *
+ * * Wraps <https://nodemailer.com> with a React‑template renderer.
+ * * Provides convenience helpers for booking‑related notifications.
+ *
+ * **Environment variables**
+ * - `EMAIL_FROM_2` ‑ Gmail address used as sender (App‑Password auth).
+ * - `GMAIL_APP_PASSWORD` ‑ App password for the sender account.
+ * - `BOOKING_ADMIN_EMAIL` ‑ Admin copy for booking mails.
+ *
+ * @example Basic HTML send
+ * ```ts
+ * await mailService.sendMail({
+ *   to: "someone@example.fi",
+ *   subject: "Plain HTML",
+ *   html: "<h1>Hello</h1>",
+ * });
+ * ```
+ */
 @Injectable()
 export class MailService {
   constructor(private readonly assembler: BookingEmailAssembler) {}
 
+  /**
+   * Turn either a React e‑mail component or raw HTML string into the final
+   * markup passed to Nodemailer.
+   *
+   * @throws if neither `template` nor `html` was provided.
+   */
   private generateHtml(template?: ReactElement, html?: string) {
     if (template) {
       return render(template);
@@ -41,6 +87,16 @@ export class MailService {
     throw new Error("No email template or HTML content provided.");
   }
 
+  /**
+   * Low‑level wrapper around `nodemailer.sendMail()`.
+   *
+   * Prefers React templates but accepts raw HTML for legacy callers.
+   * In **production** errors are swallowed and returned as `{ success:false }`
+   * to avoid hard‑crashing REST requests, while in dev they bubble up.
+   *
+   * @param options - See {@link SendMailOptions}.
+   * @returns The Nodemailer result or an error object in production.
+   */
   async sendMail({ to, subject, template, html, bcc }: SendMailOptions) {
     try {
       // ==== DEBUG LOGS (remove in production) ====
@@ -89,7 +145,13 @@ export class MailService {
     }
   }
 
-  // method to get emails from Contact Form
+  /**
+   * Used by the public contact form – sends an e‑mail *from* the visitor
+   * **to** the site owner.  Kept separate from {@link sendMail} to allow a
+   * fully‑custom "from" header.
+   *
+   * @deprecated Will be merged into `sendMail` once all callers are updated.
+   */
   async getMail(to: string, subject: string, html: string, from: string) {
     try {
       const transport = nodemailer.createTransport({
@@ -129,7 +191,12 @@ export class MailService {
     }
   }
 
-  private pickTemplate(type: BookingMailType, payload: any) {
+  /**
+   * Map a {@link BookingMailType} enum to its corresponding React template.
+   *
+   * @internal Called by {@link sendBookingMail} only.
+   */
+  private pickTemplate(type: BookingMailType, payload) {
     switch (type) {
       case BookingMailType.Creation:
         return BookingCreationEmail(payload);
@@ -148,10 +215,13 @@ export class MailService {
       case BookingMailType.ItemsPickedUp:
         return ItemsPickedUpMail(payload);
       default:
-        throw new Error(`Unknown BookingMailType: ${type}`);
+        throw new Error(`Unknown BookingMailType: ${String(type)}`);
     }
   }
 
+  /**
+   * Finnish / English bilingual subject lines for each booking mail type.
+   */
   private subjectLine(type: BookingMailType): string {
     switch (type) {
       case BookingMailType.Creation:
@@ -175,27 +245,65 @@ export class MailService {
     }
   }
 
+  /**
+   * Send any booking‑related notification e‑mail in **one call**.
+   *
+   * `sendBookingMail` takes two arguments:
+   *
+   * | Name   | Type               | Description                                                    |
+   * |--------|--------------------|----------------------------------------------------------------|
+   * | `type` | {@link BookingMailType} | Enum value that selects which React template and subject line to use (Creation, Confirmation, Update, Cancellation, etc.). |
+   * | `params` | {@link BookingMailParams} | Extra data required by the template. Currently:<br>• **orderId** – UUID of the booking.<br>• **triggeredBy** – UID of the user (admin / owner) who performed the action. |
+   *
+   * @example
+   * ```ts
+   * await mailService.sendBookingMail(BookingMailType.Confirmation, {
+   *   orderId: "f6b1e3c1-0a2d-49d5‑b612‑dfece42d9a7c",
+   *   triggeredBy: currentUserId,
+   * });
+   * ```
+   */
   public async sendBookingMail(
     type: BookingMailType,
     params: BookingMailParams,
   ) {
     console.log("[MailService] sendBookingMail START ⇒", type, params);
-    const payload = await this.assembler.buildPayload(params.orderId);
-    const template = this.pickTemplate(type, payload);
+    type EmailPayloadWithOptionalReturn = BookingEmailPayload & {
+      returnDate?: string;
+    };
+    const rawPayload: EmailPayloadWithOptionalReturn =
+      await this.assembler.buildPayload(params.orderId);
+
+    // Helper – turn ISO strings into "DD.MM.YYYY"
+    const formatDate = (d: string | Date | null | undefined) =>
+      d ? dayjs(d).format("DD.MM.YYYY") : "";
+
+    const formattedPayload = {
+      ...rawPayload,
+      pickupDate: formatDate(rawPayload.pickupDate),
+      returnDate: formatDate(rawPayload.returnDate),
+      items: (rawPayload.items ?? []).map((item) => ({
+        ...item,
+        start_date: formatDate(item.start_date),
+        end_date: formatDate(item.end_date),
+      })),
+    };
+
+    const template = this.pickTemplate(type, formattedPayload);
     // For cancellation emails, the template expects orderId, startDate, and recipientRole
     let finalTemplate = template;
     if (type === BookingMailType.Cancellation) {
       finalTemplate = BookingCancelledEmail({
         orderId: params.orderId,
-        startDate: payload.pickupDate,
-        items: payload.items,
+        startDate: formattedPayload.pickupDate,
+        items: formattedPayload.items,
         recipientRole: "user", // identical copy goes to admin via Bcc
       });
     }
     const subject = this.subjectLine(type);
 
     await this.sendMail({
-      to: payload.recipient,
+      to: formattedPayload.recipient,
       bcc: process.env.BOOKING_ADMIN_EMAIL ?? process.env.EMAIL_FROM_2, // Send to admin as well
       subject,
       template: finalTemplate,

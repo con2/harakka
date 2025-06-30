@@ -5,6 +5,9 @@ import { Translations } from "../booking/types/translations.types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "src/types/supabase.types";
 
+/**
+ * Shape consumed by all booking‑related React e‑mail templates.
+ */
 export interface BookingEmailPayload {
   recipient: string;
   userName: string;
@@ -23,18 +26,31 @@ export interface BookingEmailPayload {
   }[];
 }
 
+/**
+ * Composes a rich e‑mail payload for booking notifications in **one** query
+ * round‑trip (thanks to Supabase's nested selects).
+ *
+ * Usage:
+ * ```ts
+ * const payload = await assembler.buildPayload(orderId);
+ * const template = BookingCreationEmail(payload);
+ * await mailService.sendMail({ to: payload.recipient, template, subject });
+ * ```
+ */
 @Injectable()
 export class BookingEmailAssembler {
   constructor(private readonly supabaseService: SupabaseService) {}
 
   /**
-   * Build everything an email template needs, given only an orderId.
-   * One DB round‑trip is used to fetch:
-   *   – order
-   *   – order_items (+ storage_items + storage_locations)
-   *   – user profile
+   * Build a fully‑hydrated {@link BookingEmailPayload} from an `orderId`.
    *
-   * The calling MailService will decide which template / subject to use.
+   * Queries:
+   * 1. `orders` with nested `order_items → storage_items → storage_locations`
+   * 2. `user_profiles` for the order owner
+   *
+   * Also formats dates (DD.MM.YYYY) and maps translations.
+   *
+   * @throws BadRequestException when either the order or user is not found.
    */
   async buildPayload(orderId: string): Promise<BookingEmailPayload> {
     const supabase =
