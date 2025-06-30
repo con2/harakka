@@ -1,4 +1,4 @@
-import React, { ReactElement } from "react";
+import * as React from "react";
 import {
   Html,
   Head,
@@ -29,7 +29,7 @@ const BookingCancelledEmail = ({
   items,
   recipientRole,
   startDate,
-}: BookingCancelledEmailProps): ReactElement => {
+}: BookingCancelledEmailProps): React.ReactElement => {
   const isAdmin = recipientRole === "admin" || recipientRole === "superVera";
 
   return (
@@ -106,7 +106,7 @@ const BookingCancelledEmail = ({
           </Text>
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {items.map(
-              (item, index): ReactElement => (
+              (item, index): React.ReactElement => (
                 <li
                   key={index}
                   style={{ fontSize: "16px", marginBottom: "6px" }}
@@ -132,7 +132,7 @@ const BookingCancelledEmail = ({
           </Text>
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {items.map(
-              (item, index): ReactElement => (
+              (item, index): React.ReactElement => (
                 <li
                   key={index}
                   style={{ fontSize: "16px", marginBottom: "6px" }}

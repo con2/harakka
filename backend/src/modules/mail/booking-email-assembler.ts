@@ -14,6 +14,8 @@ export interface BookingEmailPayload {
   items: {
     item_id: string;
     quantity: number;
+    start_date: string;
+    end_date: string;
     translations: {
       fi: { name: string };
       en: { name: string };
@@ -48,6 +50,7 @@ export class BookingEmailAssembler {
           order_items (
             quantity,
             start_date,
+            end_date,
             item_id,
             storage_items (
               translations,
@@ -85,6 +88,8 @@ export class BookingEmailAssembler {
         return {
           item_id: item.item_id,
           quantity: item.quantity ?? 0,
+          start_date: item.start_date,
+          end_date: item.end_date,
           translations: {
             fi: { name: translations?.fi?.item_name ?? "Unknown" },
             en: { name: translations?.en?.item_name ?? "Unknown" },
