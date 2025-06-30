@@ -1,11 +1,14 @@
 // define the row range to fetch
-// Add a negative page number error/check here??
 export function getPaginationRange(
   page: number,
   limit: number,
 ): { from: number; to: number } {
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
+  // ensure valid numbers
+  const safePage = Math.max(1, page); // at least 1
+  const safeLimit = Math.max(1, limit); // at least 1
+  // calculations
+  const from = (safePage - 1) * limit;
+  const to = from + safeLimit - 1;
   return { from, to };
 }
 
@@ -19,6 +22,8 @@ export function getPaginationMeta(
   page: number;
 } {
   const total = count ?? 0;
-  const totalPages = Math.ceil(total / limit);
-  return { total, totalPages, page };
+  const safeLimit = Math.max(1, limit); // prevent division by 0
+  const totalPages = Math.ceil(total / safeLimit);
+  const safePage = Math.max(1, page); // make sure page >= 1
+  return { total, totalPages, page: safePage };
 }
