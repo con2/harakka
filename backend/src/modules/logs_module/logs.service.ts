@@ -1,6 +1,7 @@
 import { Injectable, Logger, ForbiddenException } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { LogMessage, AuditLog } from "./interfaces/log.interface";
+import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 
 @Injectable()
 export class LogsService {
@@ -15,10 +16,11 @@ export class LogsService {
    * Get logs from both audit_logs table and in-memory system logs
    * Only accessible to admin users
    */
-  async getAllLogs(userId: string): Promise<LogMessage[]> {
-    const supabase = this.supabaseService.getServiceClient();
+  async getAllLogs(req: AuthRequest): Promise<LogMessage[]> {
+    const supabase = req.supabase;
 
     // First check if user is an admin
+    const userId = req.user?.id;
     const { data: userProfile, error: userError } = await supabase
       .from("user_profiles")
       .select("role")
@@ -50,16 +52,16 @@ export class LogsService {
     }
 
     // Format audit logs to match frontend expected format
-    const formattedAuditLogs = (auditLogs || []).map((log: AuditLog) => ({
+    const formattedAuditLogs = (auditLogs || []).map((log) => ({
       id: log.id,
-      timestamp: log.created_at,
+      timestamp: log.created_at ?? new Date().toISOString(),
       level: this.determineLogLevel(log.action),
-      message: this.formatLogMessage(log),
+      message: this.formatLogMessage(log as AuditLog),
       source: `DB:${log.table_name}`,
       metadata: {
         action: log.action,
         recordId: log.record_id,
-        userId: log.user_id,
+        userId: log.user_id ?? undefined,
         oldValues: log.old_values,
         newValues: log.new_values,
         logType: "audit",
@@ -68,7 +70,8 @@ export class LogsService {
     // Combine both log types and sort by timestamp (newest first)
     const combinedLogs = [...formattedAuditLogs, ...this.systemLogs].sort(
       (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+        new Date(b.timestamp ?? "").getTime() -
+        new Date(a.timestamp ?? "").getTime(),
     );
     return combinedLogs;
   }
