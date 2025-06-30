@@ -325,7 +325,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create organizations table
-CREATE TABLE public.ERM_organizations (
+CREATE TABLE public.organizations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   slug VARCHAR UNIQUE NOT NULL,
@@ -349,12 +349,12 @@ $$ LANGUAGE plpgsql;
 
 -- Create triggers
 CREATE TRIGGER update_organizations_updated_at
-  BEFORE UPDATE ON public.ERM_organizations
+  BEFORE UPDATE ON public.organizations
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER generate_organizations_slug_trigger
-  BEFORE INSERT OR UPDATE OF name ON public.ERM_organizations
+  BEFORE INSERT OR UPDATE OF name ON public.organizations
   FOR EACH ROW
   EXECUTE FUNCTION generate_organization_slug();
 ```
@@ -364,10 +364,11 @@ CREATE TRIGGER generate_organizations_slug_trigger
 ```sql
 
 -- Create organization items ownership table
-CREATE TABLE public.ERM_organization_items (
+CREATE TABLE public.organization_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  organization_id UUID REFERENCES public.ERM_organizations(id) NOT NULL,
+  organization_id UUID REFERENCES public.organizations(id) NOT NULL,
   storage_item_id UUID REFERENCES public.storage_items(id) NOT NULL,
+  storage_location_id UUID REFERENCES public.storage_locations(id) NOT NULL, -- TODO: delete this column from storage_items later
   owned_quantity INTEGER NOT NULL DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -375,15 +376,15 @@ CREATE TABLE public.ERM_organization_items (
   created_by UUID REFERENCES auth.users(id),
   updated_by UUID REFERENCES auth.users(id),
 
-  -- Unique constraint to prevent duplicate organization-item pairs
-  CONSTRAINT unique_org_item UNIQUE(organization_id, storage_item_id),
+  -- Unique constraint to prevent duplicate organization-item-location combinations
+  CONSTRAINT unique_org_item_location UNIQUE(organization_id, storage_item_id, storage_location_id),
   -- Check constraint to ensure owned_quantity is non-negative
   CONSTRAINT positive_quantity CHECK (owned_quantity >= 0)
 );
 
 -- Add trigger for updated_at
-CREATE TRIGGER update_ERM_organization_items_updated_at
-  BEFORE UPDATE ON public.ERM_organization_items
+CREATE TRIGGER update_organization_items_updated_at
+  BEFORE UPDATE ON public.organization_items
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
@@ -393,10 +394,10 @@ CREATE TRIGGER update_ERM_organization_items_updated_at
 
 ```sql
 -- Create user-organization-role relationship table
-CREATE TABLE public.ERM_user_organization_roles (
+CREATE TABLE public.user_organization_roles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES auth.users(id) NOT NULL,
-  organization_id UUID REFERENCES public.ERM_organizations(id) NOT NULL,
+  organization_id UUID REFERENCES public.organizations(id) NOT NULL,
   role_id UUID REFERENCES public.roles(id) NOT NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -409,8 +410,8 @@ CREATE TABLE public.ERM_user_organization_roles (
 );
 
 -- Add trigger for updated_at
-CREATE TRIGGER update_ERM_user_organization_roles_updated_at
-  BEFORE UPDATE ON public.ERM_user_organization_roles
+CREATE TRIGGER update_user_organization_roles_updated_at
+  BEFORE UPDATE ON public.user_organization_roles
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
@@ -420,9 +421,9 @@ CREATE TRIGGER update_ERM_user_organization_roles_updated_at
 
 ```sql
 -- Create organization-location relationship table (many-to-many)
-CREATE TABLE public.ERM_organization_locations (
+CREATE TABLE public.organization_locations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  organization_id UUID REFERENCES public.ERM_organizations(id) NOT NULL,
+  organization_id UUID REFERENCES public.organizations(id) NOT NULL,
   storage_location_id UUID REFERENCES public.storage_locations(id) NOT NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -433,26 +434,22 @@ CREATE TABLE public.ERM_organization_locations (
 );
 
 -- Add trigger for updated_at
-CREATE TRIGGER update_ERM_organization_locations_updated_at
-  BEFORE UPDATE ON public.ERM_organization_locations
+CREATE TRIGGER update_organization_locations_updated_at
+  BEFORE UPDATE ON public.organization_locations
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 ```
 
-5. Update old tables later to reference the new organization structure TODO: apply later
+5. Update old tables later to reference the new organization structure
 
 ```sql
--- Update order_items to reference the providing organization
+-- Update order_items to reference the providing organization TODO: don't forget to update backend code to fill this field
 ALTER TABLE public.order_items
-ADD COLUMN provider_organization_id UUID REFERENCES public.ERM_organizations(id);
+ADD COLUMN provider_organization_id UUID REFERENCES public.organizations(id);
 
 -- Update promotions to reference the organization that created them
 ALTER TABLE public.promotions
-ADD COLUMN owner_organization_id UUID REFERENCES public.ERM_organizations(id);
-
--- Update audit_logs to include organization context
-ALTER TABLE public.audit_logs
-ADD COLUMN organization_id UUID REFERENCES public.ERM_organizations(id);
+ADD COLUMN owner_organization_id UUID REFERENCES public.organizations(id);
 
 -- Create function to calculate total items from organization ownership
 CREATE OR REPLACE FUNCTION calculate_storage_item_total(item_id UUID)
@@ -460,7 +457,7 @@ RETURNS INTEGER AS $$
 BEGIN
   RETURN COALESCE(
     (SELECT SUM(owned_quantity)
-     FROM public.ERM_organization_items
+     FROM public.organization_items
      WHERE storage_item_id = item_id
      AND is_active = TRUE),
     0
@@ -468,7 +465,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger function to update storage_items totals when ERM_organization_items changes
+-- Create trigger function to update storage_items totals when organization_items changes
 CREATE OR REPLACE FUNCTION update_storage_item_totals()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -490,37 +487,76 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger on ERM_organization_items to automatically update storage_items totals
+-- Create trigger on organization_items to automatically update storage_items totals
 CREATE TRIGGER update_storage_items_totals_trigger
-  AFTER INSERT OR UPDATE OR DELETE ON public.ERM_organization_items
+  AFTER INSERT OR UPDATE OR DELETE ON public.organization_items
   FOR EACH ROW
   EXECUTE FUNCTION update_storage_item_totals();
-
--- Create a view to easily see organization ownership breakdown per item
-CREATE VIEW ERM_v_item_ownership_summary AS
-SELECT
-  si.id as storage_item_id,
-  si.translations->>'name' as item_name,
-  si.items_number_total,
-  si.items_number_available,
-  COALESCE(org_totals.total_owned, 0) as calculated_total,
-  CASE
-    WHEN si.items_number_total != COALESCE(org_totals.total_owned, 0)
-    THEN 'MISMATCH'
-    ELSE 'OK'
-  END as total_status
-FROM public.storage_items si
-LEFT JOIN (
-  SELECT
-    storage_item_id,
-    SUM(owned_quantity) as total_owned,
-    COUNT(*) as owner_count
-  FROM public.ERM_organization_items
-  WHERE is_active = TRUE
-  GROUP BY storage_item_id
-) org_totals ON si.id = org_totals.storage_item_id;
 
 -- One-time update to sync existing storage_items with organization ownership
 UPDATE public.storage_items
 SET items_number_total = calculate_storage_item_total(id);
+```
+
+6. Update locations handling
+
+```sql
+-- Update organization_items table to include location information
+ALTER TABLE public.organization_items
+ADD COLUMN storage_location_id UUID REFERENCES public.storage_locations(id) NOT NULL;
+
+-- Update the unique constraint to include location
+ALTER TABLE public.organization_items
+DROP CONSTRAINT unique_org_item;
+
+ALTER TABLE public.organization_items
+ADD CONSTRAINT unique_org_item_location UNIQUE(organization_id, storage_item_id, storage_location_id);
+
+
+-- Create view to show location-specific ownership
+CREATE VIEW view_item_ownership_summary AS
+SELECT
+  si.id as storage_item_id,
+  si.translations->'en'->>'item_name' as item_name,
+  sl.name as location_name,
+  org.name as organization_name,
+  eoi.owned_quantity,
+  si.items_number_total as total_across_all_locations,
+  location_totals.location_total
+FROM public.storage_items si
+JOIN public.organization_items eoi ON si.id = eoi.storage_item_id
+JOIN public.organizations org ON eoi.organization_id = org.id
+JOIN public.storage_locations sl ON eoi.storage_location_id = sl.id
+LEFT JOIN (
+  SELECT
+    storage_item_id,
+    storage_location_id,
+    SUM(owned_quantity) as location_total
+  FROM public.organization_items
+  WHERE is_active = TRUE
+  GROUP BY storage_item_id, storage_location_id
+) location_totals ON si.id = location_totals.storage_item_id
+                  AND eoi.storage_location_id = location_totals.storage_location_id
+WHERE eoi.is_active = TRUE
+ORDER BY si.translations->'en'->>'item_name', sl.name, org.name;
+
+-- Create a summary view by location and item
+CREATE VIEW view_item_location_summary AS
+SELECT
+  si.id as storage_item_id,
+  si.translations->'en'->>'item_name' as item_name,
+  sl.name as location_name,
+  SUM(eoi.owned_quantity) as total_at_location,
+  COUNT(DISTINCT eoi.organization_id) as organizations_count,
+  STRING_AGG(
+    org.name || ': ' || eoi.owned_quantity::TEXT,
+    ', ' ORDER BY org.name
+  ) as organization_breakdown
+FROM public.storage_items si
+JOIN public.organization_items eoi ON si.id = eoi.storage_item_id
+JOIN public.organizations org ON eoi.organization_id = org.id
+JOIN public.storage_locations sl ON eoi.storage_location_id = sl.id
+WHERE eoi.is_active = TRUE
+GROUP BY si.id, si.translations, sl.id, sl.name
+ORDER BY si.translations->'en'->>'item_name', sl.name;
 ```
