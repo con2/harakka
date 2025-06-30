@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/store/hooks";
 import { createTag, fetchAllTags } from "@/store/slices/tagSlice";
 import { toast } from "sonner";
-import { Label } from "../ui/label";
+import { Label } from "../../ui/label";
 import { CreateTagDto, Tag } from "@/types/tag";
 import { createTagPayload } from "@/types/forms";
 // Import translation utilities

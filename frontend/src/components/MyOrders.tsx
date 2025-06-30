@@ -1,43 +1,44 @@
-import { useEffect, useState } from "react";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
+  cancelOrder,
   getUserOrders,
-  selectOrdersLoading,
   selectOrdersError,
+  selectOrdersLoading,
   selectUserOrders,
   updateOrder,
-  cancelOrder,
 } from "@/store/slices/ordersSlice";
-import { BookingOrder, BookingItem } from "@/types";
-import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { LoaderCircle } from "lucide-react";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
-import OrderCancelButton from "./OrderCancelButton";
-import OrderDetailsButton from "./Admin/OrderDetailsButton";
-import { DataTable } from "./ui/data-table";
+import { BookingItem, BookingOrder } from "@/types";
+import { ColumnDef } from "@tanstack/react-table";
+import { LoaderCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+
+import { ordersApi } from "@/api/services/orders";
+import OrderDetailsButton from '@/components/Admin/Orders/OrderDetailsButton';
+import OrderCancelButton from '@/components/OrderCancelButton';
+import OrderEditButton from '@/components/OrderEditButton';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useIsMobile } from "@/hooks/use-mobile";
-import OrderEditButton from "./OrderEditButton";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import DatePickerButton from "./ui/DatePickerButton";
-import { Calendar } from "./ui/calendar";
 import { useLanguage } from "@/context/LanguageContext";
-import { t } from "@/translations";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
-import { ordersApi } from "@/api/services/orders";
+import { t } from "@/translations";
+import DatePickerButton from "../components/ui/DatePickerButton";
+import { Calendar } from "../components/ui/calendar";
+import { DataTable } from "../components/ui/data-table";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 
 const MyOrders = () => {
   const dispatch = useAppDispatch();
@@ -185,45 +186,45 @@ const MyOrders = () => {
   };
   // fetch availability for an item on a given date
   useEffect(() => {
-  const fetchAvailability = async () => {
-    if (!globalStartDate || !globalEndDate) return;
+    const fetchAvailability = async () => {
+      if (!globalStartDate || !globalEndDate) return;
 
-    for (const item of editFormItems) {
-      const itemId = item.item_id;
-      const currentOrderQty = item.quantity ?? 0;
+      for (const item of editFormItems) {
+        const itemId = item.item_id;
+        const currentOrderQty = item.quantity ?? 0;
 
-      setLoadingAvailability(prev => ({ ...prev, [itemId]: true }));
+        setLoadingAvailability(prev => ({ ...prev, [itemId]: true }));
 
-      try {
-        const data = await ordersApi.checkAvailability(
-          itemId,
-          globalStartDate,
-          globalEndDate
-        );
+        try {
+          const data = await ordersApi.checkAvailability(
+            itemId,
+            globalStartDate,
+            globalEndDate
+          );
 
-        const correctedAvailableQuantity = data.availableQuantity + currentOrderQty;
+          const correctedAvailableQuantity = data.availableQuantity + currentOrderQty;
 
-        setAvailability(prev => ({
-          ...prev,
-          [itemId]: correctedAvailableQuantity,
-        }));
-      } catch (err) {
-        console.error(`Error checking availability for item ${itemId}:`, err);
-      } finally {
-        setLoadingAvailability(prev => ({ ...prev, [itemId]: false }));
+          setAvailability(prev => ({
+            ...prev,
+            [itemId]: correctedAvailableQuantity,
+          }));
+        } catch (err) {
+          console.error(`Error checking availability for item ${itemId}:`, err);
+        } finally {
+          setLoadingAvailability(prev => ({ ...prev, [itemId]: false }));
+        }
       }
-    }
-  };
+    };
 
-  fetchAvailability();
-}, [globalStartDate, globalEndDate, editFormItems]);
+    fetchAvailability();
+  }, [globalStartDate, globalEndDate, editFormItems]);
 
-const isFormValid = editFormItems.every((item) => {
-  const inputQty = item.id !== undefined ? (itemQuantities[item.id] ?? item.quantity) : item.quantity;
-  const availQty = availability[item.item_id];
+  const isFormValid = editFormItems.every((item) => {
+    const inputQty = item.id !== undefined ? (itemQuantities[item.id] ?? item.quantity) : item.quantity;
+    const availQty = availability[item.item_id];
 
-  return availQty === undefined || inputQty <= availQty;
-});
+    return availQty === undefined || inputQty <= availQty;
+  });
 
 
   // Render a status badge with appropriate color
@@ -632,7 +633,7 @@ const isFormValid = editFormItems.every((item) => {
                           />
                           <OrderCancelButton
                             id={order.id}
-                            closeModal={() => {}}
+                            closeModal={() => { }}
                           />
                         </>
                       )}
@@ -673,9 +674,9 @@ const isFormValid = editFormItems.every((item) => {
                         value={
                           globalStartDate
                             ? formatDateLocalized(
-                                new Date(globalStartDate),
-                                "d MMM yyyy",
-                              )
+                              new Date(globalStartDate),
+                              "d MMM yyyy",
+                            )
                             : null
                         }
                         placeholder={t.myOrders.edit.selectStartDate[lang]}
@@ -719,9 +720,9 @@ const isFormValid = editFormItems.every((item) => {
                         value={
                           globalEndDate
                             ? formatDateLocalized(
-                                new Date(globalEndDate),
-                                "d MMM yyyy",
-                              )
+                              new Date(globalEndDate),
+                              "d MMM yyyy",
+                            )
                             : null
                         }
                         placeholder={t.myOrders.edit.selectEndDate[lang]}
@@ -753,7 +754,7 @@ const isFormValid = editFormItems.every((item) => {
                           const isBeforeToday = date < today;
                           const isBeforeStart =
                             globalStartDate &&
-                            !isNaN(Date.parse(globalStartDate))
+                              !isNaN(Date.parse(globalStartDate))
                               ? date < new Date(globalStartDate)
                               : false;
                           return isBeforeToday || isBeforeStart;
@@ -876,7 +877,7 @@ const isFormValid = editFormItems.every((item) => {
                       </div>
                     )}
                     {!loadingAvailability[item.item_id] && (
-                    <p className="text-xs italic text-slate-400 mt-1">Total of {availability[item.item_id]} items bookable</p>
+                      <p className="text-xs italic text-slate-400 mt-1">Total of {availability[item.item_id]} items bookable</p>
                     )}
                   </div>
                 </div>
