@@ -1,12 +1,14 @@
 import {
   Controller,
   Get,
-  Headers,
   UnauthorizedException,
   Logger,
   InternalServerErrorException,
+  Req,
 } from "@nestjs/common";
 import { LogsService } from "./logs.service";
+import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { logError } from "src/utils/logging";
 
 @Controller("logs")
 export class LogsController {
@@ -15,13 +17,14 @@ export class LogsController {
   constructor(private readonly logsService: LogsService) {}
 
   @Get()
-  async getAllLogs(@Headers("x-user-id") userId: string) {
+  async getAllLogs(@Req() req: AuthRequest) {
+    const userId = req.user?.id;
     if (!userId) {
       throw new UnauthorizedException("User ID is required for authorization");
     }
 
     try {
-      const logs = await this.logsService.getAllLogs(userId);
+      const logs = await this.logsService.getAllLogs(req);
 
       // Log the access for audit purposes
       this.logsService.createLog({
@@ -35,12 +38,23 @@ export class LogsController {
     } catch (error) {
       if (
         error instanceof UnauthorizedException ||
-        error.message.includes("permission")
+        (typeof error === "object" &&
+          error !== null &&
+          "message" in error &&
+          typeof (error as { message?: unknown }).message === "string" &&
+          (error as { message: string }).message.includes("permission"))
       ) {
         throw error;
       }
 
-      this.logger.error(`Error fetching logs: ${error.message}`, error.stack);
+      logError(
+        this.logsService,
+        "Error fetching logs",
+        "LogsController",
+        error,
+        { route: "GET /logs" },
+      );
+
       throw new InternalServerErrorException("Failed to retrieve logs");
     }
   }
