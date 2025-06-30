@@ -30,10 +30,10 @@ export class UserService {
   }
 
   async getUserById(id: string, req: AuthRequest): Promise<UserProfile | null> {
-    const supabase = req.supabase; // add here roles
+    const supabase = req.supabase;
     const { data, error } = await supabase
       .from("user_profiles")
-      .select("*")
+      .select("*, user_roles(role)")
       .eq("id", id)
       .single();
     if (error) {
