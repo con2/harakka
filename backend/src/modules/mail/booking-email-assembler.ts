@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
-import * as dayjs from "dayjs";
+import * as dayjs from "dayjs"; // Keep this as a named import to avoid issues.
 import { SupabaseService } from "../supabase/supabase.service";
 import { Translations } from "../booking/types/translations.types";
 import { SupabaseClient } from "@supabase/supabase-js";
