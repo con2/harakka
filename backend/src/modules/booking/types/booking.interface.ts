@@ -1,3 +1,5 @@
+import { Database } from "src/types/supabase.types";
+
 export interface BookingItem {
   item_id: string;
   quantity: number;
@@ -24,3 +26,10 @@ export interface EnrichedItem {
 export type UserBookingOrder = {
   order_items?: { storage_items?: { location_id?: string } }[];
 };
+
+export type BookingTable = Database["public"]["Tables"]["orders"];
+export type BookingTableRow = Database["public"]["Tables"]["orders"]["Row"];
+export type BookingTableInsert =
+  Database["public"]["Tables"]["orders"]["Insert"];
+export type BookingTableUpdate =
+  Database["public"]["Tables"]["orders"]["Update"];
