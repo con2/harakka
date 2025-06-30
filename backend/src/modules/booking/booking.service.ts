@@ -506,84 +506,11 @@ export class BookingService {
         throw new BadRequestException("Could not create updated order items");
       }
     }
-    // 5.8 send mail to user:
-    type EnrichedItem = {
-      item_id: string;
-      quantity: number;
-      start_date: string;
-      translations?: {
-        fi: { item_name: string };
-        en: { item_name: string };
-      };
-      location_id?: string;
-    };
-
-    const enrichedItems: EnrichedItem[] = updatedItems || [];
-
-    for (const item of enrichedItems) {
-      const { data: storageItem, error: storageItemError } = await supabase
-        .from("storage_items")
-        .select("translations, location_id")
-        .eq("id", item.item_id)
-        .single();
-
-      if (storageItemError || !storageItem) {
-        throw new BadRequestException("Could not fetch storage item details");
-      }
-
-      item.translations = storageItem.translations;
-      item.location_id = storageItem.location_id;
-    }
-
-    // adapt to email:
-    const pickupDate = dayjs(enrichedItems[0].start_date).format("DD.MM.YYYY");
-
-    const { data: location, error: locationError } = await supabase
-      .from("storage_locations")
-      .select("name, address")
-      .eq("id", enrichedItems[0].location_id)
-      .single();
-
-    const emailItems = enrichedItems.map((item) => ({
-      item_id: item.item_id,
-      quantity: item.quantity,
-      translations: {
-        fi: {
-          name: item.translations?.fi.item_name ?? "Unknown",
-        },
-        en: {
-          name: item.translations?.en.item_name ?? "Unknown",
-        },
-      },
-    }));
-
-    const emailData: EmailProps = {
-      name: user.full_name,
-      email: user.email,
-      pickupDate,
-      today: dayjs().format("DD.MM.YYYY"),
-      location: location?.name,
-      items: emailItems,
-    };
-
-    /* await this.mailService.sendMail({
-      to: emailData.email,
-      subject: "Varaus päivitetty - Booking updated",
-      template: BookingUpdateEmail(emailData),
-    }); */
-
-    // send mail to admin
-    const adminEmailData = {
-      ...emailData,
-      email: "illusia.rental.service@gmail.com",
-      name: "Admin",
-    };
-
-    /*  await this.mailService.sendMail({
-      to: "illusia.rental.service@gmail.com",
-      subject: "Varaus päivitetty - Booking updated - waiting to be confirmed",
-      template: BookingUpdateEmail(adminEmailData),
-    }); */
+    // 5.8 notify user via centralized mail service
+    await this.mailService.sendBookingMail(BookingMailType.Update, {
+      orderId,
+      triggeredBy: userId,
+    });
 
     const { data: updatedOrder, error: orderError } = await supabase
       .from("orders")
