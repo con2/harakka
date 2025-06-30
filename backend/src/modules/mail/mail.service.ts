@@ -6,7 +6,7 @@ import {
   BookingMailType,
   BookingMailParams,
 } from "./interfaces/mail.interface";
-import dayjs from "dayjs";
+import * as dayjs from "dayjs";
 import type { BookingEmailPayload } from "./booking-email-assembler";
 import { BookingEmailAssembler } from "./booking-email-assembler";
 import BookingCreationEmail from "./../../emails/BookingCreationEmail";
