@@ -118,60 +118,6 @@ export type Database = {
           },
         ];
       };
-      notifications: {
-        Row: {
-          created_at: string | null;
-          id: string;
-          is_read: boolean | null;
-          item_id: string | null;
-          message: string;
-          order_id: string | null;
-          read_at: string | null;
-          title: string;
-          type: string;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string | null;
-          id?: string;
-          is_read?: boolean | null;
-          item_id?: string | null;
-          message: string;
-          order_id?: string | null;
-          read_at?: string | null;
-          title: string;
-          type: string;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string | null;
-          id?: string;
-          is_read?: boolean | null;
-          item_id?: string | null;
-          message?: string;
-          order_id?: string | null;
-          read_at?: string | null;
-          title?: string;
-          type?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "notifications_item_id_fkey";
-            columns: ["item_id"];
-            isOneToOne: false;
-            referencedRelation: "storage_items";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "notifications_order_id_fkey";
-            columns: ["order_id"];
-            isOneToOne: false;
-            referencedRelation: "orders";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       order_items: {
         Row: {
           created_at: string | null;
@@ -180,7 +126,8 @@ export type Database = {
           item_id: string;
           location_id: string;
           order_id: string;
-          quantity: number | null;
+          provider_organization_id: string | null;
+          quantity: number;
           start_date: string;
           status: string;
           subtotal: number | null;
@@ -194,7 +141,8 @@ export type Database = {
           item_id: string;
           location_id: string;
           order_id: string;
-          quantity?: number | null;
+          provider_organization_id?: string | null;
+          quantity?: number;
           start_date: string;
           status: string;
           subtotal?: number | null;
@@ -208,7 +156,8 @@ export type Database = {
           item_id?: string;
           location_id?: string;
           order_id?: string;
-          quantity?: number | null;
+          provider_organization_id?: string | null;
+          quantity?: number;
           start_date?: string;
           status?: string;
           subtotal?: number | null;
@@ -224,6 +173,20 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "order_items_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_location_summary";
+            referencedColumns: ["storage_item_id"];
+          },
+          {
+            foreignKeyName: "order_items_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_ownership_summary";
+            referencedColumns: ["storage_item_id"];
+          },
+          {
             foreignKeyName: "order_items_location_id_fkey";
             columns: ["location_id"];
             isOneToOne: false;
@@ -235,6 +198,13 @@ export type Database = {
             columns: ["order_id"];
             isOneToOne: false;
             referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_items_provider_organization_id_fkey";
+            columns: ["provider_organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];
@@ -284,6 +254,159 @@ export type Database = {
           total_amount?: number | null;
           updated_at?: string | null;
           user_id?: string;
+        };
+        Relationships: [];
+      };
+      organization_items: {
+        Row: {
+          created_at: string | null;
+          created_by: string | null;
+          id: string;
+          is_active: boolean | null;
+          organization_id: string;
+          owned_quantity: number;
+          storage_item_id: string;
+          storage_location_id: string;
+          updated_at: string | null;
+          updated_by: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          created_by?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          organization_id: string;
+          owned_quantity?: number;
+          storage_item_id: string;
+          storage_location_id: string;
+          updated_at?: string | null;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          created_by?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          organization_id?: string;
+          owned_quantity?: number;
+          storage_item_id?: string;
+          storage_location_id?: string;
+          updated_at?: string | null;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "erm_organization_items_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "erm_organization_items_storage_item_id_fkey";
+            columns: ["storage_item_id"];
+            isOneToOne: false;
+            referencedRelation: "storage_items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "erm_organization_items_storage_item_id_fkey";
+            columns: ["storage_item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_location_summary";
+            referencedColumns: ["storage_item_id"];
+          },
+          {
+            foreignKeyName: "erm_organization_items_storage_item_id_fkey";
+            columns: ["storage_item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_ownership_summary";
+            referencedColumns: ["storage_item_id"];
+          },
+          {
+            foreignKeyName: "organization_items_storage_location_id_fkey";
+            columns: ["storage_location_id"];
+            isOneToOne: false;
+            referencedRelation: "storage_locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      organization_locations: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          is_active: boolean | null;
+          organization_id: string;
+          storage_location_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          organization_id: string;
+          storage_location_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          organization_id?: string;
+          storage_location_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "erm_organization_locations_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "erm_organization_locations_storage_location_id_fkey";
+            columns: ["storage_location_id"];
+            isOneToOne: false;
+            referencedRelation: "storage_locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      organizations: {
+        Row: {
+          created_at: string | null;
+          created_by: string | null;
+          description: string | null;
+          id: string;
+          is_active: boolean | null;
+          name: string;
+          slug: string;
+          updated_at: string | null;
+          updated_by: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          created_by?: string | null;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          name: string;
+          slug: string;
+          updated_at?: string | null;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          created_by?: string | null;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          name?: string;
+          slug?: string;
+          updated_at?: string | null;
+          updated_by?: string | null;
         };
         Relationships: [];
       };
@@ -343,6 +466,7 @@ export type Database = {
           is_active: boolean | null;
           max_discount: number | null;
           min_order_amount: number | null;
+          owner_organization_id: string | null;
           starts_at: string;
           times_used: number | null;
           usage_limit: number | null;
@@ -358,6 +482,7 @@ export type Database = {
           is_active?: boolean | null;
           max_discount?: number | null;
           min_order_amount?: number | null;
+          owner_organization_id?: string | null;
           starts_at: string;
           times_used?: number | null;
           usage_limit?: number | null;
@@ -373,11 +498,20 @@ export type Database = {
           is_active?: boolean | null;
           max_discount?: number | null;
           min_order_amount?: number | null;
+          owner_organization_id?: string | null;
           starts_at?: string;
           times_used?: number | null;
           usage_limit?: number | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "promotions_owner_organization_id_fkey";
+            columns: ["owner_organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       reviews: {
         Row: {
@@ -418,7 +552,36 @@ export type Database = {
             referencedRelation: "storage_items";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "reviews_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_location_summary";
+            referencedColumns: ["storage_item_id"];
+          },
+          {
+            foreignKeyName: "reviews_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_ownership_summary";
+            referencedColumns: ["storage_item_id"];
+          },
         ];
+      };
+      roles: {
+        Row: {
+          id: string;
+          role: Database["public"]["Enums"]["roles_type"];
+        };
+        Insert: {
+          id?: string;
+          role: Database["public"]["Enums"]["roles_type"];
+        };
+        Update: {
+          id?: string;
+          role?: Database["public"]["Enums"]["roles_type"];
+        };
+        Relationships: [];
       };
       saved_list_items: {
         Row: {
@@ -449,6 +612,20 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "storage_items";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "saved_list_items_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_location_summary";
+            referencedColumns: ["storage_item_id"];
+          },
+          {
+            foreignKeyName: "saved_list_items_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_ownership_summary";
+            referencedColumns: ["storage_item_id"];
           },
           {
             foreignKeyName: "saved_list_items_list_id_fkey";
@@ -485,6 +662,44 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [];
+      };
+      storage_analytics: {
+        Row: {
+          created_at: string | null;
+          date: string;
+          id: string;
+          location_id: string;
+          occupancy_rate: number | null;
+          total_bookings: number | null;
+          total_revenue: number | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          date: string;
+          id?: string;
+          location_id: string;
+          occupancy_rate?: number | null;
+          total_bookings?: number | null;
+          total_revenue?: number | null;
+        };
+        Update: {
+          created_at?: string | null;
+          date?: string;
+          id?: string;
+          location_id?: string;
+          occupancy_rate?: number | null;
+          total_bookings?: number | null;
+          total_revenue?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "storage_analytics_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "storage_locations";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       storage_compartments: {
         Row: {
@@ -587,6 +802,20 @@ export type Database = {
             referencedRelation: "storage_items";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "storage_item_images_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_location_summary";
+            referencedColumns: ["storage_item_id"];
+          },
+          {
+            foreignKeyName: "storage_item_images_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_ownership_summary";
+            referencedColumns: ["storage_item_id"];
+          },
         ];
       };
       storage_item_tags: {
@@ -620,6 +849,20 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "storage_item_tags_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_location_summary";
+            referencedColumns: ["storage_item_id"];
+          },
+          {
+            foreignKeyName: "storage_item_tags_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "view_item_ownership_summary";
+            referencedColumns: ["storage_item_id"];
+          },
+          {
             foreignKeyName: "storage_item_tags_tag_id_fkey";
             columns: ["tag_id"];
             isOneToOne: false;
@@ -641,6 +884,8 @@ export type Database = {
           items_number_total: number;
           location_id: string;
           price: number;
+          test_metadata: Json | null;
+          test_priority_score: number | null;
           translations: Json | null;
         };
         Insert: {
@@ -655,6 +900,8 @@ export type Database = {
           items_number_total: number;
           location_id: string;
           price: number;
+          test_metadata?: Json | null;
+          test_priority_score?: number | null;
           translations?: Json | null;
         };
         Update: {
@@ -669,6 +916,8 @@ export type Database = {
           items_number_total?: number;
           location_id?: string;
           price?: number;
+          test_metadata?: Json | null;
+          test_priority_score?: number | null;
           translations?: Json | null;
         };
         Relationships: [
@@ -780,6 +1029,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      test_features: {
+        Row: {
+          created_at: string | null;
+          description: string | null;
+          feature_name: string;
+          id: string;
+          is_enabled: boolean | null;
+          test_data: Json | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          description?: string | null;
+          feature_name: string;
+          id?: string;
+          is_enabled?: boolean | null;
+          test_data?: Json | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          description?: string | null;
+          feature_name?: string;
+          id?: string;
+          is_enabled?: boolean | null;
+          test_data?: Json | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       user_addresses: {
         Row: {
           address_type: string;
@@ -819,6 +1098,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_organization_roles: {
+        Row: {
+          created_at: string | null;
+          created_by: string | null;
+          id: string;
+          is_active: boolean | null;
+          organization_id: string;
+          role_id: string;
+          updated_at: string | null;
+          updated_by: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          created_by?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          organization_id: string;
+          role_id: string;
+          updated_at?: string | null;
+          updated_by?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          created_by?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          organization_id?: string;
+          role_id?: string;
+          updated_at?: string | null;
+          updated_by?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "erm_user_organization_roles_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "erm_user_organization_roles_role_id_fkey";
+            columns: ["role_id"];
+            isOneToOne: false;
+            referencedRelation: "roles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_profiles: {
         Row: {
           created_at: string | null;
@@ -855,38 +1185,134 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_roles: {
+        Row: {
+          created_at: string | null;
+          profile_id: string;
+          role: Database["public"]["Enums"]["role_type"];
+        };
+        Insert: {
+          created_at?: string | null;
+          profile_id: string;
+          role: Database["public"]["Enums"]["role_type"];
+        };
+        Update: {
+          created_at?: string | null;
+          profile_id?: string;
+          role?: Database["public"]["Enums"]["role_type"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: true;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
-      [_ in never]: never;
+      view_item_location_summary: {
+        Row: {
+          item_name: string | null;
+          location_name: string | null;
+          organization_breakdown: string | null;
+          organizations_count: number | null;
+          storage_item_id: string | null;
+          total_at_location: number | null;
+        };
+        Relationships: [];
+      };
+      view_item_ownership_summary: {
+        Row: {
+          item_name: string | null;
+          location_name: string | null;
+          location_total: number | null;
+          organization_name: string | null;
+          owned_quantity: number | null;
+          storage_item_id: string | null;
+          total_across_all_locations: number | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
-      clear_request_user_id: {
-        Args: Record<PropertyKey, never>;
-        Returns: undefined;
+      calculate_storage_item_total: {
+        Args: { item_id: string };
+        Returns: number;
+      };
+      calculate_test_metrics: {
+        Args: { item_id: string };
+        Returns: Json;
+      };
+      generate_slug: {
+        Args: { input_text: string };
+        Returns: string;
+      };
+      get_all_full_orders: {
+        Args: { in_offset?: number; in_limit?: number };
+        Returns: Json;
+      };
+      get_full_order: {
+        Args: { order_id: string };
+        Returns: Json;
+      };
+      get_full_user_order: {
+        Args: { in_user_id: string; in_offset?: number; in_limit?: number };
+        Returns: Json;
       };
       get_request_user_id: {
         Args: Record<PropertyKey, never>;
         Returns: string;
       };
-      is_admin: {
-        Args: Record<PropertyKey, never>;
+      get_user_highest_tenant_role: {
+        Args: { p_user_id: string; p_tenant_id: string };
+        Returns: Database["public"]["Enums"]["tenant_role"];
+      };
+      get_user_tenant_roles: {
+        Args: { p_user_id: string; p_tenant_id: string };
+        Returns: {
+          role_name: Database["public"]["Enums"]["tenant_role"];
+          granted_at: string;
+        }[];
+      };
+      has_tenant_admin_role: {
+        Args: { p_tenant_id: string };
         Returns: boolean;
       };
-      is_admin_only: {
-        Args: Record<PropertyKey, never>;
+      is_tenant_admin: {
+        Args: { p_tenant_id: string };
         Returns: boolean;
       };
-      is_super_vera: {
-        Args: Record<PropertyKey, never>;
+      user_has_tenant_role: {
+        Args: {
+          p_user_id: string;
+          p_tenant_id: string;
+          p_role: Database["public"]["Enums"]["tenant_role"];
+        };
         Returns: boolean;
-      };
-      set_request_user_id: {
-        Args: { user_id: string };
-        Returns: undefined;
       };
     };
     Enums: {
-      [_ in never]: never;
+      role_type:
+        | "User"
+        | "Admin"
+        | "SuperVera"
+        | "app_admin"
+        | "main_admin"
+        | "admin"
+        | "user"
+        | "superVera";
+      roles_type:
+        | "super_admin"
+        | "main_admin"
+        | "admin"
+        | "user"
+        | "superVera"
+        | "storage_manager"
+        | "requester";
+      tenant_role: "admin" | "manager" | "user" | "viewer" | "editor";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1004,6 +1430,27 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      role_type: [
+        "User",
+        "Admin",
+        "SuperVera",
+        "app_admin",
+        "main_admin",
+        "admin",
+        "user",
+        "superVera",
+      ],
+      roles_type: [
+        "super_admin",
+        "main_admin",
+        "admin",
+        "user",
+        "superVera",
+        "storage_manager",
+        "requester",
+      ],
+      tenant_role: ["admin", "manager", "user", "viewer", "editor"],
+    },
   },
 } as const;
