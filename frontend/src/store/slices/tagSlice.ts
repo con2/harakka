@@ -16,15 +16,22 @@ const initialState: TagState = {
   error: null,
   errorContext: null,
   selectedTags: [], // initialized as an empty array
+  page: 1,
+  limit: 10,
+  total: 0,
+  totalPages: 1,
 };
 
 // Async Thunks (API Calls)
 // get all tags
 export const fetchAllTags = createAsyncThunk(
   "tags/fetchAllTags",
-  async (_, { rejectWithValue }) => {
+  async (
+    { page = 1, limit = 10 }: { page?: number; limit?: number },
+    { rejectWithValue },
+  ) => {
     try {
-      return await tagsApi.getAllTags();
+      return await tagsApi.getAllTags(page, limit);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch tags"),
@@ -149,7 +156,10 @@ export const tagSlice = createSlice({
       })
       .addCase(fetchAllTags.fulfilled, (state, action) => {
         state.loading = false;
-        state.tags = action.payload;
+        state.tags = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.totalPages;
       })
       .addCase(fetchAllTags.rejected, (state, action) => {
         state.loading = false;
@@ -261,6 +271,11 @@ export const selectAllTags = (state: RootState) => state.tags.tags;
 export const selectLoading = (state: RootState) => state.tags.loading;
 export const selectError = (state: RootState) => state.tags.error;
 export const selectSelectedTags = (state: RootState) => state.tags.selectedTags;
+// Pagination data
+export const selectTagsPage = (state: RootState) => state.tags.page;
+export const selectTagsLimit = (state: RootState) => state.tags.limit;
+export const selectTagsTotal = (state: RootState) => state.tags.total;
+export const selectTagsTotalPages = (state: RootState) => state.tags.totalPages;
 
 // Export actions
 export const { clearSelectedTags, selectTag } = tagSlice.actions;

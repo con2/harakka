@@ -9,21 +9,29 @@ export const tagsApi = {
    * Get all tags
    * @returns Array of tags
    */
-  getAllTags: (): Promise<Tag[]> => api.get("/tags"),
+  getAllTags: (
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
+    data: Tag[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> => api.get(`/tags?page=${page}&limit=${limit}`),
 
   /**
    * Get all tags for a specific item
    * @param itemId - Item ID
    * @returns Array of tags assigned to the item
    */
-  getTagById: (itemId: string): Promise<Tag> => api.get(`/tags/${itemId}`),
+  getTagById: (itemId: string): Promise<Tag> => api.get(`/tags/item/${itemId}`),
 
   /**
    * Get all tags for a specific item
    * @param itemId - Item ID
    * @returns Array of tags assigned to the item
    */
-  getTagsByItem: (itemId: string): Promise<Tag[]> => api.get(`/tags/${itemId}`),
+  getTagsByItem: (itemId: string): Promise<Tag[]> => api.get(`/tags/item/${itemId}`),
 
   /**
    * Create a new tag

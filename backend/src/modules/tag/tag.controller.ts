@@ -7,6 +7,7 @@ import {
   Put,
   Post,
   Req,
+  Query,
 } from "@nestjs/common";
 import { TagService } from "./tag.service";
 import { TagRow, TagUpdate } from "./interfaces/tag.interface";
@@ -16,9 +17,21 @@ export class TagController {
   constructor(private readonly tagService: TagService) {}
 
   @Get()
-  async getAllTags(): Promise<TagRow[]> {
-    return this.tagService.getAllTags();
+  async getAllTags(
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ): Promise<{
+    data: TagRow[];
+    total: number;
+    totalPages: number;
+    page: number;
+  }> {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
+    return this.tagService.getAllTags(pageNumber, limitNumber);
   }
+
   @Get(":itemId")
   async getTagsForItem(@Param("itemId") itemId: string): Promise<TagRow[]> {
     return this.tagService.getTagsForItem(itemId);
