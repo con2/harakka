@@ -29,7 +29,7 @@ export class LogsController {
     }
 
     try {
-      const pageNumber = parseInt(page, 1);
+      const pageNumber = parseInt(page, 10);
       const limitNumber = parseInt(limit, 10);
       const logs = await this.logsService.getAllLogs(
         req,

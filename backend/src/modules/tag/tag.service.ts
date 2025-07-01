@@ -4,6 +4,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { TagRow, TagUpdate } from "./interfaces/tag.interface";
 import { Database } from "src/types/supabase.types";
+import { ApiResponse } from "src/types/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 
 @Injectable()
@@ -15,38 +16,33 @@ export class TagService {
       this.supabaseService.getServiceClient() as SupabaseClient<Database>;
   }
   // Fetch all tags
-  async getAllTags(
-    page: number,
-    limit: number,
-  ): Promise<{
-    data: TagRow[];
-    total: number;
-    totalPages: number;
-    page: number;
-  }> {
+  async getAllTags(page: number, limit: number): Promise<ApiResponse<TagRow>> {
     const supabase = this._supabase;
     const { from, to } = getPaginationRange(page, limit);
 
+    // Get total count
     const { count, error: countError } = await supabase
       .from("tags")
-      .select("*", { count: "exact", head: true });
+      .select("*", { count: "exact" });
 
     if (countError) throw new Error(countError.message);
 
     // Fetch paginated tags
-    const { data, error } = await supabase
-      .from("tags")
-      .select("*")
-      .range(from, to);
+    const result = await supabase.from("tags").select("*").range(from, to);
 
-    if (error) throw new Error(error.message);
+    if (result.error) throw new Error(result.error.message);
 
     const meta = getPaginationMeta(count ?? 0, page, limit);
 
+    // Return in the expected format for frontend
     return {
-      data: data as TagRow[],
-      ...meta,
-    };
+      data: result.data as TagRow[],
+      error: result.error,
+      count: result.count,
+      status: result.status,
+      statusText: result.statusText,
+      metadata: meta,
+    } as ApiResponse<TagRow>;
   }
 
   async getTagsForItem(itemId: string): Promise<TagRow[]> {

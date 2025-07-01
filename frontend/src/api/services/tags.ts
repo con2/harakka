@@ -6,18 +6,33 @@ import { api } from "../axios";
  */
 export const tagsApi = {
   /**
-   * Get all tags
-   * @returns Array of tags
+   * Get all tags with pagination metadata
+   * @returns Array of tags with pagination metadata
    */
-  getAllTags: (
+  getAllTags: async (
     page: number = 1,
     limit: number = 10,
   ): Promise<{
     data: Tag[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }> => api.get(`/tags?page=${page}&limit=${limit}`),
+    metadata: {
+      total: number;
+      page: number;
+      totalPages: number;
+    }
+  }> => {
+    const result = await api.get(`/tags?page=${page}&limit=${limit}`);
+    console.log("Tags API response:", result);
+
+    // Extract data and metadata from the ApiResponse
+    return {
+      data: result.data || [],
+      metadata: result.metadata || {
+        total: 0,
+        page,
+        totalPages: 1,
+      },
+    };
+  },
 
   /**
    * Get all tags for a specific item

@@ -157,9 +157,9 @@ export const tagSlice = createSlice({
       .addCase(fetchAllTags.fulfilled, (state, action) => {
         state.loading = false;
         state.tags = action.payload.data;
-        state.total = action.payload.total;
-        state.page = action.payload.page;
-        state.totalPages = action.payload.totalPages;
+        state.total = action.payload.metadata.total;
+        state.page = action.payload.metadata.page;
+        state.totalPages = action.payload.metadata.totalPages;
       })
       .addCase(fetchAllTags.rejected, (state, action) => {
         state.loading = false;

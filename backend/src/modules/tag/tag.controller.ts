@@ -11,6 +11,7 @@ import {
 } from "@nestjs/common";
 import { TagService } from "./tag.service";
 import { TagRow, TagUpdate } from "./interfaces/tag.interface";
+import { ApiResponse } from "src/types/response.types";
 
 @Controller("tags")
 export class TagController {
@@ -20,12 +21,7 @@ export class TagController {
   async getAllTags(
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
-  ): Promise<{
-    data: TagRow[];
-    total: number;
-    totalPages: number;
-    page: number;
-  }> {
+  ): Promise<ApiResponse<TagRow>> {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
 
