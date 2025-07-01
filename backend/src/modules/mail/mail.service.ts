@@ -17,6 +17,7 @@ import BookingRejectionEmail from "./../../emails/BookingRejectionEmail";
 import BookingDeleteMail from "./../../emails/BookingDeleteMail";
 import ItemsReturnedMail from "./../../emails/ItemsReturned";
 import ItemsPickedUpMail from "./../../emails/ItemsPickedUp";
+import { ExceptionsHandler } from "@nestjs/core/exceptions/exceptions-handler";
 
 /**
  * Options accepted by {@link MailService.sendMail}.
@@ -99,12 +100,6 @@ export class MailService {
    */
   async sendMail({ to, subject, template, html, bcc }: SendMailOptions) {
     try {
-      // ==== DEBUG LOGS (remove in production) ====
-      console.log("[MailService] ENV EMAIL_FROM_2 =", process.env.EMAIL_FROM_2);
-      console.log("[MailService] Sending to:", to, " | subject:", subject);
-      // ===========================================
-      /*    const accessToken = await this.oAuth2Client.getAccessToken() */
-
       const transport = nodemailer.createTransport({
         host: "smtp.gmail.com",
         port: 465,
@@ -126,11 +121,9 @@ export class MailService {
       if (bcc) mailOptions.bcc = bcc;
 
       const result = await transport.sendMail(mailOptions);
-      console.log("[MailService] SMTP sendMail result:", result);
+
       return result;
     } catch (error) {
-      console.error("Failed to send email:", error);
-
       if (process.env.NODE_ENV === "production") {
         return {
           success: false,
@@ -267,7 +260,6 @@ export class MailService {
     type: BookingMailType,
     params: BookingMailParams,
   ) {
-    console.log("[MailService] sendBookingMail START ⇒", type, params);
     type EmailPayloadWithOptionalReturn = BookingEmailPayload & {
       returnDate?: string;
     };
@@ -308,6 +300,5 @@ export class MailService {
       subject,
       template: finalTemplate,
     });
-    console.log("[MailService] sendBookingMail DONE for order", params.orderId);
   }
 }
