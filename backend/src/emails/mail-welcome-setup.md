@@ -1,4 +1,6 @@
-neue triggerfunktion:
+# Welcome Email Setup
+
+## New Trigger Function
 
 ```sql
 DECLARE

@@ -12,7 +12,7 @@ import { EmailProps } from "src/modules/mail/interfaces/mail.interface";
 const BookingRejectionEmail = ({
   name,
   pickupDate,
-  location,
+  // location,
   items,
   today,
 }: EmailProps) => (
