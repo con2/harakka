@@ -9,17 +9,21 @@ import {
   BookingItemsRow,
   BookingItemsUpdate,
 } from "./interfaces/booking-items.interfaces";
-import { ApiResponse } from "src/types/response.types";
+import { ApiResponse, ApiSingleResponse } from "src/types/response.types";
 
 @Injectable()
 export class BookingItemsService {
-  async getAll(supabase: SupabaseClient) {
-    const { data }: PostgrestResponse<BookingItemsRow> = await supabase
+  async getAll(
+    supabase: SupabaseClient,
+  ): Promise<ApiResponse<BookingItemsRow>> {
+    const result: PostgrestResponse<BookingItemsRow> = await supabase
       .from("order_items")
       .select("*");
 
-    if (!data) throw new BadRequestException("Could not retrieve booking data");
-    return data;
+    if (result.error)
+      throw new BadRequestException("Could not retrieve booking data");
+
+    return result;
   }
 
   async getBookingItems(
@@ -36,6 +40,7 @@ export class BookingItemsService {
 
     if (result.error) {
       console.error(result.error);
+      throw new Error("Could not retrieve booking-item");
     }
 
     return result;
@@ -55,7 +60,7 @@ export class BookingItemsService {
 
     if (result.error) {
       console.error(result.error);
-      throw new Error("Result had error");
+      throw new Error("Coult not retrieve user bookings");
     }
 
     return result;
@@ -64,13 +69,17 @@ export class BookingItemsService {
   async createBookingItem(
     supabase: SupabaseClient,
     booking_item: BookingItemsInsert,
-  ) {
-    const { data, error }: PostgrestSingleResponse<BookingItemsRow> =
-      await supabase.from("order_items").insert(booking_item).select().single();
+  ): Promise<ApiSingleResponse<BookingItemsRow>> {
+    const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
+      .from("order_items")
+      .insert(booking_item)
+      .select()
+      .single();
 
-    if (error) throw new BadRequestException("Could not create booking-item");
+    if (result.error)
+      throw new BadRequestException("Could not create booking-item");
 
-    return data;
+    return result;
   }
 
   async removeBookingItem(
@@ -78,44 +87,42 @@ export class BookingItemsService {
     booking_id: string,
     booking_item_id: string,
   ) {
-    const { data, error }: PostgrestSingleResponse<BookingItemsRow> =
-      await supabase
-        .from("order_items")
-        .delete()
-        .eq("order_id", booking_id) // After renaming table + id column: Update column name
-        .eq("id", booking_item_id)
-        .select()
-        .single();
+    const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
+      .from("order_items")
+      .delete()
+      .eq("order_id", booking_id) // After renaming table + id column: Update column name
+      .eq("id", booking_item_id)
+      .select()
+      .single();
 
-    if (error) {
-      console.error(error);
-      if (error.code === "PGRST116")
+    if (result.error) {
+      console.error(result.error);
+      if (result.error.code === "PGRST116")
         throw new BadRequestException(
           "Failed to remove booking item. Either it has already been removed or an incorrect ID has been provided",
         );
       throw new BadRequestException("Failed to remove booking item");
     }
-    return data;
+    return result;
   }
 
   async updateBookingItem(
     supabase: SupabaseClient,
     booking_item_id: string,
     updated_booking_item: BookingItemsUpdate,
-  ) {
-    const { data, error }: PostgrestSingleResponse<BookingItemsRow> =
-      await supabase
-        .from("order-items")
-        .update(updated_booking_item)
-        .eq("id", booking_item_id)
-        .select()
-        .single();
+  ): Promise<ApiSingleResponse<BookingItemsRow>> {
+    const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
+      .from("order-items")
+      .update(updated_booking_item)
+      .eq("id", booking_item_id)
+      .select()
+      .single();
 
-    if (error) {
-      console.error(error);
+    if (result.error) {
+      console.error(result.error);
       throw new BadRequestException("Failed to update booking item");
     }
 
-    return data;
+    return result;
   }
 }
