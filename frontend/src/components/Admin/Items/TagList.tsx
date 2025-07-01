@@ -43,7 +43,6 @@ const TagList = () => {
   >("all");
   // Translation
   const { lang } = useLanguage();
-  console.log("tags:", tags)
 
   const [editTag, setEditTag] = useState<Tag | null>(null);
   const [editNameFi, setEditNameFi] = useState("");
