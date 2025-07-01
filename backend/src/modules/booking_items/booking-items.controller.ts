@@ -4,13 +4,17 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
 } from "@nestjs/common";
 import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
 import { BookingItemsService } from "./booking-items.service";
-import { BookingItemsInsert } from "./interfaces/booking-items.interfaces";
+import {
+  BookingItemsInsert,
+  BookingItemsUpdate,
+} from "./interfaces/booking-items.interfaces";
 
 @Controller("booking-items")
 export class BookingItemsController {
@@ -82,6 +86,20 @@ export class BookingItemsController {
       supabase,
       booking_id,
       booking_item_id,
+    );
+  }
+
+  @Patch(":booking_item_id")
+  async updateBookingItem(
+    @Req() req: AuthenticatedRequest,
+    @Param("booking_item_id") booking_item_id: string,
+    @Body() updated_booking_item: BookingItemsUpdate,
+  ) {
+    const supabase = req.supabase;
+    return await this.bookingItemsService.updateBookingItem(
+      supabase,
+      booking_item_id,
+      updated_booking_item,
     );
   }
 }

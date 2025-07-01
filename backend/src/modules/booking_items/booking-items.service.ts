@@ -37,7 +37,6 @@ export class BookingItemsService {
       throw new BadRequestException("Failed to get bookingItems");
     }
     if (!data) throw new BadRequestException("Booking not found");
-    return data;
   }
 
   async getUserBookingItems(
@@ -95,16 +94,14 @@ export class BookingItemsService {
 
   async updateBookingItem(
     supabase: SupabaseClient,
-    booking_id: string,
-    item_id: string,
+    booking_item_id: string,
     updated_booking_item: BookingItemsUpdate,
   ) {
     const { data, error }: PostgrestSingleResponse<BookingItemsRow> =
       await supabase
         .from("order-items")
         .update(updated_booking_item)
-        .eq("order_id", booking_id)
-        .eq("item_id", item_id)
+        .eq("id", booking_item_id)
         .select()
         .single();
 
