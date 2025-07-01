@@ -12,9 +12,9 @@ import { EmailProps } from "src/modules/mail/interfaces/mail.interface";
 const BookingUpdateEmail = ({
   name,
   pickupDate,
-  location,
+  // location,
   items,
-  today,
+  // today,
 }: EmailProps) => (
   <Html>
     <Head>
