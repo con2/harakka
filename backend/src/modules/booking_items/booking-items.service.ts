@@ -10,60 +10,69 @@ import {
   BookingItemsUpdate,
 } from "./interfaces/booking-items.interfaces";
 import { ApiResponse, ApiSingleResponse } from "src/types/response.types";
+import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 
 @Injectable()
 export class BookingItemsService {
   async getAll(
     supabase: SupabaseClient,
+    page: number,
+    limit: number,
   ): Promise<ApiResponse<BookingItemsRow>> {
+    const { from, to } = getPaginationRange(page, limit);
+
     const result: PostgrestResponse<BookingItemsRow> = await supabase
       .from("order_items")
-      .select("*");
+      .select("*")
+      .range(from, to);
 
     if (result.error)
       throw new BadRequestException("Could not retrieve booking data");
 
-    return result;
+    const metadata = getPaginationMeta(result.count, page, limit);
+    return { ...result, metadata };
   }
 
   async getBookingItems(
     supabase: SupabaseClient,
     booking_id: string,
-    offset: number = 0,
-    limit: number = 20,
+    page: number,
+    limit: number,
   ): Promise<ApiResponse<BookingItemsRow>> {
+    const { from, to } = getPaginationRange(page, limit);
     const result: PostgrestResponse<BookingItemsRow> = await supabase
       .from("order_items")
-      .select("*")
+      .select("*", { count: "exact" })
       .eq("order_id", booking_id)
-      .range(offset, offset + limit);
+      .range(from, to);
 
     if (result.error) {
       console.error(result.error);
       throw new Error("Could not retrieve booking-item");
     }
-
-    return result;
+    const metadata = getPaginationMeta(result.count, page, limit);
+    return { ...result, metadata };
   }
 
   async getUserBookingItems(
     supabase: SupabaseClient,
     user_id: string,
-    offset: number = 0,
-    limit: number = 20,
+    page: number,
+    limit: number,
   ): Promise<ApiResponse<BookingItemsRow>> {
+    const { from, to } = getPaginationRange(page, limit);
     const result = await supabase
       .from("order-items")
       .select("*")
       .eq("user_id", user_id)
-      .range(offset, offset + limit);
+      .range(from, to);
 
     if (result.error) {
       console.error(result.error);
       throw new Error("Coult not retrieve user bookings");
     }
-
-    return result;
+    const metadata = getPaginationMeta(result.count, page, limit);
+    return { ...result, metadata };
   }
 
   async createBookingItem(
@@ -86,7 +95,7 @@ export class BookingItemsService {
     supabase: SupabaseClient,
     booking_id: string,
     booking_item_id: string,
-  ) {
+  ): Promise<ApiSingleResponse<BookingItemsRow>> {
     const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
       .from("order_items")
       .delete()

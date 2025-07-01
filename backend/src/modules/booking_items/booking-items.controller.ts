@@ -26,9 +26,19 @@ export class BookingItemsController {
    * @returns
    */
   @Get()
-  async getAllBookingItems(@Req() req: AuthenticatedRequest) {
+  async getAllBookingItems(
+    @Req() req: AuthenticatedRequest,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
     const supabase = req.supabase;
-    return await this.bookingItemsService.getAll(supabase);
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    return await this.bookingItemsService.getAll(
+      supabase,
+      pageNumber,
+      limitNumber,
+    );
   }
 
   /**
@@ -43,15 +53,18 @@ export class BookingItemsController {
   async getBookingItems(
     @Req() req: AuthenticatedRequest,
     @Param("booking_id") booking_id: string,
-    @Query("offset") offset: number,
-    @Query("limit") limit: number,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
   ) {
     const supabase = req.supabase;
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
     return await this.bookingItemsService.getBookingItems(
       supabase,
       booking_id,
-      offset,
-      limit,
+      pageNumber,
+      limitNumber,
     );
   }
 
