@@ -1,8 +1,6 @@
 import { Database } from "src/types/supabase.types";
 import { Translations } from "./translations.types";
 
-import { Database } from "src/types/supabase.types";
-
 export interface BookingItem {
   item_id: string;
   quantity: number;
