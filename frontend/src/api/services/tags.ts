@@ -21,7 +21,6 @@ export const tagsApi = {
     }
   }> => {
     const result = await api.get(`/tags?page=${page}&limit=${limit}`);
-    console.log("Tags API response:", result);
 
     // Extract data and metadata from the ApiResponse
     return {
