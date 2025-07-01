@@ -14,9 +14,7 @@ const BookingConfirmationEmail = ({
   pickupDate,
   location,
   items,
-
-}: EmailProps) => (
-
+}: EmailProps): React.ReactElement => (
   <Html>
     <Head>
       <link
@@ -166,7 +164,6 @@ const BookingConfirmationEmail = ({
       </Container>
     </Body>
   </Html>
-  
 );
 
 export default BookingConfirmationEmail;
