@@ -59,8 +59,9 @@ const Logs: React.FC = () => {
   const [showLogDetails, setShowLogDetails] = useState(false);
 
   useEffect(() => {
-    dispatch(getAllLogs(userId));
-  }, [dispatch, userId]);
+    if (logs.length === 0)
+      dispatch(getAllLogs(userId));
+  }, [dispatch, userId, logs.length]);
 
   const refreshLogs = () => {
     if (userId) {

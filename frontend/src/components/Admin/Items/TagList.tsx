@@ -67,12 +67,13 @@ const TagList = () => {
 
   // Fetch tags on mount
   useEffect(() => {
-    dispatch(fetchAllTags());
-  }, [dispatch]);
+    if (tags.length === 0)
+      dispatch(fetchAllTags());
+  }, [dispatch, tags.length]);
 
   // Fetch items once tags are available
   useEffect(() => {
-    if (tags.length > 0 && items.length === 0) {
+    if (items.length <= 1) {
       dispatch(fetchAllItems());
     }
   }, [dispatch, tags, items.length]);

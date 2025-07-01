@@ -51,11 +51,11 @@ const OrderList = () => {
 
   useEffect(() => {
     // Always fetch orders when the admin component mounts and auth is ready
-    if (!authLoading && user && user.id && !ordersLoadedRef.current) {
+    if (user && orders.length <= 1) {
       dispatch(getAllOrders(user.id));
       ordersLoadedRef.current = true;
     }
-  }, [authLoading, dispatch, user]);
+  }, [dispatch, user, orders.length]);
 
   const handleViewDetails = (order: BookingOrder) => {
     setSelectedOrder(order);
