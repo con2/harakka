@@ -9,7 +9,7 @@ import {
   BookingItemsRow,
   BookingItemsUpdate,
 } from "./interfaces/booking-items.interfaces";
-import { ApiResponse } from "src/types/optionB.types";
+import { ApiResponse } from "src/types/response.types";
 
 @Injectable()
 export class BookingItemsService {
