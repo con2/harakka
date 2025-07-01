@@ -58,6 +58,13 @@ export class AuthMiddleware implements NestMiddleware {
       `[${new Date().toISOString()}] Authenticating request to: ${req.method} ${req.path}`,
     );
 
+    // allow bypassing if a valid API key is present
+    const apiKey = req.headers["x-api-key"];
+    if (apiKey === this.config.get("BACKEND_SECRET")) {
+      this.logger.log("Bypassing auth middleware with api key");
+      return next();
+    }
+
     try {
       const token = this.extractToken(req);
       if (!token) {

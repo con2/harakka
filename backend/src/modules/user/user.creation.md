@@ -74,5 +74,3 @@ Briefly summarized
     Realtime Subscription: listen for changes in the backend and react programmatically.
 
 I recommend the Edge Function + Event Trigger - this is the cleanest way to automatically trigger your Nest service without having to rewrite the logic in the database itself.
-
-Translated with DeepL.com (free version)
