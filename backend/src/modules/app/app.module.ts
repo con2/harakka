@@ -29,6 +29,7 @@ import { UserController } from "../user/user.controller";
 import { StorageLocationsController } from "../storage-locations/storage-locations.controller";
 import { BookingItemsModule } from "../booking_items/booking-items.module";
 import { BookingItemsController } from "../booking_items/booking-items.controller";
+import { LogsController } from "../logs_module/logs.controller";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -75,6 +76,7 @@ export class AppModule implements NestModule {
         UserController,
         StorageLocationsController,
         BookingItemsController,
+        LogsController,
         { path: "*", method: RequestMethod.POST },
         { path: "*", method: RequestMethod.PUT },
         { path: "*", method: RequestMethod.PATCH },
