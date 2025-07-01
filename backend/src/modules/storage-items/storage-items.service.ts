@@ -12,8 +12,6 @@ import { S3Service } from "../supabase/s3-supabase.service";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { Tables, TablesUpdate } from "src/types/supabase.types";
-import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
 // this is used by the controller
 
 @Injectable()
