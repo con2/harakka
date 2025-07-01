@@ -1,5 +1,6 @@
 # Jons hidden files
 NOTES.md
+/.vscode
 
 # compiled output
 /dist
