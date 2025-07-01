@@ -11,7 +11,7 @@ import { PickUpEmail } from "src/modules/mail/interfaces/mail.interface";
 
 const ItemsPickedUpMail = ({
   name,
-  pickupDate,
+  // pickupDate,
   location,
   items,
 }: PickUpEmail) => (

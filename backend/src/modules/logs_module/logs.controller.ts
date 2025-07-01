@@ -5,6 +5,7 @@ import {
   Logger,
   InternalServerErrorException,
   Req,
+  Query,
 } from "@nestjs/common";
 import { LogsService } from "./logs.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
@@ -17,14 +18,24 @@ export class LogsController {
   constructor(private readonly logsService: LogsService) {}
 
   @Get()
-  async getAllLogs(@Req() req: AuthRequest) {
+  async getAllLogs(
+    @Req() req: AuthRequest,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
     const userId = req.user?.id;
     if (!userId) {
       throw new UnauthorizedException("User ID is required for authorization");
     }
 
     try {
-      const logs = await this.logsService.getAllLogs(req);
+      const pageNumber = parseInt(page, 10);
+      const limitNumber = parseInt(limit, 10);
+      const logs = await this.logsService.getAllLogs(
+        req,
+        pageNumber,
+        limitNumber,
+      );
 
       // Log the access for audit purposes
       this.logsService.createLog({
