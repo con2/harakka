@@ -9,6 +9,7 @@ import {
   BookingItemsRow,
   BookingItemsUpdate,
 } from "./interfaces/booking-items.interfaces";
+import { ApiResponse } from "src/types/optionB.types";
 
 @Injectable()
 export class BookingItemsService {
@@ -26,17 +27,18 @@ export class BookingItemsService {
     booking_id: string,
     offset: number = 0,
     limit: number = 20,
-  ) {
-    const { data, error }: PostgrestResponse<BookingItemsRow> = await supabase
+  ): Promise<ApiResponse<BookingItemsRow>> {
+    const result: PostgrestResponse<BookingItemsRow> = await supabase
       .from("order_items")
       .select("*")
       .eq("order_id", booking_id)
       .range(offset, offset + limit);
-    if (error) {
-      console.error(error);
-      throw new BadRequestException("Failed to get bookingItems");
+
+    if (result.error) {
+      console.error(result.error);
     }
-    if (!data) throw new BadRequestException("Booking not found");
+
+    return result;
   }
 
   async getUserBookingItems(
@@ -44,15 +46,19 @@ export class BookingItemsService {
     user_id: string,
     offset: number = 0,
     limit: number = 20,
-  ) {
-    const { data } = await supabase
+  ): Promise<ApiResponse<BookingItemsRow>> {
+    const result = await supabase
       .from("order-items")
       .select("*")
       .eq("user_id", user_id)
       .range(offset, offset + limit);
 
-    console.log(data);
-    return data;
+    if (result.error) {
+      console.error(result.error);
+      throw new Error("Result had error");
+    }
+
+    return result;
   }
 
   async createBookingItem(
