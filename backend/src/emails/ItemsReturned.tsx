@@ -7,8 +7,26 @@ import {
   Text,
   Section,
 } from "@react-email/components";
+import type { BookingItem } from "../modules/booking/types/order";
 
-const ItemsReturnedMail = ({ name, location, items, today }) => (
+type ExtendedBookingItem = BookingItem & {
+  translations?: {
+    fi: { name: string };
+    en: { name: string };
+  };
+};
+
+type ItemsReturnedMailProps = {
+  name: string;
+  location: string;
+  items: ExtendedBookingItem[];
+};
+
+const ItemsReturnedMail = ({
+  name,
+  location,
+  items,
+}: ItemsReturnedMailProps): React.ReactElement => (
   <Html>
     <Head>
       <link
@@ -84,11 +102,13 @@ const ItemsReturnedMail = ({ name, location, items, today }) => (
           Tavaraluettelo:
         </Text>
         <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
-          {items.map((item, index) => (
-            <li key={index} style={{ marginBottom: "4px", fontSize: "16px" }}>
-              {item.translations.fi.name} (x{item.quantity})
-            </li>
-          ))}
+          {items.map(
+            (item, index): React.ReactElement => (
+              <li key={index} style={{ marginBottom: "4px", fontSize: "16px" }}>
+                {item.translations?.fi.name ?? "Unknown"} (x{item.quantity})
+              </li>
+            ),
+          )}
         </ul>
 
         <hr style={{ margin: "30px 0" }} />
@@ -105,11 +125,13 @@ const ItemsReturnedMail = ({ name, location, items, today }) => (
           List of items:
         </Text>
         <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
-          {items.map((item, index) => (
-            <li key={index} style={{ marginBottom: "4px", fontSize: "16px" }}>
-              {item.translations.en.name} (x{item.quantity})
-            </li>
-          ))}
+          {items.map(
+            (item, index): React.ReactElement => (
+              <li key={index} style={{ marginBottom: "4px", fontSize: "16px" }}>
+                {item.translations?.en.name ?? "Unknown"} (x{item.quantity})
+              </li>
+            ),
+          )}
         </ul>
 
         <Section style={{ textAlign: "center", marginTop: "30px" }}>
