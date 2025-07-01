@@ -81,7 +81,7 @@ const MyOrders = () => {
       return;
     }
 
-    if (user && !orders)
+    if (user && orders.length === 0)
       dispatch(getUserOrders(user.id));
 
   }, [dispatch, navigate, user, lang, orders]);
