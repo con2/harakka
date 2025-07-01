@@ -43,6 +43,7 @@ const TagList = () => {
   >("all");
   // Translation
   const { lang } = useLanguage();
+  console.log("tags:", tags)
 
   const [editTag, setEditTag] = useState<Tag | null>(null);
   const [editNameFi, setEditNameFi] = useState("");
@@ -57,19 +58,20 @@ const TagList = () => {
     });
   });
 
-  const filteredTags = tags
-    .filter((tag) => {
-      const fiName = tag.translations?.fi?.name?.toLowerCase() || "";
-      const enName = tag.translations?.en?.name?.toLowerCase() || "";
-      const search = searchTerm.toLowerCase();
-      return fiName.includes(search) || enName.includes(search);
-    })
-    .filter((tag) => {
-      const isAssigned = !!tagUsage[tag.id];
-      if (assignmentFilter === "assigned") return isAssigned;
-      if (assignmentFilter === "unassigned") return !isAssigned;
-      return true;
-    });
+  // added a fallback default ([]) before calling .filter
+  const filteredTags = (tags ?? [])
+  .filter((tag) => {
+    const fiName = tag.translations?.fi?.name?.toLowerCase() || "";
+    const enName = tag.translations?.en?.name?.toLowerCase() || "";
+    const search = searchTerm.toLowerCase();
+    return fiName.includes(search) || enName.includes(search);
+  })
+  .filter((tag) => {
+    const isAssigned = !!tagUsage?.[tag.id];
+    if (assignmentFilter === "assigned") return isAssigned;
+    if (assignmentFilter === "unassigned") return !isAssigned;
+    return true;
+  });
 
   // Fetch tags on mount
   useEffect(() => {
@@ -83,10 +85,12 @@ const TagList = () => {
 
   // Fetch items once tags are available
   useEffect(() => {
-    if (tags.length > 0 && items.length === 0) {
+    if (!tags || tags.length === 0) return; // exit if tags is falsy or empty
+    if (items.length === 0) {
       dispatch(fetchAllItems());
     }
-  }, [dispatch, tags, items.length]);
+  }, [dispatch, tags, items, items.length]);
+
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
@@ -198,14 +202,6 @@ const TagList = () => {
       },
     },
   ];
-
-  if (loading) {
-    return (
-      <div className="flex justify-center p-8">
-        <LoaderCircle className="animate-spin" />
-      </div>
-    );
-  }
 
   if (error) {
     return <div className="p-4 text-destructive">{error}</div>;

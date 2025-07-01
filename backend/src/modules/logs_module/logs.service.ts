@@ -3,6 +3,7 @@ import { SupabaseService } from "../supabase/supabase.service";
 import { LogMessage, AuditLog } from "./interfaces/log.interface";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
+import { ApiResponse } from "src/types/response.types";
 
 @Injectable()
 export class LogsService {
@@ -21,12 +22,7 @@ export class LogsService {
     req: AuthRequest,
     page: number,
     limit: number,
-  ): Promise<{
-    data: LogMessage[];
-    total: number;
-    totalPages: number;
-    page: number;
-  }> {
+  ): Promise<ApiResponse<LogMessage>> {
     const supabase = req.supabase;
     const { from, to } = getPaginationRange(page, limit);
 
@@ -90,9 +86,14 @@ export class LogsService {
         new Date(a.timestamp ?? "").getTime(),
     );
     const meta = getPaginationMeta(count, page, limit);
+    // not getting data from Supabase here, but combining DB + in-memory logs, so I manually construct the full ApiResponse<T> object
     return {
       data: combinedLogs,
-      ...meta,
+      error: null,
+      count: count ?? combinedLogs.length,
+      status: 200,
+      statusText: "OK",
+      metadata: meta,
     };
   }
 
