@@ -7,9 +7,9 @@ import {
 /* Disable ESLint for this file to allow metadata to be any-type*/
 
 export type ApiResponse<T> = PostgrestResponse<T> & {
-  metadata: any;
+  metadata?: any;
 };
 
 export type ApiSingleResponse<T> = PostgrestSingleResponse<T> & {
-  metadata: any;
+  metadata?: any;
 };
