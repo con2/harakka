@@ -2,8 +2,8 @@ import { Session, User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { supabase } from "../config/supabase";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAppDispatch } from "@/store/hooks";
-import { clearSelectedUser, getUserById } from "@/store/slices/usersSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { clearSelectedUser, getUserById, selectSelectedUser } from "@/store/slices/usersSlice";
 import { LoaderCircle } from "lucide-react";
 import { AuthContext } from "./AuthContext";
 
@@ -15,15 +15,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
+  const redux_user = useAppSelector(selectSelectedUser);
 
   const handleSessionUpdate = (session: Session | null) => {
-    // Check if this is a recovery flow by examining the URL
     const isRecoveryFlow =
       window.location.href.includes("type=recovery") ||
       window.location.hash.includes("type=recovery");
 
     if (isRecoveryFlow) {
-      // Don't save user or session for recovery flows
       setSession(null);
       setUser(null);
       setAuthLoading(false);
@@ -34,14 +33,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(session);
     setUser(user);
 
-    // Save user ID to localStorage when session updates
     if (user?.id) {
       localStorage.setItem("userId", user.id);
 
-      // Load the full user profile from backend immediately after login
-      dispatch(getUserById(user.id));
-    } else if (!user) {
-      localStorage.removeItem("userId"); // Clean up on logout
+      if (!redux_user || redux_user.id !== user.id) {
+        dispatch(getUserById(user.id));
+      }
+
+    } else {
+      localStorage.removeItem("userId");
       dispatch(clearSelectedUser());
     }
 
@@ -63,33 +63,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!user) {
-      dispatch(clearSelectedUser());
-    }
-
     if (user && location.pathname === "/login") {
       navigate("/");
     }
-  }, [user, location.pathname, dispatch, navigate]);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleSessionUpdate(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      handleSessionUpdate(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  }, [user, location.pathname, navigate]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    // No need to dispatch clearSelectedUser here directly,
-    // since handleSessionUpdate will run after auth change
     navigate("/");
   };
 
@@ -100,7 +80,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
   };
 
-  // return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
   return (
     <AuthContext.Provider value={value}>
       {authLoading ? (
@@ -113,4 +92,3 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
-

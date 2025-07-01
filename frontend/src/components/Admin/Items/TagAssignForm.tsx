@@ -7,13 +7,13 @@ import {
   selectSelectedTags,
   selectLoading,
 } from "@/store/slices/tagSlice";
-import { Checkbox } from "../ui/checkbox";
-import { Button } from "../ui/button";
 import { TagAssignFormProps } from "@/types";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 
 const TagAssignmentForm: React.FC<TagAssignFormProps> = ({ itemId }) => {
   const dispatch = useAppDispatch();
