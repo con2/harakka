@@ -879,7 +879,6 @@ export type Database = {
           id: string;
           is_active: boolean | null;
           is_deleted: boolean | null;
-          items_number_available: number;
           items_number_currently_in_storage: number | null;
           items_number_total: number;
           location_id: string;
@@ -895,7 +894,6 @@ export type Database = {
           id?: string;
           is_active?: boolean | null;
           is_deleted?: boolean | null;
-          items_number_available: number;
           items_number_currently_in_storage?: number | null;
           items_number_total: number;
           location_id: string;
@@ -911,7 +909,6 @@ export type Database = {
           id?: string;
           is_active?: boolean | null;
           is_deleted?: boolean | null;
-          items_number_available?: number;
           items_number_currently_in_storage?: number | null;
           items_number_total?: number;
           location_id?: string;
