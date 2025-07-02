@@ -64,8 +64,7 @@ const AdminDashboard = () => {
   const { formatDate } = useFormattedDate();
 
   useEffect(() => {
-    if (items.length <= 1)
-      dispatch(fetchAllItems());
+    if (items.length <= 1) dispatch(fetchAllItems());
   }, [dispatch, items.length]);
 
   useEffect(() => {

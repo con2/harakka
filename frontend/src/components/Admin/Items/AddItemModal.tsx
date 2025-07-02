@@ -81,7 +81,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   const error = useAppSelector(selectItemsError);
   const errorContext = useAppSelector(selectItemsErrorContext);
   const { lang } = useLanguage(); // Get current language
-  const tags = useAppSelector(selectAllTags)
+  const tags = useAppSelector(selectAllTags);
 
   // Use global modal state from Redux
   const modalState = useAppSelector(selectItemModalState);
@@ -107,8 +107,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   }, [error, errorContext]);
 
   useEffect(() => {
-    if (modalState.isOpen && tags.length === 0)
-      dispatch(fetchAllTags());
+    if (modalState.isOpen && tags.length === 0) dispatch(fetchAllTags());
 
     if (modalState.isOpen && locations.length === 0)
       dispatch(fetchAllLocations());

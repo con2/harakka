@@ -33,8 +33,7 @@ const ItemsList: React.FC = () => {
 
   // Fetch all items when the component mounts
   useEffect(() => {
-    if (items.length <= 1)
-      dispatch(fetchAllItems());
+    if (items.length <= 1) dispatch(fetchAllItems());
   }, [dispatch, items.length]);
 
   const userQuery = searchQuery.toLowerCase().trim();

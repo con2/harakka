@@ -94,9 +94,7 @@ const MyOrders = () => {
       return;
     }
 
-    if (user && orders.length === 0)
-      dispatch(getUserOrders(user.id));
-
+    if (user && orders.length === 0) dispatch(getUserOrders(user.id));
   }, [dispatch, navigate, user, lang, orders]);
 
   // Apply filters to orders
