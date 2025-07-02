@@ -1,12 +1,6 @@
-import {
-  Controller,
-  Get,
-  Req,
-  Param,
-  BadRequestException,
-} from "@nestjs/common";
-import { RoleService } from "./role.service";
+import { Controller, Get, Param, Req } from "@nestjs/common";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { RoleService } from "./role.service";
 import { UserRoleWithDetails } from "./interfaces/role.interface";
 
 @Controller("roles")
@@ -14,40 +8,69 @@ export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
   /**
-   * Get all roles for the current authenticated user across all organizations
+   * GET /roles/current
+   * Get all roles for the current authenticated user
    */
-  @Get("my-roles")
-  getMyRoles(@Req() req: AuthRequest): UserRoleWithDetails[] {
+  @Get("current")
+  getCurrentUserRoles(@Req() req: AuthRequest): UserRoleWithDetails[] {
     return this.roleService.getCurrentUserRoles(req);
   }
 
   /**
-   * Get current user's roles in a specific organization
+   * GET /roles/check/:roleName
+   * Check if user has a specific role
    */
-  @Get("my-roles/:organizationId")
-  getMyRolesInOrganization(
-    @Param("organizationId") organizationId: string,
+  @Get("check/:roleName")
+  hasRole(
+    @Param("roleName") roleName: string,
     @Req() req: AuthRequest,
-  ): UserRoleWithDetails[] {
-    if (!organizationId) {
-      throw new BadRequestException("Organization ID is required");
-    }
-
-    return this.roleService.getCurrentUserRolesInOrganization(
-      organizationId,
-      req,
-    );
+  ): { hasRole: boolean; roleName: string } {
+    const hasRole = this.roleService.hasRole(req, roleName);
+    return { hasRole, roleName };
   }
 
   /**
-   * Get user organizations with their roles
+   * GET /roles/check/:roleName/organization/:orgId
+   * Check if user has a specific role in an organization
    */
-  @Get("my-organizations")
-  getMyOrganizations(@Req() req: AuthRequest): Array<{
-    organization_id: string;
-    organization_name: string;
-    roles: string[];
-  }> {
+  @Get("check/:roleName/organization/:orgId")
+  hasRoleInOrganization(
+    @Param("roleName") roleName: string,
+    @Param("orgId") orgId: string,
+    @Req() req: AuthRequest,
+  ): { hasRole: boolean; roleName: string; organizationId: string } {
+    const hasRole = this.roleService.hasRole(req, roleName, orgId);
+    return { hasRole, roleName, organizationId: orgId };
+  }
+
+  /**
+   * GET /roles/organizations
+   * Get user's organizations and roles
+   */
+  @Get("organizations")
+  getUserOrganizations(@Req() req: AuthRequest) {
     return this.roleService.getUserOrganizations(req);
+  }
+
+  /**
+   * GET /roles/organization/:orgId
+   * Get user's roles in a specific organization
+   */
+  @Get("organization/:orgId")
+  getCurrentUserRolesInOrganization(
+    @Param("orgId") orgId: string,
+    @Req() req: AuthRequest,
+  ): UserRoleWithDetails[] {
+    return this.roleService.getCurrentUserRolesInOrganization(orgId, req);
+  }
+
+  /**
+   * GET /roles/super-vera
+   * Check if user is superVera (global admin)
+   */
+  @Get("super-vera")
+  isSuperVera(@Req() req: AuthRequest): { isSuperVera: boolean } {
+    const isSuperVera = this.roleService.isSuperVera(req);
+    return { isSuperVera };
   }
 }
