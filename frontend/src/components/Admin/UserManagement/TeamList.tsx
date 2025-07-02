@@ -111,7 +111,7 @@ const TeamList = () => {
       id: "delete",
       header: t.teamList.columns.delete[lang],
       cell: ({ row }) => (
-        <UserDeleteButton id={row.original.id} closeModal={() => { }} />
+        <UserDeleteButton id={row.original.id} closeModal={() => {}} />
       ),
     },
   ];

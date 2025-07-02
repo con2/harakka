@@ -66,7 +66,8 @@ const ItemsList: React.FC = () => {
       item.translations?.[lang === "fi" ? "en" : "fi"]?.item_type;
 
     const matchesItemTypes =
-      !filters.itemTypes?.length || filters.itemTypes.includes(itemType?.toLowerCase());
+      !filters.itemTypes?.length ||
+      filters.itemTypes.includes(itemType?.toLowerCase());
 
     // Filter by tags
     const matchesTags =

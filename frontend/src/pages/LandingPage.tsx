@@ -22,7 +22,9 @@ const LandingPage = () => {
         <h2 className="text-5xl font-bold mb-4 text-white drop-shadow-[0_3px_4px_rgba(0,0,0,0.7)]">
           {t.landingPage.heading[lang]}
         </h2>
-        <p className="mb-6 text-xl text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]">{t.landingPage.subheading[lang]}</p>
+        <p className="mb-6 text-xl text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]">
+          {t.landingPage.subheading[lang]}
+        </p>
         <Button
           onClick={() => (window.location.href = "/storage")}
           className="bg-secondary text-white border:secondary font-semibold px-6 py-5 rounded-lg shadow hover:bg-white hover:text-secondary hover:border-secondary transition"

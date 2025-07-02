@@ -23,7 +23,12 @@ export const toastConfirm = ({
     <div onMouseDown={(e) => e.stopPropagation()}>
       <Card className="w-[360px] shadow-lg border">
         <CardHeader>
-          <CardTitle className="text-lg" style={{ zIndex: 9999, pointerEvents: "auto" }}>{title}</CardTitle>
+          <CardTitle
+            className="text-lg"
+            style={{ zIndex: 9999, pointerEvents: "auto" }}
+          >
+            {title}
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <p className="text-sm text-muted-foreground">{description}</p>

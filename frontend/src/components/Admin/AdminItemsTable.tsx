@@ -30,9 +30,9 @@ import { Command, CommandGroup, CommandItem } from "../ui/command";
 import { PaginatedDataTable } from "../ui/data-table-paginated";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { toastConfirm } from "../ui/toastConfirm";
-import AddItemModal from './Items/AddItemModal';
-import AssignTagsModal from './Items/AssignTagsModal';
-import UpdateItemModal from './Items/UpdateItemModal';
+import AddItemModal from "./Items/AddItemModal";
+import AssignTagsModal from "./Items/AssignTagsModal";
+import UpdateItemModal from "./Items/UpdateItemModal";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -351,9 +351,9 @@ const AdminItemsTable = () => {
               >
                 {tagFilter.length > 0
                   ? t.adminItemsTable.filters.tags.filtered[lang].replace(
-                    "{count}",
-                    tagFilter.length.toString(),
-                  )
+                      "{count}",
+                      tagFilter.length.toString(),
+                    )
                   : t.adminItemsTable.filters.tags.filter[lang]}
               </Button>
             </PopoverTrigger>

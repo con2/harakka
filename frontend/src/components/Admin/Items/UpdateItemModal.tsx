@@ -164,19 +164,21 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
         {/* Tab Navigation */}
         <div className="flex border-b mb-2">
           <button
-            className={`px-4 py-1 text-sm ${activeTab === "details"
+            className={`px-4 py-1 text-sm ${
+              activeTab === "details"
                 ? "border-b-2 border-secondary font-medium"
                 : "text-gray-500"
-              }`}
+            }`}
             onClick={() => setActiveTab("details")}
           >
             {t.updateItemModal.tabs.details[lang]}
           </button>
           <button
-            className={`px-4 py-1 text-sm ${activeTab === "images"
+            className={`px-4 py-1 text-sm ${
+              activeTab === "images"
                 ? "border-b-2 border-secondary font-medium"
                 : "text-gray-500"
-              }`}
+            }`}
             onClick={() => setActiveTab("images")}
           >
             {t.updateItemModal.tabs.images[lang]}
@@ -228,38 +230,38 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                 {/* Item Types - Side by Side (if they exist in your schema) */}
                 {(formData.translations.fi.item_type !== undefined ||
                   formData.translations.en.item_type !== undefined) && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="translations.fi.item_type">
-                          {t.updateItemModal.labels.itemTypeFi[lang]}
-                        </Label>
-                        <Input
-                          id="translations.fi.item_type"
-                          name="translations.fi.item_type"
-                          value={formData.translations.fi.item_type || ""}
-                          onChange={handleChange}
-                          placeholder={
-                            t.updateItemModal.placeholders.itemTypeFi[lang]
-                          }
-                          className="placeholder:text-xs p-2"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="translations.en.item_type">
-                          {t.updateItemModal.labels.itemTypeEn[lang]}
-                        </Label>
-                        <Input
-                          id="translations.en.item_type"
-                          name="translations.en.item_type"
-                          value={formData.translations.en.item_type || ""}
-                          placeholder={
-                            t.updateItemModal.placeholders.itemTypeEn[lang]
-                          }
-                          className="placeholder:text-xs p-2"
-                        />
-                      </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="translations.fi.item_type">
+                        {t.updateItemModal.labels.itemTypeFi[lang]}
+                      </Label>
+                      <Input
+                        id="translations.fi.item_type"
+                        name="translations.fi.item_type"
+                        value={formData.translations.fi.item_type || ""}
+                        onChange={handleChange}
+                        placeholder={
+                          t.updateItemModal.placeholders.itemTypeFi[lang]
+                        }
+                        className="placeholder:text-xs p-2"
+                      />
                     </div>
-                  )}
+                    <div>
+                      <Label htmlFor="translations.en.item_type">
+                        {t.updateItemModal.labels.itemTypeEn[lang]}
+                      </Label>
+                      <Input
+                        id="translations.en.item_type"
+                        name="translations.en.item_type"
+                        value={formData.translations.en.item_type || ""}
+                        placeholder={
+                          t.updateItemModal.placeholders.itemTypeEn[lang]
+                        }
+                        className="placeholder:text-xs p-2"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Item Descriptions - Side by Side */}
                 <div className="grid grid-cols-2 gap-4">
