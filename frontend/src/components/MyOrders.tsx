@@ -166,7 +166,7 @@ const MyOrders = () => {
         dispatch(cancelOrder(editingOrder.id));
         toast.warning(t.myOrders.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
-          dispatch(getUserOrders(user.id));
+          dispatch(getUserOrders({user_id: user.id, page: currentPage, limit: 10}));
         }
       } catch {
         toast.error(t.myOrders.edit.toast.cancelFailed[lang]);
@@ -189,7 +189,7 @@ const MyOrders = () => {
       setShowEditModal(false);
       setEditingOrder(null);
       if (user?.id) {
-        dispatch(getUserOrders(user.id));
+        dispatch(getUserOrders({ user_id: user.id, page: currentPage, limit: 10 }));
       }
     } catch {
       toast.error(t.myOrders.edit.toast.updateFailed[lang]);
@@ -452,7 +452,7 @@ const MyOrders = () => {
               toast.error(t.myOrders.error.loginRequired[lang]);
               return;
             }
-            dispatch(getUserOrders(user.id));
+            dispatch(getUserOrders({ user_id: user.id, page: currentPage, limit: 10 }));
           }}
           className="mt-4"
         >
