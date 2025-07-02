@@ -9,7 +9,6 @@ import {
 } from "@/store/slices/ordersSlice";
 import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import { useAuth } from "@/context/AuthContext";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "../../ui/button";
 import { BookingOrder, BookingItem, PaymentStatus } from "@/types";
@@ -32,6 +31,7 @@ import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { Separator } from "../../ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import OrderPickupButton from "./OrderPickupButton";
+import { useAuth } from "@/hooks/useAuth";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -51,11 +51,11 @@ const OrderList = () => {
 
   useEffect(() => {
     // Always fetch orders when the admin component mounts and auth is ready
-    if (!authLoading && user && user.id && !ordersLoadedRef.current) {
+    if (user && orders.length <= 1) {
       dispatch(getAllOrders(user.id));
       ordersLoadedRef.current = true;
     }
-  }, [authLoading, dispatch, user]);
+  }, [dispatch, user, orders.length]);
 
   const handleViewDetails = (order: BookingOrder) => {
     setSelectedOrder(order);
