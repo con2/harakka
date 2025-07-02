@@ -11,7 +11,7 @@ import {
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { RoleService } from "./role.service";
 import { UserRoleWithDetails } from "./interfaces/role.interface";
-import { CreateUserRoleDto } from "./dto/role.dto";
+import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
 
 @Controller("roles")
 export class RoleController {
