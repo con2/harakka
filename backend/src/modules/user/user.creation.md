@@ -1,4 +1,4 @@
-# wie mache ich das die supabase funktion die create funktion hier triggert?
+# how to trigger the backend from spabase
 
 Supabase Edge Function / Webhook
 
