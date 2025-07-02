@@ -7,7 +7,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { StorageLocationsService } from "./storage-locations.service";
-import { StorageLocation } from "./interfaces/storage-location";
+import { StorageLocationsRow } from "./interfaces/storage-location";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 
 @Controller("api/storage-locations")
@@ -22,15 +22,16 @@ export class StorageLocationsController {
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
   ): Promise<{
-    data: StorageLocation[];
+    data: StorageLocationsRow[];
     total: number;
     page: number;
     totalPages: number;
   }> {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
+    const supabase = req.supabase;
     return this.storageLocationsService.getAllLocations(
-      req,
+      supabase,
       pageNumber,
       limitNumber,
     );
@@ -40,7 +41,7 @@ export class StorageLocationsController {
   async getLocationById(
     @Param("id") id: string,
     @Req() req: AuthRequest,
-  ): Promise<StorageLocation> {
+  ): Promise<StorageLocationsRow> {
     const location = await this.storageLocationsService.getLocationById(
       id,
       req,
