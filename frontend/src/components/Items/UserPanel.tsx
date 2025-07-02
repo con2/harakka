@@ -25,8 +25,7 @@ const UserPanel = () => {
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
 
   useEffect(() => {
-    if (tags.length < 1)
-      dispatch(fetchAllTags({ page: 1, limit: 10 }));
+    if (tags.length < 1) dispatch(fetchAllTags({ page: 1, limit: 10 }));
     if (locations.length < 1)
       dispatch(fetchAllLocations({ page: 1, limit: 10 }));
   }, [dispatch, tags, locations]);
@@ -90,19 +89,6 @@ const UserPanel = () => {
     count += filters.locationIds.length;
     return count;
   };
-    let count = 0;
-    if (
-      filters.itemsNumberAvailable[0] !== 0 ||
-      filters.itemsNumberAvailable[1] !== 100
-    ) {
-      count++;
-    }
-    count += filters.averageRating.length;
-    count += filters.itemTypes.length;
-    count += filters.tagIds.length;
-    count += filters.locationIds.length;
-    return count;
-  };
 
   // Mobile filter toggle visibility state
   const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -132,7 +118,6 @@ const UserPanel = () => {
             <div className="flex items-center justify-between my-2">
               <h3 className="text-secondary font-bold mb-0">Filters</h3>
               <div className="flex items-center gap-2">
-                {/* Clear filters button */}
                 {/* Clear filters button */}
                 {countActiveFilters() > 0 && (
                   <div className="flex justify-start">
@@ -181,10 +166,11 @@ const UserPanel = () => {
                 return (
                   <span
                     key={typeName}
-                    className={`cursor-pointer text-sm justify-between flex items-center ${isSelected
-                      ? "text-secondary font-bold"
-                      : "text-slate-500 hover:text-secondary"
-                      }`}
+                    className={`cursor-pointer text-sm justify-between flex items-center ${
+                      isSelected
+                        ? "text-secondary font-bold"
+                        : "text-slate-500 hover:text-secondary"
+                    }`}
                     onClick={() => {
                       const updated = isSelected
                         ? filters.itemTypes.filter((t) => t !== typeName)
@@ -246,10 +232,11 @@ const UserPanel = () => {
                   return (
                     <label
                       key={location.id}
-                      className={`flex items-center gap-2 text-sm cursor-pointer ${isSelected
-                        ? "text-secondary"
-                        : "text-slate-600 hover:text-secondary"
-                        }`}
+                      className={`flex items-center gap-2 text-sm cursor-pointer ${
+                        isSelected
+                          ? "text-secondary"
+                          : "text-slate-600 hover:text-secondary"
+                      }`}
                     >
                       <input
                         type="checkbox"
@@ -257,8 +244,8 @@ const UserPanel = () => {
                         onChange={() => {
                           const updated = isSelected
                             ? filters.locationIds.filter(
-                              (id) => id !== location.id,
-                            )
+                                (id) => id !== location.id,
+                              )
                             : [...filters.locationIds, location.id];
                           handleFilterChange("locationIds", updated);
                         }}
@@ -289,10 +276,11 @@ const UserPanel = () => {
                   return (
                     <Button
                       key={tag.id}
-                      className={`px-4 border-secondary border-1 rounded-2xl ${(filters.tagIds || []).includes(tag.id)
-                        ? "bg-secondary text-white hover:bg-secondary/80 hover:text-white hover:border-secondary"
-                        : "bg-white text-secondary hover:bg-secondary hover:text-white hover:border-secondary"
-                        }`}
+                      className={`px-4 border-secondary border-1 rounded-2xl ${
+                        (filters.tagIds || []).includes(tag.id)
+                          ? "bg-secondary text-white hover:bg-secondary/80 hover:text-white hover:border-secondary"
+                          : "bg-white text-secondary hover:bg-secondary hover:text-white hover:border-secondary"
+                      }`}
                       onClick={() => {
                         const selected = filters.tagIds || [];
                         const isSelected = selected.includes(tag.id);
