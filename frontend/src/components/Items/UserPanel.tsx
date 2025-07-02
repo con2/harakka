@@ -166,8 +166,8 @@ const UserPanel = () => {
                   <span
                     key={typeName}
                     className={`cursor-pointer text-sm justify-between flex items-center ${isSelected
-                      ? "text-secondary font-bold"
-                      : "text-slate-500 hover:text-secondary"
+                        ? "text-secondary font-bold"
+                        : "text-slate-500 hover:text-secondary"
                       }`}
                     onClick={() => {
                       const updated = isSelected
@@ -231,8 +231,8 @@ const UserPanel = () => {
                     <label
                       key={location.id}
                       className={`flex items-center gap-2 text-sm cursor-pointer ${isSelected
-                        ? "text-secondary"
-                        : "text-slate-600 hover:text-secondary"
+                          ? "text-secondary"
+                          : "text-slate-600 hover:text-secondary"
                         }`}
                     >
                       <input
@@ -274,8 +274,8 @@ const UserPanel = () => {
                     <Button
                       key={tag.id}
                       className={`px-4 border-secondary border-1 rounded-2xl ${(filters.tagIds || []).includes(tag.id)
-                        ? "bg-secondary text-white hover:bg-secondary/80 hover:text-white hover:border-secondary"
-                        : "bg-white text-secondary hover:bg-secondary hover:text-white hover:border-secondary"
+                          ? "bg-secondary text-white hover:bg-secondary/80 hover:text-white hover:border-secondary"
+                          : "bg-white text-secondary hover:bg-secondary hover:text-white hover:border-secondary"
                         }`}
                       onClick={() => {
                         const selected = filters.tagIds || [];
