@@ -65,7 +65,6 @@ const Logs: React.FC = () => {
   const totalCount = useAppSelector(selectLogsTotalCount);
   const pageCount = Math.ceil(totalCount / pageSize);
 
-
   useEffect(() => {
     if (logs.length < 1)
       dispatch(getAllLogs({ page: pageIndex + 1, limit: pageSize }));
@@ -364,18 +363,18 @@ const Logs: React.FC = () => {
           {(searchQuery ||
             logTypeFilter !== "all" ||
             levelFilter !== "all") && (
-              <Button
-                onClick={() => {
-                  setLogTypeFilter("all");
-                  setLevelFilter("all");
-                  setSearchQuery("");
-                }}
-                size="sm"
-                className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
-              >
-                {t.logs.filters.reset[lang] || "Reset Filters"}
-              </Button>
-            )}
+            <Button
+              onClick={() => {
+                setLogTypeFilter("all");
+                setLevelFilter("all");
+                setSearchQuery("");
+              }}
+              size="sm"
+              className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+            >
+              {t.logs.filters.reset[lang] || "Reset Filters"}
+            </Button>
+          )}
         </div>
       </div>
 

@@ -91,7 +91,6 @@ const TagList = () => {
     }
   }, [dispatch, tags, items, items.length]);
 
-
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);

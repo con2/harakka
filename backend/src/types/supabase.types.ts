@@ -310,6 +310,20 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "erm_organization_items_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "erm_organization_items_storage_item_id_fkey";
+            columns: ["storage_item_id"];
+            isOneToOne: false;
+            referencedRelation: "storage_items";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "erm_organization_items_storage_item_id_fkey";
             columns: ["storage_item_id"];
             isOneToOne: false;
@@ -617,6 +631,13 @@ export type Database = {
             foreignKeyName: "saved_list_items_item_id_fkey";
             columns: ["item_id"];
             isOneToOne: false;
+            referencedRelation: "storage_items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "saved_list_items_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
             referencedRelation: "view_item_location_summary";
             referencedColumns: ["storage_item_id"];
           },
@@ -841,6 +862,13 @@ export type Database = {
           translations?: Json | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "storage_item_tags_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "storage_items";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "storage_item_tags_item_id_fkey";
             columns: ["item_id"];
@@ -1242,10 +1270,6 @@ export type Database = {
         Args: { item_id: string };
         Returns: number;
       };
-      calculate_test_metrics: {
-        Args: { item_id: string };
-        Returns: Json;
-      };
       generate_slug: {
         Args: { input_text: string };
         Returns: string;
@@ -1261,37 +1285,6 @@ export type Database = {
       get_full_user_order: {
         Args: { in_user_id: string; in_offset?: number; in_limit?: number };
         Returns: Json;
-      };
-      get_request_user_id: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      get_user_highest_tenant_role: {
-        Args: { p_user_id: string; p_tenant_id: string };
-        Returns: Database["public"]["Enums"]["tenant_role"];
-      };
-      get_user_tenant_roles: {
-        Args: { p_user_id: string; p_tenant_id: string };
-        Returns: {
-          role_name: Database["public"]["Enums"]["tenant_role"];
-          granted_at: string;
-        }[];
-      };
-      has_tenant_admin_role: {
-        Args: { p_tenant_id: string };
-        Returns: boolean;
-      };
-      is_tenant_admin: {
-        Args: { p_tenant_id: string };
-        Returns: boolean;
-      };
-      user_has_tenant_role: {
-        Args: {
-          p_user_id: string;
-          p_tenant_id: string;
-          p_role: Database["public"]["Enums"]["tenant_role"];
-        };
-        Returns: boolean;
       };
     };
     Enums: {
@@ -1312,7 +1305,6 @@ export type Database = {
         | "superVera"
         | "storage_manager"
         | "requester";
-      tenant_role: "admin" | "manager" | "user" | "viewer" | "editor";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1450,7 +1442,6 @@ export const Constants = {
         "storage_manager",
         "requester",
       ],
-      tenant_role: ["admin", "manager", "user", "viewer", "editor"],
     },
   },
 } as const;

@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 import { useAppSelector } from "@/store/hooks";
-import { selectIsAdmin, selectIsSuperVera, selectSelectedUser } from "@/store/slices/usersSlice";
+import {
+  selectIsAdmin,
+  selectIsSuperVera,
+  selectSelectedUser,
+} from "@/store/slices/usersSlice";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,7 +85,10 @@ export const Navigation = () => {
               {isLoggedIn && (
                 <NavigationMenuItem className="hidden md:flex">
                   <NavigationMenuLink asChild>
-                    <Link to="/profile" className="flex items-center gap-1 text-secondary font-medium">
+                    <Link
+                      to="/profile"
+                      className="flex items-center gap-1 text-secondary font-medium"
+                    >
                       {t.navigation.myProfile[lang]}
                     </Link>
                   </NavigationMenuLink>
@@ -92,7 +99,10 @@ export const Navigation = () => {
               {admin && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link to="/admin" className="flex items-center gap-1 text-secondary font-medium">
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-1 text-secondary font-medium"
+                    >
                       {t.navigation.admin[lang]}
                     </Link>
                   </NavigationMenuLink>
@@ -102,7 +112,10 @@ export const Navigation = () => {
               {/* Always show Storage */}
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
-                  <Link to="/storage" className="flex items-center gap-1 text-secondary font-medium">
+                  <Link
+                    to="/storage"
+                    className="flex items-center gap-1 text-secondary font-medium"
+                  >
                     {t.navigation.storage[lang]}
                   </Link>
                 </NavigationMenuLink>
@@ -112,7 +125,10 @@ export const Navigation = () => {
               {!admin && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link to="/howItWorks" className="flex items-center gap-1 text-secondary font-medium">
+                    <Link
+                      to="/howItWorks"
+                      className="flex items-center gap-1 text-secondary font-medium"
+                    >
                       {t.navigation.guides[lang]}
                     </Link>
                   </NavigationMenuLink>
@@ -123,7 +139,10 @@ export const Navigation = () => {
               {!admin && (
                 <NavigationMenuItem className="hidden md:flex">
                   <NavigationMenuLink asChild>
-                    <Link to="/contact-us" className="flex items-center gap-1 text-secondary font-medium">
+                    <Link
+                      to="/contact-us"
+                      className="flex items-center gap-1 text-secondary font-medium"
+                    >
                       {t.navigation.contactUs[lang]}
                     </Link>
                   </NavigationMenuLink>
