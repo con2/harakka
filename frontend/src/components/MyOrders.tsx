@@ -88,18 +88,16 @@ const MyOrders = () => {
 
   useEffect(() => {
     // Redirect if not authenticated
-    if (!user?.id) {
+    if (!user) {
       toast.error(t.myOrders.error.loginRequired[lang]);
       navigate("/login");
       return;
     }
 
-    if (user?.id) {
-      if (user?.id) {
-        dispatch(getUserOrders(user.id));
-      }
-    }
-  }, [dispatch, navigate, user, lang]);
+    if (user && orders.length === 0)
+      dispatch(getUserOrders(user.id));
+
+  }, [dispatch, navigate, user, lang, orders]);
 
   // Apply filters to orders
   const filteredOrders = orders.filter((order) => {

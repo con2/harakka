@@ -45,11 +45,11 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
   const { lang } = useLanguage();
 
   useEffect(() => {
-    if (open) {
+    if (open && tags.length === 0) {
       dispatch(fetchAllTags());
       dispatch(fetchTagsForItem(itemId));
     }
-  }, [open, dispatch, itemId]);
+  }, [open, dispatch, itemId, tags.length]);
 
   useEffect(() => {
     if (selectedTags) {

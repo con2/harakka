@@ -2,8 +2,8 @@ import Navigation from "./components/Navigation";
 import { Toaster } from "sonner";
 import { UserProfileLoader } from "./context/UserProfileLoader";
 import Footer from "./components/Footer";
-import { AuthProvider } from "./context/AuthContext";
 import { Outlet } from "react-router-dom";
+import { AuthProvider } from "./context/AuthProvider";
 
 function App() {
   return (
