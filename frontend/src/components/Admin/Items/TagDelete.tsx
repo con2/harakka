@@ -38,7 +38,7 @@ const TagDelete = ({
             success: t.tagDelete.toast.success[lang],
             error: t.tagDelete.toast.error[lang],
           });
-          dispatch(fetchAllTags());
+          dispatch(fetchAllTags({ limit: 20 }));
           onDeleted?.();
           closeModal?.();
         } catch {

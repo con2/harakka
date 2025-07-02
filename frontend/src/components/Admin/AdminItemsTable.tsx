@@ -64,7 +64,7 @@ const AdminItemsTable = () => {
   //fetch tags list
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   useEffect(() => {
-    dispatch(fetchAllTags());
+    dispatch(fetchAllTags({ limit: 20 })); // Get more tags for filtering
   }, [dispatch]);
 
   const itemsColumns: ColumnDef<Item>[] = [

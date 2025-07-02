@@ -22,7 +22,22 @@ const initialState: LocationsState = {
   error: null,
 };
 
-// Async thunk to fetch all locations
+/**
+ * Fetches a paginated list of storage locations from the backend.
+ *
+ * @param {Object} [params={}]               Pagination options.
+ * @param {number} [params.page=1]           The page number to retrieve (1‑based).
+ * @param {number} [params.limit=10]         The maximum number of locations to return per page.
+ * @returns {AsyncThunk}                     A Redux Toolkit thunk that resolves to an object
+ *                                          containing `data` (LocationDetails[]) plus pagination
+ *                                          keys (`total`, `page`, `totalPages`).
+ *
+ * @example
+ * ```ts
+ * // Fetch locations, first page, 50 per page
+ * dispatch(fetchAllLocations({ page: 1, limit: 50 }));
+ * ```
+ */
 export const fetchAllLocations = createAsyncThunk(
   "locations/fetchAll",
   async (

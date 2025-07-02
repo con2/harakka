@@ -65,9 +65,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   }, [initialData]);
 
   useEffect(() => {
-    dispatch(fetchAllTags());
+    dispatch(fetchAllTags({ limit: 20 }));
     dispatch(fetchTagsForItem(formData.id)); // fetch tags for this item
-    dispatch(fetchAllLocations());
+    dispatch(fetchAllLocations({ limit: 20 }));
   }, [dispatch, formData.id]);
 
   useEffect(() => {
