@@ -1,5 +1,6 @@
 import { BaseEntity, ErrorContext } from "./common";
 import { ItemTranslation } from "./item";
+import { Database } from "./supabase.types";
 
 /**
  * Order status values
@@ -77,6 +78,10 @@ export interface OrdersState {
   error: string | null; // Change to simple string like tags
   errorContext: ErrorContext;
   currentOrder: string | null;
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 /**
@@ -91,3 +96,6 @@ export interface CreateOrderDto {
     end_date: string;
   }[];
 }
+
+export type BookingsTable = Database["public"]["Tables"]["orders"]
+export type BookingsRow = BookingsTable["Row"]
