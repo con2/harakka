@@ -27,6 +27,8 @@ import { AuthTestService } from "../AuthTest/authTest.service";
 import { BookingController } from "../booking/booking.controller";
 import { UserController } from "../user/user.controller";
 import { StorageLocationsController } from "../storage-locations/storage-locations.controller";
+import { BookingItemsModule } from "../booking_items/booking-items.module";
+import { BookingItemsController } from "../booking_items/booking-items.controller";
 import { LogsController } from "../logs_module/logs.controller";
 import { RoleModule } from "../role/role.module";
 import { RoleController } from "../role/role.controller";
@@ -60,6 +62,7 @@ dotenvExpand.expand(env);
     TagModule,
     UserModule,
     SupabaseModule,
+    BookingItemsModule,
     RoleModule,
   ],
   controllers: [AppController, AuthTestController],
@@ -75,6 +78,7 @@ export class AppModule implements NestModule {
         BookingController,
         UserController,
         StorageLocationsController,
+        BookingItemsController,
         LogsController,
         RoleController,
         { path: "*", method: RequestMethod.POST },

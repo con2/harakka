@@ -24,12 +24,12 @@ type BookingCancelledEmailProps = {
   startDate: string;
 };
 
-export const BookingCancelledEmail = ({
+const BookingCancelledEmail = ({
   orderId,
   items,
   recipientRole,
   startDate,
-}: BookingCancelledEmailProps) => {
+}: BookingCancelledEmailProps): React.ReactElement => {
   const isAdmin = recipientRole === "admin" || recipientRole === "superVera";
 
   return (
@@ -105,13 +105,18 @@ export const BookingCancelledEmail = ({
             Perutut tuotteet:
           </Text>
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
-            {items.map((item, index) => (
-              <li key={index} style={{ fontSize: "16px", marginBottom: "6px" }}>
-                Kohde: {item.translations?.en.name ?? "Unknown"}, <br />
-                Määrä: {item.quantity}, <br />
-                Päivämäärät: {item.start_date} to {item.end_date}
-              </li>
-            ))}
+            {items.map(
+              (item, index): React.ReactElement => (
+                <li
+                  key={index}
+                  style={{ fontSize: "16px", marginBottom: "6px" }}
+                >
+                  Kohde: {item.translations?.en.name ?? "Unknown"}, <br />
+                  Määrä: {item.quantity}, <br />
+                  Päivämäärät: {item.start_date} to {item.end_date}
+                </li>
+              ),
+            )}
           </ul>
 
           <hr style={{ margin: "30px 0" }} />
@@ -126,13 +131,18 @@ export const BookingCancelledEmail = ({
             Cancelled Items:
           </Text>
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
-            {items.map((item, index) => (
-              <li key={index} style={{ fontSize: "16px", marginBottom: "6px" }}>
-                Item: {item.translations?.en.name ?? "Unknown"}, <br />
-                Quantity: {item.quantity}, <br />
-                Dates: {item.start_date} to {item.end_date}
-              </li>
-            ))}
+            {items.map(
+              (item, index): React.ReactElement => (
+                <li
+                  key={index}
+                  style={{ fontSize: "16px", marginBottom: "6px" }}
+                >
+                  Item: {item.translations?.en.name ?? "Unknown"}, <br />
+                  Quantity: {item.quantity}, <br />
+                  Dates: {item.start_date} to {item.end_date}
+                </li>
+              ),
+            )}
           </ul>
 
           {!isAdmin && (
@@ -170,3 +180,5 @@ export const BookingCancelledEmail = ({
     </Html>
   );
 };
+
+export default BookingCancelledEmail;

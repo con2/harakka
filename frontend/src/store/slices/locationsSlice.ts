@@ -6,12 +6,18 @@ import { locationsApi } from "../../api/services/locations";
 // Define the state interface
 interface LocationsState {
   locations: LocationDetails[];
+  total: number;
+  page: number;
+  totalPages: number;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: LocationsState = {
   locations: [],
+  total: 0,
+  page: 1,
+  totalPages: 1,
   loading: false,
   error: null,
 };
@@ -19,9 +25,15 @@ const initialState: LocationsState = {
 // Async thunk to fetch all locations
 export const fetchAllLocations = createAsyncThunk(
   "locations/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (
+    {
+      page = 1,
+      limit = 10,
+    }: { page?: number; limit?: number } = {},
+    { rejectWithValue },
+  ) => {
     try {
-      return await locationsApi.getAllLocations();
+      return await locationsApi.getAllLocations(page, limit);
     } catch (error: unknown) {
       let errorMessage = "Failed to fetch locations";
 
@@ -58,7 +70,10 @@ const locationsSlice = createSlice({
       })
       .addCase(fetchAllLocations.fulfilled, (state, action) => {
         state.loading = false;
-        state.locations = action.payload;
+        state.locations = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.totalPages;
       })
       .addCase(fetchAllLocations.rejected, (state, action) => {
         state.loading = false;
