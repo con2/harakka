@@ -2,24 +2,33 @@ import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { StorageLocation } from "./interfaces/storage-location";
+import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 
 @Injectable()
 export class StorageLocationsService {
   constructor(private supabaseService: SupabaseService) {}
 
-  async getAllLocations(req: AuthRequest): Promise<StorageLocation[]> {
+  async getAllLocations(req: AuthRequest, page: number, limit: number) {
     const supabase = req.supabase;
 
-    const { data, error } = await supabase
+    const { from, to } = getPaginationRange(page, limit);
+
+    const { data, error, count } = await supabase
       .from("storage_locations")
-      .select("*")
-      .order("name");
+      .select("*", { count: "exact" })
+      .order("name")
+      .range(from, to);
 
     if (error) {
       throw new Error(error.message);
     }
 
-    return data || [];
+    const meta = getPaginationMeta(count, page, limit);
+
+    return {
+      data: data || [],
+      ...meta,
+    };
   }
 
   async getLocationById(

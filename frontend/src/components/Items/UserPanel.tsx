@@ -26,7 +26,7 @@ const UserPanel = () => {
 
   useEffect(() => {
     dispatch(fetchAllTags());
-    dispatch(fetchAllLocations());
+    dispatch(fetchAllLocations({ page: 1, limit: 10 }));
   }, [dispatch]);
 
   // Unique item_type values from items

@@ -10,6 +10,8 @@ import {
   selectAllTags,
   selectError,
   selectLoading,
+  selectTagsPage,
+  selectTagsTotalPages,
   updateTag,
 } from "@/store/slices/tagSlice";
 import AddTagModal from "./AddTagModal";
@@ -33,6 +35,8 @@ const TagList = () => {
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectLoading);
   const error = useAppSelector(selectError);
+  const page = useAppSelector(selectTagsPage);
+  const totalPages = useAppSelector(selectTagsTotalPages);
   const [searchTerm, setSearchTerm] = useState("");
   const [assignmentFilter, setAssignmentFilter] = useState<
     "all" | "assigned" | "unassigned"
@@ -44,6 +48,8 @@ const TagList = () => {
   const [editNameFi, setEditNameFi] = useState("");
   const [editNameEn, setEditNameEn] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(page);
+
   const tagUsage: Record<string, number> = {};
   items.forEach((item) => {
     (item.storage_item_tags || []).forEach((tag) => {
@@ -51,31 +57,44 @@ const TagList = () => {
     });
   });
 
-  const filteredTags = tags
-    .filter((tag) => {
-      const fiName = tag.translations?.fi?.name?.toLowerCase() || "";
-      const enName = tag.translations?.en?.name?.toLowerCase() || "";
-      const search = searchTerm.toLowerCase();
-      return fiName.includes(search) || enName.includes(search);
-    })
-    .filter((tag) => {
-      const isAssigned = !!tagUsage[tag.id];
-      if (assignmentFilter === "assigned") return isAssigned;
-      if (assignmentFilter === "unassigned") return !isAssigned;
-      return true;
-    });
+  // added a fallback default ([]) before calling .filter
+  const filteredTags = (tags ?? [])
+  .filter((tag) => {
+    const fiName = tag.translations?.fi?.name?.toLowerCase() || "";
+    const enName = tag.translations?.en?.name?.toLowerCase() || "";
+    const search = searchTerm.toLowerCase();
+    return fiName.includes(search) || enName.includes(search);
+  })
+  .filter((tag) => {
+    const isAssigned = !!tagUsage?.[tag.id];
+    if (assignmentFilter === "assigned") return isAssigned;
+    if (assignmentFilter === "unassigned") return !isAssigned;
+    return true;
+  });
 
   // Fetch tags on mount
   useEffect(() => {
-    dispatch(fetchAllTags());
-  }, [dispatch]);
+    dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
+  }, [dispatch, currentPage]);
+
+  // When redux page changes, sync local page
+  useEffect(() => {
+    setCurrentPage(page);
+  }, [page]);
 
   // Fetch items once tags are available
   useEffect(() => {
-    if (tags.length > 0 && items.length === 0) {
+    if (!tags || tags.length === 0) return; // exit if tags is falsy or empty
+    if (items.length === 0) {
       dispatch(fetchAllItems());
     }
-  }, [dispatch, tags, items.length]);
+  }, [dispatch, tags, items, items.length]);
+
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+  };
 
   const handleEditClick = (tag: Tag) => {
     setEditTag(tag);
@@ -99,7 +118,7 @@ const TagList = () => {
         updateTag({ id: editTag.id, tagData: updatedTag }),
       ).unwrap();
       toast.success(t.tagList.editModal.messages.success[lang]);
-      dispatch(fetchAllTags());
+      dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
       setEditTag(null);
     } catch {
       toast.error(t.tagList.editModal.messages.error[lang]);
@@ -174,7 +193,7 @@ const TagList = () => {
             <TagDelete
               id={tag.id}
               onDeleted={() => {
-                dispatch(fetchAllTags());
+                dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
               }}
             />
           </div>
@@ -182,14 +201,6 @@ const TagList = () => {
       },
     },
   ];
-
-  if (loading) {
-    return (
-      <div className="flex justify-center p-8">
-        <LoaderCircle className="animate-spin" />
-      </div>
-    );
-  }
 
   if (error) {
     return <div className="p-4 text-destructive">{error}</div>;
@@ -264,7 +275,13 @@ const TagList = () => {
           </div>
 
           {/* Table */}
-          <PaginatedDataTable columns={columns} data={filteredTags} />
+          <PaginatedDataTable
+            columns={columns}
+            data={filteredTags}
+            pageIndex={currentPage - 1}
+            pageCount={totalPages}
+            onPageChange={(page) => handlePageChange(page + 1)}
+          />
 
           {/* Edit Modal */}
           {editTag && (
