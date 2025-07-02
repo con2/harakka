@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { useAppSelector } from "@/store/hooks";
 import { selectIsAdmin, selectIsSuperVera, selectSelectedUser } from "@/store/slices/usersSlice";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -18,6 +17,7 @@ import { toastConfirm } from "./ui/toastConfirm";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Navigation = () => {
   const { signOut } = useAuth();
@@ -110,24 +110,24 @@ export const Navigation = () => {
 
               {/* User GuideLines in Nav only for regular users */}
               {!admin && (
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link to="/howItWorks" className="flex items-center gap-1 text-secondary font-medium">
-                    {t.navigation.guides[lang]}
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link to="/howItWorks" className="flex items-center gap-1 text-secondary font-medium">
+                      {t.navigation.guides[lang]}
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
               )}
 
               {/* Contact Form Only in Desktop view for non admins*/}
               {!admin && (
-              <NavigationMenuItem className="hidden md:flex">
-                <NavigationMenuLink asChild>
-                  <Link to="/contact-us" className="flex items-center gap-1 text-secondary font-medium">
-                    {t.navigation.contactUs[lang]}
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
+                <NavigationMenuItem className="hidden md:flex">
+                  <NavigationMenuLink asChild>
+                    <Link to="/contact-us" className="flex items-center gap-1 text-secondary font-medium">
+                      {t.navigation.contactUs[lang]}
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
               )}
             </NavigationMenuList>
           </NavigationMenu>

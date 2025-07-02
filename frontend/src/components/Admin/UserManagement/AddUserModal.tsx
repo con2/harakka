@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -30,6 +29,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Label } from "../../ui/label";
+import { useAuth } from "@/hooks/useAuth";
 
 const initialFormState: Omit<CreateUserDto, "password"> = {
   full_name: "",
