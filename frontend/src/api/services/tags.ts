@@ -1,5 +1,6 @@
 import { Tag, CreateTagDto, UpdateTagDto } from "@/types/tag";
 import { api } from "../axios";
+import { ApiResponse } from "@/types/api"
 
 /**
  * API service for tag-related endpoints
@@ -20,12 +21,15 @@ export const tagsApi = {
       totalPages: number;
     }
   }> => {
-    const result = await api.get(`/tags?page=${page}&limit=${limit}`);
-
+    const result = await api.get<ApiResponse<Tag[]>>(`/tags?page=${page}&limit=${limit}`);
+    console.log("result:", result)
+    console.log("data:", result.data)
+    console.log("data.data:", result.data.data)
+    console.log("data.metadata:", result.data.metadata)
     // Extract data and metadata from the ApiResponse
     return {
-      data: result.data || [],
-      metadata: result.metadata || {
+      data: result.data ?? [],
+      metadata: result.metadata ?? {
         total: 0,
         page,
         totalPages: 1,
