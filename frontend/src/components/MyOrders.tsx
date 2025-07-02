@@ -5,6 +5,8 @@ import {
   getUserOrders,
   selectOrdersError,
   selectOrdersLoading,
+  selectOrdersPage,
+  selectOrdersTotalPages,
   selectUserOrders,
   updateOrder,
 } from "@/store/slices/ordersSlice";
@@ -63,6 +65,9 @@ const MyOrders = () => {
   const [endPickerOpen, setEndPickerOpen] = useState(false);
   const [availability, setAvailability] = useState<{ [itemId: string]: number }>({});
   const [loadingAvailability, setLoadingAvailability] = useState<{ [itemId: string]: boolean }>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const page = useAppSelector(selectOrdersPage)
+  const totalPages = useAppSelector(selectOrdersTotalPages)
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -82,10 +87,18 @@ const MyOrders = () => {
     }
 
     if (user && orders.length === 0)
-      dispatch(getUserOrders(user.id));
+      dispatch(getUserOrders({user_id: user.id, page: currentPage, limit: 10}));
 
-  }, [dispatch, navigate, user, lang, orders]);
+  }, [dispatch, navigate, user, lang, orders, currentPage]);
 
+  useEffect(() => {
+    if (user && page !== currentPage) dispatch(getUserOrders({ user_id: user.id, page: currentPage, limit: 10 }));
+  }, [page, currentPage, dispatch, user])
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+  };
   // Apply filters to orders
   const filteredOrders = orders.filter((order) => {
     // Filter by status
@@ -642,7 +655,9 @@ const MyOrders = () => {
             ))}
           </Accordion>
         ) : (
-          <PaginatedDataTable columns={columns} data={filteredOrders} />
+              <PaginatedDataTable columns={columns} data={filteredOrders} pageIndex={currentPage - 1}
+                pageCount={totalPages}
+                onPageChange={(page) => handlePageChange(page + 1)} />
         )}
       </div>
 
