@@ -15,7 +15,8 @@ import {
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 
 // Create an entity adapter for orders
-const ordersAdapter = createEntityAdapter<BookingOrder>({
+const ordersAdapter = createEntityAdapter<BookingOrder, string>({
+  selectId: (e) => e.id,
   sortComparer: (a, b) => {
     const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -32,6 +33,10 @@ const initialState = ordersAdapter.getInitialState<
   error: null,
   errorContext: null,
   currentOrder: null,
+  page: 1,
+  limit: 10,
+  total: 0,
+  totalPages: 1,
 });
 
 // Create order thunk
@@ -49,11 +54,14 @@ export const createOrder = createAsyncThunk<BookingOrder, CreateOrderDto>(
 );
 
 // Get user orders thunk
-export const getUserOrders = createAsyncThunk<BookingOrder[], string>(
+export const getUserOrders = createAsyncThunk(
   "orders/getUserOrders",
-  async (userId, { rejectWithValue }) => {
+  async (
+    { user_id, page, limit }: { user_id: string; page: number; limit: number },
+    { rejectWithValue },
+  ) => {
     try {
-      return await ordersApi.getUserOrders(userId);
+      return await ordersApi.getUserOrders(user_id, page, limit);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch user orders"),
@@ -63,11 +71,14 @@ export const getUserOrders = createAsyncThunk<BookingOrder[], string>(
 );
 
 // Get all orders thunk
-export const getAllOrders = createAsyncThunk<BookingOrder[], string>(
+export const getAllOrders = createAsyncThunk(
   "orders/getAllOrders",
-  async (userId, { rejectWithValue }) => {
+  async (
+    { page = 1, limit = 10 }: { page?: number; limit?: number },
+    { rejectWithValue },
+  ) => {
     try {
-      return await ordersApi.getAllOrders(userId);
+      return await ordersApi.getAllOrders(page, limit);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch all orders"),
@@ -174,19 +185,16 @@ export const returnItems = createAsyncThunk<
   { orderId: string },
   string,
   { rejectValue: string }
->(
-  "orders/returnItems",
-  async (orderId, { rejectWithValue }) => {
-    try {
-      await ordersApi.returnItems(orderId); // Just fire and forget
-      return { orderId };
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to process returns")
-      );
-    }
+>("orders/returnItems", async (orderId, { rejectWithValue }) => {
+  try {
+    await ordersApi.returnItems(orderId); // Just fire and forget
+    return { orderId };
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to process returns"),
+    );
   }
-);
+});
 
 // update Payment Status thunk
 export const updatePaymentStatus = createAsyncThunk<
@@ -204,10 +212,10 @@ export const updatePaymentStatus = createAsyncThunk<
       };
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to update the payment status")
+        extractErrorMessage(error, "Failed to update the payment status"),
       );
     }
-  }
+  },
 );
 
 export const ordersSlice = createSlice({
@@ -246,8 +254,11 @@ export const ordersSlice = createSlice({
       })
       .addCase(getUserOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.userOrders = action.payload;
-        ordersAdapter.setAll(state, action.payload);
+        state.userOrders = action.payload.data ?? [];
+        state.total = action.payload.metadata.total;
+        state.page = action.payload.metadata.page;
+        state.totalPages = action.payload.metadata.totalPages;
+        ordersAdapter.setAll(state, action.payload.data ?? []);
       })
       .addCase(getUserOrders.rejected, (state, action) => {
         state.loading = false;
@@ -256,13 +267,17 @@ export const ordersSlice = createSlice({
       })
       // Get all orders
       .addCase(getAllOrders.pending, (state) => {
+        
         state.loading = true;
         state.error = null;
         state.errorContext = null;
       })
       .addCase(getAllOrders.fulfilled, (state, action) => {
         state.loading = false;
-        ordersAdapter.setAll(state, action.payload);
+        state.total = action.payload.metadata.total;
+        state.page = action.payload.metadata.page;
+        state.totalPages = action.payload.metadata.totalPages;
+        ordersAdapter.setAll(state, action.payload.data ?? []);
       })
       .addCase(getAllOrders.rejected, (state, action) => {
         state.loading = false;
@@ -408,7 +423,7 @@ export const ordersSlice = createSlice({
         });
 
         state.userOrders = state.userOrders.map((order) =>
-          order.id === orderId ? { ...order, status: "completed" } : order
+          order.id === orderId ? { ...order, status: "completed" } : order,
         );
       })
       .addCase(returnItems.rejected, (state, action) => {
@@ -437,7 +452,6 @@ export const ordersSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "update-payment-status";
       });
-      ;
   },
 });
 
@@ -467,6 +481,13 @@ export const selectOrdersErrorWithContext = (state: RootState) => ({
 });
 export const selectOrdersTotal = ordersSelectors.selectTotal;
 export const selectUserOrders = (state: RootState) => state.orders.userOrders;
+
+// Pagination data
+export const selectOrdersPage = (state: RootState) => state.orders.page;
+export const selectOrdersLimit = (state: RootState) => state.orders.limit;
+export const selectOrdersTotalData = (state: RootState) => state.orders.total;
+export const selectOrdersTotalPages = (state: RootState) =>
+  state.orders.totalPages;
 
 // Export reducer
 export default ordersSlice.reducer;
