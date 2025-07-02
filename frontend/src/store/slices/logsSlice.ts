@@ -39,12 +39,11 @@ export const getAllLogs = createAsyncThunk<
       return await logsApi.getAllLogs(page, limit);
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch all logs")
+        extractErrorMessage(error, "Failed to fetch all logs"),
       );
     }
-  }
+  },
 );
-
 
 // Create the logs slice
 const logsSlice = createSlice({
