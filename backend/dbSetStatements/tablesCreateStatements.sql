@@ -24,7 +24,6 @@ CREATE TABLE storage_items (
   location_id UUID REFERENCES storage_locations(id) NOT NULL,
   compartment_id UUID REFERENCES storage_compartments(id),
   items_number_total NUMERIC NOT NULL,
-  items_number_available NUMERIC NOT NULL,
   price DECIMAL NOT NULL,
   average_rating DECIMAL DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
