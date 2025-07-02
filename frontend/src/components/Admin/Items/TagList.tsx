@@ -74,8 +74,9 @@ const TagList = () => {
 
   // Fetch tags on mount
   useEffect(() => {
-    dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
-  }, [dispatch, currentPage]);
+    if (tags.length === 0)
+      dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
+  }, [dispatch, tags.length, currentPage]);
 
   // When redux page changes, sync local page
   useEffect(() => {

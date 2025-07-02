@@ -1,5 +1,4 @@
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -19,6 +18,7 @@ import { Navigate } from "react-router-dom";
 import { Button } from "../../ui/button";
 import AddTeamMemberModal from "./AddTeamMemberModal";
 import UserDeleteButton from "./UserDeleteButton";
+import { useAuth } from "@/hooks/useAuth";
 
 const TeamList = () => {
   const dispatch = useAppDispatch();

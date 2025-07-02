@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -22,6 +21,7 @@ import { PaginatedDataTable } from "../../ui/data-table-paginated";
 import AddUserModal from "./AddUserModal";
 import UserDeleteButton from "./UserDeleteButton";
 import UserEditModal from "./UserEditModal";
+import { useAuth } from "@/hooks/useAuth";
 
 const UsersList = () => {
   const dispatch = useAppDispatch();

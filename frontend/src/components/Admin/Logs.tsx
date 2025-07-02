@@ -66,8 +66,9 @@ const Logs: React.FC = () => {
   const pageCount = Math.ceil(totalCount / pageSize);
 
   useEffect(() => {
-    dispatch(getAllLogs({ page: pageIndex + 1, limit: pageSize }));
-  }, [dispatch, userId, pageIndex, pageSize]);
+    if (logs.length < 1)
+      dispatch(getAllLogs({ page: pageIndex + 1, limit: pageSize }));
+  }, [dispatch, logs.length, pageIndex]);
 
   const refreshLogs = () => {
     if (userId) {

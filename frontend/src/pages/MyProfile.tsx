@@ -78,9 +78,10 @@ const MyProfile = () => {
       setPhone(selectedUser.phone || "");
       setVisibleName(selectedUser.visible_name || "");
       // setPreferences(selectedUser.preferences || "");
-      dispatch(getUserAddresses(selectedUser.id));
+      if (addresses.length === 0)
+        dispatch(getUserAddresses(selectedUser.id));
     }
-  }, [selectedUser, dispatch]);
+  }, [selectedUser, dispatch, addresses.length]);
 
   useEffect(() => {
     setAddresses(userAddresses || []);

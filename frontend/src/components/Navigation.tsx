@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { useAppSelector } from "@/store/hooks";
 import {
   selectIsAdmin,
@@ -22,6 +21,7 @@ import { toastConfirm } from "./ui/toastConfirm";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Navigation = () => {
   const { signOut } = useAuth();
