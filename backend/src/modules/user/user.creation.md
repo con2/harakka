@@ -8,23 +8,45 @@ Supabase Edge Function / Webhook
 
     Vorteil: sauber entkoppelt, offiziell unterstützt, und du kannst HTTP nutzen.
 
+## add bypass to middleware:
+
+```ts
+// Allow bypass if valid API key is present
+const apiKey = req.headers["x-api-key"];
+if (apiKey === this.config.get("BACKEND_SECRET")) {
+  this.logger.log("Bypassing auth middleware via API key");
+  return next();
+}
+```
+
 ## Trigger-Definition in supabase/functions/handleNewUser/index.ts
+
+**new edge function: handleNewUser.ts**
 
 ```ts
 import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 
 serve(async (req) => {
   const payload = await req.json();
-  // payload.record will enthalten: NEW von user.created
-  await fetch(`${Deno.env.get("API_URL")}/users`, {
+  const user = payload.record;
+
+  const res = await fetch(`${Deno.env.get("API_URL")}/users`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-Key": Deno.env.get("BACKEND_SECRET")!,
+    },
     body: JSON.stringify({
-      id: payload.record.id,
-      email: payload.record.email,
-      // ggf. weitere Daten
+      id: user.id,
+      email: user.email,
     }),
   });
+
+  if (!res.ok) {
+    console.error("Failed to call backend:", await res.text());
+    return new Response("Error calling backend", { status: 500 });
+  }
+
   return new Response("ok");
 });
 ```
