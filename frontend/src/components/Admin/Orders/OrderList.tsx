@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getAllOrders,
@@ -40,6 +40,7 @@ import {
 } from "../../ui/select";
 import OrderPickupButton from "./OrderPickupButton";
 import { useAuth } from "@/hooks/useAuth";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -59,11 +60,12 @@ const OrderList = () => {
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const [currentPage, setCurrentPage] = useState(1);
+  const debouncedSearchQuery = useDebouncedValue(searchQuery)
 
   useEffect(() => {
     // Always fetch orders when the admin component mounts and auth is ready
     if (user && orders.length <= 1) {
-      dispatch(getAllOrders({ page: currentPage }));
+      dispatch(getAllOrders({ page: currentPage, limit: 10 }));
       ordersLoadedRef.current = true;
     }
   }, [dispatch, user, orders.length, currentPage]);
@@ -74,13 +76,17 @@ const OrderList = () => {
   };
 
   useEffect(() => {
-    if (page !== currentPage) dispatch(getAllOrders({ page: currentPage }));
+    if (page !== currentPage) dispatch(getAllOrders({ page: currentPage, limit: 10 }));
   }, [page, currentPage, dispatch]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
   };
+
+  useEffect(() => {
+    if (debouncedSearchQuery) console.log("This is when it will search")
+  },  [debouncedSearchQuery])
 
   // Render a status badge with appropriate color
   const StatusBadge = ({ status }: { status?: string }) => {
@@ -166,6 +172,10 @@ const OrderList = () => {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  const handleSearchQuery = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  } 
 
   // Apply filters to orders before passing to table
   const filteredOrders = orders.filter((order) => {
@@ -430,7 +440,7 @@ const OrderList = () => {
               placeholder={t.orderList.filters.search[lang]}
               value={searchQuery}
               size={50}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchQuery(e)}
               className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             />
             <select
