@@ -3,7 +3,6 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-  getPaginationRowModel,
   getSortedRowModel,
   SortingState,
 } from "@tanstack/react-table";
@@ -26,30 +25,39 @@ import { t } from "@/translations";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  pageIndex: number;
+  pageCount: number;
+  onPageChange: (pageIndex: number) => void;
 }
 
 export function PaginatedDataTable<TData, TValue>({
   columns,
   data,
+  pageIndex,
+  pageCount,
+  onPageChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const table = useReactTable({
     data,
     columns,
+    pageCount,
+    manualPagination: true,
     state: {
+      pagination: {
+        pageIndex,
+        pageSize: 10,
+      },
       sorting,
     },
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-        pageIndex: 0,
-      },
+    onPaginationChange: (updater) => {
+      const newState =
+        typeof updater === "function" ? updater({ pageIndex, pageSize: 10 }) : updater;
+      onPageChange(newState.pageIndex);
     },
-    getRowId: (row) => (row as { id?: string | number })?.id?.toString() ?? JSON.stringify(row),
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
   // Translation
   const { lang } = useLanguage();
@@ -121,28 +129,25 @@ export function PaginatedDataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-center mt-5 space-x-2">
         <Button
-          className="px-2 py-1 bg-background border-1 border-secondary text-secondary hover:bg-secondary hover:text-white"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
+          variant={"secondary"}
+          onClick={() => onPageChange(pageIndex - 1)}
+          disabled={pageIndex === 0}
         >
           {t.pagination.previous[lang]}
         </Button>
         <span className="text-sm text-slate-500">
           {t.pagination.pageInfo[lang]
-            .replace(
-              "{page}",
-              String(table.getState().pagination.pageIndex + 1),
-            )
-            .replace("{total}", String(table.getPageCount()))}
+            .replace("{page}", String(pageIndex + 1))
+            .replace("{total}", String(pageCount))}
         </span>
         <Button
-          className="px-2 py-1 bg-background border-1 border-secondary text-secondary hover:bg-secondary hover:text-white"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
+          variant={"secondary"}
+          onClick={() => onPageChange(pageIndex + 1)}
+          disabled={pageIndex + 1 >= pageCount}
         >
           {t.pagination.next[lang]}
         </Button>
-      </div>
+              </div>
     </div>
   );
 }

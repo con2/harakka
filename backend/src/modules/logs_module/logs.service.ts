@@ -2,6 +2,8 @@ import { Injectable, Logger, ForbiddenException } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { LogMessage, AuditLog } from "./interfaces/log.interface";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
+import { ApiResponse } from "src/types/response.types";
 
 @Injectable()
 export class LogsService {
@@ -16,10 +18,15 @@ export class LogsService {
    * Get logs from both audit_logs table and in-memory system logs
    * Only accessible to admin users
    */
-  async getAllLogs(req: AuthRequest): Promise<LogMessage[]> {
+  async getAllLogs(
+    req: AuthRequest,
+    page: number,
+    limit: number,
+  ): Promise<ApiResponse<LogMessage>> {
     const supabase = req.supabase;
+    const { from, to } = getPaginationRange(page, limit);
 
-    // First check if user is an admin
+    // TODO: Change role table - First check if user is an admin
     const userId = req.user?.id;
     const { data: userProfile, error: userError } = await supabase
       .from("user_profiles")
@@ -40,11 +47,16 @@ export class LogsService {
     }
 
     // Fetch audit logs from database
-    const { data: auditLogs, error } = await supabase
+    const {
+      data: auditLogs,
+      error,
+      count,
+    } = await supabase
       .from("audit_logs")
-      .select("*")
+      .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
-      .limit(500);
+      //.limit(500);
+      .range(from, to);
 
     if (error) {
       this.logger.error(`Failed to fetch logs: ${error.message}`);
@@ -73,7 +85,16 @@ export class LogsService {
         new Date(b.timestamp ?? "").getTime() -
         new Date(a.timestamp ?? "").getTime(),
     );
-    return combinedLogs;
+    const meta = getPaginationMeta(count, page, limit);
+    // not getting data from Supabase here, but combining DB + in-memory logs, so I manually construct the full ApiResponse<T> object
+    return {
+      data: combinedLogs,
+      error: null,
+      count: count ?? combinedLogs.length,
+      status: 200,
+      statusText: "OK",
+      metadata: meta,
+    };
   }
 
   /**

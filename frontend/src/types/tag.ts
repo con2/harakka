@@ -21,6 +21,10 @@ export interface TagState {
   error: string | null;
   errorContext: ErrorContext;
   selectedTags: Tag[] | null;
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 /**

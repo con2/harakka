@@ -5,6 +5,7 @@ import {
   selectAllLogs,
   selectLogsError,
   selectLogsLoading,
+  selectLogsTotalCount,
 } from "@/store/slices/logsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
@@ -58,14 +59,20 @@ const Logs: React.FC = () => {
   const [selectedLog, setSelectedLog] = useState<LogMessage | null>(null);
   const [showLogDetails, setShowLogDetails] = useState(false);
 
+  // track page number and size
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageSize = 10;
+  const totalCount = useAppSelector(selectLogsTotalCount);
+  const pageCount = Math.ceil(totalCount / pageSize);
+
+
   useEffect(() => {
-    if (logs.length === 0)
-      dispatch(getAllLogs(userId));
-  }, [dispatch, userId, logs.length]);
+    dispatch(getAllLogs({ page: pageIndex + 1, limit: pageSize }));
+  }, [dispatch, userId]);
 
   const refreshLogs = () => {
     if (userId) {
-      dispatch(getAllLogs(userId));
+      dispatch(getAllLogs({ page: pageIndex + 1, limit: pageSize }));
     }
   };
 
@@ -385,7 +392,13 @@ const Logs: React.FC = () => {
         </div>
       ) : (
         <div>
-          <PaginatedDataTable columns={columns} data={filteredAndSortedLogs} />
+          <PaginatedDataTable
+            columns={columns}
+            data={filteredAndSortedLogs}
+            pageIndex={pageIndex}
+            pageCount={pageCount}
+            onPageChange={setPageIndex}
+          />
         </div>
       )}
 
