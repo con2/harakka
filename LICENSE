@@ -1,21 +1,33 @@
-MIT License
+FullStack Storage and Booking App Non-Commercial License v1.0
 
-Copyright (c) 2025 Aluko Maria, Beliakov Vladimir, Jana Stefanie, Shital Sapkota
+Copyright (c) 2025 Aluko Maria, Beliakov Vladimir, Gian Jonathan, Jana Stefanie, Kantis Athina, Shital Sapkota - The FullStack Storage and Booking App Team
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. <b>Permission</b>   
+You are free to:
+- Use the software for non-commercial purposes
+- Copy and distribute the software without modification
+- Modify the software for personal, educational, or non-profit use
+- Share modified versions with attribution
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. <b>Conditions</b>  
+You must:  
+- Include this license text in all copies or substantial portions of the software
+- Provide proper credit to the original authors:
+  - "Aluko Maria, Beliakov Vladimir, Gian Jonathan, Jana Stefanie, Kantis Athina, Shital Sapkota (2025)"
+- Link to the original project repository (if public)
+- Clearly indicate any changes you make
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+3. <b>Limitations</b>  
+You may not:  
+- Use this software or any modified version for commercial purposes
+- Sell, license, or include this software in any paid product or service
+- Use this software in systems that generate revenue, directly or indirectly
+
+4. <b>Commercial Use</b>  
+Commercial use of this software is strictly prohibited without prior written permission.
+To obtain a commercial license, contact the authors at:  
+[https://github.com/Con2StorageOrg](https://github.com/Con2StorageOrg)
+
+5. <b>Disclaimer</b>  
+This software is provided "as is", without warranty of any kind.
+The authors are not liable for any damages arising from the use of this software.
