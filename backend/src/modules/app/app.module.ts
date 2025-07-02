@@ -27,6 +27,8 @@ import { AuthTestService } from "../AuthTest/authTest.service";
 import { BookingController } from "../booking/booking.controller";
 import { UserController } from "../user/user.controller";
 import { StorageLocationsController } from "../storage-locations/storage-locations.controller";
+import { BookingItemsModule } from "../booking_items/booking-items.module";
+import { BookingItemsController } from "../booking_items/booking-items.controller";
 import { LogsController } from "../logs_module/logs.controller";
 
 // Load and expand environment variables before NestJS modules initialize
@@ -58,6 +60,7 @@ dotenvExpand.expand(env);
     TagModule,
     UserModule,
     SupabaseModule,
+    BookingItemsModule,
   ],
   controllers: [AppController, AuthTestController],
   providers: [AppService, AuthTestService],
@@ -72,6 +75,7 @@ export class AppModule implements NestModule {
         BookingController,
         UserController,
         StorageLocationsController,
+        BookingItemsController,
         LogsController,
         { path: "*", method: RequestMethod.POST },
         { path: "*", method: RequestMethod.PUT },
