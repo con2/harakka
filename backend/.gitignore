@@ -1,5 +1,5 @@
 # Supabase files
-/supabase   # Supabase project files
+/.supabase   
 .vscode     
 # compiled output
 /dist
