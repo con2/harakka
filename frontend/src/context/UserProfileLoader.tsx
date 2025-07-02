@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { getUserById } from "../store/slices/usersSlice";
-import { useAuth } from "../context/AuthContext";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export const UserProfileLoader = () => {
   const dispatch = useAppDispatch();

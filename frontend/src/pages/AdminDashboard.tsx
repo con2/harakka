@@ -54,8 +54,9 @@ const AdminDashboard = () => {
   const { formatDate } = useFormattedDate();
 
   useEffect(() => {
-    dispatch(fetchAllItems());
-  }, [dispatch]);
+    if (items.length <= 1)
+      dispatch(fetchAllItems());
+  }, [dispatch, items.length]);
 
   useEffect(() => {
     if (users.length === 0) {
@@ -64,10 +65,10 @@ const AdminDashboard = () => {
   }, [dispatch, users.length]);
 
   useEffect(() => {
-    if (!ordersLoading && user?.id && orders.length === 0) {
+    if (user && orders.length <= 1) {
       dispatch(getAllOrders(user.id));
     }
-  }, [dispatch, user?.id, orders.length, ordersLoading]);
+  }, [dispatch, user, orders.length]);
 
   const handleViewDetails = (order: BookingOrder) => {
     setSelectedOrder(order);
