@@ -1,7 +1,11 @@
+# Supabase files
+/.supabase   
+.vscode     
 # compiled output
 /dist
 /node_modules
 /build
+/.vscode
 
 # Logs
 logs
