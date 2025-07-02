@@ -1,6 +1,6 @@
 # Generated Supabase types file
 src/types/supabase.types.ts
-
+*.css
 # Ignore dependency trees and build output
 node_modules/
 dist/
