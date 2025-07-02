@@ -1,3 +1,5 @@
+import { UserRoleWithDetails } from "../interfaces/role.interface";
+
 /**
  * DTO for creating a new user role assignment
  */

@@ -1,6 +1,14 @@
-import { Injectable, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from "@nestjs/common";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { UserRoleWithDetails } from "./interfaces/role.interface";
+import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "src/types/supabase.types";
 
 @Injectable()
 export class RoleService {
@@ -102,5 +110,259 @@ export class RoleService {
     return req.userRoles.filter(
       (role) => role.organization_id === organizationId,
     );
+  }
+
+  /**
+   * Create a new user role assignment
+   */
+  async createUserRole(
+    createRoleDto: CreateUserRoleDto,
+    req: AuthRequest,
+  ): Promise<UserRoleWithDetails> {
+    const { user_id, organization_id, role_id } = createRoleDto;
+
+    // Check if assignment already exists
+    const { data: existing } = await req.supabase
+      .from("user_organization_roles")
+      .select("id")
+      .eq("user_id", user_id)
+      .eq("organization_id", organization_id)
+      .eq("role_id", role_id)
+      .single();
+
+    if (existing) {
+      throw new BadRequestException(
+        "User already has this role in this organization",
+      );
+    }
+
+    // Create the role assignment
+    const { data, error } = await req.supabase
+      .from("user_organization_roles")
+      .insert({
+        user_id,
+        organization_id,
+        role_id,
+        is_active: true,
+      })
+      .select(
+        `
+        id,
+        user_id,
+        organization_id,
+        role_id,
+        is_active,
+        created_at,
+        roles!inner(
+          id,
+          role
+        ),
+        organizations!inner(
+          id,
+          name,
+          slug
+        )
+      `,
+      )
+      .single();
+
+    if (error) {
+      this.logger.error(`Failed to create user role: ${error.message}`);
+      throw new BadRequestException("Failed to create role assignment");
+    }
+
+    return {
+      id: data.id,
+      user_id: data.user_id,
+      organization_id: data.organization_id,
+      role_id: data.role_id,
+      role_name: String(data.roles.role),
+      organization_name: data.organizations.name,
+      is_active: data.is_active ?? true,
+      created_at: data.created_at ?? undefined,
+    };
+  }
+
+  /**
+   * Update a user role assignment
+   */
+  async updateUserRole(
+    roleAssignmentId: string,
+    updateRoleDto: UpdateUserRoleDto,
+    req: AuthRequest,
+  ): Promise<UserRoleWithDetails> {
+    // Check if assignment exists
+    const { data: existing, error: existingError } = await req.supabase
+      .from("user_organization_roles")
+      .select("id, user_id, organization_id")
+      .eq("id", roleAssignmentId)
+      .single();
+
+    if (existingError || !existing) {
+      throw new NotFoundException("Role assignment not found");
+    }
+
+    // Update the role assignment
+    const { data, error } = await req.supabase
+      .from("user_organization_roles")
+      .update({
+        role_id: updateRoleDto.role_id,
+        is_active: updateRoleDto.is_active,
+      })
+      .eq("id", roleAssignmentId)
+      .select(
+        `
+        id,
+        user_id,
+        organization_id,
+        role_id,
+        is_active,
+        created_at,
+        roles!inner(
+          id,
+          role
+        ),
+        organizations!inner(
+          id,
+          name,
+          slug
+        )
+      `,
+      )
+      .single();
+
+    if (error) {
+      this.logger.error(`Failed to update user role: ${error.message}`);
+      throw new BadRequestException("Failed to update role assignment");
+    }
+
+    return {
+      id: data.id,
+      user_id: data.user_id,
+      organization_id: data.organization_id,
+      role_id: data.role_id,
+      role_name: String(data.roles.role),
+      organization_name: data.organizations.name,
+      is_active: data.is_active ?? true,
+      created_at: data.created_at ?? undefined,
+    };
+  }
+
+  /**
+   * Delete a user role assignment (soft delete by setting is_active = false)
+   */
+  async deleteUserRole(
+    roleAssignmentId: string,
+    req: AuthRequest,
+  ): Promise<{ success: boolean; message: string }> {
+    // Check if assignment exists
+    const { data: existing, error: existingError } = await req.supabase
+      .from("user_organization_roles")
+      .select("id, user_id, organization_id")
+      .eq("id", roleAssignmentId)
+      .single();
+
+    if (existingError || !existing) {
+      throw new NotFoundException("Role assignment not found");
+    }
+
+    // Soft delete by setting is_active = false
+    const { error } = await req.supabase
+      .from("user_organization_roles")
+      .update({ is_active: false })
+      .eq("id", roleAssignmentId);
+
+    if (error) {
+      this.logger.error(`Failed to delete user role: ${error.message}`);
+      throw new BadRequestException("Failed to delete role assignment");
+    }
+
+    return {
+      success: true,
+      message: "Role assignment deactivated successfully",
+    };
+  }
+
+  /**
+   * Hard delete a user role assignment (permanent removal)
+   */
+  async permanentDeleteUserRole(
+    roleAssignmentId: string,
+    req: AuthRequest,
+  ): Promise<{ success: boolean; message: string }> {
+    // Check if assignment exists
+    const { data: existing, error: existingError } = await req.supabase
+      .from("user_organization_roles")
+      .select("id")
+      .eq("id", roleAssignmentId)
+      .single();
+
+    if (existingError || !existing) {
+      throw new NotFoundException("Role assignment not found");
+    }
+
+    // Hard delete
+    const { error } = await req.supabase
+      .from("user_organization_roles")
+      .delete()
+      .eq("id", roleAssignmentId);
+
+    if (error) {
+      this.logger.error(
+        `Failed to permanently delete user role: ${error.message}`,
+      );
+      throw new BadRequestException(
+        "Failed to permanently delete role assignment",
+      );
+    }
+
+    return {
+      success: true,
+      message: "Role assignment permanently deleted",
+    };
+  }
+
+  /**
+   * Get all user role assignments (admin only)
+   */
+  async getAllUserRoles(req: AuthRequest): Promise<UserRoleWithDetails[]> {
+    const { data, error } = await req.supabase
+      .from("user_organization_roles")
+      .select(
+        `
+        id,
+        user_id,
+        organization_id,
+        role_id,
+        is_active,
+        created_at,
+        roles!inner(
+          id,
+          role
+        ),
+        organizations!inner(
+          id,
+          name,
+          slug
+        )
+      `,
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      this.logger.error(`Failed to fetch all user roles: ${error.message}`);
+      throw new BadRequestException("Failed to fetch user roles");
+    }
+
+    return data.map((item) => ({
+      id: item.id,
+      user_id: item.user_id,
+      organization_id: item.organization_id,
+      role_id: item.role_id,
+      role_name: String(item.roles.role),
+      organization_name: item.organizations.name,
+      is_active: item.is_active ?? true,
+      created_at: item.created_at ?? undefined,
+    }));
   }
 }

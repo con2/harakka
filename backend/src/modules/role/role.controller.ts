@@ -1,7 +1,17 @@
-import { Controller, Get, Param, Req } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Req,
+  Body,
+} from "@nestjs/common";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { RoleService } from "./role.service";
 import { UserRoleWithDetails } from "./interfaces/role.interface";
+import { CreateUserRoleDto } from "./dto/role.dto";
 
 @Controller("roles")
 export class RoleController {
@@ -65,6 +75,17 @@ export class RoleController {
   }
 
   /**
+   * GET /roles/all
+   * Get all user role assignments (admin only)
+   */
+  @Get("all")
+  async getAllUserRoles(
+    @Req() req: AuthRequest,
+  ): Promise<UserRoleWithDetails[]> {
+    return this.roleService.getAllUserRoles(req);
+  }
+
+  /**
    * GET /roles/super-vera
    * Check if user is superVera (global admin)
    */
@@ -72,5 +93,54 @@ export class RoleController {
   isSuperVera(@Req() req: AuthRequest): { isSuperVera: boolean } {
     const isSuperVera = this.roleService.isSuperVera(req);
     return { isSuperVera };
+  }
+
+  /**
+   * POST /roles
+   * Create a new user role assignment
+   */
+  @Post()
+  async createUserRole(
+    @Body() createRoleDto: CreateUserRoleDto,
+    @Req() req: AuthRequest,
+  ): Promise<UserRoleWithDetails> {
+    return this.roleService.createUserRole(createRoleDto, req);
+  }
+
+  /**
+   * PUT /roles/:id
+   * Update a user role assignment
+   */
+  @Put(":id")
+  async updateUserRole(
+    @Param("id") id: string,
+    @Body() updateRoleDto: UpdateUserRoleDto,
+    @Req() req: AuthRequest,
+  ): Promise<UserRoleWithDetails> {
+    return this.roleService.updateUserRole(id, updateRoleDto, req);
+  }
+
+  /**
+   * DELETE /roles/:id
+   * Soft delete a user role assignment (deactivate)
+   */
+  @Delete(":id")
+  async deleteUserRole(
+    @Param("id") id: string,
+    @Req() req: AuthRequest,
+  ): Promise<{ success: boolean; message: string }> {
+    return this.roleService.deleteUserRole(id, req);
+  }
+
+  /**
+   * DELETE /roles/:id/permanent
+   * Permanently delete a user role assignment
+   */
+  @Delete(":id/permanent")
+  async permanentDeleteUserRole(
+    @Param("id") id: string,
+    @Req() req: AuthRequest,
+  ): Promise<{ success: boolean; message: string }> {
+    return this.roleService.permanentDeleteUserRole(id, req);
   }
 }
