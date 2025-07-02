@@ -7,7 +7,11 @@ type MultiSelectProps = {
   onChange: (selected: string[]) => void;
 };
 
-export const MultiSelect = ({ selected, options, onChange }: MultiSelectProps) => {
+export const MultiSelect = ({
+  selected,
+  options,
+  onChange,
+}: MultiSelectProps) => {
   const [search, setSearch] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
@@ -18,7 +22,9 @@ export const MultiSelect = ({ selected, options, onChange }: MultiSelectProps) =
     onChange(updatedSelected);
   };
 
-  const filteredOptions = options.filter(option => option.toLowerCase().includes(search.toLowerCase()));
+  const filteredOptions = options.filter((option) =>
+    option.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <div className="relative">
@@ -37,7 +43,9 @@ export const MultiSelect = ({ selected, options, onChange }: MultiSelectProps) =
           style={{ maxHeight: "200px" }}
         >
           {filteredOptions.length === 0 ? (
-            <div className="px-4 py-2 text-sm text-gray-500">No results found</div>
+            <div className="px-4 py-2 text-sm text-gray-500">
+              No results found
+            </div>
           ) : (
             filteredOptions.map((option) => (
               <div
