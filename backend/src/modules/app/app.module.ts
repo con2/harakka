@@ -32,6 +32,7 @@ import { BookingItemsController } from "../booking_items/booking-items.controlle
 import { LogsController } from "../logs_module/logs.controller";
 import { RoleModule } from "../role/role.module";
 import { RoleController } from "../role/role.controller";
+import { AuthModule } from "../auth/auth.module";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -53,6 +54,7 @@ dotenvExpand.expand(env);
       ],
     }),
     AdminModule,
+    AuthModule,
     BookingModule,
     ItemImagesModule,
     LogsModule,
@@ -72,19 +74,32 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
-
+      .exclude(
+        // Public authentication endpoints - these should NOT require authentication
+        { path: "auth/test-login", method: RequestMethod.POST },
+        { path: "auth/get-fresh-token", method: RequestMethod.POST },
+        { path: "auth/endpoints", method: RequestMethod.GET },
+        // Health checks and public endpoints
+        { path: "health", method: RequestMethod.GET },
+        { path: "", method: RequestMethod.GET }, // Root endpoint
+        { path: "storage", method: RequestMethod.GET },
+      )
       // ⬇️  List every non-GET verb you want protected
       .forRoutes(
+        // Protected controllers
         BookingController,
         UserController,
         StorageLocationsController,
         BookingItemsController,
         LogsController,
         RoleController,
+
+        // Protected HTTP methods (all routes except excluded ones)
         { path: "*", method: RequestMethod.POST },
         { path: "*", method: RequestMethod.PUT },
         { path: "*", method: RequestMethod.PATCH },
         { path: "*", method: RequestMethod.DELETE },
+        { path: "*", method: RequestMethod.GET }, // Protect GET routes too, except excluded ones
       );
   }
 }
