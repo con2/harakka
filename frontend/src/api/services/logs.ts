@@ -36,4 +36,4 @@ export const logsApi = {
     page: number;
     totalPages: number;
   }> => api.get(`/logs?page=${page}&limit=${limit}`),
-}
+};
