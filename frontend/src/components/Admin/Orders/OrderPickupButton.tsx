@@ -6,7 +6,7 @@ import { t } from "@/translations";
 const OrderPickupButton = () => {
   const { lang } = useLanguage();
   return (
-     <Button
+    <Button
       variant="ghost"
       size="sm"
       title={t.orderList.buttons.pickedUp[lang]}
@@ -14,7 +14,7 @@ const OrderPickupButton = () => {
     >
       <BoxIcon className="h-4 w-4" />
     </Button>
-  )
-}
+  );
+};
 
-export default OrderPickupButton
+export default OrderPickupButton;

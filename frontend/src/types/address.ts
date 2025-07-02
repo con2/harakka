@@ -1,6 +1,6 @@
 export interface Address {
   id?: string;
-  user_id: string; 
+  user_id: string;
   address_type: "both" | "billing" | "shipping";
   street_address: string;
   city: string;

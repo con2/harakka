@@ -75,19 +75,19 @@ const UserPanel = () => {
   };
 
   const countActiveFilters = () => {
-  let count = 0;
-  if (
-    filters.itemsNumberAvailable[0] !== 0 ||
-    filters.itemsNumberAvailable[1] !== 100
-  ) {
-    count++;
-  }
-  count += filters.averageRating.length;
-  count += filters.itemTypes.length;
-  count += filters.tagIds.length;
-  count += filters.locationIds.length;
-  return count;
-};
+    let count = 0;
+    if (
+      filters.itemsNumberAvailable[0] !== 0 ||
+      filters.itemsNumberAvailable[1] !== 100
+    ) {
+      count++;
+    }
+    count += filters.averageRating.length;
+    count += filters.itemTypes.length;
+    count += filters.tagIds.length;
+    count += filters.locationIds.length;
+    return count;
+  };
 
   // Mobile filter toggle visibility state
   const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -102,22 +102,22 @@ const UserPanel = () => {
     <div className="flex min-h-screen w-full overflow-y-auto md:px-10">
       {/* Sidebar: Filters Panel */}
       <aside
-  ref={filterRef}
-  className={`${
-    isFilterVisible ? "block" : "hidden"
-  } md:flex md:flex-col md:min-h-[calc(100vh-60px)] w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
-  style={{
-    top: "60px",
-    backgroundColor: "#fff",
-  }}
->
+        ref={filterRef}
+        className={`${
+          isFilterVisible ? "block" : "hidden"
+        } md:flex md:flex-col md:min-h-[calc(100vh-60px)] w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
+        style={{
+          top: "60px",
+          backgroundColor: "#fff",
+        }}
+      >
         {/* Filter Section */}
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
           <div>
             <div className="flex items-center justify-between my-2">
               <h3 className="text-secondary font-bold mb-0">Filters</h3>
               <div className="flex items-center gap-2">
-                 {/* Clear filters button */}
+                {/* Clear filters button */}
                 {countActiveFilters() > 0 && (
                   <div className="flex justify-start">
                     <Button
@@ -177,7 +177,8 @@ const UserPanel = () => {
                       handleFilterChange("itemTypes", updated);
                     }}
                   >
-                    {typeName.charAt(0).toUpperCase() + typeName.slice(1)} <ChevronRight className="w-4 h-4 inline" />
+                    {typeName.charAt(0).toUpperCase() + typeName.slice(1)}{" "}
+                    <ChevronRight className="w-4 h-4 inline" />
                   </span>
                 );
               })}

@@ -18,7 +18,7 @@ export const tagsApi = {
       total: number;
       page: number;
       totalPages: number;
-    }
+    };
   }> => {
     const result = await api.get(`/tags?page=${page}&limit=${limit}`);
 
@@ -45,7 +45,8 @@ export const tagsApi = {
    * @param itemId - Item ID
    * @returns Array of tags assigned to the item
    */
-  getTagsByItem: (itemId: string): Promise<Tag[]> => api.get(`/tags/item/${itemId}`),
+  getTagsByItem: (itemId: string): Promise<Tag[]> =>
+    api.get(`/tags/item/${itemId}`),
 
   /**
    * Create a new tag

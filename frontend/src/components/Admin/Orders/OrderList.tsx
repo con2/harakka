@@ -30,7 +30,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { Separator } from "../../ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 import OrderPickupButton from "./OrderPickupButton";
 
 const OrderList = () => {
@@ -239,11 +245,20 @@ const OrderList = () => {
       cell: ({ row }) => {
         const paymentStatus = row.original.payment_status ?? "N/A";
 
-        const handleStatusChange = (newStatus: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | "N/A") => {
-          dispatch(updatePaymentStatus({
-            orderId: row.original.id,
-            status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
-          }));
+        const handleStatusChange = (
+          newStatus:
+            | "invoice-sent"
+            | "paid"
+            | "payment-rejected"
+            | "overdue"
+            | "N/A",
+        ) => {
+          dispatch(
+            updatePaymentStatus({
+              orderId: row.original.id,
+              status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
+            }),
+          );
         };
 
         return (
@@ -252,18 +267,29 @@ const OrderList = () => {
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              {["invoice-sent", "paid", "payment-rejected", "overdue", "N/A"].map((status) => {
-                const statusKeyMap: Record<string, keyof typeof t.orderList.columns.invoice.invoiceStatus> = {
+              {[
+                "invoice-sent",
+                "paid",
+                "payment-rejected",
+                "overdue",
+                "N/A",
+              ].map((status) => {
+                const statusKeyMap: Record<
+                  string,
+                  keyof typeof t.orderList.columns.invoice.invoiceStatus
+                > = {
                   "invoice-sent": "sent",
-                  "paid": "paid",
+                  paid: "paid",
                   "payment-rejected": "rejected",
-                  "overdue": "overdue",
+                  overdue: "overdue",
                   "N/A": "NA",
                 };
                 const statusKey = statusKeyMap[status];
                 return (
                   <SelectItem className="text-xs" key={status} value={status}>
-                    {t.orderList.columns.invoice.invoiceStatus?.[statusKey]?.[lang] || status}
+                    {t.orderList.columns.invoice.invoiceStatus?.[statusKey]?.[
+                      lang
+                    ] || status}
                   </SelectItem>
                 );
               })}
@@ -311,10 +337,7 @@ const OrderList = () => {
               />
             )}
 
-            {isConfirmed && (
-              <OrderPickupButton
-              />
-            )}
+            {isConfirmed && <OrderPickupButton />}
 
             <OrderDeleteButton
               id={order.id}
@@ -504,14 +527,18 @@ const OrderList = () => {
                     {selectedOrder.status === "pending" && (
                       <>
                         <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.confirm[lang]}</span>
+                          <span className="text-xs text-slate-600">
+                            {t.orderList.modal.buttons.confirm[lang]}
+                          </span>
                           <OrderConfirmButton
                             id={selectedOrder.id}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
                         <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.reject[lang]}</span>
+                          <span className="text-xs text-slate-600">
+                            {t.orderList.modal.buttons.reject[lang]}
+                          </span>
                           <OrderRejectButton
                             id={selectedOrder.id}
                             closeModal={() => setShowDetailsModal(false)}
@@ -523,21 +550,26 @@ const OrderList = () => {
                     {selectedOrder.status === "confirmed" && (
                       <>
                         <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.return[lang]}</span>
+                          <span className="text-xs text-slate-600">
+                            {t.orderList.modal.buttons.return[lang]}
+                          </span>
                           <OrderReturnButton
                             id={selectedOrder.id}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
                         <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.pickedUp[lang]}</span>
-                          <OrderPickupButton
-                          />
+                          <span className="text-xs text-slate-600">
+                            {t.orderList.modal.buttons.pickedUp[lang]}
+                          </span>
+                          <OrderPickupButton />
                         </div>
                       </>
                     )}
                     <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.delete[lang]}</span>
+                      <span className="text-xs text-slate-600">
+                        {t.orderList.modal.buttons.delete[lang]}
+                      </span>
                       <OrderDeleteButton
                         id={selectedOrder.id}
                         closeModal={() => setShowDetailsModal(false)}

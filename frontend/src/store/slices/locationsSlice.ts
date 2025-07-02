@@ -26,10 +26,7 @@ const initialState: LocationsState = {
 export const fetchAllLocations = createAsyncThunk(
   "locations/fetchAll",
   async (
-    {
-      page = 1,
-      limit = 10,
-    }: { page?: number; limit?: number } = {},
+    { page = 1, limit = 10 }: { page?: number; limit?: number } = {},
     { rejectWithValue },
   ) => {
     try {

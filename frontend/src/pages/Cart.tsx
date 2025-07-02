@@ -140,7 +140,8 @@ const Cart: React.FC = () => {
       console.error("Checkout error:", error);
       console.error("Order data that failed:", orderData);
       toast.error(
-        `Checkout error: ${error instanceof Error ? error.message : "Unknown error"
+        `Checkout error: ${
+          error instanceof Error ? error.message : "Unknown error"
         }`,
       );
     }
@@ -167,9 +168,9 @@ const Cart: React.FC = () => {
   const rentalDays =
     startDate && endDate
       ? Math.ceil(
-        (new Date(endDate).getTime() - new Date(startDate).getTime()) /
-        (1000 * 60 * 60 * 24),
-      ) + 1
+          (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+            (1000 * 60 * 60 * 24),
+        ) + 1
       : 0;
 
   return (

@@ -262,7 +262,7 @@ const ItemsDetails: React.FC = () => {
               ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
               : "Tuote"}
           </h2>
-          
+
           {/* Rating Component */}
           {item.average_rating ? (
             <div className="flex items-center justify-start mt-1">
@@ -277,19 +277,14 @@ const ItemsDetails: React.FC = () => {
             <div className="text-sm mt-2">
               {item.location_details.name && (
                 <div className="flex items-start">
-                  <span>
-                    {t.itemDetails.locations.location[lang]}:
-                  </span>
+                  <span>{t.itemDetails.locations.location[lang]}:</span>
                   <span className="ml-1">{item.location_details.name}</span>
                 </div>
               )}
 
               {item.location_details.address && (
                 <div className="flex items-start">
-                  <span>
-                    {" "}
-                    {t.itemDetails.locations.address[lang]}:
-                  </span>
+                  <span> {t.itemDetails.locations.address[lang]}:</span>
                   <span className="ml-1">{item.location_details.address}</span>
                 </div>
               )}
@@ -316,8 +311,7 @@ const ItemsDetails: React.FC = () => {
                 </div>
                 <p className="text-xs font-medium m-0">
                   {formatDate(startDate, "d MMM yyyy")}
-                    <span> -</span>{" "}
-                    {formatDate(endDate, "d MMM yyyy")}
+                  <span> -</span> {formatDate(endDate, "d MMM yyyy")}
                 </p>
               </div>
 
@@ -354,9 +348,12 @@ const ItemsDetails: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                      onClick={() =>
+                  onClick={() =>
                     setQuantity(
-                      Math.min(availabilityInfo.availableQuantity, quantity + 1),
+                      Math.min(
+                        availabilityInfo.availableQuantity,
+                        quantity + 1,
+                      ),
                     )
                   }
                   disabled={quantity >= availabilityInfo.availableQuantity}
