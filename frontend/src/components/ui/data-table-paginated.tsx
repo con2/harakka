@@ -52,7 +52,9 @@ export function PaginatedDataTable<TData, TValue>({
     },
     onPaginationChange: (updater) => {
       const newState =
-        typeof updater === "function" ? updater({ pageIndex, pageSize: 10 }) : updater;
+        typeof updater === "function"
+          ? updater({ pageIndex, pageSize: 10 })
+          : updater;
       onPageChange(newState.pageIndex);
     },
     onSortingChange: setSorting,
@@ -147,7 +149,7 @@ export function PaginatedDataTable<TData, TValue>({
         >
           {t.pagination.next[lang]}
         </Button>
-              </div>
+      </div>
     </div>
   );
 }

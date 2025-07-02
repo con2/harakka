@@ -2,7 +2,13 @@ import { BookingOrder } from "@/types";
 import { Button } from "./ui/button";
 import { Edit } from "lucide-react";
 
-const OrderEditButton = ({ order, onEdit }: { order: BookingOrder; onEdit: (order: BookingOrder) => void }) => (
+const OrderEditButton = ({
+  order,
+  onEdit,
+}: {
+  order: BookingOrder;
+  onEdit: (order: BookingOrder) => void;
+}) => (
   <Button
     onClick={() => onEdit(order)}
     size={"sm"}
