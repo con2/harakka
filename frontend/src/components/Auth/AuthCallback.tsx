@@ -12,7 +12,7 @@ const AuthCallback = () => {
       try {
         const url = new URL(window.location.href);
         const hashParams = new URLSearchParams(url.hash.replace("#", ""));
-        console.log('url in auth callback: ', url)
+        console.log("url in auth callback: ", url);
 
         // Check if this is a recovery flow FIRST before any other auth handling
         const isRecovery =
