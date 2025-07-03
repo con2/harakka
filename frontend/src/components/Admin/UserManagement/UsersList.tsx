@@ -35,6 +35,9 @@ const UsersList = () => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
   const isAuthorized = isAdmin || isSuperVera || isUser;
   const closeModal = () => setIsModalOpen(false);
   // Translation
@@ -64,6 +67,22 @@ const UsersList = () => {
       if (roleFilter === "all") return true;
       return u.role === roleFilter;
     });
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchQuery, roleFilter]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (pageIndex: number) => {
+    setCurrentPage(pageIndex);
+  };
 
   const columns: ColumnDef<UserProfile>[] = [
     {
@@ -207,7 +226,13 @@ const UsersList = () => {
         </div>
       </div>
 
-      <PaginatedDataTable columns={columns} data={filteredUsers} />
+      <PaginatedDataTable
+        columns={columns}
+        data={paginatedUsers}
+        pageIndex={currentPage}
+        pageCount={totalPages}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 };

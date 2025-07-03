@@ -166,7 +166,8 @@ const SidebarLink = ({
     to={to}
     end={end} // Ensures exact match
     className={({ isActive }: { isActive: boolean }) =>
-      `flex items-center gap-3 p-2 rounded hover:bg-gray-200 ${isActive ? "text-highlight2" : "text-gray-700"
+      `flex items-center gap-3 p-2 rounded hover:bg-gray-200 ${
+        isActive ? "text-highlight2" : "text-gray-700"
       }`
     }
   >

@@ -134,9 +134,12 @@ const TimeframeSelector: React.FC = () => {
                       : false;
                     // prevent dates more than 14 days from start
                     const isTooFarFromStart = startDate
-                      ? date.getTime() > new Date(startDate.getTime() + 14 * 86400000).getTime()
+                      ? date.getTime() >
+                        new Date(startDate.getTime() + 14 * 86400000).getTime()
                       : false;
-                    return isBeforeToday || isBeforeStartDate || isTooFarFromStart;
+                    return (
+                      isBeforeToday || isBeforeStartDate || isTooFarFromStart
+                    );
                   }}
                 />
               </PopoverContent>

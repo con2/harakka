@@ -30,9 +30,9 @@ import { Command, CommandGroup, CommandItem } from "../ui/command";
 import { PaginatedDataTable } from "../ui/data-table-paginated";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { toastConfirm } from "../ui/toastConfirm";
-import AddItemModal from './Items/AddItemModal';
-import AssignTagsModal from './Items/AssignTagsModal';
-import UpdateItemModal from './Items/UpdateItemModal';
+import AddItemModal from "./Items/AddItemModal";
+import AssignTagsModal from "./Items/AssignTagsModal";
+import UpdateItemModal from "./Items/UpdateItemModal";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -55,18 +55,58 @@ const AdminItemsTable = () => {
   >("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
 
   const handleCloseAssignTagsModal = () => {
     setAssignTagsModalOpen(false);
     setCurrentItemId(null);
   };
-
+  /* ————————————————————— Side Effects ———————————————————————————— */
   //fetch tags list
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   useEffect(() => {
-    dispatch(fetchAllTags());
+    dispatch(fetchAllTags({ limit: 20 }));
   }, [dispatch]);
 
+  useEffect(() => {
+    if (items.length === 0) {
+      dispatch(fetchAllItems());
+    }
+  }, [dispatch, items.length]);
+
+  useEffect(() => {
+    if (selectedItem) {
+      dispatch(fetchAllItems());
+    }
+  }, [selectedItem, dispatch]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm, statusFilter, tagFilter]);
+
+  const deletableItems = useAppSelector((state) => state.items.deletableItems);
+
+  useEffect(() => {
+    const newItemIds = items
+      .filter(
+        (item) =>
+          !Object.prototype.hasOwnProperty.call(deletableItems, item.id),
+      )
+      .map((item) => item.id);
+
+    if (newItemIds.length > 0) {
+      newItemIds.forEach((id) => dispatch(checkItemDeletability(id)));
+    }
+  }, [dispatch, items, deletableItems]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm, statusFilter, tagFilter]);
+  /* ————————————————————————— Item Columns ———————————————————————— */
   const itemsColumns: ColumnDef<Item>[] = [
     {
       header: t.adminItemsTable.columns.namefi[lang],
@@ -158,10 +198,7 @@ const AdminItemsTable = () => {
         const targetUser = row.original;
         const canEdit = isSuperVera || isAdmin;
         const canDelete = isSuperVera || isAdmin;
-        const isDeletable = useAppSelector(
-          (state) => state.items.deletableItems[targetUser.id] !== false,
-        );
-
+        const isDeletable = deletableItems[targetUser.id] !== false;
         return (
           <div className="flex gap-2">
             {canEdit && (
@@ -207,31 +244,10 @@ const AdminItemsTable = () => {
     },
   ];
 
-  useEffect(() => {
-    if (items.length === 0) {
-      dispatch(fetchAllItems());
-    }
-  }, [dispatch, items.length]);
-
   const handleEdit = (item: Item) => {
     setSelectedItem(item); // Set the selected item
     setShowModal(true); // Show the modal
   };
-
-  const deletableItems = useAppSelector((state) => state.items.deletableItems);
-
-  useEffect(() => {
-    const newItemIds = items
-      .filter(
-        (item) =>
-          !Object.prototype.hasOwnProperty.call(deletableItems, item.id),
-      )
-      .map((item) => item.id);
-
-    if (newItemIds.length > 0) {
-      newItemIds.forEach((id) => dispatch(checkItemDeletability(id)));
-    }
-  }, [dispatch, items, deletableItems]);
 
   const handleDelete = async (id: string) => {
     toastConfirm({
@@ -261,18 +277,6 @@ const AdminItemsTable = () => {
     setShowModal(false);
     setSelectedItem(null); // Reset selected item
   };
-
-  useEffect(() => {
-    if (items.length === 0) {
-      dispatch(fetchAllItems());
-    }
-  }, [dispatch, items.length]);
-
-  useEffect(() => {
-    if (selectedItem) {
-      dispatch(fetchAllItems());
-    }
-  }, [selectedItem, dispatch]);
 
   if (loading) {
     return (
@@ -306,6 +310,18 @@ const AdminItemsTable = () => {
       return tagFilter.every((tag) => itemTagIds.includes(tag));
     });
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedItems = filteredItems.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (pageIndex: number) => {
+    setCurrentPage(pageIndex);
+  };
+
+  /*————————————————————————————— Main Render —————————————————————————————*/
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -351,9 +367,9 @@ const AdminItemsTable = () => {
               >
                 {tagFilter.length > 0
                   ? t.adminItemsTable.filters.tags.filtered[lang].replace(
-                    "{count}",
-                    tagFilter.length.toString(),
-                  )
+                      "{count}",
+                      tagFilter.length.toString(),
+                    )
                   : t.adminItemsTable.filters.tags.filter[lang]}
               </Button>
             </PopoverTrigger>
@@ -444,7 +460,13 @@ const AdminItemsTable = () => {
         </div>
       </div>
 
-      <PaginatedDataTable columns={itemsColumns} data={filteredItems} />
+      <PaginatedDataTable
+        columns={itemsColumns}
+        data={paginatedItems}
+        pageIndex={currentPage}
+        pageCount={totalPages}
+        onPageChange={handlePageChange}
+      />
 
       {/* Show UpdateItemModal when showModal is true */}
       {showModal && selectedItem && (
