@@ -100,7 +100,7 @@ const OrderList = () => {
           limit: 10,
           searchquery: debouncedSearchQuery,
           ascending: ascending === false ? false : true,
-          status_filter: (statusFilter !== "all") && statusFilter
+          status_filter: statusFilter !== "all" ? statusFilter : undefined
         }),
       );
     else {
