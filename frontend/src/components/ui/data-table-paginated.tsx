@@ -25,10 +25,10 @@ interface DataTableProps<TData, TValue> {
   pageIndex: number;
   pageCount: number;
   onPageChange: (pageIndex: number) => void;
-  ascending: boolean | null;
-  order: string;
-  handleAscending: (asc: boolean | null) => void;
-  handleOrder: (order: string) => void;
+  ascending?: boolean | null;
+  order?: string;
+  handleAscending?: (asc: boolean | null) => void;
+  handleOrder?: (order: string) => void;
 }
 
 export function PaginatedDataTable<TData, TValue>({
@@ -72,22 +72,22 @@ export function PaginatedDataTable<TData, TValue>({
    */
   const handleClick = (id: string) => {
     if (id !== order) {
-      handleOrder(id);
-      handleAscending(true);
+      handleOrder?.(id);
+      handleAscending?.(true);
       return;
     }
 
     if (ascending !== null) {
-      handleOrder(id);
+      handleOrder?.(id);
     }
 
     if (ascending === true) {
-      handleAscending(false);
+      handleAscending?.(false);
     } else if (ascending === null) {
-      handleAscending(true);
+      handleAscending?.(true);
     } else {
-      handleAscending(null);
-      handleOrder("order_number");
+      handleAscending?.(null);
+      handleOrder?.("order_number");
     }
   };
 
@@ -102,7 +102,9 @@ export function PaginatedDataTable<TData, TValue>({
                   const isOrder = header.id === order;
                   return (
                     <TableHead
-                      onClick={() => handleClick(header.id)}
+                      onClick={
+                        handleOrder ? () => handleClick(header.id) : () => {}
+                      }
                       className="cursor-pointer select-none hover:text-highlight2 transition-colors items-center gap-1"
                       key={header.id}
                     >
