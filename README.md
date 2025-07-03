@@ -2,7 +2,7 @@
 
 A comprehensive platform for managing and booking storage items across multiple locations. This application allows users to browse available storage options, make reservations, and manage their bookings through an intuitive interface.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+[![License](https://img.shields.io/badge/license-Non--Commercial-red.svg)](./LICENSE)
 
 ## Features
 
@@ -133,4 +133,8 @@ Contributions are welcome! Please read our [Contribution Guide](docs/developers/
 
 ## License
 
-This project is licensed under the MIT License - see [LICENSE](./LICENSE) file for details.
+This project is licensed under the **FullStack Storage and Booking App Non-Commercial License v1.0**.  
+See the [LICENSE](./LICENSE) file for details.
+
+Commercial use is prohibited without a separate agreement.  
+To request permission for commercial use or to contact the team, please open an issue or reach out via our GitHub organization page: 404internsfound@gmail.com
