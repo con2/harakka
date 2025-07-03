@@ -60,7 +60,7 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
       const result = await dispatch(createTag(createTagDto)).unwrap();
 
       toast.success(t.addTagModal.messages.success[lang]);
-      dispatch(fetchAllTags());
+      dispatch(fetchAllTags({ limit: 20 }));
       onCreated?.(result);
       resetForm();
       setOpen(false);

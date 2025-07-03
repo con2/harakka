@@ -1,5 +1,5 @@
-import { forwardRef } from 'react';
-import { CalendarIcon } from 'lucide-react';
+import { forwardRef } from "react";
+import { CalendarIcon } from "lucide-react";
 
 // DatePickerButton component using forwardRef
 const DatePickerButton = forwardRef<
@@ -16,6 +16,6 @@ const DatePickerButton = forwardRef<
   </button>
 ));
 
-DatePickerButton.displayName = 'DatePickerButton';
+DatePickerButton.displayName = "DatePickerButton";
 
 export default DatePickerButton;
