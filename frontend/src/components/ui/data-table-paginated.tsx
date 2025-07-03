@@ -25,7 +25,7 @@ interface DataTableProps<TData, TValue> {
   pageIndex: number;
   pageCount: number;
   onPageChange: (pageIndex: number) => void;
-  ascending: boolean;
+  ascending: boolean | null;
   order: string;
   handleAscending: (asc: boolean | null) => void;
   handleOrder: (order: string) => void;
@@ -73,7 +73,7 @@ export function PaginatedDataTable<TData, TValue>({
   const handleClick = (id: string) => {
     if (id !== order) {
       handleOrder(id);
-      handleAscending(true)
+      handleAscending(true);
       return;
     }
 
@@ -90,7 +90,6 @@ export function PaginatedDataTable<TData, TValue>({
       handleOrder("order_number");
     }
   };
-  
 
   return (
     <div className="space-y-2">
