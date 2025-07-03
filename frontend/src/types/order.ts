@@ -120,8 +120,8 @@ export type BookingStatus =
   | "completed"
   | "pending"
   | "cancelled by user"
-  | "all"
+  | "all";
 
-  export type BookingUserView =
-  Database["public"]["Views"]["view_bookings_with_user_info"]
-  export type BookingUserViewRow = BookingUserView["Row"]
+export type BookingUserView =
+  Database["public"]["Views"]["view_bookings_with_user_info"];
+export type BookingUserViewRow = BookingUserView["Row"];

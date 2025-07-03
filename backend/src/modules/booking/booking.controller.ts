@@ -227,7 +227,7 @@ export class BookingController {
   }
 
   @Get("ordered")
-  async getOrderedBookings(
+  getOrderedBookings(
     @Req() req: AuthRequest,
     @Query("search") searchquery: string,
     @Query("order") ordered_by: ValidBookingOrder = "order_number",
