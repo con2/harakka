@@ -1,6 +1,12 @@
 import { ApiResponse } from "@/types/response.types";
 import { api } from "../axios";
-import { BookingItem, BookingOrder, CreateOrderDto } from "@/types";
+import {
+  BookingItem,
+  BookingOrder,
+  CreateOrderDto,
+  ValidBookingOrder,
+} from "@/types";
+import { BookingStatus, BookingUserView } from "../../types/order";
 
 /**
  * API service for order-related endpoints
@@ -149,5 +155,29 @@ export const ordersApi = {
   ): Promise<{ orderId: string; status: string }> => {
     await api.patch(`/bookings/payment-status`, { orderId, status });
     return { orderId, status: status ?? "" };
+  },
+
+  /**
+   * Get ordered and filtered bookings.
+   * @param order_by What column to order the columns by. Default "order_number"
+   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
+   * @param page What page number is requested
+   * @param limit How many rows to retrieve
+   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
+   * @param searchquery Optional. Filter bookings by a string
+   * @param status_filter Optional. What status to filter the bookings by
+   */
+  getOrderedBookings: async (
+    ordered_by: ValidBookingOrder,
+    ascending: boolean = true,
+    page: number,
+    limit: number,
+    searchquery?: string,
+    status_filter?: BookingStatus,
+  ): Promise<ApiResponse<BookingUserView>> => {
+    let call = `/bookings/ordered?order=${ordered_by}&ascending=${ascending}&page=${page}&limit=${limit}`;
+    if (searchquery) call += `&search=${searchquery}`;
+    if (status_filter) call += `&status=${status_filter}`;
+    return await api.get(call);
   },
 };

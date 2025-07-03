@@ -97,5 +97,31 @@ export interface CreateOrderDto {
   }[];
 }
 
-export type BookingsTable = Database["public"]["Tables"]["orders"]
-export type BookingsRow = BookingsTable["Row"]
+export type BookingsTable = Database["public"]["Tables"]["orders"];
+export type BookingsRow = BookingsTable["Row"];
+
+/**
+ * Valid values for the /ordered endpoint.
+ * Data can be ordered by the following values
+ */
+export type ValidBookingOrder =
+  | "created_at"
+  | "order_number"
+  | "payment_status"
+  | "status"
+  | "total"
+  | "full_name";
+
+export type BookingStatus =
+  | "confirmed"
+  | "cancelled by admin"
+  | "deleted"
+  | "rejected"
+  | "completed"
+  | "pending"
+  | "cancelled by user"
+  | "all"
+
+  export type BookingUserView =
+  Database["public"]["Views"]["view_bookings_with_user_info"]
+  export type BookingUserViewRow = BookingUserView["Row"]

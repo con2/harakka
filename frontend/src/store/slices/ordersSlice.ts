@@ -11,6 +11,8 @@ import {
   OrdersState,
   CreateOrderDto,
   PaymentStatus,
+  ValidBookingOrder,
+  BookingStatus,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 
@@ -65,6 +67,43 @@ export const getUserOrders = createAsyncThunk(
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch user orders"),
+      );
+    }
+  },
+);
+// Get user orders thunk
+export const getOrderedBookings = createAsyncThunk(
+  "orders/getOrderedBookings",
+  async (
+    {
+      ordered_by = "order_number",
+      ascending = true,
+      page = 1,
+      limit = 10,
+      searchquery,
+      status_filter,
+    }: {
+      ordered_by: ValidBookingOrder;
+      page: number;
+      limit: number;
+      searchquery: string;
+      ascending?: boolean;
+      status_filter?: BookingStatus;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await ordersApi.getOrderedBookings(
+        ordered_by,
+        ascending,
+        page,
+        limit,
+        searchquery,
+        status_filter,
+      );
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch ordered bookings"),
       );
     }
   },
@@ -265,9 +304,27 @@ export const ordersSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "fetch";
       })
+      // Get ordered bookings
+      .addCase(getOrderedBookings.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(getOrderedBookings.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userOrders = action.payload.data ?? [];
+        state.total = action.payload.metadata.total;
+        state.page = action.payload.metadata.page;
+        state.totalPages = action.payload.metadata.totalPages;
+        ordersAdapter.setAll(state, action.payload.data ?? []);
+      })
+      .addCase(getOrderedBookings.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
       // Get all orders
       .addCase(getAllOrders.pending, (state) => {
-        
         state.loading = true;
         state.error = null;
         state.errorContext = null;
