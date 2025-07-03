@@ -8,12 +8,19 @@ import {
   updatePaymentStatus,
   selectOrdersPage,
   selectOrdersTotalPages,
+  getOrderedBookings,
 } from "@/store/slices/ordersSlice";
 import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "../../ui/button";
-import { BookingOrder, BookingItem, PaymentStatus } from "@/types";
+import {
+  BookingOrder,
+  BookingItem,
+  PaymentStatus,
+  ValidBookingOrder, BookingUserViewRow,
+  BookingStatus
+} from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -53,40 +60,62 @@ const OrderList = () => {
   const [selectedOrder, setSelectedOrder] = useState<BookingOrder | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
+  const [order, setOrder] = useState<ValidBookingOrder>("order_number");
+  const [ascending, setAscending] = useState<boolean | null>(null)
   const page = useAppSelector(selectOrdersPage);
   const totalPages = useAppSelector(selectOrdersTotalPages);
   // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const [currentPage, setCurrentPage] = useState(1);
-  const debouncedSearchQuery = useDebouncedValue(searchQuery)
+  const debouncedSearchQuery = useDebouncedValue(searchQuery);
 
-  useEffect(() => {
-    // Always fetch orders when the admin component mounts and auth is ready
-    if (user && orders.length <= 1) {
-      dispatch(getAllOrders({ page: currentPage, limit: 10 }));
-      ordersLoadedRef.current = true;
-    }
-  }, [dispatch, user, orders.length, currentPage]);
-
+  /*----------------------handlers----------------------------------*/
   const handleViewDetails = (order: BookingOrder) => {
     setSelectedOrder(order);
     setShowDetailsModal(true);
   };
-
-  useEffect(() => {
-    if (page !== currentPage) dispatch(getAllOrders({ page: currentPage, limit: 10 }));
-  }, [page, currentPage, dispatch]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
   };
 
+
+  const handleSearchQuery = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleOrder = (order: string) => setOrder(order as ValidBookingOrder)
+  const handleAscending = (ascending: boolean | null) => setAscending(ascending)
+
+  /*----------------------side-effects----------------------------------*/
   useEffect(() => {
-    if (debouncedSearchQuery) console.log("This is when it will search")
-  },  [debouncedSearchQuery])
+    if (debouncedSearchQuery || statusFilter || order)
+      dispatch(
+        getOrderedBookings({
+          ordered_by: order,
+          page: currentPage,
+          limit: 10,
+          searchquery: debouncedSearchQuery,
+          ascending: ascending === false ? false : true,
+          status_filter: (statusFilter !== "all") && statusFilter
+        }),
+      );
+    else {
+      dispatch(getAllOrders({ page: currentPage, limit: 10 }));
+      ordersLoadedRef.current = true;
+    }
+  }, [
+    debouncedSearchQuery,
+    statusFilter,
+    page,
+    order,
+    dispatch,
+    currentPage,
+    ascending
+  ]);
 
   // Render a status badge with appropriate color
   const StatusBadge = ({ status }: { status?: string }) => {
@@ -173,49 +202,24 @@ const OrderList = () => {
     }
   };
 
-  const handleSearchQuery = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-  } 
-
-  // Apply filters to orders before passing to table
-  const filteredOrders = orders.filter((order) => {
-    // Filter by status
-    if (statusFilter !== "all" && order.status !== statusFilter) {
-      return false;
-    }
-    // Filter by search query (order number or customer name)
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const orderNumber = String(order.order_number || "").toLowerCase();
-      const customerName = (order.user_profile?.name || "").toLowerCase();
-      const customerEmail = (order.user_profile?.email || "").toLowerCase();
-
-      return (
-        orderNumber.includes(query) ||
-        customerName.includes(query) ||
-        customerEmail.includes(query)
-      );
-    }
-
-    return true;
-  });
-
-  const columns: ColumnDef<BookingOrder>[] = [
+  const columns: ColumnDef<BookingUserViewRow>[] = [
     {
       accessorKey: "order_number",
       header: t.orderList.columns.orderNumber[lang],
+      enableSorting: true,
     },
     {
-      accessorKey: "user_profile.name",
+      accessorKey: "full_name",
       header: t.orderList.columns.customer[lang],
+      enableSorting: true,
       cell: ({ row }) => (
         <div>
           <div>
-            {row.original.user_profile?.name ||
+            {row.original.full_name ||
               t.orderList.status.unknown[lang]}
           </div>
           <div className="text-xs text-gray-500">
-            {row.original.user_profile?.email}
+            {row.original.email}
           </div>
         </div>
       ),
@@ -223,11 +227,13 @@ const OrderList = () => {
     {
       accessorKey: "status",
       header: t.orderList.columns.status[lang],
+      enableSorting: true,
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "created_at",
       header: t.orderList.columns.orderDate[lang],
+      enableSorting: true,
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
@@ -261,11 +267,13 @@ const OrderList = () => {
     {
       accessorKey: "final_amount",
       header: t.orderList.columns.total[lang],
+      enableSorting: true,
       cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
     },
     {
-      accessorKey: "invoice_status",
+      accessorKey: "payment_status",
       header: t.orderList.columns.invoice[lang],
+      enableSorting: true,
       cell: ({ row }) => {
         const paymentStatus = row.original.payment_status ?? "N/A";
 
@@ -393,7 +401,8 @@ const OrderList = () => {
       header: t.orderList.modal.orderItems.columns.startDate[lang],
       cell: ({ row }) => {
         formatDate(new Date(row.original.start_date || ""), "d MMM yyyy");
-    }},
+      },
+    },
     {
       accessorKey: "end_date",
       header: t.orderList.modal.orderItems.columns.endDate[lang],
@@ -445,7 +454,7 @@ const OrderList = () => {
             />
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => setStatusFilter(e.target.value as BookingStatus)}
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             >
               <option value="all">
@@ -489,10 +498,14 @@ const OrderList = () => {
         </div>
         <PaginatedDataTable
           columns={columns}
-          data={filteredOrders}
+          data={orders}
           pageIndex={currentPage - 1}
           pageCount={totalPages}
           onPageChange={(page) => handlePageChange(page + 1)}
+          order={order}
+          ascending={ascending}
+          handleOrder={handleOrder}
+          handleAscending={handleAscending}
         />
       </div>
 
