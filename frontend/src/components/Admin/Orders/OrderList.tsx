@@ -15,8 +15,6 @@ import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "../../ui/button";
 import {
-  BookingOrder,
-  BookingItem,
   PaymentStatus,
   ValidBookingOrder,
   BookingUserViewRow,
@@ -34,7 +32,6 @@ import OrderReturnButton from "./OrderReturnButton";
 import OrderConfirmButton from "./OrderConfirmButton";
 import OrderRejectButton from "./OrderRejectButton";
 import OrderDeleteButton from "./OrderDeleteButton";
-import { DataTable } from "../../ui/data-table";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
@@ -381,40 +378,40 @@ const OrderList = () => {
     },
   ];
 
-  const orderColumns: ColumnDef<BookingItem>[] = [
-    {
-      accessorKey: "item_name",
-      header: t.orderList.modal.orderItems.columns.item[lang],
-      cell: (i) => {
-        const itemName = i.getValue();
-        return (
-          String(itemName).charAt(0).toUpperCase() + String(itemName).slice(1)
-        );
-      },
-    },
-    {
-      accessorKey: "quantity",
-      header: t.orderList.modal.orderItems.columns.quantity[lang],
-    },
-    {
-      accessorKey: "start_date",
-      header: t.orderList.modal.orderItems.columns.startDate[lang],
-      cell: ({ row }) => {
-        formatDate(new Date(row.original.start_date || ""), "d MMM yyyy");
-      },
-    },
-    {
-      accessorKey: "end_date",
-      header: t.orderList.modal.orderItems.columns.endDate[lang],
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
-    },
-    {
-      accessorKey: "subtotal",
-      header: t.orderList.modal.orderItems.columns.subtotal[lang],
-      cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
-    },
-  ];
+  // const orderColumns: ColumnDef<BookingItem>[] = [
+  //   {
+  //     accessorKey: "item_name",
+  //     header: t.orderList.modal.orderItems.columns.item[lang],
+  //     cell: (i) => {
+  //       const itemName = i.getValue();
+  //       return (
+  //         String(itemName).charAt(0).toUpperCase() + String(itemName).slice(1)
+  //       );
+  //     },
+  //   },
+  //   {
+  //     accessorKey: "quantity",
+  //     header: t.orderList.modal.orderItems.columns.quantity[lang],
+  //   },
+  //   {
+  //     accessorKey: "start_date",
+  //     header: t.orderList.modal.orderItems.columns.startDate[lang],
+  //     cell: ({ row }) => {
+  //       formatDate(new Date(row.original.start_date || ""), "d MMM yyyy");
+  //     },
+  //   },
+  //   {
+  //     accessorKey: "end_date",
+  //     header: t.orderList.modal.orderItems.columns.endDate[lang],
+  //     cell: ({ row }) =>
+  //       formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
+  //   },
+  //   {
+  //     accessorKey: "subtotal",
+  //     header: t.orderList.modal.orderItems.columns.subtotal[lang],
+  //     cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
+  //   },
+  // ];
 
   if (authLoading || loading) {
     return (
@@ -557,10 +554,10 @@ const OrderList = () => {
 
                 {/* Order Items */}
                 <div>
-                  <DataTable
+                  {/* <DataTable
                     columns={orderColumns}
                     data={selectedOrder.order_items || []}
-                  />
+                  /> */}
                 </div>
 
                 {/* Order Modal Actions */}

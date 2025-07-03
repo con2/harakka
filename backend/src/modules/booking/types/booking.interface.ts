@@ -74,7 +74,7 @@ export type ValidBookingOrder =
   | "order_number"
   | "payment_status"
   | "status"
-  | "total_amount"
+  | "final_amount"
   | "full_name";
 
 export type BookingStatus =
