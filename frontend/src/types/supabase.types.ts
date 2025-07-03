@@ -110,6 +110,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_with_user_info"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "invoices_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -198,6 +205,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["id"]
           },
           {
@@ -450,6 +464,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["id"]
           },
         ]
@@ -1157,7 +1178,7 @@ export type Database = {
           id: string
           phone: string | null
           preferences: Json | null
-          role: string
+          role: string | null
           saved_lists: Json | null
           visible_name: string | null
         }
@@ -1168,7 +1189,7 @@ export type Database = {
           id: string
           phone?: string | null
           preferences?: Json | null
-          role?: string
+          role?: string | null
           saved_lists?: Json | null
           visible_name?: string | null
         }
@@ -1179,7 +1200,7 @@ export type Database = {
           id?: string
           phone?: string | null
           preferences?: Json | null
-          role?: string
+          role?: string | null
           saved_lists?: Json | null
           visible_name?: string | null
         }
@@ -1213,6 +1234,28 @@ export type Database = {
       }
     }
     Views: {
+      view_bookings_with_user_info: {
+        Row: {
+          created_at: string | null
+          created_at_text: string | null
+          discount_amount: number | null
+          discount_code: string | null
+          final_amount: number | null
+          full_name: string | null
+          id: string | null
+          notes: string | null
+          order_number: string | null
+          payment_details: Json | null
+          payment_status: string | null
+          status: string | null
+          total_amount: number | null
+          total_text: string | null
+          updated_at: string | null
+          user_id: string | null
+          visible_name: string | null
+        }
+        Relationships: []
+      }
       view_item_location_summary: {
         Row: {
           item_name: string | null
@@ -1238,6 +1281,10 @@ export type Database = {
       }
     }
     Functions: {
+      auth_hook_get_user_roles: {
+        Args: { event: Json }
+        Returns: Json
+      }
       calculate_storage_item_total: {
         Args: { item_id: string }
         Returns: number
@@ -1257,6 +1304,20 @@ export type Database = {
       get_full_user_order: {
         Args: { in_user_id: string; in_offset?: number; in_limit?: number }
         Returns: Json
+      }
+      get_user_roles: {
+        Args: { user_uuid: string }
+        Returns: {
+          id: string
+          user_id: string
+          organization_id: string
+          role_id: string
+          is_active: boolean
+          created_at: string
+          role_name: string
+          organization_name: string
+          organization_slug: string
+        }[]
       }
     }
     Enums: {
@@ -1417,4 +1478,3 @@ export const Constants = {
     },
   },
 } as const
-

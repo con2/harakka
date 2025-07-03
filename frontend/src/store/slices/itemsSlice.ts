@@ -221,7 +221,7 @@ export const itemsSlice = createSlice({
 
         state.loading = false;
         state.items = state.items.map((item) =>
-          item.id === updatedItem.id ? updatedItem : item,
+          item.id === updatedItem.id ? updatedItem : (item as Item),
         );
       })
       .addCase(updateItem.rejected, (state, action) => {

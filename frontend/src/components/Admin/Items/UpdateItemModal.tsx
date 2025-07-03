@@ -351,7 +351,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                   </Label>
                   <Switch
                     id="is_active"
-                    checked={formData.is_active}
+                    checked={!!formData.is_active} // Convert to boolean because supabase stores as boolean
                     onCheckedChange={(checked: boolean) =>
                       setFormData((prev) => ({
                         ...prev,

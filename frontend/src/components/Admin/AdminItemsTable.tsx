@@ -185,7 +185,7 @@ const AdminItemsTable = () => {
         };
 
         return (
-          <Switch checked={item.is_active} onCheckedChange={handleToggle} />
+          <Switch checked={!!item.is_active} onCheckedChange={handleToggle} /> // Convert to boolean because supabase stores as boolean
         );
       },
     },

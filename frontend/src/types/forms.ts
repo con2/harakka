@@ -1,6 +1,7 @@
 import { Tag, TagTranslation } from "./tag";
 import { Item, ItemTranslation } from "./item";
 import { UserRole } from "./user";
+import { Json } from "./supabase.types";
 
 /**
  * Base form state for all forms in the application
@@ -42,10 +43,13 @@ export interface ItemFormData
     Item,
     | "id"
     | "created_at"
-    | "updated_at"
     | "storage_item_tags"
     | "tagIds"
+    | "is_deleted"
     | "average_rating"
+    | "test_metadata"
+    | "test_priority_score"
+    | "translations"
   > {
   // Override translations to ensure they always exist with required fields
   translations: {
@@ -55,6 +59,9 @@ export interface ItemFormData
   // Add tagIds as a separate field for form handling
   tagIds: string[];
 
+  // Add optional test fields to match Supabase type
+  test_metadata?: Json | null;
+  test_priority_score?: number | null;
   // Ensure both fields are defined
   items_number_available: number;
   items_number_currently_in_storage: number;

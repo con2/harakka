@@ -461,7 +461,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                   </Label>
                   <Switch
                     id="is_active"
-                    checked={formData.is_active}
+                    checked={formData.is_active ?? false}
                     onCheckedChange={handleToggleChange}
                   />
                 </div>

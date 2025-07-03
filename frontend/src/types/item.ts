@@ -1,33 +1,45 @@
 import {
-  BaseEntity,
   ErrorContext,
-  Translatable,
   Tag,
   LocationDetails,
+  Translatable,
+  BaseEntity,
 } from "@/types";
+import { TablesInsert, TablesUpdate } from "./supabase.types";
+import { Database } from "./supabase.types";
 
-/**
- * Item translations content
- */
 export interface ItemTranslation {
   item_type: string;
   item_name: string;
   item_description: string;
 }
 
-export interface Item extends BaseEntity, Translatable<ItemTranslation> {
-  location_id: string;
-  compartment_id: string;
-  items_number_total: number;
-  items_number_available: number;
-  items_number_currently_in_storage: number;
-  price: number;
-  is_active: boolean;
-  average_rating?: number;
+// ── raw Supabase row ────────────────────────────────────────────────────────────
+type StorageItemRow = Database["public"]["Tables"]["storage_items"]["Row"];
+
+// ── UI-only helpers ────────────────────────────────────────────────────────────
+interface ItemHelpers {
   tagIds?: string[];
   storage_item_tags?: Tag[];
   location_details?: LocationDetails | null;
 }
+
+/**
+ * Full item shape used in the front-end:
+ *   • every DB column except the untyped `translations`
+ *   • the *typed* translations object expected by <Translatable>
+ *   • BaseEntity fields + Translatable mix-in
+ *   • extra UI conveniences (tagIds, etc.)
+ */
+export type Item = (Omit<StorageItemRow, "translations"> & {
+  translations: {
+    fi: ItemTranslation;
+    en: ItemTranslation;
+  } | null;
+}) &
+  ItemHelpers &
+  BaseEntity &
+  Translatable<ItemTranslation>;
 
 /**
  * Item state in Redux store
@@ -45,18 +57,26 @@ export interface ItemState {
  * Data required to create a new item
  */
 export type CreateItemDto = Omit<
-  Item,
-  "id" | "created_at" | "updated_at" | "storage_item_tags"
+  TablesInsert<"storage_items">,
+  "translations"
 > & {
-  // Exclude 'id', 'created_at', 'updated_at' and 'storage_item_tags' from the create type
+  translations: {
+    fi: ItemTranslation;
+    en: ItemTranslation;
+  };
   tagIds?: string[];
 };
 
 /**
  * Data for updating an existing item
  */
-export type UpdateItemDto = Partial<
-  Omit<Item, "id" | "created_at" | "updated_at" | "storage_item_tags">
+export type UpdateItemDto = Omit<
+  TablesUpdate<"storage_items">,
+  "translations"
 > & {
+  translations?: {
+    fi?: ItemTranslation;
+    en?: ItemTranslation;
+  };
   tagIds?: string[];
 };
