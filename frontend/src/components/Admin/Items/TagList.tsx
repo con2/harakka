@@ -38,6 +38,7 @@ const TagList = () => {
   const page = useAppSelector(selectTagsPage);
   const totalPages = useAppSelector(selectTagsTotalPages);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [assignmentFilter, setAssignmentFilter] = useState<
     "all" | "assigned" | "unassigned"
   >("all");
@@ -57,28 +58,39 @@ const TagList = () => {
     });
   });
 
+  // Update debouncedSearchTerm when searchTerm changes
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
   // added a fallback default ([]) before calling .filter
-  const filteredTags = (tags ?? [])
-    .filter((tag) => {
-      const fiName = tag.translations?.fi?.name?.toLowerCase() || "";
-      const enName = tag.translations?.en?.name?.toLowerCase() || "";
-      const search = searchTerm.toLowerCase();
-      return fiName.includes(search) || enName.includes(search);
-    })
-    .filter((tag) => {
-      const isAssigned = !!tagUsage?.[tag.id];
-      if (assignmentFilter === "assigned") return isAssigned;
-      if (assignmentFilter === "unassigned") return !isAssigned;
-      return true;
-    });
+  const filteredTags = (tags ?? []).filter((tag) => {
+    const isAssigned = !!tagUsage?.[tag.id];
+    if (assignmentFilter === "assigned") return isAssigned;
+    if (assignmentFilter === "unassigned") return !isAssigned;
+    return true;
+  });
+  // if search term changes, reset page to 1
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
   // Fetch tags on mount
   useEffect(() => {
-    if (tags.length === 0)
-      dispatch(
-        fetchAllTags({ page: currentPage, limit: 10, search: searchTerm }),
-      );
-  }, [dispatch, tags.length, currentPage, searchTerm]);
+    dispatch(
+      fetchAllTags({
+        page: currentPage,
+        limit: 10,
+        search: debouncedSearchTerm,
+      }),
+    );
+  }, [dispatch, tags.length, currentPage, debouncedSearchTerm]);
 
   // When redux page changes, sync local page
   useEffect(() => {
@@ -96,7 +108,9 @@ const TagList = () => {
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
-    dispatch(fetchAllTags({ page: newPage, limit: 10, search: searchTerm }));
+    dispatch(
+      fetchAllTags({ page: newPage, limit: 10, search: debouncedSearchTerm }),
+    );
   };
 
   const handleEditClick = (tag: Tag) => {
