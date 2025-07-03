@@ -142,6 +142,17 @@ const AdminItemsTable = () => {
       ),
     },
     {
+      header: t.adminItemsTable.columns.location[lang],
+      size: 70,
+      accessorFn: (row) => row.price || "N/A", // For sorting
+      enableSorting: true,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1 text-sm">
+          {row.original.price || "N/A"}
+        </div>
+      ),
+    },
+    {
       header: t.adminItemsTable.columns.price[lang],
       accessorKey: "price",
       size: 30,
