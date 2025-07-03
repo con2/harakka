@@ -137,4 +137,4 @@ This project is licensed under the **FullStack Storage and Booking App Non-Comme
 See the [LICENSE](./LICENSE) file for details.
 
 Commercial use is prohibited without a separate agreement.  
-To request permission for commercial use or to contact the team, please open an issue or reach out via our GitHub organization page: [https://github.com/Con2StorageOrg](https://github.com/Con2StorageOrg)
+To request permission for commercial use or to contact the team, please open an issue or reach out via our GitHub organization page: 404internsfound@gmail.com
