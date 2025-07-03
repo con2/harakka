@@ -18,6 +18,7 @@ import { CreateBookingDto } from "./dto/create-booking.dto";
 import { InvoiceService } from "./invoice.service";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
 
 @Controller("bookings")
 export class BookingController {
@@ -225,6 +226,31 @@ export class BookingController {
     );
   }
 
+  @Get("ordered")
+  async getOrderedBookings(
+    @Req() req: AuthRequest,
+    @Query("search") searchquery: string,
+    @Query("order") ordered_by: ValidBookingOrder = "order_number",
+    @Query("status") status_filter: BookingStatus,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+    @Query("ascending") ascending: string = "true",
+  ) {
+    const supabase = req.supabase;
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const is_ascending = ascending.toLowerCase() === "true";
+    console.log(status_filter);
+    return this.bookingService.getOrderedBookings(
+      supabase,
+      pageNum,
+      limitNum,
+      is_ascending,
+      ordered_by,
+      searchquery,
+      status_filter,
+    );
+  }
   // commented out because it is not used atm
   /* @Get(":orderId/generate") // unsafe - anyone can create files
   async generateInvoice(@Param("orderId") orderId: string) {

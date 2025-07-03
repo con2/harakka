@@ -35,6 +35,7 @@ import {
   StorageItemsRow,
   UserProfilesRow,
   BookingRow,
+  ValidBookingOrder,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { StorageLocationsService } from "../storage-locations/storage-locations.service";
@@ -135,7 +136,6 @@ export class BookingService {
     };
   }
 
-  // 2. get all bookings of a user
   async getUserBookings(
     userId: string,
     supabase: SupabaseClient<Database>,
@@ -1099,6 +1099,61 @@ export class BookingService {
 
     return {
       message: `Payment status updated to '${status}' for order ${orderId}`,
+    };
+  }
+
+  /**
+   * Get bookings in an ordered list
+   * @param supabase The supabase client provided by request
+   * @param page What page number is requested
+   * @param limit How many rows to retrieve
+   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
+   * @param filter What to filter the bookings by
+   * @param searchquery Optional. Filter bookings by a string
+   * @returns Matching bookings
+   */
+  async getOrderedBookings(
+    supabase: SupabaseClient,
+    page: number,
+    limit: number,
+    ascending: boolean,
+    order_by: ValidBookingOrder,
+    searchquery?: string,
+    status_filter?: string,
+  ) {
+    const { from, to } = getPaginationRange(page, limit);
+
+    const query = supabase
+      .from("view_bookings_with_user_info")
+      .select("*", { count: "exact" })
+      .range(from, to)
+      .order(order_by ?? "order_number", { ascending: ascending });
+
+    if (status_filter) query.eq("status", status_filter);
+    // Match any field if there is a searchquery
+    if (searchquery) {
+      query.or(
+        `order_number.ilike.%${searchquery}%,` +
+          `status.ilike.%${searchquery}%,` +
+          `full_name.ilike.%${searchquery}%,` +
+          `created_at_text.ilike.%${searchquery}%,` +
+          `total_text.ilike.%${searchquery}%,` +
+          `payment_status.ilike.%${searchquery}%`,
+      );
+    }
+
+    const result = await query;
+
+    const { error, count } = result;
+    if (error) {
+      console.log(error);
+      throw new Error("Failed to get matching bookings");
+    }
+
+    const pagination_meta = getPaginationMeta(count, page, limit);
+    return {
+      ...result,
+      metadata: pagination_meta,
     };
   }
 }
