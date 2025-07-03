@@ -150,9 +150,16 @@ const AdminItemsTable = () => {
     {
       header: t.adminItemsTable.columns.quantity[lang],
       size: 30,
-      accessorFn: (row) => row.items_number_available,
+      accessorFn: (row) => row.items_number_currently_in_storage,
       cell: ({ row }) =>
-        `${row.original.items_number_available} ${t.adminItemsTable.messages.units[lang]}`,
+        `${row.original.items_number_currently_in_storage} ${t.adminItemsTable.messages.units[lang]}`,
+    },
+    {
+      header: t.adminItemsTable.columns.quantity[lang],
+      size: 30,
+      accessorFn: (row) => row.items_number_total,
+      cell: ({ row }) =>
+        `${row.original.items_number_total} ${t.adminItemsTable.messages.units[lang]}`,
     },
     {
       id: "status",
