@@ -15,7 +15,7 @@ This repository includes automated CI/CD workflows to ensure code quality and bu
   - Confirms build artifacts exist
   - Provides build status summary
 
-### 2. Comprehensive PR Checks (`lint-and-type-check.yml`)
+### 2. Lint & Type Checks (`lint-and-type-check.yml`)
 
 **Purpose**: Complete code quality and security checks
 

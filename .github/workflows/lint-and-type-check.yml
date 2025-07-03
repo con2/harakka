@@ -1,4 +1,4 @@
-name: Comprehensive PR Checks
+name: Lint & Type Check
 
 on:
   pull_request:
