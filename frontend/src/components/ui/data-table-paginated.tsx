@@ -68,19 +68,29 @@ export function PaginatedDataTable<TData, TValue>({
 
   /**
    * Mimic original sorting behaviour
-   * @param id The ID of which to sort by
+   * @param id The ID of which to sort by. If ascending is null it will return to original sorting.
    */
   const handleClick = (id: string) => {
     if (id !== order) {
-      handleAscending(true);
       handleOrder(id);
-    } else {
-      if (ascending) handleAscending(false);
-      else if (ascending === false) handleAscending(null);
-      else handleAscending(true);
+      handleAscending(true)
+      return;
     }
-    handleOrder(id);
+
+    if (ascending !== null) {
+      handleOrder(id);
+    }
+
+    if (ascending === true) {
+      handleAscending(false);
+    } else if (ascending === null) {
+      handleAscending(true);
+    } else {
+      handleAscending(null);
+      handleOrder("order_number");
+    }
   };
+  
 
   return (
     <div className="space-y-2">
