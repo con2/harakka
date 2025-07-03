@@ -401,7 +401,7 @@ export class RoleService {
           id: item.id,
           user_id: item.user_id,
           organization_id: item.organization_id,
-          role_id: item.role_id,
+          role_id: item.role_id || "user",
           role_name: item.roles.role,
           organization_name: item.organizations.name,
           is_active: item.is_active ?? true,
