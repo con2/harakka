@@ -12,6 +12,11 @@ interface LogsState {
   page: number;
   loading: boolean;
   error: string | null;
+  filters: {
+    level?: string;
+    logType?: "audit" | "system";
+    search?: string;
+  };
 }
 
 const initialState: LogsState = {
@@ -21,6 +26,7 @@ const initialState: LogsState = {
   page: 1,
   loading: false,
   error: null,
+  filters: {},
 };
 
 // Async thunk to fetch all logs
@@ -31,12 +37,20 @@ export const getAllLogs = createAsyncThunk<
     page: number;
     totalPages: number;
   },
-  { page?: number; limit?: number }
+  { page?: number;
+    limit?: number;
+    level?: string;
+    logType?: "audit" | "system";
+    search?: string;
+  }
 >(
   "logs/fetchAllLogs",
-  async ({ page = 1, limit = 10 }, { rejectWithValue }) => {
+  async (
+    { page = 1, limit = 10, level, logType, search },
+    { rejectWithValue }
+  ) => {
     try {
-      return await logsApi.getAllLogs(page, limit);
+      return await logsApi.getAllLogs(page, limit, level, logType, search);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch all logs")
@@ -63,6 +77,11 @@ const logsSlice = createSlice({
         state.total = action.payload.total;
         state.totalPages = action.payload.totalPages;
         state.page = action.payload.page;
+        state.filters = {
+          level: action.meta.arg.level,
+          logType: action.meta.arg.logType,
+          search: action.meta.arg.search,
+        };
       })
       .addCase(getAllLogs.rejected, (state, action) => {
         state.loading = false;
