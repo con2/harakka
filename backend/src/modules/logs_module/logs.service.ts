@@ -23,7 +23,7 @@ export class LogsService {
     page: number,
     limit: number,
     level?: string,
-    logType?: "audit" | "system",
+    logType?: string,
     search?: string,
   ): Promise<ApiResponse<LogMessage>> {
     const supabase = req.supabase;
@@ -91,7 +91,9 @@ export class LogsService {
 
     // filtering and search
     const filteredLogs = combinedLogs.filter((log) => {
-      const matchesLevel = level ? log.level === level : true;
+      const matchesLevel = level
+        ? log.level.toLowerCase() === level.toLowerCase()
+        : true;
       const matchesSearch = search
         ? log.message.toLowerCase().includes(search.toLowerCase()) ||
           JSON.stringify(log.metadata || {})

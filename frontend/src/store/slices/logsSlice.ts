@@ -37,7 +37,8 @@ export const getAllLogs = createAsyncThunk<
     page: number;
     totalPages: number;
   },
-  { page?: number;
+  {
+    page?: number;
     limit?: number;
     level?: string;
     logType?: "audit" | "system";
@@ -47,7 +48,7 @@ export const getAllLogs = createAsyncThunk<
   "logs/fetchAllLogs",
   async (
     { page = 1, limit = 10, level, logType, search },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       return await logsApi.getAllLogs(page, limit, level, logType, search);

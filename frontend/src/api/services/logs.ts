@@ -1,3 +1,4 @@
+import { ApiResponse } from "@/types/api";
 import { api } from "../axios";
 import { LogMessage } from "@/types";
 
@@ -12,11 +13,11 @@ export const logsApi = {
    * @param userId - Admin user ID for authorization
    * @returns Promise with all logs
    */
-  getAllLogs: (
+  getAllLogs: async (
     page: number = 1,
     limit: number = 10,
     level?: string,
-    logType?: "audit" | "system",
+    logType?: string,
     search?: string,
   ): Promise<{
     data: LogMessage[];
@@ -32,6 +33,15 @@ export const logsApi = {
     if (logType) params.append("logType", logType);
     if (search) params.append("search", search);
 
-    return api.get(`/logs?${params.toString()}`);
+    const response: ApiResponse<LogMessage[]> = await api.get(
+      `/logs?${params.toString()}`,
+    );
+
+    return {
+      data: response.data,
+      total: response.metadata.total,
+      totalPages: response.metadata.totalPages,
+      page: response.metadata.page,
+    };
   },
 };
