@@ -3,8 +3,6 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-  getSortedRowModel,
-  SortingState,
 } from "@tanstack/react-table";
 
 import {
@@ -17,7 +15,6 @@ import {
 } from "@/components/ui/table";
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
@@ -28,6 +25,10 @@ interface DataTableProps<TData, TValue> {
   pageIndex: number;
   pageCount: number;
   onPageChange: (pageIndex: number) => void;
+  ascending: boolean;
+  order: string;
+  handleAscending: (asc: boolean | null) => void;
+  handleOrder: (order: string) => void;
 }
 
 export function PaginatedDataTable<TData, TValue>({
@@ -36,31 +37,50 @@ export function PaginatedDataTable<TData, TValue>({
   pageIndex,
   pageCount,
   onPageChange,
+  ascending,
+  order,
+  handleAscending,
+  handleOrder,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
   const table = useReactTable({
     data,
     columns,
     pageCount,
     manualPagination: true,
+    manualSorting: true,
     state: {
       pagination: {
         pageIndex,
         pageSize: 10,
       },
-      sorting,
     },
     onPaginationChange: (updater) => {
       const newState =
-        typeof updater === "function" ? updater({ pageIndex, pageSize: 10 }) : updater;
+        typeof updater === "function"
+          ? updater({ pageIndex, pageSize: 10 })
+          : updater;
       onPageChange(newState.pageIndex);
     },
-    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
   // Translation
   const { lang } = useLanguage();
+
+  /**
+   * Mimic original sorting behaviour
+   * @param id The ID of which to sort by
+   */
+  const handleClick = (id: string) => {
+    if (id !== order) {
+      handleAscending(true);
+      handleOrder(id);
+    } else {
+      if (ascending) handleAscending(false);
+      else if (ascending === false) handleAscending(null);
+      else handleAscending(true);
+    }
+    handleOrder(id);
+  };
 
   return (
     <div className="space-y-2">
@@ -70,10 +90,10 @@ export function PaginatedDataTable<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const isSorted = header.column.getIsSorted();
+                  const isOrder = header.id === order;
                   return (
                     <TableHead
-                      onClick={header.column.getToggleSortingHandler()}
+                      onClick={() => handleClick(header.id)}
                       className="cursor-pointer select-none hover:text-highlight2 transition-colors items-center gap-1"
                       key={header.id}
                     >
@@ -84,9 +104,9 @@ export function PaginatedDataTable<TData, TValue>({
                             header.getContext(),
                           )}
                         </span>
-                        {isSorted === "asc" ? (
+                        {isOrder && ascending === false ? (
                           <ArrowUp className="w-3 h-3 text-muted-foreground" />
-                        ) : isSorted === "desc" ? (
+                        ) : isOrder && ascending ? (
                           <ArrowDown className="w-3 h-3 text-muted-foreground" />
                         ) : null}
                       </div>
@@ -147,7 +167,7 @@ export function PaginatedDataTable<TData, TValue>({
         >
           {t.pagination.next[lang]}
         </Button>
-              </div>
+      </div>
     </div>
   );
 }
