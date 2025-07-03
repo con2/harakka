@@ -1,0 +1,103 @@
+name: Comprehensive PR Checks
+
+on:
+  pull_request:
+    branches: [develop, deployment]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  frontend-checks:
+    name: Frontend Linting & Type Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+          
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+        
+      - name: Check formatting
+        working-directory: ./frontend
+        run: npm run format:check
+        
+      - name: Run linting
+        working-directory: ./frontend
+        run: npm run lint
+        
+      - name: TypeScript compilation check
+        working-directory: ./frontend
+        run: npx tsc --noEmit
+        
+
+  backend-checks:
+    name: Backend Linting & Type Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+          
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+        
+      - name: Check formatting (optional)
+        working-directory: ./backend
+        run: npm run format
+        continue-on-error: true
+        
+      - name: Run linting
+        working-directory: ./backend
+        run: npm run lint
+        
+      - name: Run tests (optional)
+        working-directory: ./backend
+        run: npm run test
+        continue-on-error: true
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Audit frontend dependencies
+        working-directory: ./frontend
+        run: |
+          npm ci
+          echo "Running frontend security audit..."
+          npm audit --audit-level=high || echo "Frontend audit found vulnerabilities but continuing..."
+        continue-on-error: true
+        
+      - name: Audit backend dependencies
+        working-directory: ./backend
+        run: |
+          npm ci
+          echo "Running backend security audit..."
+          npm audit --audit-level=high || echo "Backend audit found vulnerabilities but continuing..."
+        continue-on-error: true

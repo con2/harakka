@@ -90,14 +90,10 @@ export const Login = () => {
                   link_text: t.authUi.sign_up.link_text[lang],
                 },
                 forgotten_password: {
-                  email_label:
-                    t.authUi.forgotten_password.email_label[lang],
+                  email_label: t.authUi.forgotten_password.email_label[lang],
                   email_input_placeholder:
-                    t.authUi.forgotten_password.email_input_placeholder[
-                    lang
-                    ],
-                  button_label:
-                    t.authUi.forgotten_password.button_label[lang],
+                    t.authUi.forgotten_password.email_input_placeholder[lang],
+                  button_label: t.authUi.forgotten_password.button_label[lang],
                   link_text: t.authUi.forgotten_password.link_text[lang],
                 },
                 magic_link: {

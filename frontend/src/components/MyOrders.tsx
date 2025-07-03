@@ -17,12 +17,17 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 
 import { ordersApi } from "@/api/services/orders";
-import OrderDetailsButton from '@/components/Admin/Orders/OrderDetailsButton';
-import OrderCancelButton from '@/components/OrderCancelButton';
-import OrderEditButton from '@/components/OrderEditButton';
+import OrderDetailsButton from "@/components/Admin/Orders/OrderDetailsButton";
+import OrderCancelButton from "@/components/OrderCancelButton";
+import OrderEditButton from "@/components/OrderEditButton";
 import {
   Accordion,
   AccordionContent,
@@ -38,7 +43,11 @@ import { Calendar } from "../components/ui/calendar";
 import { DataTable } from "../components/ui/data-table";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../components/ui/popover";
 
 const MyOrders = () => {
   const dispatch = useAppDispatch();
@@ -61,8 +70,15 @@ const MyOrders = () => {
   );
   const [startPickerOpen, setStartPickerOpen] = useState(false);
   const [endPickerOpen, setEndPickerOpen] = useState(false);
-  const [availability, setAvailability] = useState<{ [itemId: string]: number }>({});
-  const [loadingAvailability, setLoadingAvailability] = useState<{ [itemId: string]: boolean }>({});
+  const [availability, setAvailability] = useState<{
+    [itemId: string]: number;
+  }>({});
+  const [loadingAvailability, setLoadingAvailability] = useState<{
+    [itemId: string]: boolean;
+  }>({});
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -75,36 +91,44 @@ const MyOrders = () => {
 
   useEffect(() => {
     // Redirect if not authenticated
-    if (!user?.id) {
+    if (!user) {
       toast.error(t.myOrders.error.loginRequired[lang]);
       navigate("/login");
       return;
     }
 
-    if (user?.id) {
-      if (user?.id) {
-        dispatch(getUserOrders(user.id));
-      }
-    }
-  }, [dispatch, navigate, user, lang]);
+    if (user && orders.length === 0) dispatch(getUserOrders(user.id));
+  }, [dispatch, navigate, user, lang, orders]); // Apply filters to orders
 
-  // Apply filters to orders
   const filteredOrders = orders.filter((order) => {
     // Filter by status
     if (statusFilter !== "all" && order.status !== statusFilter) {
       return false;
     }
-
     // Filter by search query (order number)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const orderNumber = String(order.order_number || "").toLowerCase();
-
       return orderNumber.includes(query);
     }
-
     return true;
   });
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchQuery, statusFilter]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (pageIndex: number) => {
+    setCurrentPage(pageIndex);
+  };
 
   const formatDate = (dateString?: string): string => {
     if (!dateString) return "N/A";
@@ -193,25 +217,26 @@ const MyOrders = () => {
         const itemId = item.item_id;
         const currentOrderQty = item.quantity ?? 0;
 
-        setLoadingAvailability(prev => ({ ...prev, [itemId]: true }));
+        setLoadingAvailability((prev) => ({ ...prev, [itemId]: true }));
 
         try {
           const data = await ordersApi.checkAvailability(
             itemId,
             globalStartDate,
-            globalEndDate
+            globalEndDate,
           );
 
-          const correctedAvailableQuantity = data.availableQuantity + currentOrderQty;
+          const correctedAvailableQuantity =
+            data.availableQuantity + currentOrderQty;
 
-          setAvailability(prev => ({
+          setAvailability((prev) => ({
             ...prev,
             [itemId]: correctedAvailableQuantity,
           }));
         } catch (err) {
           console.error(`Error checking availability for item ${itemId}:`, err);
         } finally {
-          setLoadingAvailability(prev => ({ ...prev, [itemId]: false }));
+          setLoadingAvailability((prev) => ({ ...prev, [itemId]: false }));
         }
       }
     };
@@ -220,12 +245,14 @@ const MyOrders = () => {
   }, [globalStartDate, globalEndDate, editFormItems]);
 
   const isFormValid = editFormItems.every((item) => {
-    const inputQty = item.id !== undefined ? (itemQuantities[item.id] ?? item.quantity) : item.quantity;
+    const inputQty =
+      item.id !== undefined
+        ? (itemQuantities[item.id] ?? item.quantity)
+        : item.quantity;
     const availQty = availability[item.item_id];
 
     return availQty === undefined || inputQty <= availQty;
   });
-
 
   // Render a status badge with appropriate color
   const StatusBadge = ({ status }: { status?: string }) => {
@@ -633,7 +660,7 @@ const MyOrders = () => {
                           />
                           <OrderCancelButton
                             id={order.id}
-                            closeModal={() => { }}
+                            closeModal={() => {}}
                           />
                         </>
                       )}
@@ -644,7 +671,13 @@ const MyOrders = () => {
             ))}
           </Accordion>
         ) : (
-          <PaginatedDataTable columns={columns} data={filteredOrders} />
+          <PaginatedDataTable
+            columns={columns}
+            data={paginatedOrders}
+            pageIndex={currentPage}
+            pageCount={totalPages}
+            onPageChange={handlePageChange}
+          />
         )}
       </div>
 
@@ -674,9 +707,9 @@ const MyOrders = () => {
                         value={
                           globalStartDate
                             ? formatDateLocalized(
-                              new Date(globalStartDate),
-                              "d MMM yyyy",
-                            )
+                                new Date(globalStartDate),
+                                "d MMM yyyy",
+                              )
                             : null
                         }
                         placeholder={t.myOrders.edit.selectStartDate[lang]}
@@ -720,9 +753,9 @@ const MyOrders = () => {
                         value={
                           globalEndDate
                             ? formatDateLocalized(
-                              new Date(globalEndDate),
-                              "d MMM yyyy",
-                            )
+                                new Date(globalEndDate),
+                                "d MMM yyyy",
+                              )
                             : null
                         }
                         placeholder={t.myOrders.edit.selectEndDate[lang]}
@@ -754,7 +787,7 @@ const MyOrders = () => {
                           const isBeforeToday = date < today;
                           const isBeforeStart =
                             globalStartDate &&
-                              !isNaN(Date.parse(globalStartDate))
+                            !isNaN(Date.parse(globalStartDate))
                               ? date < new Date(globalStartDate)
                               : false;
                           return isBeforeToday || isBeforeStart;
@@ -765,10 +798,7 @@ const MyOrders = () => {
                 </div>
               </div>
               {editFormItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="grid grid-cols-5 gap-4"
-                >
+                <div key={item.id} className="grid grid-cols-5 gap-4">
                   <div className="col-span-2 items-center">
                     <Label className="block text-xs font-medium">
                       {t.myOrders.edit.item[lang]}
@@ -807,7 +837,10 @@ const MyOrders = () => {
                       })()}
                     </p>
                   </div>
-                  <div className="flex flex-col h-full" style={{ zIndex: 50, pointerEvents: "auto" }}>
+                  <div
+                    className="flex flex-col h-full"
+                    style={{ zIndex: 50, pointerEvents: "auto" }}
+                  >
                     {/* <Label className="block text-sm font-medium">
                       {t.myOrders.edit.quantity[lang]}
                     </Label> */}
@@ -816,8 +849,9 @@ const MyOrders = () => {
                         type="button"
                         size="sm"
                         variant="outline"
-                        disabled={item.id !== undefined &&
-                          itemQuantities[item.id] === 0}
+                        disabled={
+                          item.id !== undefined && itemQuantities[item.id] === 0
+                        }
                         onClick={() => {
                           if (item.id !== undefined) {
                             const newQty =
@@ -854,9 +888,11 @@ const MyOrders = () => {
                         type="button"
                         size="sm"
                         variant="outline"
-                        disabled={availability[item.item_id] !== undefined &&
+                        disabled={
+                          availability[item.item_id] !== undefined &&
                           item.id !== undefined &&
-                          itemQuantities[item.id] === availability[item.item_id]}
+                          itemQuantities[item.id] === availability[item.item_id]
+                        }
                         onClick={() => {
                           if (item.id !== undefined) {
                             const newQty =
@@ -877,7 +913,9 @@ const MyOrders = () => {
                       </div>
                     )}
                     {!loadingAvailability[item.item_id] && (
-                      <p className="text-xs italic text-slate-400 mt-1">Total of {availability[item.item_id]} items bookable</p>
+                      <p className="text-xs italic text-slate-400 mt-1">
+                        Total of {availability[item.item_id]} items bookable
+                      </p>
                     )}
                   </div>
                 </div>

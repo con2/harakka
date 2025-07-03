@@ -59,23 +59,24 @@ const TagList = () => {
 
   // added a fallback default ([]) before calling .filter
   const filteredTags = (tags ?? [])
-  .filter((tag) => {
-    const fiName = tag.translations?.fi?.name?.toLowerCase() || "";
-    const enName = tag.translations?.en?.name?.toLowerCase() || "";
-    const search = searchTerm.toLowerCase();
-    return fiName.includes(search) || enName.includes(search);
-  })
-  .filter((tag) => {
-    const isAssigned = !!tagUsage?.[tag.id];
-    if (assignmentFilter === "assigned") return isAssigned;
-    if (assignmentFilter === "unassigned") return !isAssigned;
-    return true;
-  });
+    .filter((tag) => {
+      const fiName = tag.translations?.fi?.name?.toLowerCase() || "";
+      const enName = tag.translations?.en?.name?.toLowerCase() || "";
+      const search = searchTerm.toLowerCase();
+      return fiName.includes(search) || enName.includes(search);
+    })
+    .filter((tag) => {
+      const isAssigned = !!tagUsage?.[tag.id];
+      if (assignmentFilter === "assigned") return isAssigned;
+      if (assignmentFilter === "unassigned") return !isAssigned;
+      return true;
+    });
 
   // Fetch tags on mount
   useEffect(() => {
-    dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
-  }, [dispatch, currentPage]);
+    if (tags.length === 0)
+      dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
+  }, [dispatch, tags.length, currentPage]);
 
   // When redux page changes, sync local page
   useEffect(() => {
@@ -89,7 +90,6 @@ const TagList = () => {
       dispatch(fetchAllItems());
     }
   }, [dispatch, tags, items, items.length]);
-
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
