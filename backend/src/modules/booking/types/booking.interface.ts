@@ -69,3 +69,19 @@ export type BookingTable = Database["public"]["Tables"]["orders"];
 export type BookingRow = Database["public"]["Tables"]["orders"]["Row"];
 export type BookingInsert = Database["public"]["Tables"]["orders"]["Insert"];
 export type BookingUpdate = Database["public"]["Tables"]["orders"]["Update"];
+export type ValidBookingOrder =
+  | "created_at"
+  | "order_number"
+  | "payment_status"
+  | "status"
+  | "total_amount"
+  | "full_name";
+
+export type BookingStatus =
+  | "confirmed"
+  | "cancelled by admin"
+  | "deleted"
+  | "rejected"
+  | "completed"
+  | "pending"
+  | "cancelled by user";
