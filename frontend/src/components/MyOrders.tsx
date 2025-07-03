@@ -76,6 +76,9 @@ const MyOrders = () => {
   const [loadingAvailability, setLoadingAvailability] = useState<{
     [itemId: string]: boolean;
   }>({});
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -94,28 +97,38 @@ const MyOrders = () => {
       return;
     }
 
-    if (user && orders.length === 0)
-      dispatch(getUserOrders(user.id));
+    if (user && orders.length === 0) dispatch(getUserOrders(user.id));
+  }, [dispatch, navigate, user, lang, orders]); // Apply filters to orders
 
-  }, [dispatch, navigate, user, lang, orders]);
-
-  // Apply filters to orders
   const filteredOrders = orders.filter((order) => {
     // Filter by status
     if (statusFilter !== "all" && order.status !== statusFilter) {
       return false;
     }
-
     // Filter by search query (order number)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const orderNumber = String(order.order_number || "").toLowerCase();
-
       return orderNumber.includes(query);
     }
-
     return true;
   });
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchQuery, statusFilter]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (pageIndex: number) => {
+    setCurrentPage(pageIndex);
+  };
 
   const formatDate = (dateString?: string): string => {
     if (!dateString) return "N/A";
@@ -658,7 +671,13 @@ const MyOrders = () => {
             ))}
           </Accordion>
         ) : (
-          <PaginatedDataTable columns={columns} data={filteredOrders} />
+          <PaginatedDataTable
+            columns={columns}
+            data={paginatedOrders}
+            pageIndex={currentPage}
+            pageCount={totalPages}
+            onPageChange={handlePageChange}
+          />
         )}
       </div>
 

@@ -78,8 +78,7 @@ const MyProfile = () => {
       setPhone(selectedUser.phone || "");
       setVisibleName(selectedUser.visible_name || "");
       // setPreferences(selectedUser.preferences || "");
-      if (addresses.length === 0)
-        dispatch(getUserAddresses(selectedUser.id));
+      if (addresses.length === 0) dispatch(getUserAddresses(selectedUser.id));
     }
   }, [selectedUser, dispatch, addresses.length]);
 

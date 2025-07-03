@@ -51,6 +51,9 @@ const OrderList = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
   // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
@@ -175,6 +178,22 @@ const OrderList = () => {
 
     return true;
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (pageIndex: number) => {
+    setCurrentPage(pageIndex);
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchQuery, statusFilter]);
 
   const columns: ColumnDef<BookingOrder>[] = [
     {
@@ -463,7 +482,13 @@ const OrderList = () => {
             )}
           </div>
         </div>
-        <PaginatedDataTable columns={columns} data={filteredOrders} />
+        <PaginatedDataTable
+          columns={columns}
+          data={paginatedOrders}
+          pageIndex={currentPage}
+          pageCount={totalPages}
+          onPageChange={handlePageChange}
+        />
       </div>
 
       {/* Order Details Modal */}

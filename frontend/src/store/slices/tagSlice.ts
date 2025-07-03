@@ -23,11 +23,26 @@ const initialState: TagState = {
 };
 
 // Async Thunks (API Calls)
-// get all tags
+/**
+ * Fetches a paginated list of tags from the backend.
+ *
+ * @param {Object} [params={}]               Pagination options.
+ * @param {number} [params.page=1]           The page number to retrieve (1‑based).
+ * @param {number} [params.limit=10]         The maximum number of tags to return per page.
+ * @returns {AsyncThunk}                     A Redux Toolkit thunk that resolves to an object
+ *                                          containing `data` (Tag[]) and `metadata`
+ *                                          (pagination details).
+ *
+ * @example
+ * ```ts
+ * // Retrieve the second page with 25 tags per page
+ * dispatch(fetchAllTags({ page: 2, limit: 25 }));
+ * ```
+ */
 export const fetchAllTags = createAsyncThunk(
   "tags/fetchAllTags",
   async (
-    { page = 1, limit = 10 }: { page?: number; limit?: number },
+    { page = 1, limit = 10 }: { page?: number; limit?: number } = {},
     { rejectWithValue },
   ) => {
     try {
