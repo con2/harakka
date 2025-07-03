@@ -13,13 +13,13 @@ export const tagsApi = {
   getAllTags: async (
     page: number = 1,
     limit: number = 10,
+    search: string = "",
   ): Promise<ApiResponse<Tag[]>> => {
     // Fetch paginated tags from the backend
     const response = (await api.get(
-      `/tags?page=${page}&limit=${limit}`,
+      `/tags?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`,
     )) as ApiResponse<Tag[]>;
 
-    // Always return a complete object, even if the backend response is partial
     return {
       data: response.data ?? [],
       metadata: response.metadata ?? {

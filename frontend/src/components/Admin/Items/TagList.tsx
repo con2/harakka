@@ -75,15 +75,17 @@ const TagList = () => {
   // Fetch tags on mount
   useEffect(() => {
     if (tags.length === 0)
-      dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
-  }, [dispatch, tags.length, currentPage]);
+      dispatch(
+        fetchAllTags({ page: currentPage, limit: 10, search: searchTerm }),
+      );
+  }, [dispatch, tags.length, currentPage, searchTerm]);
 
   // When redux page changes, sync local page
   useEffect(() => {
     setCurrentPage(page);
   }, [page]);
 
-  // Fetch items once tags are available
+  // TODO: Update fetchAllItems, fetch items once tags are available
   useEffect(() => {
     if (!tags || tags.length === 0) return; // exit if tags is falsy or empty
     if (items.length === 0) {
@@ -94,6 +96,7 @@ const TagList = () => {
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
+    dispatch(fetchAllTags({ page: newPage, limit: 10, search: searchTerm }));
   };
 
   const handleEditClick = (tag: Tag) => {
@@ -118,7 +121,9 @@ const TagList = () => {
         updateTag({ id: editTag.id, tagData: updatedTag }),
       ).unwrap();
       toast.success(t.tagList.editModal.messages.success[lang]);
-      dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
+      dispatch(
+        fetchAllTags({ page: currentPage, limit: 10, search: searchTerm }),
+      );
       setEditTag(null);
     } catch {
       toast.error(t.tagList.editModal.messages.error[lang]);
@@ -193,7 +198,13 @@ const TagList = () => {
             <TagDelete
               id={tag.id}
               onDeleted={() => {
-                dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
+                dispatch(
+                  fetchAllTags({
+                    page: currentPage,
+                    limit: 10,
+                    search: searchTerm,
+                  }),
+                );
               }}
             />
           </div>
