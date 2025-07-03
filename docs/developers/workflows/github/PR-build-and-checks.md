@@ -4,15 +4,15 @@ This repository includes automated CI/CD workflows to ensure code quality and bu
 
 ## Available Workflows
 
-### 1. PR Build Check (`pr-build-check.yml`)
+### 1. Build Validation (`build-validation.yml`)
 
 **Purpose**: Simple build verification for pull requests
 
 - **Triggers**: Pull requests to `develop` or `deployment` branches
 - **What it does**:
   - Builds both frontend and backend
-  - Verifies TypeScript compilation
-  - Ensures build artifacts are created
+  - Verifies TypeScript compilation (implicit in the build scripts)
+  - Confirms build artifacts exist
   - Provides build status summary
 
 ### 2. Comprehensive PR Checks (`comprehensive-pr-checks.yml`)
@@ -21,13 +21,15 @@ This repository includes automated CI/CD workflows to ensure code quality and bu
 
 - **Triggers**: Pull requests to `develop` or `deployment` branches
 - **What it does**:
-  - All checks from PR Build Check, plus:
   - Code formatting verification
   - Linting checks
+  - TypeScript type checking without emitting files
+  - Unit tests (non‑blocking)
   - Security dependency audits
-  - Uploads build artifacts for review
 
 ## Workflow Details
+
+> **Note**: The *Frontend* and *Backend* build steps described below run **only** in the **Build Validation** workflow.
 
 ### Frontend Checks
 
@@ -61,10 +63,9 @@ This repository includes automated CI/CD workflows to ensure code quality and bu
 - **npm dependencies**: Cached to speed up workflow runs
 - **Cache key**: Based on package-lock.json files
 
-### Build Artifacts
+### Build Verification
 
-- **Retention**: 1 day (cleanup to save storage)
-- **Purpose**: Available for manual verification if needed
+The Build Validation workflow confirms that production bundles are created in `frontend/dist/` and `backend/dist/`, but it deliberately does **not** upload those artifacts. This keeps the workflow lightweight while still guaranteeing that a deployable bundle can be produced.
 
 ## Status Indicators
 
