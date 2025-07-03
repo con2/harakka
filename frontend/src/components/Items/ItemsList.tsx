@@ -33,8 +33,9 @@ const ItemsList: React.FC = () => {
 
   // Fetch all items when the component mounts
   useEffect(() => {
-    dispatch(fetchAllItems());
-  }, [dispatch]);
+    if (items.length <= 1)
+      dispatch(fetchAllItems());
+  }, [dispatch, items.length]);
 
   const userQuery = searchQuery.toLowerCase().trim();
 
@@ -66,7 +67,8 @@ const ItemsList: React.FC = () => {
       item.translations?.[lang === "fi" ? "en" : "fi"]?.item_type;
 
     const matchesItemTypes =
-      !filters.itemTypes?.length || filters.itemTypes.includes(itemType?.toLowerCase());
+      !filters.itemTypes?.length ||
+      filters.itemTypes.includes(itemType?.toLowerCase());
 
     // Filter by tags
     const matchesTags =

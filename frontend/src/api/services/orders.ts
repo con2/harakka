@@ -171,11 +171,11 @@ export const ordersApi = {
   },
 
   /**
- * Update payment status of an order (admin only)
- * @param orderId - Order ID to update
- * @param status - New payment status
- * @returns Promise with confirmation message
- */
+   * Update payment status of an order (admin only)
+   * @param orderId - Order ID to update
+   * @param status - New payment status
+   * @returns Promise with confirmation message
+   */
   updatePaymentStatus: async (
     orderId: string,
     status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
@@ -189,7 +189,7 @@ export const ordersApi = {
         headers: {
           "x-user-id": userId || "",
         },
-      }
+      },
     );
     return { orderId, status: status ?? "" };
   },

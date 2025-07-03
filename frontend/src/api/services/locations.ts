@@ -27,4 +27,3 @@ export const locationsApi = {
   getLocationById: (id: string): Promise<LocationDetails> =>
     api.get(`/api/storage-locations/${id}`),
 };
-

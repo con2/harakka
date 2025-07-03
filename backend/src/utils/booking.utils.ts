@@ -35,10 +35,6 @@ export async function calculateAvailableQuantity(
   return item.items_number_total - booked;
 }
 
-/**
- * @param orders
- * @returns An array of unique location IDs
- */
 export function getUniqueLocationIDs(orders: UserBookingOrder[]): string[] {
   return Array.from(
     new Set(

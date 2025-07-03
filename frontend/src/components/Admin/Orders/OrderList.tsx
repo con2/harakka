@@ -9,7 +9,6 @@ import {
 } from "@/store/slices/ordersSlice";
 import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import { useAuth } from "@/context/AuthContext";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "../../ui/button";
 import { BookingOrder, BookingItem, PaymentStatus } from "@/types";
@@ -30,8 +29,15 @@ import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { Separator } from "../../ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 import OrderPickupButton from "./OrderPickupButton";
+import { useAuth } from "@/hooks/useAuth";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -45,17 +51,20 @@ const OrderList = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
   // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
 
   useEffect(() => {
     // Always fetch orders when the admin component mounts and auth is ready
-    if (!authLoading && user && user.id && !ordersLoadedRef.current) {
+    if (user && orders.length <= 1) {
       dispatch(getAllOrders(user.id));
       ordersLoadedRef.current = true;
     }
-  }, [authLoading, dispatch, user]);
+  }, [dispatch, user, orders.length]);
 
   const handleViewDetails = (order: BookingOrder) => {
     setSelectedOrder(order);
@@ -170,6 +179,22 @@ const OrderList = () => {
     return true;
   });
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (pageIndex: number) => {
+    setCurrentPage(pageIndex);
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchQuery, statusFilter]);
+
   const columns: ColumnDef<BookingOrder>[] = [
     {
       accessorKey: "order_number",
@@ -239,11 +264,20 @@ const OrderList = () => {
       cell: ({ row }) => {
         const paymentStatus = row.original.payment_status ?? "N/A";
 
-        const handleStatusChange = (newStatus: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | "N/A") => {
-          dispatch(updatePaymentStatus({
-            orderId: row.original.id,
-            status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
-          }));
+        const handleStatusChange = (
+          newStatus:
+            | "invoice-sent"
+            | "paid"
+            | "payment-rejected"
+            | "overdue"
+            | "N/A",
+        ) => {
+          dispatch(
+            updatePaymentStatus({
+              orderId: row.original.id,
+              status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
+            }),
+          );
         };
 
         return (
@@ -252,18 +286,29 @@ const OrderList = () => {
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              {["invoice-sent", "paid", "payment-rejected", "overdue", "N/A"].map((status) => {
-                const statusKeyMap: Record<string, keyof typeof t.orderList.columns.invoice.invoiceStatus> = {
+              {[
+                "invoice-sent",
+                "paid",
+                "payment-rejected",
+                "overdue",
+                "N/A",
+              ].map((status) => {
+                const statusKeyMap: Record<
+                  string,
+                  keyof typeof t.orderList.columns.invoice.invoiceStatus
+                > = {
                   "invoice-sent": "sent",
-                  "paid": "paid",
+                  paid: "paid",
                   "payment-rejected": "rejected",
-                  "overdue": "overdue",
+                  overdue: "overdue",
                   "N/A": "NA",
                 };
                 const statusKey = statusKeyMap[status];
                 return (
                   <SelectItem className="text-xs" key={status} value={status}>
-                    {t.orderList.columns.invoice.invoiceStatus?.[statusKey]?.[lang] || status}
+                    {t.orderList.columns.invoice.invoiceStatus?.[statusKey]?.[
+                      lang
+                    ] || status}
                   </SelectItem>
                 );
               })}
@@ -311,10 +356,7 @@ const OrderList = () => {
               />
             )}
 
-            {isConfirmed && (
-              <OrderPickupButton
-              />
-            )}
+            {isConfirmed && <OrderPickupButton />}
 
             <OrderDeleteButton
               id={order.id}
@@ -440,7 +482,13 @@ const OrderList = () => {
             )}
           </div>
         </div>
-        <PaginatedDataTable columns={columns} data={filteredOrders} />
+        <PaginatedDataTable
+          columns={columns}
+          data={paginatedOrders}
+          pageIndex={currentPage}
+          pageCount={totalPages}
+          onPageChange={handlePageChange}
+        />
       </div>
 
       {/* Order Details Modal */}
@@ -504,14 +552,18 @@ const OrderList = () => {
                     {selectedOrder.status === "pending" && (
                       <>
                         <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.confirm[lang]}</span>
+                          <span className="text-xs text-slate-600">
+                            {t.orderList.modal.buttons.confirm[lang]}
+                          </span>
                           <OrderConfirmButton
                             id={selectedOrder.id}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
                         <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.reject[lang]}</span>
+                          <span className="text-xs text-slate-600">
+                            {t.orderList.modal.buttons.reject[lang]}
+                          </span>
                           <OrderRejectButton
                             id={selectedOrder.id}
                             closeModal={() => setShowDetailsModal(false)}
@@ -523,21 +575,26 @@ const OrderList = () => {
                     {selectedOrder.status === "confirmed" && (
                       <>
                         <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.return[lang]}</span>
+                          <span className="text-xs text-slate-600">
+                            {t.orderList.modal.buttons.return[lang]}
+                          </span>
                           <OrderReturnButton
                             id={selectedOrder.id}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
                         <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">{t.orderList.modal.buttons.pickedUp[lang]}</span>
-                          <OrderPickupButton
-                          />
+                          <span className="text-xs text-slate-600">
+                            {t.orderList.modal.buttons.pickedUp[lang]}
+                          </span>
+                          <OrderPickupButton />
                         </div>
                       </>
                     )}
                     <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">{t.orderList.modal.buttons.delete[lang]}</span>
+                      <span className="text-xs text-slate-600">
+                        {t.orderList.modal.buttons.delete[lang]}
+                      </span>
                       <OrderDeleteButton
                         id={selectedOrder.id}
                         closeModal={() => setShowDetailsModal(false)}

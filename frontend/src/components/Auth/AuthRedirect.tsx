@@ -1,6 +1,6 @@
+import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 
 export const AuthRedirect = () => {
   const { user } = useAuth();
@@ -9,9 +9,9 @@ export const AuthRedirect = () => {
   useEffect(() => {
     if (user) {
       if (user.role === "user") {
-        navigate("/");  // redirect to Landing Page for "user"
+        navigate("/"); // redirect to Landing Page for "user"
       } else if (user.role === "admin" || user.role === "superVera") {
-        navigate("/admin");  // redirect to Admin Panel for "admin" or "superVera"
+        navigate("/admin"); // redirect to Admin Panel for "admin" or "superVera"
       }
     }
   }, [user, navigate]);

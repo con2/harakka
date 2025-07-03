@@ -78,9 +78,9 @@ const MyProfile = () => {
       setPhone(selectedUser.phone || "");
       setVisibleName(selectedUser.visible_name || "");
       // setPreferences(selectedUser.preferences || "");
-      dispatch(getUserAddresses(selectedUser.id));
+      if (addresses.length === 0) dispatch(getUserAddresses(selectedUser.id));
     }
-  }, [selectedUser, dispatch]);
+  }, [selectedUser, dispatch, addresses.length]);
 
   useEffect(() => {
     setAddresses(userAddresses || []);
@@ -341,7 +341,7 @@ const MyProfile = () => {
                               <label className="block text-xs font-medium text-gray-700">
                                 {
                                   t.myProfile.addresses.streetAddress.label[
-                                  lang
+                                    lang
                                   ]
                                 }
                               </label>
@@ -431,21 +431,21 @@ const MyProfile = () => {
                                 <option value="both">
                                   {
                                     t.myProfile.addresses.type.options.both[
-                                    lang
+                                      lang
                                     ]
                                   }
                                 </option>
                                 <option value="billing">
                                   {
                                     t.myProfile.addresses.type.options.billing[
-                                    lang
+                                      lang
                                     ]
                                   }
                                 </option>
                                 <option value="shipping">
                                   {
                                     t.myProfile.addresses.type.options.shipping[
-                                    lang
+                                      lang
                                     ]
                                   }
                                 </option>
@@ -558,7 +558,7 @@ const MyProfile = () => {
                             <SelectItem value="shipping">
                               {
                                 t.myProfile.addresses.type.options.shipping[
-                                lang
+                                  lang
                                 ]
                               }
                             </SelectItem>
@@ -580,7 +580,7 @@ const MyProfile = () => {
                           }
                           placeholder={
                             t.myProfile.addresses.streetAddress.placeholder[
-                            lang
+                              lang
                             ]
                           }
                         />

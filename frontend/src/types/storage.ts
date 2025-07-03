@@ -1,18 +1,18 @@
-import { BaseEntity } from './common';
+import { BaseEntity } from "./common";
 
 /**
  * Supported image types for uploads
  */
-export type ImageType = 'main' | 'thumbnail' | 'detail';
+export type ImageType = "main" | "thumbnail" | "detail";
 
 /**
  * Allowed MIME types for file uploads
  */
 export type AllowedMimeType =
-  | 'image/jpeg'
-  | 'image/png'
-  | 'image/webp'
-  | 'image/gif';
+  | "image/jpeg"
+  | "image/png"
+  | "image/webp"
+  | "image/gif";
 
 /**
  * Image file upload size and type constraints
@@ -20,10 +20,10 @@ export type AllowedMimeType =
 export const FILE_CONSTRAINTS = {
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
   ALLOWED_FILE_TYPES: [
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'image/gif',
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
   ] as readonly AllowedMimeType[],
 };
 
