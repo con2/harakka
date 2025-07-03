@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
-import { verify } from "jsonwebtoken";
+import { verify, TokenExpiredError } from "jsonwebtoken";
 import { UserRoleWithDetails } from "../role/interfaces/role.interface";
 import { JWTPayload, JWTRole } from "./interfaces/jwt.interface";
 
@@ -11,6 +11,7 @@ export class JwtService {
   private readonly supabaseUrl: string;
   private readonly serviceRoleKey: string;
   private readonly jwtSecret: string;
+  private readonly jwtExpirySeconds: number;
 
   // Cache for JWT updates to prevent frequent updates
   private jwtUpdateCache = new Map<string, number>();
@@ -22,6 +23,7 @@ export class JwtService {
       "",
     );
     this.jwtSecret = this.config.get<string>("SUPABASE_JWT_SECRET", "");
+    this.jwtExpirySeconds = this.config.get<number>("JWT_EXPIRY_SECONDS", 3600); // 1 hour default
 
     if (!this.supabaseUrl || !this.serviceRoleKey || !this.jwtSecret) {
       throw new Error(
@@ -67,39 +69,15 @@ export class JwtService {
    * Verify and decode JWT token
    */
   verifyToken(token: string): JWTPayload {
-    return verify(token, this.jwtSecret, {
-      algorithms: ["HS256"],
-    }) as JWTPayload;
-  }
-
-  /**
-   * Analyze JWT contents for debugging
-   */
-  analyzeJWT(token: string, userId: string): void {
     try {
-      const decoded = this.verifyToken(token);
-      const hasRoles = decoded.app_metadata?.roles?.length > 0;
-      const roleCount = decoded.app_metadata?.roles?.length || 0;
-      const lastSync = decoded.app_metadata?.last_role_sync;
-
-      this.logger.debug(
-        `🔍 JWT Analysis for user ${userId}:
-        - Has roles in JWT: ${hasRoles}
-        - Role count: ${roleCount}
-        - Last sync: ${lastSync || "Never"}
-        - Will use: ${hasRoles ? "JWT path (fast)" : "Database fallback (slower)"}`,
-      );
-
-      if (hasRoles) {
-        const roleNames = decoded.app_metadata.roles
-          .map((r: JWTRole) => `${r.name}@${r.org_name}`)
-          .join(", ");
-        this.logger.debug(`📋 JWT Roles: [${roleNames}]`);
-      }
+      return verify(token, this.jwtSecret, {
+        algorithms: ["HS256"],
+      }) as JWTPayload;
     } catch (error) {
-      this.logger.debug(
-        `Failed to analyze JWT for user ${userId}: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      if (error instanceof TokenExpiredError) {
+        throw error;
+      }
+      throw new Error("Invalid token format or signature");
     }
   }
 
@@ -118,7 +96,7 @@ export class JwtService {
         id: role.id,
         user_id: userId,
         organization_id: role.org_id,
-        role_id: role.role_id || null,
+        role_id: role.role_id,
         role_name: role.name,
         organization_name: role.org_name,
         is_active: true,
@@ -138,7 +116,9 @@ export class JwtService {
   hasRolesInJWT(token: string): boolean {
     try {
       const decoded = this.verifyToken(token);
-      return decoded.app_metadata?.roles?.length > 0;
+      return Boolean(
+        decoded.app_metadata?.roles && decoded.app_metadata.roles.length > 0,
+      );
     } catch {
       return false;
     }

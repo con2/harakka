@@ -3,7 +3,7 @@ export interface JWTRole {
   name: string;
   org_id: string;
   org_name: string;
-  role_id: string | null;
+  role_id: string;
   created_at: string;
 }
 

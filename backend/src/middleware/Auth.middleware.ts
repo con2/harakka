@@ -12,6 +12,7 @@ import { TokenExpiredError } from "jsonwebtoken";
 import { AuthRequest } from "./interfaces/auth-request.interface";
 import { UserRoleWithDetails } from "../modules/role/interfaces/role.interface";
 import { JwtService } from "../modules/jwt/jwt.service";
+import { JWTPayload } from "../modules/jwt/interfaces/jwt.interface";
 
 /**
  * AuthMiddleware
@@ -35,7 +36,7 @@ export class AuthMiddleware implements NestMiddleware {
   // Cache for reducing authentication logging noise
   private lastAuthLog = new Map<
     string,
-    { roles: string[]; timestamp: number }
+    { roleSignature: string; timestamp: number }
   >();
 
   constructor(
@@ -66,8 +67,19 @@ export class AuthMiddleware implements NestMiddleware {
       }
 
       // Local signature/expiry verification + decode payload
+      let payload: JWTPayload;
       try {
-        this.jwtService.verifyToken(token);
+        payload = this.jwtService.verifyToken(token);
+
+        // Validate essential JWT claims
+        if (!payload.sub || !payload.aud || !payload.exp) {
+          throw new UnauthorizedException("Invalid token payload");
+        }
+
+        // Validate expiration manually (additional safety)
+        if (Date.now() >= payload.exp * 1000) {
+          throw new UnauthorizedException("Token has expired");
+        }
       } catch (verifyErr) {
         if (verifyErr instanceof TokenExpiredError) {
           this.logger.warn(
@@ -108,24 +120,8 @@ export class AuthMiddleware implements NestMiddleware {
         throw new UnauthorizedException("Invalid or expired token");
       }
 
-      // Log JWT contents for debugging
-      this.jwtService.analyzeJWT(token, user.id);
-
-      if (!this.jwtService.hasRolesInJWT(token)) {
-        this.logger.error(
-          `JWT missing roles for user ${user.id}. User must log in again to get updated JWT with roles.`,
-        );
-        throw new UnauthorizedException(
-          "Session outdated - please log in again to refresh your permissions",
-        );
-      }
-
       // Extract roles from JWT
       const userRoles = this.jwtService.extractRolesFromToken(token, user.id);
-
-      this.logger.debug(
-        `There are ${userRoles.length} roles from JWT for user ${user.id}`,
-      );
 
       // JWT status log
       if (this.shouldLogAuth(user.id, userRoles)) {
@@ -165,10 +161,10 @@ export class AuthMiddleware implements NestMiddleware {
 
     if (
       !cached ||
-      cached.roles.join(",") !== roleSignature ||
+      cached.roleSignature !== roleSignature ||
       now - cached.timestamp > 300000
     ) {
-      this.lastAuthLog.set(userId, { roles: [roleSignature], timestamp: now });
+      this.lastAuthLog.set(userId, { roleSignature, timestamp: now });
       return true;
     }
 
@@ -182,7 +178,16 @@ export class AuthMiddleware implements NestMiddleware {
    * when neither is present.
    */
   private extractToken(req: Request): string | null {
+    // Try Authorization header first
     const header = req.headers.authorization;
-    return header?.startsWith("Bearer ") ? header.slice(7) : null;
+    if (header?.startsWith("Bearer ")) {
+      return header.slice(7);
+    }
+
+    // Try cookie as fallback with explicit type assertion and validation
+    const cookies = req.cookies as Record<string, unknown> | undefined;
+    const cookieValue = cookies?.["sb-access-token"];
+
+    return typeof cookieValue === "string" ? cookieValue : null;
   }
 }
