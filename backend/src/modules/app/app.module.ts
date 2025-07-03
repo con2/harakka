@@ -11,7 +11,6 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 import * as dotenvExpand from "dotenv-expand";
 import { ThrottlerModule } from "@nestjs/throttler";
-import { AdminModule } from "../admin/admin.module";
 import { BookingModule } from "../booking/booking.module";
 import { ItemImagesModule } from "../item-images/item-images.module";
 import { LogsModule } from "../logs_module/logs.module";
@@ -22,8 +21,6 @@ import { TagModule } from "../tag/tag.module";
 import { UserModule } from "../user/user.module";
 import { SupabaseModule } from "../supabase/supabase.module";
 import { AuthMiddleware } from "../../middleware/Auth.middleware";
-import { AuthTestController } from "../AuthTest/authTest.controller";
-import { AuthTestService } from "../AuthTest/authTest.service";
 import { BookingController } from "../booking/booking.controller";
 import { UserController } from "../user/user.controller";
 import { StorageLocationsController } from "../storage-locations/storage-locations.controller";
@@ -33,6 +30,7 @@ import { LogsController } from "../logs_module/logs.controller";
 import { RoleModule } from "../role/role.module";
 import { RoleController } from "../role/role.controller";
 import { AuthModule } from "../auth/auth.module";
+import { JwtModule } from "../jwt/jwt.module";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -53,7 +51,6 @@ dotenvExpand.expand(env);
         },
       ],
     }),
-    AdminModule,
     AuthModule,
     BookingModule,
     ItemImagesModule,
@@ -66,9 +63,10 @@ dotenvExpand.expand(env);
     SupabaseModule,
     BookingItemsModule,
     RoleModule,
+    JwtModule,
   ],
-  controllers: [AppController, AuthTestController],
-  providers: [AppService, AuthTestService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
@@ -82,9 +80,8 @@ export class AppModule implements NestModule {
         // Health checks and public endpoints
         { path: "health", method: RequestMethod.GET },
         { path: "", method: RequestMethod.GET }, // Root endpoint
-        { path: "storage", method: RequestMethod.GET },
+        { path: "storage", method: RequestMethod.GET }, // Public storage endpoint
       )
-      // ⬇️  List every non-GET verb you want protected
       .forRoutes(
         // Protected controllers
         BookingController,

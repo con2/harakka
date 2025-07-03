@@ -1,21 +1,22 @@
-import { Controller, Post, Body, Logger, Get, Req } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
-import { ConfigService } from '@nestjs/config';
-import { AuthRequest } from '../../middleware/interfaces/auth-request.interface';
+//USED ONLY FOR TESTING PURPOSES
+import { Controller, Post, Body, Logger, Get, Req } from "@nestjs/common";
+import { createClient } from "@supabase/supabase-js";
+import { ConfigService } from "@nestjs/config";
+import { AuthRequest } from "../../middleware/interfaces/auth-request.interface";
 
-@Controller('auth')
+@Controller("auth")
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
   private readonly supabase;
 
   constructor(private readonly config: ConfigService) {
     this.supabase = createClient(
-      this.config.get<string>('SUPABASE_URL')!,
-      this.config.get<string>('SUPABASE_ANON_KEY')!
+      this.config.get<string>("SUPABASE_URL")!,
+      this.config.get<string>("SUPABASE_ANON_KEY")!,
     );
   }
 
-  @Post('test-login')
+  @Post("test-login")
   async getTestToken(@Body() body: { email: string; password: string }) {
     try {
       const { data, error } = await this.supabase.auth.signInWithPassword({
@@ -29,18 +30,21 @@ export class AuthController {
 
       // Decode JWT to show roles
       const payload = JSON.parse(
-        Buffer.from(data.session.access_token.split('.')[1], 'base64').toString()
+        Buffer.from(
+          data.session.access_token.split(".")[1],
+          "base64",
+        ).toString(),
       );
 
       // Format the token for easy copy-paste
       const formattedToken = data.session.access_token;
-      
+
       this.logger.log(`🎫 Fresh token generated for ${body.email}`);
       this.logger.log(`📋 Token (copy for Postman): ${formattedToken}`);
 
       return {
         success: true,
-        message: '✅ Fresh token generated with latest role metadata',
+        message: "✅ Fresh token generated with latest role metadata",
         access_token: formattedToken,
         refresh_token: data.session.refresh_token,
         expires_at: data.session.expires_at,
@@ -55,33 +59,35 @@ export class AuthController {
         },
         performance_info: {
           will_use_jwt_path: (payload.app_metadata?.roles?.length || 0) > 0,
-          optimization_status: (payload.app_metadata?.roles?.length || 0) > 0 
-            ? '🚀 Optimized - will use JWT path (fast)'
-            : '⚠️ Not optimized - will use database fallback (slower)',
+          optimization_status:
+            (payload.app_metadata?.roles?.length || 0) > 0
+              ? "🚀 Optimized - will use JWT path (fast)"
+              : "⚠️ Not optimized - will use database fallback (slower)",
         },
         instructions: {
-          postman: 'Copy the access_token above and use as Bearer token in Postman',
-          next_steps: 'Make API requests to see JWT optimization in action'
-        }
+          postman:
+            "Copy the access_token above and use as Bearer token in Postman",
+          next_steps: "Make API requests to see JWT optimization in action",
+        },
       };
     } catch (error) {
-      this.logger.error('Test login failed:', error);
+      this.logger.error("Test login failed:", error);
       throw error;
     }
   }
 
-  @Get('token-info')
+  @Get("token-info")
   async getCurrentTokenInfo(@Req() req: AuthRequest) {
     try {
-      const token = req.headers.authorization?.replace('Bearer ', '');
-      
+      const token = req.headers.authorization?.replace("Bearer ", "");
+
       if (!token) {
-        throw new Error('No token provided');
+        throw new Error("No token provided");
       }
 
       // Decode current JWT
       const payload = JSON.parse(
-        Buffer.from(token.split('.')[1], 'base64').toString()
+        Buffer.from(token.split(".")[1], "base64").toString(),
       );
 
       const hasRoles = (payload.app_metadata?.roles?.length || 0) > 0;
@@ -98,20 +104,20 @@ export class AuthController {
           expires_at: new Date(payload.exp * 1000).toISOString(),
         },
         performance_status: {
-          current_path: hasRoles ? 'JWT (optimized)' : 'Database (fallback)',
-          performance: hasRoles ? '🚀 Fast' : '⚠️ Slower',
-          recommendation: hasRoles 
-            ? 'Token is optimized - using fast JWT path'
-            : 'Token missing roles - using database fallback. Get fresh token via /auth/test-login'
-        }
+          current_path: hasRoles ? "JWT (optimized)" : "Database (fallback)",
+          performance: hasRoles ? "🚀 Fast" : "⚠️ Slower",
+          recommendation: hasRoles
+            ? "Token is optimized - using fast JWT path"
+            : "Token missing roles - using database fallback. Get fresh token via /auth/test-login",
+        },
       };
     } catch (error) {
-      this.logger.error('Token info failed:', error);
+      this.logger.error("Token info failed:", error);
       throw error;
     }
   }
 
-  @Post('get-fresh-token')
+  @Post("get-fresh-token")
   async getFreshToken(@Body() body: { email: string; password: string }) {
     try {
       const { data, error } = await this.supabase.auth.signInWithPassword({
@@ -125,14 +131,19 @@ export class AuthController {
 
       // Decode JWT to show current roles
       const payload = JSON.parse(
-        Buffer.from(data.session.access_token.split('.')[1], 'base64').toString()
+        Buffer.from(
+          data.session.access_token.split(".")[1],
+          "base64",
+        ).toString(),
       );
 
       const hasRoles = (payload.app_metadata?.roles?.length || 0) > 0;
 
       return {
         success: true,
-        message: hasRoles ? '🚀 Fresh token with JWT optimization!' : '⚠️ Token without roles (will be updated on next request)',
+        message: hasRoles
+          ? "🚀 Fresh token with JWT optimization!"
+          : "⚠️ Token without roles (will be updated on next request)",
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_at: data.session.expires_at,
@@ -140,18 +151,23 @@ export class AuthController {
           has_roles: hasRoles,
           role_count: payload.app_metadata?.roles?.length || 0,
           roles: payload.app_metadata?.roles || [],
-          optimization_status: hasRoles ? 'JWT Path (Fast)' : 'Database Fallback (Slower)',
+          optimization_status: hasRoles
+            ? "JWT Path (Fast)"
+            : "Database Fallback (Slower)",
         },
         test_instructions: {
-          step1: 'Copy the access_token above',
-          step2: 'Use it as Bearer token in your requests',
-          step3: 'If no roles in JWT yet, make one request to trigger JWT update',
-          step4: 'Get another fresh token - it should then have roles in JWT',
-        }
+          step1: "Copy the access_token above",
+          step2: "Use it as Bearer token in your requests",
+          step3:
+            "If no roles in JWT yet, make one request to trigger JWT update",
+          step4: "Get another fresh token - it should then have roles in JWT",
+        },
       };
     } catch (error) {
-      this.logger.error('Fresh token generation failed:', error);
-      throw new Error(`Failed to generate fresh token: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error("Fresh token generation failed:", error);
+      throw new Error(
+        `Failed to generate fresh token: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 }

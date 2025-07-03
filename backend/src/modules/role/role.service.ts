@@ -7,13 +7,12 @@ import {
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { UserRoleWithDetails } from "./interfaces/role.interface";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "src/types/supabase.types";
+import { JwtService } from "../jwt/jwt.service";
 
 @Injectable()
 export class RoleService {
   private readonly logger = new Logger(RoleService.name);
-
+  constructor(private readonly jwtService: JwtService) {}
   /**
    * Get all active roles for the current authenticated user
    * Uses roles already fetched and attached to request by AuthMiddleware
@@ -171,7 +170,7 @@ export class RoleService {
       throw new BadRequestException("Failed to create role assignment");
     }
 
-    return {
+    const result = {
       id: data.id,
       user_id: data.user_id,
       organization_id: data.organization_id,
@@ -181,6 +180,11 @@ export class RoleService {
       is_active: data.is_active ?? true,
       created_at: data.created_at ?? undefined,
     };
+
+    // After successful role creation, update JWT
+    await this.updateUserJWT(createRoleDto.user_id, req);
+
+    return result;
   }
 
   /**
@@ -236,7 +240,7 @@ export class RoleService {
       throw new BadRequestException("Failed to update role assignment");
     }
 
-    return {
+    const result = {
       id: data.id,
       user_id: data.user_id,
       organization_id: data.organization_id,
@@ -246,6 +250,11 @@ export class RoleService {
       is_active: data.is_active ?? true,
       created_at: data.created_at ?? undefined,
     };
+
+    // After successful role update, update JWT
+    await this.updateUserJWT(existing.user_id, req);
+
+    return result;
   }
 
   /**
@@ -277,6 +286,9 @@ export class RoleService {
       throw new BadRequestException("Failed to delete role assignment");
     }
 
+    // After successful role deletion, update JWT
+    await this.updateUserJWT(existing.user_id, req);
+
     return {
       success: true,
       message: "Role assignment deactivated successfully",
@@ -284,7 +296,7 @@ export class RoleService {
   }
 
   /**
-   * Hard delete a user role assignment (permanent removal)
+   * Hard delete a user role assignment (permanent removal) USE IT ONLY IF YOU KNOW WHAT YOU ARE DOING!
    */
   async permanentDeleteUserRole(
     roleAssignmentId: string,
@@ -293,7 +305,7 @@ export class RoleService {
     // Check if assignment exists
     const { data: existing, error: existingError } = await req.supabase
       .from("user_organization_roles")
-      .select("id")
+      .select("id, user_id")
       .eq("id", roleAssignmentId)
       .single();
 
@@ -315,6 +327,9 @@ export class RoleService {
         "Failed to permanently delete role assignment",
       );
     }
+
+    // After successful permanent deletion, update JWT
+    await this.updateUserJWT(existing.user_id, req);
 
     return {
       success: true,
@@ -364,5 +379,42 @@ export class RoleService {
       is_active: item.is_active ?? true,
       created_at: item.created_at ?? undefined,
     }));
+  }
+
+  private async updateUserJWT(userId: string, req: AuthRequest): Promise<void> {
+    try {
+      // Force refresh user roles and update JWT
+      const { data: freshRoles } = await req.supabase
+        .from("user_organization_roles")
+        .select(
+          `
+      id, user_id, organization_id, role_id, is_active, created_at,
+      roles!inner(role),
+      organizations!inner(name)
+    `,
+        )
+        .eq("user_id", userId)
+        .eq("is_active", true);
+
+      if (freshRoles) {
+        const userRoles = freshRoles.map((item) => ({
+          id: item.id,
+          user_id: item.user_id,
+          organization_id: item.organization_id,
+          role_id: item.role_id,
+          role_name: item.roles.role,
+          organization_name: item.organizations.name,
+          is_active: item.is_active ?? true,
+          created_at: item.created_at ?? undefined,
+        }));
+
+        // Use the JWT service to force update
+        await this.jwtService.forceUpdateJWTWithRoles(userId, userRoles);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to update JWT for user ${userId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 }
