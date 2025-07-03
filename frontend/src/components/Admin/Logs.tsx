@@ -60,21 +60,14 @@ const Logs: React.FC = () => {
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 10;
   const totalPages = useAppSelector(selectLogsPagination).totalPages ?? 0;
-
   const apiLogType =
     logTypeFilter === "all" || logTypeFilter === "errors"
       ? undefined
       : logTypeFilter;
 
-  const apiLevel =
-    levelFilter === "all"
-      ? undefined
-      : levelFilter;
+  const apiLevel = levelFilter === "all" ? undefined : levelFilter;
 
-  const apiLevelForErrors =
-    logTypeFilter === "errors"
-      ? "error"
-      : apiLevel;
+  const apiLevelForErrors = logTypeFilter === "errors" ? "error" : apiLevel;
 
   useEffect(() => {
     dispatch(
@@ -84,9 +77,18 @@ const Logs: React.FC = () => {
         logType: apiLogType,
         level: apiLevelForErrors,
         search: searchQuery || undefined,
-      })
+      }),
     );
-  }, [dispatch, pageIndex, pageSize, logTypeFilter, levelFilter, searchQuery]);
+  }, [
+    dispatch,
+    pageIndex,
+    pageSize,
+    logTypeFilter,
+    levelFilter,
+    searchQuery,
+    apiLogType,
+    apiLevelForErrors,
+  ]);
 
   const refreshLogs = () => {
     dispatch(
@@ -96,7 +98,7 @@ const Logs: React.FC = () => {
         logType: apiLogType,
         level: apiLevelForErrors,
         search: searchQuery || undefined,
-      })
+      }),
     );
   };
 
@@ -358,18 +360,18 @@ const Logs: React.FC = () => {
           {(searchQuery ||
             logTypeFilter !== "all" ||
             levelFilter !== "all") && (
-              <Button
-                onClick={() => {
-                  setLogTypeFilter("all");
-                  setLevelFilter("all");
-                  setSearchQuery("");
-                }}
-                size="sm"
-                className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
-              >
-                {t.logs.filters.reset[lang] || "Reset Filters"}
-              </Button>
-            )}
+            <Button
+              onClick={() => {
+                setLogTypeFilter("all");
+                setLevelFilter("all");
+                setSearchQuery("");
+              }}
+              size="sm"
+              className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+            >
+              {t.logs.filters.reset[lang] || "Reset Filters"}
+            </Button>
+          )}
         </div>
       </div>
 
