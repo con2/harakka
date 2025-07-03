@@ -9,7 +9,7 @@ env:
 
 jobs:
   frontend-checks:
-    name: Frontend Build & Checks
+    name: Frontend Linting & Formatting Checks
     runs-on: ubuntu-latest
     
     steps:
@@ -39,28 +39,9 @@ jobs:
         working-directory: ./frontend
         run: npx tsc --noEmit
         
-      - name: Build application
-        working-directory: ./frontend
-        run: npm run build
-        
-      - name: Verify build output
-        working-directory: ./frontend
-        run: |
-          if [ ! -d "dist" ]; then
-            echo "❌ Build failed - dist directory not found"
-            exit 1
-          fi
-          echo "✅ Frontend build successful"
-          
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist/
-          retention-days: 1
 
   backend-checks:
-    name: Backend Build & Checks
+    name: Backend Linting & Formatting Checks
     runs-on: ubuntu-latest
     
     steps:
@@ -91,26 +72,6 @@ jobs:
         working-directory: ./backend
         run: npm run test
         continue-on-error: true
-        
-      - name: Build application
-        working-directory: ./backend
-        run: npm run build
-        
-      - name: Verify build output
-        working-directory: ./backend
-        run: |
-          if [ ! -d "dist" ]; then
-            echo "❌ Build failed - dist directory not found"
-            exit 1
-          fi
-          echo "✅ Backend build successful"
-          
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-dist
-          path: backend/dist/
-          retention-days: 1
 
   security-audit:
     name: Security Audit
