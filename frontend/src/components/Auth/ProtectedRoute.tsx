@@ -1,8 +1,11 @@
-import { Navigate } from 'react-router-dom';
-import { useAppSelector } from '@/store/hooks';
-import { selectSelectedUser, selectSelectedUserLoading } from '@/store/slices/usersSlice';
-import { ReactNode } from 'react';
-import { LoaderCircle } from 'lucide-react';
+import { Navigate } from "react-router-dom";
+import { useAppSelector } from "@/store/hooks";
+import {
+  selectSelectedUser,
+  selectSelectedUserLoading,
+} from "@/store/slices/usersSlice";
+import { ReactNode } from "react";
+import { LoaderCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {

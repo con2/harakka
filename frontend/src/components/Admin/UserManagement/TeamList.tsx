@@ -33,6 +33,9 @@ const TeamList = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (!authLoading && isSuperVera && users.length === 0) {
@@ -43,6 +46,22 @@ const TeamList = () => {
   const teamUsers = users.filter(
     (user) => user.role === "admin" || user.role === "superVera",
   );
+
+  // Reset to first page when data changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [teamUsers.length]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(teamUsers.length / itemsPerPage);
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = teamUsers.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (pageIndex: number) => {
+    setCurrentPage(pageIndex);
+  };
 
   const handleAddNew = () => {
     setSelectedUser(null);
@@ -111,7 +130,7 @@ const TeamList = () => {
       id: "delete",
       header: t.teamList.columns.delete[lang],
       cell: ({ row }) => (
-        <UserDeleteButton id={row.original.id} closeModal={() => { }} />
+        <UserDeleteButton id={row.original.id} closeModal={() => {}} />
       ),
     },
   ];
@@ -152,7 +171,13 @@ const TeamList = () => {
         />
       )}
 
-      <PaginatedDataTable columns={columns} data={teamUsers} />
+      <PaginatedDataTable
+        columns={columns}
+        data={paginatedUsers}
+        pageIndex={currentPage}
+        pageCount={totalPages}
+        onPageChange={handlePageChange}
+      />
     </>
   );
 };
