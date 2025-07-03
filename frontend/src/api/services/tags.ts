@@ -1,6 +1,6 @@
 import { Tag, CreateTagDto, UpdateTagDto } from "@/types/tag";
 import { api } from "../axios";
-import { ApiResponse } from "@/types/api"
+import { ApiResponse } from "@/types/api";
 
 /**
  * API service for tag-related endpoints
@@ -13,23 +13,16 @@ export const tagsApi = {
   getAllTags: async (
     page: number = 1,
     limit: number = 10,
-  ): Promise<{
-    data: Tag[];
-    metadata: {
-      total: number;
-      page: number;
-      totalPages: number;
-    }
-  }> => {
-    const result = await api.get<ApiResponse<Tag[]>>(`/tags?page=${page}&limit=${limit}`);
-    console.log("result:", result)
-    console.log("data:", result.data)
-    console.log("data.data:", result.data.data)
-    console.log("data.metadata:", result.data.metadata)
-    // Extract data and metadata from the ApiResponse
+  ): Promise<ApiResponse<Tag[]>> => {
+    // Fetch paginated tags from the backend
+    const response = (await api.get(
+      `/tags?page=${page}&limit=${limit}`,
+    )) as ApiResponse<Tag[]>;
+
+    // Always return a complete object, even if the backend response is partial
     return {
-      data: result.data ?? [],
-      metadata: result.metadata ?? {
+      data: response.data ?? [],
+      metadata: response.metadata ?? {
         total: 0,
         page,
         totalPages: 1,
@@ -49,7 +42,8 @@ export const tagsApi = {
    * @param itemId - Item ID
    * @returns Array of tags assigned to the item
    */
-  getTagsByItem: (itemId: string): Promise<Tag[]> => api.get(`/tags/item/${itemId}`),
+  getTagsByItem: (itemId: string): Promise<Tag[]> =>
+    api.get(`/tags/item/${itemId}`),
 
   /**
    * Create a new tag
