@@ -1109,6 +1109,7 @@ export class BookingService {
    * @param limit How many rows to retrieve
    * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
    * @param filter What to filter the bookings by
+   * @param order_by What column to order the columns by. Default "order_number"
    * @param searchquery Optional. Filter bookings by a string
    * @returns Matching bookings
    */
