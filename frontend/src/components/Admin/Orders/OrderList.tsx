@@ -18,8 +18,9 @@ import {
   BookingOrder,
   BookingItem,
   PaymentStatus,
-  ValidBookingOrder, BookingUserViewRow,
-  BookingStatus
+  ValidBookingOrder,
+  BookingUserViewRow,
+  BookingStatus,
 } from "@/types";
 import {
   Dialog,
@@ -57,12 +58,14 @@ const OrderList = () => {
   const ordersLoadedRef = useRef(false);
   const user = useAppSelector(selectSelectedUser);
   const { authLoading } = useAuth();
-  const [selectedOrder, setSelectedOrder] = useState<BookingOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<BookingUserViewRow | null>(
+    null,
+  );
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
   const [order, setOrder] = useState<ValidBookingOrder>("order_number");
-  const [ascending, setAscending] = useState<boolean | null>(null)
+  const [ascending, setAscending] = useState<boolean | null>(null);
   const page = useAppSelector(selectOrdersPage);
   const totalPages = useAppSelector(selectOrdersTotalPages);
   // Translation
@@ -72,7 +75,7 @@ const OrderList = () => {
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
 
   /*----------------------handlers----------------------------------*/
-  const handleViewDetails = (order: BookingOrder) => {
+  const handleViewDetails = (order: BookingUserViewRow) => {
     setSelectedOrder(order);
     setShowDetailsModal(true);
   };
@@ -82,13 +85,13 @@ const OrderList = () => {
     setCurrentPage(newPage);
   };
 
-
   const handleSearchQuery = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
-  const handleOrder = (order: string) => setOrder(order as ValidBookingOrder)
-  const handleAscending = (ascending: boolean | null) => setAscending(ascending)
+  const handleOrder = (order: string) => setOrder(order as ValidBookingOrder);
+  const handleAscending = (ascending: boolean | null) =>
+    setAscending(ascending);
 
   /*----------------------side-effects----------------------------------*/
   useEffect(() => {
@@ -100,7 +103,7 @@ const OrderList = () => {
           limit: 10,
           searchquery: debouncedSearchQuery,
           ascending: ascending === false ? false : true,
-          status_filter: statusFilter !== "all" ? statusFilter : undefined
+          status_filter: statusFilter !== "all" ? statusFilter : undefined,
         }),
       );
     else {
@@ -114,7 +117,7 @@ const OrderList = () => {
     order,
     dispatch,
     currentPage,
-    ascending
+    ascending,
   ]);
 
   // Render a status badge with appropriate color
@@ -215,12 +218,9 @@ const OrderList = () => {
       cell: ({ row }) => (
         <div>
           <div>
-            {row.original.full_name ||
-              t.orderList.status.unknown[lang]}
+            {row.original.full_name || t.orderList.status.unknown[lang]}
           </div>
-          <div className="text-xs text-gray-500">
-            {row.original.email}
-          </div>
+          <div className="text-xs text-gray-500">{row.original.email}</div>
         </div>
       ),
     },
@@ -228,7 +228,7 @@ const OrderList = () => {
       accessorKey: "status",
       header: t.orderList.columns.status[lang],
       enableSorting: true,
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <StatusBadge status={row.original.status!} />,
     },
     {
       accessorKey: "created_at",
@@ -287,7 +287,7 @@ const OrderList = () => {
         ) => {
           dispatch(
             updatePaymentStatus({
-              orderId: row.original.id,
+              orderId: row.original.id!,
               status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
             }),
           );
@@ -352,11 +352,11 @@ const OrderList = () => {
             {isPending && (
               <>
                 <OrderConfirmButton
-                  id={order.id}
+                  id={order.id!}
                   closeModal={() => setShowDetailsModal(false)}
                 />
                 <OrderRejectButton
-                  id={order.id}
+                  id={order.id!}
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
@@ -364,7 +364,7 @@ const OrderList = () => {
 
             {isConfirmed && (
               <OrderReturnButton
-                id={order.id}
+                id={order.id!}
                 closeModal={() => setShowDetailsModal(false)}
               />
             )}
@@ -372,7 +372,7 @@ const OrderList = () => {
             {isConfirmed && <OrderPickupButton />}
 
             <OrderDeleteButton
-              id={order.id}
+              id={order.id!}
               closeModal={() => setShowDetailsModal(false)}
             />
           </div>
@@ -529,11 +529,11 @@ const OrderList = () => {
                       {t.orderList.modal.customer[lang]}
                     </h3>
                     <p className="text-sm mb-0">
-                      {selectedOrder.user_profile?.name ||
+                      {selectedOrder.full_name ||
                         t.orderList.status.unknown[lang]}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {selectedOrder.user_profile?.email}
+                      {selectedOrder.email}
                     </p>
                   </div>
 
@@ -543,7 +543,7 @@ const OrderList = () => {
                     </h3>
                     <p className="text-sm mb-0">
                       {t.orderList.modal.status[lang]}{" "}
-                      <StatusBadge status={selectedOrder.status} />
+                      <StatusBadge status={selectedOrder.status!} />
                     </p>
                     <p className="text-sm">
                       {t.orderList.modal.date[lang]}{" "}
@@ -574,7 +574,7 @@ const OrderList = () => {
                             {t.orderList.modal.buttons.confirm[lang]}
                           </span>
                           <OrderConfirmButton
-                            id={selectedOrder.id}
+                            id={selectedOrder.id!}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
@@ -583,7 +583,7 @@ const OrderList = () => {
                             {t.orderList.modal.buttons.reject[lang]}
                           </span>
                           <OrderRejectButton
-                            id={selectedOrder.id}
+                            id={selectedOrder.id!}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
@@ -597,7 +597,7 @@ const OrderList = () => {
                             {t.orderList.modal.buttons.return[lang]}
                           </span>
                           <OrderReturnButton
-                            id={selectedOrder.id}
+                            id={selectedOrder.id!}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
@@ -614,7 +614,7 @@ const OrderList = () => {
                         {t.orderList.modal.buttons.delete[lang]}
                       </span>
                       <OrderDeleteButton
-                        id={selectedOrder.id}
+                        id={selectedOrder.id!}
                         closeModal={() => setShowDetailsModal(false)}
                       />
                     </div>
