@@ -1,6 +1,6 @@
 import { Tag, CreateTagDto, UpdateTagDto } from "@/types/tag";
 import { api } from "../axios";
-import { Paginated } from "@/types/api";
+import { ApiResponse } from "@/types/api";
 
 /**
  * API service for tag-related endpoints
@@ -13,11 +13,11 @@ export const tagsApi = {
   getAllTags: async (
     page: number = 1,
     limit: number = 10,
-  ): Promise<Paginated<Tag[]>> => {
+  ): Promise<ApiResponse<Tag[]>> => {
     // Fetch paginated tags from the backend
     const response = (await api.get(
       `/tags?page=${page}&limit=${limit}`,
-    )) as Paginated<Tag[]>;
+    )) as ApiResponse<Tag[]>;
 
     // Always return a complete object, even if the backend response is partial
     return {
