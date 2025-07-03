@@ -9,7 +9,7 @@ env:
 
 jobs:
   frontend-checks:
-    name: Frontend Linting & Formatting Checks
+    name: Frontend Linting & Type Checks
     runs-on: ubuntu-latest
     
     steps:
@@ -41,7 +41,7 @@ jobs:
         
 
   backend-checks:
-    name: Backend Linting & Formatting Checks
+    name: Backend Linting & Type Checks
     runs-on: ubuntu-latest
     
     steps:
