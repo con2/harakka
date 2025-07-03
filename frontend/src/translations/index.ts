@@ -50,6 +50,7 @@ export const t = {
   assignTagsModal,
   authUi,
   cart,
+  common: general.common, // Shorthand for general.common
   contactForm,
   countries,
   footer,

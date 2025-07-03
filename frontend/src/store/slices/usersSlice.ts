@@ -104,56 +104,66 @@ export const getUserAddresses = createAsyncThunk(
       return await usersApi.getAddresses(id);
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch user addresses")
+        extractErrorMessage(error, "Failed to fetch user addresses"),
       );
     }
-  }
+  },
 );
 
 // Create new address thunk
 export const addAddress = createAsyncThunk(
   "users/addAddress",
-  async ({ id, address }: { id: string; address: Address }, { rejectWithValue }) => {
+  async (
+    { id, address }: { id: string; address: Address },
+    { rejectWithValue },
+  ) => {
     try {
       return await usersApi.addAddress(id, address);
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to add address")
+        extractErrorMessage(error, "Failed to add address"),
       );
     }
-  }
+  },
 );
 
 // Update address thunk
 export const updateAddress = createAsyncThunk(
   "users/updateAddress",
   async (
-    { id, addressId, address }: { id: string; addressId: string; address: Address },
-    { rejectWithValue }
+    {
+      id,
+      addressId,
+      address,
+    }: { id: string; addressId: string; address: Address },
+    { rejectWithValue },
   ) => {
     try {
       return await usersApi.updateAddress(id, addressId, address);
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to update address")
+        extractErrorMessage(error, "Failed to update address"),
       );
     }
-  }
+  },
 );
 
 // Delete address thunk
 export const deleteAddress = createAsyncThunk(
   "users/deleteAddress",
-  async ({ id, addressId }: { id: string; addressId: string }, { rejectWithValue }) => {
+  async (
+    { id, addressId }: { id: string; addressId: string },
+    { rejectWithValue },
+  ) => {
     try {
       await usersApi.deleteAddress(id, addressId);
       return addressId; // Return the address ID to remove from state
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to delete address")
+        extractErrorMessage(error, "Failed to delete address"),
       );
     }
-  }
+  },
 );
 
 export const usersSlice = createSlice({
@@ -266,11 +276,11 @@ export const usersSlice = createSlice({
       })
       .addCase(getUserAddresses.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedUserAddresses = action.payload; 
+        state.selectedUserAddresses = action.payload;
       })
       .addCase(getUserAddresses.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string; 
+        state.error = action.payload as string;
         state.errorContext = "fetch";
       })
 
@@ -282,7 +292,10 @@ export const usersSlice = createSlice({
       })
       .addCase(addAddress.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedUserAddresses = [...(state.selectedUserAddresses || []), action.payload];
+        state.selectedUserAddresses = [
+          ...(state.selectedUserAddresses || []),
+          action.payload,
+        ];
       })
       .addCase(addAddress.rejected, (state, action) => {
         state.loading = false;
@@ -298,8 +311,9 @@ export const usersSlice = createSlice({
       })
       .addCase(updateAddress.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedUserAddresses = (state.selectedUserAddresses || []).map((address) =>
-          address.id === action.payload.id ? action.payload : address
+        state.selectedUserAddresses = (state.selectedUserAddresses || []).map(
+          (address) =>
+            address.id === action.payload.id ? action.payload : address,
         );
       })
       .addCase(updateAddress.rejected, (state, action) => {
@@ -316,9 +330,9 @@ export const usersSlice = createSlice({
       })
       .addCase(deleteAddress.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedUserAddresses = (state.selectedUserAddresses ?? []).filter(
-          (address) => address.id !== action.payload
-        );
+        state.selectedUserAddresses = (
+          state.selectedUserAddresses ?? []
+        ).filter((address) => address.id !== action.payload);
       })
       .addCase(deleteAddress.rejected, (state, action) => {
         state.loading = false;
@@ -351,10 +365,12 @@ export const selectIsUser = (state: RootState) =>
 export const selectSelectedUserLoading = (state: RootState) =>
   state.users.selectedUserLoading;
 
-export const selectUserAddresses = (state: RootState) => state.users.selectedUserAddresses;
+export const selectUserAddresses = (state: RootState) =>
+  state.users.selectedUserAddresses;
 
 // export actions from the slice
-export const { clearSelectedUser, selectUser, clearAddresses } = usersSlice.actions;
+export const { clearSelectedUser, selectUser, clearAddresses } =
+  usersSlice.actions;
 
 // export the reducer to be used in the store
 export default usersSlice.reducer;

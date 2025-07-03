@@ -25,8 +25,7 @@ const UserPanel = () => {
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
 
   useEffect(() => {
-    if (tags.length < 1)
-      dispatch(fetchAllTags({ page: 1, limit: 10 }));
+    if (tags.length < 1) dispatch(fetchAllTags({ page: 1, limit: 10 }));
     if (locations.length < 1)
       dispatch(fetchAllLocations({ page: 1, limit: 10 }));
   }, [dispatch, tags, locations]);
@@ -105,8 +104,9 @@ const UserPanel = () => {
       {/* Sidebar: Filters Panel */}
       <aside
         ref={filterRef}
-        className={`${isFilterVisible ? "block" : "hidden"
-          } md:flex md:flex-col md:min-h-[calc(100vh-60px)] w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
+        className={`${
+          isFilterVisible ? "block" : "hidden"
+        } md:flex md:flex-col md:min-h-[calc(100vh-60px)] w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
         style={{
           top: "60px",
           backgroundColor: "#fff",
@@ -166,10 +166,11 @@ const UserPanel = () => {
                 return (
                   <span
                     key={typeName}
-                    className={`cursor-pointer text-sm justify-between flex items-center ${isSelected
-                      ? "text-secondary font-bold"
-                      : "text-slate-500 hover:text-secondary"
-                      }`}
+                    className={`cursor-pointer text-sm justify-between flex items-center ${
+                      isSelected
+                        ? "text-secondary font-bold"
+                        : "text-slate-500 hover:text-secondary"
+                    }`}
                     onClick={() => {
                       const updated = isSelected
                         ? filters.itemTypes.filter((t) => t !== typeName)
@@ -177,7 +178,8 @@ const UserPanel = () => {
                       handleFilterChange("itemTypes", updated);
                     }}
                   >
-                    {typeName.charAt(0).toUpperCase() + typeName.slice(1)} <ChevronRight className="w-4 h-4 inline" />
+                    {typeName.charAt(0).toUpperCase() + typeName.slice(1)}{" "}
+                    <ChevronRight className="w-4 h-4 inline" />
                   </span>
                 );
               })}
@@ -230,10 +232,11 @@ const UserPanel = () => {
                   return (
                     <label
                       key={location.id}
-                      className={`flex items-center gap-2 text-sm cursor-pointer ${isSelected
-                        ? "text-secondary"
-                        : "text-slate-600 hover:text-secondary"
-                        }`}
+                      className={`flex items-center gap-2 text-sm cursor-pointer ${
+                        isSelected
+                          ? "text-secondary"
+                          : "text-slate-600 hover:text-secondary"
+                      }`}
                     >
                       <input
                         type="checkbox"
@@ -241,8 +244,8 @@ const UserPanel = () => {
                         onChange={() => {
                           const updated = isSelected
                             ? filters.locationIds.filter(
-                              (id) => id !== location.id,
-                            )
+                                (id) => id !== location.id,
+                              )
                             : [...filters.locationIds, location.id];
                           handleFilterChange("locationIds", updated);
                         }}
@@ -273,10 +276,11 @@ const UserPanel = () => {
                   return (
                     <Button
                       key={tag.id}
-                      className={`px-4 border-secondary border-1 rounded-2xl ${(filters.tagIds || []).includes(tag.id)
-                        ? "bg-secondary text-white hover:bg-secondary/80 hover:text-white hover:border-secondary"
-                        : "bg-white text-secondary hover:bg-secondary hover:text-white hover:border-secondary"
-                        }`}
+                      className={`px-4 border-secondary border-1 rounded-2xl ${
+                        (filters.tagIds || []).includes(tag.id)
+                          ? "bg-secondary text-white hover:bg-secondary/80 hover:text-white hover:border-secondary"
+                          : "bg-white text-secondary hover:bg-secondary hover:text-white hover:border-secondary"
+                      }`}
                       onClick={() => {
                         const selected = filters.tagIds || [];
                         const isSelected = selected.includes(tag.id);

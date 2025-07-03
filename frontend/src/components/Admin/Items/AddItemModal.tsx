@@ -81,7 +81,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
   const error = useAppSelector(selectItemsError);
   const errorContext = useAppSelector(selectItemsErrorContext);
   const { lang } = useLanguage(); // Get current language
-  const tags = useAppSelector(selectAllTags)
+  const tags = useAppSelector(selectAllTags);
 
   // Use global modal state from Redux
   const modalState = useAppSelector(selectItemModalState);
@@ -108,10 +108,10 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (modalState.isOpen && tags.length === 0)
-      dispatch(fetchAllTags());
+      dispatch(fetchAllTags({ limit: 20 }));
 
     if (modalState.isOpen && locations.length === 0)
-      dispatch(fetchAllLocations());
+      dispatch(fetchAllLocations({ limit: 10 }));
   }, [dispatch, modalState.isOpen, tags.length, locations.length]);
 
   // When item is created, switch to images tab
@@ -247,15 +247,17 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
       <DialogContent className="sm:max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="mb-0">{t.addItemModal.title[lang]}</DialogTitle>
+          <DialogTitle className="mb-0">
+            {t.addItemModal.title[lang]}
+          </DialogTitle>
           <DialogDescription className="text-center">
             {activeTab === "details"
               ? t.addItemModal.description.details[lang]
               : createdItem
                 ? t.addItemModal.description.images[lang].replace(
-                  "{name}",
-                  createdItem.translations.en.item_name,
-                )
+                    "{name}",
+                    createdItem.translations.en.item_name,
+                  )
                 : t.addItemModal.description.createFirst[lang]}
           </DialogDescription>
         </DialogHeader>
@@ -263,10 +265,11 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
         {/* Tab Navigation */}
         <div className="flex border-b mb-2">
           <button
-            className={`px-4 py-1 text-sm ${activeTab === "details"
-              ? "border-b-2 border-secondary font-medium"
-              : "text-gray-500"
-              }`}
+            className={`px-4 py-1 text-sm ${
+              activeTab === "details"
+                ? "border-b-2 border-secondary font-medium"
+                : "text-gray-500"
+            }`}
             onClick={() => setActiveTab("details")}
           >
             {t.addItemModal.tabs.details[lang]}
@@ -275,10 +278,11 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className={`px-4 py-1 text-sm ${activeTab === "images"
-                    ? "border-b-2 border-secondary font-medium"
-                    : "text-gray-500"
-                    }`}
+                  className={`px-4 py-1 text-sm ${
+                    activeTab === "images"
+                      ? "border-b-2 border-secondary font-medium"
+                      : "text-gray-500"
+                  }`}
                   onClick={() =>
                     modalState.createdItemId && setActiveTab("images")
                   }
@@ -519,9 +523,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
             {/* Tag Selection */}
             <div className="space-y-2">
-              <Label>
-                {t.addItemModal.labels.assignTags[lang]}
-              </Label>
+              <Label>{t.addItemModal.labels.assignTags[lang]}</Label>
               <div className="grid grid-cols-2 max-h-60 overflow-y-auto">
                 {availableTags.map((tag) => (
                   <label key={tag.id} className="flex items-center">
@@ -532,8 +534,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                     />
                     <span className="text-sm">
                       {tag.translations?.[lang]?.name ||
-                        tag.translations?.[lang === "fi" ? "en" : "fi"]
-                          ?.name ||
+                        tag.translations?.[lang === "fi" ? "en" : "fi"]?.name ||
                         "Unnamed"}
                     </span>
                   </label>
