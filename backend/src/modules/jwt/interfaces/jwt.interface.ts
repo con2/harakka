@@ -1,3 +1,5 @@
+import { User } from "@supabase/supabase-js";
+
 export interface JWTRole {
   id: string;
   name: string;
@@ -7,7 +9,7 @@ export interface JWTRole {
   created_at: string;
 }
 
-export interface JWTPayload {
+export interface JWTPayload extends Omit<User, "app_metadata"> {
   sub: string;
   aud: string;
   exp: number;
@@ -18,5 +20,4 @@ export interface JWTPayload {
     role_count?: number;
     last_role_sync?: string;
   };
-  user_metadata?: Record<string, unknown>;
 }
