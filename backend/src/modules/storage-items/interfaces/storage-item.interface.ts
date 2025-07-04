@@ -86,7 +86,11 @@ export interface StorageItemWithJoin {
 }
 
 export type ValidItemOrder =
-  | "items_number_total"
+  | "fi_item_name"
+  | "fi_item_type"
+  | "item_type"
+  | "location_name"
   | "price"
-  | "location_id"
-  | "translations";
+  | "items_number_total"
+  | "is_active"
+  | "created_at";
