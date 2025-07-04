@@ -24,7 +24,7 @@ export async function calculateAvailableQuantity(
     throw new Error("Error checking the bookings");
   }
 
-  const bookedQuantity =
+  const alreadyBookedQuantity =
     overlapping?.reduce((sum, o) => sum + (o.quantity || 0), 0) ?? 0;
 
   // get items total quantity
@@ -38,11 +38,11 @@ export async function calculateAvailableQuantity(
     throw new Error("Error when retrieving/ calling item.total");
   }
 
-  const availableQuantity = item.items_number_total - bookedQuantity;
+  const availableQuantity = item.items_number_total - alreadyBookedQuantity;
 
   return {
     item_id: itemId,
-    bookedQuantity,
+    alreadyBookedQuantity,
     availableQuantity,
   };
 }
