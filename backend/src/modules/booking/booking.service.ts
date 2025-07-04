@@ -33,12 +33,10 @@ import {
   BookingItem,
   OrderItemInsert,
   OrderItemRow,
-  OrderItemQuantity,
   OrderWithItems,
   StorageItemsRow,
   UserProfilesRow,
 } from "./types/booking.interface";
-import { ApiSingleResponse } from "src/types/response.types";
 
 @Injectable()
 export class BookingService {
@@ -970,52 +968,7 @@ export class BookingService {
     };
   }
 
-  // 11. check availability of item by date range - calculateAvailableQuantity
-  async checkAvailability(
-    itemId: string,
-    startDate: string,
-    endDate: string,
-    supabase: SupabaseClient,
-  ): Promise<
-    ApiSingleResponse<{
-      item_id: string;
-      alreadyBookedQuantity: number;
-      availableQuantity: number;
-    }>
-  > {
-    try {
-      const { item_id, availableQuantity, alreadyBookedQuantity } =
-        await calculateAvailableQuantity(supabase, itemId, startDate, endDate);
-
-      return {
-        data: {
-          item_id,
-          alreadyBookedQuantity,
-          availableQuantity,
-        },
-        error: null,
-        status: 200,
-        statusText: "OK",
-        count: null,
-      };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          message: (err as Error).message,
-          code: "availability-check_error",
-          details: "",
-          hint: "",
-          name: "availability-check_error",
-        },
-        status: 400,
-        statusText: "Error",
-        count: null,
-      };
-    }
-  }
-
-  // 12. Update payment status
+  // 11. Update payment status
   async updatePaymentStatus(
     orderId: string,
     status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,

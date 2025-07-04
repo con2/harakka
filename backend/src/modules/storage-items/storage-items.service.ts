@@ -14,6 +14,8 @@ import { SupabaseService } from "../supabase/supabase.service";
 import { Tables, TablesUpdate } from "src/types/supabase.types";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
+import { calculateAvailableQuantity } from "src/utils/booking.utils";
+import { ApiSingleResponse } from "src/types/response.types";
 // this is used by the controller
 
 @Injectable()
@@ -23,6 +25,7 @@ export class StorageItemsService {
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
   ) {}
 
+  // 1. get All items
   async getAllItems(): Promise<StorageItem[]> {
     const supabase = this.supabaseClient.getServiceClient();
 
@@ -68,6 +71,7 @@ export class StorageItemsService {
     }));
   }
 
+  // 2. get one item
   async getItemById(id: string): Promise<StorageItem | null> {
     const supabase = this.supabaseClient.getServiceClient();
 
@@ -115,6 +119,7 @@ export class StorageItemsService {
     };
   }
 
+  // 3. create Item
   async createItem(
     req: Request,
     item: Partial<TablesUpdate<"storage_items">> & { tagIds?: string[] },
@@ -150,6 +155,7 @@ export class StorageItemsService {
     return insertedItem;
   }
 
+  // 4 update an item
   async updateItem(
     req: Request,
     id: string,
@@ -200,6 +206,7 @@ export class StorageItemsService {
     return updatedItem;
   }
 
+  // 5. delete an item
   async deleteItem(
     req: Request,
     id: string,
@@ -282,6 +289,7 @@ export class StorageItemsService {
     return { success: true, id };
   }
 
+  // 6. get Items by tag
   // TODO: needs to be fixed and updated
   async getItemsByTag(req: Request, tagId: string) {
     const supabase = req["supabase"] as SupabaseClient;
@@ -296,6 +304,7 @@ export class StorageItemsService {
     return data.map((entry) => entry.items); // Extract items from the relation
   }
 
+  // 7. soft-delete item (to keep the data just in case)
   async softDeleteItem(
     req: Request,
     id: string,
@@ -313,7 +322,7 @@ export class StorageItemsService {
     return { success: true, id };
   }
 
-  //check if the item can be deleted (if it exists in some orders)
+  // 8. check if the item can be deleted (if it exists in some orders)
   async canDeleteItem(
     req: Request,
     id: string,
@@ -352,5 +361,67 @@ export class StorageItemsService {
       success: true,
       id,
     };
+  }
+
+  // 9. check availability of item by date range - calculateAvailableQuantity
+  async checkAvailability(
+    itemId: string,
+    startDate: string,
+    endDate: string,
+    supabase: SupabaseClient,
+  ): Promise<
+    ApiSingleResponse<{
+      item_id: string;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }>
+  > {
+    try {
+      const { item_id, availableQuantity, alreadyBookedQuantity } =
+        await calculateAvailableQuantity(supabase, itemId, startDate, endDate);
+
+      return {
+        data: {
+          item_id,
+          alreadyBookedQuantity,
+          availableQuantity,
+        },
+        error: null,
+        status: 200,
+        statusText: "OK",
+        count: null,
+      };
+    } catch (err) {
+      if (err instanceof Error) {
+        return {
+          data: null,
+          error: {
+            message: err.message,
+            code: "availability-check_error",
+            details: "",
+            hint: "",
+            name: "availability-check_error",
+          },
+          status: 400,
+          statusText: "Error",
+          count: null,
+        };
+      }
+
+      // Fallback
+      return {
+        data: null,
+        error: {
+          message: "Unknown error",
+          code: "availability-check_error",
+          details: "",
+          hint: "",
+          name: "availability-check_error",
+        },
+        status: 400,
+        statusText: "Error",
+        count: null,
+      };
+    }
   }
 }
