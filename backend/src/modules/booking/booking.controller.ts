@@ -240,7 +240,6 @@ export class BookingController {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const is_ascending = ascending.toLowerCase() === "true";
-    console.log(status_filter);
     return this.bookingService.getOrderedBookings(
       supabase,
       pageNum,
