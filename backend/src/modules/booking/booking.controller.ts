@@ -170,29 +170,9 @@ export class BookingController {
       itemId,
       startDate,
       endDate,
-      userId, //TODO: check if userId is needed here
+      userId,
       supabase,
     );
-  }
-
-  // get virtual number of items for a specific date
-  @Get("virtual-quantity")
-  async getAvailableQuantity(
-    @Query("item_id") itemId: string,
-    @Query("startdate") startdate: string,
-    @Query("enddate") enddate: string,
-  ) {
-    if (!itemId || !startdate) {
-      throw new BadRequestException("item_id and date are mendatory");
-    }
-    // Calling the method from the service class and returning the booked quantity
-    const availableQuantity =
-      await this.bookingService.getAvailableQuantityForDate(
-        itemId,
-        startdate,
-        enddate,
-      );
-    return { availableQuantity };
   }
 
   // change payment status
