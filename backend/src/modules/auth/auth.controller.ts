@@ -4,7 +4,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { ConfigService } from "@nestjs/config";
 import { AuthRequest } from "../../middleware/interfaces/auth-request.interface";
 import * as jwt from "jsonwebtoken";
-import { CustomJWTPayload } from "./auth.types";
+import { JWTPayload } from "../jwt/interfaces/jwt.interface";
 
 @Controller("auth")
 export class AuthController {
@@ -31,7 +31,7 @@ export class AuthController {
       }
 
       // Decode JWT to show roles (safer approach)
-      const payload = jwt.decode(data.session.access_token) as CustomJWTPayload;
+      const payload = jwt.decode(data.session.access_token) as JWTPayload;
 
       if (!payload) {
         throw new Error("Failed to decode JWT token");
@@ -89,7 +89,7 @@ export class AuthController {
       // Decode current JWT
       const payload = JSON.parse(
         Buffer.from(token.split(".")[1], "base64").toString(),
-      ) as CustomJWTPayload;
+      ) as JWTPayload;
 
       const hasRoles = (payload.app_metadata?.roles?.length || 0) > 0;
 
@@ -136,7 +136,7 @@ export class AuthController {
           data.session.access_token.split(".")[1],
           "base64",
         ).toString(),
-      ) as CustomJWTPayload;
+      ) as JWTPayload;
 
       const hasRoles = (payload.app_metadata?.roles?.length || 0) > 0;
 
