@@ -18,6 +18,7 @@ import { CreateBookingDto } from "./dto/create-booking.dto";
 import { InvoiceService } from "./invoice.service";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
+import { ApiSingleResponse } from "src/types/response.types";
 
 @Controller("bookings")
 export class BookingController {
@@ -163,14 +164,18 @@ export class BookingController {
     @Query("start_date") startDate: string,
     @Query("end_date") endDate: string,
     @Req() req: AuthenticatedRequest,
-  ) {
-    const userId = req.user.id;
+  ): Promise<
+    ApiSingleResponse<{
+      item_id: string;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }>
+  > {
     const supabase = req.supabase;
     return this.bookingService.checkAvailability(
       itemId,
       startDate,
       endDate,
-      userId,
       supabase,
     );
   }

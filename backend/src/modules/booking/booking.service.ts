@@ -38,6 +38,7 @@ import {
   StorageItemsRow,
   UserProfilesRow,
 } from "./types/booking.interface";
+import { ApiSingleResponse } from "src/types/response.types";
 
 @Injectable()
 export class BookingService {
@@ -969,50 +970,44 @@ export class BookingService {
     };
   }
 
-  // 11. check availability of item by date range
+  // 11. check availability of item by date range - calculateAvailableQuantity
   async checkAvailability(
     itemId: string,
     startDate: string,
     endDate: string,
-    userId: string,
     supabase: SupabaseClient,
-  ) {
-    // Sum all overlapping bookings
-    const { data: overlappingOrders, error: overlapError } = await supabase
-      .from("order_items")
-      .select("quantity")
-      .eq("item_id", itemId) // item_id = :itemId
-      .lte("start_date", endDate) // AND start_date <= :endDate
-      .gte("end_date", startDate) // AND end_date   >= :startDate
-      .overrideTypes<OrderItemQuantity[]>();
+  ): Promise<
+    ApiSingleResponse<{
+      item_id: string;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }>
+  > {
+    try {
+      const { item_id, availableQuantity, alreadyBookedQuantity } =
+        await calculateAvailableQuantity(supabase, itemId, startDate, endDate);
 
-    if (overlapError) {
-      throw new BadRequestException("Error checking overlapping bookings");
+      return {
+        data: {
+          item_id,
+          alreadyBookedQuantity,
+          availableQuantity,
+        },
+        error: null,
+        status: 200,
+        statusText: "OK",
+      };
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          message: (err as Error).message,
+          code: "availability-check_error",
+        },
+        status: 400,
+        statusText: "Error",
+      };
     }
-
-    const alreadyBookedQuantity =
-      overlappingOrders?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
-      0;
-
-    // Get total quantity of item from storage
-    const { data: itemData, error: itemError } = await supabase
-      .from("storage_items")
-      .select("items_number_total")
-      .eq("id", itemId)
-      .single<StorageItemsRow>();
-
-    if (itemError || !itemData) {
-      throw new BadRequestException("Item data not found");
-    }
-
-    const availableQuantity =
-      itemData.items_number_total - alreadyBookedQuantity;
-
-    return {
-      item_id: itemId,
-      availableQuantity,
-      alreadyBookedQuantity,
-    };
   }
 
   // 12. Update payment status
