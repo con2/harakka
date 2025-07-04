@@ -35,6 +35,11 @@ export class StorageItemsController {
   async getById(@Param("id") id: string) {
     return this.storageItemsService.getItemById(id); // GET /storage-items/:id (get one)
   }
+  // /storage-items/by-tag/:tagId
+  @Get("by-tag/:tagId")
+  async getItemsByTag(@Param("tagId") tagId: string) {
+    return this.storageItemsService.getItemsByTag(tagId);
+  }
 
   @Post()
   async create(@Req() req, @Body() item) {
@@ -54,11 +59,6 @@ export class StorageItemsController {
   @Post(":id/soft-delete")
   async softDeleteStorageItem(@Req() req: Request, @Param("id") id: string) {
     return this.storageItemsService.softDeleteItem(req, id);
-  }
-
-  @Get("by-tag/:tagId")
-  async getItemsByTag(@Req() req: Request, @Param("tagId") tagId: string) {
-    return this.storageItemsService.getItemsByTag(req, tagId);
   }
 
   @Post(":id/can-delete")

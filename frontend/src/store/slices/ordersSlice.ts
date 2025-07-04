@@ -11,11 +11,14 @@ import {
   OrdersState,
   CreateOrderDto,
   PaymentStatus,
+  ValidBookingOrder,
+  BookingStatus,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 
 // Create an entity adapter for orders
-const ordersAdapter = createEntityAdapter<BookingOrder>({
+const ordersAdapter = createEntityAdapter<BookingOrder, string>({
+  selectId: (e) => e.id,
   sortComparer: (a, b) => {
     const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -32,6 +35,10 @@ const initialState = ordersAdapter.getInitialState<
   error: null,
   errorContext: null,
   currentOrder: null,
+  page: 1,
+  limit: 10,
+  total: 0,
+  totalPages: 1,
 });
 
 // Create order thunk
@@ -49,11 +56,14 @@ export const createOrder = createAsyncThunk<BookingOrder, CreateOrderDto>(
 );
 
 // Get user orders thunk
-export const getUserOrders = createAsyncThunk<BookingOrder[], string>(
+export const getUserOrders = createAsyncThunk(
   "orders/getUserOrders",
-  async (userId, { rejectWithValue }) => {
+  async (
+    { user_id, page, limit }: { user_id: string; page: number; limit: number },
+    { rejectWithValue },
+  ) => {
     try {
-      return await ordersApi.getUserOrders(userId);
+      return await ordersApi.getUserOrders(user_id, page, limit);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch user orders"),
@@ -61,13 +71,53 @@ export const getUserOrders = createAsyncThunk<BookingOrder[], string>(
     }
   },
 );
+// Get user orders thunk
+export const getOrderedBookings = createAsyncThunk(
+  "orders/getOrderedBookings",
+  async (
+    {
+      ordered_by = "order_number",
+      ascending = true,
+      page = 1,
+      limit = 10,
+      searchquery,
+      status_filter,
+    }: {
+      ordered_by: ValidBookingOrder;
+      page: number;
+      limit: number;
+      searchquery: string;
+      ascending?: boolean;
+      status_filter?: BookingStatus;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await ordersApi.getOrderedBookings(
+        ordered_by,
+        ascending,
+        page,
+        limit,
+        searchquery,
+        status_filter,
+      );
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch ordered bookings"),
+      );
+    }
+  },
+);
 
 // Get all orders thunk
-export const getAllOrders = createAsyncThunk<BookingOrder[], string>(
+export const getAllOrders = createAsyncThunk(
   "orders/getAllOrders",
-  async (userId, { rejectWithValue }) => {
+  async (
+    { page = 1, limit = 10 }: { page?: number; limit?: number },
+    { rejectWithValue },
+  ) => {
     try {
-      return await ordersApi.getAllOrders(userId);
+      return await ordersApi.getAllOrders(page, limit);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch all orders"),
@@ -243,10 +293,32 @@ export const ordersSlice = createSlice({
       })
       .addCase(getUserOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.userOrders = action.payload;
-        ordersAdapter.setAll(state, action.payload);
+        state.userOrders = action.payload.data ?? [];
+        state.total = action.payload.metadata.total;
+        state.page = action.payload.metadata.page;
+        state.totalPages = action.payload.metadata.totalPages;
+        ordersAdapter.setAll(state, action.payload.data ?? []);
       })
       .addCase(getUserOrders.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
+      // Get ordered bookings
+      .addCase(getOrderedBookings.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(getOrderedBookings.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userOrders = action.payload.data ?? [];
+        state.total = action.payload.metadata.total;
+        state.page = action.payload.metadata.page;
+        state.totalPages = action.payload.metadata.totalPages;
+        ordersAdapter.setAll(state, action.payload.data ?? []);
+      })
+      .addCase(getOrderedBookings.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";
@@ -259,7 +331,10 @@ export const ordersSlice = createSlice({
       })
       .addCase(getAllOrders.fulfilled, (state, action) => {
         state.loading = false;
-        ordersAdapter.setAll(state, action.payload);
+        state.total = action.payload.metadata.total;
+        state.page = action.payload.metadata.page;
+        state.totalPages = action.payload.metadata.totalPages;
+        ordersAdapter.setAll(state, action.payload.data ?? []);
       })
       .addCase(getAllOrders.rejected, (state, action) => {
         state.loading = false;
@@ -463,6 +538,13 @@ export const selectOrdersErrorWithContext = (state: RootState) => ({
 });
 export const selectOrdersTotal = ordersSelectors.selectTotal;
 export const selectUserOrders = (state: RootState) => state.orders.userOrders;
+
+// Pagination data
+export const selectOrdersPage = (state: RootState) => state.orders.page;
+export const selectOrdersLimit = (state: RootState) => state.orders.limit;
+export const selectOrdersTotalData = (state: RootState) => state.orders.total;
+export const selectOrdersTotalPages = (state: RootState) =>
+  state.orders.totalPages;
 
 // Export reducer
 export default ordersSlice.reducer;

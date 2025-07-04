@@ -4,7 +4,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
-import { Calendar, LoaderCircle, Trash2 } from "lucide-react";
+import { Calendar, ChevronLeft, LoaderCircle, Trash2 } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -175,9 +175,17 @@ const Cart: React.FC = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-10 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white">
-      <p className="text-xl mb-4 text-left pl-2 text-secondary">
-        {t.cart.review.title[lang]}
-      </p>
+      <div className="mb-3 mt-4 md:mt-0">
+        <Button
+          onClick={() => navigate("/storage")}
+          className="text-secondary mb-4 ml-2 px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+        >
+          <ChevronLeft /> {t.itemDetails.buttons.back[lang]}
+        </Button>
+        <p className="text-xl mb-4 text-left pl-2 text-secondary">
+          {t.cart.review.title[lang]}
+        </p>
+      </div>
       <div className="flex flex-col md:flex-row gap-10 mb-2">
         <div className="flex flex-col flex-2/3">
           {/* Booking Timeframe Summary */}
@@ -353,7 +361,7 @@ const Cart: React.FC = () => {
       <div className="flex flex-row items-center justify-between gap-4">
         <Button
           onClick={handleClearCart}
-          className="text-primary/50 bg-background rounded-2xl border-1 border-primary/50 hover:bg-primary hover:text-white ml-4"
+          className="text-primary/50 bg-background rounded-2xl border-1 border-primary/50 hover:bg-primary hover:text-white ml-2"
         >
           {t.cart.buttons.clearCart[lang]}
         </Button>

@@ -5,9 +5,8 @@ import {
   selectAllLogs,
   selectLogsError,
   selectLogsLoading,
-  selectLogsTotalCount,
+  selectLogsPagination,
 } from "@/store/slices/logsSlice";
-import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { LogMessage } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
@@ -20,7 +19,7 @@ import {
   LoaderCircle,
   RefreshCw,
 } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { PaginatedDataTable } from "../ui/data-table-paginated";
@@ -42,11 +41,9 @@ import {
 const Logs: React.FC = () => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
-  const user = useAppSelector(selectSelectedUser);
   const loading = useAppSelector(selectLogsLoading);
   const error = useAppSelector(selectLogsError);
   const logs = useAppSelector(selectAllLogs);
-  const userId = user?.id || "";
 
   // State for filtering and viewing details
   const [logTypeFilter, setLogTypeFilter] = useState<
@@ -62,53 +59,53 @@ const Logs: React.FC = () => {
   // track page number and size
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 10;
-  const totalCount = useAppSelector(selectLogsTotalCount);
-  const pageCount = Math.ceil(totalCount / pageSize);
+  const totalPages = useAppSelector(selectLogsPagination).totalPages ?? 0;
+  const apiLogType =
+    logTypeFilter === "all" || logTypeFilter === "errors"
+      ? undefined
+      : logTypeFilter;
+
+  const apiLevel = levelFilter === "all" ? undefined : levelFilter;
+
+  const apiLevelForErrors = logTypeFilter === "errors" ? "error" : apiLevel;
 
   useEffect(() => {
-    if (logs.length < 1)
-      dispatch(getAllLogs({ page: pageIndex + 1, limit: pageSize }));
-  }, [dispatch, logs.length, pageIndex]);
+    dispatch(
+      getAllLogs({
+        page: pageIndex + 1,
+        limit: pageSize,
+        logType: apiLogType,
+        level: apiLevelForErrors,
+        search: searchQuery || undefined,
+      }),
+    );
+  }, [
+    dispatch,
+    pageIndex,
+    pageSize,
+    logTypeFilter,
+    levelFilter,
+    searchQuery,
+    apiLogType,
+    apiLevelForErrors,
+  ]);
 
   const refreshLogs = () => {
-    if (userId) {
-      dispatch(getAllLogs({ page: pageIndex + 1, limit: pageSize }));
-    }
+    dispatch(
+      getAllLogs({
+        page: pageIndex + 1,
+        limit: pageSize,
+        logType: apiLogType,
+        level: apiLevelForErrors,
+        search: searchQuery || undefined,
+      }),
+    );
   };
 
-  // Sort and filter logs
-  const filteredAndSortedLogs = useMemo(() => {
-    // Filter logs based on criteria
-    const filtered = logs.filter((log) => {
-      // Filter by type
-      if (logTypeFilter === "errors") {
-        return log.level === "error" && log.metadata?.logType === "system";
-      } else if (logTypeFilter === "audit") {
-        return log.metadata?.logType === "audit";
-      } else if (logTypeFilter === "system") {
-        return log.metadata?.logType === "system";
-      }
-
-      // Filter by level
-      if (levelFilter !== "all" && log.level !== levelFilter) {
-        return false;
-      }
-
-      // Filter by search query
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        return (
-          log.message.toLowerCase().includes(query) ||
-          log.source?.toLowerCase().includes(query) ||
-          false
-        );
-      }
-
-      return true;
-    });
-
-    return filtered;
-  }, [logs, logTypeFilter, levelFilter, searchQuery]);
+  // reset pageIndex to 0 when filters change
+  useEffect(() => {
+    setPageIndex(0);
+  }, [logTypeFilter, levelFilter, searchQuery]);
 
   // Get level icon based on log level
   const getLevelIcon = (level: string) => {
@@ -378,13 +375,7 @@ const Logs: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-2 text-sm text-muted-foreground">
-        {t.logs.filters.showing[lang] || "Showing"}:{" "}
-        {filteredAndSortedLogs.length} {t.logs.filters.of[lang] || "of"}{" "}
-        {logs.length} {t.logs.filters.entries[lang] || "logs"}
-      </div>
-
-      {filteredAndSortedLogs.length === 0 ? (
+      {logs.length === 0 ? (
         <div className="p-8 text-center text-muted-foreground">
           {searchQuery || logTypeFilter !== "all" || levelFilter !== "all"
             ? t.logs.noFilteredData[lang] || "No logs match your filters"
@@ -394,9 +385,9 @@ const Logs: React.FC = () => {
         <div>
           <PaginatedDataTable
             columns={columns}
-            data={filteredAndSortedLogs}
+            data={logs}
             pageIndex={pageIndex}
-            pageCount={pageCount}
+            pageCount={totalPages}
             onPageChange={setPageIndex}
           />
         </div>

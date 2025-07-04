@@ -1,10 +1,10 @@
-import path from 'path';
-import dotenv from 'dotenv';
-import dotenvExpand from 'dotenv-expand';
+import path from "path";
+import dotenv from "dotenv";
+import dotenvExpand from "dotenv-expand";
 
 // Load and expand env variables
 const myEnv = dotenv.config({
-  path: path.resolve(process.cwd(), '../.env.local'),
+  path: path.resolve(process.cwd(), "../.env.local"),
 });
 dotenvExpand.expand(myEnv);
 
@@ -22,7 +22,7 @@ interface Config {
 
 const config: Config = {
   port: Number(process.env.PORT) || 3000,
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv: process.env.NODE_ENV || "development",
   supabase: {
     url: process.env.SUPABASE_URL,
     key: process.env.SUPABASE_SERVICE_ROLE_KEY,
