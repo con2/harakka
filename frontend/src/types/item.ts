@@ -66,9 +66,11 @@ export type UpdateItemDto = Partial<
 };
 
 export type ValidItemOrder =
-  | "item_name"
+  | "fi_item_name"
+  | "fi_item_type"
   | "item_type"
-  | "location"
+  | "location_name"
   | "price"
-  | "quantity"
-  | "is_active";
+  | "items_number_total"
+  | "is_active"
+  | "created_at";
