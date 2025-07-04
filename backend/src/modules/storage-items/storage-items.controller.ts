@@ -8,6 +8,7 @@ import {
   HttpException,
   HttpStatus,
   Req,
+  Query,
 } from "@nestjs/common";
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
@@ -23,8 +24,34 @@ export class StorageItemsController {
   ) {}
 
   @Get()
-  async getAll() {
-    return this.storageItemsService.getAllItems(); // GET /storage-items
+  async getAll(
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    return this.storageItemsService.getAllItems(pageNum, limitNum);
+  }
+
+  @Get("ordered")
+  getOrderedBookings(
+    @Query("search") searchquery: string,
+    @Query("order") ordered_by: string,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+    @Query("ascending") ascending: string = "true",
+  ) {
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const is_ascending = ascending.toLowerCase() === "true";
+    return this.storageItemsService.getOrderedStorageItems(
+      pageNum,
+      limitNum,
+      is_ascending,
+      ordered_by,
+      searchquery,
+    );
   }
 
   @Get(":id")
