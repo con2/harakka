@@ -17,7 +17,8 @@ import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
 import { InvoiceService } from "./invoice.service";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
-import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
+import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
 
 @Controller("bookings")
 export class BookingController {
@@ -28,43 +29,66 @@ export class BookingController {
 
   // gets all bookings - use case: admin
   @Get()
-  async getAll(@Req() req: AuthenticatedRequest) {
+  async getAll(
+    @Req() req: AuthRequest,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
     const supabase = req.supabase;
-    return this.bookingService.getAllOrders(supabase);
+    return this.bookingService.getAllOrders(supabase, pageNumber, limitNumber);
   }
 
   // gets the bookings of the logged-in user
   @Get("my")
-  async getOwnBookings(@Req() req: AuthenticatedRequest) {
+  async getOwnBookings(
+    @Req() req: AuthRequest,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
     const userId = req.user.id;
     const supabase = req.supabase;
-    return this.bookingService.getUserBookings(userId, supabase);
+    return this.bookingService.getUserBookings(
+      userId,
+      supabase,
+      pageNumber,
+      limitNumber,
+    );
   }
 
   // gets the bookings of a specific user
   @Get("user/:userId")
   async getUserBookings(
     @Param("userId") userId: string,
-    @Req() req: AuthenticatedRequest,
+    @Req() req: AuthRequest,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
   ) {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
     if (!userId) {
       throw new UnauthorizedException("User ID is required");
     }
     const supabase = req.supabase;
-    return this.bookingService.getUserBookings(userId, supabase);
+    return this.bookingService.getUserBookings(
+      userId,
+      supabase,
+      pageNumber,
+      limitNumber,
+    );
   }
 
   // any user creates a booking
   @Post()
-  async createBooking(
-    @Body() dto: CreateBookingDto,
-    @Req() req: AuthenticatedRequest,
-  ) {
+  async createBooking(@Body() dto: CreateBookingDto, @Req() req: AuthRequest) {
     try {
-      const userId = req.user?.id;
-      if (!userId) {
+      const userId = req.user.id;
+      if (!userId)
         throw new BadRequestException("No userId found: user_id is required");
-      }
+
       // put user-ID to DTO
       const dtoWithUserId = { ...dto, user_id: userId };
       return this.bookingService.createBooking(dtoWithUserId, req.supabase);
@@ -86,10 +110,7 @@ export class BookingController {
 
   // confirms a booking
   @Put(":id/confirm") // admin confirms booking
-  async confirm(
-    @Param("id") orderId: string,
-    @Req() req: AuthenticatedRequest,
-  ) {
+  async confirm(@Param("id") orderId: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     const supabase = req.supabase;
 
@@ -101,7 +122,7 @@ export class BookingController {
   async updateBooking(
     @Param("id") id: string,
     @Body("items") updatedItems: any[],
-    @Req() req: AuthenticatedRequest,
+    @Req() req: AuthRequest,
   ) {
     const userId = req.user.id;
     const supabase = req.supabase;
@@ -115,7 +136,7 @@ export class BookingController {
 
   // rejects a booking by admin
   @Put(":id/reject")
-  async reject(@Param("id") id: string, @Req() req: AuthenticatedRequest) {
+  async reject(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.rejectBooking(id, userId, supabase);
@@ -123,7 +144,7 @@ export class BookingController {
 
   // cancels own booking by user or admin cancels any booking
   @Delete(":id/cancel")
-  async cancel(@Param("id") id: string, @Req() req: AuthenticatedRequest) {
+  async cancel(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.cancelBooking(id, userId, supabase);
@@ -131,7 +152,7 @@ export class BookingController {
 
   // admin deletes booking
   @Delete(":id/delete")
-  async delete(@Param("id") id: string, @Req() req: AuthenticatedRequest) {
+  async delete(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.deleteBooking(id, userId, supabase);
@@ -139,7 +160,7 @@ export class BookingController {
 
   // admin returns items
   @Post(":id/return")
-  async returnItems(@Param("id") id: string, @Req() req: AuthenticatedRequest) {
+  async returnItems(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.returnItems(id, userId, supabase);
@@ -147,10 +168,7 @@ export class BookingController {
 
   // admin marks items as picked up
   @Post(":orderId/pickup")
-  async pickup(
-    @Param("orderId") orderId: string,
-    @Req() req: AuthenticatedRequest,
-  ) {
+  async pickup(@Param("orderId") orderId: string, @Req() req: AuthRequest) {
     // const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.confirmPickup(orderId, supabase);
@@ -162,15 +180,13 @@ export class BookingController {
     @Param("itemId") itemId: string,
     @Query("start_date") startDate: string,
     @Query("end_date") endDate: string,
-    @Req() req: AuthenticatedRequest,
+    @Req() req: AuthRequest,
   ) {
-    const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.checkAvailability(
       itemId,
       startDate,
       endDate,
-      userId, //TODO: check if userId is needed here
       supabase,
     );
   }
@@ -199,7 +215,7 @@ export class BookingController {
   @Patch("payment-status")
   async updatePaymentStatus(
     @Body() dto: UpdatePaymentStatusDto,
-    @Req() req: AuthenticatedRequest,
+    @Req() req: AuthRequest,
   ) {
     // const userId = req.user.id;
     const supabase = req.supabase;
@@ -210,6 +226,31 @@ export class BookingController {
     );
   }
 
+  @Get("ordered")
+  getOrderedBookings(
+    @Req() req: AuthRequest,
+    @Query("search") searchquery: string,
+    @Query("order") ordered_by: ValidBookingOrder = "order_number",
+    @Query("status") status_filter: BookingStatus,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+    @Query("ascending") ascending: string = "true",
+  ) {
+    const supabase = req.supabase;
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const is_ascending = ascending.toLowerCase() === "true";
+    console.log(status_filter);
+    return this.bookingService.getOrderedBookings(
+      supabase,
+      pageNum,
+      limitNum,
+      is_ascending,
+      ordered_by,
+      searchquery,
+      status_filter,
+    );
+  }
   // commented out because it is not used atm
   /* @Get(":orderId/generate") // unsafe - anyone can create files
   async generateInvoice(@Param("orderId") orderId: string) {

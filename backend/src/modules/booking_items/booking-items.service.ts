@@ -115,6 +115,27 @@ export class BookingItemsService {
     return result;
   }
 
+  async removeAllBookingItems(
+    supabase: SupabaseClient,
+    booking_id: string,
+  ): Promise<ApiResponse<BookingItemsRow>> {
+    const result: PostgrestResponse<BookingItemsRow> = await supabase
+      .from("order_items")
+      .delete()
+      .eq("order_id", booking_id) // After renaming table + id column: Update column name
+      .select();
+
+    if (result.error) {
+      console.error(result.error);
+      if (result.error.code === "PGRST116")
+        throw new BadRequestException(
+          "Failed to remove booking item. Either it has already been removed or an incorrect ID has been provided",
+        );
+      throw new BadRequestException("Failed to remove booking item");
+    }
+    return result;
+  }
+
   async updateBookingItem(
     supabase: SupabaseClient,
     booking_item_id: string,
