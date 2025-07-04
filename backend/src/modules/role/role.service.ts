@@ -234,7 +234,6 @@ export class RoleService {
       `,
       )
       .single();
-  
 
     if (error) {
       this.logger.error(`Failed to update user role: ${error.message}`);

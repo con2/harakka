@@ -1,13 +1,15 @@
 //USED ONLY FOR TESTING PURPOSES
 import { Controller, Post, Body, Logger, Get, Req } from "@nestjs/common";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { ConfigService } from "@nestjs/config";
 import { AuthRequest } from "../../middleware/interfaces/auth-request.interface";
+import * as jwt from "jsonwebtoken";
+import { CustomJWTPayload } from "./auth.types";
 
 @Controller("auth")
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
-  private readonly supabase;
+  private readonly supabase: SupabaseClient;
 
   constructor(private readonly config: ConfigService) {
     this.supabase = createClient(
@@ -28,13 +30,12 @@ export class AuthController {
         throw new Error(`Login failed: ${error.message}`);
       }
 
-      // Decode JWT to show roles
-      const payload = JSON.parse(
-        Buffer.from(
-          data.session.access_token.split(".")[1],
-          "base64",
-        ).toString(),
-      );
+      // Decode JWT to show roles (safer approach)
+      const payload = jwt.decode(data.session.access_token) as CustomJWTPayload;
+
+      if (!payload) {
+        throw new Error("Failed to decode JWT token");
+      }
 
       // Format the token for easy copy-paste
       const formattedToken = data.session.access_token;
@@ -77,7 +78,7 @@ export class AuthController {
   }
 
   @Get("token-info")
-  async getCurrentTokenInfo(@Req() req: AuthRequest) {
+  getCurrentTokenInfo(@Req() req: AuthRequest) {
     try {
       const token = req.headers.authorization?.replace("Bearer ", "");
 
@@ -88,7 +89,7 @@ export class AuthController {
       // Decode current JWT
       const payload = JSON.parse(
         Buffer.from(token.split(".")[1], "base64").toString(),
-      );
+      ) as CustomJWTPayload;
 
       const hasRoles = (payload.app_metadata?.roles?.length || 0) > 0;
 
@@ -135,7 +136,7 @@ export class AuthController {
           data.session.access_token.split(".")[1],
           "base64",
         ).toString(),
-      );
+      ) as CustomJWTPayload;
 
       const hasRoles = (payload.app_metadata?.roles?.length || 0) > 0;
 

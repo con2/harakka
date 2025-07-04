@@ -126,10 +126,10 @@ export class RoleController {
    */
   @Delete(":id")
   async deleteUserRole(
-    @Param("id") id: string,
+    @Param("id") tableKeyId: string,
     @Req() req: AuthRequest,
   ): Promise<{ success: boolean; message: string }> {
-    return this.roleService.deleteUserRole(id, req);
+    return this.roleService.deleteUserRole(tableKeyId, req);
   }
 
   /**
@@ -138,9 +138,9 @@ export class RoleController {
    */
   @Delete(":id/permanent")
   async permanentDeleteUserRole(
-    @Param("id") id: string,
+    @Param("id") tableKeyId: string,
     @Req() req: AuthRequest,
   ): Promise<{ success: boolean; message: string }> {
-    return this.roleService.permanentDeleteUserRole(id, req);
+    return this.roleService.permanentDeleteUserRole(tableKeyId, req);
   }
 }
