@@ -33,6 +33,7 @@ import ContactForm from "../components/ContactForm";
 
 // Layout
 import App from "../App";
+import LoginPage from "@/pages/LoginPage";
 
 export const router = createBrowserRouter([
   {
@@ -45,7 +46,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/login",
-        element: <Login />,
+        element: <LoginPage />,
       },
       {
         path: "/profile",

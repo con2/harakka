@@ -7,7 +7,8 @@ import { useSearchParams } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-//import LoginTest from "./LoginTest"; // Import the test component
+import illusiaImage from "@/assets/illusiaImage.jpg";
+
 
 export const Login = () => {
   const [searchParams] = useSearchParams();
@@ -18,14 +19,39 @@ export const Login = () => {
   const { lang } = useLanguage();
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-center text-xl">
-            {t.login.title[lang]}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="relative min-h-screen w-full overflow-hidden">
+      {/* Background Image with Overlay */}
+     <div
+        className="absolute inset-[-8px] bg-cover bg-center -z-10 blur-[5px]"
+        style={{
+          backgroundImage: `url(${illusiaImage})`,
+        }}
+      />
+      
+      {/* Gradient Overlay for Better Text Readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 via-primary/40 to-secondary/30 -z-10" />
+      
+      {/* Login Content */}
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Welcome Text */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white drop-shadow-lg mb-2">
+              Welcome Back
+            </h1>
+            <p className="text-white/80 drop-shadow-md">
+              Sign in to access your storage rentals
+            </p>
+          </div>
+          
+          <Card className="w-full shadow-2xl bg-white/95 backdrop-blur-sm border-0 transform hover:scale-[1.02] transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-center text-2xl font-bold text-primary mb-2">
+                {t.login.title[lang]}
+              </CardTitle>
+              <div className="w-16 h-1 bg-gradient-to-r from-secondary to-highlight2 mx-auto rounded-full"></div>
+            </CardHeader>
+            <CardContent className="pt-2">
           {reset === "success" && (
             <Alert className="mb-4 bg-green-50 border-green-200">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -48,7 +74,24 @@ export const Login = () => {
                 default: {
                   colors: {
                     brand: "#9537c7",
-                    brandAccent: "#44195b",
+                    brandAccent: "#3ec3ba",
+                    brandButtonText: "white",
+                    defaultButtonBackground: "#f8f9fa",
+                    defaultButtonBackgroundHover: "#e9ecef",
+                    defaultButtonBorder: "#dee2e6",
+                    defaultButtonText: "#495057",
+                    dividerBackground: "#e9ecef",
+                    inputBackground: "white",
+                    inputBorder: "#ced4da",
+                    inputBorderHover: "#9537c7",
+                    inputBorderFocus: "#9537c7",
+                    inputText: "#495057",
+                    inputLabelText: "#6c757d",
+                    inputPlaceholder: "#adb5bd",
+                    messageText: "#495057",
+                    messageTextDanger: "#dc3545",
+                    anchorTextColor: "#9537c7",
+                    anchorTextHoverColor: "#3ec3ba",
                   },
                   fonts: {
                     bodyFontFamily: "var(--main-font)",
@@ -56,7 +99,36 @@ export const Login = () => {
                     labelFontFamily: "var(--main-font)",
                     buttonFontFamily: "var(--main-font)",
                   },
+                  borderWidths: {
+                    buttonBorderWidth: "1px",
+                    inputBorderWidth: "1px",
+                  },
+                  radii: {
+                    borderRadiusButton: "0.5rem",
+                    buttonBorderRadius: "0.5rem",
+                    inputBorderRadius: "0.5rem",
+                  },
+                  space: {
+                    spaceSmall: "4px",
+                    spaceMedium: "8px",
+                    spaceLarge: "16px",
+                    labelBottomMargin: "8px",
+                    anchorBottomMargin: "4px",
+                    emailInputSpacing: "4px",
+                    socialAuthSpacing: "4px",
+                    buttonPadding: "10px 15px",
+                    inputPadding: "10px 15px",
+                  },
                 },
+              },
+              className: {
+                container: "space-y-4",
+                button: "transition-all duration-200 hover:shadow-md",
+                input: "transition-all duration-200",
+                label: "font-medium text-gray-700",
+                anchor: "font-medium transition-colors duration-200",
+                divider: "text-gray-400",
+                message: "text-sm",
               },
             }}
             providers={["google"]}
@@ -107,11 +179,10 @@ export const Login = () => {
               },
             }}
           />
-
-          {/* Show test component for debugging */}
-          {/* <LoginTest /> */}
         </CardContent>
       </Card>
+        </div>
+      </div>
     </div>
   );
 };
