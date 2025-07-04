@@ -14,7 +14,7 @@ import {
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
-import { Tables, TablesInsert, TablesUpdate } from "../../types/supabase.types"; // Import the Database type for type safety
+import { Tables } from "../../types/supabase.types"; // Import the Database type for type safety
 import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
 import { ApiSingleResponse } from "src/types/response.types";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
@@ -62,13 +62,22 @@ export class StorageItemsController {
   }
 
   @Post(":id/can-delete")
-  async canDelete(@Req() req: Request, @Param("id") id: string): Promise<any> {
+  async canDelete(
+    @Req() req: Request,
+    @Param("id") id: string,
+  ): Promise<{ success: boolean; reason?: string; id: string }> {
     try {
       const result = await this.storageItemsService.canDeleteItem(req, id);
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new HttpException(
+          error.message,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
       throw new HttpException(
-        error.message || "Failed to check if item can be deleted",
+        "Failed to check if item can be deleted",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
