@@ -2,6 +2,12 @@ import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { S3Service } from "../supabase/s3-supabase.service";
 import { v4 as uuidv4 } from "uuid";
+import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { ItemImageRow } from "./types/item-image.types";
+import {
+  PostgrestResponse,
+  PostgrestSingleResponse,
+} from "@supabase/supabase-js";
 
 @Injectable()
 export class ItemImagesService {
@@ -16,6 +22,7 @@ export class ItemImagesService {
    * Upload an image to S3 storage and create a database record
    */
   async uploadItemImage(
+    req: AuthRequest,
     itemId: string,
     file: Express.Multer.File,
     metadata: {
@@ -24,7 +31,7 @@ export class ItemImagesService {
       display_order: number;
     },
   ) {
-    const supabase = this.supabaseService.getServiceClient();
+    const supabase = req.supabase;
     const fileExt = file.originalname.split(".").pop();
     const fileName = `${itemId}/${uuidv4()}.${fileExt}`;
     const contentType = file.mimetype;
@@ -42,9 +49,12 @@ export class ItemImagesService {
         file.buffer,
         contentType,
       );
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error("S3 storage upload error:", error);
-      throw new Error(`Storage upload failed: ${error.message}`);
+      if (error instanceof Error) {
+        throw new Error(`Storage upload failed: ${error.message}`);
+      }
+      throw new Error("Storage upload failed");
     }
 
     // 2. Create database record
@@ -80,10 +90,10 @@ export class ItemImagesService {
   /**
    * Get all images for an item
    */
-  async getItemImages(itemId: string) {
+  async getItemImages(itemId: string): Promise<ItemImageRow[]> {
     const supabase = this.supabaseService.getAnonClient();
 
-    const { data, error } = await supabase
+    const { data, error }: PostgrestResponse<ItemImageRow> = await supabase
       .from("storage_item_images")
       .select("*")
       .eq("item_id", itemId)
@@ -98,18 +108,23 @@ export class ItemImagesService {
   /**
    * Delete an item image
    */
-  async deleteItemImage(imageId: string) {
+  async deleteItemImage(imageId: string): Promise<{ success: boolean }> {
     const supabase = this.supabaseService.getServiceClient();
 
     // 1. Get the image record
-    const { data: image, error: fetchError } = await supabase
+    const {
+      data: image,
+      error: fetchError,
+    }: PostgrestSingleResponse<ItemImageRow> = await supabase
       .from("storage_item_images")
       .select("*")
       .eq("id", imageId)
       .single();
 
     if (fetchError || !image) {
-      throw new Error("Image not found");
+      const message =
+        fetchError instanceof Error ? fetchError.message : "Image not found";
+      throw new Error(message);
     }
 
     // 2. Extract filepath from database
