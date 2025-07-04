@@ -12,8 +12,7 @@ import {
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
-import { Tables, TablesInsert, TablesUpdate } from "../../types/supabase.types"; // Import the Database type for type safety
-// calls the methods of storage-items.service.ts & handles API req and forwards it to the server
+import { Tables } from "../../types/supabase.types"; // Import the Database type for type safety
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
 export class StorageItemsController {
@@ -30,6 +29,11 @@ export class StorageItemsController {
   @Get(":id")
   async getById(@Param("id") id: string) {
     return this.storageItemsService.getItemById(id); // GET /storage-items/:id (get one)
+  }
+  // /storage-items/by-tag/:tagId
+  @Get("by-tag/:tagId")
+  async getItemsByTag(@Param("tagId") tagId: string) {
+    return this.storageItemsService.getItemsByTag(tagId);
   }
 
   @Post()
@@ -52,21 +56,16 @@ export class StorageItemsController {
     return this.storageItemsService.softDeleteItem(req, id);
   }
 
-  @Get("by-tag/:tagId")
-  async getItemsByTag(@Req() req: Request, @Param("tagId") tagId: string) {
-    return this.storageItemsService.getItemsByTag(req, tagId);
-  }
-
   @Post(":id/can-delete")
-  async canDelete(@Req() req: Request, @Param("id") id: string): Promise<any> {
+  async canDelete(
+    @Req() req: Request,
+    @Param("id") id: string,
+  ): Promise<{ success: boolean; reason?: string; id: string }> {
     try {
-      const result = await this.storageItemsService.canDeleteItem(req, id);
-      return result;
-    } catch (error) {
-      throw new HttpException(
-        error.message || "Failed to check if item can be deleted",
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      return await this.storageItemsService.canDeleteItem(req, id);
+    } catch (err: unknown) {
+      const { message } = err as { message: string };
+      throw new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

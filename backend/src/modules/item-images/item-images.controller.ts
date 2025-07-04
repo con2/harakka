@@ -23,6 +23,11 @@ export class ItemImagesController {
     private readonly supabaseService: SupabaseService,
   ) {}
 
+  @Get(":itemId")
+  async getImages(@Param("itemId") itemId: string) {
+    return this.itemImagesService.getItemImages(itemId);
+  }
+
   @Post(":itemId")
   @UseInterceptors(FileInterceptor("image"))
   async uploadImage(
@@ -61,12 +66,7 @@ export class ItemImagesController {
       throw new BadRequestException("No image file provided");
     }
 
-    return this.itemImagesService.uploadItemImage(itemId, file, metadata);
-  }
-
-  @Get(":itemId")
-  async getImages(@Param("itemId") itemId: string) {
-    return this.itemImagesService.getItemImages(itemId);
+    return this.itemImagesService.uploadItemImage(req, itemId, file, metadata);
   }
 
   @Delete(":imageId")
