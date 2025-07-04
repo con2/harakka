@@ -84,3 +84,9 @@ export interface StorageItemWithJoin {
     is_active: boolean;
   };
 }
+
+export type ValidItemOrder =
+  | "items_number_total"
+  | "price"
+  | "location_id"
+  | "translations";

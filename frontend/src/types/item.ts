@@ -39,6 +39,10 @@ export interface ItemState {
   selectedItem: Item | null;
   errorContext: ErrorContext;
   deletableItems: Record<string, boolean>;
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 /**
@@ -60,3 +64,11 @@ export type UpdateItemDto = Partial<
 > & {
   tagIds?: string[];
 };
+
+export type ValidItemOrder =
+  | "item_name"
+  | "item_type"
+  | "location"
+  | "price"
+  | "quantity"
+  | "is_active";
