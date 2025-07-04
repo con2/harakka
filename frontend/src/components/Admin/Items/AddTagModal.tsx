@@ -9,8 +9,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAppDispatch } from "@/store/hooks";
-import { createTag, fetchAllTags } from "@/store/slices/tagSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  createTag,
+  fetchAllTags,
+  selectTagsLimit,
+  selectTagsPage,
+} from "@/store/slices/tagSlice";
 import { toast } from "sonner";
 import { Label } from "../../ui/label";
 import { CreateTagDto, Tag } from "@/types/tag";
@@ -26,6 +31,8 @@ interface AddTagModalProps {
 
 const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
   const dispatch = useAppDispatch();
+  const page = useAppSelector(selectTagsPage);
+  const limit = useAppSelector(selectTagsLimit);
   // Translation
   const { lang } = useLanguage();
 
@@ -60,7 +67,7 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
       const result = await dispatch(createTag(createTagDto)).unwrap();
 
       toast.success(t.addTagModal.messages.success[lang]);
-      dispatch(fetchAllTags({ limit: 20 }));
+      dispatch(fetchAllTags({ limit, page }));
       onCreated?.(result);
       resetForm();
       setOpen(false);
