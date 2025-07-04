@@ -118,13 +118,12 @@ export class BookingItemsService {
   async removeAllBookingItems(
     supabase: SupabaseClient,
     booking_id: string,
-  ): Promise<ApiSingleResponse<BookingItemsRow>> {
-    const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
+  ): Promise<ApiResponse<BookingItemsRow>> {
+    const result: PostgrestResponse<BookingItemsRow> = await supabase
       .from("order_items")
       .delete()
       .eq("order_id", booking_id) // After renaming table + id column: Update column name
-      .select()
-      .single();
+      .select();
 
     if (result.error) {
       console.error(result.error);
