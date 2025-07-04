@@ -172,6 +172,13 @@ export class BookingController {
     }>
   > {
     const supabase = req.supabase;
+
+    if (!itemId || !startDate || !endDate) {
+      throw new BadRequestException(
+        "Item id, startdate and enddate are required!",
+      );
+    }
+
     return this.bookingService.checkAvailability(
       itemId,
       startDate,

@@ -227,7 +227,7 @@ export class BookingService {
         end_date,
       );
 
-      if (quantity > available) {
+      if (quantity > available.availableQuantity) {
         throw new BadRequestException(
           `Not enough virtual stock available for item ${item_id}`,
         );
@@ -468,7 +468,7 @@ export class BookingService {
         end_date,
       );
 
-      if (quantity > available) {
+      if (quantity > available.availableQuantity) {
         throw new BadRequestException(
           `Not enough virtual stock available for item ${item_id}`,
         );
@@ -996,6 +996,7 @@ export class BookingService {
         error: null,
         status: 200,
         statusText: "OK",
+        count: null,
       };
     } catch (err) {
       return {
@@ -1003,9 +1004,13 @@ export class BookingService {
         error: {
           message: (err as Error).message,
           code: "availability-check_error",
+          details: "",
+          hint: "",
+          name: "availability-check_error",
         },
         status: 400,
         statusText: "Error",
+        count: null,
       };
     }
   }
