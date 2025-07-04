@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getAllOrders,
@@ -6,25 +6,31 @@ import {
   selectOrdersError,
   selectAllOrders,
   updatePaymentStatus,
+  selectOrdersPage,
+  selectOrdersTotalPages,
+  getOrderedBookings,
 } from "@/store/slices/ordersSlice";
 import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "../../ui/button";
-import { BookingOrder, BookingItem, PaymentStatus } from "@/types";
+import {
+  PaymentStatus,
+  ValidBookingOrder,
+  BookingUserViewRow,
+  BookingStatus,
+} from "@/types";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
 import OrderReturnButton from "./OrderReturnButton";
 import OrderConfirmButton from "./OrderConfirmButton";
 import OrderRejectButton from "./OrderRejectButton";
 import OrderDeleteButton from "./OrderDeleteButton";
-import { DataTable } from "../../ui/data-table";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
@@ -38,6 +44,8 @@ import {
 } from "../../ui/select";
 import OrderPickupButton from "./OrderPickupButton";
 import { useAuth } from "@/hooks/useAuth";
+import { StatusBadge } from "@/components/StatusBadge";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const OrderList = () => {
   const dispatch = useAppDispatch();
@@ -47,182 +55,97 @@ const OrderList = () => {
   const ordersLoadedRef = useRef(false);
   const user = useAppSelector(selectSelectedUser);
   const { authLoading } = useAuth();
-  const [selectedOrder, setSelectedOrder] = useState<BookingOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<BookingUserViewRow | null>(
+    null,
+  );
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 10;
+  const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
+  const [order, setOrder] = useState<ValidBookingOrder>("order_number");
+  const [ascending, setAscending] = useState<boolean | null>(null);
+  const page = useAppSelector(selectOrdersPage);
+  const totalPages = useAppSelector(selectOrdersTotalPages);
   // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const debouncedSearchQuery = useDebouncedValue(searchQuery);
 
-  useEffect(() => {
-    // Always fetch orders when the admin component mounts and auth is ready
-    if (user && orders.length <= 1) {
-      dispatch(getAllOrders(user.id));
-      ordersLoadedRef.current = true;
-    }
-  }, [dispatch, user, orders.length]);
-
-  const handleViewDetails = (order: BookingOrder) => {
+  /*----------------------handlers----------------------------------*/
+  const handleViewDetails = (order: BookingUserViewRow) => {
     setSelectedOrder(order);
     setShowDetailsModal(true);
   };
 
-  // Render a status badge with appropriate color
-  const StatusBadge = ({ status }: { status?: string }) => {
-    if (!status)
-      return (
-        <Badge variant="outline">{t.orderList.status.unknown[lang]}</Badge>
-      );
-
-    switch (status) {
-      case "pending":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-yellow-100 text-yellow-800 border-yellow-300"
-          >
-            {t.orderList.status.pending[lang]}
-          </Badge>
-        );
-      case "confirmed":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-green-100 text-green-800 border-green-300"
-          >
-            {t.orderList.status.confirmed[lang]}
-          </Badge>
-        );
-      case "cancelled":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-red-100 text-red-800 border-red-300"
-          >
-            {t.orderList.status.cancelled[lang]}
-          </Badge>
-        );
-      case "cancelled by user":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-red-100 text-red-800 border-red-300"
-          >
-            {t.orderList.status.cancelledByUser[lang]}
-          </Badge>
-        );
-      case "cancelled by admin":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-red-100 text-red-800 border-red-300"
-          >
-            {t.orderList.status.cancelledByAdmin[lang]}
-          </Badge>
-        );
-      case "rejected":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-red-100 text-red-800 border-red-300"
-          >
-            {t.orderList.status.rejected[lang]}
-          </Badge>
-        );
-      case "completed":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-blue-100 text-blue-800 border-blue-300"
-          >
-            {t.orderList.status.completed[lang]}
-          </Badge>
-        );
-      case "picked up":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-green-100 text-green-800 border-green-300"
-          >
-            {t.orderList.status.pickedUp[lang]}
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
   };
 
-  // Apply filters to orders before passing to table
-  const filteredOrders = orders.filter((order) => {
-    // Filter by status
-    if (statusFilter !== "all" && order.status !== statusFilter) {
-      return false;
-    }
-    // Filter by search query (order number or customer name)
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const orderNumber = String(order.order_number || "").toLowerCase();
-      const customerName = (order.user_profile?.name || "").toLowerCase();
-      const customerEmail = (order.user_profile?.email || "").toLowerCase();
-
-      return (
-        orderNumber.includes(query) ||
-        customerName.includes(query) ||
-        customerEmail.includes(query)
-      );
-    }
-
-    return true;
-  });
-
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
-  const startIndex = currentPage * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
-
-  // Handle page change
-  const handlePageChange = (pageIndex: number) => {
-    setCurrentPage(pageIndex);
+  const handleSearchQuery = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
-  // Reset to first page when filters change
+  const handleOrder = (order: string) => setOrder(order as ValidBookingOrder);
+  const handleAscending = (ascending: boolean | null) =>
+    setAscending(ascending);
+
+  /*----------------------side-effects----------------------------------*/
   useEffect(() => {
-    setCurrentPage(0);
-  }, [searchQuery, statusFilter]);
+    if (debouncedSearchQuery || statusFilter || order)
+      dispatch(
+        getOrderedBookings({
+          ordered_by: order,
+          page: currentPage,
+          limit: 10,
+          searchquery: debouncedSearchQuery,
+          ascending: ascending === false ? false : true,
+          status_filter: statusFilter !== "all" ? statusFilter : undefined,
+        }),
+      );
+    else {
+      dispatch(getAllOrders({ page: currentPage, limit: 10 }));
+      ordersLoadedRef.current = true;
+    }
+  }, [
+    debouncedSearchQuery,
+    statusFilter,
+    page,
+    order,
+    dispatch,
+    currentPage,
+    ascending,
+  ]);
 
-  const columns: ColumnDef<BookingOrder>[] = [
+  const columns: ColumnDef<BookingUserViewRow>[] = [
     {
       accessorKey: "order_number",
       header: t.orderList.columns.orderNumber[lang],
+      enableSorting: true,
     },
     {
-      accessorKey: "user_profile.name",
+      accessorKey: "full_name",
       header: t.orderList.columns.customer[lang],
+      enableSorting: true,
       cell: ({ row }) => (
         <div>
           <div>
-            {row.original.user_profile?.name ||
-              t.orderList.status.unknown[lang]}
+            {row.original.full_name || t.orderList.status.unknown[lang]}
           </div>
-          <div className="text-xs text-gray-500">
-            {row.original.user_profile?.email}
-          </div>
+          <div className="text-xs text-gray-500">{row.original.email}</div>
         </div>
       ),
     },
     {
       accessorKey: "status",
       header: t.orderList.columns.status[lang],
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      enableSorting: true,
+      cell: ({ row }) => <StatusBadge status={row.original.status!} />,
     },
     {
       accessorKey: "created_at",
       header: t.orderList.columns.orderDate[lang],
+      enableSorting: true,
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
@@ -256,11 +179,13 @@ const OrderList = () => {
     {
       accessorKey: "final_amount",
       header: t.orderList.columns.total[lang],
+      enableSorting: true,
       cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
     },
     {
-      accessorKey: "invoice_status",
+      accessorKey: "payment_status",
       header: t.orderList.columns.invoice[lang],
+      enableSorting: true,
       cell: ({ row }) => {
         const paymentStatus = row.original.payment_status ?? "N/A";
 
@@ -274,7 +199,7 @@ const OrderList = () => {
         ) => {
           dispatch(
             updatePaymentStatus({
-              orderId: row.original.id,
+              orderId: row.original.id!,
               status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
             }),
           );
@@ -339,11 +264,11 @@ const OrderList = () => {
             {isPending && (
               <>
                 <OrderConfirmButton
-                  id={order.id}
+                  id={order.id!}
                   closeModal={() => setShowDetailsModal(false)}
                 />
                 <OrderRejectButton
-                  id={order.id}
+                  id={order.id!}
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
@@ -351,7 +276,7 @@ const OrderList = () => {
 
             {isConfirmed && (
               <OrderReturnButton
-                id={order.id}
+                id={order.id!}
                 closeModal={() => setShowDetailsModal(false)}
               />
             )}
@@ -359,7 +284,7 @@ const OrderList = () => {
             {isConfirmed && <OrderPickupButton />}
 
             <OrderDeleteButton
-              id={order.id}
+              id={order.id!}
               closeModal={() => setShowDetailsModal(false)}
             />
           </div>
@@ -368,39 +293,40 @@ const OrderList = () => {
     },
   ];
 
-  const orderColumns: ColumnDef<BookingItem>[] = [
-    {
-      accessorKey: "item_name",
-      header: t.orderList.modal.orderItems.columns.item[lang],
-      cell: (i) => {
-        const itemName = i.getValue();
-        return (
-          String(itemName).charAt(0).toUpperCase() + String(itemName).slice(1)
-        );
-      },
-    },
-    {
-      accessorKey: "quantity",
-      header: t.orderList.modal.orderItems.columns.quantity[lang],
-    },
-    {
-      accessorKey: "start_date",
-      header: t.orderList.modal.orderItems.columns.startDate[lang],
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.start_date || ""), "d MMM yyyy"),
-    },
-    {
-      accessorKey: "end_date",
-      header: t.orderList.modal.orderItems.columns.endDate[lang],
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
-    },
-    {
-      accessorKey: "subtotal",
-      header: t.orderList.modal.orderItems.columns.subtotal[lang],
-      cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
-    },
-  ];
+  // const orderColumns: ColumnDef<BookingItem>[] = [
+  //   {
+  //     accessorKey: "item_name",
+  //     header: t.orderList.modal.orderItems.columns.item[lang],
+  //     cell: (i) => {
+  //       const itemName = i.getValue();
+  //       return (
+  //         String(itemName).charAt(0).toUpperCase() + String(itemName).slice(1)
+  //       );
+  //     },
+  //   },
+  //   {
+  //     accessorKey: "quantity",
+  //     header: t.orderList.modal.orderItems.columns.quantity[lang],
+  //   },
+  //   {
+  //     accessorKey: "start_date",
+  //     header: t.orderList.modal.orderItems.columns.startDate[lang],
+  //     cell: ({ row }) => {
+  //       formatDate(new Date(row.original.start_date || ""), "d MMM yyyy");
+  //     },
+  //   },
+  //   {
+  //     accessorKey: "end_date",
+  //     header: t.orderList.modal.orderItems.columns.endDate[lang],
+  //     cell: ({ row }) =>
+  //       formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
+  //   },
+  //   {
+  //     accessorKey: "subtotal",
+  //     header: t.orderList.modal.orderItems.columns.subtotal[lang],
+  //     cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
+  //   },
+  // ];
 
   if (authLoading || loading) {
     return (
@@ -422,7 +348,7 @@ const OrderList = () => {
           <h1 className="text-xl">{t.orderList.title[lang]}</h1>
 
           <Button
-            onClick={() => user && user?.id && dispatch(getAllOrders(user.id))}
+            onClick={() => user && user?.id && dispatch(getAllOrders({}))}
             className="bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
           >
             {t.orderList.buttons.refresh[lang]}
@@ -435,12 +361,12 @@ const OrderList = () => {
               placeholder={t.orderList.filters.search[lang]}
               value={searchQuery}
               size={50}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchQuery(e)}
               className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             />
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => setStatusFilter(e.target.value as BookingStatus)}
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             >
               <option value="all">
@@ -484,10 +410,14 @@ const OrderList = () => {
         </div>
         <PaginatedDataTable
           columns={columns}
-          data={paginatedOrders}
-          pageIndex={currentPage}
+          data={orders}
+          pageIndex={currentPage - 1}
           pageCount={totalPages}
-          onPageChange={handlePageChange}
+          onPageChange={(page) => handlePageChange(page + 1)}
+          order={order}
+          ascending={ascending}
+          handleOrder={handleOrder}
+          handleAscending={handleAscending}
         />
       </div>
 
@@ -511,11 +441,11 @@ const OrderList = () => {
                       {t.orderList.modal.customer[lang]}
                     </h3>
                     <p className="text-sm mb-0">
-                      {selectedOrder.user_profile?.name ||
+                      {selectedOrder.full_name ||
                         t.orderList.status.unknown[lang]}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {selectedOrder.user_profile?.email}
+                      {selectedOrder.email}
                     </p>
                   </div>
 
@@ -525,7 +455,7 @@ const OrderList = () => {
                     </h3>
                     <p className="text-sm mb-0">
                       {t.orderList.modal.status[lang]}{" "}
-                      <StatusBadge status={selectedOrder.status} />
+                      <StatusBadge status={selectedOrder.status!} />
                     </p>
                     <p className="text-sm">
                       {t.orderList.modal.date[lang]}{" "}
@@ -539,10 +469,10 @@ const OrderList = () => {
 
                 {/* Order Items */}
                 <div>
-                  <DataTable
+                  {/* <DataTable
                     columns={orderColumns}
                     data={selectedOrder.order_items || []}
-                  />
+                  /> */}
                 </div>
 
                 {/* Order Modal Actions */}
@@ -556,7 +486,7 @@ const OrderList = () => {
                             {t.orderList.modal.buttons.confirm[lang]}
                           </span>
                           <OrderConfirmButton
-                            id={selectedOrder.id}
+                            id={selectedOrder.id!}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
@@ -565,7 +495,7 @@ const OrderList = () => {
                             {t.orderList.modal.buttons.reject[lang]}
                           </span>
                           <OrderRejectButton
-                            id={selectedOrder.id}
+                            id={selectedOrder.id!}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
@@ -579,7 +509,7 @@ const OrderList = () => {
                             {t.orderList.modal.buttons.return[lang]}
                           </span>
                           <OrderReturnButton
-                            id={selectedOrder.id}
+                            id={selectedOrder.id!}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
@@ -596,7 +526,7 @@ const OrderList = () => {
                         {t.orderList.modal.buttons.delete[lang]}
                       </span>
                       <OrderDeleteButton
-                        id={selectedOrder.id}
+                        id={selectedOrder.id!}
                         closeModal={() => setShowDetailsModal(false)}
                       />
                     </div>

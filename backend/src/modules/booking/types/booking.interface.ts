@@ -27,7 +27,7 @@ export interface EnrichedItem {
 export type UserBookingOrder = {
   order_items?: { storage_items?: { location_id?: string } }[];
 };
-export type OrdersRow = Database["public"]["Tables"]["orders"]["Row"];
+export type BookingsRow = Database["public"]["Tables"]["orders"]["Row"];
 
 export type UserProfilesRow =
   Database["public"]["Tables"]["user_profiles"]["Row"];
@@ -64,3 +64,24 @@ export type OrderWithItems = OrderRow & {
     } | null;
   })[];
 };
+
+export type BookingTable = Database["public"]["Tables"]["orders"];
+export type BookingRow = Database["public"]["Tables"]["orders"]["Row"];
+export type BookingInsert = Database["public"]["Tables"]["orders"]["Insert"];
+export type BookingUpdate = Database["public"]["Tables"]["orders"]["Update"];
+export type ValidBookingOrder =
+  | "created_at"
+  | "order_number"
+  | "payment_status"
+  | "status"
+  | "final_amount"
+  | "full_name";
+
+export type BookingStatus =
+  | "confirmed"
+  | "cancelled by admin"
+  | "deleted"
+  | "rejected"
+  | "completed"
+  | "pending"
+  | "cancelled by user";

@@ -241,10 +241,10 @@ export class StorageItemsService {
         if (image.storage_path) {
           try {
             await this.s3Service.deleteFile(image.storage_path);
-          } catch (error) {
+          } catch (error: unknown) {
             // Log but continue - we still want to delete the database record even if file deletion fails
             console.error(
-              `Failed to delete S3 file for image ${image.id}: ${error.message}`,
+              `Failed to delete S3 file for image ${image.id}: ${error instanceof Error ? error.message : String(error)}`,
             );
           }
         }
