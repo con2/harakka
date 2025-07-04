@@ -16,25 +16,36 @@ export class TagService {
       this.supabaseService.getServiceClient() as SupabaseClient<Database>;
   }
   // Fetch all tags
-  async getAllTags(page: number, limit: number): Promise<ApiResponse<TagRow>> {
+  async getAllTags(
+    page: number,
+    limit: number,
+    searchTerm?: string,
+  ): Promise<ApiResponse<TagRow>> {
     const supabase = this._supabase;
-    const { from, to } = getPaginationRange(page, limit);
+    // base query
+    let query = supabase.from("tags").select("*", { count: "exact" });
 
-    // Get total count
-    const { count, error: countError } = await supabase
-      .from("tags")
-      .select("*", { count: "exact" });
+    // apply search filter if searchTerm exists
+    if (searchTerm && searchTerm.trim() !== "") {
+      const term = `%${searchTerm.toLowerCase()}%`;
+      query = query.or(
+        `translations->fi->>name.ilike.${term},translations->en->>name.ilike.${term}`,
+      );
+    }
+
+    // Get count
+    const { count, error: countError } = await query;
 
     if (countError) throw new Error(countError.message);
 
-    // Fetch paginated tags
-    const result = await supabase.from("tags").select("*").range(from, to);
+    // Fetch paginated data
+    const { from, to } = getPaginationRange(page, limit);
+    const result = await query.range(from, to);
 
     if (result.error) throw new Error(result.error.message);
 
     const meta = getPaginationMeta(count ?? 0, page, limit);
 
-    // Return in the expected format for frontend
     return {
       data: result.data as TagRow[],
       error: result.error,
@@ -42,7 +53,7 @@ export class TagService {
       status: result.status,
       statusText: result.statusText,
       metadata: meta,
-    } as ApiResponse<TagRow>;
+    };
   }
 
   async getTagsForItem(itemId: string): Promise<TagRow[]> {

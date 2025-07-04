@@ -22,6 +22,9 @@ export class LogsService {
     req: AuthRequest,
     page: number,
     limit: number,
+    level?: string,
+    logType?: string,
+    search?: string,
   ): Promise<ApiResponse<LogMessage>> {
     const supabase = req.supabase;
     const { from, to } = getPaginationRange(page, limit);
@@ -46,51 +49,75 @@ export class LogsService {
       throw new ForbiddenException("Only administrators can access logs");
     }
 
-    // Fetch audit logs from database
-    const {
-      data: auditLogs,
-      error,
-      count,
-    } = await supabase
-      .from("audit_logs")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      //.limit(500);
-      .range(from, to);
+    const includeAudit = !logType || logType === "audit";
+    const includeSystem = !logType || logType === "system";
 
-    if (error) {
-      this.logger.error(`Failed to fetch logs: ${error.message}`);
-      throw new Error(`Could not retrieve logs: ${error.message}`);
+    const combinedLogs: LogMessage[] = [];
+
+    if (includeAudit) {
+      // Fetch all audit logs without range
+      const { data: auditLogs, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        this.logger.error(`Failed to fetch audit logs: ${error.message}`);
+        throw new Error(`Could not retrieve logs: ${error.message}`);
+      }
+
+      const formattedAuditLogs = (auditLogs || []).map((log) => ({
+        id: log.id,
+        timestamp: log.created_at ?? new Date().toISOString(),
+        level: this.determineLogLevel(log.action),
+        message: this.formatLogMessage(log as AuditLog),
+        source: `DB:${log.table_name}`,
+        metadata: {
+          action: log.action,
+          recordId: log.record_id,
+          userId: log.user_id ?? undefined,
+          oldValues: log.old_values,
+          newValues: log.new_values,
+          logType: "audit",
+        },
+      }));
+
+      combinedLogs.push(...formattedAuditLogs);
     }
 
-    // Format audit logs to match frontend expected format
-    const formattedAuditLogs = (auditLogs || []).map((log) => ({
-      id: log.id,
-      timestamp: log.created_at ?? new Date().toISOString(),
-      level: this.determineLogLevel(log.action),
-      message: this.formatLogMessage(log as AuditLog),
-      source: `DB:${log.table_name}`,
-      metadata: {
-        action: log.action,
-        recordId: log.record_id,
-        userId: log.user_id ?? undefined,
-        oldValues: log.old_values,
-        newValues: log.new_values,
-        logType: "audit",
-      },
-    }));
-    // Combine both log types and sort by timestamp (newest first)
-    const combinedLogs = [...formattedAuditLogs, ...this.systemLogs].sort(
+    if (includeSystem) {
+      combinedLogs.push(...this.systemLogs);
+    }
+
+    // filtering and search
+    const filteredLogs = combinedLogs.filter((log) => {
+      const matchesLevel = level
+        ? log.level.toLowerCase() === level.toLowerCase()
+        : true;
+      const matchesSearch = search
+        ? log.message.toLowerCase().includes(search.toLowerCase()) ||
+          JSON.stringify(log.metadata || {})
+            .toLowerCase()
+            .includes(search.toLowerCase())
+        : true;
+      return matchesLevel && matchesSearch;
+    });
+
+    // sort by newest first
+    filteredLogs.sort(
       (a, b) =>
-        new Date(b.timestamp ?? "").getTime() -
-        new Date(a.timestamp ?? "").getTime(),
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
-    const meta = getPaginationMeta(count, page, limit);
-    // not getting data from Supabase here, but combining DB + in-memory logs, so I manually construct the full ApiResponse<T> object
+
+    // paginate filtered logs
+    const paginatedLogs = filteredLogs.slice(from, to + 1);
+
+    const meta = getPaginationMeta(filteredLogs.length, page, limit);
+
     return {
-      data: combinedLogs,
+      data: paginatedLogs,
       error: null,
-      count: count ?? combinedLogs.length,
+      count: filteredLogs.length,
       status: 200,
       statusText: "OK",
       metadata: meta,

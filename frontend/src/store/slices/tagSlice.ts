@@ -29,6 +29,7 @@ const initialState: TagState = {
  * @param {Object} [params={}]               Pagination options.
  * @param {number} [params.page=1]           The page number to retrieve (1‑based).
  * @param {number} [params.limit=10]         The maximum number of tags to return per page.
+ * @param {string} [params.search]           The search term entered by the user.
  * @returns {AsyncThunk}                     A Redux Toolkit thunk that resolves to an object
  *                                          containing `data` (Tag[]) and `metadata`
  *                                          (pagination details).
@@ -42,11 +43,19 @@ const initialState: TagState = {
 export const fetchAllTags = createAsyncThunk(
   "tags/fetchAllTags",
   async (
-    { page = 1, limit = 10 }: { page?: number; limit?: number } = {},
+    {
+      page = 1,
+      limit = 10,
+      search = "",
+    }: {
+      page?: number;
+      limit?: number;
+      search?: string;
+    } = {},
     { rejectWithValue },
   ) => {
     try {
-      return await tagsApi.getAllTags(page, limit);
+      return await tagsApi.getAllTags(page, limit, search);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch tags"),

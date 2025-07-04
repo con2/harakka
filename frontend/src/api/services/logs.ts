@@ -1,3 +1,4 @@
+import { ApiResponse } from "@/types/api";
 import { api } from "../axios";
 import { LogMessage } from "@/types";
 
@@ -12,28 +13,35 @@ export const logsApi = {
    * @param userId - Admin user ID for authorization
    * @returns Promise with all logs
    */
-  // getAllLogs: async (
-  //   userId: string,
-  //   page = 2,
-  //   limit = 20
-  // ): Promise<LogMessage[]> => {
-  //   return api.get("/logs", {
-  //     headers: {
-  //       "x-user-id": userId,
-  //     },
-  //     params: {
-  //       page,
-  //       limit,
-  //     },
-  //   });
-  // },
-  getAllLogs: (
+  getAllLogs: async (
     page: number = 1,
     limit: number = 10,
+    level?: string,
+    logType?: string,
+    search?: string,
   ): Promise<{
     data: LogMessage[];
     total: number;
     page: number;
     totalPages: number;
-  }> => api.get(`/logs?page=${page}&limit=${limit}`),
+  }> => {
+    // build query params string
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    if (level) params.append("level", level);
+    if (logType) params.append("logType", logType);
+    if (search) params.append("search", search);
+
+    const response: ApiResponse<LogMessage[]> = await api.get(
+      `/logs?${params.toString()}`,
+    );
+
+    return {
+      data: response.data,
+      total: response.metadata.total,
+      totalPages: response.metadata.totalPages,
+      page: response.metadata.page,
+    };
+  },
 };
