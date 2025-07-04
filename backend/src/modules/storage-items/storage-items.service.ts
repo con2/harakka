@@ -14,6 +14,7 @@ import { SupabaseService } from "../supabase/supabase.service";
 import { Tables, TablesUpdate } from "src/types/supabase.types";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
+import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 // this is used by the controller
 
 @Injectable()
@@ -23,8 +24,9 @@ export class StorageItemsService {
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
   ) {}
 
-  async getAllItems(): Promise<StorageItem[]> {
+  async getAllItems(page: number, limit: number): Promise<StorageItem[]> {
     const supabase = this.supabaseClient.getServiceClient();
+    const { from, to } = getPaginationRange(page, limit);
 
     // Updated query to join storage_item_tags with tags table
     const { data, error }: PostgrestResponse<StorageItemWithJoin> =
@@ -50,8 +52,10 @@ export class StorageItemsService {
           is_active
         )
       `,
+          { count: "exact" },
         )
-        .eq("is_deleted", false); // Explicitly select tags and their translations by joining the tags table - show only undeleted items
+        .eq("is_deleted", false) // Explicitly select tags and their translations by joining the tags table - show only undeleted items
+        .range(from, to);
 
     if (error) {
       throw new Error(error.message);
@@ -351,6 +355,66 @@ export class StorageItemsService {
     return {
       success: true,
       id,
+    };
+  }
+
+  async getOrderedStorageItems(
+    page: number,
+    limit: number,
+    ascending: boolean,
+    order_by: string,
+    searchquery?: string,
+  ) {
+    const supabase = this.supabaseClient.getAnonClient();
+    const { from, to } = getPaginationRange(page, limit);
+
+    const query = supabase
+      .from("storage_items")
+      .select(
+        `
+        translations->fi,
+        translations->en,
+        id,
+        items_number_total,
+        price,
+        storage_locations (
+          name
+        ),
+        storage_item_tags (
+          tag_id,
+          tags (
+            id,
+            translations
+          )
+        ),        `,
+        { count: "exact" },
+      )
+      .range(from, to)
+      .order(order_by ?? "translations->fi->item_name", {
+        ascending: ascending,
+      });
+
+    if (searchquery) {
+      query.or(
+        `translations->fi->item_name.ilike.%${searchquery}%,` +
+          `translations->en->item_name.ilike.%${searchquery}%,` +
+          `id.ilike.%${searchquery}%,` +
+          `storage_locations.name.ilike.%${searchquery}%`,
+      );
+    }
+
+    const result = await query;
+    const { error, count } = result;
+    console.log("result data: ", result.data);
+    if (error) {
+      console.log(error);
+      throw new Error("Failed to get matching items");
+    }
+
+    const pagination_meta = getPaginationMeta(count, page, limit);
+    return {
+      ...result,
+      metadata: pagination_meta,
     };
   }
 }
