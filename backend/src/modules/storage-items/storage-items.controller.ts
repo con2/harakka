@@ -8,11 +8,15 @@ import {
   HttpException,
   HttpStatus,
   Req,
+  Query,
+  BadRequestException,
 } from "@nestjs/common";
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
 import { Tables, TablesInsert, TablesUpdate } from "../../types/supabase.types"; // Import the Database type for type safety
+import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
+import { ApiSingleResponse } from "src/types/response.types";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
@@ -68,5 +72,35 @@ export class StorageItemsController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  // checks availability of items by date range
+  @Get("availability/:itemId")
+  async getItemAvailability(
+    @Param("itemId") itemId: string,
+    @Query("start_date") startDate: string,
+    @Query("end_date") endDate: string,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<
+    ApiSingleResponse<{
+      item_id: string;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }>
+  > {
+    const supabase = req.supabase;
+
+    if (!itemId || !startDate || !endDate) {
+      throw new BadRequestException(
+        "Item id, startdate and enddate are required!",
+      );
+    }
+
+    return await this.storageItemsService.checkAvailability(
+      itemId,
+      startDate,
+      endDate,
+      supabase,
+    );
   }
 }

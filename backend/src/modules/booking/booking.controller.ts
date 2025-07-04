@@ -7,7 +7,6 @@ import {
   Post,
   Put,
   Req,
-  Query,
   Patch,
   UnauthorizedException,
   BadRequestException,
@@ -18,7 +17,6 @@ import { CreateBookingDto } from "./dto/create-booking.dto";
 import { InvoiceService } from "./invoice.service";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
-import { ApiSingleResponse } from "src/types/response.types";
 
 @Controller("bookings")
 export class BookingController {
@@ -155,36 +153,6 @@ export class BookingController {
     // const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.confirmPickup(orderId, supabase);
-  }
-
-  // checks availability of items by date range
-  @Get("availability/:itemId")
-  async getItemAvailability(
-    @Param("itemId") itemId: string,
-    @Query("start_date") startDate: string,
-    @Query("end_date") endDate: string,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<
-    ApiSingleResponse<{
-      item_id: string;
-      alreadyBookedQuantity: number;
-      availableQuantity: number;
-    }>
-  > {
-    const supabase = req.supabase;
-
-    if (!itemId || !startDate || !endDate) {
-      throw new BadRequestException(
-        "Item id, startdate and enddate are required!",
-      );
-    }
-
-    return this.bookingService.checkAvailability(
-      itemId,
-      startDate,
-      endDate,
-      supabase,
-    );
   }
 
   // change payment status
