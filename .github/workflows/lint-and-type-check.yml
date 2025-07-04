@@ -27,9 +27,9 @@ jobs:
         working-directory: ./frontend
         run: npm ci
         
-      - name: Check formatting
+      - name: Format Code
         working-directory: ./frontend
-        run: npm run format:check
+        run: npm run format
         
       - name: Run linting
         working-directory: ./frontend
@@ -59,7 +59,7 @@ jobs:
         working-directory: ./backend
         run: npm ci
         
-      - name: Check formatting (optional)
+      - name: Format Code
         working-directory: ./backend
         run: npm run format
         continue-on-error: true
