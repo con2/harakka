@@ -3,8 +3,6 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-  getSortedRowModel,
-  SortingState,
 } from "@tanstack/react-table";
 
 import {
@@ -17,7 +15,6 @@ import {
 } from "@/components/ui/table";
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
@@ -28,27 +25,42 @@ interface DataTableProps<TData, TValue> {
   pageIndex: number;
   pageCount: number;
   onPageChange: (pageIndex: number) => void;
+  ascending?: boolean | null;
+  order?: string;
+  handleAscending?: (asc: boolean | null) => void;
+  handleOrder?: (order: string) => void;
+  originalSorting?: string;
 }
 
+/**
+ * If data table has manual sorting:
+ * a value for ascending, order, handleAscending and handleOrder must be provided.
+ * These should update the state of the parents component, leading to a new API call.
+ * If for some reason the original order is not the first column of the table, originalSorting must be provided
+ */
 export function PaginatedDataTable<TData, TValue>({
   columns,
   data,
   pageIndex,
   pageCount,
   onPageChange,
+  ascending,
+  order,
+  handleAscending,
+  handleOrder,
+  originalSorting,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
   const table = useReactTable({
     data,
     columns,
     pageCount,
     manualPagination: true,
+    manualSorting: true,
     state: {
       pagination: {
         pageIndex,
         pageSize: 10,
       },
-      sorting,
     },
     onPaginationChange: (updater) => {
       const newState =
@@ -57,12 +69,35 @@ export function PaginatedDataTable<TData, TValue>({
           : updater;
       onPageChange(newState.pageIndex);
     },
-    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
   // Translation
   const { lang } = useLanguage();
+
+  /**
+   * Mimic original sorting behaviour
+   * @param id The ID of which to sort by. If ascending is null it will return to original sorting.
+   */
+  const handleClick = (id: string) => {
+    if (id !== order) {
+      handleOrder?.(id);
+      handleAscending?.(true);
+      return;
+    }
+
+    if (ascending !== null) {
+      handleOrder?.(id);
+    }
+
+    if (ascending === true) {
+      handleAscending?.(false);
+    } else if (ascending === null) {
+      handleAscending?.(true);
+    } else {
+      handleAscending?.(null);
+      handleOrder?.(originalSorting ?? table.getHeaderGroups()[0].id);
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -72,10 +107,12 @@ export function PaginatedDataTable<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const isSorted = header.column.getIsSorted();
+                  const isOrder = header.id === order;
                   return (
                     <TableHead
-                      onClick={header.column.getToggleSortingHandler()}
+                      onClick={
+                        handleOrder ? () => handleClick(header.id) : () => {}
+                      }
                       className="cursor-pointer select-none hover:text-highlight2 transition-colors items-center gap-1"
                       key={header.id}
                     >
@@ -86,9 +123,9 @@ export function PaginatedDataTable<TData, TValue>({
                             header.getContext(),
                           )}
                         </span>
-                        {isSorted === "asc" ? (
+                        {isOrder && ascending === false ? (
                           <ArrowUp className="w-3 h-3 text-muted-foreground" />
-                        ) : isSorted === "desc" ? (
+                        ) : isOrder && ascending ? (
                           <ArrowDown className="w-3 h-3 text-muted-foreground" />
                         ) : null}
                       </div>
