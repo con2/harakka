@@ -29,7 +29,10 @@ This repository includes automated CI/CD workflows to ensure code quality and bu
 
 ## Workflow Details
 
-> **Note**: The *Frontend* and *Backend* build steps described below run **only** in the **Build Validation** workflow.
+> **Note**:
+
+- The *Frontend* and *Backend* build steps described below run **only** in the **Build Validation** workflow.
+- All checks `continue-on-error`
 
 ### Frontend Checks
 
