@@ -1012,35 +1012,10 @@ export class BookingService {
       item_id: itemId,
       availableQuantity,
       alreadyBookedQuantity,
-      totalQuantity: itemData.items_number_total,
-      startDate,
-      endDate,
     };
   }
 
-  // 12. virtual number of items for a specific date
-  async getAvailableQuantityForDate(
-    itemId: string,
-    startdate: string,
-    enddate: string,
-  ) {
-    const supabase = this.supabaseService.getServiceClient();
-
-    if (!itemId || !startdate) {
-      throw new BadRequestException("item_id and date are mandatory");
-    }
-
-    const num_available = await calculateAvailableQuantity(
-      supabase,
-      itemId,
-      startdate,
-      enddate,
-    );
-
-    return num_available ?? 0;
-  }
-
-  // 13. Update payment status
+  // 12. Update payment status
   async updatePaymentStatus(
     orderId: string,
     status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
