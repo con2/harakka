@@ -22,6 +22,9 @@ export class LogsController {
     @Req() req: AuthRequest,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
+    @Query("level") level?: string,
+    @Query("logType") logType?: string,
+    @Query("search") search?: string,
   ) {
     const userId = req.user?.id;
     if (!userId) {
@@ -35,6 +38,9 @@ export class LogsController {
         req,
         pageNumber,
         limitNumber,
+        level,
+        logType,
+        search,
       );
 
       // Log the access for audit purposes

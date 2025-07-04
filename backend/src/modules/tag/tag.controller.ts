@@ -21,11 +21,12 @@ export class TagController {
   async getAllTags(
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
+    @Query("search") search: string = "",
   ): Promise<ApiResponse<TagRow>> {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
 
-    return this.tagService.getAllTags(pageNumber, limitNumber);
+    return this.tagService.getAllTags(pageNumber, limitNumber, search);
   }
 
   @Get(":itemId")
