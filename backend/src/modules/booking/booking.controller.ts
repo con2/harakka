@@ -18,6 +18,7 @@ import { CreateBookingDto } from "./dto/create-booking.dto";
 import { InvoiceService } from "./invoice.service";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
 
 @Controller("bookings")
 export class BookingController {
@@ -28,17 +29,34 @@ export class BookingController {
 
   // gets all bookings - use case: admin
   @Get()
-  async getAll(@Req() req: AuthRequest) {
+  async getAll(
+    @Req() req: AuthRequest,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
     const supabase = req.supabase;
-    return this.bookingService.getAllOrders(supabase);
+    return this.bookingService.getAllOrders(supabase, pageNumber, limitNumber);
   }
 
   // gets the bookings of the logged-in user
   @Get("my")
-  async getOwnBookings(@Req() req: AuthRequest) {
+  async getOwnBookings(
+    @Req() req: AuthRequest,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
     const userId = req.user.id;
     const supabase = req.supabase;
-    return this.bookingService.getUserBookings(userId, supabase);
+    return this.bookingService.getUserBookings(
+      userId,
+      supabase,
+      pageNumber,
+      limitNumber,
+    );
   }
 
   // gets the bookings of a specific user
@@ -46,22 +64,31 @@ export class BookingController {
   async getUserBookings(
     @Param("userId") userId: string,
     @Req() req: AuthRequest,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
   ) {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
     if (!userId) {
       throw new UnauthorizedException("User ID is required");
     }
     const supabase = req.supabase;
-    return this.bookingService.getUserBookings(userId, supabase);
+    return this.bookingService.getUserBookings(
+      userId,
+      supabase,
+      pageNumber,
+      limitNumber,
+    );
   }
 
   // any user creates a booking
   @Post()
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: AuthRequest) {
     try {
-      const userId = req.user?.id;
-      if (!userId) {
+      const userId = req.user.id;
+      if (!userId)
         throw new BadRequestException("No userId found: user_id is required");
-      }
+
       // put user-ID to DTO
       const dtoWithUserId = { ...dto, user_id: userId };
       return this.bookingService.createBooking(dtoWithUserId, req.supabase);
@@ -155,13 +182,11 @@ export class BookingController {
     @Query("end_date") endDate: string,
     @Req() req: AuthRequest,
   ) {
-    const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.checkAvailability(
       itemId,
       startDate,
       endDate,
-      userId, //TODO: check if userId is needed here
       supabase,
     );
   }
@@ -201,6 +226,31 @@ export class BookingController {
     );
   }
 
+  @Get("ordered")
+  getOrderedBookings(
+    @Req() req: AuthRequest,
+    @Query("search") searchquery: string,
+    @Query("order") ordered_by: ValidBookingOrder = "order_number",
+    @Query("status") status_filter: BookingStatus,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+    @Query("ascending") ascending: string = "true",
+  ) {
+    const supabase = req.supabase;
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const is_ascending = ascending.toLowerCase() === "true";
+    console.log(status_filter);
+    return this.bookingService.getOrderedBookings(
+      supabase,
+      pageNum,
+      limitNum,
+      is_ascending,
+      ordered_by,
+      searchquery,
+      status_filter,
+    );
+  }
   // commented out because it is not used atm
   /* @Get(":orderId/generate") // unsafe - anyone can create files
   async generateInvoice(@Param("orderId") orderId: string) {

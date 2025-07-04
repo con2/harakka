@@ -23,33 +23,45 @@ import { BookingMailType } from "../mail/interfaces/mail.interface";
  import { InvoiceService } from "./invoice.service"; */
 import * as dayjs from "dayjs";
 import * as utc from "dayjs/plugin/utc";
-dayjs.extend(utc);
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "src/types/supabase.types";
-export type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 import { Translations } from "./types/translations.types";
 import {
   CancelBookingResponse,
   BookingItem,
-  OrderItemInsert,
   OrderItemRow,
   OrderItemQuantity,
   OrderWithItems,
   StorageItemsRow,
   UserProfilesRow,
+  BookingRow,
+  ValidBookingOrder,
 } from "./types/booking.interface";
-
+import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
+import { StorageLocationsService } from "../storage-locations/storage-locations.service";
+import { BookingItemsService } from "../booking_items/booking-items.service";
+dayjs.extend(utc);
 @Injectable()
 export class BookingService {
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly mailService: MailService,
+    private readonly locationsService: StorageLocationsService,
+    private readonly bookingItemsService: BookingItemsService,
   ) {}
 
   // 1. get all orders
-  async getAllOrders(supabase: SupabaseClient<Database>) {
-    const { data: orders, error } = await supabase.from("orders").select(
-      `
+  async getAllOrders(
+    supabase: SupabaseClient<Database>,
+    page: number,
+    limit: number,
+  ) {
+    const { from, to } = getPaginationRange(page, limit);
+
+    const result = await supabase
+      .from("orders")
+      .select(
+        `
       *,
       order_items (
         *,
@@ -61,7 +73,12 @@ export class BookingService {
         )
       )
     `,
-    );
+        { count: "exact" },
+      )
+      .range(from, to);
+
+    const { data: orders, error, count } = result;
+    const metadata = getPaginationMeta(count, page, limit);
 
     if (error) {
       console.error("Supabase error in getAllOrders():", error);
@@ -112,16 +129,30 @@ export class BookingService {
       }),
     );
 
-    return ordersWithUserProfiles;
+    return {
+      ...result,
+      data: ordersWithUserProfiles,
+      metadata,
+    };
   }
 
-  // 2. get all bookings of a user
-  async getUserBookings(userId: string, supabase: SupabaseClient<Database>) {
+  async getUserBookings(
+    userId: string,
+    supabase: SupabaseClient<Database>,
+    page: number,
+    limit: number,
+  ) {
+    const { from, to } = getPaginationRange(page, limit);
+
     if (!userId || userId === "undefined") {
       throw new BadRequestException("Valid user ID is required");
     }
 
-    const { data: orders, error } = await supabase
+    const {
+      data: orders,
+      error,
+      count,
+    } = await supabase
       .from("orders")
       .select(
         `
@@ -134,9 +165,11 @@ export class BookingService {
           )
         )
       `,
+        { count: "exact" },
       )
       .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
     if (error) {
       console.error(
@@ -153,21 +186,24 @@ export class BookingService {
     const locationIds = getUniqueLocationIDs(orders);
 
     // Load all relevant storage locations
-    const { data: locationsData, error: locationError } = await supabase
-      .from("storage_locations")
-      .select("id, name")
-      .in("id", locationIds);
+    const result = await this.locationsService.getMatchingLocations(
+      { id: locationIds },
+      ["id", "name"],
+    );
 
-    if (locationError) {
+    const { data: locationsData, error: locationsError } = result;
+
+    if (locationsError) {
       console.error(
-        `Supabase error loading locations: ${JSON.stringify(locationError)}`,
+        `Supabase error loading locations: ${JSON.stringify(locationsError)}`,
       );
-      throw new Error(`Failed to fetch locations: ${locationError.message}`);
+      throw new Error(`Failed to fetch locations: ${locationsError.message}`);
     }
 
     const locationMap = new Map(
       (locationsData ?? []).map((loc) => [loc.id, loc.name]),
     );
+    const metadata = getPaginationMeta(count, page, limit);
 
     // Add location_name and item_name to each item
     const ordersWithNames = orders.map((order) => ({
@@ -185,7 +221,7 @@ export class BookingService {
       }),
     }));
 
-    return ordersWithNames;
+    return { ...result, data: ordersWithNames, metadata };
   }
 
   // 3. create a Booking
@@ -261,7 +297,7 @@ export class BookingService {
         order_number: generateOrderNumber(),
       })
       .select()
-      .single<OrderRow>();
+      .single<BookingRow>();
 
     if (orderError || !order) {
       throw new BadRequestException("Could not create order");
@@ -398,7 +434,7 @@ export class BookingService {
 
   // 5. update a Booking (Admin/SuperVera OR Owner)
   async updateBooking(
-    orderId: string,
+    booking_id: string,
     userId: string,
     updatedItems: BookingItem[],
     supabase: SupabaseClient,
@@ -407,7 +443,7 @@ export class BookingService {
     const { data: order } = await supabase
       .from("orders")
       .select("status, user_id, order_number")
-      .eq("id", orderId)
+      .eq("id", booking_id)
       .single();
 
     if (!order) throw new BadRequestException("Order not found");
@@ -423,17 +459,7 @@ export class BookingService {
       throw new BadRequestException("User not found");
     }
 
-    const isAdmin = user?.role === "admin" || user?.role === "superVera";
-    if (
-      !(
-        user.role === "admin" ||
-        userId === order.user_id ||
-        user.role === "service_role"
-      )
-    ) {
-      throw new ForbiddenException("Not allowed to update this booking");
-    }
-
+    const isAdmin = ["admin", "superVera", "service_role"].includes(user.role);
     const isOwner = order.user_id === userId;
 
     if (!isAdmin && !isOwner) {
@@ -447,8 +473,8 @@ export class BookingService {
       );
     }
 
-    // 5.3. Delete existing items from order_items to avoid douplicates
-    await supabase.from("order_items").delete().eq("order_id", orderId);
+    // 5.3. Delete existing items from order_items to avoid duplicates
+    await this.bookingItemsService.removeAllBookingItems(supabase, booking_id);
 
     // 5.4. insert updated items with availability check
     for (const item of updatedItems) {
@@ -487,18 +513,22 @@ export class BookingService {
       }
 
       // 5.7. insert new order item
-      const { error: itemInsertError } = await supabase
-        .from("order_items")
-        .insert<OrderItemInsert>({
-          order_id: orderId,
-          item_id: item.item_id,
-          location_id: storageItem.location_id,
-          quantity: item.quantity,
-          start_date: item.start_date,
-          end_date: item.end_date,
-          total_days: totalDays,
-          status: "pending",
-        });
+      const newBookingItem = {
+        order_id: booking_id,
+        item_id: item.item_id,
+        location_id: storageItem.location_id,
+        quantity: item.quantity,
+        start_date: item.start_date,
+        end_date: item.end_date,
+        total_days: totalDays,
+        status: "pending",
+      };
+
+      const { error: itemInsertError } =
+        await this.bookingItemsService.createBookingItem(
+          supabase,
+          newBookingItem,
+        );
 
       if (itemInsertError) {
         console.error("Order item insert error:", itemInsertError);
@@ -508,7 +538,7 @@ export class BookingService {
 
     // 5.8 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Update, {
-      orderId,
+      orderId: booking_id,
       triggeredBy: userId,
     });
 
@@ -525,7 +555,7 @@ export class BookingService {
     )
   `,
       )
-      .eq("id", orderId)
+      .eq("id", booking_id)
       .single()
       .overrideTypes<OrderWithItems>();
 
@@ -737,7 +767,7 @@ export class BookingService {
       .select("status, user_id, order_number")
       .eq("id", orderId)
       .single()
-      .overrideTypes<OrderRow>();
+      .overrideTypes<BookingRow>();
 
     if (orderError || !order) throw new BadRequestException("Order not found");
 
@@ -954,7 +984,7 @@ export class BookingService {
       .from("orders")
       .select("user_id")
       .eq("id", orderId)
-      .single<OrderRow>();
+      .single<BookingRow>();
 
     const triggeredBy = orderRow?.user_id ?? "system";
 
@@ -974,7 +1004,6 @@ export class BookingService {
     itemId: string,
     startDate: string,
     endDate: string,
-    userId: string,
     supabase: SupabaseClient,
   ) {
     // Sum all overlapping bookings
@@ -1070,6 +1099,62 @@ export class BookingService {
 
     return {
       message: `Payment status updated to '${status}' for order ${orderId}`,
+    };
+  }
+
+  /**
+   * Get bookings in an ordered list
+   * @param supabase The supabase client provided by request
+   * @param page What page number is requested
+   * @param limit How many rows to retrieve
+   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
+   * @param filter What to filter the bookings by
+   * @param order_by What column to order the columns by. Default "order_number"
+   * @param searchquery Optional. Filter bookings by a string
+   * @returns Matching bookings
+   */
+  async getOrderedBookings(
+    supabase: SupabaseClient,
+    page: number,
+    limit: number,
+    ascending: boolean,
+    order_by: ValidBookingOrder,
+    searchquery?: string,
+    status_filter?: string,
+  ) {
+    const { from, to } = getPaginationRange(page, limit);
+
+    const query = supabase
+      .from("view_bookings_with_user_info")
+      .select("*", { count: "exact" })
+      .range(from, to)
+      .order(order_by ?? "order_number", { ascending: ascending });
+
+    if (status_filter) query.eq("status", status_filter);
+    // Match any field if there is a searchquery
+    if (searchquery) {
+      query.or(
+        `order_number.ilike.%${searchquery}%,` +
+          `status.ilike.%${searchquery}%,` +
+          `full_name.ilike.%${searchquery}%,` +
+          `created_at_text.ilike.%${searchquery}%,` +
+          `final_amount_text.ilike.%${searchquery}%,` +
+          `payment_status.ilike.%${searchquery}%`,
+      );
+    }
+
+    const result = await query;
+
+    const { error, count } = result;
+    if (error) {
+      console.log(error);
+      throw new Error("Failed to get matching bookings");
+    }
+
+    const pagination_meta = getPaginationMeta(count, page, limit);
+    return {
+      ...result,
+      metadata: pagination_meta,
     };
   }
 }
