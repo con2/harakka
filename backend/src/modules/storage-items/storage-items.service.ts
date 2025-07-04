@@ -11,9 +11,7 @@ import {
 import { S3Service } from "../supabase/s3-supabase.service";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
-import { Tables, TablesUpdate } from "src/types/supabase.types";
-import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
+import { TablesUpdate } from "src/types/supabase.types";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
 import { ApiSingleResponse } from "src/types/response.types";
 // this is used by the controller
@@ -130,10 +128,8 @@ export class StorageItemsService {
     // and keep the rest of the item data in storageItemData
     const { tagIds, ...storageItemData } = item;
     // Insert the item into the storage_items table
-    const { data: insertedItems, error } = await supabase
-      .from("storage_items")
-      .insert(storageItemData)
-      .select();
+    const { data: insertedItems, error }: PostgrestResponse<StorageItem> =
+      await supabase.from("storage_items").insert(storageItemData).select();
     if (error) throw new Error(error.message);
 
     const insertedItem = insertedItems?.[0];
@@ -168,7 +164,10 @@ export class StorageItemsService {
     console.log("Updating item with data:", JSON.stringify(itemData, null, 2));
 
     // Update the main item
-    const { data: updatedItemData, error: updateError } = await supabase
+    const {
+      data: updatedItemData,
+      error: updateError,
+    }: PostgrestResponse<StorageItem> = await supabase
       .from("storage_items")
       .update(itemData)
       .eq("id", id)
@@ -293,10 +292,14 @@ export class StorageItemsService {
   // TODO: needs to be fixed and updated
   async getItemsByTag(req: Request, tagId: string) {
     const supabase = req["supabase"] as SupabaseClient;
-    const { data, error } = await supabase
-      .from("storage_item_tags")
-      .select("item_id, items(*)") // Select foreign table 'items' if it's a relation
-      .eq("tag_id", tagId);
+    const {
+      data,
+      error,
+    }: PostgrestResponse<{ item_id: string; items: StorageItem[] }> =
+      await supabase
+        .from("storage_item_tags")
+        .select("item_id, items(*)") // Select foreign table 'items' if it's a relation
+        .eq("tag_id", tagId);
 
     if (error) throw new Error(error.message);
 
