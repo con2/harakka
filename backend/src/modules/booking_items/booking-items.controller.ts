@@ -9,12 +9,12 @@ import {
   Query,
   Req,
 } from "@nestjs/common";
-import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
 import { BookingItemsService } from "./booking-items.service";
 import {
   BookingItemsInsert,
   BookingItemsUpdate,
 } from "./interfaces/booking-items.interfaces";
+import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 
 @Controller("booking-items")
 export class BookingItemsController {
@@ -27,7 +27,7 @@ export class BookingItemsController {
    */
   @Get()
   async getAllBookingItems(
-    @Req() req: AuthenticatedRequest,
+    @Req() req: AuthRequest,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
   ) {
@@ -51,7 +51,7 @@ export class BookingItemsController {
    */
   @Get(":booking_id")
   async getBookingItems(
-    @Req() req: AuthenticatedRequest,
+    @Req() req: AuthRequest,
     @Param("booking_id") booking_id: string,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
@@ -76,7 +76,7 @@ export class BookingItemsController {
    */
   @Post()
   async createBookingItem(
-    @Req() req: AuthenticatedRequest,
+    @Req() req: AuthRequest,
     @Body() booking_item: BookingItemsInsert,
   ) {
     const supabase = req.supabase;
@@ -88,7 +88,7 @@ export class BookingItemsController {
 
   @Delete(":booking_id/:booking_item_id")
   async removeBookingItem(
-    @Req() req: AuthenticatedRequest,
+    @Req() req: AuthRequest,
     @Param("booking_id") booking_id: string,
     @Param("booking_item_id") booking_item_id: string,
   ) {
@@ -104,7 +104,7 @@ export class BookingItemsController {
 
   @Patch(":booking_item_id")
   async updateBookingItem(
-    @Req() req: AuthenticatedRequest,
+    @Req() req: AuthRequest,
     @Param("booking_item_id") booking_item_id: string,
     @Body() updated_booking_item: BookingItemsUpdate,
   ) {
