@@ -29,8 +29,15 @@ interface DataTableProps<TData, TValue> {
   order?: string;
   handleAscending?: (asc: boolean | null) => void;
   handleOrder?: (order: string) => void;
+  originalSorting?: string;
 }
 
+/**
+ * If data table has manual sorting:
+ * a value for ascending, order, handleAscending and handleOrder must be provided.
+ * These should update the state of the parents component, leading to a new API call.
+ * If for some reason the original order is not the first column of the table, originalSorting must be provided
+ */
 export function PaginatedDataTable<TData, TValue>({
   columns,
   data,
@@ -41,6 +48,7 @@ export function PaginatedDataTable<TData, TValue>({
   order,
   handleAscending,
   handleOrder,
+  originalSorting,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -87,7 +95,7 @@ export function PaginatedDataTable<TData, TValue>({
       handleAscending?.(true);
     } else {
       handleAscending?.(null);
-      handleOrder?.("order_number");
+      handleOrder?.(originalSorting ?? table.getHeaderGroups()[0].id);
     }
   };
 
