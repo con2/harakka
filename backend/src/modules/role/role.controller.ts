@@ -113,11 +113,11 @@ export class RoleController {
    */
   @Put(":id")
   async updateUserRole(
-    @Param("id") id: string,
+    @Param("id") tableKeyId: string,
     @Body() updateRoleDto: UpdateUserRoleDto,
     @Req() req: AuthRequest,
   ): Promise<UserRoleWithDetails> {
-    return this.roleService.updateUserRole(id, updateRoleDto, req);
+    return this.roleService.updateUserRole(tableKeyId, updateRoleDto, req);
   }
 
   /**
