@@ -1,21 +1,30 @@
 import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { StorageLocation } from "./interfaces/storage-location";
+import {
+  StorageLocationsFilter,
+  StorageLocationsRow,
+} from "./interfaces/storage-location";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { ApiResponse } from "src/types/response.types";
 
 @Injectable()
 export class StorageLocationsService {
   constructor(private supabaseService: SupabaseService) {}
 
-  async getAllLocations(req: AuthRequest, page: number, limit: number) {
-    const supabase = req.supabase;
-
+  async getAllLocations(
+    supabase: SupabaseClient,
+    page: number,
+    limit: number,
+    columns?: string[],
+  ) {
     const { from, to } = getPaginationRange(page, limit);
+    const requestedData = columns ? columns.join(", ") : "*";
 
     const { data, error, count } = await supabase
       .from("storage_locations")
-      .select("*", { count: "exact" })
+      .select(requestedData as "*", { count: "exact" })
       .order("name")
       .range(from, to);
 
@@ -24,7 +33,6 @@ export class StorageLocationsService {
     }
 
     const meta = getPaginationMeta(count, page, limit);
-
     return {
       data: data || [],
       ...meta,
@@ -34,7 +42,7 @@ export class StorageLocationsService {
   async getLocationById(
     id: string,
     req: AuthRequest,
-  ): Promise<StorageLocation | null> {
+  ): Promise<StorageLocationsRow | null> {
     const supabase = req.supabase;
 
     const { data, error } = await supabase
@@ -51,5 +59,36 @@ export class StorageLocationsService {
     }
 
     return data ?? null;
+  }
+
+  /**
+   * Get the locations matching desired filters.
+   * @param filters Object with key-value pairs of the column and value you would like to filter by
+   * @param columns Specify what columns of the table you would like to return
+   * @returns matching storage locations
+   */
+  async getMatchingLocations(
+    filters: Partial<Record<StorageLocationsFilter, string[]>>,
+    columns?: string[],
+  ): Promise<ApiResponse<StorageLocationsRow>> {
+    const supabase = this.supabaseService.getAnonClient();
+    const requestedData = columns ? columns.join(", ") : "*";
+
+    let query = supabase
+      .from("storage_locations")
+      .select(requestedData as "*", { count: "exact" })
+      .order("name");
+
+    for (const [field, values] of Object.entries(filters)) {
+      query = query.in(field as StorageLocationsFilter, values);
+    }
+
+    const result = await query;
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    return result;
   }
 }
