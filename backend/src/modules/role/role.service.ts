@@ -191,7 +191,7 @@ export class RoleService {
    * Update a user role assignment
    */
   async updateUserRole(
-    roleAssignmentId: string,
+    tableKeyId: string,
     updateRoleDto: UpdateUserRoleDto,
     req: AuthRequest,
   ): Promise<UserRoleWithDetails> {
@@ -199,7 +199,7 @@ export class RoleService {
     const { data: existing, error: existingError } = await req.supabase
       .from("user_organization_roles")
       .select("id, user_id, organization_id")
-      .eq("id", roleAssignmentId)
+      .eq("id", tableKeyId)
       .single();
 
     if (existingError || !existing) {
@@ -213,7 +213,7 @@ export class RoleService {
         role_id: updateRoleDto.role_id,
         is_active: updateRoleDto.is_active,
       })
-      .eq("id", roleAssignmentId)
+      .eq("id", tableKeyId)
       .select(
         `
         id,
@@ -234,6 +234,7 @@ export class RoleService {
       `,
       )
       .single();
+  
 
     if (error) {
       this.logger.error(`Failed to update user role: ${error.message}`);
@@ -261,14 +262,14 @@ export class RoleService {
    * Delete a user role assignment (soft delete by setting is_active = false)
    */
   async deleteUserRole(
-    roleAssignmentId: string,
+    tableKeyId: string,
     req: AuthRequest,
   ): Promise<{ success: boolean; message: string }> {
     // Check if assignment exists
     const { data: existing, error: existingError } = await req.supabase
       .from("user_organization_roles")
       .select("id, user_id, organization_id")
-      .eq("id", roleAssignmentId)
+      .eq("id", tableKeyId)
       .single();
 
     if (existingError || !existing) {
@@ -279,7 +280,7 @@ export class RoleService {
     const { error } = await req.supabase
       .from("user_organization_roles")
       .update({ is_active: false })
-      .eq("id", roleAssignmentId);
+      .eq("id", tableKeyId);
 
     if (error) {
       this.logger.error(`Failed to delete user role: ${error.message}`);
@@ -299,14 +300,14 @@ export class RoleService {
    * Hard delete a user role assignment (permanent removal) USE IT ONLY IF YOU KNOW WHAT YOU ARE DOING!
    */
   async permanentDeleteUserRole(
-    roleAssignmentId: string,
+    tableKeyId: string,
     req: AuthRequest,
   ): Promise<{ success: boolean; message: string }> {
     // Check if assignment exists
     const { data: existing, error: existingError } = await req.supabase
       .from("user_organization_roles")
       .select("id, user_id")
-      .eq("id", roleAssignmentId)
+      .eq("id", tableKeyId)
       .single();
 
     if (existingError || !existing) {
@@ -317,7 +318,7 @@ export class RoleService {
     const { error } = await req.supabase
       .from("user_organization_roles")
       .delete()
-      .eq("id", roleAssignmentId);
+      .eq("id", tableKeyId);
 
     if (error) {
       this.logger.error(
