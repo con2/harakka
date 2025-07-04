@@ -77,10 +77,28 @@ export class AppModule implements NestModule {
         { path: "auth/test-login", method: RequestMethod.POST },
         { path: "auth/get-fresh-token", method: RequestMethod.POST },
         { path: "auth/endpoints", method: RequestMethod.GET },
+
         // Health checks and public endpoints
         { path: "health", method: RequestMethod.GET },
         { path: "", method: RequestMethod.GET }, // Root endpoint
-        { path: "storage", method: RequestMethod.GET }, // Public storage endpoint
+
+        // Public storage and item endpoints (for front page)
+        { path: "storage", method: RequestMethod.GET },
+        { path: "storage-items", method: RequestMethod.GET },
+        { path: "storage-items/(.*)", method: RequestMethod.GET }, // For specific item endpoints
+        { path: "api/storage-locations", method: RequestMethod.GET },
+        { path: "storage-locations", method: RequestMethod.GET },
+        { path: "storage-locations/(.*)", method: RequestMethod.GET },
+
+        // Public tag endpoints
+        { path: "tags", method: RequestMethod.GET },
+        { path: "tags/(.*)", method: RequestMethod.GET },
+
+        // Public item images endpoints
+        { path: "item-images/(.*)", method: RequestMethod.GET },
+
+        // Public booking availability endpoints (for checking item availability)
+        { path: "bookings/availability/(.*)", method: RequestMethod.GET },
       )
       .forRoutes(
         // Protected controllers
