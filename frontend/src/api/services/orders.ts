@@ -1,5 +1,12 @@
+import { ApiResponse } from "@/types/response.types";
 import { api } from "../axios";
-import { BookingItem, BookingOrder, CreateOrderDto } from "@/types";
+import {
+  BookingItem,
+  BookingOrder,
+  CreateOrderDto,
+  ValidBookingOrder,
+} from "@/types";
+import { BookingStatus, BookingUserView } from "../../types/order";
 
 /**
  * API service for order-related endpoints
@@ -11,12 +18,7 @@ export const ordersApi = {
    * @returns Promise with created order
    */
   createOrder: async (orderData: CreateOrderDto): Promise<BookingOrder> => {
-    const userId = orderData.user_id;
-    return api.post("/bookings", orderData, {
-      headers: {
-        "x-user-id": userId || "",
-      },
-    });
+    return api.post("/bookings", orderData);
   },
 
   /**
@@ -24,8 +26,12 @@ export const ordersApi = {
    * @param userId - User ID to fetch orders for
    * @returns Promise with user's orders
    */
-  getUserOrders: async (userId: string): Promise<BookingOrder[]> => {
-    return api.get(`/bookings/user/${userId}`);
+  getUserOrders: async (
+    userId: string,
+    page: number,
+    limit: number,
+  ): Promise<ApiResponse<BookingOrder>> => {
+    return api.get(`/bookings/user/${userId}?page=${page}&limit=${limit}`);
   },
 
   /**
@@ -33,12 +39,11 @@ export const ordersApi = {
    * @param userId - Admin user ID for authorization
    * @returns Promise with all orders
    */
-  getAllOrders: async (userId: string): Promise<BookingOrder[]> => {
-    return api.get("/bookings", {
-      headers: {
-        "x-user-id": userId,
-      },
-    });
+  getAllOrders: async (
+    page: number,
+    limit: number,
+  ): Promise<ApiResponse<BookingOrder>> => {
+    return api.get(`/bookings?page=${page}&limit=${limit}`);
   },
 
   /**
@@ -47,16 +52,7 @@ export const ordersApi = {
    * @returns Promise with updated order
    */
   confirmOrder: async (orderId: string): Promise<{ message: string }> => {
-    const userId = localStorage.getItem("userId");
-    return api.put(
-      `/bookings/${orderId}/confirm`,
-      {},
-      {
-        headers: {
-          "x-user-id": userId || "",
-        },
-      },
-    );
+    return api.put(`/bookings/${orderId}/confirm`);
   },
 
   /**
@@ -69,16 +65,7 @@ export const ordersApi = {
     orderId: string,
     items: BookingItem[],
   ): Promise<BookingOrder> => {
-    const userId = localStorage.getItem("userId");
-    return api.put(
-      `/bookings/${orderId}/update`,
-      { items },
-      {
-        headers: {
-          "x-user-id": userId || "",
-        },
-      },
-    );
+    return api.put(`/bookings/${orderId}/update`, { items });
   },
 
   /**
@@ -87,16 +74,7 @@ export const ordersApi = {
    * @returns Promise with updated order
    */
   rejectOrder: async (orderId: string): Promise<{ message: string }> => {
-    const userId = localStorage.getItem("userId");
-    return api.put(
-      `/bookings/${orderId}/reject`,
-      {},
-      {
-        headers: {
-          "x-user-id": userId || "",
-        },
-      },
-    );
+    return api.put(`/bookings/${orderId}/reject`);
   },
 
   /**
@@ -105,12 +83,7 @@ export const ordersApi = {
    * @returns Promise with updated order
    */
   cancelOrder: async (orderId: string): Promise<{ message: string }> => {
-    const userId = localStorage.getItem("userId");
-    return api.delete(`/bookings/${orderId}/cancel`, {
-      headers: {
-        "x-user-id": userId || "",
-      },
-    });
+    return api.delete(`/bookings/${orderId}/cancel`);
   },
 
   /**
@@ -180,17 +153,31 @@ export const ordersApi = {
     orderId: string,
     status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
   ): Promise<{ orderId: string; status: string }> => {
-    const userId = localStorage.getItem("userId");
-
-    await api.patch(
-      `/bookings/payment-status`,
-      { orderId, status },
-      {
-        headers: {
-          "x-user-id": userId || "",
-        },
-      },
-    );
+    await api.patch(`/bookings/payment-status`, { orderId, status });
     return { orderId, status: status ?? "" };
+  },
+
+  /**
+   * Get ordered and filtered bookings.
+   * @param order_by What column to order the columns by. Default "order_number"
+   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
+   * @param page What page number is requested
+   * @param limit How many rows to retrieve
+   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
+   * @param searchquery Optional. Filter bookings by a string
+   * @param status_filter Optional. What status to filter the bookings by
+   */
+  getOrderedBookings: async (
+    ordered_by: ValidBookingOrder,
+    ascending: boolean = true,
+    page: number,
+    limit: number,
+    searchquery?: string,
+    status_filter?: BookingStatus,
+  ): Promise<ApiResponse<BookingUserView>> => {
+    let call = `/bookings/ordered?order=${ordered_by}&ascending=${ascending}&page=${page}&limit=${limit}`;
+    if (searchquery) call += `&search=${searchquery}`;
+    if (status_filter) call += `&status=${status_filter}`;
+    return await api.get(call);
   },
 };
