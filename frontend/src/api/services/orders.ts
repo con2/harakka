@@ -120,30 +120,6 @@ export const ordersApi = {
   },
 
   /**
-   * Check availability of items for a specific date range
-   * @param itemId - Item ID to check availability for
-   * @param startDate - Start date for the booking
-   * @param endDate - End date for the booking
-   * @returns Promise with availability details
-   */
-  checkAvailability: (
-    itemId: string,
-    startDate: string,
-    endDate: string,
-  ): Promise<{
-    item_id: string;
-    availableQuantity: number;
-    alreadyBookedQuantity: number;
-    totalQuantity: number;
-  }> => {
-    return api.get(
-      `/bookings/availability/${itemId}?start_date=${encodeURIComponent(
-        startDate,
-      )}&end_date=${encodeURIComponent(endDate)}`,
-    );
-  },
-
-  /**
    * Update payment status of an order (admin only)
    * @param orderId - Order ID to update
    * @param status - New payment status

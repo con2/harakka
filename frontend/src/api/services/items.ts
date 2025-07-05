@@ -74,7 +74,7 @@ export const itemsApi = {
    * @param endDate - End of the date range
    * @returns Promise with item availability information
    */
-  getAvailableItems: (
+  checkAvailability: (
     itemId: string,
     startDate: Date,
     enddate: Date,
