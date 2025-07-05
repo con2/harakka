@@ -1,4 +1,3 @@
-import { ordersApi } from "@/api/services/orders";
 import imagePlaceholder from "@/assets/defaultImage.jpg";
 import {
   Tooltip,
@@ -27,6 +26,7 @@ import {
 } from "../../store/slices/itemImagesSlice";
 import { Item } from "../../types/item";
 import { Input } from "../ui/input";
+import { itemsApi } from "@/api/services/items";
 
 interface ItemsCardProps {
   item: Item;
@@ -170,8 +170,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         error: null,
       }));
 
-      ordersApi
-        .checkAvailability(item.id, startDate, endDate)
+      itemsApi
+        .checkAvailability(item.id, new Date(startDate), new Date(endDate))
         .then((response) => {
           setAvailabilityInfo({
             availableQuantity: response.availableQuantity,

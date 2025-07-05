@@ -23,7 +23,6 @@ import {
   DialogTitle,
 } from "../components/ui/dialog";
 
-import { ordersApi } from "@/api/services/orders";
 import OrderDetailsButton from "@/components/Admin/Orders/OrderDetailsButton";
 import OrderCancelButton from "@/components/OrderCancelButton";
 import OrderEditButton from "@/components/OrderEditButton";
@@ -42,6 +41,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { StatusBadge } from "./StatusBadge";
 import InlineTimeframePicker from "./InlineTimeframeSelector";
+import { itemsApi } from "@/api/services/items";
 
 const MyOrders = () => {
   const dispatch = useAppDispatch();
@@ -217,10 +217,10 @@ const MyOrders = () => {
         setLoadingAvailability((prev) => ({ ...prev, [itemId]: true }));
 
         try {
-          const data = await ordersApi.checkAvailability(
+          const data = await itemsApi.checkAvailability(
             itemId,
-            globalStartDate,
-            globalEndDate,
+            new Date(globalStartDate),
+            new Date(globalEndDate),
           );
 
           const correctedAvailableQuantity =
