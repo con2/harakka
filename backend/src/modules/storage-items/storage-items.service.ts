@@ -29,7 +29,7 @@ export class StorageItemsService {
 
     // Updated query to join storage_item_tags with tags table
     const { data, error }: PostgrestResponse<StorageItemWithJoin> =
-      await supabase
+      (await supabase
         .from("storage_items")
         .select(
           `
@@ -52,21 +52,25 @@ export class StorageItemsService {
         )
       `,
         )
-        .eq("is_deleted", false); // Explicitly select tags and their translations by joining the tags table - show only undeleted items
+        .eq("is_deleted", false)) as PostgrestSingleResponse<
+        StorageItemWithJoin[]
+      >; // Explicitly select tags and their translations by joining the tags table - show only undeleted items
 
     if (error) {
       throw new Error(error.message);
     }
 
     // Structure the result to include both tags and location data
-    return data.map((item) => ({
-      ...item,
-      storage_item_tags:
-        item.storage_item_tags?.map(
-          (tagLink) => tagLink.tags, // Flatten out the tags object to just be the tag itself
-        ) ?? [], // Fallback to empty array if no tags are available
-      location_details: item.storage_locations || null,
-    }));
+    return data.map(
+      (item: StorageItemWithJoin): StorageItem => ({
+        ...item,
+        storage_item_tags:
+          item.storage_item_tags?.map(
+            (tagLink) => tagLink.tags, // Flatten out the tags object to just be the tag itself
+          ) ?? [], // Fallback to empty array if no tags are available
+        location_details: item.storage_locations || null,
+      }),
+    );
   }
 
   // 2. get one item
