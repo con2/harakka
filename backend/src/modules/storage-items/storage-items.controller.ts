@@ -103,7 +103,7 @@ export class StorageItemsController {
       availableQuantity: number;
     }>
   > {
-    const supabase = req.supabase;
+    const supabase = req.supabase || this.supabaseService.getAnonClient();
 
     if (!itemId || !startDate || !endDate) {
       throw new BadRequestException(
