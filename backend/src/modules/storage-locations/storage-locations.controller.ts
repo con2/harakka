@@ -30,6 +30,10 @@ export class StorageLocationsController {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
     const supabase = req.supabase;
+    if (!supabase) {
+      throw new Error("Supabase client is undefined.");
+    }
+
     return this.storageLocationsService.getAllLocations(
       supabase,
       pageNumber,
