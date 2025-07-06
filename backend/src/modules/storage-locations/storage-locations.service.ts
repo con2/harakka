@@ -30,8 +30,6 @@ export class StorageLocationsService {
     if (error) {
       throw new Error(error.message);
     }
-    console.log("Supabase response", { data, error, count });
-    console.log("from/to", from, to);
     const meta = getPaginationMeta(count, page, limit);
     return {
       data: data || [],
