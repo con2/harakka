@@ -1,9 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { TagRow, TagUpdate } from "./interfaces/tag.interface";
-import { Database } from "src/types/supabase.types";
+import { Database } from "src/types/database.types";
 import { ApiResponse } from "src/types/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 
@@ -71,7 +71,7 @@ export class TagService {
   // Create a new tag
   async createTag(req: AuthRequest, tagData: TagRow): Promise<TagRow> {
     const supabase = req.supabase;
-    const { data, error } = await supabase
+    const { data, error }: PostgrestSingleResponse<TagRow> = await supabase
       .from("tags")
       .insert(tagData)
       .select()
@@ -113,7 +113,7 @@ export class TagService {
     tagData: TagUpdate,
   ): Promise<TagRow> {
     const supabase = req.supabase;
-    const { data, error } = await supabase
+    const { data, error }: PostgrestSingleResponse<TagRow> = await supabase
       .from("tags")
       .update(tagData)
       .eq("id", id)

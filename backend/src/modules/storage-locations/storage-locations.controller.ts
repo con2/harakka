@@ -2,23 +2,22 @@ import {
   Controller,
   Get,
   Param,
-  Req,
   NotFoundException,
   Query,
 } from "@nestjs/common";
 import { StorageLocationsService } from "./storage-locations.service";
 import { StorageLocationsRow } from "./interfaces/storage-location";
-import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { SupabaseService } from "../supabase/supabase.service";
 
 @Controller("api/storage-locations")
 export class StorageLocationsController {
   constructor(
     private readonly storageLocationsService: StorageLocationsService,
+    private readonly supabaseService: SupabaseService,
   ) {}
 
   @Get()
   async getAllLocations(
-    @Req() req: AuthRequest,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
   ): Promise<{
@@ -29,7 +28,7 @@ export class StorageLocationsController {
   }> {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
-    const supabase = req.supabase;
+    const supabase = this.supabaseService.getAnonClient();
     return this.storageLocationsService.getAllLocations(
       supabase,
       pageNumber,
@@ -38,13 +37,11 @@ export class StorageLocationsController {
   }
 
   @Get(":id")
-  async getLocationById(
-    @Param("id") id: string,
-    @Req() req: AuthRequest,
-  ): Promise<StorageLocationsRow> {
+  async getLocationById(@Param("id") id: string): Promise<StorageLocationsRow> {
+    const supabase = this.supabaseService.getAnonClient();
     const location = await this.storageLocationsService.getLocationById(
       id,
-      req,
+      supabase,
     );
     if (!location) {
       throw new NotFoundException(

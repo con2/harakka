@@ -13,7 +13,7 @@ import {
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
-import { Tables } from "../../types/supabase.types"; // Import the Database type for type safety
+import { Tables } from "src/types/supabase.types";
 import { ValidItemOrder } from "./interfaces/storage-item.interface";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 

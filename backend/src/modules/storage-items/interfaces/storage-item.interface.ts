@@ -1,5 +1,5 @@
-import type { Database } from "src/types/database.types";
 import type { TagRow } from "../../tag/interfaces/tag.interface";
+import { Database } from "src/types/supabase.types";
 
 /* ── Supabase base rows ──────────────────────────────────────────────── */
 export type StorageItemRow =
@@ -7,7 +7,6 @@ export type StorageItemRow =
 export type LocationRow =
   Database["public"]["Tables"]["storage_locations"]["Row"];
 
-/* ── Flattened item returned by the service ──────────────────────────── */
 export type StorageItem = StorageItemRow & {
   /** Tags flattened from the join table */
   storage_item_tags?: TagRow[];
@@ -21,17 +20,7 @@ export type StorageItemWithJoin = StorageItemRow & {
     tag_id: string;
     tags: TagRow;
   }[];
-
-  // Raw Supabase join result for location
-  storage_locations?: {
-    id: string;
-    name: string;
-    description: string;
-    address: string;
-    latitude: number;
-    longitude: number;
-    is_active: boolean;
-  };
+  storage_locations?: LocationRow;
 };
 
 export type ValidItemOrder =
