@@ -596,11 +596,11 @@ export class BookingService {
       .eq("id", userId)
       .single<UserProfilesRow>();
 
-    if (!user) {
+    if (!user || !user.role) {
       throw new ForbiddenException("User not found");
     }
 
-    const isAdmin = ["admin", "superVera"].includes(user.role?.trim());
+    const isAdmin = ["admin", "superVera"].includes(user.role.trim());
 
     if (!isAdmin) {
       throw new ForbiddenException("Only admins can reject bookings");
@@ -681,13 +681,13 @@ export class BookingService {
       .eq("id", userId)
       .single<UserProfilesRow>();
 
-    if (userProfileError || !userProfile) {
+    if (userProfileError || !userProfile || !userProfile.role) {
       throw new BadRequestException("User profile not found");
     }
 
     // 7.2 permissions check
 
-    const isAdmin = ["admin", "superVera"].includes(userProfile.role?.trim());
+    const isAdmin = ["admin", "superVera"].includes(userProfile.role.trim());
     const isOwner = order.user_id === userId;
 
     if (!isAdmin && !isOwner) {
@@ -783,7 +783,7 @@ export class BookingService {
       .eq("id", userId)
       .single<UserProfilesRow>();
 
-    if (userProfileError || !userProfile) {
+    if (userProfileError || !userProfile || !userProfile.role) {
       throw new BadRequestException("User profile not found");
     }
 
