@@ -5,7 +5,7 @@ import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
 import { Calendar, ChevronLeft, LoaderCircle, Trash2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
@@ -49,9 +49,16 @@ const Cart: React.FC = () => {
     (state) => state.timeframe,
   );
 
-  // Convert string dates to Date objects when needed
-  const startDate = startDateStr ? new Date(startDateStr) : null;
-  const endDate = endDateStr ? new Date(endDateStr) : null;
+  // Convert string dates to Date objects when needed - useMemo to prevent constant re-rendering
+  const startDate = useMemo(
+    () => (startDateStr ? new Date(startDateStr) : null),
+    [startDateStr],
+  );
+
+  const endDate = useMemo(
+    () => (endDateStr ? new Date(endDateStr) : null),
+    [endDateStr],
+  );
 
   useEffect(() => {
     if (!startDate || !endDate || cartItems.length === 0) return;
@@ -72,6 +79,7 @@ const Cart: React.FC = () => {
       itemsApi
         .checkAvailability(itemId, startDate, endDate)
         .then((response) => {
+          console.log("Availability check response:", response);
           setAvailabilityMap((prev) => ({
             ...prev,
             [itemId]: {
@@ -82,15 +90,14 @@ const Cart: React.FC = () => {
           }));
         })
         .catch((error) => {
-          console.error("Availability error for item", itemId, error);
+          console.error("availability error for item", itemId, error);
 
           setAvailabilityMap((prev) => ({
             ...prev,
             [itemId]: {
-              availableQuantity:
-                cartItem.item.items_number_currently_in_storage,
+              availableQuantity: 0,
               isChecking: false,
-              error: "Verfügbarkeitsprüfung fehlgeschlagen",
+              error: "error in availability check",
             },
           }));
         });
@@ -153,9 +160,10 @@ const Cart: React.FC = () => {
     }
 
     // Validate all items are within available quantity
-    const invalidItems = cartItems.filter(
-      (item) => item.quantity > item.item.items_number_available,
-    );
+    const invalidItems = cartItems.filter((item) => {
+      const availability = availabilityMap[item.item.id];
+      return availability && item.quantity > availability.availableQuantity;
+    });
 
     if (invalidItems.length > 0) {
       toast.error(t.cart.toast.itemsExceedQuantity[lang]);
@@ -297,7 +305,8 @@ const Cart: React.FC = () => {
                       </p>
                       <p className="text-xs text-slate-400">
                         {t.cart.item.available[lang]}{" "}
-                        {cartItem.item.items_number_available}{" "}
+                        {availabilityMap[cartItem.item.id]?.availableQuantity ??
+                          "-"}{" "}
                         {t.cart.item.units[lang]}
                       </p>
                     </div>
@@ -326,7 +335,9 @@ const Cart: React.FC = () => {
                             )
                           }
                           className="w-12 mx-2 text-center"
-                          max={cartItem.item.items_number_available}
+                          max={
+                            availabilityMap[cartItem.item.id]?.availableQuantity
+                          }
                         />
                         <Button
                           variant="outline"
@@ -339,7 +350,8 @@ const Cart: React.FC = () => {
                           }
                           disabled={
                             cartItem.quantity >=
-                            cartItem.item.items_number_available
+                            (availabilityMap[cartItem.item.id]
+                              ?.availableQuantity ?? 0)
                           }
                         >
                           +
