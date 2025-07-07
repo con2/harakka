@@ -74,14 +74,19 @@ export const itemsApi = {
     api.post(`/storage-items/${id}/can-delete`),
 
   getOrderedItems: (
-    ordered_by: ValidItemOrder = "item_name",
+    ordered_by: ValidItemOrder = "created_at",
     ascending: boolean = true,
     page: number,
     limit: number,
     searchquery?: string,
+    tag_filters?: string[],
+    activity_filter?: "active" | "inactive",
   ) => {
+    const activity = activity_filter === "active" ? true : false;
     let call = `/storage-items/ordered?order=${ordered_by}&page=${page}&limit=${limit}&ascending=${ascending}`;
     if (searchquery) call += `&search=${searchquery}`;
+    if (tag_filters) call += `&tags=${tag_filters.join(",")}`;
+    if (activity_filter) call += `&active=${activity}`;
     return api.get(call);
   },
 };

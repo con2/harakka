@@ -7,14 +7,21 @@ import {
 import {
   StorageItem,
   StorageItemWithJoin,
+  ValidItemOrder,
 } from "./interfaces/storage-item.interface";
 import { S3Service } from "../supabase/s3-supabase.service";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
-import { Tables, TablesUpdate } from "src/types/supabase.types";
-import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
+import { TablesUpdate } from "src/types/supabase.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
+import {
+  applySearchAcrossColumns,
+  getColumnData,
+  getFilterType,
+  getOrderedTableRows,
+} from "src/utils/queryconstructor.utils";
+import { ColumnMeta, Eq, Filter } from "../../types/queryconstructor.types";
+
 // this is used by the controller
 
 @Injectable()
@@ -358,54 +365,53 @@ export class StorageItemsService {
     };
   }
 
+  /**
+   * Get ordered and/or filtered items
+   * @param page What page number is requested
+   * @param limit How many rows to retrieve
+   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
+   * @param order_by What column to order the columns by. Default "created_at". See {Valid}
+   * @param searchquery Optional. Filter items by a string. Currently supports search by item name, item type and location name
+   * @param tags Optional. Filter by tag IDs
+   * @param activity_filter Optional. Filter by active/inactive status
+   * @returns Matching items
+   */
   async getOrderedStorageItems(
     page: number,
     limit: number,
     ascending: boolean,
-    order_by: string,
+    order_by?: ValidItemOrder,
     searchquery?: string,
+    tags?: string,
+    activity_filter?: "active" | "inactive",
   ) {
     const supabase = this.supabaseClient.getAnonClient();
     const { from, to } = getPaginationRange(page, limit);
 
     const query = supabase
-      .from("storage_items")
-      .select(
-        `
-        translations->fi,
-        translations->en,
-        id,
-        items_number_total,
-        price,
-        storage_locations (
-          name
-        ),
-        storage_item_tags (
-          tag_id,
-          tags (
-            id,
-            translations
-          )
-        ),        `,
-        { count: "exact" },
-      )
-      .range(from, to)
-      .order(order_by ?? "translations->fi->item_name", {
+      .from("view_manage_storage_items")
+      .select("*", { count: "exact" })
+      .range(from, to);
+
+    if (order_by)
+      query.order(order_by ?? "created_at", {
         ascending: ascending,
       });
 
     if (searchquery) {
       query.or(
-        `translations->fi->item_name.ilike.%${searchquery}%,` +
-          `translations->en->item_name.ilike.%${searchquery}%,` +
-          `id.ilike.%${searchquery}%,` +
-          `storage_locations.name.ilike.%${searchquery}%`,
+        `fi_item_name.ilike.%${searchquery}%,` +
+          `fi_item_type.ilike.%${searchquery}%,` +
+          `location_name.ilike.%${searchquery}%`,
       );
     }
 
+    if (activity_filter) query.eq("is_active", activity_filter);
+    if (tags) query.overlaps("tag_ids", tags.split(","));
+
     const result = await query;
     const { error, count } = result;
-    console.log("result data: ", result.data);
+
     if (error) {
       console.log(error);
       throw new Error("Failed to get matching items");
@@ -416,5 +422,48 @@ export class StorageItemsService {
       ...result,
       metadata: pagination_meta,
     };
+  }
+
+  async supabaseTest(
+    tableName: string,
+    select: string = "*",
+    page: number = 1,
+    limit: number = 10,
+    ascending: boolean = true,
+    order?: string,
+    searchquery?: string,
+    eq?: Eq | Eq[],
+  ) {
+    const supabase = this.supabaseClient.getServiceClient();
+    const query = getOrderedTableRows(
+      supabase,
+      tableName,
+      select,
+      page,
+      limit,
+      ascending,
+      order,
+      eq,
+    );
+
+    if (searchquery) {
+      const columnData = await getColumnData(supabase, tableName);
+      const filters: Filter[] = columnData!.map((col) => ({
+        column: col.column_name,
+        type: getFilterType(col),
+      }));
+      applySearchAcrossColumns(query, filters, searchquery);
+
+      // Add custom search for json structures
+      query.or(
+        `fi_item_name.ilike.%${searchquery}%,` +
+          `fi_item_type.ilike.%${searchquery}%,` +
+          `location_name.ilike.%${searchquery}%`,
+      );
+    }
+
+    const result = await query;
+    const pagination_meta = getPaginationMeta(result.count, page, limit);
+    return { ...result, metadata: pagination_meta };
   }
 }
