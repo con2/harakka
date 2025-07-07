@@ -17,8 +17,6 @@ import {
   selectRolesError,
   selectAdminError,
   selectIsAdmin,
-  hasRole,
-  hasAnyRole,
 } from "@/store/slices/rolesSlice";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
 
