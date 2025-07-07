@@ -423,47 +423,4 @@ export class StorageItemsService {
       metadata: pagination_meta,
     };
   }
-
-  async supabaseTest(
-    tableName: string,
-    select: string = "*",
-    page: number = 1,
-    limit: number = 10,
-    ascending: boolean = true,
-    order?: string,
-    searchquery?: string,
-    eq?: Eq | Eq[],
-  ) {
-    const supabase = this.supabaseClient.getServiceClient();
-    const query = getOrderedTableRows(
-      supabase,
-      tableName,
-      select,
-      page,
-      limit,
-      ascending,
-      order,
-      eq,
-    );
-
-    if (searchquery) {
-      const columnData = await getColumnData(supabase, tableName);
-      const filters: Filter[] = columnData!.map((col) => ({
-        column: col.column_name,
-        type: getFilterType(col),
-      }));
-      applySearchAcrossColumns(query, filters, searchquery);
-
-      // Add custom search for json structures
-      query.or(
-        `fi_item_name.ilike.%${searchquery}%,` +
-          `fi_item_type.ilike.%${searchquery}%,` +
-          `location_name.ilike.%${searchquery}%`,
-      );
-    }
-
-    const result = await query;
-    const pagination_meta = getPaginationMeta(result.count, page, limit);
-    return { ...result, metadata: pagination_meta };
-  }
 }
