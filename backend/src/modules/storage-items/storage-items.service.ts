@@ -14,13 +14,6 @@ import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { TablesUpdate } from "src/types/supabase.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
-import {
-  applySearchAcrossColumns,
-  getColumnData,
-  getFilterType,
-  getOrderedTableRows,
-} from "src/utils/queryconstructor.utils";
-import { ColumnMeta, Eq, Filter } from "../../types/queryconstructor.types";
 
 // this is used by the controller
 
