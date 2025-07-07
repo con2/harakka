@@ -42,3 +42,15 @@ export interface UseRolesReturn {
   hasAnyRole: (roleNames: string[], organizationId?: string) => boolean;
   refreshRoles: () => Promise<void>;
 }
+
+export interface RolesState {
+  currentUserRoles: UserRoleWithDetails[];
+  currentUserOrganizations: UserOrganization[];
+  isSuperVera: boolean;
+  allUserRoles: UserRoleWithDetails[];
+  loading: boolean;
+  adminLoading: boolean;
+  error: string | null;
+  adminError: string | null;
+  errorContext: string | null;
+}

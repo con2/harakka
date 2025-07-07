@@ -56,11 +56,29 @@ const ProtectedRoute = ({
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // Check role-based access
+  // Check role-based access using BOTH old and new systems
   if (allowedRoles.length > 0) {
-    const hasRequiredRole = hasAnyRole(allowedRoles, requiredOrganization);
+    // OLD SYSTEM: Check if user has role in selectedUser.role
+    const hasOldRole = allowedRoles.includes(selectedUser.role);
 
-    if (!hasRequiredRole && !isSuperVera) {
+    // NEW SYSTEM: Check if user has role in JWT-based roles
+    const hasNewRole = hasAnyRole(allowedRoles, requiredOrganization);
+
+    // Allow access if user has required role in EITHER system OR is SuperVera
+    const hasAccess = hasOldRole || hasNewRole || isSuperVera;
+
+    // Debug logging (remove later)
+    console.log("🔍 Role Check Debug:", {
+      allowedRoles,
+      oldRole: selectedUser.role,
+      hasOldRole,
+      hasNewRole,
+      isSuperVera,
+      hasAccess,
+      requiredOrganization,
+    });
+
+    if (!hasAccess) {
       return <Navigate to="/unauthorized" replace />;
     }
   }
