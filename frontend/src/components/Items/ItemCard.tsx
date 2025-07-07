@@ -143,24 +143,6 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
     navigate(`/storage/items/${itemId}`);
   };
 
-  // Handle item deletion
-  // const handleDelete = async () => {
-  //   if (!window.confirm("Are you sure you want to delete this item?")) return;
-  //   try {
-  //     await dispatch(deleteItem(item.id)).unwrap(); // Delete item via Redux action
-  //     toast.success("Item deleted successfully");
-  //   } catch (error) {
-  //     console.error("Error deleting item:", error);
-  //     toast.error("Failed to delete item");
-  //   }
-  // };
-
-  // // Handle item update (for admin only)
-  // const handleUpdate = () => {
-  //   // Navigate to the update form or trigger a modal to edit the item
-  //   navigate(`/admin/items/${item.id}/edit`);
-  // };
-
   // Handle adding item to cart
   const handleAddToCart = () => {
     if (item) {
