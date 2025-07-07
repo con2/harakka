@@ -81,12 +81,16 @@ export const itemsApi = {
     searchquery?: string,
     tag_filters?: string[],
     activity_filter?: "active" | "inactive",
+    location_filter?: string[],
+    categories?: string[],
   ) => {
     const activity = activity_filter === "active" ? true : false;
     let call = `/storage-items/ordered?order=${ordered_by}&page=${page}&limit=${limit}&ascending=${ascending}`;
     if (searchquery) call += `&search=${searchquery}`;
     if (tag_filters) call += `&tags=${tag_filters.join(",")}`;
     if (activity_filter) call += `&active=${activity}`;
+    if (location_filter) call += `&location=${location_filter.join(",")}`;
+    if (categories) call += `&category=${categories.join(",")}`;
     return api.get(call);
   },
 };

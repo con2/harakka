@@ -53,6 +53,8 @@ export class StorageItemsController {
     @Query("ascending") ascending: string = "true",
     @Query("tags") tags: string,
     @Query("active") active_filter: "active" | "inactive",
+    @Query("locations") location_filter: string,
+    @Query("category") category: string,
   ) {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
@@ -65,6 +67,8 @@ export class StorageItemsController {
       searchquery,
       tags,
       active_filter,
+      location_filter,
+      category,
     );
   }
 
