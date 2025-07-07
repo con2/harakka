@@ -67,29 +67,6 @@ export class StorageItemsController {
       active_filter,
     );
   }
-  @Get("test")
-  async getOrderedTableRows(
-    @Query("select") select: string = "*",
-    @Query("page") page: string = "1",
-    @Query("limit") limit: string = "10",
-    @Query("ascending") ascending: string = "true",
-    @Query("search") searchquery: string,
-    @Query("order") ordered_by?: string,
-  ) {
-    const pageNum = parseInt(page, 10);
-    const limitNum = parseInt(limit, 10);
-    const is_ascending = ascending.toLowerCase() === "true";
-
-    return await this.storageItemsService.supabaseTest(
-      "storage_items",
-      select,
-      pageNum,
-      limitNum,
-      is_ascending,
-      ordered_by,
-      searchquery,
-    );
-  }
 
   @Get(":id")
   async getById(@Param("id") id: string) {
