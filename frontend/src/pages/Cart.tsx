@@ -5,7 +5,7 @@ import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
 import { Calendar, ChevronLeft, LoaderCircle, Trash2 } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
@@ -20,6 +20,7 @@ import {
   updateQuantity,
 } from "../store/slices/cartSlice";
 import { createOrder, selectOrdersLoading } from "../store/slices/ordersSlice";
+import { itemsApi } from "@/api/services/items";
 
 const Cart: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -35,6 +36,14 @@ const Cart: React.FC = () => {
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
 
+  const [availabilityMap, setAvailabilityMap] = useState<{
+    [itemId: string]: {
+      availableQuantity: number;
+      isChecking: boolean;
+      error: string | null;
+    };
+  }>({});
+
   // Get start and end dates from the timeframe Redux slice
   const { startDate: startDateStr, endDate: endDateStr } = useAppSelector(
     (state) => state.timeframe,
@@ -43,6 +52,50 @@ const Cart: React.FC = () => {
   // Convert string dates to Date objects when needed
   const startDate = startDateStr ? new Date(startDateStr) : null;
   const endDate = endDateStr ? new Date(endDateStr) : null;
+
+  useEffect(() => {
+    if (!startDate || !endDate || cartItems.length === 0) return;
+
+    cartItems.forEach((cartItem) => {
+      const itemId = cartItem.item.id;
+
+      // Set loading state for this item
+      setAvailabilityMap((prev) => ({
+        ...prev,
+        [itemId]: {
+          ...prev[itemId],
+          isChecking: true,
+          error: null,
+        },
+      }));
+
+      itemsApi
+        .checkAvailability(itemId, startDate, endDate)
+        .then((response) => {
+          setAvailabilityMap((prev) => ({
+            ...prev,
+            [itemId]: {
+              availableQuantity: response.availableQuantity,
+              isChecking: false,
+              error: null,
+            },
+          }));
+        })
+        .catch((error) => {
+          console.error("Availability error for item", itemId, error);
+
+          setAvailabilityMap((prev) => ({
+            ...prev,
+            [itemId]: {
+              availableQuantity:
+                cartItem.item.items_number_currently_in_storage,
+              isChecking: false,
+              error: "Verfügbarkeitsprüfung fehlgeschlagen",
+            },
+          }));
+        });
+    });
+  }, [cartItems, startDate, endDate]);
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return;

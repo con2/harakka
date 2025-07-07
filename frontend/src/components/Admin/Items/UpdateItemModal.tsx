@@ -407,7 +407,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                       id="items_number_available"
                       name="items_number_available"
                       type="number"
-                      value={formData.items_number_available}
+                      value={formData.items_number_currently_in_storage} // add correct value from api call?
                       onChange={handleChange}
                       placeholder={
                         t.updateItemModal.placeholders.available[lang]
