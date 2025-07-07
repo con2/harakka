@@ -18,7 +18,7 @@ import { ColumnMeta, Eq, Filter } from "src/types/queryconstructor.types";
  * @param eq Optional. Get only data that matches certain columns. Can be an array of key/value pairs.
  * @returns An API response which the matching data
  */
-export function getOrderedTableRows(
+export function queryConstructor(
   supabase: SupabaseClient,
   table_name: string,
   select: string = "*",
