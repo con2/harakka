@@ -299,6 +299,8 @@ export class BookingService {
       .single<BookingRow>();
 
     if (orderError || !order) {
+      console.error("Order insert error:", orderError);
+      console.error("Order result:", order);
       throw new BadRequestException("Could not create order");
     }
 
