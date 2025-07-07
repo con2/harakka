@@ -54,7 +54,7 @@ export class StorageItemsService {
       `,
           { count: "exact" },
         )
-        .eq("is_deleted", false) // Explicitly select tags and their translations by joining the tags table - show only undeleted items
+        .eq("is_deleted", false)
         .range(from, to);
 
     if (error) {
@@ -377,6 +377,8 @@ export class StorageItemsService {
     searchquery?: string,
     tags?: string,
     activity_filter?: "active" | "inactive",
+    location_filter?: string,
+    category?: string,
   ) {
     const supabase = this.supabaseClient.getAnonClient();
     const { from, to } = getPaginationRange(page, limit);
@@ -395,12 +397,21 @@ export class StorageItemsService {
       query.or(
         `fi_item_name.ilike.%${searchquery}%,` +
           `fi_item_type.ilike.%${searchquery}%,` +
+          `en_item_name.ilike.%${searchquery}%,` +
+          `en_item_type.ilike.%${searchquery}%,` +
           `location_name.ilike.%${searchquery}%`,
       );
     }
 
     if (activity_filter) query.eq("is_active", activity_filter);
     if (tags) query.overlaps("tag_ids", tags.split(","));
+    if (location_filter)
+      query.overlaps("location_id", location_filter.split(","));
+
+    if (category) {
+      const categories = category.split(",");
+      query.in("en_item_type", categories);
+    }
 
     const result = await query;
     const { error, count } = result;

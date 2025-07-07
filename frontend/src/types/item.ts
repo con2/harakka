@@ -4,6 +4,7 @@ import {
   Translatable,
   Tag,
   LocationDetails,
+  TagTranslation,
 } from "@/types";
 
 /**
@@ -77,6 +78,13 @@ export type ManageItemViewRow = {
   items_number_total: number;
   is_active: boolean;
   created_at: string;
+  id: string;
+  en_item_name: string;
+  en_item_type: string;
+  location_id: string;
+  tags: string[];
+  translations: ItemTranslation;
+  tag_translations: TagTranslation;
 };
 
 /**
