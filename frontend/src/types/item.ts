@@ -19,7 +19,6 @@ export interface Item extends BaseEntity, Translatable<ItemTranslation> {
   location_id: string;
   compartment_id: string;
   items_number_total: number;
-  items_number_available: number;
   items_number_currently_in_storage: number;
   price: number;
   is_active: boolean;

@@ -87,9 +87,9 @@ export const itemsApi = {
       start_date: startDate.toISOString(),
       end_date: enddate.toISOString(),
     });
-    return api.get(
-      `/storage-items/availability/${itemId}?${params.toString()}`,
-    );
+    return api
+      .get(`/storage-items/availability/${itemId}?${params.toString()}`)
+      .then((res) => res.data);
   },
 
   canDeleteItem: (

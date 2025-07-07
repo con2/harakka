@@ -43,9 +43,10 @@ const ItemsList: React.FC = () => {
   const filteredItems = items.filter((item) => {
     // Filter by active status
     const isActive = filters.isActive ? item.is_active : true;
-    const isWithinAvailabilityRange =
+  /*   const isWithinAvailabilityRange =
       item.items_number_available >= filters.itemsNumberAvailable[0] &&
-      item.items_number_available <= filters.itemsNumberAvailable[1];
+      item.items_number_available <= filters.itemsNumberAvailable[1]; */
+      return isActive;
 
     // filter by average rating
     const matchesRating =
@@ -86,7 +87,7 @@ const ItemsList: React.FC = () => {
 
     return (
       isActive &&
-      isWithinAvailabilityRange &&
+     // isWithinAvailabilityRange &&
       matchesRating &&
       matchesSearch &&
       matchesItemTypes &&
