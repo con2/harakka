@@ -129,10 +129,8 @@ export class StorageItemsService {
     // and keep the rest of the item data in storageItemData
     const { tagIds, ...storageItemData } = item;
     // Insert the item into the storage_items table
-    const { data: insertedItems, error } = await supabase
-      .from("storage_items")
-      .insert(storageItemData)
-      .select();
+    const { data: insertedItems, error }: PostgrestResponse<StorageItem> =
+      await supabase.from("storage_items").insert(storageItemData).select();
     if (error) throw new Error(error.message);
 
     const insertedItem = insertedItems?.[0];
@@ -166,7 +164,10 @@ export class StorageItemsService {
     console.log("Updating item with data:", JSON.stringify(itemData, null, 2));
 
     // Update the main item
-    const { data: updatedItemData, error: updateError } = await supabase
+    const {
+      data: updatedItemData,
+      error: updateError,
+    }: PostgrestResponse<StorageItem> = await supabase
       .from("storage_items")
       .update(itemData)
       .eq("id", id)
@@ -239,10 +240,10 @@ export class StorageItemsService {
         if (image.storage_path) {
           try {
             await this.s3Service.deleteFile(image.storage_path);
-          } catch (error) {
+          } catch (error: unknown) {
             // Log but continue - we still want to delete the database record even if file deletion fails
             console.error(
-              `Failed to delete S3 file for image ${image.id}: ${error.message}`,
+              `Failed to delete S3 file for image ${image.id}: ${error instanceof Error ? error.message : String(error)}`,
             );
           }
         }
@@ -286,18 +287,55 @@ export class StorageItemsService {
     return { success: true, id };
   }
 
-  // TODO: needs to be fixed and updated
-  async getItemsByTag(req: Request, tagId: string) {
-    const supabase = req["supabase"] as SupabaseClient;
-    const { data, error } = await supabase
-      .from("storage_item_tags")
-      .select("item_id, items(*)") // Select foreign table 'items' if it's a relation
-      .eq("tag_id", tagId);
+  /**
+   * Return all storage items that include the given tag.
+   * Uses an INNER JOIN on `storage_item_tags` so we can filter by `tag_id`
+   * while still getting the full item row plus its tags and location data.
+   */
+  async getItemsByTag(tagId: string): Promise<StorageItem[]> {
+    const supabase = this.supabaseClient.getServiceClient();
 
-    if (error) throw new Error(error.message);
+    // 1️⃣  Query storage_items, joining storage_item_tags to filter by tagId
+    const { data, error }: PostgrestResponse<StorageItemWithJoin> =
+      await supabase
+        .from("storage_items")
+        .select(
+          `
+        *,
+        storage_item_tags!inner(
+          tag_id,
+          tags (
+            id,
+            translations
+          )
+        ),
+        storage_locations (
+          id,
+          name,
+          description,
+          address,
+          latitude,
+          longitude,
+          is_active
+        )
+      `,
+        )
+        .eq("storage_item_tags.tag_id", tagId) // keep only rows with the requested tag
+        .eq("is_deleted", false); // ignore soft‑deleted items
 
-    // The data will now have the related 'items' fetched in the same query
-    return data.map((entry) => entry.items); // Extract items from the relation
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    // 2️⃣  Flatten the nested join result to match StorageItem shape
+    return (
+      data?.map((item) => ({
+        ...item,
+        storage_item_tags:
+          item.storage_item_tags?.map((link) => link.tags) ?? [],
+        location_details: item.storage_locations ?? null,
+      })) ?? []
+    );
   }
 
   async softDeleteItem(
