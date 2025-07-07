@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LoaderCircle, Shield, Users, Building, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { UserRoleWithDetails } from "@/types/roles";
 
 export const RoleManagement: React.FC = () => {
   console.log("🔄 RoleManagement - Component rendering");
@@ -23,7 +22,6 @@ export const RoleManagement: React.FC = () => {
     hasRole,
     refreshCurrentUserRoles,
     refreshAllUserRoles,
-    refreshAll,
   } = useRoles();
 
   console.log("🔍 RoleManagement - Hook state:", {
