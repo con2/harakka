@@ -345,7 +345,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                   ? availabilityInfo.availableQuantity > 0
                     ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
                     : `${t.itemCard.notAvailable[lang]}`
-                  : `${t.itemCard.totalUnits[lang]}: ${item.items_number_currently_in_storage}`}
+                  : `${t.itemCard.totalUnits[lang]}: ${item.items_number_total}`}
               </p>
             )}
           </div>
