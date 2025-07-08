@@ -53,7 +53,7 @@ export interface BookingItem {
 /**
  * Order entity representing a booking in the system
  */
-export interface BookingOrder extends BaseEntity {
+export interface Booking extends BaseEntity {
   user_id: string;
   booking_number: string;
   status: BookingStatus;
@@ -72,9 +72,9 @@ export interface BookingOrder extends BaseEntity {
  * Booking state in Redux store
  */
 export interface BookingsState {
-  entities: Record<string, BookingOrder>;
+  entities: Record<string, Booking>;
   ids: string[];
-  userBookings: BookingOrder[];
+  userBookings: Booking[];
   loading: boolean;
   error: string | null; // Change to simple string like tags
   errorContext: ErrorContext;
@@ -105,7 +105,7 @@ export type BookingsRow = BookingsTable["Row"];
  * Valid values for the /ordered endpoint.
  * Data can be ordered by the following values
  */
-export type ValidBookingOrder =
+export type ValidBooking =
   | "created_at"
   | "booking_number"
   | "payment_status"

@@ -34,7 +34,7 @@ import {
   StorageItemsRow,
   UserProfilesRow,
   BookingRow,
-  ValidBookingOrder,
+  ValidBooking,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { StorageLocationsService } from "../storage-locations/storage-locations.service";
@@ -1048,7 +1048,7 @@ export class BookingService {
    * @param limit How many rows to retrieve
    * @param ascending If to sort booking smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
    * @param filter What to filter the bookings by
-   * @param booking_by What column to booking the columns by. Default "booking_number"
+   * @param order_by What column to order the columns by. Default "booking_number"
    * @param searchquery Optional. Filter bookings by a string
    * @returns Matching bookings
    */
@@ -1057,7 +1057,7 @@ export class BookingService {
     page: number,
     limit: number,
     ascending: boolean,
-    order_by: ValidBookingOrder,
+    order_by: ValidBooking,
     searchquery?: string,
     status_filter?: string,
   ) {
@@ -1067,13 +1067,13 @@ export class BookingService {
       .from("view_bookings_with_user_info")
       .select("*", { count: "exact" })
       .range(from, to)
-      .order(order_by ?? "order_number", { ascending: ascending });
+      .order(order_by ?? "booking_number", { ascending: ascending });
 
     if (status_filter) query.eq("status", status_filter);
     // Match any field if there is a searchquery
     if (searchquery) {
       query.or(
-        `order_number.ilike.%${searchquery}%,` +
+        `booking_number.ilike.%${searchquery}%,` +
           `status.ilike.%${searchquery}%,` +
           `full_name.ilike.%${searchquery}%,` +
           `created_at_text.ilike.%${searchquery}%,` +

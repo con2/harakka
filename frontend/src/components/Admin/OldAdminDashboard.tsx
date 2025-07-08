@@ -18,12 +18,12 @@ import {
   Warehouse,
 } from "lucide-react";
 import {
-  getAllOrders,
-  selectAllOrders,
-  selectOrdersLoading,
+  getAllBookings,
+  selectAllBookings,
+  selectBookingLoading,
 } from "@/store/slices/bookingsSlice";
 import { Badge } from "../ui/badge";
-import { BookingOrder } from "@/types";
+import { Booking } from "@/types";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
@@ -35,8 +35,8 @@ const AdminDashboard = () => {
   //const loading = useAppSelector(selectLoading);
   const items = useAppSelector(selectAllItems);
   const user = useAppSelector(selectSelectedUser);
-  const orders = useAppSelector(selectAllOrders);
-  const ordersLoading = useAppSelector(selectOrdersLoading);
+  const bookings = useAppSelector(selectAllBookings);
+  const bookingsLoading = useAppSelector(selectBookingLoading);
   const navigate = useNavigate();
   // Translation
   const { lang } = useLanguage();
@@ -53,10 +53,10 @@ const AdminDashboard = () => {
   }, [dispatch, users.length]);
 
   useEffect(() => {
-    if (!ordersLoading && user?.id && orders.length === 0) {
-      dispatch(getAllOrders(user.id));
+    if (!bookingsLoading && user?.id && bookings.length === 0) {
+      dispatch(getAllBookings(user.id));
     }
-  }, [dispatch, user?.id, orders.length, ordersLoading]);
+  }, [dispatch, user?.id, bookings.length, bookingsLoading]);
 
   const StatusBadge = ({ status }: { status?: string }) => {
     if (!status)
@@ -134,11 +134,11 @@ const AdminDashboard = () => {
   };
 
   // Define columns for the DataTable
-  // Orders table
-  const ordersColumns: ColumnDef<BookingOrder>[] = [
+  // Bookings table
+  const bookingsColumns: ColumnDef<Booking>[] = [
     {
       accessorKey: "order_number",
-      header: t.adminDashboard.columns.orderNumber[lang],
+      header: t.adminDashboard.columns.bookingNumber[lang],
     },
     {
       accessorKey: "user_profile.name",
@@ -214,28 +214,28 @@ const AdminDashboard = () => {
         <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
           <div className="flex justify-center items-center">
             <p className="text-slate-500">
-              {t.adminDashboard.cards.orders[lang]}
+              {t.adminDashboard.cards.bookings[lang]}
             </p>
           </div>
           <div className="flex flex-row items-center gap-2">
             <ShoppingBag className="h-10 w-10 text-highlight2 shrink-0" />
-            <span className="text-4xl font-normal">{orders.length}</span>
+            <span className="text-4xl font-normal">{bookings.length}</span>
           </div>
         </div>
       </div>
-      {/* Recent Orders Section */}
+      {/* Recent bookings Section */}
       <div className="mb-8">
         <h2 className="text-left">
-          {t.adminDashboard.sections.recentOrders[lang]}
+          {t.adminDashboard.sections.recentBookings[lang]}
         </h2>
-        {ordersLoading ? (
+        {bookingsLoading ? (
           <div className="flex justify-center items-center py-6">
             <LoaderCircle className="animate-spin" />
           </div>
         ) : (
           <DataTable
-            columns={ordersColumns}
-            data={[...orders]
+            columns={bookingsColumns}
+            data={[...bookings]
               .sort(
                 (a, b) =>
                   new Date(b.created_at || "").getTime() -
@@ -249,7 +249,7 @@ const AdminDashboard = () => {
             className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
             onClick={() => navigate("/admin/orders")}
           >
-            {t.adminDashboard.sections.manageOrders[lang]} <MoveRight />
+            {t.adminDashboard.sections.manageBookings[lang]} <MoveRight />
           </Button>
         </div>
       </div>

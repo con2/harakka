@@ -15,12 +15,12 @@ export const bookingConfirmation = {
     fi: "Tilauksen tietoja ei ole saatavilla.",
     en: "Booking details not available.",
   },
-  orderNumber: {
+  bookingNumber: {
     fi: "Tilausnumero:",
     en: "Booking Number:",
   },
   buttons: {
-    viewOrders: {
+    viewBookings: {
       fi: "Näytä tilaukseni",
       en: "View My Bookings",
     },

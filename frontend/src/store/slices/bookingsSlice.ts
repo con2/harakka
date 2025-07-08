@@ -6,18 +6,18 @@ import {
 import { bookingsApi } from "../../api/services/bookings";
 import { RootState } from "../store";
 import {
-  BookingOrder,
+  Booking,
   BookingItem,
   BookingsState,
   CreateBookingDto,
   PaymentStatus,
-  ValidBookingOrder,
+  ValidBooking,
   BookingStatus,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 
 // Create an entity adapter for bookings
-const bookingsAdapter = createEntityAdapter<BookingOrder, string>({
+const bookingsAdapter = createEntityAdapter<Booking, string>({
   selectId: (e) => e.id,
   sortComparer: (a, b) => {
     const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -42,7 +42,7 @@ const initialState = bookingsAdapter.getInitialState<
 });
 
 // Create booking thunk
-export const createBooking = createAsyncThunk<BookingOrder, CreateBookingDto>(
+export const createBooking = createAsyncThunk<Booking, CreateBookingDto>(
   "bookings/createBooking",
   async (bookingData, { rejectWithValue }) => {
     try {
@@ -83,7 +83,7 @@ export const getOrderedBookings = createAsyncThunk(
       searchquery,
       status_filter,
     }: {
-      ordered_by: ValidBookingOrder;
+      ordered_by: ValidBooking;
       page: number;
       limit: number;
       searchquery: string;
@@ -150,7 +150,7 @@ export const confirmBooking = createAsyncThunk<
 
 // Update booking thunk
 export const updateBooking = createAsyncThunk<
-  BookingOrder,
+  Booking,
   { bookingId: string; items: BookingItem[] }
 >(
   "bookings/updateBooking",
@@ -510,7 +510,7 @@ export const bookingsSlice = createSlice({
         // Update the booking in the normalized state
         bookingsAdapter.updateOne(state, {
           id: bookingId,
-          changes: { payment_status: status as BookingOrder["payment_status"] },
+          changes: { payment_status: status as Booking["payment_status"] },
         });
       })
       .addCase(updatePaymentStatus.rejected, (state, action) => {

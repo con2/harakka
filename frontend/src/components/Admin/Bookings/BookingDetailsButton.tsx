@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
-import { BookingOrder } from "@/types";
+import { Booking } from "@/types";
 
 interface BookingDetailsButtonProps {
-  booking: BookingOrder;
-  onViewDetails: (booking: BookingOrder) => void;
+  booking: Booking;
+  onViewDetails: (booking: Booking) => void;
 }
 
 const BookingDetailsButton = ({

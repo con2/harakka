@@ -9,7 +9,7 @@ import {
   updateBooking,
 } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
-import { BookingItem, BookingOrder } from "@/types";
+import { BookingItem, Booking } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -44,15 +44,11 @@ const MyBookings = () => {
   const bookings = useAppSelector(selectUserBookings);
   const loading = useAppSelector(selectBookingLoading);
   const error = useAppSelector(selectBookingError);
-  const [selectedBooking, setSelectedBooking] = useState<BookingOrder | null>(
-    null,
-  );
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [editingBooking, setEditingBooking] = useState<BookingOrder | null>(
-    null,
-  );
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [editFormItems, setEditFormItems] = useState<BookingItem[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [globalStartDate, setGlobalStartDate] = useState<string | null>(null);
@@ -126,12 +122,12 @@ const MyBookings = () => {
     return formatDateLocalized(new Date(dateString), "d MMM yyyy");
   };
 
-  const handleViewDetails = (booking: BookingOrder) => {
+  const handleViewDetails = (booking: Booking) => {
     setSelectedBooking(booking);
     setShowDetailsModal(true);
   };
 
-  const handleEditBooking = (booking: BookingOrder) => {
+  const handleEditBooking = (booking: Booking) => {
     setItemQuantities(
       Object.fromEntries(
         booking.booking_items.map((item) => [String(item.id), item.quantity]),
@@ -257,7 +253,7 @@ const MyBookings = () => {
     return availQty === undefined || inputQty <= availQty;
   });
 
-  const columns: ColumnDef<BookingOrder>[] = [
+  const columns: ColumnDef<Booking>[] = [
     {
       accessorKey: "booking_number",
       header: t.myBookings.columns.bookingNumber[lang],

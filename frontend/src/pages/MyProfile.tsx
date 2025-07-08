@@ -703,8 +703,8 @@ const MyProfile = () => {
           )}
         </TabsContent>
 
-        {/* Orders Tab */}
-        <TabsContent value="orders">
+        {/* Bookings Tab */}
+        <TabsContent value="bookings">
           <MyBookings />
         </TabsContent>
       </Tabs>

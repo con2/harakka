@@ -18,7 +18,7 @@ import { CreateBookingDto } from "./dto/create-booking.dto";
 import { InvoiceService } from "./invoice.service";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
+import { BookingStatus, ValidBooking } from "./types/booking.interface";
 
 @Controller("bookings")
 export class BookingController {
@@ -197,7 +197,7 @@ export class BookingController {
   getOrderedBookings(
     @Req() req: AuthRequest,
     @Query("search") searchquery: string,
-    @Query("booking") ordered_by: ValidBookingOrder = "booking_number",
+    @Query("booking") ordered_by: ValidBooking = "booking_number",
     @Query("status") status_filter: BookingStatus,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
