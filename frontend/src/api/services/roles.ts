@@ -70,7 +70,7 @@ export const roleApi = {
     return await api.delete(`/roles/${tableKeyId}`);
   },
 
-  //USE WITH A GREAT CAUTIOUS, this will permanently delete the role of this user from the database
+  //USE WITH A GREAT CAUTION: this will permanently delete the role of this user from the database
   async permanentDeleteUserRole(
     tableKeyId: string,
   ): Promise<{ success: boolean; message: string }> {
