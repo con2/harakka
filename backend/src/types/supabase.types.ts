@@ -310,20 +310,6 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "erm_organization_items_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "erm_organization_items_storage_item_id_fkey";
-            columns: ["storage_item_id"];
-            isOneToOne: false;
-            referencedRelation: "storage_items";
-            referencedColumns: ["id"];
-          },
-          {
             foreignKeyName: "erm_organization_items_storage_item_id_fkey";
             columns: ["storage_item_id"];
             isOneToOne: false;
@@ -631,13 +617,6 @@ export type Database = {
             foreignKeyName: "saved_list_items_item_id_fkey";
             columns: ["item_id"];
             isOneToOne: false;
-            referencedRelation: "storage_items";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "saved_list_items_item_id_fkey";
-            columns: ["item_id"];
-            isOneToOne: false;
             referencedRelation: "view_item_location_summary";
             referencedColumns: ["storage_item_id"];
           },
@@ -862,13 +841,6 @@ export type Database = {
           translations?: Json | null;
         };
         Relationships: [
-          {
-            foreignKeyName: "storage_item_tags_item_id_fkey";
-            columns: ["item_id"];
-            isOneToOne: false;
-            referencedRelation: "storage_items";
-            referencedColumns: ["id"];
-          },
           {
             foreignKeyName: "storage_item_tags_item_id_fkey";
             columns: ["item_id"];

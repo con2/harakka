@@ -35,6 +35,7 @@ CREATE TRIGGER update_average_rating_trigger
 AFTER INSERT OR UPDATE OR DELETE ON reviews
 FOR EACH ROW EXECUTE FUNCTION calculate_average_rating();
 
+/*
 -- Function to automatically update storage item availability based on order status changes
 CREATE OR REPLACE FUNCTION update_item_availability()
 RETURNS TRIGGER AS $$
@@ -82,6 +83,7 @@ EXCEPTION
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
+*/
 
 -- Trigger to manage inventory when order items change status
 CREATE TRIGGER manage_inventory_trigger

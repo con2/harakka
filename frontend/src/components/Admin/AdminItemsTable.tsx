@@ -148,11 +148,18 @@ const AdminItemsTable = () => {
       cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
     },
     {
-      header: t.adminItemsTable.columns.quantity[lang],
+      header: t.adminItemsTable.columns.quantity[lang], // TODO: add correct header items in storage
       size: 30,
-      accessorFn: (row) => row.items_number_available,
+      accessorFn: (row) => row.items_number_currently_in_storage,
       cell: ({ row }) =>
-        `${row.original.items_number_available} ${t.adminItemsTable.messages.units[lang]}`,
+        `${row.original.items_number_currently_in_storage} ${t.adminItemsTable.messages.units[lang]}`,
+    },
+    {
+      header: t.adminItemsTable.columns.quantity[lang], // TODO: add corr. header items total
+      size: 30,
+      accessorFn: (row) => row.items_number_total,
+      cell: ({ row }) =>
+        `${row.original.items_number_total} ${t.adminItemsTable.messages.units[lang]}`,
     },
     {
       id: "status",

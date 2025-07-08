@@ -9,11 +9,13 @@ import {
 import { StorageLocationsService } from "./storage-locations.service";
 import { StorageLocationsRow } from "./interfaces/storage-location";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { SupabaseService } from "../supabase/supabase.service";
 
 @Controller("api/storage-locations")
 export class StorageLocationsController {
   constructor(
     private readonly storageLocationsService: StorageLocationsService,
+    private readonly supabaseService: SupabaseService,
   ) {}
 
   @Get()
@@ -29,7 +31,11 @@ export class StorageLocationsController {
   }> {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
-    const supabase = req.supabase;
+    const supabase = req.supabase || this.supabaseService.getAnonClient();
+    if (!supabase) {
+      throw new Error("Supabase client is undefined.");
+    }
+
     return this.storageLocationsService.getAllLocations(
       supabase,
       pageNumber,

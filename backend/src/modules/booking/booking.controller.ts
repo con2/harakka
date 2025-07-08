@@ -4,10 +4,10 @@ import {
   Delete,
   Get,
   Param,
+  Query,
   Post,
   Put,
   Req,
-  Query,
   Patch,
   UnauthorizedException,
   BadRequestException,
@@ -172,43 +172,6 @@ export class BookingController {
     // const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.confirmPickup(orderId, supabase);
-  }
-
-  // checks availability of items by date range
-  @Get("availability/:itemId")
-  async getItemAvailability(
-    @Param("itemId") itemId: string,
-    @Query("start_date") startDate: string,
-    @Query("end_date") endDate: string,
-    @Req() req: AuthRequest,
-  ) {
-    const supabase = req.supabase;
-    return this.bookingService.checkAvailability(
-      itemId,
-      startDate,
-      endDate,
-      supabase,
-    );
-  }
-
-  // get virtual number of items for a specific date
-  @Get("virtual-quantity")
-  async getAvailableQuantity(
-    @Query("item_id") itemId: string,
-    @Query("startdate") startdate: string,
-    @Query("enddate") enddate: string,
-  ) {
-    if (!itemId || !startdate) {
-      throw new BadRequestException("item_id and date are mendatory");
-    }
-    // Calling the method from the service class and returning the booked quantity
-    const availableQuantity =
-      await this.bookingService.getAvailableQuantityForDate(
-        itemId,
-        startdate,
-        enddate,
-      );
-    return { availableQuantity };
   }
 
   // change payment status

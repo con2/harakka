@@ -27,11 +27,9 @@ export class StorageLocationsService {
       .select(requestedData as "*", { count: "exact" })
       .order("name")
       .range(from, to);
-
     if (error) {
       throw new Error(error.message);
     }
-
     const meta = getPaginationMeta(count, page, limit);
     return {
       data: data || [],

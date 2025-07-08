@@ -12,6 +12,8 @@ import { S3Service } from "../supabase/s3-supabase.service";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { TablesUpdate } from "src/types/supabase.types";
+import { calculateAvailableQuantity } from "src/utils/booking.utils";
+import { ApiSingleResponse } from "src/types/response.types";
 // this is used by the controller
 
 @Injectable()
@@ -21,12 +23,13 @@ export class StorageItemsService {
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
   ) {}
 
+  // 1. get All items
   async getAllItems(): Promise<StorageItem[]> {
     const supabase = this.supabaseClient.getServiceClient();
 
     // Updated query to join storage_item_tags with tags table
     const { data, error }: PostgrestResponse<StorageItemWithJoin> =
-      await supabase
+      (await supabase
         .from("storage_items")
         .select(
           `
@@ -49,23 +52,28 @@ export class StorageItemsService {
         )
       `,
         )
-        .eq("is_deleted", false); // Explicitly select tags and their translations by joining the tags table - show only undeleted items
+        .eq("is_deleted", false)) as PostgrestSingleResponse<
+        StorageItemWithJoin[]
+      >; // Explicitly select tags and their translations by joining the tags table - show only undeleted items
 
     if (error) {
       throw new Error(error.message);
     }
 
     // Structure the result to include both tags and location data
-    return data.map((item) => ({
-      ...item,
-      storage_item_tags:
-        item.storage_item_tags?.map(
-          (tagLink) => tagLink.tags, // Flatten out the tags object to just be the tag itself
-        ) ?? [], // Fallback to empty array if no tags are available
-      location_details: item.storage_locations || null,
-    }));
+    return data.map(
+      (item: StorageItemWithJoin): StorageItem => ({
+        ...item,
+        storage_item_tags:
+          item.storage_item_tags?.map(
+            (tagLink) => tagLink.tags, // Flatten out the tags object to just be the tag itself
+          ) ?? [], // Fallback to empty array if no tags are available
+        location_details: item.storage_locations || null,
+      }),
+    );
   }
 
+  // 2. get one item
   async getItemById(id: string): Promise<StorageItem | null> {
     const supabase = this.supabaseClient.getServiceClient();
 
@@ -113,6 +121,7 @@ export class StorageItemsService {
     };
   }
 
+  // 3. create Item
   async createItem(
     req: Request,
     item: Partial<TablesUpdate<"storage_items">> & { tagIds?: string[] },
@@ -146,6 +155,7 @@ export class StorageItemsService {
     return insertedItem;
   }
 
+  // 4 update an item
   async updateItem(
     req: Request,
     id: string,
@@ -199,6 +209,7 @@ export class StorageItemsService {
     return updatedItem;
   }
 
+  // 5. delete an item
   async deleteItem(
     req: Request,
     id: string,
@@ -281,57 +292,26 @@ export class StorageItemsService {
     return { success: true, id };
   }
 
-  /**
-   * Return all storage items that include the given tag.
-   * Uses an INNER JOIN on `storage_item_tags` so we can filter by `tag_id`
-   * while still getting the full item row plus its tags and location data.
-   */
-  async getItemsByTag(tagId: string): Promise<StorageItem[]> {
-    const supabase = this.supabaseClient.getServiceClient();
-
-    // 1️⃣  Query storage_items, joining storage_item_tags to filter by tagId
-    const { data, error }: PostgrestResponse<StorageItemWithJoin> =
+  // 6. get Items by tag
+  // TODO: needs to be fixed and updated
+  async getItemsByTag(req: Request, tagId: string) {
+    const supabase = req["supabase"] as SupabaseClient;
+    const {
+      data,
+      error,
+    }: PostgrestResponse<{ item_id: string; items: StorageItem[] }> =
       await supabase
-        .from("storage_items")
-        .select(
-          `
-        *,
-        storage_item_tags!inner(
-          tag_id,
-          tags (
-            id,
-            translations
-          )
-        ),
-        storage_locations (
-          id,
-          name,
-          description,
-          address,
-          latitude,
-          longitude,
-          is_active
-        )
-      `,
-        )
-        .eq("storage_item_tags.tag_id", tagId) // keep only rows with the requested tag
-        .eq("is_deleted", false); // ignore soft‑deleted items
+        .from("storage_item_tags")
+        .select("item_id, items(*)") // Select foreign table 'items' if it's a relation
+        .eq("tag_id", tagId);
 
-    if (error) {
-      throw new Error(error.message);
-    }
+    if (error) throw new Error(error.message);
 
-    // 2️⃣  Flatten the nested join result to match StorageItem shape
-    return (
-      data?.map((item) => ({
-        ...item,
-        storage_item_tags:
-          item.storage_item_tags?.map((link) => link.tags) ?? [],
-        location_details: item.storage_locations ?? null,
-      })) ?? []
-    );
+    // The data will now have the related 'items' fetched in the same query
+    return data.map((entry) => entry.items); // Extract items from the relation
   }
 
+  // 7. soft-delete item (to keep the data just in case)
   async softDeleteItem(
     req: Request,
     id: string,
@@ -349,7 +329,7 @@ export class StorageItemsService {
     return { success: true, id };
   }
 
-  //check if the item can be deleted (if it exists in some orders)
+  // 8. check if the item can be deleted (if it exists in some orders)
   async canDeleteItem(
     req: Request,
     id: string,
@@ -388,5 +368,67 @@ export class StorageItemsService {
       success: true,
       id,
     };
+  }
+
+  // 9. check availability of item by date range - calculateAvailableQuantity
+  async checkAvailability(
+    itemId: string,
+    startDate: string,
+    endDate: string,
+    supabase: SupabaseClient,
+  ): Promise<
+    ApiSingleResponse<{
+      item_id: string;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }>
+  > {
+    try {
+      const { item_id, availableQuantity, alreadyBookedQuantity } =
+        await calculateAvailableQuantity(supabase, itemId, startDate, endDate);
+
+      return {
+        data: {
+          item_id,
+          alreadyBookedQuantity,
+          availableQuantity,
+        },
+        error: null,
+        status: 200,
+        statusText: "OK",
+        count: null,
+      };
+    } catch (err) {
+      if (err instanceof Error) {
+        return {
+          data: null,
+          error: {
+            message: err.message,
+            code: "availability-check_error",
+            details: "",
+            hint: "",
+            name: "availability-check_error",
+          },
+          status: 400,
+          statusText: "Error",
+          count: null,
+        };
+      }
+
+      // Fallback
+      return {
+        data: null,
+        error: {
+          message: "Unknown error",
+          code: "availability-check_error",
+          details: "",
+          hint: "",
+          name: "availability-check_error",
+        },
+        status: 400,
+        statusText: "Error",
+        count: null,
+      };
+    }
   }
 }
