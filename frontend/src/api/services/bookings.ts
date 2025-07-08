@@ -1,11 +1,6 @@
 import { ApiResponse } from "@/types/response.types";
 import { api } from "../axios";
-import {
-  BookingItem,
-  BookingOrder,
-  CreateBookingDto,
-  ValidBookingOrder,
-} from "@/types";
+import { BookingItem, Booking, CreateBookingDto, ValidBooking } from "@/types";
 import { BookingStatus, BookingUserView } from "../../types/booking";
 
 /**
@@ -17,9 +12,7 @@ export const bookingsApi = {
    * @param bookingData - Booking data including items
    * @returns Promise with created booking
    */
-  createBooking: async (
-    bookingData: CreateBookingDto,
-  ): Promise<BookingOrder> => {
+  createBooking: async (bookingData: CreateBookingDto): Promise<Booking> => {
     return api.post("/bookings", bookingData);
   },
 
@@ -32,7 +25,7 @@ export const bookingsApi = {
     userId: string,
     page: number,
     limit: number,
-  ): Promise<ApiResponse<BookingOrder>> => {
+  ): Promise<ApiResponse<Booking>> => {
     return api.get(`/bookings/user/${userId}?page=${page}&limit=${limit}`);
   },
 
@@ -44,7 +37,7 @@ export const bookingsApi = {
   getAllBookings: async (
     page: number,
     limit: number,
-  ): Promise<ApiResponse<BookingOrder>> => {
+  ): Promise<ApiResponse<Booking>> => {
     return api.get(`/bookings?page=${page}&limit=${limit}`);
   },
 
@@ -66,7 +59,7 @@ export const bookingsApi = {
   updateBooking: async (
     bookingId: string,
     items: BookingItem[],
-  ): Promise<BookingOrder> => {
+  ): Promise<Booking> => {
     return api.put(`/bookings/${bookingId}/update`, { items });
   },
 
@@ -108,7 +101,7 @@ export const bookingsApi = {
    * @param bookingId - booking ID to process returns for
    * @returns Promise with updated booking
    */
-  returnItems: async (bookingId: string): Promise<BookingOrder> => {
+  returnItems: async (bookingId: string): Promise<Booking> => {
     const userId = localStorage.getItem("userId");
     return api.post(
       `/bookings/${bookingId}/return`,
@@ -146,7 +139,7 @@ export const bookingsApi = {
    * @param status_filter Optional. What status to filter the bookings by
    */
   getOrderedBookings: async (
-    ordered_by: ValidBookingOrder,
+    ordered_by: ValidBooking,
     ascending: boolean = true,
     page: number,
     limit: number,

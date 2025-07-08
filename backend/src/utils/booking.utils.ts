@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { UserBookingOrder } from "src/modules/booking/types/booking.interface";
+import { UserBooking } from "src/modules/booking/types/booking.interface";
 import { Database } from "../types/supabase.types";
 
 export async function calculateAvailableQuantity(
@@ -47,7 +47,7 @@ export async function calculateAvailableQuantity(
   };
 }
 
-export function getUniqueLocationIDs(bookings: UserBookingOrder[]): string[] {
+export function getUniqueLocationIDs(bookings: UserBooking[]): string[] {
   return Array.from(
     new Set(
       bookings

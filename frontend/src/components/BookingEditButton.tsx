@@ -1,4 +1,4 @@
-import { BookingOrder } from "@/types";
+import { Booking } from "@/types";
 import { Button } from "./ui/button";
 import { Edit } from "lucide-react";
 
@@ -6,8 +6,8 @@ const BookingEditButton = ({
   booking,
   onEdit,
 }: {
-  booking: BookingOrder;
-  onEdit: (booking: BookingOrder) => void;
+  booking: Booking;
+  onEdit: (booking: Booking) => void;
 }) => (
   <Button
     onClick={() => onEdit(booking)}

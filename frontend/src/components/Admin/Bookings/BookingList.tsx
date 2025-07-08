@@ -16,7 +16,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "../../ui/button";
 import {
   PaymentStatus,
-  ValidBookingOrder,
+  ValidBooking,
   BookingUserViewRow,
   BookingStatus,
 } from "@/types";
@@ -55,11 +55,12 @@ const BookingList = () => {
   const bookingsLoadedRef = useRef(false);
   const user = useAppSelector(selectSelectedUser);
   const { authLoading } = useAuth();
-  const [selectedBooking, setSelectedBooking] = useState<BookingUserViewRow | null>(null);
+  const [selectedBooking, setSelectedBooking] =
+    useState<BookingUserViewRow | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
-  const [booking, setBooking] = useState<ValidBookingOrder>("booking_number");
+  const [booking, setBooking] = useState<ValidBooking>("booking_number");
   const [ascending, setAscending] = useState<boolean | null>(null);
   const page = useAppSelector(selectBookingPage);
   const totalPages = useAppSelector(selectBookingTotalPages);
@@ -84,7 +85,8 @@ const BookingList = () => {
     setSearchQuery(e.target.value);
   };
 
-  const handleBooking = (booking: string) => setBooking(booking as ValidBookingOrder);
+  const handleBooking = (booking: string) =>
+    setBooking(booking as ValidBooking);
   const handleAscending = (ascending: boolean | null) =>
     setAscending(ascending);
 

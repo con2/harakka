@@ -24,7 +24,7 @@ export interface EnrichedItem {
   location_id?: string;
 }
 
-export type UserBookingOrder = {
+export type UserBooking = {
   booking_items?: { storage_items?: { location_id?: string } }[];
 };
 export type BookingsRow = Database["public"]["Tables"]["bookings"]["Row"];
@@ -32,7 +32,8 @@ export type BookingsRow = Database["public"]["Tables"]["bookings"]["Row"];
 export type UserProfilesRow =
   Database["public"]["Tables"]["user_profiles"]["Row"];
 
-export type BookingItemRow = Database["public"]["Tables"]["booking_items"]["Row"];
+export type BookingItemRow =
+  Database["public"]["Tables"]["booking_items"]["Row"];
 
 export type BookingItemInsert =
   Database["public"]["Tables"]["booking_items"]["Insert"];
@@ -42,8 +43,6 @@ export type BookingItemQuantity = Pick<BookingItemRow, "quantity">;
 
 export type StorageItemsRow =
   Database["public"]["Tables"]["storage_items"]["Row"];
-
-export type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
 
 export interface CancelBookingResponse {
   message: string;
@@ -69,7 +68,7 @@ export type BookingTable = Database["public"]["Tables"]["bookings"];
 export type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
 export type BookingInsert = Database["public"]["Tables"]["bookings"]["Insert"];
 export type BookingUpdate = Database["public"]["Tables"]["bookings"]["Update"];
-export type ValidBookingOrder =
+export type ValidBooking =
   | "created_at"
   | "booking_number"
   | "payment_status"

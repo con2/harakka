@@ -23,7 +23,7 @@ import {
   selectBookingLoading,
   updatePaymentStatus,
 } from "@/store/slices/bookingsSlice";
-import { BookingItem, BookingOrder, PaymentStatus } from "@/types";
+import { BookingItem, Booking, PaymentStatus } from "@/types";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
@@ -57,7 +57,7 @@ const AdminDashboard = () => {
   const bookings = useAppSelector(selectAllBookings);
   const bookingsLoading = useAppSelector(selectBookingLoading);
   const navigate = useNavigate();
-  const [selectedBooking, setSelectedBooking] = useState<BookingOrder | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   // Translation
   const { lang } = useLanguage();
@@ -75,18 +75,18 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (user && bookings.length <= 1) {
-      dispatch(getAllBookings(user.id));
+      dispatch(getAllBookings({}));
     }
   }, [dispatch, user, bookings.length]);
 
-  const handleViewDetails = (booking: BookingOrder) => {
+  const handleViewDetails = (booking: Booking) => {
     setSelectedBooking(booking);
     setShowDetailsModal(true);
   };
 
   // Define columns for the DataTable
   // Bookings table
-  const columns: ColumnDef<BookingOrder>[] = [
+  const columns: ColumnDef<Booking>[] = [
     {
       accessorKey: "booking_number",
       header: t.bookingList.columns.bookingNumber[lang],
