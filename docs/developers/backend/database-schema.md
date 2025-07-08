@@ -54,7 +54,6 @@ CREATE TABLE storage_items (
   location_id UUID REFERENCES storage_locations(id) NOT NULL,
   compartment_id UUID REFERENCES storage_compartments(id),
   items_number_total NUMERIC NOT NULL,
-  items_number_available NUMERIC NOT NULL,
   price DECIMAL NOT NULL,
   average_rating DECIMAL DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
@@ -347,7 +346,7 @@ CREATE OR REPLACE FUNCTION update_item_availability()
 RETURNS TRIGGER AS $$
 BEGIN
   -- For status changes to picked_up
-  IF NEW.status = 'picked_up' AND (OLD.status IS DISTINCT FROM 'picked_up') THEN
+ /*  IF NEW.status = 'picked_up' AND (OLD.status IS DISTINCT FROM 'picked_up') THEN
     UPDATE storage_items
     SET items_number_available = items_number_available - NEW.quantity
     WHERE id = NEW.item_id AND items_number_available >= NEW.quantity;
@@ -362,7 +361,7 @@ BEGIN
     UPDATE storage_items
     SET items_number_available = items_number_available + NEW.quantity
     WHERE id = NEW.item_id;
-  END IF;
+  END IF; */
 
   -- Additional logic for DELETE operations
   -- ...

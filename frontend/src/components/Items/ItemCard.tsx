@@ -1,4 +1,3 @@
-import { ordersApi } from "@/api/services/orders";
 import imagePlaceholder from "@/assets/defaultImage.jpg";
 import {
   Tooltip,
@@ -27,6 +26,7 @@ import {
 } from "../../store/slices/itemImagesSlice";
 import { Item } from "../../types/item";
 import { Input } from "../ui/input";
+import { itemsApi } from "@/api/services/items";
 
 interface ItemsCardProps {
   item: Item;
@@ -45,7 +45,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
-      availableQuantity: item.items_number_available,
+      availableQuantity: item.items_number_total || 0,
       isChecking: false,
       error: null,
     });
@@ -163,6 +163,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   // Check if the item is available for the selected timeframe
   useEffect(() => {
     // Only check availability if dates are selected
+    if (!item.id || !startDate || !endDate) return;
     if (startDate && endDate) {
       setAvailabilityInfo((prev) => ({
         ...prev,
@@ -170,8 +171,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         error: null,
       }));
 
-      ordersApi
-        .checkAvailability(item.id, startDate, endDate)
+      itemsApi
+        .checkAvailability(item.id, new Date(startDate), new Date(endDate))
         .then((response) => {
           setAvailabilityInfo({
             availableQuantity: response.availableQuantity,
@@ -182,7 +183,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         .catch((error) => {
           console.error("Error checking availability:", error);
           setAvailabilityInfo({
-            availableQuantity: item.items_number_available,
+            availableQuantity: item.items_number_currently_in_storage,
             isChecking: false,
             error: "Failed to check availability",
           });
@@ -313,10 +314,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setQuantity(
+              onClick={() => { console.log(`Quantity: ${quantity}, availableQUantity: ${availabilityInfo}`)
+                setQuantity( // HIER!!
                   Math.min(availabilityInfo.availableQuantity, quantity + 1),
-                )
+              )}
               }
               className="h-8 w-8 p-0"
               disabled={quantity >= availabilityInfo.availableQuantity}
@@ -340,7 +341,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                   ? availabilityInfo.availableQuantity > 0
                     ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
                     : `${t.itemCard.notAvailable[lang]}`
-                  : `${t.itemCard.totalUnits[lang]}: ${item.items_number_available}`}
+                  : `${t.itemCard.totalUnits[lang]}: ${item.items_number_currently_in_storage}`}
               </p>
             )}
           </div>

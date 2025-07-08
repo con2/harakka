@@ -56,7 +56,6 @@ const initialFormState: ItemFormData = {
   location_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
   compartment_id: "0ffa5562-82a9-4352-b804-1adebbb7d80c",
   items_number_total: 1,
-  items_number_available: 1,
   items_number_currently_in_storage: 1,
   price: 0,
   is_active: true,
@@ -149,7 +148,6 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
       if (
         name === "price" ||
         name === "items_number_total" ||
-        name === "items_number_available" ||
         name === "items_number_currently_in_storage"
       ) {
         setFormData({
@@ -499,23 +497,6 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
                   min="0"
                   max={formData.items_number_total}
                   placeholder={t.addItemModal.labels.inStorage[lang]}
-                  className="value:text-xs"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="items_number_available">
-                  {t.addItemModal.labels.available[lang]}
-                </Label>
-                <Input
-                  id="items_number_available"
-                  name="items_number_available"
-                  type="number"
-                  value={formData.items_number_available}
-                  onChange={handleChange}
-                  min="0"
-                  max={formData.items_number_total}
-                  placeholder={t.addItemModal.labels.available[lang]}
                   className="value:text-xs"
                 />
               </div>

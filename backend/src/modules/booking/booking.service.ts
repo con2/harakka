@@ -30,7 +30,6 @@ import {
   CancelBookingResponse,
   BookingItem,
   OrderItemRow,
-  OrderItemQuantity,
   OrderWithItems,
   StorageItemsRow,
   UserProfilesRow,
@@ -262,7 +261,7 @@ export class BookingService {
         end_date,
       );
 
-      if (quantity > available) {
+      if (quantity > available.availableQuantity) {
         throw new BadRequestException(
           `Not enough virtual stock available for item ${item_id}`,
         );
@@ -300,6 +299,8 @@ export class BookingService {
       .single<BookingRow>();
 
     if (orderError || !order) {
+      console.error("Order insert error:", orderError);
+      console.error("Order result:", order);
       throw new BadRequestException("Could not create order");
     }
 
@@ -493,7 +494,7 @@ export class BookingService {
         end_date,
       );
 
-      if (quantity > available) {
+      if (quantity > available.availableQuantity) {
         throw new BadRequestException(
           `Not enough virtual stock available for item ${item_id}`,
         );
@@ -999,77 +1000,7 @@ export class BookingService {
     };
   }
 
-  // 11. check availability of item by date range
-  async checkAvailability(
-    itemId: string,
-    startDate: string,
-    endDate: string,
-    supabase: SupabaseClient,
-  ) {
-    // Sum all overlapping bookings
-    const { data: overlappingOrders, error: overlapError } = await supabase
-      .from("order_items")
-      .select("quantity")
-      .eq("item_id", itemId) // item_id = :itemId
-      .lte("start_date", endDate) // AND start_date <= :endDate
-      .gte("end_date", startDate) // AND end_date   >= :startDate
-      .overrideTypes<OrderItemQuantity[]>();
-
-    if (overlapError) {
-      throw new BadRequestException("Error checking overlapping bookings");
-    }
-
-    const alreadyBookedQuantity =
-      overlappingOrders?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
-      0;
-
-    // Get total quantity of item from storage
-    const { data: itemData, error: itemError } = await supabase
-      .from("storage_items")
-      .select("items_number_total")
-      .eq("id", itemId)
-      .single<StorageItemsRow>();
-
-    if (itemError || !itemData) {
-      throw new BadRequestException("Item data not found");
-    }
-
-    const availableQuantity =
-      itemData.items_number_total - alreadyBookedQuantity;
-
-    return {
-      item_id: itemId,
-      availableQuantity,
-      alreadyBookedQuantity,
-      totalQuantity: itemData.items_number_total,
-      startDate,
-      endDate,
-    };
-  }
-
-  // 12. virtual number of items for a specific date
-  async getAvailableQuantityForDate(
-    itemId: string,
-    startdate: string,
-    enddate: string,
-  ) {
-    const supabase = this.supabaseService.getServiceClient();
-
-    if (!itemId || !startdate) {
-      throw new BadRequestException("item_id and date are mandatory");
-    }
-
-    const num_available = await calculateAvailableQuantity(
-      supabase,
-      itemId,
-      startdate,
-      enddate,
-    );
-
-    return num_available ?? 0;
-  }
-
-  // 13. Update payment status
+  // 11. Update payment status
   async updatePaymentStatus(
     orderId: string,
     status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
