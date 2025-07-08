@@ -106,7 +106,7 @@ export type BookingsRow = BookingsTable["Row"];
  */
 export type ValidBookingOrder =
   | "created_at"
-  | "order_number"
+  | "booking_number"
   | "payment_status"
   | "status"
   | "total"
