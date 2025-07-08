@@ -47,11 +47,11 @@ export async function calculateAvailableQuantity(
   };
 }
 
-export function getUniqueLocationIDs(orders: UserBooking[]): string[] {
+export function getUniqueLocationIDs(bookings: UserBooking[]): string[] {
   return Array.from(
     new Set(
-      orders
-        .flatMap((order) => order.booking_items ?? [])
+      bookings
+        .flatMap((booking) => booking.booking_items ?? [])
         .map((item) => item.storage_items?.location_id)
         .filter((id): id is string => !!id),
     ),
@@ -82,7 +82,7 @@ export function calculateDuration(start: Date, end: Date): number {
   return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export function generateOrderNumber() {
+export function generateBookingNumber() {
   return `ORD-${Math.floor(Math.random() * 10000)
     .toString()
     .padStart(4, "0")}`;
