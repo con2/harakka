@@ -346,7 +346,7 @@ export class StorageItemsService {
 
     // Check if item exists in any orders
     const { data, error } = await supabase
-      .from("order_items")
+      .from("booking_items")
       .select("id")
       .eq("item_id", id)
       .limit(1);

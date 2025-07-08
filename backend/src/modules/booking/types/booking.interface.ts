@@ -24,30 +24,31 @@ export interface EnrichedItem {
   location_id?: string;
 }
 
-export type UserBookingOrder = {
-  order_items?: { storage_items?: { location_id?: string } }[];
+export type UserBooking = {
+  booking_items?: { storage_items?: { location_id?: string } }[];
 };
 export type BookingsRow = Database["public"]["Tables"]["orders"]["Row"];
 
 export type UserProfilesRow =
   Database["public"]["Tables"]["user_profiles"]["Row"];
 
-export type OrderItemRow = Database["public"]["Tables"]["order_items"]["Row"];
+export type BookingItemRow =
+  Database["public"]["Tables"]["booking_items"]["Row"];
 
-export type OrderItemInsert =
-  Database["public"]["Tables"]["order_items"]["Insert"];
+export type BookingItemInsert =
+  Database["public"]["Tables"]["booking_items"]["Insert"];
 
 // Row with only the `quantity` field – handy for lightweight queries
-export type OrderItemQuantity = Pick<OrderItemRow, "quantity">;
+export type BookingItemQuantity = Pick<BookingItemRow, "quantity">;
 
 export type StorageItemsRow =
   Database["public"]["Tables"]["storage_items"]["Row"];
 
-export type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
+export type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
 
 export interface CancelBookingResponse {
   message: string;
-  orderId: string;
+  bookingId: string;
   cancelledBy: "admin" | "user";
   items: {
     item_id: string;
@@ -57,8 +58,8 @@ export interface CancelBookingResponse {
   }[];
 }
 
-export type OrderWithItems = OrderRow & {
-  order_items: (OrderItemRow & {
+export type BookingWithItems = BookingRow & {
+  booking_items: (BookingItemRow & {
     storage_items: {
       translations: Translations | null;
     } | null;
