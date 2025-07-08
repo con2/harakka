@@ -362,7 +362,7 @@ const AdminDashboard = () => {
                         t.bookingList.status.unknown[lang]}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {selectedbooking.user_profile?.email}
+                      {selectedBooking.user_profile?.email}
                     </p>
                   </div>
 
