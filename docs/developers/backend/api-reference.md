@@ -220,7 +220,6 @@ Returns a list of all storage items.
     "location_id": "uuid",
     "price": 10.99,
     "items_number_total": 50,
-    "items_number_available": 25,
     "average_rating": 4.5,
     "is_active": true,
     "translations": {
@@ -256,7 +255,6 @@ Returns a specific storage item by ID.
   "compartment_id": "uuid",
   "price": 10.99,
   "items_number_total": 50,
-  "items_number_available": 25,
   "average_rating": 4.5,
   "is_active": true,
   "translations": {
@@ -305,7 +303,6 @@ Creates a new storage item. Requires admin privileges.
   "location_id": "uuid",
   "compartment_id": "uuid",
   "items_number_total": 50,
-  "items_number_available": 50,
   "price": 10.99,
   "is_active": true,
   "translations": {
@@ -331,7 +328,6 @@ Creates a new storage item. Requires admin privileges.
   "compartment_id": "uuid",
   "price": 10.99,
   "items_number_total": 50,
-  "items_number_available": 50,
   "average_rating": 0,
   "is_active": true,
   "translations": {
@@ -379,7 +375,6 @@ Updates a storage item. Requires admin privileges.
   "compartment_id": "uuid",
   "price": 12.99,
   "items_number_total": 50,
-  "items_number_available": 25,
   "average_rating": 4.5,
   "is_active": true,
   "translations": {
@@ -943,34 +938,40 @@ Returns a list of system logs. Requires admin privileges.
 ## Response Type
 
 ### Format / Example
+
 #### Successful response
+
 ```json
 {
-    "error": null,
-    "data": {}, // any data requested from backend or manually inserted
-    "count": null,
-    "status": 200,
-    "statusText": "OK"
+  "error": null,
+  "data": {}, // any data requested from backend or manually inserted
+  "count": null,
+  "status": 200,
+  "statusText": "OK"
 }
 ```
+
 #### Unsuccessful response
+
 ```json
 {
-    "error": {
-        "code": "22P02",
-        "details": null,
-        "hint": null,
-        "message": "invalid input syntax for type uuid: \"4dfd509e-a02d-493d-3a-e49dfddc6445\""
-    },
-    "data": null,
-    "count": null,
-    "status": 400,
-    "statusText": "Bad Request"
+  "error": {
+    "code": "22P02",
+    "details": null,
+    "hint": null,
+    "message": "invalid input syntax for type uuid: \"4dfd509e-a02d-493d-3a-e49dfddc6445\""
+  },
+  "data": null,
+  "count": null,
+  "status": 400,
+  "statusText": "Bad Request"
 }
 ```
 
 ### Type
+
 The agreed-upon response types looks like the following:
+
 ```ts
 export type ApiResponse<T> = PostgrestResponse<T> & {
   metadata?: any;
@@ -980,15 +981,15 @@ export type ApiSingleResponse<T> = PostgrestSingleResponse<T> & {
   metadata?: any;
 };
 ```
+
 1. **ApiResponse<T>**
-Returns an object with the same properties as a PostgrestResponse as well as an optional metadata. Will always return an array of the type, no need to explicitly say that the expected data will be an array.
+   Returns an object with the same properties as a PostgrestResponse as well as an optional metadata. Will always return an array of the type, no need to explicitly say that the expected data will be an array.
 
 2. **ApiSingleResponse<T>**
-This type should be used the exact same way as the ApiResponse. Will always return a singular entity of the expected type, no arrays.
-
-
+   This type should be used the exact same way as the ApiResponse. Will always return a singular entity of the expected type, no arrays.
 
 ### Usage
+
 ```ts
   async getBookingItems(
     supabase: SupabaseClient,
@@ -1012,5 +1013,7 @@ This type should be used the exact same way as the ApiResponse. Will always retu
     return result;
   }
 ```
+
 ### Other cases
+
 In the event of that an endpoint does not make a request to the database, the returned data **should** have the same format as the ApiResponse/ApiSingleResponse still.

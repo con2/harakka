@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchAllItems, updateItem } from "@/store/slices/itemsSlice";
-import { Item } from "@/types";
+import { Item, ItemImageAvailabilityInfo } from "@/types";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -39,6 +39,7 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { Textarea } from "../../ui/textarea";
+import { itemsApi } from "@/api/services/items";
 
 type UpdateItemModalProps = {
   onClose: () => void;
@@ -56,6 +57,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   const locations = useAppSelector(selectAllLocations);
   // Translation
   const { lang } = useLanguage();
+  const { startDate, endDate } = useAppSelector((state) => state.timeframe);
 
   // Prefill the form with initial data if available
   useEffect(() => {
@@ -75,6 +77,42 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
       setLocalSelectedTags(selectedTags.map((tag) => tag.id));
     }
   }, [selectedTags]);
+
+  const [availabilityInfo, setAvailabilityInfo] =
+    useState<ItemImageAvailabilityInfo>({
+      availableQuantity: formData?.items_number_total || 0,
+      isChecking: false,
+      error: null,
+    });
+
+  // Check if the item is available for the selected timeframe
+  useEffect(() => {
+    if (startDate && endDate && formData?.id) {
+      setAvailabilityInfo((prev) => ({
+        ...prev,
+        isChecking: true,
+        error: null,
+      }));
+
+      itemsApi
+        .checkAvailability(formData.id, new Date(startDate), new Date(endDate))
+        .then((response) => {
+          setAvailabilityInfo({
+            availableQuantity: response.availableQuantity,
+            isChecking: false,
+            error: null,
+          });
+        })
+        .catch((error) => {
+          console.error("Error checking availability:", error);
+          setAvailabilityInfo({
+            availableQuantity: 0,
+            isChecking: false,
+            error: "Failed to check availability",
+          });
+        });
+    }
+  }, [formData?.id, startDate, endDate]);
 
   const handleTagToggle = (tagId: string) => {
     setLocalSelectedTags((prev) =>
@@ -400,20 +438,21 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
                   </div>
 
                   <div>
-                    <Label htmlFor="items_number_available">
-                      {t.updateItemModal.labels.available[lang]}
-                    </Label>
-                    <Input
-                      id="items_number_available"
-                      name="items_number_available"
-                      type="number"
-                      value={formData.items_number_available}
-                      onChange={handleChange}
-                      placeholder={
-                        t.updateItemModal.placeholders.available[lang]
-                      }
-                      className="value:text-xs"
-                    />
+                    <Label>{t.updateItemModal.labels.available[lang]}</Label>
+                    <div className="text-sm mt-1">
+                      {availabilityInfo.isChecking ? (
+                        <span className="text-muted-foreground italic">
+                          {t.updateItemModal.labels.available[lang] ||
+                            "Checking..."}
+                        </span>
+                      ) : availabilityInfo.error ? (
+                        <span className="text-red-500">
+                          {availabilityInfo.error}
+                        </span>
+                      ) : (
+                        <span>{availabilityInfo.availableQuantity}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

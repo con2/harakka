@@ -56,7 +56,6 @@ export interface ItemFormData
   tagIds: string[];
 
   // Ensure both fields are defined
-  items_number_available: number;
   items_number_currently_in_storage: number;
 }
 

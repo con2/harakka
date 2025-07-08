@@ -4,9 +4,11 @@ import {
   Param,
   NotFoundException,
   Query,
+  Req,
 } from "@nestjs/common";
 import { StorageLocationsService } from "./storage-locations.service";
 import { StorageLocationsRow } from "./interfaces/storage-location";
+import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { SupabaseService } from "../supabase/supabase.service";
 
 @Controller("api/storage-locations")
@@ -18,6 +20,7 @@ export class StorageLocationsController {
 
   @Get()
   async getAllLocations(
+    @Req() req: AuthRequest,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
   ): Promise<{
@@ -28,7 +31,11 @@ export class StorageLocationsController {
   }> {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
-    const supabase = this.supabaseService.getAnonClient();
+    const supabase = req.supabase || this.supabaseService.getAnonClient();
+    if (!supabase) {
+      throw new Error("Supabase client is undefined.");
+    }
+
     return this.storageLocationsService.getAllLocations(
       supabase,
       pageNumber,

@@ -51,12 +51,12 @@ export const itemsApi = {
   getItemsByTag: (tagId: string): Promise<Item[]> =>
     api.get(`/storage-items/by-tag/${tagId}`),
 
-  /**
+  /* commented out this code to test
    * Get items available within a specific date range
    * @param startDate - Start date for availability check
    * @param endDate - End date for availability check
    * @returns Promise with an array of available items
-   */
+   
   getAvailableItems: (
     startDate?: Date | null,
     endDate?: Date | null,
@@ -66,6 +66,31 @@ export const itemsApi = {
     if (endDate) params.append("endDate", endDate.toISOString());
 
     return api.get(`/storage-items/available?${params.toString()}`);
+  },*/
+
+  /**
+   * Get availability information for a specific item within a date range
+   * @param itemId - ID of the item to check
+   * @param startDate - Start of the date range
+   * @param endDate - End of the date range
+   * @returns Promise with item availability information
+   */
+  checkAvailability: (
+    itemId: string,
+    startDate: Date,
+    enddate: Date,
+  ): Promise<{
+    item_id: string;
+    alreadyBookedQuantity: number;
+    availableQuantity: number;
+  }> => {
+    const params = new URLSearchParams({
+      start_date: startDate.toISOString(),
+      end_date: enddate.toISOString(),
+    });
+    return api
+      .get(`/storage-items/availability/${itemId}?${params.toString()}`)
+      .then((res) => res.data);
   },
 
   canDeleteItem: (

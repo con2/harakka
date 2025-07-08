@@ -20,18 +20,98 @@ export class TagService {
     page: number,
     limit: number,
     searchTerm?: string,
+    assignmentFilter?: string,
+    sortBy?: string,
+    sortOrder?: string,
   ): Promise<ApiResponse<TagRow>> {
     const supabase = this._supabase;
-    // base query
+    let tagIds: string[] = [];
+    let shouldFilterByIds = false;
+
+    // Get tag IDs based on assignment filter
+    if (assignmentFilter === "assigned") {
+      // Get tags that are assigned to at least one item
+      const { data: assignedTagsData, error: assignedError } = await supabase
+        .from("storage_item_tags")
+        .select("tag_id")
+        .not("tag_id", "is", null);
+
+      if (assignedError) throw new Error(assignedError.message);
+
+      tagIds = [...new Set(assignedTagsData?.map((item) => item.tag_id) || [])];
+      shouldFilterByIds = true;
+    } else if (assignmentFilter === "unassigned") {
+      // Get all tag IDs first
+      const { data: allTagsData, error: allTagsError } = await supabase
+        .from("tags")
+        .select("id");
+
+      if (allTagsError) throw new Error(allTagsError.message);
+
+      // Get assigned tag IDs
+      const { data: assignedTagsData, error: assignedError } = await supabase
+        .from("storage_item_tags")
+        .select("tag_id")
+        .not("tag_id", "is", null);
+
+      if (assignedError) throw new Error(assignedError.message);
+
+      const assignedTagIds = new Set(
+        assignedTagsData?.map((item) => item.tag_id) || [],
+      );
+      tagIds =
+        allTagsData
+          ?.filter((tag) => !assignedTagIds.has(tag.id))
+          .map((tag) => tag.id) || [];
+      shouldFilterByIds = true;
+    }
+
+    // Build the base query
     let query = supabase.from("tags").select("*", { count: "exact" });
 
-    // apply search filter if searchTerm exists
+    // Apply assignment filter
+    if (shouldFilterByIds) {
+      if (tagIds.length === 0) {
+        // No tags match the filter, return empty result
+        return {
+          data: [],
+          error: null,
+          count: 0,
+          status: 200,
+          statusText: "OK",
+          metadata: {
+            total: 0,
+            page,
+            totalPages: 0,
+            limit,
+          },
+        };
+      }
+      query = query.in("id", tagIds);
+    }
+
+    // Apply search filter if searchTerm exists
     if (searchTerm && searchTerm.trim() !== "") {
       const term = `%${searchTerm.toLowerCase()}%`;
       query = query.or(
         `translations->fi->>name.ilike.${term},translations->en->>name.ilike.${term}`,
       );
     }
+
+    // Apply sorting
+    const validSortFields = ["created_at", "updated_at"];
+    const validSortOrders = ["asc", "desc"];
+
+    const field = validSortFields.includes(sortBy || "")
+      ? sortBy
+      : "created_at";
+    const order = validSortOrders.includes(sortOrder || "")
+      ? sortOrder
+      : "desc";
+
+    query = query.order(field as "created_at" | "updated_at", {
+      ascending: order === "asc",
+    });
 
     // Get count
     const { count, error: countError } = await query;

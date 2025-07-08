@@ -55,7 +55,7 @@
 //         setLoadingAvailability(prev => ({ ...prev, [itemId]: true }));
 
 //         try {
-//           const res = await ordersApi.checkAvailability(itemId, globalStartDate, globalEndDate);
+//           const res = await itemsApi.checkAvailability(itemId, globalStartDate, globalEndDate);
 //           setAvailability(prev => ({
 //             ...prev,
 //             [itemId]: res.availableQuantity + orderQty,
