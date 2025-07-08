@@ -17,7 +17,6 @@ import BookingRejectionEmail from "./../../emails/BookingRejectionEmail";
 import BookingDeleteMail from "./../../emails/BookingDeleteMail";
 import ItemsReturnedMail from "./../../emails/ItemsReturned";
 import ItemsPickedUpMail from "./../../emails/ItemsPickedUp";
-import { ExceptionsHandler } from "@nestjs/core/exceptions/exceptions-handler";
 
 /**
  * Options accepted by {@link MailService.sendMail}.
@@ -246,12 +245,12 @@ export class MailService {
    * | Name   | Type               | Description                                                    |
    * |--------|--------------------|----------------------------------------------------------------|
    * | `type` | {@link BookingMailType} | Enum value that selects which React template and subject line to use (Creation, Confirmation, Update, Cancellation, etc.). |
-   * | `params` | {@link BookingMailParams} | Extra data required by the template. Currently:<br>• **orderId** – UUID of the booking.<br>• **triggeredBy** – UID of the user (admin / owner) who performed the action. |
+   * | `params` | {@link BookingMailParams} | Extra data required by the template. Currently:<br>• **bookingId** – UUID of the booking.<br>• **triggeredBy** – UID of the user (admin / owner) who performed the action. |
    *
    * @example
    * ```ts
    * await mailService.sendBookingMail(BookingMailType.Confirmation, {
-   *   orderId: "f6b1e3c1-0a2d-49d5‑b612‑dfece42d9a7c",
+   *   bookingId: "f6b1e3c1-0a2d-49d5‑b612‑dfece42d9a7c",
    *   triggeredBy: currentUserId,
    * });
    * ```
@@ -264,7 +263,7 @@ export class MailService {
       returnDate?: string;
     };
     const rawPayload: EmailPayloadWithOptionalReturn =
-      await this.assembler.buildPayload(params.orderId);
+      await this.assembler.buildPayload(params.bookingId);
 
     // Helper – turn ISO strings into "DD.MM.YYYY"
     const formatDate = (d: string | Date | null | undefined) =>
@@ -282,11 +281,11 @@ export class MailService {
     };
 
     const template = this.pickTemplate(type, formattedPayload);
-    // For cancellation emails, the template expects orderId, startDate, and recipientRole
+    // For cancellation emails, the template expects bookingId, startDate, and recipientRole
     let finalTemplate = template;
     if (type === BookingMailType.Cancellation) {
       finalTemplate = BookingCancelledEmail({
-        orderId: params.orderId,
+        bookingId: params.bookingId,
         startDate: formattedPayload.pickupDate,
         items: formattedPayload.items,
         recipientRole: "user", // identical copy goes to admin via Bcc
