@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { UserBookingOrder } from "src/modules/booking/types/booking.interface";
 import { Database } from "../types/supabase.types";
+import { UserBooking } from "src/modules/booking/types/booking.interface";
 
 export async function calculateAvailableQuantity(
   supabase: SupabaseClient<Database>,
@@ -14,7 +14,7 @@ export async function calculateAvailableQuantity(
 }> {
   // get overlapping bookings
   const { data: overlapping, error } = await supabase
-    .from("order_items")
+    .from("booking_items")
     .select("quantity")
     .eq("item_id", itemId)
     .in("status", ["pending", "confirmed"])
@@ -47,11 +47,11 @@ export async function calculateAvailableQuantity(
   };
 }
 
-export function getUniqueLocationIDs(orders: UserBookingOrder[]): string[] {
+export function getUniqueLocationIDs(orders: UserBooking[]): string[] {
   return Array.from(
     new Set(
       orders
-        .flatMap((order) => order.order_items ?? [])
+        .flatMap((order) => order.booking_items ?? [])
         .map((item) => item.storage_items?.location_id)
         .filter((id): id is string => !!id),
     ),
