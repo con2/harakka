@@ -19,7 +19,7 @@ import {
   selectCartItems,
   updateQuantity,
 } from "../store/slices/cartSlice";
-import { createOrder, selectOrdersLoading } from "../store/slices/ordersSlice";
+import { createOrder, selectOrdersLoading } from "../store/slices/bookingsSlice";
 import { itemsApi } from "@/api/services/items";
 
 const Cart: React.FC = () => {

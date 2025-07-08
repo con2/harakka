@@ -1,28 +1,28 @@
-export const orderConfirmation = {
+export const bookingConfirmation = {
   title: {
     fi: "Tilaus luotu!",
-    en: "Order Created!",
+    en: "Booking Created!",
   },
   message: {
     fi: "Tilauksesi on onnistuneesti vastaanotettu. Saat vahvistusviestin sähköpostiisi pian.",
-    en: "Your order has been successfully placed. You will receive a confirmation email shortly.",
+    en: "Your booking has been successfully placed. You will receive a confirmation email shortly.",
   },
   loading: {
     fi: "Ladataan tilauksen tietoja...",
-    en: "Loading order details...",
+    en: "Loading booking details...",
   },
   notAvailable: {
     fi: "Tilauksen tietoja ei ole saatavilla.",
-    en: "Order details not available.",
+    en: "Booking details not available.",
   },
   orderNumber: {
     fi: "Tilausnumero:",
-    en: "Order Number:",
+    en: "Booking Number:",
   },
   buttons: {
     viewOrders: {
       fi: "Näytä tilaukseni",
-      en: "View My Orders",
+      en: "View My Bookings",
     },
     continueBrowsing: {
       fi: "Jatka selaamista",

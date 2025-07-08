@@ -43,7 +43,7 @@ import {
 } from "../components/ui/select";
 import { toastConfirm } from "../components/ui/toastConfirm";
 import profilePlaceholder from "../assets/profilePlaceholder.png";
-import MyOrders from "@/components/MyOrders";
+import MyBookings from "@/components/MyBookings";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();

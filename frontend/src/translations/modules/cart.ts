@@ -114,7 +114,7 @@ export const cart = {
     },
     loginRequired: {
       fi: "Kirjaudu sisään suorittaaksesi tilauksesi loppuun",
-      en: "Please log in to complete your order",
+      en: "Please log in to complete your booking",
     },
     profileLoading: {
       fi: "Profiiliasi ladataan. Yritä uudelleen hetken kuluttua.",
@@ -128,15 +128,15 @@ export const cart = {
       fi: "Jotkin tuotteet ylittävät saatavilla olevan määrän",
       en: "Some items exceed available quantity",
     },
-    creatingOrder: {
+    creatingBooking: {
       fi: "Luodaan varaustasi...",
       en: "Creating your booking...",
     },
-    orderCreated: {
+    bookingCreated: {
       fi: "Varaus luotu onnistuneesti!",
       en: "Booking created successfully!",
     },
-    orderError: {
+    bookingError: {
       fi: "Virhe: ",
       en: "Error: ",
     },

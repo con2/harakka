@@ -18,11 +18,11 @@ import {
   Warehouse,
 } from "lucide-react";
 import {
-  getAllOrders,
-  selectAllOrders,
-  selectOrdersLoading,
+  getAllBookings,
+  selectAllBookings,
+  selectBookingsLoading,
   updatePaymentStatus,
-} from "@/store/slices/ordersSlice";
+} from "@/store/slices/bookingsSlice";
 import { BookingItem, BookingOrder, PaymentStatus } from "@/types";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
@@ -42,11 +42,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import OrderPickupButton from "@/components/Admin/Orders/OrderPickupButton";
-import OrderConfirmButton from "@/components/Admin/Orders/OrderConfirmButton";
-import OrderRejectButton from "@/components/Admin/Orders/OrderRejectButton";
-import OrderReturnButton from "@/components/Admin/Orders/OrderReturnButton";
-import OrderDeleteButton from "@/components/Admin/Orders/OrderDeleteButton";
+import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
+import BookingConfirmButton from "@/components/Admin/Bookings/BookingConfirmButton";
+import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton";
+import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
+import BookingDeleteButton from "@/components/Admin/Bookings/BookingDeleteButton";
 import { StatusBadge } from "@/components/StatusBadge";
 
 const AdminDashboard = () => {
@@ -54,10 +54,10 @@ const AdminDashboard = () => {
   const users = useAppSelector(selectAllUsers);
   const items = useAppSelector(selectAllItems);
   const user = useAppSelector(selectSelectedUser);
-  const orders = useAppSelector(selectAllOrders);
-  const ordersLoading = useAppSelector(selectOrdersLoading);
+  const bookings = useAppSelector(selectAllBookings);
+  const bookingsLoading = useAppSelector(selectBookingsLoading);
   const navigate = useNavigate();
-  const [selectedOrder, setSelectedOrder] = useState<BookingOrder | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<BookingOrder | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   // Translation
   const { lang } = useLanguage();
@@ -74,31 +74,31 @@ const AdminDashboard = () => {
   }, [dispatch, users.length]);
 
   useEffect(() => {
-    if (user && orders.length <= 1) {
-      dispatch(getAllOrders(user.id));
+    if (user && bookings.length <= 1) {
+      dispatch(getAllBookings(user.id));
     }
-  }, [dispatch, user, orders.length]);
+  }, [dispatch, user, bookings.length]);
 
-  const handleViewDetails = (order: BookingOrder) => {
-    setSelectedOrder(order);
+  const handleViewDetails = (booking: BookingOrder) => {
+    setSelectedBooking(booking);
     setShowDetailsModal(true);
   };
 
   // Define columns for the DataTable
-  // Orders table
+  // Bookings table
   const columns: ColumnDef<BookingOrder>[] = [
     {
-      accessorKey: "order_number",
-      header: t.orderList.columns.orderNumber[lang],
+      accessorKey: "booking_number",
+      header: t.bookingList.columns.bookingNumber[lang],
     },
     {
       accessorKey: "user_profile.name",
-      header: t.orderList.columns.customer[lang],
+      header: t.bookingList.columns.customer[lang],
       cell: ({ row }) => (
         <div>
           <div>
             {row.original.user_profile?.name ||
-              t.orderList.status.unknown[lang]}
+              t.bookingList.status.unknown[lang]}
           </div>
           <div className="text-xs text-gray-500">
             {row.original.user_profile?.email}
@@ -108,23 +108,23 @@ const AdminDashboard = () => {
     },
     {
       accessorKey: "status",
-      header: t.orderList.columns.status[lang],
+      header: t.bookingList.columns.status[lang],
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "created_at",
-      header: t.orderList.columns.orderDate[lang],
+      header: t.bookingList.columns.bookingDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
     {
       accessorKey: "final_amount",
-      header: t.orderList.columns.total[lang],
+      header: t.bookingList.columns.total[lang],
       cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
     },
     {
       accessorKey: "invoice_status",
-      header: t.orderList.columns.invoice[lang],
+      header: t.bookingList.columns.invoice[lang],
       cell: ({ row }) => {
         const paymentStatus = row.original.payment_status ?? "N/A";
 
@@ -138,7 +138,7 @@ const AdminDashboard = () => {
         ) => {
           dispatch(
             updatePaymentStatus({
-              orderId: row.original.id,
+              bookingId: row.original.id,
               status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
             }),
           );
@@ -159,7 +159,7 @@ const AdminDashboard = () => {
               ].map((status) => {
                 const statusKeyMap: Record<
                   string,
-                  keyof typeof t.orderList.columns.invoice.invoiceStatus
+                  keyof typeof t.bookingList.columns.invoice.invoiceStatus
                 > = {
                   "invoice-sent": "sent",
                   paid: "paid",
@@ -170,7 +170,7 @@ const AdminDashboard = () => {
                 const statusKey = statusKeyMap[status];
                 return (
                   <SelectItem className="text-xs" key={status} value={status}>
-                    {t.orderList.columns.invoice.invoiceStatus?.[statusKey]?.[
+                    {t.bookingList.columns.invoice.invoiceStatus?.[statusKey]?.[
                       lang
                     ] || status}
                   </SelectItem>
@@ -184,17 +184,17 @@ const AdminDashboard = () => {
     {
       id: "actions",
       cell: ({ row }) => {
-        const order = row.original;
-        const isPending = order.status === "pending";
-        const isConfirmed = order.status === "confirmed";
+        const booking = row.original;
+        const isPending = booking.status === "pending";
+        const isConfirmed = booking.status === "confirmed";
 
         return (
           <div className="flex space-x-1">
             <Button
               variant={"ghost"}
               size="sm"
-              onClick={() => handleViewDetails(order)}
-              title={t.orderList.buttons.viewDetails[lang]}
+              onClick={() => handleViewDetails(booking)}
+              title={t.bookingList.buttons.viewDetails[lang]}
               className="hover:text-slate-900 hover:bg-slate-300"
             >
               <Eye className="h-4 w-4" />
@@ -202,28 +202,28 @@ const AdminDashboard = () => {
 
             {isPending && (
               <>
-                <OrderConfirmButton
-                  id={order.id}
+                <BookingConfirmButton
+                  id={booking.id}
                   closeModal={() => setShowDetailsModal(false)}
                 />
-                <OrderRejectButton
-                  id={order.id}
+                <BookingRejectButton
+                  id={booking.id}
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
             )}
 
             {isConfirmed && (
-              <OrderReturnButton
-                id={order.id}
+              <BookingReturnButton
+                id={booking.id}
                 closeModal={() => setShowDetailsModal(false)}
               />
             )}
 
-            {isConfirmed && <OrderPickupButton />}
+            {isConfirmed && <BookingPickupButton />}
 
-            <OrderDeleteButton
-              id={order.id}
+            <BookingDeleteButton
+              id={booking.id}
               closeModal={() => setShowDetailsModal(false)}
             />
           </div>
@@ -232,10 +232,10 @@ const AdminDashboard = () => {
     },
   ];
 
-  const orderColumns: ColumnDef<BookingItem>[] = [
+  const bookingColumns: ColumnDef<BookingItem>[] = [
     {
       accessorKey: "item_name",
-      header: t.orderList.modal.orderItems.columns.item[lang],
+      header: t.bookingList.modal.bookingItems.columns.item[lang],
       cell: (i) => {
         const itemName = i.getValue();
         return (
@@ -245,23 +245,23 @@ const AdminDashboard = () => {
     },
     {
       accessorKey: "quantity",
-      header: t.orderList.modal.orderItems.columns.quantity[lang],
+      header: t.bookingList.modal.bookingItems.columns.quantity[lang],
     },
     {
       accessorKey: "start_date",
-      header: t.orderList.modal.orderItems.columns.startDate[lang],
+      header: t.bookingList.modal.bookingItems.columns.startDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.start_date || ""), "d MMM yyyy"),
     },
     {
       accessorKey: "end_date",
-      header: t.orderList.modal.orderItems.columns.endDate[lang],
+      header: t.bookingList.modal.bookingItems.columns.endDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
     },
     {
       accessorKey: "subtotal",
-      header: t.orderList.modal.orderItems.columns.subtotal[lang],
+      header: t.bookingList.modal.bookingItems.columns.subtotal[lang],
       cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
     },
   ];
@@ -296,28 +296,28 @@ const AdminDashboard = () => {
         <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
           <div className="flex justify-center items-center">
             <p className="text-slate-500">
-              {t.adminDashboard.cards.orders[lang]}
+              {t.adminDashboard.cards.bookings[lang]}
             </p>
           </div>
           <div className="flex flex-row items-center gap-2">
             <ShoppingBag className="h-10 w-10 text-highlight2 shrink-0" />
-            <span className="text-4xl font-normal">{orders.length}</span>
+            <span className="text-4xl font-normal">{bookings.length}</span>
           </div>
         </div>
       </div>
-      {/* Recent Orders Section */}
+      {/* Recent bookings Section */}
       <div className="mb-8">
         <h2 className="text-left">
-          {t.adminDashboard.sections.recentOrders[lang]}
+          {t.adminDashboard.sections.recentBookings[lang]}
         </h2>
-        {ordersLoading ? (
+        {bookingsLoading ? (
           <div className="flex justify-center items-center py-6">
             <LoaderCircle className="animate-spin" />
           </div>
         ) : (
           <DataTable
             columns={columns}
-            data={[...orders]
+            data={[...bookings]
               .sort(
                 (a, b) =>
                   new Date(b.created_at || "").getTime() -
@@ -330,120 +330,120 @@ const AdminDashboard = () => {
           <Button
             variant={"secondary"}
             className="flex items-center gap-2"
-            onClick={() => navigate("/admin/orders")}
+            onClick={() => navigate("/admin/bookings")}
           >
-            {t.adminDashboard.sections.manageOrders[lang]}{" "}
+            {t.adminDashboard.sections.manageBookings[lang]}{" "}
             <MoveRight className="inline-block" />
           </Button>
         </div>
       </div>
 
-      {/* Order Details Modal */}
-      {selectedOrder && (
+      {/* Booking Details Modal */}
+      {selectedBooking && (
         <div className="min-w-[320px]">
           <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
             <DialogContent className="max-w-5xl">
               <DialogHeader>
                 <DialogTitle className="text-left">
-                  {t.orderList.columns.orderNumber[lang]}{" "}
-                  {selectedOrder.order_number}
+                  {t.bookingList.columns.bookingNumber[lang]}{" "}
+                  {selectedBooking.booking_number}
                 </DialogTitle>
               </DialogHeader>
 
               <div className="space-y-4">
-                {/* Order Info */}
+                {/* Booking Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <h3 className="font-normal">
-                      {t.orderList.modal.customer[lang]}
+                      {t.bookingList.modal.customer[lang]}
                     </h3>
                     <p className="text-sm mb-0">
-                      {selectedOrder.user_profile?.name ||
-                        t.orderList.status.unknown[lang]}
+                      {selectedBooking.user_profile?.name ||
+                        t.bookingList.status.unknown[lang]}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {selectedOrder.user_profile?.email}
+                      {selectedbooking.user_profile?.email}
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <h3 className="font-normal">
-                      {t.orderList.modal.orderInfo[lang]}
+                      {t.bookingList.modal.bookingInfo[lang]}
                     </h3>
                     <p className="text-sm mb-0">
-                      {t.orderList.modal.status[lang]}{" "}
-                      <StatusBadge status={selectedOrder.status} />
+                      {t.bookingList.modal.status[lang]}{" "}
+                      <StatusBadge status={selectedBooking.status} />
                     </p>
                     <p className="text-sm">
-                      {t.orderList.modal.date[lang]}{" "}
+                      {t.bookingList.modal.date[lang]}{" "}
                       {formatDate(
-                        new Date(selectedOrder.created_at || ""),
+                        new Date(selectedBooking.created_at || ""),
                         "d MMM yyyy",
                       )}
                     </p>
                   </div>
                 </div>
 
-                {/* Order Items */}
+                {/* Booking Items */}
                 <div>
                   <DataTable
-                    columns={orderColumns}
-                    data={selectedOrder.order_items || []}
+                    columns={bookingColumns}
+                    data={selectedBooking.booking_items || []}
                   />
                 </div>
 
-                {/* Order Modal Actions */}
+                {/* booking Modal Actions */}
                 <div className="flex flex-col justify-center space-x-4">
                   <Separator />
                   <div className="flex flex-row items-center gap-4 mt-4 justify-center">
-                    {selectedOrder.status === "pending" && (
+                    {selectedBooking.status === "pending" && (
                       <>
                         <div className="flex flex-col items-center text-center">
                           <span className="text-xs text-slate-600">
-                            {t.orderList.modal.buttons.confirm[lang]}
+                            {t.bookingList.modal.buttons.confirm[lang]}
                           </span>
-                          <OrderConfirmButton
-                            id={selectedOrder.id}
+                          <BookingConfirmButton
+                            id={selectedBooking.id}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
                         <div className="flex flex-col items-center text-center">
                           <span className="text-xs text-slate-600">
-                            {t.orderList.modal.buttons.reject[lang]}
+                            {t.bookingList.modal.buttons.reject[lang]}
                           </span>
-                          <OrderRejectButton
-                            id={selectedOrder.id}
+                          <BookingRejectButton
+                            id={selectedBooking.id}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
                       </>
                     )}
 
-                    {selectedOrder.status === "confirmed" && (
+                    {selectedBooking.status === "confirmed" && (
                       <div className="flex flex-col items-center text-center">
                         <span className="text-xs text-slate-600">
-                          {t.orderList.modal.buttons.return[lang]}
+                          {t.bookingList.modal.buttons.return[lang]}
                         </span>
-                        <OrderReturnButton
-                          id={selectedOrder.id}
+                        <BookingReturnButton
+                          id={selectedBooking.id}
                           closeModal={() => setShowDetailsModal(false)}
                         />
                       </div>
                     )}
-                    {selectedOrder.status === "confirmed" && (
+                    {selectedBooking.status === "confirmed" && (
                       <div className="flex flex-col items-center text-center">
                         <span className="text-xs text-slate-600">
-                          {t.orderList.modal.buttons.pickedUp[lang]}
+                          {t.bookingList.modal.buttons.pickedUp[lang]}
                         </span>
-                        <OrderPickupButton />
+                        <BookingPickupButton />
                       </div>
                     )}
                     <div className="flex flex-col items-center text-center">
                       <span className="text-xs text-slate-600">
-                        {t.orderList.modal.buttons.delete[lang]}
+                        {t.bookingList.modal.buttons.delete[lang]}
                       </span>
-                      <OrderDeleteButton
-                        id={selectedOrder.id}
+                      <BookingDeleteButton
+                        id={selectedBooking.id}
                         closeModal={() => setShowDetailsModal(false)}
                       />
                     </div>

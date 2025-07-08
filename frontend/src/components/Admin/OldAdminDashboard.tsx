@@ -21,7 +21,7 @@ import {
   getAllOrders,
   selectAllOrders,
   selectOrdersLoading,
-} from "@/store/slices/ordersSlice";
+} from "@/store/slices/bookingsSlice";
 import { Badge } from "../ui/badge";
 import { BookingOrder } from "@/types";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";

@@ -2,21 +2,21 @@ import { BookingOrder } from "@/types";
 import { Button } from "./ui/button";
 import { Edit } from "lucide-react";
 
-const OrderEditButton = ({
-  order,
+const BookingEditButton = ({
+  booking,
   onEdit,
 }: {
-  order: BookingOrder;
-  onEdit: (order: BookingOrder) => void;
+  booking: BookingOrder;
+  onEdit: (booking: BookingOrder) => void;
 }) => (
   <Button
-    onClick={() => onEdit(order)}
+    onClick={() => onEdit(booking)}
     size={"sm"}
-    title="Edit Order"
+    title="Edit Booking"
     className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
   >
     <Edit className="h-4 w-4" />
   </Button>
 );
 
-export default OrderEditButton;
+export default BookingEditButton;
