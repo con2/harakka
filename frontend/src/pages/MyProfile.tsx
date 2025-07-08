@@ -213,8 +213,8 @@ const MyProfile = () => {
           <TabsTrigger value="user-details">
             {t.myProfile.tabs.userDetails[lang]}
           </TabsTrigger>
-          <TabsTrigger value="orders">
-            {t.myProfile.tabs.orders[lang]}
+          <TabsTrigger value="bookings">
+            {t.myProfile.tabs.bookings[lang]}
           </TabsTrigger>
         </TabsList>
 
@@ -705,7 +705,7 @@ const MyProfile = () => {
 
         {/* Orders Tab */}
         <TabsContent value="orders">
-          <MyOrders /> {/* Embedding your existing MyOrders component */}
+          <MyBookings /> {/* Embedding your existing MyBookings component */}
         </TabsContent>
       </Tabs>
     </div>
