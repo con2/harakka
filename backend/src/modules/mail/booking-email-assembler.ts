@@ -32,7 +32,7 @@ export interface BookingEmailPayload {
  *
  * Usage:
  * ```ts
- * const payload = await assembler.buildPayload(orderId);
+ * const payload = await assembler.buildPayload(bookingId);
  * const template = BookingCreationEmail(payload);
  * await mailService.sendMail({ to: payload.recipient, template, subject });
  * ```
@@ -42,28 +42,28 @@ export class BookingEmailAssembler {
   constructor(private readonly supabaseService: SupabaseService) {}
 
   /**
-   * Build a fully‑hydrated {@link BookingEmailPayload} from an `orderId`.
+   * Build a fully‑hydrated {@link BookingEmailPayload} from an `bookingId`.
    *
    * Queries:
-   * 1. `orders` with nested `order_items → storage_items → storage_locations`
-   * 2. `user_profiles` for the order owner
+   * 1. `bookings` with nested `booking_items → storage_items → storage_locations`
+   * 2. `user_profiles` for the booking owner
    *
    * Also formats dates (DD.MM.YYYY) and maps translations.
    *
-   * @throws BadRequestException when either the order or user is not found.
+   * @throws BadRequestException when either the booking or user is not found.
    */
-  async buildPayload(orderId: string): Promise<BookingEmailPayload> {
+  async buildPayload(bookingId: string): Promise<BookingEmailPayload> {
     const supabase =
       this.supabaseService.getServiceClient() as SupabaseClient<Database>;
 
-    // 1. Load order with nested relations (items → storage → location)
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
+    // 1. Load booking with nested relations (items → storage → location)
+    const { data: booking, error: bookingError } = await supabase
+      .from("bookings")
       .select(
         `
           id,
           user_id,
-          order_items (
+          booking_items (
             quantity,
             start_date,
             end_date,
@@ -77,18 +77,18 @@ export class BookingEmailAssembler {
           )
         `,
       )
-      .eq("id", orderId)
+      .eq("id", bookingId)
       .single();
 
-    if (orderError || !order) {
-      throw new BadRequestException("Could not load order for email payload");
+    if (bookingError || !booking) {
+      throw new BadRequestException("Could not load booking for email payload");
     }
 
     // 2. Load user
     const { data: user, error: userError } = await supabase
       .from("user_profiles")
       .select("full_name, email")
-      .eq("id", order.user_id)
+      .eq("id", booking.user_id)
       .single();
 
     if (userError || !user) {
@@ -97,7 +97,7 @@ export class BookingEmailAssembler {
 
     // 3. Enrich items once
     const enrichedItems =
-      order.order_items?.map((item) => {
+      booking.booking_items?.map((item) => {
         const translations = item.storage_items
           ?.translations as Translations | null;
 
@@ -114,12 +114,12 @@ export class BookingEmailAssembler {
       }) ?? [];
 
     // 4. Derive date & location
-    const pickupDate = dayjs(order.order_items?.[0]?.start_date).format(
+    const pickupDate = dayjs(booking.booking_items?.[0]?.start_date).format(
       "DD.MM.YYYY",
     );
 
     const locationName =
-      order.order_items?.[0]?.storage_items?.storage_locations?.name ??
+      booking.booking_items?.[0]?.storage_items?.storage_locations?.name ??
       "Unknown";
 
     return {

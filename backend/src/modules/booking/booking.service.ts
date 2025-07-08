@@ -8,7 +8,7 @@ import { CreateBookingDto } from "./dto/create-booking.dto";
 import {
   calculateAvailableQuantity,
   calculateDuration,
-  generateOrderNumber,
+  generateBookingNumber,
   dayDiffFromToday,
   getUniqueLocationIDs,
 } from "src/utils/booking.utils";
@@ -29,8 +29,8 @@ import { Translations } from "./types/translations.types";
 import {
   CancelBookingResponse,
   BookingItem,
-  OrderItemRow,
-  OrderWithItems,
+  BookingItemRow,
+  BookingWithItems,
   StorageItemsRow,
   UserProfilesRow,
   BookingRow,
@@ -49,8 +49,8 @@ export class BookingService {
     private readonly bookingItemsService: BookingItemsService,
   ) {}
 
-  // 1. get all orders
-  async getAllOrders(
+  // 1. get all bookings
+  async getAllBookings(
     supabase: SupabaseClient<Database>,
     page: number,
     limit: number,
@@ -58,11 +58,11 @@ export class BookingService {
     const { from, to } = getPaginationRange(page, limit);
 
     const result = await supabase
-      .from("orders")
+      .from("bookings")
       .select(
         `
       *,
-      order_items (
+      booking_items (
         *,
         storage_items (
           translations,
@@ -76,27 +76,27 @@ export class BookingService {
       )
       .range(from, to);
 
-    const { data: orders, error, count } = result;
+    const { data: bookings, error, count } = result;
     const metadata = getPaginationMeta(count, page, limit);
 
     if (error) {
-      console.error("Supabase error in getAllOrders():", error);
-      throw new BadRequestException("Could not load orders");
+      console.error("Supabase error in getAllBookings():", error);
+      throw new BadRequestException("Could not load bookings");
     }
-    if (!orders || orders.length === 0) {
-      throw new BadRequestException("No orders found");
+    if (!bookings || bookings.length === 0) {
+      throw new BadRequestException("No bookings found");
     }
 
     // get corresponding user profile for each booking (via user_id)
-    const ordersWithUserProfiles = await Promise.all(
-      orders.map(async (order) => {
+    const bookingsWithUserProfiles = await Promise.all(
+      bookings.map(async (booking) => {
         let user: { name: string; email: string } | null = null;
 
-        if (order.user_id) {
+        if (booking.user_id) {
           const { data: userData } = await supabase
             .from("user_profiles")
             .select("full_name, email")
-            .eq("id", order.user_id)
+            .eq("id", booking.user_id)
             .maybeSingle();
 
           if (userData) {
@@ -108,7 +108,7 @@ export class BookingService {
         }
 
         const itemWithNamesAndLocation =
-          order.order_items?.map((item) => {
+          booking.booking_items?.map((item) => {
             const translations = item.storage_items
               ?.translations as Translations | null;
 
@@ -121,16 +121,16 @@ export class BookingService {
           }) ?? [];
 
         return {
-          ...order,
+          ...booking,
           user_profile: user,
-          order_items: itemWithNamesAndLocation,
+          booking_items: itemWithNamesAndLocation,
         };
       }),
     );
 
     return {
       ...result,
-      data: ordersWithUserProfiles,
+      data: bookingsWithUserProfiles,
       metadata,
     };
   }
@@ -148,15 +148,15 @@ export class BookingService {
     }
 
     const {
-      data: orders,
+      data: bookings,
       error,
       count,
     } = await supabase
-      .from("orders")
+      .from("bookings")
       .select(
         `
         *,
-        order_items (
+        booking_items (
           *,
           storage_items (
             translations,
@@ -167,7 +167,7 @@ export class BookingService {
         { count: "exact" },
       )
       .eq("user_id", userId)
-      .order("created_at", { ascending: false })
+      .booking("created_at", { ascending: false })
       .range(from, to);
 
     if (error) {
@@ -177,12 +177,12 @@ export class BookingService {
       throw new Error(`Failed to fetch user bookings: ${error.message}`);
     }
 
-    if (!orders || orders.length === 0) {
+    if (!bookings || bookings.length === 0) {
       return [];
     }
 
-    // Get unique location_ids from all order_items
-    const locationIds = getUniqueLocationIDs(orders);
+    // Get unique location_ids from all booking_items
+    const locationIds = getUniqueLocationIDs(bookings);
 
     // Load all relevant storage locations
     const result = await this.locationsService.getMatchingLocations(
@@ -205,9 +205,9 @@ export class BookingService {
     const metadata = getPaginationMeta(count, page, limit);
 
     // Add location_name and item_name to each item
-    const ordersWithNames = orders.map((order) => ({
-      ...order,
-      order_items: order.order_items?.map((item) => {
+    const bookingsWithNames = bookings.map((booking) => ({
+      ...booking,
+      booking_items: booking.booking_items?.map((item) => {
         const translations = item.storage_items
           ?.translations as Translations | null;
         return {
@@ -220,7 +220,7 @@ export class BookingService {
       }),
     }));
 
-    return { ...result, data: ordersWithNames, metadata };
+    return { ...result, data: bookingsWithNames, metadata };
   }
 
   // 3. create a Booking
@@ -286,25 +286,25 @@ export class BookingService {
       }
     }
 
-    // 3.4. Create the order
+    // 3.4. Create the booking
 
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
+    const { data: booking, error: bookingError } = await supabase
+      .from("bookings")
       .insert({
         user_id: userId,
         status: "pending",
-        order_number: generateOrderNumber(),
+        booking_number: generateBookingNumber(),
       })
       .select()
       .single<BookingRow>();
 
-    if (orderError || !order) {
-      console.error("Order insert error:", orderError);
-      console.error("Order result:", order);
-      throw new BadRequestException("Could not create order");
+    if (bookingError || !booking) {
+      console.error("Booking insert error:", bookingError);
+      console.error("Booking result:", booking);
+      throw new BadRequestException("Could not create booking");
     }
 
-    // 3.5. Create order items
+    // 3.5. Create booking items
     for (const item of dto.items) {
       const start = new Date(item.start_date);
       const end = new Date(item.end_date);
@@ -323,60 +323,62 @@ export class BookingService {
         );
       }
 
-      // insert order item
-      const { error: insertError } = await supabase.from("order_items").insert({
-        order_id: order.id,
-        item_id: item.item_id,
-        location_id: storageItem.location_id,
-        quantity: item.quantity,
-        start_date: item.start_date,
-        end_date: item.end_date,
-        total_days: totalDays,
-        status: "pending",
-      });
+      // insert booking item
+      const { error: insertError } = await supabase
+        .from("booking_items")
+        .insert({
+          booking_id: booking.id,
+          item_id: item.item_id,
+          location_id: storageItem.location_id,
+          quantity: item.quantity,
+          start_date: item.start_date,
+          end_date: item.end_date,
+          total_days: totalDays,
+          status: "pending",
+        });
 
       if (insertError) {
-        throw new BadRequestException("Could not create order items");
+        throw new BadRequestException("Could not create booking items");
       }
     }
 
     // 3.6 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Creation, {
-      orderId: order.id,
+      bookingId: booking.id,
       triggeredBy: userId,
     });
 
-    return warningMessage ? { order, warning: warningMessage } : order;
+    return warningMessage ? { booking, warning: warningMessage } : booking;
   }
 
   // 4. confirm a Booking
   async confirmBooking(
-    orderId: string,
+    bookingId: string,
     userId: string,
     supabase: SupabaseClient,
   ) {
     // 4.1 check if already confirmed
-    const { data: order } = await supabase
-      .from("orders")
+    const { data: booking } = await supabase
+      .from("bookings")
       .select("status, user_id")
-      .eq("id", orderId)
+      .eq("id", bookingId)
       .single();
 
-    if (!order) throw new BadRequestException("Order not found");
+    if (!booking) throw new BadRequestException("Booking not found");
 
     // prevent re-confirmation
-    if (order.status === "confirmed") {
+    if (booking.status === "confirmed") {
       throw new BadRequestException("Booking is already confirmed");
     }
 
-    // 4.2 Get all the order items
+    // 4.2 Get all the booking items
     const { data: items, error: itemsError } = await supabase
-      .from("order_items")
+      .from("booking_items")
       .select("item_id, quantity, start_date, item_id, quantity")
-      .eq("order_id", orderId);
+      .eq("booking_id", bookingId);
 
     if (itemsError) {
-      throw new BadRequestException("Could not load order items");
+      throw new BadRequestException("Could not load booking items");
     }
 
     // 4.3 check availability of the items
@@ -400,34 +402,34 @@ export class BookingService {
       }
     }
 
-    // 4.4 Change the order status to 'confirmed'
+    // 4.4 Change the booking status to 'confirmed'
     const { error: updateError } = await supabase
-      .from("orders")
+      .from("bookings")
       .update({ status: "confirmed" })
-      .eq("id", orderId);
+      .eq("id", bookingId);
 
     if (updateError) {
       throw new BadRequestException("Could not confirm booking");
     }
 
-    // Change the order items' status to 'confirmed'
+    // Change the booking items' status to 'confirmed'
     const { error: itemsUpdateError } = await supabase
-      .from("order_items")
+      .from("booking_items")
       .update({ status: "confirmed" })
-      .eq("order_id", orderId);
+      .eq("booking_id", bookingId);
 
     if (itemsUpdateError) {
-      throw new BadRequestException("Could not confirm order items");
+      throw new BadRequestException("Could not confirm booking items");
     }
 
     // uncomment this when you want the invoice generation inside the app
     /*  // 4.5 create invoice and save to database
     const invoice = new InvoiceService(this.supabaseService);
-    invoice.generateInvoice(orderId); */
+    invoice.generateInvoice(bookingId); */
 
     // 4.6 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Confirmation, {
-      orderId,
+      bookingId,
       triggeredBy: userId,
     });
     return { message: "Booking confirmed" };
@@ -440,14 +442,14 @@ export class BookingService {
     updatedItems: BookingItem[],
     supabase: SupabaseClient,
   ) {
-    // 5.1 check the order
-    const { data: order } = await supabase
-      .from("orders")
-      .select("status, user_id, order_number")
+    // 5.1 check the booking
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("status, user_id, booking_number")
       .eq("id", booking_id)
       .single();
 
-    if (!order) throw new BadRequestException("Order not found");
+    if (!booking) throw new BadRequestException("Booking not found");
 
     // 5.2. check the user role
     const { data: user } = await supabase
@@ -461,20 +463,20 @@ export class BookingService {
     }
 
     const isAdmin = ["admin", "superVera", "service_role"].includes(user.role);
-    const isOwner = order.user_id === userId;
+    const isOwner = booking.user_id === userId;
 
     if (!isAdmin && !isOwner) {
       throw new ForbiddenException("Not allowed to update this booking");
     }
 
     // 5.4 Status check (users are restricted)
-    if (!isAdmin && order.status !== "pending") {
+    if (!isAdmin && booking.status !== "pending") {
       throw new ForbiddenException(
-        "Your order has been confirmed. You can't update it.",
+        "Your booking has been confirmed. You can't update it.",
       );
     }
 
-    // 5.3. Delete existing items from order_items to avoid duplicates
+    // 5.3. Delete existing items from booking_items to avoid duplicates
     await this.bookingItemsService.removeAllBookingItems(supabase, booking_id);
 
     // 5.4. insert updated items with availability check
@@ -513,9 +515,9 @@ export class BookingService {
         );
       }
 
-      // 5.7. insert new order item
+      // 5.7. insert new booking item
       const newBookingItem = {
-        order_id: booking_id,
+        booking_id: booking_id,
         item_id: item.item_id,
         location_id: storageItem.location_id,
         quantity: item.quantity,
@@ -532,23 +534,23 @@ export class BookingService {
         );
 
       if (itemInsertError) {
-        console.error("Order item insert error:", itemInsertError);
-        throw new BadRequestException("Could not create updated order items");
+        console.error("Booking item insert error:", itemInsertError);
+        throw new BadRequestException("Could not create updated booking items");
       }
     }
 
     // 5.8 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Update, {
-      orderId: booking_id,
+      bookingId: booking_id,
       triggeredBy: userId,
     });
 
-    const { data: updatedOrder, error: orderError } = await supabase
-      .from("orders")
+    const { data: updatedBooking, error: bookingError } = await supabase
+      .from("bookings")
       .select(
         `
     *,
-    order_items (
+    booking_items (
       *,
       storage_items (
         translations
@@ -558,35 +560,35 @@ export class BookingService {
       )
       .eq("id", booking_id)
       .single()
-      .overrideTypes<OrderWithItems>();
+      .overrideTypes<BookingWithItems>();
 
-    if (orderError || !updatedOrder) {
+    if (bookingError || !updatedBooking) {
       throw new BadRequestException("Could not fetch updated booking details");
     }
 
     return {
       message: "Booking updated",
-      booking: updatedOrder,
+      booking: updatedBooking,
     };
   }
 
   // 6. reject a Booking (Admin/SuperVera only)
   async rejectBooking(
-    orderId: string,
+    bookingId: string,
     userId: string,
     supabase: SupabaseClient,
   ) {
     // check if already rejected
-    const { data: order } = await supabase
-      .from("orders")
-      .select("status, user_id, order_number")
-      .eq("id", orderId)
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("status, user_id, booking_number")
+      .eq("id", bookingId)
       .single();
 
-    if (!order) throw new BadRequestException("Order not found");
+    if (!booking) throw new BadRequestException("Booking not found");
 
     // prevent re-rejection
-    if (order.status === "rejected") {
+    if (booking.status === "rejected") {
       throw new BadRequestException("Booking is already rejected");
     }
 
@@ -607,36 +609,36 @@ export class BookingService {
       throw new ForbiddenException("Only admins can reject bookings");
     }
 
-    // fetch order items for email
-    const { data: orderItems, error: orderItemsError } = await supabase
-      .from("order_items")
+    // fetch booking items for email
+    const { data: bookingItems, error: bookingItemsError } = await supabase
+      .from("booking_items")
       .select("item_id, quantity, start_date, end_date")
-      .eq("order_id", orderId);
+      .eq("booking_id", bookingId);
 
-    if (orderItemsError || !orderItems) {
+    if (bookingItemsError || !bookingItems) {
       throw new BadRequestException(
-        "Could not fetch order items for rejection",
+        "Could not fetch booking items for rejection",
       );
     }
 
-    // 6.2 set order_item status to cancelled
+    // 6.2 set booking_item status to cancelled
     const { error: itemUpdateError } = await supabase
-      .from("order_items")
+      .from("booking_items")
       .update({ status: "cancelled" }) // Trigger watches for change
-      .eq("order_id", orderId);
+      .eq("booking_id", bookingId);
 
     if (itemUpdateError) {
-      console.error("Order items update error:", itemUpdateError);
+      console.error("Booking items update error:", itemUpdateError);
       throw new BadRequestException(
-        "Could not update order items for cancellation",
+        "Could not update booking items for cancellation",
       );
     }
 
-    // 6.3 set order status to rejected
+    // 6.3 set booking status to rejected
     const { error: updateError } = await supabase
-      .from("orders")
+      .from("bookings")
       .update({ status: "rejected" })
-      .eq("id", orderId);
+      .eq("id", bookingId);
 
     if (updateError) {
       console.error("Failed to reject booking:", updateError);
@@ -645,7 +647,7 @@ export class BookingService {
 
     // 6.6 notify via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Rejection, {
-      orderId,
+      bookingId,
       triggeredBy: userId,
     });
 
@@ -654,24 +656,25 @@ export class BookingService {
 
   // 7. cancel a Booking (User if not confirmed, Admins/SuperVera always)
   async cancelBooking(
-    orderId: string,
+    bookingId: string,
     userId: string,
     supabase: SupabaseClient,
   ): Promise<CancelBookingResponse> {
-    // 7.1 check order status
-    const { data: order } = await supabase
-      .from("orders")
-      .select("status, user_id, order_number")
-      .eq("id", orderId)
+    // 7.1 check booking status
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("status, user_id, booking_number")
+      .eq("id", bookingId)
       .single();
-
-    if (!order) throw new BadRequestException("Order not found");
+    if (!booking) throw new BadRequestException("Booking not found");
 
     // prevent re-cancellation
     const finalStates = new Set(["cancelled by user", "cancelled by admin"]);
 
-    if (finalStates.has(order.status)) {
-      throw new BadRequestException(`Booking has already been ${order.status}`);
+    if (finalStates.has(booking.status)) {
+      throw new BadRequestException(
+        `Booking has already been ${booking.status}`,
+      );
     }
 
     // get user profile
@@ -689,65 +692,65 @@ export class BookingService {
     // 7.2 permissions check
 
     const isAdmin = ["admin", "superVera"].includes(userProfile.role?.trim());
-    const isOwner = order.user_id === userId;
+    const isOwner = booking.user_id === userId;
 
     if (!isAdmin && !isOwner) {
       throw new ForbiddenException("You can only cancel your own bookings");
     }
 
-    if (!isAdmin && order.status === "confirmed") {
+    if (!isAdmin && booking.status === "confirmed") {
       throw new ForbiddenException(
         "You can't cancel a booking that has already been confirmed",
       );
     }
 
-    // 7.5 Cancel all related order_items
+    // 7.5 Cancel all related booking_items
     const { error: itemUpdateError } = await supabase
-      .from("order_items")
+      .from("booking_items")
       .update({ status: "cancelled" })
-      .eq("order_id", orderId);
+      .eq("booking_id", bookingId);
 
     if (itemUpdateError) {
-      console.error("Order items update error:", itemUpdateError);
+      console.error("Booking items update error:", itemUpdateError);
       throw new BadRequestException(
-        "Could not update order items for cancellation",
+        "Could not update booking items for cancellation",
       );
     }
 
-    // 7.4 update order_items
+    // 7.4 update booking_items
     const { error } = await supabase
-      .from("orders")
+      .from("bookings")
       .update({ status: isAdmin ? "cancelled by admin" : "cancelled by user" })
-      .eq("id", orderId);
+      .eq("id", bookingId);
 
     if (error) {
       throw new BadRequestException("Could not cancel the booking");
     }
 
-    // 7.6 Fetch order items for email details
-    const { data: orderItems, error: orderItemsError } = await supabase
-      .from("order_items")
+    // 7.6 Fetch booking items for email details
+    const { data: bookingItems, error: bookingItemsError } = await supabase
+      .from("booking_items")
       .select("item_id, quantity, start_date, end_date")
-      .eq("order_id", orderId)
-      .overrideTypes<OrderItemRow[]>();
+      .eq("booking_id", bookingId)
+      .overrideTypes<BookingItemRow[]>();
 
-    if (orderItemsError || !orderItems) {
+    if (bookingItemsError || !bookingItems) {
       throw new BadRequestException(
-        "Could not fetch order items for cancellation",
+        "Could not fetch booking items for cancellation",
       );
     }
 
     // notify via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Cancellation, {
-      orderId,
+      bookingId,
       triggeredBy: userId,
     });
 
     return {
       message: `Booking cancelled by ${isAdmin ? "admin" : "user"}`,
-      orderId,
+      bookingId,
       cancelledBy: isAdmin ? "admin" : "user",
-      items: orderItems.map((item) => ({
+      items: bookingItems.map((item) => ({
         item_id: item.item_id,
         quantity: item.quantity,
         start_date: item.start_date,
@@ -758,22 +761,23 @@ export class BookingService {
 
   // 8. delete a Booking and mark it as deleted
   async deleteBooking(
-    orderId: string,
+    bookingId: string,
     userId: string,
     supabase: SupabaseClient,
   ) {
-    // 8.1 check order in database
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .select("status, user_id, order_number")
-      .eq("id", orderId)
+    // 8.1 check booking in database
+    const { data: booking, error: bookingError } = await supabase
+      .from("bookings")
+      .select("status, user_id, booking_number")
+      .eq("id", bookingId)
       .single()
       .overrideTypes<BookingRow>();
 
-    if (orderError || !order) throw new BadRequestException("Order not found");
+    if (bookingError || !booking)
+      throw new BadRequestException("Booking not found");
 
     // prevent re-deletion
-    if (order.status === "deleted") {
+    if (booking.status === "deleted") {
       throw new BadRequestException("Booking is already deleted");
     }
 
@@ -796,34 +800,34 @@ export class BookingService {
       );
     }
 
-    // 8.3 cancel all related order_items to restore virtual stock
+    // 8.3 cancel all related booking_items to restore virtual stock
     const { error: itemUpdateError } = await supabase
-      .from("order_items")
+      .from("booking_items")
       .update({ status: "cancelled" })
-      .eq("order_id", orderId);
+      .eq("booking_id", bookingId);
 
     if (itemUpdateError) {
-      console.error("Order items update error:", itemUpdateError);
-      throw new BadRequestException("Could not cancel related order items");
+      console.error("Booking items update error:", itemUpdateError);
+      throw new BadRequestException("Could not cancel related booking items");
     }
 
-    // 8.4 fetch order_items for email
-    const { data: orderItems, error: orderItemsError } = await supabase
-      .from("order_items")
+    // 8.4 fetch booking_items for email
+    const { data: bookingItems, error: bookingItemsError } = await supabase
+      .from("booking_items")
       .select("item_id, quantity, start_date, end_date")
-      .eq("order_id", orderId);
+      .eq("booking_id", bookingId);
 
-    if (orderItemsError || !orderItems) {
-      throw new BadRequestException("Could not fetch order items for email");
+    if (bookingItemsError || !bookingItems) {
+      throw new BadRequestException("Could not fetch booking items for email");
     }
 
-    // 8.5 Soft-delete the order (update only)
+    // 8.5 Soft-delete the booking (update only)
     const { error: deleteError } = await supabase
-      .from("orders")
+      .from("bookings")
       .update({
         status: "deleted",
       })
-      .eq("id", orderId);
+      .eq("id", bookingId);
 
     if (deleteError) {
       throw new BadRequestException("Could not mark booking as deleted");
@@ -831,7 +835,7 @@ export class BookingService {
 
     // 8.6 send notification email user and admin
     await this.mailService.sendBookingMail(BookingMailType.Cancellation, {
-      orderId,
+      bookingId,
       triggeredBy: userId,
     });
 
@@ -841,12 +845,16 @@ export class BookingService {
   }
 
   // 9. return items (when items are brought back)
-  async returnItems(orderId: string, userId: string, supabase: SupabaseClient) {
+  async returnItems(
+    bookingId: string,
+    userId: string,
+    supabase: SupabaseClient,
+  ) {
     const { data: items } = await supabase
-      .from("order_items")
+      .from("booking_items")
       .select("item_id, quantity, status")
-      .eq("order_id", orderId)
-      .overrideTypes<OrderItemRow[]>();
+      .eq("booking_id", bookingId)
+      .overrideTypes<BookingItemRow[]>();
 
     if (!items || items.length === 0) {
       throw new BadRequestException("No items found for return");
@@ -858,11 +866,11 @@ export class BookingService {
       }
     }
 
-    // set order status to completed
+    // set booking status to completed
     const { error: updateError } = await supabase
-      .from("orders")
+      .from("bookings")
       .update({ status: "completed" })
-      .eq("id", orderId);
+      .eq("id", bookingId);
 
     if (updateError) {
       console.error("Failed to complete booking:", updateError);
@@ -897,7 +905,7 @@ export class BookingService {
 
     // notify via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.ItemsReturned, {
-      orderId,
+      bookingId,
       triggeredBy: userId,
     });
 
@@ -905,13 +913,13 @@ export class BookingService {
   }
 
   // 10. confirm pickup of items
-  async confirmPickup(orderId: string, supabase: SupabaseClient) {
-    // 10.1. Get the order item
+  async confirmPickup(bookingId: string, supabase: SupabaseClient) {
+    // 10.1. Get the booking item
     const { data: items } = await supabase
-      .from("order_items")
+      .from("booking_items")
       .select("item_id, quantity, status, start_date, end_date")
-      .eq("order_id", orderId)
-      .overrideTypes<OrderItemRow[]>();
+      .eq("booking_id", bookingId)
+      .overrideTypes<BookingItemRow[]>();
 
     if (!items || items.length === 0) {
       throw new BadRequestException("No items found for return");
@@ -923,7 +931,7 @@ export class BookingService {
 
       if (item.status !== "confirmed") {
         throw new BadRequestException(
-          "Order item is not confirmed and can't be picked up",
+          "Booking item is not confirmed and can't be picked up",
         );
       }
       /* if (item.start_date > today) { // TODO uncomment this when the booking system is ready!!!!!!!!!!!
@@ -969,59 +977,59 @@ export class BookingService {
         throw new BadRequestException("Failed to update storage stock");
       }
 
-      // 10.4. Update order item status to "picked_up"
+      // 10.4. Update booking item status to "picked_up"
       const { error: updateStatusError } = await supabase
-        .from("order_items")
+        .from("booking_items")
         .update({ status: "picked_up" })
         .eq("id", item.item_id);
 
       if (updateStatusError) {
-        throw new BadRequestException("Failed to update order item status");
+        throw new BadRequestException("Failed to update booking item status");
       }
     }
 
     // look up the booking owner so we can tag who triggered the mail
-    const { data: orderRow } = await supabase
-      .from("orders")
+    const { data: bookingRow } = await supabase
+      .from("bookings")
       .select("user_id")
-      .eq("id", orderId)
+      .eq("id", bookingId)
       .single<BookingRow>();
 
-    const triggeredBy = orderRow?.user_id ?? "system";
+    const triggeredBy = bookingRow?.user_id ?? "system";
 
     // notify via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.ItemsPickedUp, {
-      orderId,
+      bookingId,
       triggeredBy,
     });
 
     return {
-      message: `Pickup confirmed for order ${orderId}`,
+      message: `Pickup confirmed for booking ${bookingId}`,
     };
   }
 
   // 11. Update payment status
   async updatePaymentStatus(
-    orderId: string,
+    bookingId: string,
     status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
     supabase: SupabaseClient,
   ) {
-    // Check if order exists
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
+    // Check if booking exists
+    const { data: booking, error: bookingError } = await supabase
+      .from("bookings")
       .select("id")
-      .eq("id", orderId)
+      .eq("id", bookingId)
       .single();
 
-    if (!order || orderError) {
-      throw new BadRequestException("Order not found");
+    if (!booking || bookingError) {
+      throw new BadRequestException("Booking not found");
     }
 
     // Update payment_status
     const { error: updateError } = await supabase
-      .from("orders")
+      .from("bookings")
       .update({ payment_status: status })
-      .eq("id", orderId);
+      .eq("id", bookingId);
 
     if (updateError) {
       console.error("Supabase error in updatePaymentStatus():", updateError);
@@ -1029,18 +1037,18 @@ export class BookingService {
     }
 
     return {
-      message: `Payment status updated to '${status}' for order ${orderId}`,
+      message: `Payment status updated to '${status}' for booking ${bookingId}`,
     };
   }
 
   /**
-   * Get bookings in an ordered list
+   * Get bookings in an bookinged list
    * @param supabase The supabase client provided by request
    * @param page What page number is requested
    * @param limit How many rows to retrieve
-   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
+   * @param ascending If to sort booking smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
    * @param filter What to filter the bookings by
-   * @param order_by What column to order the columns by. Default "order_number"
+   * @param booking_by What column to booking the columns by. Default "booking_number"
    * @param searchquery Optional. Filter bookings by a string
    * @returns Matching bookings
    */

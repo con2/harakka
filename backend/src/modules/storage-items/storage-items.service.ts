@@ -329,7 +329,7 @@ export class StorageItemsService {
     return { success: true, id };
   }
 
-  // 8. check if the item can be deleted (if it exists in some orders)
+  // 8. check if the item can be deleted (if it exists in some bookings)
   async canDeleteItem(
     req: Request,
     id: string,
@@ -340,9 +340,9 @@ export class StorageItemsService {
       throw new Error("No item ID provided for deletion");
     }
 
-    // Check if item exists in any orders
+    // Check if item exists in any bookings
     const { data, error } = await supabase
-      .from("order_items")
+      .from("booking_items")
       .select("id")
       .eq("item_id", id)
       .limit(1);

@@ -37,7 +37,11 @@ export class BookingController {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
     const supabase = req.supabase;
-    return this.bookingService.getAllOrders(supabase, pageNumber, limitNumber);
+    return this.bookingService.getAllBookings(
+      supabase,
+      pageNumber,
+      limitNumber,
+    );
   }
 
   // gets the bookings of the logged-in user
@@ -110,11 +114,11 @@ export class BookingController {
 
   // confirms a booking
   @Put(":id/confirm") // admin confirms booking
-  async confirm(@Param("id") orderId: string, @Req() req: AuthRequest) {
+  async confirm(@Param("id") bookingId: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     const supabase = req.supabase;
 
-    return this.bookingService.confirmBooking(orderId, userId, supabase);
+    return this.bookingService.confirmBooking(bookingId, userId, supabase);
   }
 
   // updates a booking
@@ -167,11 +171,11 @@ export class BookingController {
   }
 
   // admin marks items as picked up
-  @Post(":orderId/pickup")
-  async pickup(@Param("orderId") orderId: string, @Req() req: AuthRequest) {
+  @Post(":bookingId/pickup")
+  async pickup(@Param("bookingId") bookingId: string, @Req() req: AuthRequest) {
     // const userId = req.user.id;
     const supabase = req.supabase;
-    return this.bookingService.confirmPickup(orderId, supabase);
+    return this.bookingService.confirmPickup(bookingId, supabase);
   }
 
   // change payment status
@@ -183,7 +187,7 @@ export class BookingController {
     // const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.updatePaymentStatus(
-      dto.orderId,
+      dto.bookingId,
       dto.status,
       supabase,
     );
@@ -193,7 +197,7 @@ export class BookingController {
   getOrderedBookings(
     @Req() req: AuthRequest,
     @Query("search") searchquery: string,
-    @Query("order") ordered_by: ValidBookingOrder = "order_number",
+    @Query("booking") ordered_by: ValidBookingOrder = "booking_number",
     @Query("status") status_filter: BookingStatus,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",

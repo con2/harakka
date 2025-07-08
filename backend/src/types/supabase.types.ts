@@ -73,7 +73,7 @@ export type Database = {
           due_date: string | null;
           id: string;
           invoice_number: string;
-          order_id: string | null;
+          booking_id: string | null;
           pdf_url: string | null;
           reference_number: string | null;
           total_amount: number | null;
@@ -84,7 +84,7 @@ export type Database = {
           due_date?: string | null;
           id?: string;
           invoice_number: string;
-          order_id?: string | null;
+          booking_id?: string | null;
           pdf_url?: string | null;
           reference_number?: string | null;
           total_amount?: number | null;
@@ -95,7 +95,7 @@ export type Database = {
           due_date?: string | null;
           id?: string;
           invoice_number?: string;
-          order_id?: string | null;
+          booking_id?: string | null;
           pdf_url?: string | null;
           reference_number?: string | null;
           total_amount?: number | null;
@@ -103,10 +103,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "invoices_order_id_fkey";
-            columns: ["order_id"];
+            foreignKeyName: "invoices_booking_id_fkey";
+            columns: ["booking_id"];
             isOneToOne: false;
-            referencedRelation: "orders";
+            referencedRelation: "bookings";
             referencedColumns: ["id"];
           },
           {
@@ -118,14 +118,14 @@ export type Database = {
           },
         ];
       };
-      order_items: {
+      booking_items: {
         Row: {
           created_at: string | null;
           end_date: string;
           id: string;
           item_id: string;
           location_id: string;
-          order_id: string;
+          booking_id: string;
           provider_organization_id: string | null;
           quantity: number;
           start_date: string;
@@ -140,7 +140,7 @@ export type Database = {
           id?: string;
           item_id: string;
           location_id: string;
-          order_id: string;
+          booking_id: string;
           provider_organization_id?: string | null;
           quantity?: number;
           start_date: string;
@@ -155,7 +155,7 @@ export type Database = {
           id?: string;
           item_id?: string;
           location_id?: string;
-          order_id?: string;
+          booking_id?: string;
           provider_organization_id?: string | null;
           quantity?: number;
           start_date?: string;
@@ -166,42 +166,42 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "order_items_item_id_fkey";
+            foreignKeyName: "booking_items_item_id_fkey";
             columns: ["item_id"];
             isOneToOne: false;
             referencedRelation: "storage_items";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "order_items_item_id_fkey";
+            foreignKeyName: "booking_items_item_id_fkey";
             columns: ["item_id"];
             isOneToOne: false;
             referencedRelation: "view_item_location_summary";
             referencedColumns: ["storage_item_id"];
           },
           {
-            foreignKeyName: "order_items_item_id_fkey";
+            foreignKeyName: "booking_items_item_id_fkey";
             columns: ["item_id"];
             isOneToOne: false;
             referencedRelation: "view_item_ownership_summary";
             referencedColumns: ["storage_item_id"];
           },
           {
-            foreignKeyName: "order_items_location_id_fkey";
+            foreignKeyName: "booking_items_location_id_fkey";
             columns: ["location_id"];
             isOneToOne: false;
             referencedRelation: "storage_locations";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "order_items_order_id_fkey";
-            columns: ["order_id"];
+            foreignKeyName: "booking_items_booking_id_fkey";
+            columns: ["booking_id"];
             isOneToOne: false;
-            referencedRelation: "orders";
+            referencedRelation: "bookings";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "order_items_provider_organization_id_fkey";
+            foreignKeyName: "booking_items_provider_organization_id_fkey";
             columns: ["provider_organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
@@ -209,7 +209,7 @@ export type Database = {
           },
         ];
       };
-      orders: {
+      bookings: {
         Row: {
           created_at: string | null;
           discount_amount: number | null;
@@ -217,7 +217,7 @@ export type Database = {
           final_amount: number | null;
           id: string;
           notes: string | null;
-          order_number: string;
+          booking_number: string;
           payment_details: Json | null;
           payment_status: string | null;
           status: string;
@@ -232,7 +232,7 @@ export type Database = {
           final_amount?: number | null;
           id?: string;
           notes?: string | null;
-          order_number: string;
+          booking_number: string;
           payment_details?: Json | null;
           payment_status?: string | null;
           status: string;
@@ -247,7 +247,7 @@ export type Database = {
           final_amount?: number | null;
           id?: string;
           notes?: string | null;
-          order_number?: string;
+          booking_number?: string;
           payment_details?: Json | null;
           payment_status?: string | null;
           status?: string;
@@ -416,7 +416,7 @@ export type Database = {
           created_at: string | null;
           id: string;
           metadata: Json | null;
-          order_id: string;
+          booking_id: string;
           payment_date: string;
           payment_method: string;
           status: string;
@@ -427,7 +427,7 @@ export type Database = {
           created_at?: string | null;
           id?: string;
           metadata?: Json | null;
-          order_id: string;
+          booking_id: string;
           payment_date: string;
           payment_method: string;
           status: string;
@@ -438,7 +438,7 @@ export type Database = {
           created_at?: string | null;
           id?: string;
           metadata?: Json | null;
-          order_id?: string;
+          booking_id?: string;
           payment_date?: string;
           payment_method?: string;
           status?: string;
@@ -446,10 +446,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "payments_order_id_fkey";
-            columns: ["order_id"];
+            foreignKeyName: "payments_booking_id_fkey";
+            columns: ["booking_id"];
             isOneToOne: false;
-            referencedRelation: "orders";
+            referencedRelation: "bookings";
             referencedColumns: ["id"];
           },
         ];
@@ -465,7 +465,7 @@ export type Database = {
           id: string;
           is_active: boolean | null;
           max_discount: number | null;
-          min_order_amount: number | null;
+          min_booking_amount: number | null;
           owner_organization_id: string | null;
           starts_at: string;
           times_used: number | null;
@@ -481,7 +481,7 @@ export type Database = {
           id?: string;
           is_active?: boolean | null;
           max_discount?: number | null;
-          min_order_amount?: number | null;
+          min_booking_amount?: number | null;
           owner_organization_id?: string | null;
           starts_at: string;
           times_used?: number | null;
@@ -497,7 +497,7 @@ export type Database = {
           id?: string;
           is_active?: boolean | null;
           max_discount?: number | null;
-          min_order_amount?: number | null;
+          min_booking_amount?: number | null;
           owner_organization_id?: string | null;
           starts_at?: string;
           times_used?: number | null;
@@ -1246,15 +1246,15 @@ export type Database = {
         Args: { input_text: string };
         Returns: string;
       };
-      get_all_full_orders: {
+      get_all_full_bookings: {
         Args: { in_offset?: number; in_limit?: number };
         Returns: Json;
       };
-      get_full_order: {
-        Args: { order_id: string };
+      get_full_booking: {
+        Args: { booking_id: string };
         Returns: Json;
       };
-      get_full_user_order: {
+      get_full_user_booking: {
         Args: { in_user_id: string; in_offset?: number; in_limit?: number };
         Returns: Json;
       };

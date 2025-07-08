@@ -14,7 +14,7 @@ export async function calculateAvailableQuantity(
 }> {
   // get overlapping bookings
   const { data: overlapping, error } = await supabase
-    .from("order_items")
+    .from("booking_items")
     .select("quantity")
     .eq("item_id", itemId)
     .in("status", ["pending", "confirmed"])
@@ -47,11 +47,11 @@ export async function calculateAvailableQuantity(
   };
 }
 
-export function getUniqueLocationIDs(orders: UserBookingOrder[]): string[] {
+export function getUniqueLocationIDs(bookings: UserBookingOrder[]): string[] {
   return Array.from(
     new Set(
-      orders
-        .flatMap((order) => order.order_items ?? [])
+      bookings
+        .flatMap((booking) => booking.booking_items ?? [])
         .map((item) => item.storage_items?.location_id)
         .filter((id): id is string => !!id),
     ),
@@ -82,7 +82,7 @@ export function calculateDuration(start: Date, end: Date): number {
   return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export function generateOrderNumber() {
+export function generateBookingNumber() {
   return `ORD-${Math.floor(Math.random() * 10000)
     .toString()
     .padStart(4, "0")}`;
