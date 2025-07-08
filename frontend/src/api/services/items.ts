@@ -1,4 +1,4 @@
-import { CreateItemDto, Item, UpdateItemDto } from "@/types";
+import { CreateItemDto, Item, UpdateItemDto, ValidItemOrder } from "@/types";
 import { api } from "../axios";
 
 /**
@@ -9,7 +9,8 @@ export const itemsApi = {
    * Get all storage items
    * @returns Promise with an array of items
    */
-  getAllItems: (): Promise<Item[]> => api.get("/storage-items"),
+  getAllItems: (page: number, limit: number) =>
+    api.get(`/storage-items?page=${page}&limit=${limit}`),
 
   /**
    * Get a specific item by ID
@@ -96,4 +97,25 @@ export const itemsApi = {
     id: string,
   ): Promise<{ deletable: boolean; reason?: string }> =>
     api.post(`/storage-items/${id}/can-delete`),
+
+  getOrderedItems: (
+    ordered_by: ValidItemOrder = "created_at",
+    ascending: boolean = true,
+    page: number,
+    limit: number,
+    searchquery?: string,
+    tag_filters?: string[],
+    activity_filter?: "active" | "inactive",
+    location_filter?: string[],
+    categories?: string[],
+  ) => {
+    const activity = activity_filter === "active" ? true : false;
+    let call = `/storage-items/ordered?order=${ordered_by}&page=${page}&limit=${limit}&ascending=${ascending}`;
+    if (searchquery) call += `&search=${searchquery}`;
+    if (tag_filters) call += `&tags=${tag_filters.join(",")}`;
+    if (activity_filter) call += `&active=${activity}`;
+    if (location_filter) call += `&location=${location_filter.join(",")}`;
+    if (categories) call += `&category=${categories.join(",")}`;
+    return api.get(call);
+  },
 };
