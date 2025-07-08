@@ -167,7 +167,7 @@ export class BookingService {
         { count: "exact" },
       )
       .eq("user_id", userId)
-      .booking("created_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .range(from, to);
 
     if (error) {

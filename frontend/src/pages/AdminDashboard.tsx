@@ -20,7 +20,7 @@ import {
 import {
   getAllBookings,
   selectAllBookings,
-  selectBookingsLoading,
+  selectBookingLoading,
   updatePaymentStatus,
 } from "@/store/slices/bookingsSlice";
 import { BookingItem, BookingOrder, PaymentStatus } from "@/types";
@@ -55,7 +55,7 @@ const AdminDashboard = () => {
   const items = useAppSelector(selectAllItems);
   const user = useAppSelector(selectSelectedUser);
   const bookings = useAppSelector(selectAllBookings);
-  const bookingsLoading = useAppSelector(selectBookingsLoading);
+  const bookingsLoading = useAppSelector(selectBookingLoading);
   const navigate = useNavigate();
   const [selectedBooking, setSelectedBooking] = useState<BookingOrder | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
