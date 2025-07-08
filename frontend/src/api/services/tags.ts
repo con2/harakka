@@ -14,10 +14,13 @@ export const tagsApi = {
     page: number = 1,
     limit: number = 10,
     search: string = "",
+    assignmentFilter: string = "all",
+    sortBy: string = "created_at",
+    sortOrder: string = "desc",
   ): Promise<ApiResponse<Tag[]>> => {
     // Fetch paginated tags from the backend
     const response = (await api.get(
-      `/tags?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`,
+      `/tags?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&assignmentFilter=${assignmentFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
     )) as ApiResponse<Tag[]>;
 
     return {

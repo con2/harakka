@@ -22,11 +22,21 @@ export class TagController {
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
     @Query("search") search: string = "",
+    @Query("assignmentFilter") assignmentFilter: string = "all",
+    @Query("sortBy") sortBy: string = "created_at",
+    @Query("sortOrder") sortOrder: string = "desc",
   ): Promise<ApiResponse<TagRow>> {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
 
-    return this.tagService.getAllTags(pageNumber, limitNumber, search);
+    return this.tagService.getAllTags(
+      pageNumber,
+      limitNumber,
+      search,
+      assignmentFilter,
+      sortBy,
+      sortOrder,
+    );
   }
 
   @Get(":itemId")
