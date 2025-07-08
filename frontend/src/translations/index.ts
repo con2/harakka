@@ -18,11 +18,11 @@ import { itemsList } from "./modules/itemsList";
 import { landingPage } from "./modules/landingPage";
 import { login } from "./modules/login";
 import { logs } from "./modules/logs";
-import { myOrders } from "./modules/myOrders";
+import { myBookings } from "./modules/myBookings";
 import { myProfile } from "./modules/myProfile";
 import { navigation } from "./modules/navigation";
-import { orderConfirmation } from "./modules/orderConfirmation";
-import { orderList } from "./modules/orderList";
+import { bookingConfirmation } from "./modules/bookingConfirmation";
+import { bookingList } from "./modules/bookingList";
 import { pagination } from "./modules/pagination";
 import { passwordReset } from "./modules/passwordReset";
 import { passwordResetResult } from "./modules/passwordResetResult";
@@ -62,11 +62,11 @@ export const t = {
   landingPage,
   login,
   logs,
-  myOrders,
+  myBookings,
   myProfile,
   navigation,
-  orderConfirmation,
-  orderList,
+  bookingConfirmation,
+  bookingList,
   pagination,
   passwordReset,
   passwordResetResult,

@@ -1,12 +1,12 @@
-export const orderList = {
+export const bookingList = {
   title: {
     fi: "Hallinnoi tilauksia",
-    en: "Manage Orders",
+    en: "Manage Bookings",
   },
   filters: {
     search: {
       fi: "Hae tilausnumeroa tai asiakasta",
-      en: "Search order # or customer name",
+      en: "Search booking # or customer name",
     },
     status: {
       all: {
@@ -52,9 +52,9 @@ export const orderList = {
     },
   },
   columns: {
-    orderNumber: {
+    bookingNumber: {
       fi: "Tilaus #",
-      en: "Order #",
+      en: "Booking #",
     },
     customer: {
       fi: "Asiakas",
@@ -64,9 +64,9 @@ export const orderList = {
       fi: "Tila",
       en: "Status",
     },
-    orderDate: {
+    bookingDate: {
       fi: "Tilauspäivä",
-      en: "Order Date",
+      en: "Booking Date",
     },
     dateRange: {
       fi: "Aika",
@@ -110,7 +110,7 @@ export const orderList = {
   buttons: {
     refresh: {
       fi: "Päivitä tilaukset",
-      en: "Refresh Orders",
+      en: "Refresh Bookings",
     },
     viewDetails: {
       fi: "Näytä tiedot",
@@ -122,11 +122,11 @@ export const orderList = {
     },
     delete: {
       fi: "Poista tilaus",
-      en: "Delete Order",
+      en: "Delete Booking",
     },
     reject: {
       fi: "Hylkää tilaus",
-      en: "Reject Order",
+      en: "Reject Booking",
     },
     pickedUp: {
       fi: "Merkitse noudetuksi",
@@ -180,9 +180,9 @@ export const orderList = {
       fi: "Asiakas",
       en: "Customer",
     },
-    orderInfo: {
+    bookingInfo: {
       fi: "Tilaustiedot",
-      en: "Order Information",
+      en: "Booking Information",
     },
     status: {
       fi: "Tila:",
@@ -192,7 +192,7 @@ export const orderList = {
       fi: "Päivämäärä:",
       en: "Date:",
     },
-    orderItems: {
+    bookingItems: {
       columns: {
         item: {
           fi: "Tuote",
@@ -241,6 +241,6 @@ export const orderList = {
   },
   loading: {
     fi: "Ladataan tilauksia...",
-    en: "Loading orders...",
+    en: "Loading bookings...",
   },
 };

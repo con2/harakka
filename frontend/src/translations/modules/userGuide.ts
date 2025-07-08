@@ -48,10 +48,10 @@ export const userGuide = {
         en: "Select the <strong>Start Date</strong> and <strong>End Date</strong> to check availability.",
       },
     },
-    howToOrder: {
+    howToBook: {
       title: {
         fi: "Kuinka tilata",
-        en: "How to Order",
+        en: "How to Book",
       },
       content: {
         fi: [
@@ -81,7 +81,7 @@ export const userGuide = {
       },
       items: {
         fi: ["Tilaukset", "Tuotteet", "Tagit", "Käyttäjät", "Asetukset"],
-        en: ["Orders", "Items", "Tags", "Users", "Settings"],
+        en: ["Bookings", "Items", "Tags", "Users", "Settings"],
       },
     },
     usersTeams: {
@@ -128,10 +128,10 @@ export const userGuide = {
         en: "<strong>Tags:</strong> Create/edit/delete tags in both English and Finnish.",
       },
     },
-    orders: {
+    bookings: {
       title: {
         fi: "Tilaukset",
-        en: "Orders",
+        en: "Bookings",
       },
       actions: {
         fi: [
@@ -140,9 +140,9 @@ export const userGuide = {
           "Tarkastele tai poista tiettyjä tilauksia",
         ],
         en: [
-          "View all customer orders",
-          "Refresh the order list",
-          "View or delete specific orders",
+          "View all customer bookings",
+          "Refresh the booking list",
+          "View or delete specific bookings",
         ],
       },
     },

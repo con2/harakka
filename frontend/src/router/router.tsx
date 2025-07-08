@@ -13,7 +13,7 @@ import AdminPanel from "../components/Admin/AdminPanel";
 import UsersList from "@/components/Admin/UserManagement/UsersList";
 import TeamList from "@/components/Admin/UserManagement/TeamList";
 import AdminItemsTable from "../components/Admin/AdminItemsTable";
-import OrderList from "@/components/Admin/Orders/OrderList";
+import BookingList from "@/components/Admin/Bookings/BookingList";
 import TagList from "@/components/Admin/Items/TagList";
 import Logs from "../components/Admin/Logs";
 
@@ -27,7 +27,7 @@ import Unauthorized from "../components/Unauthorized";
 import ItemsList from "../components/Items/ItemsList";
 import ItemDetails from "../components/Items/ItemsDetails";
 import UserPanel from "../components/Items/UserPanel";
-import OrderConfirmation from "../components/OrderConfirmation";
+import BookingConfirmation from "../components/BookingConfirmation";
 import { UserGuide } from "../components/UserGuidelines";
 import ContactForm from "../components/ContactForm";
 
@@ -68,7 +68,7 @@ export const router = createBrowserRouter([
           { path: "users", element: <UsersList /> },
           { path: "team", element: <TeamList /> },
           { path: "items", element: <AdminItemsTable /> },
-          { path: "orders", element: <OrderList /> },
+          { path: "bookings", element: <BookingList /> },
           { path: "tags", element: <TagList /> },
           { path: "logs", element: <Logs /> },
         ],
@@ -92,8 +92,8 @@ export const router = createBrowserRouter([
         element: <Cart />,
       },
       {
-        path: "/orders/confirmation",
-        element: <OrderConfirmation />,
+        path: "/bookings/confirmation",
+        element: <BookingConfirmation />,
       },
       {
         path: "/howItWorks",

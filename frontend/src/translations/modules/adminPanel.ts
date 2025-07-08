@@ -8,9 +8,9 @@ export const adminPanel = {
       fi: "Kojelauta",
       en: "Dashboard",
     },
-    orders: {
+    bookings: {
       fi: "Tilaukset",
-      en: "Orders",
+      en: "Bookings",
     },
     items: {
       fi: "Tuotteet",

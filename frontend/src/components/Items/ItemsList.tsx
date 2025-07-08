@@ -33,8 +33,7 @@ const ItemsList: React.FC = () => {
 
   // Fetch all items when the component mounts
   useEffect(() => {
-    if (items.length <= 1)
-      dispatch(fetchAllItems());
+    if (items.length <= 1) dispatch(fetchAllItems());
   }, [dispatch, items.length]);
 
   const userQuery = searchQuery.toLowerCase().trim();
@@ -43,11 +42,9 @@ const ItemsList: React.FC = () => {
   const filteredItems = items.filter((item) => {
     // Filter by active status
     const isActive = filters.isActive ? item.is_active : true;
-  /*   const isWithinAvailabilityRange =
+    /*   const isWithinAvailabilityRange =
       item.items_number_available >= filters.itemsNumberAvailable[0] &&
       item.items_number_available <= filters.itemsNumberAvailable[1]; */
-      return isActive;
-
     // filter by average rating
     const matchesRating =
       filters.averageRating.length === 0 ||
