@@ -27,7 +27,7 @@ export interface EnrichedItem {
 export type UserBooking = {
   booking_items?: { storage_items?: { location_id?: string } }[];
 };
-export type BookingsRow = Database["public"]["Tables"]["orders"]["Row"];
+export type BookingsRow = Database["public"]["Tables"]["bookings"]["Row"];
 
 export type UserProfilesRow =
   Database["public"]["Tables"]["user_profiles"]["Row"];
@@ -43,8 +43,6 @@ export type BookingItemQuantity = Pick<BookingItemRow, "quantity">;
 
 export type StorageItemsRow =
   Database["public"]["Tables"]["storage_items"]["Row"];
-
-export type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
 
 export interface CancelBookingResponse {
   message: string;
@@ -66,10 +64,10 @@ export type BookingWithItems = BookingRow & {
   })[];
 };
 
-export type BookingTable = Database["public"]["Tables"]["orders"];
-export type BookingRow = Database["public"]["Tables"]["orders"]["Row"];
-export type BookingInsert = Database["public"]["Tables"]["orders"]["Insert"];
-export type BookingUpdate = Database["public"]["Tables"]["orders"]["Update"];
+export type BookingTable = Database["public"]["Tables"]["bookings"];
+export type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
+export type BookingInsert = Database["public"]["Tables"]["bookings"]["Insert"];
+export type BookingUpdate = Database["public"]["Tables"]["bookings"]["Update"];
 export type ValidBookingOrder =
   | "created_at"
   | "order_number"

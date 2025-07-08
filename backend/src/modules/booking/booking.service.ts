@@ -169,7 +169,7 @@ export class BookingService {
         { count: "exact" },
       )
       .eq("user_id", userId)
-      .booking("created_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .range(from, to);
 
     if (error) {
@@ -1129,7 +1129,7 @@ export class BookingService {
    * @param searchquery Optional. Filter bookings by a string
    * @returns Matching bookings
    */
-  async getBookingedBookings(
+  async getOrderedBookings(
     supabase: SupabaseClient,
     page: number,
     limit: number,
