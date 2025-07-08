@@ -3,9 +3,9 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   cancelBooking,
   getUserBookings,
+  selectUserBookings,
   selectBookingError,
   selectBookingLoading,
-  selectUserBookings,
   updateBooking,
 } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
@@ -671,7 +671,8 @@ const MyBookings = () => {
                         // Fall back to stored item_name
                         else {
                           itemName =
-                            item.item_name || t.myBookings.edit.unnamedItem[lang];
+                            item.item_name ||
+                            t.myBookings.edit.unnamedItem[lang];
                         }
 
                         return (

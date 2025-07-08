@@ -705,7 +705,7 @@ const MyProfile = () => {
 
         {/* Orders Tab */}
         <TabsContent value="orders">
-          <MyBookings /> {/* Embedding your existing MyBookings component */}
+          <MyBookings />
         </TabsContent>
       </Tabs>
     </div>
