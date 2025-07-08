@@ -96,8 +96,8 @@ export class AppModule implements NestModule {
         // Public item images endpoints
         { path: "item-images/(.*)", method: RequestMethod.GET },
 
-        // Public booking availability endpoints (for checking item availability)
-        { path: "bookings/availability/(.*)", method: RequestMethod.GET },
+        // Public storage-item availability endpoints (for checking item availability)
+        { path: "storage-items/availability/(.*)", method: RequestMethod.GET },
       )
       .forRoutes(
         // Protected controllers

@@ -190,8 +190,9 @@ export const getItemsByTag = createAsyncThunk<Item[], string>(
   },
 );
 
+// NOT NEEDED? because we are using now the api response directly
 // Get available items within a timeframe
-export const getAvailableItems = createAsyncThunk<
+/* export const getAvailableItems = createAsyncThunk<
   Item[],
   { startDate?: Date | null; endDate?: Date | null }
 >(
@@ -205,7 +206,7 @@ export const getAvailableItems = createAsyncThunk<
       );
     }
   },
-);
+); */
 
 export const itemsSlice = createSlice({
   name: "items",
@@ -331,7 +332,7 @@ export const itemsSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "update";
       })
-      .addCase(getAvailableItems.pending, (state) => {
+      /* .addCase(getAvailableItems.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -343,7 +344,7 @@ export const itemsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";
-      })
+      }) */
       .addCase(getItemsByTag.pending, (state) => {
         state.loading = true;
         state.error = null;
