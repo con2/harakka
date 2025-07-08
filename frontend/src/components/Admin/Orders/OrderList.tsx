@@ -61,7 +61,7 @@ const OrderList = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
-  const [order, setOrder] = useState<ValidBookingOrder>("order_number");
+  const [order, setOrder] = useState<ValidBookingOrder>("booking_number");
   const [ascending, setAscending] = useState<boolean | null>(null);
   const page = useAppSelector(selectOrdersPage);
   const totalPages = useAppSelector(selectOrdersTotalPages);
@@ -119,7 +119,7 @@ const OrderList = () => {
 
   const columns: ColumnDef<BookingUserViewRow>[] = [
     {
-      accessorKey: "order_number",
+      accessorKey: "booking_number",
       header: t.orderList.columns.orderNumber[lang],
       enableSorting: true,
     },

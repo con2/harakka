@@ -23,7 +23,6 @@ import { SupabaseModule } from "../supabase/supabase.module";
 import { AuthMiddleware } from "../../middleware/Auth.middleware";
 import { BookingController } from "../booking/booking.controller";
 import { UserController } from "../user/user.controller";
-import { StorageLocationsController } from "../storage-locations/storage-locations.controller";
 import { BookingItemsModule } from "../booking_items/booking-items.module";
 import { BookingItemsController } from "../booking_items/booking-items.controller";
 import { LogsController } from "../logs_module/logs.controller";
@@ -104,7 +103,6 @@ export class AppModule implements NestModule {
         // Protected controllers
         BookingController,
         UserController,
-        StorageLocationsController,
         BookingItemsController,
         LogsController,
         RoleController,

@@ -41,7 +41,7 @@ export enum BookingMailType {
 }
 
 export interface BookingMailParams {
-  orderId: string; // always required
+  bookingId: string; // always required
   triggeredBy: string; // userId of actor (admin / owner)
 }
 

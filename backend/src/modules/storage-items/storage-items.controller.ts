@@ -14,6 +14,7 @@ import {
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
+import { ValidItemOrder } from "./interfaces/storage-item.interface";
 import { Tables } from "../../types/supabase.types"; // Import the Database type for type safety
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { ApiSingleResponse } from "src/types/response.types";
@@ -28,10 +29,52 @@ export class StorageItemsController {
   ) {}
 
   @Get()
-  async getAll() {
-    return this.storageItemsService.getAllItems(); // GET /storage-items
+  async getAll(
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    return this.storageItemsService.getAllItems(pageNum, limitNum);
   }
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+
+  /**
+   * Get ordered and/or filtered items
+   * @param page What page number is requested
+   * @param limit How many rows to retrieve
+   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
+   * @param order_by What column to order the columns by. Default "created_at". See {Valid}
+   * @param searchquery Optional. Filter items by a string
+   * @returns Matching items
+   */
+  @Get("ordered")
+  getOrderedItems(
+    @Query("search") searchquery: string,
+    @Query("order") ordered_by: ValidItemOrder,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+    @Query("ascending") ascending: string = "true",
+    @Query("tags") tags: string,
+    @Query("active") active_filter: "active" | "inactive",
+    @Query("locations") location_filter: string,
+    @Query("category") category: string,
+  ) {
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const is_ascending = ascending.toLowerCase() === "true";
+    return this.storageItemsService.getOrderedStorageItems(
+      pageNum,
+      limitNum,
+      is_ascending,
+      ordered_by,
+      searchquery,
+      tags,
+      active_filter,
+      location_filter,
+      category,
+    );
+  }
   // (if we dont find the solution we could use that)
   @Get(":id")
   async getById(@Param("id") id: string): Promise<StorageItem | null> {
