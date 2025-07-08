@@ -18,14 +18,14 @@ type ExtendedBookingItem = BookingItem & {
 };
 
 type BookingCancelledEmailProps = {
-  orderId: string;
+  bookingId: string;
   items: ExtendedBookingItem[];
   recipientRole: Extract<UserRole, "user" | "admin" | "superVera">;
   startDate: string;
 };
 
 const BookingCancelledEmail = ({
-  orderId,
+  bookingId,
   items,
   recipientRole,
   startDate,
@@ -97,7 +97,7 @@ const BookingCancelledEmail = ({
           </Text>
 
           <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-            Varaus numerolla <strong>{orderId}</strong> päivämäärälle{" "}
+            Varaus numerolla <strong>{bookingId}</strong> päivämäärälle{" "}
             <strong>{startDate}</strong> on peruttu.
           </Text>
 
@@ -123,8 +123,8 @@ const BookingCancelledEmail = ({
 
           {/* --- english --- */}
           <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-            A booking with order number <strong>{orderId}</strong> for the date{" "}
-            <strong>{startDate}</strong> has been cancelled.
+            A booking with order number <strong>{bookingId}</strong> for the
+            date <strong>{startDate}</strong> has been cancelled.
           </Text>
 
           <Text style={{ fontWeight: "bold", marginTop: "20px" }}>

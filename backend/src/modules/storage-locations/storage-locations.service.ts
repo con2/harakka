@@ -1,12 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
-import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import {
   StorageLocationsFilter,
   StorageLocationsRow,
 } from "./interfaces/storage-location";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { ApiResponse } from "src/types/response.types";
 
 @Injectable()
@@ -39,15 +38,14 @@ export class StorageLocationsService {
 
   async getLocationById(
     id: string,
-    req: AuthRequest,
+    supabase: SupabaseClient,
   ): Promise<StorageLocationsRow | null> {
-    const supabase = req.supabase;
-
-    const { data, error } = await supabase
-      .from("storage_locations")
-      .select("*")
-      .eq("id", id)
-      .single();
+    const { data, error }: PostgrestSingleResponse<StorageLocationsRow> =
+      await supabase
+        .from("storage_locations")
+        .select("*")
+        .eq("id", id)
+        .single();
 
     if (error) {
       if (error.code === "PGRST116") {
@@ -78,7 +76,7 @@ export class StorageLocationsService {
       .order("name");
 
     for (const [field, values] of Object.entries(filters)) {
-      query = query.in(field as StorageLocationsFilter, values);
+      query = query.in(field, values);
     }
 
     const result = await query;

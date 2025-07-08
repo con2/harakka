@@ -314,11 +314,15 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { console.log(`Quantity: ${quantity}, availableQUantity: ${availabilityInfo}`)
-                setQuantity( // HIER!!
+              onClick={() => {
+                console.log(
+                  `Quantity: ${quantity}, availableQUantity: ${availabilityInfo}`,
+                );
+                setQuantity(
+                  // HIER!!
                   Math.min(availabilityInfo.availableQuantity, quantity + 1),
-              )}
-              }
+                );
+              }}
               className="h-8 w-8 p-0"
               disabled={quantity >= availabilityInfo.availableQuantity}
             >
@@ -341,7 +345,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                   ? availabilityInfo.availableQuantity > 0
                     ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
                     : `${t.itemCard.notAvailable[lang]}`
-                  : `${t.itemCard.totalUnits[lang]}: ${item.items_number_currently_in_storage}`}
+                  : `${t.itemCard.totalUnits[lang]}: ${item.items_number_total}`}
               </p>
             )}
           </div>

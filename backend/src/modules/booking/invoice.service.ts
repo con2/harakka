@@ -27,7 +27,7 @@ export class InvoiceService {
 
     // Load related order items
     const { data: orderItems, error: itemsError } = await supabase
-      .from("order_items")
+      .from("booking_items")
       .select("*, storage_items(*)") // only works if storage_items is a foreign key
       .eq("order_id", orderId);
     if (!orderItems || itemsError) {
