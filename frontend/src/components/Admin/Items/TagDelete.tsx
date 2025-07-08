@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
-import { deleteTag, fetchAllTags } from "@/store/slices/tagSlice";
+import { deleteTag } from "@/store/slices/tagSlice";
 import { Trash2 } from "lucide-react";
 import { toastConfirm } from "../../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
@@ -38,7 +38,6 @@ const TagDelete = ({
             success: t.tagDelete.toast.success[lang],
             error: t.tagDelete.toast.error[lang],
           });
-          dispatch(fetchAllTags({ limit: 20 }));
           onDeleted?.();
           closeModal?.();
         } catch {

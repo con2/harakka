@@ -46,3 +46,8 @@ export interface TagAssignment {
   itemId: string;
   tagIds: string[];
 }
+
+/**
+ * Filter options for tag assignment status
+ */
+export type TagAssignmentFilter = "all" | "assigned" | "unassigned";
