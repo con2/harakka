@@ -4,7 +4,7 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
+  | Json[]
 
 export type Database = {
   // Allows to automatically instanciate createClient with right options
@@ -12,29 +12,54 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       audit_logs: {
         Row: {
-          action: string;
-          created_at: string | null;
-          id: string;
-          new_values: Json | null;
-          old_values: Json | null;
-          record_id: string;
-          table_name: string;
-          user_id: string | null;
-        };
+          action: string
+          created_at: string | null
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string
+          table_name: string
+          user_id: string | null
+        }
         Insert: {
-          action: string;
-          created_at?: string | null;
-          id?: string;
-          new_values?: Json | null;
-          old_values?: Json | null;
-          record_id: string;
-          table_name: string;
-          user_id?: string | null;
-        };
+          action: string
+          created_at?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id: string
+          table_name: string
+          user_id?: string | null
+        }
         Update: {
           action?: string
           created_at?: string | null
@@ -44,240 +69,165 @@ export type Database = {
           record_id?: string
           table_name?: string
           user_id?: string | null
+        }
         Relationships: []
       }
       booking_items: {
         Row: {
-          created_at: string | null;
-          end_date: string;
-          id: string;
-          item_id: string;
-          location_id: string;
-          booking_id: string;
-          provider_organization_id: string | null;
-          quantity: number;
-          start_date: string;
-          status: string;
-          subtotal: number | null;
-          total_days: number;
-          unit_price: number | null;
-        };
+          booking_id: string
+          created_at: string | null
+          end_date: string
+          id: string
+          item_id: string
+          location_id: string
+          provider_organization_id: string | null
+          quantity: number
+          start_date: string
+          status: string
+          subtotal: number | null
+          total_days: number
+          unit_price: number | null
+        }
         Insert: {
-          created_at?: string | null;
-          end_date: string;
-          id?: string;
-          item_id: string;
-          location_id: string;
-          booking_id: string;
-          provider_organization_id?: string | null;
-          quantity?: number;
-          start_date: string;
-          status: string;
-          subtotal?: number | null;
-          total_days: number;
-          unit_price?: number | null;
-        };
+          booking_id: string
+          created_at?: string | null
+          end_date: string
+          id?: string
+          item_id: string
+          location_id: string
+          provider_organization_id?: string | null
+          quantity?: number
+          start_date: string
+          status: string
+          subtotal?: number | null
+          total_days: number
+          unit_price?: number | null
+        }
         Update: {
-          created_at?: string | null;
-          end_date?: string;
-          id?: string;
-          item_id?: string;
-          location_id?: string;
-          booking_id?: string;
-          provider_organization_id?: string | null;
-          quantity?: number;
-          start_date?: string;
-          status?: string;
-          subtotal?: number | null;
-          total_days?: number;
-          unit_price?: number | null;
-        };
+          booking_id?: string
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          item_id?: string
+          location_id?: string
+          provider_organization_id?: string | null
+          quantity?: number
+          start_date?: string
+          status?: string
+          subtotal?: number | null
+          total_days?: number
+          unit_price?: number | null
+        }
         Relationships: [
           {
-            foreignKeyName: "booking_items_item_id_fkey";
-            columns: ["item_id"];
-            isOneToOne: false;
-            referencedRelation: "storage_items";
-            referencedColumns: ["id"];
+            foreignKeyName: "order_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "storage_items"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "booking_items_item_id_fkey";
-            columns: ["item_id"];
-            isOneToOne: false;
-            referencedRelation: "view_item_location_summary";
-            referencedColumns: ["storage_item_id"];
+            foreignKeyName: "order_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_item_location_summary"
+            referencedColumns: ["storage_item_id"]
           },
           {
-            foreignKeyName: "booking_items_item_id_fkey";
-            columns: ["item_id"];
-            isOneToOne: false;
-            referencedRelation: "view_item_ownership_summary";
-            referencedColumns: ["storage_item_id"];
+            foreignKeyName: "order_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_item_ownership_summary"
+            referencedColumns: ["storage_item_id"]
           },
           {
-            foreignKeyName: "booking_items_location_id_fkey";
-            columns: ["location_id"];
-            isOneToOne: false;
-            referencedRelation: "storage_locations";
-            referencedColumns: ["id"];
+            foreignKeyName: "order_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "booking_items_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
-            referencedRelation: "bookings";
-            referencedColumns: ["id"];
+            foreignKeyName: "order_items_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "booking_items_provider_organization_id_fkey";
-            columns: ["provider_organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-        Row: {
-          created_at: string | null;
-          end_date: string;
-          id: string;
-          item_id: string;
-          location_id: string;
-          booking_id: string;
-          provider_organization_id: string | null;
-          quantity: number;
-          start_date: string;
-          status: string;
-          subtotal: number | null;
-          total_days: number;
-          unit_price: number | null;
-        };
-        Insert: {
-          created_at?: string | null;
-          end_date: string;
-          id?: string;
-          item_id: string;
-          location_id: string;
-          booking_id: string;
-          provider_organization_id?: string | null;
-          quantity?: number;
-          start_date: string;
-          status: string;
-          subtotal?: number | null;
-          total_days: number;
-          unit_price?: number | null;
-        };
-        Update: {
-          created_at?: string | null;
-          end_date?: string;
-          id?: string;
-          item_id?: string;
-          location_id?: string;
-          booking_id?: string;
-          provider_organization_id?: string | null;
-          quantity?: number;
-          start_date?: string;
-          status?: string;
-          subtotal?: number | null;
-          total_days?: number;
-          unit_price?: number | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "booking_items_item_id_fkey";
-            columns: ["item_id"];
-            isOneToOne: false;
-            referencedRelation: "storage_items";
-            referencedColumns: ["id"];
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "booking_items_item_id_fkey";
-            columns: ["item_id"];
-            isOneToOne: false;
-            referencedRelation: "view_item_location_summary";
-            referencedColumns: ["storage_item_id"];
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_with_user_info"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "booking_items_item_id_fkey";
-            columns: ["item_id"];
-            isOneToOne: false;
-            referencedRelation: "view_item_ownership_summary";
-            referencedColumns: ["storage_item_id"];
+            foreignKeyName: "order_items_provider_organization_id_fkey"
+            columns: ["provider_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "booking_items_location_id_fkey";
-            columns: ["location_id"];
-            isOneToOne: false;
-            referencedRelation: "storage_locations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "booking_items_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
-            referencedRelation: "bookings";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "booking_items_provider_organization_id_fkey";
-            columns: ["provider_organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
+        ]
+      }
       bookings: {
         Row: {
-          created_at: string | null;
-      bookings: {
-        Row: {
-          created_at: string | null;
-          discount_amount: number | null;
-          discount_code: string | null;
-          final_amount: number | null;
-          id: string;
-          notes: string | null;
-          booking_number: string;
-          payment_details: Json | null;
-          payment_status: string | null;
-          status: string;
-          total_amount: number | null;
-          updated_at: string | null;
-          user_id: string;
-        };
+          booking_number: string
+          created_at: string | null
+          discount_amount: number | null
+          discount_code: string | null
+          final_amount: number | null
+          id: string
+          notes: string | null
+          payment_details: Json | null
+          payment_status: string | null
+          status: string
+          total_amount: number | null
+          updated_at: string | null
+          user_id: string
+        }
         Insert: {
-          created_at?: string | null;
-          discount_amount?: number | null;
-          discount_code?: string | null;
-          final_amount?: number | null;
-          id?: string;
-          notes?: string | null;
-          booking_number: string;
-          payment_details?: Json | null;
-          payment_status?: string | null;
-          status: string;
-          total_amount?: number | null;
-          updated_at?: string | null;
-          user_id: string;
-        };
+          booking_number: string
+          created_at?: string | null
+          discount_amount?: number | null
+          discount_code?: string | null
+          final_amount?: number | null
+          id?: string
+          notes?: string | null
+          payment_details?: Json | null
+          payment_status?: string | null
+          status: string
+          total_amount?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
         Update: {
-          created_at?: string | null;
-          discount_amount?: number | null;
-          discount_code?: string | null;
-          final_amount?: number | null;
-          id?: string;
-          notes?: string | null;
-          booking_number?: string;
-          payment_details?: Json | null;
-          payment_status?: string | null;
-          status?: string;
-          total_amount?: number | null;
-          updated_at?: string | null;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
+          booking_number?: string
+          created_at?: string | null
+          discount_amount?: number | null
+          discount_code?: string | null
+          final_amount?: number | null
+          id?: string
+          notes?: string | null
+          payment_details?: Json | null
+          payment_status?: string | null
+          status?: string
+          total_amount?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          created_at: string | null
           due_date: string | null
           id: string
           invoice_number: string
@@ -315,6 +265,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["id"]
           },
           {
@@ -406,8 +363,8 @@ export type Database = {
             referencedRelation: "storage_locations"
             referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       organization_locations: {
         Row: {
           created_at: string | null
@@ -448,8 +405,8 @@ export type Database = {
             referencedRelation: "storage_locations"
             referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       organizations: {
         Row: {
           created_at: string | null
@@ -474,166 +431,173 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
-          created_at?: string | null;
-          created_by?: string | null;
-          description?: string | null;
-          id?: string;
-          is_active?: boolean | null;
-          name?: string;
-          slug?: string;
-          updated_at?: string | null;
-          updated_by?: string | null;
-        };
-        Relationships: [];
-      };
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
-          amount: number;
-          created_at: string | null;
-          id: string;
-          metadata: Json | null;
-          booking_id: string;
-          payment_date: string;
-          payment_method: string;
-          status: string;
-          transaction_id: string | null;
-        };
+          amount: number
+          booking_id: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          payment_date: string
+          payment_method: string
+          status: string
+          transaction_id: string | null
+        }
         Insert: {
-          amount: number;
-          created_at?: string | null;
-          id?: string;
-          metadata?: Json | null;
-          booking_id: string;
-          payment_date: string;
-          payment_method: string;
-          status: string;
-          transaction_id?: string | null;
-        };
+          amount: number
+          booking_id: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_date: string
+          payment_method: string
+          status: string
+          transaction_id?: string | null
+        }
         Update: {
-          amount?: number;
-          created_at?: string | null;
-          id?: string;
-          metadata?: Json | null;
-          booking_id?: string;
-          payment_date?: string;
-          payment_method?: string;
-          status?: string;
-          transaction_id?: string | null;
-        };
+          amount?: number
+          booking_id?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_date?: string
+          payment_method?: string
+          status?: string
+          transaction_id?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "payments_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
-            referencedRelation: "bookings";
-            referencedColumns: ["id"];
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+          {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_with_user_info"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promotions: {
         Row: {
-          code: string;
-          created_at: string | null;
-          description: string;
-          discount_type: string;
-          discount_value: number;
-          expires_at: string;
-          id: string;
-          is_active: boolean | null;
-          max_discount: number | null;
-          min_booking_amount: number | null;
-          owner_organization_id: string | null;
-          starts_at: string;
-          times_used: number | null;
-          usage_limit: number | null;
-        };
+          code: string
+          created_at: string | null
+          description: string
+          discount_type: string
+          discount_value: number
+          expires_at: string
+          id: string
+          is_active: boolean | null
+          max_discount: number | null
+          min_order_amount: number | null
+          owner_organization_id: string | null
+          starts_at: string
+          times_used: number | null
+          usage_limit: number | null
+        }
         Insert: {
-          code: string;
-          created_at?: string | null;
-          description: string;
-          discount_type: string;
-          discount_value: number;
-          expires_at: string;
-          id?: string;
-          is_active?: boolean | null;
-          max_discount?: number | null;
-          min_booking_amount?: number | null;
-          owner_organization_id?: string | null;
-          starts_at: string;
-          times_used?: number | null;
-          usage_limit?: number | null;
-        };
+          code: string
+          created_at?: string | null
+          description: string
+          discount_type: string
+          discount_value: number
+          expires_at: string
+          id?: string
+          is_active?: boolean | null
+          max_discount?: number | null
+          min_order_amount?: number | null
+          owner_organization_id?: string | null
+          starts_at: string
+          times_used?: number | null
+          usage_limit?: number | null
+        }
         Update: {
-          code?: string;
-          created_at?: string | null;
-          description?: string;
-          discount_type?: string;
-          discount_value?: number;
-          expires_at?: string;
-          id?: string;
-          is_active?: boolean | null;
-          max_discount?: number | null;
-          min_booking_amount?: number | null;
-          owner_organization_id?: string | null;
-          starts_at?: string;
-          times_used?: number | null;
-          usage_limit?: number | null;
-        };
+          code?: string
+          created_at?: string | null
+          description?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string
+          id?: string
+          is_active?: boolean | null
+          max_discount?: number | null
+          min_order_amount?: number | null
+          owner_organization_id?: string | null
+          starts_at?: string
+          times_used?: number | null
+          usage_limit?: number | null
+        }
         Relationships: [
           {
-            foreignKeyName: "promotions_owner_organization_id_fkey";
-            columns: ["owner_organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
+            foreignKeyName: "promotions_owner_organization_id_fkey"
+            columns: ["owner_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       reviews: {
         Row: {
-          created_at: string | null;
-          id: string;
-          is_verified: boolean | null;
-          item_id: string;
-          rating: number;
-          review_text: string | null;
-          updated_at: string | null;
-          user_id: string;
-        };
+          created_at: string | null
+          id: string
+          is_verified: boolean | null
+          item_id: string
+          rating: number
+          review_text: string | null
+          updated_at: string | null
+          user_id: string
+        }
         Insert: {
-          created_at?: string | null;
-          id?: string;
-          is_verified?: boolean | null;
-          item_id: string;
-          rating: number;
-          review_text?: string | null;
-          updated_at?: string | null;
-          user_id: string;
-        };
+          created_at?: string | null
+          id?: string
+          is_verified?: boolean | null
+          item_id: string
+          rating: number
+          review_text?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
         Update: {
-          created_at?: string | null;
-          id?: string;
-          is_verified?: boolean | null;
-          item_id?: string;
-          rating?: number;
-          review_text?: string | null;
-          updated_at?: string | null;
-          user_id?: string;
-        };
+          created_at?: string | null
+          id?: string
+          is_verified?: boolean | null
+          item_id?: string
+          rating?: number
+          review_text?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "reviews_item_id_fkey";
-            columns: ["item_id"];
-            isOneToOne: false;
-            referencedRelation: "storage_items";
-            referencedColumns: ["id"];
+            foreignKeyName: "reviews_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "storage_items"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reviews_item_id_fkey";
-            columns: ["item_id"];
-            isOneToOne: false;
-            referencedRelation: "view_item_location_summary",
-            referencedColumns: ["storage_item_id"];
+            foreignKeyName: "reviews_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_item_location_summary"
+            referencedColumns: ["storage_item_id"]
           },
           {
             foreignKeyName: "reviews_item_id_fkey"
@@ -783,11 +747,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "storage_analytics_location_id_fkey";
-            columns: ["location_id"];
-            isOneToOne: false;
-            referencedRelation: "storage_locations";
-            referencedColumns: ["id"];
+            foreignKeyName: "storage_analytics_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1317,6 +1281,23 @@ export type Database = {
       }
     }
     Views: {
+      view_bookings_with_user_info: {
+        Row: {
+          booking_number: string | null
+          created_at: string | null
+          created_at_text: string | null
+          email: string | null
+          final_amount: number | null
+          final_amount_text: string | null
+          full_name: string | null
+          id: string | null
+          payment_status: string | null
+          status: string | null
+          total_amount: number | null
+          visible_name: string | null
+        }
+        Relationships: []
+      }
       view_item_location_summary: {
         Row: {
           item_name: string | null
@@ -1367,6 +1348,40 @@ export type Database = {
           },
         ]
       }
+      view_user_roles_with_details: {
+        Row: {
+          assigned_at: string | null
+          assignment_id: string | null
+          assignment_updated_at: string | null
+          is_active: boolean | null
+          organization_id: string | null
+          organization_is_active: boolean | null
+          organization_name: string | null
+          role_id: string | null
+          role_name: Database["public"]["Enums"]["roles_type"] | null
+          user_email: string | null
+          user_full_name: string | null
+          user_id: string | null
+          user_phone: string | null
+          user_visible_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "erm_user_organization_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "erm_user_organization_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       auth_hook_get_user_roles: {
@@ -1378,22 +1393,6 @@ export type Database = {
         Returns: number
       }
       generate_slug: {
-        Args: { input_text: string };
-        Returns: string;
-      };
-      get_all_full_bookings: {
-        Args: { in_offset?: number; in_limit?: number };
-        Returns: Json;
-      };
-      get_full_booking: {
-        Args: { booking_id: string };
-        Returns: Json;
-      };
-      get_full_user_booking: {
-        Args: { in_user_id: string; in_offset?: number; in_limit?: number };
-        Returns: Json;
-      };
-    };
         Args: { input_text: string }
         Returns: string
       }
@@ -1470,6 +1469,7 @@ export type Database = {
       [_ in never]: never
     }
   }
+}
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
@@ -1586,7 +1586,7 @@ export type CompositeTypes<
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never;
+    : never
 
 export const Constants = {
   graphql_public: {
@@ -1615,4 +1615,4 @@ export const Constants = {
       ],
     },
   },
-} as const;
+} as const
