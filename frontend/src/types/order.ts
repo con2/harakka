@@ -1,5 +1,6 @@
 import { BaseEntity, ErrorContext } from "./common";
 import { ItemTranslation } from "./item";
+import { Database } from "./supabase.types";
 
 /**
  * Order status values
@@ -77,6 +78,10 @@ export interface OrdersState {
   error: string | null; // Change to simple string like tags
   errorContext: ErrorContext;
   currentOrder: string | null;
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 /**
@@ -91,3 +96,32 @@ export interface CreateOrderDto {
     end_date: string;
   }[];
 }
+
+export type BookingsTable = Database["public"]["Tables"]["orders"];
+export type BookingsRow = BookingsTable["Row"];
+
+/**
+ * Valid values for the /ordered endpoint.
+ * Data can be ordered by the following values
+ */
+export type ValidBookingOrder =
+  | "created_at"
+  | "booking_number"
+  | "payment_status"
+  | "status"
+  | "total"
+  | "full_name";
+
+export type BookingStatus =
+  | "confirmed"
+  | "cancelled by admin"
+  | "deleted"
+  | "rejected"
+  | "completed"
+  | "pending"
+  | "cancelled by user"
+  | "all";
+
+export type BookingUserView =
+  Database["public"]["Views"]["view_bookings_with_user_info"];
+export type BookingUserViewRow = BookingUserView["Row"];

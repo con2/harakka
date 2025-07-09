@@ -8,18 +8,21 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  checkItemDeletability,
   deleteItem,
   fetchAllItems,
+  fetchOrderedItems,
   selectAllItems,
   selectItemsError,
+  selectItemsLimit,
   selectItemsLoading,
+  selectItemsPage,
+  selectItemsTotalPages,
   updateItem,
 } from "@/store/slices/itemsSlice";
 import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
 import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
-import { Item } from "@/types/item";
+import { Item, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -33,6 +36,7 @@ import { toastConfirm } from "../ui/toastConfirm";
 import AddItemModal from "./Items/AddItemModal";
 import AssignTagsModal from "./Items/AssignTagsModal";
 import UpdateItemModal from "./Items/UpdateItemModal";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -40,13 +44,16 @@ const AdminItemsTable = () => {
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
+  const tagsLoading = useAppSelector((state) => state.tags.loading);
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const isAdmin = useAppSelector(selectIsAdmin);
   const isSuperVera = useAppSelector(selectIsSuperVera);
   // Translation
   const { lang } = useLanguage();
-
+  const page = useAppSelector(selectItemsPage);
+  const totalPages = useAppSelector(selectItemsTotalPages);
+  const limit = useAppSelector(selectItemsLimit);
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   // filtering states:
@@ -55,62 +62,103 @@ const AdminItemsTable = () => {
   >("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchQuery = useDebouncedValue(searchTerm);
+
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [order, setOrder] = useState<ValidItemOrder>("created_at");
+  const [ascending, setAscending] = useState<boolean | null>(null);
+
+  /*-----------------------handlers-----------------------------------*/
+  const handlePageChange = (newPage: number) => setCurrentPage(newPage);
+
+  const handleEdit = (item: Item) => {
+    setSelectedItem(item); // Set the selected item
+    setShowModal(true); // Show the modal
+  };
+
+  const handleDelete = async (id: string) => {
+    toastConfirm({
+      title: t.adminItemsTable.messages.deletion.title[lang],
+      description: t.adminItemsTable.messages.deletion.description[lang],
+      confirmText: t.adminItemsTable.messages.deletion.confirm[lang],
+      cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
+      onConfirm: async () => {
+        try {
+          toast.promise(dispatch(deleteItem(id)).unwrap(), {
+            loading: t.adminItemsTable.messages.toast.deleting[lang],
+            success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
+            error: t.adminItemsTable.messages.toast.deleteFail[lang],
+          });
+          dispatch(fetchAllItems({ page: 1, limit: limit }));
+        } catch {
+          toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
+        }
+      },
+      onCancel: () => {
+        // Optional: handle cancel if needed
+      },
+    });
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedItem(null); // Reset selected item
+  };
+
+  const handleOrder = (order: string) =>
+    setOrder(order.toLowerCase() as ValidItemOrder);
+  const handleAscending = (ascending: boolean | null) =>
+    setAscending(ascending);
 
   const handleCloseAssignTagsModal = () => {
     setAssignTagsModalOpen(false);
     setCurrentItemId(null);
   };
+  useEffect(() => console.log(tagFilter), [tagFilter]);
+
   /* ————————————————————— Side Effects ———————————————————————————— */
+  useEffect(() => {
+    if (debouncedSearchQuery || order) {
+      dispatch(
+        fetchOrderedItems({
+          ordered_by: order,
+          page: currentPage,
+          limit: limit,
+          searchquery: debouncedSearchQuery,
+          ascending: ascending === false ? false : true,
+          tag_filters: tagFilter,
+          activity_filter: statusFilter !== "all" ? statusFilter : undefined,
+        }),
+      );
+    } else {
+      dispatch(fetchAllItems({ page: currentPage, limit: limit }));
+    }
+  }, [
+    dispatch,
+    ascending,
+    order,
+    debouncedSearchQuery,
+    currentPage,
+    limit,
+    page,
+    tagFilter,
+    statusFilter,
+  ]);
+
   //fetch tags list
-  const tagsLoading = useAppSelector((state) => state.tags.loading);
   useEffect(() => {
-    dispatch(fetchAllTags({ limit: 20 }));
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (items.length === 0) {
-      dispatch(fetchAllItems());
-    }
-  }, [dispatch, items.length]);
-
-  useEffect(() => {
-    if (selectedItem) {
-      dispatch(fetchAllItems());
-    }
-  }, [selectedItem, dispatch]);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [searchTerm, statusFilter, tagFilter]);
+    if (tags.length === 0) dispatch(fetchAllTags({ limit: 20 }));
+  }, [dispatch, tags.length, items.length]);
 
   const deletableItems = useAppSelector((state) => state.items.deletableItems);
 
-  useEffect(() => {
-    const newItemIds = items
-      .filter(
-        (item) =>
-          !Object.prototype.hasOwnProperty.call(deletableItems, item.id),
-      )
-      .map((item) => item.id);
-
-    if (newItemIds.length > 0) {
-      newItemIds.forEach((id) => dispatch(checkItemDeletability(id)));
-    }
-  }, [dispatch, items, deletableItems]);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [searchTerm, statusFilter, tagFilter]);
   /* ————————————————————————— Item Columns ———————————————————————— */
   const itemsColumns: ColumnDef<Item>[] = [
     {
       header: t.adminItemsTable.columns.namefi[lang],
       size: 120,
+      id: "fi_item_name",
       accessorFn: (row) => row.translations.fi.item_name,
       sortingFn: "alphanumeric",
       enableSorting: true,
@@ -122,22 +170,24 @@ const AdminItemsTable = () => {
     {
       header: t.adminItemsTable.columns.typefi[lang],
       size: 120,
-      accessorFn: (row) => row.translations.fi.item_type,
+      id: "fi_item_type",
+      accessorFn: (row) => row.translations.en.item_type,
       sortingFn: "alphanumeric",
       enableSorting: true,
       cell: ({ row }) => {
-        const type = row.original.translations.fi.item_type || "";
+        const type = row.original.translations.en.item_type || "";
         return type.charAt(0).toUpperCase() + type.slice(1);
       },
     },
     {
       header: t.adminItemsTable.columns.location[lang],
       size: 70,
-      accessorFn: (row) => row.location_details?.name || "N/A", // For sorting
+      id: "location_name",
+      accessorFn: (row) => row.location_name || "N/A", // For sorting
       enableSorting: true,
       cell: ({ row }) => (
         <div className="flex items-center gap-1 text-sm">
-          {row.original.location_details?.name || "N/A"}
+          {row.original.location_name || "N/A"}
         </div>
       ),
     },
@@ -148,14 +198,15 @@ const AdminItemsTable = () => {
       cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
     },
     {
-      header: t.adminItemsTable.columns.quantity[lang],
+      header: t.adminItemsTable.columns.quantity[lang], // TODO: add corr. header items total
       size: 30,
-      accessorFn: (row) => row.items_number_available,
+      id: "items_number_total",
+      accessorFn: (row) => row.items_number_total,
       cell: ({ row }) =>
-        `${row.original.items_number_available} ${t.adminItemsTable.messages.units[lang]}`,
+        `${row.original.items_number_total} ${t.adminItemsTable.messages.units[lang]}`,
     },
     {
-      id: "status",
+      id: "is_active",
       header: t.adminItemsTable.columns.active[lang],
       size: 30,
       cell: ({ row }) => {
@@ -171,7 +222,7 @@ const AdminItemsTable = () => {
                 },
               }),
             ).unwrap();
-            dispatch(fetchAllItems());
+            dispatch(fetchAllItems({ page: 1, limit: limit }));
             toast.success(
               checked
                 ? t.adminItemsTable.messages.toast.activateSuccess[lang]
@@ -244,40 +295,6 @@ const AdminItemsTable = () => {
     },
   ];
 
-  const handleEdit = (item: Item) => {
-    setSelectedItem(item); // Set the selected item
-    setShowModal(true); // Show the modal
-  };
-
-  const handleDelete = async (id: string) => {
-    toastConfirm({
-      title: t.adminItemsTable.messages.deletion.title[lang],
-      description: t.adminItemsTable.messages.deletion.description[lang],
-      confirmText: t.adminItemsTable.messages.deletion.confirm[lang],
-      cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
-      onConfirm: async () => {
-        try {
-          await toast.promise(dispatch(deleteItem(id)).unwrap(), {
-            loading: t.adminItemsTable.messages.toast.deleting[lang],
-            success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
-            error: t.adminItemsTable.messages.toast.deleteFail[lang],
-          });
-          dispatch(fetchAllItems());
-        } catch {
-          toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
-        }
-      },
-      onCancel: () => {
-        // Optional: handle cancel if needed
-      },
-    });
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedItem(null); // Reset selected item
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center p-8">
@@ -289,37 +306,6 @@ const AdminItemsTable = () => {
   if (error) {
     return <div className="p-4 text-destructive">{error}</div>;
   }
-
-  const filteredItems = items
-    .filter((item) => {
-      if (statusFilter === "active") return item.is_active;
-      if (statusFilter === "inactive") return !item.is_active;
-      return true;
-    })
-    .filter((item) => {
-      const name = item.translations.fi.item_name.toLowerCase();
-      const type = item.translations.fi.item_type.toLowerCase();
-      return (
-        name.includes(searchTerm.toLowerCase()) ||
-        type.includes(searchTerm.toLowerCase())
-      );
-    })
-    .filter((item) => {
-      if (tagFilter.length === 0) return true;
-      const itemTagIds = (item.storage_item_tags ?? []).map((t) => t.id);
-      return tagFilter.every((tag) => itemTagIds.includes(tag));
-    });
-
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const startIndex = currentPage * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedItems = filteredItems.slice(startIndex, endIndex);
-
-  // Handle page change
-  const handlePageChange = (pageIndex: number) => {
-    setCurrentPage(pageIndex);
-  };
 
   /*————————————————————————————— Main Render —————————————————————————————*/
   return (
@@ -412,17 +398,12 @@ const AdminItemsTable = () => {
                         >
                           <Checkbox
                             checked={tagFilter.includes(tag.id)}
-                            onCheckedChange={() =>
-                              setTagFilter((prev) =>
-                                prev.includes(tag.id)
-                                  ? prev.filter((t) => t !== tag.id)
-                                  : [...prev, tag.id],
-                              )
-                            }
                             className={cn(
                               "mr-2 h-4 w-4 border border-secondary bg-white text-white",
                               "data-[state=checked]:bg-secondary",
                               "data-[state=checked]:text-white",
+                              "relative",
+                              "z-10",
                             )}
                           />
                           <span>{label}</span>
@@ -462,10 +443,15 @@ const AdminItemsTable = () => {
 
       <PaginatedDataTable
         columns={itemsColumns}
-        data={paginatedItems}
-        pageIndex={currentPage}
+        data={items}
+        pageIndex={currentPage - 1}
         pageCount={totalPages}
-        onPageChange={handlePageChange}
+        onPageChange={(page) => handlePageChange(page + 1)}
+        handleAscending={handleAscending}
+        handleOrder={handleOrder}
+        order={order}
+        ascending={ascending}
+        originalSorting="items_number_total"
       />
 
       {/* Show UpdateItemModal when showModal is true */}

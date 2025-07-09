@@ -4,9 +4,9 @@ import { Button } from "../../ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "../../ui/data-table-paginated";
-import { Tag } from "@/types";
+import { Tag, TagAssignmentFilter } from "@/types";
 import {
-  fetchAllTags,
+  fetchFilteredTags,
   selectAllTags,
   selectError,
   selectLoading,
@@ -28,6 +28,7 @@ import TagDelete from "./TagDelete";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const TagList = () => {
   const dispatch = useAppDispatch();
@@ -37,19 +38,28 @@ const TagList = () => {
   const error = useAppSelector(selectError);
   const page = useAppSelector(selectTagsPage);
   const totalPages = useAppSelector(selectTagsTotalPages);
+  // State for filtering
   const [searchTerm, setSearchTerm] = useState("");
-  const [assignmentFilter, setAssignmentFilter] = useState<
-    "all" | "assigned" | "unassigned"
-  >("all");
+  const [assignmentFilter, setAssignmentFilter] =
+    useState<TagAssignmentFilter>("all");
+  const [currentPage, setCurrentPage] = useState(page);
+  // State for sorting (backend)
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  // State for sorting (UI table)
+  const [order, setOrder] = useState("created_at");
+  const [ascending, setAscending] = useState<boolean | null>(false);
+  // Debounced search term
+  const debouncedSearchTerm = useDebouncedValue(searchTerm);
   // Translation
   const { lang } = useLanguage();
 
+  // Edit modal state
   const [editTag, setEditTag] = useState<Tag | null>(null);
   const [editNameFi, setEditNameFi] = useState("");
   const [editNameEn, setEditNameEn] = useState("");
 
-  const [currentPage, setCurrentPage] = useState(page);
-
+  // Calculate tag usage for display
   const tagUsage: Record<string, number> = {};
   items.forEach((item) => {
     (item.storage_item_tags || []).forEach((tag) => {
@@ -57,43 +67,64 @@ const TagList = () => {
     });
   });
 
-  // added a fallback default ([]) before calling .filter
-  const filteredTags = (tags ?? [])
-    .filter((tag) => {
-      const fiName = tag.translations?.fi?.name?.toLowerCase() || "";
-      const enName = tag.translations?.en?.name?.toLowerCase() || "";
-      const search = searchTerm.toLowerCase();
-      return fiName.includes(search) || enName.includes(search);
-    })
-    .filter((tag) => {
-      const isAssigned = !!tagUsage?.[tag.id];
-      if (assignmentFilter === "assigned") return isAssigned;
-      if (assignmentFilter === "unassigned") return !isAssigned;
-      return true;
-    });
-
-  // Fetch tags on mount
+  // Fetch tags when search term or assignment filter changes
   useEffect(() => {
-    if (tags.length === 0)
-      dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
-  }, [dispatch, tags.length, currentPage]);
+    dispatch(
+      fetchFilteredTags({
+        page: currentPage,
+        limit: 10,
+        search: debouncedSearchTerm,
+        assignmentFilter,
+        sortBy,
+        sortOrder,
+      }),
+    );
+  }, [
+    dispatch,
+    currentPage,
+    debouncedSearchTerm,
+    assignmentFilter,
+    sortBy,
+    sortOrder,
+  ]);
+
+  // Reset page when search term or assignment filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, assignmentFilter, sortBy, sortOrder]);
 
   // When redux page changes, sync local page
   useEffect(() => {
     setCurrentPage(page);
   }, [page]);
 
-  // Fetch items once tags are available
+  // Fetch items once
   useEffect(() => {
-    if (!tags || tags.length === 0) return; // exit if tags is falsy or empty
     if (items.length === 0) {
       dispatch(fetchAllItems());
     }
-  }, [dispatch, tags, items, items.length]);
+  }, [dispatch, items.length]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
+  };
+
+  // Sorting handlers
+  const handleOrder = (newOrder: string) => {
+    setOrder(newOrder);
+    setSortBy(newOrder);
+  };
+
+  const handleAscending = (newAscending: boolean | null) => {
+    setAscending(newAscending);
+    if (newAscending === null) {
+      setSortOrder("desc"); // default sort order
+    } else if (newAscending) {
+      setSortOrder("asc");
+    } else {
+      setSortOrder("desc");
+    }
   };
 
   const handleEditClick = (tag: Tag) => {
@@ -118,7 +149,17 @@ const TagList = () => {
         updateTag({ id: editTag.id, tagData: updatedTag }),
       ).unwrap();
       toast.success(t.tagList.editModal.messages.success[lang]);
-      dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
+      // Refresh the current page
+      dispatch(
+        fetchFilteredTags({
+          page: currentPage,
+          limit: 10,
+          search: debouncedSearchTerm,
+          assignmentFilter,
+          sortBy,
+          sortOrder,
+        }),
+      );
       setEditTag(null);
     } catch {
       toast.error(t.tagList.editModal.messages.error[lang]);
@@ -130,16 +171,20 @@ const TagList = () => {
       header: t.tagList.columns.nameFi[lang],
       accessorFn: (row) => row.translations?.fi?.name ?? "—",
       cell: ({ row }) => row.original.translations?.fi?.name ?? "—",
+      enableSorting: false,
     },
     {
       header: t.tagList.columns.nameEn[lang],
       accessorFn: (row) => row.translations?.en?.name ?? "—",
       cell: ({ row }) => row.original.translations?.en?.name ?? "—",
+      enableSorting: false,
     },
     {
       header: t.tagList.columns.createdAt[lang],
+      id: "created_at",
       accessorKey: "created_at",
       cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
+      enableSorting: true,
     },
     {
       header: t.tagList.columns.assigned[lang],
@@ -157,6 +202,7 @@ const TagList = () => {
           </span>
         );
       },
+      enableSorting: false,
     },
     {
       header: t.tagList.columns.assignedTo[lang],
@@ -173,8 +219,7 @@ const TagList = () => {
           </span>
         );
       },
-      sortingFn: "basic",
-      enableSorting: true,
+      enableSorting: false,
     },
     {
       id: "actions",
@@ -193,7 +238,29 @@ const TagList = () => {
             <TagDelete
               id={tag.id}
               onDeleted={() => {
-                dispatch(fetchAllTags({ page: currentPage, limit: 10 }));
+                // Calculate if we need to go to previous page after deletion
+                const isLastItemOnPage = (tags?.length ?? 0) === 1;
+                const shouldGoToPreviousPage =
+                  isLastItemOnPage && currentPage > 1;
+                const targetPage = shouldGoToPreviousPage
+                  ? currentPage - 1
+                  : currentPage;
+
+                // Update the current page if needed
+                if (shouldGoToPreviousPage) {
+                  setCurrentPage(targetPage);
+                }
+
+                dispatch(
+                  fetchFilteredTags({
+                    page: targetPage,
+                    limit: 10,
+                    search: debouncedSearchTerm,
+                    assignmentFilter,
+                    sortBy,
+                    sortOrder,
+                  }),
+                );
               }}
             />
           </div>
@@ -235,9 +302,7 @@ const TagList = () => {
               <select
                 value={assignmentFilter}
                 onChange={(e) =>
-                  setAssignmentFilter(
-                    e.target.value as "all" | "assigned" | "unassigned",
-                  )
+                  setAssignmentFilter(e.target.value as TagAssignmentFilter)
                 }
                 className="text-sm p-2 rounded-md border bg-white focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
               >
@@ -266,7 +331,23 @@ const TagList = () => {
               )}
             </div>
             <div className="flex gap-4">
-              <AddTagModal>
+              <AddTagModal
+                onCreated={() => {
+                  // When a new tag is created, go to the first page to see it
+                  // (especially important if filters are applied)
+                  setCurrentPage(1);
+                  dispatch(
+                    fetchFilteredTags({
+                      page: 1,
+                      limit: 10,
+                      search: debouncedSearchTerm,
+                      assignmentFilter,
+                      sortBy,
+                      sortOrder,
+                    }),
+                  );
+                }}
+              >
                 <Button variant="outline" size={"sm"}>
                   {t.tagList.buttons.add[lang]}
                 </Button>
@@ -277,10 +358,15 @@ const TagList = () => {
           {/* Table */}
           <PaginatedDataTable
             columns={columns}
-            data={filteredTags}
+            data={tags || []}
             pageIndex={currentPage - 1}
             pageCount={totalPages}
             onPageChange={(page) => handlePageChange(page + 1)}
+            order={order}
+            ascending={ascending}
+            handleOrder={handleOrder}
+            handleAscending={handleAscending}
+            originalSorting="created_at"
           />
 
           {/* Edit Modal */}

@@ -63,7 +63,6 @@ export interface ItemFormData
   test_metadata?: Json | null;
   test_priority_score?: number | null;
   // Ensure both fields are defined
-  items_number_available: number;
   items_number_currently_in_storage: number;
 }
 

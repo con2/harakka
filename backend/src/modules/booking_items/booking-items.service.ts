@@ -22,7 +22,7 @@ export class BookingItemsService {
     const { from, to } = getPaginationRange(page, limit);
 
     const result: PostgrestResponse<BookingItemsRow> = await supabase
-      .from("order_items")
+      .from("booking_items")
       .select("*")
       .range(from, to);
 
@@ -41,7 +41,7 @@ export class BookingItemsService {
   ): Promise<ApiResponse<BookingItemsRow>> {
     const { from, to } = getPaginationRange(page, limit);
     const result: PostgrestResponse<BookingItemsRow> = await supabase
-      .from("order_items")
+      .from("booking_items")
       .select("*", { count: "exact" })
       .eq("order_id", booking_id)
       .range(from, to);
@@ -62,7 +62,7 @@ export class BookingItemsService {
   ): Promise<ApiResponse<BookingItemsRow>> {
     const { from, to } = getPaginationRange(page, limit);
     const result = await supabase
-      .from("order-items")
+      .from("booking_items")
       .select("*")
       .eq("user_id", user_id)
       .range(from, to);
@@ -80,7 +80,7 @@ export class BookingItemsService {
     booking_item: BookingItemsInsert,
   ): Promise<ApiSingleResponse<BookingItemsRow>> {
     const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
-      .from("order_items")
+      .from("booking_items")
       .insert(booking_item)
       .select()
       .single();
@@ -97,12 +97,33 @@ export class BookingItemsService {
     booking_item_id: string,
   ): Promise<ApiSingleResponse<BookingItemsRow>> {
     const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
-      .from("order_items")
+      .from("booking_items")
       .delete()
       .eq("order_id", booking_id) // After renaming table + id column: Update column name
       .eq("id", booking_item_id)
       .select()
       .single();
+
+    if (result.error) {
+      console.error(result.error);
+      if (result.error.code === "PGRST116")
+        throw new BadRequestException(
+          "Failed to remove booking item. Either it has already been removed or an incorrect ID has been provided",
+        );
+      throw new BadRequestException("Failed to remove booking item");
+    }
+    return result;
+  }
+
+  async removeAllBookingItems(
+    supabase: SupabaseClient,
+    booking_id: string,
+  ): Promise<ApiResponse<BookingItemsRow>> {
+    const result: PostgrestResponse<BookingItemsRow> = await supabase
+      .from("order_items")
+      .delete()
+      .eq("order_id", booking_id) // After renaming table + id column: Update column name
+      .select();
 
     if (result.error) {
       console.error(result.error);
@@ -121,7 +142,7 @@ export class BookingItemsService {
     updated_booking_item: BookingItemsUpdate,
   ): Promise<ApiSingleResponse<BookingItemsRow>> {
     const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
-      .from("order-items")
+      .from("booking_items")
       .update(updated_booking_item)
       .eq("id", booking_item_id)
       .select()

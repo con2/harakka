@@ -45,7 +45,7 @@ export class BookingEmailAssembler {
    * Build a fully‑hydrated {@link BookingEmailPayload} from an `orderId`.
    *
    * Queries:
-   * 1. `orders` with nested `order_items → storage_items → storage_locations`
+   * 1. `orders` with nested `booking_items → storage_items → storage_locations`
    * 2. `user_profiles` for the order owner
    *
    * Also formats dates (DD.MM.YYYY) and maps translations.
@@ -58,12 +58,12 @@ export class BookingEmailAssembler {
 
     // 1. Load order with nested relations (items → storage → location)
     const { data: order, error: orderError } = await supabase
-      .from("orders")
+      .from("bookings")
       .select(
         `
           id,
           user_id,
-          order_items (
+          booking_items (
             quantity,
             start_date,
             end_date,
@@ -97,7 +97,7 @@ export class BookingEmailAssembler {
 
     // 3. Enrich items once
     const enrichedItems =
-      order.order_items?.map((item) => {
+      order.booking_items?.map((item) => {
         const translations = item.storage_items
           ?.translations as Translations | null;
 
@@ -114,12 +114,12 @@ export class BookingEmailAssembler {
       }) ?? [];
 
     // 4. Derive date & location
-    const pickupDate = dayjs(order.order_items?.[0]?.start_date).format(
+    const pickupDate = dayjs(order.booking_items?.[0]?.start_date).format(
       "DD.MM.YYYY",
     );
 
     const locationName =
-      order.order_items?.[0]?.storage_items?.storage_locations?.name ??
+      order.booking_items?.[0]?.storage_items?.storage_locations?.name ??
       "Unknown";
 
     return {

@@ -1,9 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { TagRow, TagUpdate } from "./interfaces/tag.interface";
-import { Database } from "src/types/supabase.types";
+import { Database } from "src/types/database.types";
 import { ApiResponse } from "src/types/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 
@@ -16,25 +16,116 @@ export class TagService {
       this.supabaseService.getServiceClient() as SupabaseClient<Database>;
   }
   // Fetch all tags
-  async getAllTags(page: number, limit: number): Promise<ApiResponse<TagRow>> {
+  async getAllTags(
+    page: number,
+    limit: number,
+    searchTerm?: string,
+    assignmentFilter?: string,
+    sortBy?: string,
+    sortOrder?: string,
+  ): Promise<ApiResponse<TagRow>> {
     const supabase = this._supabase;
-    const { from, to } = getPaginationRange(page, limit);
+    let tagIds: string[] = [];
+    let shouldFilterByIds = false;
 
-    // Get total count
-    const { count, error: countError } = await supabase
-      .from("tags")
-      .select("*", { count: "exact" });
+    // Get tag IDs based on assignment filter
+    if (assignmentFilter === "assigned") {
+      // Get tags that are assigned to at least one item
+      const { data: assignedTagsData, error: assignedError } = await supabase
+        .from("storage_item_tags")
+        .select("tag_id")
+        .not("tag_id", "is", null);
+
+      if (assignedError) throw new Error(assignedError.message);
+
+      tagIds = [...new Set(assignedTagsData?.map((item) => item.tag_id) || [])];
+      shouldFilterByIds = true;
+    } else if (assignmentFilter === "unassigned") {
+      // Get all tag IDs first
+      const { data: allTagsData, error: allTagsError } = await supabase
+        .from("tags")
+        .select("id");
+
+      if (allTagsError) throw new Error(allTagsError.message);
+
+      // Get assigned tag IDs
+      const { data: assignedTagsData, error: assignedError } = await supabase
+        .from("storage_item_tags")
+        .select("tag_id")
+        .not("tag_id", "is", null);
+
+      if (assignedError) throw new Error(assignedError.message);
+
+      const assignedTagIds = new Set(
+        assignedTagsData?.map((item) => item.tag_id) || [],
+      );
+      tagIds =
+        allTagsData
+          ?.filter((tag) => !assignedTagIds.has(tag.id))
+          .map((tag) => tag.id) || [];
+      shouldFilterByIds = true;
+    }
+
+    // Build the base query
+    let query = supabase.from("tags").select("*", { count: "exact" });
+
+    // Apply assignment filter
+    if (shouldFilterByIds) {
+      if (tagIds.length === 0) {
+        // No tags match the filter, return empty result
+        return {
+          data: [],
+          error: null,
+          count: 0,
+          status: 200,
+          statusText: "OK",
+          metadata: {
+            total: 0,
+            page,
+            totalPages: 0,
+            limit,
+          },
+        };
+      }
+      query = query.in("id", tagIds);
+    }
+
+    // Apply search filter if searchTerm exists
+    if (searchTerm && searchTerm.trim() !== "") {
+      const term = `%${searchTerm.toLowerCase()}%`;
+      query = query.or(
+        `translations->fi->>name.ilike.${term},translations->en->>name.ilike.${term}`,
+      );
+    }
+
+    // Apply sorting
+    const validSortFields = ["created_at", "updated_at"];
+    const validSortOrders = ["asc", "desc"];
+
+    const field = validSortFields.includes(sortBy || "")
+      ? sortBy
+      : "created_at";
+    const order = validSortOrders.includes(sortOrder || "")
+      ? sortOrder
+      : "desc";
+
+    query = query.order(field as "created_at" | "updated_at", {
+      ascending: order === "asc",
+    });
+
+    // Get count
+    const { count, error: countError } = await query;
 
     if (countError) throw new Error(countError.message);
 
-    // Fetch paginated tags
-    const result = await supabase.from("tags").select("*").range(from, to);
+    // Fetch paginated data
+    const { from, to } = getPaginationRange(page, limit);
+    const result = await query.range(from, to);
 
     if (result.error) throw new Error(result.error.message);
 
     const meta = getPaginationMeta(count ?? 0, page, limit);
 
-    // Return in the expected format for frontend
     return {
       data: result.data as TagRow[],
       error: result.error,
@@ -42,7 +133,7 @@ export class TagService {
       status: result.status,
       statusText: result.statusText,
       metadata: meta,
-    } as ApiResponse<TagRow>;
+    };
   }
 
   async getTagsForItem(itemId: string): Promise<TagRow[]> {
@@ -60,7 +151,7 @@ export class TagService {
   // Create a new tag
   async createTag(req: AuthRequest, tagData: TagRow): Promise<TagRow> {
     const supabase = req.supabase;
-    const { data, error } = await supabase
+    const { data, error }: PostgrestSingleResponse<TagRow> = await supabase
       .from("tags")
       .insert(tagData)
       .select()
@@ -102,7 +193,7 @@ export class TagService {
     tagData: TagUpdate,
   ): Promise<TagRow> {
     const supabase = req.supabase;
-    const { data, error } = await supabase
+    const { data, error }: PostgrestSingleResponse<TagRow> = await supabase
       .from("tags")
       .update(tagData)
       .eq("id", id)

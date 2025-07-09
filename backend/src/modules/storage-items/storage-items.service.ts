@@ -7,13 +7,15 @@ import {
 import {
   StorageItem,
   StorageItemWithJoin,
+  ValidItemOrder,
 } from "./interfaces/storage-item.interface";
 import { S3Service } from "../supabase/s3-supabase.service";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
-import { Tables, TablesUpdate } from "src/types/supabase.types";
-import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { AuthenticatedRequest } from "src/middleware/Auth.middleware";
+import { TablesUpdate } from "src/types/supabase.types";
+import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
+import { calculateAvailableQuantity } from "src/utils/booking.utils";
+import { ApiSingleResponse } from "src/types/response.types";
 // this is used by the controller
 
 @Injectable()
@@ -23,12 +25,13 @@ export class StorageItemsService {
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
   ) {}
 
-  async getAllItems(): Promise<StorageItem[]> {
+  async getAllItems(page: number, limit: number): Promise<StorageItem[]> {
     const supabase = this.supabaseClient.getServiceClient();
+    const { from, to } = getPaginationRange(page, limit);
 
     // Updated query to join storage_item_tags with tags table
     const { data, error }: PostgrestResponse<StorageItemWithJoin> =
-      await supabase
+      (await supabase
         .from("storage_items")
         .select(
           `
@@ -50,24 +53,31 @@ export class StorageItemsService {
           is_active
         )
       `,
+          { count: "exact" },
         )
-        .eq("is_deleted", false); // Explicitly select tags and their translations by joining the tags table - show only undeleted items
+        .range(from, to)
+        .eq("is_deleted", false)) as PostgrestSingleResponse<
+        StorageItemWithJoin[]
+      >; // Explicitly select tags and their translations by joining the tags table - show only undeleted items
 
     if (error) {
       throw new Error(error.message);
     }
 
     // Structure the result to include both tags and location data
-    return data.map((item) => ({
-      ...item,
-      storage_item_tags:
-        item.storage_item_tags?.map(
-          (tagLink) => tagLink.tags, // Flatten out the tags object to just be the tag itself
-        ) ?? [], // Fallback to empty array if no tags are available
-      location_details: item.storage_locations || null,
-    }));
+    return data.map(
+      (item: StorageItemWithJoin): StorageItem => ({
+        ...item,
+        storage_item_tags:
+          item.storage_item_tags?.map(
+            (tagLink) => tagLink.tags, // Flatten out the tags object to just be the tag itself
+          ) ?? [], // Fallback to empty array if no tags are available
+        location_details: item.storage_locations || null,
+      }),
+    );
   }
 
+  // 2. get one item
   async getItemById(id: string): Promise<StorageItem | null> {
     const supabase = this.supabaseClient.getServiceClient();
 
@@ -115,6 +125,7 @@ export class StorageItemsService {
     };
   }
 
+  // 3. create Item
   async createItem(
     req: Request,
     item: Partial<TablesUpdate<"storage_items">> & { tagIds?: string[] },
@@ -125,10 +136,8 @@ export class StorageItemsService {
     // and keep the rest of the item data in storageItemData
     const { tagIds, ...storageItemData } = item;
     // Insert the item into the storage_items table
-    const { data: insertedItems, error } = await supabase
-      .from("storage_items")
-      .insert(storageItemData)
-      .select();
+    const { data: insertedItems, error }: PostgrestResponse<StorageItem> =
+      await supabase.from("storage_items").insert(storageItemData).select();
     if (error) throw new Error(error.message);
 
     const insertedItem = insertedItems?.[0];
@@ -150,6 +159,7 @@ export class StorageItemsService {
     return insertedItem;
   }
 
+  // 4 update an item
   async updateItem(
     req: Request,
     id: string,
@@ -162,7 +172,10 @@ export class StorageItemsService {
     console.log("Updating item with data:", JSON.stringify(itemData, null, 2));
 
     // Update the main item
-    const { data: updatedItemData, error: updateError } = await supabase
+    const {
+      data: updatedItemData,
+      error: updateError,
+    }: PostgrestResponse<StorageItem> = await supabase
       .from("storage_items")
       .update(itemData)
       .eq("id", id)
@@ -200,6 +213,7 @@ export class StorageItemsService {
     return updatedItem;
   }
 
+  // 5. delete an item
   async deleteItem(
     req: Request,
     id: string,
@@ -235,10 +249,10 @@ export class StorageItemsService {
         if (image.storage_path) {
           try {
             await this.s3Service.deleteFile(image.storage_path);
-          } catch (error) {
+          } catch (error: unknown) {
             // Log but continue - we still want to delete the database record even if file deletion fails
             console.error(
-              `Failed to delete S3 file for image ${image.id}: ${error.message}`,
+              `Failed to delete S3 file for image ${image.id}: ${error instanceof Error ? error.message : String(error)}`,
             );
           }
         }
@@ -282,13 +296,18 @@ export class StorageItemsService {
     return { success: true, id };
   }
 
+  // 6. get Items by tag
   // TODO: needs to be fixed and updated
   async getItemsByTag(req: Request, tagId: string) {
     const supabase = req["supabase"] as SupabaseClient;
-    const { data, error } = await supabase
-      .from("storage_item_tags")
-      .select("item_id, items(*)") // Select foreign table 'items' if it's a relation
-      .eq("tag_id", tagId);
+    const {
+      data,
+      error,
+    }: PostgrestResponse<{ item_id: string; items: StorageItem[] }> =
+      await supabase
+        .from("storage_item_tags")
+        .select("item_id, items(*)") // Select foreign table 'items' if it's a relation
+        .eq("tag_id", tagId);
 
     if (error) throw new Error(error.message);
 
@@ -296,6 +315,7 @@ export class StorageItemsService {
     return data.map((entry) => entry.items); // Extract items from the relation
   }
 
+  // 7. soft-delete item (to keep the data just in case)
   async softDeleteItem(
     req: Request,
     id: string,
@@ -313,7 +333,7 @@ export class StorageItemsService {
     return { success: true, id };
   }
 
-  //check if the item can be deleted (if it exists in some orders)
+  // 8. check if the item can be deleted (if it exists in some orders)
   async canDeleteItem(
     req: Request,
     id: string,
@@ -326,7 +346,7 @@ export class StorageItemsService {
 
     // Check if item exists in any orders
     const { data, error } = await supabase
-      .from("order_items")
+      .from("booking_items")
       .select("id")
       .eq("item_id", id)
       .limit(1);
@@ -352,5 +372,137 @@ export class StorageItemsService {
       success: true,
       id,
     };
+  }
+
+  /**
+   * Get ordered and/or filtered items
+   * @param page What page number is requested
+   * @param limit How many rows to retrieve
+   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
+   * @param order_by What column to order the columns by. Default "created_at". See {Valid}
+   * @param searchquery Optional. Filter items by a string. Currently supports search by item name, item type and location name
+   * @param tags Optional. Filter by tag IDs
+   * @param activity_filter Optional. Filter by active/inactive status
+   * @returns Matching items
+   */
+  async getOrderedStorageItems(
+    page: number,
+    limit: number,
+    ascending: boolean,
+    order_by?: ValidItemOrder,
+    searchquery?: string,
+    tags?: string,
+    activity_filter?: "active" | "inactive",
+    location_filter?: string,
+    category?: string,
+  ) {
+    const supabase = this.supabaseClient.getAnonClient();
+    const { from, to } = getPaginationRange(page, limit);
+
+    const query = supabase
+      .from("view_manage_storage_items")
+      .select("*", { count: "exact" })
+      .range(from, to);
+
+    if (order_by)
+      query.order(order_by ?? "created_at", {
+        ascending: ascending,
+      });
+
+    if (searchquery) {
+      query.or(
+        `fi_item_name.ilike.%${searchquery}%,` +
+          `fi_item_type.ilike.%${searchquery}%,` +
+          `en_item_name.ilike.%${searchquery}%,` +
+          `en_item_type.ilike.%${searchquery}%,` +
+          `location_name.ilike.%${searchquery}%`,
+      );
+    }
+
+    if (activity_filter) query.eq("is_active", activity_filter);
+    if (tags) query.overlaps("tag_ids", tags.split(","));
+    if (location_filter)
+      query.overlaps("location_id", location_filter.split(","));
+
+    if (category) {
+      const categories = category.split(",");
+      query.in("en_item_type", categories);
+    }
+
+    const result = await query;
+    const { error, count } = result;
+
+    if (error) {
+      console.log(error);
+      throw new Error("Failed to get matching items");
+    }
+
+    const pagination_meta = getPaginationMeta(count, page, limit);
+    return {
+      ...result,
+      metadata: pagination_meta,
+    };
+  }
+
+  // 9. check availability of item by date range - calculateAvailableQuantity
+  async checkAvailability(
+    itemId: string,
+    startDate: string,
+    endDate: string,
+    supabase: SupabaseClient,
+  ): Promise<
+    ApiSingleResponse<{
+      item_id: string;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }>
+  > {
+    try {
+      const { item_id, availableQuantity, alreadyBookedQuantity } =
+        await calculateAvailableQuantity(supabase, itemId, startDate, endDate);
+
+      return {
+        data: {
+          item_id,
+          alreadyBookedQuantity,
+          availableQuantity,
+        },
+        error: null,
+        status: 200,
+        statusText: "OK",
+        count: null,
+      };
+    } catch (err) {
+      if (err instanceof Error) {
+        return {
+          data: null,
+          error: {
+            message: err.message,
+            code: "availability-check_error",
+            details: "",
+            hint: "",
+            name: "availability-check_error",
+          },
+          status: 400,
+          statusText: "Error",
+          count: null,
+        };
+      }
+
+      // Fallback
+      return {
+        data: null,
+        error: {
+          message: "Unknown error",
+          code: "availability-check_error",
+          details: "",
+          hint: "",
+          name: "availability-check_error",
+        },
+        status: 400,
+        statusText: "Error",
+        count: null,
+      };
+    }
   }
 }

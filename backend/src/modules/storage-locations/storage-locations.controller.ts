@@ -2,18 +2,20 @@ import {
   Controller,
   Get,
   Param,
-  Req,
   NotFoundException,
   Query,
+  Req,
 } from "@nestjs/common";
 import { StorageLocationsService } from "./storage-locations.service";
-import { StorageLocation } from "./interfaces/storage-location";
+import { StorageLocationsRow } from "./interfaces/storage-location";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { SupabaseService } from "../supabase/supabase.service";
 
 @Controller("api/storage-locations")
 export class StorageLocationsController {
   constructor(
     private readonly storageLocationsService: StorageLocationsService,
+    private readonly supabaseService: SupabaseService,
   ) {}
 
   @Get()
@@ -22,28 +24,31 @@ export class StorageLocationsController {
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
   ): Promise<{
-    data: StorageLocation[];
+    data: StorageLocationsRow[];
     total: number;
     page: number;
     totalPages: number;
   }> {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
+    const supabase = req.supabase || this.supabaseService.getAnonClient();
+    if (!supabase) {
+      throw new Error("Supabase client is undefined.");
+    }
+
     return this.storageLocationsService.getAllLocations(
-      req,
+      supabase,
       pageNumber,
       limitNumber,
     );
   }
 
   @Get(":id")
-  async getLocationById(
-    @Param("id") id: string,
-    @Req() req: AuthRequest,
-  ): Promise<StorageLocation> {
+  async getLocationById(@Param("id") id: string): Promise<StorageLocationsRow> {
+    const supabase = this.supabaseService.getAnonClient();
     const location = await this.storageLocationsService.getLocationById(
       id,
-      req,
+      supabase,
     );
     if (!location) {
       throw new NotFoundException(

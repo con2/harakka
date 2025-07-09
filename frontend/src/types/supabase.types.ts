@@ -7,31 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       audit_logs: {
@@ -194,6 +169,13 @@ export type Database = {
             referencedColumns: ["storage_item_id"]
           },
           {
+            foreignKeyName: "order_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "order_items_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
@@ -336,6 +318,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
+          },
+          {
+            foreignKeyName: "erm_organization_items_storage_item_id_fkey"
+            columns: ["storage_item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "organization_items_storage_location_id_fkey"
@@ -587,6 +576,13 @@ export type Database = {
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
           },
+          {
+            foreignKeyName: "reviews_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
+          },
         ]
       }
       roles: {
@@ -647,6 +643,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
+          },
+          {
+            foreignKeyName: "saved_list_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "saved_list_items_list_id_fkey"
@@ -837,6 +840,13 @@ export type Database = {
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
           },
+          {
+            foreignKeyName: "storage_item_images_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
+          },
         ]
       }
       storage_item_tags: {
@@ -882,6 +892,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
+          },
+          {
+            foreignKeyName: "storage_item_tags_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "storage_item_tags_tag_id_fkey"
@@ -1256,6 +1273,23 @@ export type Database = {
         }
         Relationships: []
       }
+      view_bookings_with_user_info: {
+        Row: {
+          created_at: string | null
+          created_at_text: string | null
+          email: string | null
+          final_amount: number | null
+          final_amount_text: string | null
+          full_name: string | null
+          id: string | null
+          order_number: string | null
+          payment_status: string | null
+          status: string | null
+          total_amount: number | null
+          visible_name: string | null
+        }
+        Relationships: []
+      }
       view_item_location_summary: {
         Row: {
           item_name: string | null
@@ -1276,6 +1310,20 @@ export type Database = {
           owned_quantity: number | null
           storage_item_id: string | null
           total_across_all_locations: number | null
+        }
+        Relationships: []
+      }
+      view_manage_storage_items: {
+        Row: {
+          created_at: string | null
+          fi_item_name: string | null
+          fi_item_type: string | null
+          id: string | null
+          is_active: boolean | null
+          items_number_total: number | null
+          location_name: string | null
+          price: number | null
+          translations: Json | null
         }
         Relationships: []
       }
@@ -1451,9 +1499,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       role_type: [

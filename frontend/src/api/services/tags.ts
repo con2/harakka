@@ -13,13 +13,16 @@ export const tagsApi = {
   getAllTags: async (
     page: number = 1,
     limit: number = 10,
+    search: string = "",
+    assignmentFilter: string = "all",
+    sortBy: string = "created_at",
+    sortOrder: string = "desc",
   ): Promise<ApiResponse<Tag[]>> => {
     // Fetch paginated tags from the backend
     const response = (await api.get(
-      `/tags?page=${page}&limit=${limit}`,
+      `/tags?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&assignmentFilter=${assignmentFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
     )) as ApiResponse<Tag[]>;
 
-    // Always return a complete object, even if the backend response is partial
     return {
       data: response.data ?? [],
       metadata: response.metadata ?? {

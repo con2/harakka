@@ -15,7 +15,6 @@ import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import {
   Dialog,
@@ -24,7 +23,6 @@ import {
   DialogTitle,
 } from "../components/ui/dialog";
 
-import { ordersApi } from "@/api/services/orders";
 import OrderDetailsButton from "@/components/Admin/Orders/OrderDetailsButton";
 import OrderCancelButton from "@/components/OrderCancelButton";
 import OrderEditButton from "@/components/OrderEditButton";
@@ -38,16 +36,12 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { t } from "@/translations";
-import DatePickerButton from "../components/ui/DatePickerButton";
-import { Calendar } from "../components/ui/calendar";
 import { DataTable } from "../components/ui/data-table";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../components/ui/popover";
+import { StatusBadge } from "./StatusBadge";
+import InlineTimeframePicker from "./InlineTimeframeSelector";
+import { itemsApi } from "@/api/services/items";
 
 const MyOrders = () => {
   const dispatch = useAppDispatch();
@@ -68,8 +62,6 @@ const MyOrders = () => {
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>(
     {},
   );
-  const [startPickerOpen, setStartPickerOpen] = useState(false);
-  const [endPickerOpen, setEndPickerOpen] = useState(false);
   const [availability, setAvailability] = useState<{
     [itemId: string]: number;
   }>({});
@@ -97,7 +89,8 @@ const MyOrders = () => {
       return;
     }
 
-    if (user && orders.length === 0) dispatch(getUserOrders(user.id));
+    if (user && orders.length === 0)
+      dispatch(getUserOrders({ user_id: user.id, page: 1, limit: 10 }));
   }, [dispatch, navigate, user, lang, orders]); // Apply filters to orders
 
   const filteredOrders = orders.filter((order) => {
@@ -179,7 +172,9 @@ const MyOrders = () => {
         dispatch(cancelOrder(editingOrder.id));
         toast.warning(t.myOrders.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
-          dispatch(getUserOrders(user.id));
+          dispatch(
+            getUserOrders({ user_id: user.id, page: currentPage, limit: 10 }),
+          );
         }
       } catch {
         toast.error(t.myOrders.edit.toast.cancelFailed[lang]);
@@ -202,7 +197,9 @@ const MyOrders = () => {
       setShowEditModal(false);
       setEditingOrder(null);
       if (user?.id) {
-        dispatch(getUserOrders(user.id));
+        dispatch(
+          getUserOrders({ user_id: user.id, page: currentPage, limit: 10 }),
+        );
       }
     } catch {
       toast.error(t.myOrders.edit.toast.updateFailed[lang]);
@@ -220,10 +217,10 @@ const MyOrders = () => {
         setLoadingAvailability((prev) => ({ ...prev, [itemId]: true }));
 
         try {
-          const data = await ordersApi.checkAvailability(
+          const data = await itemsApi.checkAvailability(
             itemId,
-            globalStartDate,
-            globalEndDate,
+            new Date(globalStartDate),
+            new Date(globalEndDate),
           );
 
           const correctedAvailableQuantity =
@@ -253,71 +250,6 @@ const MyOrders = () => {
 
     return availQty === undefined || inputQty <= availQty;
   });
-
-  // Render a status badge with appropriate color
-  const StatusBadge = ({ status }: { status?: string }) => {
-    if (!status)
-      return <Badge variant="outline">{t.myOrders.status.unknown[lang]}</Badge>;
-
-    switch (status) {
-      case "pending":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-yellow-100 text-yellow-800 border-yellow-300"
-          >
-            {t.myOrders.status.pending[lang]}
-          </Badge>
-        );
-      case "confirmed":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-green-100 text-green-800 border-green-300"
-          >
-            {t.myOrders.status.confirmed[lang]}
-          </Badge>
-        );
-      case "cancelled":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-red-100 text-red-800 border-red-300"
-          >
-            {t.myOrders.status.cancelled[lang]}
-          </Badge>
-        );
-      case "cancelled by user":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-red-100 text-red-800 border-red-300"
-          >
-            {t.myOrders.status.cancelledByUser[lang]}
-          </Badge>
-        );
-      case "cancelled by admin":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-red-100 text-red-800 border-red-300"
-          >
-            {t.myOrders.status.cancelledByAdmin[lang]}
-          </Badge>
-        );
-      case "completed":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-blue-100 text-blue-800 border-blue-300"
-          >
-            {t.myOrders.status.completed[lang]}
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
 
   const columns: ColumnDef<BookingOrder>[] = [
     {
@@ -361,11 +293,6 @@ const MyOrders = () => {
         );
       },
     },
-    // {
-    //   accessorKey: "final_amount",
-    //   header: t.myOrders.columns.total[lang],
-    //   cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
-    // },
     {
       id: "actions",
       cell: ({ row }) => {
@@ -468,7 +395,9 @@ const MyOrders = () => {
               toast.error(t.myOrders.error.loginRequired[lang]);
               return;
             }
-            dispatch(getUserOrders(user.id));
+            dispatch(
+              getUserOrders({ user_id: user.id, page: currentPage, limit: 10 }),
+            );
           }}
           className="mt-4"
         >
@@ -631,20 +560,6 @@ const MyOrders = () => {
                               </strong>{" "}
                               {item.quantity}
                             </p>
-                            {/* <p>
-                              <strong>{t.myOrders.mobile.start[lang]}</strong>{" "}
-                              {formatDate(item.start_date)}
-                            </p>
-                            <p>
-                              <strong>{t.myOrders.mobile.end[lang]}</strong>{" "}
-                              {formatDate(item.end_date)}
-                            </p> */}
-                            {/* <p>
-                              <strong>
-                                {t.myOrders.mobile.subtotal[lang]}
-                              </strong>{" "}
-                              €{item.subtotal?.toFixed(2) || "0.00"}
-                            </p> */}
                           </div>
                         ))}
                       </div>
@@ -693,110 +608,17 @@ const MyOrders = () => {
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div>
-                  <Label className="block text-sm font-medium mb-1">
-                    {t.myOrders.edit.startDate[lang]}
-                  </Label>
-                  <Popover
-                    open={startPickerOpen}
-                    onOpenChange={setStartPickerOpen}
-                  >
-                    <PopoverTrigger asChild>
-                      <DatePickerButton
-                        value={
-                          globalStartDate
-                            ? formatDateLocalized(
-                                new Date(globalStartDate),
-                                "d MMM yyyy",
-                              )
-                            : null
-                        }
-                        placeholder={t.myOrders.edit.selectStartDate[lang]}
-                      />
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-auto p-0"
-                      side="bottom"
-                      align="start"
-                      style={{ zIndex: 50, pointerEvents: "auto" }}
-                    >
-                      <Calendar
-                        mode="single"
-                        defaultMonth={
-                          globalStartDate
-                            ? new Date(globalStartDate)
-                            : undefined
-                        }
-                        selected={
-                          globalStartDate && !isNaN(Date.parse(globalStartDate))
-                            ? new Date(globalStartDate)
-                            : undefined
-                        }
-                        onSelect={(date) => {
-                          setGlobalStartDate(date?.toISOString() ?? null);
-                          // setStartPickerOpen(false);
-                        }}
-                        disabled={(date) => date < today}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div>
-                  <Label className="block text-sm font-medium mb-1">
-                    {t.myOrders.edit.endDate[lang]}
-                  </Label>
-                  <Popover open={endPickerOpen} onOpenChange={setEndPickerOpen}>
-                    <PopoverTrigger asChild>
-                      <DatePickerButton
-                        value={
-                          globalEndDate
-                            ? formatDateLocalized(
-                                new Date(globalEndDate),
-                                "d MMM yyyy",
-                              )
-                            : null
-                        }
-                        placeholder={t.myOrders.edit.selectEndDate[lang]}
-                      />
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-auto p-0"
-                      side="bottom"
-                      align="start"
-                      style={{ zIndex: 50, pointerEvents: "auto" }}
-                    >
-                      <Calendar
-                        mode="single"
-                        defaultMonth={
-                          globalStartDate
-                            ? new Date(globalStartDate)
-                            : undefined
-                        }
-                        selected={
-                          globalEndDate && !isNaN(Date.parse(globalEndDate))
-                            ? new Date(globalEndDate)
-                            : undefined
-                        }
-                        onSelect={(date) => {
-                          setGlobalEndDate(date?.toISOString() ?? null);
-                          // setEndPickerOpen(false);
-                        }}
-                        disabled={(date) => {
-                          const isBeforeToday = date < today;
-                          const isBeforeStart =
-                            globalStartDate &&
-                            !isNaN(Date.parse(globalStartDate))
-                              ? date < new Date(globalStartDate)
-                              : false;
-                          return isBeforeToday || isBeforeStart;
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
+              <InlineTimeframePicker
+                startDate={globalStartDate ? new Date(globalStartDate) : null}
+                endDate={globalEndDate ? new Date(globalEndDate) : null}
+                onChange={(type, date) => {
+                  if (type === "start") {
+                    setGlobalStartDate(date?.toISOString() ?? null);
+                  } else {
+                    setGlobalEndDate(date?.toISOString() ?? null);
+                  }
+                }}
+              />
               {editFormItems.map((item) => (
                 <div key={item.id} className="grid grid-cols-5 gap-4">
                   <div className="col-span-2 items-center">
@@ -989,15 +811,6 @@ const MyOrders = () => {
                     data={selectedOrder.order_items || []}
                   />
                 </div>
-
-                {/* <div className="flex items-center justify-end mt-4 pr-4">
-                  <div className="text-sm font-medium">
-                    {t.myOrders.orderDetails.total[lang]}
-                  </div>
-                  <div className="ml-2 font-bold">
-                    €{selectedOrder.final_amount?.toFixed(2) || "0.00"}
-                  </div>
-                </div> */}
               </div>
             </div>
           </DialogContent>
