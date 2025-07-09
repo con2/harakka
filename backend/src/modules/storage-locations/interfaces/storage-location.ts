@@ -1,5 +1,4 @@
-import { Database } from "src/types/supabase.types";
-
+import { Database } from "src/types/database.types";
 export type StorageLocationsTable =
   Database["public"]["Tables"]["storage_locations"];
 export type StorageLocationsRow = StorageLocationsTable["Row"];

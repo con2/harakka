@@ -7,11 +7,13 @@ import {
 import {
   StorageItem,
   StorageItemWithJoin,
+  ValidItemOrder,
 } from "./interfaces/storage-item.interface";
 import { S3Service } from "../supabase/s3-supabase.service";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { TablesUpdate } from "src/types/supabase.types";
+import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
 import { ApiSingleResponse } from "src/types/response.types";
 // this is used by the controller
@@ -23,9 +25,9 @@ export class StorageItemsService {
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
   ) {}
 
-  // 1. get All items
-  async getAllItems(): Promise<StorageItem[]> {
+  async getAllItems(page: number, limit: number): Promise<StorageItem[]> {
     const supabase = this.supabaseClient.getServiceClient();
+    const { from, to } = getPaginationRange(page, limit);
 
     // Updated query to join storage_item_tags with tags table
     const { data, error }: PostgrestResponse<StorageItemWithJoin> =
@@ -51,7 +53,9 @@ export class StorageItemsService {
           is_active
         )
       `,
+          { count: "exact" },
         )
+        .range(from, to)
         .eq("is_deleted", false)) as PostgrestSingleResponse<
         StorageItemWithJoin[]
       >; // Explicitly select tags and their translations by joining the tags table - show only undeleted items
@@ -367,6 +371,76 @@ export class StorageItemsService {
     return {
       success: true,
       id,
+    };
+  }
+
+  /**
+   * Get ordered and/or filtered items
+   * @param page What page number is requested
+   * @param limit How many rows to retrieve
+   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
+   * @param order_by What column to order the columns by. Default "created_at". See {Valid}
+   * @param searchquery Optional. Filter items by a string. Currently supports search by item name, item type and location name
+   * @param tags Optional. Filter by tag IDs
+   * @param activity_filter Optional. Filter by active/inactive status
+   * @returns Matching items
+   */
+  async getOrderedStorageItems(
+    page: number,
+    limit: number,
+    ascending: boolean,
+    order_by?: ValidItemOrder,
+    searchquery?: string,
+    tags?: string,
+    activity_filter?: "active" | "inactive",
+    location_filter?: string,
+    category?: string,
+  ) {
+    const supabase = this.supabaseClient.getAnonClient();
+    const { from, to } = getPaginationRange(page, limit);
+
+    const query = supabase
+      .from("view_manage_storage_items")
+      .select("*", { count: "exact" })
+      .range(from, to);
+
+    if (order_by)
+      query.order(order_by ?? "created_at", {
+        ascending: ascending,
+      });
+
+    if (searchquery) {
+      query.or(
+        `fi_item_name.ilike.%${searchquery}%,` +
+          `fi_item_type.ilike.%${searchquery}%,` +
+          `en_item_name.ilike.%${searchquery}%,` +
+          `en_item_type.ilike.%${searchquery}%,` +
+          `location_name.ilike.%${searchquery}%`,
+      );
+    }
+
+    if (activity_filter) query.eq("is_active", activity_filter);
+    if (tags) query.overlaps("tag_ids", tags.split(","));
+    if (location_filter)
+      query.overlaps("location_id", location_filter.split(","));
+
+    if (category) {
+      const categories = category.split(",");
+      query.in("en_item_type", categories);
+    }
+
+    const result = await query;
+    const { error, count } = result;
+
+    if (error) {
+      console.log(error);
+      throw new Error("Failed to get matching items");
+    }
+
+    const pagination_meta = getPaginationMeta(count, page, limit);
+    return {
+      ...result,
+      metadata: pagination_meta,
     };
   }
 

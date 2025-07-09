@@ -36,5 +36,9 @@ export const adminPanel = {
       fi: "Lokit",
       en: "Logs",
     },
+    roles: {
+      fi: "Roolit",
+      en: "Roles",
+    },
   },
 };

@@ -29,7 +29,9 @@ import { Translations } from "./types/translations.types";
 import {
   CancelBookingResponse,
   BookingItem,
+  BookingItemInsert,
   BookingItemRow,
+  BookingItemQuantity,
   BookingWithItems,
   StorageItemsRow,
   UserProfilesRow,
@@ -476,8 +478,8 @@ export class BookingService {
       );
     }
 
-    // 5.3. Delete existing items from booking_items to avoid duplicates
-    await this.bookingItemsService.removeAllBookingItems(supabase, booking_id);
+    // 5.3. Delete existing items from booking_items to avoid douplicates
+    await supabase.from("booking_items").delete().eq("booking_id", booking_id);
 
     // 5.4. insert updated items with availability check
     for (const item of updatedItems) {
@@ -516,22 +518,18 @@ export class BookingService {
       }
 
       // 5.7. insert new booking item
-      const newBookingItem = {
-        booking_id: booking_id,
-        item_id: item.item_id,
-        location_id: storageItem.location_id,
-        quantity: item.quantity,
-        start_date: item.start_date,
-        end_date: item.end_date,
-        total_days: totalDays,
-        status: "pending",
-      };
-
-      const { error: itemInsertError } =
-        await this.bookingItemsService.createBookingItem(
-          supabase,
-          newBookingItem,
-        );
+      const { error: itemInsertError } = await supabase
+        .from("booking_items")
+        .insert<BookingItemInsert>({
+          booking_id: booking_id,
+          item_id: item.item_id,
+          location_id: storageItem.location_id,
+          quantity: item.quantity,
+          start_date: item.start_date,
+          end_date: item.end_date,
+          total_days: totalDays,
+          status: "pending",
+        });
 
       if (itemInsertError) {
         console.error("Booking item insert error:", itemInsertError);
@@ -599,11 +597,12 @@ export class BookingService {
       .eq("id", userId)
       .single<UserProfilesRow>();
 
-    if (!user) {
+    if (!user || !user.role) {
       throw new ForbiddenException("User not found");
     }
 
-    const isAdmin = ["admin", "superVera"].includes(user.role?.trim());
+    const isAdmin =
+      user.role && ["admin", "superVera"].includes(user.role?.trim());
 
     if (!isAdmin) {
       throw new ForbiddenException("Only admins can reject bookings");
@@ -685,13 +684,15 @@ export class BookingService {
       .eq("id", userId)
       .single<UserProfilesRow>();
 
-    if (userProfileError || !userProfile) {
+    if (userProfileError || !userProfile || !userProfile.role) {
       throw new BadRequestException("User profile not found");
     }
 
     // 7.2 permissions check
 
-    const isAdmin = ["admin", "superVera"].includes(userProfile.role?.trim());
+    const isAdmin =
+      userProfile.role &&
+      ["admin", "superVera"].includes(userProfile.role?.trim());
     const isOwner = booking.user_id === userId;
 
     if (!isAdmin && !isOwner) {
@@ -788,11 +789,13 @@ export class BookingService {
       .eq("id", userId)
       .single<UserProfilesRow>();
 
-    if (userProfileError || !userProfile) {
+    if (userProfileError || !userProfile || !userProfile.role) {
       throw new BadRequestException("User profile not found");
     }
 
-    const isAdmin = ["admin", "superVera"].includes(userProfile.role?.trim());
+    const isAdmin =
+      userProfile.role &&
+      ["admin", "superVera"].includes(userProfile.role?.trim());
 
     if (!isAdmin) {
       throw new ForbiddenException(
@@ -1008,7 +1011,29 @@ export class BookingService {
     };
   }
 
-  // 11. Update payment status
+  // 12. virtual number of items for a specific date
+  async getAvailableQuantityForDate(
+    itemId: string,
+    startdate: string,
+    enddate: string,
+  ) {
+    const supabase = this.supabaseService.getServiceClient();
+
+    if (!itemId || !startdate) {
+      throw new BadRequestException("item_id and date are mandatory");
+    }
+
+    const num_available = await calculateAvailableQuantity(
+      supabase,
+      itemId,
+      startdate,
+      enddate,
+    );
+
+    return num_available ?? 0;
+  }
+
+  // 13. Update payment status
   async updatePaymentStatus(
     bookingId: string,
     status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
@@ -1042,7 +1067,7 @@ export class BookingService {
   }
 
   /**
-   * Get bookings in an bookinged list
+   * Get bookings in an ordered list
    * @param supabase The supabase client provided by request
    * @param page What page number is requested
    * @param limit How many rows to retrieve

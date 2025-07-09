@@ -42,7 +42,11 @@ export class LogsService {
       throw new ForbiddenException("Error verifying user role");
     }
 
-    if (!userProfile || !["admin", "superVera"].includes(userProfile.role)) {
+    if (
+      !userProfile ||
+      !userProfile.role ||
+      !["admin", "superVera"].includes(userProfile.role)
+    ) {
       this.logger.warn(
         `User ${userId} attempted to access logs without admin rights`,
       );

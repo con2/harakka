@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   Users,
   Warehouse,
+  ShieldUser,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -71,6 +72,13 @@ const AdminPanel = () => {
             to="/admin/logs"
             icon={<FileText className="w-5 h-5" />}
             label={t.adminPanel.navigation.logs[lang] || "Logs"}
+          />
+
+          {/* Add the new Roles link */}
+          <SidebarLink
+            to="/admin/roles"
+            icon={<ShieldUser className="w-5 h-5" />}
+            label={t.adminPanel.navigation.roles[lang]}
           />
 
           <SidebarLink

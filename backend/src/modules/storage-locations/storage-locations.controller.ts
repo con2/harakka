@@ -2,9 +2,9 @@ import {
   Controller,
   Get,
   Param,
-  Req,
   NotFoundException,
   Query,
+  Req,
 } from "@nestjs/common";
 import { StorageLocationsService } from "./storage-locations.service";
 import { StorageLocationsRow } from "./interfaces/storage-location";
@@ -44,13 +44,11 @@ export class StorageLocationsController {
   }
 
   @Get(":id")
-  async getLocationById(
-    @Param("id") id: string,
-    @Req() req: AuthRequest,
-  ): Promise<StorageLocationsRow> {
+  async getLocationById(@Param("id") id: string): Promise<StorageLocationsRow> {
+    const supabase = this.supabaseService.getAnonClient();
     const location = await this.storageLocationsService.getLocationById(
       id,
-      req,
+      supabase,
     );
     if (!location) {
       throw new NotFoundException(
