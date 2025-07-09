@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { UserBooking } from "src/modules/booking/types/booking.interface";
 import { Database } from "../types/supabase.types";
+import { UserBooking } from "src/modules/booking/types/booking.interface";
 
 export async function calculateAvailableQuantity(
   supabase: SupabaseClient<Database>,
