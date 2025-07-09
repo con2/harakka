@@ -31,7 +31,6 @@ import {
   BookingItem,
   BookingItemInsert,
   BookingItemRow,
-  BookingItemQuantity,
   BookingWithItems,
   StorageItemsRow,
   UserProfilesRow,

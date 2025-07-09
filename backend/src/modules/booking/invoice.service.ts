@@ -6,6 +6,8 @@ import {
   generateBarcodeImage,
   generateInvoicePDF,
 } from "../../utils/invoice-functions";
+import { PostgrestResponse } from "@supabase/supabase-js";
+import { BookingsRow, UserProfilesRow } from "./types/booking.interface";
 
 @Injectable()
 export class InvoiceService {
@@ -15,7 +17,10 @@ export class InvoiceService {
     const supabase = this.supabaseService.getServiceClient();
 
     // Load booking
-    const { data: booking, error: bookingError } = await supabase
+    const {
+      data: booking,
+      error: bookingError,
+    }: PostgrestResponse<BookingsRow> = await supabase
       .from("bookings")
       .select("*")
       .eq("id", bookingId)
@@ -35,11 +40,12 @@ export class InvoiceService {
     }
 
     // Load user
-    const { data: user, error: userError } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("id", booking.user_id)
-      .single();
+    const { data: user, error: userError }: PostgrestResponse<UserProfilesRow> =
+      await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("id", booking[0].user_id)
+        .single();
     if (!user || userError) {
       throw new BadRequestException("User not found");
     }
@@ -87,7 +93,7 @@ export class InvoiceService {
       contentType: "application/pdf",
     });
 
-    await supabase.from("invoices").insert({
+    /*     await supabase.from("invoices").insert({
       invoice_number: invoiceNumber,
       booking_id: booking.id,
       user_id: booking.user_id,
@@ -95,7 +101,7 @@ export class InvoiceService {
       total_amount: total,
       due_date: dueDate.toISOString().split("T")[0],
       pdf_url: filePath,
-    });
+    }); */
 
     const { data: publicUrlData } = supabase.storage
       .from("invoices")

@@ -18,7 +18,11 @@ import { CreateBookingDto } from "./dto/create-booking.dto";
 import { InvoiceService } from "./invoice.service";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { BookingStatus, ValidBooking } from "./types/booking.interface";
+import {
+  BookingItem,
+  BookingStatus,
+  ValidBooking,
+} from "./types/booking.interface";
 
 @Controller("bookings")
 export class BookingController {
@@ -125,7 +129,7 @@ export class BookingController {
   @Put(":id/update") // user updates own booking or admin updates booking
   async updateBooking(
     @Param("id") id: string,
-    @Body("items") updatedItems: any[],
+    @Body("items") updatedItems: BookingItem[],
     @Req() req: AuthRequest,
   ) {
     const userId = req.user.id;
