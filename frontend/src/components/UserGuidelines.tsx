@@ -78,12 +78,12 @@ export const UserGuide: React.FC = () => {
 
             <AccordionItem value="user-2">
               <AccordionTrigger>
-                {t.userGuide.sections.howToOrder.title[lang]}
+                {t.userGuide.sections.howToBook.title[lang]}
               </AccordionTrigger>
               <AccordionContent>
                 <ol className="list-decimal ml-6 space-y-2 text-gray-700">
-                  {t.userGuide.sections.howToOrder.content[lang].map(
-                    (step, index) => (
+                  {t.userGuide.sections.howToBook.content[lang].map(
+                    (step: string, index: number) => (
                       <li
                         key={index}
                         dangerouslySetInnerHTML={{ __html: step }}
@@ -167,12 +167,12 @@ export const UserGuide: React.FC = () => {
 
                 <AccordionItem value="admin-4">
                   <AccordionTrigger>
-                    {t.userGuide.sections.orders.title[lang]}
+                    {t.userGuide.sections.bookings.title[lang]}
                   </AccordionTrigger>
                   <AccordionContent>
                     <ul className="list-disc ml-6 space-y-1 text-gray-700">
-                      {t.userGuide.sections.orders.actions[lang].map(
-                        (action, index) => (
+                      {t.userGuide.sections.bookings.actions[lang].map(
+                        (action: string, index: number) => (
                           <li key={index}>{action}</li>
                         ),
                       )}

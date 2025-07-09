@@ -123,8 +123,7 @@ const BookingCancelledEmail = ({
 
           {/* --- english --- */}
           <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-            A booking with order number <strong>{bookingId}</strong> for the
-            date <strong>{startDate}</strong> has been cancelled.
+            A booking with booking number <strong>{bookingId}</strong> has been cancelled.
           </Text>
 
           <Text style={{ fontWeight: "bold", marginTop: "20px" }}>
@@ -148,7 +147,7 @@ const BookingCancelledEmail = ({
           {!isAdmin && (
             <Section style={{ textAlign: "center", marginTop: "30px" }}>
               <a
-                href="http://localhost:5180/profile?tab=orders"
+                href="http://localhost:5180/profile?tab=bookings"
                 style={{
                   backgroundColor: "#9537C7",
                   color: "#ffffff",

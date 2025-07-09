@@ -44,7 +44,7 @@ export class BookingItemsController {
   /**
    * Get booked items of a certain booking
    * @param req
-   * @param booking_id The ID of the order
+   * @param booking_id The ID of the booking
    * @param offset What index to paginate from. Default 0
    * @param limit Amount of booking items to return. Default 20
    * @returns

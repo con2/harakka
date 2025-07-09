@@ -1,7 +1,7 @@
 import { Action, ThunkDispatch } from "@reduxjs/toolkit";
 import { UserState } from "./user";
 import { ItemState } from "./item";
-import { OrdersState } from "./order";
+import { BookingsState } from "./booking";
 import { CartState } from "./cart";
 import { TimeframeState } from "./timeframe";
 import { TagState } from "./tag";
@@ -12,7 +12,7 @@ import { TagState } from "./tag";
 export interface RootState {
   users: UserState;
   items: ItemState;
-  orders: OrdersState;
+  bookings: BookingsState;
   cart: CartState;
   timeframe: TimeframeState;
   tags: TagState;

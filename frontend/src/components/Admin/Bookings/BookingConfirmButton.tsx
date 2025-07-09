@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
-import { confirmOrder } from "@/store/slices/ordersSlice";
+import { confirmBooking } from "@/store/slices/bookingsSlice";
 import { CheckCircle } from "lucide-react";
 import { toastConfirm } from "../../ui/toastConfirm";
 
-const OrderConfirmButton = ({
+const BookingConfirmButton = ({
   id,
   closeModal,
 }: {
@@ -14,22 +14,22 @@ const OrderConfirmButton = ({
 }) => {
   const dispatch = useAppDispatch();
 
-  const handleConfirmOrder = () => {
+  const handleConfirmBooking = () => {
     if (!id) {
-      toast.error("Invalid order ID.");
+      toast.error("Invalid booking ID.");
       return;
     }
 
     toastConfirm({
-      title: "Confirm Order",
-      description: "Are you sure you want to confirm this order?",
+      title: "Confirm Booking",
+      description: "Are you sure you want to confirm this booking?",
       confirmText: "Confirm",
       cancelText: "Cancel",
       onConfirm: async () => {
-        await toast.promise(dispatch(confirmOrder(id)).unwrap(), {
-          loading: "Confirming order...",
-          success: "Order has been successfully confirmed.",
-          error: "Failed to confirm the order.",
+        await toast.promise(dispatch(confirmBooking(id)).unwrap(), {
+          loading: "Confirming booking...",
+          success: "Booking has been successfully confirmed.",
+          error: "Failed to confirm the booking.",
         });
         closeModal();
       },
@@ -38,8 +38,8 @@ const OrderConfirmButton = ({
   return (
     <Button
       size="sm"
-      onClick={() => handleConfirmOrder()}
-      title="Confirm Order"
+      onClick={() => handleConfirmBooking()}
+      title="Confirm Booking"
       className="text-green-600 hover:text-green-800 hover:bg-green-100"
     >
       <CheckCircle className="h-4 w-4" />
@@ -47,4 +47,4 @@ const OrderConfirmButton = ({
   );
 };
 
-export default OrderConfirmButton;
+export default BookingConfirmButton;

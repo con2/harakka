@@ -2,7 +2,7 @@ import { IsIn, IsString } from "class-validator";
 
 export class UpdatePaymentStatusDto {
   @IsString()
-  orderId: string;
+  bookingId: string;
 
   @IsIn(["invoice-sent", "paid", "payment-rejected"])
   status: "invoice-sent" | "paid" | "payment-rejected";

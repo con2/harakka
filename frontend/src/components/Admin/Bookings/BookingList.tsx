@@ -1,22 +1,22 @@
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  getAllOrders,
-  selectOrdersLoading,
-  selectOrdersError,
-  selectAllOrders,
+  getAllBookings,
+  selectBookingLoading,
+  selectBookingError,
+  selectAllBookings,
   updatePaymentStatus,
-  selectOrdersPage,
-  selectOrdersTotalPages,
+  selectBookingPage,
+  selectBookingTotalPages,
   getOrderedBookings,
-} from "@/store/slices/ordersSlice";
+} from "@/store/slices/bookingsSlice";
 import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "../../ui/button";
 import {
   PaymentStatus,
-  ValidBookingOrder,
+  ValidBooking,
   BookingUserViewRow,
   BookingStatus,
 } from "@/types";
@@ -27,10 +27,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
-import OrderReturnButton from "./OrderReturnButton";
-import OrderConfirmButton from "./OrderConfirmButton";
-import OrderRejectButton from "./OrderRejectButton";
-import OrderDeleteButton from "./OrderDeleteButton";
+import BookingReturnButton from "./BookingReturnButton";
+import BookingConfirmButton from "./BookingConfirmButton";
+import BookingRejectButton from "./BookingRejectButton";
+import BookingDeleteButton from "./BookingDeleteButton";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
@@ -42,29 +42,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
-import OrderPickupButton from "./OrderPickupButton";
+import BookingPickupButton from "./BookingPickupButton";
 import { useAuth } from "@/hooks/useAuth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
-const OrderList = () => {
+const BookingList = () => {
   const dispatch = useAppDispatch();
-  const orders = useAppSelector(selectAllOrders);
-  const loading = useAppSelector(selectOrdersLoading);
-  const error = useAppSelector(selectOrdersError);
-  const ordersLoadedRef = useRef(false);
+  const bookings = useAppSelector(selectAllBookings);
+  const loading = useAppSelector(selectBookingLoading);
+  const error = useAppSelector(selectBookingError);
+  const bookingsLoadedRef = useRef(false);
   const user = useAppSelector(selectSelectedUser);
   const { authLoading } = useAuth();
-  const [selectedOrder, setSelectedOrder] = useState<BookingUserViewRow | null>(
-    null,
-  );
+  const [selectedBooking, setSelectedBooking] =
+    useState<BookingUserViewRow | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
-  const [order, setOrder] = useState<ValidBookingOrder>("booking_number");
+  const [booking, setBooking] = useState<ValidBooking>("booking_number");
   const [ascending, setAscending] = useState<boolean | null>(null);
-  const page = useAppSelector(selectOrdersPage);
-  const totalPages = useAppSelector(selectOrdersTotalPages);
+  const page = useAppSelector(selectBookingPage);
+  const totalPages = useAppSelector(selectBookingTotalPages);
   // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
@@ -72,8 +71,8 @@ const OrderList = () => {
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
 
   /*----------------------handlers----------------------------------*/
-  const handleViewDetails = (order: BookingUserViewRow) => {
-    setSelectedOrder(order);
+  const handleViewDetails = (booking: BookingUserViewRow) => {
+    setSelectedBooking(booking);
     setShowDetailsModal(true);
   };
 
@@ -86,16 +85,17 @@ const OrderList = () => {
     setSearchQuery(e.target.value);
   };
 
-  const handleOrder = (order: string) => setOrder(order as ValidBookingOrder);
+  const handleBooking = (booking: string) =>
+    setBooking(booking as ValidBooking);
   const handleAscending = (ascending: boolean | null) =>
     setAscending(ascending);
 
   /*----------------------side-effects----------------------------------*/
   useEffect(() => {
-    if (debouncedSearchQuery || statusFilter || order)
+    if (debouncedSearchQuery || statusFilter || booking)
       dispatch(
         getOrderedBookings({
-          ordered_by: order,
+          ordered_by: booking,
           page: currentPage,
           limit: 10,
           searchquery: debouncedSearchQuery,
@@ -104,14 +104,14 @@ const OrderList = () => {
         }),
       );
     else {
-      dispatch(getAllOrders({ page: currentPage, limit: 10 }));
-      ordersLoadedRef.current = true;
+      dispatch(getAllBookings({ page: currentPage, limit: 10 }));
+      bookingsLoadedRef.current = true;
     }
   }, [
     debouncedSearchQuery,
     statusFilter,
     page,
-    order,
+    booking,
     dispatch,
     currentPage,
     ascending,
@@ -120,17 +120,17 @@ const OrderList = () => {
   const columns: ColumnDef<BookingUserViewRow>[] = [
     {
       accessorKey: "booking_number",
-      header: t.orderList.columns.orderNumber[lang],
+      header: t.bookingList.columns.bookingNumber[lang],
       enableSorting: true,
     },
     {
       accessorKey: "full_name",
-      header: t.orderList.columns.customer[lang],
+      header: t.bookingList.columns.customer[lang],
       enableSorting: true,
       cell: ({ row }) => (
         <div>
           <div>
-            {row.original.full_name || t.orderList.status.unknown[lang]}
+            {row.original.full_name || t.bookingList.status.unknown[lang]}
           </div>
           <div className="text-xs text-gray-500">{row.original.email}</div>
         </div>
@@ -138,22 +138,22 @@ const OrderList = () => {
     },
     {
       accessorKey: "status",
-      header: t.orderList.columns.status[lang],
+      header: t.bookingList.columns.status[lang],
       enableSorting: true,
       cell: ({ row }) => <StatusBadge status={row.original.status!} />,
     },
     {
       accessorKey: "created_at",
-      header: t.orderList.columns.orderDate[lang],
+      header: t.bookingList.columns.bookingDate[lang],
       enableSorting: true,
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
     // {
     //   accessorKey: "date_range",
-    //   header: t.orderList.columns.dateRange[lang],
+    //   header: t.bookingList.columns.dateRange[lang],
     //   cell: ({ row }) => {
-    //     const items = row.original.order_items || [];
+    //     const items = row.original.booking_items || [];
     //     if (items.length === 0) return "-";
 
     //     // Get earliest start_date
@@ -178,13 +178,13 @@ const OrderList = () => {
     // },
     {
       accessorKey: "final_amount",
-      header: t.orderList.columns.total[lang],
+      header: t.bookingList.columns.total[lang],
       enableSorting: true,
       cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
     },
     {
       accessorKey: "payment_status",
-      header: t.orderList.columns.invoice[lang],
+      header: t.bookingList.columns.invoice[lang],
       enableSorting: true,
       cell: ({ row }) => {
         const paymentStatus = row.original.payment_status ?? "N/A";
@@ -199,7 +199,7 @@ const OrderList = () => {
         ) => {
           dispatch(
             updatePaymentStatus({
-              orderId: row.original.id!,
+              bookingId: row.original.id!,
               status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
             }),
           );
@@ -220,7 +220,7 @@ const OrderList = () => {
               ].map((status) => {
                 const statusKeyMap: Record<
                   string,
-                  keyof typeof t.orderList.columns.invoice.invoiceStatus
+                  keyof typeof t.bookingList.columns.invoice.invoiceStatus
                 > = {
                   "invoice-sent": "sent",
                   paid: "paid",
@@ -231,7 +231,7 @@ const OrderList = () => {
                 const statusKey = statusKeyMap[status];
                 return (
                   <SelectItem className="text-xs" key={status} value={status}>
-                    {t.orderList.columns.invoice.invoiceStatus?.[statusKey]?.[
+                    {t.bookingList.columns.invoice.invoiceStatus?.[statusKey]?.[
                       lang
                     ] || status}
                   </SelectItem>
@@ -245,17 +245,17 @@ const OrderList = () => {
     {
       id: "actions",
       cell: ({ row }) => {
-        const order = row.original;
-        const isPending = order.status === "pending";
-        const isConfirmed = order.status === "confirmed";
+        const booking = row.original;
+        const isPending = booking.status === "pending";
+        const isConfirmed = booking.status === "confirmed";
 
         return (
           <div className="flex space-x-1">
             <Button
               variant={"ghost"}
               size="sm"
-              onClick={() => handleViewDetails(order)}
-              title={t.orderList.buttons.viewDetails[lang]}
+              onClick={() => handleViewDetails(booking)}
+              title={t.bookingList.buttons.viewDetails[lang]}
               className="hover:text-slate-900 hover:bg-slate-300"
             >
               <Eye className="h-4 w-4" />
@@ -263,28 +263,28 @@ const OrderList = () => {
 
             {isPending && (
               <>
-                <OrderConfirmButton
-                  id={order.id!}
+                <BookingConfirmButton
+                  id={booking.id!}
                   closeModal={() => setShowDetailsModal(false)}
                 />
-                <OrderRejectButton
-                  id={order.id!}
+                <BookingRejectButton
+                  id={booking.id!}
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
             )}
 
             {isConfirmed && (
-              <OrderReturnButton
-                id={order.id!}
+              <BookingReturnButton
+                id={booking.id!}
                 closeModal={() => setShowDetailsModal(false)}
               />
             )}
 
-            {isConfirmed && <OrderPickupButton />}
+            {isConfirmed && <BookingPickupButton />}
 
-            <OrderDeleteButton
-              id={order.id!}
+            <BookingDeleteButton
+              id={booking.id!}
               closeModal={() => setShowDetailsModal(false)}
             />
           </div>
@@ -293,10 +293,10 @@ const OrderList = () => {
     },
   ];
 
-  // const orderColumns: ColumnDef<BookingItem>[] = [
+  // const bookingColumns: ColumnDef<BookingItem>[] = [
   //   {
   //     accessorKey: "item_name",
-  //     header: t.orderList.modal.orderItems.columns.item[lang],
+  //     header: t.bookingList.modal.bookingItems.columns.item[lang],
   //     cell: (i) => {
   //       const itemName = i.getValue();
   //       return (
@@ -306,24 +306,24 @@ const OrderList = () => {
   //   },
   //   {
   //     accessorKey: "quantity",
-  //     header: t.orderList.modal.orderItems.columns.quantity[lang],
+  //     header: t.bookingList.modal.bookingItems.columns.quantity[lang],
   //   },
   //   {
   //     accessorKey: "start_date",
-  //     header: t.orderList.modal.orderItems.columns.startDate[lang],
+  //     header: t.bookingList.modal.bookingItems.columns.startDate[lang],
   //     cell: ({ row }) => {
   //       formatDate(new Date(row.original.start_date || ""), "d MMM yyyy");
   //     },
   //   },
   //   {
   //     accessorKey: "end_date",
-  //     header: t.orderList.modal.orderItems.columns.endDate[lang],
+  //     header: t.bookingList.modal.bookingItems.columns.endDate[lang],
   //     cell: ({ row }) =>
   //       formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
   //   },
   //   {
   //     accessorKey: "subtotal",
-  //     header: t.orderList.modal.orderItems.columns.subtotal[lang],
+  //     header: t.bookingList.modal.bookingItems.columns.subtotal[lang],
   //     cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
   //   },
   // ];
@@ -332,7 +332,7 @@ const OrderList = () => {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <LoaderCircle className="animate-spin h-8 w-8 mr-2" />
-        <span>{t.orderList.loading[lang]}</span>
+        <span>{t.bookingList.loading[lang]}</span>
       </div>
     );
   }
@@ -345,20 +345,20 @@ const OrderList = () => {
     <>
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl">{t.orderList.title[lang]}</h1>
+          <h1 className="text-xl">{t.bookingList.title[lang]}</h1>
 
           <Button
-            onClick={() => user && user?.id && dispatch(getAllOrders({}))}
+            onClick={() => user && user?.id && dispatch(getAllBookings({}))}
             className="bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
           >
-            {t.orderList.buttons.refresh[lang]}
+            {t.bookingList.buttons.refresh[lang]}
           </Button>
         </div>
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex gap-4 items-center">
             <input
               type="text"
-              placeholder={t.orderList.filters.search[lang]}
+              placeholder={t.bookingList.filters.search[lang]}
               value={searchQuery}
               size={50}
               onChange={(e) => handleSearchQuery(e)}
@@ -370,28 +370,28 @@ const OrderList = () => {
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             >
               <option value="all">
-                {t.orderList.filters.status.all[lang]}
+                {t.bookingList.filters.status.all[lang]}
               </option>
               <option value="pending">
-                {t.orderList.filters.status.pending[lang]}
+                {t.bookingList.filters.status.pending[lang]}
               </option>
               <option value="confirmed">
-                {t.orderList.filters.status.confirmed[lang]}
+                {t.bookingList.filters.status.confirmed[lang]}
               </option>
               <option value="cancelled">
-                {t.orderList.filters.status.cancelled[lang]}
+                {t.bookingList.filters.status.cancelled[lang]}
               </option>
               <option value="rejected">
-                {t.orderList.filters.status.rejected[lang]}
+                {t.bookingList.filters.status.rejected[lang]}
               </option>
               <option value="completed">
-                {t.orderList.filters.status.completed[lang]}
+                {t.bookingList.filters.status.completed[lang]}
               </option>
               <option value="deleted">
-                {t.orderList.filters.status.deleted[lang]}
+                {t.bookingList.filters.status.deleted[lang]}
               </option>
               <option value="cancelled by admin">
-                {t.orderList.filters.status.cancelledByAdmin[lang]}
+                {t.bookingList.filters.status.cancelledByAdmin[lang]}
               </option>
             </select>
             {(searchQuery || statusFilter !== "all") && (
@@ -403,130 +403,130 @@ const OrderList = () => {
                 size={"sm"}
                 className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
               >
-                {t.orderList.filters.clear[lang]}
+                {t.bookingList.filters.clear[lang]}
               </Button>
             )}
           </div>
         </div>
         <PaginatedDataTable
           columns={columns}
-          data={orders}
+          data={bookings as unknown as BookingUserViewRow[]}
           pageIndex={currentPage - 1}
           pageCount={totalPages}
           onPageChange={(page) => handlePageChange(page + 1)}
-          order={order}
+          booking={booking}
           ascending={ascending}
-          handleOrder={handleOrder}
+          handleBooking={handleBooking}
           handleAscending={handleAscending}
         />
       </div>
 
-      {/* Order Details Modal */}
-      {selectedOrder && (
+      {/* Booking Details Modal */}
+      {selectedBooking && (
         <div className="min-w-[320px]">
           <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
             <DialogContent className="max-w-5xl">
               <DialogHeader>
                 <DialogTitle className="text-left">
-                  {t.orderList.columns.orderNumber[lang]}{" "}
-                  {selectedOrder.order_number}
+                  {t.bookingList.columns.bookingNumber[lang]}{" "}
+                  {selectedBooking.booking_number}
                 </DialogTitle>
               </DialogHeader>
 
               <div className="space-y-4">
-                {/* Order Info */}
+                {/* Booking Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <h3 className="font-normal">
-                      {t.orderList.modal.customer[lang]}
+                      {t.bookingList.modal.customer[lang]}
                     </h3>
                     <p className="text-sm mb-0">
-                      {selectedOrder.full_name ||
-                        t.orderList.status.unknown[lang]}
+                      {selectedBooking.full_name ||
+                        t.bookingList.status.unknown[lang]}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {selectedOrder.email}
+                      {selectedBooking.email}
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <h3 className="font-normal">
-                      {t.orderList.modal.orderInfo[lang]}
+                      {t.bookingList.modal.bookingInfo[lang]}
                     </h3>
                     <p className="text-sm mb-0">
-                      {t.orderList.modal.status[lang]}{" "}
-                      <StatusBadge status={selectedOrder.status!} />
+                      {t.bookingList.modal.status[lang]}{" "}
+                      <StatusBadge status={selectedBooking.status!} />
                     </p>
                     <p className="text-sm">
-                      {t.orderList.modal.date[lang]}{" "}
+                      {t.bookingList.modal.date[lang]}{" "}
                       {formatDate(
-                        new Date(selectedOrder.created_at || ""),
+                        new Date(selectedBooking.created_at || ""),
                         "d MMM yyyy",
                       )}
                     </p>
                   </div>
                 </div>
 
-                {/* Order Items */}
+                {/* booking Items */}
                 <div>
                   {/* <DataTable
-                    columns={orderColumns}
-                    data={selectedOrder.order_items || []}
+                    columns={bookingColumns}
+                    data={selectedBooking.booking_items || []}
                   /> */}
                 </div>
 
-                {/* Order Modal Actions */}
+                {/* booking Modal Actions */}
                 <div className="flex flex-col justify-center space-x-4">
                   <Separator />
                   <div className="flex flex-row items-center gap-4 mt-4 justify-center">
-                    {selectedOrder.status === "pending" && (
+                    {selectedBooking.status === "pending" && (
                       <>
                         <div className="flex flex-col items-center text-center">
                           <span className="text-xs text-slate-600">
-                            {t.orderList.modal.buttons.confirm[lang]}
+                            {t.bookingList.modal.buttons.confirm[lang]}
                           </span>
-                          <OrderConfirmButton
-                            id={selectedOrder.id!}
+                          <BookingConfirmButton
+                            id={selectedBooking.id!}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
                         <div className="flex flex-col items-center text-center">
                           <span className="text-xs text-slate-600">
-                            {t.orderList.modal.buttons.reject[lang]}
+                            {t.bookingList.modal.buttons.reject[lang]}
                           </span>
-                          <OrderRejectButton
-                            id={selectedOrder.id!}
+                          <BookingRejectButton
+                            id={selectedBooking.id!}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
                       </>
                     )}
 
-                    {selectedOrder.status === "confirmed" && (
+                    {selectedBooking.status === "confirmed" && (
                       <>
                         <div className="flex flex-col items-center text-center">
                           <span className="text-xs text-slate-600">
-                            {t.orderList.modal.buttons.return[lang]}
+                            {t.bookingList.modal.buttons.return[lang]}
                           </span>
-                          <OrderReturnButton
-                            id={selectedOrder.id!}
+                          <BookingReturnButton
+                            id={selectedBooking.id!}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
                         <div className="flex flex-col items-center text-center">
                           <span className="text-xs text-slate-600">
-                            {t.orderList.modal.buttons.pickedUp[lang]}
+                            {t.bookingList.modal.buttons.pickedUp[lang]}
                           </span>
-                          <OrderPickupButton />
+                          <BookingPickupButton />
                         </div>
                       </>
                     )}
                     <div className="flex flex-col items-center text-center">
                       <span className="text-xs text-slate-600">
-                        {t.orderList.modal.buttons.delete[lang]}
+                        {t.bookingList.modal.buttons.delete[lang]}
                       </span>
-                      <OrderDeleteButton
-                        id={selectedOrder.id!}
+                      <BookingDeleteButton
+                        id={selectedBooking.id!}
                         closeModal={() => setShowDetailsModal(false)}
                       />
                     </div>
@@ -541,4 +541,4 @@ const OrderList = () => {
   );
 };
 
-export default OrderList;
+export default BookingList;
