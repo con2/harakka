@@ -167,17 +167,17 @@ export class RoleService {
     }
 
     const result = {
-      id: roleDetails.assignment_id,
-      user_id: roleDetails.user_id,
-      organization_id: roleDetails.organization_id,
-      role_id: roleDetails.role_id,
-      role_name: roleDetails.role_name,
-      organization_name: roleDetails.organization_name,
+      id: roleDetails.assignment_id ?? undefined,
+      user_id: roleDetails.user_id ?? "",
+      organization_id: roleDetails.organization_id ?? "",
+      role_id: roleDetails.role_id ?? "",
+      role_name: roleDetails.role_name ?? "",
+      organization_name: roleDetails.organization_name ?? "",
       is_active: roleDetails.is_active ?? true,
-      created_at: roleDetails.assigned_at,
-      user_email: roleDetails.user_email,
-      user_full_name: roleDetails.user_full_name,
-      user_visible_name: roleDetails.user_visible_name,
+      created_at: roleDetails.assigned_at ?? undefined,
+      user_email: roleDetails.user_email ?? undefined,
+      user_full_name: roleDetails.user_full_name ?? undefined,
+      user_visible_name: roleDetails.user_visible_name ?? undefined,
     };
 
     // After successful role creation, update JWT
@@ -240,12 +240,12 @@ export class RoleService {
     }
 
     const result = {
-      id: data.id,
-      user_id: data.user_id,
-      organization_id: data.organization_id,
-      role_id: data.role_id,
-      role_name: String(data.roles.role),
-      organization_name: data.organizations.name,
+      id: data.id ?? undefined,
+      user_id: data.user_id ?? "",
+      organization_id: data.organization_id ?? "",
+      role_id: data.role_id ?? "",
+      role_name: String(data.roles?.role ?? ""),
+      organization_name: data.organizations?.name ?? "",
       is_active: data.is_active ?? true,
       created_at: data.created_at ?? undefined,
     };
@@ -350,21 +350,39 @@ export class RoleService {
       throw new BadRequestException("Failed to fetch user roles");
     }
 
-    return data.map((item) => ({
-      id: item.assignment_id,
-      user_id: item.user_id,
-      organization_id: item.organization_id,
-      role_id: item.role_id,
-      role_name: item.role_name,
-      organization_name: item.organization_name,
-      is_active: item.is_active ?? true,
-      created_at: item.assigned_at,
-      // Additional user info
-      user_email: item.user_email,
-      user_full_name: item.user_full_name,
-      user_visible_name: item.user_visible_name,
-      user_phone: item.user_phone,
+    const mappedRoles = data.map((role) => ({
+      id: role.assignment_id ?? undefined,
+      user_id: role.user_id ?? "",
+      organization_id: role.organization_id ?? "",
+      role_id: role.role_id ?? "",
+      role_name: role.role_name ?? "",
+      organization_name: role.organization_name ?? "",
+      is_active: role.is_active ?? true,
+      created_at: role.assigned_at ?? undefined,
+      user_email: role.user_email ?? undefined,
+      user_full_name: role.user_full_name ?? undefined,
+      user_visible_name: role.user_visible_name ?? undefined,
+      user_phone: role.user_phone ?? undefined,
     }));
+
+    return this.filterUserRoles(mappedRoles, req);
+  }
+
+  /**
+   * Filter user roles based on permissions
+   */
+  private filterUserRoles(
+    roles: UserRoleWithDetails[],
+    req: AuthRequest,
+  ): UserRoleWithDetails[] {
+    // SuperVera can see all roles
+    if (this.isSuperVera(req)) {
+      return roles;
+    }
+
+    // Regular admins can only see roles in their organizations
+    const userOrgIds = req.userRoles.map((role) => role.organization_id);
+    return roles.filter((role) => userOrgIds.includes(role.organization_id));
   }
 
   private async updateUserJWT(userId: string, req: AuthRequest): Promise<void> {
@@ -377,14 +395,14 @@ export class RoleService {
 
       if (freshRoles) {
         const userRoles = freshRoles.map((item) => ({
-          id: item.assignment_id,
-          user_id: item.user_id,
-          organization_id: item.organization_id,
-          role_id: item.role_id,
-          role_name: item.role_name,
-          organization_name: item.organization_name,
+          id: item.assignment_id ?? undefined,
+          user_id: item.user_id ?? "",
+          organization_id: item.organization_id ?? "",
+          role_id: item.role_id ?? "",
+          role_name: item.role_name ?? "",
+          organization_name: item.organization_name ?? "",
           is_active: item.is_active ?? true,
-          created_at: item.assigned_at,
+          created_at: item.assigned_at ?? undefined,
         }));
 
         // Use the JWT service to force update
