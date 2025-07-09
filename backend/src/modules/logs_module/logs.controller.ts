@@ -10,6 +10,7 @@ import {
 import { LogsService } from "./logs.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { logError } from "src/utils/logging";
+import { Roles } from "src/decorators/roles.decorator";
 
 @Controller("logs")
 export class LogsController {
@@ -18,6 +19,7 @@ export class LogsController {
   constructor(private readonly logsService: LogsService) {}
 
   @Get()
+  @Roles(["admin", "super_admin", "main_admin", "superVera"], { match: "any" })
   async getAllLogs(
     @Req() req: AuthRequest,
     @Query("page") page: string = "1",

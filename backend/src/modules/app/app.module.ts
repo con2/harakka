@@ -30,6 +30,7 @@ import { RoleModule } from "../role/role.module";
 import { RoleController } from "../role/role.controller";
 import { AuthModule } from "../auth/auth.module";
 import { JwtModule } from "../jwt/jwt.module";
+import { RolesGuard } from "src/guards/roles.guard";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -65,7 +66,7 @@ dotenvExpand.expand(env);
     JwtModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: "APP_GUARD", useClass: RolesGuard }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

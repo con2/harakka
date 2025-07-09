@@ -15,17 +15,20 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { UserAddress, UserProfile } from "./interfaces/user.interface";
+import { Roles } from "src/decorators/roles.decorator";
 
 @Controller("users")
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
+  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
   async getAllUsers(@Req() req: AuthRequest): Promise<UserProfile[]> {
     return this.userService.getAllUsers(req);
   }
 
   @Get(":id")
+  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
   async getUserById(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -40,6 +43,7 @@ export class UserController {
   }
 
   @Post()
+  @Roles(["admin", "super_admin", "superVera", "main_admin"], { match: "any" })
   async createUser(
     @Body() user: CreateUserDto,
     @Req() req: AuthRequest,
@@ -49,6 +53,7 @@ export class UserController {
   }
 
   @Put(":id")
+  @Roles(["admin", "super_admin", "superVera", "main_admin"], { match: "any" })
   async updateUser(
     @Param("id") id: string,
     @Body() user: Partial<CreateUserDto>,
@@ -62,6 +67,7 @@ export class UserController {
   }
 
   @Delete(":id")
+  @Roles(["admin", "super_admin", "superVera", "main_admin"], { match: "any" })
   async deleteUser(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -72,6 +78,7 @@ export class UserController {
   // Address Endpoints
 
   @Get(":id/addresses")
+  @Roles(["admin", "super_admin", "superVera", "main_admin"], { match: "any" })
   async getAddresses(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -82,6 +89,7 @@ export class UserController {
   }
 
   @Post(":id/addresses")
+  @Roles(["admin", "super_admin", "main_admin", "superVera"], { match: "any" })
   async addAddress(
     @Param("id") id: string,
     @Body() address: CreateAddressDto,
@@ -91,6 +99,7 @@ export class UserController {
   }
 
   @Put(":id/addresses/:addressId")
+  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
   async updateAddress(
     @Param("id") id: string,
     @Param("addressId") addressId: string,
@@ -101,6 +110,7 @@ export class UserController {
   }
 
   @Delete(":id/addresses/:addressId")
+  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
   async deleteAddress(
     @Param("id") id: string,
     @Param("addressId") addressId: string,

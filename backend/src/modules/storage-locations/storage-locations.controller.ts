@@ -10,6 +10,7 @@ import { StorageLocationsService } from "./storage-locations.service";
 import { StorageLocationsRow } from "./interfaces/storage-location";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { SupabaseService } from "../supabase/supabase.service";
+import { Public } from "src/decorators/roles.decorator";
 
 @Controller("api/storage-locations")
 export class StorageLocationsController {
@@ -18,6 +19,7 @@ export class StorageLocationsController {
     private readonly supabaseService: SupabaseService,
   ) {}
 
+  @Public()
   @Get()
   async getAllLocations(
     @Req() req: AuthRequest,
