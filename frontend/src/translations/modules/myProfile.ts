@@ -4,9 +4,9 @@ export const myProfile = {
       fi: "Profiilini",
       en: "My Profile",
     },
-    orders: {
+    bookings: {
       fi: "Tilaukseni",
-      en: "My Orders",
+      en: "My Bookings",
     },
   },
   personalDetails: {

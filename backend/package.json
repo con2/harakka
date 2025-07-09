@@ -2,9 +2,7 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "author": "",
   "private": true,
-  "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

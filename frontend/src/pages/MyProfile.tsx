@@ -43,7 +43,7 @@ import {
 } from "../components/ui/select";
 import { toastConfirm } from "../components/ui/toastConfirm";
 import profilePlaceholder from "../assets/profilePlaceholder.png";
-import MyOrders from "@/components/MyOrders";
+import MyBookings from "@/components/MyBookings";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();
@@ -213,8 +213,8 @@ const MyProfile = () => {
           <TabsTrigger value="user-details">
             {t.myProfile.tabs.userDetails[lang]}
           </TabsTrigger>
-          <TabsTrigger value="orders">
-            {t.myProfile.tabs.orders[lang]}
+          <TabsTrigger value="bookings">
+            {t.myProfile.tabs.bookings[lang]}
           </TabsTrigger>
         </TabsList>
 
@@ -703,9 +703,9 @@ const MyProfile = () => {
           )}
         </TabsContent>
 
-        {/* Orders Tab */}
-        <TabsContent value="orders">
-          <MyOrders /> {/* Embedding your existing MyOrders component */}
+        {/* Bookings Tab */}
+        <TabsContent value="bookings">
+          <MyBookings />
         </TabsContent>
       </Tabs>
     </div>

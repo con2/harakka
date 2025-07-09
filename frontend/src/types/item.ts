@@ -27,13 +27,14 @@ export interface Item extends BaseEntity, Translatable<ItemTranslation> {
   tagIds?: string[];
   storage_item_tags?: Tag[];
   location_details?: LocationDetails | null;
+  location_name?: string;
 }
 
 /**
  * Item state in Redux store
  */
 export interface ItemState {
-  items: Item[] | ManageItemViewRow[];
+  items: Array<Item | ManageItemViewRow>;
   loading: boolean;
   error: string | null;
   selectedItem: Item | null;
@@ -67,24 +68,22 @@ export type UpdateItemDto = Partial<
 
 /**
  * Type used for `/admin/items`
- * Gets the basic, necessary data
+ * Gets the basic, necessary data plus some pre‑flattened translations.
  */
-export type ManageItemViewRow = {
+export interface ManageItemViewRow extends Item {
+  /* Flattened, language‑specific name/type strings for quick sorting */
   fi_item_name: string;
   fi_item_type: string;
-  location_name: string;
-  price: number;
-  items_number_total: number;
-  is_active: boolean;
-  created_at: string;
-  id: string;
+
   en_item_name: string;
   en_item_type: string;
-  location_id: string;
+
+  /** Tag IDs linked to this item */
   tags: string[];
-  translations: ItemTranslation;
+
+  /** Localised tag translation object */
   tag_translations: TagTranslation;
-};
+}
 
 /**
  * Valid orders/filters for the manage items page.

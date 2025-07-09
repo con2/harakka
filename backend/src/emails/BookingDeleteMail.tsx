@@ -8,7 +8,7 @@ import {
   Section,
 } from "@react-email/components";
 
-const BookingDeleteMail = ({ name, email, order }) => (
+const BookingDeleteMail = ({ name, email, booking }) => (
   <Html>
     <Head>
       <link
@@ -76,7 +76,7 @@ const BookingDeleteMail = ({ name, email, order }) => (
           Hei <strong>Admin</strong>,
         </Text>
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          Varaus, jonka järjestysnumero on {order}, on onnistuneesti merkitty
+          Varaus, jonka järjestysnumero on {booking}, on onnistuneesti merkitty
           poistetuksi. Se siirtyy arkistoosi eikä näy enää tilausten
           luettelossa. Se on tullut pois käyttäjältä {name}, {email}.
         </Text>
@@ -87,9 +87,9 @@ const BookingDeleteMail = ({ name, email, order }) => (
           Hello <strong>Admin</strong>,
         </Text>
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          The booking with the ordernumber {order} has been sucessfully marked
+          The booking with the booking number {booking} has been sucessfully marked
           as deleted. It will go to your archive and will no longer be visible
-          in the list of the orders. It has been deleted from user {name},{" "}
+          in the list of the bookings. It has been deleted from user {name},{" "}
           {email}.
         </Text>
       </Container>

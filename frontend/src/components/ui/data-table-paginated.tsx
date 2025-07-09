@@ -26,15 +26,15 @@ interface DataTableProps<TData, TValue> {
   pageCount: number;
   onPageChange: (pageIndex: number) => void;
   ascending?: boolean | null;
-  order?: string;
+  booking?: string;
   handleAscending?: (asc: boolean | null) => void;
-  handleOrder?: (order: string) => void;
+  handleBooking?: (order: string) => void;
   originalSorting?: string;
 }
 
 /**
  * If data table has manual sorting:
- * a value for ascending, order, handleAscending and handleOrder must be provided.
+ * a value for ascending, order, handleAscending and handleBooking must be provided.
  * These should update the state of the parents component, leading to a new API call.
  * If for some reason the original order is not the first column of the table, originalSorting must be provided
  */
@@ -45,9 +45,9 @@ export function PaginatedDataTable<TData, TValue>({
   pageCount,
   onPageChange,
   ascending,
-  order,
+  booking,
   handleAscending,
-  handleOrder,
+  handleBooking,
   originalSorting,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
@@ -79,14 +79,14 @@ export function PaginatedDataTable<TData, TValue>({
    * @param id The ID of which to sort by. If ascending is null it will return to original sorting.
    */
   const handleClick = (id: string) => {
-    if (id !== order) {
-      handleOrder?.(id);
+    if (id !== booking) {
+      handleBooking?.(id);
       handleAscending?.(true);
       return;
     }
 
     if (ascending !== null) {
-      handleOrder?.(id);
+      handleBooking?.(id);
     }
 
     if (ascending === true) {
@@ -95,7 +95,7 @@ export function PaginatedDataTable<TData, TValue>({
       handleAscending?.(true);
     } else {
       handleAscending?.(null);
-      handleOrder?.(originalSorting ?? table.getHeaderGroups()[0].id);
+      handleBooking?.(originalSorting ?? table.getHeaderGroups()[0].id);
     }
   };
 
@@ -107,11 +107,11 @@ export function PaginatedDataTable<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const isOrder = header.id === order;
+                  const isOrder = header.id === booking;
                   return (
                     <TableHead
                       onClick={
-                        handleOrder ? () => handleClick(header.id) : () => {}
+                        handleBooking ? () => handleClick(header.id) : () => {}
                       }
                       className="cursor-pointer select-none hover:text-highlight2 transition-colors items-center gap-1"
                       key={header.id}

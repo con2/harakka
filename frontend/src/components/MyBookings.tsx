@@ -1,31 +1,25 @@
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  cancelOrder,
-  getUserOrders,
-  selectOrdersError,
-  selectOrdersLoading,
-  selectUserOrders,
-  updateOrder,
-} from "@/store/slices/ordersSlice";
+  cancelBooking,
+  getUserBookings,
+  selectUserBookings,
+  selectBookingError,
+  selectBookingLoading,
+  updateBooking,
+} from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
-import { BookingItem, BookingOrder } from "@/types";
+import { BookingItem, Booking, BookingUserViewRow } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Button } from "../components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../components/ui/dialog";
-
-import OrderDetailsButton from "@/components/Admin/Orders/OrderDetailsButton";
-import OrderCancelButton from "@/components/OrderCancelButton";
-import OrderEditButton from "@/components/OrderEditButton";
+import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import BookingDetailsButton from "@/components/Admin/Bookings/BookingDetailsButton";
+import BookingCancelButton from "@/components/BookingCancelButton";
+import BookingEditButton from "@/components/BookingEditButton";
 import {
   Accordion,
   AccordionContent,
@@ -36,25 +30,34 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { t } from "@/translations";
-import { DataTable } from "../components/ui/data-table";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
+import { DataTable } from "./ui/data-table";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { StatusBadge } from "./StatusBadge";
 import InlineTimeframePicker from "./InlineTimeframeSelector";
 import { itemsApi } from "@/api/services/items";
 
-const MyOrders = () => {
+const MyBookings = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const user = useAppSelector(selectSelectedUser);
-  const orders = useAppSelector(selectUserOrders);
-  const loading = useAppSelector(selectOrdersLoading);
-  const error = useAppSelector(selectOrdersError);
-  const [selectedOrder, setSelectedOrder] = useState<BookingOrder | null>(null);
+  // Raw array can contain either real `Booking`s or flattened view rows
+  const bookingsRaw = useAppSelector(selectUserBookings) as (
+    | Booking
+    | BookingUserViewRow
+  )[];
+
+  /** Narrower type-guard: keeps only objects that have `booking_items`. */
+  const bookings: Booking[] = bookingsRaw.filter(
+    (b): b is Booking => (b as Booking).booking_items !== undefined,
+  );
+  const loading = useAppSelector(selectBookingLoading);
+  const error = useAppSelector(selectBookingError);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [editingOrder, setEditingOrder] = useState<BookingOrder | null>(null);
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [editFormItems, setEditFormItems] = useState<BookingItem[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [globalStartDate, setGlobalStartDate] = useState<string | null>(null);
@@ -84,25 +87,25 @@ const MyOrders = () => {
   useEffect(() => {
     // Redirect if not authenticated
     if (!user) {
-      toast.error(t.myOrders.error.loginRequired[lang]);
+      toast.error(t.myBookings.error.loginRequired[lang]);
       navigate("/login");
       return;
     }
 
-    if (user && orders.length === 0)
-      dispatch(getUserOrders({ user_id: user.id, page: 1, limit: 10 }));
-  }, [dispatch, navigate, user, lang, orders]); // Apply filters to orders
+    if (user && bookings.length === 0)
+      dispatch(getUserBookings({ user_id: user.id, page: 1, limit: 10 }));
+  }, [dispatch, navigate, user, lang, bookings]); // Apply filters to bookings
 
-  const filteredOrders = orders.filter((order) => {
+  const filteredBookings = bookings.filter((booking) => {
     // Filter by status
-    if (statusFilter !== "all" && order.status !== statusFilter) {
+    if (statusFilter !== "all" && booking.status !== statusFilter) {
       return false;
     }
-    // Filter by search query (order number)
+    // Filter by search query (booking number)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      const orderNumber = String(order.order_number || "").toLowerCase();
-      return orderNumber.includes(query);
+      const bookingNumber = String(booking.booking_number || "").toLowerCase();
+      return bookingNumber.includes(query);
     }
     return true;
   });
@@ -113,10 +116,10 @@ const MyOrders = () => {
   }, [searchQuery, statusFilter]);
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+  const paginatedBookings = filteredBookings.slice(startIndex, endIndex);
 
   // Handle page change
   const handlePageChange = (pageIndex: number) => {
@@ -128,26 +131,26 @@ const MyOrders = () => {
     return formatDateLocalized(new Date(dateString), "d MMM yyyy");
   };
 
-  const handleViewDetails = (order: BookingOrder) => {
-    setSelectedOrder(order);
+  const handleViewDetails = (booking: Booking) => {
+    setSelectedBooking(booking);
     setShowDetailsModal(true);
   };
 
-  const handleEditOrder = (order: BookingOrder) => {
+  const handleEditBooking = (booking: Booking) => {
     setItemQuantities(
       Object.fromEntries(
-        order.order_items.map((item) => [String(item.id), item.quantity]),
+        booking.booking_items.map((item) => [String(item.id), item.quantity]),
       ),
     );
-    setGlobalStartDate(order.order_items?.[0]?.start_date ?? null);
-    setGlobalEndDate(order.order_items?.[0]?.end_date ?? null);
-    setEditingOrder(order);
-    setEditFormItems(order.order_items || []);
+    setGlobalStartDate(booking.booking_items?.[0]?.start_date ?? null);
+    setGlobalEndDate(booking.booking_items?.[0]?.end_date ?? null);
+    setEditingBooking(booking);
+    setEditFormItems(booking.booking_items || []);
     setShowEditModal(true);
   };
 
   const handleSubmitEdit = async () => {
-    if (!editingOrder) return;
+    if (!editingBooking) return;
 
     const updatedItems = editFormItems
       .map((item) => ({
@@ -164,45 +167,53 @@ const MyOrders = () => {
     if (updatedItems.length === 0) {
       try {
         dispatch(
-          updateOrder({
-            orderId: editingOrder.id,
+          updateBooking({
+            bookingId: editingBooking.id,
             items: updatedItems,
           }),
         );
-        dispatch(cancelOrder(editingOrder.id));
-        toast.warning(t.myOrders.edit.toast.emptyCancelled[lang]);
+        dispatch(cancelBooking(editingBooking.id));
+        toast.warning(t.myBookings.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
           dispatch(
-            getUserOrders({ user_id: user.id, page: currentPage, limit: 10 }),
+            getUserBookings({
+              user_id: user.id,
+              page: currentPage,
+              limit: 10,
+            }),
           );
         }
       } catch {
-        toast.error(t.myOrders.edit.toast.cancelFailed[lang]);
+        toast.error(t.myBookings.edit.toast.cancelFailed[lang]);
       } finally {
         setShowEditModal(false);
-        setEditingOrder(null);
+        setEditingBooking(null);
       }
       return;
     }
 
     try {
       await dispatch(
-        updateOrder({
-          orderId: editingOrder.id,
+        updateBooking({
+          bookingId: editingBooking.id,
           items: updatedItems,
         }),
       ).unwrap();
 
-      toast.success(t.myOrders.edit.toast.orderUpdated[lang]);
+      toast.success(t.myBookings.edit.toast.bookingUpdated[lang]);
       setShowEditModal(false);
-      setEditingOrder(null);
+      setEditingBooking(null);
       if (user?.id) {
         dispatch(
-          getUserOrders({ user_id: user.id, page: currentPage, limit: 10 }),
+          getUserBookings({
+            user_id: user.id,
+            page: currentPage,
+            limit: 10,
+          }),
         );
       }
     } catch {
-      toast.error(t.myOrders.edit.toast.updateFailed[lang]);
+      toast.error(t.myBookings.edit.toast.updateFailed[lang]);
     }
   };
   // fetch availability for an item on a given date
@@ -212,7 +223,7 @@ const MyOrders = () => {
 
       for (const item of editFormItems) {
         const itemId = item.item_id;
-        const currentOrderQty = item.quantity ?? 0;
+        const currentBookingQty = item.quantity ?? 0;
 
         setLoadingAvailability((prev) => ({ ...prev, [itemId]: true }));
 
@@ -224,7 +235,7 @@ const MyOrders = () => {
           );
 
           const correctedAvailableQuantity =
-            data.availableQuantity + currentOrderQty;
+            data.availableQuantity + currentBookingQty;
 
           setAvailability((prev) => ({
             ...prev,
@@ -251,26 +262,26 @@ const MyOrders = () => {
     return availQty === undefined || inputQty <= availQty;
   });
 
-  const columns: ColumnDef<BookingOrder>[] = [
+  const columns: ColumnDef<Booking>[] = [
     {
-      accessorKey: "order_number",
-      header: t.myOrders.columns.orderNumber[lang],
+      accessorKey: "booking_number",
+      header: t.myBookings.columns.bookingNumber[lang],
     },
     {
       accessorKey: "status",
-      header: t.myOrders.columns.status[lang],
+      header: t.myBookings.columns.status[lang],
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "created_at",
-      header: t.myOrders.columns.date[lang],
+      header: t.myBookings.columns.date[lang],
       cell: ({ row }) => formatDate(row.original.created_at),
     },
     {
       accessorKey: "date_range",
-      header: t.orderList.columns.dateRange[lang],
+      header: t.bookingList.columns.dateRange[lang],
       cell: ({ row }) => {
-        const items = row.original.order_items || [];
+        const items = row.original.booking_items || [];
         if (items.length === 0) return "-";
 
         // Get earliest start_date
@@ -296,21 +307,24 @@ const MyOrders = () => {
     {
       id: "actions",
       cell: ({ row }) => {
-        const order = row.original;
-        const isPending = order.status === "pending";
+        const booking = row.original;
+        const isPending = booking.status === "pending";
 
         return (
           <div className="flex space-x-2">
-            <OrderDetailsButton
-              order={order}
+            <BookingDetailsButton
+              booking={booking}
               onViewDetails={handleViewDetails}
             />
 
             {isPending && (
               <>
-                <OrderEditButton order={order} onEdit={handleEditOrder} />
-                <OrderCancelButton
-                  id={order.id}
+                <BookingEditButton
+                  booking={booking}
+                  onEdit={handleEditBooking}
+                />
+                <BookingCancelButton
+                  id={booking.id}
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
@@ -324,7 +338,7 @@ const MyOrders = () => {
   const bookingColumns: ColumnDef<BookingItem>[] = [
     {
       accessorKey: "item_name",
-      header: t.myOrders.columns.item[lang],
+      header: t.myBookings.columns.item[lang],
       cell: ({ row }) => {
         const itemData = row.original;
         let itemName = null;
@@ -356,21 +370,21 @@ const MyOrders = () => {
     },
     {
       accessorKey: "quantity",
-      header: t.myOrders.columns.quantity[lang],
+      header: t.myBookings.columns.quantity[lang],
     },
     {
       accessorKey: "start_date",
-      header: t.myOrders.columns.startDate[lang],
+      header: t.myBookings.columns.startDate[lang],
       cell: ({ row }) => formatDate(row.original.start_date),
     },
     {
       accessorKey: "end_date",
-      header: t.myOrders.columns.endDate[lang],
+      header: t.myBookings.columns.endDate[lang],
       cell: ({ row }) => formatDate(row.original.end_date),
     },
     // {
     //   accessorKey: "subtotal",
-    //   header: t.myOrders.columns.subtotal[lang],
+    //   header: t.myBookings.columns.subtotal[lang],
     //   cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
     // },
   ];
@@ -379,7 +393,7 @@ const MyOrders = () => {
     return (
       <div className="flex justify-center items-center p-8">
         <LoaderCircle className="animate-spin h-8 w-8 mr-2" />
-        <span>{t.myOrders.loading[lang]}</span>
+        <span>{t.myBookings.loading[lang]}</span>
       </div>
     );
   }
@@ -387,21 +401,25 @@ const MyOrders = () => {
   if (error) {
     return (
       <div className="text-red-500 text-center p-8">
-        <p>{t.myOrders.error.loadingError[lang]}</p>
+        <p>{t.myBookings.error.loadingError[lang]}</p>
         <p className="text-sm">{error}</p>
         <Button
           onClick={() => {
             if (!user?.id) {
-              toast.error(t.myOrders.error.loginRequired[lang]);
+              toast.error(t.myBookings.error.loginRequired[lang]);
               return;
             }
             dispatch(
-              getUserOrders({ user_id: user.id, page: currentPage, limit: 10 }),
+              getUserBookings({
+                user_id: user.id,
+                page: currentPage,
+                limit: 10,
+              }),
             );
           }}
           className="mt-4"
         >
-          {t.myOrders.buttons.tryAgain[lang]}
+          {t.myBookings.buttons.tryAgain[lang]}
         </Button>
       </div>
     );
@@ -415,7 +433,7 @@ const MyOrders = () => {
           <div className="flex gap-4 items-center">
             <input
               type="text"
-              placeholder={t.myOrders.filter.searchPlaceholder[lang]}
+              placeholder={t.myBookings.filter.searchPlaceholder[lang]}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
@@ -425,23 +443,29 @@ const MyOrders = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             >
-              <option value="all">{t.myOrders.filter.allStatuses[lang]}</option>
-              <option value="pending">{t.myOrders.status.pending[lang]}</option>
+              <option value="all">
+                {t.myBookings.filter.allStatuses[lang]}
+              </option>
+              <option value="pending">
+                {t.myBookings.status.pending[lang]}
+              </option>
               <option value="confirmed">
-                {t.myOrders.status.confirmed[lang]}
+                {t.myBookings.status.confirmed[lang]}
               </option>
               <option value="cancelled">
-                {t.myOrders.status.cancelled[lang]}
+                {t.myBookings.status.cancelled[lang]}
               </option>
               <option value="rejected">
-                {t.myOrders.status.rejected[lang]}
+                {t.myBookings.status.rejected[lang]}
               </option>
               <option value="completed">
-                {t.myOrders.status.completed[lang]}
+                {t.myBookings.status.completed[lang]}
               </option>
-              <option value="deleted">{t.myOrders.status.deleted[lang]}</option>
+              <option value="deleted">
+                {t.myBookings.status.deleted[lang]}
+              </option>
               <option value="cancelled by admin">
-                {t.myOrders.status.cancelledByAdmin[lang]}
+                {t.myBookings.status.cancelledByAdmin[lang]}
               </option>
             </select>
             {(searchQuery || statusFilter !== "all") && (
@@ -453,72 +477,74 @@ const MyOrders = () => {
                 size={"sm"}
                 className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
               >
-                {t.myOrders.buttons.clearFilters[lang]}
+                {t.myBookings.buttons.clearFilters[lang]}
               </Button>
             )}
           </div>
         </div>
 
-        {/* Orders table or empty state */}
-        {orders.length === 0 ? (
+        {/* Booking table or empty state */}
+        {bookings.length === 0 ? (
           <div className="text-center py-8 bg-slate-50 rounded-lg">
-            <p className="text-lg mb-2">{t.myOrders.emptyState.title[lang]}</p>
+            <p className="text-lg mb-2">
+              {t.myBookings.emptyState.title[lang]}
+            </p>
             <p className="text-muted-foreground mb-4">
-              {t.myOrders.emptyState.description[lang]}
+              {t.myBookings.emptyState.description[lang]}
             </p>
             <Button
               onClick={() => navigate("/storage")}
               className="bg-background text-secondary border-secondary border hover:bg-secondary hover:text-white"
             >
-              {t.myOrders.buttons.browseItems[lang]}
+              {t.myBookings.buttons.browseItems[lang]}
             </Button>
           </div>
         ) : isMobile ? (
           <Accordion type="multiple" className="w-full space-y-2">
-            {filteredOrders.map((order) => (
-              <AccordionItem key={order.id} value={String(order.id)}>
+            {filteredBookings.map((booking) => (
+              <AccordionItem key={booking.id} value={String(booking.id)}>
                 <AccordionTrigger className="text-left">
                   <div className="flex flex-col w-full">
                     <span className="text-sm font-medium">
-                      {t.myOrders.columns.orderNumber[lang]}{" "}
-                      {order.order_number}
+                      {t.myBookings.columns.bookingNumber[lang]}{" "}
+                      {booking.booking_number}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(order.created_at)} · {order.status}
+                      {formatDate(booking.created_at)} · {booking.status}
                     </span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-1">
-                    {/* Order Info */}
+                    {/* booking Info */}
                     <div className="text-sm">
                       <p>
-                        <strong>{t.myOrders.mobile.status[lang]}</strong>{" "}
-                        <StatusBadge status={order.status} />
+                        <strong>{t.myBookings.mobile.status[lang]}</strong>{" "}
+                        <StatusBadge status={booking.status} />
                       </p>
                       <p>
-                        <strong>{t.myOrders.mobile.start[lang]}</strong>{" "}
-                        {formatDate(order.order_items?.[0]?.start_date)}
+                        <strong>{t.myBookings.mobile.start[lang]}</strong>{" "}
+                        {formatDate(booking.booking_items?.[0]?.start_date)}
                       </p>
                       <p>
-                        <strong>{t.myOrders.mobile.end[lang]}</strong>{" "}
-                        {formatDate(order.order_items?.[0]?.end_date)}
+                        <strong>{t.myBookings.mobile.end[lang]}</strong>{" "}
+                        {formatDate(booking.booking_items?.[0]?.end_date)}
                       </p>
                     </div>
 
-                    {/* Order Items */}
+                    {/* booking Items */}
                     <div className="bg-slate-50 rounded-md">
                       <p className="text-md font-semibold">
-                        {t.myOrders.orderDetails.items[lang]}:
+                        {t.myBookings.bookingDetails.items[lang]}:
                       </p>
                       <div className="space-y-2 p-1">
-                        {order.order_items?.map((item) => (
+                        {booking.booking_items?.map((item) => (
                           <div
                             key={item.id}
                             className="text-xs space-y-1 border-b pb-2 last:border-b-0 last:pb-0"
                           >
                             <p>
-                              <strong>{t.myOrders.mobile.item[lang]}</strong>{" "}
+                              <strong>{t.myBookings.mobile.item[lang]}</strong>{" "}
                               {(() => {
                                 let itemName;
 
@@ -556,7 +582,7 @@ const MyOrders = () => {
                             </p>
                             <p>
                               <strong>
-                                {t.myOrders.mobile.quantity[lang]}
+                                {t.myBookings.mobile.quantity[lang]}
                               </strong>{" "}
                               {item.quantity}
                             </p>
@@ -567,14 +593,14 @@ const MyOrders = () => {
 
                     {/* Actions */}
                     <div className="flex justify-end gap-2 mt-3">
-                      {order.status === "pending" && (
+                      {booking.status === "pending" && (
                         <>
-                          <OrderEditButton
-                            order={order}
-                            onEdit={handleEditOrder}
+                          <BookingEditButton
+                            booking={booking}
+                            onEdit={handleEditBooking}
                           />
-                          <OrderCancelButton
-                            id={order.id}
+                          <BookingCancelButton
+                            id={booking.id}
                             closeModal={() => {}}
                           />
                         </>
@@ -588,7 +614,7 @@ const MyOrders = () => {
         ) : (
           <PaginatedDataTable
             columns={columns}
-            data={paginatedOrders}
+            data={paginatedBookings}
             pageIndex={currentPage}
             pageCount={totalPages}
             onPageChange={handlePageChange}
@@ -596,14 +622,14 @@ const MyOrders = () => {
         )}
       </div>
 
-      {/* Editing Order Modal */}
-      {editingOrder && (
+      {/* Editing Booking Modal */}
+      {editingBooking && (
         <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
           <DialogContent className="max-w-sm overflow-visible">
             <DialogHeader className="items-start">
               <DialogTitle>
-                {t.myOrders.edit.title[lang]}
-                {editingOrder.order_number}
+                {t.myBookings.edit.title[lang]}
+                {editingBooking.booking_number}
               </DialogTitle>
             </DialogHeader>
 
@@ -623,7 +649,7 @@ const MyOrders = () => {
                 <div key={item.id} className="grid grid-cols-5 gap-4">
                   <div className="col-span-2 items-center">
                     <Label className="block text-xs font-medium">
-                      {t.myOrders.edit.item[lang]}
+                      {t.myBookings.edit.item[lang]}
                     </Label>
                     <p className="text-sm">
                       {(() => {
@@ -650,7 +676,8 @@ const MyOrders = () => {
                         // Fall back to stored item_name
                         else {
                           itemName =
-                            item.item_name || t.myOrders.edit.unnamedItem[lang];
+                            item.item_name ||
+                            t.myBookings.edit.unnamedItem[lang];
                         }
 
                         return (
@@ -664,7 +691,7 @@ const MyOrders = () => {
                     style={{ zIndex: 50, pointerEvents: "auto" }}
                   >
                     {/* <Label className="block text-sm font-medium">
-                      {t.myOrders.edit.quantity[lang]}
+                      {t.myBookings.edit.quantity[lang]}
                     </Label> */}
                     <div className="flex items-center gap-1 mt-auto">
                       <Button
@@ -748,14 +775,14 @@ const MyOrders = () => {
                   variant={"secondary"}
                   onClick={() => setShowEditModal(false)}
                 >
-                  {t.myOrders.edit.buttons.cancel[lang]}
+                  {t.myBookings.edit.buttons.cancel[lang]}
                 </Button>
                 <Button
                   variant={"outline"}
                   onClick={handleSubmitEdit}
-                  disabled={!editingOrder || !isFormValid}
+                  disabled={!editingBooking || !isFormValid}
                 >
-                  {t.myOrders.edit.buttons.saveChanges[lang]}
+                  {t.myBookings.edit.buttons.saveChanges[lang]}
                 </Button>
               </div>
             </div>
@@ -763,23 +790,23 @@ const MyOrders = () => {
         </Dialog>
       )}
 
-      {/* Order Details Modal */}
-      {selectedOrder && (
+      {/* Booking Details Modal */}
+      {selectedBooking && (
         <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
           <DialogContent className="max-w-3xl overflow-x-auto">
             <DialogHeader>
               <DialogTitle className="text-left">
-                {t.myOrders.orderDetails.title[lang]}
-                {selectedOrder.order_number}
+                {t.myBookings.bookingDetails.title[lang]}
+                {selectedBooking.booking_number}
               </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
-              {/* Order Info */}
+              {/* booking Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-normal text-sm mb-1">
-                    {t.myOrders.orderDetails.customerInfo[lang]}
+                    {t.myBookings.bookingDetails.customerInfo[lang]}
                   </h3>
                   <p className="text-xs text-grey-500">{user?.full_name}</p>
                   <p className="text-xs text-gray-500">{user?.email}</p>
@@ -787,28 +814,28 @@ const MyOrders = () => {
 
                 <div>
                   <h3 className="font-normal text-sm mb-1">
-                    {t.myOrders.orderDetails.orderInfo[lang]}
+                    {t.myBookings.bookingDetails.bookingInfo[lang]}
                   </h3>
                   <p className="text-xs">
-                    {t.myOrders.columns.status[lang]}:{" "}
-                    <StatusBadge status={selectedOrder.status} />
+                    {t.myBookings.columns.status[lang]}:{" "}
+                    <StatusBadge status={selectedBooking.status} />
                   </p>
                   <p className="text-xs">
-                    {t.myOrders.columns.date[lang]}:{" "}
-                    {formatDate(selectedOrder.created_at)}
+                    {t.myBookings.columns.date[lang]}:{" "}
+                    {formatDate(selectedBooking.created_at)}
                   </p>
                 </div>
               </div>
 
-              {/* Order Items */}
+              {/* Booking Items */}
               <div>
                 <h3 className="font-normal text-sm mb-2">
-                  {t.myOrders.orderDetails.items[lang]}
+                  {t.myBookings.bookingDetails.items[lang]}
                 </h3>
                 <div className="border rounded-md overflow-hidden">
                   <DataTable
                     columns={bookingColumns}
-                    data={selectedOrder.order_items || []}
+                    data={selectedBooking.booking_items || []}
                   />
                 </div>
               </div>
@@ -820,4 +847,4 @@ const MyOrders = () => {
   );
 };
 
-export default MyOrders;
+export default MyBookings;

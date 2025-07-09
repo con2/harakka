@@ -3,9 +3,9 @@ import { ItemTranslation } from "./item";
 import { Database } from "./supabase.types";
 
 /**
- * Order status values
+ * Booking status values
  */
-export type OrderStatus =
+export type BookingStatus =
   | "pending"
   | "confirmed"
   | "paid"
@@ -13,7 +13,8 @@ export type OrderStatus =
   | "cancelled"
   | "cancelled by user"
   | "rejected"
-  | "refunded";
+  | "refunded"
+  | "all";
 
 /**
  * Payment status values
@@ -26,7 +27,7 @@ export type PaymentStatus =
   | null;
 
 /**
- * Booked item in an order
+ * Booked item in an booking
  */
 export interface BookingItem {
   id?: string;
@@ -52,15 +53,15 @@ export interface BookingItem {
 /**
  * Order entity representing a booking in the system
  */
-export interface BookingOrder extends BaseEntity {
+export interface Booking extends BaseEntity {
   user_id: string;
-  order_number: string;
-  status: OrderStatus;
+  booking_number: string;
+  status: BookingStatus;
   total_amount?: number | null;
   discount_amount?: number | null;
   final_amount?: number | null;
   payment_status?: PaymentStatus;
-  order_items: BookingItem[];
+  booking_items: BookingItem[];
   user_profile?: {
     name?: string;
     email: string;
@@ -68,16 +69,16 @@ export interface BookingOrder extends BaseEntity {
 }
 
 /**
- * Order state in Redux store
+ * Booking state in Redux store
  */
-export interface OrdersState {
-  entities: Record<string, BookingOrder>;
+export interface BookingsState {
+  entities: Record<string, Booking>;
   ids: string[];
-  userOrders: BookingOrder[];
+  userBookings: Array<Booking | BookingUserViewRow>;
   loading: boolean;
   error: string | null; // Change to simple string like tags
   errorContext: ErrorContext;
-  currentOrder: string | null;
+  currentBooking: string | null;
   page: number;
   limit: number;
   total: number;
@@ -85,9 +86,9 @@ export interface OrdersState {
 }
 
 /**
- * Data required to create a new order
+ * Data required to create a newbBooking
  */
-export interface CreateOrderDto {
+export interface CreateBookingDto {
   user_id: string;
   items: {
     item_id: string;
@@ -97,30 +98,20 @@ export interface CreateOrderDto {
   }[];
 }
 
-export type BookingsTable = Database["public"]["Tables"]["orders"];
+export type BookingsTable = Database["public"]["Tables"]["bookings"];
 export type BookingsRow = BookingsTable["Row"];
 
 /**
  * Valid values for the /ordered endpoint.
  * Data can be ordered by the following values
  */
-export type ValidBookingOrder =
+export type ValidBooking =
   | "created_at"
   | "booking_number"
   | "payment_status"
   | "status"
   | "total"
   | "full_name";
-
-export type BookingStatus =
-  | "confirmed"
-  | "cancelled by admin"
-  | "deleted"
-  | "rejected"
-  | "completed"
-  | "pending"
-  | "cancelled by user"
-  | "all";
 
 export type BookingUserView =
   Database["public"]["Views"]["view_bookings_with_user_info"];

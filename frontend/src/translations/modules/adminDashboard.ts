@@ -8,19 +8,19 @@ export const adminDashboard = {
       fi: "Tuotteet",
       en: "Items",
     },
-    orders: {
+    bookings: {
       fi: "Tilaukset",
-      en: "Orders",
+      en: "Bookings",
     },
   },
   sections: {
-    recentOrders: {
+    recentBookings: {
       fi: "Viimeisimmät tilaukset",
-      en: "Recent Orders",
+      en: "Recent Bookings",
     },
-    manageOrders: {
+    manageBookings: {
       fi: "Hallitse tilauksia",
-      en: "Manage Orders",
+      en: "Manage Bookings",
     },
   },
   status: {
@@ -58,9 +58,9 @@ export const adminDashboard = {
     },
   },
   columns: {
-    orderNumber: {
+    bookingNumber: {
       fi: "Tilaus #",
-      en: "Order #",
+      en: "Booking #",
     },
     customer: {
       fi: "Asiakas",
