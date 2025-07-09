@@ -74,7 +74,7 @@ export interface Booking extends BaseEntity {
 export interface BookingsState {
   entities: Record<string, Booking>;
   ids: string[];
-  userBookings: Booking[];
+  userBookings: Array<Booking | BookingUserViewRow>;
   loading: boolean;
   error: string | null; // Change to simple string like tags
   errorContext: ErrorContext;

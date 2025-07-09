@@ -9,7 +9,7 @@ import {
   updateBooking,
 } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
-import { BookingItem, Booking } from "@/types";
+import { BookingItem, Booking, BookingUserViewRow } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -41,7 +41,16 @@ const MyBookings = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const user = useAppSelector(selectSelectedUser);
-  const bookings = useAppSelector(selectUserBookings);
+  // Raw array can contain either real `Booking`s or flattened view rows
+  const bookingsRaw = useAppSelector(selectUserBookings) as (
+    | Booking
+    | BookingUserViewRow
+  )[];
+
+  /** Narrower type-guard: keeps only objects that have `booking_items`. */
+  const bookings: Booking[] = bookingsRaw.filter(
+    (b): b is Booking => (b as Booking).booking_items !== undefined,
+  );
   const loading = useAppSelector(selectBookingLoading);
   const error = useAppSelector(selectBookingError);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);

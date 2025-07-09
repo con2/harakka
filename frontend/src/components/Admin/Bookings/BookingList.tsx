@@ -410,7 +410,7 @@ const BookingList = () => {
         </div>
         <PaginatedDataTable
           columns={columns}
-          data={bookings}
+          data={bookings as unknown as BookingUserViewRow[]}
           pageIndex={currentPage - 1}
           pageCount={totalPages}
           onPageChange={(page) => handlePageChange(page + 1)}

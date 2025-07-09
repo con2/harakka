@@ -85,7 +85,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           variant="outline"
           className="bg-green-100 text-green-800 border-green-300"
         >
-          {t.orderList.status.pickedUp[lang]}
+          {t.bookingList.status.pickedUp[lang]}
         </Badge>
       );
     default:

@@ -13,6 +13,7 @@ import {
   PaymentStatus,
   ValidBooking,
   BookingStatus,
+  BookingUserViewRow,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 
@@ -30,7 +31,7 @@ const bookingsAdapter = createEntityAdapter<Booking, string>({
 const initialState = bookingsAdapter.getInitialState<
   Omit<BookingsState, "entities" | "ids">
 >({
-  userBookings: [],
+  userBookings: [] as Booking[] | BookingUserViewRow[],
   loading: false,
   error: null,
   errorContext: null,
@@ -296,11 +297,16 @@ export const bookingsSlice = createSlice({
       })
       .addCase(getUserBookings.fulfilled, (state, action) => {
         state.loading = false;
-        state.userBookings = action.payload.data ?? [];
+        state.userBookings = (action.payload.data ?? []) as unknown as
+          | Booking[]
+          | BookingUserViewRow[];
         state.total = action.payload.metadata.total;
         state.page = action.payload.metadata.page;
         state.totalPages = action.payload.metadata.totalPages;
-        bookingsAdapter.setAll(state, action.payload.data ?? []);
+        bookingsAdapter.setAll(
+          state,
+          (action.payload.data ?? []) as unknown as Booking[],
+        );
       })
       .addCase(getUserBookings.rejected, (state, action) => {
         state.loading = false;
@@ -315,11 +321,16 @@ export const bookingsSlice = createSlice({
       })
       .addCase(getOrderedBookings.fulfilled, (state, action) => {
         state.loading = false;
-        state.userBookings = action.payload.data ?? [];
+        state.userBookings = (action.payload.data ?? []) as unknown as
+          | Booking[]
+          | BookingUserViewRow[];
         state.total = action.payload.metadata.total;
         state.page = action.payload.metadata.page;
         state.totalPages = action.payload.metadata.totalPages;
-        bookingsAdapter.setAll(state, action.payload.data ?? []);
+        bookingsAdapter.setAll(
+          state,
+          (action.payload.data ?? []) as unknown as Booking[],
+        );
       })
       .addCase(getOrderedBookings.rejected, (state, action) => {
         state.loading = false;

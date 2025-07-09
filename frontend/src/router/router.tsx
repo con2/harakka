@@ -1,7 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 // Auth
-import Login from "../components/Auth/Login";
 import AuthCallback from "../components/Auth/AuthCallback";
 import PasswordReset from "../components/Auth/PasswordReset";
 import PasswordResetResult from "../components/Auth/PasswordResetResult";
