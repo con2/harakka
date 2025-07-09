@@ -1012,7 +1012,7 @@ export class BookingService {
     };
   }
 
-  // 11. check availability of item by date range
+  /* // 11. check availability of item by date range
   async checkAvailability(
     itemId: string,
     startDate: string,
@@ -1084,8 +1084,8 @@ export class BookingService {
 
     return num_available ?? 0;
   }
-
-  // 13. Update payment status
+ */
+  // 11. Update payment status
   async updatePaymentStatus(
     bookingId: string,
     status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
