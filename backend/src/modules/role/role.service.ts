@@ -28,7 +28,7 @@ export class RoleService {
   }
 
   /**
-   * Check if user has specific role in organization
+   * Check if the current user has specific role in organization
    */
   hasRole(
     req: AuthRequest,
@@ -45,7 +45,7 @@ export class RoleService {
   }
 
   /**
-   * Check if user has any of the specified roles
+   * Check if the current user has any of the specified roles
    */
   hasAnyRole(
     req: AuthRequest,
@@ -58,7 +58,7 @@ export class RoleService {
   }
 
   /**
-   * Check if user is superVera (global admin)
+   * Check if the current user is superVera (global admin)
    */
   isSuperVera(req: AuthRequest): boolean {
     return req.userRoles.some((role) => role.role_name === "superVera");
@@ -144,25 +144,7 @@ export class RoleService {
         role_id,
         is_active: true,
       })
-      .select(
-        `
-        id,
-        user_id,
-        organization_id,
-        role_id,
-        is_active,
-        created_at,
-        roles!inner(
-          id,
-          role
-        ),
-        organizations!inner(
-          id,
-          name,
-          slug
-        )
-      `,
-      )
+      .select("id")
       .single();
 
     if (error) {
@@ -170,15 +152,32 @@ export class RoleService {
       throw new BadRequestException("Failed to create role assignment");
     }
 
+    // Get the complete role details using the view
+    const { data: roleDetails, error: viewError } = await req.supabase
+      .from("view_user_roles_with_details")
+      .select("*")
+      .eq("assignment_id", data.id)
+      .single();
+
+    if (viewError || !roleDetails) {
+      this.logger.error(
+        `Failed to fetch created role details: ${viewError?.message}`,
+      );
+      throw new BadRequestException("Failed to fetch created role details");
+    }
+
     const result = {
-      id: data.id,
-      user_id: data.user_id,
-      organization_id: data.organization_id,
-      role_id: data.role_id,
-      role_name: String(data.roles.role),
-      organization_name: data.organizations.name,
-      is_active: data.is_active ?? true,
-      created_at: data.created_at ?? undefined,
+      id: roleDetails.assignment_id,
+      user_id: roleDetails.user_id,
+      organization_id: roleDetails.organization_id,
+      role_id: roleDetails.role_id,
+      role_name: roleDetails.role_name,
+      organization_name: roleDetails.organization_name,
+      is_active: roleDetails.is_active ?? true,
+      created_at: roleDetails.assigned_at,
+      user_email: roleDetails.user_email,
+      user_full_name: roleDetails.user_full_name,
+      user_visible_name: roleDetails.user_visible_name,
     };
 
     // After successful role creation, update JWT
@@ -342,27 +341,9 @@ export class RoleService {
    */
   async getAllUserRoles(req: AuthRequest): Promise<UserRoleWithDetails[]> {
     const { data, error } = await req.supabase
-      .from("user_organization_roles")
-      .select(
-        `
-        id,
-        user_id,
-        organization_id,
-        role_id,
-        is_active,
-        created_at,
-        roles!inner(
-          id,
-          role
-        ),
-        organizations!inner(
-          id,
-          name,
-          slug
-        )
-      `,
-      )
-      .order("created_at", { ascending: false });
+      .from("view_user_roles_with_details")
+      .select("*")
+      .order("assigned_at", { ascending: false });
 
     if (error) {
       this.logger.error(`Failed to fetch all user roles: ${error.message}`);
@@ -370,42 +351,40 @@ export class RoleService {
     }
 
     return data.map((item) => ({
-      id: item.id,
+      id: item.assignment_id,
       user_id: item.user_id,
       organization_id: item.organization_id,
       role_id: item.role_id,
-      role_name: String(item.roles.role),
-      organization_name: item.organizations.name,
+      role_name: item.role_name,
+      organization_name: item.organization_name,
       is_active: item.is_active ?? true,
-      created_at: item.created_at ?? undefined,
+      created_at: item.assigned_at,
+      // Additional user info
+      user_email: item.user_email,
+      user_full_name: item.user_full_name,
+      user_visible_name: item.user_visible_name,
+      user_phone: item.user_phone,
     }));
   }
 
   private async updateUserJWT(userId: string, req: AuthRequest): Promise<void> {
     try {
-      // Force refresh user roles and update JWT
+      // Get fresh roles using the optimized view
       const { data: freshRoles } = await req.supabase
-        .from("user_organization_roles")
-        .select(
-          `
-      id, user_id, organization_id, role_id, is_active, created_at,
-      roles!inner(role),
-      organizations!inner(name)
-    `,
-        )
-        .eq("user_id", userId)
-        .eq("is_active", true);
+        .from("view_user_roles_with_details")
+        .select("*")
+        .eq("user_id", userId);
 
       if (freshRoles) {
         const userRoles = freshRoles.map((item) => ({
-          id: item.id,
+          id: item.assignment_id,
           user_id: item.user_id,
           organization_id: item.organization_id,
-          role_id: item.role_id || "user",
-          role_name: item.roles.role,
-          organization_name: item.organizations.name,
+          role_id: item.role_id,
+          role_name: item.role_name,
+          organization_name: item.organization_name,
           is_active: item.is_active ?? true,
-          created_at: item.created_at ?? undefined,
+          created_at: item.assigned_at,
         }));
 
         // Use the JWT service to force update
