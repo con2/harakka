@@ -101,7 +101,7 @@ const TagList = () => {
   // Fetch items once
   useEffect(() => {
     if (items.length === 0) {
-      dispatch(fetchAllItems());
+      dispatch(fetchAllItems({ page: 1, limit: 10 }));
     }
   }, [dispatch, items.length]);
 
@@ -362,9 +362,9 @@ const TagList = () => {
             pageIndex={currentPage - 1}
             pageCount={totalPages}
             onPageChange={(page) => handlePageChange(page + 1)}
-            order={order}
+            booking={order}
             ascending={ascending}
-            handleOrder={handleOrder}
+            handleBooking={handleOrder}
             handleAscending={handleAscending}
             originalSorting="created_at"
           />

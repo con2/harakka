@@ -31,12 +31,11 @@ import {
   BookingItem,
   BookingItemInsert,
   BookingItemRow,
-  BookingItemQuantity,
   BookingWithItems,
   StorageItemsRow,
   UserProfilesRow,
   BookingRow,
-  ValidBookingOrder,
+  ValidBooking,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { StorageLocationsService } from "../storage-locations/storage-locations.service";
@@ -665,7 +664,6 @@ export class BookingService {
       .select("status, user_id, booking_number")
       .eq("id", bookingId)
       .single();
-
     if (!booking) throw new BadRequestException("Booking not found");
 
     // prevent re-cancellation
@@ -1012,57 +1010,6 @@ export class BookingService {
     };
   }
 
-  // 11. check availability of item by date range
-  async checkAvailability(
-    itemId: string,
-    startDate: string,
-    endDate: string,
-    userId: string,
-    supabase: SupabaseClient,
-  ) {
-    // Sum all overlapping bookings
-    const { data: overlappingBookings, error: overlapError } = await supabase
-      .from("booking_items")
-      .select("quantity")
-      .eq("item_id", itemId) // item_id = :itemId
-      .lte("start_date", endDate) // AND start_date <= :endDate
-      .gte("end_date", startDate) // AND end_date   >= :startDate
-      .overrideTypes<BookingItemQuantity[]>();
-
-    if (overlapError) {
-      throw new BadRequestException("Error checking overlapping bookings");
-    }
-
-    const alreadyBookedQuantity =
-      overlappingBookings?.reduce(
-        (sum, item) => sum + (item.quantity ?? 0),
-        0,
-      ) ?? 0;
-
-    // Get total quantity of item from storage
-    const { data: itemData, error: itemError } = await supabase
-      .from("storage_items")
-      .select("items_number_total")
-      .eq("id", itemId)
-      .single<StorageItemsRow>();
-
-    if (itemError || !itemData) {
-      throw new BadRequestException("Item data not found");
-    }
-
-    const availableQuantity =
-      itemData.items_number_total - alreadyBookedQuantity;
-
-    return {
-      item_id: itemId,
-      availableQuantity,
-      alreadyBookedQuantity,
-      totalQuantity: itemData.items_number_total,
-      startDate,
-      endDate,
-    };
-  }
-
   // 12. virtual number of items for a specific date
   async getAvailableQuantityForDate(
     itemId: string,
@@ -1119,13 +1066,13 @@ export class BookingService {
   }
 
   /**
-   * Get bookings in an bookinged list
+   * Get bookings in an ordered list
    * @param supabase The supabase client provided by request
    * @param page What page number is requested
    * @param limit How many rows to retrieve
    * @param ascending If to sort booking smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
    * @param filter What to filter the bookings by
-   * @param order_by What column to booking the columns by. Default "booking_number"
+   * @param order_by What column to order the columns by. Default "booking_number"
    * @param searchquery Optional. Filter bookings by a string
    * @returns Matching bookings
    */
@@ -1134,7 +1081,7 @@ export class BookingService {
     page: number,
     limit: number,
     ascending: boolean,
-    order_by: ValidBookingOrder,
+    order_by: ValidBooking,
     searchquery?: string,
     status_filter?: string,
   ) {

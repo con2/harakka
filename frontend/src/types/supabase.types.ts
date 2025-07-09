@@ -7,6 +7,36 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instanciate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       audit_logs: {
@@ -42,72 +72,14 @@ export type Database = {
         }
         Relationships: []
       }
-      invoices: {
+      booking_items: {
         Row: {
-          created_at: string | null
-          due_date: string | null
-          id: string
-          invoice_number: string
-          order_id: string | null
-          pdf_url: string | null
-          reference_number: string | null
-          total_amount: number | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          due_date?: string | null
-          id?: string
-          invoice_number: string
-          order_id?: string | null
-          pdf_url?: string | null
-          reference_number?: string | null
-          total_amount?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          due_date?: string | null
-          id?: string
-          invoice_number?: string
-          order_id?: string | null
-          pdf_url?: string | null
-          reference_number?: string | null
-          total_amount?: number | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invoices_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoices_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoices_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      order_items: {
-        Row: {
+          booking_id: string
           created_at: string | null
           end_date: string
           id: string
           item_id: string
           location_id: string
-          order_id: string
           provider_organization_id: string | null
           quantity: number
           start_date: string
@@ -117,12 +89,12 @@ export type Database = {
           unit_price: number | null
         }
         Insert: {
+          booking_id: string
           created_at?: string | null
           end_date: string
           id?: string
           item_id: string
           location_id: string
-          order_id: string
           provider_organization_id?: string | null
           quantity?: number
           start_date: string
@@ -132,12 +104,12 @@ export type Database = {
           unit_price?: number | null
         }
         Update: {
+          booking_id?: string
           created_at?: string | null
           end_date?: string
           id?: string
           item_id?: string
           location_id?: string
-          order_id?: string
           provider_organization_id?: string | null
           quantity?: number
           start_date?: string
@@ -184,14 +156,14 @@ export type Database = {
           },
           {
             foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
+            columns: ["booking_id"]
             isOneToOne: false
-            referencedRelation: "orders"
+            referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
+            columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["id"]
@@ -205,15 +177,15 @@ export type Database = {
           },
         ]
       }
-      orders: {
+      bookings: {
         Row: {
+          booking_number: string
           created_at: string | null
           discount_amount: number | null
           discount_code: string | null
           final_amount: number | null
           id: string
           notes: string | null
-          order_number: string
           payment_details: Json | null
           payment_status: string | null
           status: string
@@ -222,13 +194,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          booking_number: string
           created_at?: string | null
           discount_amount?: number | null
           discount_code?: string | null
           final_amount?: number | null
           id?: string
           notes?: string | null
-          order_number: string
           payment_details?: Json | null
           payment_status?: string | null
           status: string
@@ -237,13 +209,13 @@ export type Database = {
           user_id: string
         }
         Update: {
+          booking_number?: string
           created_at?: string | null
           discount_amount?: number | null
           discount_code?: string | null
           final_amount?: number | null
           id?: string
           notes?: string | null
-          order_number?: string
           payment_details?: Json | null
           payment_status?: string | null
           status?: string
@@ -252,6 +224,64 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      invoices: {
+        Row: {
+          created_at: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string
+          order_id: string | null
+          pdf_url: string | null
+          reference_number: string | null
+          total_amount: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          order_id?: string | null
+          pdf_url?: string | null
+          reference_number?: string | null
+          total_amount?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          order_id?: string | null
+          pdf_url?: string | null
+          reference_number?: string | null
+          total_amount?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_with_user_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       organization_items: {
         Row: {
@@ -416,10 +446,10 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          booking_id: string
           created_at: string | null
           id: string
           metadata: Json | null
-          order_id: string
           payment_date: string
           payment_method: string
           status: string
@@ -427,10 +457,10 @@ export type Database = {
         }
         Insert: {
           amount: number
+          booking_id: string
           created_at?: string | null
           id?: string
           metadata?: Json | null
-          order_id: string
           payment_date: string
           payment_method: string
           status: string
@@ -438,10 +468,10 @@ export type Database = {
         }
         Update: {
           amount?: number
+          booking_id?: string
           created_at?: string | null
           id?: string
           metadata?: Json | null
-          order_id?: string
           payment_date?: string
           payment_method?: string
           status?: string
@@ -449,15 +479,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "payments_order_id_fkey"
-            columns: ["order_id"]
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
             isOneToOne: false
-            referencedRelation: "orders"
+            referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "payments_order_id_fkey"
-            columns: ["order_id"]
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["id"]
@@ -917,7 +947,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_deleted: boolean | null
-          items_number_available: number
+          items_number_available: number | null
           items_number_currently_in_storage: number | null
           items_number_total: number
           location_id: string
@@ -933,7 +963,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_deleted?: boolean | null
-          items_number_available: number
+          items_number_available?: number | null
           items_number_currently_in_storage?: number | null
           items_number_total: number
           location_id: string
@@ -949,7 +979,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_deleted?: boolean | null
-          items_number_available?: number
+          items_number_available?: number | null
           items_number_currently_in_storage?: number | null
           items_number_total?: number
           location_id?: string
@@ -1275,6 +1305,7 @@ export type Database = {
       }
       view_bookings_with_user_info: {
         Row: {
+          booking_number: string | null
           created_at: string | null
           created_at_text: string | null
           email: string | null
@@ -1282,7 +1313,6 @@ export type Database = {
           final_amount_text: string | null
           full_name: string | null
           id: string | null
-          order_number: string | null
           payment_status: string | null
           status: string | null
           total_amount: number | null
@@ -1316,16 +1346,63 @@ export type Database = {
       view_manage_storage_items: {
         Row: {
           created_at: string | null
+          en_item_name: string | null
+          en_item_type: string | null
           fi_item_name: string | null
           fi_item_type: string | null
           id: string | null
           is_active: boolean | null
           items_number_total: number | null
+          location_id: string | null
           location_name: string | null
           price: number | null
+          tag_ids: string[] | null
+          tag_translations: Json[] | null
           translations: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "storage_items_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      view_user_roles_with_details: {
+        Row: {
+          assigned_at: string | null
+          assignment_id: string | null
+          assignment_updated_at: string | null
+          is_active: boolean | null
+          organization_id: string | null
+          organization_is_active: boolean | null
+          organization_name: string | null
+          role_id: string | null
+          role_name: Database["public"]["Enums"]["roles_type"] | null
+          user_email: string | null
+          user_full_name: string | null
+          user_id: string | null
+          user_phone: string | null
+          user_visible_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "erm_user_organization_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "erm_user_organization_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -1341,17 +1418,40 @@ export type Database = {
         Args: { input_text: string }
         Returns: string
       }
+      get_all_full_bookings: {
+        Args: { in_offset: number; in_limit: number }
+        Returns: Json
+      }
       get_all_full_orders: {
         Args: { in_offset?: number; in_limit?: number }
+        Returns: Json
+      }
+      get_full_booking: {
+        Args: { booking_id: string }
         Returns: Json
       }
       get_full_order: {
         Args: { order_id: string }
         Returns: Json
       }
+      get_full_user_booking: {
+        Args: { in_user_id: string; in_offset: number; in_limit: number }
+        Returns: Json
+      }
       get_full_user_order: {
         Args: { in_user_id: string; in_offset?: number; in_limit?: number }
         Returns: Json
+      }
+      get_request_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_table_columns: {
+        Args: { input_table_name: string }
+        Returns: {
+          column_name: string
+          data_type: string
+        }[]
       }
       get_user_roles: {
         Args: { user_uuid: string }
@@ -1393,21 +1493,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -1425,14 +1529,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -1448,14 +1554,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -1471,14 +1579,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -1486,19 +1596,24 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       role_type: [

@@ -1,20 +1,20 @@
-export const myOrders = {
+export const myBookings = {
   title: {
     fi: "Tilaukseni",
-    en: "My Orders",
+    en: "My Bookings",
   },
   loading: {
     fi: "Ladataan tilauksiasi...",
-    en: "Loading your orders...",
+    en: "Loading your bookings...",
   },
   error: {
     loadingError: {
       fi: "Virhe tilausten lataamisessa",
-      en: "Error loading your orders",
+      en: "Error loading your bookings",
     },
     loginRequired: {
       fi: "Kirjaudu sisään nähdäksesi tilauksesi",
-      en: "Please log in to view your orders",
+      en: "Please log in to view your bookings",
     },
   },
   buttons: {
@@ -70,9 +70,9 @@ export const myOrders = {
     },
   },
   columns: {
-    orderNumber: {
+    bookingNumber: {
       fi: "Tilaus #",
-      en: "Order #",
+      en: "Booking #",
     },
     status: {
       fi: "Tila",
@@ -110,25 +110,25 @@ export const myOrders = {
   emptyState: {
     title: {
       fi: "Sinulla ei ole vielä tilauksia",
-      en: "You don't have any orders yet",
+      en: "You don't have any bookings yet",
     },
     description: {
       fi: "Tilauksesi näkyvät täällä",
-      en: "Items you order will appear here",
+      en: "Items you book will appear here",
     },
   },
-  orderDetails: {
+  bookingDetails: {
     title: {
       fi: "Tilauksen tiedot #",
-      en: "Order Details #",
+      en: "Booking Details #",
     },
     customerInfo: {
       fi: "Asiakkaan tiedot",
       en: "Customer Information",
     },
-    orderInfo: {
+    bookingInfo: {
       fi: "Tilauksen tiedot",
-      en: "Order Information",
+      en: "Booking Information",
     },
     items: {
       fi: "Tuotteet",
@@ -172,7 +172,7 @@ export const myOrders = {
   filter: {
     searchPlaceholder: {
       fi: "Hae tilausnumerolla",
-      en: "Search order #",
+      en: "Search booking #",
     },
     allStatuses: {
       fi: "Kaikki tilat",
@@ -182,7 +182,7 @@ export const myOrders = {
   edit: {
     title: {
       fi: "Muokkaa tilausta #",
-      en: "Edit Order #",
+      en: "Edit Booking #",
     },
     startDate: {
       fi: "Alkupäivä",
@@ -223,21 +223,21 @@ export const myOrders = {
       },
     },
     toast: {
-      orderUpdated: {
+      bookingUpdated: {
         fi: "Tilaus päivitetty!",
-        en: "Order updated!",
+        en: "Booking updated!",
       },
       updateFailed: {
         fi: "Tilauksen päivitys epäonnistui",
-        en: "Failed to update order",
+        en: "Failed to update booking",
       },
       emptyCancelled: {
         fi: "Kaikki tuotteet poistettu — tilaus peruutettu",
-        en: "All items removed — order cancelled",
+        en: "All items removed — booking cancelled",
       },
       cancelFailed: {
         fi: "Tilauksen peruuttaminen epäonnistui",
-        en: "Failed to cancel order",
+        en: "Failed to cancel booking",
       },
     },
   },
@@ -248,32 +248,32 @@ export const myOrders = {
     },
     description: {
       fi: "Haluatko varmasti peruuttaa tämän tilauksen?",
-      en: "Are you sure you want to cancel this order?",
+      en: "Are you sure you want to cancel this booking?",
     },
     confirmText: {
       fi: "Peruuta tilaus",
-      en: "Cancel Order",
+      en: "Cancel Booking",
     },
     cancelText: {
       fi: "Säilytä tilaus",
-      en: "Keep Order",
+      en: "Keep Booking",
     },
     toast: {
       loading: {
         fi: "Peruutetaan tilausta...",
-        en: "Cancelling order...",
+        en: "Cancelling booking...",
       },
       success: {
         fi: "Tilaus peruutettu onnistuneesti",
-        en: "Order cancelled successfully",
+        en: "Booking cancelled successfully",
       },
       error: {
         fi: "Tilauksen peruuttaminen epäonnistui",
-        en: "Failed to cancel order",
+        en: "Failed to cancel booking",
       },
       invalidId: {
         fi: "Virheellinen tilausnumero.",
-        en: "Invalid order ID.",
+        en: "Invalid booking ID.",
       },
     },
   },

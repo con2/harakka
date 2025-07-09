@@ -38,9 +38,9 @@ const AdminPanel = () => {
           />
 
           <SidebarLink
-            to="/admin/orders"
+            to="/admin/bookings"
             icon={<ShoppingBag className="w-5 h-5" />}
-            label={t.adminPanel.navigation.orders[lang]}
+            label={t.adminPanel.navigation.bookings[lang]}
           />
 
           <SidebarLink
@@ -111,9 +111,9 @@ const AdminPanel = () => {
               label={t.adminPanel.navigation.dashboard[lang]}
             />
             <SidebarLink
-              to="/admin/orders"
+              to="/admin/bookings"
               icon={<ShoppingBag />}
-              label={t.adminPanel.navigation.orders[lang]}
+              label={t.adminPanel.navigation.bookings[lang]}
             />
             <SidebarLink
               to="/admin/items"

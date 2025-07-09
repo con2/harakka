@@ -1,20 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
-import { BookingOrder } from "@/types";
+import { Booking } from "@/types";
 
-interface OrderDetailsButtonProps {
-  order: BookingOrder;
-  onViewDetails: (order: BookingOrder) => void;
+interface BookingDetailsButtonProps {
+  booking: Booking;
+  onViewDetails: (booking: Booking) => void;
 }
 
-const OrderDetailsButton = ({
-  order,
+const BookingDetailsButton = ({
+  booking,
   onViewDetails,
-}: OrderDetailsButtonProps) => {
+}: BookingDetailsButtonProps) => {
   return (
     <Button
       variant="ghost"
-      onClick={() => onViewDetails(order)}
+      onClick={() => onViewDetails(booking)}
       className="hover:text-slate-900 hover:bg-slate-300"
       size="sm"
       title="View Details"
@@ -24,4 +24,4 @@ const OrderDetailsButton = ({
   );
 };
 
-export default OrderDetailsButton;
+export default BookingDetailsButton;

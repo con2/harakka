@@ -176,7 +176,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
       await dispatch(
         assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
       ).unwrap();
-      dispatch(fetchAllItems());
+      dispatch(fetchAllItems({ page: 1, limit: 10 })); // Refresh items list after update
       toast.success(t.updateItemModal.messages.success[lang]);
       onClose();
     } catch (error) {

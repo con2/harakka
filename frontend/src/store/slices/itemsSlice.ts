@@ -237,7 +237,9 @@ export const itemsSlice = createSlice({
       })
       .addCase(fetchAllItems.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.data;
+        state.items = (action.payload.data ?? []) as Array<
+          Item | ManageItemViewRow
+        >;
         state.total = action.payload.metadata.total;
         state.page = action.payload.metadata.page;
         state.totalPages = action.payload.metadata.totalPages;
@@ -254,7 +256,9 @@ export const itemsSlice = createSlice({
       })
       .addCase(fetchOrderedItems.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.data;
+        state.items = (action.payload.data ?? []) as Array<
+          Item | ManageItemViewRow
+        >;
         state.total = action.payload.metadata.total;
         state.page = action.payload.metadata.page;
         state.totalPages = action.payload.metadata.totalPages;
