@@ -3,7 +3,7 @@ import {
   fetchAllUsers,
   selectAllUsers,
   //selectLoading,
-  selectSelectedUser,
+  // selectSelectedUser,
 } from "@/store/slices/usersSlice";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -34,7 +34,7 @@ const AdminDashboard = () => {
   const users = useAppSelector(selectAllUsers);
   //const loading = useAppSelector(selectLoading);
   const items = useAppSelector(selectAllItems);
-  const user = useAppSelector(selectSelectedUser);
+  // const user = useAppSelector(selectSelectedUser); Not sure if we need this anymore(fixing build errors)
   const bookings = useAppSelector(selectAllBookings);
   const bookingsLoading = useAppSelector(selectBookingLoading);
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ const AdminDashboard = () => {
   const { formatDate } = useFormattedDate();
 
   useEffect(() => {
-    dispatch(fetchAllItems());
+    dispatch(fetchAllItems({ page: 1, limit: 10 }));
   }, [dispatch]);
 
   useEffect(() => {
@@ -53,10 +53,10 @@ const AdminDashboard = () => {
   }, [dispatch, users.length]);
 
   useEffect(() => {
-    if (!bookingsLoading && user?.id && bookings.length === 0) {
-      dispatch(getAllBookings(user.id));
+    if (!bookingsLoading && bookings.length === 0) {
+      dispatch(getAllBookings({ page: 1, limit: 10 }));
     }
-  }, [dispatch, user?.id, bookings.length, bookingsLoading]);
+  }, [dispatch, bookings.length, bookingsLoading]);
 
   const StatusBadge = ({ status }: { status?: string }) => {
     if (!status)
