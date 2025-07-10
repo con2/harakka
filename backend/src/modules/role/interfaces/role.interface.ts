@@ -15,6 +15,9 @@ export type UserOrganizationRole =
 // Organization definition
 export type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 
+export type ViewUserRolesWithDetailsRow =
+  Database["public"]["Views"]["view_user_roles_with_details"]["Row"];
+
 /**
  * Extended interface for user roles with joined data
  * Some fields are optional when created from request context

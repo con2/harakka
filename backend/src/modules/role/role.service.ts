@@ -5,12 +5,13 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+
+import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
+import { JwtService } from "../jwt/jwt.service";
 import {
   UserRoleWithDetails,
   ViewUserRolesWithDetailsRow,
 } from "./interfaces/role.interface";
-import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
-import { JwtService } from "../jwt/jwt.service";
 
 @Injectable()
 export class RoleService {
