@@ -1,19 +1,19 @@
 import React from "react";
 import { useAppSelector } from "../store/hooks";
 import {
-  selectCurrentOrder,
-  selectOrdersLoading,
-} from "../store/slices/ordersSlice";
+  selectCurrentBooking,
+  selectBookingLoading,
+} from "../store/slices/bookingsSlice";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, LoaderCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 
-const OrderConfirmation: React.FC = () => {
+const BookingConfirmation: React.FC = () => {
   const navigate = useNavigate();
-  const order = useAppSelector(selectCurrentOrder);
-  const isLoading = useAppSelector(selectOrdersLoading);
+  const booking = useAppSelector(selectCurrentBooking);
+  const isLoading = useAppSelector(selectBookingLoading);
 
   // Add language support
   const { lang } = useLanguage();
@@ -25,42 +25,42 @@ const OrderConfirmation: React.FC = () => {
           <CheckCircle className="h-16 w-16 text-green-500" />
         </div>
         <h2 className="text-2xl font-bold mb-4">
-          {t.orderConfirmation.title[lang]}
+          {t.bookingConfirmation.title[lang]}
         </h2>
-        <p className="mb-4">{t.orderConfirmation.message[lang]}</p>
+        <p className="mb-4">{t.bookingConfirmation.message[lang]}</p>
         {isLoading ? (
           <div className="bg-slate-50 p-4 rounded-md flex justify-center items-center mb-6 h-12">
             <LoaderCircle className="animate-spin h-5 w-5 mr-2" />
             <span className="text-sm text-gray-600">
-              {t.orderConfirmation.loading[lang]}
+              {t.bookingConfirmation.loading[lang]}
             </span>
           </div>
-        ) : order ? (
+        ) : booking ? (
           <div className="bg-slate-50 p-4 rounded-md text-left mb-6">
             <p>
               <span className="font-semibold">
-                {t.orderConfirmation.orderNumber[lang]}
+                {t.bookingConfirmation.bookingNumber[lang]}
               </span>{" "}
-              {order.order_number}
+              {booking.booking_number}
             </p>
           </div>
         ) : (
           <div className="bg-slate-50 p-4 rounded-md text-left mb-6 text-amber-600">
-            <p>{t.orderConfirmation.notAvailable[lang]}</p>
+            <p>{t.bookingConfirmation.notAvailable[lang]}</p>
           </div>
         )}
         <div className="flex gap-4 justify-center">
           <Button
-            onClick={() => navigate("/profile?tab=orders")}
+            onClick={() => navigate("/profile?tab=bookings")}
             className="flex-1 bg-background text-secondary border-secondary border hover:bg-secondary hover:text-white"
           >
-            {t.orderConfirmation.buttons.viewOrders[lang]}
+            {t.bookingConfirmation.buttons.viewBookings[lang]}
           </Button>
           <Button
             onClick={() => navigate("/storage")}
             className="flex-1 bg-background text-primary border-primary border hover:bg-primary hover:text-white"
           >
-            {t.orderConfirmation.buttons.continueBrowsing[lang]}
+            {t.bookingConfirmation.buttons.continueBrowsing[lang]}
           </Button>
         </div>
       </div>
@@ -68,4 +68,4 @@ const OrderConfirmation: React.FC = () => {
   );
 };
 
-export default OrderConfirmation;
+export default BookingConfirmation;

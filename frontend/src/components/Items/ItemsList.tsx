@@ -26,7 +26,7 @@ const ItemsList: React.FC = () => {
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
-  const [currentPage, setCurrentPage] = useState(1);
+  const currentPage = 1;
 
   // Translation
   const { lang } = useLanguage();
@@ -58,7 +58,6 @@ const ItemsList: React.FC = () => {
   }, [
     dispatch,
     items.length,
-    currentPage,
     isActive,
     itemTypes,
     debouncedSearchQuery,
@@ -66,11 +65,6 @@ const ItemsList: React.FC = () => {
     tagIds,
     pageLimit,
   ]);
-
-  // Handle page change
-  const handlePageChange = (pageIndex: number) => {
-    setCurrentPage(pageIndex);
-  };
 
   // Loading state
   if (loading) {

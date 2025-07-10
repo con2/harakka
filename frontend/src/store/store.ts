@@ -1,7 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import usersReducer from "./slices/usersSlice";
 import itemsReducer from "./slices/itemsSlice";
-import ordersReducer from "./slices/ordersSlice";
+import bookingsReducer from "./slices/bookingsSlice";
 import cartReducer from "./slices/cartSlice";
 import timeframeReducer from "./slices/timeframeSlice";
 import tagsReducer from "./slices/tagSlice";
@@ -16,7 +16,7 @@ export const store = configureStore({
   reducer: {
     users: usersReducer,
     items: itemsReducer,
-    orders: ordersReducer,
+    bookings: bookingsReducer,
     cart: cartReducer,
     timeframe: timeframeReducer,
     tags: tagsReducer,

@@ -19,7 +19,10 @@ import {
   selectCartItems,
   updateQuantity,
 } from "../store/slices/cartSlice";
-import { createOrder, selectOrdersLoading } from "../store/slices/ordersSlice";
+import {
+  createBooking,
+  selectBookingLoading,
+} from "../store/slices/bookingsSlice";
 import { itemsApi } from "@/api/services/items";
 
 const Cart: React.FC = () => {
@@ -27,7 +30,7 @@ const Cart: React.FC = () => {
   const navigate = useNavigate();
   const cartItems = useAppSelector(selectCartItems);
   // const cartTotal = useAppSelector(selectCartTotal);
-  const orderLoading = useAppSelector(selectOrdersLoading);
+  const bookingLoading = useAppSelector(selectBookingLoading);
   const userProfile = useAppSelector(selectSelectedUser);
   const user = useAppSelector(selectSelectedUser);
 
@@ -170,8 +173,8 @@ const Cart: React.FC = () => {
       return;
     }
 
-    // Format order data according to backend expectations
-    const orderData = {
+    // Format booking data according to backend expectations
+    const bookingData = {
       user_id: userProfile.id,
       items: cartItems.map((item) => ({
         item_id: item.item.id,
@@ -185,21 +188,21 @@ const Cart: React.FC = () => {
     //console.log("User ID:", user.id);
 
     try {
-      await toast.promise(dispatch(createOrder(orderData)).unwrap(), {
-        loading: t.cart.toast.creatingOrder[lang],
-        success: t.cart.toast.orderCreated[lang],
+      await toast.promise(dispatch(createBooking(bookingData)).unwrap(), {
+        loading: t.cart.toast.creatingBooking[lang],
+        success: t.cart.toast.bookingCreated[lang],
         error: (err) =>
-          `${t.cart.toast.orderError[lang]}${err || t.cart.toast.orderError[lang]}`,
+          `${t.cart.toast.bookingError[lang]}${err || t.cart.toast.bookingError[lang]}`,
       });
 
-      // Clear cart after successful order
+      // Clear cart after successful booking
       dispatch(clearCart());
 
-      // Navigate to orders page or confirmation
-      navigate("/orders/confirmation");
+      // Navigate to bookings page or confirmation
+      navigate("/bookings/confirmation");
     } catch (error: unknown) {
       console.error("Checkout error:", error);
-      console.error("Order data that failed:", orderData);
+      console.error("Booking data that failed:", bookingData);
       toast.error(
         `Checkout error: ${
           error instanceof Error ? error.message : "Unknown error"
@@ -406,11 +409,11 @@ const Cart: React.FC = () => {
           <Button
             className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary w-full"
             disabled={
-              !startDate || !endDate || orderLoading || cartItems.length === 0
+              !startDate || !endDate || bookingLoading || cartItems.length === 0
             }
             onClick={handleCheckout}
           >
-            {orderLoading ? (
+            {bookingLoading ? (
               <>
                 <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                 {t.cart.buttons.processing[lang]}

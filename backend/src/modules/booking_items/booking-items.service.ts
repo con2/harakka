@@ -43,7 +43,7 @@ export class BookingItemsService {
     const result: PostgrestResponse<BookingItemsRow> = await supabase
       .from("booking_items")
       .select("*", { count: "exact" })
-      .eq("order_id", booking_id)
+      .eq("booking_id", booking_id)
       .range(from, to);
 
     if (result.error) {
@@ -99,7 +99,7 @@ export class BookingItemsService {
     const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
       .from("booking_items")
       .delete()
-      .eq("order_id", booking_id) // After renaming table + id column: Update column name
+      .eq("booking_id", booking_id) // After renaming table + id column: Update column name
       .eq("id", booking_item_id)
       .select()
       .single();
@@ -120,9 +120,9 @@ export class BookingItemsService {
     booking_id: string,
   ): Promise<ApiResponse<BookingItemsRow>> {
     const result: PostgrestResponse<BookingItemsRow> = await supabase
-      .from("order_items")
+      .from("booking_items")
       .delete()
-      .eq("order_id", booking_id) // After renaming table + id column: Update column name
+      .eq("booking_id", booking_id)
       .select();
 
     if (result.error) {

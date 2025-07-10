@@ -68,9 +68,9 @@ export type BookingTable = Database["public"]["Tables"]["bookings"];
 export type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
 export type BookingInsert = Database["public"]["Tables"]["bookings"]["Insert"];
 export type BookingUpdate = Database["public"]["Tables"]["bookings"]["Update"];
-export type ValidBookingOrder =
+export type ValidBooking =
   | "created_at"
-  | "order_number"
+  | "booking_number"
   | "payment_status"
   | "status"
   | "final_amount"
