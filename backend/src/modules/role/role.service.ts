@@ -5,7 +5,10 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { UserRoleWithDetails } from "./interfaces/role.interface";
+import {
+  UserRoleWithDetails,
+  ViewUserRolesWithDetailsRow,
+} from "./interfaces/role.interface";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
 import { JwtService } from "../jwt/jwt.service";
 
@@ -117,8 +120,9 @@ export class RoleService {
   async createUserRole(
     createRoleDto: CreateUserRoleDto,
     req: AuthRequest,
-  ): Promise<UserRoleWithDetails> {
-    const { user_id, organization_id, role_id } = createRoleDto;
+  ): Promise<ViewUserRolesWithDetailsRow> {
+    const { user_id, organization_id, role_id }: CreateUserRoleDto =
+      createRoleDto;
 
     // Check if assignment already exists
     const { data: existing } = await req.supabase
@@ -166,24 +170,10 @@ export class RoleService {
       throw new BadRequestException("Failed to fetch created role details");
     }
 
-    const result = {
-      id: roleDetails.assignment_id ?? undefined,
-      user_id: roleDetails.user_id ?? "",
-      organization_id: roleDetails.organization_id ?? "",
-      role_id: roleDetails.role_id ?? "",
-      role_name: roleDetails.role_name ?? "",
-      organization_name: roleDetails.organization_name ?? "",
-      is_active: roleDetails.is_active ?? true,
-      created_at: roleDetails.assigned_at ?? undefined,
-      user_email: roleDetails.user_email ?? undefined,
-      user_full_name: roleDetails.user_full_name ?? undefined,
-      user_visible_name: roleDetails.user_visible_name ?? undefined,
-    };
-
     // After successful role creation, update JWT
     await this.updateUserJWT(createRoleDto.user_id, req);
 
-    return result;
+    return roleDetails as ViewUserRolesWithDetailsRow;
   }
 
   /**
@@ -349,20 +339,23 @@ export class RoleService {
       this.logger.error(`Failed to fetch all user roles: ${error.message}`);
       throw new BadRequestException("Failed to fetch user roles");
     }
+    if (!data) {
+      return [];
+    }
 
-    const mappedRoles = data.map((role) => ({
-      id: role.assignment_id ?? undefined,
-      user_id: role.user_id ?? "",
-      organization_id: role.organization_id ?? "",
-      role_id: role.role_id ?? "",
-      role_name: role.role_name ?? "",
-      organization_name: role.organization_name ?? "",
-      is_active: role.is_active ?? true,
-      created_at: role.assigned_at ?? undefined,
-      user_email: role.user_email ?? undefined,
-      user_full_name: role.user_full_name ?? undefined,
-      user_visible_name: role.user_visible_name ?? undefined,
-      user_phone: role.user_phone ?? undefined,
+    const mappedRoles: UserRoleWithDetails[] = data.map((row) => ({
+      id: row.assignment_id ?? undefined,
+      user_id: row.user_id ?? "",
+      organization_id: row.organization_id ?? "",
+      role_id: row.role_id ?? "",
+      role_name: row.role_name ?? "",
+      organization_name: row.organization_name ?? "",
+      is_active: row.is_active ?? true,
+      created_at: row.assigned_at ?? undefined,
+      user_email: row.user_email ?? undefined,
+      user_full_name: row.user_full_name ?? undefined,
+      user_visible_name: row.user_visible_name ?? undefined,
+      user_phone: row.user_phone ?? undefined,
     }));
 
     return this.filterUserRoles(mappedRoles, req);
