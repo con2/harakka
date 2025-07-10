@@ -1,6 +1,6 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { usersApi } from "../../api/services/users";
-import { UserState, UserProfile, CreateUserDto } from "../../types/user";
+import { UserState, CreateUserDto, FlatUserProfile } from "../../types/user";
 import { RootState } from "../store";
 import { supabase } from "../../config/supabase";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
@@ -17,6 +17,9 @@ const initialState: UserState = {
 };
 
 // fetch all users
+import { UserProfile } from "@/types/user";
+import { User } from "@supabase/supabase-js";
+
 export const fetchAllUsers = createAsyncThunk(
   "users/fetchAllUsers",
   async (_, { rejectWithValue }) => {
@@ -83,7 +86,7 @@ export const deleteUser = createAsyncThunk(
 export const updateUser = createAsyncThunk(
   "users/updateUser",
   async (
-    { id, data }: { id: string; data: Partial<UserProfile> },
+    { id, data }: { id: string; data: CreateUserDto },
     { rejectWithValue },
   ) => {
     try {
@@ -175,7 +178,7 @@ export const usersSlice = createSlice({
       state.error = null;
       state.errorContext = null;
     },
-    selectUser: (state, action: PayloadAction<UserProfile>) => {
+    selectUser: (state, action) => {
       state.selectedUser = action.payload;
     },
     clearAddresses: (state) => {
@@ -194,7 +197,7 @@ export const usersSlice = createSlice({
       })
       .addCase(fetchAllUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload;
+        state.users = action.payload
       })
       .addCase(fetchAllUsers.rejected, (state, action) => {
         state.loading = false;
@@ -210,7 +213,7 @@ export const usersSlice = createSlice({
       })
       .addCase(getUserById.fulfilled, (state, action) => {
         state.selectedUserLoading = false;
-        state.selectedUser = action.payload;
+        state.selectedUser = action.payload as FlatUserProfile;
       })
       .addCase(getUserById.rejected, (state, action) => {
         state.selectedUserLoading = false;

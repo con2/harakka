@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "cy:open": "cypress open",
     "cy:run": "cypress run",
-    "test:e2e": "start-server-and-test dev http://localhost:5180 cy:run"
+    "test:e2e": "start-server-and-test dev http://localhost:5180 cy:run",
+    "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > src/types/supabase.types.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -58,6 +59,7 @@
     "react-router-dom": "^7.4.1",
     "react-star-ratings": "^2.3.0",
     "sonner": "^2.0.3",
+    "supabase": "^2.30.4",
     "tailwind-merge": "^3.0.2",
     "tw-animate-css": "^1.2.5",
     "zod": "^3.24.4"
