@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchCurrentUserRoles,
@@ -22,6 +22,14 @@ import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
 
 export const useRoles = () => {
   const dispatch = useAppDispatch();
+
+  // Track fetch attempts with a state to ensure it survives re-renders
+  const [fetchAttempts, setFetchAttempts] = useState(0);
+  const MAX_FETCH_ATTEMPTS = 2;
+  const initialFetchAttempted = useRef(false);
+
+  // Track if we've received a response (even an empty one)
+  const [responseReceived, setResponseReceived] = useState(false);
 
   // Current user roles and organizations
   const currentUserRoles = useAppSelector(selectCurrentUserRoles);
@@ -67,12 +75,23 @@ export const useRoles = () => {
 
   // Actions
   const refreshCurrentUserRoles = useCallback(() => {
-    return dispatch(fetchCurrentUserRoles());
-  }, [dispatch]);
+    if (fetchAttempts < MAX_FETCH_ATTEMPTS) {
+      setFetchAttempts((prev) => prev + 1);
+      return dispatch(fetchCurrentUserRoles()).then((result) => {
+        setResponseReceived(true);
+        return result;
+      });
+    }
+    return Promise.resolve({ type: "roles/fetchCurrentUserRoles/rejected" });
+  }, [dispatch, fetchAttempts]);
 
   const refreshAllUserRoles = useCallback(() => {
-    return dispatch(fetchAllUserRoles());
-  }, [dispatch]);
+    if (fetchAttempts < MAX_FETCH_ATTEMPTS) {
+      setFetchAttempts((prev) => prev + 1);
+      return dispatch(fetchAllUserRoles());
+    }
+    return Promise.resolve({ type: "roles/fetchAllUserRoles/rejected" });
+  }, [dispatch, fetchAttempts]);
 
   const createRole = useCallback(
     (roleData: CreateUserRoleDto) => {
@@ -107,15 +126,35 @@ export const useRoles = () => {
   }, [dispatch]);
 
   const refreshAll = useCallback(async () => {
-    await dispatch(fetchCurrentUserRoles());
-  }, [dispatch]);
-
-  // Auto-fetch current user roles on mount
-  useEffect(() => {
-    if (currentUserRoles.length === 0) {
-      dispatch(fetchCurrentUserRoles());
+    // Only refresh if we haven't exceeded maximum attempts
+    if (fetchAttempts < MAX_FETCH_ATTEMPTS) {
+      setFetchAttempts((prev) => prev + 1);
+      await dispatch(fetchCurrentUserRoles());
     }
-  }, []);
+  }, [dispatch, fetchAttempts]);
+
+  // Auto-fetch current user roles exactly once on mount and limit retries
+  useEffect(() => {
+    if (
+      !initialFetchAttempted.current &&
+      !loading &&
+      fetchAttempts < MAX_FETCH_ATTEMPTS
+    ) {
+      console.log(
+        `Initial roles fetch (attempt ${fetchAttempts + 1}/${MAX_FETCH_ATTEMPTS})`,
+      );
+      initialFetchAttempted.current = true;
+      setFetchAttempts((prev) => prev + 1);
+
+      dispatch(fetchCurrentUserRoles())
+        .then(() => {
+          setResponseReceived(true);
+        })
+        .catch(() => {
+          setResponseReceived(true); // Even on error, we've received a response
+        });
+    }
+  }, [dispatch, loading, fetchAttempts]);
 
   return {
     // Data
@@ -126,7 +165,7 @@ export const useRoles = () => {
     // Status
     isSuperVera,
     isAdmin,
-    loading,
+    loading: loading && !responseReceived, // Only show loading if we haven't received any response
     adminLoading,
     error,
     adminError,

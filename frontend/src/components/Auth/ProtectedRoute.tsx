@@ -4,7 +4,7 @@ import {
   selectSelectedUser,
   selectSelectedUserLoading,
 } from "@/store/slices/usersSlice";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
@@ -20,20 +20,62 @@ const ProtectedRoute = ({
   children,
   allowedRoles = [],
   requiredOrganization,
-  requireSuperVera = false,
 }: ProtectedRouteProps) => {
   const { authLoading } = useAuth(); // wait for supabase auth to finish
-  const {
-    loading: rolesLoading,
-    error: rolesError,
-    hasAnyRole,
-    isSuperVera,
-  } = useRoles(); //roles from the new schema
+  const { loading: rolesLoading, hasAnyRole, isSuperVera } = useRoles(); //roles from the new schema
   const selectedUser = useAppSelector(selectSelectedUser); // pull profile from redux
   const userLoading = useAppSelector(selectSelectedUserLoading);
 
-  if (authLoading || userLoading || !selectedUser || rolesLoading) {
-    // Wait for auth, roles and user loading to finish
+  // Use a state variable to track if access check has been performed
+  const [accessChecked, setAccessChecked] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+
+  useEffect(() => {
+    // Only perform the check once when data is loaded
+    if (
+      !authLoading &&
+      !userLoading &&
+      !rolesLoading &&
+      selectedUser &&
+      !accessChecked
+    ) {
+      // OLD SYSTEM: Check if user has role in selectedUser.role
+      const hasOldRole = allowedRoles.includes(selectedUser.role);
+
+      // NEW SYSTEM: Check if user has role in JWT-based roles
+      const hasNewRole = hasAnyRole(allowedRoles, requiredOrganization);
+
+      // Allow access if user has required role in EITHER system OR is SuperVera
+      const userHasAccess = hasOldRole || hasNewRole || isSuperVera;
+
+      // Debug logging
+      console.log("🔍 Final Role Check:", {
+        allowedRoles,
+        oldRole: selectedUser.role,
+        hasOldRole,
+        hasNewRole,
+        isSuperVera,
+        hasAccess: userHasAccess,
+        requiredOrganization,
+      });
+
+      setHasAccess(userHasAccess);
+      setAccessChecked(true);
+    }
+  }, [
+    authLoading,
+    userLoading,
+    rolesLoading,
+    selectedUser,
+    allowedRoles,
+    hasAnyRole,
+    isSuperVera,
+    requiredOrganization,
+    accessChecked,
+  ]);
+
+  // Show loading state while authentication or checking is in progress
+  if (authLoading || userLoading || rolesLoading || !accessChecked) {
     return (
       <div className="flex justify-center items-center h-screen">
         <LoaderCircle className="animate-spin w-6 h-6" />
@@ -41,48 +83,12 @@ const ProtectedRoute = ({
     );
   }
 
-  if (!selectedUser || !allowedRoles.includes(selectedUser.role)) {
+  // Check access and redirect if necessary
+  if (!hasAccess) {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // Handle role loading errors
-  if (rolesError) {
-    console.error("Role authorization error:", rolesError);
-    return <Navigate to="/unauthorized" replace />;
-  }
-
-  // Check if SuperVera is required
-  if (requireSuperVera && !isSuperVera) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
-  // Check role-based access using BOTH old and new systems
-  if (allowedRoles.length > 0) {
-    // OLD SYSTEM: Check if user has role in selectedUser.role
-    const hasOldRole = allowedRoles.includes(selectedUser.role);
-
-    // NEW SYSTEM: Check if user has role in JWT-based roles
-    const hasNewRole = hasAnyRole(allowedRoles, requiredOrganization);
-
-    // Allow access if user has required role in EITHER system OR is SuperVera
-    const hasAccess = hasOldRole || hasNewRole || isSuperVera;
-
-    // Debug logging (remove later)
-    console.log("🔍 Role Check Debug:", {
-      allowedRoles,
-      oldRole: selectedUser.role,
-      hasOldRole,
-      hasNewRole,
-      isSuperVera,
-      hasAccess,
-      requiredOrganization,
-    });
-
-    if (!hasAccess) {
-      return <Navigate to="/unauthorized" replace />;
-    }
-  }
-
+  // User has access, render children
   return <>{children}</>;
 };
 
