@@ -14,13 +14,6 @@ import {
 } from "src/utils/booking.utils";
 import { MailService } from "../mail/mail.service";
 import { BookingMailType } from "../mail/interfaces/mail.interface";
-/*import {
-  generateBarcodeImage,
-  generateInvoicePDF,
-  generateVirtualBarcode,
-  generateFinnishReferenceNumber,
-} from "../utils/invoice-functions";
- import { InvoiceService } from "./invoice.service"; */
 import * as dayjs from "dayjs";
 import * as utc from "dayjs/plugin/utc";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -39,7 +32,6 @@ import {
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { StorageLocationsService } from "../storage-locations/storage-locations.service";
-import { BookingItemsService } from "../booking_items/booking-items.service";
 dayjs.extend(utc);
 @Injectable()
 export class BookingService {
@@ -47,7 +39,6 @@ export class BookingService {
     private readonly supabaseService: SupabaseService,
     private readonly mailService: MailService,
     private readonly locationsService: StorageLocationsService,
-    private readonly bookingItemsService: BookingItemsService,
   ) {}
 
   // 1. get all bookings
@@ -1031,7 +1022,7 @@ export class BookingService {
 
     return num_available ?? 0;
   }
- */
+
   // 11. Update payment status
   async updatePaymentStatus(
     bookingId: string,
