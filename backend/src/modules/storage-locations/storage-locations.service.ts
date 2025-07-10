@@ -6,7 +6,7 @@ import {
 } from "./interfaces/storage-location";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
-import { ApiResponse } from "src/types/response.types";
+import { ApiResponse } from "../../../../common/response.types";
 
 @Injectable()
 export class StorageLocationsService {

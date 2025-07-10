@@ -11,7 +11,7 @@ import {
 } from "@nestjs/common";
 import { TagService } from "./tag.service";
 import { TagRow, TagUpdate } from "./interfaces/tag.interface";
-import { ApiResponse } from "src/types/response.types";
+import { ApiResponse } from "../../../../common/response.types";
 import { Public } from "src/decorators/roles.decorator";
 
 @Controller("tags")

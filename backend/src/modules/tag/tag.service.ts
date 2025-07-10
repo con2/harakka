@@ -3,8 +3,8 @@ import { SupabaseService } from "../supabase/supabase.service";
 import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { TagRow, TagUpdate } from "./interfaces/tag.interface";
-import { Database } from "src/types/database.types";
-import { ApiResponse } from "src/types/response.types";
+import { Database } from "../../../../common/database.types";
+import { ApiResponse } from "../../../../common/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 
 @Injectable()

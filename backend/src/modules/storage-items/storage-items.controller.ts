@@ -17,7 +17,7 @@ import { SupabaseService } from "../supabase/supabase.service";
 import { ValidItemOrder } from "./interfaces/storage-item.interface";
 import { Tables } from "../../types/supabase.types"; // Import the Database type for type safety
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { ApiSingleResponse } from "src/types/response.types";
+import { ApiSingleResponse } from "../../../../common/response.types";
 import { StorageItem } from "./interfaces/storage-item.interface";
 import { Public } from "src/decorators/roles.decorator";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
