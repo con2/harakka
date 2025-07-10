@@ -40,7 +40,7 @@ export class TagController {
     );
   }
 
-  @Get(":itemId")
+  @Get("item/:itemId")
   async getTagsForItem(@Param("itemId") itemId: string): Promise<TagRow[]> {
     return this.tagService.getTagsForItem(itemId);
   }
