@@ -3,8 +3,19 @@ import { useRoles } from "@/hooks/useRoles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoaderCircle, Shield, Users, Building, RefreshCw } from "lucide-react";
+import {
+  LoaderCircle,
+  Shield,
+  Users,
+  Building,
+  RefreshCw,
+  Check,
+  X,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 export const RoleManagement: React.FC = () => {
   const {
@@ -17,6 +28,8 @@ export const RoleManagement: React.FC = () => {
     adminError,
     refreshCurrentUserRoles,
     refreshAllUserRoles,
+    hasAnyRole,
+    hasRole,
   } = useRoles();
 
   // Define admin status solely from new user roles (without old system)
@@ -77,6 +90,51 @@ export const RoleManagement: React.FC = () => {
       console.error("❌ RoleManagement - Manual refresh failed:", err);
     }
   }, [refreshCurrentUserRoles, refreshAllUserRoles, isAdmin]);
+
+  // For hasAnyRole testing
+  const [roleTestInput, setRoleTestInput] = useState("");
+  const [orgTestInput, setOrgTestInput] = useState("");
+  const [testRoles, setTestRoles] = useState<string[]>([]);
+  const [roleTestResult, setRoleTestResult] = useState(false);
+  const [roleTestPerformed, setRoleTestPerformed] = useState(false);
+
+  // For hasRole testing (single role)
+  const [singleRoleInput, setSingleRoleInput] = useState("");
+  const [singleOrgInput, setSingleOrgInput] = useState("");
+  const [singleRoleResult, setSingleRoleResult] = useState(false);
+  const [singleRoleTestPerformed, setSingleRoleTestPerformed] = useState(false);
+
+  // Handler for testing multiple roles (hasAnyRole)
+  const handleTestRoles = useCallback(() => {
+    const rolesToTest = roleTestInput
+      .split(",")
+      .map((role) => role.trim())
+      .filter((role) => role.length > 0);
+
+    setTestRoles(rolesToTest);
+    const result = hasAnyRole(rolesToTest, orgTestInput || undefined);
+    setRoleTestResult(result);
+    setRoleTestPerformed(true);
+
+    console.log("Role test (hasAnyRole):", {
+      roles: rolesToTest,
+      organizationId: orgTestInput || "any",
+      result,
+    });
+  }, [roleTestInput, orgTestInput, hasAnyRole]);
+
+  // Handler for testing a single role (hasRole)
+  const handleTestSingleRole = useCallback(() => {
+    setSingleRoleTestPerformed(true);
+    const result = hasRole(singleRoleInput, singleOrgInput || undefined);
+    setSingleRoleResult(result);
+
+    console.log("Role test (hasRole):", {
+      role: singleRoleInput,
+      organizationId: singleOrgInput || "any",
+      result,
+    });
+  }, [singleRoleInput, singleOrgInput, hasRole]);
 
   // Loading state
   if (loading) {
@@ -429,6 +487,188 @@ export const RoleManagement: React.FC = () => {
                 {isSuperVera ? "Yes" : "No"}
               </Badge>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Role Check Testing Section (hasAnyRole) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Test hasAnyRole Function</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="roleTest">Role Names (comma separated)</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="roleTest"
+                  placeholder="e.g. admin,user,manager"
+                  value={roleTestInput}
+                  onChange={(e) => setRoleTestInput(e.target.value)}
+                />
+                <Input
+                  placeholder="Organization ID (optional)"
+                  value={orgTestInput}
+                  onChange={(e) => setOrgTestInput(e.target.value)}
+                />
+                <Button
+                  onClick={handleTestRoles}
+                  variant="default"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Test Multiple Roles
+                </Button>
+              </div>
+            </div>
+
+            {roleTestPerformed && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Testing roles:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {testRoles.map((role, i) => (
+                        <Badge key={i} variant="outline">
+                          {role}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  {orgTestInput && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">In organization:</span>
+                      <Badge variant="outline">{orgTestInput}</Badge>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Result:</span>
+                    {roleTestResult ? (
+                      <div className="flex items-center text-green-600">
+                        <Check className="w-4 h-4 mr-1" />
+                        <span>User has at least one of these roles</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-red-600">
+                        <X className="w-4 h-4 mr-1" />
+                        <span>User does not have any of these roles</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-xs text-muted-foreground mt-2">
+                    <pre className="p-2 bg-slate-100 rounded overflow-x-auto">
+                      {JSON.stringify(
+                        {
+                          testedRoles: testRoles,
+                          organizationId: orgTestInput || "any",
+                          result: roleTestResult,
+                          userRoles: currentUserRoles.map((r) => ({
+                            role: r.role_name,
+                            org: r.organization_name,
+                            orgId: r.organization_id,
+                          })),
+                        },
+                        null,
+                        2,
+                      )}
+                    </pre>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Single Role Testing Section (hasRole) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Test hasRole Function</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="singleRoleTest">Single Role Name</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="singleRoleTest"
+                  placeholder="e.g. admin"
+                  value={singleRoleInput}
+                  onChange={(e) => setSingleRoleInput(e.target.value)}
+                />
+                <Input
+                  placeholder="Organization ID (optional)"
+                  value={singleOrgInput}
+                  onChange={(e) => setSingleOrgInput(e.target.value)}
+                />
+                <Button
+                  onClick={handleTestSingleRole}
+                  variant="default"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Test Single Role
+                </Button>
+              </div>
+            </div>
+
+            {singleRoleTestPerformed && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Testing role:</span>
+                    <Badge variant="outline">{singleRoleInput}</Badge>
+                  </div>
+
+                  {singleOrgInput && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">In organization:</span>
+                      <Badge variant="outline">{singleOrgInput}</Badge>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Result:</span>
+                    {singleRoleResult ? (
+                      <div className="flex items-center text-green-600">
+                        <Check className="w-4 h-4 mr-1" />
+                        <span>User has this specific role</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-red-600">
+                        <X className="w-4 h-4 mr-1" />
+                        <span>User does not have this role</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-xs text-muted-foreground mt-2">
+                    <pre className="p-2 bg-slate-100 rounded overflow-x-auto">
+                      {JSON.stringify(
+                        {
+                          testedRole: singleRoleInput,
+                          organizationId: singleOrgInput || "any",
+                          result: singleRoleResult,
+                          userRoles: currentUserRoles.map((r) => ({
+                            role: r.role_name,
+                            org: r.organization_name,
+                            orgId: r.organization_id,
+                          })),
+                        },
+                        null,
+                        2,
+                      )}
+                    </pre>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
