@@ -12,11 +12,12 @@ import {
 import { TagService } from "./tag.service";
 import { TagRow, TagUpdate } from "./interfaces/tag.interface";
 import { ApiResponse } from "src/types/response.types";
+import { Public } from "src/decorators/roles.decorator";
 
 @Controller("tags")
 export class TagController {
   constructor(private readonly tagService: TagService) {}
-
+  @Public()
   @Get()
   async getAllTags(
     @Query("page") page: string = "1",

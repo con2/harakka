@@ -15,6 +15,7 @@ import {
   BookingItemsUpdate,
 } from "./interfaces/booking-items.interfaces";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { Public } from "src/decorators/roles.decorator";
 
 @Controller("booking-items")
 export class BookingItemsController {
@@ -26,6 +27,7 @@ export class BookingItemsController {
    * @returns
    */
   @Get()
+  @Public()
   async getAllBookingItems(
     @Req() req: AuthRequest,
     @Query("page") page: string = "1",
@@ -50,6 +52,7 @@ export class BookingItemsController {
    * @returns
    */
   @Get(":booking_id")
+  @Public()
   async getBookingItems(
     @Req() req: AuthRequest,
     @Param("booking_id") booking_id: string,

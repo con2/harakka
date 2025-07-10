@@ -23,6 +23,7 @@ import {
   BookingStatus,
   ValidBooking,
 } from "./types/booking.interface";
+import { Public, Roles } from "src/decorators/roles.decorator";
 
 @Controller("bookings")
 export class BookingController {
@@ -32,6 +33,7 @@ export class BookingController {
   ) {}
 
   // gets all bookings - use case: admin
+  @Public()
   @Get()
   async getAll(
     @Req() req: AuthRequest,
@@ -91,6 +93,15 @@ export class BookingController {
 
   // any user creates a booking
   @Post()
+  @Roles([
+    "admin",
+    "user",
+    "main_admin",
+    "super_admin",
+    "superVera",
+    "storage_manager",
+    "requester",
+  ])
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: AuthRequest) {
     try {
       const userId = req.user.id;
