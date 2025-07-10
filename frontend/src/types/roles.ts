@@ -7,6 +7,11 @@ export interface UserRoleWithDetails {
   organization_name: string;
   is_active: boolean;
   created_at?: string;
+  // Additional user fields from the database view
+  user_email?: string;
+  user_full_name?: string;
+  user_visible_name?: string;
+  user_phone?: string;
 }
 
 export interface CreateUserRoleDto {
