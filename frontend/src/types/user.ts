@@ -46,11 +46,11 @@ export type FlatUserProfile = {
  * User state in Redux store
  */
 export interface UserState {
-  users: FlatUserProfile[]; // Array of user profiles
+  users: UserProfile[]; // Array of user profiles
   loading: boolean;
   error: string | null;
   errorContext: ErrorContext;
-  selectedUser: FlatUserProfile | null;
+  selectedUser: UserProfile | null;
   selectedUserLoading?: boolean;
   selectedUserAddresses?: Address[];
 }

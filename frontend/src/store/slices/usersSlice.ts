@@ -197,7 +197,7 @@ export const usersSlice = createSlice({
       })
       .addCase(fetchAllUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload
+        state.users = action.payload;
       })
       .addCase(fetchAllUsers.rejected, (state, action) => {
         state.loading = false;
@@ -213,7 +213,7 @@ export const usersSlice = createSlice({
       })
       .addCase(getUserById.fulfilled, (state, action) => {
         state.selectedUserLoading = false;
-        state.selectedUser = action.payload as FlatUserProfile;
+        state.selectedUser = action.payload;
       })
       .addCase(getUserById.rejected, (state, action) => {
         state.selectedUserLoading = false;

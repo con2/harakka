@@ -7,7 +7,7 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "disableSourceOfProjectReferenceRedirect": true,
-    "maxNodeModuleJsDepth": 2,
+    "maxNodeModuleJsDepth": 5,
     "noUncheckedIndexedAccess": true,
     "strictFunctionTypes": false,
     "baseUrl": ".",
