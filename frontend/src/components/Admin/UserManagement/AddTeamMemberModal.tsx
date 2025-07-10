@@ -10,7 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAppDispatch } from "@/store/hooks";
 import { createUser, updateUser } from "@/store/slices/usersSlice";
-import { CreateUserDto, UserProfile } from "@/types";
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  UserProfile,
+} from "../../../../../common/user.types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -151,7 +155,7 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
           return;
         }
         await dispatch(
-          updateUser({ id: initialData.id, data: formData }),
+          updateUser({ id: initialData.id, data: formData as UpdateUserDto }),
         ).unwrap();
         toast.success("User updated successfully!");
       } else {

@@ -10,7 +10,7 @@ import {
   selectLoading,
 } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
-import { UserProfile } from "@/types/user";
+import { UserProfile } from "../../../../../common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -100,7 +100,7 @@ const TeamList = () => {
       accessorKey: "created_at",
       header: t.teamList.columns.userSince[lang],
       cell: ({ row }) =>
-        formatDate(new Date(row.original.created_at), "d MMM yyyy"),
+        formatDate(new Date(row.original.created_at ?? ""), "d MMM yyyy"),
     },
     {
       id: "role",

@@ -12,7 +12,7 @@ import {
   selectLoading,
 } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
-import { UserProfile } from "@/types";
+import { UserProfile } from "../../../../../common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -115,7 +115,7 @@ const UsersList = () => {
       header: t.usersList.columns.userSince[lang],
       size: 100,
       cell: ({ row }) =>
-        formatDate(new Date(row.original.created_at), "d MMM yyyy"),
+        formatDate(new Date(row.original.created_at ?? ""), "d MMM yyyy"),
     },
     {
       id: "role",

@@ -1,10 +1,15 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { usersApi } from "../../api/services/users";
-import { UserState, CreateUserDto } from "../../types/user";
+import {
+  CreateUserDto,
+  UserProfile,
+  UpdateUserDto,
+} from "../../../../common/user.types";
 import { RootState } from "../store";
 import { supabase } from "../../config/supabase";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { Address } from "@/types/address";
+import { UserState } from "@/types";
 
 const initialState: UserState = {
   users: [],
@@ -82,7 +87,7 @@ export const deleteUser = createAsyncThunk(
 export const updateUser = createAsyncThunk(
   "users/updateUser",
   async (
-    { id, data }: { id: string; data: CreateUserDto },
+    { id, data }: { id: string; data: UpdateUserDto },
     { rejectWithValue },
   ) => {
     try {
@@ -257,7 +262,7 @@ export const usersSlice = createSlice({
       })
       .addCase(updateUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = state.users.map((user) =>
+        state.users = state.users.map((user: UserProfile) =>
           user.id === action.payload.id ? action.payload : user,
         );
       })

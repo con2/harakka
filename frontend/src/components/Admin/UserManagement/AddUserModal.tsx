@@ -24,7 +24,7 @@ import {
   selectLoading,
 } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
-import { CreateUserDto } from "@/types/user";
+import { CreateUserDto } from "../../../../../common/user.types";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -32,6 +32,7 @@ import { Label } from "../../ui/label";
 import { useAuth } from "@/hooks/useAuth";
 
 const initialFormState: Omit<CreateUserDto, "password"> = {
+  id: "",
   full_name: "",
   visible_name: "",
   email: "",
@@ -84,16 +85,19 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
       toast.error(t.addUserModal.messages.passwordRequired[lang]);
       return;
     }
-    if (!isValidEmail(formData.email)) {
+    if (!isValidEmail(formData.email ?? "")) {
       toast.error(t.addUserModal.messages.invalidEmail[lang]);
       return;
     }
     try {
-      const payload: CreateUserDto = { ...formData, password };
+      const payload = { ...formData, password };
       await dispatch(createUser(payload)).unwrap();
 
       toast.success(
-        t.addUserModal.messages.success[lang].replace("{email}", payload.email),
+        t.addUserModal.messages.success[lang].replace(
+          "{email}",
+          payload.email ?? "",
+        ),
       );
       resetForm();
       setOpen(false);
@@ -120,7 +124,7 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
             <Input
               id="full_name"
               name="full_name"
-              value={formData.full_name}
+              value={formData.full_name ?? ""}
               onChange={handleChange}
               placeholder={t.addUserModal.placeholders.fullName[lang]}
             />
@@ -133,7 +137,7 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
             <Input
               id="visible_name"
               name="visible_name"
-              value={formData.visible_name}
+              value={formData.visible_name ?? ""}
               onChange={handleChange}
               placeholder={t.addUserModal.placeholders.visibleName[lang]}
             />
@@ -144,7 +148,7 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
             <Input
               id="email"
               name="email"
-              value={formData.email}
+              value={formData.email ?? ""}
               onChange={handleChange}
               placeholder={t.addUserModal.placeholders.email[lang]}
             />
@@ -155,7 +159,7 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
             <Input
               id="phone"
               name="phone"
-              value={formData.phone}
+              value={formData.phone ?? ""}
               onChange={handleChange}
               placeholder={t.addUserModal.placeholders.phone[lang]}
               autoComplete="new-phone"
@@ -170,7 +174,7 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
               id="password"
               name="password"
               type="password"
-              value={password}
+              value={password ?? ""}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={t.addUserModal.placeholders.password[lang]}
               autoComplete="new-password"
@@ -180,7 +184,10 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
           {user?.role === "superVera" && (
             <div>
               <Label htmlFor="role">{t.addUserModal.labels.role[lang]}</Label>
-              <Select value={formData.role} onValueChange={handleRoleChange}>
+              <Select
+                value={formData.role ?? ""}
+                onValueChange={handleRoleChange}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue
                     placeholder={t.addUserModal.placeholders.selectRole[lang]}

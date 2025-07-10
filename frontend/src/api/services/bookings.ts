@@ -1,4 +1,4 @@
-import { ApiResponse } from "@/types/response.types";
+import { ApiResponse } from "../../../../common/response.types";
 import { api } from "../axios";
 import { BookingItem, Booking, CreateBookingDto, ValidBooking } from "@/types";
 import { BookingStatus, BookingUserView } from "../../types/booking";

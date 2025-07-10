@@ -19,12 +19,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch } from "@/store/hooks";
 import { updateUser } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
-import { UserFormData, UserProfile } from "@/types";
+import { UserFormData } from "@/types";
 import { Edit } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Label } from "../../ui/label";
 import { MultiSelect } from "../../ui/multi-select";
+import { UserProfile } from "../../../../../common/user.types";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();
@@ -34,7 +35,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
     email: user.email || "",
-    role: user.role || "user",
+    roles: [(user.role as "user" | "admin" | "superVera") || "user"], // Should be fixed when we setup new roles
     phone: user.phone || "",
     visible_name: user.visible_name || "",
     preferences: user.preferences || {},
@@ -77,12 +78,14 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
 
   // Handle changes for role
   const handleRoleChange = (newRole: "user" | "admin" | "superVera") => {
-    setFormData({ ...formData, role: newRole });
+    setFormData({ ...formData, roles: [newRole] });
   };
 
   const handleSave = async () => {
     try {
-      await dispatch(updateUser({ id: user.id, data: formData })).unwrap();
+      await dispatch(
+        updateUser({ id: user.id, data: { ...formData, id: user.id } }),
+      ).unwrap();
       toast.success(t.userEditModal.messages.success[lang]);
     } catch {
       toast.error(t.userEditModal.messages.error[lang]);
@@ -141,7 +144,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
             <Label htmlFor="role">{t.userEditModal.labels.role[lang]}</Label>
             <Select
               onValueChange={handleRoleChange}
-              defaultValue={formData.role}
+              defaultValue={formData.roles?.[0]}
             >
               <SelectTrigger className="w-[120px]">
                 <SelectValue

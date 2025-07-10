@@ -41,7 +41,11 @@ const ProtectedRoute = ({
     );
   }
 
-  if (!selectedUser || !allowedRoles.includes(selectedUser.role)) {
+  if (
+    !selectedUser ||
+    !selectedUser.role ||
+    !allowedRoles.includes(selectedUser.role)
+  ) {
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -59,7 +63,9 @@ const ProtectedRoute = ({
   // Check role-based access using BOTH old and new systems
   if (allowedRoles.length > 0) {
     // OLD SYSTEM: Check if user has role in selectedUser.role
-    const hasOldRole = allowedRoles.includes(selectedUser.role);
+    const hasOldRole = selectedUser.role
+      ? allowedRoles.includes(selectedUser.role)
+      : false;
 
     // NEW SYSTEM: Check if user has role in JWT-based roles
     const hasNewRole = hasAnyRole(allowedRoles, requiredOrganization);
