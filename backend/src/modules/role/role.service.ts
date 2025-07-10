@@ -174,7 +174,7 @@ export class RoleService {
     // After successful role creation, update JWT
     await this.updateUserJWT(createRoleDto.user_id, req);
 
-    return roleDetails as ViewUserRolesWithDetailsRow;
+    return roleDetails;
   }
 
   /**

@@ -10,7 +10,7 @@ import {
 } from "@nestjs/common";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { RoleService } from "./role.service";
-import { UserRoleWithDetails } from "./interfaces/role.interface";
+import { UserRoleWithDetails, ViewUserRolesWithDetailsRow } from "./interfaces/role.interface";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
 
 @Controller("roles")
@@ -103,7 +103,7 @@ export class RoleController {
   async createUserRole(
     @Body() createRoleDto: CreateUserRoleDto,
     @Req() req: AuthRequest,
-  ): Promise<UserRoleWithDetails> {
+  ): Promise<ViewUserRolesWithDetailsRow> {
     return this.roleService.createUserRole(createRoleDto, req);
   }
 
