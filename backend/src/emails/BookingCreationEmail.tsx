@@ -140,7 +140,7 @@ const BookingCreationEmail = ({
 
         <Section style={{ textAlign: "center", marginTop: "30px" }}>
           <a
-            href="http://localhost:5180/profile?tab=orders" // TODO: replace with actual link
+            href="http://localhost:5180/profile?tab=bookings" // TODO: replace with actual link
             style={{
               backgroundColor: "#9537C7",
               color: "#ffffff",

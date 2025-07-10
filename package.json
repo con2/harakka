@@ -11,8 +11,6 @@
     "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend",
     "deploy": "echo 'Add deployment scripts here'"
   },
-  "author": "Your Team Name",
-  "license": "MIT",
   "devDependencies": {
     "concurrently": "^9.1.2",
     "supabase": "^2.20.3"

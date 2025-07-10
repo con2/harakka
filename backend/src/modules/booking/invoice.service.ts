@@ -6,40 +6,46 @@ import {
   generateBarcodeImage,
   generateInvoicePDF,
 } from "../../utils/invoice-functions";
+import { PostgrestResponse } from "@supabase/supabase-js";
+import { BookingsRow, UserProfilesRow } from "./types/booking.interface";
 
 @Injectable()
 export class InvoiceService {
   constructor(private readonly supabaseService: SupabaseService) {} // TODO refactor
 
-  async generateInvoice(orderId: string): Promise<string> {
+  async generateInvoice(bookingId: string): Promise<string> {
     const supabase = this.supabaseService.getServiceClient();
 
-    // Load order
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
+    // Load booking
+    const {
+      data: booking,
+      error: bookingError,
+    }: PostgrestResponse<BookingsRow> = await supabase
+      .from("bookings")
       .select("*")
-      .eq("id", orderId)
+      .eq("id", bookingId)
       .single();
 
-    if (!order || orderError) {
-      throw new BadRequestException("Order not found");
+    if (!booking || bookingError) {
+      throw new BadRequestException("Booking not found");
     }
 
-    // Load related order items
-    const { data: orderItems, error: itemsError } = await supabase
+    // Load related booking items
+    const { data: bookingItems, error: itemsError } = await supabase
       .from("booking_items")
       .select("*, storage_items(*)") // only works if storage_items is a foreign key
-      .eq("order_id", orderId);
-    if (!orderItems || itemsError) {
-      throw new BadRequestException("Order items not found");
+      .eq("booking_id", bookingId);
+    if (!bookingItems || itemsError) {
+      throw new BadRequestException("Booking items not found");
     }
 
     // Load user
-    const { data: user, error: userError } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("id", order.user_id)
-      .single();
+    const { data: user, error: userError }: PostgrestResponse<UserProfilesRow> =
+      await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("id", booking[0].user_id)
+        .single();
     if (!user || userError) {
       throw new BadRequestException("User not found");
     }
@@ -73,7 +79,7 @@ export class InvoiceService {
     const pdfBuffer = await generateInvoicePDF({
       invoiceNumber,
       user: user,
-      items: orderItems,
+      items: bookingItems,
       total,
       vatAmount,
       barcodeImage,
@@ -87,15 +93,15 @@ export class InvoiceService {
       contentType: "application/pdf",
     });
 
-    await supabase.from("invoices").insert({
+    /*     await supabase.from("invoices").insert({
       invoice_number: invoiceNumber,
-      booking_id: order.id,
-      user_id: order.user_id,
+      booking_id: booking.id,
+      user_id: booking.user_id,
       reference_number: referenceNumber,
       total_amount: total,
       due_date: dueDate.toISOString().split("T")[0],
       pdf_url: filePath,
-    });
+    }); */
 
     const { data: publicUrlData } = supabase.storage
       .from("invoices")

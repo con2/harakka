@@ -9,7 +9,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import illusiaImage from "@/assets/illusiaImage.jpg";
 
-
 export const Login = () => {
   const [searchParams] = useSearchParams();
   const reset = searchParams.get("reset");
@@ -27,10 +26,8 @@ export const Login = () => {
           backgroundImage: `url(${illusiaImage})`,
         }}
       />
-      
       {/* Gradient Overlay for Better Text Readability */}
       <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 via-primary/40 to-secondary/30 -z-10" />
-      
       {/* Login Content */}
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="w-full max-w-md">
@@ -43,7 +40,6 @@ export const Login = () => {
               Sign in to access your storage rentals
             </p>
           </div>
-          
           <Card className="w-full shadow-2xl bg-white/95 backdrop-blur-sm border-0 transform hover:scale-[1.02] transition-all duration-300">
             <CardHeader className="pb-4">
               <CardTitle className="text-center text-2xl font-bold text-primary mb-2">
@@ -55,17 +51,19 @@ export const Login = () => {
           {reset === "success" && (
             <Alert className="mb-4 bg-green-50 border-green-200">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <AlertDescription>{t.login.resetSuccess[lang]}</AlertDescription>
+              <AlertDescription>
+                {t.login.resetSuccess[lang]}
+              </AlertDescription>
             </Alert>
           )}
-
           {error === "expired_link" && (
             <Alert className="mb-4 bg-amber-50 border-amber-200">
               <InfoIcon className="h-4 w-4 text-amber-500" />
-              <AlertDescription>{t.login.expiredLink[lang]}</AlertDescription>
+                <AlertDescription>
+                  {t.login.expiredLink[lang]}
+                </AlertDescription>
             </Alert>
           )}
-
           <Auth
             supabaseClient={supabase}
             appearance={{
