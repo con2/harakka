@@ -36,7 +36,6 @@
     "class-validator": "^0.14.1",
     "dayjs": "^1.11.13",
     "dayjs-plugin-utc": "^0.1.2",
-    "full-stack-booking-app": "file:..",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "nodemailer": "^7.0.2",
