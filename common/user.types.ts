@@ -1,4 +1,4 @@
-import{ Database } from "./database.types";
+import { Database } from "./supabase.types"
 
 export type CreateUserDto =
   Database["public"]["Tables"]["user_profiles"]["Insert"] & {
@@ -11,3 +11,5 @@ export type UpdateUserDto =
   };
 
 export type UserProfile = Database["public"]["Tables"]["user_profiles"]["Row"];
+
+export type UserAddress = Database["public"]["Tables"]["user_addresses"]["Row"];

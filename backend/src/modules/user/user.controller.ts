@@ -10,11 +10,14 @@ import {
   Req,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
-import { CreateUserDto } from "./dto/create-user.dto";
+import {
+  CreateUserDto,
+  UserProfile,
+  UserAddress,
+} from "../../../../common/user.types";
 
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { UserAddress, UserProfile } from "./interfaces/user.interface";
 import { Roles } from "src/decorators/roles.decorator";
 
 @Controller("users")
@@ -105,7 +108,7 @@ export class UserController {
     @Param("addressId") addressId: string,
     @Body() address: CreateAddressDto,
     @Req() req: AuthRequest,
-  ): Promise<UserAddress | null> {
+  ): Promise<UserAddress> {
     return this.userService.updateAddress(id, addressId, address, req);
   }
 
