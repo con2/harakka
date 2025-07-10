@@ -1,7 +1,6 @@
-import { User } from "@supabase/supabase-js";
 import { Address } from "./address";
 import { ErrorContext } from "./common";
-import { Database } from "./supabase.types";
+import { Database } from "../../../backend/src/types/database.types.ts";
 
 /**
  * User roles in the application
@@ -31,17 +30,7 @@ export interface UserProfile extends BaseEntity {
   preferences?: Record<string, string>;
   addresses?: Address[];
 } */
-export type FlatUserProfile = {
-  id: string;
-  email: string;
-  full_name: string | null;
-  visible_name: string | null;
-  phone: string | null;
-  role: string | null; // or UserRole if that's validated elsewhere
-  preferences: Record<string, string>; // coerced from Json
-  saved_lists: string[]; // coerced from Json
-  created_at: string | null;
-};
+
 /**
  * User state in Redux store
  */

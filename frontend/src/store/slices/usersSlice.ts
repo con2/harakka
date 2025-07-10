@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { usersApi } from "../../api/services/users";
-import { UserState, CreateUserDto, FlatUserProfile } from "../../types/user";
+import { UserState, CreateUserDto } from "../../types/user";
 import { RootState } from "../store";
 import { supabase } from "../../config/supabase";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
@@ -15,10 +15,6 @@ const initialState: UserState = {
   selectedUserLoading: false,
   selectedUserAddresses: [],
 };
-
-// fetch all users
-import { UserProfile } from "@/types/user";
-import { User } from "@supabase/supabase-js";
 
 export const fetchAllUsers = createAsyncThunk(
   "users/fetchAllUsers",
