@@ -317,15 +317,25 @@ export const RoleManagement: React.FC = () => {
                     key={role.id || index}
                     className="flex items-center justify-between p-3 border rounded-lg"
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
                         <Badge variant="default">{role.role_name}</Badge>
-                        <span className="text-sm text-muted-foreground">
-                          in {role.organization_name}
+                        <span className="text-sm font-medium">
+                          {role.organization_name}
                         </span>
                       </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>
+                          User email:{" "}
+                          {role.user_email ||
+                            role.user_full_name ||
+                            role.user_visible_name ||
+                            role.user_id}
+                        </span>
+                        {role.user_phone && <span>📞 {role.user_phone}</span>}
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        User: {role.user_id} • Role ID: {role.role_id}
+                        Role ID: {role.role_id} • Org ID: {role.organization_id}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
