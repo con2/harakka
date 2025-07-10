@@ -12,7 +12,6 @@
     "deploy": "echo 'Add deployment scripts here'"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
-    "supabase": "^2.20.3"
+    "concurrently": "^9.1.2"
   }
 }
