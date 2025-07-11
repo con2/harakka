@@ -9,31 +9,38 @@ jobs:
   validate-builds:
     name: Validate Frontend & Backend Builds
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-          
-      # Frontend Build
-      - name: Install frontend dependencies
-        run: npm ci --prefix frontend
-        
+          node-version: "20"
+          cache: "npm"
+
+      # Install common dependencies first
+      - name: Install common dependencies
+        run: npm ci --prefix common
+
+      # Frontend Build attempt
+      - name: Clean frontend lockfile and node_modules (optional fix for CI)
+        run: rm -rf frontend/node_modules frontend/package-lock.json
+
+      - name: Reinstall frontend dependencies cleanly
+        run: npm install --legacy-peer-deps --prefix frontend
+
       - name: Build frontend
         run: npm run build --prefix frontend
-        
-      # Backend Build  
+
+      # Backend Build
       - name: Install backend dependencies
         run: npm ci --prefix backend
-        
+
       - name: Build backend
         run: npm run build --prefix backend
-        
+
       # Final verification
       - name: Verify builds completed
         run: |

@@ -28,6 +28,20 @@ export type Database = MergeDeep<
           Insert: { translations?: TagTranslations | null };
           Update: { translations?: TagTranslations | null };
         };
+        user_profiles: {
+          Row: {
+            preferences: Record<string, string> | null;
+            saved_lists: string[] | null;
+          };
+          Insert: {
+            preferences?: Record<string, string> | null;
+            saved_lists?: string[] | null;
+          };
+          Update: {
+            preferences?: Record<string, string> | null;
+            saved_lists?: string[] | null;
+          };
+        };
       };
     };
   }

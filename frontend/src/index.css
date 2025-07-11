@@ -1,11 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto+Slab:wght@100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto+Slab:wght@100..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
 :root {
-  --main-font: 'Lato', sans-serif;
-  --heading-font: 'Roboto Slab', serif;
+  --main-font: "Lato", sans-serif;
+  --heading-font: "Roboto Slab", serif;
   --radius: 0.625rem;
   --background: white;
   --foreground: oklch(0.145 0 0);
@@ -115,10 +115,13 @@
   button {
     cursor: pointer;
   }
-  h1, h2, h3, nav {
+  h1,
+  h2,
+  h3,
+  nav {
     font-family: var(--heading-font);
   }
-  aside>nav {
+  aside > nav {
     font-family: var(--main-font);
   }
   h2 {
@@ -220,14 +223,14 @@
 }
 
 .custom-toast::after {
-  content: '';
+  content: "";
   position: absolute;
   border-radius: 0.75rem;
   bottom: 0;
   left: 0;
   height: 4px;
   width: 0;
-  background-color: #4CAF50;
+  background-color: #4caf50;
   animation: progressBar 3s linear forwards;
   animation-play-state: running;
   z-index: 0;

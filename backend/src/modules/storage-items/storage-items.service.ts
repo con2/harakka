@@ -15,7 +15,7 @@ import { SupabaseService } from "../supabase/supabase.service";
 import { TablesUpdate } from "src/types/supabase.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
-import { ApiSingleResponse } from "src/types/response.types";
+import { ApiSingleResponse } from "../../../../common/response.types"; // Import ApiSingleResponse for type safety
 // this is used by the controller
 
 @Injectable()

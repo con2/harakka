@@ -20,7 +20,7 @@ export const Login = () => {
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Background Image with Overlay */}
-     <div
+      <div
         className="absolute inset-[-8px] bg-cover bg-center -z-10 blur-[5px]"
         style={{
           backgroundImage: `url(${illusiaImage})`,
@@ -48,137 +48,141 @@ export const Login = () => {
               <div className="w-16 h-1 bg-gradient-to-r from-secondary to-highlight2 mx-auto rounded-full"></div>
             </CardHeader>
             <CardContent className="pt-2">
-          {reset === "success" && (
-            <Alert className="mb-4 bg-green-50 border-green-200">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <AlertDescription>
-                {t.login.resetSuccess[lang]}
-              </AlertDescription>
-            </Alert>
-          )}
-          {error === "expired_link" && (
-            <Alert className="mb-4 bg-amber-50 border-amber-200">
-              <InfoIcon className="h-4 w-4 text-amber-500" />
-                <AlertDescription>
-                  {t.login.expiredLink[lang]}
-                </AlertDescription>
-            </Alert>
-          )}
-          <Auth
-            supabaseClient={supabase}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: "#9537c7",
-                    brandAccent: "#3ec3ba",
-                    brandButtonText: "white",
-                    defaultButtonBackground: "#f8f9fa",
-                    defaultButtonBackgroundHover: "#e9ecef",
-                    defaultButtonBorder: "#dee2e6",
-                    defaultButtonText: "#495057",
-                    dividerBackground: "#e9ecef",
-                    inputBackground: "white",
-                    inputBorder: "#ced4da",
-                    inputBorderHover: "#9537c7",
-                    inputBorderFocus: "#9537c7",
-                    inputText: "#495057",
-                    inputLabelText: "#6c757d",
-                    inputPlaceholder: "#adb5bd",
-                    messageText: "#495057",
-                    messageTextDanger: "#dc3545",
-                    anchorTextColor: "#9537c7",
-                    anchorTextHoverColor: "#3ec3ba",
+              {reset === "success" && (
+                <Alert className="mb-4 bg-green-50 border-green-200">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <AlertDescription>
+                    {t.login.resetSuccess[lang]}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {error === "expired_link" && (
+                <Alert className="mb-4 bg-amber-50 border-amber-200">
+                  <InfoIcon className="h-4 w-4 text-amber-500" />
+                  <AlertDescription>
+                    {t.login.expiredLink[lang]}
+                  </AlertDescription>
+                </Alert>
+              )}
+              <Auth
+                supabaseClient={supabase}
+                appearance={{
+                  theme: ThemeSupa,
+                  variables: {
+                    default: {
+                      colors: {
+                        brand: "#9537c7",
+                        brandAccent: "#3ec3ba",
+                        brandButtonText: "white",
+                        defaultButtonBackground: "#f8f9fa",
+                        defaultButtonBackgroundHover: "#e9ecef",
+                        defaultButtonBorder: "#dee2e6",
+                        defaultButtonText: "#495057",
+                        dividerBackground: "#e9ecef",
+                        inputBackground: "white",
+                        inputBorder: "#ced4da",
+                        inputBorderHover: "#9537c7",
+                        inputBorderFocus: "#9537c7",
+                        inputText: "#495057",
+                        inputLabelText: "#6c757d",
+                        inputPlaceholder: "#adb5bd",
+                        messageText: "#495057",
+                        messageTextDanger: "#dc3545",
+                        anchorTextColor: "#9537c7",
+                        anchorTextHoverColor: "#3ec3ba",
+                      },
+                      fonts: {
+                        bodyFontFamily: "var(--main-font)",
+                        inputFontFamily: "var(--main-font)",
+                        labelFontFamily: "var(--main-font)",
+                        buttonFontFamily: "var(--main-font)",
+                      },
+                      borderWidths: {
+                        buttonBorderWidth: "1px",
+                        inputBorderWidth: "1px",
+                      },
+                      radii: {
+                        borderRadiusButton: "0.5rem",
+                        buttonBorderRadius: "0.5rem",
+                        inputBorderRadius: "0.5rem",
+                      },
+                      space: {
+                        spaceSmall: "4px",
+                        spaceMedium: "8px",
+                        spaceLarge: "16px",
+                        labelBottomMargin: "8px",
+                        anchorBottomMargin: "4px",
+                        emailInputSpacing: "4px",
+                        socialAuthSpacing: "4px",
+                        buttonPadding: "10px 15px",
+                        inputPadding: "10px 15px",
+                      },
+                    },
                   },
-                  fonts: {
-                    bodyFontFamily: "var(--main-font)",
-                    inputFontFamily: "var(--main-font)",
-                    labelFontFamily: "var(--main-font)",
-                    buttonFontFamily: "var(--main-font)",
+                  className: {
+                    container: "space-y-4",
+                    button: "transition-all duration-200 hover:shadow-md",
+                    input: "transition-all duration-200",
+                    label: "font-medium text-gray-700",
+                    anchor: "font-medium transition-colors duration-200",
+                    divider: "text-gray-400",
+                    message: "text-sm",
                   },
-                  borderWidths: {
-                    buttonBorderWidth: "1px",
-                    inputBorderWidth: "1px",
+                }}
+                providers={["google"]}
+                socialLayout="horizontal"
+                view="sign_in"
+                showLinks={true}
+                magicLink={true}
+                redirectTo={`${window.location.origin}/auth/callback`}
+                localization={{
+                  variables: {
+                    sign_in: {
+                      email_label: t.authUi.sign_in.email_label[lang],
+                      email_input_placeholder:
+                        t.authUi.sign_in.email_input_placeholder[lang],
+                      password_label: t.authUi.sign_in.password_label[lang],
+                      password_input_placeholder:
+                        t.authUi.sign_in.password_input_placeholder[lang],
+                      button_label: t.authUi.sign_in.button_label[lang],
+                      social_provider_text:
+                        t.authUi.sign_in.social_provider_text[lang],
+                      link_text: t.authUi.sign_in.link_text[lang],
+                    },
+                    sign_up: {
+                      email_label: t.authUi.sign_up.email_label[lang],
+                      email_input_placeholder:
+                        t.authUi.sign_up.email_input_placeholder[lang],
+                      password_label: t.authUi.sign_up.password_label[lang],
+                      password_input_placeholder:
+                        t.authUi.sign_up.password_input_placeholder[lang],
+                      button_label: t.authUi.sign_up.button_label[lang],
+                      link_text: t.authUi.sign_up.link_text[lang],
+                    },
+                    forgotten_password: {
+                      email_label:
+                        t.authUi.forgotten_password.email_label[lang],
+                      email_input_placeholder:
+                        t.authUi.forgotten_password.email_input_placeholder[
+                          lang
+                        ],
+                      button_label:
+                        t.authUi.forgotten_password.button_label[lang],
+                      link_text: t.authUi.forgotten_password.link_text[lang],
+                    },
+                    magic_link: {
+                      email_input_label:
+                        t.authUi.magic_link.email_input_label[lang],
+                      email_input_placeholder:
+                        t.authUi.magic_link.email_input_placeholder[lang],
+                      button_label: t.authUi.magic_link.button_label[lang],
+                      link_text: t.authUi.magic_link.link_text[lang],
+                    },
                   },
-                  radii: {
-                    borderRadiusButton: "0.5rem",
-                    buttonBorderRadius: "0.5rem",
-                    inputBorderRadius: "0.5rem",
-                  },
-                  space: {
-                    spaceSmall: "4px",
-                    spaceMedium: "8px",
-                    spaceLarge: "16px",
-                    labelBottomMargin: "8px",
-                    anchorBottomMargin: "4px",
-                    emailInputSpacing: "4px",
-                    socialAuthSpacing: "4px",
-                    buttonPadding: "10px 15px",
-                    inputPadding: "10px 15px",
-                  },
-                },
-              },
-              className: {
-                container: "space-y-4",
-                button: "transition-all duration-200 hover:shadow-md",
-                input: "transition-all duration-200",
-                label: "font-medium text-gray-700",
-                anchor: "font-medium transition-colors duration-200",
-                divider: "text-gray-400",
-                message: "text-sm",
-              },
-            }}
-            providers={["google"]}
-            socialLayout="horizontal"
-            view="sign_in"
-            showLinks={true}
-            magicLink={true}
-            redirectTo={`${window.location.origin}/auth/callback`}
-            localization={{
-              variables: {
-                sign_in: {
-                  email_label: t.authUi.sign_in.email_label[lang],
-                  email_input_placeholder:
-                    t.authUi.sign_in.email_input_placeholder[lang],
-                  password_label: t.authUi.sign_in.password_label[lang],
-                  password_input_placeholder:
-                    t.authUi.sign_in.password_input_placeholder[lang],
-                  button_label: t.authUi.sign_in.button_label[lang],
-                  social_provider_text:
-                    t.authUi.sign_in.social_provider_text[lang],
-                  link_text: t.authUi.sign_in.link_text[lang],
-                },
-                sign_up: {
-                  email_label: t.authUi.sign_up.email_label[lang],
-                  email_input_placeholder:
-                    t.authUi.sign_up.email_input_placeholder[lang],
-                  password_label: t.authUi.sign_up.password_label[lang],
-                  password_input_placeholder:
-                    t.authUi.sign_up.password_input_placeholder[lang],
-                  button_label: t.authUi.sign_up.button_label[lang],
-                  link_text: t.authUi.sign_up.link_text[lang],
-                },
-                forgotten_password: {
-                  email_label: t.authUi.forgotten_password.email_label[lang],
-                  email_input_placeholder:
-                    t.authUi.forgotten_password.email_input_placeholder[lang],
-                  button_label: t.authUi.forgotten_password.button_label[lang],
-                  link_text: t.authUi.forgotten_password.link_text[lang],
-                },
-                magic_link: {
-                  email_input_label:
-                    t.authUi.magic_link.email_input_label[lang],
-                  email_input_placeholder:
-                    t.authUi.magic_link.email_input_placeholder[lang],
-                  button_label: t.authUi.magic_link.button_label[lang],
-                  link_text: t.authUi.magic_link.link_text[lang],
-                },
-              },
-            }}
-          />
-        </CardContent>
-      </Card>
+                }}
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

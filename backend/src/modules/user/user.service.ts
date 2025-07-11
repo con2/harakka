@@ -1,13 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 
-import { CreateUserDto } from "./dto/create-user.dto";
+import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
 import { SupabaseClient, UserResponse } from "@supabase/supabase-js";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import WelcomeEmail from "src/emails/WelcomeEmail";
 import { MailService } from "../mail/mail.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { UserAddress, UserProfile } from "./interfaces/user.interface";
 import { UserEmailAssembler } from "../mail/user-email-assembler";
 
 @Injectable()
@@ -28,7 +27,7 @@ export class UserService {
     const supabase = req.supabase;
     const { data, error } = await supabase.from("user_profiles").select("*");
     if (error) throw new Error(error.message);
-    return data || [];
+    return (data as UserProfile[]) || [];
   }
 
   async getUserById(id: string, req: AuthRequest): Promise<UserProfile | null> {
@@ -42,7 +41,7 @@ export class UserService {
       if (error.code === "PGRST116") return null;
       throw new Error(error.message);
     }
-    return data ?? null;
+    return (data as UserProfile) ?? null;
   }
 
   async createUser(
@@ -53,6 +52,9 @@ export class UserService {
     let createdProfile: UserProfile | null = null;
     try {
       // First, check if user already exists to provide better error message
+      if (!user.email) {
+        throw new Error("Email is required to create a user");
+      }
       const { data: existingUser } = await supabase
         .from("user_profiles")
         .select("id")
@@ -140,7 +142,7 @@ export class UserService {
           );
         }
 
-        createdProfile = data;
+        createdProfile = data as UserProfile;
       } else {
         // Profile doesn't exist yet, create it
         const { data, error: profileError } = await supabase
@@ -169,7 +171,7 @@ export class UserService {
           );
         }
 
-        createdProfile = data;
+        createdProfile = data as UserProfile;
       }
 
       // Send welcome e‑mail once the profile is ready
@@ -225,7 +227,7 @@ export class UserService {
       if (error.code === "PGRST116") return null;
       throw new Error(error.message);
     }
-    return data;
+    return data as UserProfile;
   }
 
   async deleteUser(id: string, req: AuthRequest): Promise<void> {
@@ -276,7 +278,7 @@ export class UserService {
     addressId: string,
     address: CreateAddressDto,
     req: AuthRequest,
-  ): Promise<UserAddress | null> {
+  ): Promise<UserAddress> {
     const supabase = req.supabase;
     const { data, error } = await supabase
       .from("user_addresses")

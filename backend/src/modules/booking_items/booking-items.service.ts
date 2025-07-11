@@ -9,7 +9,10 @@ import {
   BookingItemsRow,
   BookingItemsUpdate,
 } from "./interfaces/booking-items.interfaces";
-import { ApiResponse, ApiSingleResponse } from "src/types/response.types";
+import {
+  ApiResponse,
+  ApiSingleResponse,
+} from "../../../../common/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 
 @Injectable()

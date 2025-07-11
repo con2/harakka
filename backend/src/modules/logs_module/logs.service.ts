@@ -3,7 +3,7 @@ import { SupabaseService } from "../supabase/supabase.service";
 import { LogMessage, AuditLog } from "./interfaces/log.interface";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
-import { ApiResponse } from "src/types/response.types";
+import { ApiResponse } from "../../../../common/response.types";
 
 @Injectable()
 export class LogsService {

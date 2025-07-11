@@ -104,6 +104,7 @@ const MyProfile = () => {
   const handleSaveChanges = () => {
     if (selectedUser) {
       const updatedUserData = {
+        id: selectedUser.id,
         full_name: name,
         email,
         phone,

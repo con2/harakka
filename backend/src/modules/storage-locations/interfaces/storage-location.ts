@@ -1,4 +1,4 @@
-import { Database } from "src/types/database.types";
+import { Database } from "../../../../../common/database.types";
 export type StorageLocationsTable =
   Database["public"]["Tables"]["storage_locations"];
 export type StorageLocationsRow = StorageLocationsTable["Row"];

@@ -40,7 +40,7 @@ const ProtectedRoute = ({
       !accessChecked
     ) {
       // OLD SYSTEM: Check if user has role in selectedUser.role
-      const hasOldRole = allowedRoles.includes(selectedUser.role);
+      const hasOldRole = allowedRoles.includes(selectedUser.role || "");
 
       // NEW SYSTEM: Check if user has role in JWT-based roles
       const hasNewRole = hasAnyRole(allowedRoles, requiredOrganization);

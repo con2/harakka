@@ -1,4 +1,4 @@
-import { CreateUserDto, UserProfile } from "@/types/user";
+import { CreateUserDto, UserProfile } from "@common/user.types";
 import { api } from "../axios";
 import { Address } from "@/types/address";
 

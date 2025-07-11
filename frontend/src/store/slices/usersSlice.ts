@@ -1,10 +1,12 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { usersApi } from "../../api/services/users";
-import { UserState, UserProfile, CreateUserDto } from "../../types/user";
+
 import { RootState } from "../store";
 import { supabase } from "../../config/supabase";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { Address } from "@/types/address";
+import { UserState } from "@/types";
+import { CreateUserDto, UpdateUserDto, UserProfile } from "@common/user.types";
 
 const initialState: UserState = {
   users: [],
@@ -16,7 +18,6 @@ const initialState: UserState = {
   selectedUserAddresses: [],
 };
 
-// fetch all users
 export const fetchAllUsers = createAsyncThunk(
   "users/fetchAllUsers",
   async (_, { rejectWithValue }) => {
@@ -83,7 +84,7 @@ export const deleteUser = createAsyncThunk(
 export const updateUser = createAsyncThunk(
   "users/updateUser",
   async (
-    { id, data }: { id: string; data: Partial<UserProfile> },
+    { id, data }: { id: string; data: UpdateUserDto },
     { rejectWithValue },
   ) => {
     try {
@@ -175,7 +176,7 @@ export const usersSlice = createSlice({
       state.error = null;
       state.errorContext = null;
     },
-    selectUser: (state, action: PayloadAction<UserProfile>) => {
+    selectUser: (state, action) => {
       state.selectedUser = action.payload;
     },
     clearAddresses: (state) => {
@@ -242,7 +243,9 @@ export const usersSlice = createSlice({
       })
       .addCase(deleteUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = state.users.filter((user) => user.id !== action.payload);
+        state.users = state.users.filter(
+          (user: UserProfile) => user.id !== action.payload,
+        );
       })
       .addCase(deleteUser.rejected, (state, action) => {
         state.loading = false;
@@ -258,7 +261,7 @@ export const usersSlice = createSlice({
       })
       .addCase(updateUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = state.users.map((user) =>
+        state.users = state.users.map((user: UserProfile) =>
           user.id === action.payload.id ? action.payload : user,
         );
       })
