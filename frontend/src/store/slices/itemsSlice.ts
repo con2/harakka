@@ -11,7 +11,7 @@ import {
   ManageItemViewRow,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
-import { ApiResponse } from "@/types/response.types";
+import { ApiResponse } from "@common/response.types";
 import { AxiosResponse } from "axios";
 
 /**

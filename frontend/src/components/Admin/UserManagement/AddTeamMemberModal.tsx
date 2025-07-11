@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAppDispatch } from "@/store/hooks";
 import { createUser, updateUser } from "@/store/slices/usersSlice";
-import { CreateUserDto, UserFormData, UserProfile } from "@/types";
+import { CreateUserDto, UpdateUserDto, UserProfile } from "@common/user.types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -21,6 +21,15 @@ import {
   SelectValue,
 } from "../../ui/select";
 
+type UserRole =
+  | "user"
+  | "admin"
+  | "main_admin"
+  | "super_admin"
+  | "superVera"
+  | "storage_manager"
+  | "requester";
+
 type TeamMemberFormProps = {
   onClose: () => void;
   initialData?: UserProfile;
@@ -29,14 +38,14 @@ type TeamMemberFormProps = {
 const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
   const dispatch = useAppDispatch();
 
-  const [formData, setFormData] = useState<UserFormData>(() => ({
-    full_name: initialData?.full_name || "",
-    visible_name: initialData?.visible_name || "",
-    email: initialData?.email || "",
-    phone: initialData?.phone || "",
-    role: initialData?.role || "user",
-    preferences: initialData?.preferences || {},
-    saved_lists: initialData?.saved_lists,
+  const [formData, setFormData] = useState<Partial<UserProfile>>(() => ({
+    full_name: initialData?.full_name ?? "",
+    visible_name: initialData?.visible_name ?? "",
+    email: initialData?.email ?? "",
+    phone: initialData?.phone ?? "",
+    role: initialData?.role ?? "user",
+    preferences: initialData?.preferences ?? {},
+    saved_lists: initialData?.saved_lists as string[] | undefined,
   }));
 
   const [password, setPassword] = useState("");
@@ -45,13 +54,13 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
   useEffect(() => {
     if (initialData) {
       setFormData({
-        full_name: initialData.full_name || "",
-        visible_name: initialData.visible_name || "",
-        email: initialData.email || "",
-        phone: initialData.phone || "",
-        role: initialData.role,
-        preferences: initialData.preferences || {},
-        saved_lists: initialData.saved_lists,
+        full_name: initialData.full_name ?? "",
+        visible_name: initialData.visible_name ?? "",
+        email: initialData.email ?? "",
+        phone: initialData.phone ?? "",
+        role: (initialData.role as UserRole) ?? "user",
+        preferences: initialData.preferences ?? {},
+        saved_lists: initialData.saved_lists as string[] | undefined,
       });
     }
   }, [initialData]);
@@ -60,7 +69,7 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData((prev: Partial<UserProfile>) => ({
       ...prev,
       [name]:
         name === "role" ? (value as "user" | "admin" | "superVera") : value,
@@ -70,7 +79,14 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
   const handlePreferencesChange = (key: string, value: string) => {
     setFormData({
       ...formData,
-      preferences: { ...formData.preferences, [key]: value },
+      preferences:
+        typeof formData.preferences === "object" &&
+        !Array.isArray(formData.preferences)
+          ? {
+              ...(formData.preferences as Record<string, string>),
+              [key]: value,
+            }
+          : { [key]: value },
     });
   };
 
@@ -78,12 +94,21 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
     const newPreferenceKey = `new_key_${Date.now()}`;
     setFormData({
       ...formData,
-      preferences: { ...formData.preferences, [newPreferenceKey]: "" },
+      preferences:
+        typeof formData.preferences === "object" &&
+        !Array.isArray(formData.preferences)
+          ? {
+              ...(formData.preferences as Record<string, string>),
+              [newPreferenceKey]: "",
+            }
+          : { [newPreferenceKey]: "" },
     });
   };
 
   const removePreference = (key: string) => {
-    const newPreferences = { ...formData.preferences };
+    const newPreferences = {
+      ...(formData.preferences as Record<string, string>),
+    };
     delete newPreferences[key];
     setFormData({ ...formData, preferences: newPreferences });
   };
@@ -126,14 +151,14 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
           return;
         }
         await dispatch(
-          updateUser({ id: initialData.id, data: formData }),
+          updateUser({ id: initialData.id, data: formData as UpdateUserDto }),
         ).unwrap();
         toast.success("User updated successfully!");
       } else {
         // For new users, create a proper CreateUserDto with password
-        const createPayload: CreateUserDto = {
-          ...formData,
-          password, // Password required for new users
+        const createPayload = {
+          ...(formData as CreateUserDto),
+          password,
         };
 
         await dispatch(createUser(createPayload)).unwrap();
@@ -169,7 +194,7 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
               id="full_name"
               name="full_name"
               placeholder="Full Name"
-              value={formData.full_name}
+              value={formData.full_name ?? ""}
               onChange={handleChange}
               required
             />
@@ -182,7 +207,7 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
               name="email"
               type="email"
               placeholder="Email"
-              value={formData.email}
+              value={formData.email ?? ""}
               onChange={handleChange}
               required
             />
@@ -194,7 +219,7 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
               id="phone"
               name="phone"
               placeholder="Phone"
-              value={formData.phone}
+              value={formData.phone ?? ""}
               onChange={handleChange}
               required
             />
@@ -203,11 +228,11 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
           <div>
             <Label htmlFor="role">Role</Label>
             <Select
-              value={formData.role}
+              value={formData.role ?? ""}
               onValueChange={(value) =>
-                setFormData((prev) => ({
+                setFormData((prev: Partial<UserProfile>) => ({
                   ...prev,
-                  role: value as "admin" | "superVera" | "user",
+                  role: value as UserRole,
                 }))
               }
             >
@@ -217,7 +242,11 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
               <SelectContent>
                 <SelectItem value="user">User</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="main_admin">Main Admin</SelectItem>
+                <SelectItem value="super_admin">Super Admin</SelectItem>
                 <SelectItem value="superVera">SuperVera</SelectItem>
+                <SelectItem value="storage_manager">Storage Manager</SelectItem>
+                <SelectItem value="requester">Requester</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -228,7 +257,7 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
               id="visible_name"
               name="visible_name"
               placeholder="Visible Name"
-              value={formData.visible_name}
+              value={formData.visible_name ?? ""}
               onChange={handleChange}
             />
           </div>
@@ -240,7 +269,10 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
                 <Input
                   className="mb-2"
                   name={`preference_${key}`}
-                  value={formData.preferences?.[key] || ""}
+                  value={
+                    (formData.preferences as Record<string, string>)?.[key] ??
+                    ""
+                  }
                   onChange={(e) => handlePreferencesChange(key, e.target.value)}
                   placeholder="Enter a new preference"
                 />

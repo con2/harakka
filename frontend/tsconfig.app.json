@@ -10,6 +10,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@common/*": [
+        "../common/*"
       ]
     },
 
@@ -28,7 +31,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "../backend/src/email-tamplates"],
+  "include": ["src", "../backend/src/email-tamplates", "../common/response.types.ts"],
     "exclude": [
     "node_modules",
     "dist", "build",
