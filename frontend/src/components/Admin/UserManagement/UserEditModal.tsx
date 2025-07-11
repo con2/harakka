@@ -38,8 +38,13 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     roles: [(user.role as "user" | "admin" | "superVera") || "user"], // Should be fixed when we setup new roles
     phone: user.phone || "",
     visible_name: user.visible_name || "",
-    preferences: user.preferences || {},
-    saved_lists: user.saved_lists || [],
+    preferences:
+      typeof user.preferences === "object" && !Array.isArray(user.preferences)
+        ? (user.preferences as Record<string, string>)
+        : {},
+    saved_lists: Array.isArray(user.saved_lists)
+      ? (user.saved_lists as string[])
+      : [],
   });
 
   // Handle changes for normal input fields

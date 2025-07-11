@@ -7,7 +7,9 @@
  *
  * This ensures full type safety and accurate IntelliSense throughout the app.
  */
-import { Database } from "./supabase.types"
+
+import { Database } from "./database.types";
+
 
 /**
  * DTO for creating a new user.

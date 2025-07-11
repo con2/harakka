@@ -1,15 +1,16 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { usersApi } from "../../api/services/users";
-import {
-  CreateUserDto,
-  UserProfile,
-  UpdateUserDto,
-} from "../../../../common/user.types";
+
 import { RootState } from "../store";
 import { supabase } from "../../config/supabase";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { Address } from "@/types/address";
 import { UserState } from "@/types";
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  UserProfile,
+} from "../../../../common/user.types";
 
 const initialState: UserState = {
   users: [],

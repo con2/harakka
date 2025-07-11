@@ -31,7 +31,7 @@ export class UserService {
     const supabase = req.supabase;
     const { data, error } = await supabase.from("user_profiles").select("*");
     if (error) throw new Error(error.message);
-    return data || [];
+    return (data as UserProfile[]) || [];
   }
 
   async getUserById(id: string, req: AuthRequest): Promise<UserProfile | null> {
@@ -45,7 +45,7 @@ export class UserService {
       if (error.code === "PGRST116") return null;
       throw new Error(error.message);
     }
-    return data ?? null;
+    return (data as UserProfile) ?? null;
   }
 
   async createUser(
@@ -146,7 +146,7 @@ export class UserService {
           );
         }
 
-        createdProfile = data;
+        createdProfile = data as UserProfile;
       } else {
         // Profile doesn't exist yet, create it
         const { data, error: profileError } = await supabase
@@ -175,7 +175,7 @@ export class UserService {
           );
         }
 
-        createdProfile = data;
+        createdProfile = data as UserProfile;
       }
 
       // Send welcome e‑mail once the profile is ready
@@ -231,7 +231,7 @@ export class UserService {
       if (error.code === "PGRST116") return null;
       throw new Error(error.message);
     }
-    return data;
+    return data as UserProfile;
   }
 
   async deleteUser(id: string, req: AuthRequest): Promise<void> {
