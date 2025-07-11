@@ -39,12 +39,20 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     phone: user.phone || "",
     visible_name: user.visible_name || "",
     preferences:
-      typeof user.preferences === "object" && !Array.isArray(user.preferences)
-        ? (user.preferences as Record<string, string>)
+      user.preferences &&
+      typeof user.preferences === "object" &&
+      !Array.isArray(user.preferences)
+        ? (Object.fromEntries(
+            Object.entries(user.preferences).filter(
+              ([_, v]) => typeof v === "string",
+            ),
+          ) as Record<string, string>)
         : {},
-    saved_lists: Array.isArray(user.saved_lists)
-      ? (user.saved_lists as string[])
-      : [],
+    saved_lists:
+      Array.isArray(user.saved_lists) &&
+      user.saved_lists.every((item) => typeof item === "string")
+        ? (user.saved_lists as string[])
+        : [],
   });
 
   // Handle changes for normal input fields
