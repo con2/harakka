@@ -32,7 +32,7 @@ export class RoleService {
   }
 
   /**
-   * Check if the current user has specific role in organization
+   * Check if the current user has *specified role* in organization
    */
   hasRole(
     req: AuthRequest,
@@ -49,7 +49,7 @@ export class RoleService {
   }
 
   /**
-   * Check if the current user has any of the specified roles
+   * Check if the current user has *any of the specified roles* in organization
    */
   hasAnyRole(
     req: AuthRequest,
