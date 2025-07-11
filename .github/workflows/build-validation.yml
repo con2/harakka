@@ -24,13 +24,13 @@ jobs:
       - name: Install common dependencies
         run: npm ci --prefix common
           
-      # Frontend Build
-      - name: Install frontend dependencies
-        run: npm ci --prefix frontend
+      # Frontend Build attempt
+      - name: Clean frontend lockfile and node_modules (optional fix for CI)
+        run: rm -rf frontend/node_modules frontend/package-lock.json
         
-      # Workaround for Rollup optional dependencies issue
-      - name: Fix Rollup optional dependencies
-        run: npm install --prefix frontend --no-optional && npm install --prefix frontend
+      
+      - name: Reinstall frontend dependencies cleanly
+        run: npm install --legacy-peer-deps --prefix frontend
         
       - name: Build frontend
         run: npm run build --prefix frontend
