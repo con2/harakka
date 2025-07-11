@@ -10,12 +10,7 @@ import {
   Req,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
-import {
-  CreateUserDto,
-  UserProfile,
-  UserAddress,
-} from "../../../../common/user.types";
-
+import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { Roles } from "src/decorators/roles.decorator";

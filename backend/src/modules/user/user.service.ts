@@ -1,11 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 
-import {
-  CreateUserDto,
-  UserProfile,
-  UserAddress,
-} from "../../../../common/user.types";
+import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
 import { SupabaseClient, UserResponse } from "@supabase/supabase-js";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import WelcomeEmail from "src/emails/WelcomeEmail";
