@@ -1,5 +1,8 @@
 # Jons hidden files
 NOTES.md
+# Node.js dependencies
+node_modules/*
+.nvmrc
 # Supabase project files
 /supabase
 
