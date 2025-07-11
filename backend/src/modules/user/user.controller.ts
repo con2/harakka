@@ -22,7 +22,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
+  /*  @Roles(["admin", "super_admin", "superVera"], { match: "any" }) */ // Auth Guard
   async getAllUsers(@Req() req: AuthRequest): Promise<UserProfile[]> {
     return this.userService.getAllUsers(req);
   }
