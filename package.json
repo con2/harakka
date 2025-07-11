@@ -12,7 +12,8 @@
     "deploy": "echo 'Add deployment scripts here'",
     "generate:types": "concurrently \"npm run generate:types:frontend\" \"npm run generate:types:backend\"",
     "generate:types:frontend": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > frontend/src/types/supabase.types.ts",
-    "generate:types:backend": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > backend/src/types/supabase.types.ts"
+    "generate:types:backend": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > backend/src/types/supabase.types.ts",
+    "generate:types:common": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > common/supabase.types.ts"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.50.4",
