@@ -6,11 +6,7 @@ import { supabase } from "../../config/supabase";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { Address } from "@/types/address";
 import { UserState } from "@/types";
-import {
-  CreateUserDto,
-  UpdateUserDto,
-  UserProfile,
-} from "../../../../common/user.types";
+import { CreateUserDto, UpdateUserDto, UserProfile } from "@common/user.types";
 
 const initialState: UserState = {
   users: [],

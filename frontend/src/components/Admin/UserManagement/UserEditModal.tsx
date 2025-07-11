@@ -25,7 +25,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Label } from "../../ui/label";
 import { MultiSelect } from "../../ui/multi-select";
-import { UserProfile } from "../../../../../common/user.types";
+import { UserProfile } from "@common/user.types";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();

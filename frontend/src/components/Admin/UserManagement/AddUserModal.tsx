@@ -24,7 +24,7 @@ import {
   selectLoading,
 } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
-import { CreateUserDto } from "../../../../../common/user.types";
+import { CreateUserDto } from "@common/user.types";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";

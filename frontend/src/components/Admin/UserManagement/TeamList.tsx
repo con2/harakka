@@ -10,7 +10,7 @@ import {
   selectLoading,
 } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
-import { UserProfile } from "../../../../../common/user.types";
+import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";

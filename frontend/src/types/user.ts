@@ -1,4 +1,4 @@
-import { UserProfile } from "../../../common/user.types";
+import { UserProfile } from "@common/user.types";
 import { Address } from "./address";
 import { ErrorContext } from "./common";
 
