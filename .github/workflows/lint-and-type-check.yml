@@ -5,7 +5,7 @@ on:
     branches: [develop, deployment]
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
 
 jobs:
   frontend-checks:
@@ -30,6 +30,11 @@ jobs:
       - name: Install dependencies
         working-directory: ./frontend
         run: npm ci
+        
+      # Workaround for Rollup optional dependencies issue
+      - name: Fix Rollup optional dependencies
+        working-directory: ./frontend
+        run: npm install --no-optional && npm install
         
       - name: Format Code
         working-directory: ./frontend
@@ -104,6 +109,7 @@ jobs:
         working-directory: ./frontend
         run: |
           npm ci
+          npm install --no-optional && npm install
           echo "Running frontend security audit..."
           npm audit --audit-level=high || echo "Frontend audit found vulnerabilities but continuing..."
         continue-on-error: true
