@@ -69,7 +69,7 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData((prev: Partial<UserProfile>) => ({
       ...prev,
       [name]:
         name === "role" ? (value as "user" | "admin" | "superVera") : value,
@@ -230,7 +230,7 @@ const AddTeamMemberModal = ({ onClose, initialData }: TeamMemberFormProps) => {
             <Select
               value={formData.role ?? ""}
               onValueChange={(value) =>
-                setFormData((prev) => ({
+                setFormData((prev: Partial<UserProfile>) => ({
                   ...prev,
                   role: value as UserRole,
                 }))

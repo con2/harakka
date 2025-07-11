@@ -50,7 +50,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
         : {},
     saved_lists:
       Array.isArray(user.saved_lists) &&
-      user.saved_lists.every((item) => typeof item === "string")
+      user.saved_lists.every((item: unknown) => typeof item === "string")
         ? (user.saved_lists as string[])
         : [],
   });

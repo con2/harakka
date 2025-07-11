@@ -90,7 +90,7 @@ const AddUserModal = ({ children }: { children: React.ReactNode }) => {
       return;
     }
     try {
-      const payload = { ...formData, password };
+      const payload: CreateUserDto = { ...formData, password };
       await dispatch(createUser(payload)).unwrap();
 
       toast.success(
