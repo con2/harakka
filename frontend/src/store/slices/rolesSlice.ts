@@ -21,6 +21,13 @@ const initialState: RolesState = {
 };
 
 // Async thunks
+
+// Get current user ID from localStorage or auth
+export const getCurrentUserId = (): string | null => {
+  return localStorage.getItem("userId");
+};
+
+// Fetch current user roles and organizations
 export const fetchCurrentUserRoles = createAsyncThunk(
   "roles/fetchCurrentUserRoles",
   async (_, { rejectWithValue }) => {
@@ -44,6 +51,7 @@ export const fetchCurrentUserRoles = createAsyncThunk(
   },
 );
 
+// Fetch all user roles (admin)
 export const fetchAllUserRoles = createAsyncThunk(
   "roles/fetchAllUserRoles",
   async (_, { rejectWithValue }) => {
@@ -137,6 +145,12 @@ const rolesSlice = createSlice({
       state.adminError = null;
       state.errorContext = null;
     },
+
+    // Refresh current user roles when they're modified
+    triggerCurrentUserRolesRefresh: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -181,6 +195,12 @@ const rolesSlice = createSlice({
       .addCase(createUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
         state.allUserRoles.push(action.payload);
+        // Check if this role assignment affects the current user
+        const currentUserId = getCurrentUserId();
+        if (currentUserId && action.payload.user_id === currentUserId) {
+          // Mark that we need to refresh current user roles
+          state.loading = true;
+        }
       })
       .addCase(createUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -201,6 +221,12 @@ const rolesSlice = createSlice({
         if (index !== -1) {
           state.allUserRoles[index] = action.payload;
         }
+        // Check if this role update affects the current user
+        const currentUserId = getCurrentUserId();
+        if (currentUserId && action.payload.user_id === currentUserId) {
+          // Mark that we need to refresh current user roles
+          state.loading = true;
+        }
       })
       .addCase(updateUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -215,9 +241,18 @@ const rolesSlice = createSlice({
       })
       .addCase(deleteUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
+        const deletedRole = state.allUserRoles.find(
+          (role) => role.id === action.payload,
+        );
         state.allUserRoles = state.allUserRoles.filter(
           (role) => role.id !== action.payload,
         );
+        // Check if this deletion affects the current user
+        const currentUserId = getCurrentUserId();
+        if (currentUserId && deletedRole?.user_id === currentUserId) {
+          // Mark that we need to refresh current user roles
+          state.loading = true;
+        }
       })
       .addCase(deleteUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -232,9 +267,18 @@ const rolesSlice = createSlice({
       })
       .addCase(permanentDeleteUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
+        const deletedRole = state.allUserRoles.find(
+          (role) => role.id === action.payload,
+        );
         state.allUserRoles = state.allUserRoles.filter(
           (role) => role.id !== action.payload,
         );
+        // Check if this deletion affects the current user
+        const currentUserId = getCurrentUserId();
+        if (currentUserId && deletedRole?.user_id === currentUserId) {
+          // Mark that we need to refresh current user roles
+          state.loading = true;
+        }
       })
       .addCase(permanentDeleteUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -302,5 +346,6 @@ export const selectUserRolesByOrganization = (
 };
 
 // Export actions
-export const { clearRoleErrors, resetRoles } = rolesSlice.actions;
+export const { clearRoleErrors, resetRoles, triggerCurrentUserRolesRefresh } =
+  rolesSlice.actions;
 export default rolesSlice.reducer;
