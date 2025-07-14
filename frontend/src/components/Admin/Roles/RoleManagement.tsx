@@ -33,7 +33,7 @@ export const RoleManagement: React.FC = () => {
   } = useRoles();
 
   // Define admin status solely from new user roles (without old system)
-  const isAdmin =
+  const isAdminCheck =
     currentUserRoles?.some(
       (role) =>
         role.role_name === "admin" ||
@@ -42,7 +42,7 @@ export const RoleManagement: React.FC = () => {
         role.role_name === "main_admin",
     ) ?? false;
 
-  const isSuperVera =
+  const isSuperVeraCheck =
     currentUserRoles?.some((role) => role.role_name === "superVera") ?? false;
 
   // Add fetch attempt tracking with a "roles attempted" flag
@@ -53,7 +53,7 @@ export const RoleManagement: React.FC = () => {
   useEffect(() => {
     // Only fetch admin roles if user is admin and we don't have them yet
     if (
-      isAdmin &&
+      isAdminCheck &&
       allUserRoles.length === 0 &&
       !adminLoading &&
       !adminError &&
@@ -71,7 +71,7 @@ export const RoleManagement: React.FC = () => {
       });
     }
   }, [
-    isAdmin,
+    isAdminCheck,
     allUserRoles.length,
     adminLoading,
     adminError,
@@ -83,13 +83,13 @@ export const RoleManagement: React.FC = () => {
   const handleRefresh = useCallback(async () => {
     try {
       await refreshCurrentUserRoles();
-      if (isAdmin) {
+      if (isAdminCheck) {
         await refreshAllUserRoles();
       }
     } catch (err) {
       console.error("❌ RoleManagement - Manual refresh failed:", err);
     }
-  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAdmin]);
+  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAdminCheck]);
 
   // For hasAnyRole testing
   const [roleTestInput, setRoleTestInput] = useState("");
@@ -219,16 +219,20 @@ export const RoleManagement: React.FC = () => {
             </div>
             <div>
               Is Admin:{" "}
-              <span className={isAdmin ? "text-green-600" : "text-orange-600"}>
-                {isAdmin.toString()}
+              <span
+                className={isAdminCheck ? "text-green-600" : "text-orange-600"}
+              >
+                {isAdminCheck.toString()}
               </span>
             </div>
             <div>
               Is SuperVera:{" "}
               <span
-                className={isSuperVera ? "text-purple-600" : "text-gray-600"}
+                className={
+                  isSuperVeraCheck ? "text-purple-600" : "text-gray-600"
+                }
               >
-                {isSuperVera.toString()}
+                {isSuperVeraCheck.toString()}
               </span>
             </div>
             <div>
@@ -253,9 +257,9 @@ export const RoleManagement: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <span className="font-medium">Status:</span>
-              {isSuperVera ? (
+              {isSuperVeraCheck ? (
                 <Badge variant="destructive">SuperVera (Global Admin)</Badge>
-              ) : isAdmin ? (
+              ) : isAdminCheck ? (
                 <Badge variant="default">Admin</Badge>
               ) : (
                 <Badge variant="secondary">User</Badge>
@@ -356,7 +360,7 @@ export const RoleManagement: React.FC = () => {
       </Card>
 
       {/* Admin Section */}
-      {isAdmin && (
+      {isAdminCheck && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -437,10 +441,10 @@ export const RoleManagement: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="font-medium">Can access admin functions:</span>
               <Badge
-                variant={isAdmin ? "default" : "secondary"}
-                className={isAdmin ? "bg-green-100 text-green-800" : ""}
+                variant={isAdminCheck ? "default" : "secondary"}
+                className={isAdminCheck ? "bg-green-100 text-green-800" : ""}
               >
-                {isAdmin ? "Yes" : "No"}
+                {isAdminCheck ? "Yes" : "No"}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
@@ -483,8 +487,8 @@ export const RoleManagement: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <span className="font-medium">Is SuperVera:</span>
-              <Badge variant={isSuperVera ? "destructive" : "secondary"}>
-                {isSuperVera ? "Yes" : "No"}
+              <Badge variant={isSuperVeraCheck ? "destructive" : "secondary"}>
+                {isSuperVeraCheck ? "Yes" : "No"}
               </Badge>
             </div>
           </div>
