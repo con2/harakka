@@ -4,68 +4,64 @@ import {
   Post,
   Put,
   Delete,
-  Body,
   Param,
-  NotFoundException,
+  Body,
   Req,
+  NotFoundException,
 } from "@nestjs/common";
-import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { OrganizationsService } from "./organizations.service";
+import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { Public, Roles } from "src/decorators/roles.decorator";
+import { Organization } from "../../../../common/supabase.types";
 
-@Controller("Organizations")
+@Controller("organizations")
 export class OrganizationsController {
-  constructor(private readonly Organizationservice: OrganizationsService) {}
+  constructor(private readonly svc: OrganizationsService) {}
 
+  @Public()
   @Get()
-  async getAllOrganizations(@Req() req: AuthRequest): Promise<[]> {
-    return this.Organizationservice.getAllOrganizations(req);
+  async getAllOrgs(@Req() req: AuthRequest): Promise<Organization[]> {
+    return this.svc.getAll(req);
   }
 
+  @Public()
   @Get(":id")
-  async getOrganizationById(
+  async getOrgById(
     @Param("id") id: string,
     @Req() req: AuthRequest,
-  ): Promise<OrganizationProfile> {
-    const organization = await this.Organizationservice.getOrganizationById(
-      id,
-      req,
-    );
-    if (!organization) {
-      throw new NotFoundException(
-        `Organization with ID ${id} not found or you do not have access to it`,
-      );
-    }
-    return organization;
+  ): Promise<Organization> {
+    const org = await this.svc.getById(id, req);
+    if (!org) throw new NotFoundException(`Organization ${id} not found`);
+    return org;
   }
 
+  @Roles(["super_admin"], { match: "any" })
   @Post()
-  async createOrganization(
-    @Body() organization: CreateOrganizationDto,
+  async createOrg(
+    @Body() org: Organization,
     @Req() req: AuthRequest,
-  ): Promise<OrganizationProfile> {
-    // await for Body
-    return this.OrganizationService.createOrganization(organization, req);
+  ): Promise<Organization> {
+    return this.svc.create(org, req);
   }
 
+  @Roles(["super_admin"], { match: "any" })
   @Put(":id")
-  async updateOrganization(
+  async updateOrg(
     @Param("id") id: string,
-    @Body() organization: Partial<CreateOrganizationDto>,
+    @Body() org: Partial<Organization>,
     @Req() req: AuthRequest,
-  ): Promise<OrganizationProfile> {
-    const updatedOrganization =
-      await this.OrganizationService.updateOrganization(id, organization, req);
-    if (!updatedOrganization) {
-      throw new NotFoundException(`Organization with ID ${id} not found`);
-    }
-    return updatedOrganization;
+  ): Promise<Organization> {
+    const updated = await this.svc.update(id, org, req);
+    if (!updated) throw new NotFoundException(`Organization ${id} not found`);
+    return updated;
   }
 
+  @Roles(["super_admin"], { match: "any" })
   @Delete(":id")
-  async deleteOrganization(
+  async deleteOrg(
     @Param("id") id: string,
     @Req() req: AuthRequest,
   ): Promise<void> {
-    return this.Organizationservice.deleteOrganization(id, req);
+    return this.svc.delete(id, req);
   }
 }
