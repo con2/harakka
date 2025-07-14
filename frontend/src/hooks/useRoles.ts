@@ -50,7 +50,16 @@ export const useRoles = () => {
   const error = useAppSelector(selectRolesError);
   const adminError = useAppSelector(selectAdminError);
 
-  // Role checking functions - FIX: Use proper role checking based on current roles
+  // Auto-refresh current user roles when loading state indicates a change
+  useEffect(() => {
+    if (loading && responseReceived) {
+      dispatch(fetchCurrentUserRoles()).catch((error) => {
+        console.error("❌ Failed to refresh current user roles:", error);
+      });
+    }
+  }, [loading, responseReceived, dispatch]);
+
+  // Role checking functions
   const checkHasRole = useCallback(
     (roleName: string, organizationId?: string) => {
       return currentUserRoles.some((role) => {
@@ -73,6 +82,79 @@ export const useRoles = () => {
     [checkHasRole],
   );
 
+  // Automatically refresh current user roles if needed
+  const createRole = useCallback(
+    async (roleData: CreateUserRoleDto) => {
+      const result = await dispatch(createUserRole(roleData));
+
+      // If the role was created for the current user, wait a moment for JWT to update
+      const currentUserId = localStorage.getItem("userId");
+      if (currentUserId && roleData.user_id === currentUserId) {
+        setTimeout(() => {
+          dispatch(fetchCurrentUserRoles());
+        }, 1500); // Give backend time to update JWT
+      }
+
+      return result;
+    },
+    [dispatch],
+  );
+
+  const updateRole = useCallback(
+    async (tableKeyId: string, updateData: UpdateUserRoleDto) => {
+      const result = await dispatch(updateUserRole({ tableKeyId, updateData }));
+
+      // Check if this update affects the current user
+      const currentUserId = localStorage.getItem("userId");
+      const affectedRole = allUserRoles.find((role) => role.id === tableKeyId);
+
+      if (currentUserId && affectedRole?.user_id === currentUserId) {
+        setTimeout(() => {
+          dispatch(fetchCurrentUserRoles());
+        }, 1500); // Give backend time to update JWT
+      }
+
+      return result;
+    },
+    [dispatch, allUserRoles],
+  );
+
+  const deleteRole = useCallback(
+    async (tableKeyId: string) => {
+      const roleToDelete = allUserRoles.find((role) => role.id === tableKeyId);
+      const result = await dispatch(deleteUserRole(tableKeyId));
+
+      // Check if this deletion affects the current user
+      const currentUserId = localStorage.getItem("userId");
+      if (currentUserId && roleToDelete?.user_id === currentUserId) {
+        setTimeout(() => {
+          dispatch(fetchCurrentUserRoles());
+        }, 1500); // Give backend time to update JWT
+      }
+
+      return result;
+    },
+    [dispatch, allUserRoles],
+  );
+
+  const permanentDeleteRole = useCallback(
+    async (tableKeyId: string) => {
+      const roleToDelete = allUserRoles.find((role) => role.id === tableKeyId);
+      const result = await dispatch(permanentDeleteUserRole(tableKeyId));
+
+      // Check if this deletion affects the current user
+      const currentUserId = localStorage.getItem("userId");
+      if (currentUserId && roleToDelete?.user_id === currentUserId) {
+        setTimeout(() => {
+          dispatch(fetchCurrentUserRoles());
+        }, 1500); // Give backend time to update JWT
+      }
+
+      return result;
+    },
+    [dispatch, allUserRoles],
+  );
+
   // Actions
   const refreshCurrentUserRoles = useCallback(() => {
     if (fetchAttempts < MAX_FETCH_ATTEMPTS) {
@@ -92,34 +174,6 @@ export const useRoles = () => {
     }
     return Promise.resolve({ type: "roles/fetchAllUserRoles/rejected" });
   }, [dispatch, fetchAttempts]);
-
-  const createRole = useCallback(
-    (roleData: CreateUserRoleDto) => {
-      return dispatch(createUserRole(roleData));
-    },
-    [dispatch],
-  );
-
-  const updateRole = useCallback(
-    (tableKeyId: string, updateData: UpdateUserRoleDto) => {
-      return dispatch(updateUserRole({ tableKeyId, updateData }));
-    },
-    [dispatch],
-  );
-
-  const deleteRole = useCallback(
-    (tableKeyId: string) => {
-      return dispatch(deleteUserRole(tableKeyId));
-    },
-    [dispatch],
-  );
-
-  const permanentDeleteRole = useCallback(
-    (tableKeyId: string) => {
-      return dispatch(permanentDeleteUserRole(tableKeyId));
-    },
-    [dispatch],
-  );
 
   const clearErrors = useCallback(() => {
     dispatch(clearRoleErrors());
