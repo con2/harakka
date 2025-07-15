@@ -1072,6 +1072,21 @@ export type Database = {
         }
         Relationships: []
       }
+      test: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
       test_features: {
         Row: {
           created_at: string | null
@@ -1419,6 +1434,10 @@ export type Database = {
           organization_name: string
           organization_slug: string
         }[]
+      }
+      update_user_jwt_on_role_change_for_user: {
+        Args: { target_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
