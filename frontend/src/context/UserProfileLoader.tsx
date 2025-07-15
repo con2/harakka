@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useAppDispatch } from "@/store/hooks";
-import { getUserById } from "../store/slices/usersSlice";
+import { getCurrentUser } from "../store/slices/usersSlice";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -19,7 +19,7 @@ export const UserProfileLoader = () => {
   useEffect(() => {
     // Wait for authLoading to finish and only fetch once
     if (!authLoading && user?.id && !fetchedOnce.current && !isAuthPage) {
-      dispatch(getUserById(user.id));
+      dispatch(getCurrentUser());
       fetchedOnce.current = true;
     }
   }, [user?.id, authLoading, dispatch, isAuthPage]);

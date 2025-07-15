@@ -19,6 +19,7 @@ export const usersApi = {
    */
   getUserById: (id: string): Promise<UserProfile> => api.get(`/users/${id}`),
 
+  getCurrentUser: (): Promise<UserProfile> => api.get("/users/me"),
   /**
    * Create a new user
    * @param user - User data to create
