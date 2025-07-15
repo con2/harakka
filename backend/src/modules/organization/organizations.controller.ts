@@ -11,13 +11,10 @@ import {
   Query,
 } from "@nestjs/common";
 import { OrganizationsService } from "./organizations.service";
-import { Database } from "../../../../common/database.types";
-import { CreateOrganizationDto } from "./dto/create-organization.dto";
-import { UpdateOrganizationDto } from "./dto/update-organization.dto";
+/* import { CreateOrganizationDto } from "./dto/create-organization.dto"; */
+/* import { UpdateOrganizationDto } from "./dto/update-organization.dto"; */
 import { Roles } from "src/decorators/roles.decorator";
-import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { Tables, TablesInsert, TablesUpdate } from "@common/supabase.types";
-import { Roles } from "src/decorators/roles.decorator";
+// import { Tables, TablesInsert, TablesUpdate } from "@common/supabase.types";
 
 /* type Org = Tables<"organizations">;
 type OrgCreateDto = TablesInsert<"organizations">;
@@ -39,7 +36,7 @@ export class OrganizationsController {
     const limitNum = parseInt(limit, 10);
     const isAscending = ascending.toLowerCase() === "true";
 
-    return this.organizationsService.getAllOrganizations(
+    return this.organizationService.getAllOrganizations(
       pageNum,
       limitNum,
       isAscending,
@@ -50,7 +47,7 @@ export class OrganizationsController {
   @Public()
   @Get(":id")
   async getOrganizationById(@Param("id") id: string) {
-    const org = await this.organizationsService.getOrganizationById(id);
+    const org = await this.organizationService.getOrganizationById(id);
     if (!org) throw new NotFoundException(`Organization ${id} not found`);
     return org;
   }

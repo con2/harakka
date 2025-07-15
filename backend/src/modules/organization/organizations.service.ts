@@ -17,7 +17,8 @@ export class OrganizationsService {
     return req.supabase || this.supabaseService.getServiceClient();
   }
 
-  async getAll(
+  // 1. get all
+  async getAllOrganizations(
     page: number,
     limit: number,
     ascending: boolean,
@@ -39,7 +40,8 @@ export class OrganizationsService {
     return data;
   }
 
-  async getById(id: string): Promise<OrganizationRow | null> {
+  // 2. get one
+  async getOrganizationById(id: string): Promise<OrganizationRow | null> {
     const supabase = this.supabaseService.getServiceClient();
     const { data, error } = await supabase
       .from("organizations")
@@ -51,6 +53,7 @@ export class OrganizationsService {
     return data;
   }
 
+  // 3. create
   async createOrganization(
     req: AuthRequest,
     org: OrganizationInsert,
@@ -66,6 +69,7 @@ export class OrganizationsService {
     return data;
   }
 
+  // 4. update
   async updateOrganization(
     req: AuthRequest,
     id: string,
@@ -83,6 +87,7 @@ export class OrganizationsService {
     return data;
   }
 
+  // delete
   async deleteOrganization(
     req: AuthRequest,
     id: string,
