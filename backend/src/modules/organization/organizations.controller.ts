@@ -72,7 +72,10 @@ export class OrganizationsController {
 
   @Delete(":organizationId")
   @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
-  async deleteOrganization(@Req() req: AuthRequest, @Param("id") id: string) {
+  async deleteOrganization(
+    @Req() req: AuthRequest,
+    @Param("id") id: string,
+  ): Promise<{ success: boolean; id: string }> {
     return this.organizationService.deleteOrganization(req, id);
   }
 }
