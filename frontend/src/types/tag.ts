@@ -1,4 +1,5 @@
-import { BaseEntity, ErrorContext, Translatable } from "./common";
+import { ErrorContext } from "./common";
+import { Database } from "@common/database.types";
 
 /**
  * Tag translation content
@@ -8,9 +9,14 @@ export interface TagTranslation {
 }
 
 /**
+ * Basic tag row from Supabase
+ */
+type TagRow = Database["public"]["Tables"]["tags"]["Row"];
+
+/**
  * Tag entity representing a label that can be assigned to items
  */
-export interface Tag extends BaseEntity, Translatable<TagTranslation> {}
+export type Tag = TagRow;
 
 /**
  * Tag state in Redux store

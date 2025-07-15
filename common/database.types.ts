@@ -11,6 +11,11 @@ type TagTranslations = {
   en: { name: string };
   fi: { name: string };
 };
+
+type CompartmentTranslations = {
+  en: { name: string };
+  fi: { name: string };
+};
 // Helps to override the `Json | null` type in the database schema
 /* ── Add the shape of translations here ──────────────────────────── */
 export type Database = MergeDeep<
@@ -27,7 +32,17 @@ export type Database = MergeDeep<
           Row: { translations: TagTranslations | null };
           Insert: { translations?: TagTranslations | null };
           Update: { translations?: TagTranslations | null };
-        };
+        },
+        storage_item_tags: {
+          Row: { translations: TagTranslations | null };
+          Insert: { translations?: TagTranslations | null };
+          Update: { translations?: TagTranslations | null };
+        },
+        storage_compartments: {
+          Row: { translations: CompartmentTranslations | null };
+          Insert: { translations?: CompartmentTranslations | null };
+          Update: { translations?: CompartmentTranslations | null };
+        },
         user_profiles: {
           Row: {
             preferences: Record<string, string> | null;

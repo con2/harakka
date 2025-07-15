@@ -1,5 +1,5 @@
 import { Tag, TagTranslation } from "./tag";
-import { Item, ItemTranslation } from "./item";
+import { CreateItemDto, ItemTranslation } from "./item";
 import { UserRole } from "./user";
 
 /**

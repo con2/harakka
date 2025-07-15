@@ -4,7 +4,6 @@ import {
   ItemState,
   Item,
   UpdateItemDto,
-  Tag,
   RootState,
   ItemFormData,
   ValidItemOrder,
@@ -13,6 +12,7 @@ import {
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { ApiResponse } from "@common/response.types";
 import { AxiosResponse } from "axios";
+import { Database } from "@common/database.types";
 
 /**
  * Initial state for items slice
@@ -218,11 +218,11 @@ export const itemsSlice = createSlice({
     },
     updateItemTags: (
       state,
-      action: PayloadAction<{ itemId: string; tags: Tag[] }>,
+      action: PayloadAction<{ itemId: string; tags: TagRow[] }>,
     ) => {
       const { itemId, tags } = action.payload;
-      const item = state.items.find((item) => item.id === itemId);
-      if (item) {
+      const item = state.items.find((item) => item.id === itemId) as Item | undefined;
+      if (item && item.storage_item_tags !== undefined) {
         item.storage_item_tags = tags;
       }
     },
@@ -237,9 +237,7 @@ export const itemsSlice = createSlice({
       })
       .addCase(fetchAllItems.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = (action.payload.data ?? []) as Array<
-          Item | ManageItemViewRow
-        >;
+        state.items = action.payload.data ?? [];
         state.total = action.payload.metadata.total;
         state.page = action.payload.metadata.page;
         state.totalPages = action.payload.metadata.totalPages;

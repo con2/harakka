@@ -1,11 +1,4 @@
-import {
-  BaseEntity,
-  ErrorContext,
-  Translatable,
-  Tag,
-  LocationDetails,
-  TagTranslation,
-} from "@/types";
+import { ErrorContext, TagTranslation } from "@/types";
 import { Database } from "@common/database.types";
 /**
  * Item translations content
@@ -34,30 +27,44 @@ export interface ItemTranslation {
  */
 type StorageItemRow = Database["public"]["Tables"]["storage_items"]["Row"];
 
+/** Basic tag row from Supabase */
+type TagRow = Database["public"]["Tables"]["tags"]["Row"];
+
+/** Basic location row from Supabase */
+type LocationRow = Database["public"]["Tables"]["storage_locations"]["Row"];
+
 /**
- * Main `Item` type used throughout the app.
- *
- * We merge the raw database row with our shared base/translation helpers
- * and append some frontend‑only convenience properties.
+ * Flattened storage item with optional joins – mirrors the backend `StorageItem`.
  */
-export type Item = StorageItemRow &
-  BaseEntity &
-  Translatable<ItemTranslation> & {
-    /** Average rating calculated server‑side from reviews */
-    average_rating?: number;
+export type Item = StorageItemRow & {
+  /** Tags flattened from the join table */
+  storage_item_tags?: TagRow[];
+  /** Convenience copy of the joined location row */
+  location_details?: LocationRow | null;
 
-    /** UUIDs of tags attached to this item */
-    tagIds?: string[];
+  /** Average rating calculated server‑side from reviews (frontend‑only helper) */
+  average_rating?: number;
 
-    /** Fully hydrated tag entities when fetched via joins */
-    storage_item_tags?: Tag[];
+  /** UUIDs of tags attached to this item (frontend helper for forms) */
+  tagIds?: string[];
 
-    /** Convenience details from the related location */
-    location_details?: LocationDetails | null;
+  /** Flattened location name for quick lists & tables */
+  location_name?: string;
+};
 
-    /** Flattened location name for quick lists & tables */
-    location_name?: string;
-  };
+/** Alias kept for parity with backend naming */
+export type StorageItem = Item;
+
+/**
+ * Raw Supabase join type (mirrors backend `StorageItemWithJoin`)
+ */
+export type StorageItemWithJoin = StorageItemRow & {
+  storage_item_tags?: {
+    tag_id: string;
+    tags: TagRow;
+  }[];
+  storage_locations?: LocationRow;
+};
 
 /**
  * Item state in Redux store
@@ -76,13 +83,21 @@ export interface ItemState {
 }
 
 /**
- * Data required to create a new item
+ * Payload for creating a new item (frontend → backend).
+ *
+ * We strip away DB‑managed columns and calculated helpers that are never
+ * sent from the form.
  */
 export type CreateItemDto = Omit<
   Item,
-  "id" | "created_at" | "updated_at" | "storage_item_tags"
+  | "id"
+  | "created_at"
+  | "updated_at"
+  | "storage_item_tags"
+  | "average_rating"
+  | "location_name"
 > & {
-  // Exclude 'id', 'created_at', 'updated_at' and 'storage_item_tags' from the create type
+  /** Plain tag IDs selected in the form */
   tagIds?: string[];
 };
 
@@ -94,25 +109,6 @@ export type UpdateItemDto = Partial<
 > & {
   tagIds?: string[];
 };
-
-/**
- * Type used for `/admin/items`
- * Gets the basic, necessary data plus some pre‑flattened translations.
- */
-export interface ManageItemViewRow extends Item {
-  /* Flattened, language‑specific name/type strings for quick sorting */
-  fi_item_name: string;
-  fi_item_type: string;
-
-  en_item_name: string;
-  en_item_type: string;
-
-  /** Tag IDs linked to this item */
-  tags: string[];
-
-  /** Localised tag translation object */
-  tag_translations: TagTranslation;
-}
 
 /**
  * Valid orders/filters for the manage items page.
