@@ -6,7 +6,7 @@ import {
   LocationDetails,
   TagTranslation,
 } from "@/types";
-
+import { Database } from "@common/database.types";
 /**
  * Item translations content
  */
@@ -15,8 +15,7 @@ export interface ItemTranslation {
   item_name: string;
   item_description: string;
 }
-
-export interface Item extends BaseEntity, Translatable<ItemTranslation> {
+/* export interface Item extends BaseEntity, Translatable<ItemTranslation> {
   location_id: string;
   compartment_id: string;
   items_number_total: number;
@@ -29,6 +28,36 @@ export interface Item extends BaseEntity, Translatable<ItemTranslation> {
   location_details?: LocationDetails | null;
   location_name?: string;
 }
+ */
+/**
+ * Storage item row shape coming directly from Supabase.
+ */
+type StorageItemRow = Database["public"]["Tables"]["storage_items"]["Row"];
+
+/**
+ * Main `Item` type used throughout the app.
+ *
+ * We merge the raw database row with our shared base/translation helpers
+ * and append some frontend‑only convenience properties.
+ */
+export type Item = StorageItemRow &
+  BaseEntity &
+  Translatable<ItemTranslation> & {
+    /** Average rating calculated server‑side from reviews */
+    average_rating?: number;
+
+    /** UUIDs of tags attached to this item */
+    tagIds?: string[];
+
+    /** Fully hydrated tag entities when fetched via joins */
+    storage_item_tags?: Tag[];
+
+    /** Convenience details from the related location */
+    location_details?: LocationDetails | null;
+
+    /** Flattened location name for quick lists & tables */
+    location_name?: string;
+  };
 
 /**
  * Item state in Redux store
