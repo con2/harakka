@@ -6,19 +6,18 @@ import {
   Delete,
   Body,
   Param,
-  Req,
   NotFoundException,
   Query,
+  SetMetadata,
+  Req,
 } from "@nestjs/common";
 import { OrganizationsService } from "./organizations.service";
-/* import { CreateOrganizationDto } from "./dto/create-organization.dto"; */
-/* import { UpdateOrganizationDto } from "./dto/update-organization.dto"; */
 import { Roles } from "src/decorators/roles.decorator";
-// import { Tables, TablesInsert, TablesUpdate } from "@common/supabase.types";
+import { CreateOrganizationDto } from "./dto/create-organization.dto";
+import { UpdateOrganizationDto } from "./dto/update-organization.dto";
+import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 
-/* type Org = Tables<"organizations">;
-type OrgCreateDto = TablesInsert<"organizations">;
-type OrgUpdateDto = TablesUpdate<"organizations">; */
+export const Public = () => SetMetadata("isPublic", true); // inserted afterwards
 
 @Controller("organizations")
 export class OrganizationsController {
@@ -54,22 +53,26 @@ export class OrganizationsController {
 
   @Post()
   @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
-  async createOrganization(@Body() org: CreateOrganizationDto) {
-    return this.organizationService.createOrganization(org);
+  async createOrganization(
+    @Req() req: AuthRequest, // do I need this when I do it in service?
+    @Body() org: CreateOrganizationDto,
+  ) {
+    return this.organizationService.createOrganization(req, org); // mehr ERROR -- auch in den folgenden methoden??
   }
 
   @Put(":organizationId")
   @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
   async updateOrganization(
+    @Req() req: AuthRequest,
     @Param("organizationId") id: string,
     @Body() dto: UpdateOrganizationDto,
   ) {
-    return await this.organizationService.update(id, dto);
+    return await this.organizationService.updateOrganization(req, id, dto);
   }
 
   @Delete(":organizationId")
   @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
-  async deleteOrganization(@Param("id") id: string): Promise<void> {
-    return this.organizationService.deleteOrganization(id);
+  async deleteOrganization(@Req() req: AuthRequest, @Param("id") id: string) {
+    return this.organizationService.deleteOrganization(req, id);
   }
 }
