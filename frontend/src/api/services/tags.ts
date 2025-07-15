@@ -1,29 +1,52 @@
 import { Tag, CreateTagDto, UpdateTagDto } from "@/types/tag";
 import { api } from "../axios";
+import { ApiResponse } from "@/types/api";
 
 /**
  * API service for tag-related endpoints
  */
 export const tagsApi = {
   /**
-   * Get all tags
-   * @returns Array of tags
+   * Get all tags with pagination metadata
+   * @returns Array of tags with pagination metadata
    */
-  getAllTags: (): Promise<Tag[]> => api.get("/tags"),
+  getAllTags: async (
+    page: number = 1,
+    limit: number = 10,
+    search: string = "",
+    assignmentFilter: string = "all",
+    sortBy: string = "created_at",
+    sortOrder: string = "desc",
+  ): Promise<ApiResponse<Tag[]>> => {
+    // Fetch paginated tags from the backend
+    const response = (await api.get(
+      `/tags?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&assignmentFilter=${assignmentFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
+    )) as ApiResponse<Tag[]>;
+
+    return {
+      data: response.data ?? [],
+      metadata: response.metadata ?? {
+        total: 0,
+        page,
+        totalPages: 1,
+      },
+    };
+  },
 
   /**
    * Get all tags for a specific item
    * @param itemId - Item ID
    * @returns Array of tags assigned to the item
    */
-  getTagById: (itemId: string): Promise<Tag> => api.get(`/tags/${itemId}`),
+  getTagById: (itemId: string): Promise<Tag> => api.get(`/tags/item/${itemId}`),
 
   /**
    * Get all tags for a specific item
    * @param itemId - Item ID
    * @returns Array of tags assigned to the item
    */
-  getTagsByItem: (itemId: string): Promise<Tag[]> => api.get(`/tags/${itemId}`),
+  getTagsByItem: (itemId: string): Promise<Tag[]> =>
+    api.get(`/tags/item/${itemId}`),
 
   /**
    * Create a new tag

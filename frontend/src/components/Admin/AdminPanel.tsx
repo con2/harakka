@@ -1,20 +1,21 @@
-import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
-import {
-  LayoutDashboard,
-  Users,
-  Settings,
-  Menu,
-  Warehouse,
-  PinIcon,
-  ShoppingBag,
-  FileText,
-} from "lucide-react";
 import logo from "@/assets/logo.png";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import {
+  FileText,
+  LayoutDashboard,
+  Menu,
+  PinIcon,
+  Settings,
+  ShoppingBag,
+  Users,
+  Warehouse,
+  ShieldUser,
+} from "lucide-react";
+import { useState } from "react";
+import { NavLink, Outlet } from "react-router-dom";
 //import { useAppSelector } from "@/store/hooks";
 //import { selectIsSuperVera } from "@/store/slices/usersSlice";
 
@@ -37,9 +38,9 @@ const AdminPanel = () => {
           />
 
           <SidebarLink
-            to="/admin/orders"
+            to="/admin/bookings"
             icon={<ShoppingBag className="w-5 h-5" />}
-            label={t.adminPanel.navigation.orders[lang]}
+            label={t.adminPanel.navigation.bookings[lang]}
           />
 
           <SidebarLink
@@ -73,6 +74,13 @@ const AdminPanel = () => {
             label={t.adminPanel.navigation.logs[lang] || "Logs"}
           />
 
+          {/* Add the new Roles link */}
+          <SidebarLink
+            to="/admin/roles"
+            icon={<ShieldUser className="w-5 h-5" />}
+            label={t.adminPanel.navigation.roles[lang]}
+          />
+
           <SidebarLink
             to="/profile"
             icon={<Settings className="w-5 h-5" />}
@@ -103,9 +111,9 @@ const AdminPanel = () => {
               label={t.adminPanel.navigation.dashboard[lang]}
             />
             <SidebarLink
-              to="/admin/orders"
+              to="/admin/bookings"
               icon={<ShoppingBag />}
-              label={t.adminPanel.navigation.orders[lang]}
+              label={t.adminPanel.navigation.bookings[lang]}
             />
             <SidebarLink
               to="/admin/items"

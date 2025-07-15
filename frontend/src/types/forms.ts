@@ -20,7 +20,7 @@ export interface UserFormData {
   visible_name: string;
   email: string;
   phone: string;
-  role: UserRole;
+  roles: UserRole[];
   preferences: Record<string, string>;
   saved_lists?: string[];
 }
@@ -56,7 +56,6 @@ export interface ItemFormData
   tagIds: string[];
 
   // Ensure both fields are defined
-  items_number_available: number;
   items_number_currently_in_storage: number;
 }
 

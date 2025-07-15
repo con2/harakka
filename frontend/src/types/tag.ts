@@ -21,6 +21,10 @@ export interface TagState {
   error: string | null;
   errorContext: ErrorContext;
   selectedTags: Tag[] | null;
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 /**
@@ -42,3 +46,8 @@ export interface TagAssignment {
   itemId: string;
   tagIds: string[];
 }
+
+/**
+ * Filter options for tag assignment status
+ */
+export type TagAssignmentFilter = "all" | "assigned" | "unassigned";

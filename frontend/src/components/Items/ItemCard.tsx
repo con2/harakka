@@ -1,33 +1,32 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
-import { Clock } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { getItemById } from "@/store/slices/itemsSlice";
-import { Item } from "../../types/item";
-import { useFormattedDate } from "@/hooks/useFormattedDate";
-import { Input } from "../ui/input";
-import { addToCart } from "@/store/slices/cartSlice";
-import { toast } from "sonner";
+import imagePlaceholder from "@/assets/defaultImage.jpg";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useLanguage } from "@/context/LanguageContext";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { addToCart } from "@/store/slices/cartSlice";
+import { getItemById } from "@/store/slices/itemsSlice";
+import { t } from "@/translations";
+import { ItemTranslation } from "@/types";
+import { ItemImageAvailabilityInfo } from "@/types/storage";
+import { Clock, MapPin } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
 import {
   getItemImages,
   selectItemImages,
 } from "../../store/slices/itemImagesSlice";
-import imagePlaceholder from "@/assets/defaultImage.jpg";
-import { ordersApi } from "@/api/services/orders";
-import { ItemImageAvailabilityInfo } from "@/types/storage";
-import { MapPin } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
-import { t } from "@/translations";
-import { useLanguage } from "@/context/LanguageContext";
-import { ItemTranslation } from "@/types";
+import { Item } from "../../types/item";
+import { Input } from "../ui/input";
+import { itemsApi } from "@/api/services/items";
 
 interface ItemsCardProps {
   item: Item;
@@ -46,7 +45,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
-      availableQuantity: item.items_number_available,
+      availableQuantity: item.items_number_total || 0,
       isChecking: false,
       error: null,
     });
@@ -141,26 +140,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
     dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
-    navigate(`/items/${itemId}`);
+    navigate(`/storage/items/${itemId}`);
   };
-
-  // Handle item deletion
-  // const handleDelete = async () => {
-  //   if (!window.confirm("Are you sure you want to delete this item?")) return;
-  //   try {
-  //     await dispatch(deleteItem(item.id)).unwrap(); // Delete item via Redux action
-  //     toast.success("Item deleted successfully");
-  //   } catch (error) {
-  //     console.error("Error deleting item:", error);
-  //     toast.error("Failed to delete item");
-  //   }
-  // };
-
-  // // Handle item update (for admin only)
-  // const handleUpdate = () => {
-  //   // Navigate to the update form or trigger a modal to edit the item
-  //   navigate(`/admin/items/${item.id}/edit`);
-  // };
 
   // Handle adding item to cart
   const handleAddToCart = () => {
@@ -182,6 +163,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   // Check if the item is available for the selected timeframe
   useEffect(() => {
     // Only check availability if dates are selected
+    if (!item.id || !startDate || !endDate) return;
     if (startDate && endDate) {
       setAvailabilityInfo((prev) => ({
         ...prev,
@@ -189,8 +171,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         error: null,
       }));
 
-      ordersApi
-        .checkAvailability(item.id, startDate, endDate)
+      itemsApi
+        .checkAvailability(item.id, new Date(startDate), new Date(endDate))
         .then((response) => {
           setAvailabilityInfo({
             availableQuantity: response.availableQuantity,
@@ -201,7 +183,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         .catch((error) => {
           console.error("Error checking availability:", error);
           setAvailabilityInfo({
-            availableQuantity: item.items_number_available,
+            availableQuantity: item.items_number_currently_in_storage,
             isChecking: false,
             error: "Failed to check availability",
           });
@@ -332,11 +314,15 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
+              onClick={() => {
+                console.log(
+                  `Quantity: ${quantity}, availableQUantity: ${availabilityInfo}`,
+                );
                 setQuantity(
+                  // HIER!!
                   Math.min(availabilityInfo.availableQuantity, quantity + 1),
-                )
-              }
+                );
+              }}
               className="h-8 w-8 p-0"
               disabled={quantity >= availabilityInfo.availableQuantity}
             >
@@ -344,26 +330,26 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             </Button>
           </div>
 
-        <div className="flex items-center justify-end mb-3 mt-1">
-          {availabilityInfo.isChecking ? (
-            <p className="text-xs text-slate-400 italic m-0">
-              {t.itemCard.checkingAvailability[lang]}
-            </p>
-          ) : availabilityInfo.error ? (
-            <p className="text-xs text-red-500 italic m-0">
-              {t.itemCard.availabilityError[lang]}
-            </p>
-          ) : (
-            <p className="text-xs text-slate-400 italic m-0">
-              {startDate && endDate
-                ? availabilityInfo.availableQuantity > 0
-                  ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
-                  : `${t.itemCard.notAvailable[lang]}`
-                : `${t.itemCard.totalUnits[lang]}: ${item.items_number_available}`}
-            </p>
-          )}
+          <div className="flex items-center justify-end mb-3 mt-1">
+            {availabilityInfo.isChecking ? (
+              <p className="text-xs text-slate-400 italic m-0">
+                {t.itemCard.checkingAvailability[lang]}
+              </p>
+            ) : availabilityInfo.error ? (
+              <p className="text-xs text-red-500 italic m-0">
+                {t.itemCard.availabilityError[lang]}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 italic m-0">
+                {startDate && endDate
+                  ? availabilityInfo.availableQuantity > 0
+                    ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
+                    : `${t.itemCard.notAvailable[lang]}`
+                  : `${t.itemCard.totalUnits[lang]}: ${item.items_number_total}`}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
 
         {/* Add to Cart Button with Tooltip */}
         <TooltipProvider>

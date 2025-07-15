@@ -22,8 +22,8 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { ItemImageAvailabilityInfo, ItemTranslation } from "@/types";
-import { ordersApi } from "@/api/services/orders";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { itemsApi } from "@/api/services/items";
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -49,7 +49,7 @@ const ItemsDetails: React.FC = () => {
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
-      availableQuantity: item?.items_number_available ?? 0,
+      availableQuantity: item?.items_number_total ?? 0,
       isChecking: false,
       error: null,
     });
@@ -121,8 +121,8 @@ const ItemsDetails: React.FC = () => {
         error: null,
       }));
 
-      ordersApi
-        .checkAvailability(item.id, startDate, endDate)
+      itemsApi
+        .checkAvailability(item.id, new Date(startDate), new Date(endDate))
         .then((response) => {
           setAvailabilityInfo({
             availableQuantity: response.availableQuantity,
@@ -133,7 +133,7 @@ const ItemsDetails: React.FC = () => {
         .catch((error) => {
           console.error("Error checking availability:", error);
           setAvailabilityInfo({
-            availableQuantity: item.items_number_available,
+            availableQuantity: item.items_number_currently_in_storage,
             isChecking: false,
             error: "Failed to check availability",
           });
@@ -262,7 +262,7 @@ const ItemsDetails: React.FC = () => {
               ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
               : "Tuote"}
           </h2>
-          
+
           {/* Rating Component */}
           {item.average_rating ? (
             <div className="flex items-center justify-start mt-1">
@@ -277,19 +277,14 @@ const ItemsDetails: React.FC = () => {
             <div className="text-sm mt-2">
               {item.location_details.name && (
                 <div className="flex items-start">
-                  <span>
-                    {t.itemDetails.locations.location[lang]}:
-                  </span>
+                  <span>{t.itemDetails.locations.location[lang]}:</span>
                   <span className="ml-1">{item.location_details.name}</span>
                 </div>
               )}
 
               {item.location_details.address && (
                 <div className="flex items-start">
-                  <span>
-                    {" "}
-                    {t.itemDetails.locations.address[lang]}:
-                  </span>
+                  <span> {t.itemDetails.locations.address[lang]}:</span>
                   <span className="ml-1">{item.location_details.address}</span>
                 </div>
               )}
@@ -316,8 +311,7 @@ const ItemsDetails: React.FC = () => {
                 </div>
                 <p className="text-xs font-medium m-0">
                   {formatDate(startDate, "d MMM yyyy")}
-                    <span> -</span>{" "}
-                    {formatDate(endDate, "d MMM yyyy")}
+                  <span> -</span> {formatDate(endDate, "d MMM yyyy")}
                 </p>
               </div>
 
@@ -354,9 +348,12 @@ const ItemsDetails: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                      onClick={() =>
+                  onClick={() =>
                     setQuantity(
-                      Math.min(availabilityInfo.availableQuantity, quantity + 1),
+                      Math.min(
+                        availabilityInfo.availableQuantity,
+                        quantity + 1,
+                      ),
                     )
                   }
                   disabled={quantity >= availabilityInfo.availableQuantity}
@@ -382,7 +379,7 @@ const ItemsDetails: React.FC = () => {
                       ? availabilityInfo.availableQuantity > 0
                         ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
                         : `${t.itemCard.notAvailable[lang]}`
-                      : `${t.itemCard.totalUnits[lang]}: ${item.items_number_available}`}
+                      : `${t.itemCard.totalUnits[lang]}: ${item.items_number_currently_in_storage}`}
                   </p>
                 )}
               </div>

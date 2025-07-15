@@ -16,18 +16,101 @@ const initialState: TagState = {
   error: null,
   errorContext: null,
   selectedTags: [], // initialized as an empty array
+  page: 1,
+  limit: 10,
+  total: 0,
+  totalPages: 1,
 };
 
 // Async Thunks (API Calls)
-// get all tags
+/**
+ * Fetches a paginated list of tags from the backend.
+ *
+ * @param {Object} [params={}]               Pagination options.
+ * @param {number} [params.page=1]           The page number to retrieve (1‑based).
+ * @param {number} [params.limit=10]         The maximum number of tags to return per page.
+ * @param {string} [params.search]           The search term entered by the user.
+ * @returns {AsyncThunk}                     A Redux Toolkit thunk that resolves to an object
+ *                                          containing `data` (Tag[]) and `metadata`
+ *                                          (pagination details).
+ *
+ * @example
+ * ```ts
+ * // Retrieve the second page with 25 tags per page
+ * dispatch(fetchAllTags({ page: 2, limit: 25 }));
+ * ```
+ */
 export const fetchAllTags = createAsyncThunk(
   "tags/fetchAllTags",
-  async (_, { rejectWithValue }) => {
+  async (
+    {
+      page = 1,
+      limit = 10,
+      search = "",
+    }: {
+      page?: number;
+      limit?: number;
+      search?: string;
+    } = {},
+    { rejectWithValue },
+  ) => {
     try {
-      return await tagsApi.getAllTags();
+      return await tagsApi.getAllTags(page, limit, search, "all");
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch tags"),
+      );
+    }
+  },
+);
+
+/**
+ * Fetches filtered tags from the backend.
+ *
+ * @param {Object} params                   Filtering and pagination options.
+ * @param {number} params.page              The page number to retrieve (1‑based).
+ * @param {number} params.limit             The maximum number of tags to return per page.
+ * @param {string} params.search            The search term entered by the user.
+ * @param {string} params.assignmentFilter  Filter by assignment status ("all", "assigned", "unassigned").
+ * @param {string} params.sortBy            Field to sort by ("created_at", "updated_at").
+ * @param {string} params.sortOrder         Sort order ("asc", "desc").
+ * @returns {AsyncThunk}                    A Redux Toolkit thunk that resolves to an object
+ *                                         containing `data` (Tag[]) and `metadata`
+ *                                         (pagination details).
+ */
+export const fetchFilteredTags = createAsyncThunk(
+  "tags/fetchFilteredTags",
+  async (
+    {
+      page = 1,
+      limit = 10,
+      search = "",
+      assignmentFilter = "all",
+      sortBy = "created_at",
+      sortOrder = "desc",
+    }: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      assignmentFilter?: string;
+      sortBy?: string;
+      sortOrder?: string;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      // Pass all parameters to the backend API
+      return await tagsApi.getAllTags(
+        page,
+        limit,
+        search,
+        assignmentFilter,
+        sortBy,
+        sortOrder,
+      );
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch filtered tags"),
       );
     }
   },
@@ -149,9 +232,29 @@ export const tagSlice = createSlice({
       })
       .addCase(fetchAllTags.fulfilled, (state, action) => {
         state.loading = false;
-        state.tags = action.payload;
+        state.tags = action.payload.data;
+        state.total = action.payload.metadata.total;
+        state.page = action.payload.metadata.page;
+        state.totalPages = action.payload.metadata.totalPages;
       })
       .addCase(fetchAllTags.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
+      .addCase(fetchFilteredTags.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(fetchFilteredTags.fulfilled, (state, action) => {
+        state.loading = false;
+        state.tags = action.payload.data;
+        state.total = action.payload.metadata.total;
+        state.page = action.payload.metadata.page;
+        state.totalPages = action.payload.metadata.totalPages;
+      })
+      .addCase(fetchFilteredTags.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";
@@ -261,6 +364,11 @@ export const selectAllTags = (state: RootState) => state.tags.tags;
 export const selectLoading = (state: RootState) => state.tags.loading;
 export const selectError = (state: RootState) => state.tags.error;
 export const selectSelectedTags = (state: RootState) => state.tags.selectedTags;
+// Pagination data
+export const selectTagsPage = (state: RootState) => state.tags.page;
+export const selectTagsLimit = (state: RootState) => state.tags.limit;
+export const selectTagsTotal = (state: RootState) => state.tags.total;
+export const selectTagsTotalPages = (state: RootState) => state.tags.totalPages;
 
 // Export actions
 export const { clearSelectedTags, selectTag } = tagSlice.actions;

@@ -2,23 +2,23 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "author": "",
   "private": true,
-  "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
+    "start": "node -r tsconfig-paths/register dist/backend/src/main.js",
+    "start:watch": "nest start --watch -r tsconfig-paths/register",
     "start:dev": "nodemon --watch src --ext ts --exec \"ts-node -r tsconfig-paths/register src/main.ts\"",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:debug": "nest start --debug --watch -r tsconfig-paths/register",
+    "start:prod": "node -r tsconfig-paths/register dist/backend/src/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "email:dev": "email dev -p 3001"
+    "email:dev": "email dev -p 3001",
+    "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > src/types/supabase.types.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.802.0",
@@ -31,20 +31,18 @@
     "@react-email/components": "^0.0.38",
     "@react-email/render": "^1.1.2",
     "@supabase/supabase-js": "^2.49.4",
-    "@types/multer": "^1.4.12",
+    "@types/multer": "^2.0.0",
     "@types/nodemailer": "^6.4.17",
     "bwip-js": "^4.6.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "dayjs": "^1.11.13",
     "dayjs-plugin-utc": "^0.1.2",
-    "full-stack-booking-app": "file:..",
-    "googleapis": "^148.0.0",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "nodemailer": "^7.0.2",
     "pdfkit": "^0.17.1",
     "react-email": "^4.0.13",
-    "react-mail": "^0.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "uuid": "^11.1.0"
@@ -52,14 +50,17 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
+    "@jest/globals": "^30.0.3",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
-    "@swc/cli": "^0.6.0",
+    "@swc/cli": "^0.7.7",
     "@swc/core": "^1.10.7",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.10.7",
+    "@types/react": "^19.1.8",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
@@ -74,8 +75,9 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "type-fest": "^4.41.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.34.0"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -83,7 +85,6 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"

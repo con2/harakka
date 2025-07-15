@@ -10,11 +10,11 @@ This document covers the Supabase setup and usage for our App. Supabase provides
 
 1. Access Credentials:
 
--   Dashboard URL: https://supabase.com/dashboard/project/[project-id]
--   Project-id: Stored in .env.local as SUPABASE_PROJECT_ID
--   RESTful endpoint for querying and managing database: https://[project-id].supabase.co
--   Project API Key (public): Stored in .env.local as SUPABASE_PUBLIC_API_KEY
--   Project API Key (secret): Stored in .env.local as SUPABASE_SERVICE_ROLE_KEY
+- Dashboard URL: https://supabase.com/dashboard/project/[project-id]
+- Project-id: Stored in .env.local as SUPABASE_PROJECT_ID
+- RESTful endpoint for querying and managing database: https://[project-id].supabase.co
+- Project API Key (public): Stored in .env.local as SUPABASE_PUBLIC_API_KEY
+- Project API Key (secret): Stored in .env.local as SUPABASE_SERVICE_ROLE_KEY
 
 2. Local Development:
 
@@ -73,7 +73,6 @@ storage_items
 ├── location_id (uuid, FK -> storage_locations.id, NOT NULL)
 ├── compartment_id (uuid, FK -> storage_compartments.id)
 ├── items_number_total (numeric, NOT NULL)
-├── items_number_available (numeric, NOT NULL)
 ├── price (decimal, NOT NULL)
 ├── average_rating (decimal, default 0)
 ├── status (varchar, default 'available') // Item availability status
@@ -233,25 +232,25 @@ audit_logs
 
 ```json
 {
-	"fi": {
-		"item_type": "kypäriä",
-		"item_name": "sotilaskypärä",
-		"item_description": "sotilaskypärä musta, iso"
-	},
-	"en": {
-		"item_type": "helmets",
-		"item_name": "military helmet",
-		"item_description": "military helmet black, large"
-	}
+  "fi": {
+    "item_type": "kypäriä",
+    "item_name": "sotilaskypärä",
+    "item_description": "sotilaskypärä musta, iso"
+  },
+  "en": {
+    "item_type": "helmets",
+    "item_name": "military helmet",
+    "item_description": "military helmet black, large"
+  }
 }
 ```
 
 This approach allows:
 
--   Storing translations for all languages in a single field
--   Adding new languages without schema changes
--   Flexible querying using JSON operators
--   Client-side language selection
+- Storing translations for all languages in a single field
+- Adding new languages without schema changes
+- Flexible querying using JSON operators
+- Client-side language selection
 
 ## Security and Automation Features
 
@@ -259,11 +258,11 @@ This approach allows:
 
 The database implements a comprehensive audit system that automatically tracks all changes to critical tables:
 
--   orders
--   order_items
--   payments
--   storage_items
--   user_profiles
+- orders
+- order_items
+- payments
+- storage_items
+- user_profiles
 
 #### Audit Function
 
@@ -313,10 +312,10 @@ FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
 
 **How It Works**
 
--   Every change to audited tables is logged with the user who made the change
--   Captures full before/after state for updates
--   Stores all data in JSONB format for flexible querying
--   Maintains a complete change history for compliance and debugging
+- Every change to audited tables is logged with the user who made the change
+- Captures full before/after state for updates
+- Stores all data in JSONB format for flexible querying
+- Maintains a complete change history for compliance and debugging
 
 ### 2. Auto-Generated Fields
 
@@ -390,7 +389,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION update_item_availability()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- For new or updated order items
+/*   -- For new or updated order items
   IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
     -- When a new order is placed or an existing one is updated
     IF NEW.status = 'confirmed' THEN
@@ -410,7 +409,7 @@ BEGIN
         CASE WHEN TG_OP = 'DELETE' THEN OLD.quantity
              ELSE NEW.quantity END
     WHERE id = CASE WHEN TG_OP = 'DELETE' THEN OLD.item_id ELSE NEW.item_id END;
-  END IF;
+  END IF; */
 
   RETURN COALESCE(NEW, OLD);
 EXCEPTION
@@ -428,9 +427,9 @@ Our database implements comprehensive Row Level Security to ensure data protecti
 **Overview**
 All tables have RLS enabled, with policies controlling:
 
--   What public (unauthenticated) users can see
--   What authenticated users can see and modify
--   What administrators and superVera can access
+- What public (unauthenticated) users can see
+- What authenticated users can see and modify
+- What administrators and superVera can access
 
 **Role-Based Access Control Functions**
 
@@ -544,9 +543,9 @@ CREATE INDEX idx_tags_translations ON tags USING GIN (translations);
 
 Test users are created in Supabase, including roles:
 
--   superVera: Has full access to all data
--   admin: Can manage all data except other admins and superVera
--   user: Regular user with limited access
+- superVera: Has full access to all data
+- admin: Can manage all data except other admins and superVera
+- user: Regular user with limited access
 
 ### Test data:
 
@@ -559,12 +558,13 @@ Test data injection is done by running the following file: '../backend/dbSetStat
 ```js
 // Get item data in Finnish
 const { data, error } = await supabase
-	.from("storage_items")
-	.select("id, price, translations:translations->fi")
-	.eq("status", "available");
+  .from("storage_items")
+  .select("id, price, translations:translations->fi")
+  .eq("status", "available");
 
 // Client-side language selection
-const displayName = item.translations[userLanguage].item_name || item.translations.en.item_name; // Fallback to English
+const displayName =
+  item.translations[userLanguage].item_name || item.translations.en.item_name; // Fallback to English
 ```
 
 ### Querying Audit Logs
@@ -572,11 +572,11 @@ const displayName = item.translations[userLanguage].item_name || item.translatio
 ```js
 //Get history of changes to a specific order
 const { data, error } = await supabase
-	.from("audit_logs")
-	.select("*")
-	.eq("table_name", "orders")
-	.eq("record_id", orderId)
-	.order("created_at", { ascending: false });
+  .from("audit_logs")
+  .select("*")
+  .eq("table_name", "orders")
+  .eq("record_id", orderId)
+  .order("created_at", { ascending: false });
 ```
 
 ### Working with Row Level Security

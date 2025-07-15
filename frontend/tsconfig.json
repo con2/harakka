@@ -8,7 +8,15 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@common/*": ["../common/*"]
     }
-  }
+  },
+    /*  NEW — guard-rail for the whole workspace  */
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+  ]
 }

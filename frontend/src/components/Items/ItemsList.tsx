@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
-  fetchAllItems,
   selectAllItems,
   selectItemsLoading,
   selectItemsError,
+  selectItemsLimit,
+  fetchOrderedItems,
 } from "../../store/slices/itemsSlice";
 import ItemCard from "./ItemCard";
 import { Input } from "../ui/input";
@@ -14,84 +15,56 @@ import { LoaderCircle, Search } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { FiltersState } from "@/types";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
   const filters = useOutletContext<FiltersState>(); // Get filters from context
   const dispatch = useAppDispatch();
-
+  const pageLimit = useAppSelector(selectItemsLimit);
   // Redux state selectors
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
+  const currentPage = 1;
 
   // Translation
   const { lang } = useLanguage();
 
+  // Get all filters from the UserPanel
+  const { isActive, itemTypes, tagIds, locationIds } = filters;
+
   //state for search query
   const [searchQuery, setSearchQuery] = useState("");
+  const userQuery = searchQuery.toLowerCase().trim();
+  const debouncedSearchQuery = useDebouncedValue(userQuery);
 
   // Fetch all items when the component mounts
   useEffect(() => {
-    dispatch(fetchAllItems());
-  }, [dispatch]);
-
-  const userQuery = searchQuery.toLowerCase().trim();
-
-  // Apply filters to the items
-  const filteredItems = items.filter((item) => {
-    // Filter by active status
-    const isActive = filters.isActive ? item.is_active : true;
-    const isWithinAvailabilityRange =
-      item.items_number_available >= filters.itemsNumberAvailable[0] &&
-      item.items_number_available <= filters.itemsNumberAvailable[1];
-
-    // filter by average rating
-    const matchesRating =
-      filters.averageRating.length === 0 ||
-      filters.averageRating.includes(Math.floor(item.average_rating ?? 0));
-
-    const matchesSearch =
-      item.translations.fi.item_name.toLowerCase().includes(userQuery) ||
-      item.translations.fi.item_type?.toLowerCase().includes(userQuery) ||
-      item.translations.fi.item_description
-        ?.toLowerCase()
-        .includes(userQuery) ||
-      item.translations.en.item_name.toLowerCase().includes(userQuery) ||
-      item.translations.en.item_type?.toLowerCase().includes(userQuery) ||
-      item.translations.en.item_description?.toLowerCase().includes(userQuery);
-    // Filter by item types
-    const itemType =
-      item.translations?.[lang]?.item_type ||
-      item.translations?.[lang === "fi" ? "en" : "fi"]?.item_type;
-
-    const matchesItemTypes =
-      !filters.itemTypes?.length || filters.itemTypes.includes(itemType?.toLowerCase());
-
-    // Filter by tags
-    const matchesTags =
-      !filters.tagIds?.length ||
-      (item.storage_item_tags || []).some((tag) =>
-        filters.tagIds.includes(tag.id),
-      );
-    // add tags filter here
-    // right now the english tags are not found
-
-    // Filter by location
-    const matchesLocation =
-      !filters.locationIds?.length ||
-      filters.locationIds.includes(item.location_id);
-
-    return (
-      isActive &&
-      isWithinAvailabilityRange &&
-      matchesRating &&
-      matchesSearch &&
-      matchesItemTypes &&
-      matchesTags &&
-      matchesLocation
+    const active = isActive ? "active" : "inactive";
+    dispatch(
+      fetchOrderedItems({
+        ordered_by: "created_at",
+        ascending: true,
+        page: currentPage,
+        limit: pageLimit,
+        searchquery: debouncedSearchQuery,
+        tag_filters: tagIds,
+        activity_filter: active,
+        categories: itemTypes,
+        location_filter: locationIds,
+      }),
     );
-  });
+  }, [
+    dispatch,
+    items.length,
+    isActive,
+    itemTypes,
+    debouncedSearchQuery,
+    locationIds,
+    tagIds,
+    pageLimit,
+  ]);
 
   // Loading state
   if (loading) {
@@ -132,10 +105,10 @@ const ItemsList: React.FC = () => {
 
       {/* Render the list of filtered items */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 mb-4">
-        {filteredItems.length === 0 ? (
+        {items.length === 0 ? (
           <p>{t.itemsList.noItemsFound[lang]}</p> // Message when no items exist
         ) : (
-          filteredItems.map((item) => <ItemCard key={item.id} item={item} />)
+          items.map((item) => <ItemCard key={item.id} item={item} />)
         )}
       </div>
     </div>

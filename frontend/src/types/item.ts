@@ -4,6 +4,7 @@ import {
   Translatable,
   Tag,
   LocationDetails,
+  TagTranslation,
 } from "@/types";
 
 /**
@@ -19,7 +20,6 @@ export interface Item extends BaseEntity, Translatable<ItemTranslation> {
   location_id: string;
   compartment_id: string;
   items_number_total: number;
-  items_number_available: number;
   items_number_currently_in_storage: number;
   price: number;
   is_active: boolean;
@@ -27,18 +27,23 @@ export interface Item extends BaseEntity, Translatable<ItemTranslation> {
   tagIds?: string[];
   storage_item_tags?: Tag[];
   location_details?: LocationDetails | null;
+  location_name?: string;
 }
 
 /**
  * Item state in Redux store
  */
 export interface ItemState {
-  items: Item[];
+  items: Array<Item | ManageItemViewRow>;
   loading: boolean;
   error: string | null;
   selectedItem: Item | null;
   errorContext: ErrorContext;
   deletableItems: Record<string, boolean>;
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 /**
@@ -60,3 +65,34 @@ export type UpdateItemDto = Partial<
 > & {
   tagIds?: string[];
 };
+
+/**
+ * Type used for `/admin/items`
+ * Gets the basic, necessary data plus some pre‑flattened translations.
+ */
+export interface ManageItemViewRow extends Item {
+  /* Flattened, language‑specific name/type strings for quick sorting */
+  fi_item_name: string;
+  fi_item_type: string;
+
+  en_item_name: string;
+  en_item_type: string;
+
+  /** Tag IDs linked to this item */
+  tags: string[];
+
+  /** Localised tag translation object */
+  tag_translations: TagTranslation;
+}
+
+/**
+ * Valid orders/filters for the manage items page.
+ */
+export type ValidItemOrder =
+  | "fi_item_name"
+  | "fi_item_type"
+  | "location_name"
+  | "price"
+  | "items_number_total"
+  | "is_active"
+  | "created_at";
