@@ -1,10 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAppSelector } from "@/store/hooks";
-import {
-  selectIsAdmin,
-  selectIsSuperVera,
-  selectSelectedUser,
-} from "@/store/slices/usersSlice";
+import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,17 +18,18 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useRoles } from "@/hooks/useRoles";
 
 export const Navigation = () => {
   const { signOut } = useAuth();
-  const isAdmin = useAppSelector(selectIsAdmin);
-  const isSuperVera = useAppSelector(selectIsSuperVera);
+  // get user role information from the hook
+  const { hasAnyRole } = useRoles();
+  const isAnyTypeOfAdmin = hasAnyRole(["admin", "superVera"]);
   const selectedUser = useAppSelector(selectSelectedUser);
   const cartItemsCount = useAppSelector(selectCartItemsCount);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const admin = isAdmin || isSuperVera;
   const isLoggedIn = !!selectedUser;
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
@@ -75,12 +72,6 @@ export const Navigation = () => {
           </Link>
           <NavigationMenu>
             <NavigationMenuList>
-              {/* <NavigationMenuItem className="hidden md:flex">
-                <NavigationMenuLink asChild>
-                  <Link to="/"> {t.navigation.home[lang]} </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem> */}
-
               {/* Show My orders link only for logged in users */}
               {isLoggedIn && (
                 <NavigationMenuItem className="hidden md:flex">
@@ -96,7 +87,7 @@ export const Navigation = () => {
               )}
 
               {/* Show Admin Panel link only for admins/superVera */}
-              {admin && (
+              {isAnyTypeOfAdmin && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
                     <Link
@@ -122,7 +113,7 @@ export const Navigation = () => {
               </NavigationMenuItem>
 
               {/* User GuideLines in Nav only for regular users */}
-              {!admin && (
+              {!isAnyTypeOfAdmin && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
                     <Link
@@ -136,7 +127,7 @@ export const Navigation = () => {
               )}
 
               {/* Contact Form Only in Desktop view for non admins*/}
-              {!admin && (
+              {!isAnyTypeOfAdmin && (
                 <NavigationMenuItem className="hidden md:flex">
                   <NavigationMenuLink asChild>
                     <Link
