@@ -60,8 +60,6 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
   //For update, soft delete, delete
   const [assignmentId, setAssignmentId] = useState(role?.id || "");
 
-  const [isEdit] = useState(!!role);
-
   const [mode, setMode] = useState<
     "create" | "softDelete" | "restoreRole" | "hardDelete"
   >("create");
@@ -147,6 +145,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
               ))}
             </SelectContent>
           </Select>
+          {/* TODO: replace by dropdown when organizations backend is ready */}
           <Input
             name="organization_id"
             placeholder="Organization ID"
@@ -172,12 +171,26 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
       {(mode === "softDelete" ||
         mode === "hardDelete" ||
         mode === "restoreRole") && (
-        <Input
-          name="assignmentId"
-          placeholder="Role Assignment ID"
-          value={assignmentId}
-          onChange={(e) => setAssignmentId(e.target.value)}
-        />
+        <>
+          <label className="font-semibold">Role Assignment</label>
+          <Select
+            value={assignmentId}
+            onValueChange={(id) => setAssignmentId(id)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select Role Assignment" />
+            </SelectTrigger>
+            <SelectContent>
+              {allUserRoles.map((role) => (
+                <SelectItem key={role.id} value={role.id || ""}>
+                  {role.user_email
+                    ? `${role.user_email} (${role.role_name} in ${role.organization_name})`
+                    : `${role.role_name} in ${role.organization_name}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </>
       )}
       <div className="flex gap-2 flex-wrap">
         <Button type="submit" disabled={loading}>
