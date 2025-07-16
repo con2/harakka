@@ -113,16 +113,18 @@ export class OrganizationsController {
 
   // 7. activate or deactivate orgs
   @Put(":organizationId/activation")
-  @Roles(["super_admin"], { match: "any" })
+  @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
   async toggleOrganizationActivation(
     @Req() req: AuthRequest,
     @Param("organizationId") id: string,
-    @Body("is_active") is_active: boolean,
   ) {
-    if (typeof is_active !== "boolean") {
-      throw new BadRequestException("Field 'is_active' must be a boolean");
+    const org = await this.organizationService.getOrganizationById(id);
+    if (!org) {
+      throw new NotFoundException(`Organization with ID '${id}' not found`);
     }
 
-    return this.organizationService.toggleActivation(req, id, is_active);
+    const newIsActive = !org.is_active;
+
+    return this.organizationService.toggleActivation(req, id, newIsActive);
   }
 }

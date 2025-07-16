@@ -128,7 +128,9 @@ export class OrganizationsService {
     const { error } = await supabase
       .from("organizations")
       .update({ is_active, updated_by: req.user.id })
-      .eq("id", id);
+      .eq("id", id)
+      .select()
+      .single();
 
     if (error) throw new Error(error.message);
     return { success: true, id, is_active };
