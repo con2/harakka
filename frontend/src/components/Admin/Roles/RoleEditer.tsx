@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useRoles } from "@/hooks/useRoles";
 import { CreateUserRoleDto, UserRoleWithDetails } from "@/types/roles";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
     permanentDeleteRole,
     refreshAllUserRoles,
     availableRoles,
+    allUserRoles,
   } = useRoles();
 
   // For create
@@ -40,6 +41,21 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
     organization_id: "",
     role_id: "",
   });
+
+  // Memoized list of unique users by email
+  const userOptions = useMemo(() => {
+    const seen = new Set();
+    return allUserRoles
+      .filter(
+        (r) =>
+          r.user_email && !seen.has(r.user_email) && seen.add(r.user_email),
+      )
+      .map((r) => ({
+        user_id: r.user_id,
+        email: r.user_email,
+        full_name: r.user_full_name,
+      }));
+  }, [allUserRoles]);
 
   //For update, soft delete, delete
   const [assignmentId, setAssignmentId] = useState(role?.id || "");
@@ -111,19 +127,33 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
       </h3>
       {mode === "create" && (
         <>
-          <Input
-            name="user_id"
-            placeholder="User ID"
+          {/* User dropdown by email and name */}
+          <label className="font-semibold">User (by email)</label>
+          <Select
             value={createForm.user_id}
-            onChange={handleCreateChange}
-            disabled={isEdit}
-          />
+            onValueChange={(userId) =>
+              setCreateForm((prev) => ({ ...prev, user_id: userId }))
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a user" />
+            </SelectTrigger>
+            <SelectContent>
+              {userOptions.map((user) => (
+                <SelectItem key={user.user_id} value={user.user_id}>
+                  {user.email}
+                  {user.full_name ? ` (${user.full_name})` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input
             name="organization_id"
             placeholder="Organization ID"
             value={createForm.organization_id}
             onChange={handleCreateChange}
           />
+          {/* List of all roles dropdown */}
           <label className="font-semibold">Role</label>
           <Select value={createForm.role_id} onValueChange={handleRoleSelect}>
             <SelectTrigger className="w-full">
