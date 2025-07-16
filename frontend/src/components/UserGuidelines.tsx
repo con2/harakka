@@ -1,18 +1,16 @@
-import { useAppSelector } from "@/store/hooks";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "./ui/accordion";
-import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { useRoles } from "@/hooks/useRoles";
 
 export const UserGuide: React.FC = () => {
-  const selectedUser = useAppSelector(selectSelectedUser);
-  const isAdmin = ["admin", "superVera"].includes(selectedUser?.role ?? "");
-
+  const { hasAnyRole } = useRoles();
+  const isAnyTypeOfAdmin = hasAnyRole(["admin", "superVera"]);
   // Add language support
   const { lang } = useLanguage();
 
@@ -95,7 +93,7 @@ export const UserGuide: React.FC = () => {
             </AccordionItem>
           </Accordion>
 
-          {isAdmin && (
+          {isAnyTypeOfAdmin && (
             <>
               <h2 className="text-2xl font-bold text-center mb-6">
                 {t.userGuide.title.admin[lang]}
