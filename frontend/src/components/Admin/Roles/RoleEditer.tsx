@@ -11,6 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { ColumnDef } from "@tanstack/react-table";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 
 interface RoleEditerProps {
   role?: UserRoleWithDetails;
@@ -59,6 +61,40 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
 
   //For update, soft delete, delete
   const [assignmentId, setAssignmentId] = useState(role?.id || "");
+  // Filters for assignment dropdown
+  const [filterUser, setFilterUser] = useState("");
+  const [filterOrg, setFilterOrg] = useState("");
+  const [filterRole, setFilterRole] = useState("");
+
+  // Pagination state
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageSize = 15;
+
+  // Filtered assignments for table
+  const filteredAssignments = useMemo(() => {
+    return allUserRoles.filter(
+      (r) =>
+        (!filterUser ||
+          (r.user_email &&
+            r.user_email.toLowerCase().includes(filterUser.toLowerCase()))) &&
+        (!filterOrg ||
+          (r.organization_name &&
+            r.organization_name
+              .toLowerCase()
+              .includes(filterOrg.toLowerCase()))) &&
+        (!filterRole ||
+          (r.role_name &&
+            r.role_name.toLowerCase().includes(filterRole.toLowerCase()))),
+    );
+  }, [allUserRoles, filterUser, filterOrg, filterRole]);
+
+  // Paginate filtered assignments
+  const paginatedAssignments = useMemo(() => {
+    const start = pageIndex * pageSize;
+    return filteredAssignments.slice(start, start + pageSize);
+  }, [filteredAssignments, pageIndex, pageSize]);
+
+  const totalPages = Math.ceil(filteredAssignments.length / pageSize);
 
   const [mode, setMode] = useState<
     "create" | "softDelete" | "restoreRole" | "hardDelete"
@@ -99,6 +135,53 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
       setLoading(false);
     }
   };
+
+  const assignmentColumns: ColumnDef<UserRoleWithDetails>[] = [
+    {
+      accessorKey: "user_email",
+      size: 10,
+      header: "User Email",
+      cell: ({ row }) => (
+        <span>
+          {row.original.user_email}
+          {row.original.user_full_name
+            ? ` (${row.original.user_full_name})`
+            : ""}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "role_name",
+      header: "Role",
+    },
+    {
+      accessorKey: "organization_name",
+      header: "Organization",
+    },
+    {
+      accessorKey: "is_active",
+      header: "Active",
+      cell: ({ row }) =>
+        row.original.is_active ? (
+          <span className="text-green-600">Yes</span>
+        ) : (
+          <span className="text-red-600">No</span>
+        ),
+    },
+    {
+      id: "select",
+      header: "Select",
+      cell: ({ row }) => (
+        <Button
+          size="sm"
+          variant={assignmentId === row.original.id ? "default" : "outline"}
+          onClick={() => setAssignmentId(row.original.id || "")}
+        >
+          {assignmentId === row.original.id ? "Selected" : "Select"}
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <form className="space-y-4 p-4 border rounded" onSubmit={handleSubmit}>
@@ -173,23 +256,64 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
         mode === "restoreRole") && (
         <>
           <label className="font-semibold">Role Assignment</label>
-          <Select
-            value={assignmentId}
-            onValueChange={(id) => setAssignmentId(id)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select Role Assignment" />
-            </SelectTrigger>
-            <SelectContent>
-              {allUserRoles.map((role) => (
-                <SelectItem key={role.id} value={role.id || ""}>
-                  {role.user_email
-                    ? `${role.user_email} (${role.role_name} in ${role.organization_name})`
-                    : `${role.role_name} in ${role.organization_name}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2 mb-2 flex-wrap">
+            <Input
+              placeholder="Filter by user email"
+              value={filterUser}
+              onChange={(e) => {
+                setFilterUser(e.target.value);
+                setPageIndex(0);
+              }}
+              className="w-40"
+            />
+            <Input
+              placeholder="Filter by organization"
+              value={filterOrg}
+              onChange={(e) => {
+                setFilterOrg(e.target.value);
+                setPageIndex(0);
+              }}
+              className="w-40"
+            />
+            <Input
+              placeholder="Filter by role"
+              value={filterRole}
+              onChange={(e) => {
+                setFilterRole(e.target.value);
+                setPageIndex(0);
+              }}
+              className="w-40"
+            />
+            {(filterUser || filterOrg || filterRole) && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-9"
+                onClick={() => {
+                  setFilterUser("");
+                  setFilterOrg("");
+                  setFilterRole("");
+                  setPageIndex(0);
+                }}
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+          <PaginatedDataTable
+            columns={assignmentColumns}
+            data={paginatedAssignments}
+            pageIndex={pageIndex}
+            pageCount={totalPages}
+            onPageChange={setPageIndex}
+          />
+          {assignmentId && (
+            <div className="mt-2 text-sm text-muted-foreground">
+              Selected assignment ID:{" "}
+              <span className="font-mono">{assignmentId}</span>
+            </div>
+          )}
         </>
       )}
       <div className="flex gap-2 flex-wrap">
