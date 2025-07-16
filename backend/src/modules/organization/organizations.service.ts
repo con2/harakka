@@ -54,7 +54,20 @@ export class OrganizationsService {
     return data;
   }
 
-  // 3. create
+  // 3. get Org by slug
+  async getOrganizationBySlug(slug: string): Promise<OrganizationRow | null> {
+    const supabase = this.supabaseService.getServiceClient();
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  // 4. create
   async createOrganization(
     req: AuthRequest,
     org: OrganizationInsert,
@@ -72,7 +85,7 @@ export class OrganizationsService {
     return data;
   }
 
-  // 4. update
+  // 5. update
   async updateOrganization(
     req: AuthRequest,
     id: string,
@@ -90,7 +103,7 @@ export class OrganizationsService {
     return data;
   }
 
-  // 5. delete
+  // 6. delete
   async deleteOrganization(
     req: AuthRequest,
     id: string,
@@ -104,7 +117,8 @@ export class OrganizationsService {
     if (error) throw new Error(error.message);
     return { success: true, id };
   }
-  // 6. activate or deactivate orgs
+
+  // 7. activate or deactivate orgs
   async toggleActivation(
     req: AuthRequest,
     id: string,
@@ -118,18 +132,5 @@ export class OrganizationsService {
 
     if (error) throw new Error(error.message);
     return { success: true, id, is_active };
-  }
-
-  // 7. get Org by slug
-  async getOrganizationBySlug(slug: string): Promise<OrganizationRow | null> {
-    const supabase = this.supabaseService.getServiceClient();
-    const { data, error } = await supabase
-      .from("organizations")
-      .select("*")
-      .eq("slug", slug)
-      .maybeSingle();
-
-    if (error) throw new Error(error.message);
-    return data;
   }
 }

@@ -11,6 +11,7 @@ import {
   SetMetadata,
   Req,
   ConflictException,
+  BadRequestException,
 } from "@nestjs/common";
 import { OrganizationsService } from "./organizations.service";
 import { Roles } from "src/decorators/roles.decorator";
@@ -25,6 +26,7 @@ export const Public = () => SetMetadata("isPublic", true); // inserted afterward
 export class OrganizationsController {
   constructor(private readonly organizationService: OrganizationsService) {}
 
+  // 1. get all
   @Public()
   @Get()
   async getAllOrganizations(
@@ -45,6 +47,7 @@ export class OrganizationsController {
     );
   }
 
+  // 2. get one
   @Public()
   @Get(":id")
   async getOrganizationById(@Param("id") id: string) {
@@ -53,6 +56,17 @@ export class OrganizationsController {
     return org;
   }
 
+  // 3. get Org by slug
+  @Public()
+  @Get("slug/:slug")
+  async getOrganizationBySlug(@Param("slug") slug: string) {
+    const org = await this.organizationService.getOrganizationBySlug(slug);
+    if (!org)
+      throw new NotFoundException(`Organization with slug "${slug}" not found`);
+    return org;
+  }
+
+  // 4. create
   @Post()
   @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
   async createOrganization(
@@ -60,7 +74,7 @@ export class OrganizationsController {
     @Body() org: CreateOrganizationDto,
   ) {
     const slugified =
-      org.slug ?? slugify(org.name, { lower: true, strict: true });
+      org.slug ?? slugify(org.name, { lower: true, strict: true }); // need to create it here because the field is required
 
     const exists =
       await this.organizationService.getOrganizationBySlug(slugified);
@@ -74,6 +88,7 @@ export class OrganizationsController {
     }); // mehr ERROR -- auch in den folgenden methoden??
   }
 
+  // 5. update
   @Put(":organizationId")
   @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
   async updateOrganization(
@@ -84,12 +99,30 @@ export class OrganizationsController {
     return await this.organizationService.updateOrganization(req, id, dto);
   }
 
+  // 6. delete
   @Delete(":organizationId")
   @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
   async deleteOrganization(
     @Req() req: AuthRequest,
-    @Param("id") id: string,
+    @Param("organizationId") id: string,
   ): Promise<{ success: boolean; id: string }> {
+    if (!id) throw new BadRequestException("Organization ID is required");
+
     return this.organizationService.deleteOrganization(req, id);
+  }
+
+  // 7. activate or deactivate orgs
+  @Put(":organizationId/activation")
+  @Roles(["super_admin"], { match: "any" })
+  async toggleOrganizationActivation(
+    @Req() req: AuthRequest,
+    @Param("organizationId") id: string,
+    @Body("is_active") is_active: boolean,
+  ) {
+    if (typeof is_active !== "boolean") {
+      throw new BadRequestException("Field 'is_active' must be a boolean");
+    }
+
+    return this.organizationService.toggleActivation(req, id, is_active);
   }
 }
