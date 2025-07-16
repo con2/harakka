@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-//import { Constants } from "@common/supabase.types";
 
 interface RoleEditerProps {
   role?: UserRoleWithDetails;
@@ -32,6 +31,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
     deleteRole,
     permanentDeleteRole,
     refreshAllUserRoles,
+    availableRoles,
   } = useRoles();
 
   // For create
@@ -52,11 +52,12 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
 
   const [loading, setLoading] = useState(false);
 
-  // Use canonical roles from supabase types
-  //const allowedRoles = Constants.public.Enums.roles_type;
-
   const handleCreateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCreateForm({ ...createForm, [e.target.name]: e.target.value });
+  };
+
+  const handleRoleSelect = (roleId: string) => {
+    setCreateForm((prev) => ({ ...prev, role_id: roleId }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,12 +124,19 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
             value={createForm.organization_id}
             onChange={handleCreateChange}
           />
-          <Input
-            name="role_id"
-            placeholder="Role ID"
-            value={createForm.role_id}
-            onChange={handleCreateChange}
-          />
+          <label className="font-semibold">Role</label>
+          <Select value={createForm.role_id} onValueChange={handleRoleSelect}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a role" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableRoles?.map((role) => (
+                <SelectItem key={role.id} value={role.id}>
+                  {role.role}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </>
       )}
       {(mode === "softDelete" ||

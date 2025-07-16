@@ -1,3 +1,5 @@
+import { Database } from "@common/database.types";
+
 export interface UserRoleWithDetails {
   id?: string;
   user_id: string;
@@ -58,4 +60,5 @@ export interface RolesState {
   error: string | null;
   adminError: string | null;
   errorContext: string | null;
+  availableRoles: Database["public"]["Tables"]["roles"]["Row"][];
 }

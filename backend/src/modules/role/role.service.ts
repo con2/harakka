@@ -116,6 +116,22 @@ export class RoleService {
   }
 
   /**
+   * Get all available roles from the roles table
+   */
+  async getAllRoles(req: AuthRequest) {
+    const { data, error } = await req.supabase
+      .from("roles")
+      .select("*")
+      .order("role", { ascending: true });
+
+    if (error) {
+      this.logger.error(`Failed to fetch roles: ${error.message}`);
+      throw new BadRequestException("Failed to fetch roles");
+    }
+    return data;
+  }
+
+  /**
    * Create a new user role assignment
    */
   async createUserRole(

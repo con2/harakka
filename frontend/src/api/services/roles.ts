@@ -6,6 +6,7 @@ import {
   UserOrganization,
   UserRoleWithDetails,
 } from "@/types/roles";
+import type { Database } from "@common/database.types";
 
 export const roleApi = {
   // Get current user's roles
@@ -46,6 +47,13 @@ export const roleApi = {
   // Get all user roles
   async getAllUserRoles(): Promise<UserRoleWithDetails[]> {
     return await api.get("/roles/all");
+  },
+
+  // Get all available roles for dropdowns
+  async getAvailableRoles(): Promise<
+    Database["public"]["Tables"]["roles"]["Row"][]
+  > {
+    return await api.get("/roles/list");
   },
 
   // Assign a role to a user in an organization
