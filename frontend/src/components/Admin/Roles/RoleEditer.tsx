@@ -53,7 +53,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
   const [loading, setLoading] = useState(false);
 
   // Use canonical roles from supabase types
-  const allowedRoles = Constants.public.Enums.roles_type;
+  //const allowedRoles = Constants.public.Enums.roles_type;
 
   const handleCreateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCreateForm({ ...createForm, [e.target.name]: e.target.value });
