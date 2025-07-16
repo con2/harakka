@@ -1435,6 +1435,10 @@ export type Database = {
           organization_slug: string
         }[]
       }
+      update_user_jwt_on_role_change_for_user: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       role_type:

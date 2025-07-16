@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   NotFoundException,
+  ForbiddenException,
   Req,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
@@ -25,12 +26,42 @@ export class UserController {
     return this.userService.getAllUsers(req);
   }
 
+  @Get("me")
+  async getCurrentUser(@Req() req: AuthRequest): Promise<UserProfile> {
+    const user = await this.userService.getCurrentUser(req);
+    if (!user) {
+      throw new NotFoundException("Current user not found");
+    }
+    // Return the user profile without sensitive data
+    return user;
+  }
+
   @Get(":id")
-  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
   async getUserById(
     @Param("id") id: string,
     @Req() req: AuthRequest,
   ): Promise<UserProfile> {
+    // Check if the user is accessing their own profile
+    if (req.user?.id === id) {
+      // Allow users to access their own profile
+      const user = await this.userService.getUserById(id, req);
+      if (!user) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+      return user;
+    }
+
+    // For accessing other users' profiles, check admin roles
+    const hasAdminRole = req.userRoles?.some((role) =>
+      ["admin", "super_admin", "superVera"].includes(role.role_name),
+    );
+
+    if (!hasAdminRole) {
+      throw new ForbiddenException(
+        "You do not have permission to access other users' profiles",
+      );
+    }
+
     const user = await this.userService.getUserById(id, req);
     if (!user) {
       throw new NotFoundException(
