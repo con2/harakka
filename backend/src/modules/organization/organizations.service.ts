@@ -6,7 +6,7 @@ import {
   OrganizationInsert,
   OrganizationUpdate,
 } from "./interfaces/organization.interface";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import slugify from "slugify";
 
@@ -44,7 +44,13 @@ export class OrganizationsService {
   // 2. get one
   async getOrganizationById(id: string): Promise<OrganizationRow | null> {
     const supabase = this.supabaseService.getServiceClient();
-    const { data, error } = await supabase
+    const {
+      data,
+      error,
+    }: {
+      data: OrganizationRow | null;
+      error: PostgrestError | null;
+    } = await supabase
       .from("organizations")
       .select("*")
       .eq("id", id)
@@ -57,7 +63,13 @@ export class OrganizationsService {
   // 3. get Org by slug
   async getOrganizationBySlug(slug: string): Promise<OrganizationRow | null> {
     const supabase = this.supabaseService.getServiceClient();
-    const { data, error } = await supabase
+    const {
+      data,
+      error,
+    }: {
+      data: OrganizationRow | null;
+      error: PostgrestError | null;
+    } = await supabase
       .from("organizations")
       .select("*")
       .eq("slug", slug)
@@ -75,13 +87,21 @@ export class OrganizationsService {
     const supabase = this.getClient(req);
     const slug = org.slug ?? slugify(org.name, { lower: true, strict: true });
 
-    const { data, error } = await supabase
+    const {
+      data,
+      error,
+    }: {
+      data: OrganizationRow | null;
+      error: PostgrestError | null;
+    } = await supabase
       .from("organizations")
       .insert({ ...org, slug, created_by: req.user.id })
       .select()
       .single();
 
     if (error) throw new Error(error.message);
+    if (!data) throw new Error("No organization returned after insert.");
+
     return data;
   }
 
@@ -92,7 +112,13 @@ export class OrganizationsService {
     org: OrganizationUpdate,
   ): Promise<OrganizationRow> {
     const supabase = this.getClient(req);
-    const { data, error } = await supabase
+    const {
+      data,
+      error,
+    }: {
+      data: OrganizationRow | null;
+      error: PostgrestError | null;
+    } = await supabase
       .from("organizations")
       .update({ ...org, updated_by: req.user.id })
       .eq("id", id)
@@ -100,6 +126,8 @@ export class OrganizationsService {
       .single();
 
     if (error) throw new Error(error.message);
+    if (!data) throw new Error("No organization returned after insert.");
+
     return data;
   }
 
