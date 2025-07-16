@@ -1,29 +1,24 @@
-import { Database } from "./database.types";
 import { ErrorContext } from "./common";
+import { Database, TagTranslations } from "./databaseGenerated";
 
+/** Runtime row shape for the `tags` table with typed `translations`. */
 export type Tag = Database["public"]["Tables"]["tags"]["Row"];
-export type TagUpdate = Database["public"]["Tables"]["tags"]["Update"];
-export type CreateTag = Database["public"]["Tables"]["tags"]["Insert"];
-/**
- * Tag translation content
- */
-/* export interface TagTranslation {
-  name: string;
-} */
-import type { Tables } from "./supabase.types";
 
-export type TagTranslation = { en: string; fi: string };
-type TagRowBase = Tables<"tags">;
-type TagRow = Omit<TagRowBase, "translations"> & {
-  translations: TagTranslation | null;
-};
-/**
- * Tag entity representing a label that can be assigned to items
- */
-// export interface Tag extends BaseEntity, Translatable<TagTranslation> {}
+/** Payload accepted by Supabase when updating an existing tag. */
+export type UpdateTagDto = Database["public"]["Tables"]["tags"]["Update"];
+
+/** Payload accepted by Supabase when inserting a new tag. */
+export type CreateTagDto = Database["public"]["Tables"]["tags"]["Insert"];
 
 /**
- * Tag state in Redux store
+ * A single‑language translation object (alias of one entry in
+ * {@link TagTranslations}).
+ */
+export type TagTranslation = TagTranslations["en"];
+
+/**
+ * Normalised slice of the Redux store that caches `Tag` records together
+ * with loading/error flags and pagination metadata.
  */
 export interface TagState {
   tags: Tag[];
@@ -37,27 +32,11 @@ export interface TagState {
   totalPages: number;
 }
 
-/**
- * Data required to create a new tag
- */
-export type CreateTagDto = Omit<TagRow, "id" | "created_at">;
-
-/**
- * Data for updating an existing tag
- */
-export type UpdateTagDto = Partial<
-  Omit<TagRow, "id" | "created_at" | "updated_at">
->;
-
-/**
- * Data for assigning tags to an item
- */
+/** Association of one item with multiple tag IDs. */
 export interface TagAssignment {
   itemId: string;
   tagIds: string[];
 }
 
-/**
- * Filter options for tag assignment status
- */
+/** UI filter values for tag‑assignment status. */
 export type TagAssignmentFilter = "all" | "assigned" | "unassigned";
