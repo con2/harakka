@@ -8,6 +8,7 @@ import {
 } from "./interfaces/organization.interface";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import slugify from "slugify";
 
 @Injectable()
 export class OrganizationsService {
@@ -59,9 +60,11 @@ export class OrganizationsService {
     org: OrganizationInsert,
   ): Promise<OrganizationRow> {
     const supabase = this.getClient(req);
+    const slug = org.slug ?? slugify(org.name, { lower: true, strict: true });
+
     const { data, error } = await supabase
       .from("organizations")
-      .insert({ ...org, created_by: req.user.id })
+      .insert({ ...org, slug, created_by: req.user.id })
       .select()
       .single();
 
@@ -87,7 +90,7 @@ export class OrganizationsService {
     return data;
   }
 
-  // delete
+  // 5. delete
   async deleteOrganization(
     req: AuthRequest,
     id: string,
@@ -101,7 +104,7 @@ export class OrganizationsService {
     if (error) throw new Error(error.message);
     return { success: true, id };
   }
-
+  // 6. activate or deactivate orgs
   async toggleActivation(
     req: AuthRequest,
     id: string,
@@ -115,5 +118,18 @@ export class OrganizationsService {
 
     if (error) throw new Error(error.message);
     return { success: true, id, is_active };
+  }
+
+  // 7. get Org by slug
+  async getOrganizationBySlug(slug: string): Promise<OrganizationRow | null> {
+    const supabase = this.supabaseService.getServiceClient();
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    return data;
   }
 }

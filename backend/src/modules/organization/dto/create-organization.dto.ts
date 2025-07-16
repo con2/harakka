@@ -5,7 +5,7 @@ export class CreateOrganizationDto {
   name: string;
 
   @IsString()
-  slug: string;
+  slug?: string;
 
   @IsOptional()
   @IsString()

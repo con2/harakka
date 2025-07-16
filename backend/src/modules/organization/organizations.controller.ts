@@ -10,12 +10,14 @@ import {
   Query,
   SetMetadata,
   Req,
+  ConflictException,
 } from "@nestjs/common";
 import { OrganizationsService } from "./organizations.service";
 import { Roles } from "src/decorators/roles.decorator";
 import { CreateOrganizationDto } from "./dto/create-organization.dto";
 import { UpdateOrganizationDto } from "./dto/update-organization.dto";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
+import slugify from "slugify";
 
 export const Public = () => SetMetadata("isPublic", true); // inserted afterwards
 
@@ -54,10 +56,22 @@ export class OrganizationsController {
   @Post()
   @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
   async createOrganization(
-    @Req() req: AuthRequest, // do I need this when I do it in service?
+    @Req() req: AuthRequest,
     @Body() org: CreateOrganizationDto,
   ) {
-    return this.organizationService.createOrganization(req, org); // mehr ERROR -- auch in den folgenden methoden??
+    const slugified =
+      org.slug ?? slugify(org.name, { lower: true, strict: true });
+
+    const exists =
+      await this.organizationService.getOrganizationBySlug(slugified);
+    if (exists) {
+      throw new ConflictException(`Slug "${slugified}" is already in use`);
+    }
+
+    return this.organizationService.createOrganization(req, {
+      ...org,
+      slug: slugified,
+    }); // mehr ERROR -- auch in den folgenden methoden??
   }
 
   @Put(":organizationId")
