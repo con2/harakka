@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Constants } from "@common/supabase.types";
+//import { Constants } from "@common/supabase.types";
 
 interface RoleEditerProps {
   role?: UserRoleWithDetails;
