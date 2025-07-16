@@ -73,8 +73,17 @@ export class OrganizationsController {
     @Req() req: AuthRequest,
     @Body() org: CreateOrganizationDto,
   ) {
+    // Type not recognized by TS
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const slugified =
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       org.slug ?? slugify(org.name, { lower: true, strict: true }); // need to create it here because the field is required
+
+    if (typeof slugified !== "string") {
+      throw new BadRequestException(
+        "Failed to generate valid slug from organization name",
+      );
+    }
 
     const exists =
       await this.organizationService.getOrganizationBySlug(slugified);
