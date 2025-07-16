@@ -31,6 +31,7 @@ import { RoleController } from "../role/role.controller";
 import { AuthModule } from "../auth/auth.module";
 import { JwtModule } from "../jwt/jwt.module";
 import { RolesGuard } from "src/guards/roles.guard";
+import { UserBanningModule } from "../user-banning/user-banning.module";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -64,6 +65,7 @@ dotenvExpand.expand(env);
     BookingItemsModule,
     RoleModule,
     JwtModule,
+    UserBanningModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: "APP_GUARD", useClass: RolesGuard }],
