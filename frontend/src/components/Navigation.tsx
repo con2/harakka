@@ -24,7 +24,12 @@ export const Navigation = () => {
   const { signOut } = useAuth();
   // get user role information from the hook
   const { hasAnyRole } = useRoles();
-  const isAnyTypeOfAdmin = hasAnyRole(["admin", "superVera"]);
+  const isAnyTypeOfAdmin = hasAnyRole([
+    "admin",
+    "superVera",
+    "main_admin",
+    "super_admin",
+  ]);
   const selectedUser = useAppSelector(selectSelectedUser);
   const cartItemsCount = useAppSelector(selectCartItemsCount);
   const location = useLocation();
