@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
-import { queryConstructor } from "../../utils/queryconstructor.utils";
 import {
   OrganizationRow,
   OrganizationInsert,
@@ -8,6 +7,8 @@ import {
 } from "./interfaces/organization.interface";
 import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
+import { ApiResponse } from "../../../../common/response.types";
 import slugify from "slugify";
 
 @Injectable()
@@ -24,21 +25,29 @@ export class OrganizationsService {
     limit: number,
     ascending: boolean,
     order?: string,
-  ) {
+  ): Promise<ApiResponse<OrganizationRow>> {
     const supabase = this.supabaseService.getServiceClient();
+    const { from, to } = getPaginationRange(page, limit);
 
-    const { data, error } = await queryConstructor(
-      supabase,
-      "organizations",
-      "*",
-      page,
-      limit,
-      ascending,
-      order,
-    );
+    const query = supabase
+      .from("organizations")
+      .select("*", { count: "exact" })
+      .range(from, to);
+
+    if (order) {
+      query.order(order, { ascending: ascending });
+    }
+
+    const result = await query;
+    const { error, count } = result;
 
     if (error) throw new Error(error.message);
-    return data;
+
+    const metadata = getPaginationMeta(count, page, limit);
+    return {
+      ...result,
+      metadata,
+    };
   }
 
   // 2. get one
@@ -85,6 +94,8 @@ export class OrganizationsService {
     org: OrganizationInsert,
   ): Promise<OrganizationRow> {
     const supabase = this.getClient(req);
+    // Type not recognized by TS
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const slug = org.slug ?? slugify(org.name, { lower: true, strict: true });
 
     const {
