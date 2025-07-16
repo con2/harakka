@@ -245,9 +245,12 @@ const rolesSlice = createSlice({
       })
       .addCase(deleteUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
-        state.allUserRoles = state.allUserRoles.filter(
-          (role) => role.id !== action.payload,
+        const idx = state.allUserRoles.findIndex(
+          (role) => role.id === action.payload,
         );
+        if (idx !== -1) {
+          state.allUserRoles[idx].is_active = false;
+        }
       })
       .addCase(deleteUserRole.rejected, (state, action) => {
         state.adminLoading = false;

@@ -70,6 +70,10 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 15;
 
+  const [mode, setMode] = useState<
+    "create" | "softDelete" | "restoreRole" | "hardDelete"
+  >("create");
+
   // Filtered assignments for table
   const filteredAssignments = useMemo(() => {
     return allUserRoles.filter(
@@ -84,9 +88,13 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
               .includes(filterOrg.toLowerCase()))) &&
         (!filterRole ||
           (r.role_name &&
-            r.role_name.toLowerCase().includes(filterRole.toLowerCase()))),
+            r.role_name.toLowerCase().includes(filterRole.toLowerCase()))) &&
+        // Only show inactive assignments in restore mode
+        (mode !== "restoreRole" || r.is_active === false) &&
+        // Only show active assignments in softDelete mode
+        (mode !== "softDelete" || r.is_active === true),
     );
-  }, [allUserRoles, filterUser, filterOrg, filterRole]);
+  }, [allUserRoles, filterUser, filterOrg, filterRole, mode]);
 
   // Paginate filtered assignments
   const paginatedAssignments = useMemo(() => {
@@ -95,10 +103,6 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
   }, [filteredAssignments, pageIndex, pageSize]);
 
   const totalPages = Math.ceil(filteredAssignments.length / pageSize);
-
-  const [mode, setMode] = useState<
-    "create" | "softDelete" | "restoreRole" | "hardDelete"
-  >("create");
 
   const [loading, setLoading] = useState(false);
 
@@ -117,17 +121,22 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
       if (mode === "create") {
         await createRole(createForm);
         toast.success("Role created");
+        await new Promise((res) => setTimeout(res, 300));
+        await refreshAllUserRoles();
+        setCreateForm({ user_id: "", organization_id: "", role_id: "" });
       } else if (mode === "softDelete" && assignmentId) {
         await deleteRole(assignmentId);
         toast.success("Role deactivated");
+        await refreshAllUserRoles();
       } else if (mode === "restoreRole" && assignmentId) {
         await updateRole(assignmentId, { is_active: true });
         toast.success("Role restored");
+        await refreshAllUserRoles();
       } else if (mode === "hardDelete" && assignmentId) {
         await permanentDeleteRole(assignmentId);
         toast.success("Role permanently deleted");
+        await refreshAllUserRoles();
       }
-      await refreshAllUserRoles();
       onClose?.();
     } catch {
       toast.error("Operation failed");
@@ -169,15 +178,39 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
         ),
     },
     {
-      id: "select",
-      header: "Select",
+      id: "action",
+      header: "Action",
       cell: ({ row }) => (
         <Button
           size="sm"
-          variant={assignmentId === row.original.id ? "default" : "outline"}
-          onClick={() => setAssignmentId(row.original.id || "")}
+          type="button"
+          onClick={async () => {
+            setLoading(true);
+            try {
+              setAssignmentId(row.original.id!); // Keep assignmentId up to date
+              if (mode === "softDelete") {
+                await deleteRole(row.original.id!);
+                toast.success("Role deactivated");
+              } else if (mode === "restoreRole") {
+                await updateRole(row.original.id!, { is_active: true });
+                toast.success("Role restored");
+              } else if (mode === "hardDelete") {
+                await permanentDeleteRole(row.original.id!);
+                toast.success("Role permanently deleted");
+              }
+              await refreshAllUserRoles();
+              onClose?.();
+            } catch {
+              toast.error("Operation failed");
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={loading}
         >
-          {assignmentId === row.original.id ? "Selected" : "Select"}
+          {mode === "softDelete" && "Soft Delete"}
+          {mode === "restoreRole" && "Restore"}
+          {mode === "hardDelete" && "Hard Delete"}
         </Button>
       ),
     },
@@ -249,6 +282,16 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
               ))}
             </SelectContent>
           </Select>
+          <div className="flex gap-2 flex-wrap mt-4">
+            <Button type="submit" disabled={loading}>
+              Create
+            </Button>
+            {onClose && (
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+            )}
+          </div>
         </>
       )}
       {(mode === "softDelete" ||
@@ -308,27 +351,15 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
             pageCount={totalPages}
             onPageChange={setPageIndex}
           />
-          {assignmentId && (
-            <div className="mt-2 text-sm text-muted-foreground">
-              Selected assignment ID:{" "}
-              <span className="font-mono">{assignmentId}</span>
+          {onClose && (
+            <div className="flex gap-2 flex-wrap mt-4">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
             </div>
           )}
         </>
       )}
-      <div className="flex gap-2 flex-wrap">
-        <Button type="submit" disabled={loading}>
-          {mode === "create" && "Create"}
-          {mode === "softDelete" && "Confirm Soft Delete"}
-          {mode === "hardDelete" && "Confirm Hard Delete"}
-          {mode === "restoreRole" && "Restore"}
-        </Button>
-        {onClose && (
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-        )}
-      </div>
     </form>
   );
 };
