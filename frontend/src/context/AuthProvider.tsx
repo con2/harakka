@@ -70,7 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 5. Clear any cached authentication state
       setSession(null);
       setUser(null);
-      console.log("Complete logout: JWT, Redux store, and cached data cleared");
     } catch (error) {
       console.error("Error during logout:", error);
       // Even if there's an error, still clear local data and navigate
