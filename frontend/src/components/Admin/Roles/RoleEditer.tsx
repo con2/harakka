@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useRoles } from "@/hooks/useRoles";
-import { UserRoleWithDetails } from "@/types/roles";
+import { CreateUserRoleDto, UserRoleWithDetails } from "@/types/roles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Constants } from "@common/supabase.types";
 
 interface RoleEditerProps {
   role?: UserRoleWithDetails;
@@ -47,9 +48,12 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
 
   const [mode, setMode] = useState<
     "create" | "softDelete" | "restoreRole" | "hardDelete"
-  >(isEdit ? "update" : "create");
+  >("create");
 
   const [loading, setLoading] = useState(false);
+
+  // Use canonical roles from supabase types
+  const allowedRoles = Constants.public.Enums.roles_type;
 
   const handleCreateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCreateForm({ ...createForm, [e.target.name]: e.target.value });
