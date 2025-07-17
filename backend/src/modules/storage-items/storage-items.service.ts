@@ -246,7 +246,7 @@ export class StorageItemsService {
     // Delete any found images
     if (images && images.length > 0) {
       const paths = images.map((i) => i.storage_path);
-      await supabase.storage.from("public/item-images").remove(paths);
+      await supabase.storage.from("item-images").remove(paths);
 
       // Then delete the image records
       const { error: deleteImagesError } = await supabase
