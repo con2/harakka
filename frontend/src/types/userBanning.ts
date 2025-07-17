@@ -70,7 +70,7 @@ export interface UserBanningState {
   error: string | null;
   banHistory: UserBanHistoryDto[];
   banStatuses: UserBanHistoryDto[];
-  currentUserBanStatus: UserBanStatusCheck | null;
+  userBanStatuses: Record<string, UserBanStatusCheck>; // userId -> ban status
   lastOperation: BanOperationResult | null;
 }
 

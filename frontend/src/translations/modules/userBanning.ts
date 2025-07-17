@@ -88,6 +88,14 @@ export const userBanning = {
       fi: "Estä käyttäjä",
       en: "Ban User",
     },
+    unban: {
+      fi: "Poista esto",
+      en: "Unban User",
+    },
+    viewHistory: {
+      fi: "Näytä historia",
+      en: "View History",
+    },
     cancel: {
       fi: "Peruuta",
       en: "Cancel",

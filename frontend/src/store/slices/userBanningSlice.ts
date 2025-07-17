@@ -15,7 +15,7 @@ const initialState: UserBanningState = {
   error: null,
   banHistory: [],
   banStatuses: [],
-  currentUserBanStatus: null,
+  userBanStatuses: {},
   lastOperation: null,
 };
 
@@ -221,7 +221,8 @@ const userBanningSlice = createSlice({
       })
       .addCase(checkUserBanStatus.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentUserBanStatus = action.payload;
+        const userId = action.meta.arg;
+        state.userBanStatuses[userId] = action.payload;
       })
       .addCase(checkUserBanStatus.rejected, (state, action) => {
         state.loading = false;
@@ -241,8 +242,8 @@ export const selectBanHistory = (state: RootState) =>
   state.userBanning.banHistory;
 export const selectBanStatuses = (state: RootState) =>
   state.userBanning.banStatuses;
-export const selectCurrentUserBanStatus = (state: RootState) =>
-  state.userBanning.currentUserBanStatus;
+export const selectCurrentUserBanStatus = (state: RootState, userId: string) =>
+  state.userBanning.userBanStatuses[userId] || null;
 export const selectLastOperation = (state: RootState) =>
   state.userBanning.lastOperation;
 
