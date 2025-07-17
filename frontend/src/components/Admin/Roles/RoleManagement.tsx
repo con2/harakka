@@ -34,6 +34,7 @@ export const RoleManagement: React.FC = () => {
   } = useRoles();
 
   // Define admin status solely from new user roles (without old system)
+  console.log(currentUserRoles);
   const isAdmin =
     currentUserRoles?.some(
       (role) =>
@@ -343,9 +344,9 @@ export const RoleManagement: React.FC = () => {
                         Inactive
                       </Badge>
                     )}
-                    {role.created_at && (
+                    {role.assigned_at && (
                       <span className="text-xs text-muted-foreground">
-                        {new Date(role.created_at).toLocaleDateString()}
+                        {new Date(role.assigned_at).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -414,9 +415,9 @@ export const RoleManagement: React.FC = () => {
                           Inactive
                         </Badge>
                       )}
-                      {role.created_at && (
+                      {role.assigned_at && (
                         <span className="text-xs text-muted-foreground">
-                          {new Date(role.created_at).toLocaleDateString()}
+                          {new Date(role.assigned_at).toLocaleDateString()}
                         </span>
                       )}
                     </div>

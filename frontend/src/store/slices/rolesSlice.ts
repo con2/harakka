@@ -5,14 +5,16 @@ import {
   CreateUserRoleDto,
   UpdateUserRoleDto,
   RolesState,
+  UserOrganization,
 } from "@/types/roles";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 
 const initialState: RolesState = {
-  currentUserRoles: [],
-  currentUserOrganizations: [],
+  currentUserRoles: [] as ViewUserRolesWithDetails[],
+  currentUserOrganizations: [] as UserOrganization[],
   isSuperVera: false,
-  allUserRoles: [],
+  allUserRoles: [] as ViewUserRolesWithDetails[],
   loading: false,
   adminLoading: false,
   error: null,
@@ -162,7 +164,8 @@ const rolesSlice = createSlice({
       })
       .addCase(fetchCurrentUserRoles.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentUserRoles = action.payload.roles;
+        state.currentUserRoles = action.payload
+          .roles as ViewUserRolesWithDetails[];
         state.currentUserOrganizations = action.payload.organizations;
         state.isSuperVera = action.payload.isSuperVera;
       })
@@ -179,7 +182,7 @@ const rolesSlice = createSlice({
       })
       .addCase(fetchAllUserRoles.fulfilled, (state, action) => {
         state.adminLoading = false;
-        state.allUserRoles = action.payload;
+        state.allUserRoles = action.payload as ViewUserRolesWithDetails[];
       })
       .addCase(fetchAllUserRoles.rejected, (state, action) => {
         state.adminLoading = false;
@@ -194,7 +197,7 @@ const rolesSlice = createSlice({
       })
       .addCase(createUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
-        state.allUserRoles.push(action.payload);
+        state.allUserRoles.push(action.payload as ViewUserRolesWithDetails);
       })
       .addCase(createUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -229,7 +232,8 @@ const rolesSlice = createSlice({
           (role) => role.id === action.payload.id,
         );
         if (index !== -1) {
-          state.allUserRoles[index] = action.payload;
+          state.allUserRoles[index] =
+            action.payload as ViewUserRolesWithDetails;
         }
       })
       .addCase(updateUserRole.rejected, (state, action) => {
@@ -331,9 +335,9 @@ export const selectIsAdmin = (state: RootState) => {
 export const selectUserRolesByOrganization = (
   state: RootState,
   organizationId: string,
-) => {
+): ViewUserRolesWithDetails[] => {
   return state.roles.currentUserRoles.filter(
-    (role) => role.organization_id === organizationId,
+    (role: ViewUserRolesWithDetails) => role.organization_id === organizationId,
   );
 };
 

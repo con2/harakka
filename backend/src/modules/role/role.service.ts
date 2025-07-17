@@ -8,10 +8,7 @@ import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 
 import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
 import { JwtService } from "../jwt/jwt.service";
-import {
-  UserOrganizationRole,
-  ViewUserRolesWithDetails,
-} from "@common/role.types";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 
 @Injectable()
 export class RoleService {
@@ -40,7 +37,7 @@ export class RoleService {
     organizationId?: string,
   ): boolean {
     return req.userRoles.some((role) => {
-      const roleMatch = role.role_name === roleName;
+      const roleMatch = role.role_name !== null && role.role_name === roleName;
       const orgMatch = organizationId
         ? role.organization_id === organizationId
         : true;
@@ -65,7 +62,9 @@ export class RoleService {
    * Check if the current user is superVera (global admin)
    */
   isSuperVera(req: AuthRequest): boolean {
-    return req.userRoles.some((role) => role.role_name === "superVera");
+    return req.userRoles.some(
+      (role) => role.role_name !== null && role.role_name === "superVera",
+    );
   }
 
   /**
@@ -76,31 +75,32 @@ export class RoleService {
     organization_name: string;
     roles: string[];
   }> {
-    const orgMap = new Map<
-      string,
-      {
-        organization_id: string;
-        organization_name: string;
-        roles: string[];
-      }
-    >();
-
-    req.userRoles.forEach((role) => {
-      const orgId = role.organization_id;
-      if (!orgMap.has(orgId)) {
-        orgMap.set(orgId, {
-          organization_id: orgId,
-          organization_name: role.organization_name,
-          roles: [],
-        });
-      }
-      const org = orgMap.get(orgId);
-      if (org) {
-        org.roles.push(role.role_name);
-      }
-    });
-
-    return Array.from(orgMap.values());
+    return Object.values(
+      req.userRoles.reduce(
+        (acc, role) => {
+          const orgId = role.organization_id;
+          if (!orgId) return acc; // skip if orgId is null/undefined
+          if (!acc[orgId]) {
+            acc[orgId] = {
+              organization_id: orgId,
+              organization_name:
+                role.organization_name ?? "Unknown Organization", // fallback for null
+              roles: [],
+            };
+          }
+          acc[orgId].roles.push(role.role_name ?? "Unknown role");
+          return acc;
+        },
+        {} as Record<
+          string,
+          {
+            organization_id: string;
+            organization_name: string;
+            roles: string[];
+          }
+        >,
+      ),
+    );
   }
 
   /**
@@ -109,7 +109,7 @@ export class RoleService {
   getCurrentUserRolesInOrganization(
     organizationId: string,
     req: AuthRequest,
-  ): UserRoleWithDetails[] {
+  ): ViewUserRolesWithDetails[] {
     return req.userRoles.filter(
       (role) => role.organization_id === organizationId,
     );
@@ -213,7 +213,7 @@ export class RoleService {
     }
 
     // Update the role assignment
-    const { data, error } = await req.supabase
+    const { data } = await req.supabase
       .from("user_organization_roles")
       .update({
         role_id: updateRoleDto.role_id,

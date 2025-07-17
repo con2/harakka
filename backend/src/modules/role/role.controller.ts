@@ -10,10 +10,7 @@ import {
 } from "@nestjs/common";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { RoleService } from "./role.service";
-import {
-  UserOrganizationRole,
-  ViewUserRolesWithDetails,
-} from "@common/role.types";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
 
 @Controller("roles")
