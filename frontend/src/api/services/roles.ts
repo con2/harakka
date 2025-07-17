@@ -4,13 +4,12 @@ import {
   RoleCheckResponse,
   UpdateUserRoleDto,
   UserOrganization,
-  UserRoleWithDetails,
 } from "@/types/roles";
 import type { Database } from "@common/database.types";
 
 export const roleApi = {
   // Get current user's roles
-  async getCurrentUserRoles(): Promise<UserRoleWithDetails[]> {
+  async getCurrentUserRoles(): Promise<[]> {
     return await api.get("/roles/current");
   },
 

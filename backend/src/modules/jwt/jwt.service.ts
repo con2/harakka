@@ -2,8 +2,8 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
 import { verify, TokenExpiredError } from "jsonwebtoken";
-import { UserRoleWithDetails } from "../role/interfaces/role.interface";
 import { JWTPayload, JWTRole } from "./interfaces/jwt.interface";
+import { ViewUserRolesWithDetails } from "../../../../common/role.interface";
 
 @Injectable()
 export class JwtService {
@@ -38,7 +38,7 @@ export class JwtService {
    */
   async updateJWTWithRoles(
     userId: string,
-    userRoles: UserRoleWithDetails[],
+    userRoles: ViewUserRolesWithDetails[],
   ): Promise<void> {
     const now = Date.now();
     const lastUpdate = this.jwtUpdateCache.get(userId);
@@ -60,7 +60,7 @@ export class JwtService {
    */
   async forceUpdateJWTWithRoles(
     userId: string,
-    userRoles: UserRoleWithDetails[],
+    userRoles: ViewUserRolesWithDetails[],
   ): Promise<void> {
     await this.performJWTUpdate(userId, userRoles, true);
   }
@@ -84,7 +84,10 @@ export class JwtService {
   /**
    * Extract roles from JWT token
    */
-  extractRolesFromToken(token: string, userId: string): UserRoleWithDetails[] {
+  extractRolesFromToken(
+    token: string,
+    userId: string,
+  ): ViewUserRolesWithDetails[] {
     try {
       const decoded = this.verifyToken(token);
 
@@ -151,7 +154,7 @@ export class JwtService {
    */
   private async performJWTUpdate(
     userId: string,
-    userRoles: UserRoleWithDetails[],
+    userRoles: ViewUserRolesWithDetails[],
     isForced: boolean,
   ): Promise<void> {
     try {

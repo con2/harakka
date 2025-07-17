@@ -806,7 +806,7 @@ export type Database = {
           image_url: string
           is_active: boolean | null
           item_id: string
-          storage_path: string | null
+          storage_path: string
         }
         Insert: {
           alt_text?: string | null
@@ -817,7 +817,7 @@ export type Database = {
           image_url: string
           is_active?: boolean | null
           item_id: string
-          storage_path?: string | null
+          storage_path: string
         }
         Update: {
           alt_text?: string | null
@@ -828,7 +828,7 @@ export type Database = {
           image_url?: string
           is_active?: boolean | null
           item_id?: string
-          storage_path?: string | null
+          storage_path?: string
         }
         Relationships: [
           {
@@ -1246,7 +1246,7 @@ export type Database = {
             columns: ["role_assignment_id"]
             isOneToOne: false
             referencedRelation: "view_user_roles_with_details"
-            referencedColumns: ["assignment_id"]
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_ban_history_user_id_fkey"
@@ -1478,8 +1478,8 @@ export type Database = {
       view_user_roles_with_details: {
         Row: {
           assigned_at: string | null
-          assignment_id: string | null
           assignment_updated_at: string | null
+          id: string | null
           is_active: boolean | null
           organization_id: string | null
           organization_is_active: boolean | null
