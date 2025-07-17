@@ -30,7 +30,7 @@ const TagDetail = ({ tag }: { tag: Tag }) => {
     <div className="border rounded-md p-4 mt-6 shadow-sm">
       <h2 className="text-xl font-semibold mb-2">
         {t.tagDetail.title[lang]}{" "}
-        {tag.translations.fi?.name ?? tag.translations.en?.name}
+        {tag.translations?.fi?.name ?? tag.translations?.en?.name}
       </h2>
 
       {loading ? (
