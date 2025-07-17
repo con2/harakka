@@ -41,21 +41,20 @@ export class ItemImagesService {
       contentType: contentType,
     });
 
-    // 1. Upload to S3 storage
-    let imageUrl: string;
-    try {
-      imageUrl = await this.s3Service.uploadFile(
-        fileName,
-        file.buffer,
-        contentType,
-      );
-    } catch (error: unknown) {
-      this.logger.error("S3 storage upload error:", error);
-      if (error instanceof Error) {
-        throw new Error(`Storage upload failed: ${error.message}`);
-      }
-      throw new Error("Storage upload failed");
+    // 1. Upload to supabase storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(`item-images`)
+      .upload(fileName, file.buffer, {
+        contentType: "image/jpeg",
+      });
+
+    if (uploadError || !uploadData) {
+      const message =
+        uploadError instanceof Error ? uploadError.message : "Upload failed";
+      throw new Error(message);
     }
+
+    const imageUrl = `https://${process.env.SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/item-images/${uploadData.path}`;
 
     // 2. Create database record
     try {
@@ -68,21 +67,23 @@ export class ItemImagesService {
           display_order: metadata.display_order,
           alt_text: metadata.alt_text || "",
           is_active: true,
-          storage_path: fileName, // Save the S3 path for future reference
+          storage_path: uploadData.path,
         })
         .select()
         .single();
 
       if (dbError) {
-        // Cleanup S3 on database failure
-        await this.s3Service.deleteFile(fileName);
+        await supabase.storage
+          .from("item-images")
+          .remove([uploadData.fullPath]);
         throw new Error(`Database record creation failed: ${dbError.message}`);
       }
 
       return imageRecord;
     } catch (error) {
-      // Cleanup S3 on any exception
-      await this.s3Service.deleteFile(fileName);
+      await supabase.storage
+        .from("public/item-images")
+        .remove([uploadData.fullPath]);
       throw error;
     }
   }
@@ -121,15 +122,17 @@ export class ItemImagesService {
       .eq("id", imageId)
       .single();
 
-    if (fetchError || !image) {
+    if (fetchError || !image || !image.storage_path) {
       const message =
         fetchError instanceof Error ? fetchError.message : "Image not found";
       throw new Error(message);
     }
 
-    // 2. Extract filepath from database
-    const storagePath =
-      image.storage_path || this.extractPathFromUrl(image.image_url);
+    // 2. Delete from storage
+    const { error: removeErr } = await supabase.storage
+      .from("item-images")
+      .remove([image.storage_path]);
+    if (removeErr) throw new Error("Could not remove from storage");
 
     // 3. Delete from S3
     await this.s3Service.deleteFile(storagePath);
