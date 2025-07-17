@@ -12,7 +12,7 @@ import {
 import { S3Service } from "../supabase/s3-supabase.service";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
-import { TablesUpdate } from "src/types/supabase.types";
+import { TablesUpdate } from "@common/supabase.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
 import { ApiSingleResponse } from "../../../../common/response.types"; // Import ApiSingleResponse for type safety

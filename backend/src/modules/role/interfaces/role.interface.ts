@@ -1,4 +1,4 @@
-import { Database } from "src/types/supabase.types";
+import { Database } from "@common/supabase.types";
 
 /**
  * @description Proper Supabase types for role-related entities.

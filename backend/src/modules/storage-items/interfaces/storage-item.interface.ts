@@ -1,5 +1,5 @@
 import type { TagRow } from "../../tag/interfaces/tag.interface";
-import { Database } from "src/types/supabase.types";
+import { Database } from "@common/supabase.types";
 
 /* ── Supabase base rows ──────────────────────────────────────────────── */
 export type StorageItemRow =
