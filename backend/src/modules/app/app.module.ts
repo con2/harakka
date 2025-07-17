@@ -33,6 +33,8 @@ import { JwtModule } from "../jwt/jwt.module";
 import { RolesGuard } from "src/guards/roles.guard";
 import { OrganizationsModule } from "../organization/organizations.module";
 import { OrganizationsController } from "../organization/organizations.controller";
+import { Org_ItemsModule } from "../org_items/org_items.module";
+import { OrgItemsController } from "../org_items/org_items.controller";
 import { UserBanningModule } from "../user-banning/user-banning.module";
 
 // Load and expand environment variables before NestJS modules initialize
@@ -68,6 +70,7 @@ dotenvExpand.expand(env);
     RoleModule,
     JwtModule,
     OrganizationsModule,
+    Org_ItemsModule,
     UserBanningModule,
   ],
   controllers: [AppController],
@@ -104,6 +107,10 @@ export class AppModule implements NestModule {
 
         // Public storage-item availability endpoints (for checking item availability)
         { path: "storage-items/availability/(.*)", method: RequestMethod.GET },
+
+        // Organization_items public endpoints
+        { path: "org-items", method: RequestMethod.GET },
+        { path: "org-items/(.*)", method: RequestMethod.GET },
       )
       .forRoutes(
         // Protected controllers
@@ -113,6 +120,7 @@ export class AppModule implements NestModule {
         LogsController,
         RoleController,
         OrganizationsController,
+        OrgItemsController,
 
         // Protected HTTP methods (all routes except excluded ones)
         { path: "*", method: RequestMethod.POST },
