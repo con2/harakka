@@ -18,6 +18,8 @@ import {
   UnbanDto,
   UserBanHistoryDto,
   UserBanStatusDto,
+  BanOperationResult,
+  UserBanStatusCheck,
 } from "./dto/user-banning.dto";
 import { RolesGuard } from "../../guards/roles.guard";
 import { Roles } from "../../decorators/roles.decorator";
@@ -37,7 +39,7 @@ export class UserBanningController {
   async banForRole(
     @Body(ValidationPipe) banForRoleDto: BanForRoleDto,
     @Req() req: AuthRequest,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<BanOperationResult> {
     return this.userBanningService.banForRole(banForRoleDto, req);
   }
 
@@ -50,7 +52,7 @@ export class UserBanningController {
   async banForOrg(
     @Body(ValidationPipe) banForOrgDto: BanForOrgDto,
     @Req() req: AuthRequest,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<BanOperationResult> {
     return this.userBanningService.banForOrg(banForOrgDto, req);
   }
 
@@ -63,7 +65,7 @@ export class UserBanningController {
   async banForApp(
     @Body(ValidationPipe) banForAppDto: BanForAppDto,
     @Req() req: AuthRequest,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<BanOperationResult> {
     return this.userBanningService.banForApp(banForAppDto, req);
   }
 
@@ -76,7 +78,7 @@ export class UserBanningController {
   async unbanUser(
     @Body(ValidationPipe) unbanDto: UnbanDto,
     @Req() req: AuthRequest,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<BanOperationResult> {
     return this.userBanningService.unbanUser(unbanDto, req);
   }
 
@@ -111,11 +113,7 @@ export class UserBanningController {
   async checkUserBanStatus(
     @Param("userId") userId: string,
     @Req() req: AuthRequest,
-  ): Promise<{
-    isBannedForApp: boolean;
-    bannedOrganizations: string[];
-    bannedRoles: Array<{ organizationId: string; roleId: string }>;
-  }> {
+  ): Promise<UserBanStatusCheck> {
     return this.userBanningService.checkUserBanStatus(userId, req);
   }
 }

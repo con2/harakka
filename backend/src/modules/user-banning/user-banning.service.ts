@@ -13,9 +13,11 @@ import {
   UnbanDto,
   UserBanHistoryDto,
   UserBanStatusDto,
+  BanOperationResult,
+  UserBanStatusCheck,
 } from "./dto/user-banning.dto";
 import { AuthRequest } from "../../middleware/interfaces/auth-request.interface";
-import { Json } from "../../types/supabase.types";
+import { Json } from "@common/supabase.types";
 
 @Injectable()
 export class UserBanningService {
@@ -29,7 +31,7 @@ export class UserBanningService {
   async banForRole(
     banForRoleDto: BanForRoleDto,
     req: AuthRequest,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<BanOperationResult> {
     const {
       userId,
       organizationId,
@@ -121,7 +123,7 @@ export class UserBanningService {
   async banForOrg(
     banForOrgDto: BanForOrgDto,
     req: AuthRequest,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<BanOperationResult> {
     const {
       userId,
       organizationId,
@@ -220,7 +222,7 @@ export class UserBanningService {
   async banForApp(
     banForAppDto: BanForAppDto,
     req: AuthRequest,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<BanOperationResult> {
     const { userId, banReason, isPermanent = false, notes } = banForAppDto;
     const bannedByUserId = req.user.id;
 
@@ -307,7 +309,7 @@ export class UserBanningService {
   async unbanUser(
     unbanDto: UnbanDto,
     req: AuthRequest,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<BanOperationResult> {
     // Validate permissions
     await this.validateBanPermissions(unbanDto.userId, req);
 
@@ -353,7 +355,7 @@ export class UserBanningService {
         .insert({
           user_id: unbanDto.userId,
           banned_by: req.user.id,
-          ban_type: unbanDto.banType as string,
+          ban_type: unbanDto.banType,
           action: "unbanned",
           organization_id: unbanDto.organizationId,
           unbanned_at: new Date().toISOString(),
@@ -537,11 +539,7 @@ export class UserBanningService {
   async checkUserBanStatus(
     userId: string,
     req: AuthRequest,
-  ): Promise<{
-    isBannedForApp: boolean;
-    bannedOrganizations: string[];
-    bannedRoles: Array<{ organizationId: string; roleId: string }>;
-  }> {
+  ): Promise<UserBanStatusCheck> {
     // Get all role assignments for the user
     const { data: allRoles, error: allRolesError } = await req.supabase
       .from("user_organization_roles")
