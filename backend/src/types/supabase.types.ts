@@ -256,6 +256,13 @@ export type Database = {
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invoices_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "view_user_ban_status"
+            referencedColumns: ["id"]
+          },
         ]
       }
       organization_items: {
@@ -1156,6 +1163,107 @@ export type Database = {
         }
         Relationships: []
       }
+      user_ban_history: {
+        Row: {
+          action: string
+          affected_assignments: Json | null
+          ban_reason: string | null
+          ban_type: string
+          banned_at: string | null
+          banned_by: string
+          created_at: string | null
+          id: string
+          is_permanent: boolean | null
+          notes: string | null
+          organization_id: string | null
+          role_assignment_id: string | null
+          unbanned_at: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          affected_assignments?: Json | null
+          ban_reason?: string | null
+          ban_type: string
+          banned_at?: string | null
+          banned_by: string
+          created_at?: string | null
+          id?: string
+          is_permanent?: boolean | null
+          notes?: string | null
+          organization_id?: string | null
+          role_assignment_id?: string | null
+          unbanned_at?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          affected_assignments?: Json | null
+          ban_reason?: string | null
+          ban_type?: string
+          banned_at?: string | null
+          banned_by?: string
+          created_at?: string | null
+          id?: string
+          is_permanent?: boolean | null
+          notes?: string | null
+          organization_id?: string | null
+          role_assignment_id?: string | null
+          unbanned_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_ban_history_banned_by_fkey"
+            columns: ["banned_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_banned_by_fkey"
+            columns: ["banned_by"]
+            isOneToOne: false
+            referencedRelation: "view_user_ban_status"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_role_assignment_id_fkey"
+            columns: ["role_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "user_organization_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_role_assignment_id_fkey"
+            columns: ["role_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "view_user_roles_with_details"
+            referencedColumns: ["assignment_id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "view_user_ban_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_organization_roles: {
         Row: {
           created_at: string | null
@@ -1267,6 +1375,13 @@ export type Database = {
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_roles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "view_user_ban_status"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -1337,6 +1452,28 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      view_user_ban_status: {
+        Row: {
+          active_roles_count: number | null
+          ban_reason: string | null
+          ban_status: string | null
+          banned_at: string | null
+          banned_by: string | null
+          banned_by_email: string | null
+          banned_by_name: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          inactive_roles_count: number | null
+          is_permanent: boolean | null
+          latest_action: string | null
+          latest_ban_type: string | null
+          unbanned_at: string | null
+          user_created_at: string | null
+          visible_name: string | null
+        }
+        Relationships: []
       }
       view_user_roles_with_details: {
         Row: {
@@ -1410,6 +1547,21 @@ export type Database = {
         Args: { in_user_id: string; in_offset?: number; in_limit?: number }
         Returns: Json
       }
+      get_latest_ban_record: {
+        Args: { check_user_id: string }
+        Returns: {
+          id: string
+          ban_type: string
+          action: string
+          ban_reason: string
+          is_permanent: boolean
+          banned_by: string
+          banned_at: string
+          unbanned_at: string
+          organization_id: string
+          role_assignment_id: string
+        }[]
+      }
       get_request_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1434,6 +1586,22 @@ export type Database = {
           organization_name: string
           organization_slug: string
         }[]
+      }
+      is_user_banned_for_app: {
+        Args: { check_user_id: string }
+        Returns: boolean
+      }
+      is_user_banned_for_org: {
+        Args: { check_user_id: string; check_org_id: string }
+        Returns: boolean
+      }
+      is_user_banned_for_role: {
+        Args: {
+          check_user_id: string
+          check_org_id: string
+          check_role_id: string
+        }
+        Returns: boolean
       }
       update_user_jwt_on_role_change_for_user: {
         Args: { target_user_id: string }
