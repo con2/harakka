@@ -21,8 +21,8 @@ jobs:
           cache: "npm"
 
       # Install common dependencies first
-      # - name: Install common dependencies
-      #   run: npm ci --prefix common
+      - name: Install common dependencies
+        run: npm ci --prefix common
 
       # Frontend Build attempt
       - name: Clean frontend lockfile and node_modules (optional fix for CI)
