@@ -1,19 +1,24 @@
-import { BaseEntity, ErrorContext, Translatable } from "./common";
+import { ErrorContext } from "./common";
+import { Database, TagTranslations } from "./databaseGenerated";
+
+/** Runtime row shape for the `tags` table with typed `translations`. */
+export type Tag = Database["public"]["Tables"]["tags"]["Row"];
+
+/** Payload accepted by Supabase when updating an existing tag. */
+export type UpdateTagDto = Database["public"]["Tables"]["tags"]["Update"];
+
+/** Payload accepted by Supabase when inserting a new tag. */
+export type CreateTagDto = Database["public"]["Tables"]["tags"]["Insert"];
 
 /**
- * Tag translation content
+ * A single‑language translation object (alias of one entry in
+ * {@link TagTranslations}).
  */
-export interface TagTranslation {
-  name: string;
-}
+export type TagTranslation = TagTranslations["en"];
 
 /**
- * Tag entity representing a label that can be assigned to items
- */
-export interface Tag extends BaseEntity, Translatable<TagTranslation> {}
-
-/**
- * Tag state in Redux store
+ * Normalised slice of the Redux store that caches `Tag` records together
+ * with loading/error flags and pagination metadata.
  */
 export interface TagState {
   tags: Tag[];
@@ -27,27 +32,11 @@ export interface TagState {
   totalPages: number;
 }
 
-/**
- * Data required to create a new tag
- */
-export type CreateTagDto = Omit<Tag, "id" | "created_at">;
-
-/**
- * Data for updating an existing tag
- */
-export type UpdateTagDto = Partial<
-  Omit<Tag, "id" | "created_at" | "updated_at">
->;
-
-/**
- * Data for assigning tags to an item
- */
+/** Association of one item with multiple tag IDs. */
 export interface TagAssignment {
   itemId: string;
   tagIds: string[];
 }
 
-/**
- * Filter options for tag assignment status
- */
+/** UI filter values for tag‑assignment status. */
 export type TagAssignmentFilter = "all" | "assigned" | "unassigned";
