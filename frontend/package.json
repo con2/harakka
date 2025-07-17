@@ -13,8 +13,7 @@
     "preview": "vite preview",
     "cy:open": "cypress open",
     "cy:run": "cypress run",
-    "test:e2e": "start-server-and-test dev http://localhost:5180 cy:run",
-    "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > src/types/supabase.types.ts"
+    "test:e2e": "start-server-and-test dev http://localhost:5180 cy:run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
