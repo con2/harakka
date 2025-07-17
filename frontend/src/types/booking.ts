@@ -1,6 +1,6 @@
 import { BaseEntity, ErrorContext } from "./common";
 import { ItemTranslation } from "./item";
-import { Database } from "./supabase.types";
+import { Database } from "@common/database.types";
 
 /**
  * Booking status values

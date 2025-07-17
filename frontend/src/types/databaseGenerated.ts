@@ -1,5 +1,5 @@
-import { Database as DatabaseGenerated } from "./supabase.types";
-export type { Json } from "./supabase.types";
+import { Database as DatabaseGenerated } from "@common/supabase.types";
+export type { Json } from "@common/supabase.types";
 
 /**
  * Strongly‑typed representation of the JSON column **`tags.translations`**.
