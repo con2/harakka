@@ -14,6 +14,7 @@
     "noEmit": true,
 
     /* Linting */
+    "strictNullChecks": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

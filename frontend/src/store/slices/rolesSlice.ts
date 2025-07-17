@@ -18,6 +18,7 @@ const initialState: RolesState = {
   error: null,
   adminError: null,
   errorContext: null,
+  availableRoles: [],
 };
 
 // Async thunks
@@ -52,6 +53,19 @@ export const fetchAllUserRoles = createAsyncThunk(
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch all user roles"),
+      );
+    }
+  },
+);
+
+export const fetchAvailableRoles = createAsyncThunk(
+  "roles/fetchAvailableRoles",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await roleApi.getAvailableRoles();
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch available roles"),
       );
     }
   },
@@ -188,6 +202,22 @@ const rolesSlice = createSlice({
         state.errorContext = "create-user-role";
       })
 
+      // Fetch available roles
+      .addCase(fetchAvailableRoles.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(fetchAvailableRoles.fulfilled, (state, action) => {
+        state.loading = false;
+        state.availableRoles = action.payload;
+      })
+      .addCase(fetchAvailableRoles.rejected, (state, action) => {
+        state.loading = false;
+        state.adminError = action.payload as string;
+        state.errorContext = "fetch-available-roles";
+      })
+
       // Update user role
       .addCase(updateUserRole.pending, (state) => {
         state.adminLoading = true;
@@ -215,9 +245,12 @@ const rolesSlice = createSlice({
       })
       .addCase(deleteUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
-        state.allUserRoles = state.allUserRoles.filter(
-          (role) => role.id !== action.payload,
+        const idx = state.allUserRoles.findIndex(
+          (role) => role.id === action.payload,
         );
+        if (idx !== -1) {
+          state.allUserRoles[idx].is_active = false;
+        }
       })
       .addCase(deleteUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -282,6 +315,9 @@ export const selectRolesError = (state: RootState) => state.roles.error;
 export const selectAdminError = (state: RootState) => state.roles.adminError;
 export const selectErrorContext = (state: RootState) =>
   state.roles.errorContext;
+
+export const selectAvailableRoles = (state: RootState) =>
+  state.roles.availableRoles;
 
 // Computed selectors
 export const selectIsAdmin = (state: RootState) => {

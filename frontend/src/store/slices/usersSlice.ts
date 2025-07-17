@@ -65,6 +65,29 @@ export const getUserById = createAsyncThunk(
   },
 );
 
+// Get current user thunk (for authenticated user's own profile)
+export const getCurrentUser = createAsyncThunk(
+  "users/getCurrentUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await usersApi.getCurrentUser();
+    } catch (error: unknown) {
+      // If we get a 404 or 403 on current user, the session might be invalid
+      const axiosError = error as { response?: { status?: number } };
+      if (
+        axiosError.response?.status === 404 ||
+        axiosError.response?.status === 403
+      ) {
+        // Clear the auth session
+        await supabase.auth.signOut();
+      }
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch current user"),
+      );
+    }
+  },
+);
+
 // Delete user thunk
 export const deleteUser = createAsyncThunk(
   "users/deleteUser",
@@ -219,6 +242,22 @@ export const usersSlice = createSlice({
         state.errorContext = "fetch";
       })
 
+      // fetch current user
+      .addCase(getCurrentUser.pending, (state) => {
+        state.selectedUserLoading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(getCurrentUser.fulfilled, (state, action) => {
+        state.selectedUserLoading = false;
+        state.selectedUser = action.payload;
+      })
+      .addCase(getCurrentUser.rejected, (state, action) => {
+        state.selectedUserLoading = false;
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
+
       // create User
       .addCase(createUser.pending, (state) => {
         state.loading = true;
@@ -358,13 +397,13 @@ export const selectErrorWithContext = (state: RootState) => ({
 export const selectSelectedUser = (state: RootState) =>
   state.users.selectedUser;
 export const selectUserRole = (state: RootState) =>
-  state.users.selectedUser?.role || null;
+  state.users.selectedUser?.role || null; // deprecated
 export const selectIsAdmin = (state: RootState) =>
-  state.users.selectedUser?.role === "admin";
+  state.users.selectedUser?.role === "admin"; // deprecated
 export const selectIsSuperVera = (state: RootState) =>
-  state.users.selectedUser?.role === "superVera";
+  state.users.selectedUser?.role === "superVera"; // deprecated
 export const selectIsUser = (state: RootState) =>
-  state.users.selectedUser?.role === "user";
+  state.users.selectedUser?.role === "user"; // deprecated
 export const selectSelectedUserLoading = (state: RootState) =>
   state.users.selectedUserLoading;
 

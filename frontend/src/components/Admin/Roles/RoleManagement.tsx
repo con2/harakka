@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import RoleEditer from "./RoleEditer";
 
 export const RoleManagement: React.FC = () => {
   const {
@@ -425,6 +426,13 @@ export const RoleManagement: React.FC = () => {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Roles editing Section */}
+      {isAdmin && (
+        <div className="my-6">
+          <RoleEditer />
+        </div>
       )}
 
       {/* Permission Testing Section */}
