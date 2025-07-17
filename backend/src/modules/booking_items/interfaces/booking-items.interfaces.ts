@@ -1,4 +1,4 @@
-import { Database } from "@common/supabase.types";
+import { Database } from "@common/database.types";
 
 export type BookingItemsTable = Database["public"]["Tables"]["booking_items"];
 export type BookingItemsRow = BookingItemsTable["Row"];
