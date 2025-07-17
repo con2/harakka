@@ -183,7 +183,10 @@ const TagList = () => {
       header: t.tagList.columns.createdAt[lang],
       id: "created_at",
       accessorKey: "created_at",
-      cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
+      cell: ({ row }) =>
+        row.original.created_at
+          ? new Date(row.original.created_at).toLocaleDateString()
+          : "—",
       enableSorting: true,
     },
     {

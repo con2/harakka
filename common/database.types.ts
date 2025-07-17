@@ -1,5 +1,6 @@
 import type { MergeDeep } from "type-fest";
 import type { Database as Base } from "./supabase.types";
+export type { Json } from "./supabase.types";
 
 /* ── Concrete shapes for our translations ─────────────── */
 type ItemTranslations = {
@@ -27,6 +28,17 @@ export type Database = MergeDeep<
           Row: { translations: TagTranslations | null };
           Insert: { translations?: TagTranslations | null };
           Update: { translations?: TagTranslations | null };
+        };
+        storage_item_tags: {
+          Row: {
+            translations: TagTranslations | null;
+          };
+          Insert: {
+            translations?: TagTranslations | null;
+          };
+          Update: {
+            translations?: TagTranslations | null;
+          };
         };
         user_profiles: {
           Row: {

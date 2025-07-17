@@ -50,12 +50,9 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
       // Use the helper function to create a properly typed payload
       const tagData = createTagPayload(fiName, enName);
 
-      // Convert TagFormData to CreateTagDto explicitly
+      // Create the Supabase payload directly from the prepared form data
       const createTagDto: CreateTagDto = {
-        translations: {
-          fi: tagData.translations.fi || { name: "" },
-          en: tagData.translations.en || { name: "" },
-        },
+        translations: tagData.translations,
       };
       const result = await dispatch(createTag(createTagDto)).unwrap();
 

@@ -1,13 +1,7 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { tagsApi } from "../../api/services/tags";
 import { RootState } from "../store";
-import {
-  CreateTagDto,
-  Tag,
-  TagAssignment,
-  TagState,
-  UpdateTagDto,
-} from "@/types";
+import { CreateTagDto, TagAssignment, TagState, UpdateTagDto } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 
 const initialState: TagState = {
@@ -219,7 +213,7 @@ export const tagSlice = createSlice({
       state.error = null;
       state.errorContext = null;
     },
-    selectTag: (state, action: PayloadAction<Tag>) => {
+    selectTag: (state, action) => {
       state.selectedTags = [action.payload]; // Assuming one tag can be selected at a time
     },
   },
