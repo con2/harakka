@@ -95,7 +95,7 @@ export class OrganizationsService {
   ): Promise<OrganizationRow> {
     const supabase = this.getClient(req);
     // Type not recognized by TS
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
     const slug = org.slug ?? slugify(org.name, { lower: true, strict: true });
 
     const {
