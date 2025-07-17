@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useRoles } from "@/hooks/useRoles";
 import { CreateUserRoleDto, UserRoleWithDetails } from "@/types/roles";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-//import { Constants } from "@common/supabase.types";
+import { ColumnDef } from "@tanstack/react-table";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 
 interface RoleEditerProps {
   role?: UserRoleWithDetails;
@@ -32,6 +33,8 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
     deleteRole,
     permanentDeleteRole,
     refreshAllUserRoles,
+    availableRoles,
+    allUserRoles,
   } = useRoles();
 
   // For create
@@ -41,22 +44,74 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
     role_id: "",
   });
 
+  // Memoized list of unique users by email
+  const userOptions = useMemo(() => {
+    const seen = new Set();
+    return allUserRoles
+      .filter(
+        (r) =>
+          r.user_email && !seen.has(r.user_email) && seen.add(r.user_email),
+      )
+      .map((r) => ({
+        user_id: r.user_id,
+        email: r.user_email,
+        full_name: r.user_full_name,
+      }));
+  }, [allUserRoles]);
+
   //For update, soft delete, delete
   const [assignmentId, setAssignmentId] = useState(role?.id || "");
+  // Filters for assignment dropdown
+  const [filterUser, setFilterUser] = useState("");
+  const [filterOrg, setFilterOrg] = useState("");
+  const [filterRole, setFilterRole] = useState("");
 
-  const [isEdit] = useState(!!role);
+  // Pagination state
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageSize = 15;
 
   const [mode, setMode] = useState<
     "create" | "softDelete" | "restoreRole" | "hardDelete"
   >("create");
 
-  const [loading, setLoading] = useState(false);
+  // Filtered assignments for table
+  const filteredAssignments = useMemo(() => {
+    return allUserRoles.filter(
+      (r) =>
+        (!filterUser ||
+          (r.user_email &&
+            r.user_email.toLowerCase().includes(filterUser.toLowerCase()))) &&
+        (!filterOrg ||
+          (r.organization_name &&
+            r.organization_name
+              .toLowerCase()
+              .includes(filterOrg.toLowerCase()))) &&
+        (!filterRole ||
+          (r.role_name &&
+            r.role_name.toLowerCase().includes(filterRole.toLowerCase()))) &&
+        // Only show inactive assignments in restore mode
+        (mode !== "restoreRole" || r.is_active === false) &&
+        // Only show active assignments in softDelete mode
+        (mode !== "softDelete" || r.is_active === true),
+    );
+  }, [allUserRoles, filterUser, filterOrg, filterRole, mode]);
 
-  // Use canonical roles from supabase types
-  //const allowedRoles = Constants.public.Enums.roles_type;
+  // Paginate filtered assignments
+  const paginatedAssignments = useMemo(() => {
+    const start = pageIndex * pageSize;
+    return filteredAssignments.slice(start, start + pageSize);
+  }, [filteredAssignments, pageIndex, pageSize]);
+
+  const totalPages = Math.ceil(filteredAssignments.length / pageSize);
+
+  const [loading, setLoading] = useState(false);
 
   const handleCreateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCreateForm({ ...createForm, [e.target.name]: e.target.value });
+  };
+
+  const handleRoleSelect = (roleId: string) => {
+    setCreateForm((prev) => ({ ...prev, role_id: roleId }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,17 +121,22 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
       if (mode === "create") {
         await createRole(createForm);
         toast.success("Role created");
+        await new Promise((res) => setTimeout(res, 300));
+        await refreshAllUserRoles();
+        setCreateForm({ user_id: "", organization_id: "", role_id: "" });
       } else if (mode === "softDelete" && assignmentId) {
         await deleteRole(assignmentId);
         toast.success("Role deactivated");
+        await refreshAllUserRoles();
       } else if (mode === "restoreRole" && assignmentId) {
         await updateRole(assignmentId, { is_active: true });
         toast.success("Role restored");
+        await refreshAllUserRoles();
       } else if (mode === "hardDelete" && assignmentId) {
         await permanentDeleteRole(assignmentId);
         toast.success("Role permanently deleted");
+        await refreshAllUserRoles();
       }
-      await refreshAllUserRoles();
       onClose?.();
     } catch {
       toast.error("Operation failed");
@@ -84,6 +144,77 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
       setLoading(false);
     }
   };
+
+  const assignmentColumns: ColumnDef<UserRoleWithDetails>[] = [
+    {
+      accessorKey: "user_email",
+      size: 10,
+      header: "User Email",
+      cell: ({ row }) => (
+        <span>
+          {row.original.user_email}
+          {row.original.user_full_name
+            ? ` (${row.original.user_full_name})`
+            : ""}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "role_name",
+      header: "Role",
+    },
+    {
+      accessorKey: "organization_name",
+      header: "Organization",
+    },
+    {
+      accessorKey: "is_active",
+      header: "Active",
+      cell: ({ row }) =>
+        row.original.is_active ? (
+          <span className="text-green-600">Yes</span>
+        ) : (
+          <span className="text-red-600">No</span>
+        ),
+    },
+    {
+      id: "action",
+      header: "Action",
+      cell: ({ row }) => (
+        <Button
+          size="sm"
+          type="button"
+          onClick={async () => {
+            setLoading(true);
+            try {
+              setAssignmentId(row.original.id!); // Keep assignmentId up to date
+              if (mode === "softDelete") {
+                await deleteRole(row.original.id!);
+                toast.success("Role deactivated");
+              } else if (mode === "restoreRole") {
+                await updateRole(row.original.id!, { is_active: true });
+                toast.success("Role restored");
+              } else if (mode === "hardDelete") {
+                await permanentDeleteRole(row.original.id!);
+                toast.success("Role permanently deleted");
+              }
+              await refreshAllUserRoles();
+              onClose?.();
+            } catch {
+              toast.error("Operation failed");
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={loading}
+        >
+          {mode === "softDelete" && "Soft Delete"}
+          {mode === "restoreRole" && "Restore"}
+          {mode === "hardDelete" && "Hard Delete"}
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <form className="space-y-4 p-4 border rounded" onSubmit={handleSubmit}>
@@ -110,50 +241,125 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
       </h3>
       {mode === "create" && (
         <>
-          <Input
-            name="user_id"
-            placeholder="User ID"
+          {/* User dropdown by email and name */}
+          <label className="font-semibold">User (by email)</label>
+          <Select
             value={createForm.user_id}
-            onChange={handleCreateChange}
-            disabled={isEdit}
-          />
+            onValueChange={(userId) =>
+              setCreateForm((prev) => ({ ...prev, user_id: userId }))
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a user" />
+            </SelectTrigger>
+            <SelectContent>
+              {userOptions.map((user) => (
+                <SelectItem key={user.user_id} value={user.user_id}>
+                  {user.email}
+                  {user.full_name ? ` (${user.full_name})` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* TODO: replace by dropdown when organizations backend is ready */}
           <Input
             name="organization_id"
             placeholder="Organization ID"
             value={createForm.organization_id}
             onChange={handleCreateChange}
           />
-          <Input
-            name="role_id"
-            placeholder="Role ID"
-            value={createForm.role_id}
-            onChange={handleCreateChange}
-          />
+          {/* List of all roles dropdown */}
+          <label className="font-semibold">Role</label>
+          <Select value={createForm.role_id} onValueChange={handleRoleSelect}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a role" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableRoles?.map((role) => (
+                <SelectItem key={role.id} value={role.id}>
+                  {role.role}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex gap-2 flex-wrap mt-4">
+            <Button type="submit" disabled={loading}>
+              Create
+            </Button>
+            {onClose && (
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+            )}
+          </div>
         </>
       )}
       {(mode === "softDelete" ||
         mode === "hardDelete" ||
         mode === "restoreRole") && (
-        <Input
-          name="assignmentId"
-          placeholder="Role Assignment ID"
-          value={assignmentId}
-          onChange={(e) => setAssignmentId(e.target.value)}
-        />
+        <>
+          <label className="font-semibold">Role Assignment</label>
+          <div className="flex gap-2 mb-2 flex-wrap">
+            <Input
+              placeholder="Filter by user email"
+              value={filterUser}
+              onChange={(e) => {
+                setFilterUser(e.target.value);
+                setPageIndex(0);
+              }}
+              className="w-40"
+            />
+            <Input
+              placeholder="Filter by organization"
+              value={filterOrg}
+              onChange={(e) => {
+                setFilterOrg(e.target.value);
+                setPageIndex(0);
+              }}
+              className="w-40"
+            />
+            <Input
+              placeholder="Filter by role"
+              value={filterRole}
+              onChange={(e) => {
+                setFilterRole(e.target.value);
+                setPageIndex(0);
+              }}
+              className="w-40"
+            />
+            {(filterUser || filterOrg || filterRole) && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-9"
+                onClick={() => {
+                  setFilterUser("");
+                  setFilterOrg("");
+                  setFilterRole("");
+                  setPageIndex(0);
+                }}
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+          <PaginatedDataTable
+            columns={assignmentColumns}
+            data={paginatedAssignments}
+            pageIndex={pageIndex}
+            pageCount={totalPages}
+            onPageChange={setPageIndex}
+          />
+          {onClose && (
+            <div className="flex gap-2 flex-wrap mt-4">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+            </div>
+          )}
+        </>
       )}
-      <div className="flex gap-2 flex-wrap">
-        <Button type="submit" disabled={loading}>
-          {mode === "create" && "Create"}
-          {mode === "softDelete" && "Confirm Soft Delete"}
-          {mode === "hardDelete" && "Confirm Hard Delete"}
-          {mode === "restoreRole" && "Restore"}
-        </Button>
-        {onClose && (
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-        )}
-      </div>
     </form>
   );
 };

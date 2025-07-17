@@ -31,6 +31,8 @@ import { RoleController } from "../role/role.controller";
 import { AuthModule } from "../auth/auth.module";
 import { JwtModule } from "../jwt/jwt.module";
 import { RolesGuard } from "src/guards/roles.guard";
+import { OrganizationsModule } from "../organization/organizations.module";
+import { OrganizationsController } from "../organization/organizations.controller";
 import { UserBanningModule } from "../user-banning/user-banning.module";
 
 // Load and expand environment variables before NestJS modules initialize
@@ -65,6 +67,7 @@ dotenvExpand.expand(env);
     BookingItemsModule,
     RoleModule,
     JwtModule,
+    OrganizationsModule,
     UserBanningModule,
   ],
   controllers: [AppController],
@@ -109,6 +112,7 @@ export class AppModule implements NestModule {
         BookingItemsController,
         LogsController,
         RoleController,
+        OrganizationsController,
 
         // Protected HTTP methods (all routes except excluded ones)
         { path: "*", method: RequestMethod.POST },

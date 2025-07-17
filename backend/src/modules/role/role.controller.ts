@@ -99,6 +99,15 @@ export class RoleController {
   }
 
   /**
+   * GET /roles/list
+   * Get all available roles from the roles table
+   */
+  @Get("list")
+  async getAllRoles(@Req() req: AuthRequest) {
+    return this.roleService.getAllRoles(req);
+  }
+
+  /**
    * POST /roles
    * Create a new user role assignment
    */

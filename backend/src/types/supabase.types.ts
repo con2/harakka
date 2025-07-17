@@ -256,6 +256,13 @@ export type Database = {
             referencedRelation: "user_profiles";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "invoices_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "view_user_ban_status";
+            referencedColumns: ["id"];
+          },
         ];
       };
       organization_items: {
