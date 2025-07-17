@@ -28,7 +28,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/throttler": "^6.4.0",
-    "@react-email/components": "^0.0.38",
+    "@react-email/components": "^0.3.1",
     "@react-email/render": "^1.1.2",
     "@supabase/supabase-js": "^2.49.4",
     "@types/multer": "^2.0.0",
