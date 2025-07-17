@@ -7,11 +7,13 @@ import {
   Body,
   Param,
   Query,
+  Req,
 } from "@nestjs/common";
 import { OrgItemsService } from "./org_items.service";
 import { Public } from "@src/decorators/roles.decorator";
 import { Eq } from "../../types/queryconstructor.types";
-import { OrgItemInsert } from "./interfaces/org_items.interface";
+import { OrgItemInsert, OrgItemUpdate } from "./interfaces/org_items.interface";
+import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 
 @Controller("org-items")
 export class OrgItemsController {
@@ -19,7 +21,7 @@ export class OrgItemsController {
 
   @Get()
   @Public()
-  async getAllOrgItems(
+  async getAll(
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
     @Query("order") order?: string,
@@ -69,17 +71,21 @@ export class OrgItemsController {
   }
 
   @Post()
-  create(@Body() OrgItem: OrgItemInsert) {
-    // return this.orgItemsService.create(createDto);
+  create(@Req() req: AuthRequest, @Body() orgItem: OrgItemInsert) {
+    return this.orgItemsService.createOrgItem(req, orgItem);
   }
 
   @Put(":id")
-  update(@Param("id") id: string, @Body() updateDto: string) {
-    // return this.orgItemsService.update(id, updateDto);
+  update(
+    @Req() req: AuthRequest,
+    @Param("id") id: string,
+    @Body() updateDto: OrgItemUpdate,
+  ) {
+    return this.orgItemsService.updateOrgItem(req, id, updateDto);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    // return this.orgItemsService.remove(id);
+  remove(@Req() req: AuthRequest, @Param("id") id: string) {
+    return this.orgItemsService.deleteOrgItem(req, id);
   }
 }

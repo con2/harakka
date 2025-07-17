@@ -93,24 +93,24 @@ export class AppModule implements NestModule {
         // Public storage and item endpoints (for front page)
         { path: "storage", method: RequestMethod.GET },
         { path: "storage-items", method: RequestMethod.GET },
-        { path: "storage-items/(.*)", method: RequestMethod.GET }, // For specific item endpoints
+        { path: "storage-items/*path", method: RequestMethod.GET }, // For specific item endpoints
         { path: "api/storage-locations", method: RequestMethod.GET },
         { path: "storage-locations", method: RequestMethod.GET },
-        { path: "storage-locations/(.*)", method: RequestMethod.GET },
+        { path: "storage-locations/*path", method: RequestMethod.GET },
 
         // Public tag endpoints
         { path: "tags", method: RequestMethod.GET },
-        { path: "tags/(.*)", method: RequestMethod.GET },
+        { path: "tags/*path", method: RequestMethod.GET },
 
         // Public item images endpoints
-        { path: "item-images/(.*)", method: RequestMethod.GET },
+        { path: "item-images/*path", method: RequestMethod.GET },
 
         // Public storage-item availability endpoints (for checking item availability)
-        { path: "storage-items/availability/(.*)", method: RequestMethod.GET },
+        { path: "storage-items/availability/*path", method: RequestMethod.GET },
 
         // Organization_items public endpoints
         { path: "org-items", method: RequestMethod.GET },
-        { path: "org-items/(.*)", method: RequestMethod.GET },
+        { path: "org-items/*path", method: RequestMethod.GET },
       )
       .forRoutes(
         // Protected controllers
