@@ -38,26 +38,19 @@ export class ItemImagesService {
     });
 
     // 1. Upload to supabase storage
-    let imageUrl: string;
-    try {
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("public/item-images")
-        .upload(fileName, file.buffer);
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(`item-images`)
+      .upload(fileName, file.buffer, {
+        contentType: "image/jpeg",
+      });
 
-      if (uploadError || !uploadData) {
-        const message =
-          uploadError instanceof Error ? uploadError.message : "Upload failed";
-        throw new Error(message);
-      }
-
-      imageUrl = uploadData.fullPath;
-    } catch (error: unknown) {
-      this.logger.error("Storage upload error:", error);
-      if (error instanceof Error) {
-        throw new Error(`Storage upload failed: ${error.message}`);
-      }
-      throw new Error("Storage upload failed");
+    if (uploadError || !uploadData) {
+      const message =
+        uploadError instanceof Error ? uploadError.message : "Upload failed";
+      throw new Error(message);
     }
+
+    const imageUrl = `https://${process.env.SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/item-images/${uploadData.path}`;
 
     // 2. Create database record
     try {
@@ -70,19 +63,23 @@ export class ItemImagesService {
           display_order: metadata.display_order,
           alt_text: metadata.alt_text || "",
           is_active: true,
-          storage_path: fileName,
+          storage_path: uploadData.path,
         })
         .select()
         .single();
 
       if (dbError) {
-        await supabase.storage.from("public/item-images").remove([imageUrl]);
+        await supabase.storage
+          .from("item-images")
+          .remove([uploadData.fullPath]);
         throw new Error(`Database record creation failed: ${dbError.message}`);
       }
 
       return imageRecord;
     } catch (error) {
-      await supabase.storage.from("public/item-images").remove([imageUrl]);
+      await supabase.storage
+        .from("public/item-images")
+        .remove([uploadData.fullPath]);
       throw error;
     }
   }
@@ -121,16 +118,17 @@ export class ItemImagesService {
       .eq("id", imageId)
       .single();
 
-    if (fetchError || !image) {
+    if (fetchError || !image || !image.storage_path) {
       const message =
         fetchError instanceof Error ? fetchError.message : "Image not found";
       throw new Error(message);
     }
 
     // 2. Delete from storage
-    await supabase.storage
-      .from("public/item-images")
-      .remove([`public/item-images/${image.storage_path}`]);
+    const { error: removeErr } = await supabase.storage
+      .from("item-images")
+      .remove([image.storage_path]);
+    if (removeErr) throw new Error("Could not remove from storage");
 
     // 3. Delete database record
     const { error: deleteError } = await supabase
