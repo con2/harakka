@@ -93,12 +93,6 @@ export class OrganizationsService {
     org: OrganizationInsert,
   ): Promise<OrganizationRow> {
     const supabase = this.getClient(req);
-<<<<<<< HEAD
-=======
-    // Type not recognized by TS
-
-    const slug = org.slug ?? slugify(org.name, { lower: true, strict: true });
->>>>>>> develop
 
     const {
       data,
