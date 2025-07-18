@@ -10,7 +10,7 @@ import {
   Req,
 } from "@nestjs/common";
 import { OrgItemsService } from "./org_items.service";
-import { Public } from "@src/decorators/roles.decorator";
+import { Public, Roles } from "@src/decorators/roles.decorator";
 import { Eq } from "../../types/queryconstructor.types";
 import { OrgItemInsert, OrgItemUpdate } from "./interfaces/org_items.interface";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
@@ -71,11 +71,13 @@ export class OrgItemsController {
   }
 
   @Post()
+  @Roles(["main_admin","admin","storage_manager",], { match: "any" })
   create(@Req() req: AuthRequest, @Body() orgItem: OrgItemInsert) {
     return this.orgItemsService.createOrgItem(req, orgItem);
   }
 
   @Put(":id")
+  @Roles(["main_admin","admin","storage_manager",], { match: "any" })
   update(
     @Req() req: AuthRequest,
     @Param("id") id: string,
@@ -85,6 +87,7 @@ export class OrgItemsController {
   }
 
   @Delete(":id")
+  @Roles(["main_admin","admin","storage_manager",], { match: "any" })
   remove(@Req() req: AuthRequest, @Param("id") id: string) {
     return this.orgItemsService.deleteOrgItem(req, id);
   }
