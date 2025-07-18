@@ -432,7 +432,27 @@ export class UserBanningService {
       roleId: role.role_id,
     }));
 
+    // Determine if user is banned at all (app, organization, or role level)
+    const isBanned =
+      isBannedForApp ||
+      bannedOrganizations.length > 0 ||
+      bannedRoles.length > 0;
+
+    // Determine the primary ban type
+    let banType: string | undefined = undefined;
+    if (isBannedForApp) {
+      banType = "application";
+    } else if (bannedOrganizations.length > 0) {
+      banType = "organization";
+    } else if (bannedRoles.length > 0) {
+      banType = "role";
+    }
+
     return {
+      userId,
+      isBanned,
+      banType,
+      // Additional details for frontend use if needed
       isBannedForApp,
       bannedOrganizations,
       bannedRoles,

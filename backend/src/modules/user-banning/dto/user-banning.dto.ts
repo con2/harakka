@@ -47,7 +47,13 @@ export interface BanOperationResult {
 }
 
 export interface UserBanStatusCheck {
-  isBannedForApp: boolean;
-  bannedOrganizations: string[];
-  bannedRoles: Array<{ organizationId: string; roleId: string }>;
+  userId: string;
+  isBanned: boolean;
+  banType?: string;
+  banReason?: string;
+  bannedAt?: Date;
+  isPermanent?: boolean;
+  isBannedForApp?: boolean;
+  bannedOrganizations?: string[];
+  bannedRoles?: Array<{ organizationId: string; roleId: string }>;
 }
