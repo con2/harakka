@@ -361,7 +361,7 @@ export class RoleService {
     }
 
     const mappedRoles: UserRoleWithDetails[] = data.map((row) => ({
-      id: row.assignment_id ?? undefined,
+      id: row.id ?? undefined,
       user_id: row.user_id ?? "",
       organization_id: row.organization_id ?? "",
       role_id: row.role_id ?? "",
@@ -405,7 +405,7 @@ export class RoleService {
 
       if (freshRoles) {
         const userRoles = freshRoles.map((item) => ({
-          id: item.assignment_id ?? undefined,
+          id: item.id ?? undefined,
           user_id: item.user_id ?? "",
           organization_id: item.organization_id ?? "",
           role_id: item.role_id ?? "",

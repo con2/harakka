@@ -4,8 +4,8 @@ export interface AuditLog {
   record_id: string;
   action: string;
   user_id?: string;
-  old_values?: Record<string, any>;
-  new_values?: Record<string, any>;
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
   created_at: string;
 }
 
@@ -15,5 +15,5 @@ export interface LogMessage {
   level: "error" | "warning" | "info" | "debug";
   message: string;
   source?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

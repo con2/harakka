@@ -9,18 +9,18 @@ export type LocationRow =
 
 export type StorageItem = StorageItemRow & {
   /** Tags flattened from the join table */
-  storage_item_tags?: TagRow[];
+  storage_item_tags: TagRow[];
   /** Convenience copy of the joined location row */
-  location_details?: LocationRow | null;
+  location_details: LocationRow | null;
 };
 
 /* ── Shape returned by raw Supabase join (before flattening) ─────────── */
 export type StorageItemWithJoin = StorageItemRow & {
-  storage_item_tags?: {
+  storage_item_tags: {
     tag_id: string;
     tags: TagRow;
   }[];
-  storage_locations?: LocationRow;
+  storage_locations: LocationRow;
 };
 
 export type ValidItemOrder =
