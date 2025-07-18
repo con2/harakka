@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useRoles } from "@/hooks/useRoles";
-import { CreateUserRoleDto, UserRoleWithDetails } from "@/types/roles";
+import { CreateUserRoleDto } from "@/types/roles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,9 +13,10 @@ import {
 import { toast } from "sonner";
 import { ColumnDef } from "@tanstack/react-table";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 
 interface RoleEditerProps {
-  role?: UserRoleWithDetails;
+  role?: ViewUserRolesWithDetails;
   onClose?: () => void;
 }
 
@@ -145,7 +146,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
     }
   };
 
-  const assignmentColumns: ColumnDef<UserRoleWithDetails>[] = [
+  const assignmentColumns: ColumnDef<ViewUserRolesWithDetails>[] = [
     {
       accessorKey: "user_email",
       size: 10,
@@ -254,7 +255,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
             </SelectTrigger>
             <SelectContent>
               {userOptions.map((user) => (
-                <SelectItem key={user.user_id} value={user.user_id}>
+                <SelectItem key={user.user_id} value={user.user_id ?? ""}>
                   {user.email}
                   {user.full_name ? ` (${user.full_name})` : ""}
                 </SelectItem>

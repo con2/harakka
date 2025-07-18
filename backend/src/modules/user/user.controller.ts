@@ -53,7 +53,7 @@ export class UserController {
 
     // For accessing other users' profiles, check admin roles
     const hasAdminRole = req.userRoles?.some((role) =>
-      ["admin", "super_admin", "superVera"].includes(role.role_name),
+      ["admin", "super_admin", "superVera"].includes(role.role_name ?? ""),
     );
 
     if (!hasAdminRole) {
