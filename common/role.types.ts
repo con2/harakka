@@ -1,4 +1,4 @@
-import { Database } from "@common/database.types";
+import { Database } from "./database.types";
 
 /**
  * @description Proper Supabase types for role-related entities.

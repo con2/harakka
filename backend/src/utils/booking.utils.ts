@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../types/supabase.types";
+import { Database } from "@common/database.types";
 import { UserBooking } from "src/modules/booking/types/booking.interface";
 
 export async function calculateAvailableQuantity(

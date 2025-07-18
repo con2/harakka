@@ -1,6 +1,3 @@
-
-
-
 # Shared Types: Usage Guide
 
 ## 📌 Important Notice
@@ -16,13 +13,15 @@ The types in `supabase.types.ts` come with loose `Json` fields which lack struct
 ### What to Do
 
 ✅ Use:
+
 ```ts
-import type { Database } from '@/common/database.types';
+import type { Database } from "@common/database.types";
 ```
 
 🚫 Avoid:
+
 ```ts
-import type { Database } from '@/common/supabase.types';
+import type { Database } from "@common/supabase.types";
 ```
 
 This change helps eliminate ambiguous or weakly typed fields and will keep our codebase clean and maintainable.

@@ -1,4 +1,4 @@
-import { Database } from "src/types/supabase.types";
+import { Database } from "@common/supabase.types";
 import { Translations } from "./translations.types";
 
 export interface BookingItem {

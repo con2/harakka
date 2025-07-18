@@ -10,10 +10,7 @@ import {
 } from "@nestjs/common";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { RoleService } from "./role.service";
-import {
-  UserRoleWithDetails,
-  ViewUserRolesWithDetailsRow,
-} from "./interfaces/role.interface";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
 
 @Controller("roles")
@@ -25,7 +22,7 @@ export class RoleController {
    * Get all roles for the current authenticated user
    */
   @Get("current")
-  getCurrentUserRoles(@Req() req: AuthRequest): UserRoleWithDetails[] {
+  getCurrentUserRoles(@Req() req: AuthRequest): ViewUserRolesWithDetails[] {
     return this.roleService.getCurrentUserRoles(req);
   }
 
@@ -73,7 +70,7 @@ export class RoleController {
   getCurrentUserRolesInOrganization(
     @Param("orgId") orgId: string,
     @Req() req: AuthRequest,
-  ): UserRoleWithDetails[] {
+  ): ViewUserRolesWithDetails[] {
     return this.roleService.getCurrentUserRolesInOrganization(orgId, req);
   }
 
@@ -84,7 +81,7 @@ export class RoleController {
   @Get("all")
   async getAllUserRoles(
     @Req() req: AuthRequest,
-  ): Promise<UserRoleWithDetails[]> {
+  ): Promise<ViewUserRolesWithDetails[]> {
     return this.roleService.getAllUserRoles(req);
   }
 
@@ -115,7 +112,7 @@ export class RoleController {
   async createUserRole(
     @Body() createRoleDto: CreateUserRoleDto,
     @Req() req: AuthRequest,
-  ): Promise<ViewUserRolesWithDetailsRow> {
+  ): Promise<ViewUserRolesWithDetails> {
     return this.roleService.createUserRole(createRoleDto, req);
   }
 
@@ -128,7 +125,7 @@ export class RoleController {
     @Param("id") tableKeyId: string,
     @Body() updateRoleDto: UpdateUserRoleDto,
     @Req() req: AuthRequest,
-  ): Promise<UserRoleWithDetails> {
+  ): Promise<ViewUserRolesWithDetails> {
     return this.roleService.updateUserRole(tableKeyId, updateRoleDto, req);
   }
 
