@@ -1,9 +1,12 @@
-import { Injectable } from "@nestjs/common";
+import { ForbiddenException, Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { getPaginationMeta } from "@src/utils/pagination";
 import { ApiSingleResponse } from "@common/response.types";
 import { Or } from "type-fest";
-import { OrgLocationRow } from "./interfaces/organization_locations.interface";
+import {
+  OrgLocationRow,
+  OrgLocationUpdate,
+} from "./interfaces/organization_locations.interface";
 
 @Injectable()
 export class OrganizationLocationsService {
@@ -70,6 +73,35 @@ export class OrganizationLocationsService {
       count: 1,
       status: 200,
       statusText: "Location Created",
+    };
+  }
+  updateOrgLoc(
+    req: AuthRequest,
+    id: string,
+    dto: OrgLocationUpdate,
+  ): Promise<ApiSingleResponse<OrgLocationRow>> {
+    const existing = await this.getOrgLocById(id);
+    if (!existing) {
+      throw new ForbiddenException(" Organization Location not found");
+    }
+
+    dto.updated_by = req.user.id;
+
+    const { data, error } = await req.supabase
+      .from("organization_locations")
+      .update(dto)
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) handleSupabaseError(error);
+
+    return {
+      data,
+      error: null,
+      count: 1,
+      status: 200,
+      statusText: "Location Updated",
     };
   }
 }
