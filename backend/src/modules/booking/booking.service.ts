@@ -17,7 +17,7 @@ import { BookingMailType } from "../mail/interfaces/mail.interface";
 import * as dayjs from "dayjs";
 import * as utc from "dayjs/plugin/utc";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "src/types/supabase.types";
+import { Database } from "@common/supabase.types";
 import { Translations } from "./types/translations.types";
 import {
   CancelBookingResponse,

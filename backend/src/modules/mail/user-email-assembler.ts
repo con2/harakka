@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "src/types/supabase.types";
+import { Database } from "@common/supabase.types";
 
 import type { WelcomeEmailPayload } from "./interfaces/mail.interface";
 

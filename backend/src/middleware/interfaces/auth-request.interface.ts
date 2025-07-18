@@ -1,5 +1,5 @@
 import { SupabaseClient, User } from "@supabase/supabase-js";
-import { Database } from "src/types/supabase.types";
+import { Database } from "@common/supabase.types";
 import { Request } from "express";
 import { ViewUserRolesWithDetails } from "@common/role.types";
 

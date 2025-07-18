@@ -15,7 +15,6 @@ import {
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
-import { InvoiceService } from "./invoice.service";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import {
@@ -27,10 +26,7 @@ import { Public, Roles } from "src/decorators/roles.decorator";
 
 @Controller("bookings")
 export class BookingController {
-  constructor(
-    private readonly bookingService: BookingService,
-    private readonly invoiceService: InvoiceService,
-  ) {}
+  constructor(private readonly bookingService: BookingService) {}
 
   // gets all bookings - use case: admin
   @Public()

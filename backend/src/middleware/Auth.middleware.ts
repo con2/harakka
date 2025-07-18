@@ -6,13 +6,14 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "src/types/supabase.types";
+// import type { Database } from "../types/supabase.types";
 import { Request, Response, NextFunction } from "express";
 import { TokenExpiredError } from "jsonwebtoken";
 import { AuthRequest } from "./interfaces/auth-request.interface";
 import { JwtService } from "../modules/jwt/jwt.service";
 import { JWTPayload } from "../modules/jwt/interfaces/jwt.interface";
 import { ViewUserRolesWithDetails } from "@common/role.types";
+import type { Database } from "@common/supabase.types";
 
 /**
  * AuthMiddleware
