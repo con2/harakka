@@ -10,7 +10,6 @@ import {
   Query,
   SetMetadata,
   Req,
-  ConflictException,
   BadRequestException,
 } from "@nestjs/common";
 import { OrganizationsService } from "./organizations.service";
@@ -18,7 +17,6 @@ import { Roles } from "src/decorators/roles.decorator";
 import { CreateOrganizationDto } from "./dto/create-organization.dto";
 import { UpdateOrganizationDto } from "./dto/update-organization.dto";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
-import slugify from "slugify";
 
 export const Public = () => SetMetadata("isPublic", true); // inserted afterwards
 
@@ -47,7 +45,7 @@ export class OrganizationsController {
     );
   }
 
-  // 2. get one
+  // 2. get one by ID
   @Public()
   @Get(":id")
   async getOrganizationById(@Param("id") id: string) {
@@ -73,27 +71,7 @@ export class OrganizationsController {
     @Req() req: AuthRequest,
     @Body() org: CreateOrganizationDto,
   ) {
-    // Type not recognized by TS
-
-    const slugified =
-      org.slug ?? slugify(org.name, { lower: true, strict: true }); // need to create it here because the field is required
-
-    if (typeof slugified !== "string") {
-      throw new BadRequestException(
-        "Failed to generate valid slug from organization name",
-      );
-    }
-
-    const exists =
-      await this.organizationService.getOrganizationBySlug(slugified);
-    if (exists) {
-      throw new ConflictException(`Slug "${slugified}" is already in use`);
-    }
-
-    return this.organizationService.createOrganization(req, {
-      ...org,
-      slug: slugified,
-    }); // mehr ERROR -- auch in den folgenden methoden??
+    return this.organizationService.createOrganization(req, org);
   }
 
   // 5. update

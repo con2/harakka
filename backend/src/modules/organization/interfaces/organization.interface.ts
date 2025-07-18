@@ -1,4 +1,4 @@
-import { Database } from "@common/supabase.types";
+import { Database } from "@common/database.types";
 
 export type OrganizationRow =
   Database["public"]["Tables"]["organizations"]["Row"];
