@@ -8,7 +8,7 @@ import {
   Section,
 } from "@react-email/components";
 
-interface WelcomeEmailProps {
+export interface WelcomeEmailProps {
   name: string;
 }
 

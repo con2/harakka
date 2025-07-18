@@ -1,6 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
-import { S3Service } from "../supabase/s3-supabase.service";
 import { v4 as uuidv4 } from "uuid";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { ItemImageRow } from "./types/item-image.types";
@@ -13,10 +12,7 @@ import {
 export class ItemImagesService {
   private readonly logger = new Logger(ItemImagesService.name);
 
-  constructor(
-    private supabaseService: SupabaseService,
-    private s3Service: S3Service,
-  ) {}
+  constructor(private supabaseService: SupabaseService) {}
 
   /**
    * Upload an image to S3 storage and create a database record
@@ -36,7 +32,7 @@ export class ItemImagesService {
     const fileName = `${itemId}/${uuidv4()}.${fileExt}`;
     const contentType = file.mimetype;
 
-    this.logger.log("Uploading to S3 Storage:", {
+    this.logger.log("Uploading to supabase storage:", {
       key: fileName,
       contentType: contentType,
     });
@@ -134,10 +130,7 @@ export class ItemImagesService {
       .remove([image.storage_path]);
     if (removeErr) throw new Error("Could not remove from storage");
 
-    // 3. Delete from S3
-    await this.s3Service.deleteFile(storagePath);
-
-    // 4. Delete database record
+    // 3. Delete database record
     const { error: deleteError } = await supabase
       .from("storage_item_images")
       .delete()

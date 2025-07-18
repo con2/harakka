@@ -9,7 +9,6 @@ import {
   StorageItemWithJoin,
   ValidItemOrder,
 } from "./interfaces/storage-item.interface";
-import { S3Service } from "../supabase/s3-supabase.service";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { TablesUpdate } from "@common/supabase.types";
@@ -21,7 +20,6 @@ import { ApiSingleResponse } from "../../../../common/response.types"; // Import
 @Injectable()
 export class StorageItemsService {
   constructor(
-    private s3Service: S3Service, // handles S3 bucket queries
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
   ) {}
 
@@ -69,7 +67,7 @@ export class StorageItemsService {
       (item: StorageItemWithJoin): StorageItem => ({
         ...item,
         storage_item_tags:
-          item.storage_item_tags?.map(
+          item.storage_item_tags.map(
             (tagLink) => tagLink.tags, // Flatten out the tags object to just be the tag itself
           ) ?? [], // Fallback to empty array if no tags are available
         location_details: item.storage_locations || null,
@@ -233,7 +231,10 @@ export class StorageItemsService {
     }
 
     // Step 1: Delete images associated with the item
-    const { data: images, error: imagesError } = await supabase
+    const {
+      data: images,
+      error: imagesError,
+    }: PostgrestResponse<{ id: string; storage_path: string }> = await supabase
       .from("storage_item_images")
       .select("id, storage_path")
       .eq("item_id", id);
