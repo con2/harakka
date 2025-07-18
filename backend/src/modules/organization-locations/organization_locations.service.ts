@@ -62,8 +62,11 @@ export class OrganizationLocationsService {
     dto: OrgLocationInsert,
   ): Promise<ApiSingleResponse<OrgLocationRow>> {
     this.assertPermission(req, dto.organization_id, "create");
+    // kann es sein dass hier die org id nach der permission abgesucht wird? aber nicht der grade eingeloggte user?
 
     dto.created_at = new Date().toISOString();
+    // orgItem.created_by = req.user.id;
+    // Tabelle gibt nur created at her und nicht created by! ?? soll das noch eingefügt werden?
 
     const { data, error }: PostgrestSingleResponse<OrgLocationRow> =
       await req.supabase
@@ -146,8 +149,14 @@ export class OrganizationLocationsService {
   }
 
   private hasRole(req: AuthRequest, orgId: string, allowed: string[]): boolean {
-    const role = req.user.role;
-    return role ? allowed.includes(role) : false;
+    const roles = req.user.role || [];
+    return roles.some((role) => allowed.includes(role));
+  }
+
+  // bypass for super admins --- aber den gibt es auch schon im auth guard...
+  private isSuperAdmin(req: AuthRequest): boolean {
+    const roles = req.user.roles || [];
+    return roles.includes("super_admin");
   }
 
   private assertPermission(req: AuthRequest, orgId: string, action: string) {
@@ -156,4 +165,15 @@ export class OrganizationLocationsService {
       throw new ForbiddenException(`You don't have permissions to ${action}`);
     }
   }
+
+  /*   private hasRole(req: AuthRequest, orgId: string, allowed: string[]): boolean {
+    const role = req.user.role;
+    return role ? allowed.includes(role) : false;
+  }
+
+  private assertPermission(req: AuthRequest, orgId: string, action: string) {
+    const allowedRoles = ["super_admin", "main_admin", "storage_manager"];
+    if (!this.hasRole(req, orgId, allowedRoles)) {
+      throw new ForbiddenException(You don't have permissions to ${action});
+    } */
 }
