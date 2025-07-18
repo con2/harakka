@@ -263,13 +263,6 @@ export type Database = {
             referencedRelation: "view_user_ban_status";
             referencedColumns: ["id"];
           },
-          {
-            foreignKeyName: "invoices_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "view_user_ban_status";
-            referencedColumns: ["id"];
-          },
         ];
       };
       organization_items: {
@@ -1389,13 +1382,6 @@ export type Database = {
             referencedRelation: "view_user_ban_status";
             referencedColumns: ["id"];
           },
-          {
-            foreignKeyName: "user_roles_profile_id_fkey";
-            columns: ["profile_id"];
-            isOneToOne: true;
-            referencedRelation: "view_user_ban_status";
-            referencedColumns: ["id"];
-          },
         ];
       };
     };
@@ -1466,28 +1452,6 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
-      };
-      view_user_ban_status: {
-        Row: {
-          active_roles_count: number | null;
-          ban_reason: string | null;
-          ban_status: string | null;
-          banned_at: string | null;
-          banned_by: string | null;
-          banned_by_email: string | null;
-          banned_by_name: string | null;
-          email: string | null;
-          full_name: string | null;
-          id: string | null;
-          inactive_roles_count: number | null;
-          is_permanent: boolean | null;
-          latest_action: string | null;
-          latest_ban_type: string | null;
-          unbanned_at: string | null;
-          user_created_at: string | null;
-          visible_name: string | null;
-        };
-        Relationships: [];
       };
       view_user_ban_status: {
         Row: {
@@ -1598,21 +1562,6 @@ export type Database = {
           role_assignment_id: string;
         }[];
       };
-      get_latest_ban_record: {
-        Args: { check_user_id: string };
-        Returns: {
-          id: string;
-          ban_type: string;
-          action: string;
-          ban_reason: string;
-          is_permanent: boolean;
-          banned_by: string;
-          banned_at: string;
-          unbanned_at: string;
-          organization_id: string;
-          role_assignment_id: string;
-        }[];
-      };
       get_request_user_id: {
         Args: Record<PropertyKey, never>;
         Returns: string;
@@ -1637,22 +1586,6 @@ export type Database = {
           organization_name: string;
           organization_slug: string;
         }[];
-      };
-      is_user_banned_for_app: {
-        Args: { check_user_id: string };
-        Returns: boolean;
-      };
-      is_user_banned_for_org: {
-        Args: { check_user_id: string; check_org_id: string };
-        Returns: boolean;
-      };
-      is_user_banned_for_role: {
-        Args: {
-          check_user_id: string;
-          check_org_id: string;
-          check_role_id: string;
-        };
-        Returns: boolean;
       };
       is_user_banned_for_app: {
         Args: { check_user_id: string };
