@@ -204,7 +204,7 @@ export const itemsSlice = createSlice({
     ) => {
       const { itemId, tags } = action.payload;
       const item = state.items.find((item) => item.id === itemId);
-      if (item) {
+      if (item && "storage_item_tags" in item) {
         item.storage_item_tags = tags;
       }
     },
@@ -222,9 +222,10 @@ export const itemsSlice = createSlice({
         state.items = (action.payload.data ?? []) as Array<
           Item | ManageItemViewRow
         >;
-        state.total = action.payload.metadata.total;
-        state.page = action.payload.metadata.page;
-        state.totalPages = action.payload.metadata.totalPages;
+        const { total, totalPages, page } = action.payload.metadata;
+        state.total = total;
+        state.page = page;
+        state.totalPages = totalPages;
       })
       .addCase(fetchAllItems.rejected, (state, action) => {
         state.loading = false;
@@ -241,9 +242,10 @@ export const itemsSlice = createSlice({
         state.items = (action.payload.data ?? []) as Array<
           Item | ManageItemViewRow
         >;
-        state.total = action.payload.metadata.total;
-        state.page = action.payload.metadata.page;
-        state.totalPages = action.payload.metadata.totalPages;
+        const { total, totalPages, page } = action.payload.metadata;
+        state.total = total;
+        state.page = page;
+        state.totalPages = totalPages;
       })
       .addCase(fetchOrderedItems.rejected, (state, action) => {
         state.loading = false;

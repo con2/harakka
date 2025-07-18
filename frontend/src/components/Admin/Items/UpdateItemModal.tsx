@@ -67,10 +67,10 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   }, [initialData]);
 
   useEffect(() => {
-    dispatch(fetchAllTags({ limit: 20 }));
+    if (!tags || tags.length === 0) dispatch(fetchAllTags({ limit: 20 }));
+    if (locations.length === 0) dispatch(fetchAllLocations({ limit: 20 }));
     dispatch(fetchTagsForItem(formData.id)); // fetch tags for this item
-    dispatch(fetchAllLocations({ limit: 20 }));
-  }, [dispatch, formData.id]);
+  }, [dispatch, locations.length, formData.id, tags]);
 
   useEffect(() => {
     if (selectedTags) {
@@ -168,15 +168,12 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
         location_id: formData.location_id,
       };
 
-      console.log("Sending update with location_id:", formData.location_id);
-
       await dispatch(
         updateItem({ id: formData.id, data: updateData }),
       ).unwrap();
       await dispatch(
         assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
       ).unwrap();
-      dispatch(fetchAllItems({ page: 1, limit: 10 })); // Refresh items list after update
       toast.success(t.updateItemModal.messages.success[lang]);
       onClose();
     } catch (error) {

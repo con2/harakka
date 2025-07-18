@@ -8,15 +8,18 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
+  clearSelectedItem,
   deleteItem,
   fetchAllItems,
   fetchOrderedItems,
+  getItemById,
   selectAllItems,
   selectItemsError,
   selectItemsLimit,
   selectItemsLoading,
   selectItemsPage,
   selectItemsTotalPages,
+  selectSelectedItem,
   updateItem,
 } from "@/store/slices/itemsSlice";
 import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
@@ -46,7 +49,6 @@ const AdminItemsTable = () => {
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const [showModal, setShowModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const isAdmin = useAppSelector(selectIsAdmin);
   const isSuperVera = useAppSelector(selectIsSuperVera);
   // Translation
@@ -68,12 +70,13 @@ const AdminItemsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [order, setOrder] = useState<ValidItemOrder>("created_at");
   const [ascending, setAscending] = useState<boolean | null>(null);
+  const selectedItem = useAppSelector(selectSelectedItem);
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
 
-  const handleEdit = (item: Item) => {
-    setSelectedItem(item); // Set the selected item
+  const handleEdit = (id: string) => {
+    if (!selectedItem || id !== selectedItem.id) dispatch(getItemById(id));
     setShowModal(true); // Show the modal
   };
 
@@ -103,7 +106,6 @@ const AdminItemsTable = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setSelectedItem(null); // Reset selected item
   };
 
   const handleBooking = (order: string) =>
@@ -133,8 +135,6 @@ const AdminItemsTable = () => {
           activity_filter: statusFilter !== "all" ? statusFilter : undefined,
         }),
       );
-    } else {
-      dispatch(fetchAllItems({ page: currentPage, limit: limit }));
     }
   }, [
     dispatch,
@@ -247,16 +247,16 @@ const AdminItemsTable = () => {
       enableSorting: false,
       enableColumnFilter: false,
       cell: ({ row }) => {
-        const targetUser = row.original;
+        const item = row.original;
         const canEdit = isSuperVera || isAdmin;
         const canDelete = isSuperVera || isAdmin;
-        const isDeletable = deletableItems[targetUser.id] !== false;
+        const isDeletable = deletableItems[item.id] !== false;
         return (
           <div className="flex gap-2">
             {canEdit && (
               <Button
                 size="sm"
-                onClick={() => handleEdit(targetUser)}
+                onClick={() => handleEdit(item.id)}
                 className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
               >
                 <Edit className="h-4 w-4" />
@@ -271,9 +271,9 @@ const AdminItemsTable = () => {
                         size="sm"
                         variant="ghost"
                         className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                        onClick={() => handleDelete(targetUser.id)}
+                        onClick={() => handleDelete(item.id)}
                         disabled={!isDeletable}
-                        aria-label={`Delete ${targetUser.translations.fi.item_name}`}
+                        aria-label={`Delete ${item.translations.fi.item_name}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -354,9 +354,9 @@ const AdminItemsTable = () => {
               >
                 {tagFilter.length > 0
                   ? t.adminItemsTable.filters.tags.filtered[lang].replace(
-                    "{count}",
-                    tagFilter.length.toString(),
-                  )
+                      "{count}",
+                      tagFilter.length.toString(),
+                    )
                   : t.adminItemsTable.filters.tags.filter[lang]}
               </Button>
             </PopoverTrigger>

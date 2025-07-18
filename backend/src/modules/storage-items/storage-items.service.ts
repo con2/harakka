@@ -5,6 +5,7 @@ import {
   SupabaseClient,
 } from "@supabase/supabase-js";
 import {
+  LocationRow,
   StorageItem,
   StorageItemWithJoin,
   ValidItemOrder,
@@ -161,11 +162,14 @@ export class StorageItemsService {
   async updateItem(
     req: Request,
     id: string,
-    item: Partial<TablesUpdate<"storage_items">> & { tagIds?: string[] },
+    item: Partial<TablesUpdate<"storage_items">> & {
+      tagIds?: string[];
+      location_details?: LocationRow;
+    },
   ): Promise<StorageItem> {
     const supabase = req["supabase"] as SupabaseClient;
     // Extract properties that shouldn't be sent to the database
-    const { tagIds, ...itemData } = item;
+    const { tagIds, location_details, ...itemData } = item;
 
     console.log("Updating item with data:", JSON.stringify(itemData, null, 2));
 
