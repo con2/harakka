@@ -15,7 +15,7 @@ import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
 import { ValidItemOrder } from "./interfaces/storage-item.interface";
-import { Tables } from "../../types/supabase.types"; // Import the Database type for type safety
+import { Tables } from "@common/supabase.types"; // Import the Database type for type safety
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { ApiSingleResponse } from "../../../../common/response.types";
 import { StorageItem } from "./interfaces/storage-item.interface";
