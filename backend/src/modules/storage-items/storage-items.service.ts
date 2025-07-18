@@ -11,7 +11,7 @@ import {
 } from "./interfaces/storage-item.interface";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
-import { TablesUpdate } from "src/types/supabase.types";
+import { TablesUpdate } from "@common/supabase.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
 import { ApiSingleResponse } from "../../../../common/response.types"; // Import ApiSingleResponse for type safety
