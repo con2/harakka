@@ -1,6 +1,5 @@
 import type { MergeDeep } from "type-fest";
 import type { Database as Base } from "./supabase.types";
-export type { Json } from "./supabase.types";
 
 /* ── Concrete shapes for our translations ─────────────── */
 type ItemTranslations = {
@@ -8,7 +7,7 @@ type ItemTranslations = {
   fi: { item_name: string; item_type: string; item_description: string };
 };
 
-type TagTranslations = {
+export type TagTranslations = {
   en: { name: string };
   fi: { name: string };
 };

@@ -6,7 +6,6 @@ import {
   UpdateItemDto,
   Tag,
   RootState,
-  ItemFormData,
   ValidItemOrder,
   ManageItemViewRow,
 } from "@/types";
@@ -135,7 +134,7 @@ export const getItemById = createAsyncThunk<Item, string>(
 // create Item
 export const createItem = createAsyncThunk(
   "items/createItem",
-  async (itemData: ItemFormData, { rejectWithValue }) => {
+  async (itemData: Item, { rejectWithValue }) => {
     try {
       const createdItem = await itemsApi.createItem(itemData);
       console.log("Item created in API:", createdItem); // Debug log
@@ -218,7 +217,7 @@ export const itemsSlice = createSlice({
     },
     updateItemTags: (
       state,
-      action: PayloadAction<{ itemId: string; tags: Tag[] }>,
+      action: PayloadAction<{ itemId: string; tags: any[] }>,
     ) => {
       const { itemId, tags } = action.payload;
       const item = state.items.find((item) => item.id === itemId);
@@ -237,9 +236,7 @@ export const itemsSlice = createSlice({
       })
       .addCase(fetchAllItems.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = (action.payload.data ?? []) as Array<
-          Item | ManageItemViewRow
-        >;
+        state.items = action.payload.data ?? [];
         state.total = action.payload.metadata.total;
         state.page = action.payload.metadata.page;
         state.totalPages = action.payload.metadata.totalPages;
@@ -256,9 +253,8 @@ export const itemsSlice = createSlice({
       })
       .addCase(fetchOrderedItems.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = (action.payload.data ?? []) as Array<
-          Item | ManageItemViewRow
-        >;
+        state.items = action.payload.data ?? [];
+
         state.total = action.payload.metadata.total;
         state.page = action.payload.metadata.page;
         state.totalPages = action.payload.metadata.totalPages;
@@ -321,7 +317,7 @@ export const itemsSlice = createSlice({
         ) {
           updatedItem.storage_item_tags = Array.from(
             new Map(
-              updatedItem.storage_item_tags.map((tag) => [tag.id, tag]),
+              updatedItem.storage_item_tags.map((tag: Tag) => [tag.id, tag]),
             ).values(),
           );
         }

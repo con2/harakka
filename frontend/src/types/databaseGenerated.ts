@@ -13,6 +13,11 @@ export type TagTranslations = {
   fi: { name: string };
 };
 
+type ItemTranslations = {
+  en: { item_name: string; item_type: string; item_description: string };
+  fi: { item_name: string; item_type: string; item_description: string };
+};
+
 /**
  * Re‑export of the generated Supabase `Database` type with a *narrowed*
  * definition of `tags.translations`.

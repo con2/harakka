@@ -1,5 +1,5 @@
 import { ErrorContext } from "./common";
-import { Database, TagTranslations } from "./databaseGenerated";
+import { Database, TagTranslations } from "@common/database.types";
 
 /** Runtime row shape for the `tags` table with typed `translations`. */
 export type Tag = Database["public"]["Tables"]["tags"]["Row"];

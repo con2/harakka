@@ -6,28 +6,18 @@ import {
   LocationDetails,
   TagTranslation,
 } from "@/types";
+import { Database } from "@common/database.types";
 
-/**
- * Item translations content
- */
-export interface ItemTranslation {
-  item_type: string;
-  item_name: string;
-  item_description: string;
-}
-
-export interface Item extends BaseEntity, Translatable<ItemTranslation> {
-  location_id: string;
-  compartment_id: string;
-  items_number_total: number;
-  items_number_currently_in_storage: number;
-  price: number;
-  is_active: boolean;
-  average_rating?: number;
-  tagIds?: string[];
-  storage_item_tags?: Tag[];
-  location_details?: LocationDetails | null;
-  location_name?: string;
+export type ItemRow = Database["public"]["Tables"]["storage_items"]["Row"];
+export type ItemInsert =
+  Database["public"]["Tables"]["storage_items"]["Insert"];
+export type ItemUpdate =
+  Database["public"]["Tables"]["storage_items"]["Update"];
+export interface Item extends ItemRow {
+  // Don't override database properties - let them come from ItemRow
+  // Only add frontend-specific properties that aren't in the database
+  tagIds?: string[]; // Frontend computed property
+  storage_item_tags?: Tag[]; // Frontend populated property
 }
 
 /**
@@ -70,11 +60,18 @@ export type UpdateItemDto = Partial<
  * Type used for `/admin/items`
  * Gets the basic, necessary data plus some pre‑flattened translations.
  */
-export interface ManageItemViewRow extends Item {
-  /* Flattened, language‑specific name/type strings for quick sorting */
+export interface ManageItemViewRow {
+  // Core item fields from ItemRow
+  id: string;
+  location_name: string | null;
+  price: number | null;
+  items_number_total: number | null;
+  is_active: boolean | null;
+  created_at: string | null;
+  storage_item_tags: Tag[] | null;
+  // Flattened, language‑specific name/type strings for quick sorting
   fi_item_name: string;
   fi_item_type: string;
-
   en_item_name: string;
   en_item_type: string;
 
