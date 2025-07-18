@@ -19,6 +19,7 @@ import {
   selectAdminError,
   selectIsAdmin,
   selectAvailableRoles,
+  selectIsSuperAdmin,
 } from "@/store/slices/rolesSlice";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
 
@@ -40,6 +41,7 @@ export const useRoles = () => {
   );
   const isSuperVera = useAppSelector(selectIsSuperVera);
   const isAdmin = useAppSelector(selectIsAdmin);
+  const isSuperAdmin = useAppSelector(selectIsSuperAdmin);
 
   // Admin data
   const allUserRoles = useAppSelector(selectAllUserRoles);
@@ -172,6 +174,7 @@ export const useRoles = () => {
 
     // Status
     isSuperVera,
+    isSuperAdmin,
     isAdmin,
     loading: loading && !responseReceived, // Only show loading if we haven't received any response
     adminLoading,

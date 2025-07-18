@@ -13,7 +13,7 @@ import {
 import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "../../ui/button";
+import { Button } from "@/components/ui/button";
 import {
   PaymentStatus,
   ValidBooking,
@@ -27,25 +27,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
-import BookingReturnButton from "./BookingReturnButton";
-import BookingConfirmButton from "./BookingConfirmButton";
-import BookingRejectButton from "./BookingRejectButton";
-import BookingDeleteButton from "./BookingDeleteButton";
+import BookingConfirmButton from "@/components/Admin/Bookings/BookingConfirmButton";
+import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton";
+import BookingDeleteButton from "@/components/Admin/Bookings/BookingDeleteButton";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
-import { Separator } from "../../ui/separator";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../ui/select";
-import BookingPickupButton from "./BookingPickupButton";
+} from "@/components/ui/select";
+import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
 import { useAuth } from "@/hooks/useAuth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
 
 const BookingList = () => {
   const dispatch = useAppDispatch();

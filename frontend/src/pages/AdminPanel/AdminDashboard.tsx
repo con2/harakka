@@ -5,8 +5,8 @@ import {
   selectSelectedUser,
 } from "@/store/slices/usersSlice";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/button";
-import { DataTable } from "../components/ui/data-table";
+import { Button } from "../../components/ui/button";
+import { DataTable } from "../../components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
 import {
@@ -33,15 +33,15 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../components/ui/dialog";
-import { Separator } from "../components/ui/separator";
+} from "../../components/ui/dialog";
+import { Separator } from "../../components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../components/ui/select";
+} from "../../components/ui/select";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
 import BookingConfirmButton from "@/components/Admin/Bookings/BookingConfirmButton";
 import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton";

@@ -17,11 +17,11 @@ import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { PaginatedDataTable } from "../../ui/data-table-paginated";
-import AddUserModal from "./AddUserModal";
-import UserDeleteButton from "./UserDeleteButton";
-import UserEditModal from "./UserEditModal";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { useAuth } from "@/hooks/useAuth";
+import AddUserModal from "@/components/Admin/UserManagement/AddUserModal";
+import UserEditModal from "@/components/Admin/UserManagement/UserEditModal";
+import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
 
 const UsersList = () => {
   const dispatch = useAppDispatch();
@@ -147,7 +147,7 @@ const UsersList = () => {
           <div className="flex gap-2">
             {canEdit && <UserEditModal user={targetUser} />}
             {canDelete && (
-              <UserDeleteButton id={targetUser.id} closeModal={closeModal} />
+              <DeleteUserButton id={targetUser.id} closeModal={closeModal} />
             )}
           </div>
         );

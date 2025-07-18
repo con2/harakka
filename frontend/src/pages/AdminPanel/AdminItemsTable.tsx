@@ -27,16 +27,20 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "../ui/button";
-import { Checkbox } from "../ui/checkbox";
-import { Command, CommandGroup, CommandItem } from "../ui/command";
-import { PaginatedDataTable } from "../ui/data-table-paginated";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { toastConfirm } from "../ui/toastConfirm";
-import AddItemModal from "./Items/AddItemModal";
-import AssignTagsModal from "./Items/AssignTagsModal";
-import UpdateItemModal from "./Items/UpdateItemModal";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import AddItemModal from "@/components/Admin/Items/AddItemModal";
+import AssignTagsModal from "@/components/Admin/Items/AssignTagsModal";
+import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
