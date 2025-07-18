@@ -34,7 +34,6 @@ export const RoleManagement: React.FC = () => {
   } = useRoles();
 
   // Define admin status solely from new user roles (without old system)
-  console.log(currentUserRoles);
   const isAdmin =
     currentUserRoles?.some(
       (role) =>
@@ -62,9 +61,6 @@ export const RoleManagement: React.FC = () => {
       !fetchingAdminData &&
       fetchAttemptsRef.current < MAX_FETCH_ATTEMPTS // Limit to 2 attempts
     ) {
-      console.log(
-        `Attempting to fetch admin roles (attempt ${fetchAttemptsRef.current + 1}/2)`,
-      );
       fetchAttemptsRef.current += 1;
       setFetchingAdminData(true);
 
@@ -117,12 +113,6 @@ export const RoleManagement: React.FC = () => {
     const result = hasAnyRole(rolesToTest, orgTestInput || undefined);
     setRoleTestResult(result);
     setRoleTestPerformed(true);
-
-    console.log("Role test (hasAnyRole):", {
-      roles: rolesToTest,
-      organizationId: orgTestInput || "any",
-      result,
-    });
   }, [roleTestInput, orgTestInput, hasAnyRole]);
 
   // Handler for testing a single role (hasRole)
@@ -130,12 +120,6 @@ export const RoleManagement: React.FC = () => {
     setSingleRoleTestPerformed(true);
     const result = hasRole(singleRoleInput, singleOrgInput || undefined);
     setSingleRoleResult(result);
-
-    console.log("Role test (hasRole):", {
-      role: singleRoleInput,
-      organizationId: singleOrgInput || "any",
-      result,
-    });
   }, [singleRoleInput, singleOrgInput, hasRole]);
 
   // Loading state

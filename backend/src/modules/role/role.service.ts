@@ -67,6 +67,10 @@ export class RoleService {
     );
   }
 
+  /* The method is used to extract and organize the user's organizations from the request context.
+  It processes the user roles and groups them based on the organization they belong to.
+  It returns an array of objects, where each object represents an organization with its ID,
+  name, and an array of roles associated with that organization. */
   /**
    * Get user organizations from request context
    */
@@ -78,21 +82,23 @@ export class RoleService {
     return Object.values(
       req.userRoles.reduce(
         (acc, role) => {
-          const orgId = role.organization_id;
+          const orgId = role.organization_id; // extract organization ID from the role
           if (!orgId) return acc; // skip if orgId is null/undefined
           if (!acc[orgId]) {
+            // if this organization hasn't been added yet, add
             acc[orgId] = {
               organization_id: orgId,
               organization_name:
-                role.organization_name ?? "Unknown Organization", // fallback for null
+                role.organization_name ?? "Unknown Organization", // fallback for null organization name
               roles: [],
             };
           }
-          acc[orgId].roles.push(role.role_name ?? "Unknown role");
+          acc[orgId].roles.push(role.role_name ?? "Unknown role"); //Add the role name to the organization's roles array (with fallback)
           return acc;
         },
         {} as Record<
           string,
+          //Response shape for each organization
           {
             organization_id: string;
             organization_name: string;

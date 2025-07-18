@@ -48,17 +48,6 @@ const ProtectedRoute = ({
       // Allow access if user has required role in EITHER system OR is SuperVera
       const userHasAccess = hasOldRole || hasNewRole || isSuperVera;
 
-      // Debug logging
-      console.log("🔍 Final Role Check:", {
-        allowedRoles,
-        oldRole: selectedUser.role,
-        hasOldRole,
-        hasNewRole,
-        isSuperVera,
-        hasAccess: userHasAccess,
-        requiredOrganization,
-      });
-
       setHasAccess(userHasAccess);
       setAccessChecked(true);
     }
