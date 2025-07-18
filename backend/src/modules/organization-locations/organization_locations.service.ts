@@ -3,6 +3,7 @@ import { SupabaseService } from "../supabase/supabase.service";
 import { getPaginationMeta } from "@src/utils/pagination";
 import { ApiSingleResponse } from "@common/response.types";
 import { Or } from "type-fest";
+import { OrgLocationRow } from "./interfaces/organization_locations.interface";
 
 @Injectable()
 export class OrganizationLocationsService {
@@ -35,7 +36,7 @@ export class OrganizationLocationsService {
   }
 
   async getOrgLocById(id: string): Promise<OrgLocationRow | null> {
-    const client = this.supabaseServiceService.getServiceClient();
+    const client = this.supabaseService.getServiceClient();
     const { data, error } = await client
       .from("organization_locations")
       .select("*")
