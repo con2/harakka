@@ -1,7 +1,7 @@
-export class SendMailDto {
+export class SendMailDto<T> {
   email: string;
   subject: string;
-  data: any;
+  data: T;
   type: "bookingConfirmation" | "welcome" | "bookingCancelled";
   // Add other email types as needed
 }
