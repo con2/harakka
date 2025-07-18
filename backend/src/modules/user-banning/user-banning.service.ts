@@ -17,7 +17,7 @@ import {
   UserBanStatusCheck,
 } from "./dto/user-banning.dto";
 import { AuthRequest } from "../../middleware/interfaces/auth-request.interface";
-import { Json } from "@common/supabase.types";
+import { handleSupabaseError } from "../../utils/handleError.utils";
 
 @Injectable()
 export class UserBanningService {
@@ -51,7 +51,11 @@ export class UserBanningService {
       .eq("role_id", roleId)
       .single();
 
-    if (findError || !roleAssignment) {
+    if (findError) {
+      handleSupabaseError(findError);
+    }
+
+    if (!roleAssignment) {
       throw new NotFoundException("Role assignment not found");
     }
 
@@ -62,59 +66,49 @@ export class UserBanningService {
     // Validate permissions
     await this.validateBanPermissions(userId, req);
 
-    try {
-      // Set is_active = false for this specific role assignment
-      const { error: updateError } = await req.supabase
+    // Set is_active = false for this specific role assignment
+    const { error: updateError } = await req.supabase
+      .from("user_organization_roles")
+      .update({ is_active: false })
+      .eq("id", roleAssignment.id);
+
+    if (updateError) {
+      handleSupabaseError(updateError);
+    }
+
+    // Create ban history record
+    const { error: historyError } = await req.supabase
+      .from("user_ban_history")
+      .insert({
+        user_id: userId,
+        banned_by: bannedByUserId,
+        ban_type: "banForRole",
+        action: "banned",
+        ban_reason: banReason,
+        is_permanent: isPermanent,
+        role_assignment_id: roleAssignment.id,
+        organization_id: organizationId,
+        notes,
+      });
+
+    if (historyError) {
+      // Rollback
+      await req.supabase
         .from("user_organization_roles")
-        .update({ is_active: false })
+        .update({ is_active: true })
         .eq("id", roleAssignment.id);
 
-      if (updateError) {
-        throw new Error(`Failed to ban role: ${updateError.message}`);
-      }
-
-      // Create ban history record
-      const { error: historyError } = await req.supabase
-        .from("user_ban_history")
-        .insert({
-          user_id: userId,
-          banned_by: bannedByUserId,
-          ban_type: "banForRole",
-          action: "banned",
-          ban_reason: banReason,
-          is_permanent: isPermanent,
-          role_assignment_id: roleAssignment.id,
-          organization_id: organizationId,
-          notes,
-        });
-
-      if (historyError) {
-        // Rollback
-        await req.supabase
-          .from("user_organization_roles")
-          .update({ is_active: true })
-          .eq("id", roleAssignment.id);
-
-        throw new Error(
-          `Failed to create ban history: ${historyError.message}`,
-        );
-      }
-
-      this.logger.log(
-        `User ${userId} banned for role ${roleId} in org ${organizationId} by ${bannedByUserId}`,
-      );
-
-      return {
-        success: true,
-        message: `User has been banned for the specific role successfully`,
-      };
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      throw new BadRequestException(
-        `Failed to ban user for role: ${errorMessage}`,
-      );
+      handleSupabaseError(historyError);
     }
+
+    this.logger.log(
+      `User ${userId} banned for role ${roleId} in org ${organizationId} by ${bannedByUserId}`,
+    );
+
+    return {
+      success: true,
+      message: `User has been banned for the specific role successfully`,
+    };
   }
 
   /**
@@ -142,9 +136,7 @@ export class UserBanningService {
       .eq("is_active", true);
 
     if (findError) {
-      throw new BadRequestException(
-        `Failed to fetch role assignments: ${findError.message}`,
-      );
+      handleSupabaseError(findError);
     }
 
     if (!roleAssignments || roleAssignments.length === 0) {
@@ -156,64 +148,52 @@ export class UserBanningService {
     // Validate permissions
     await this.validateBanPermissions(userId, req);
 
-    try {
-      // Set is_active = false for all role assignments in this organization
-      const { error: updateError } = await req.supabase
-        .from("user_organization_roles")
-        .update({ is_active: false })
-        .eq("user_id", userId)
-        .eq("organization_id", organizationId)
-        .eq("is_active", true);
+    // Set is_active = false for all role assignments in this organization
+    const { error: updateError } = await req.supabase
+      .from("user_organization_roles")
+      .update({ is_active: false })
+      .eq("user_id", userId)
+      .eq("organization_id", organizationId)
+      .eq("is_active", true);
 
-      if (updateError) {
-        throw new Error(
-          `Failed to ban user from organization: ${updateError.message}`,
-        );
-      }
-
-      // Create ban history record with affected assignments
-      const { error: historyError } = await req.supabase
-        .from("user_ban_history")
-        .insert({
-          user_id: userId,
-          banned_by: bannedByUserId,
-          ban_type: "banForOrg",
-          action: "banned",
-          ban_reason: banReason,
-          is_permanent: isPermanent,
-          organization_id: organizationId,
-          affected_assignments: { assignments: roleAssignments },
-          notes,
-        });
-
-      if (historyError) {
-        // Rollback
-        await req.supabase
-          .from("user_organization_roles")
-          .update({ is_active: true })
-          .eq("user_id", userId)
-          .eq("organization_id", organizationId);
-
-        throw new Error(
-          `Failed to create ban history: ${historyError.message}`,
-        );
-      }
-
-      this.logger.log(
-        `User ${userId} banned from organization ${organizationId} by ${bannedByUserId}`,
-      );
-
-      return {
-        success: true,
-        message: `User has been banned from the organization successfully`,
-      };
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      throw new BadRequestException(
-        `Failed to ban user from organization: ${errorMessage}`,
-      );
+    if (updateError) {
+      handleSupabaseError(updateError);
     }
+
+    // Create ban history record with affected assignments
+    const { error: historyError } = await req.supabase
+      .from("user_ban_history")
+      .insert({
+        user_id: userId,
+        banned_by: bannedByUserId,
+        ban_type: "banForOrg",
+        action: "banned",
+        ban_reason: banReason,
+        is_permanent: isPermanent,
+        organization_id: organizationId,
+        affected_assignments: { assignments: roleAssignments },
+        notes,
+      });
+
+    if (historyError) {
+      // Rollback
+      await req.supabase
+        .from("user_organization_roles")
+        .update({ is_active: true })
+        .eq("user_id", userId)
+        .eq("organization_id", organizationId);
+
+      handleSupabaseError(historyError);
+    }
+
+    this.logger.log(
+      `User ${userId} banned from organization ${organizationId} by ${bannedByUserId}`,
+    );
+
+    return {
+      success: true,
+      message: `User has been banned from the organization successfully`,
+    };
   }
 
   /**
@@ -234,9 +214,7 @@ export class UserBanningService {
       .eq("is_active", true);
 
     if (findError) {
-      throw new BadRequestException(
-        `Failed to fetch role assignments: ${findError.message}`,
-      );
+      handleSupabaseError(findError);
     }
 
     if (!roleAssignments || roleAssignments.length === 0) {
@@ -246,61 +224,49 @@ export class UserBanningService {
     // Validate permissions
     await this.validateBanPermissions(userId, req);
 
-    try {
-      // Set is_active = false for all role assignments
-      const { error: updateError } = await req.supabase
-        .from("user_organization_roles")
-        .update({ is_active: false })
-        .eq("user_id", userId)
-        .eq("is_active", true);
+    // Set is_active = false for all role assignments
+    const { error: updateError } = await req.supabase
+      .from("user_organization_roles")
+      .update({ is_active: false })
+      .eq("user_id", userId)
+      .eq("is_active", true);
 
-      if (updateError) {
-        throw new Error(
-          `Failed to ban user from application: ${updateError.message}`,
-        );
-      }
-
-      // Create ban history record with all affected assignments
-      const { error: historyError } = await req.supabase
-        .from("user_ban_history")
-        .insert({
-          user_id: userId,
-          banned_by: bannedByUserId,
-          ban_type: "banForApp",
-          action: "banned",
-          ban_reason: banReason,
-          is_permanent: isPermanent,
-          affected_assignments: { assignments: roleAssignments },
-          notes,
-        });
-
-      if (historyError) {
-        // Rollback
-        await req.supabase
-          .from("user_organization_roles")
-          .update({ is_active: true })
-          .eq("user_id", userId);
-
-        throw new Error(
-          `Failed to create ban history: ${historyError.message}`,
-        );
-      }
-
-      this.logger.log(
-        `User ${userId} banned from entire application by ${bannedByUserId}`,
-      );
-
-      return {
-        success: true,
-        message: `User has been banned from the entire application successfully`,
-      };
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      throw new BadRequestException(
-        `Failed to ban user from application: ${errorMessage}`,
-      );
+    if (updateError) {
+      handleSupabaseError(updateError);
     }
+
+    // Create ban history record with all affected assignments
+    const { error: historyError } = await req.supabase
+      .from("user_ban_history")
+      .insert({
+        user_id: userId,
+        banned_by: bannedByUserId,
+        ban_type: "banForApp",
+        action: "banned",
+        ban_reason: banReason,
+        is_permanent: isPermanent,
+        affected_assignments: { assignments: roleAssignments },
+        notes,
+      });
+
+    if (historyError) {
+      // Rollback
+      await req.supabase
+        .from("user_organization_roles")
+        .update({ is_active: true })
+        .eq("user_id", userId);
+
+      handleSupabaseError(historyError);
+    }
+
+    this.logger.log(
+      `User ${userId} banned from entire application by ${bannedByUserId}`,
+    );
+
+    return {
+      success: true,
+      message: `User has been banned from the entire application successfully`,
+    };
   }
 
   /**
@@ -313,75 +279,66 @@ export class UserBanningService {
     // Validate permissions
     await this.validateBanPermissions(unbanDto.userId, req);
 
-    try {
-      let updateQuery = req.supabase
-        .from("user_organization_roles")
-        .update({ is_active: true })
-        .eq("user_id", unbanDto.userId)
-        .eq("is_active", false);
+    let updateQuery = req.supabase
+      .from("user_organization_roles")
+      .update({ is_active: true })
+      .eq("user_id", unbanDto.userId)
+      .eq("is_active", false);
 
-      // Apply filters based on ban type
-      if (unbanDto.banType === "banForRole") {
-        if (!unbanDto.organizationId || !unbanDto.roleId) {
-          throw new BadRequestException(
-            "Organization ID and Role ID are required for unbanForRole",
-          );
-        }
-        updateQuery = updateQuery
-          .eq("organization_id", unbanDto.organizationId)
-          .eq("role_id", unbanDto.roleId);
-      } else if (unbanDto.banType === "banForOrg") {
-        if (!unbanDto.organizationId) {
-          throw new BadRequestException(
-            "Organization ID is required for unbanForOrg",
-          );
-        }
-        updateQuery = updateQuery.eq(
-          "organization_id",
-          unbanDto.organizationId,
+    // Apply filters based on ban type
+    if (unbanDto.banType === "banForRole") {
+      if (!unbanDto.organizationId || !unbanDto.roleId) {
+        throw new BadRequestException(
+          "Organization ID and Role ID are required for unbanForRole",
         );
       }
-      // For banForApp, no additional filters needed
-
-      const { error: updateError } = await updateQuery;
-
-      if (updateError) {
-        throw new Error(`Failed to unban user: ${updateError.message}`);
-      }
-
-      // Create unban history record
-      const { error: historyError } = await req.supabase
-        .from("user_ban_history")
-        .insert({
-          user_id: unbanDto.userId,
-          banned_by: req.user.id,
-          ban_type: unbanDto.banType,
-          action: "unbanned",
-          organization_id: unbanDto.organizationId,
-          unbanned_at: new Date().toISOString(),
-          notes: unbanDto.notes,
-        });
-
-      if (historyError) {
-        this.logger.warn(
-          `Failed to create unban history: ${historyError.message}`,
+      updateQuery = updateQuery
+        .eq("organization_id", unbanDto.organizationId)
+        .eq("role_id", unbanDto.roleId);
+    } else if (unbanDto.banType === "banForOrg") {
+      if (!unbanDto.organizationId) {
+        throw new BadRequestException(
+          "Organization ID is required for unbanForOrg",
         );
-        // Don't rollback unban for history failure
       }
-
-      this.logger.log(
-        `User ${unbanDto.userId} unbanned (${unbanDto.banType}) by ${req.user.id}`,
-      );
-
-      return {
-        success: true,
-        message: `User has been unbanned successfully`,
-      };
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      throw new BadRequestException(`Failed to unban user: ${errorMessage}`);
+      updateQuery = updateQuery.eq("organization_id", unbanDto.organizationId);
     }
+    // For banForApp, no additional filters needed
+
+    const { error: updateError } = await updateQuery;
+
+    if (updateError) {
+      handleSupabaseError(updateError);
+    }
+
+    // Create unban history record
+    const { error: historyError } = await req.supabase
+      .from("user_ban_history")
+      .insert({
+        user_id: unbanDto.userId,
+        banned_by: req.user.id,
+        ban_type: unbanDto.banType,
+        action: "unbanned",
+        organization_id: unbanDto.organizationId,
+        unbanned_at: new Date().toISOString(),
+        notes: unbanDto.notes,
+      });
+
+    if (historyError) {
+      this.logger.warn(
+        `Failed to create unban history: ${historyError.message}`,
+      );
+      // Don't rollback unban for history failure
+    }
+
+    this.logger.log(
+      `User ${unbanDto.userId} unbanned (${unbanDto.banType}) by ${req.user.id}`,
+    );
+
+    return {
+      success: true,
+      message: `User has been unbanned successfully`,
+    };
   }
 
   /**
@@ -393,75 +350,15 @@ export class UserBanningService {
   ): Promise<UserBanHistoryDto[]> {
     const { data, error } = await req.supabase
       .from("user_ban_history")
-      .select(
-        `
-        id,
-        user_id,
-        banned_by,
-        ban_type,
-        action,
-        ban_reason,
-        is_permanent,
-        role_assignment_id,
-        organization_id,
-        affected_assignments,
-        banned_at,
-        unbanned_at,
-        notes,
-        created_at
-      `,
-      )
+      .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
-      throw new BadRequestException(
-        `Failed to fetch ban history: ${error.message}`,
-      );
+      handleSupabaseError(error);
     }
 
-    type BanHistoryRecord = {
-      id: string;
-      user_id: string;
-      banned_by: string;
-      ban_type: string;
-      action: string;
-      ban_reason: string | null;
-      is_permanent: boolean | null;
-      role_assignment_id: string | null;
-      organization_id: string | null;
-      affected_assignments: Json | null;
-      banned_at: string | null;
-      unbanned_at: string | null;
-      notes: string | null;
-      created_at: string | null;
-    };
-
-    return (
-      data?.map((record: BanHistoryRecord) => ({
-        id: record.id,
-        userId: record.user_id,
-        bannedBy: record.banned_by,
-        banType: record.ban_type,
-        action: record.action,
-        banReason: record.ban_reason || undefined,
-        isPermanent: record.is_permanent,
-        roleAssignmentId: record.role_assignment_id || undefined,
-        organizationId: record.organization_id || undefined,
-        affectedAssignments:
-          record.affected_assignments &&
-          typeof record.affected_assignments === "object" &&
-          !Array.isArray(record.affected_assignments)
-            ? (record.affected_assignments as Record<string, unknown>)
-            : undefined,
-        bannedAt: record.banned_at ? new Date(record.banned_at) : null,
-        unbannedAt: record.unbanned_at
-          ? new Date(record.unbanned_at)
-          : undefined,
-        notes: record.notes || undefined,
-        createdAt: record.created_at ? new Date(record.created_at) : null,
-      })) || []
-    );
+    return data || [];
   }
 
   /**
@@ -474,63 +371,10 @@ export class UserBanningService {
       .order("user_created_at", { ascending: false });
 
     if (error) {
-      throw new BadRequestException(
-        `Failed to fetch user ban statuses: ${error.message}`,
-      );
+      handleSupabaseError(error);
     }
 
-    type BanStatusRecord = {
-      id: string | null;
-      email: string | null;
-      full_name: string | null;
-      visible_name: string | null;
-      user_created_at: string | null;
-      active_roles_count: number | null;
-      inactive_roles_count: number | null;
-      ban_status: string | null;
-      latest_ban_type: string | null;
-      latest_action: string | null;
-      ban_reason: string | null;
-      is_permanent: boolean | null;
-      banned_by: string | null;
-      banned_at: string | null;
-      unbanned_at: string | null;
-      banned_by_name: string | null;
-      banned_by_email: string | null;
-    };
-
-    return (
-      data?.map((record: BanStatusRecord) => ({
-        id: record.id ?? "",
-        email: record.email ?? "",
-        fullName: record.full_name ?? undefined,
-        visibleName: record.visible_name ?? undefined,
-        userCreatedAt: record.user_created_at
-          ? new Date(record.user_created_at)
-          : new Date(),
-        activeRolesCount: record.active_roles_count ?? 0,
-        inactiveRolesCount: record.inactive_roles_count ?? 0,
-        banStatus:
-          (record.ban_status as "active" | "partially_banned" | "banned_app") ??
-          "active",
-        latestBanType:
-          record.latest_ban_type !== null ? record.latest_ban_type : undefined,
-        latestAction:
-          record.latest_action !== null ? record.latest_action : undefined,
-        banReason: record.ban_reason !== null ? record.ban_reason : undefined,
-        isPermanent:
-          record.is_permanent !== null ? record.is_permanent : undefined,
-        bannedBy: record.banned_by !== null ? record.banned_by : undefined,
-        bannedAt: record.banned_at ? new Date(record.banned_at) : undefined,
-        unbannedAt: record.unbanned_at
-          ? new Date(record.unbanned_at)
-          : undefined,
-        bannedByName:
-          record.banned_by_name !== null ? record.banned_by_name : undefined,
-        bannedByEmail:
-          record.banned_by_email !== null ? record.banned_by_email : undefined,
-      })) || []
-    );
+    return data || [];
   }
 
   /**
@@ -547,9 +391,7 @@ export class UserBanningService {
       .eq("user_id", userId);
 
     if (allRolesError) {
-      throw new BadRequestException(
-        `Failed to check ban status: ${allRolesError.message}`,
-      );
+      handleSupabaseError(allRolesError);
     }
 
     const activeRoles = allRoles?.filter((role) => role.is_active) || [];
