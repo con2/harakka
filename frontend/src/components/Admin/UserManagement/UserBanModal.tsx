@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,6 +32,13 @@ import {
 } from "@/store/slices/userBanningSlice";
 import { UserProfile } from "@common/user.types";
 import { BanType } from "@/types/userBanning";
+import { useRoles } from "@/hooks/useRoles";
+import { COMMON_BAN_REASONS, CUSTOM_BAN_REASON } from "@/config/constants";
+
+interface TargetUserOrganization {
+  organization_id: string;
+  organization_name: string;
+}
 
 interface UserBanModalProps {
   user: UserProfile;
@@ -44,14 +50,71 @@ const UserBanModal = ({ user, initialOpen = false }: UserBanModalProps) => {
   const loading = useAppSelector(selectUserBanningLoading);
   const banningError = useAppSelector(selectUserBanningError);
   const { lang } = useLanguage();
+  const { allUserRoles, refreshAllUserRoles } = useRoles();
 
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [banType, setBanType] = useState<BanType>("role");
+  const [selectedBanReason, setSelectedBanReason] = useState<string>("");
+  const [customBanReason, setCustomBanReason] = useState("");
   const [banReason, setBanReason] = useState("");
   const [notes, setNotes] = useState("");
   const [isPermanent, setIsPermanent] = useState(false);
   const [organizationId, setOrganizationId] = useState("");
   const [roleId, setRoleId] = useState("");
+
+  // Get organizations where the target user has roles (these are what we can ban them from)
+  const getTargetUserOrganizations = (): TargetUserOrganization[] => {
+    console.log("All user roles:", allUserRoles);
+    console.log("Target user ID:", user.id);
+    const userRoles = allUserRoles.filter(
+      (role) => role.user_id === user.id && role.is_active,
+    );
+    console.log("Filtered user roles for target user:", userRoles);
+    const orgMap = new Map<string, TargetUserOrganization>();
+    userRoles.forEach((role) => {
+      if (!orgMap.has(role.organization_id)) {
+        orgMap.set(role.organization_id, {
+          organization_id: role.organization_id,
+          organization_name: role.organization_name,
+        });
+      }
+    });
+    const organizations = Array.from(orgMap.values());
+    console.log("Available organizations:", organizations);
+    return organizations;
+  };
+  // Get the target user's roles in a specific organization for banning
+  const getTargetUserRolesForOrg = (orgId: string) => {
+    return allUserRoles.filter(
+      (role) =>
+        role.user_id === user.id &&
+        role.organization_id === orgId &&
+        role.is_active,
+    );
+  };
+
+  // Reset role when organization changes
+  useEffect(() => {
+    if (banType === "role" && organizationId) {
+      setRoleId("");
+    }
+  }, [organizationId, banType]);
+
+  // Load all user roles when modal opens
+  useEffect(() => {
+    if (isOpen && (!allUserRoles || allUserRoles.length === 0)) {
+      refreshAllUserRoles();
+    }
+  }, [isOpen, allUserRoles, refreshAllUserRoles]);
+
+  // Update final ban reason based on selection
+  useEffect(() => {
+    if (selectedBanReason === CUSTOM_BAN_REASON) {
+      setBanReason(customBanReason);
+    } else {
+      setBanReason(selectedBanReason);
+    }
+  }, [selectedBanReason, customBanReason]);
 
   const handleSubmit = async () => {
     if (!user.id) {
@@ -61,6 +124,12 @@ const UserBanModal = ({ user, initialOpen = false }: UserBanModalProps) => {
 
     if (!banReason.trim()) {
       toast.error(t.userBanning.messages.missingFields[lang]);
+      return;
+    }
+
+    // Additional validation for custom reason
+    if (selectedBanReason === CUSTOM_BAN_REASON && !customBanReason.trim()) {
+      toast.error("Please provide a custom ban reason");
       return;
     }
 
@@ -128,6 +197,8 @@ const UserBanModal = ({ user, initialOpen = false }: UserBanModalProps) => {
   const handleClose = () => {
     setIsOpen(false);
     setBanType("application");
+    setSelectedBanReason("");
+    setCustomBanReason("");
     setBanReason("");
     setNotes("");
     setIsPermanent(false);
@@ -190,28 +261,49 @@ const UserBanModal = ({ user, initialOpen = false }: UserBanModalProps) => {
               <Label htmlFor="organization">
                 {t.userBanning.fields.organization.label[lang]}
               </Label>
-              <Input
-                id="organization"
-                value={organizationId}
-                onChange={(e) => setOrganizationId(e.target.value)}
-                placeholder={
-                  t.userBanning.fields.organization.placeholder[lang]
-                }
-              />
+              <Select value={organizationId} onValueChange={setOrganizationId}>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      t.userBanning.fields.organization.placeholder[lang]
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {getTargetUserOrganizations().map(
+                    (org: TargetUserOrganization) => (
+                      <SelectItem
+                        key={org.organization_id}
+                        value={org.organization_id}
+                      >
+                        {org.organization_name}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
-          {banType === "role" && (
+          {banType === "role" && organizationId && (
             <div className="space-y-2">
               <Label htmlFor="role">
                 {t.userBanning.fields.role.label[lang]}
               </Label>
-              <Input
-                id="role"
-                value={roleId}
-                onChange={(e) => setRoleId(e.target.value)}
-                placeholder={t.userBanning.fields.role.placeholder[lang]}
-              />
+              <Select value={roleId} onValueChange={setRoleId}>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={t.userBanning.fields.role.placeholder[lang]}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {getTargetUserRolesForOrg(organizationId).map((userRole) => (
+                    <SelectItem key={userRole.role_id} value={userRole.role_id}>
+                      {userRole.role_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
@@ -219,14 +311,35 @@ const UserBanModal = ({ user, initialOpen = false }: UserBanModalProps) => {
             <Label htmlFor="banReason">
               {t.userBanning.fields.banReason.label[lang]}
             </Label>
-            <Textarea
-              id="banReason"
-              value={banReason}
-              onChange={(e) => setBanReason(e.target.value)}
-              placeholder={t.userBanning.fields.banReason.placeholder[lang]}
-              rows={3}
-            />
+            <Select
+              value={selectedBanReason}
+              onValueChange={setSelectedBanReason}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a reason..." />
+              </SelectTrigger>
+              <SelectContent>
+                {COMMON_BAN_REASONS.map((reason) => (
+                  <SelectItem key={reason} value={reason}>
+                    {reason}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          {selectedBanReason === CUSTOM_BAN_REASON && (
+            <div className="space-y-2">
+              <Label htmlFor="customBanReason">Custom Ban Reason</Label>
+              <Textarea
+                id="customBanReason"
+                value={customBanReason}
+                onChange={(e) => setCustomBanReason(e.target.value)}
+                placeholder="Please specify the reason for banning..."
+                rows={3}
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="notes">
@@ -259,7 +372,12 @@ const UserBanModal = ({ user, initialOpen = false }: UserBanModalProps) => {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={loading || !banReason.trim()}
+            disabled={
+              loading ||
+              !banReason.trim() ||
+              (selectedBanReason === CUSTOM_BAN_REASON &&
+                !customBanReason.trim())
+            }
             className="bg-orange-600 hover:bg-orange-700"
           >
             {loading
