@@ -72,10 +72,10 @@ const UserBanModal = ({ user, initialOpen = false }: UserBanModalProps) => {
     console.log("Filtered user roles for target user:", userRoles);
     const orgMap = new Map<string, TargetUserOrganization>();
     userRoles.forEach((role) => {
-      if (!orgMap.has(role.organization_id)) {
+      if (role.organization_id && !orgMap.has(role.organization_id)) {
         orgMap.set(role.organization_id, {
           organization_id: role.organization_id,
-          organization_name: role.organization_name,
+          organization_name: role.organization_name ?? "",
         });
       }
     });
@@ -297,11 +297,16 @@ const UserBanModal = ({ user, initialOpen = false }: UserBanModalProps) => {
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {getTargetUserRolesForOrg(organizationId).map((userRole) => (
-                    <SelectItem key={userRole.role_id} value={userRole.role_id}>
-                      {userRole.role_name}
-                    </SelectItem>
-                  ))}
+                  {getTargetUserRolesForOrg(organizationId)
+                    .filter((userRole) => userRole.role_id) // Filter out null role_ids
+                    .map((userRole) => (
+                      <SelectItem
+                        key={userRole.role_id}
+                        value={userRole.role_id!}
+                      >
+                        {userRole.role_name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
