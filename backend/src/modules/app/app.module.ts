@@ -33,6 +33,8 @@ import { JwtModule } from "../jwt/jwt.module";
 import { RolesGuard } from "src/guards/roles.guard";
 import { OrganizationsModule } from "../organization/organizations.module";
 import { OrganizationsController } from "../organization/organizations.controller";
+import { Org_ItemsModule } from "../org_items/org_items.module";
+import { OrgItemsController } from "../org_items/org_items.controller";
 
 // Load and expand environment variables before NestJS modules initialize
 const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
@@ -67,6 +69,7 @@ dotenvExpand.expand(env);
     RoleModule,
     JwtModule,
     OrganizationsModule,
+    Org_ItemsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: "APP_GUARD", useClass: RolesGuard }],
@@ -88,20 +91,24 @@ export class AppModule implements NestModule {
         // Public storage and item endpoints (for front page)
         { path: "storage", method: RequestMethod.GET },
         { path: "storage-items", method: RequestMethod.GET },
-        { path: "storage-items/(.*)", method: RequestMethod.GET }, // For specific item endpoints
+        { path: "storage-items/*path", method: RequestMethod.GET }, // For specific item endpoints
         { path: "api/storage-locations", method: RequestMethod.GET },
         { path: "storage-locations", method: RequestMethod.GET },
-        { path: "storage-locations/(.*)", method: RequestMethod.GET },
+        { path: "storage-locations/*path", method: RequestMethod.GET },
 
         // Public tag endpoints
         { path: "tags", method: RequestMethod.GET },
-        { path: "tags/(.*)", method: RequestMethod.GET },
+        { path: "tags/*path", method: RequestMethod.GET },
 
         // Public item images endpoints
-        { path: "item-images/(.*)", method: RequestMethod.GET },
+        { path: "item-images/*path", method: RequestMethod.GET },
 
         // Public storage-item availability endpoints (for checking item availability)
-        { path: "storage-items/availability/(.*)", method: RequestMethod.GET },
+        { path: "storage-items/availability/*path", method: RequestMethod.GET },
+
+        // Organization_items public endpoints
+        { path: "org-items", method: RequestMethod.GET },
+        { path: "org-items/*path", method: RequestMethod.GET },
       )
       .forRoutes(
         // Protected controllers
@@ -111,6 +118,7 @@ export class AppModule implements NestModule {
         LogsController,
         RoleController,
         OrganizationsController,
+        OrgItemsController,
 
         // Protected HTTP methods (all routes except excluded ones)
         { path: "*", method: RequestMethod.POST },
