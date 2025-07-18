@@ -9,7 +9,6 @@ import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { ApiResponse } from "../../../../common/response.types";
-import slugify from "slugify";
 
 @Injectable()
 export class OrganizationsService {
@@ -94,9 +93,6 @@ export class OrganizationsService {
     org: OrganizationInsert,
   ): Promise<OrganizationRow> {
     const supabase = this.getClient(req);
-    // Type not recognized by TS
-
-    const slug = org.slug ?? slugify(org.name, { lower: true, strict: true });
 
     const {
       data,
@@ -106,7 +102,7 @@ export class OrganizationsService {
       error: PostgrestError | null;
     } = await supabase
       .from("organizations")
-      .insert({ ...org, slug, created_by: req.user.id })
+      .insert({ ...org, created_by: req.user.id })
       .select()
       .single();
 
