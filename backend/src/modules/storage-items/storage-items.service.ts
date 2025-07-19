@@ -106,7 +106,6 @@ export class StorageItemsService {
       `,
         ) // Join storage_item_tags and tags table to get full tag data
         .eq("id", id)
-        .eq("is_deleted", false) // Only get undeleted items
         .single();
 
     if (error) {
@@ -183,7 +182,6 @@ export class StorageItemsService {
       .eq("id", id)
       .select();
 
-    console.log(updateError);
     if (updateError) {
       throw new Error(updateError.message);
     }

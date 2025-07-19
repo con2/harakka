@@ -8,7 +8,6 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  clearSelectedItem,
   deleteItem,
   fetchAllItems,
   fetchOrderedItems,
@@ -16,13 +15,16 @@ import {
   selectAllItems,
   selectItemsError,
   selectItemsLimit,
-  selectItemsLoading,
   selectItemsPage,
   selectItemsTotalPages,
   selectSelectedItem,
   updateItem,
 } from "@/store/slices/itemsSlice";
-import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
+import {
+  fetchAllTags,
+  fetchTagsForItem,
+  selectAllTags,
+} from "@/store/slices/tagSlice";
 import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { Item, ValidItemOrder } from "@/types/item";
@@ -44,7 +46,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
   const items = useAppSelector(selectAllItems);
-  const loading = useAppSelector(selectItemsLoading);
+  const [loading, setLoading] = useState(true);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
@@ -76,7 +78,10 @@ const AdminItemsTable = () => {
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
 
   const handleEdit = (id: string) => {
-    if (!selectedItem || id !== selectedItem.id) dispatch(getItemById(id));
+    if (!selectedItem || id !== selectedItem.id) {
+      dispatch(getItemById(id));
+      dispatch(fetchTagsForItem(id));
+    }
     setShowModal(true); // Show the modal
   };
 
@@ -117,7 +122,6 @@ const AdminItemsTable = () => {
     setAssignTagsModalOpen(false);
     setCurrentItemId(null);
   };
-  useEffect(() => console.log(tagFilter), [tagFilter]);
 
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
@@ -135,6 +139,7 @@ const AdminItemsTable = () => {
           activity_filter: statusFilter !== "all" ? statusFilter : undefined,
         }),
       );
+      setLoading(false);
     }
   }, [
     dispatch,

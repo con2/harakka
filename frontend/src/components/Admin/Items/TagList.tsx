@@ -9,7 +9,7 @@ import {
   fetchFilteredTags,
   selectAllTags,
   selectError,
-  selectLoading,
+  selectTagsLoading,
   selectTagsPage,
   selectTagsTotalPages,
   updateTag,
@@ -34,7 +34,7 @@ const TagList = () => {
   const dispatch = useAppDispatch();
   const tags = useAppSelector(selectAllTags);
   const items = useAppSelector(selectAllItems);
-  const loading = useAppSelector(selectLoading);
+  const loading = useAppSelector(selectTagsLoading);
   const error = useAppSelector(selectError);
   const page = useAppSelector(selectTagsPage);
   const totalPages = useAppSelector(selectTagsTotalPages);

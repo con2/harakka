@@ -312,6 +312,7 @@ export const itemsSlice = createSlice({
         // Find the item in local state, update only necessary properties
         const index = state.items.findIndex((i) => i.id === updatedItem.id);
         Object.assign(state.items[index], updatedItem);
+        state.selectedItem = updatedItem;
       })
       .addCase(updateItem.rejected, (state, action) => {
         state.error = action.payload as string;
