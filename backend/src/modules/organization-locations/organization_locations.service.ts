@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { getPaginationMeta } from "@src/utils/pagination";
 import { ApiResponse, ApiSingleResponse } from "@common/response.types";
@@ -59,63 +59,66 @@ export class OrganizationLocationsService {
   // 3. create organization location
   async createOrgLoc(
     req: AuthRequest,
-    dto: OrgLocationInsert,
+    orgLoc: OrgLocationInsert,
   ): Promise<ApiSingleResponse<OrgLocationRow>> {
-    this.assertPermission(req, dto.organization_id, "create");
-    // kann es sein dass hier die org id nach der permission abgesucht wird? aber nicht der grade eingeloggte user?
+    const supabase = req.supabase;
 
-    dto.created_at = new Date().toISOString();
-    // orgItem.created_by = req.user.id;
-    // Tabelle gibt nur created at her und nicht created by! ?? soll das noch eingefügt werden?
+    try {
+      const { data, error }: PostgrestSingleResponse<OrgLocationRow> =
+        await supabase
+          .from("organization_locations")
+          .insert(orgLoc)
+          .select("*")
+          .single();
+      if (error) handleSupabaseError(error);
 
-    const { data, error }: PostgrestSingleResponse<OrgLocationRow> =
-      await req.supabase
-        .from("organization_locations")
-        .insert(dto)
-        .select("*")
-        .single();
-
-    if (error) handleSupabaseError(error);
-
-    return {
-      data,
-      error: null,
-      count: 1,
-      status: 200,
-      statusText: "Location Created",
-    };
+      return {
+        data,
+        error: null,
+        count: 1,
+        status: 201,
+        statusText: "Location Created",
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to create organization location: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
   }
 
   // 4. update organization location
   async updateOrgLoc(
     req: AuthRequest,
     id: string,
-    dto: OrgLocationUpdate,
+    orgLoc: OrgLocationUpdate,
   ): Promise<ApiSingleResponse<OrgLocationRow>> {
-    const existing = await this.getOrgLocById(id);
-    if (!existing) {
-      throw new ForbiddenException("Organization Location not found");
+    const supabase = req.supabase;
+    try {
+      const { data, error } = await supabase
+        .from("organization_locations")
+        .update(orgLoc)
+        .eq("id", id)
+        .select("*")
+        .single();
+
+      if (error) handleSupabaseError(error);
+
+      return {
+        data,
+        error: null,
+        count: 1,
+        status: 200,
+        statusText: "Location Updated",
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to update organization location: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
-    this.assertPermission(req, existing.organization_id, "update"); // is that correct permission?
-
-    dto.updated_at = new Date().toISOString();
-
-    const { data, error } = await req.supabase
-      .from("organization_locations")
-      .update(dto)
-      .eq("id", id)
-      .select("*")
-      .single();
-
-    if (error) handleSupabaseError(error);
-
-    return {
-      data,
-      error: null,
-      count: 1,
-      status: 200,
-      statusText: "Location Updated",
-    };
   }
 
   // 5. delete organization location
@@ -123,57 +126,30 @@ export class OrganizationLocationsService {
     req: AuthRequest,
     id: string,
   ): Promise<ApiSingleResponse<OrgLocationRow>> {
-    const existing = await this.getOrgLocById(id);
-    if (!existing) {
-      throw new ForbiddenException("Organization Location not found"); // jons utils nutzen
-    }
+    const supabase = req.supabase;
 
-    this.assertPermission(req, existing.organization_id, "delete");
+    try {
+      const { data, error }: PostgrestSingleResponse<OrgLocationRow> =
+        await supabase
+          .from("organization_locations")
+          .delete()
+          .eq("id", id)
+          .select("*")
+          .single();
 
-    const { data, error } = await req.supabase
-      .from("organization_locations")
-      .delete()
-      .eq("id", id)
-      .select("*")
-      .single();
+      if (error) handleSupabaseError(error);
 
-    if (error) handleSupabaseError(error);
-
-    return {
-      data,
-      error: null,
-      count: 0,
-      status: 200,
-      statusText: "Deleted",
-    };
-  }
-
-  private hasRole(req: AuthRequest, orgId: string, allowed: string[]): boolean {
-    const roles = req.user.role || [];
-    return roles.some((role) => allowed.includes(role));
-  }
-
-  // bypass for super admins --- aber den gibt es auch schon im auth guard...
-  private isSuperAdmin(req: AuthRequest): boolean {
-    const roles = req.user.roles || [];
-    return roles.includes("super_admin");
-  }
-
-  private assertPermission(req: AuthRequest, orgId: string, action: string) {
-    const allowedRoles = ["super_admin", "main_admin", "storage_manager"];
-    if (!this.hasRole(req, orgId, allowedRoles)) {
-      throw new ForbiddenException(`You don't have permissions to ${action}`);
+      return {
+        data,
+        error: null,
+        count: 0,
+        status: 200,
+        statusText: "Deleted",
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to delete org location: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
-
-  /*   private hasRole(req: AuthRequest, orgId: string, allowed: string[]): boolean {
-    const role = req.user.role;
-    return role ? allowed.includes(role) : false;
-  }
-
-  private assertPermission(req: AuthRequest, orgId: string, action: string) {
-    const allowedRoles = ["super_admin", "main_admin", "storage_manager"];
-    if (!this.hasRole(req, orgId, allowedRoles)) {
-      throw new ForbiddenException(You don't have permissions to ${action});
-    } */
 }
