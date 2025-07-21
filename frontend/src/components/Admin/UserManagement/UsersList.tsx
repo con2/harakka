@@ -18,10 +18,10 @@ import { PaginatedDataTable } from "../../ui/data-table-paginated";
 import AddUserModal from "./AddUserModal";
 import UserDeleteButton from "./UserDeleteButton";
 import UserEditModal from "./UserEditModal";
-import UserBanActionsDropdown from "./UserBanActionsDropdown";
-import UserBanModal from "./UserBanModal";
-import UserBanHistoryModal from "./UserBanHistoryModal";
-import UnbanUserModal from "./UnbanUserModal";
+import UserBanActionsDropdown from "./Banning/UserBanActionsDropdown";
+import UserBanModal from "./Banning/UserBanModal";
+import UserBanHistoryModal from "./Banning/UserBanHistoryModal";
+import UnbanUserModal from "./Banning/UnbanUserModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 
@@ -61,6 +61,12 @@ const UsersList = () => {
       setActiveModal(null);
     }
   }, [activeUser]);
+
+  // Reset modal state
+  const resetModalState = () => {
+    setActiveUser(null);
+    setActiveModal(null);
+  };
 
   useEffect(() => {
     if (
@@ -288,6 +294,7 @@ const UsersList = () => {
           key={`ban-${activeUser.id}`}
           user={activeUser}
           initialOpen={true}
+          onClose={resetModalState}
         />
       )}
       {activeUser && activeModal === "unban" && (
@@ -295,6 +302,7 @@ const UsersList = () => {
           key={`unban-${activeUser.id}`}
           user={activeUser}
           initialOpen={true}
+          onClose={resetModalState}
         />
       )}
       {activeUser && activeModal === "history" && (
@@ -302,6 +310,7 @@ const UsersList = () => {
           key={`history-${activeUser.id}`}
           user={activeUser}
           initialOpen={true}
+          onClose={resetModalState}
         />
       )}
     </div>

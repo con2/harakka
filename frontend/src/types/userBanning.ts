@@ -34,19 +34,19 @@ export interface UnbanDto {
 
 export interface UserBanHistoryDto {
   id: string;
-  userId: string;
-  bannedBy: string;
-  banType: string;
+  user_id: string;
+  banned_by: string;
+  ban_type: string;
   action: string;
-  banReason?: string;
-  isPermanent: boolean | null;
-  roleAssignmentId?: string;
-  organizationId?: string;
-  affectedAssignments?: Record<string, unknown>;
-  bannedAt: Date | null;
-  unbannedAt?: Date;
+  ban_reason?: string;
+  is_permanent: boolean | null;
+  role_assignment_id?: string;
+  organization_id?: string;
+  affected_assignments?: Record<string, unknown>;
+  banned_at: string | null;
+  unbanned_at?: string;
   notes?: string;
-  createdAt: Date | null;
+  created_at: string | null;
 }
 
 export interface BanOperationResult {
