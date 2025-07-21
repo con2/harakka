@@ -190,24 +190,6 @@ export const getItemsByTag = createAsyncThunk<Item[], string>(
   },
 );
 
-// NOT NEEDED? because we are using now the api response directly
-// Get available items within a timeframe
-/* export const getAvailableItems = createAsyncThunk<
-  Item[],
-  { startDate?: Date | null; endDate?: Date | null }
->(
-  "items/getAvailableItems",
-  async ({ startDate, endDate }, { rejectWithValue }) => {
-    try {
-      return await itemsApi.getAvailableItems(startDate, endDate);
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch available items"),
-      );
-    }
-  },
-); */
-
 export const itemsSlice = createSlice({
   name: "items",
   initialState,
@@ -308,7 +290,6 @@ export const itemsSlice = createSlice({
         state.errorContext = "delete";
       })
       .addCase(updateItem.pending, (state) => {
-        state.loading = true;
         state.error = null;
       })
       .addCase(updateItem.fulfilled, (state, action) => {
@@ -326,29 +307,14 @@ export const itemsSlice = createSlice({
           );
         }
 
-        state.loading = false;
-        state.items = state.items.map((item) =>
-          item.id === updatedItem.id ? updatedItem : item,
-        );
+        // Find the item in local state, update only necessary properties
+        const index = state.items.findIndex((i) => i.id === updatedItem.id);
+        Object.assign(state.items[index], updatedItem);
       })
       .addCase(updateItem.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "update";
       })
-      /* .addCase(getAvailableItems.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(getAvailableItems.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
-      })
-      .addCase(getAvailableItems.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-        state.errorContext = "fetch";
-      }) */
       .addCase(getItemsByTag.pending, (state) => {
         state.loading = true;
         state.error = null;

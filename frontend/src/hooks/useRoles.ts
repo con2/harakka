@@ -149,9 +149,6 @@ export const useRoles = () => {
       !loading &&
       fetchAttempts < MAX_FETCH_ATTEMPTS
     ) {
-      console.log(
-        `Initial roles fetch (attempt ${fetchAttempts + 1}/${MAX_FETCH_ATTEMPTS})`,
-      );
       initialFetchAttempted.current = true;
       setFetchAttempts((prev) => prev + 1);
 

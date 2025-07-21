@@ -2,8 +2,8 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
 import { verify, TokenExpiredError } from "jsonwebtoken";
-import { UserRoleWithDetails } from "../role/interfaces/role.interface";
-import { JWTPayload, JWTRole } from "./interfaces/jwt.interface";
+import { JWTPayload } from "./interfaces/jwt.interface";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 
 @Injectable()
 export class JwtService {
@@ -38,7 +38,7 @@ export class JwtService {
    */
   async updateJWTWithRoles(
     userId: string,
-    userRoles: UserRoleWithDetails[],
+    userRoles: ViewUserRolesWithDetails[],
   ): Promise<void> {
     const now = Date.now();
     const lastUpdate = this.jwtUpdateCache.get(userId);
@@ -60,7 +60,7 @@ export class JwtService {
    */
   async forceUpdateJWTWithRoles(
     userId: string,
-    userRoles: UserRoleWithDetails[],
+    userRoles: ViewUserRolesWithDetails[],
   ): Promise<void> {
     await this.performJWTUpdate(userId, userRoles, true);
   }
@@ -84,7 +84,10 @@ export class JwtService {
   /**
    * Extract roles from JWT token
    */
-  extractRolesFromToken(token: string, userId: string): UserRoleWithDetails[] {
+  extractRolesFromToken(
+    token: string,
+    userId: string,
+  ): ViewUserRolesWithDetails[] {
     try {
       const decoded = this.verifyToken(token);
 
@@ -92,16 +95,8 @@ export class JwtService {
         return [];
       }
 
-      return decoded.app_metadata.roles.map((role: JWTRole) => ({
-        id: role.id,
-        user_id: userId,
-        organization_id: role.org_id,
-        role_id: role.role_id,
-        role_name: role.name,
-        organization_name: role.org_name,
-        is_active: true,
-        created_at: role.created_at || new Date().toISOString(),
-      }));
+      // Directly return the roles as ViewUserRolesWithDetails[]
+      return decoded.app_metadata.roles;
     } catch (error) {
       this.logger.error(
         `Failed to extract roles from JWT for user ${userId}: ${error instanceof Error ? error.message : String(error)}`,
@@ -151,28 +146,18 @@ export class JwtService {
    */
   private async performJWTUpdate(
     userId: string,
-    userRoles: UserRoleWithDetails[],
+    userRoles: ViewUserRolesWithDetails[],
     isForced: boolean,
   ): Promise<void> {
     try {
       // Create service role client for admin operations
       const adminSupabase = createClient(this.supabaseUrl, this.serviceRoleKey);
 
-      // Transform roles for JWT storage
-      const jwtRoles = userRoles.map((role) => ({
-        id: role.id,
-        name: role.role_name,
-        org_id: role.organization_id,
-        org_name: role.organization_name,
-        role_id: role.role_id,
-        created_at: role.created_at,
-      }));
-
       // Update user"s app_metadata
       const { error } = await adminSupabase.auth.admin.updateUserById(userId, {
         app_metadata: {
-          roles: jwtRoles,
-          role_count: jwtRoles.length,
+          roles: userRoles,
+          role_count: userRoles.length,
           last_role_sync: new Date().toISOString(),
         },
       });
@@ -188,7 +173,7 @@ export class JwtService {
       this.jwtUpdateCache.set(userId, Date.now());
 
       this.logger.log(
-        `🔄 ${isForced ? "Force " : ""}Updated JWT for user ${userId} with ${jwtRoles.length} roles`,
+        `🔄 ${isForced ? "Force " : ""}Updated JWT for user ${userId} with ${userRoles.length} roles`,
       );
     } catch (error) {
       this.logger.error(

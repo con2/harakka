@@ -10,9 +10,9 @@ import { createClient } from "@supabase/supabase-js";
 import { Request, Response, NextFunction } from "express";
 import { TokenExpiredError } from "jsonwebtoken";
 import { AuthRequest } from "./interfaces/auth-request.interface";
-import { UserRoleWithDetails } from "../modules/role/interfaces/role.interface";
 import { JwtService } from "../modules/jwt/jwt.service";
 import { JWTPayload } from "../modules/jwt/interfaces/jwt.interface";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 import type { Database } from "@common/supabase.types";
 
 /**
@@ -152,7 +152,10 @@ export class AuthMiddleware implements NestMiddleware {
   /**
    * Authentication logging with JWT analysis
    */
-  private shouldLogAuth(userId: string, roles: UserRoleWithDetails[]): boolean {
+  private shouldLogAuth(
+    userId: string,
+    roles: ViewUserRolesWithDetails[],
+  ): boolean {
     const now = Date.now();
     const roleSignature = roles
       .map((r) => `${r.role_name}@${r.organization_name}`)
