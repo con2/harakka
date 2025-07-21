@@ -228,7 +228,6 @@ const AdminItemsTable = () => {
                 },
               }),
             ).unwrap();
-            dispatch(fetchAllItems({ page: 1, limit: limit }));
             toast.success(
               checked
                 ? t.adminItemsTable.messages.toast.activateSuccess[lang]
@@ -359,9 +358,9 @@ const AdminItemsTable = () => {
               >
                 {tagFilter.length > 0
                   ? t.adminItemsTable.filters.tags.filtered[lang].replace(
-                      "{count}",
-                      tagFilter.length.toString(),
-                    )
+                    "{count}",
+                    tagFilter.length.toString(),
+                  )
                   : t.adminItemsTable.filters.tags.filter[lang]}
               </Button>
             </PopoverTrigger>
