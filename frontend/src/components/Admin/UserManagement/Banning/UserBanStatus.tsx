@@ -5,7 +5,7 @@ import { t } from "@/translations";
 import { Badge } from "@/components/ui/badge";
 import {
   checkUserBanStatus,
-  selectCurrentUserBanStatus,
+  selectUserBanStatuses,
   selectUserBanningLoading,
 } from "@/store/slices/userBanningSlice";
 
@@ -15,9 +15,8 @@ interface UserBanStatusProps {
 
 const UserBanStatus = ({ userId }: UserBanStatusProps) => {
   const dispatch = useAppDispatch();
-  const banStatus = useAppSelector((state) =>
-    selectCurrentUserBanStatus(state, userId),
-  );
+  const userBanStatuses = useAppSelector(selectUserBanStatuses);
+  const banStatus = userBanStatuses[userId];
   const loading = useAppSelector(selectUserBanningLoading);
   const { lang } = useLanguage();
 

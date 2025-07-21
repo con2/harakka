@@ -1,10 +1,11 @@
 import { api } from "../axios";
 import {
-  BanForRoleDto,
-  BanForOrgDto,
-  BanForAppDto,
-  UnbanDto,
-  UserBanHistoryDto,
+  BanForRoleRequest,
+  BanForOrgRequest,
+  BanForAppRequest,
+  UnbanRequest,
+  SimpleBanHistoryItem,
+  BanStatusItem,
   BanOperationResult,
   UserBanStatusCheck,
 } from "@/types/userBanning";
@@ -16,37 +17,37 @@ export const userBanningApi = {
   /**
    * Ban a user for a specific role
    */
-  banForRole: (data: BanForRoleDto): Promise<BanOperationResult> =>
+  banForRole: (data: BanForRoleRequest): Promise<BanOperationResult> =>
     api.post("/user-banning/ban-for-role", data),
 
   /**
    * Ban a user for all roles in an organization
    */
-  banForOrg: (data: BanForOrgDto): Promise<BanOperationResult> =>
+  banForOrg: (data: BanForOrgRequest): Promise<BanOperationResult> =>
     api.post("/user-banning/ban-for-org", data),
 
   /**
    * Ban a user from the entire application
    */
-  banForApp: (data: BanForAppDto): Promise<BanOperationResult> =>
+  banForApp: (data: BanForAppRequest): Promise<BanOperationResult> =>
     api.post("/user-banning/ban-for-app", data),
 
   /**
    * Unban a user
    */
-  unbanUser: (data: UnbanDto): Promise<BanOperationResult> =>
+  unbanUser: (data: UnbanRequest): Promise<BanOperationResult> =>
     api.post("/user-banning/unban", data),
 
   /**
    * Get ban history for a specific user
    */
-  getUserBanHistory: (userId: string): Promise<UserBanHistoryDto[]> =>
+  getUserBanHistory: (userId: string): Promise<SimpleBanHistoryItem[]> =>
     api.get(`/user-banning/history/${userId}`),
 
   /**
    * Get all user ban statuses (admin overview)
    */
-  getAllUserBanStatuses: (): Promise<UserBanHistoryDto[]> =>
+  getAllUserBanStatuses: (): Promise<BanStatusItem[]> =>
     api.get("/user-banning/statuses"),
 
   /**

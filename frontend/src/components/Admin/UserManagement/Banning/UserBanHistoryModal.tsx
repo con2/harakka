@@ -94,6 +94,9 @@ const UserBanHistoryModal = ({
                     {t.userBanning.history.columns.banType[lang]}
                   </TableHead>
                   <TableHead>
+                    {t.userBanning.history.columns.orgName[lang]}
+                  </TableHead>
+                  <TableHead>
                     {t.userBanning.history.columns.reason[lang]}
                   </TableHead>
                   <TableHead>
@@ -108,6 +111,7 @@ const UserBanHistoryModal = ({
                 {banHistory.map((ban) => (
                   <TableRow key={ban.id}>
                     <TableCell>{ban.ban_type}</TableCell>
+                    <TableCell>{ban.organization_id}</TableCell>
                     <TableCell>{ban.ban_reason || "-"}</TableCell>
                     <TableCell>
                       {ban.created_at

@@ -12,7 +12,7 @@ import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import {
   checkUserBanStatus,
-  selectCurrentUserBanStatus,
+  selectUserBanStatuses,
   selectUserBanningLoading,
 } from "@/store/slices/userBanningSlice";
 
@@ -37,9 +37,8 @@ const UserBanActionsDropdown = ({
 }: UserBanActionsDropdownProps) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
-  const currentUserBanStatus = useAppSelector((state) =>
-    selectCurrentUserBanStatus(state, user.id),
-  );
+  const userBanStatuses = useAppSelector(selectUserBanStatuses);
+  const currentUserBanStatus = userBanStatuses[user.id];
   const loading = useAppSelector(selectUserBanningLoading);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [statusChecked, setStatusChecked] = useState(false);

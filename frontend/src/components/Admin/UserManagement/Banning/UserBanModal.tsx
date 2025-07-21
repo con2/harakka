@@ -55,7 +55,7 @@ const UserBanModal = ({
   const loading = useAppSelector(selectUserBanningLoading);
   const banningError = useAppSelector(selectUserBanningError);
   const { lang } = useLanguage();
-  const { allUserRoles, refreshAllUserRoles } = useRoles();
+  const { allUserRoles, refreshAllUserRoles, adminLoading } = useRoles();
 
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [banType, setBanType] = useState<BanType>("role");
@@ -65,16 +65,13 @@ const UserBanModal = ({
   const [notes, setNotes] = useState("");
   const [isPermanent, setIsPermanent] = useState(false);
   const [organizationId, setOrganizationId] = useState("");
-  const [roleId, setRoleId] = useState("");
+  const [roleAssignmentId, setRoleAssignmentId] = useState("");
 
   // Get organizations where the target user has roles (these are what we can ban them from)
   const getTargetUserOrganizations = (): TargetUserOrganization[] => {
-    console.log("All user roles:", allUserRoles);
-    console.log("Target user ID:", user.id);
     const userRoles = allUserRoles.filter(
       (role) => role.user_id === user.id && role.is_active,
     );
-    console.log("Filtered user roles for target user:", userRoles);
     const orgMap = new Map<string, TargetUserOrganization>();
     userRoles.forEach((role) => {
       if (role.organization_id && !orgMap.has(role.organization_id)) {
@@ -85,32 +82,33 @@ const UserBanModal = ({
       }
     });
     const organizations = Array.from(orgMap.values());
-    console.log("Available organizations:", organizations);
     return organizations;
   };
   // Get the target user's roles in a specific organization for banning
   const getTargetUserRolesForOrg = (orgId: string) => {
-    return allUserRoles.filter(
+    const roles = allUserRoles.filter(
       (role) =>
         role.user_id === user.id &&
         role.organization_id === orgId &&
         role.is_active,
     );
+    return roles;
   };
 
   // Reset role when organization changes
   useEffect(() => {
     if (banType === "role" && organizationId) {
-      setRoleId("");
+      setRoleAssignmentId("");
     }
   }, [organizationId, banType]);
 
   // Load all user roles when modal opens
   useEffect(() => {
     if (isOpen && (!allUserRoles || allUserRoles.length === 0)) {
+      console.log("Debug - Refreshing user roles...");
       refreshAllUserRoles();
     }
-  }, [isOpen, allUserRoles, refreshAllUserRoles]);
+  }, [isOpen, allUserRoles, refreshAllUserRoles, adminLoading]);
 
   // Update final ban reason based on selection
   useEffect(() => {
@@ -139,7 +137,7 @@ const UserBanModal = ({
     }
 
     // Validate required fields based on ban type
-    if (banType === "role" && (!organizationId || !roleId)) {
+    if (banType === "role" && (!organizationId || !roleAssignmentId)) {
       toast.error(t.userBanning.messages.missingFields[lang]);
       return;
     }
@@ -153,25 +151,41 @@ const UserBanModal = ({
       let result;
 
       switch (banType) {
-        case "role":
+        case "role": {
+          // Get the selected role assignment to extract the actual role_id
+          const selectedRole = getTargetUserRolesForOrg(organizationId).find(
+            (role) => role.id === roleAssignmentId,
+          );
+
+          console.log("Debug - Selected role assignment:", selectedRole);
+          console.log("Debug - Ban for role request data:", {
+            userId: user.id,
+            organizationId: organizationId,
+            roleId: selectedRole?.role_id, // Send the actual role_id, not assignment id
+            banReason: banReason.trim(),
+            isPermanent: isPermanent,
+            notes: notes.trim() || undefined,
+          });
+
           result = await dispatch(
             banUserForRole({
               userId: user.id,
-              organizationId,
-              roleId,
+              organizationId: organizationId,
+              roleId: selectedRole?.role_id || roleAssignmentId, // Use role_id if available
               banReason: banReason.trim(),
-              isPermanent,
+              isPermanent: isPermanent,
               notes: notes.trim() || undefined,
             }),
           ).unwrap();
           break;
+        }
         case "organization":
           result = await dispatch(
             banUserForOrg({
               userId: user.id,
-              organizationId,
+              organizationId: organizationId,
               banReason: banReason.trim(),
-              isPermanent,
+              isPermanent: isPermanent,
               notes: notes.trim() || undefined,
             }),
           ).unwrap();
@@ -181,18 +195,20 @@ const UserBanModal = ({
             banUserForApp({
               userId: user.id,
               banReason: banReason.trim(),
-              isPermanent,
+              isPermanent: isPermanent,
               notes: notes.trim() || undefined,
             }),
           ).unwrap();
           break;
+        default:
+          throw new Error("Invalid ban type");
       }
 
-      if (result.success) {
+      if (result?.success) {
         toast.success(t.userBanning.toast.success[lang]);
         handleClose();
       } else {
-        toast.error(result.message || t.userBanning.toast.error[lang]);
+        toast.error(result?.message || t.userBanning.toast.error[lang]);
       }
     } catch {
       toast.error(banningError || t.userBanning.toast.error[lang]);
@@ -208,7 +224,7 @@ const UserBanModal = ({
     setNotes("");
     setIsPermanent(false);
     setOrganizationId("");
-    setRoleId("");
+    setRoleAssignmentId("");
     if (onClose) {
       onClose();
     }
@@ -298,7 +314,10 @@ const UserBanModal = ({
               <Label htmlFor="role">
                 {t.userBanning.fields.role.label[lang]}
               </Label>
-              <Select value={roleId} onValueChange={setRoleId}>
+              <Select
+                value={roleAssignmentId}
+                onValueChange={setRoleAssignmentId}
+              >
                 <SelectTrigger>
                   <SelectValue
                     placeholder={t.userBanning.fields.role.placeholder[lang]}
@@ -308,10 +327,7 @@ const UserBanModal = ({
                   {getTargetUserRolesForOrg(organizationId)
                     .filter((userRole) => userRole.role_id) // Filter out null role_ids
                     .map((userRole) => (
-                      <SelectItem
-                        key={userRole.role_id}
-                        value={userRole.role_id!}
-                      >
+                      <SelectItem key={userRole.id} value={userRole.id!}>
                         {userRole.role_name}
                       </SelectItem>
                     ))}

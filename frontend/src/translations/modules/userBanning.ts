@@ -149,6 +149,10 @@ export const userBanning = {
         fi: "Esto-tyyppi",
         en: "Ban Type",
       },
+      orgName: {
+        fi: "Organisaatio",
+        en: "Organization",
+      },
       reason: {
         fi: "Syy",
         en: "Reason",

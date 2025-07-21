@@ -28,7 +28,7 @@ import {
   selectUserBanningError,
 } from "@/store/slices/userBanningSlice";
 import { UserProfile } from "@common/user.types";
-import { BanType, UserBanHistoryDto } from "@/types/userBanning";
+import { BanType, SimpleBanHistoryItem } from "@/types/userBanning";
 import { useRoles } from "@/hooks/useRoles";
 import { userBanningApi } from "@/api/services/userBanning";
 
@@ -59,7 +59,7 @@ const UnbanUserModal = ({
   const [notes, setNotes] = useState("");
   const [organizationId, setOrganizationId] = useState("");
   const [roleId, setRoleId] = useState("");
-  const [activeBans, setActiveBans] = useState<UserBanHistoryDto[]>([]);
+  const [activeBans, setActiveBans] = useState<SimpleBanHistoryItem[]>([]);
   const [bansLoading, setBansLoading] = useState(false);
 
   // Get organizations where the user has active bans (these are what we can unban them from)
@@ -67,11 +67,19 @@ const UnbanUserModal = ({
     const orgMap = new Map<string, TargetUserOrganization>();
     activeBans.forEach((ban) => {
       // Only include bans that are still active (no unbannedAt date) and match the selected ban type
+      const matchesBanType =
+        (banType === "organization" &&
+          (ban.ban_type === "banForOrg" || ban.ban_type === "organization")) ||
+        (banType === "role" &&
+          (ban.ban_type === "banForRole" || ban.ban_type === "role")) ||
+        (banType === "application" &&
+          (ban.ban_type === "banForApp" || ban.ban_type === "application"));
+
       if (
         !ban.unbanned_at &&
         ban.organization_id &&
         ban.action === "banned" &&
-        ban.ban_type === banType
+        matchesBanType
       ) {
         const userRole = allUserRoles.find(
           (role) => role.organization_id === ban.organization_id,
@@ -96,7 +104,7 @@ const UnbanUserModal = ({
       (ban) =>
         !ban.unbanned_at &&
         ban.action === "banned" &&
-        ban.ban_type === "role" &&
+        (ban.ban_type === "banForRole" || ban.ban_type === "role") &&
         ban.organization_id === orgId,
     );
 
@@ -130,7 +138,17 @@ const UnbanUserModal = ({
 
     activeBans.forEach((ban) => {
       if (!ban.unbanned_at && ban.action === "banned") {
-        activeBanTypes.add(ban.ban_type as BanType);
+        // Convert database ban_type values to frontend BanType
+        if (ban.ban_type === "banForApp" || ban.ban_type === "application") {
+          activeBanTypes.add("application");
+        } else if (
+          ban.ban_type === "banForOrg" ||
+          ban.ban_type === "organization"
+        ) {
+          activeBanTypes.add("organization");
+        } else if (ban.ban_type === "banForRole" || ban.ban_type === "role") {
+          activeBanTypes.add("role");
+        }
       }
     });
 
@@ -143,7 +161,7 @@ const UnbanUserModal = ({
       (ban) =>
         !ban.unbanned_at &&
         ban.action === "banned" &&
-        ban.ban_type === "application",
+        (ban.ban_type === "application" || ban.ban_type === "banForApp"),
     );
   };
 
@@ -153,7 +171,7 @@ const UnbanUserModal = ({
       (ban) =>
         !ban.unbanned_at &&
         ban.action === "banned" &&
-        ban.ban_type === "organization" &&
+        (ban.ban_type === "organization" || ban.ban_type === "banForOrg") &&
         ban.organization_id,
     );
   };
@@ -164,7 +182,7 @@ const UnbanUserModal = ({
       (ban) =>
         !ban.unbanned_at &&
         ban.action === "banned" &&
-        ban.ban_type === "role" &&
+        (ban.ban_type === "role" || ban.ban_type === "banForRole") &&
         ban.organization_id,
     );
   };
@@ -237,7 +255,7 @@ const UnbanUserModal = ({
       const result = await dispatch(
         unbanUser({
           userId: user.id,
-          banType,
+          banType: banType,
           organizationId: organizationId || undefined,
           roleId: roleId || undefined,
           notes: notes.trim() || undefined,

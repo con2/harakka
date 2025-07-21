@@ -3,11 +3,12 @@ import { RootState } from "../store";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { userBanningApi } from "../../api/services/userBanning";
 import {
-  BanForRoleDto,
-  BanForOrgDto,
-  BanForAppDto,
-  UnbanDto,
+  BanForRoleRequest,
+  BanForOrgRequest,
+  BanForAppRequest,
+  UnbanRequest,
   UserBanningState,
+  BanStatusItem,
 } from "@/types/userBanning";
 
 const initialState: UserBanningState = {
@@ -22,7 +23,7 @@ const initialState: UserBanningState = {
 // Async thunks
 export const banUserForRole = createAsyncThunk(
   "userBanning/banForRole",
-  async (data: BanForRoleDto, { rejectWithValue }) => {
+  async (data: BanForRoleRequest, { rejectWithValue }) => {
     try {
       return await userBanningApi.banForRole(data);
     } catch (error: unknown) {
@@ -35,7 +36,7 @@ export const banUserForRole = createAsyncThunk(
 
 export const banUserForOrg = createAsyncThunk(
   "userBanning/banForOrg",
-  async (data: BanForOrgDto, { rejectWithValue }) => {
+  async (data: BanForOrgRequest, { rejectWithValue }) => {
     try {
       return await userBanningApi.banForOrg(data);
     } catch (error: unknown) {
@@ -48,7 +49,7 @@ export const banUserForOrg = createAsyncThunk(
 
 export const banUserForApp = createAsyncThunk(
   "userBanning/banForApp",
-  async (data: BanForAppDto, { rejectWithValue }) => {
+  async (data: BanForAppRequest, { rejectWithValue }) => {
     try {
       return await userBanningApi.banForApp(data);
     } catch (error: unknown) {
@@ -61,7 +62,7 @@ export const banUserForApp = createAsyncThunk(
 
 export const unbanUser = createAsyncThunk(
   "userBanning/unban",
-  async (data: UnbanDto, { rejectWithValue }) => {
+  async (data: UnbanRequest, { rejectWithValue }) => {
     try {
       return await userBanningApi.unbanUser(data);
     } catch (error: unknown) {
@@ -102,7 +103,9 @@ export const checkUserBanStatus = createAsyncThunk(
   "userBanning/checkStatus",
   async (userId: string, { rejectWithValue }) => {
     try {
-      return await userBanningApi.checkUserBanStatus(userId);
+      const result = await userBanningApi.checkUserBanStatus(userId);
+      // Ensure result has userId (in case backend doesn't return it)
+      return { ...result, userId };
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to check user ban status"),
@@ -123,7 +126,7 @@ const userBanningSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Ban for role
+    // Ban user for role
     builder
       .addCase(banUserForRole.pending, (state) => {
         state.loading = true;
@@ -136,10 +139,8 @@ const userBanningSlice = createSlice({
       .addCase(banUserForRole.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
-
-    // Ban for organization
-    builder
+      })
+      // Ban user for organization
       .addCase(banUserForOrg.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -151,10 +152,8 @@ const userBanningSlice = createSlice({
       .addCase(banUserForOrg.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
-
-    // Ban for application
-    builder
+      })
+      // Ban user for application
       .addCase(banUserForApp.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -166,10 +165,8 @@ const userBanningSlice = createSlice({
       .addCase(banUserForApp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
-
-    // Unban user
-    builder
+      })
+      // Unban user
       .addCase(unbanUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -181,10 +178,8 @@ const userBanningSlice = createSlice({
       .addCase(unbanUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
-
-    // Fetch ban history
-    builder
+      })
+      // Fetch user ban history
       .addCase(fetchUserBanHistory.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -196,33 +191,29 @@ const userBanningSlice = createSlice({
       .addCase(fetchUserBanHistory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
-
-    // Fetch all ban statuses
-    builder
+      })
+      // Fetch all ban statuses
       .addCase(fetchAllUserBanStatuses.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchAllUserBanStatuses.fulfilled, (state, action) => {
         state.loading = false;
-        state.banStatuses = action.payload;
+        state.banStatuses = action.payload as BanStatusItem[];
       })
       .addCase(fetchAllUserBanStatuses.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
-
-    // Check user ban status
-    builder
+      })
+      // Check user ban status
       .addCase(checkUserBanStatus.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(checkUserBanStatus.fulfilled, (state, action) => {
         state.loading = false;
-        const userId = action.meta.arg;
-        state.userBanStatuses[userId] = action.payload;
+        const banStatus = action.payload;
+        state.userBanStatuses[banStatus.userId] = banStatus;
       })
       .addCase(checkUserBanStatus.rejected, (state, action) => {
         state.loading = false;
@@ -234,6 +225,7 @@ const userBanningSlice = createSlice({
 export const { clearError, clearLastOperation } = userBanningSlice.actions;
 
 // Selectors
+export const selectUserBanningState = (state: RootState) => state.userBanning;
 export const selectUserBanningLoading = (state: RootState) =>
   state.userBanning.loading;
 export const selectUserBanningError = (state: RootState) =>
@@ -242,8 +234,8 @@ export const selectBanHistory = (state: RootState) =>
   state.userBanning.banHistory;
 export const selectBanStatuses = (state: RootState) =>
   state.userBanning.banStatuses;
-export const selectCurrentUserBanStatus = (state: RootState, userId: string) =>
-  state.userBanning.userBanStatuses[userId] || null;
+export const selectUserBanStatuses = (state: RootState) =>
+  state.userBanning.userBanStatuses;
 export const selectLastOperation = (state: RootState) =>
   state.userBanning.lastOperation;
 
