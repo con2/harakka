@@ -19,6 +19,11 @@ jobs:
           cache: "npm"
           cache-dependency-path: "backend/package-lock.json"
 
+      - name: Install common dependencies (common types folder)
+        run: |
+          cd common
+          npm ci
+
       - name: Install dependencies
         run: |
           cd backend
