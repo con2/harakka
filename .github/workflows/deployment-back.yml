@@ -41,8 +41,8 @@ jobs:
           cd backend
           # Create deployment package without dev dependencies
           mkdir deployment
-          cp -r dist Procfile package.json package-lock.json assets dbSetStatements deployment/
-          cp config.mts .deployment deployment/  # Added .deployment file
+          cp -r dist Procfile package.json package-lock.json assets deployment/
+          cp config.mts deployment/
           cd deployment
           npm ci --omit=dev
 
