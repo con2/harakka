@@ -167,11 +167,11 @@ const MyBookings = () => {
       try {
         dispatch(
           updateBooking({
-            bookingId: selectedBooking.id,
+            bookingId: selectedBooking.id!,
             items: updatedItems,
           }),
         );
-        dispatch(cancelBooking(selectedBooking.id));
+        dispatch(cancelBooking(selectedBooking.id!));
         toast.warning(t.myBookings.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
           dispatch(
@@ -194,7 +194,7 @@ const MyBookings = () => {
     try {
       await dispatch(
         updateBooking({
-          bookingId: selectedBooking.id,
+          bookingId: selectedBooking.id!,
           items: updatedItems,
         }),
       ).unwrap();
