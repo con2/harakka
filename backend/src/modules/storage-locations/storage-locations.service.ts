@@ -76,7 +76,9 @@ export class StorageLocationsService {
       .order("name");
 
     for (const [field, values] of Object.entries(filters)) {
-      query = query.in(field, values);
+      if (Array.isArray(values) && values.length > 0) {
+        query = query.in(field, values);
+      }
     }
 
     const result = await query;

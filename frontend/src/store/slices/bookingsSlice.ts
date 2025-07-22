@@ -373,10 +373,11 @@ export const bookingsSlice = createSlice({
         });
 
         // Also update in the user bookings array
-        state.userBookings = state.userBookings.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, status: "confirmed" }
-            : booking,
+        state.userBookings = state.userBookings.map(
+          (booking: Booking | BookingUserViewRow) =>
+            booking.id === bookingId
+              ? { ...booking, status: "confirmed" }
+              : booking,
         );
       })
       .addCase(confirmBooking.rejected, (state, action) => {
@@ -396,8 +397,9 @@ export const bookingsSlice = createSlice({
           id: action.payload.id,
           changes: action.payload,
         });
-        state.userBookings = state.userBookings.map((booking) =>
-          booking.id === action.payload.id ? action.payload : booking,
+        state.userBookings = state.userBookings.map(
+          (booking: Booking | BookingUserViewRow) =>
+            booking.id === action.payload.id ? action.payload : booking,
         );
       })
       .addCase(updateBooking.rejected, (state, action) => {
@@ -423,10 +425,11 @@ export const bookingsSlice = createSlice({
         });
 
         // Also update in the user bookings array
-        state.userBookings = state.userBookings.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, status: "rejected" }
-            : booking,
+        state.userBookings = state.userBookings.map(
+          (booking: Booking | BookingUserViewRow) =>
+            booking.id === bookingId
+              ? { ...booking, status: "rejected" }
+              : booking,
         );
       })
       .addCase(rejectBooking.rejected, (state, action) => {
@@ -453,10 +456,11 @@ export const bookingsSlice = createSlice({
         });
 
         // Also update in the user bookings array
-        state.userBookings = state.userBookings.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, status: "cancelled by user" }
-            : booking,
+        state.userBookings = state.userBookings.map(
+          (booking: Booking | BookingUserViewRow) =>
+            booking.id === bookingId
+              ? { ...booking, status: "cancelled by user" }
+              : booking,
         );
       })
       .addCase(cancelBooking.rejected, (state, action) => {
@@ -474,7 +478,8 @@ export const bookingsSlice = createSlice({
         state.loading = false;
         bookingsAdapter.removeOne(state, action.payload);
         state.userBookings = state.userBookings.filter(
-          (booking) => booking.id !== action.payload,
+          (booking: Booking | BookingUserViewRow) =>
+            booking.id !== action.payload,
         );
       })
       .addCase(deleteBooking.rejected, (state, action) => {
@@ -497,10 +502,11 @@ export const bookingsSlice = createSlice({
           changes: { status: "completed" },
         });
 
-        state.userBookings = state.userBookings.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, status: "completed" }
-            : booking,
+        state.userBookings = state.userBookings.map(
+          (booking: Booking | BookingUserViewRow) =>
+            booking.id === bookingId
+              ? { ...booking, status: "completed" }
+              : booking,
         );
       })
       .addCase(returnItems.rejected, (state, action) => {
