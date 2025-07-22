@@ -31,7 +31,7 @@ const OrganizationList = () => {
 
   // Initial fetch
   useEffect(() => {
-    dispatch(fetchAllOrganizations({ page: currentPage, limit }));
+    void dispatch(fetchAllOrganizations({ page: currentPage, limit }));
   }, [dispatch, currentPage]);
 
   const handlePageChange = (newPage: number) => {
@@ -39,25 +39,25 @@ const OrganizationList = () => {
     setCurrentPage(newPage);
   };
 
-  // Spalten für Tabelle
+  // columns for table
   const columns: ColumnDef<OrganizationDetails>[] = [
     {
-      header: "Name",
+      header: t.organizationList.columns.name[lang],
       accessorKey: "name",
-      cell: ({ row }) => row.original.name || "—",
+      cell: ({ row }) => row.original.name,
     },
     {
-      header: "Slug",
+      header: t.organizationList.columns.slug[lang],
       accessorKey: "slug",
-      cell: ({ row }) => row.original.slug || "—",
+      cell: ({ row }) => row.original.slug,
     },
     {
-      header: "Beschreibung",
+      header: t.organizationList.columns.description[lang],
       accessorKey: "description",
-      cell: ({ row }) => row.original.description || "—",
+      cell: ({ row }) => row.original.description,
     },
     {
-      header: "Aktiv",
+      header: t.organizationList.columns.isActive[lang],
       accessorKey: "is_active",
       cell: ({ row }) =>
         row.original.is_active ? (
@@ -71,7 +71,7 @@ const OrganizationList = () => {
         ),
     },
     {
-      header: "Erstellt am",
+      header: t.organizationList.columns.createdAt[lang],
       accessorKey: "created_at",
       cell: ({ row }) =>
         row.original.created_at
