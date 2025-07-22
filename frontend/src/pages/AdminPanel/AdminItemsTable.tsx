@@ -13,10 +13,8 @@ import {
   fetchOrderedItems,
   selectAllItems,
   selectItemsError,
-  selectItemsLimit,
+  selectItemsPagination,
   selectItemsLoading,
-  selectItemsPage,
-  selectItemsTotalPages,
   updateItem,
 } from "@/store/slices/itemsSlice";
 import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
@@ -55,9 +53,6 @@ const AdminItemsTable = () => {
   const isSuperVera = useAppSelector(selectIsSuperVera);
   // Translation
   const { lang } = useLanguage();
-  const page = useAppSelector(selectItemsPage);
-  const totalPages = useAppSelector(selectItemsTotalPages);
-  const limit = useAppSelector(selectItemsLimit);
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   // filtering states:
@@ -72,6 +67,7 @@ const AdminItemsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [order, setOrder] = useState<ValidItemOrder>("created_at");
   const [ascending, setAscending] = useState<boolean | null>(null);
+  const { page, totalPages, limit } = useAppSelector(selectItemsPagination);
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
@@ -119,27 +115,22 @@ const AdminItemsTable = () => {
     setAssignTagsModalOpen(false);
     setCurrentItemId(null);
   };
-  useEffect(() => console.log(tagFilter), [tagFilter]);
 
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
-    if (debouncedSearchQuery || order) {
-      dispatch(
-        fetchOrderedItems({
-          ordered_by: order,
-          page: currentPage,
-          limit: limit,
-          searchquery: debouncedSearchQuery,
-          ascending: ascending === false ? false : true,
-          tag_filters: tagFilter,
-          location_filter: [],
-          categories: [],
-          activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        }),
-      );
-    } else {
-      dispatch(fetchAllItems({ page: currentPage, limit: limit }));
-    }
+    dispatch(
+      fetchOrderedItems({
+        ordered_by: order,
+        page: currentPage,
+        limit: limit,
+        searchquery: debouncedSearchQuery,
+        ascending: ascending === false ? false : true,
+        tag_filters: tagFilter,
+        location_filter: [],
+        categories: [],
+        activity_filter: statusFilter !== "all" ? statusFilter : undefined,
+      }),
+    );
   }, [
     dispatch,
     ascending,

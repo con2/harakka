@@ -7,9 +7,19 @@ import {
   selectBookingError,
   selectBookingLoading,
   updateBooking,
+  selectBooking,
+  selectCurrentBooking,
+  selectBookingItemsPagination,
+  selectBookingPagination,
+  selectCurrentBookingLoading,
+  getBookingItems,
 } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
-import { BookingItem, Booking, BookingUserViewRow } from "@/types";
+import {
+  BookingWithDetails,
+  BookingPreview,
+  BookingItemWithDetails,
+} from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -36,29 +46,22 @@ import { Label } from "./ui/label";
 import { StatusBadge } from "./StatusBadge";
 import InlineTimeframePicker from "./InlineTimeframeSelector";
 import { itemsApi } from "@/api/services/items";
+import Spinner from "./Spinner";
 
 const MyBookings = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const user = useAppSelector(selectSelectedUser);
-  // Raw array can contain either real `Booking`s or flattened view rows
-  const bookingsRaw = useAppSelector(selectUserBookings) as (
-    | Booking
-    | BookingUserViewRow
-  )[];
-
-  /** Narrower type-guard: keeps only objects that have `booking_items`. */
-  const bookings: Booking[] = bookingsRaw.filter(
-    (b): b is Booking => (b as Booking).booking_items !== undefined,
-  );
+  const bookings = useAppSelector(selectUserBookings);
   const loading = useAppSelector(selectBookingLoading);
   const error = useAppSelector(selectBookingError);
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
-  const [editFormItems, setEditFormItems] = useState<BookingItem[]>([]);
+  const [editingBooking, setEditingBooking] = useState(false);
+  const [editFormItems, setEditFormItems] = useState<BookingItemWithDetails[]>(
+    [],
+  );
   const [showEditModal, setShowEditModal] = useState(false);
   const [globalStartDate, setGlobalStartDate] = useState<string | null>(null);
   const [globalEndDate, setGlobalEndDate] = useState<string | null>(null);
@@ -68,21 +71,43 @@ const MyBookings = () => {
   const [availability, setAvailability] = useState<{
     [itemId: string]: number;
   }>({});
-  const [loadingAvailability, setLoadingAvailability] = useState<{
-    [itemId: string]: boolean;
-  }>({});
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 10;
+  const selectedBooking = useAppSelector(selectCurrentBooking);
+  const { page: itemPage, totalPages: itemTotalPages } = useAppSelector(
+    selectBookingItemsPagination,
+  );
+  const [currentItemPage, setCurrentItemPage] = useState(1);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
+  const { totalPages } = useAppSelector(selectBookingPagination);
   const isMobile = useIsMobile();
+  const itemsLoading = useAppSelector(selectCurrentBookingLoading);
 
   // Translation
   const { lang } = useLanguage();
   const { formatDate: formatDateLocalized } = useFormattedDate();
+
+  const handleEditBooking = async (booking: BookingPreview) => {
+    setEditingBooking(true);
+    dispatch(selectBooking(booking));
+    setLoadingAvailability(true);
+    setShowEditModal(true);
+    await dispatch(getBookingItems(booking.id!));
+    if (!selectedBooking || !selectedBooking.booking_items) return;
+    setItemQuantities(
+      Object.fromEntries(
+        selectedBooking.booking_items.map((item) => [
+          String(item.id),
+          item.quantity,
+        ]),
+      ),
+    );
+    setGlobalStartDate(selectedBooking.booking_items?.[0]?.start_date ?? null);
+    setGlobalEndDate(selectedBooking.booking_items?.[0]?.end_date ?? null);
+    setEditFormItems(selectedBooking.booking_items || []);
+  };
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -96,30 +121,14 @@ const MyBookings = () => {
       dispatch(getUserBookings({ user_id: user.id, page: 1, limit: 10 }));
   }, [dispatch, navigate, user, lang, bookings]); // Apply filters to bookings
 
-  const filteredBookings = bookings.filter((booking) => {
-    // Filter by status
-    if (statusFilter !== "all" && booking.status !== statusFilter) {
-      return false;
-    }
-    // Filter by search query (booking number)
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const bookingNumber = String(booking.booking_number || "").toLowerCase();
-      return bookingNumber.includes(query);
-    }
-    return true;
-  });
-
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(0);
   }, [searchQuery, statusFilter]);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
-  const startIndex = currentPage * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedBookings = filteredBookings.slice(startIndex, endIndex);
+  useEffect(() => {
+    console.log("loading availability: ", loadingAvailability);
+  }, [loadingAvailability]);
 
   // Handle page change
   const handlePageChange = (pageIndex: number) => {
@@ -131,26 +140,16 @@ const MyBookings = () => {
     return formatDateLocalized(new Date(dateString), "d MMM yyyy");
   };
 
-  const handleViewDetails = (booking: Booking) => {
-    setSelectedBooking(booking);
+  const handleViewDetails = (booking: BookingPreview) => {
+    dispatch(selectBooking(booking));
+    dispatch(getBookingItems(booking.id));
     setShowDetailsModal(true);
   };
 
-  const handleEditBooking = (booking: Booking) => {
-    setItemQuantities(
-      Object.fromEntries(
-        booking.booking_items.map((item) => [String(item.id), item.quantity]),
-      ),
-    );
-    setGlobalStartDate(booking.booking_items?.[0]?.start_date ?? null);
-    setGlobalEndDate(booking.booking_items?.[0]?.end_date ?? null);
-    setEditingBooking(booking);
-    setEditFormItems(booking.booking_items || []);
-    setShowEditModal(true);
-  };
+  const handleItemPageChange = (newPage: number) => setCurrentItemPage(newPage);
 
   const handleSubmitEdit = async () => {
-    if (!editingBooking) return;
+    if (!selectedBooking || !editingBooking) return;
 
     const updatedItems = editFormItems
       .map((item) => ({
@@ -168,11 +167,11 @@ const MyBookings = () => {
       try {
         dispatch(
           updateBooking({
-            bookingId: editingBooking.id,
+            bookingId: selectedBooking.id,
             items: updatedItems,
           }),
         );
-        dispatch(cancelBooking(editingBooking.id));
+        dispatch(cancelBooking(selectedBooking.id));
         toast.warning(t.myBookings.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
           dispatch(
@@ -187,7 +186,7 @@ const MyBookings = () => {
         toast.error(t.myBookings.edit.toast.cancelFailed[lang]);
       } finally {
         setShowEditModal(false);
-        setEditingBooking(null);
+        setEditingBooking(false);
       }
       return;
     }
@@ -195,14 +194,14 @@ const MyBookings = () => {
     try {
       await dispatch(
         updateBooking({
-          bookingId: editingBooking.id,
+          bookingId: selectedBooking.id,
           items: updatedItems,
         }),
       ).unwrap();
 
       toast.success(t.myBookings.edit.toast.bookingUpdated[lang]);
       setShowEditModal(false);
-      setEditingBooking(null);
+      setEditingBooking(false);
       if (user?.id) {
         dispatch(
           getUserBookings({
@@ -216,16 +215,14 @@ const MyBookings = () => {
       toast.error(t.myBookings.edit.toast.updateFailed[lang]);
     }
   };
-  // fetch availability for an item on a given date
+
   useEffect(() => {
     const fetchAvailability = async () => {
       if (!globalStartDate || !globalEndDate) return;
 
-      for (const item of editFormItems) {
+      const availabilityPromises = editFormItems.map(async (item) => {
         const itemId = item.item_id;
         const currentBookingQty = item.quantity ?? 0;
-
-        setLoadingAvailability((prev) => ({ ...prev, [itemId]: true }));
 
         try {
           const data = await itemsApi.checkAvailability(
@@ -243,14 +240,15 @@ const MyBookings = () => {
           }));
         } catch (err) {
           console.error(`Error checking availability for item ${itemId}:`, err);
-        } finally {
-          setLoadingAvailability((prev) => ({ ...prev, [itemId]: false }));
         }
-      }
+      });
+
+      await Promise.all(availabilityPromises);
+      setLoadingAvailability(false);
     };
 
     fetchAvailability();
-  }, [globalStartDate, globalEndDate, editFormItems]);
+  }, [globalStartDate, globalEndDate, editingBooking, editFormItems]);
 
   const isFormValid = editFormItems.every((item) => {
     const inputQty =
@@ -262,7 +260,10 @@ const MyBookings = () => {
     return availQty === undefined || inputQty <= availQty;
   });
 
-  const columns: ColumnDef<Booking>[] = [
+  /**
+   * Columns of booking
+   */
+  const columns: ColumnDef<BookingPreview>[] = [
     {
       accessorKey: "booking_number",
       header: t.myBookings.columns.bookingNumber[lang],
@@ -270,39 +271,12 @@ const MyBookings = () => {
     {
       accessorKey: "status",
       header: t.myBookings.columns.status[lang],
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <StatusBadge status={row.original.status!} />,
     },
     {
       accessorKey: "created_at",
       header: t.myBookings.columns.date[lang],
-      cell: ({ row }) => formatDate(row.original.created_at),
-    },
-    {
-      accessorKey: "date_range",
-      header: t.bookingList.columns.dateRange[lang],
-      cell: ({ row }) => {
-        const items = row.original.booking_items || [];
-        if (items.length === 0) return "-";
-
-        // Get earliest start_date
-        const minStartDate = items.reduce((minDate, item) => {
-          const date = new Date(item.start_date);
-          return date < minDate ? date : minDate;
-        }, new Date(items[0].start_date));
-
-        // Get latest end_date
-        const maxEndDate = items.reduce((maxDate, item) => {
-          const date = new Date(item.end_date);
-          return date > maxDate ? date : maxDate;
-        }, new Date(items[0].end_date));
-
-        return (
-          <div className="text-sm flex flex-col">
-            <span>{`${formatDate(minStartDate.toISOString())} -`}</span>
-            <span>{`${formatDate(maxEndDate.toISOString())}`}</span>
-          </div>
-        );
-      },
+      cell: ({ row }) => formatDate(row.original.created_at!),
     },
     {
       id: "actions",
@@ -324,7 +298,7 @@ const MyBookings = () => {
                   onEdit={handleEditBooking}
                 />
                 <BookingCancelButton
-                  id={booking.id}
+                  id={booking.id!}
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
@@ -335,36 +309,16 @@ const MyBookings = () => {
     },
   ];
 
-  const bookingColumns: ColumnDef<BookingItem>[] = [
+  /**
+   * Columns of booking items
+   */
+  const bookingColumns: ColumnDef<BookingItemWithDetails>[] = [
     {
       accessorKey: "item_name",
       header: t.myBookings.columns.item[lang],
       cell: ({ row }) => {
-        const itemData = row.original;
-        let itemName = null;
-
-        // Try to get from translations in current language
-        if (
-          itemData.storage_items?.translations &&
-          itemData.storage_items.translations[lang]?.item_name
-        ) {
-          itemName = itemData.storage_items.translations[lang].item_name;
-        }
-        // Fall back to alternate language
-        else if (
-          itemData.storage_items?.translations &&
-          itemData.storage_items.translations[lang === "fi" ? "en" : "fi"]
-            ?.item_name
-        ) {
-          itemName =
-            itemData.storage_items.translations[lang === "fi" ? "en" : "fi"]
-              .item_name;
-        }
-        // Fall back to stored item_name
-        else {
-          itemName = itemData.item_name || `Item ${itemData.item_id}`;
-        }
-
+        const itemName =
+          row.original.storage_items.translations![lang].item_name;
         return itemName.charAt(0).toUpperCase() + itemName.slice(1);
       },
     },
@@ -483,8 +437,8 @@ const MyBookings = () => {
           </div>
         </div>
 
-        {/* Booking table or empty state */}
-        {bookings.length === 0 ? (
+        {/* BookingPreview table or empty state */}
+        {bookings.length === 0 && (
           <div className="text-center py-8 bg-slate-50 rounded-lg">
             <p className="text-lg mb-2">
               {t.myBookings.emptyState.title[lang]}
@@ -499,9 +453,10 @@ const MyBookings = () => {
               {t.myBookings.buttons.browseItems[lang]}
             </Button>
           </div>
-        ) : isMobile ? (
+        )}
+        {isMobile && (
           <Accordion type="multiple" className="w-full space-y-2">
-            {filteredBookings.map((booking) => (
+            {bookings.map((booking) => (
               <AccordionItem key={booking.id} value={String(booking.id)}>
                 <AccordionTrigger className="text-left">
                   <div className="flex flex-col w-full">
@@ -510,7 +465,7 @@ const MyBookings = () => {
                       {booking.booking_number}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(booking.created_at)} · {booking.status}
+                      {formatDate(booking.created_at!)} · {booking.status}
                     </span>
                   </div>
                 </AccordionTrigger>
@@ -520,76 +475,50 @@ const MyBookings = () => {
                     <div className="text-sm">
                       <p>
                         <strong>{t.myBookings.mobile.status[lang]}</strong>{" "}
-                        <StatusBadge status={booking.status} />
+                        <StatusBadge status={booking.status!} />
                       </p>
-                      <p>
+                      {/* <p>
                         <strong>{t.myBookings.mobile.start[lang]}</strong>{" "}
                         {formatDate(booking.booking_items?.[0]?.start_date)}
                       </p>
                       <p>
                         <strong>{t.myBookings.mobile.end[lang]}</strong>{" "}
                         {formatDate(booking.booking_items?.[0]?.end_date)}
-                      </p>
+                      </p> */}
                     </div>
 
                     {/* booking Items */}
-                    <div className="bg-slate-50 rounded-md">
-                      <p className="text-md font-semibold">
-                        {t.myBookings.bookingDetails.items[lang]}:
-                      </p>
-                      <div className="space-y-2 p-1">
-                        {booking.booking_items?.map((item) => (
-                          <div
-                            key={item.id}
-                            className="text-xs space-y-1 border-b pb-2 last:border-b-0 last:pb-0"
-                          >
-                            <p>
-                              <strong>{t.myBookings.mobile.item[lang]}</strong>{" "}
-                              {(() => {
-                                let itemName;
-
-                                // Try to get translated name from storage_items
-                                if (
-                                  item.storage_items?.translations?.[lang]
-                                    ?.item_name
-                                ) {
-                                  itemName =
-                                    item.storage_items.translations[lang]
-                                      .item_name;
-                                }
-                                // Fall back to alternate language
-                                else if (
-                                  item.storage_items?.translations?.[
-                                    lang === "fi" ? "en" : "fi"
-                                  ]?.item_name
-                                ) {
-                                  itemName =
-                                    item.storage_items.translations[
-                                      lang === "fi" ? "en" : "fi"
-                                    ].item_name;
-                                }
-                                // Fall back to stored item_name
-                                else {
-                                  itemName =
-                                    item.item_name || `Item ${item.item_id}`;
-                                }
-
-                                return (
-                                  itemName.charAt(0).toUpperCase() +
-                                  itemName.slice(1)
-                                );
-                              })()}
-                            </p>
-                            <p>
-                              <strong>
-                                {t.myBookings.mobile.quantity[lang]}
-                              </strong>{" "}
-                              {item.quantity}
-                            </p>
+                    {selectedBooking && selectedBooking.booking_items && (
+                      <>
+                        <div className="bg-slate-50 rounded-md">
+                          <p className="text-md font-semibold">
+                            {t.myBookings.bookingDetails.items[lang]}:
+                          </p>
+                          <div className="space-y-2 p-1">
+                            {selectedBooking.booking_items.map((item) => (
+                              <div
+                                key={item.id}
+                                className="text-xs space-y-1 border-b pb-2 last:border-b-0 last:pb-0"
+                              >
+                                <p>
+                                  <strong>
+                                    {t.myBookings.mobile.item[lang]}
+                                  </strong>{" "}
+                                  {item.storage_items.translations[lang]
+                                    .item_name ?? "Unknown"}
+                                </p>
+                                <p>
+                                  <strong>
+                                    {t.myBookings.mobile.quantity[lang]}
+                                  </strong>{" "}
+                                  {item.quantity}
+                                </p>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </div>
+                        </div>
+                      </>
+                    )}
 
                     {/* Actions */}
                     <div className="flex justify-end gap-2 mt-3">
@@ -597,10 +526,10 @@ const MyBookings = () => {
                         <>
                           <BookingEditButton
                             booking={booking}
-                            onEdit={handleEditBooking}
+                            onEdit={() => {}}
                           />
                           <BookingCancelButton
-                            id={booking.id}
+                            id={booking.id!}
                             closeModal={() => {}}
                           />
                         </>
@@ -611,181 +540,156 @@ const MyBookings = () => {
               </AccordionItem>
             ))}
           </Accordion>
-        ) : (
+        )}
+
+        {totalPages > 1 ? (
           <PaginatedDataTable
             columns={columns}
-            data={paginatedBookings}
+            data={bookings}
             pageIndex={currentPage}
             pageCount={totalPages}
             onPageChange={handlePageChange}
           />
+        ) : (
+          <DataTable data={bookings} columns={columns} />
         )}
       </div>
 
-      {/* Editing Booking Modal */}
-      {editingBooking && (
+      {/* Editing BookingPreview Modal */}
+      {selectedBooking && (
         <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
           <DialogContent className="max-w-sm overflow-visible">
             <DialogHeader className="items-start">
               <DialogTitle>
                 {t.myBookings.edit.title[lang]}
-                {editingBooking.booking_number}
+                {selectedBooking.booking_number}
               </DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-4">
-              <InlineTimeframePicker
-                startDate={globalStartDate ? new Date(globalStartDate) : null}
-                endDate={globalEndDate ? new Date(globalEndDate) : null}
-                onChange={(type, date) => {
-                  if (type === "start") {
-                    setGlobalStartDate(date?.toISOString() ?? null);
-                  } else {
-                    setGlobalEndDate(date?.toISOString() ?? null);
-                  }
-                }}
-              />
-              {editFormItems.map((item) => (
-                <div key={item.id} className="grid grid-cols-5 gap-4">
-                  <div className="col-span-2 items-center">
-                    <Label className="block text-xs font-medium">
-                      {t.myBookings.edit.item[lang]}
-                    </Label>
-                    <p className="text-sm">
-                      {(() => {
-                        let itemName;
-
-                        // Try to get translated name from storage_items
-                        if (
-                          item.storage_items?.translations?.[lang]?.item_name
-                        ) {
-                          itemName =
-                            item.storage_items.translations[lang].item_name;
-                        }
-                        // Fall back to alternate language
-                        else if (
-                          item.storage_items?.translations?.[
-                            lang === "fi" ? "en" : "fi"
-                          ]?.item_name
-                        ) {
-                          itemName =
-                            item.storage_items.translations[
-                              lang === "fi" ? "en" : "fi"
-                            ].item_name;
-                        }
-                        // Fall back to stored item_name
-                        else {
-                          itemName =
-                            item.item_name ||
-                            t.myBookings.edit.unnamedItem[lang];
-                        }
-
-                        return (
-                          itemName.charAt(0).toUpperCase() + itemName.slice(1)
-                        );
-                      })()}
-                    </p>
-                  </div>
-                  <div
-                    className="flex flex-col h-full"
-                    style={{ zIndex: 50, pointerEvents: "auto" }}
-                  >
-                    {/* <Label className="block text-sm font-medium">
+            {(itemsLoading || loadingAvailability) && (
+              <Spinner padding="py-10" />
+            )}
+            {!itemsLoading && !loadingAvailability && (
+              <div className="space-y-4">
+                <InlineTimeframePicker
+                  startDate={globalStartDate ? new Date(globalStartDate) : null}
+                  endDate={globalEndDate ? new Date(globalEndDate) : null}
+                  onChange={(type, date) => {
+                    if (type === "start") {
+                      setGlobalStartDate(date?.toISOString() ?? null);
+                    } else {
+                      setGlobalEndDate(date?.toISOString() ?? null);
+                    }
+                  }}
+                />
+                {editFormItems.map((item) => (
+                  <div key={item.id} className="grid grid-cols-5 gap-4">
+                    <div className="col-span-2 items-center">
+                      <Label className="block text-xs font-medium">
+                        {t.myBookings.edit.item[lang]}
+                      </Label>
+                      <p className="text-sm">
+                        {item.storage_items.translations[lang].item_name ??
+                          "Unknown"}
+                      </p>
+                    </div>
+                    <div
+                      className="flex flex-col h-full"
+                      style={{ zIndex: 50, pointerEvents: "auto" }}
+                    >
+                      {/* <Label className="block text-sm font-medium">
                       {t.myBookings.edit.quantity[lang]}
                     </Label> */}
-                    <div className="flex items-center gap-1 mt-auto">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={
-                          item.id !== undefined && itemQuantities[item.id] === 0
-                        }
-                        onClick={() => {
-                          if (item.id !== undefined) {
-                            const newQty =
-                              (itemQuantities[item.id] || item.quantity) - 1;
-                            if (newQty >= 0) {
+                      <div className="flex items-center gap-1 mt-auto">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={
+                            item.id !== undefined &&
+                            itemQuantities[item.id] <= 1
+                          }
+                          onClick={() => {
+                            if (item.id !== undefined) {
+                              const newQty =
+                                (itemQuantities[item.id] || item.quantity) - 1;
+                              if (newQty >= 0) {
+                                setItemQuantities({
+                                  ...itemQuantities,
+                                  [String(item.id)]: newQty,
+                                });
+                              }
+                            }
+                          }}
+                        >
+                          –
+                        </Button>
+                        <Input
+                          value={
+                            item.id !== undefined
+                              ? (itemQuantities[item.id] ?? item.quantity)
+                              : item.quantity
+                          }
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            if (!isNaN(val) && val >= 0) {
+                              setItemQuantities({
+                                ...itemQuantities,
+                                [String(item.id)]: val,
+                              });
+                            }
+                          }}
+                          className="w-[50px] text-center"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={
+                            availability[item.item_id] !== undefined &&
+                            item.id !== undefined &&
+                            itemQuantities[item.id] ===
+                              availability[item.item_id]
+                          }
+                          onClick={() => {
+                            if (item.id !== undefined) {
+                              const newQty =
+                                (itemQuantities[item.id] || item.quantity) + 1;
                               setItemQuantities({
                                 ...itemQuantities,
                                 [String(item.id)]: newQty,
                               });
                             }
-                          }
-                        }}
-                      >
-                        –
-                      </Button>
-                      <Input
-                        value={
-                          item.id !== undefined
-                            ? (itemQuantities[item.id] ?? item.quantity)
-                            : item.quantity
-                        }
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          if (!isNaN(val) && val >= 0) {
-                            setItemQuantities({
-                              ...itemQuantities,
-                              [String(item.id)]: val,
-                            });
-                          }
-                        }}
-                        className="w-[50px] text-center"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={
-                          availability[item.item_id] !== undefined &&
-                          item.id !== undefined &&
-                          itemQuantities[item.id] === availability[item.item_id]
-                        }
-                        onClick={() => {
-                          if (item.id !== undefined) {
-                            const newQty =
-                              (itemQuantities[item.id] || item.quantity) + 1;
-                            setItemQuantities({
-                              ...itemQuantities,
-                              [String(item.id)]: newQty,
-                            });
-                          }
-                        }}
-                      >
-                        +
-                      </Button>
-                    </div>
-                    {loadingAvailability[item.item_id] && (
-                      <div className="flex items-center justify-center mt-2">
-                        <LoaderCircle className="animate-spin h-4 w-4" />
+                          }}
+                        >
+                          +
+                        </Button>
                       </div>
-                    )}
-                    {!loadingAvailability[item.item_id] && (
-                      <p className="text-xs italic text-slate-400 mt-1">
-                        Total of {availability[item.item_id]} items bookable
-                      </p>
-                    )}
+                      {availability[item.item_id] && (
+                        <p className="text-xs italic text-slate-400 mt-1">
+                          Total of {availability[item.item_id]} items bookable
+                        </p>
+                      )}
+                    </div>
                   </div>
+                ))}
+                <div className="flex justify-between gap-2 mt-4">
+                  <Button
+                    variant={"secondary"}
+                    onClick={() => setShowEditModal(false)}
+                  >
+                    {t.myBookings.edit.buttons.cancel[lang]}
+                  </Button>
+                  <Button
+                    variant={"outline"}
+                    onClick={handleSubmitEdit}
+                    disabled={!editingBooking || !isFormValid}
+                  >
+                    {t.myBookings.edit.buttons.saveChanges[lang]}
+                  </Button>
                 </div>
-              ))}
-
-              <div className="flex justify-between gap-2 mt-4">
-                <Button
-                  variant={"secondary"}
-                  onClick={() => setShowEditModal(false)}
-                >
-                  {t.myBookings.edit.buttons.cancel[lang]}
-                </Button>
-                <Button
-                  variant={"outline"}
-                  onClick={handleSubmitEdit}
-                  disabled={!editingBooking || !isFormValid}
-                >
-                  {t.myBookings.edit.buttons.saveChanges[lang]}
-                </Button>
               </div>
-            </div>
+            )}
           </DialogContent>
         </Dialog>
       )}
@@ -818,27 +722,47 @@ const MyBookings = () => {
                   </h3>
                   <p className="text-xs">
                     {t.myBookings.columns.status[lang]}:{" "}
-                    <StatusBadge status={selectedBooking.status} />
+                    <StatusBadge status={selectedBooking.status!} />
                   </p>
                   <p className="text-xs">
                     {t.myBookings.columns.date[lang]}:{" "}
-                    {formatDate(selectedBooking.created_at)}
+                    {formatDate(selectedBooking.created_at!)}
                   </p>
                 </div>
               </div>
 
               {/* Booking Items */}
-              <div>
-                <h3 className="font-normal text-sm mb-2">
-                  {t.myBookings.bookingDetails.items[lang]}
-                </h3>
-                <div className="border rounded-md overflow-hidden">
-                  <DataTable
-                    columns={bookingColumns}
-                    data={selectedBooking.booking_items || []}
-                  />
+              {itemsLoading || loadingAvailability ? (
+                <Spinner containerClasses="py-8" />
+              ) : (
+                <div>
+                  <h3 className="font-normal text-sm mb-2">
+                    {t.myBookings.bookingDetails.items[lang]}
+                  </h3>
+                  <div className="border rounded-md overflow-hidden">
+                    {itemTotalPages > 1 ? (
+                      <PaginatedDataTable
+                        pageCount={itemPage}
+                        onPageChange={handleItemPageChange}
+                        pageIndex={currentItemPage - 1}
+                        columns={bookingColumns}
+                        data={
+                          (selectedBooking as BookingWithDetails)
+                            .booking_items || []
+                        }
+                      />
+                    ) : itemTotalPages === 1 ? (
+                      <DataTable
+                        columns={bookingColumns}
+                        data={
+                          (selectedBooking as BookingWithDetails)
+                            .booking_items || []
+                        }
+                      />
+                    ) : null}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
