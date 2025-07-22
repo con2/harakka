@@ -164,8 +164,7 @@ const rolesSlice = createSlice({
       })
       .addCase(fetchCurrentUserRoles.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentUserRoles = action.payload
-          .roles as ViewUserRolesWithDetails[];
+        state.currentUserRoles = action.payload.roles;
         state.currentUserOrganizations = action.payload.organizations;
         state.isSuperVera = action.payload.isSuperVera;
       })
@@ -182,7 +181,7 @@ const rolesSlice = createSlice({
       })
       .addCase(fetchAllUserRoles.fulfilled, (state, action) => {
         state.adminLoading = false;
-        state.allUserRoles = action.payload as ViewUserRolesWithDetails[];
+        state.allUserRoles = action.payload;
       })
       .addCase(fetchAllUserRoles.rejected, (state, action) => {
         state.adminLoading = false;
@@ -197,7 +196,7 @@ const rolesSlice = createSlice({
       })
       .addCase(createUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
-        state.allUserRoles.push(action.payload as ViewUserRolesWithDetails);
+        state.allUserRoles.push(action.payload);
       })
       .addCase(createUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -232,8 +231,7 @@ const rolesSlice = createSlice({
           (role) => role.id === action.payload.id,
         );
         if (index !== -1) {
-          state.allUserRoles[index] =
-            action.payload as ViewUserRolesWithDetails;
+          state.allUserRoles[index] = action.payload;
         }
       })
       .addCase(updateUserRole.rejected, (state, action) => {

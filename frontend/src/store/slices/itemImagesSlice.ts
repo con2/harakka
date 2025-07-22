@@ -4,6 +4,15 @@ import { ItemImage, UploadItemImageDto } from "@/types/storage";
 import { RootState } from "../store";
 import { ErrorContext } from "@/types/common";
 
+// Helper type to safely unwrap an Axios‑style error object
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
 interface ItemImagesState {
   images: ItemImage[];
   itemsWithLoadedImages: string[]; // Track which items have loaded images
@@ -35,10 +44,11 @@ export const getItemImages = createAsyncThunk(
 
       const images = await itemImagesApi.getItemImages(itemId);
       return { images, itemId };
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch item images",
-      );
+    } catch (error: unknown) {
+      const message =
+        (error as ApiError).response?.data?.message ??
+        "Failed to fetch item images";
+      return rejectWithValue(message);
     }
   },
 );
@@ -55,10 +65,10 @@ export const uploadItemImage = createAsyncThunk(
   ) => {
     try {
       return await itemImagesApi.uploadItemImage(itemId, file, metadata);
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to upload image",
-      );
+    } catch (error: unknown) {
+      const message =
+        (error as ApiError).response?.data?.message ?? "Failed to upload image";
+      return rejectWithValue(message);
     }
   },
 );
@@ -69,10 +79,10 @@ export const deleteItemImage = createAsyncThunk(
     try {
       await itemImagesApi.deleteItemImage(imageId);
       return imageId;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to delete image",
-      );
+    } catch (error: unknown) {
+      const message =
+        (error as ApiError).response?.data?.message ?? "Failed to delete image";
+      return rejectWithValue(message);
     }
   },
 );
