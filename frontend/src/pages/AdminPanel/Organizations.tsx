@@ -1,23 +1,3 @@
-/* import { useRoles } from "@/hooks/useRoles";
-import { LoaderCircle } from "lucide-react";
-import { Navigate } from "react-router-dom";
-
-function Organizations() {
-  const { isSuperAdmin, loading } = useRoles();
-
-  if (loading)
-    return (
-      <div className="flex justify-center p-4">
-        <LoaderCircle className="h-4 w-4 animate-spin" />
-      </div>
-    );
-
-  if (!isSuperAdmin) return <Navigate to="/" />;
-  return <>This is the org page</>;
-}
-
-export default Organizations; */
-
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -30,6 +10,7 @@ import { OrganizationDetails } from "@/types/organization";
 import { LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
+import { t } from "@/translations";
 
 const OrganizationList = () => {
   const dispatch = useAppDispatch();
@@ -76,9 +57,13 @@ const OrganizationList = () => {
       accessorKey: "is_active",
       cell: ({ row }) =>
         row.original.is_active ? (
-          <span className="text-green-600 font-semibold">Ja</span>
+          <span className="text-green-600 font-semibold">
+            {t.organizationList.values.isActive.yes[lang]}
+          </span>
         ) : (
-          <span className="text-red-400 font-semibold">Nein</span>
+          <span className="text-red-400 font-semibold">
+            {t.organizationList.values.isActive.no[lang]}
+          </span>
         ),
     },
     {
@@ -91,9 +76,14 @@ const OrganizationList = () => {
     },
   ];
 
+  // Set language, e.g., from context, user settings, or default to "en"
+  const lang: "en" | "fi" = "en";
+
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Organisationen</h1>
+      <h1 className="text-xl font-semibold">
+        {t.organizationList.title[lang]}
+      </h1>
 
       {error && <div className="text-destructive">{error}</div>}
 

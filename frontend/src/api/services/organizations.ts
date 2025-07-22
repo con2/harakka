@@ -19,11 +19,11 @@ export const organizationApi = {
     total: number;
     page: number;
     totalPages: number;
-  }> => api.get(`/api/organizations?page=${page}&limit=${limit}`),
+  }> => api.get(`/organizations?page=${page}&limit=${limit}`),
 
   /**
    * Get a specific organization by ID
    */
   getOrganizationById: (id: string): Promise<OrganizationDetails> =>
-    api.get(`/api/organizations/${id}`),
+    api.get(`/organizations/${id}`),
 };
