@@ -11,6 +11,7 @@ import { LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { t } from "@/translations";
+import { useLanguage } from "@/context/LanguageContext";
 
 const OrganizationList = () => {
   const dispatch = useAppDispatch();
@@ -20,6 +21,9 @@ const OrganizationList = () => {
   const loading = useAppSelector(selectOrganizationLoading);
   const error = useAppSelector(selectOrganizationError);
   const totalPages = useAppSelector((state) => state.organizations.totalPages);
+
+  // Translation
+  const { lang } = useLanguage();
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -75,9 +79,6 @@ const OrganizationList = () => {
           : "—",
     },
   ];
-
-  // Set language, e.g., from context, user settings, or default to "en"
-  const lang: "en" | "fi" = "en";
 
   return (
     <div className="space-y-4">
