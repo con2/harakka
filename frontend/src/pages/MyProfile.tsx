@@ -44,6 +44,7 @@ import {
 import { toastConfirm } from "../components/ui/toastConfirm";
 import profilePlaceholder from "../assets/profilePlaceholder.png";
 import MyBookings from "@/components/MyBookings";
+import { CurrentUserRoles } from "@/components/Admin/Roles/CurrentUserRoles";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();
@@ -305,6 +306,9 @@ const MyProfile = () => {
                     />
                   </div>
                 </div>
+
+                {/* Roles */}
+                <CurrentUserRoles />
 
                 {/* Addresses */}
                 <div>
