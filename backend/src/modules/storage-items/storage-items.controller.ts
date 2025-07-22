@@ -77,6 +77,16 @@ export class StorageItemsController {
       category,
     );
   }
+
+  /**
+   * Get the total item count of unique items in the system
+   * @returns number of total items (active and inactive)
+   */
+  @Get("count")
+  async getItemCount(): Promise<ApiSingleResponse<number>> {
+    const supabase = this.supabaseService.getAnonClient();
+    return this.storageItemsService.getItemCount(supabase);
+  }
   // (if we dont find the solution we could use that)
   @Get(":id")
   async getById(@Param("id") id: string): Promise<StorageItem | null> {
