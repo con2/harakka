@@ -67,6 +67,35 @@ export const fetchOrganizationById = createAsyncThunk(
   },
 );
 
+export const createOrganization = createAsyncThunk(
+  "organizations/createOrganization",
+  async (data: Partial<OrganizationDetails>, { rejectWithValue }) => {
+    try {
+      return await organizationApi.createOrganization(data);
+    } catch (error) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to create organization"),
+      );
+    }
+  },
+);
+
+export const updateOrganization = createAsyncThunk(
+  "organizations/updateOrganization",
+  async (
+    { id, data }: { id: string; data: Partial<OrganizationDetails> },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await organizationApi.updateOrganization(id, data);
+    } catch (error) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to update organization"),
+      );
+    }
+  },
+);
+
 //Create a slice for organization state management
 const organizationSlice = createSlice({
   name: "organization",
@@ -101,8 +130,25 @@ const organizationSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
-  },
-});
+        .addCase(createOrganization.fulfilled, (state: OrganizationState, action) => {
+        state.organizations.unshift(action.payload);
+        })
+
+        .addCase(updateOrganization.fulfilled, (state: OrganizationState, action) => {
+        const index = state.organizations.findIndex(
+            (org) => org.id === action.payload.id,
+        );
+        if (index !== -1) {
+            state.organizations[index] = action.payload;
+        }
+        // optional:
+        if (state.selectedOrganization?.id === action.payload.id) {
+            state.selectedOrganization = action.payload;
+        }
+        });
+
+        },
+        });
 
 //Selectors
 export const selectOrganizations = (state: RootState) =>

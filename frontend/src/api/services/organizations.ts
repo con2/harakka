@@ -26,4 +26,13 @@ export const organizationApi = {
    */
   getOrganizationById: (id: string): Promise<OrganizationDetails> =>
     api.get(`/organizations/${id}`),
+
+  createOrganization: (
+    data: Partial<OrganizationDetails>,
+  ): Promise<OrganizationDetails> => api.post("/organizations", data),
+
+  updateOrganization: (
+    id: string,
+    data: Partial<OrganizationDetails>,
+  ): Promise<OrganizationDetails> => api.put(`/organizations/${id}`, data),
 };

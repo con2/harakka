@@ -43,4 +43,10 @@ export const organizationList = {
       },
     },
   },
+  modal: {
+    title: {
+      de: "Organisation",
+      en: "Organization",
+    },
+  },
 };
