@@ -54,6 +54,19 @@ export const fetchAllOrganizations = createAsyncThunk(
   },
 );
 
+export const fetchOrganizationById = createAsyncThunk(
+  "organizations/fetchOrganizationById",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      return await organizationApi.getOrganizationById(id);
+    } catch (error) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch organization details"),
+      );
+    }
+  },
+);
+
 //Create a slice for organization state management
 const organizationSlice = createSlice({
   name: "organization",
@@ -73,6 +86,18 @@ const organizationSlice = createSlice({
         state.totalPages = action.payload.totalPages;
       })
       .addCase(fetchAllOrganizations.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(fetchOrganizationById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchOrganizationById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedOrganization = action.payload;
+      })
+      .addCase(fetchOrganizationById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
