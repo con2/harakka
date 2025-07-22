@@ -233,7 +233,7 @@ const rolesSlice = createSlice({
       .addCase(updateUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
         const index = state.allUserRoles.findIndex(
-          (role) => role.id === action.payload.id,
+          (role: ViewUserRolesWithDetails) => role.id === action.payload.id,
         );
         if (index !== -1) {
           state.allUserRoles[index] =
@@ -254,7 +254,7 @@ const rolesSlice = createSlice({
       .addCase(deleteUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
         const idx = state.allUserRoles.findIndex(
-          (role) => role.id === action.payload,
+          (role: ViewUserRolesWithDetails) => role.id === action.payload,
         );
         if (idx !== -1) {
           state.allUserRoles[idx].is_active = false;
@@ -274,7 +274,7 @@ const rolesSlice = createSlice({
       .addCase(permanentDeleteUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
         state.allUserRoles = state.allUserRoles.filter(
-          (role) => role.id !== action.payload,
+          (role: ViewUserRolesWithDetails) => role.id !== action.payload,
         );
       })
       .addCase(permanentDeleteUserRole.rejected, (state, action) => {
