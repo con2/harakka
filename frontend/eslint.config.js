@@ -48,7 +48,7 @@ export default tseslint.config(
 
       // -------- Promise‑related safety nets --------
       "@typescript-eslint/no-misused-promises": "off",
-      "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/no-floating-promises": "warn",
       "@typescript-eslint/await-thenable": "off",
 
       /* Still surface *explicit* `any` usage so devs notice it, but don't block
