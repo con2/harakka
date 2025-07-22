@@ -5,61 +5,23 @@ import {
 } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
+  UserBanHistoryDto,
+  ViewUserBanStatusRow,
+} from "./dto/user-banning.dto";
+import {
   BanForRoleDto,
   BanForOrgDto,
   BanForAppDto,
   UnbanDto,
   BanOperationResult,
   UserBanStatusCheck,
-  UserBanHistoryDto,
-  ViewUserBanStatusRow,
-} from "./dto/user-banning.dto";
+} from "./interfaces/user-banning.interface";
 import { AuthRequest } from "../../middleware/interfaces/auth-request.interface";
 import { handleSupabaseError } from "../../utils/handleError.utils";
 
 @Injectable()
 export class UserBanningService {
   constructor(private readonly supabaseService: SupabaseService) {}
-
-  /**
-   * Check if user has required admin roles for banning operations
-   */
-  private validateAdminPermissions(req: AuthRequest): void {
-    const requiredRoles = ["admin", "main_admin", "super_admin", "superVera"];
-    
-    // Check both 'name' and 'role_name' fields to be compatible with any JWT format
-    const hasPermission = req.userRoles?.some((role) => {
-      const roleObj = role as Record<string, unknown>;
-      const roleName = role.role_name || (roleObj.name as string) || "";
-      return requiredRoles.includes(roleName) && role.is_active;
-    });
-
-    if (!hasPermission) {
-      throw new BadRequestException(
-        "Insufficient permissions to perform this operation",
-      );
-    }
-  }
-
-  /**
-   * Check if user has required high-level admin roles for app-level banning
-   */
-  private validateHighLevelAdminPermissions(req: AuthRequest): void {
-    const requiredRoles = ["main_admin", "super_admin", "superVera"];
-    
-    // Check both 'name' and 'role_name' fields to be compatible with any JWT format
-    const hasPermission = req.userRoles?.some((role) => {
-      const roleObj = role as Record<string, unknown>;
-      const roleName = role.role_name || (roleObj.name as string) || "";
-      return requiredRoles.includes(roleName) && role.is_active;
-    });
-
-    if (!hasPermission) {
-      throw new BadRequestException(
-        "Insufficient permissions to perform this operation",
-      );
-    }
-  }
   /**
    * Ban user for a specific role in an organization
    */
@@ -74,9 +36,6 @@ export class UserBanningService {
     }: BanForRoleDto,
     req: AuthRequest,
   ): Promise<BanOperationResult> {
-    // Validate admin permissions
-    this.validateAdminPermissions(req);
-    
     const bannedByUserId = req.user.id;
     // Find the specific role assignment
     const { data: roleAssignment, error: findError } = await req.supabase
@@ -150,9 +109,6 @@ export class UserBanningService {
     }: BanForOrgDto,
     req: AuthRequest,
   ): Promise<BanOperationResult> {
-    // Validate admin permissions
-    this.validateAdminPermissions(req);
-    
     const bannedByUserId = req.user.id;
 
     // Find all active role assignments for this user in this organization
@@ -220,9 +176,6 @@ export class UserBanningService {
     { userId, banReason, isPermanent = false, notes }: BanForAppDto,
     req: AuthRequest,
   ): Promise<BanOperationResult> {
-    // Validate admin permissions
-    this.validateAdminPermissions(req);
-    
     const bannedByUserId = req.user.id;
 
     // Find all active role assignments for this user
@@ -288,9 +241,6 @@ export class UserBanningService {
     unbanDto: UnbanDto,
     req: AuthRequest,
   ): Promise<BanOperationResult> {
-    // Validate admin permissions
-    this.validateAdminPermissions(req);
-    
     // First, find the active ban record(s) to update
     let banQuery = req.supabase
       .from("user_ban_history")
@@ -441,9 +391,6 @@ export class UserBanningService {
     userId: string,
     req: AuthRequest,
   ): Promise<UserBanHistoryDto[]> {
-    // Validate admin permissions
-    this.validateAdminPermissions(req);
-    
     const { data, error } = await req.supabase
       .from("user_ban_history")
       .select("*")
@@ -462,9 +409,6 @@ export class UserBanningService {
   async getAllUserBanStatuses(
     req: AuthRequest,
   ): Promise<ViewUserBanStatusRow[]> {
-    // Validate admin permissions
-    this.validateAdminPermissions(req);
-    
     const { data, error } = await req.supabase
       .from("view_user_ban_status")
       .select("*")
@@ -484,9 +428,6 @@ export class UserBanningService {
     userId: string,
     req: AuthRequest,
   ): Promise<UserBanStatusCheck> {
-    // Validate admin permissions
-    this.validateAdminPermissions(req);
-    
     // Get all role assignments for the user
     const { data: allRoles, error: allRolesError } = await req.supabase
       .from("user_organization_roles")

@@ -10,16 +10,15 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { UserBanningService } from "./user-banning.service";
+import { UserBanHistoryDto, UserBanStatusDto } from "./dto/user-banning.dto";
 import {
   BanForRoleDto,
   BanForOrgDto,
   BanForAppDto,
   UnbanDto,
-  UserBanHistoryDto,
-  UserBanStatusDto,
   BanOperationResult,
   UserBanStatusCheck,
-} from "./dto/user-banning.dto";
+} from "./interfaces/user-banning.interface";
 import { Roles } from "../../decorators/roles.decorator";
 import { AuthRequest } from "../../middleware/interfaces/auth-request.interface";
 
