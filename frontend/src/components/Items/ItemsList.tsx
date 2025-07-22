@@ -42,7 +42,7 @@ const ItemsList: React.FC = () => {
   // Fetch all items when the component mounts
   useEffect(() => {
     const active = isActive ? "active" : "inactive";
-    dispatch(
+    void dispatch(
       fetchOrderedItems({
         ordered_by: "created_at",
         ascending: true,
