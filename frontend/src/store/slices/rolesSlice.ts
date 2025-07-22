@@ -9,6 +9,7 @@ import {
 } from "@/types/roles";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { ViewUserRolesWithDetails } from "@common/role.types";
+import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 
 const initialState: RolesState = {
   currentUserRoles: [] as ViewUserRolesWithDetails[],
@@ -75,9 +76,23 @@ export const fetchAvailableRoles = createAsyncThunk(
 
 export const createUserRole = createAsyncThunk(
   "roles/createUserRole",
-  async (roleData: CreateUserRoleDto, { rejectWithValue }) => {
+  async (
+    roleData: CreateUserRoleDto,
+    { getState, rejectWithValue, dispatch },
+  ) => {
     try {
-      return await roleApi.createUserRole(roleData);
+      const result = await roleApi.createUserRole(roleData);
+
+      // If the affected user is the current user, clear refresh session and get new JWT
+      const state = getState() as RootState;
+      const currentUserId = state.users.selectedUser?.id;
+      if (roleData.user_id === currentUserId && currentUserId) {
+        await refreshSupabaseSession();
+        // Refetch roles
+        dispatch(fetchCurrentUserRoles());
+      }
+
+      return result;
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to create user role"),
@@ -93,10 +108,20 @@ export const updateUserRole = createAsyncThunk(
       tableKeyId,
       updateData,
     }: { tableKeyId: string; updateData: UpdateUserRoleDto },
-    { rejectWithValue },
+    { getState, rejectWithValue, dispatch },
   ) => {
     try {
-      return await roleApi.updateUserRole(tableKeyId, updateData);
+      const result = await roleApi.updateUserRole(tableKeyId, updateData);
+
+      // If the affected user is the current user, clear localStorage and refresh session
+      const state = getState() as RootState;
+      const currentUserId = state.users.selectedUser?.id;
+      if (result.user_id === currentUserId && currentUserId) {
+        await refreshSupabaseSession();
+        dispatch(fetchCurrentUserRoles());
+      }
+
+      return result;
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to update user role"),
@@ -107,9 +132,20 @@ export const updateUserRole = createAsyncThunk(
 
 export const deleteUserRole = createAsyncThunk(
   "roles/deleteUserRole",
-  async (tableKeyId: string, { rejectWithValue }) => {
+  async (tableKeyId: string, { getState, rejectWithValue, dispatch }) => {
     try {
+      // Find the role before deleting to check user_id
+      const state = getState() as RootState;
+      const role = state.roles.allUserRoles.find((r) => r.id === tableKeyId);
+      const currentUserId = state.users.selectedUser?.id;
+
       await roleApi.deleteUserRole(tableKeyId);
+
+      if (role && role.user_id === currentUserId && currentUserId) {
+        await refreshSupabaseSession();
+        dispatch(fetchCurrentUserRoles());
+      }
+
       return tableKeyId;
     } catch (error: unknown) {
       return rejectWithValue(
@@ -121,9 +157,20 @@ export const deleteUserRole = createAsyncThunk(
 
 export const permanentDeleteUserRole = createAsyncThunk(
   "roles/permanentDeleteUserRole",
-  async (tableKeyId: string, { rejectWithValue }) => {
+  async (tableKeyId: string, { getState, rejectWithValue, dispatch }) => {
     try {
+      // Find the role before deleting to check user_id
+      const state = getState() as RootState;
+      const role = state.roles.allUserRoles.find((r) => r.id === tableKeyId);
+      const currentUserId = state.users.selectedUser?.id;
+
       await roleApi.permanentDeleteUserRole(tableKeyId);
+
+      if (role && role.user_id === currentUserId && currentUserId) {
+        await refreshSupabaseSession();
+        dispatch(fetchCurrentUserRoles());
+      }
+
       return tableKeyId;
     } catch (error: unknown) {
       return rejectWithValue(
