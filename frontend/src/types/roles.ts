@@ -1,18 +1,5 @@
-export interface UserRoleWithDetails {
-  id?: string;
-  user_id: string;
-  organization_id: string;
-  role_id: string;
-  role_name: string;
-  organization_name: string;
-  is_active: boolean;
-  created_at?: string;
-  // Additional user fields from the database view
-  user_email?: string;
-  user_full_name?: string;
-  user_visible_name?: string;
-  user_phone?: string;
-}
+import { Database } from "@common/database.types";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 
 export interface CreateUserRoleDto {
   user_id: string;
@@ -38,7 +25,7 @@ export interface UserOrganization {
 }
 
 export interface UseRolesReturn {
-  roles: UserRoleWithDetails[];
+  roles: ViewUserRolesWithDetails[];
   organizations: UserOrganization[];
   loading: boolean;
   error: string | null;
@@ -49,13 +36,14 @@ export interface UseRolesReturn {
 }
 
 export interface RolesState {
-  currentUserRoles: UserRoleWithDetails[];
+  currentUserRoles: ViewUserRolesWithDetails[];
   currentUserOrganizations: UserOrganization[];
   isSuperVera: boolean;
-  allUserRoles: UserRoleWithDetails[];
+  allUserRoles: ViewUserRolesWithDetails[];
   loading: boolean;
   adminLoading: boolean;
   error: string | null;
   adminError: string | null;
   errorContext: string | null;
+  availableRoles: Database["public"]["Tables"]["roles"]["Row"][];
 }

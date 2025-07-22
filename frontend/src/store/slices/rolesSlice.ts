@@ -5,19 +5,22 @@ import {
   CreateUserRoleDto,
   UpdateUserRoleDto,
   RolesState,
+  UserOrganization,
 } from "@/types/roles";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 
 const initialState: RolesState = {
-  currentUserRoles: [],
-  currentUserOrganizations: [],
+  currentUserRoles: [] as ViewUserRolesWithDetails[],
+  currentUserOrganizations: [] as UserOrganization[],
   isSuperVera: false,
-  allUserRoles: [],
+  allUserRoles: [] as ViewUserRolesWithDetails[],
   loading: false,
   adminLoading: false,
   error: null,
   adminError: null,
   errorContext: null,
+  availableRoles: [],
 };
 
 // Async thunks
@@ -52,6 +55,19 @@ export const fetchAllUserRoles = createAsyncThunk(
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch all user roles"),
+      );
+    }
+  },
+);
+
+export const fetchAvailableRoles = createAsyncThunk(
+  "roles/fetchAvailableRoles",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await roleApi.getAvailableRoles();
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch available roles"),
       );
     }
   },
@@ -148,7 +164,8 @@ const rolesSlice = createSlice({
       })
       .addCase(fetchCurrentUserRoles.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentUserRoles = action.payload.roles;
+        state.currentUserRoles = action.payload
+          .roles as ViewUserRolesWithDetails[];
         state.currentUserOrganizations = action.payload.organizations;
         state.isSuperVera = action.payload.isSuperVera;
       })
@@ -165,7 +182,7 @@ const rolesSlice = createSlice({
       })
       .addCase(fetchAllUserRoles.fulfilled, (state, action) => {
         state.adminLoading = false;
-        state.allUserRoles = action.payload;
+        state.allUserRoles = action.payload as ViewUserRolesWithDetails[];
       })
       .addCase(fetchAllUserRoles.rejected, (state, action) => {
         state.adminLoading = false;
@@ -180,12 +197,28 @@ const rolesSlice = createSlice({
       })
       .addCase(createUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
-        state.allUserRoles.push(action.payload);
+        state.allUserRoles.push(action.payload as ViewUserRolesWithDetails);
       })
       .addCase(createUserRole.rejected, (state, action) => {
         state.adminLoading = false;
         state.adminError = action.payload as string;
         state.errorContext = "create-user-role";
+      })
+
+      // Fetch available roles
+      .addCase(fetchAvailableRoles.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(fetchAvailableRoles.fulfilled, (state, action) => {
+        state.loading = false;
+        state.availableRoles = action.payload;
+      })
+      .addCase(fetchAvailableRoles.rejected, (state, action) => {
+        state.loading = false;
+        state.adminError = action.payload as string;
+        state.errorContext = "fetch-available-roles";
       })
 
       // Update user role
@@ -196,10 +229,11 @@ const rolesSlice = createSlice({
       .addCase(updateUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
         const index = state.allUserRoles.findIndex(
-          (role) => role.id === action.payload.id,
+          (role: ViewUserRolesWithDetails) => role.id === action.payload.id,
         );
         if (index !== -1) {
-          state.allUserRoles[index] = action.payload;
+          state.allUserRoles[index] =
+            action.payload as ViewUserRolesWithDetails;
         }
       })
       .addCase(updateUserRole.rejected, (state, action) => {
@@ -215,9 +249,12 @@ const rolesSlice = createSlice({
       })
       .addCase(deleteUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
-        state.allUserRoles = state.allUserRoles.filter(
-          (role) => role.id !== action.payload,
+        const idx = state.allUserRoles.findIndex(
+          (role: ViewUserRolesWithDetails) => role.id === action.payload,
         );
+        if (idx !== -1) {
+          state.allUserRoles[idx].is_active = false;
+        }
       })
       .addCase(deleteUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -233,7 +270,7 @@ const rolesSlice = createSlice({
       .addCase(permanentDeleteUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
         state.allUserRoles = state.allUserRoles.filter(
-          (role) => role.id !== action.payload,
+          (role: ViewUserRolesWithDetails) => role.id !== action.payload,
         );
       })
       .addCase(permanentDeleteUserRole.rejected, (state, action) => {
@@ -283,6 +320,9 @@ export const selectAdminError = (state: RootState) => state.roles.adminError;
 export const selectErrorContext = (state: RootState) =>
   state.roles.errorContext;
 
+export const selectAvailableRoles = (state: RootState) =>
+  state.roles.availableRoles;
+
 // Computed selectors
 export const selectIsAdmin = (state: RootState) => {
   return (
@@ -295,9 +335,9 @@ export const selectIsAdmin = (state: RootState) => {
 export const selectUserRolesByOrganization = (
   state: RootState,
   organizationId: string,
-) => {
+): ViewUserRolesWithDetails[] => {
   return state.roles.currentUserRoles.filter(
-    (role) => role.organization_id === organizationId,
+    (role: ViewUserRolesWithDetails) => role.organization_id === organizationId,
   );
 };
 

@@ -43,6 +43,24 @@ export class UserService {
     }
     return (data as UserProfile) ?? null;
   }
+  async getCurrentUser(req: AuthRequest): Promise<UserProfile | null> {
+    const supabase = req.supabase;
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new Error("User ID not found in request context");
+    }
+
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("*, user_roles(role)")
+      .eq("id", userId)
+      .single();
+    if (error) {
+      if (error.code === "PGRST116") return null; // No profile found
+      throw new Error(error.message);
+    }
+    return (data as UserProfile) ?? null;
+  }
 
   async createUser(
     user: CreateUserDto,

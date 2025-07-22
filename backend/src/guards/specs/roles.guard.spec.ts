@@ -36,7 +36,7 @@ function mockContext({
   if (isPublic) Reflect.defineMetadata(IS_PUBLIC_KEY, true, handler);
   if (meta) Reflect.defineMetadata(ROLES_KEY, meta, handler);
 
-  const req: any = {
+  const req = {
     userRoles,
     params: orgParam ? { organizationId: orgParam } : {},
     headers: orgHeader ? { "x-org-id": orgHeader } : {},

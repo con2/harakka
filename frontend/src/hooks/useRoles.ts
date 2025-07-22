@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchCurrentUserRoles,
   fetchAllUserRoles,
+  fetchAvailableRoles,
   createUserRole,
   updateUserRole,
   deleteUserRole,
@@ -17,6 +18,7 @@ import {
   selectRolesError,
   selectAdminError,
   selectIsAdmin,
+  selectAvailableRoles,
 } from "@/store/slices/rolesSlice";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
 
@@ -41,6 +43,9 @@ export const useRoles = () => {
 
   // Admin data
   const allUserRoles = useAppSelector(selectAllUserRoles);
+
+  // Available roles for dropdowns
+  const availableRoles = useAppSelector(selectAvailableRoles);
 
   // Loading states
   const loading = useAppSelector(selectRolesLoading);
@@ -93,6 +98,10 @@ export const useRoles = () => {
     return Promise.resolve({ type: "roles/fetchAllUserRoles/rejected" });
   }, [dispatch, fetchAttempts]);
 
+  const refreshAvailableRoles = useCallback(() => {
+    return dispatch(fetchAvailableRoles());
+  }, [dispatch]);
+
   const createRole = useCallback(
     (roleData: CreateUserRoleDto) => {
       return dispatch(createUserRole(roleData));
@@ -133,16 +142,13 @@ export const useRoles = () => {
     }
   }, [dispatch, fetchAttempts]);
 
-  // Auto-fetch current user roles exactly once on mount and limit retries
+  // Auto-fetch current user roles and available roles on mount exactly once on mount and limit retries
   useEffect(() => {
     if (
       !initialFetchAttempted.current &&
       !loading &&
       fetchAttempts < MAX_FETCH_ATTEMPTS
     ) {
-      console.log(
-        `Initial roles fetch (attempt ${fetchAttempts + 1}/${MAX_FETCH_ATTEMPTS})`,
-      );
       initialFetchAttempted.current = true;
       setFetchAttempts((prev) => prev + 1);
 
@@ -153,6 +159,7 @@ export const useRoles = () => {
         .catch(() => {
           setResponseReceived(true); // Even on error, we've received a response
         });
+      dispatch(fetchAvailableRoles());
     }
   }, [dispatch, loading, fetchAttempts]);
 
@@ -161,6 +168,7 @@ export const useRoles = () => {
     currentUserRoles,
     currentUserOrganizations,
     allUserRoles,
+    availableRoles,
 
     // Status
     isSuperVera,
@@ -177,6 +185,7 @@ export const useRoles = () => {
     // Actions
     refreshCurrentUserRoles,
     refreshAllUserRoles,
+    refreshAvailableRoles,
     createRole,
     updateRole,
     deleteRole,

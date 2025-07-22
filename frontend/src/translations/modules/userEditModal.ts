@@ -72,6 +72,22 @@ export const userEditModal = {
       fi: "Super Vera",
       en: "Super Vera",
     },
+    storageManager: {
+      fi: "Varastonhoitaja",
+      en: "Storage Manager",
+    },
+    mainAdmin: {
+      fi: "Pääkäyttäjä",
+      en: "Main Admin",
+    },
+    superAdmin: {
+      fi: "Pääylläpitäjä",
+      en: "Super Admin",
+    },
+    requester: {
+      fi: "Tilaaja",
+      en: "Requester",
+    },
   },
   buttons: {
     save: {

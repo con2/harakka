@@ -1,6 +1,7 @@
 import { Tag, TagTranslation } from "./tag";
 import { CreateItemDto, ItemTranslation } from "./item";
 import { UserRole } from "./user";
+import { TagTranslations } from "./databaseGenerated";
 
 /**
  * Base form state for all forms in the application
@@ -63,10 +64,8 @@ export interface ItemFormData
  * Tag form data for creating/editing tags
  */
 export interface TagFormData {
-  translations: {
-    fi: TagTranslation | null;
-    en: TagTranslation | null;
-  };
+  /** Map of language code → translation (or null if untranslated). */
+  translations: TagTranslations;
 }
 
 /**
@@ -75,8 +74,8 @@ export interface TagFormData {
 export function createTagPayload(fiName: string, enName: string): TagFormData {
   return {
     translations: {
-      fi: fiName ? { name: fiName } : null,
-      en: enName ? { name: enName } : null,
+      fi: { name: fiName },
+      en: { name: enName },
     },
   };
 }

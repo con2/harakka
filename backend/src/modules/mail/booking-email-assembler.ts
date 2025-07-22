@@ -3,7 +3,7 @@ import * as dayjs from "dayjs"; // Keep this as a named import to avoid issues.
 import { SupabaseService } from "../supabase/supabase.service";
 import { Translations } from "../booking/types/translations.types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "src/types/supabase.types";
+import { Database } from "@common/supabase.types";
 
 /**
  * Shape consumed by all booking‑related React e‑mail templates.

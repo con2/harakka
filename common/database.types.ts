@@ -1,5 +1,6 @@
 import type { MergeDeep } from "type-fest";
-import type { Database as Base } from "./supabase.types";
+import type { Database as Base } from "@common/supabase.types";
+export type { Json } from "@common/supabase.types";
 
 /* ── Concrete shapes for our translations ─────────────── */
 type ItemTranslations = {

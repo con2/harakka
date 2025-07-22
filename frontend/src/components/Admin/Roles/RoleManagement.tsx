@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import RoleEditer from "./RoleEditer";
 
 export const RoleManagement: React.FC = () => {
   const {
@@ -60,9 +61,6 @@ export const RoleManagement: React.FC = () => {
       !fetchingAdminData &&
       fetchAttemptsRef.current < MAX_FETCH_ATTEMPTS // Limit to 2 attempts
     ) {
-      console.log(
-        `Attempting to fetch admin roles (attempt ${fetchAttemptsRef.current + 1}/2)`,
-      );
       fetchAttemptsRef.current += 1;
       setFetchingAdminData(true);
 
@@ -115,12 +113,6 @@ export const RoleManagement: React.FC = () => {
     const result = hasAnyRole(rolesToTest, orgTestInput || undefined);
     setRoleTestResult(result);
     setRoleTestPerformed(true);
-
-    console.log("Role test (hasAnyRole):", {
-      roles: rolesToTest,
-      organizationId: orgTestInput || "any",
-      result,
-    });
   }, [roleTestInput, orgTestInput, hasAnyRole]);
 
   // Handler for testing a single role (hasRole)
@@ -128,12 +120,6 @@ export const RoleManagement: React.FC = () => {
     setSingleRoleTestPerformed(true);
     const result = hasRole(singleRoleInput, singleOrgInput || undefined);
     setSingleRoleResult(result);
-
-    console.log("Role test (hasRole):", {
-      role: singleRoleInput,
-      organizationId: singleOrgInput || "any",
-      result,
-    });
   }, [singleRoleInput, singleOrgInput, hasRole]);
 
   // Loading state
@@ -342,9 +328,9 @@ export const RoleManagement: React.FC = () => {
                         Inactive
                       </Badge>
                     )}
-                    {role.created_at && (
+                    {role.assigned_at && (
                       <span className="text-xs text-muted-foreground">
-                        {new Date(role.created_at).toLocaleDateString()}
+                        {new Date(role.assigned_at).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -413,9 +399,9 @@ export const RoleManagement: React.FC = () => {
                           Inactive
                         </Badge>
                       )}
-                      {role.created_at && (
+                      {role.assigned_at && (
                         <span className="text-xs text-muted-foreground">
-                          {new Date(role.created_at).toLocaleDateString()}
+                          {new Date(role.assigned_at).toLocaleDateString()}
                         </span>
                       )}
                     </div>
@@ -425,6 +411,13 @@ export const RoleManagement: React.FC = () => {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Roles editing Section */}
+      {isAdmin && (
+        <div className="my-6">
+          <RoleEditer />
+        </div>
       )}
 
       {/* Permission Testing Section */}

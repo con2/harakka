@@ -17,5 +17,5 @@ export type Filter = {
 
 export type Eq = {
   column: string;
-  value: string;
+  value: string | number | boolean | null;
 };
