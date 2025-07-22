@@ -43,7 +43,7 @@ const AdminPanel = () => {
             <SidebarLink
               to="/admin/organizations"
               icon={<Building2 className="w-5 h-5" />}
-              label={"Organizations"}
+              label={t.adminPanel.navigation.organizations[lang]}
               end={true}
             />
           )}
@@ -90,6 +90,13 @@ const AdminPanel = () => {
             to="/admin/roles"
             icon={<ShieldUser className="w-5 h-5" />}
             label={t.adminPanel.navigation.roles[lang]}
+          />
+
+          {/* Add the new Organizations link */}
+          <SidebarLink
+            to="/admin/organizations"
+            icon={<Building2 className="w-5 h-5" />}
+            label={"Organizations"} /* change to translation version */
           />
 
           <SidebarLink

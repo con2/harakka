@@ -1,17 +1,18 @@
-//import { Organization } from "@common/role.types";
 import { extractErrorMessage } from "../utils/errorHandlers";
 import { organizationApi } from "@/api/services/organizations";
-import { createAsyncThunk } from "@reduxjs/toolkit";
-import { OrganizationDetails } from "@/types/organization";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { OrganizationState } from "@/types/organization";
 import { RootState } from "../store";
 
 /**
  * Initial state
  */
-const initialState: OrganizationDetails = {
+const initialState: OrganizationState = {
   organizations: [],
+  selectedOrganization: null,
   total: 0,
   page: 1,
+  limit: 10,
   totalPages: 1,
   loading: false,
   error: null,
@@ -80,10 +81,10 @@ const organizationSlice = createSlice({
 
 //Selectors
 export const selectOrganizations = (state: RootState) =>
-  state.organization.organizations;
+  state.organizations.organizations;
 export const selectOrganizationLoading = (state: RootState) =>
-  state.organization.loading;
+  state.organizations.loading;
 export const selectOrganizationError = (state: RootState) =>
-  state.organization.error;
+  state.organizations.error;
 
 export default organizationSlice.reducer;
