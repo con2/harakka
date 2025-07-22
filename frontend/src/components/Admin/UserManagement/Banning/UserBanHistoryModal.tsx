@@ -47,10 +47,10 @@ const UserBanHistoryModal = ({
 
   useEffect(() => {
     if (isOpen && user.id) {
-      dispatch(fetchUserBanHistory(user.id));
+      void dispatch(fetchUserBanHistory(user.id));
       // Also refresh roles data to get organization names
       if (!allUserRoles || allUserRoles.length === 0) {
-        refreshAllUserRoles();
+        void refreshAllUserRoles();
       }
     }
   }, [dispatch, isOpen, user.id, allUserRoles, refreshAllUserRoles]);

@@ -105,8 +105,7 @@ const UserBanModal = ({
   // Load all user roles when modal opens
   useEffect(() => {
     if (isOpen && (!allUserRoles || allUserRoles.length === 0)) {
-      console.log("Debug - Refreshing user roles...");
-      refreshAllUserRoles();
+      void refreshAllUserRoles();
     }
   }, [isOpen, allUserRoles, refreshAllUserRoles, adminLoading]);
 
@@ -156,17 +155,6 @@ const UserBanModal = ({
           const selectedRole = getTargetUserRolesForOrg(organizationId).find(
             (role) => role.id === roleAssignmentId,
           );
-
-          console.log("Debug - Selected role assignment:", selectedRole);
-          console.log("Debug - Ban for role request data:", {
-            userId: user.id,
-            organizationId: organizationId,
-            roleId: selectedRole?.role_id, // Send the actual role_id, not assignment id
-            banReason: banReason.trim(),
-            isPermanent: isPermanent,
-            notes: notes.trim() || undefined,
-          });
-
           result = await dispatch(
             banUserForRole({
               userId: user.id,
@@ -407,7 +395,7 @@ const UserBanModal = ({
               (selectedBanReason === CUSTOM_BAN_REASON &&
                 !customBanReason.trim())
             }
-            className="bg-orange-600 hover:bg-orange-700"
+            variant="secondary"
           >
             {loading
               ? t.userBanning.toast.loading[lang]

@@ -196,9 +196,9 @@ const UnbanUserModal = ({
           setBansLoading(false);
         }
       };
-      loadActiveBans();
+      void loadActiveBans();
       if (!allUserRoles || allUserRoles.length === 0) {
-        refreshAllUserRoles();
+        void refreshAllUserRoles();
       }
     }
   }, [isOpen, user.id, allUserRoles, refreshAllUserRoles]);
@@ -413,7 +413,7 @@ const UnbanUserModal = ({
                 (ban) => !ban.unbanned_at && ban.action === "banned",
               )
             }
-            className="bg-green-600 hover:bg-green-700"
+            variant="secondary"
           >
             {loading ? "Unbanning..." : "Unban User"}
           </Button>
