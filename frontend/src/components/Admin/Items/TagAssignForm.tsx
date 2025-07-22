@@ -27,7 +27,7 @@ const TagAssignmentForm: React.FC<TagAssignFormProps> = ({ itemId }) => {
   const { lang } = useLanguage();
 
   useEffect(() => {
-    dispatch(fetchTagsForItem(itemId)); // Fetch existing tags assigned to the item
+    void dispatch(fetchTagsForItem(itemId)); // Fetch existing tags assigned to the item
   }, [itemId, dispatch]);
 
   // Update the useEffect to initialize selectedTags from existingTags

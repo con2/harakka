@@ -69,7 +69,7 @@ const TagList = () => {
 
   // Fetch tags when search term or assignment filter changes
   useEffect(() => {
-    dispatch(
+    void dispatch(
       fetchFilteredTags({
         page: currentPage,
         limit: 10,
@@ -101,7 +101,7 @@ const TagList = () => {
   // Fetch items once
   useEffect(() => {
     if (items.length === 0) {
-      dispatch(fetchAllItems({ page: 1, limit: 10 }));
+      void dispatch(fetchAllItems({ page: 1, limit: 10 }));
     }
   }, [dispatch, items.length]);
 
@@ -150,7 +150,7 @@ const TagList = () => {
       ).unwrap();
       toast.success(t.tagList.editModal.messages.success[lang]);
       // Refresh the current page
-      dispatch(
+      void dispatch(
         fetchFilteredTags({
           page: currentPage,
           limit: 10,
@@ -254,7 +254,7 @@ const TagList = () => {
                   setCurrentPage(targetPage);
                 }
 
-                dispatch(
+                void dispatch(
                   fetchFilteredTags({
                     page: targetPage,
                     limit: 10,
@@ -339,7 +339,7 @@ const TagList = () => {
                   // When a new tag is created, go to the first page to see it
                   // (especially important if filters are applied)
                   setCurrentPage(1);
-                  dispatch(
+                  void dispatch(
                     fetchFilteredTags({
                       page: 1,
                       limit: 10,

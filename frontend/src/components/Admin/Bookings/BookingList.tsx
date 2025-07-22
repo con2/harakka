@@ -93,7 +93,7 @@ const BookingList = () => {
   /*----------------------side-effects----------------------------------*/
   useEffect(() => {
     if (debouncedSearchQuery || statusFilter || booking)
-      dispatch(
+      void dispatch(
         getOrderedBookings({
           ordered_by: booking,
           page: currentPage,
@@ -104,7 +104,7 @@ const BookingList = () => {
         }),
       );
     else {
-      dispatch(getAllBookings({ page: currentPage, limit: 10 }));
+      void dispatch(getAllBookings({ page: currentPage, limit: 10 }));
       bookingsLoadedRef.current = true;
     }
   }, [
@@ -197,7 +197,7 @@ const BookingList = () => {
             | "overdue"
             | "N/A",
         ) => {
-          dispatch(
+          void dispatch(
             updatePaymentStatus({
               bookingId: row.original.id!,
               status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),

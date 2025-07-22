@@ -23,7 +23,7 @@ const TagDetail = ({ tag }: { tag: Tag }) => {
       }
     };
 
-    fetchItems();
+    void fetchItems();
   }, [tag.id]);
 
   return (

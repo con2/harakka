@@ -46,8 +46,8 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
 
   useEffect(() => {
     if (open && tags.length === 0) {
-      dispatch(fetchAllTags({ limit: 20 }));
-      dispatch(fetchTagsForItem(itemId));
+      void dispatch(fetchAllTags({ limit: 20 }));
+      void dispatch(fetchTagsForItem(itemId));
     }
   }, [open, dispatch, itemId, tags.length]);
 
