@@ -57,7 +57,7 @@ export class UserBanningController {
    * Ban a user from the entire application
    */
   @Post("ban-for-app")
-  @Roles(["admin", "main_admin", "super_admin", "superVera"])
+  @Roles(["main_admin", "super_admin", "superVera"])
   @HttpCode(HttpStatus.OK)
   async banForApp(
     @Body(ValidationPipe) banForAppDto: BanForAppDto,

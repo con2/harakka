@@ -1,8 +1,15 @@
-import {
-  UserBanHistoryRow,
-  ViewUserBanStatusRow,
-  BanType,
-} from "../interfaces/user-banning.interface";
+import { Database } from "@common/supabase.types";
+
+// Extract types directly from common Supabase types
+type BanType =
+  Database["public"]["Tables"]["user_ban_history"]["Row"]["ban_type"];
+
+// Database types from common
+export type UserBanHistoryDto =
+  Database["public"]["Tables"]["user_ban_history"]["Row"];
+export type ViewUserBanStatusRow =
+  Database["public"]["Views"]["view_user_ban_status"]["Row"];
+export type UserBanStatusDto = ViewUserBanStatusRow;
 
 export interface BanForRoleDto {
   userId: string;
@@ -36,24 +43,17 @@ export interface UnbanDto {
   notes?: string;
 }
 
-// Use the base Supabase types directly
-export type UserBanHistoryDto = UserBanHistoryRow;
-export type UserBanStatusDto = ViewUserBanStatusRow;
-
-// Service response interfaces
+// Operation result type
 export interface BanOperationResult {
   success: boolean;
   message: string;
+  data?: unknown;
 }
 
+// User ban status check type
 export interface UserBanStatusCheck {
   userId: string;
-  isBanned: boolean;
-  banType?: string;
-  banReason?: string;
-  bannedAt?: Date;
-  isPermanent?: boolean;
-  isBannedForApp?: boolean;
-  bannedOrganizations?: string[];
-  bannedRoles?: Array<{ organizationId: string; roleId: string }>;
+  isBannedFromApp: boolean;
+  bannedFromOrganizations: string[];
+  bannedFromRoles: string[];
 }

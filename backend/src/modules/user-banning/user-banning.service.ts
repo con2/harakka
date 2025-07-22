@@ -2,8 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
-  Logger,
 } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
@@ -11,37 +9,75 @@ import {
   BanForOrgDto,
   BanForAppDto,
   UnbanDto,
-  UserBanHistoryDto,
-  UserBanStatusDto,
   BanOperationResult,
   UserBanStatusCheck,
+  UserBanHistoryDto,
+  ViewUserBanStatusRow,
 } from "./dto/user-banning.dto";
 import { AuthRequest } from "../../middleware/interfaces/auth-request.interface";
 import { handleSupabaseError } from "../../utils/handleError.utils";
 
 @Injectable()
 export class UserBanningService {
-  private readonly logger = new Logger(UserBanningService.name);
-
   constructor(private readonly supabaseService: SupabaseService) {}
 
+  /**
+   * Check if user has required admin roles for banning operations
+   */
+  private validateAdminPermissions(req: AuthRequest): void {
+    const requiredRoles = ["admin", "main_admin", "super_admin", "superVera"];
+    
+    // Check both 'name' and 'role_name' fields to be compatible with any JWT format
+    const hasPermission = req.userRoles?.some((role) => {
+      const roleObj = role as Record<string, unknown>;
+      const roleName = role.role_name || (roleObj.name as string) || "";
+      return requiredRoles.includes(roleName) && role.is_active;
+    });
+
+    if (!hasPermission) {
+      throw new BadRequestException(
+        "Insufficient permissions to perform this operation",
+      );
+    }
+  }
+
+  /**
+   * Check if user has required high-level admin roles for app-level banning
+   */
+  private validateHighLevelAdminPermissions(req: AuthRequest): void {
+    const requiredRoles = ["main_admin", "super_admin", "superVera"];
+    
+    // Check both 'name' and 'role_name' fields to be compatible with any JWT format
+    const hasPermission = req.userRoles?.some((role) => {
+      const roleObj = role as Record<string, unknown>;
+      const roleName = role.role_name || (roleObj.name as string) || "";
+      return requiredRoles.includes(roleName) && role.is_active;
+    });
+
+    if (!hasPermission) {
+      throw new BadRequestException(
+        "Insufficient permissions to perform this operation",
+      );
+    }
+  }
   /**
    * Ban user for a specific role in an organization
    */
   async banForRole(
-    banForRoleDto: BanForRoleDto,
-    req: AuthRequest,
-  ): Promise<BanOperationResult> {
-    const {
+    {
       userId,
       organizationId,
       roleId,
       banReason,
       isPermanent = false,
       notes,
-    } = banForRoleDto;
+    }: BanForRoleDto,
+    req: AuthRequest,
+  ): Promise<BanOperationResult> {
+    // Validate admin permissions
+    this.validateAdminPermissions(req);
+    
     const bannedByUserId = req.user.id;
-
     // Find the specific role assignment
     const { data: roleAssignment, error: findError } = await req.supabase
       .from("user_organization_roles")
@@ -54,7 +90,6 @@ export class UserBanningService {
     if (findError) {
       handleSupabaseError(findError);
     }
-
     if (!roleAssignment) {
       throw new NotFoundException("Role assignment not found");
     }
@@ -62,9 +97,6 @@ export class UserBanningService {
     if (!roleAssignment.is_active) {
       throw new BadRequestException("User is already banned for this role");
     }
-
-    // Validate permissions
-    await this.validateBanPermissions(userId, req);
 
     // Set is_active = false for this specific role assignment
     const { error: updateError } = await req.supabase
@@ -97,14 +129,8 @@ export class UserBanningService {
         .from("user_organization_roles")
         .update({ is_active: true })
         .eq("id", roleAssignment.id);
-
       handleSupabaseError(historyError);
     }
-
-    this.logger.log(
-      `User ${userId} banned for role ${roleId} in org ${organizationId} by ${bannedByUserId}`,
-    );
-
     return {
       success: true,
       message: `User has been banned for the specific role successfully`,
@@ -115,16 +141,18 @@ export class UserBanningService {
    * Ban user for all roles in an organization
    */
   async banForOrg(
-    banForOrgDto: BanForOrgDto,
-    req: AuthRequest,
-  ): Promise<BanOperationResult> {
-    const {
+    {
       userId,
       organizationId,
       banReason,
       isPermanent = false,
       notes,
-    } = banForOrgDto;
+    }: BanForOrgDto,
+    req: AuthRequest,
+  ): Promise<BanOperationResult> {
+    // Validate admin permissions
+    this.validateAdminPermissions(req);
+    
     const bannedByUserId = req.user.id;
 
     // Find all active role assignments for this user in this organization
@@ -144,10 +172,6 @@ export class UserBanningService {
         "No active roles found for user in this organization",
       );
     }
-
-    // Validate permissions
-    await this.validateBanPermissions(userId, req);
-
     // Set is_active = false for all role assignments in this organization
     const { error: updateError } = await req.supabase
       .from("user_organization_roles")
@@ -159,7 +183,6 @@ export class UserBanningService {
     if (updateError) {
       handleSupabaseError(updateError);
     }
-
     // Create ban history record with affected assignments
     const { error: historyError } = await req.supabase
       .from("user_ban_history")
@@ -174,7 +197,6 @@ export class UserBanningService {
         affected_assignments: { assignments: roleAssignments },
         notes,
       });
-
     if (historyError) {
       // Rollback
       await req.supabase
@@ -185,11 +207,6 @@ export class UserBanningService {
 
       handleSupabaseError(historyError);
     }
-
-    this.logger.log(
-      `User ${userId} banned from organization ${organizationId} by ${bannedByUserId}`,
-    );
-
     return {
       success: true,
       message: `User has been banned from the organization successfully`,
@@ -200,10 +217,12 @@ export class UserBanningService {
    * Ban user from the entire application
    */
   async banForApp(
-    banForAppDto: BanForAppDto,
+    { userId, banReason, isPermanent = false, notes }: BanForAppDto,
     req: AuthRequest,
   ): Promise<BanOperationResult> {
-    const { userId, banReason, isPermanent = false, notes } = banForAppDto;
+    // Validate admin permissions
+    this.validateAdminPermissions(req);
+    
     const bannedByUserId = req.user.id;
 
     // Find all active role assignments for this user
@@ -220,9 +239,6 @@ export class UserBanningService {
     if (!roleAssignments || roleAssignments.length === 0) {
       throw new NotFoundException("No active roles found for user");
     }
-
-    // Validate permissions
-    await this.validateBanPermissions(userId, req);
 
     // Set is_active = false for all role assignments
     const { error: updateError } = await req.supabase
@@ -259,10 +275,6 @@ export class UserBanningService {
       handleSupabaseError(historyError);
     }
 
-    this.logger.log(
-      `User ${userId} banned from entire application by ${bannedByUserId}`,
-    );
-
     return {
       success: true,
       message: `User has been banned from the entire application successfully`,
@@ -276,10 +288,112 @@ export class UserBanningService {
     unbanDto: UnbanDto,
     req: AuthRequest,
   ): Promise<BanOperationResult> {
-    // Validate permissions
-    await this.validateBanPermissions(unbanDto.userId, req);
+    // Validate admin permissions
+    this.validateAdminPermissions(req);
+    
+    // First, find the active ban record(s) to update
+    let banQuery = req.supabase
+      .from("user_ban_history")
+      .select("id, notes")
+      .eq("user_id", unbanDto.userId)
+      .eq("action", "banned")
+      .is("unbanned_at", null); // Only active bans
 
-    let updateQuery = req.supabase
+    // Apply filters based on ban type to find the specific ban record
+    if (unbanDto.banType === "banForRole") {
+      if (!unbanDto.organizationId || !unbanDto.roleId) {
+        throw new BadRequestException(
+          "Organization ID and Role ID are required for unbanForRole",
+        );
+      }
+      banQuery = banQuery
+        .eq("ban_type", "banForRole")
+        .eq("organization_id", unbanDto.organizationId);
+
+      // For role bans, we need to find the role assignment
+      const { data: roleAssignment } = await req.supabase
+        .from("user_organization_roles")
+        .select("id")
+        .eq("user_id", unbanDto.userId)
+        .eq("organization_id", unbanDto.organizationId)
+        .eq("role_id", unbanDto.roleId)
+        .single();
+
+      if (roleAssignment) {
+        banQuery = banQuery.eq("role_assignment_id", roleAssignment.id);
+      }
+    } else if (unbanDto.banType === "banForOrg") {
+      if (!unbanDto.organizationId) {
+        throw new BadRequestException(
+          "Organization ID is required for unbanForOrg",
+        );
+      }
+      banQuery = banQuery
+        .eq("ban_type", "banForOrg")
+        .eq("organization_id", unbanDto.organizationId);
+    } else if (unbanDto.banType === "banForApp") {
+      banQuery = banQuery.eq("ban_type", "banForApp");
+    }
+
+    const { data: activeBans, error: findError } = await banQuery;
+
+    if (findError) {
+      handleSupabaseError(findError);
+    }
+
+    if (!activeBans || activeBans.length === 0) {
+      throw new NotFoundException("No active ban found to remove");
+    }
+
+    // Update the ban history record(s) to mark as unbanned
+    // Build the same query conditions as used to find the bans
+    let historyUpdateQuery = req.supabase
+      .from("user_ban_history")
+      .update({
+        unbanned_at: new Date().toISOString(),
+        notes: unbanDto.notes ? `[Unbanned] ${unbanDto.notes}` : undefined,
+      })
+      .eq("user_id", unbanDto.userId)
+      .eq("action", "banned")
+      .is("unbanned_at", null);
+
+    // Apply the same specific filters to ensure we only update the correct ban records
+    if (unbanDto.banType === "banForRole") {
+      historyUpdateQuery = historyUpdateQuery
+        .eq("ban_type", "banForRole")
+        .eq("organization_id", unbanDto.organizationId!);
+
+      // For role bans, we need to find the role assignment
+      const { data: roleAssignment } = await req.supabase
+        .from("user_organization_roles")
+        .select("id")
+        .eq("user_id", unbanDto.userId)
+        .eq("organization_id", unbanDto.organizationId!)
+        .eq("role_id", unbanDto.roleId!)
+        .single();
+
+      if (roleAssignment) {
+        historyUpdateQuery = historyUpdateQuery.eq(
+          "role_assignment_id",
+          roleAssignment.id,
+        );
+      }
+    } else if (unbanDto.banType === "banForOrg") {
+      historyUpdateQuery = historyUpdateQuery
+        .eq("ban_type", "banForOrg")
+        .eq("organization_id", unbanDto.organizationId!);
+    } else if (unbanDto.banType === "banForApp") {
+      historyUpdateQuery = historyUpdateQuery.eq("ban_type", "banForApp");
+    }
+
+    const { error: historyUpdateError } = await historyUpdateQuery;
+
+    if (historyUpdateError) {
+      handleSupabaseError(historyUpdateError);
+    }
+
+    // Update user_organization_roles to reactivate roles
+    let roleUpdateQuery = req.supabase
       .from("user_organization_roles")
       .update({ is_active: true })
       .eq("user_id", unbanDto.userId)
@@ -292,7 +406,7 @@ export class UserBanningService {
           "Organization ID and Role ID are required for unbanForRole",
         );
       }
-      updateQuery = updateQuery
+      roleUpdateQuery = roleUpdateQuery
         .eq("organization_id", unbanDto.organizationId)
         .eq("role_id", unbanDto.roleId);
     } else if (unbanDto.banType === "banForOrg") {
@@ -301,39 +415,18 @@ export class UserBanningService {
           "Organization ID is required for unbanForOrg",
         );
       }
-      updateQuery = updateQuery.eq("organization_id", unbanDto.organizationId);
+      roleUpdateQuery = roleUpdateQuery.eq(
+        "organization_id",
+        unbanDto.organizationId,
+      );
     }
     // For banForApp, no additional filters needed
 
-    const { error: updateError } = await updateQuery;
+    const { error: roleUpdateError } = await roleUpdateQuery;
 
-    if (updateError) {
-      handleSupabaseError(updateError);
+    if (roleUpdateError) {
+      handleSupabaseError(roleUpdateError);
     }
-
-    // Create unban history record
-    const { error: historyError } = await req.supabase
-      .from("user_ban_history")
-      .insert({
-        user_id: unbanDto.userId,
-        banned_by: req.user.id,
-        ban_type: unbanDto.banType,
-        action: "unbanned",
-        organization_id: unbanDto.organizationId,
-        unbanned_at: new Date().toISOString(),
-        notes: unbanDto.notes,
-      });
-
-    if (historyError) {
-      this.logger.warn(
-        `Failed to create unban history: ${historyError.message}`,
-      );
-      // Don't rollback unban for history failure
-    }
-
-    this.logger.log(
-      `User ${unbanDto.userId} unbanned (${unbanDto.banType}) by ${req.user.id}`,
-    );
 
     return {
       success: true,
@@ -348,6 +441,9 @@ export class UserBanningService {
     userId: string,
     req: AuthRequest,
   ): Promise<UserBanHistoryDto[]> {
+    // Validate admin permissions
+    this.validateAdminPermissions(req);
+    
     const { data, error } = await req.supabase
       .from("user_ban_history")
       .select("*")
@@ -357,14 +453,18 @@ export class UserBanningService {
     if (error) {
       handleSupabaseError(error);
     }
-
     return data || [];
   }
 
   /**
    * Get all user ban statuses (admin view)
    */
-  async getAllUserBanStatuses(req: AuthRequest): Promise<UserBanStatusDto[]> {
+  async getAllUserBanStatuses(
+    req: AuthRequest,
+  ): Promise<ViewUserBanStatusRow[]> {
+    // Validate admin permissions
+    this.validateAdminPermissions(req);
+    
     const { data, error } = await req.supabase
       .from("view_user_ban_status")
       .select("*")
@@ -384,6 +484,9 @@ export class UserBanningService {
     userId: string,
     req: AuthRequest,
   ): Promise<UserBanStatusCheck> {
+    // Validate admin permissions
+    this.validateAdminPermissions(req);
+    
     // Get all role assignments for the user
     const { data: allRoles, error: allRolesError } = await req.supabase
       .from("user_organization_roles")
@@ -432,75 +535,13 @@ export class UserBanningService {
       roleId: role.role_id,
     }));
 
-    // Determine if user is banned at all (app, organization, or role level)
-    const isBanned =
-      isBannedForApp ||
-      bannedOrganizations.length > 0 ||
-      bannedRoles.length > 0;
-
-    // Determine the primary ban type
-    let banType: string | undefined = undefined;
-    if (isBannedForApp) {
-      banType = "application";
-    } else if (bannedOrganizations.length > 0) {
-      banType = "organization";
-    } else if (bannedRoles.length > 0) {
-      banType = "role";
-    }
-
     return {
       userId,
-      isBanned,
-      banType,
-      // Additional details for frontend use if needed
-      isBannedForApp,
-      bannedOrganizations,
-      bannedRoles,
+      isBannedFromApp: isBannedForApp,
+      bannedFromOrganizations: bannedOrganizations,
+      bannedFromRoles: bannedRoles.map(
+        (role) => `${role.organizationId}-${role.roleId}`,
+      ),
     };
-  }
-
-  /**
-   * Validate if the requesting user has permission to ban/unban the target user
-   * TODO: Update based on customer needs - right now admins and superVeras can ban users, and only superVeras can ban admins, superVeras can't be banned atm
-   */
-  private async validateBanPermissions(
-    targetUserId: string,
-    req: AuthRequest,
-  ): Promise<void> {
-    // Check if the requesting user has admin or superVera privileges
-    const hasAdminRole = req.userRoles.some(
-      (role) =>
-        (role.role_name === "admin" || role.role_name === "superVera") &&
-        role.is_active,
-    );
-
-    if (!hasAdminRole) {
-      throw new ForbiddenException(
-        "Insufficient permissions to ban/unban users",
-      );
-    }
-
-    // Get target user's roles to prevent admins from banning other admins
-    const { data: targetUserRoles } = await req.supabase
-      .from("view_user_roles_with_details")
-      .select("role_name")
-      .eq("user_id", targetUserId)
-      .eq("is_active", true);
-
-    const targetIsAdmin = targetUserRoles?.some(
-      (role) => role.role_name === "admin" || role.role_name === "superVera",
-    );
-
-    const requesterIsSuperVera = req.userRoles.some(
-      (role) => role.role_name === "superVera" && role.is_active,
-    );
-
-    if (targetIsAdmin && !requesterIsSuperVera) {
-      throw new ForbiddenException("Only superVera can ban admin users");
-    }
-
-    if (targetUserRoles?.some((role) => role.role_name === "superVera")) {
-      throw new ForbiddenException("Cannot ban superVera users");
-    }
   }
 }
