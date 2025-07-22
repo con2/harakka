@@ -17,11 +17,8 @@ import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import {
-  BookingItem,
-  BookingStatus,
-  ValidBooking,
-} from "./types/booking.interface";
+import { BookingStatus, ValidBooking } from "./types/booking.interface";
+import { BookingItem } from "@common/bookings/booking-items.types";
 import { Public, Roles } from "src/decorators/roles.decorator";
 
 @Controller("bookings")
@@ -63,6 +60,12 @@ export class BookingController {
       pageNumber,
       limitNumber,
     );
+  }
+
+  @Get("count")
+  async getBookingsCount(@Req() req: AuthRequest) {
+    const supabase = req.supabase;
+    return this.bookingService.getBookingsCount(supabase);
   }
 
   // gets the bookings of a specific user
@@ -228,12 +231,24 @@ export class BookingController {
       status_filter,
     );
   }
-  // commented out because it is not used atm
-  /* @Get(":orderId/generate") // unsafe - anyone can create files
-  async generateInvoice(@Param("orderId") orderId: string) {
-    const url = await this.invoiceService.generateInvoice(orderId);
 
-    return url; // should not send url, becaause it is not a public url - will get new endpoint with auth and so on...
-  } */
+  @Get("id/:id")
+  @Roles(["admin", "main_admin", "super_admin"])
+  async getBookingByID(
+    @Req() req: AuthRequest,
+    @Param("id") booking_id: string,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const supabase = req.supabase;
+    return this.bookingService.getBookingByID(
+      supabase,
+      booking_id,
+      pageNum,
+      limitNum,
+    );
+  }
 }
 // handles the booking process, including creating, confirming, rejecting, and canceling bookings.
