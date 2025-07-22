@@ -51,7 +51,7 @@ const UsersList = () => {
       users.length === 0 &&
       isModalOpen === true
     ) {
-      dispatch(fetchAllUsers());
+      void dispatch(fetchAllUsers());
     }
   }, [authLoading, isAuthorized, users.length, isModalOpen, dispatch]);
 

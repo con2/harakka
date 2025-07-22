@@ -25,9 +25,9 @@ const UserPanel = () => {
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
 
   useEffect(() => {
-    if (tags.length < 1) dispatch(fetchAllTags({ page: 1, limit: 10 }));
+    if (tags.length < 1) void dispatch(fetchAllTags({ page: 1, limit: 10 }));
     if (locations.length < 1)
-      dispatch(fetchAllLocations({ page: 1, limit: 10 }));
+      void dispatch(fetchAllLocations({ page: 1, limit: 10 }));
   }, [dispatch, tags, locations]);
 
   // Unique item_type values from items

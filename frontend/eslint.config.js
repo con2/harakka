@@ -55,6 +55,16 @@ export default tseslint.config(
          CI while we work through the backlog. */
       "@typescript-eslint/no-explicit-any": "warn",
 
+      // -------- Unused variables configuration --------
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+
       // ---------- React Fast Refresh ----------
       "react-refresh/only-export-components": [
         "warn",

@@ -64,18 +64,18 @@ const AdminDashboard = () => {
   const { formatDate } = useFormattedDate();
 
   useEffect(() => {
-    if (items.length <= 1) dispatch(fetchAllItems({ page: 1, limit: 10 }));
+    if (items.length <= 1) void dispatch(fetchAllItems({ page: 1, limit: 10 }));
   }, [dispatch, items.length]);
 
   useEffect(() => {
     if (users.length === 0) {
-      dispatch(fetchAllUsers());
+      void dispatch(fetchAllUsers());
     }
   }, [dispatch, users.length]);
 
   useEffect(() => {
     if (user && bookings.length <= 1) {
-      dispatch(getAllBookings({}));
+      void dispatch(getAllBookings({}));
     }
   }, [dispatch, user, bookings.length]);
 
@@ -136,7 +136,7 @@ const AdminDashboard = () => {
             | "overdue"
             | "N/A",
         ) => {
-          dispatch(
+          void dispatch(
             updatePaymentStatus({
               bookingId: row.original.id,
               status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),

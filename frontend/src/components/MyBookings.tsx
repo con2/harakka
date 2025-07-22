@@ -85,12 +85,12 @@ const MyBookings = () => {
     // Redirect if not authenticated
     if (!user) {
       toast.error(t.myBookings.error.loginRequired[lang]);
-      navigate("/login");
+      void navigate("/login");
       return;
     }
 
     if (user && bookings.length === 0)
-      dispatch(getUserBookings({ user_id: user.id, page: 1, limit: 10 }));
+      void dispatch(getUserBookings({ user_id: user.id, page: 1, limit: 10 }));
   }, [dispatch, navigate, user, lang, bookings]); // Apply filters to bookings
 
   const filteredBookings = bookings.filter((booking) => {
@@ -163,16 +163,16 @@ const MyBookings = () => {
 
     if (updatedItems.length === 0) {
       try {
-        dispatch(
+        void dispatch(
           updateBooking({
             bookingId: editingBooking.id,
             items: updatedItems,
           }),
         );
-        dispatch(cancelBooking(editingBooking.id));
+        void dispatch(cancelBooking(editingBooking.id));
         toast.warning(t.myBookings.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
-          dispatch(
+          void dispatch(
             getUserBookings({
               user_id: user.id,
               page: currentPage,
@@ -201,7 +201,7 @@ const MyBookings = () => {
       setShowEditModal(false);
       setEditingBooking(null);
       if (user?.id) {
-        dispatch(
+        void dispatch(
           getUserBookings({
             user_id: user.id,
             page: currentPage,
@@ -246,7 +246,7 @@ const MyBookings = () => {
       }
     };
 
-    fetchAvailability();
+    void fetchAvailability();
   }, [globalStartDate, globalEndDate, editFormItems]);
 
   const isFormValid = editFormItems.every((item) => {
@@ -406,7 +406,7 @@ const MyBookings = () => {
               toast.error(t.myBookings.error.loginRequired[lang]);
               return;
             }
-            dispatch(
+            void dispatch(
               getUserBookings({
                 user_id: user.id,
                 page: currentPage,

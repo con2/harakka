@@ -48,7 +48,8 @@ api.interceptors.request.use(async (config) => {
 
 api.interceptors.request.use(
   (config) => config,
-  (error) => Promise.reject(error),
+  (error) =>
+    Promise.reject(error instanceof Error ? error : new Error(String(error))),
 );
 
 // Return response.data directly
@@ -58,6 +59,8 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error("API Error:", error);
-    return Promise.reject(error);
+    return Promise.reject(
+      error instanceof Error ? error : new Error(String(error)),
+    );
   },
 );
