@@ -25,6 +25,7 @@ import {
   selectUserBanningLoading,
 } from "@/store/slices/userBanningSlice";
 import { UserProfile } from "@common/user.types";
+import { useRoles } from "@/hooks/useRoles";
 
 interface UserBanHistoryModalProps {
   user: UserProfile;
@@ -41,13 +42,31 @@ const UserBanHistoryModal = ({
   const banHistory = useAppSelector(selectBanHistory);
   const loading = useAppSelector(selectUserBanningLoading);
   const { lang } = useLanguage();
+  const { allUserRoles, refreshAllUserRoles } = useRoles();
   const [isOpen, setIsOpen] = useState(initialOpen);
 
   useEffect(() => {
     if (isOpen && user.id) {
       dispatch(fetchUserBanHistory(user.id));
+      // Also refresh roles data to get organization names
+      if (!allUserRoles || allUserRoles.length === 0) {
+        refreshAllUserRoles();
+      }
     }
-  }, [dispatch, isOpen, user.id]);
+  }, [dispatch, isOpen, user.id, allUserRoles, refreshAllUserRoles]);
+
+  // Helper function to get organization name from organization ID
+  const getOrganizationName = (
+    organizationId: string | null | undefined,
+  ): string => {
+    if (!organizationId) return "-";
+
+    const userRole = allUserRoles.find(
+      (role) => role.organization_id === organizationId,
+    );
+
+    return userRole?.organization_name || organizationId;
+  };
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -73,7 +92,7 @@ const UserBanHistoryModal = ({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{t.userBanning.history.title[lang]}</DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground text-center">
             {user.full_name} ({user.email})
           </p>
         </DialogHeader>
@@ -90,6 +109,8 @@ const UserBanHistoryModal = ({
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>
                     {t.userBanning.history.columns.banType[lang]}
                   </TableHead>
@@ -99,9 +120,7 @@ const UserBanHistoryModal = ({
                   <TableHead>
                     {t.userBanning.history.columns.reason[lang]}
                   </TableHead>
-                  <TableHead>
-                    {t.userBanning.history.columns.bannedAt[lang]}
-                  </TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead>
                     {t.userBanning.history.columns.isPermanent[lang]}
                   </TableHead>
@@ -110,13 +129,47 @@ const UserBanHistoryModal = ({
               <TableBody>
                 {banHistory.map((ban) => (
                   <TableRow key={ban.id}>
+                    <TableCell>
+                      <span
+                        className={
+                          ban.action === "banned"
+                            ? "text-red-600 font-medium"
+                            : "text-green-600 font-medium"
+                        }
+                      >
+                        {ban.action === "banned" ? "Banned" : "Unbanned"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={
+                          ban.unbanned_at
+                            ? "text-green-600"
+                            : ban.action === "banned"
+                              ? "text-red-600"
+                              : "text-gray-500"
+                        }
+                      >
+                        {ban.unbanned_at
+                          ? "Lifted"
+                          : ban.action === "banned"
+                            ? "Active"
+                            : "N/A"}
+                      </span>
+                    </TableCell>
                     <TableCell>{ban.ban_type}</TableCell>
-                    <TableCell>{ban.organization_id}</TableCell>
+                    <TableCell>
+                      {getOrganizationName(ban.organization_id)}
+                    </TableCell>
                     <TableCell>{ban.ban_reason || "-"}</TableCell>
                     <TableCell>
-                      {ban.created_at
-                        ? new Date(ban.created_at).toLocaleDateString()
-                        : "-"}
+                      {ban.action === "banned"
+                        ? ban.created_at
+                          ? new Date(ban.created_at).toLocaleDateString()
+                          : "-"
+                        : ban.unbanned_at
+                          ? new Date(ban.unbanned_at).toLocaleDateString()
+                          : "-"}
                     </TableCell>
                     <TableCell>{ban.is_permanent ? "Yes" : "No"}</TableCell>
                   </TableRow>

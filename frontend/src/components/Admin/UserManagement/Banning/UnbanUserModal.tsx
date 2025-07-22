@@ -55,7 +55,7 @@ const UnbanUserModal = ({
   const { allUserRoles, refreshAllUserRoles } = useRoles();
 
   const [isOpen, setIsOpen] = useState(initialOpen);
-  const [banType, setBanType] = useState<BanType>("application");
+  const [banType, setBanType] = useState<BanType>("role");
   const [notes, setNotes] = useState("");
   const [organizationId, setOrganizationId] = useState("");
   const [roleId, setRoleId] = useState("");
@@ -68,12 +68,9 @@ const UnbanUserModal = ({
     activeBans.forEach((ban) => {
       // Only include bans that are still active (no unbannedAt date) and match the selected ban type
       const matchesBanType =
-        (banType === "organization" &&
-          (ban.ban_type === "banForOrg" || ban.ban_type === "organization")) ||
-        (banType === "role" &&
-          (ban.ban_type === "banForRole" || ban.ban_type === "role")) ||
-        (banType === "application" &&
-          (ban.ban_type === "banForApp" || ban.ban_type === "application"));
+        (banType === "organization" && ban.ban_type === "banForOrg") ||
+        (banType === "role" && ban.ban_type === "banForRole") ||
+        (banType === "application" && ban.ban_type === "banForApp");
 
       if (
         !ban.unbanned_at &&
@@ -104,7 +101,7 @@ const UnbanUserModal = ({
       (ban) =>
         !ban.unbanned_at &&
         ban.action === "banned" &&
-        (ban.ban_type === "banForRole" || ban.ban_type === "role") &&
+        ban.ban_type === "banForRole" &&
         ban.organization_id === orgId,
     );
 
@@ -139,14 +136,11 @@ const UnbanUserModal = ({
     activeBans.forEach((ban) => {
       if (!ban.unbanned_at && ban.action === "banned") {
         // Convert database ban_type values to frontend BanType
-        if (ban.ban_type === "banForApp" || ban.ban_type === "application") {
+        if (ban.ban_type === "banForApp") {
           activeBanTypes.add("application");
-        } else if (
-          ban.ban_type === "banForOrg" ||
-          ban.ban_type === "organization"
-        ) {
+        } else if (ban.ban_type === "banForOrg") {
           activeBanTypes.add("organization");
-        } else if (ban.ban_type === "banForRole" || ban.ban_type === "role") {
+        } else if (ban.ban_type === "banForRole") {
           activeBanTypes.add("role");
         }
       }
@@ -161,7 +155,7 @@ const UnbanUserModal = ({
       (ban) =>
         !ban.unbanned_at &&
         ban.action === "banned" &&
-        (ban.ban_type === "application" || ban.ban_type === "banForApp"),
+        ban.ban_type === "banForApp",
     );
   };
 
@@ -171,7 +165,7 @@ const UnbanUserModal = ({
       (ban) =>
         !ban.unbanned_at &&
         ban.action === "banned" &&
-        (ban.ban_type === "organization" || ban.ban_type === "banForOrg") &&
+        ban.ban_type === "banForOrg" &&
         ban.organization_id,
     );
   };
@@ -182,7 +176,7 @@ const UnbanUserModal = ({
       (ban) =>
         !ban.unbanned_at &&
         ban.action === "banned" &&
-        (ban.ban_type === "role" || ban.ban_type === "banForRole") &&
+        ban.ban_type === "banForRole" &&
         ban.organization_id,
     );
   };
@@ -275,7 +269,7 @@ const UnbanUserModal = ({
 
   const handleClose = () => {
     setIsOpen(false);
-    setBanType("application");
+    setBanType("role");
     setNotes("");
     setOrganizationId("");
     setRoleId("");

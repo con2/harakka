@@ -52,7 +52,22 @@ const UserBanActionsDropdown = ({
     }
   };
 
-  const isUserBanned = currentUserBanStatus?.isBanned || false;
+  // Check if user has any active bans based on the backend response structure
+  const isUserBanned = (() => {
+    if (!currentUserBanStatus) return false;
+
+    const banStatus = currentUserBanStatus as unknown as Record<
+      string,
+      unknown
+    >;
+
+    return Boolean(
+      banStatus.isBannedFromApp ||
+        (banStatus.bannedFromOrganizations as string[])?.length > 0 ||
+        (banStatus.bannedFromRoles as string[])?.length > 0 ||
+        currentUserBanStatus.isBanned,
+    );
+  })();
 
   const handleBanClick = () => {
     setDropdownOpen(false);
