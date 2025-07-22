@@ -1,5 +1,4 @@
 import { BookingItem } from "@common/bookings/booking-items.types";
-import { Booking } from "@common/bookings/booking.types";
 import { BaseEntity, ErrorContext, Translatable } from "./common";
 import { ItemTranslation } from "./item";
 import { Database } from "@common/database.types";
@@ -52,13 +51,11 @@ export interface BookingType extends BaseEntity {
  */
 export interface BookingsState {
   bookings: BookingPreview[];
-  entities: Record<string, Booking>;
-  ids: string[];
   userBookings: BookingPreview[];
   loading: boolean;
-  error: string | null; // Change to simple string like tags
+  error: string | null;
   errorContext: ErrorContext;
-  currentBooking: BookingWithDetails | null;
+  currentBooking: Partial<BookingWithDetails> | null;
   currentBookingLoading: boolean;
   bookings_pagination: {
     page: number;
