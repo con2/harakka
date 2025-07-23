@@ -309,6 +309,11 @@ export const bookingsSlice = createSlice({
       state.error = null;
       state.errorContext = null;
     },
+    clearCurrentBookingItems: (state) => {
+      if (state.currentBooking) state.currentBooking.booking_items = null;
+      state.error = null;
+      state.errorContext = null;
+    },
     selectBooking: (state, action) => {
       state.currentBooking = action.payload;
       if (state.currentBooking && "booking_items" in state.currentBooking)
@@ -387,6 +392,8 @@ export const bookingsSlice = createSlice({
       .addCase(getBookingItems.fulfilled, (state, action) => {
         if (state.currentBooking) {
           state.currentBooking.booking_items = action.payload.data;
+          if (action.payload.data && action.payload.data.length === 0)
+            state.currentBooking.booking_items = null;
         }
         state.booking_items_pagination = action.payload.metadata;
         state.currentBookingLoading = false;
@@ -587,7 +594,8 @@ export const bookingsSlice = createSlice({
 });
 
 // Export actions
-export const { clearCurrentBooking, selectBooking } = bookingsSlice.actions;
+export const { clearCurrentBooking, selectBooking, clearCurrentBookingItems } =
+  bookingsSlice.actions;
 
 // // Export selectors
 export const selectAllBookings = (state: RootState) => state.bookings.bookings;
