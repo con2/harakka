@@ -96,6 +96,20 @@ export const updateOrganization = createAsyncThunk(
   },
 );
 
+export const deleteOrganization = createAsyncThunk(
+  "organizations/deleteOrganization",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await organizationApi.deleteOrganization(id);
+      return response.id;
+    } catch (error) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to delete organization"),
+      );
+    }
+  },
+);
+
 //Create a slice for organization state management
 const organizationSlice = createSlice({
   name: "organization",
@@ -136,7 +150,6 @@ const organizationSlice = createSlice({
           state.organizations.unshift(action.payload);
         },
       )
-
       .addCase(
         updateOrganization.fulfilled,
         (state: OrganizationState, action) => {
@@ -151,7 +164,16 @@ const organizationSlice = createSlice({
             state.selectedOrganization = action.payload;
           }
         },
-      );
+      )
+      .addCase(deleteOrganization.fulfilled, (state, action) => {
+        const deletedId = action.payload;
+        state.organizations = state.organizations.filter(
+          (org) => org.id !== deletedId,
+        );
+        if (state.selectedOrganization?.id === deletedId) {
+          state.selectedOrganization = null;
+        }
+      });
   },
 });
 

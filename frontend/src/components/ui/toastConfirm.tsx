@@ -48,7 +48,7 @@ export const toastConfirm = ({
                 toast.dismiss(t);
                 try {
                   await onConfirm();
-                } catch (err) {
+                } catch {
                   toast.error("Action failed.");
                 }
               }}

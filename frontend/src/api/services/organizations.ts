@@ -35,4 +35,7 @@ export const organizationApi = {
     id: string,
     data: Partial<OrganizationDetails>,
   ): Promise<OrganizationDetails> => api.put(`/organizations/${id}`, data),
+
+  deleteOrganization: (id: string): Promise<{ success: boolean; id: string }> =>
+    api.delete(`/organizations/${id}`),
 };
