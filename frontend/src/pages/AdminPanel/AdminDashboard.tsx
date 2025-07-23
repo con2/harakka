@@ -83,18 +83,18 @@ const AdminDashboard = () => {
   const userCount = useAppSelector(selectTotalUsersCount);
 
   useEffect(() => {
-    if (items.length <= 1) dispatch(fetchAllItems({ page: 1, limit: 10 }));
+    if (items.length <= 1) void dispatch(fetchAllItems({ page: 1, limit: 10 }));
   }, [dispatch, items.length]);
 
   useEffect(() => {
-    if (itemCount < 1) dispatch(getItemCount());
-    if (userCount < 1) dispatch(getUserCount());
-    if (bookingsCount < 1) dispatch(getBookingsCount());
+    if (itemCount < 1) void dispatch(getItemCount());
+    if (userCount < 1) void dispatch(getUserCount());
+    if (bookingsCount < 1) void dispatch(getBookingsCount());
   }, [dispatch, itemCount, bookingsCount, userCount]);
 
   useEffect(() => {
     if (bookings.length <= 1) {
-      dispatch(
+      void dispatch(
         getOrderedBookings({
           ordered_by: "created_at",
           ascending: true,
@@ -107,7 +107,7 @@ const AdminDashboard = () => {
 
   const handleViewDetails = (booking: BookingPreview) => {
     dispatch(selectBooking(booking));
-    dispatch(getBookingItems(booking.id!));
+    void dispatch(getBookingItems(booking.id));
     setShowDetailsModal(true);
   };
 
@@ -162,7 +162,7 @@ const AdminDashboard = () => {
             | "overdue"
             | "N/A",
         ) => {
-          dispatch(
+          void dispatch(
             updatePaymentStatus({
               bookingId: row.original.id!,
               status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),

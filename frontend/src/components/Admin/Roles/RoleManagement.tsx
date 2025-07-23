@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import RoleEditer from "./RoleEditer";
+import { toast } from "sonner";
 
 export const RoleManagement: React.FC = () => {
   const {
@@ -64,7 +65,7 @@ export const RoleManagement: React.FC = () => {
       fetchAttemptsRef.current += 1;
       setFetchingAdminData(true);
 
-      refreshAllUserRoles().finally(() => {
+      void refreshAllUserRoles().finally(() => {
         setFetchingAdminData(false);
       });
     }
@@ -121,6 +122,15 @@ export const RoleManagement: React.FC = () => {
     const result = hasRole(singleRoleInput, singleOrgInput || undefined);
     setSingleRoleResult(result);
   }, [singleRoleInput, singleOrgInput, hasRole]);
+
+  // Handler to refresh roles after any role operation
+  const handleRolesChanged = useCallback(async () => {
+    await refreshCurrentUserRoles();
+    if (isAdmin) {
+      await refreshAllUserRoles();
+    }
+    toast.success("Roles updated!");
+  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAdmin]);
 
   // Loading state
   if (loading) {
@@ -416,7 +426,7 @@ export const RoleManagement: React.FC = () => {
       {/* Roles editing Section */}
       {isAdmin && (
         <div className="my-6">
-          <RoleEditer />
+          <RoleEditer onRolesChanged={handleRolesChanged} />
         </div>
       )}
 

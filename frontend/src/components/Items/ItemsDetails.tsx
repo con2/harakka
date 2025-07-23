@@ -152,7 +152,7 @@ const ItemsDetails: React.FC = () => {
   // Fetch item and images
   useEffect(() => {
     if (id) {
-      dispatch(getItemById(id));
+      void dispatch(getItemById(id));
 
       // Fetch images for this item
       dispatch(getItemImages(id))

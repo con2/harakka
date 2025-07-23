@@ -541,7 +541,7 @@ export const bookingsSlice = createSlice({
       .addCase(deleteBooking.fulfilled, (state, action) => {
         state.loading = false;
         state.userBookings = state.userBookings.filter(
-          (booking) => booking.id !== action.payload,
+          (booking: Booking | BookingPreview) => booking.id !== action.payload,
         );
       })
       .addCase(deleteBooking.rejected, (state, action) => {

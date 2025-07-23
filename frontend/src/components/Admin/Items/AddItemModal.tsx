@@ -107,10 +107,10 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (modalState.isOpen && tags.length === 0)
-      dispatch(fetchAllTags({ limit: 20 }));
+      void dispatch(fetchAllTags({ limit: 20 }));
 
     if (modalState.isOpen && locations.length === 0)
-      dispatch(fetchAllLocations({ limit: 10 }));
+      void dispatch(fetchAllLocations({ limit: 10 }));
   }, [dispatch, modalState.isOpen, tags.length, locations.length]);
 
   // When item is created, switch to images tab
@@ -302,7 +302,7 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleSubmit(e);
+              void handleSubmit(e);
             }}
             className="space-y-4"
           >

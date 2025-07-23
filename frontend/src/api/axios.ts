@@ -13,6 +13,10 @@ export async function getAuthToken(): Promise<string | null> {
   return cachedToken;
 }
 
+export function clearCachedAuthToken() {
+  cachedToken = null;
+}
+
 // Get API URL from runtime config with fallback to development URL
 const apiUrl = import.meta.env.VITE_API_URL as string;
 const baseURL = apiUrl
@@ -48,7 +52,8 @@ api.interceptors.request.use(async (config) => {
 
 api.interceptors.request.use(
   (config) => config,
-  (error) => Promise.reject(error),
+  (error) =>
+    Promise.reject(error instanceof Error ? error : new Error(String(error))),
 );
 
 // Return response.data directly
@@ -58,6 +63,8 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error("API Error:", error);
-    return Promise.reject(error);
+    return Promise.reject(
+      error instanceof Error ? error : new Error(String(error)),
+    );
   },
 );

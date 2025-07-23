@@ -104,7 +104,7 @@ const BookingList = () => {
 
   /*----------------------side-effects----------------------------------*/
   useEffect(() => {
-    dispatch(
+    void dispatch(
       getOrderedBookings({
         ordered_by: booking,
         page: currentPage,
@@ -147,7 +147,7 @@ const BookingList = () => {
       accessorKey: "status",
       header: t.bookingList.columns.status[lang],
       enableSorting: true,
-      cell: ({ row }) => <StatusBadge status={row.original.status!} />,
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "created_at",
@@ -177,9 +177,9 @@ const BookingList = () => {
             | "overdue"
             | "N/A",
         ) => {
-          dispatch(
+          void dispatch(
             updatePaymentStatus({
-              bookingId: row.original.id!,
+              bookingId: row.original.id,
               status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
             }),
           );
@@ -246,11 +246,11 @@ const BookingList = () => {
             {isPending && (
               <>
                 <BookingConfirmButton
-                  id={booking.id!}
+                  id={booking.id}
                   closeModal={() => setShowDetailsModal(false)}
                 />
                 <BookingRejectButton
-                  id={booking.id!}
+                  id={booking.id}
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
@@ -258,7 +258,7 @@ const BookingList = () => {
 
             {isConfirmed && (
               <BookingReturnButton
-                id={booking.id!}
+                id={booking.id}
                 closeModal={() => setShowDetailsModal(false)}
               />
             )}
@@ -266,7 +266,7 @@ const BookingList = () => {
             {isConfirmed && <BookingPickupButton />}
 
             <BookingDeleteButton
-              id={booking.id!}
+              id={booking.id}
               closeModal={() => setShowDetailsModal(false)}
             />
           </div>
@@ -450,7 +450,7 @@ const BookingList = () => {
                     </h3>
                     <p className="text-sm mb-0">
                       {t.bookingList.modal.status[lang]}{" "}
-                      <StatusBadge status={selectedBooking.status!} />
+                      <StatusBadge status={selectedBooking.status} />
                     </p>
                     <p className="text-sm">
                       {t.bookingList.modal.date[lang]}{" "}

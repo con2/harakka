@@ -129,12 +129,12 @@ const MyBookings = () => {
     // Redirect if not authenticated
     if (!user) {
       toast.error(t.myBookings.error.loginRequired[lang]);
-      navigate("/login");
+      void navigate("/login");
       return;
     }
 
     if (user && bookings.length === 0)
-      dispatch(getUserBookings({ user_id: user.id, page: 1, limit: 10 }));
+      void dispatch(getUserBookings({ user_id: user.id, page: 1, limit: 10 }));
   }, [dispatch, navigate, user, lang, bookings]); // Apply filters to bookings
 
   // Reset to first page when filters change
@@ -179,16 +179,16 @@ const MyBookings = () => {
 
     if (updatedItems.length === 0) {
       try {
-        dispatch(
+        void dispatch(
           updateBooking({
             bookingId: selectedBooking.id!,
             items: updatedItems,
           }),
         );
-        dispatch(cancelBooking(selectedBooking.id!));
+        void dispatch(cancelBooking(selectedBooking.id!));
         toast.warning(t.myBookings.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
-          dispatch(
+          void dispatch(
             getUserBookings({
               user_id: user.id,
               page: currentPage,
@@ -215,7 +215,7 @@ const MyBookings = () => {
       toast.success(t.myBookings.edit.toast.bookingUpdated[lang]);
       setShowEditModal(false);
       if (user?.id) {
-        dispatch(
+        void dispatch(
           getUserBookings({
             user_id: user.id,
             page: currentPage,
@@ -259,7 +259,7 @@ const MyBookings = () => {
       setLoadingAvailability(false);
     };
 
-    fetchAvailability();
+    void fetchAvailability();
   }, [globalStartDate, globalEndDate, editFormItems]);
 
   const isFormValid = editFormItems.every((item) => {
@@ -375,7 +375,7 @@ const MyBookings = () => {
               toast.error(t.myBookings.error.loginRequired[lang]);
               return;
             }
-            dispatch(
+            void dispatch(
               getUserBookings({
                 user_id: user.id,
                 page: currentPage,

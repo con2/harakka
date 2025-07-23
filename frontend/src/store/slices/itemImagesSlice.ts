@@ -5,6 +5,15 @@ import { RootState } from "../store";
 import { ErrorContext } from "@/types/common";
 import { extractErrorMessage } from "../utils/errorHandlers";
 
+// Helper type to safely unwrap an Axios‑style error object
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
 interface ItemImagesState {
   images: ItemImage[];
   itemsWithLoadedImages: string[]; // Track which items have loaded images

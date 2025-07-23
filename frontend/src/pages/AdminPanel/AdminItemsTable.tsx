@@ -77,20 +77,20 @@ const AdminItemsTable = () => {
     setShowModal(true); // Show the modal
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     toastConfirm({
       title: t.adminItemsTable.messages.deletion.title[lang],
       description: t.adminItemsTable.messages.deletion.description[lang],
       confirmText: t.adminItemsTable.messages.deletion.confirm[lang],
       cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
-      onConfirm: async () => {
+      onConfirm: () => {
         try {
-          toast.promise(dispatch(deleteItem(id)).unwrap(), {
+          void toast.promise(dispatch(deleteItem(id)).unwrap(), {
             loading: t.adminItemsTable.messages.toast.deleting[lang],
             success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
             error: t.adminItemsTable.messages.toast.deleteFail[lang],
           });
-          dispatch(fetchAllItems({ page: 1, limit: limit }));
+          void dispatch(fetchAllItems({ page: 1, limit: limit }));
         } catch {
           toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
         }
@@ -118,7 +118,7 @@ const AdminItemsTable = () => {
 
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
-    dispatch(
+    void dispatch(
       fetchOrderedItems({
         ordered_by: order,
         page: currentPage,
@@ -145,7 +145,7 @@ const AdminItemsTable = () => {
 
   //fetch tags list
   useEffect(() => {
-    if (tags.length === 0) dispatch(fetchAllTags({ limit: 20 }));
+    if (tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
   }, [dispatch, tags.length, items.length]);
 
   const deletableItems = useAppSelector((state) => state.items.deletableItems);
@@ -219,7 +219,6 @@ const AdminItemsTable = () => {
                 },
               }),
             ).unwrap();
-            dispatch(fetchAllItems({ page: 1, limit: limit }));
             toast.success(
               checked
                 ? t.adminItemsTable.messages.toast.activateSuccess[lang]
