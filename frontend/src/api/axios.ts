@@ -13,6 +13,10 @@ export async function getAuthToken(): Promise<string | null> {
   return cachedToken;
 }
 
+export function clearCachedAuthToken() {
+  cachedToken = null;
+}
+
 // Get API URL from runtime config with fallback to development URL
 const apiUrl = import.meta.env.VITE_API_URL as string;
 const baseURL = apiUrl
