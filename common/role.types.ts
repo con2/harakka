@@ -1,4 +1,5 @@
 import { Database } from "./database.types";
+import { Enums, Tables } from "./supabase.types";
 
 /**
  * @description Proper Supabase types for role-related entities.
@@ -6,14 +7,14 @@ import { Database } from "./database.types";
  */
 
 // Core role definition
-export type Role = Database["public"]["Tables"]["roles"]["Row"];
+export type Role = Tables<"roles">;
 
 // User-organization-role relationship
-export type UserOrganizationRole =
-  Database["public"]["Tables"]["user_organization_roles"]["Row"];
+export type UserOrganizationRole = Tables<"user_organization_roles">;
 
 // Organization definition
-export type Organization = Database["public"]["Tables"]["organizations"]["Row"];
+export type Organization = Tables<"organizations">;
 
-export type ViewUserRolesWithDetails =
-  Database["public"]["Views"]["view_user_roles_with_details"]["Row"];
+export type ViewUserRolesWithDetails = Tables<"view_user_roles_with_details">;
+
+export type Org_Roles = Enums<"roles_type">
