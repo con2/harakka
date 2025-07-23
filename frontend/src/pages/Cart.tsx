@@ -135,7 +135,7 @@ const Cart: React.FC = () => {
   const handleCheckout = async () => {
     if (!user) {
       toast.error(t.cart.toast.loginRequired[lang]);
-      navigate("/login");
+      void navigate("/login");
       return;
     }
 
@@ -199,7 +199,7 @@ const Cart: React.FC = () => {
       dispatch(clearCart());
 
       // Navigate to bookings page or confirmation
-      navigate("/bookings/confirmation");
+      void navigate("/bookings/confirmation");
     } catch (error: unknown) {
       console.error("Checkout error:", error);
       console.error("Booking data that failed:", bookingData);

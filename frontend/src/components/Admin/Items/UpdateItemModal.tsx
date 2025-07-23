@@ -67,9 +67,9 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   }, [initialData]);
 
   useEffect(() => {
-    dispatch(fetchAllTags({ limit: 20 }));
-    dispatch(fetchTagsForItem(formData.id)); // fetch tags for this item
-    dispatch(fetchAllLocations({ limit: 20 }));
+    void dispatch(fetchAllTags({ limit: 20 }));
+    void dispatch(fetchTagsForItem(formData.id)); // fetch tags for this item
+    void dispatch(fetchAllLocations({ limit: 20 }));
   }, [dispatch, formData.id]);
 
   useEffect(() => {
@@ -155,20 +155,31 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
     setLoading(true);
 
     try {
-      // Create a clean copy of the data without the properties that should not be sent
-      const cleanedData = { ...formData };
-      // Remove properties that don't exist as columns in the database table
-      delete cleanedData.storage_item_tags;
-      delete cleanedData.tagIds;
-      delete (cleanedData as any).storage_locations;
+      // Clean the data by only including the fields that should be sent to the database
+      const {
+        // Remove joined/computed fields that exist on Item type
+        storage_item_tags: _storage_item_tags,
+        tagIds: _tagIds,
+        location_name: _location_name,
+        created_at: _created_at,
+        // Remove any other fields that don't belong in the database update
+        average_rating: _average_rating,
+        ...cleanedData
+      } = formData;
 
-      // Explicitly ensure location_id is included
+      // Only send the core database fields
       const updateData = {
-        ...cleanedData,
-        location_id: formData.location_id,
+        id: cleanedData.id,
+        location_id: cleanedData.location_id,
+        items_number_total: cleanedData.items_number_total,
+        items_number_currently_in_storage:
+          cleanedData.items_number_currently_in_storage,
+        price: cleanedData.price,
+        is_active: cleanedData.is_active,
+        translations: cleanedData.translations,
       };
 
-      console.log("Sending update with location_id:", formData.location_id);
+      console.log("Sending cleaned update data:", updateData);
 
       await dispatch(
         updateItem({ id: formData.id, data: updateData }),
@@ -176,7 +187,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
       await dispatch(
         assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
       ).unwrap();
-      dispatch(fetchAllItems({ page: 1, limit: 10 })); // Refresh items list after update
+      void dispatch(fetchAllItems({ page: 1, limit: 10 })); // Refresh items list after update
       toast.success(t.updateItemModal.messages.success[lang]);
       onClose();
     } catch (error) {

@@ -19,9 +19,9 @@ export const tagsApi = {
     sortOrder: string = "desc",
   ): Promise<ApiResponse<Tag[]>> => {
     // Fetch paginated tags from the backend
-    const response = (await api.get(
+    const response: ApiResponse<Tag[]> = await api.get(
       `/tags?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&assignmentFilter=${assignmentFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
-    )) as ApiResponse<Tag[]>;
+    );
 
     return {
       data: response.data ?? [],

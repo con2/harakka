@@ -65,7 +65,7 @@ export const RoleManagement: React.FC = () => {
       fetchAttemptsRef.current += 1;
       setFetchingAdminData(true);
 
-      refreshAllUserRoles().finally(() => {
+      void refreshAllUserRoles().finally(() => {
         setFetchingAdminData(false);
       });
     }

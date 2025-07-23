@@ -39,7 +39,7 @@ const TeamList = () => {
 
   useEffect(() => {
     if (!authLoading && isSuperVera && users.length === 0) {
-      dispatch(fetchAllUsers());
+      void dispatch(fetchAllUsers());
     }
   }, [authLoading, isSuperVera, users.length, dispatch]);
 

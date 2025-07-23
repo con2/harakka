@@ -159,7 +159,7 @@ export const useRoles = () => {
         .catch(() => {
           setResponseReceived(true); // Even on error, we've received a response
         });
-      dispatch(fetchAvailableRoles());
+      void dispatch(fetchAvailableRoles());
     }
   }, [dispatch, loading, fetchAttempts]);
 

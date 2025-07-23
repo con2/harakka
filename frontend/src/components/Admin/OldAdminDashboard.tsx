@@ -43,18 +43,18 @@ const AdminDashboard = () => {
   const { formatDate } = useFormattedDate();
 
   useEffect(() => {
-    dispatch(fetchAllItems({ page: 1, limit: 10 }));
+    void dispatch(fetchAllItems({ page: 1, limit: 10 }));
   }, [dispatch]);
 
   useEffect(() => {
     if (users.length === 0) {
-      dispatch(fetchAllUsers());
+      void dispatch(fetchAllUsers());
     }
   }, [dispatch, users.length]);
 
   useEffect(() => {
     if (!bookingsLoading && bookings.length === 0) {
-      dispatch(getAllBookings({ page: 1, limit: 10 }));
+      void dispatch(getAllBookings({ page: 1, limit: 10 }));
     }
   }, [dispatch, bookings.length, bookingsLoading]);
 

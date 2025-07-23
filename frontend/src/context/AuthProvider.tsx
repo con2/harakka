@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    void supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setAuthLoading(false);
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (user && location.pathname === "/login") {
-      navigate("/");
+      void navigate("/");
     }
   }, [user, location.pathname, navigate]);
 
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
     } finally {
       // Always navigate to home page after logout
-      navigate("/");
+      void navigate("/");
     }
   };
 

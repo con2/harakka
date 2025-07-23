@@ -7,11 +7,15 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
  * @param errorMessage Default error message
  * @param transformResponse Optional function to transform the API response
  */
-export function createApiThunk<ReturnType, ArgType = void>(
+export function createApiThunk<
+  ReturnType,
+  ArgType = void,
+  ApiResponseType = unknown,
+>(
   typePrefix: string,
-  apiCall: (arg: ArgType) => Promise<any>,
+  apiCall: (arg: ArgType) => Promise<ApiResponseType>,
   errorMessage: string,
-  transformResponse?: (response: any, arg: ArgType) => ReturnType,
+  transformResponse?: (response: ApiResponseType, arg: ArgType) => ReturnType,
 ) {
   return createAsyncThunk<ReturnType, ArgType, { rejectValue: string }>(
     typePrefix,
@@ -22,7 +26,7 @@ export function createApiThunk<ReturnType, ArgType = void>(
           return transformResponse(response, arg);
         }
         // Default handling - cast as the expected return type
-        return response as unknown as ReturnType;
+        return response as ReturnType;
       } catch (error: unknown) {
         console.error(`API Error in ${typePrefix}:`, error);
         if (error instanceof Error) {
