@@ -33,6 +33,7 @@ import ContactForm from "../components/ContactForm";
 // Layout
 import App from "../App";
 import LoginPage from "@/pages/LoginPage";
+import ThemeTestPage from "@/pages/ThemeTestPage";
 import { RoleManagement } from "@/components/Admin/Roles/RoleManagement";
 
 export const router = createBrowserRouter([
@@ -127,6 +128,10 @@ export const router = createBrowserRouter([
       {
         path: "/password-reset-success",
         element: <PasswordResetResult />,
+      },
+      {
+        path: "/theme-test",
+        element: <ThemeTestPage />, // to be deleted after testing
       },
       {
         // all other routes lead to landing page

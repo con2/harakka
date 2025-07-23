@@ -19,9 +19,12 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
+import { OrganizationSelector } from "./OrganizationSelector";
+import { useTheme } from "@/context/ThemeContext";
 
 export const Navigation = () => {
   const { signOut } = useAuth();
+  const { currentTheme } = useTheme();
   // get user role information from the hook
   const { hasAnyRole } = useRoles();
   const isAnyTypeOfAdmin = hasAnyRole([
@@ -59,18 +62,21 @@ export const Navigation = () => {
   // Translation hook
   const { lang } = useLanguage();
 
+  // Get current theme logo or fallback to default
+  const currentLogo = currentTheme.logo?.main || logo;
+
   return (
     <nav className={navClasses}>
       <div className="container md:mx-auto mx-0 flex items-center justify-between">
         <div className="flex items-center gap-1">
           <Link to="/">
             <img
-              src={logo}
+              src={currentLogo}
               alt="Logo"
               className="h-[60px] w-auto object-contain hidden md:flex"
             />
             {/* <img
-              src={smallLogo}
+              src={currentSmallLogo}
               alt="smallLogo"
               className="h-[40px] w-auto object-contain md:hidden"
             /> */}
@@ -153,6 +159,30 @@ export const Navigation = () => {
           <div className="flex items-center md:mr-6">
             <LanguageSwitcher />
           </div>
+
+          {/* Organization Selector for logged in users */}
+          {isLoggedIn && (
+            <>
+              {/* Desktop version */}
+              <div className="hidden md:flex items-center mr-4">
+                <OrganizationSelector
+                  className="text-sm"
+                  showIcon={false}
+                  placeholder="Switch org"
+                />
+              </div>
+              {/* Mobile version */}
+              <div className="md:hidden flex items-center mr-2">
+                <OrganizationSelector
+                  className="text-xs"
+                  showIcon={false}
+                  placeholder="Org"
+                  compact
+                />
+              </div>
+            </>
+          )}
+
           <Link
             to="/cart"
             className="flex items-center gap-1 text-secondary font-medium hover:text-secondary"
