@@ -4,6 +4,7 @@ import { LogMessage, AuditLog } from "./interfaces/log.interface";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { ApiResponse } from "../../../../common/response.types";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Injectable()
 export class LogsService {
@@ -29,30 +30,6 @@ export class LogsService {
     const supabase = req.supabase;
     const { from, to } = getPaginationRange(page, limit);
 
-    // TODO: Change role table - First check if user is an admin
-    const userId = req.user?.id;
-    const { data: userProfile, error: userError } = await supabase
-      .from("user_profiles")
-      .select("role")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (userError) {
-      this.logger.error(`Failed to fetch user profile: ${userError.message}`);
-      throw new ForbiddenException("Error verifying user role");
-    }
-
-    if (
-      !userProfile ||
-      !userProfile.role ||
-      !["admin", "superVera"].includes(userProfile.role)
-    ) {
-      this.logger.warn(
-        `User ${userId} attempted to access logs without admin rights`,
-      );
-      throw new ForbiddenException("Only administrators can access logs");
-    }
-
     const includeAudit = !logType || logType === "audit";
     const includeSystem = !logType || logType === "system";
 
@@ -65,9 +42,9 @@ export class LogsService {
         .select("*")
         .order("created_at", { ascending: false });
 
+      // New error handling for Supabase
       if (error) {
-        this.logger.error(`Failed to fetch audit logs: ${error.message}`);
-        throw new Error(`Could not retrieve logs: ${error.message}`);
+        handleSupabaseError(error);
       }
 
       const formattedAuditLogs = (auditLogs || []).map((log) => ({
