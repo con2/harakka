@@ -49,47 +49,6 @@ const OrganizationList = () => {
     setCurrentPage(newPage);
   };
 
-  // columns for table
-  const columns: ColumnDef<OrganizationDetails>[] = [
-    {
-      header: t.organizationList.columns.name[lang],
-      accessorKey: "name",
-      cell: ({ row }) => row.original.name,
-    },
-    {
-      header: t.organizationList.columns.slug[lang],
-      accessorKey: "slug",
-      cell: ({ row }) => row.original.slug,
-    },
-    {
-      header: t.organizationList.columns.description[lang],
-      accessorKey: "description",
-      cell: ({ row }) => row.original.description,
-    },
-    {
-      header: t.organizationList.columns.isActive[lang],
-      accessorKey: "is_active",
-      cell: ({ row }) =>
-        row.original.is_active ? (
-          <span className="text-green-600 font-semibold">
-            {t.organizationList.values.isActive.yes[lang]}
-          </span>
-        ) : (
-          <span className="text-red-400 font-semibold">
-            {t.organizationList.values.isActive.no[lang]}
-          </span>
-        ),
-    },
-    {
-      header: t.organizationList.columns.createdAt[lang],
-      accessorKey: "created_at",
-      cell: ({ row }) =>
-        row.original.created_at
-          ? new Date(row.original.created_at).toLocaleDateString()
-          : "—",
-    },
-  ];
-
   const openDetailsModal = async (org: OrganizationDetails) => {
     await dispatch(fetchOrganizationById(org.id));
     setSelectedOrg(org);

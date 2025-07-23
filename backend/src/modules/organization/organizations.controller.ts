@@ -66,7 +66,7 @@ export class OrganizationsController {
 
   // 4. create
   @Post()
-  @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
   async createOrganization(
     @Req() req: AuthRequest,
     @Body() org: CreateOrganizationDto,
@@ -76,7 +76,7 @@ export class OrganizationsController {
 
   // 5. update
   @Put(":organizationId")
-  @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
   async updateOrganization(
     @Req() req: AuthRequest,
     @Param("organizationId") id: string,
@@ -87,7 +87,7 @@ export class OrganizationsController {
 
   // 6. delete
   @Delete(":organizationId")
-  @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
   async deleteOrganization(
     @Req() req: AuthRequest,
     @Param("organizationId") id: string,
@@ -99,7 +99,7 @@ export class OrganizationsController {
 
   // 7. activate or deactivate orgs
   @Put(":organizationId/activation")
-  @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
   async toggleOrganizationActivation(
     @Req() req: AuthRequest,
     @Param("organizationId") id: string,

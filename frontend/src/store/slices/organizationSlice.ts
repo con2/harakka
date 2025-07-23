@@ -1,7 +1,7 @@
 import { extractErrorMessage } from "../utils/errorHandlers";
 import { organizationApi } from "@/api/services/organizations";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { OrganizationState } from "@/types/organization";
+import { OrganizationDetails, OrganizationState } from "@/types/organization";
 import { RootState } from "../store";
 
 /**
@@ -129,26 +129,31 @@ const organizationSlice = createSlice({
       .addCase(fetchOrganizationById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
-        .addCase(createOrganization.fulfilled, (state: OrganizationState, action) => {
-        state.organizations.unshift(action.payload);
-        })
-
-        .addCase(updateOrganization.fulfilled, (state: OrganizationState, action) => {
-        const index = state.organizations.findIndex(
-            (org) => org.id === action.payload.id,
-        );
-        if (index !== -1) {
-            state.organizations[index] = action.payload;
-        }
-        // optional:
-        if (state.selectedOrganization?.id === action.payload.id) {
-            state.selectedOrganization = action.payload;
-        }
-        });
-
+      })
+      .addCase(
+        createOrganization.fulfilled,
+        (state: OrganizationState, action) => {
+          state.organizations.unshift(action.payload);
         },
-        });
+      )
+
+      .addCase(
+        updateOrganization.fulfilled,
+        (state: OrganizationState, action) => {
+          const index = state.organizations.findIndex(
+            (org) => org.id === action.payload.id,
+          );
+          if (index !== -1) {
+            state.organizations[index] = action.payload;
+          }
+          // optional:
+          if (state.selectedOrganization?.id === action.payload.id) {
+            state.selectedOrganization = action.payload;
+          }
+        },
+      );
+  },
+});
 
 //Selectors
 export const selectOrganizations = (state: RootState) =>
