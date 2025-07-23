@@ -1,4 +1,4 @@
-import { Injectable, Logger, ForbiddenException } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { LogMessage, AuditLog } from "./interfaces/log.interface";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";

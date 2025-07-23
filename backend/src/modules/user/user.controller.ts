@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   NotFoundException,
-  ForbiddenException,
   Req,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
@@ -37,48 +36,18 @@ export class UserController {
   }
 
   @Get(":id")
+  // TODO: Update which roles can access this endpoint when we know more about the user roles
+  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
   async getUserById(
     @Param("id") id: string,
     @Req() req: AuthRequest,
   ): Promise<UserProfile> {
-    // Check if the user is accessing their own profile
-    if (req.user?.id === id) {
-      // Allow users to access their own profile
-      const user = await this.userService.getUserById(id, req);
-      if (!user) {
-        throw new NotFoundException(`User with ID ${id} not found`);
-      }
-      return user;
-    }
-
-    // For accessing other users' profiles, check admin roles
-    const hasAdminRole = req.userRoles?.some((role) =>
-      ["admin", "super_admin", "superVera"].includes(role.role_name ?? ""),
-    );
-
-    if (!hasAdminRole) {
-      throw new ForbiddenException(
-        "You do not have permission to access other users' profiles",
-      );
-    }
-
     const user = await this.userService.getUserById(id, req);
+
     if (!user) {
-      throw new NotFoundException(
-        `User with ID ${id} not found or you do not have access to it`,
-      );
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
     return user;
-  }
-
-  @Post()
-  @Roles(["admin", "super_admin", "superVera", "main_admin"], { match: "any" })
-  async createUser(
-    @Body() user: CreateUserDto,
-    @Req() req: AuthRequest,
-  ): Promise<UserProfile> {
-    // await for Body
-    return this.userService.createUser(user, req);
   }
 
   @Put(":id")
@@ -147,10 +116,4 @@ export class UserController {
   ) {
     return this.userService.deleteAddress(id, addressId, req);
   }
-
-  /* @Post(":id/send-welcome-mail")
-  async sendWelcomeEmail(@Param("id") id: string) {
-    await this.userService.sendWelcomeEmail(id);
-    return { message: `Welcome mail sent to user ${id}` };
-  } */
 }
