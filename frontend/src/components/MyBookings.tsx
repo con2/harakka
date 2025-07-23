@@ -96,7 +96,7 @@ const MyBookings = () => {
       return setLoadingAvailability(false);
     dispatch(selectBooking(booking));
     dispatch(clearCurrentBookingItems());
-    await dispatch(getBookingItems(booking.id!));
+    await dispatch(getBookingItems(booking.id));
   };
 
   useEffect(() => {
@@ -283,12 +283,12 @@ const MyBookings = () => {
     {
       accessorKey: "status",
       header: t.myBookings.columns.status[lang],
-      cell: ({ row }) => <StatusBadge status={row.original.status!} />,
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "created_at",
       header: t.myBookings.columns.date[lang],
-      cell: ({ row }) => formatDate(row.original.created_at!),
+      cell: ({ row }) => formatDate(row.original.created_at),
     },
     {
       id: "actions",
@@ -310,7 +310,7 @@ const MyBookings = () => {
                   onEdit={handleEditBooking}
                 />
                 <BookingCancelButton
-                  id={booking.id!}
+                  id={booking.id}
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
@@ -330,7 +330,7 @@ const MyBookings = () => {
       header: t.myBookings.columns.item[lang],
       cell: ({ row }) => {
         const itemName =
-          row.original.storage_items.translations![lang].item_name;
+          row.original.storage_items.translations[lang].item_name;
         return itemName.charAt(0).toUpperCase() + itemName.slice(1);
       },
     },
@@ -477,7 +477,7 @@ const MyBookings = () => {
                       {booking.booking_number}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(booking.created_at!)} · {booking.status}
+                      {formatDate(booking.created_at)} · {booking.status}
                     </span>
                   </div>
                 </AccordionTrigger>
@@ -487,7 +487,7 @@ const MyBookings = () => {
                     <div className="text-sm">
                       <p>
                         <strong>{t.myBookings.mobile.status[lang]}</strong>{" "}
-                        <StatusBadge status={booking.status!} />
+                        <StatusBadge status={booking.status} />
                       </p>
                       {/* <p>
                         <strong>{t.myBookings.mobile.start[lang]}</strong>{" "}
@@ -541,7 +541,7 @@ const MyBookings = () => {
                             onEdit={() => {}}
                           />
                           <BookingCancelButton
-                            id={booking.id!}
+                            id={booking.id}
                             closeModal={() => {}}
                           />
                         </>
@@ -734,11 +734,11 @@ const MyBookings = () => {
                   </h3>
                   <p className="text-xs">
                     {t.myBookings.columns.status[lang]}:{" "}
-                    <StatusBadge status={selectedBooking.status!} />
+                    <StatusBadge status={selectedBooking.status} />
                   </p>
                   <p className="text-xs">
                     {t.myBookings.columns.date[lang]}:{" "}
-                    {formatDate(selectedBooking.created_at!)}
+                    {formatDate(selectedBooking.created_at)}
                   </p>
                 </div>
               </div>
