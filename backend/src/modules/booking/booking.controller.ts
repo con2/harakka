@@ -11,7 +11,6 @@ import {
   Patch,
   UnauthorizedException,
   BadRequestException,
-  ForbiddenException,
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
@@ -23,6 +22,7 @@ import {
   ValidBooking,
 } from "./types/booking.interface";
 import { Public, Roles } from "src/decorators/roles.decorator";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Controller("bookings")
 export class BookingController {
@@ -108,18 +108,7 @@ export class BookingController {
       const dtoWithUserId = { ...dto, user_id: userId };
       return this.bookingService.createBooking(dtoWithUserId, req.supabase);
     } catch (error) {
-      console.error("Booking creation failed:", error);
-
-      // Return a structured error but avoid 500
-      if (
-        error instanceof BadRequestException ||
-        error instanceof ForbiddenException
-      ) {
-        throw error;
-      }
-      throw new BadRequestException(
-        "There was an issue processing your booking. If this persists, please contact support.",
-      );
+      handleSupabaseError(error);
     }
   }
 
