@@ -125,54 +125,55 @@ export const organizationList = {
     fi: "Näytä",
     en: "View",
   },
-  organizationDelete: {
-    button: {
-      title: {
-        en: "Delete organization",
-        de: "Organisation löschen",
-      },
+};
+
+export const organizationDelete = {
+  button: {
+    title: {
+      en: "Delete organization",
+      fi: "Poista organisaatio",
     },
-    confirmation: {
-      title: {
-        en: "Are you sure?",
-        de: "Bist du sicher?",
-      },
-      description: {
-        en: "This will permanently delete the organization.",
-        de: "Dies wird die Organisation dauerhaft löschen.",
-      },
-      confirmText: {
-        en: "Delete",
-        de: "Löschen",
-      },
-      cancelText: {
-        en: "Cancel",
-        de: "Abbrechen",
-      },
+  },
+  confirmation: {
+    title: {
+      en: "Are you sure?",
+      fi: "Oletko varma?",
     },
-    toast: {
-      loading: {
-        en: "Deleting organization...",
-        de: "Organisation wird gelöscht...",
-      },
-      success: {
-        en: "Organization deleted successfully.",
-        de: "Organisation erfolgreich gelöscht.",
-      },
-      error: {
-        en: "Failed to delete organization.",
-        de: "Organisation konnte nicht gelöscht werden.",
-      },
+    description: {
+      en: "This will permanently delete the organization.",
+      fi: "Tämä poistaa organisaation pysyvästi.",
     },
-    messages: {
-      invalidId: {
-        en: "Invalid organization ID.",
-        de: "Ungültige Organisations-ID.",
-      },
-      generalError: {
-        en: "Something went wrong.",
-        de: "Etwas ist schiefgelaufen.",
-      },
+    confirmText: {
+      en: "Delete",
+      fi: "Poista",
+    },
+    cancelText: {
+      en: "Cancel",
+      fi: "Peruuta",
+    },
+  },
+  toast: {
+    loading: {
+      en: "Deleting organization...",
+      fi: "Organisaatiota poistetaan...",
+    },
+    success: {
+      en: "Organization deleted successfully.",
+      fi: "Organisaatio poistettu onnistuneesti.",
+    },
+    error: {
+      en: "Failed to delete organization.",
+      fi: "Organisaation poistaminen epäonnistui.",
+    },
+  },
+  messages: {
+    invalidId: {
+      en: "Invalid organization ID.",
+      fi: "Virheellinen organisaation tunniste.",
+    },
+    generalError: {
+      en: "Something went wrong.",
+      fi: "Jokin meni pieleen.",
     },
   },
 };

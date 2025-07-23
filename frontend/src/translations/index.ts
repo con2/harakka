@@ -39,7 +39,10 @@ import { userEditModal } from "./modules/userEditModal";
 import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
 import { usersList } from "./modules/usersList";
-import { organizationList } from "./modules/organizationsList";
+import {
+  organizationDelete,
+  organizationList,
+} from "./modules/organizationsList";
 
 export const t = {
   addItemModal,
@@ -85,4 +88,5 @@ export const t = {
   userPanel,
   usersList,
   organizationList,
+  organizationDelete,
 };
