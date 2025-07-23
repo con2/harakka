@@ -13,6 +13,7 @@ import {
   selectBookingPagination,
   selectCurrentBookingLoading,
   getBookingItems,
+  clearCurrentBookingItems,
 } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
 import {
@@ -58,7 +59,6 @@ const MyBookings = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [editingBooking, setEditingBooking] = useState(false);
   const [editFormItems, setEditFormItems] = useState<BookingItemWithDetails[]>(
     [],
   );
@@ -90,24 +90,40 @@ const MyBookings = () => {
   const { formatDate: formatDateLocalized } = useFormattedDate();
 
   const handleEditBooking = async (booking: BookingPreview) => {
-    setEditingBooking(true);
-    dispatch(selectBooking(booking));
     setLoadingAvailability(true);
     setShowEditModal(true);
+    if (selectedBooking && selectedBooking.id === booking.id)
+      return setLoadingAvailability(false);
+    dispatch(selectBooking(booking));
+    dispatch(clearCurrentBookingItems());
     await dispatch(getBookingItems(booking.id!));
-    if (!selectedBooking || !selectedBooking.booking_items) return;
-    setItemQuantities(
-      Object.fromEntries(
-        selectedBooking.booking_items.map((item) => [
-          String(item.id),
-          item.quantity,
-        ]),
-      ),
-    );
-    setGlobalStartDate(selectedBooking.booking_items?.[0]?.start_date ?? null);
-    setGlobalEndDate(selectedBooking.booking_items?.[0]?.end_date ?? null);
-    setEditFormItems(selectedBooking.booking_items || []);
   };
+
+  useEffect(() => {
+    if (
+      selectedBooking &&
+      !itemsLoading &&
+      selectedBooking.booking_items === null
+    ) {
+      dispatch(clearCurrentBookingItems());
+      setEditFormItems([]);
+      setLoadingAvailability(false);
+    } else if (selectedBooking && selectedBooking.booking_items) {
+      setItemQuantities(
+        Object.fromEntries(
+          selectedBooking.booking_items.map((item) => [
+            String(item.id),
+            item.quantity,
+          ]),
+        ),
+      );
+      setGlobalStartDate(
+        selectedBooking.booking_items?.[0]?.start_date ?? null,
+      );
+      setGlobalEndDate(selectedBooking.booking_items?.[0]?.end_date ?? null);
+      setEditFormItems(selectedBooking.booking_items || []);
+    }
+  }, [selectedBooking, dispatch, itemsLoading]);
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -126,10 +142,6 @@ const MyBookings = () => {
     setCurrentPage(0);
   }, [searchQuery, statusFilter]);
 
-  useEffect(() => {
-    console.log("loading availability: ", loadingAvailability);
-  }, [loadingAvailability]);
-
   // Handle page change
   const handlePageChange = (pageIndex: number) => {
     setCurrentPage(pageIndex);
@@ -141,6 +153,8 @@ const MyBookings = () => {
   };
 
   const handleViewDetails = (booking: BookingPreview) => {
+    if (selectedBooking && selectedBooking.id === booking.id)
+      return setShowDetailsModal(true);
     dispatch(selectBooking(booking));
     dispatch(getBookingItems(booking.id));
     setShowDetailsModal(true);
@@ -149,7 +163,7 @@ const MyBookings = () => {
   const handleItemPageChange = (newPage: number) => setCurrentItemPage(newPage);
 
   const handleSubmitEdit = async () => {
-    if (!selectedBooking || !editingBooking) return;
+    if (!selectedBooking || !showEditModal) return;
 
     const updatedItems = editFormItems
       .map((item) => ({
@@ -186,7 +200,6 @@ const MyBookings = () => {
         toast.error(t.myBookings.edit.toast.cancelFailed[lang]);
       } finally {
         setShowEditModal(false);
-        setEditingBooking(false);
       }
       return;
     }
@@ -201,7 +214,6 @@ const MyBookings = () => {
 
       toast.success(t.myBookings.edit.toast.bookingUpdated[lang]);
       setShowEditModal(false);
-      setEditingBooking(false);
       if (user?.id) {
         dispatch(
           getUserBookings({
@@ -248,7 +260,7 @@ const MyBookings = () => {
     };
 
     fetchAvailability();
-  }, [globalStartDate, globalEndDate, editingBooking, editFormItems]);
+  }, [globalStartDate, globalEndDate, editFormItems]);
 
   const isFormValid = editFormItems.every((item) => {
     const inputQty =
@@ -555,8 +567,8 @@ const MyBookings = () => {
         )}
       </div>
 
-      {/* Editing BookingPreview Modal */}
-      {selectedBooking && (
+      {/* Editing Booking Modal */}
+      {selectedBooking && showEditModal && (
         <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
           <DialogContent className="max-w-sm overflow-visible">
             <DialogHeader className="items-start">
@@ -683,7 +695,7 @@ const MyBookings = () => {
                   <Button
                     variant={"outline"}
                     onClick={handleSubmitEdit}
-                    disabled={!editingBooking || !isFormValid}
+                    disabled={!showEditModal || !isFormValid}
                   >
                     {t.myBookings.edit.buttons.saveChanges[lang]}
                   </Button>
