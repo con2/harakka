@@ -129,37 +129,28 @@ export class BookingController {
     @Req() req: AuthRequest,
   ) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.updateBooking(
-      id,
-      userId,
-      updatedItems,
-      supabase,
-    );
+    return this.bookingService.updateBooking(id, userId, updatedItems, req);
   }
 
   // rejects a booking by admin
   @Put(":id/reject")
   async reject(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.rejectBooking(id, userId, supabase);
+    return this.bookingService.rejectBooking(id, userId, req);
   }
 
   // cancels own booking by user or admin cancels any booking
   @Delete(":id/cancel")
   async cancel(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.cancelBooking(id, userId, supabase);
+    return this.bookingService.cancelBooking(id, userId, req);
   }
 
   // admin deletes booking
   @Delete(":id/delete")
   async delete(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.deleteBooking(id, userId, supabase);
+    return this.bookingService.deleteBooking(id, userId, req);
   }
 
   // admin returns items
