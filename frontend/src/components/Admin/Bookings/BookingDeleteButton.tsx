@@ -28,8 +28,8 @@ const BookingDeleteButton = ({
       description: "Are you sure you want to delete this booking?",
       confirmText: "Confirm",
       cancelText: "Cancel",
-      onConfirm: async () => {
-        await toast.promise(dispatch(deleteBooking(id)).unwrap(), {
+      onConfirm: () => {
+        toast.promise(dispatch(deleteBooking(id)).unwrap(), {
           loading: "Deleting booking...",
           success: "Booking has been successfully deleted.",
           error: "Failed to delete booking.",
