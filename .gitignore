@@ -5,6 +5,7 @@ node_modules/*
 .nvmrc
 # Supabase project files
 /supabase
+.vscode
 
 # compiled output
 /dist
