@@ -5,10 +5,10 @@ import {
   BookingsState,
   CreateBookingDto,
   PaymentStatus,
-  ValidBooking,
   BookingStatus,
   BookingPreview,
   BookingWithDetails,
+  ValidBookingOrder,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { BookingItemUpdate } from "@common/bookings/booking-items.types";
@@ -123,7 +123,7 @@ export const getOrderedBookings = createAsyncThunk(
       searchquery,
       status_filter,
     }: {
-      ordered_by: ValidBooking;
+      ordered_by: ValidBookingOrder;
       page: number;
       limit: number;
       searchquery?: string;
