@@ -11,6 +11,7 @@ import {
   SetMetadata,
   Req,
   BadRequestException,
+  Patch,
 } from "@nestjs/common";
 import { OrganizationsService } from "./organizations.service";
 import { Roles } from "src/decorators/roles.decorator";
@@ -85,7 +86,7 @@ export class OrganizationsController {
     return await this.organizationService.updateOrganization(req, id, dto);
   }
 
-  // 6. delete
+  // 6. delete --- does not work atm
   @Delete(":organizationId")
   @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
   async deleteOrganization(
@@ -97,7 +98,18 @@ export class OrganizationsController {
     return this.organizationService.deleteOrganization(req, id);
   }
 
-  // 7. activate or deactivate orgs
+  // 7. soft-delete org
+  @Patch(":organizationId/soft-delete")
+  @Roles(["super_admin", "superVera"], { match: "any" })
+  async softDeleteOrganization(
+    @Req() req: AuthRequest,
+    @Param("organizationId") id: string,
+  ): Promise<{ success: boolean; id: string }> {
+    if (!id) throw new BadRequestException("Organization ID is required");
+    return this.organizationService.softDeleteOrganization(req, id);
+  }
+
+  // 8. activate or deactivate orgs
   @Put(":organizationId/activation")
   @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
   async toggleOrganizationActivation(

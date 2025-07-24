@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
-import { deleteOrganization } from "@/store/slices/organizationSlice";
+import { softDeleteOrganization } from "@/store/slices/organizationSlice";
 import { Trash2 } from "lucide-react";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
@@ -32,7 +32,7 @@ const OrganizationDelete = ({
       cancelText: t.organizationDelete.confirmation.cancelText[lang],
       onConfirm: async () => {
         try {
-          await toast.promise(dispatch(deleteOrganization(id)).unwrap(), {
+          await toast.promise(dispatch(softDeleteOrganization(id)).unwrap(), {
             loading: t.organizationDelete.toast.loading[lang],
             success: t.organizationDelete.toast.success[lang],
             error: t.organizationDelete.toast.error[lang],
@@ -59,3 +59,6 @@ const OrganizationDelete = ({
 };
 
 export default OrganizationDelete;
+
+// TODO: add hardDelete functionality
+// const OrganizationsHardDelete = () => {};

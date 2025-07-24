@@ -110,6 +110,20 @@ export const deleteOrganization = createAsyncThunk(
   },
 );
 
+export const softDeleteOrganization = createAsyncThunk(
+  "organizations/softDeleteOrganization",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await organizationApi.softDeleteOrganization(id);
+      return response.id;
+    } catch (error) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to delete organization"),
+      );
+    }
+  },
+);
+
 //Create a slice for organization state management
 const organizationSlice = createSlice({
   name: "organization",

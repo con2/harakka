@@ -38,4 +38,9 @@ export const organizationApi = {
 
   deleteOrganization: (id: string): Promise<{ success: boolean; id: string }> =>
     api.delete(`/organizations/${id}`),
+
+  softDeleteOrganization: (
+    id: string,
+  ): Promise<{ success: boolean; id: string }> =>
+    api.patch(`/organizations/${id}/soft-delete`),
 };
