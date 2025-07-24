@@ -1,6 +1,6 @@
 import { ApiResponse, ApiSingleResponse } from "@common/response.types";
 import { api } from "../axios";
-import { CreateBookingDto, ValidBooking } from "@/types";
+import { CreateBookingDto, ValidBookingOrder } from "@/types";
 import {
   BookingItemWithDetails,
   BookingPreview,
@@ -71,7 +71,6 @@ export const bookingsApi = {
 
   /**
    * Get all bookings (admin only)
-   * @param userId - Admin user ID for authorization
    * @returns Promise with all bookings
    */
   getAllBookings: async (
@@ -179,14 +178,14 @@ export const bookingsApi = {
    * @param status_filter Optional. What status to filter the bookings by
    */
   getOrderedBookings: async (
-    ordered_by: ValidBooking,
+    ordered_by: ValidBookingOrder,
     ascending: boolean = true,
     page: number,
     limit: number,
     searchquery?: string,
     status_filter?: BookingStatus,
   ): Promise<ApiResponse<BookingPreview>> => {
-    let call = `/bookings/ordered?booking=${ordered_by}&ascending=${ascending}&page=${page}&limit=${limit}`;
+    let call = `/bookings/ordered?order=${ordered_by}&ascending=${ascending}&page=${page}&limit=${limit}`;
     if (searchquery) call += `&search=${searchquery}`;
     if (status_filter) call += `&status=${status_filter}`;
     return await api.get(call);
