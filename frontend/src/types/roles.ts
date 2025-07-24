@@ -39,6 +39,7 @@ export interface RolesState {
   currentUserRoles: ViewUserRolesWithDetails[];
   currentUserOrganizations: UserOrganization[];
   isSuperVera: boolean;
+  isSuperAdmin: boolean;
   allUserRoles: ViewUserRolesWithDetails[];
   loading: boolean;
   adminLoading: boolean;

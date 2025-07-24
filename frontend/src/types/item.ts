@@ -40,10 +40,13 @@ export interface ItemState {
   selectedItem: Item | null;
   errorContext: ErrorContext;
   deletableItems: Record<string, boolean>;
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
+  item_pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  itemCount: number;
 }
 
 /**
