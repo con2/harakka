@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAppDispatch } from "@/store/hooks";
-import { fetchAllItems, selectItemsLoading, updateItem } from "@/store/slices/itemsSlice";
+import { selectItemsLoading, updateItem } from "@/store/slices/itemsSlice";
 import { Item, ItemImageAvailabilityInfo } from "@/types";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -68,8 +68,8 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   }, [initialData]);
 
   useEffect(() => {
-    if (!tags || tags.length === 0) dispatch(fetchAllTags({ limit: 20 }));
-    if (locations.length === 0) dispatch(fetchAllLocations({ limit: 20 }));
+    if (!tags || tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
+    if (locations.length === 0) void dispatch(fetchAllLocations({ limit: 20 }));
   }, [dispatch, locations.length, formData.id, tags]);
 
   useEffect(() => {
@@ -185,7 +185,6 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
       await dispatch(
         assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
       ).unwrap();
-      void dispatch(fetchAllItems({ page: 1, limit: 10 })); // Refresh items list after update
       toast.success(t.updateItemModal.messages.success[lang]);
       onClose();
     } catch (error) {
