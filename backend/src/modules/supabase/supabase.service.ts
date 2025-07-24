@@ -1,7 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { ConfigService } from "@nestjs/config";
-type Roles = "Admin" | "SuperVera" | "User";
 @Injectable()
 export class SupabaseService {
   private readonly logger = new Logger(SupabaseService.name);

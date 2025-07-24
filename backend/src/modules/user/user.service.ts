@@ -5,7 +5,7 @@ import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
 import {
   PostgrestResponse,
   PostgrestSingleResponse,
-    SupabaseClient,
+  SupabaseClient,
 } from "@supabase/supabase-js";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { MailService } from "../mail/mail.service";
@@ -179,7 +179,6 @@ export class UserService {
       handleSupabaseError(error);
     }
   }
-
 
   async getUserCount(
     supabase: SupabaseClient,
