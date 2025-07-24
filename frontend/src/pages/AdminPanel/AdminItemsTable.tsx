@@ -13,10 +13,8 @@ import {
   fetchOrderedItems,
   selectAllItems,
   selectItemsError,
-  selectItemsLimit,
+  selectItemsPagination,
   selectItemsLoading,
-  selectItemsPage,
-  selectItemsTotalPages,
   updateItem,
 } from "@/store/slices/itemsSlice";
 import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
@@ -27,16 +25,20 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "../ui/button";
-import { Checkbox } from "../ui/checkbox";
-import { Command, CommandGroup, CommandItem } from "../ui/command";
-import { PaginatedDataTable } from "../ui/data-table-paginated";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { toastConfirm } from "../ui/toastConfirm";
-import AddItemModal from "./Items/AddItemModal";
-import AssignTagsModal from "./Items/AssignTagsModal";
-import UpdateItemModal from "./Items/UpdateItemModal";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import AddItemModal from "@/components/Admin/Items/AddItemModal";
+import AssignTagsModal from "@/components/Admin/Items/AssignTagsModal";
+import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -51,9 +53,6 @@ const AdminItemsTable = () => {
   const isSuperVera = useAppSelector(selectIsSuperVera);
   // Translation
   const { lang } = useLanguage();
-  const page = useAppSelector(selectItemsPage);
-  const totalPages = useAppSelector(selectItemsTotalPages);
-  const limit = useAppSelector(selectItemsLimit);
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   // filtering states:
@@ -68,6 +67,7 @@ const AdminItemsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [order, setOrder] = useState<ValidItemOrder>("created_at");
   const [ascending, setAscending] = useState<boolean | null>(null);
+  const { page, totalPages, limit } = useAppSelector(selectItemsPagination);
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
@@ -115,27 +115,22 @@ const AdminItemsTable = () => {
     setAssignTagsModalOpen(false);
     setCurrentItemId(null);
   };
-  useEffect(() => console.log(tagFilter), [tagFilter]);
 
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
-    if (debouncedSearchQuery || order) {
-      void dispatch(
-        fetchOrderedItems({
-          ordered_by: order,
-          page: currentPage,
-          limit: limit,
-          searchquery: debouncedSearchQuery,
-          ascending: ascending === false ? false : true,
-          tag_filters: tagFilter,
-          location_filter: [],
-          categories: [],
-          activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        }),
-      );
-    } else {
-      void dispatch(fetchAllItems({ page: currentPage, limit: limit }));
-    }
+    void dispatch(
+      fetchOrderedItems({
+        ordered_by: order,
+        page: currentPage,
+        limit: limit,
+        searchquery: debouncedSearchQuery,
+        ascending: ascending === false ? false : true,
+        tag_filters: tagFilter,
+        location_filter: [],
+        categories: [],
+        activity_filter: statusFilter !== "all" ? statusFilter : undefined,
+      }),
+    );
   }, [
     dispatch,
     ascending,

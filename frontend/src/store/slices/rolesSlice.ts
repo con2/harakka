@@ -15,6 +15,7 @@ const initialState: RolesState = {
   currentUserRoles: [] as ViewUserRolesWithDetails[],
   currentUserOrganizations: [] as UserOrganization[],
   isSuperVera: false,
+  isSuperAdmin: false,
   allUserRoles: [] as ViewUserRolesWithDetails[],
   loading: false,
   adminLoading: false,
@@ -195,6 +196,7 @@ const rolesSlice = createSlice({
       state.currentUserRoles = [];
       state.currentUserOrganizations = [];
       state.isSuperVera = false;
+      state.isSuperAdmin = false;
       state.allUserRoles = [];
       state.error = null;
       state.adminError = null;
@@ -214,6 +216,8 @@ const rolesSlice = createSlice({
         state.currentUserRoles = action.payload.roles;
         state.currentUserOrganizations = action.payload.organizations;
         state.isSuperVera = action.payload.isSuperVera;
+        const userRoles = action.payload.roles.map((r) => r.role_name);
+        state.isSuperAdmin = userRoles.every((r) => r === "super_admin");
       })
       .addCase(fetchCurrentUserRoles.rejected, (state, action) => {
         state.loading = false;
@@ -355,6 +359,8 @@ export const selectCurrentUserRoles = (state: RootState) =>
 export const selectCurrentUserOrganizations = (state: RootState) =>
   state.roles.currentUserOrganizations;
 export const selectIsSuperVera = (state: RootState) => state.roles.isSuperVera;
+export const selectIsSuperAdmin = (state: RootState) =>
+  state.roles.isSuperAdmin;
 export const selectAllUserRoles = (state: RootState) =>
   state.roles.allUserRoles;
 export const selectRolesLoading = (state: RootState) => state.roles.loading;

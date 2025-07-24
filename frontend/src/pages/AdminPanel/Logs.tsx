@@ -20,23 +20,23 @@ import {
   RefreshCw,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { PaginatedDataTable } from "../ui/data-table-paginated";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "../ui/dialog";
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 
 const Logs: React.FC = () => {
   const dispatch = useAppDispatch();
