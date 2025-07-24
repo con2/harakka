@@ -124,6 +124,37 @@ export class AuthMiddleware implements NestMiddleware {
       // Extract roles from JWT
       const userRoles = this.jwtService.extractRolesFromToken(token, user.id);
 
+      const { data: latestUpdate, error: updatedError } = await supabase
+        .from("view_user_roles_with_details")
+        .select("assignment_updated_at")
+        .eq("user_id", user.id)
+        .limit(1)
+        .order("assignment_updated_at", { ascending: false })
+        .single();
+
+      if (updatedError) console.log("Updated error: ", updatedError);
+      let updatedRoles: ViewUserRolesWithDetails[] | null = null;
+
+      if (
+        payload.app_metadata?.last_role_sync &&
+        latestUpdate?.assignment_updated_at
+      ) {
+        const lastRoleSync = new Date(payload.app_metadata?.last_role_sync);
+        const updated_at_date = new Date(latestUpdate?.assignment_updated_at);
+
+        if (
+          lastRoleSync &&
+          updated_at_date &&
+          updated_at_date.getTime() > lastRoleSync.getTime()
+        ) {
+          const { data: freshRoles } = await supabase
+            .from("view_user_roles_with_details")
+            .select("*")
+            .eq("user_id", user.id);
+          updatedRoles = freshRoles as ViewUserRolesWithDetails[];
+        }
+      }
+
       // JWT status log
       if (this.shouldLogAuth(user.id, userRoles)) {
         const roleNames = userRoles
@@ -137,7 +168,7 @@ export class AuthMiddleware implements NestMiddleware {
 
       req.supabase = supabase;
       req.user = user;
-      req.userRoles = userRoles;
+      req.userRoles = updatedRoles ?? userRoles;
 
       return next();
     } catch (err: unknown) {
