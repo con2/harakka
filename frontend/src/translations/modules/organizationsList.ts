@@ -155,7 +155,7 @@ export const organizationDelete = {
   toast: {
     loading: {
       en: "Deleting organization...",
-      fi: "Organisaatiota poistetaan...",
+      fi: "Poistetaan organisaatiota...",
     },
     success: {
       en: "Organization deleted successfully.",
@@ -169,11 +169,11 @@ export const organizationDelete = {
   messages: {
     invalidId: {
       en: "Invalid organization ID.",
-      fi: "Virheellinen organisaation tunniste.",
+      fi: "Virheellinen organisaation tunnus.",
     },
     generalError: {
       en: "Something went wrong.",
-      fi: "Jokin meni pieleen.",
+      fi: "Jotain meni pieleen.",
     },
   },
 };
