@@ -19,7 +19,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
   PaymentStatus,
-  ValidBooking,
+  ValidBookingOrder,
   BookingUserViewRow,
   BookingStatus,
   BookingWithDetails,
@@ -64,7 +64,7 @@ const BookingList = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
-  const [booking, setBooking] = useState<ValidBooking>("booking_number");
+  const [orderBy, setOrderBy] = useState<ValidBookingOrder>("booking_number");
   const [ascending, setAscending] = useState<boolean | null>(null);
   const { totalPages, page } = useAppSelector(selectBookingPagination);
   // Translation
@@ -97,8 +97,9 @@ const BookingList = () => {
     setSearchQuery(e.target.value);
   };
 
-  const handleBooking = (booking: string) =>
-    setBooking(booking as ValidBooking);
+  const handleOrderBy = (orderBy: string) =>
+    setOrderBy(orderBy as ValidBookingOrder);
+
   const handleAscending = (ascending: boolean | null) =>
     setAscending(ascending);
 
@@ -106,7 +107,7 @@ const BookingList = () => {
   useEffect(() => {
     void dispatch(
       getOrderedBookings({
-        ordered_by: booking,
+        ordered_by: orderBy,
         page: currentPage,
         limit: 10,
         searchquery: debouncedSearchQuery,
@@ -118,7 +119,7 @@ const BookingList = () => {
     debouncedSearchQuery,
     statusFilter,
     page,
-    booking,
+    orderBy,
     dispatch,
     currentPage,
     ascending,
@@ -334,7 +335,7 @@ const BookingList = () => {
             onClick={() =>
               dispatch(
                 getOrderedBookings({
-                  ordered_by: booking,
+                  ordered_by: orderBy,
                   page: currentPage,
                   limit: 10,
                   searchquery: debouncedSearchQuery,
@@ -409,10 +410,11 @@ const BookingList = () => {
           pageIndex={currentPage - 1}
           pageCount={totalPages}
           onPageChange={(page) => handlePageChange(page + 1)}
-          booking={booking}
+          order={orderBy}
           ascending={ascending}
-          handleBooking={handleBooking}
+          handleOrder={handleOrderBy}
           handleAscending={handleAscending}
+          originalSorting="booking_number"
         />
       </div>
 
