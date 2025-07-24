@@ -74,7 +74,7 @@ export class UserService {
     id: string,
     user: Partial<CreateUserDto>,
     req: AuthRequest,
-  ): Promise<UserProfile | null> {
+  ): Promise<UserProfile> {
     const supabase = req.supabase;
 
     const { data, error }: PostgrestSingleResponse<UserProfile> = await supabase
