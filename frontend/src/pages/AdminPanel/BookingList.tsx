@@ -82,7 +82,7 @@ const BookingList = () => {
   /*----------------------handlers----------------------------------*/
   const handleViewDetails = (booking: BookingUserViewRow) => {
     dispatch(selectBooking(booking));
-    dispatch(getBookingItems(booking.id!));
+    void dispatch(getBookingItems(booking.id!));
     setShowDetailsModal(true);
   };
 
