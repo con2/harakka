@@ -37,7 +37,7 @@ export class UserService {
     return data;
   }
 
-  async getUserById(id: string, req: AuthRequest): Promise<UserProfile | null> {
+  async getUserById(id: string, req: AuthRequest): Promise<UserProfile> {
     const supabase = req.supabase;
 
     const { data, error }: PostgrestSingleResponse<UserProfile> = await supabase
@@ -51,7 +51,7 @@ export class UserService {
     }
     return data;
   }
-  async getCurrentUser(req: AuthRequest): Promise<UserProfile | null> {
+  async getCurrentUser(req: AuthRequest): Promise<UserProfile> {
     const supabase = req.supabase;
     const userId = req.user?.id;
     if (!userId) {
