@@ -70,7 +70,7 @@ const Logs: React.FC = () => {
   const apiLevelForErrors = logTypeFilter === "errors" ? "error" : apiLevel;
 
   useEffect(() => {
-    dispatch(
+    void dispatch(
       getAllLogs({
         page: pageIndex + 1,
         limit: pageSize,
@@ -91,7 +91,7 @@ const Logs: React.FC = () => {
   ]);
 
   const refreshLogs = () => {
-    dispatch(
+    void dispatch(
       getAllLogs({
         page: pageIndex + 1,
         limit: pageSize,

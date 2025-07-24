@@ -139,14 +139,14 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
-    dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
-    navigate(`/storage/items/${itemId}`);
+    void dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
+    void navigate(`/storage/items/${itemId}`);
   };
 
   // Handle adding item to cart
   const handleAddToCart = () => {
     if (item) {
-      dispatch(
+      void dispatch(
         addToCart({
           item: item,
           quantity: quantity,
@@ -189,7 +189,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           });
         });
     }
-  }, [item.id, startDate, endDate]);
+  }, [item.id, startDate, endDate, item.items_number_currently_in_storage]);
 
   const isItemAvailableForTimeframe = availabilityInfo.availableQuantity > 0;
 
@@ -316,7 +316,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
               size="sm"
               onClick={() => {
                 console.log(
-                  `Quantity: ${quantity}, availableQUantity: ${availabilityInfo}`,
+                  `Quantity: ${quantity}, availableQQuantity: ${availabilityInfo.availableQuantity}`,
                 );
                 setQuantity(
                   // HIER!!

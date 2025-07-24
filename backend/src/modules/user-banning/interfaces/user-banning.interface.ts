@@ -1,25 +1,52 @@
-import { Database } from "@common/database.types";
+import { Database } from "@common/supabase.types";
 
-// User Ban History table types
-export type UserBanHistoryRow =
-  Database["public"]["Tables"]["user_ban_history"]["Row"];
-export type UserBanHistoryInsert =
-  Database["public"]["Tables"]["user_ban_history"]["Insert"];
-export type UserBanHistoryUpdate =
-  Database["public"]["Tables"]["user_ban_history"]["Update"];
+// Extract types directly from common Supabase types
+type BanType =
+  Database["public"]["Tables"]["user_ban_history"]["Row"]["ban_type"];
 
-// User Organization Roles table types
-export type UserOrganizationRoleRow =
-  Database["public"]["Tables"]["user_organization_roles"]["Row"];
-export type UserOrganizationRoleInsert =
-  Database["public"]["Tables"]["user_organization_roles"]["Insert"];
-export type UserOrganizationRoleUpdate =
-  Database["public"]["Tables"]["user_organization_roles"]["Update"];
+export interface BanForRoleDto {
+  userId: string;
+  organizationId: string;
+  roleId: string;
+  banReason: string;
+  isPermanent?: boolean;
+  notes?: string;
+}
 
-// View types
-export type ViewUserBanStatusRow =
-  Database["public"]["Views"]["view_user_ban_status"]["Row"];
+export interface BanForOrgDto {
+  userId: string;
+  organizationId: string;
+  banReason: string;
+  isPermanent?: boolean;
+  notes?: string;
+}
 
-// Extract specific types from table definitions
-export type BanType = UserBanHistoryRow["ban_type"];
-export type BanAction = UserBanHistoryRow["action"];
+export interface BanForAppDto {
+  userId: string;
+  banReason: string;
+  isPermanent?: boolean;
+  notes?: string;
+}
+
+export interface UnbanDto {
+  userId: string;
+  banType: BanType;
+  organizationId?: string; // Required for banForOrg
+  roleId?: string; // Required for banForRole
+  notes?: string;
+}
+
+// Operation result type
+export interface BanOperationResult {
+  success: boolean;
+  message: string;
+  data?: unknown;
+}
+
+// User ban status check type
+export interface UserBanStatusCheck {
+  userId: string;
+  isBannedFromApp: boolean;
+  bannedFromOrganizations: string[];
+  bannedFromRoles: string[];
+}

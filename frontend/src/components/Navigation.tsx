@@ -48,7 +48,7 @@ export const Navigation = () => {
       confirmText: t.navigation.toast.confirmText[lang],
       cancelText: t.navigation.toast.cancelText[lang],
       onConfirm: () => {
-        signOut();
+        void signOut();
       },
       onCancel: () => {
         toast.success(t.navigation.toast.success[lang]);
@@ -172,7 +172,7 @@ export const Navigation = () => {
                 className="p-o m-0"
                 size={"sm"}
                 onClick={() => {
-                  navigate("/profile");
+                  void navigate("/profile");
                 }}
               >
                 {/* Show name on desktop, icon on mobile */}

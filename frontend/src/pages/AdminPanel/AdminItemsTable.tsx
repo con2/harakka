@@ -81,20 +81,20 @@ const AdminItemsTable = () => {
     setShowModal(true); // Show the modal
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     toastConfirm({
       title: t.adminItemsTable.messages.deletion.title[lang],
       description: t.adminItemsTable.messages.deletion.description[lang],
       confirmText: t.adminItemsTable.messages.deletion.confirm[lang],
       cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
-      onConfirm: async () => {
+      onConfirm: () => {
         try {
-          toast.promise(dispatch(deleteItem(id)).unwrap(), {
+          void toast.promise(dispatch(deleteItem(id)).unwrap(), {
             loading: t.adminItemsTable.messages.toast.deleting[lang],
             success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
             error: t.adminItemsTable.messages.toast.deleteFail[lang],
           });
-          dispatch(fetchAllItems({ page: 1, limit: limit }));
+          void dispatch(fetchAllItems({ page: 1, limit: limit }));
         } catch {
           toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
         }
@@ -124,7 +124,7 @@ const AdminItemsTable = () => {
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
     if (debouncedSearchQuery || order) {
-      dispatch(
+      void dispatch(
         fetchOrderedItems({
           ordered_by: order,
           page: currentPage,
@@ -138,7 +138,7 @@ const AdminItemsTable = () => {
         }),
       );
     } else {
-      dispatch(fetchAllItems({ page: currentPage, limit: limit }));
+      void dispatch(fetchAllItems({ page: currentPage, limit: limit }));
     }
   }, [
     dispatch,
@@ -154,7 +154,7 @@ const AdminItemsTable = () => {
 
   //fetch tags list
   useEffect(() => {
-    if (tags.length === 0) dispatch(fetchAllTags({ limit: 20 }));
+    if (tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
   }, [dispatch, tags.length, items.length]);
 
   const deletableItems = useAppSelector((state) => state.items.deletableItems);
@@ -358,9 +358,9 @@ const AdminItemsTable = () => {
               >
                 {tagFilter.length > 0
                   ? t.adminItemsTable.filters.tags.filtered[lang].replace(
-                    "{count}",
-                    tagFilter.length.toString(),
-                  )
+                      "{count}",
+                      tagFilter.length.toString(),
+                    )
                   : t.adminItemsTable.filters.tags.filter[lang]}
               </Button>
             </PopoverTrigger>
