@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   {
     // Add ecosystem.config.js to ignores
-    ignores: ["eslint.config.mjs", "ecosystem.config.js", "dist", "node_modules"],
+    ignores: ["eslint.config.mjs", "ecosystem.config.js", "dist", "node_modules", "src/types/supabase.types.ts"],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
