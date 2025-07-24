@@ -194,7 +194,6 @@ export const fetchTagsForItem = createAsyncThunk(
   "tags/fetchTagsForItem",
   async (itemId: string, { rejectWithValue }) => {
     try {
-      console.log("fetching tags for item: ", itemId);
       const data = await tagsApi.getTagsByItem(itemId);
       return data;
     } catch (error: unknown) {
