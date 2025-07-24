@@ -30,7 +30,7 @@ import {
   StorageItemsRow,
   UserProfilesRow,
   BookingRow,
-  ValidBooking,
+  ValidBookingOrder,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { StorageLocationsService } from "../storage-locations/storage-locations.service";
@@ -1016,7 +1016,7 @@ export class BookingService {
     page: number,
     limit: number,
     ascending: boolean,
-    order_by: ValidBooking,
+    order_by: ValidBookingOrder,
     searchquery?: string,
     status_filter?: string,
   ) {
