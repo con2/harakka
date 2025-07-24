@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   assignTagToItem,
+  fetchTagsForItem,
   selectAllTags,
   selectSelectedTags,
   selectTagsLoading,
@@ -24,6 +25,10 @@ const TagAssignmentForm: React.FC<TagAssignFormProps> = ({ itemId }) => {
   const existingTags = useAppSelector(selectSelectedTags); // Tags assigned to this item
   // Translation
   const { lang } = useLanguage();
+
+  useEffect(() => {
+    void dispatch(fetchTagsForItem(itemId)); // Fetch existing tags assigned to the item
+  }, [itemId, dispatch]);
 
   // Update the useEffect to initialize selectedTags from existingTags
   useEffect(() => {

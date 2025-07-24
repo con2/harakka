@@ -12,6 +12,8 @@ import {
   selectAllTags,
   selectTagsLoading,
   selectSelectedTags,
+  fetchAllTags,
+  fetchTagsForItem,
 } from "@/store/slices/tagSlice";
 import { Tag } from "@/types/tag";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -41,6 +43,13 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
   const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]);
   // Translation
   const { lang } = useLanguage();
+
+  useEffect(() => {
+    if (open && tags.length === 0) {
+      void dispatch(fetchAllTags({ limit: 20 }));
+      void dispatch(fetchTagsForItem(itemId));
+    }
+  }, [open, dispatch, itemId, tags.length]);
 
   useEffect(() => {
     if (selectedTags) {

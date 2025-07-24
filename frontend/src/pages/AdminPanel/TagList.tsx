@@ -1,9 +1,9 @@
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useEffect, useState } from "react";
-import { Button } from "../../ui/button";
+import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle } from "lucide-react";
-import { PaginatedDataTable } from "../../ui/data-table-paginated";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { Tag, TagAssignmentFilter } from "@/types";
 import {
   fetchFilteredTags,
@@ -14,7 +14,6 @@ import {
   selectTagsTotalPages,
   updateTag,
 } from "@/store/slices/tagSlice";
-import AddTagModal from "./AddTagModal";
 import {
   Dialog,
   DialogContent,
@@ -22,13 +21,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "../../ui/input";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import TagDelete from "./TagDelete";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import TagDelete from "@/components/Admin/Items/TagDelete";
+import AddTagModal from "@/components/Admin/Items/AddTagModal";
 
 const TagList = () => {
   const dispatch = useAppDispatch();
@@ -69,7 +69,7 @@ const TagList = () => {
 
   // Fetch tags when search term or assignment filter changes
   useEffect(() => {
-    dispatch(
+    void dispatch(
       fetchFilteredTags({
         page: currentPage,
         limit: 10,
@@ -101,7 +101,7 @@ const TagList = () => {
   // Fetch items once
   useEffect(() => {
     if (items.length === 0) {
-      dispatch(fetchAllItems({ page: 1, limit: 10 }));
+      void dispatch(fetchAllItems({ page: 1, limit: 10 }));
     }
   }, [dispatch, items.length]);
 
@@ -150,7 +150,7 @@ const TagList = () => {
       ).unwrap();
       toast.success(t.tagList.editModal.messages.success[lang]);
       // Refresh the current page
-      dispatch(
+      void dispatch(
         fetchFilteredTags({
           page: currentPage,
           limit: 10,
@@ -254,7 +254,7 @@ const TagList = () => {
                   setCurrentPage(targetPage);
                 }
 
-                dispatch(
+                void dispatch(
                   fetchFilteredTags({
                     page: targetPage,
                     limit: 10,
@@ -339,7 +339,7 @@ const TagList = () => {
                   // When a new tag is created, go to the first page to see it
                   // (especially important if filters are applied)
                   setCurrentPage(1);
-                  dispatch(
+                  void dispatch(
                     fetchFilteredTags({
                       page: 1,
                       limit: 10,

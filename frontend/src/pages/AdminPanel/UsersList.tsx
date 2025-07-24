@@ -6,9 +6,6 @@ import {
   fetchAllUsers,
   selectAllUsers,
   selectError,
-  selectIsAdmin,
-  selectIsSuperVera,
-  selectIsUser,
   selectLoading,
 } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
@@ -17,11 +14,16 @@ import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { PaginatedDataTable } from "../../ui/data-table-paginated";
-import AddUserModal from "./AddUserModal";
-import UserDeleteButton from "./UserDeleteButton";
-import UserEditModal from "./UserEditModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useRoles } from "@/hooks/useRoles";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
+import AddUserModal from "@/components/Admin/UserManagement/AddUserModal";
+import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
+import UserEditModal from "@/components/Admin/UserManagement/UserEditModal";
+import UserBanActionsDropdown from "@/components/Admin/UserManagement/Banning/UserBanActionsDropdown";
+import UserBanModal from "@/components/Admin/UserManagement/Banning/UserBanModal";
+import UserBanHistoryModal from "@/components/Admin/UserManagement/Banning/UserBanHistoryModal";
+import UnbanUserModal from "@/components/Admin/UserManagement/Banning/UnbanUserModal";
 
 const UsersList = () => {
   const dispatch = useAppDispatch();
@@ -29,20 +31,42 @@ const UsersList = () => {
   const users = useAppSelector(selectAllUsers);
   const loading = useAppSelector(selectLoading);
   const error = useAppSelector(selectError);
-  const isAdmin = useAppSelector(selectIsAdmin);
-  const isSuperVera = useAppSelector(selectIsSuperVera);
-  const isUser = useAppSelector(selectIsUser);
+  const { hasAnyRole } = useRoles();
+  const isAuthorized = hasAnyRole([
+    "admin",
+    "main_admin",
+    "superAdmin",
+    "superVera",
+  ]);
+  const isSuperAdmin = hasAnyRole(["superAdmin", "superVera"]); // TODO: replace with hasRole(["superAdmin"]) once superVera is obsolete
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  // Modal state management
+  const [activeUser, setActiveUser] = useState<UserProfile | null>(null);
+  const [activeModal, setActiveModal] = useState<
+    "ban" | "unban" | "history" | null
+  >(null);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
-  const isAuthorized = isAdmin || isSuperVera || isUser;
   const closeModal = () => setIsModalOpen(false);
   // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
+
+  // Close modals when user changes
+  useEffect(() => {
+    if (!activeUser) {
+      setActiveModal(null);
+    }
+  }, [activeUser]);
+
+  // Reset modal state
+  const resetModalState = () => {
+    setActiveUser(null);
+    setActiveModal(null);
+  };
 
   useEffect(() => {
     if (
@@ -51,7 +75,7 @@ const UsersList = () => {
       users.length === 0 &&
       isModalOpen === true
     ) {
-      dispatch(fetchAllUsers());
+      void dispatch(fetchAllUsers());
     }
   }, [authLoading, isAuthorized, users.length, isModalOpen, dispatch]);
 
@@ -139,15 +163,45 @@ const UsersList = () => {
       enableColumnFilter: false,
       cell: ({ row }) => {
         const targetUser = row.original;
-        const canEdit = isSuperVera || (isAdmin && targetUser.role === "user");
+        // logic needs to be updated based on who gets to ban whom
+        const canEdit = isAuthorized;
         const canDelete =
-          isSuperVera || (isAdmin && targetUser.role === "user");
+          isSuperAdmin || (isAuthorized && targetUser.role === "user");
+        const canBan =
+          (isSuperAdmin && targetUser.role === "admin") ||
+          (isAuthorized && targetUser.role === "user");
+
+        const handleBanClick = () => {
+          setActiveUser(targetUser);
+          setActiveModal("ban");
+        };
+
+        const handleUnbanClick = () => {
+          setActiveUser(targetUser);
+          setActiveModal("unban");
+        };
+
+        const handleHistoryClick = () => {
+          setActiveUser(targetUser);
+          setActiveModal("history");
+        };
 
         return (
           <div className="flex gap-2">
             {canEdit && <UserEditModal user={targetUser} />}
             {canDelete && (
-              <UserDeleteButton id={targetUser.id} closeModal={closeModal} />
+              <DeleteUserButton id={targetUser.id} closeModal={closeModal} />
+            )}
+            {(canBan || isSuperAdmin || isAuthorized) && (
+              <UserBanActionsDropdown
+                user={targetUser}
+                canBan={canBan}
+                isSuperAdmin={isSuperAdmin}
+                isAuthorized={isAuthorized}
+                onBanClick={handleBanClick}
+                onUnbanClick={handleUnbanClick}
+                onHistoryClick={handleHistoryClick}
+              />
             )}
           </div>
         );
@@ -233,6 +287,32 @@ const UsersList = () => {
         pageCount={totalPages}
         onPageChange={handlePageChange}
       />
+
+      {/* Ban-related modals - only render the active modal */}
+      {activeUser && activeModal === "ban" && (
+        <UserBanModal
+          key={`ban-${activeUser.id}`}
+          user={activeUser}
+          initialOpen={true}
+          onClose={resetModalState}
+        />
+      )}
+      {activeUser && activeModal === "unban" && (
+        <UnbanUserModal
+          key={`unban-${activeUser.id}`}
+          user={activeUser}
+          initialOpen={true}
+          onClose={resetModalState}
+        />
+      )}
+      {activeUser && activeModal === "history" && (
+        <UserBanHistoryModal
+          key={`history-${activeUser.id}`}
+          user={activeUser}
+          initialOpen={true}
+          onClose={resetModalState}
+        />
+      )}
     </div>
   );
 };

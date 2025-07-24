@@ -19,7 +19,7 @@ export const UserProfileLoader = () => {
   useEffect(() => {
     // Wait for authLoading to finish and only fetch once
     if (!authLoading && user?.id && !fetchedOnce.current && !isAuthPage) {
-      dispatch(getCurrentUser());
+      void dispatch(getCurrentUser());
       fetchedOnce.current = true;
     }
   }, [user?.id, authLoading, dispatch, isAuthPage]);

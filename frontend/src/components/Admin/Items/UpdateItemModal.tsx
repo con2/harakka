@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAppDispatch } from "@/store/hooks";
-import { selectItemsLoading, updateItem } from "@/store/slices/itemsSlice";
+import { fetchAllItems, selectItemsLoading, updateItem } from "@/store/slices/itemsSlice";
 import { Item, ItemImageAvailabilityInfo } from "@/types";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -155,18 +155,28 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
     setLoading(true);
 
     try {
-      // Create a clean copy of the data without the properties that should not be sent
-      const cleanedData = { ...formData };
-      // Remove properties that don't exist as columns in the database table
-      delete cleanedData.storage_item_tags;
-      delete cleanedData.tagIds;
-      if ("storage_locations" in cleanedData)
-        delete cleanedData.storage_locations;
+      // Clean the data by only including the fields that should be sent to the database
+      const {
+        // Remove joined/computed fields that exist on Item type
+        storage_item_tags: _storage_item_tags,
+        tagIds: _tagIds,
+        location_name: _location_name,
+        created_at: _created_at,
+        // Remove any other fields that don't belong in the database update
+        average_rating: _average_rating,
+        ...cleanedData
+      } = formData;
 
-      // Explicitly ensure location_id is included
+      // Only send the core database fields
       const updateData = {
-        ...cleanedData,
-        location_id: formData.location_id,
+        id: cleanedData.id,
+        location_id: cleanedData.location_id,
+        items_number_total: cleanedData.items_number_total,
+        items_number_currently_in_storage:
+          cleanedData.items_number_currently_in_storage,
+        price: cleanedData.price,
+        is_active: cleanedData.is_active,
+        translations: cleanedData.translations,
       };
 
       await dispatch(
@@ -175,6 +185,7 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
       await dispatch(
         assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
       ).unwrap();
+      void dispatch(fetchAllItems({ page: 1, limit: 10 })); // Refresh items list after update
       toast.success(t.updateItemModal.messages.success[lang]);
       onClose();
     } catch (error) {

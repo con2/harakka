@@ -12,6 +12,7 @@ export * from "./booking";
 export * from "./tag";
 export * from "./timeframe";
 export * from "./user";
+export * from "./userBanning";
 
 // Store/state related types
 export * from "./store";

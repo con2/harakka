@@ -15,7 +15,11 @@ import { SupabaseService } from "../supabase/supabase.service";
 import { TablesUpdate } from "@common/supabase.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
-import { ApiSingleResponse } from "../../../../common/response.types"; // Import ApiSingleResponse for type safety
+import {
+  ApiResponse,
+  ApiSingleResponse,
+} from "../../../../common/response.types"; // Import ApiSingleResponse for type safety
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 // this is used by the controller
 
 @Injectable()
@@ -24,16 +28,18 @@ export class StorageItemsService {
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
   ) {}
 
-  async getAllItems(page: number, limit: number): Promise<StorageItem[]> {
+  async getAllItems(
+    page: number,
+    limit: number,
+  ): Promise<ApiResponse<StorageItem>> {
     const supabase = this.supabaseClient.getServiceClient();
     const { from, to } = getPaginationRange(page, limit);
 
     // Updated query to join storage_item_tags with tags table
-    const { data, error }: PostgrestResponse<StorageItemWithJoin> =
-      (await supabase
-        .from("storage_items")
-        .select(
-          `
+    const result: PostgrestResponse<StorageItemWithJoin> = (await supabase
+      .from("storage_items")
+      .select(
+        `
         *,
         storage_item_tags (
           tag_id,
@@ -52,19 +58,17 @@ export class StorageItemsService {
           is_active
         )
       `,
-          { count: "exact" },
-        )
-        .range(from, to)
-        .eq("is_deleted", false)) as PostgrestSingleResponse<
-        StorageItemWithJoin[]
-      >; // Explicitly select tags and their translations by joining the tags table - show only undeleted items
+        { count: "exact" },
+      )
+      .range(from, to)
+      .eq("is_deleted", false)) as PostgrestSingleResponse<
+      StorageItemWithJoin[]
+    >; // Explicitly select tags and their translations by joining the tags table - show only undeleted items
 
-    if (error) {
-      throw new Error(error.message);
-    }
+    if (result.error) handleSupabaseError(result.error);
 
     // Structure the result to include both tags and location data
-    return data.map(
+    const mappedData = result.data.map(
       (item: StorageItemWithJoin): StorageItem => ({
         ...item,
         storage_item_tags:
@@ -74,6 +78,14 @@ export class StorageItemsService {
         location_details: item.storage_locations || null,
       }),
     );
+
+    const pagination_meta = getPaginationMeta(result.count, page, limit);
+
+    return {
+      ...result,
+      data: mappedData,
+      metadata: pagination_meta,
+    };
   }
 
   // 2. get one item
@@ -496,5 +508,19 @@ export class StorageItemsService {
         count: null,
       };
     }
+  }
+  async getItemCount(
+    supabase: SupabaseClient,
+  ): Promise<ApiSingleResponse<number>> {
+    const result: PostgrestResponse<undefined> = await supabase
+      .from("storage_items")
+      .select(undefined, { count: "exact" });
+
+    if (result.error) handleSupabaseError(result.error);
+
+    return {
+      ...result,
+      data: result.count ?? 0,
+    };
   }
 }

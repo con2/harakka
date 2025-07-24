@@ -30,7 +30,7 @@ const AuthCallback = () => {
 
           if (accessToken) {
             // Navigate directly to password reset page
-            navigate(
+            void navigate(
               `/password-reset#access_token=${accessToken}&type=recovery`,
               {
                 replace: true,
@@ -47,17 +47,17 @@ const AuthCallback = () => {
 
         if (data?.session) {
           // For other auth flows, redirect to home or dashboard
-          navigate("/");
+          void navigate("/");
         } else {
-          navigate("/login");
+          void navigate("/login");
         }
       } catch (error) {
         console.error("Auth callback error:", error);
-        navigate("/login");
+        void navigate("/login");
       }
     };
 
-    handleAuthCallback();
+    void handleAuthCallback();
   }, [navigate]);
 
   return (

@@ -4,7 +4,7 @@ import {
   selectAllItems,
   selectItemsLoading,
   selectItemsError,
-  selectItemsLimit,
+  selectItemsPagination,
   fetchOrderedItems,
 } from "../../store/slices/itemsSlice";
 import ItemCard from "./ItemCard";
@@ -21,7 +21,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 const ItemsList: React.FC = () => {
   const filters = useOutletContext<FiltersState>(); // Get filters from context
   const dispatch = useAppDispatch();
-  const pageLimit = useAppSelector(selectItemsLimit);
+  const { limit: pageLimit } = useAppSelector(selectItemsPagination);
   // Redux state selectors
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
@@ -42,7 +42,7 @@ const ItemsList: React.FC = () => {
   // Fetch all items when the component mounts
   useEffect(() => {
     const active = isActive ? "active" : "inactive";
-    dispatch(
+    void dispatch(
       fetchOrderedItems({
         ordered_by: "created_at",
         ascending: true,

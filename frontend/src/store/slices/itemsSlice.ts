@@ -24,10 +24,13 @@ const initialState: ItemState = {
   errorContext: null,
   selectedItem: null,
   deletableItems: {},
-  page: 1,
-  limit: 10,
-  totalPages: 0,
-  total: 0,
+  item_pagination: {
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+    total: 0,
+  },
+  itemCount: 0,
 };
 
 // Fetch all available items
@@ -118,6 +121,20 @@ export const fetchOrderedItems = createAsyncThunk<
   },
 );
 
+// get items count (all items, active and inactive)
+export const getItemCount = createAsyncThunk(
+  "items/getItemCount",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await itemsApi.getItemCount();
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch bookings count"),
+      );
+    }
+  },
+);
+
 // Fetch single item by ID
 export const getItemById = createAsyncThunk<Item, string>(
   "items/getItemById",
@@ -138,7 +155,6 @@ export const createItem = createAsyncThunk(
   async (itemData: ItemFormData, { rejectWithValue }) => {
     try {
       const createdItem = await itemsApi.createItem(itemData);
-      console.log("Item created in API:", createdItem); // Debug log
       return createdItem;
     } catch (error: unknown) {
       return rejectWithValue(
@@ -212,6 +228,17 @@ export const itemsSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
+      .addCase(getItemCount.pending, (state) => {
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(getItemCount.fulfilled, (state, action) => {
+        state.itemCount = action.payload.data!;
+      })
+      .addCase(getItemCount.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
       .addCase(fetchAllItems.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -222,10 +249,7 @@ export const itemsSlice = createSlice({
         state.items = (action.payload.data ?? []) as Array<
           Item | ManageItemViewRow
         >;
-        const { total, totalPages, page } = action.payload.metadata;
-        state.total = total;
-        state.page = page;
-        state.totalPages = totalPages;
+        state.item_pagination = action.payload.metadata;
       })
       .addCase(fetchAllItems.rejected, (state, action) => {
         state.loading = false;
@@ -242,10 +266,7 @@ export const itemsSlice = createSlice({
         state.items = (action.payload.data ?? []) as Array<
           Item | ManageItemViewRow
         >;
-        const { total, totalPages, page } = action.payload.metadata;
-        state.total = total;
-        state.page = page;
-        state.totalPages = totalPages;
+        state.item_pagination = action.payload.metadata;
       })
       .addCase(fetchOrderedItems.rejected, (state, action) => {
         state.loading = false;
@@ -365,11 +386,10 @@ export const selectSelectedItem = (state: RootState) =>
   state.items.selectedItem;
 
 // Pagination data
-export const selectItemsPage = (state: RootState) => state.items.page;
-export const selectItemsLimit = (state: RootState) => state.items.limit;
-export const selectItemsTotalData = (state: RootState) => state.items.total;
-export const selectItemsTotalPages = (state: RootState) =>
-  state.items.totalPages;
+export const selectItemsPagination = (state: RootState) =>
+  state.items.item_pagination;
+export const selectTotalItemsCount = (state: RootState) =>
+  state.items.itemCount;
 
 // Actions
 export const { clearSelectedItem, updateItemTags } = itemsSlice.actions;

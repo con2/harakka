@@ -14,11 +14,10 @@ import {
   getItemById,
   selectAllItems,
   selectItemsError,
-  selectItemsLimit,
-  selectItemsPage,
-  selectItemsTotalPages,
-  selectSelectedItem,
+  selectItemsPagination,
+  selectItemsLoading,
   updateItem,
+  selectSelectedItem,
 } from "@/store/slices/itemsSlice";
 import {
   fetchAllTags,
@@ -32,21 +31,24 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "../ui/button";
-import { Checkbox } from "../ui/checkbox";
-import { Command, CommandGroup, CommandItem } from "../ui/command";
-import { PaginatedDataTable } from "../ui/data-table-paginated";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { toastConfirm } from "../ui/toastConfirm";
-import AddItemModal from "./Items/AddItemModal";
-import AssignTagsModal from "./Items/AssignTagsModal";
-import UpdateItemModal from "./Items/UpdateItemModal";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import AddItemModal from "@/components/Admin/Items/AddItemModal";
+import AssignTagsModal from "@/components/Admin/Items/AssignTagsModal";
+import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
   const items = useAppSelector(selectAllItems);
-  const [loading, setLoading] = useState(true);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
@@ -55,9 +57,6 @@ const AdminItemsTable = () => {
   const isSuperVera = useAppSelector(selectIsSuperVera);
   // Translation
   const { lang } = useLanguage();
-  const page = useAppSelector(selectItemsPage);
-  const totalPages = useAppSelector(selectItemsTotalPages);
-  const limit = useAppSelector(selectItemsLimit);
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   // filtering states:
@@ -73,32 +72,33 @@ const AdminItemsTable = () => {
   const [order, setOrder] = useState<ValidItemOrder>("created_at");
   const [ascending, setAscending] = useState<boolean | null>(null);
   const selectedItem = useAppSelector(selectSelectedItem);
+  const { page, totalPages, limit } = useAppSelector(selectItemsPagination);
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
 
   const handleEdit = (id: string) => {
     if (!selectedItem || id !== selectedItem.id) {
-      dispatch(getItemById(id));
-      dispatch(fetchTagsForItem(id));
+      void dispatch(getItemById(id));
+      void dispatch(fetchTagsForItem(id));
     }
     setShowModal(true); // Show the modal
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     toastConfirm({
       title: t.adminItemsTable.messages.deletion.title[lang],
       description: t.adminItemsTable.messages.deletion.description[lang],
       confirmText: t.adminItemsTable.messages.deletion.confirm[lang],
       cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
-      onConfirm: async () => {
+      onConfirm: () => {
         try {
-          toast.promise(dispatch(deleteItem(id)).unwrap(), {
+          void toast.promise(dispatch(deleteItem(id)).unwrap(), {
             loading: t.adminItemsTable.messages.toast.deleting[lang],
             success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
             error: t.adminItemsTable.messages.toast.deleteFail[lang],
           });
-          dispatch(fetchAllItems({ page: 1, limit: limit }));
+          void dispatch(fetchAllItems({ page: 1, limit: limit }));
         } catch {
           toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
         }
@@ -125,22 +125,19 @@ const AdminItemsTable = () => {
 
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
-    if (debouncedSearchQuery || order) {
-      dispatch(
-        fetchOrderedItems({
-          ordered_by: order,
-          page: currentPage,
-          limit: limit,
-          searchquery: debouncedSearchQuery,
-          ascending: ascending === false ? false : true,
-          tag_filters: tagFilter,
-          location_filter: [],
-          categories: [],
-          activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        }),
-      );
-      setLoading(false);
-    }
+    void dispatch(
+      fetchOrderedItems({
+        ordered_by: order,
+        page: currentPage,
+        limit: limit,
+        searchquery: debouncedSearchQuery,
+        ascending: ascending === false ? false : true,
+        tag_filters: tagFilter,
+        location_filter: [],
+        categories: [],
+        activity_filter: statusFilter !== "all" ? statusFilter : undefined,
+      }),
+    );
   }, [
     dispatch,
     ascending,
@@ -155,7 +152,7 @@ const AdminItemsTable = () => {
 
   //fetch tags list
   useEffect(() => {
-    if (tags.length === 0) dispatch(fetchAllTags({ limit: 20 }));
+    if (tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
   }, [dispatch, tags.length, items.length]);
 
   const deletableItems = useAppSelector((state) => state.items.deletableItems);

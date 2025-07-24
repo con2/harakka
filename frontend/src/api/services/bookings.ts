@@ -1,7 +1,13 @@
-import { ApiResponse } from "@common/response.types";
+import { ApiResponse, ApiSingleResponse } from "@common/response.types";
 import { api } from "../axios";
-import { BookingItem, Booking, CreateBookingDto, ValidBooking } from "@/types";
-import { BookingStatus, BookingUserView } from "../../types/booking";
+import { CreateBookingDto, ValidBooking } from "@/types";
+import {
+  BookingItemWithDetails,
+  BookingPreview,
+  BookingStatus,
+} from "../../types/booking";
+import { BookingItemUpdate } from "@common/bookings/booking-items.types";
+import { Booking } from "@common/bookings/booking.types";
 
 /**
  * API service for booking-related endpoints
@@ -12,7 +18,9 @@ export const bookingsApi = {
    * @param bookingData - Booking data including items
    * @returns Promise with created booking
    */
-  createBooking: async (bookingData: CreateBookingDto): Promise<Booking> => {
+  createBooking: async (
+    bookingData: CreateBookingDto,
+  ): Promise<BookingPreview> => {
     return api.post("/bookings", bookingData);
   },
 
@@ -25,8 +33,40 @@ export const bookingsApi = {
     userId: string,
     page: number,
     limit: number,
-  ): Promise<ApiResponse<Booking>> => {
-    return api.get(`/bookings/user/${userId}?page=${page}&limit=${limit}`);
+    status?: string,
+  ): Promise<ApiResponse<BookingPreview>> => {
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    if (status) params.append("status", status);
+    return api.get(`/bookings/user/${userId}?${params.toString()}`);
+  },
+
+  /**
+   * Get bookings for a specific user
+   * @param user_id - User ID of booking
+   * @param booking_id ID of the booking to fetch
+   * @returns Promise with user's bookings
+   */
+  getBookingByID: async (
+    booking_id: string,
+  ): Promise<ApiSingleResponse<BookingPreview>> => {
+    return api.get(`/booking-items/${booking_id}`);
+  },
+
+  /**
+   * Get items for a booking. Does not retrieve the booking itself.
+   * Use only if booking data has already been retrieved, or if only the booking-item data is needed.
+   * @param booking_id
+   * @returns
+   */
+  getBookingItems: async (
+    booking_id: string,
+    item_details: string[] = ["translations"],
+  ): Promise<ApiResponse<BookingItemWithDetails>> => {
+    return api.get(
+      `/booking-items/${booking_id}?item-details=${item_details.join(",")}`,
+    );
   },
 
   /**
@@ -37,7 +77,7 @@ export const bookingsApi = {
   getAllBookings: async (
     page: number,
     limit: number,
-  ): Promise<ApiResponse<Booking>> => {
+  ): Promise<ApiResponse<BookingPreview>> => {
     return api.get(`/bookings?page=${page}&limit=${limit}`);
   },
 
@@ -58,7 +98,7 @@ export const bookingsApi = {
    */
   updateBooking: async (
     bookingId: string,
-    items: BookingItem[],
+    items: BookingItemUpdate[],
   ): Promise<Booking> => {
     return api.put(`/bookings/${bookingId}/update`, { items });
   },
@@ -145,10 +185,18 @@ export const bookingsApi = {
     limit: number,
     searchquery?: string,
     status_filter?: BookingStatus,
-  ): Promise<ApiResponse<BookingUserView>> => {
+  ): Promise<ApiResponse<BookingPreview>> => {
     let call = `/bookings/ordered?booking=${ordered_by}&ascending=${ascending}&page=${page}&limit=${limit}`;
     if (searchquery) call += `&search=${searchquery}`;
     if (status_filter) call += `&status=${status_filter}`;
     return await api.get(call);
+  },
+
+  /**
+   * Get total amount of bookings in the system (active and inactive)
+   * @returns number
+   */
+  getBookingsCount: async (): Promise<ApiSingleResponse<number>> => {
+    return await api.get(`/bookings/count`);
   },
 };

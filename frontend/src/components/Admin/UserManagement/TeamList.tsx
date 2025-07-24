@@ -17,8 +17,8 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Button } from "../../ui/button";
 import AddTeamMemberModal from "./AddTeamMemberModal";
-import UserDeleteButton from "./UserDeleteButton";
 import { useAuth } from "@/hooks/useAuth";
+import DeleteUserButton from "./UserDeleteButton";
 
 const TeamList = () => {
   const dispatch = useAppDispatch();
@@ -39,7 +39,7 @@ const TeamList = () => {
 
   useEffect(() => {
     if (!authLoading && isSuperVera && users.length === 0) {
-      dispatch(fetchAllUsers());
+      void dispatch(fetchAllUsers());
     }
   }, [authLoading, isSuperVera, users.length, dispatch]);
 
@@ -130,7 +130,7 @@ const TeamList = () => {
       id: "delete",
       header: t.teamList.columns.delete[lang],
       cell: ({ row }) => (
-        <UserDeleteButton id={row.original.id} closeModal={() => {}} />
+        <DeleteUserButton id={row.original.id} closeModal={() => {}} />
       ),
     },
   ];
