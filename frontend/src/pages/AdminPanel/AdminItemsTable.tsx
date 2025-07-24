@@ -9,7 +9,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   deleteItem,
-  fetchAllItems,
   fetchOrderedItems,
   getItemById,
   selectAllItems,
@@ -73,6 +72,7 @@ const AdminItemsTable = () => {
   const [ascending, setAscending] = useState<boolean | null>(null);
   const selectedItem = useAppSelector(selectSelectedItem);
   const { page, totalPages, limit } = useAppSelector(selectItemsPagination);
+  const loading = useAppSelector(selectItemsLoading);
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
@@ -98,7 +98,6 @@ const AdminItemsTable = () => {
             success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
             error: t.adminItemsTable.messages.toast.deleteFail[lang],
           });
-          void dispatch(fetchAllItems({ page: 1, limit: limit }));
         } catch {
           toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
         }
