@@ -38,6 +38,12 @@ const UsersList = () => {
   const allUserRoles = useAppSelector(selectAllUserRoles);
   const availableRoles = useAppSelector(selectAvailableRoles);
   const { hasAnyRole, refreshAllUserRoles } = useRoles();
+  useEffect(() => {
+    if (!allUserRoles.length) {
+      void refreshAllUserRoles();
+    }
+  }, [allUserRoles.length, refreshAllUserRoles]);
+  console.log("USER ROLES", allUserRoles);
   const isAuthorized = hasAnyRole([
     "admin",
     "main_admin",

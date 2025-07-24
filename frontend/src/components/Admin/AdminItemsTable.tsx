@@ -20,8 +20,8 @@ import {
   updateItem,
 } from "@/store/slices/itemsSlice";
 import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
-import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
+import { useRoles } from "@/hooks/useRoles";
 import { Item, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle, Trash2 } from "lucide-react";
@@ -47,8 +47,9 @@ const AdminItemsTable = () => {
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const isAdmin = useAppSelector(selectIsAdmin);
-  const isSuperVera = useAppSelector(selectIsSuperVera);
+  const { hasAnyRole } = useRoles();
+  const isAdmin = hasAnyRole(["admin", "main_admin"]);
+  const isSuperAdmin = hasAnyRole(["super_admin", "superVera"]);
   // Translation
   const { lang } = useLanguage();
   const page = useAppSelector(selectItemsPage);
@@ -248,8 +249,8 @@ const AdminItemsTable = () => {
       enableColumnFilter: false,
       cell: ({ row }) => {
         const targetUser = row.original;
-        const canEdit = isSuperVera || isAdmin;
-        const canDelete = isSuperVera || isAdmin;
+        const canEdit = isSuperAdmin || isAdmin;
+        const canDelete = isSuperAdmin || isAdmin;
         const isDeletable = deletableItems[targetUser.id] !== false;
         return (
           <div className="flex gap-2">
