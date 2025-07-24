@@ -24,6 +24,10 @@ import UserBanHistoryModal from "./Banning/UserBanHistoryModal";
 import UnbanUserModal from "./Banning/UnbanUserModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
+import {
+  selectAllUserRoles,
+  selectAvailableRoles,
+} from "@/store/slices/rolesSlice";
 
 const UsersList = () => {
   const dispatch = useAppDispatch();
@@ -31,14 +35,16 @@ const UsersList = () => {
   const users = useAppSelector(selectAllUsers);
   const loading = useAppSelector(selectLoading);
   const error = useAppSelector(selectError);
-  const { hasAnyRole } = useRoles();
+  const allUserRoles = useAppSelector(selectAllUserRoles);
+  const availableRoles = useAppSelector(selectAvailableRoles);
+  const { hasAnyRole, refreshAllUserRoles } = useRoles();
   const isAuthorized = hasAnyRole([
     "admin",
     "main_admin",
-    "superAdmin",
+    "super_admin",
     "superVera",
   ]);
-  const isSuperAdmin = hasAnyRole(["superAdmin", "superVera"]); // TODO: replace with hasRole(["superAdmin"]) once superVera is obsolete
+  const isSuperAdmin = hasAnyRole(["super_admin", "superVera"]); // TODO: replace with hasRole(["super_admin"]) once superVera is obsolete
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -76,8 +82,24 @@ const UsersList = () => {
       isModalOpen === true
     ) {
       void dispatch(fetchAllUsers());
+      // Also fetch all user roles for filtering and display
+      void refreshAllUserRoles();
     }
-  }, [authLoading, isAuthorized, users.length, isModalOpen, dispatch]);
+  }, [
+    authLoading,
+    isAuthorized,
+    users.length,
+    isModalOpen,
+    dispatch,
+    refreshAllUserRoles,
+  ]);
+
+  // Helper function to get user's roles from the new role system
+  const getUserRoles = (userId: string) => {
+    return allUserRoles
+      .filter((role) => role.user_id === userId && role.is_active)
+      .map((role) => role.role_name);
+  };
 
   const filteredUsers = users
     .filter((u) => {
@@ -89,7 +111,9 @@ const UsersList = () => {
     })
     .filter((u) => {
       if (roleFilter === "all") return true;
-      return u.role === roleFilter;
+      // Check if user has the filtered role in the new role system
+      const userRoles = getUserRoles(u.id);
+      return userRoles.includes(roleFilter as (typeof userRoles)[number]);
     });
 
   // Reset to first page when filters change
@@ -142,15 +166,24 @@ const UsersList = () => {
         formatDate(new Date(row.original.created_at ?? ""), "d MMM yyyy"),
     },
     {
-      id: "role",
+      id: "roles",
       header: t.usersList.columns.role[lang],
-      size: 100,
-      enableSorting: true,
-      enableColumnFilter: true,
+      size: 150,
+      enableSorting: false,
+      enableColumnFilter: false,
       cell: ({ row }) => {
-        const userRole = row.original.role;
-        return userRole ? (
-          userRole
+        const userRoles = getUserRoles(row.original.id);
+        return userRoles.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {userRoles.map((role, index) => (
+              <span
+                key={index}
+                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
+              >
+                {role}
+              </span>
+            ))}
+          </div>
         ) : (
           <span className="text-slate-500">{t.usersList.status.na[lang]}</span>
         );
@@ -163,13 +196,15 @@ const UsersList = () => {
       enableColumnFilter: false,
       cell: ({ row }) => {
         const targetUser = row.original;
-        // logic needs to be updated based on who gets to ban whom
+        const targetUserRoles = getUserRoles(targetUser.id);
+
+        // Updated logic based on new role system
         const canEdit = isAuthorized;
         const canDelete =
-          isSuperAdmin || (isAuthorized && targetUser.role === "user");
+          isSuperAdmin || (isAuthorized && targetUserRoles.includes("user"));
         const canBan =
-          (isSuperAdmin && targetUser.role === "admin") ||
-          (isAuthorized && targetUser.role === "user");
+          (isSuperAdmin && targetUserRoles.includes("admin")) ||
+          (isAuthorized && targetUserRoles.includes("user"));
 
         const handleBanClick = () => {
           setActiveUser(targetUser);
@@ -250,13 +285,11 @@ const UsersList = () => {
             className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           >
             <option value="all">{t.usersList.filters.roles.all[lang]}</option>
-            <option value="user">{t.usersList.filters.roles.user[lang]}</option>
-            <option value="admin">
-              {t.usersList.filters.roles.admin[lang]}
-            </option>
-            <option value="superVera">
-              {t.usersList.filters.roles.superVera[lang]}
-            </option>
+            {availableRoles.map((role) => (
+              <option key={role.id} value={role.role}>
+                {role.role}
+              </option>
+            ))}
           </select>
           {(searchQuery || roleFilter !== "all") && (
             <Button
