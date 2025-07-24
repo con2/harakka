@@ -331,6 +331,9 @@ export const itemsSlice = createSlice({
         }
 
         // Find the item in local state, update only necessary properties
+        state.items.map((i) => {
+          if (i.id === updatedItem.id) Object.assign(i, action.payload);
+        });
         const index = state.items.findIndex((i) => i.id === updatedItem.id);
         Object.assign(state.items[index], updatedItem);
         state.selectedItem = updatedItem;
