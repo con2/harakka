@@ -65,6 +65,22 @@ export const organizationList = {
         fi: "Kuvaus",
         en: "Description",
       },
+      createdBy: {
+        fi: "Luonut",
+        en: "Created by",
+      },
+      updatedBy: {
+        fi: "Päivittänyt",
+        en: "Updated by",
+      },
+      createdAt: {
+        fi: "Luotu",
+        en: "Created at",
+      },
+      updatedAt: {
+        fi: "Päivitetty",
+        en: "Updated at",
+      },
     },
     placeholders: {
       name: {
@@ -84,6 +100,10 @@ export const organizationList = {
       save: {
         fi: "Tallenna",
         en: "Save",
+      },
+      close: {
+        fi: "Sulje",
+        en: "Close",
       },
     },
   },

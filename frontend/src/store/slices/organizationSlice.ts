@@ -128,7 +128,11 @@ export const softDeleteOrganization = createAsyncThunk(
 const organizationSlice = createSlice({
   name: "organization",
   initialState,
-  reducers: {},
+  reducers: {
+    setSelectedOrganization(state, action) {
+      state.selectedOrganization = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchAllOrganizations.pending, (state) => {
@@ -198,5 +202,6 @@ export const selectOrganizationLoading = (state: RootState) =>
   state.organizations.loading;
 export const selectOrganizationError = (state: RootState) =>
   state.organizations.error;
+export const { setSelectedOrganization } = organizationSlice.actions;
 
 export default organizationSlice.reducer;
