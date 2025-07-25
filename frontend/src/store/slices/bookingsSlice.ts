@@ -5,10 +5,10 @@ import {
   BookingsState,
   CreateBookingDto,
   PaymentStatus,
-  ValidBooking,
   BookingStatus,
   BookingPreview,
   BookingWithDetails,
+  ValidBookingOrder,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { BookingItemUpdate } from "@common/bookings/booking-items.types";
@@ -123,7 +123,7 @@ export const getOrderedBookings = createAsyncThunk(
       searchquery,
       status_filter,
     }: {
-      ordered_by: ValidBooking;
+      ordered_by: ValidBookingOrder;
       page: number;
       limit: number;
       searchquery?: string;
@@ -444,7 +444,12 @@ export const bookingsSlice = createSlice({
         // Use the bookingId from payload
         const bookingId = action.payload.bookingId;
 
-        // Also update in the user bookings array
+        // Also update in the bookings array
+        state.bookings.forEach((booking) => {
+          if (booking.id === bookingId) {
+            booking.status = "confirmed";
+          }
+        });
         state.userBookings.forEach((booking) => {
           if (booking.id === bookingId) {
             booking.status = "confirmed";
@@ -464,10 +469,12 @@ export const bookingsSlice = createSlice({
       })
       .addCase(updateBooking.fulfilled, (state, action) => {
         state.loading = false;
-        // bookingsAdapter.updateOne(state, {
-        //   id: action.payload.id,
-        //   changes: action.payload,
-        // });
+
+        state.bookings.forEach((booking) => {
+          if (booking.id === action.payload.id) {
+            Object.assign(booking, action.payload);
+          }
+        });
         state.userBookings.forEach((booking) => {
           if (booking.id === action.payload.id) {
             Object.assign(booking, action.payload);
@@ -490,13 +497,12 @@ export const bookingsSlice = createSlice({
         // Use the bookingId from payload
         const bookingId = action.payload.bookingId;
 
-        // Update the booking status in the normalized state
-        // bookingsAdapter.updateOne(state, {
-        //   id: bookingId,
-        //   changes: { status: "rejected" },
-        // });
-
         // Also update in the user bookings array
+        state.bookings.forEach((booking) => {
+          if (booking.id === bookingId) {
+            booking.status = "rejected";
+          }
+        });
         state.userBookings.forEach((booking) => {
           if (booking.id === bookingId) {
             booking.status = "rejected";
@@ -559,6 +565,11 @@ export const bookingsSlice = createSlice({
         state.loading = false;
         const { bookingId } = action.payload;
 
+        state.bookings.forEach((booking) => {
+          if (booking.id === bookingId) {
+            booking.status = "completed";
+          }
+        });
         state.userBookings.forEach((booking) => {
           if (booking.id === bookingId) {
             booking.status = "completed";
@@ -582,7 +593,9 @@ export const bookingsSlice = createSlice({
 
         // Update the booking in the normalized state
         state.bookings = state.bookings.map((booking) =>
-          booking.id === bookingId ? { ...booking, status: status! } : booking,
+          booking.id === bookingId
+            ? { ...booking, payment_status: status! }
+            : booking,
         );
       })
       .addCase(updatePaymentStatus.rejected, (state, action) => {

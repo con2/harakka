@@ -188,9 +188,8 @@ export class StorageItemsService {
   ): Promise<StorageItem> {
     const supabase = req["supabase"] as SupabaseClient;
     // Extract properties that shouldn't be sent to the database
-    const { tagIds, location_details, ...itemData } = item;
-
-    console.log("Updating item with data:", JSON.stringify(itemData, null, 2));
+    const { tagIds, ...itemData } = item;
+    if ("location_details" in item) delete item.location_details;
 
     // Update the main item
     const {
