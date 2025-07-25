@@ -229,6 +229,7 @@ const BookingList = () => {
         const booking = row.original;
         const isPending = booking.status === "pending";
         const isConfirmed = booking.status === "confirmed";
+        const isDeleted = booking.status === "deleted";
 
         return (
           <div className="flex space-x-1">
@@ -265,11 +266,12 @@ const BookingList = () => {
             )}
 
             {isConfirmed && <BookingPickupButton />}
-
-            <BookingDeleteButton
-              id={booking.id}
-              closeModal={() => setShowDetailsModal(false)}
-            />
+            {!isDeleted && (
+              <BookingDeleteButton
+                id={booking.id}
+                closeModal={() => setShowDetailsModal(false)}
+              />
+            )}
           </div>
         );
       },
