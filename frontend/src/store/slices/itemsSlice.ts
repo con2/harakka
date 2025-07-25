@@ -26,7 +26,6 @@ const initialState: ItemState = {
   deletableItems: {},
   item_pagination: {
     page: 1,
-    limit: 10,
     totalPages: 0,
     total: 0,
   },

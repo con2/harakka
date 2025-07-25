@@ -26,6 +26,10 @@ export interface Item extends BaseEntity, Translatable<ItemTranslation> {
   tagIds?: string[];
   storage_item_tags?: Tag[];
   location_name?: string;
+  location_details?: {
+    name: string;
+    address: string;
+  };
 }
 
 /**
@@ -40,7 +44,6 @@ export interface ItemState {
   deletableItems: Record<string, boolean>;
   item_pagination: {
     page: number;
-    limit: number;
     total: number;
     totalPages: number;
   };

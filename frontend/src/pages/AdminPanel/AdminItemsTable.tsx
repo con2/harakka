@@ -71,8 +71,9 @@ const AdminItemsTable = () => {
   const [order, setOrder] = useState<ValidItemOrder>("created_at");
   const [ascending, setAscending] = useState<boolean | null>(null);
   const selectedItem = useAppSelector(selectSelectedItem);
-  const { page, totalPages, limit } = useAppSelector(selectItemsPagination);
+  const { page, totalPages } = useAppSelector(selectItemsPagination);
   const loading = useAppSelector(selectItemsLoading);
+  const ITEMS_PER_PAGE = 10;
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
@@ -128,7 +129,7 @@ const AdminItemsTable = () => {
       fetchOrderedItems({
         ordered_by: order,
         page: currentPage,
-        limit: limit,
+        limit: ITEMS_PER_PAGE,
         searchquery: debouncedSearchQuery,
         ascending: ascending === false ? false : true,
         tag_filters: tagFilter,
@@ -143,7 +144,7 @@ const AdminItemsTable = () => {
     order,
     debouncedSearchQuery,
     currentPage,
-    limit,
+    ITEMS_PER_PAGE,
     page,
     tagFilter,
     statusFilter,
