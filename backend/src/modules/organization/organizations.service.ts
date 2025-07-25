@@ -134,19 +134,45 @@ export class OrganizationsService {
     return data;
   }
 
-  // 6. delete
+  // 6. hard-delete
   async deleteOrganization(
     req: AuthRequest,
     id: string,
   ): Promise<{ success: boolean; id: string }> {
     const supabase = this.getClient(req);
-    const { error } = await supabase
-      .from("organizations")
+
+    // deletion of the org roles first
+    const deleteRoles = supabase
+      .from("user_organization_roles")
       .delete()
-      .eq("id", id);
+      .eq("organization_id", id);
 
-    if (error) handleSupabaseError(error);
+    // delete org items
+    const deleteItems = supabase
+      .from("organization_items")
+      .delete()
+      .eq("organization_id", id);
 
+    // delete org locations
+    const deleteLocations = supabase
+      .from("organization_locations")
+      .delete()
+      .eq("organization_id", id);
+
+    // ... then delete the organization
+    const deleteOrg = supabase.from("organizations").delete().eq("id", id);
+
+    const [rolesResult, itemsResult, locationsResult, orgResult] =
+      await Promise.all([deleteRoles, deleteItems, deleteLocations, deleteOrg]);
+    const errors = [
+      rolesResult.error,
+      itemsResult.error,
+      locationsResult.error,
+      orgResult.error,
+    ].filter(Boolean);
+    if (errors.length > 0) {
+      throw new Error(errors.map((e) => e?.message).join("; "));
+    }
     return { success: true, id };
   }
 
