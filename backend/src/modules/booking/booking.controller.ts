@@ -11,7 +11,6 @@ import {
   Patch,
   UnauthorizedException,
   BadRequestException,
-  ForbiddenException,
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
@@ -20,6 +19,7 @@ import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { BookingStatus, ValidBooking } from "./types/booking.interface";
 import { BookingItem } from "@common/bookings/booking-items.types";
 import { Public, Roles } from "src/decorators/roles.decorator";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Controller("bookings")
 export class BookingController {
@@ -111,18 +111,7 @@ export class BookingController {
       const dtoWithUserId = { ...dto, user_id: userId };
       return this.bookingService.createBooking(dtoWithUserId, req.supabase);
     } catch (error) {
-      console.error("Booking creation failed:", error);
-
-      // Return a structured error but avoid 500
-      if (
-        error instanceof BadRequestException ||
-        error instanceof ForbiddenException
-      ) {
-        throw error;
-      }
-      throw new BadRequestException(
-        "There was an issue processing your booking. If this persists, please contact support.",
-      );
+      handleSupabaseError(error);
     }
   }
 
@@ -143,37 +132,28 @@ export class BookingController {
     @Req() req: AuthRequest,
   ) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.updateBooking(
-      id,
-      userId,
-      updatedItems,
-      supabase,
-    );
+    return this.bookingService.updateBooking(id, userId, updatedItems, req);
   }
 
   // rejects a booking by admin
   @Put(":id/reject")
   async reject(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.rejectBooking(id, userId, supabase);
+    return this.bookingService.rejectBooking(id, userId, req);
   }
 
   // cancels own booking by user or admin cancels any booking
   @Delete(":id/cancel")
   async cancel(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.cancelBooking(id, userId, supabase);
+    return this.bookingService.cancelBooking(id, userId, req);
   }
 
   // admin deletes booking
   @Delete(":id/delete")
   async delete(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.deleteBooking(id, userId, supabase);
+    return this.bookingService.deleteBooking(id, userId, req);
   }
 
   // admin returns items
