@@ -365,9 +365,9 @@ const TagList = () => {
             pageIndex={currentPage - 1}
             pageCount={totalPages}
             onPageChange={(page) => handlePageChange(page + 1)}
-            booking={order}
+            order={order}
             ascending={ascending}
-            handleBooking={handleOrder}
+            handleOrder={handleOrder}
             handleAscending={handleAscending}
             originalSorting="created_at"
           />

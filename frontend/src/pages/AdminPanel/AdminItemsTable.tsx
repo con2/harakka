@@ -451,8 +451,8 @@ const AdminItemsTable = () => {
         pageCount={totalPages}
         onPageChange={(page) => handlePageChange(page + 1)}
         handleAscending={handleAscending}
-        handleBooking={handleBooking}
-        booking={order}
+        handleOrder={handleBooking}
+        order={order}
         ascending={ascending}
         originalSorting="items_number_total"
       />
