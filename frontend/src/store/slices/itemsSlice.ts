@@ -26,7 +26,6 @@ const initialState: ItemState = {
   deletableItems: {},
   item_pagination: {
     page: 1,
-    limit: 10,
     totalPages: 0,
     total: 0,
   },
@@ -220,7 +219,7 @@ export const itemsSlice = createSlice({
     ) => {
       const { itemId, tags } = action.payload;
       const item = state.items.find((item) => item.id === itemId);
-      if (item) {
+      if (item && "storage_item_tags" in item) {
         item.storage_item_tags = tags;
       }
     },
@@ -331,8 +330,12 @@ export const itemsSlice = createSlice({
         }
 
         // Find the item in local state, update only necessary properties
+        state.items.map((i) => {
+          if (i.id === updatedItem.id) Object.assign(i, action.payload);
+        });
         const index = state.items.findIndex((i) => i.id === updatedItem.id);
         Object.assign(state.items[index], updatedItem);
+        state.selectedItem = updatedItem;
       })
       .addCase(updateItem.rejected, (state, action) => {
         state.error = action.payload as string;

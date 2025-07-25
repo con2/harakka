@@ -28,12 +28,13 @@ import {
   BookingItemRow,
   BookingWithItems,
   StorageItemsRow,
-  UserProfilesRow,
   BookingRow,
   ValidBookingOrder,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { StorageLocationsService } from "../storage-locations/storage-locations.service";
+import { RoleService } from "../role/role.service";
+import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 import { ApiResponse, ApiSingleResponse } from "@common/response.types";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { BookingPreview } from "@common/bookings/booking.types";
@@ -47,6 +48,7 @@ export class BookingService {
     private readonly supabaseService: SupabaseService,
     private readonly mailService: MailService,
     private readonly locationsService: StorageLocationsService,
+    private readonly roleService: RoleService,
     private readonly bookingItemsService: BookingItemsService,
   ) {}
 
@@ -376,8 +378,9 @@ export class BookingService {
     booking_id: string,
     userId: string,
     updatedItems: BookingItem[],
-    supabase: SupabaseClient,
+    req: AuthRequest,
   ) {
+    const supabase = req.supabase;
     // 5.1 check the booking
     const { data: booking } = await supabase
       .from("bookings")
@@ -387,26 +390,23 @@ export class BookingService {
 
     if (!booking) throw new BadRequestException("Booking not found");
 
-    // 5.2. check the user role
-    const { data: user } = await supabase
-      .from("user_profiles")
-      .select("role, email, full_name")
-      .eq("id", userId)
-      .single();
+    // 5.2. check permissions using RoleService
+    const isElevated = this.roleService.hasAnyRole(req, [
+      "admin",
+      "super_admin",
+      "main_admin",
+      "superVera",
+      "storage_manager",
+    ]);
 
-    if (!user) {
-      throw new BadRequestException("User not found");
-    }
-
-    const isAdmin = ["admin", "superVera", "service_role"].includes(user.role);
     const isOwner = booking.user_id === userId;
 
-    if (!isAdmin && !isOwner) {
+    if (!isElevated && !isOwner) {
       throw new ForbiddenException("Not allowed to update this booking");
     }
 
     // 5.4 Status check (users are restricted)
-    if (!isAdmin && booking.status !== "pending") {
+    if (booking.status !== "pending") {
       throw new ForbiddenException(
         "Your booking has been confirmed. You can't update it.",
       );
@@ -505,11 +505,8 @@ export class BookingService {
   }
 
   // 6. reject a Booking (Admin/SuperVera only)
-  async rejectBooking(
-    bookingId: string,
-    userId: string,
-    supabase: SupabaseClient,
-  ) {
+  async rejectBooking(bookingId: string, userId: string, req: AuthRequest) {
+    const supabase = req.supabase;
     // check if already rejected
     const { data: booking } = await supabase
       .from("bookings")
@@ -524,19 +521,14 @@ export class BookingService {
       throw new BadRequestException("Booking is already rejected");
     }
 
-    // 6.1 user role check
-    const { data: user } = await supabase
-      .from("user_profiles")
-      .select("role, email, full_name")
-      .eq("id", userId)
-      .single<UserProfilesRow>();
-
-    if (!user || !user.role) {
-      throw new ForbiddenException("User not found");
-    }
-
-    const isAdmin =
-      user.role && ["admin", "superVera"].includes(user.role?.trim());
+    // 6.1 user role check using RoleService
+    const isAdmin = this.roleService.hasAnyRole(req, [
+      "admin",
+      "super_admin",
+      "main_admin",
+      "superVera",
+      "storage_manager",
+    ]);
 
     if (!isAdmin) {
       throw new ForbiddenException("Only admins can reject bookings");
@@ -591,8 +583,9 @@ export class BookingService {
   async cancelBooking(
     bookingId: string,
     userId: string,
-    supabase: SupabaseClient,
+    req: AuthRequest,
   ): Promise<CancelBookingResponse> {
+    const supabase = req.supabase;
     // 7.1 check booking status
     const { data: booking } = await supabase
       .from("bookings")
@@ -610,23 +603,14 @@ export class BookingService {
       );
     }
 
-    // get user profile
-    // We should think about replacing these kinds of querries with just checking the request for the information we need. -Jon
-    const { data: userProfile, error: userProfileError } = await supabase
-      .from("user_profiles")
-      .select("role, email, full_name")
-      .eq("id", userId)
-      .single<UserProfilesRow>();
-
-    if (userProfileError || !userProfile || !userProfile.role) {
-      throw new BadRequestException("User profile not found");
-    }
-
-    // 7.2 permissions check
-
-    const isAdmin =
-      userProfile.role &&
-      ["admin", "superVera"].includes(userProfile.role?.trim());
+    // 7.2 permissions check using RoleService
+    const isAdmin = this.roleService.hasAnyRole(req, [
+      "admin",
+      "super_admin",
+      "main_admin",
+      "superVera",
+      "storage_manager",
+    ]);
     const isOwner = booking.user_id === userId;
 
     if (!isAdmin && !isOwner) {
@@ -695,11 +679,8 @@ export class BookingService {
   }
 
   // 8. delete a Booking and mark it as deleted
-  async deleteBooking(
-    bookingId: string,
-    userId: string,
-    supabase: SupabaseClient,
-  ) {
+  async deleteBooking(bookingId: string, userId: string, req: AuthRequest) {
+    const supabase = req.supabase;
     // 8.1 check booking in database
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
@@ -716,20 +697,14 @@ export class BookingService {
       throw new BadRequestException("Booking is already deleted");
     }
 
-    // 8.2 check user role
-    const { data: userProfile, error: userProfileError } = await supabase
-      .from("user_profiles")
-      .select("role")
-      .eq("id", userId)
-      .single<UserProfilesRow>();
-
-    if (userProfileError || !userProfile || !userProfile.role) {
-      throw new BadRequestException("User profile not found");
-    }
-
-    const isAdmin =
-      userProfile.role &&
-      ["admin", "superVera"].includes(userProfile.role?.trim());
+    // 8.2 check user role using RoleService
+    const isAdmin = this.roleService.hasAnyRole(req, [
+      "admin",
+      "super_admin",
+      "main_admin",
+      "superVera",
+      "storage_manager",
+    ]);
 
     if (!isAdmin) {
       throw new ForbiddenException(

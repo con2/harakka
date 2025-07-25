@@ -9,15 +9,20 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   deleteItem,
-  fetchAllItems,
   fetchOrderedItems,
+  getItemById,
   selectAllItems,
   selectItemsError,
   selectItemsPagination,
   selectItemsLoading,
   updateItem,
+  selectSelectedItem,
 } from "@/store/slices/itemsSlice";
-import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
+import {
+  fetchAllTags,
+  fetchTagsForItem,
+  selectAllTags,
+} from "@/store/slices/tagSlice";
 import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { Item, ValidItemOrder } from "@/types/item";
@@ -43,12 +48,10 @@ import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
   const items = useAppSelector(selectAllItems);
-  const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const [showModal, setShowModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const isAdmin = useAppSelector(selectIsAdmin);
   const isSuperVera = useAppSelector(selectIsSuperVera);
   // Translation
@@ -67,13 +70,19 @@ const AdminItemsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [order, setOrder] = useState<ValidItemOrder>("created_at");
   const [ascending, setAscending] = useState<boolean | null>(null);
-  const { page, totalPages, limit } = useAppSelector(selectItemsPagination);
+  const selectedItem = useAppSelector(selectSelectedItem);
+  const { page, totalPages } = useAppSelector(selectItemsPagination);
+  const loading = useAppSelector(selectItemsLoading);
+  const ITEMS_PER_PAGE = 10;
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
 
-  const handleEdit = (item: Item) => {
-    setSelectedItem(item); // Set the selected item
+  const handleEdit = (id: string) => {
+    if (!selectedItem || id !== selectedItem.id) {
+      void dispatch(getItemById(id));
+      void dispatch(fetchTagsForItem(id));
+    }
     setShowModal(true); // Show the modal
   };
 
@@ -90,7 +99,6 @@ const AdminItemsTable = () => {
             success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
             error: t.adminItemsTable.messages.toast.deleteFail[lang],
           });
-          void dispatch(fetchAllItems({ page: 1, limit: limit }));
         } catch {
           toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
         }
@@ -103,7 +111,6 @@ const AdminItemsTable = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setSelectedItem(null); // Reset selected item
   };
 
   const handleBooking = (order: string) =>
@@ -122,7 +129,7 @@ const AdminItemsTable = () => {
       fetchOrderedItems({
         ordered_by: order,
         page: currentPage,
-        limit: limit,
+        limit: ITEMS_PER_PAGE,
         searchquery: debouncedSearchQuery,
         ascending: ascending === false ? false : true,
         tag_filters: tagFilter,
@@ -137,7 +144,7 @@ const AdminItemsTable = () => {
     order,
     debouncedSearchQuery,
     currentPage,
-    limit,
+    ITEMS_PER_PAGE,
     page,
     tagFilter,
     statusFilter,
@@ -242,16 +249,16 @@ const AdminItemsTable = () => {
       enableSorting: false,
       enableColumnFilter: false,
       cell: ({ row }) => {
-        const targetUser = row.original;
+        const item = row.original;
         const canEdit = isSuperVera || isAdmin;
         const canDelete = isSuperVera || isAdmin;
-        const isDeletable = deletableItems[targetUser.id] !== false;
+        const isDeletable = deletableItems[item.id] !== false;
         return (
           <div className="flex gap-2">
             {canEdit && (
               <Button
                 size="sm"
-                onClick={() => handleEdit(targetUser)}
+                onClick={() => handleEdit(item.id)}
                 className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
               >
                 <Edit className="h-4 w-4" />
@@ -266,9 +273,9 @@ const AdminItemsTable = () => {
                         size="sm"
                         variant="ghost"
                         className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                        onClick={() => handleDelete(targetUser.id)}
+                        onClick={() => handleDelete(item.id)}
                         disabled={!isDeletable}
-                        aria-label={`Delete ${targetUser.translations.fi.item_name}`}
+                        aria-label={`Delete ${item.translations.fi.item_name}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

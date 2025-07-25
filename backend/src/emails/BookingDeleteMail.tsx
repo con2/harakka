@@ -87,10 +87,10 @@ const BookingDeleteMail = ({ name, email, booking }) => (
           Hello <strong>Admin</strong>,
         </Text>
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-          The booking with the booking number {booking} has been sucessfully marked
-          as deleted. It will go to your archive and will no longer be visible
-          in the list of the bookings. It has been deleted from user {name},{" "}
-          {email}.
+          The booking with the booking number {booking} has been sucessfully
+          marked as deleted. It will go to your archive and will no longer be
+          visible in the list of the bookings. It has been deleted from user{" "}
+          {name}, {email}.
         </Text>
       </Container>
     </Body>
