@@ -28,15 +28,22 @@ export class StorageItemsService {
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
   ) {}
 
+  /**
+   * Get all items within a range from storage_items.
+   * @param page What page of items to return
+   * @param limit How many rows to return
+   * @param active Optional. Boolean. Whether to return active or inactive items. Omit this to get both inactive and active items.
+   * @returns
+   */
   async getAllItems(
     page: number,
     limit: number,
+    active?: boolean,
   ): Promise<ApiResponse<StorageItem>> {
     const supabase = this.supabaseClient.getServiceClient();
     const { from, to } = getPaginationRange(page, limit);
 
-    // Updated query to join storage_item_tags with tags table
-    const result: PostgrestResponse<StorageItemWithJoin> = (await supabase
+    const query = supabase
       .from("storage_items")
       .select(
         `
@@ -61,10 +68,11 @@ export class StorageItemsService {
         { count: "exact" },
       )
       .range(from, to)
-      .eq("is_deleted", false)) as PostgrestSingleResponse<
-      StorageItemWithJoin[]
-    >; // Explicitly select tags and their translations by joining the tags table - show only undeleted items
+      .eq("is_deleted", false);
 
+    if (active) query.eq("is_active", true);
+
+    const result = await query;
     if (result.error) handleSupabaseError(result.error);
 
     // Structure the result to include both tags and location data
