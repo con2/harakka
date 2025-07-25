@@ -9,11 +9,7 @@ import {
   OrganizationInsert,
   OrganizationUpdate,
 } from "./interfaces/organization.interface";
-import {
-  PostgrestError,
-  PostgrestSingleResponse,
-  SupabaseClient,
-} from "@supabase/supabase-js";
+import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { ApiResponse } from "../../../../common/response.types";
