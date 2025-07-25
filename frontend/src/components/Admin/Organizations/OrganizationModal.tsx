@@ -85,31 +85,43 @@ export default function OrganizationModal({
               <strong>Slug:</strong> {organization?.slug || "—"}
             </p>
             <p>
-              <strong>Aktiv:</strong> {organization?.is_active ? "Ja" : "Nein"}
+              <strong>Active:</strong>{" "}
+              {organization?.is_active
+                ? t.organizationList.values.isActive.yes[lang]
+                : t.organizationList.values.isActive.no[lang]}
             </p>
             <p>
-              <strong>Erstellt am:</strong>{" "}
+              <strong>
+                {t.organizationList.modal.labels.createdAt[lang]}:
+              </strong>{" "}
               {organization?.created_at
                 ? new Date(organization.created_at).toLocaleString()
                 : "—"}
             </p>
             <p>
-              <strong>Erstellt von:</strong> {organization?.created_by || "—"}
+              <strong>
+                {t.organizationList.modal.labels.createdBy[lang]}:
+              </strong>{" "}
+              {organization?.created_by || "—"}
             </p>
             <p>
-              <strong>Zuletzt aktualisiert:</strong>{" "}
+              <strong>
+                {t.organizationList.modal.labels.updatedAt[lang]}:
+              </strong>{" "}
               {organization?.updated_at
                 ? new Date(organization.updated_at).toLocaleString()
                 : "—"}
             </p>
             <p>
-              <strong>Aktualisiert von:</strong>{" "}
+              <strong>
+                {t.organizationList.modal.labels.updatedBy[lang]}:
+              </strong>{" "}
               {organization?.updated_by || "—"}
             </p>
           </div>
           <DialogFooter className="flex justify-end">
             <Button onClick={() => onOpenChange(false)}>
-              {/* {t.common.close[lang]} */} Close
+              <strong>{t.organizationList.modal.buttons.close[lang]}:</strong>
             </Button>
           </DialogFooter>
         </DialogContent>

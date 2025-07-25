@@ -5,9 +5,9 @@ import {
   fetchOrganizationById,
   selectOrganizations,
   selectOrganizationLoading,
-  selectOrganizationError,
   updateOrganization,
   createOrganization,
+  setSelectedOrganization,
 } from "@/store/slices/organizationSlice";
 import { OrganizationDetails } from "@/types/organization";
 import { Edit, Eye, LoaderCircle } from "lucide-react";
@@ -30,14 +30,15 @@ const OrganizationList = () => {
   // global Redux state
   const organizations = useAppSelector(selectOrganizations);
   const loading = useAppSelector(selectOrganizationLoading);
-  const error = useAppSelector(selectOrganizationError);
+  // const error = useAppSelector(selectOrganizationError);
   const totalPages = useAppSelector((state) => state.organizations.totalPages);
 
   // local state
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedOrg, setSelectedOrg] = useState<OrganizationDetails | null>(
-    null,
+  const selectedOrg = useAppSelector(
+    (state) => state.organizations.selectedOrganization,
   );
+
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"view" | "edit" | "create">(
     "view",
@@ -54,7 +55,7 @@ const OrganizationList = () => {
     // Optional: fetch fresh data for this org
     const resultAction = await dispatch(fetchOrganizationById(org.id));
     if (fetchOrganizationById.fulfilled.match(resultAction)) {
-      setSelectedOrg(resultAction.payload);
+      dispatch(setSelectedOrganization(resultAction.payload));
       setModalMode("view");
       setModalOpen(true);
     } else {
@@ -69,7 +70,7 @@ const OrganizationList = () => {
   const openEditModal = async (org: OrganizationDetails) => {
     const resultAction = await dispatch(fetchOrganizationById(org.id));
     if (fetchOrganizationById.fulfilled.match(resultAction)) {
-      setSelectedOrg(resultAction.payload);
+      dispatch(setSelectedOrganization(resultAction.payload));
       setModalMode("edit");
       setModalOpen(true);
     } else {
@@ -82,7 +83,7 @@ const OrganizationList = () => {
 
   // Open modal in "create" mode
   const openCreateModal = () => {
-    setSelectedOrg(null);
+    dispatch(setSelectedOrganization(null));
     setModalMode("create");
     setModalOpen(true);
   };
@@ -119,7 +120,7 @@ const OrganizationList = () => {
         );
       }
       setModalOpen(false);
-      setSelectedOrg(null);
+      dispatch(setSelectedOrganization(null));
       // Reload list after changes
       void dispatch(fetchAllOrganizations({ page: currentPage, limit }));
     } catch {
@@ -183,13 +184,6 @@ const OrganizationList = () => {
       <h1 className="text-xl font-semibold">
         {t.organizationList.title[lang]}
       </h1>
-
-      {/* Button to create new */}
-      <Button onClick={openCreateModal} className="mb-4">
-        {t.organizationList.createButton[lang]}
-      </Button>
-
-      {error && <div className="text-destructive">{error}</div>}
 
       {/* Add New Org button */}
       <div className="flex gap-4 justify-end">
