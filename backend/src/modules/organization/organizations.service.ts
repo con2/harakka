@@ -1,4 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
   OrganizationRow,
@@ -32,6 +36,7 @@ export class OrganizationsService {
     const query = supabase
       .from("organizations")
       .select("*", { count: "exact" })
+      .eq("is_deleted", false)
       .range(from, to);
 
     if (order) {
@@ -53,6 +58,18 @@ export class OrganizationsService {
   // 2. get one
   async getOrganizationById(id: string): Promise<OrganizationRow> {
     const supabase = this.supabaseService.getServiceClient();
+    const {
+      data,
+      error,
+    }: {
+      data: OrganizationRow | null;
+      error: PostgrestError | null;
+    } = await supabase
+      .from("organizations")
+      .select("*")
+      .eq("id", id)
+      .eq("is_deleted", false)
+
 
     const { data, error }: PostgrestSingleResponse<OrganizationRow> =
       await supabase.from("organizations").select("*").eq("id", id).single();
@@ -131,7 +148,41 @@ export class OrganizationsService {
     return { success: true, id };
   }
 
-  // 7. activate or deactivate orgs
+  // 7. soft-delete an organization
+  async softDeleteOrganization(
+    req: AuthRequest,
+    id: string,
+  ): Promise<{ success: boolean; id: string }> {
+    const supabase = this.getClient(req);
+
+    // check if it exists and is not already deleted
+    const { data: org, error: orgError } = await supabase
+      .from("organizations")
+      .select("id, is_deleted")
+      .eq("id", id)
+      .single();
+
+    if (orgError || !org) throw new NotFoundException("Organization not found");
+
+    if (org.is_deleted) {
+      throw new BadRequestException("Organization is already deleted");
+    }
+
+    // and soft-delete
+    const { error } = await supabase
+      .from("organizations")
+      .update({
+        is_deleted: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) throw new Error(error.message);
+
+    return { success: true, id };
+  }
+
+  // 8. activate or deactivate orgs
   async toggleActivation(
     req: AuthRequest,
     id: string,

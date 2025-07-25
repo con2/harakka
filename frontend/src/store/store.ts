@@ -11,6 +11,7 @@ import locationsReducer from "./slices/locationsSlice";
 import logsReducer from "./slices/logsSlice";
 import rolesReducer from "./slices/rolesSlice";
 import userBanningReducer from "./slices/userBanningSlice";
+import organizationReducer from "./slices/organizationSlice";
 
 // add slices in the reducer object
 export const store = configureStore({
@@ -27,6 +28,7 @@ export const store = configureStore({
     logs: logsReducer,
     roles: rolesReducer,
     userBanning: userBanningReducer,
+    organizations: organizationReducer,
   },
 });
 

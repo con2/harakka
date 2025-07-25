@@ -40,5 +40,9 @@ export const adminPanel = {
       fi: "Roolit",
       en: "Roles",
     },
+    organizations: {
+      fi: "Organisaatiot",
+      en: "Organizations",
+    },
   },
 };
