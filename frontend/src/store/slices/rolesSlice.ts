@@ -90,7 +90,7 @@ export const createUserRole = createAsyncThunk(
       if (roleData.user_id === currentUserId && currentUserId) {
         await refreshSupabaseSession();
         // Refetch roles
-        dispatch(fetchCurrentUserRoles());
+        void dispatch(fetchCurrentUserRoles());
       }
 
       return result;
@@ -119,7 +119,7 @@ export const updateUserRole = createAsyncThunk(
       const currentUserId = state.users.selectedUser?.id;
       if (result.user_id === currentUserId && currentUserId) {
         await refreshSupabaseSession();
-        dispatch(fetchCurrentUserRoles());
+        void dispatch(fetchCurrentUserRoles());
       }
 
       return result;
@@ -144,7 +144,7 @@ export const deleteUserRole = createAsyncThunk(
 
       if (role && role.user_id === currentUserId && currentUserId) {
         await refreshSupabaseSession();
-        dispatch(fetchCurrentUserRoles());
+        void dispatch(fetchCurrentUserRoles());
       }
 
       return tableKeyId;
@@ -169,7 +169,7 @@ export const permanentDeleteUserRole = createAsyncThunk(
 
       if (role && role.user_id === currentUserId && currentUserId) {
         await refreshSupabaseSession();
-        dispatch(fetchCurrentUserRoles());
+        void dispatch(fetchCurrentUserRoles());
       }
 
       return tableKeyId;

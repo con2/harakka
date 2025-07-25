@@ -156,7 +156,7 @@ const MyBookings = () => {
     if (selectedBooking && selectedBooking.id === booking.id)
       return setShowDetailsModal(true);
     dispatch(selectBooking(booking));
-    dispatch(getBookingItems(booking.id));
+    void dispatch(getBookingItems(booking.id));
     setShowDetailsModal(true);
   };
 
