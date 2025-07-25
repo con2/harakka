@@ -11,7 +11,7 @@ export const organizationApi = {
    * @param limit - Number of items per page (default: 10)
    * @returns Paginated response with organizations
    */
-  getAllOrganizations: (
+  getAllOrganizations: async (
     page: number = 1,
     limit: number = 10,
   ): Promise<{
@@ -19,7 +19,18 @@ export const organizationApi = {
     total: number;
     page: number;
     totalPages: number;
-  }> => api.get(`/organizations?page=${page}&limit=${limit}`),
+  }> => {
+    const response = await api.get(
+      `/organizations?page=${page}&limit=${limit}`,
+    );
+    const { data, count, metadata } = response.data;
+    return {
+      data,
+      total: count,
+      page: metadata.page,
+      totalPages: metadata.totalPages,
+    };
+  },
 
   /**
    * Get a specific organization by ID
