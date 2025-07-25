@@ -1,9 +1,5 @@
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import {
-  fetchAllUsers,
-  selectAllUsers,
-  selectSelectedUser,
-} from "@/store/slices/usersSlice";
+import { getUserCount, selectTotalUsersCount } from "@/store/slices/usersSlice";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { DataTable } from "../../components/ui/data-table";
@@ -18,13 +14,25 @@ import {
   Warehouse,
 } from "lucide-react";
 import {
-  getAllBookings,
+  getBookingItems,
+  getBookingsCount,
+  getOrderedBookings,
   selectAllBookings,
+  selectBooking,
+  selectBookingItemsPagination,
   selectBookingLoading,
+  selectCurrentBooking,
+  selectCurrentBookingLoading,
+  selectTotalBookingsCount,
   updatePaymentStatus,
 } from "@/store/slices/bookingsSlice";
-import { BookingItem, Booking, PaymentStatus } from "@/types";
-import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
+import { BookingWithDetails, PaymentStatus } from "@/types";
+import {
+  fetchAllItems,
+  getItemCount,
+  selectAllItems,
+  selectTotalItemsCount,
+} from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
@@ -48,45 +56,66 @@ import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton
 import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
 import BookingDeleteButton from "@/components/Admin/Bookings/BookingDeleteButton";
 import { StatusBadge } from "@/components/StatusBadge";
+import { BookingItem } from "@common/bookings/booking-items.types";
+import { StorageItemRow } from "@common/items/storage-items.types";
+import Spinner from "@/components/Spinner";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
+import { BookingPreview } from "@common/bookings/booking.types";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
-  const users = useAppSelector(selectAllUsers);
   const items = useAppSelector(selectAllItems);
-  const user = useAppSelector(selectSelectedUser);
   const bookings = useAppSelector(selectAllBookings);
   const bookingsLoading = useAppSelector(selectBookingLoading);
   const navigate = useNavigate();
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
+  const { page: itemPage, totalPages: itemTotalPages } = useAppSelector(
+    selectBookingItemsPagination,
+  );
+  const [currentItemPage, setCurrentItemPage] = useState(1);
+  const itemsLoading = useAppSelector(selectCurrentBookingLoading);
+  const selectedBooking = useAppSelector(selectCurrentBooking);
+  const itemCount = useAppSelector(selectTotalItemsCount);
+  const bookingsCount = useAppSelector(selectTotalBookingsCount);
+  const userCount = useAppSelector(selectTotalUsersCount);
 
   useEffect(() => {
     if (items.length <= 1) void dispatch(fetchAllItems({ page: 1, limit: 10 }));
   }, [dispatch, items.length]);
 
   useEffect(() => {
-    if (users.length === 0) {
-      void dispatch(fetchAllUsers());
-    }
-  }, [dispatch, users.length]);
+    if (itemCount < 1) void dispatch(getItemCount());
+    if (userCount < 1) void dispatch(getUserCount());
+    if (bookingsCount < 1) void dispatch(getBookingsCount());
+  }, [dispatch, itemCount, bookingsCount, userCount]);
 
   useEffect(() => {
-    if (user && bookings.length <= 1) {
-      void dispatch(getAllBookings({}));
+    if (bookings.length <= 1) {
+      void dispatch(
+        getOrderedBookings({
+          ordered_by: "created_at",
+          ascending: true,
+          page: 1,
+          limit: 10,
+        }),
+      );
     }
-  }, [dispatch, user, bookings.length]);
+  }, [dispatch, bookings.length]);
 
-  const handleViewDetails = (booking: Booking) => {
-    setSelectedBooking(booking);
+  const handleViewDetails = (booking: BookingPreview) => {
+    dispatch(selectBooking(booking));
+    void dispatch(getBookingItems(booking.id));
     setShowDetailsModal(true);
   };
 
+  const handleItemPageChange = (newPage: number) => setCurrentItemPage(newPage);
+
   // Define columns for the DataTable
   // Bookings table
-  const columns: ColumnDef<Booking>[] = [
+  const columns: ColumnDef<BookingPreview>[] = [
     {
       accessorKey: "booking_number",
       header: t.bookingList.columns.bookingNumber[lang],
@@ -97,19 +126,16 @@ const AdminDashboard = () => {
       cell: ({ row }) => (
         <div>
           <div>
-            {row.original.user_profile?.name ||
-              t.bookingList.status.unknown[lang]}
+            {row.original.full_name || t.bookingList.status.unknown[lang]}
           </div>
-          <div className="text-xs text-gray-500">
-            {row.original.user_profile?.email}
-          </div>
+          <div className="text-xs text-gray-500">{row.original.email}</div>
         </div>
       ),
     },
     {
       accessorKey: "status",
       header: t.bookingList.columns.status[lang],
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <StatusBadge status={row.original.status!} />,
     },
     {
       accessorKey: "created_at",
@@ -138,7 +164,7 @@ const AdminDashboard = () => {
         ) => {
           void dispatch(
             updatePaymentStatus({
-              bookingId: row.original.id,
+              bookingId: row.original.id!,
               status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
             }),
           );
@@ -203,11 +229,11 @@ const AdminDashboard = () => {
             {isPending && (
               <>
                 <BookingConfirmButton
-                  id={booking.id}
+                  id={booking.id!}
                   closeModal={() => setShowDetailsModal(false)}
                 />
                 <BookingRejectButton
-                  id={booking.id}
+                  id={booking.id!}
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
@@ -215,7 +241,7 @@ const AdminDashboard = () => {
 
             {isConfirmed && (
               <BookingReturnButton
-                id={booking.id}
+                id={booking.id!}
                 closeModal={() => setShowDetailsModal(false)}
               />
             )}
@@ -223,7 +249,7 @@ const AdminDashboard = () => {
             {isConfirmed && <BookingPickupButton />}
 
             <BookingDeleteButton
-              id={booking.id}
+              id={booking.id!}
               closeModal={() => setShowDetailsModal(false)}
             />
           </div>
@@ -232,7 +258,9 @@ const AdminDashboard = () => {
     },
   ];
 
-  const bookingColumns: ColumnDef<BookingItem>[] = [
+  const bookingItemsColumns: ColumnDef<
+    BookingItem & { storage_items: Partial<StorageItemRow> }
+  >[] = [
     {
       accessorKey: "item_name",
       header: t.bookingList.modal.bookingItems.columns.item[lang],
@@ -277,7 +305,7 @@ const AdminDashboard = () => {
           </div>
           <div className="flex flex-row items-center gap-2">
             <Users className="h-10 w-10 text-highlight2 shrink-0" />
-            <span className="text-4xl font-normal">{users.length}</span>
+            <span className="text-4xl font-normal">{userCount}</span>
           </div>
         </div>
 
@@ -289,7 +317,7 @@ const AdminDashboard = () => {
           </div>
           <div className="flex flex-row items-center gap-2">
             <Warehouse className="h-10 w-10 text-highlight2 shrink-0" />
-            <span className="text-4xl font-normal">{items.length}</span>
+            <span className="text-4xl font-normal">{itemCount}</span>
           </div>
         </div>
 
@@ -301,7 +329,7 @@ const AdminDashboard = () => {
           </div>
           <div className="flex flex-row items-center gap-2">
             <ShoppingBag className="h-10 w-10 text-highlight2 shrink-0" />
-            <span className="text-4xl font-normal">{bookings.length}</span>
+            <span className="text-4xl font-normal">{bookingsCount}</span>
           </div>
         </div>
       </div>
@@ -358,11 +386,11 @@ const AdminDashboard = () => {
                       {t.bookingList.modal.customer[lang]}
                     </h3>
                     <p className="text-sm mb-0">
-                      {selectedBooking.user_profile?.name ||
+                      {(selectedBooking as BookingWithDetails).full_name ||
                         t.bookingList.status.unknown[lang]}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {selectedBooking.user_profile?.email}
+                      {(selectedBooking as BookingWithDetails).email}
                     </p>
                   </div>
 
@@ -372,7 +400,7 @@ const AdminDashboard = () => {
                     </h3>
                     <p className="text-sm mb-0">
                       {t.bookingList.modal.status[lang]}{" "}
-                      <StatusBadge status={selectedBooking.status} />
+                      <StatusBadge status={selectedBooking.status!} />
                     </p>
                     <p className="text-sm">
                       {t.bookingList.modal.date[lang]}{" "}
@@ -386,10 +414,27 @@ const AdminDashboard = () => {
 
                 {/* Booking Items */}
                 <div>
-                  <DataTable
-                    columns={bookingColumns}
-                    data={selectedBooking.booking_items || []}
-                  />
+                  {itemsLoading && <Spinner containerClasses="py-8" />}
+                  {!itemsLoading && itemTotalPages > 1 ? (
+                    <PaginatedDataTable
+                      pageCount={itemPage}
+                      onPageChange={handleItemPageChange}
+                      pageIndex={currentItemPage - 1}
+                      columns={bookingItemsColumns}
+                      data={
+                        (selectedBooking as BookingWithDetails).booking_items ||
+                        []
+                      }
+                    />
+                  ) : !itemsLoading && itemTotalPages === 1 ? (
+                    <DataTable
+                      columns={bookingItemsColumns}
+                      data={
+                        (selectedBooking as BookingWithDetails).booking_items ||
+                        []
+                      }
+                    />
+                  ) : null}
                 </div>
 
                 {/* booking Modal Actions */}
@@ -403,7 +448,7 @@ const AdminDashboard = () => {
                             {t.bookingList.modal.buttons.confirm[lang]}
                           </span>
                           <BookingConfirmButton
-                            id={selectedBooking.id}
+                            id={selectedBooking.id!}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
@@ -412,7 +457,7 @@ const AdminDashboard = () => {
                             {t.bookingList.modal.buttons.reject[lang]}
                           </span>
                           <BookingRejectButton
-                            id={selectedBooking.id}
+                            id={selectedBooking.id!}
                             closeModal={() => setShowDetailsModal(false)}
                           />
                         </div>
@@ -425,7 +470,7 @@ const AdminDashboard = () => {
                           {t.bookingList.modal.buttons.return[lang]}
                         </span>
                         <BookingReturnButton
-                          id={selectedBooking.id}
+                          id={selectedBooking.id!}
                           closeModal={() => setShowDetailsModal(false)}
                         />
                       </div>
@@ -443,7 +488,7 @@ const AdminDashboard = () => {
                         {t.bookingList.modal.buttons.delete[lang]}
                       </span>
                       <BookingDeleteButton
-                        id={selectedBooking.id}
+                        id={selectedBooking.id!}
                         closeModal={() => setShowDetailsModal(false)}
                       />
                     </div>

@@ -2,12 +2,18 @@ import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 
 import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
-import { SupabaseClient, UserResponse } from "@supabase/supabase-js";
+import {
+  PostgrestResponse,
+  SupabaseClient,
+  UserResponse,
+} from "@supabase/supabase-js";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import WelcomeEmail from "src/emails/WelcomeEmail";
 import { MailService } from "../mail/mail.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { UserEmailAssembler } from "../mail/user-email-assembler";
+import { ApiSingleResponse } from "@common/response.types";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Injectable()
 export class UserService {
@@ -322,5 +328,20 @@ export class UserService {
       .eq("user_id", id)
       .eq("id", addressId);
     if (error) throw new Error(error.message);
+  }
+
+  async getUserCount(
+    supabase: SupabaseClient,
+  ): Promise<ApiSingleResponse<number>> {
+    const result: PostgrestResponse<undefined> = await supabase
+      .from("user_profiles")
+      .select(undefined, { count: "exact" });
+
+    if (result.error) handleSupabaseError(result.error);
+
+    return {
+      ...result,
+      data: result.count ?? 0,
+    };
   }
 }
