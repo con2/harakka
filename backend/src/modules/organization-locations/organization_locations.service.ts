@@ -43,7 +43,7 @@ export class OrganizationLocationsService {
   }
 
   // 2. get one organization location by ID
-  async getOrgLocById(id: string): Promise<OrgLocationRow | null> {
+  async getOrgLocById(id: string): Promise<OrgLocationRow> {
     const client = this.supabaseService.getServiceClient();
     const { data, error }: PostgrestSingleResponse<OrgLocationRow> =
       await client

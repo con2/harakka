@@ -1,9 +1,9 @@
 import { SetMetadata } from "@nestjs/common";
+import { Enums } from "@common/supabase.types";
 
 /**
- *  * Canonical list of role names recognised across the backend.
- * Using a `const ... as const` tuple lets the IDE offer literal
- * autocomplete when you type inside `@Roles([...])`.
+ * Canonical list of role names recognised across the backend.
+ * Using `as const satisfies ...` enables IDE autocomplete *and* compile-time validation.
  */
 export const ROLE_NAMES = [
   "user",
@@ -13,14 +13,12 @@ export const ROLE_NAMES = [
   "superVera",
   "storage_manager",
   "requester",
-] as const;
-
-export type RoleName = (typeof ROLE_NAMES)[number];
+] as const satisfies readonly Enums<"roles_type">[]; // Cross check with Supabase `roles_type` enum
 
 /**
- * Public decorator
- * Marks a route or controller as publicly accessible (no auth/roles guard).
+ * RoleName is directly inferred from the array above.
  */
+export type RoleName = (typeof ROLE_NAMES)[number];
 
 /**
  * `@Public()` – mark a route or controller as open to everyone.
@@ -54,6 +52,11 @@ export type RoleName = (typeof ROLE_NAMES)[number];
  * ```
  */
 export const IS_PUBLIC_KEY = "is_public";
+
+/**
+ * Public decorator
+ * Marks a route or controller as publicly accessible (no auth/roles guard).
+ */
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
 /**

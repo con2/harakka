@@ -5,10 +5,11 @@ import {
   OrganizationInsert,
   OrganizationUpdate,
 } from "./interfaces/organization.interface";
-import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { ApiResponse } from "../../../../common/response.types";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Injectable()
 export class OrganizationsService {
@@ -50,38 +51,25 @@ export class OrganizationsService {
   }
 
   // 2. get one
-  async getOrganizationById(id: string): Promise<OrganizationRow | null> {
+  async getOrganizationById(id: string): Promise<OrganizationRow> {
     const supabase = this.supabaseService.getServiceClient();
-    const {
-      data,
-      error,
-    }: {
-      data: OrganizationRow | null;
-      error: PostgrestError | null;
-    } = await supabase
-      .from("organizations")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
 
-    if (error) throw new Error(error.message);
+    const { data, error }: PostgrestSingleResponse<OrganizationRow> =
+      await supabase.from("organizations").select("*").eq("id", id).single();
+
+    if (error) handleSupabaseError(error);
     return data;
   }
 
   // 3. get Org by slug
-  async getOrganizationBySlug(slug: string): Promise<OrganizationRow | null> {
+  async getOrganizationBySlug(slug: string): Promise<OrganizationRow> {
     const supabase = this.supabaseService.getServiceClient();
-    const {
-      data,
-      error,
-    }: {
-      data: OrganizationRow | null;
-      error: PostgrestError | null;
-    } = await supabase
-      .from("organizations")
-      .select("*")
-      .eq("slug", slug)
-      .maybeSingle();
+    const { data, error }: PostgrestSingleResponse<OrganizationRow> =
+      await supabase
+        .from("organizations")
+        .select("*")
+        .eq("slug", slug)
+        .single();
 
     if (error) throw new Error(error.message);
     return data;
@@ -94,19 +82,13 @@ export class OrganizationsService {
   ): Promise<OrganizationRow> {
     const supabase = this.getClient(req);
 
-    const {
-      data,
-      error,
-    }: {
-      data: OrganizationRow | null;
-      error: PostgrestError | null;
-    } = await supabase
+    const { data, error } = await supabase
       .from("organizations")
       .insert({ ...org, created_by: req.user.id })
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     if (!data) throw new Error("No organization returned after insert.");
 
     return data;
@@ -119,20 +101,15 @@ export class OrganizationsService {
     org: OrganizationUpdate,
   ): Promise<OrganizationRow> {
     const supabase = this.getClient(req);
-    const {
-      data,
-      error,
-    }: {
-      data: OrganizationRow | null;
-      error: PostgrestError | null;
-    } = await supabase
+
+    const { data, error } = await supabase
       .from("organizations")
       .update({ ...org, updated_by: req.user.id })
       .eq("id", id)
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
     if (!data) throw new Error("No organization returned after insert.");
 
     return data;
@@ -149,7 +126,8 @@ export class OrganizationsService {
       .delete()
       .eq("id", id);
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
+
     return { success: true, id };
   }
 
@@ -160,6 +138,7 @@ export class OrganizationsService {
     is_active: boolean,
   ): Promise<{ success: boolean; id: string; is_active: boolean }> {
     const supabase = this.getClient(req);
+
     const { error } = await supabase
       .from("organizations")
       .update({ is_active, updated_by: req.user.id })
@@ -167,7 +146,8 @@ export class OrganizationsService {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) handleSupabaseError(error);
+
     return { success: true, id, is_active };
   }
 }
