@@ -135,7 +135,7 @@ const AdminDashboard = () => {
     {
       accessorKey: "status",
       header: t.bookingList.columns.status[lang],
-      cell: ({ row }) => <StatusBadge status={row.original.status!} />,
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "created_at",
@@ -164,7 +164,7 @@ const AdminDashboard = () => {
         ) => {
           void dispatch(
             updatePaymentStatus({
-              bookingId: row.original.id!,
+              bookingId: row.original.id,
               status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
             }),
           );
@@ -229,11 +229,11 @@ const AdminDashboard = () => {
             {isPending && (
               <>
                 <BookingConfirmButton
-                  id={booking.id!}
+                  id={booking.id}
                   closeModal={() => setShowDetailsModal(false)}
                 />
                 <BookingRejectButton
-                  id={booking.id!}
+                  id={booking.id}
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
@@ -241,7 +241,7 @@ const AdminDashboard = () => {
 
             {isConfirmed && (
               <BookingReturnButton
-                id={booking.id!}
+                id={booking.id}
                 closeModal={() => setShowDetailsModal(false)}
               />
             )}
@@ -249,7 +249,7 @@ const AdminDashboard = () => {
             {isConfirmed && <BookingPickupButton />}
 
             <BookingDeleteButton
-              id={booking.id!}
+              id={booking.id}
               closeModal={() => setShowDetailsModal(false)}
             />
           </div>
@@ -400,7 +400,7 @@ const AdminDashboard = () => {
                     </h3>
                     <p className="text-sm mb-0">
                       {t.bookingList.modal.status[lang]}{" "}
-                      <StatusBadge status={selectedBooking.status!} />
+                      <StatusBadge status={selectedBooking.status} />
                     </p>
                     <p className="text-sm">
                       {t.bookingList.modal.date[lang]}{" "}

@@ -58,21 +58,13 @@ export class OrganizationsService {
   // 2. get one
   async getOrganizationById(id: string): Promise<OrganizationRow> {
     const supabase = this.supabaseService.getServiceClient();
-    const {
-      data,
-      error,
-    }: {
-      data: OrganizationRow | null;
-      error: PostgrestError | null;
-    } = await supabase
-      .from("organizations")
-      .select("*")
-      .eq("id", id)
-      .eq("is_deleted", false)
-
-
     const { data, error }: PostgrestSingleResponse<OrganizationRow> =
-      await supabase.from("organizations").select("*").eq("id", id).single();
+      await supabase
+        .from("organizations")
+        .select("*")
+        .eq("id", id)
+        .eq("is_deleted", false)
+        .single();
 
     if (error) handleSupabaseError(error);
     return data;

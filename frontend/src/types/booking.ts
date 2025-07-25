@@ -92,7 +92,7 @@ export type BookingsRow = BookingsTable["Row"];
  * Valid values for the /ordered endpoint.
  * Data can be ordered by the following values
  */
-export type ValidBooking =
+export type ValidBookingOrder =
   | "created_at"
   | "booking_number"
   | "payment_status"

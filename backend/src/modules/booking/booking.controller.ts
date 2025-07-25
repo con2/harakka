@@ -16,7 +16,7 @@ import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { BookingStatus, ValidBooking } from "./types/booking.interface";
+import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
 import { BookingItem } from "@common/bookings/booking-items.types";
 import { Public, Roles } from "src/decorators/roles.decorator";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
@@ -191,7 +191,7 @@ export class BookingController {
   getOrderedBookings(
     @Req() req: AuthRequest,
     @Query("search") searchquery: string,
-    @Query("booking") ordered_by: ValidBooking = "booking_number",
+    @Query("order") ordered_by: ValidBookingOrder = "booking_number",
     @Query("status") status_filter: BookingStatus,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
