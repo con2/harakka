@@ -9,7 +9,8 @@ export type CreateUserRoleDto = DBTablesInsert<"user_organization_roles">;
 
 export type UpdateUserRoleDto = DBTablesUpdate<"user_organization_roles">;
 
-export type stateAvailableRoles = DBTables<"roles">[];
+export type RolesRow = DBTables<"roles">;
+
 export interface RoleCheckResponse {
   hasRole: boolean;
   roleName: string;
@@ -44,5 +45,5 @@ export interface RolesState {
   error: string | null;
   adminError: string | null;
   errorContext: string | null;
-  availableRoles: stateAvailableRoles;
+  availableRoles: RolesRow[];
 }

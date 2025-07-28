@@ -12,7 +12,7 @@ import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
@@ -59,18 +59,21 @@ const UsersList = () => {
   const { formatDate } = useFormattedDate();
 
   // ————————————— Derived Values —————————————
-  console.log("USER ROLES", allUserRoles);
   // Authorization helpers based on new role system
   const isAuthorized = isAdmin || isSuperAdmin || isSuperVera;
 
+  // Track whether we've already kicked off the initial data load
+  const initialFetchDone = useRef(false);
+
   // ————————————— Side Effects —————————————
 
+  /* 
   useEffect(() => {
     if (!allUserRoles.length) {
       void refreshAllUserRoles();
     }
   }, [allUserRoles.length, refreshAllUserRoles]);
-
+ */
   useEffect(() => {
     if (!activeUser) {
       setActiveModal(null);
@@ -79,23 +82,16 @@ const UsersList = () => {
 
   useEffect(() => {
     if (
+      !initialFetchDone.current &&
       !authLoading &&
       isAuthorized &&
-      users.length === 0 &&
-      isModalOpen === true
+      isModalOpen
     ) {
+      initialFetchDone.current = true;
       void dispatch(fetchAllUsers());
-      // Also fetch all user roles for filtering and display
       void refreshAllUserRoles();
     }
-  }, [
-    authLoading,
-    isAuthorized,
-    users.length,
-    isModalOpen,
-    dispatch,
-    refreshAllUserRoles,
-  ]);
+  }, [authLoading, isAuthorized, isModalOpen, dispatch, refreshAllUserRoles]);
 
   useEffect(() => {
     setCurrentPage(0);

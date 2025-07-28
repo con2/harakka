@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -26,7 +27,10 @@ import { toast } from "sonner";
 import { Label } from "../../ui/label";
 import { MultiSelect } from "../../ui/multi-select";
 import { UserProfile } from "@common/user.types";
-import { selectOrganizations } from "@/store/slices/organizationSlice";
+import {
+  selectOrganizations,
+  fetchAllOrganizations,
+} from "@/store/slices/organizationSlice";
 import { useRoles } from "@/hooks/useRoles";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
@@ -44,7 +48,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   } = useRoles({ skipInitialFetch: true });
 
   const canManageRoles = isSuperAdmin || isSuperVera;
-
+  console.log("UserEditModal", { user, canManageRoles });
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
     email: user.email || "",
@@ -87,6 +91,20 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
       }));
     setRoleAssignments(userRoles);
   }, [allUserRoles, user.id]);
+
+  // Ensure availableRoles are present (skipInitialFetch suppresses it in the hook)
+  /*   useEffect(() => {
+    if (canManageRoles && !availableRoles.length) {
+      void refreshAvailableRoles();
+    }
+  }, [canManageRoles, availableRoles.length, refreshAvailableRoles]);
+ */
+  // Ensure organizations list is loaded for the org picker
+  useEffect(() => {
+    if (organizations.length === 0) {
+      void dispatch(fetchAllOrganizations({ page: 1, limit: 30 }));
+    }
+  }, [organizations.length, dispatch]);
 
   // Handle changes for normal input fields
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,8 +167,10 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
 
   const handleSave = async () => {
     try {
+      // Remove "roles" key—the column no longer exists in user_profiles
+      const { roles: _roles, ...profileData } = formData;
       await dispatch(
-        updateUser({ id: user.id, data: { ...formData, id: user.id } }),
+        updateUser({ id: user.id, data: { ...profileData, id: user.id } }),
       ).unwrap();
       toast.success(t.userEditModal.messages.success[lang]);
 
@@ -212,6 +232,9 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
             {t.userEditModal.title[lang]}
           </DialogTitle>
         </DialogHeader>
+        <DialogDescription>
+          {t.userEditModal.description[lang]}
+        </DialogDescription>
 
         <div className="space-y-4">
           <div>
