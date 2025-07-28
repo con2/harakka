@@ -5,7 +5,7 @@ import { CalendarIcon } from "lucide-react";
 const DatePickerButton = forwardRef<
   HTMLButtonElement,
   React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    value: string | null;
+    value: string;
     placeholder: string;
   }
 >(({ value, placeholder, ...props }, ref) => (
