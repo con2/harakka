@@ -134,7 +134,8 @@ export class OrganizationsService {
     return data;
   }
 
-  // 6. hard-delete
+  /*
+  // 6. hard-delete ---- not in use at the moment
   async deleteOrganization(
     req: AuthRequest,
     id: string,
@@ -175,6 +176,7 @@ export class OrganizationsService {
     }
     return { success: true, id };
   }
+    */
 
   // 7. soft-delete an organization
   async softDeleteOrganization(
