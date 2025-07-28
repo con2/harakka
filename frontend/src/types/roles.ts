@@ -1,17 +1,15 @@
-import { Database } from "@common/database.types";
+import {
+  DBTables,
+  DBTablesInsert,
+  DBTablesUpdate,
+} from "@common/database.types";
 import { ViewUserRolesWithDetails } from "@common/role.types";
 
-export interface CreateUserRoleDto {
-  user_id: string;
-  organization_id: string;
-  role_id: string;
-}
+export type CreateUserRoleDto = DBTablesInsert<"user_organization_roles">;
 
-export interface UpdateUserRoleDto {
-  role_id?: string;
-  is_active?: boolean;
-}
+export type UpdateUserRoleDto = DBTablesUpdate<"user_organization_roles">;
 
+export type stateAvailableRoles = DBTables<"roles">[];
 export interface RoleCheckResponse {
   hasRole: boolean;
   roleName: string;
@@ -46,5 +44,5 @@ export interface RolesState {
   error: string | null;
   adminError: string | null;
   errorContext: string | null;
-  availableRoles: Database["public"]["Tables"]["roles"]["Row"][];
+  availableRoles: stateAvailableRoles;
 }

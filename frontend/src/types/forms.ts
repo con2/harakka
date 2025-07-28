@@ -1,7 +1,7 @@
 import { Tag } from "./tag";
 import { Item, ItemTranslation } from "./item";
 import { TagTranslations } from "./databaseGenerated";
-import { Org_Rolesn } from "@common/role.types";
+import { Org_Roles } from "@common/role.types";
 
 /**
  * Base form state for all forms in the application

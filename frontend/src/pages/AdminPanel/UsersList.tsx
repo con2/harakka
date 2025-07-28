@@ -30,6 +30,7 @@ import UserBanHistoryModal from "@/components/Admin/UserManagement/Banning/UserB
 import UnbanUserModal from "@/components/Admin/UserManagement/Banning/UnbanUserModal";
 
 const UsersList = () => {
+  // ————————————— Hooks & Selectors —————————————
   const dispatch = useAppDispatch();
   const { authLoading } = useAuth();
   const users = useAppSelector(selectAllUsers);
@@ -37,20 +38,10 @@ const UsersList = () => {
   const error = useAppSelector(selectError);
   const allUserRoles = useAppSelector(selectAllUserRoles);
   const availableRoles = useAppSelector(selectAvailableRoles);
-  const { hasAnyRole, refreshAllUserRoles } = useRoles();
-  useEffect(() => {
-    if (!allUserRoles.length) {
-      void refreshAllUserRoles();
-    }
-  }, [allUserRoles.length, refreshAllUserRoles]);
-  console.log("USER ROLES", allUserRoles);
-  const isAuthorized = hasAnyRole([
-    "admin",
-    "main_admin",
-    "super_admin",
-    "superVera",
-  ]);
-  const isSuperAdmin = hasAnyRole(["super_admin", "superVera"]); // TODO: replace with hasRole(["super_admin"]) once superVera is obsolete
+  const { isAdmin, isSuperAdmin, isSuperVera, refreshAllUserRoles } =
+    useRoles();
+
+  // ————————————— State —————————————
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -67,18 +58,24 @@ const UsersList = () => {
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
 
-  // Close modals when user changes
+  // ————————————— Derived Values —————————————
+  console.log("USER ROLES", allUserRoles);
+  // Authorization helpers based on new role system
+  const isAuthorized = isAdmin || isSuperAdmin || isSuperVera;
+
+  // ————————————— Side Effects —————————————
+
+  useEffect(() => {
+    if (!allUserRoles.length) {
+      void refreshAllUserRoles();
+    }
+  }, [allUserRoles.length, refreshAllUserRoles]);
+
   useEffect(() => {
     if (!activeUser) {
       setActiveModal(null);
     }
   }, [activeUser]);
-
-  // Reset modal state
-  const resetModalState = () => {
-    setActiveUser(null);
-    setActiveModal(null);
-  };
 
   useEffect(() => {
     if (
@@ -100,6 +97,17 @@ const UsersList = () => {
     refreshAllUserRoles,
   ]);
 
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchQuery, roleFilter]);
+
+  // ————————————— Helper Functions —————————————
+  // Reset modal state
+  const resetModalState = () => {
+    setActiveUser(null);
+    setActiveModal(null);
+  };
+
   // Helper function to get user's roles from the new role system
   const getUserRoles = (userId: string) => {
     return allUserRoles
@@ -107,6 +115,7 @@ const UsersList = () => {
       .map((role) => role.role_name);
   };
 
+  // ————————————— Computed Data —————————————
   const filteredUsers = users
     .filter((u) => {
       const query = searchQuery.toLowerCase();
@@ -123,9 +132,6 @@ const UsersList = () => {
     });
 
   // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [searchQuery, roleFilter]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -138,6 +144,7 @@ const UsersList = () => {
     setCurrentPage(pageIndex);
   };
 
+  // ————————————— Columns —————————————
   const columns: ColumnDef<UserProfile>[] = [
     {
       accessorKey: "full_name",
@@ -250,6 +257,7 @@ const UsersList = () => {
     },
   ];
 
+  // ————————————— Render —————————————
   if (authLoading || loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">

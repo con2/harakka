@@ -25,7 +25,6 @@ import {
 } from "@/store/slices/tagSlice";
 import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
-import { useRoles } from "@/hooks/useRoles";
 import { Item, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle, Trash2 } from "lucide-react";

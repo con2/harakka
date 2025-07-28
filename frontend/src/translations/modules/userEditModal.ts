@@ -20,6 +20,10 @@ export const userEditModal = {
       fi: "Rooli",
       en: "Role",
     },
+    roles: {
+      fi: "Roolit",
+      en: "Roles",
+    },
     visibleName: {
       fi: "Näkyvä nimi",
       en: "Visible Name",
@@ -57,6 +61,10 @@ export const userEditModal = {
     selectRole: {
       fi: "Valitse rooli",
       en: "Select Role",
+    },
+    selectOrganization: {
+      fi: "Valitse organisaatio",
+      en: "Select Organization",
     },
   },
   roles: {
@@ -101,6 +109,16 @@ export const userEditModal = {
     addPreference: {
       fi: "Lisää asetus",
       en: "Add Preference",
+    },
+    addRole: {
+      fi: "Lisää rooli",
+      en: "Add Role",
+    },
+  },
+  status: {
+    noRoles: {
+      fi: "Ei rooleja",
+      en: "No roles",
     },
   },
   messages: {
