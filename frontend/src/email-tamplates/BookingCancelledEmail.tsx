@@ -6,13 +6,15 @@ import {
   Heading,
   Text,
 } from "@react-email/components";
-import type { UserRole } from "../../../frontend/src/types/user";
 import type { BookingItem } from "@common/bookings/booking-items.types";
-
+import { Org_Roles } from "@common/role.types";
 type BookingCancelledEmailProps = {
   orderId: string;
   items: BookingItem[];
-  recipientRole: Extract<UserRole, "user" | "admin" | "superVera">;
+  recipientRole: Extract<
+    Org_Roles,
+    "user" | "admin" | "superVera" | "main_admin"
+  >;
 };
 
 export const BookingCancelledEmail = ({
@@ -20,7 +22,10 @@ export const BookingCancelledEmail = ({
   items,
   recipientRole,
 }: BookingCancelledEmailProps) => {
-  const isAdmin = recipientRole === "admin" || recipientRole === "superVera";
+  const isAdmin =
+    recipientRole === "admin" ||
+    recipientRole === "superVera" ||
+    recipientRole === "main_admin";
 
   return (
     <Html>
