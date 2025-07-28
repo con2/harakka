@@ -3,12 +3,16 @@ import { ReactNode, useEffect, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
-
+import { Org_Roles } from "@common/role.types";
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRoles: string[];
+  /**
+   * Accepts one or more roles from the Org_Roles union.
+   * Writing `<ProtectedRoute allowedRoles={["admin", "super_admin"]} />`
+   * now gives IntelliSense suggestions and compile‑time safety.
+   */
+  allowedRoles: Org_Roles[];
   requiredOrganization?: string;
-  requireSuperVera?: boolean;
 }
 
 const ProtectedRoute = ({

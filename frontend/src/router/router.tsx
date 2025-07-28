@@ -51,7 +51,17 @@ export const router = createBrowserRouter([
       {
         path: "/profile",
         element: (
-          <ProtectedRoute allowedRoles={["user", "admin", "superVera"]}>
+          <ProtectedRoute
+            allowedRoles={[
+              "user",
+              "storage_manager",
+              "requester",
+              "admin",
+              "main_admin",
+              "super_admin",
+              "superVera",
+            ]}
+          >
             <MyProfile />
           </ProtectedRoute>
         ),
@@ -59,7 +69,16 @@ export const router = createBrowserRouter([
       {
         path: "/admin",
         element: (
-          <ProtectedRoute allowedRoles={["admin", "superVera"]}>
+          <ProtectedRoute
+            allowedRoles={[
+              "requester",
+              "storage_manager",
+              "admin",
+              "main_admin",
+              "super_admin",
+              "superVera",
+            ]}
+          >
             <AdminPanel />
           </ProtectedRoute>
         ),
