@@ -5,6 +5,7 @@ import {
   SupabaseClient,
 } from "@supabase/supabase-js";
 import {
+  LocationRow,
   StorageItem,
   StorageItemWithJoin,
   ValidItemOrder,
@@ -14,7 +15,11 @@ import { SupabaseService } from "../supabase/supabase.service";
 import { TablesUpdate } from "@common/supabase.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
-import { ApiSingleResponse } from "../../../../common/response.types"; // Import ApiSingleResponse for type safety
+import {
+  ApiResponse,
+  ApiSingleResponse,
+} from "../../../../common/response.types"; // Import ApiSingleResponse for type safety
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 // this is used by the controller
 
 @Injectable()
@@ -23,16 +28,25 @@ export class StorageItemsService {
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
   ) {}
 
-  async getAllItems(page: number, limit: number): Promise<StorageItem[]> {
+  /**
+   * Get all items within a range from storage_items.
+   * @param page What page of items to return
+   * @param limit How many rows to return
+   * @param active Optional. Boolean. Whether to return active or inactive items. Omit this to get both inactive and active items.
+   * @returns
+   */
+  async getAllItems(
+    page: number,
+    limit: number,
+    active?: boolean,
+  ): Promise<ApiResponse<StorageItem>> {
     const supabase = this.supabaseClient.getServiceClient();
     const { from, to } = getPaginationRange(page, limit);
 
-    // Updated query to join storage_item_tags with tags table
-    const { data, error }: PostgrestResponse<StorageItemWithJoin> =
-      (await supabase
-        .from("storage_items")
-        .select(
-          `
+    const query = supabase
+      .from("storage_items")
+      .select(
+        `
         *,
         storage_item_tags (
           tag_id,
@@ -51,19 +65,18 @@ export class StorageItemsService {
           is_active
         )
       `,
-          { count: "exact" },
-        )
-        .range(from, to)
-        .eq("is_deleted", false)) as PostgrestSingleResponse<
-        StorageItemWithJoin[]
-      >; // Explicitly select tags and their translations by joining the tags table - show only undeleted items
+        { count: "exact" },
+      )
+      .range(from, to)
+      .eq("is_deleted", false);
 
-    if (error) {
-      throw new Error(error.message);
-    }
+    if (active) query.eq("is_active", true);
+
+    const result = await query;
+    if (result.error) handleSupabaseError(result.error);
 
     // Structure the result to include both tags and location data
-    return data.map(
+    const mappedData = result.data.map(
       (item: StorageItemWithJoin): StorageItem => ({
         ...item,
         storage_item_tags:
@@ -73,6 +86,14 @@ export class StorageItemsService {
         location_details: item.storage_locations || null,
       }),
     );
+
+    const pagination_meta = getPaginationMeta(result.count, page, limit);
+
+    return {
+      ...result,
+      data: mappedData,
+      metadata: pagination_meta,
+    };
   }
 
   // 2. get one item
@@ -105,7 +126,6 @@ export class StorageItemsService {
       `,
         ) // Join storage_item_tags and tags table to get full tag data
         .eq("id", id)
-        .eq("is_deleted", false) // Only get undeleted items
         .single();
 
     if (error) {
@@ -161,13 +181,15 @@ export class StorageItemsService {
   async updateItem(
     req: Request,
     id: string,
-    item: Partial<TablesUpdate<"storage_items">> & { tagIds?: string[] },
+    item: Partial<TablesUpdate<"storage_items">> & {
+      tagIds?: string[];
+      location_details?: LocationRow;
+    },
   ): Promise<StorageItem> {
     const supabase = req["supabase"] as SupabaseClient;
     // Extract properties that shouldn't be sent to the database
     const { tagIds, ...itemData } = item;
-
-    console.log("Updating item with data:", JSON.stringify(itemData, null, 2));
+    if ("location_details" in item) delete item.location_details;
 
     // Update the main item
     const {
@@ -179,7 +201,6 @@ export class StorageItemsService {
       .eq("id", id)
       .select();
 
-    console.log(updateError);
     if (updateError) {
       throw new Error(updateError.message);
     }
@@ -494,5 +515,19 @@ export class StorageItemsService {
         count: null,
       };
     }
+  }
+  async getItemCount(
+    supabase: SupabaseClient,
+  ): Promise<ApiSingleResponse<number>> {
+    const result: PostgrestResponse<undefined> = await supabase
+      .from("storage_items")
+      .select(undefined, { count: "exact" });
+
+    if (result.error) handleSupabaseError(result.error);
+
+    return {
+      ...result,
+      data: result.count ?? 0,
+    };
   }
 }

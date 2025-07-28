@@ -22,7 +22,7 @@ const UserBanStatus = ({ userId }: UserBanStatusProps) => {
 
   useEffect(() => {
     if (userId) {
-      dispatch(checkUserBanStatus(userId));
+      void dispatch(checkUserBanStatus(userId));
     }
   }, [dispatch, userId]);
 

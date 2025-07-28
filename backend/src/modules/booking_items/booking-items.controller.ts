@@ -58,6 +58,7 @@ export class BookingItemsController {
     @Param("booking_id") booking_id: string,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
+    @Query("item-details") storage_item_columns: string = "translations",
   ) {
     const supabase = req.supabase;
     const pageNumber = parseInt(page, 10);
@@ -68,6 +69,7 @@ export class BookingItemsController {
       booking_id,
       pageNumber,
       limitNumber,
+      storage_item_columns,
     );
   }
 
@@ -96,8 +98,6 @@ export class BookingItemsController {
     @Param("booking_item_id") booking_item_id: string,
   ) {
     const supabase = req.supabase;
-    console.log("removeBookingItem booking ID: ", booking_id);
-    console.log("removeBookingItem booking-item ID: ", booking_item_id);
     return await this.bookingItemsService.removeBookingItem(
       supabase,
       booking_id,

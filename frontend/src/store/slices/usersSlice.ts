@@ -16,6 +16,7 @@ const initialState: UserState = {
   selectedUser: null,
   selectedUserLoading: false,
   selectedUserAddresses: [],
+  userCount: 0,
 };
 
 export const fetchAllUsers = createAsyncThunk(
@@ -190,6 +191,20 @@ export const deleteAddress = createAsyncThunk(
   },
 );
 
+// get users count (all users, active and inactive)
+export const getUserCount = createAsyncThunk(
+  "users/getUserCount",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await usersApi.getUserCount();
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch bookings count"),
+      );
+    }
+  },
+);
+
 export const usersSlice = createSlice({
   name: "users",
   initialState,
@@ -210,6 +225,13 @@ export const usersSlice = createSlice({
   // handle API call (async thunk) lifecycle actions
   extraReducers: (builder) => {
     builder
+      .addCase(getUserCount.fulfilled, (state, action) => {
+        state.userCount = action.payload.data;
+      })
+      .addCase(getUserCount.rejected, (state) => {
+        state.error = null;
+        state.errorContext = "fetch";
+      })
       // fetch All Users
       .addCase(fetchAllUsers.pending, (state) => {
         state.loading = true;
@@ -409,6 +431,9 @@ export const selectSelectedUserLoading = (state: RootState) =>
 
 export const selectUserAddresses = (state: RootState) =>
   state.users.selectedUserAddresses;
+
+export const selectTotalUsersCount = (state: RootState) =>
+  state.users.userCount;
 
 // export actions from the slice
 export const { clearSelectedUser, selectUser, clearAddresses } =

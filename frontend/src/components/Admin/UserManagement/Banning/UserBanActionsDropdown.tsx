@@ -47,7 +47,7 @@ const UserBanActionsDropdown = ({
   const handleDropdownOpenChange = (open: boolean) => {
     setDropdownOpen(open);
     if (open && !statusChecked && user.id) {
-      dispatch(checkUserBanStatus(user.id));
+      void dispatch(checkUserBanStatus(user.id));
       setStatusChecked(true);
     }
   };

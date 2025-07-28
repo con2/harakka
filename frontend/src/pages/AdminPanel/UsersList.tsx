@@ -14,20 +14,20 @@ import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { PaginatedDataTable } from "../../ui/data-table-paginated";
-import AddUserModal from "./AddUserModal";
-import UserDeleteButton from "./UserDeleteButton";
-import UserEditModal from "./UserEditModal";
-import UserBanActionsDropdown from "./Banning/UserBanActionsDropdown";
-import UserBanModal from "./Banning/UserBanModal";
-import UserBanHistoryModal from "./Banning/UserBanHistoryModal";
-import UnbanUserModal from "./Banning/UnbanUserModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import {
   selectAllUserRoles,
   selectAvailableRoles,
 } from "@/store/slices/rolesSlice";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
+import AddUserModal from "@/components/Admin/UserManagement/AddUserModal";
+import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
+import UserEditModal from "@/components/Admin/UserManagement/UserEditModal";
+import UserBanActionsDropdown from "@/components/Admin/UserManagement/Banning/UserBanActionsDropdown";
+import UserBanModal from "@/components/Admin/UserManagement/Banning/UserBanModal";
+import UserBanHistoryModal from "@/components/Admin/UserManagement/Banning/UserBanHistoryModal";
+import UnbanUserModal from "@/components/Admin/UserManagement/Banning/UnbanUserModal";
 
 const UsersList = () => {
   const dispatch = useAppDispatch();
@@ -231,7 +231,7 @@ const UsersList = () => {
           <div className="flex gap-2">
             {canEdit && <UserEditModal user={targetUser} />}
             {canDelete && (
-              <UserDeleteButton id={targetUser.id} closeModal={closeModal} />
+              <DeleteUserButton id={targetUser.id} closeModal={closeModal} />
             )}
             {(canBan || isSuperAdmin || isAuthorized) && (
               <UserBanActionsDropdown

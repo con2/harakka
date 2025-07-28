@@ -1,20 +1,19 @@
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useEffect, useState } from "react";
-import { Button } from "../../ui/button";
+import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle } from "lucide-react";
-import { PaginatedDataTable } from "../../ui/data-table-paginated";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { Tag, TagAssignmentFilter } from "@/types";
 import {
   fetchFilteredTags,
   selectAllTags,
   selectError,
-  selectLoading,
+  selectTagsLoading,
   selectTagsPage,
   selectTagsTotalPages,
   updateTag,
 } from "@/store/slices/tagSlice";
-import AddTagModal from "./AddTagModal";
 import {
   Dialog,
   DialogContent,
@@ -22,19 +21,20 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "../../ui/input";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import TagDelete from "./TagDelete";
 import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import TagDelete from "@/components/Admin/Items/TagDelete";
+import AddTagModal from "@/components/Admin/Items/AddTagModal";
 
 const TagList = () => {
   const dispatch = useAppDispatch();
   const tags = useAppSelector(selectAllTags);
   const items = useAppSelector(selectAllItems);
-  const loading = useAppSelector(selectLoading);
+  const loading = useAppSelector(selectTagsLoading);
   const error = useAppSelector(selectError);
   const page = useAppSelector(selectTagsPage);
   const totalPages = useAppSelector(selectTagsTotalPages);
@@ -365,9 +365,9 @@ const TagList = () => {
             pageIndex={currentPage - 1}
             pageCount={totalPages}
             onPageChange={(page) => handlePageChange(page + 1)}
-            booking={order}
+            order={order}
             ascending={ascending}
-            handleBooking={handleOrder}
+            handleOrder={handleOrder}
             handleAscending={handleAscending}
             originalSorting="created_at"
           />

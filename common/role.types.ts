@@ -1,4 +1,3 @@
-import { Database } from "./database.types";
 import { Enums, Tables } from "./supabase.types";
 
 /**

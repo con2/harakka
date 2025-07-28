@@ -7,13 +7,14 @@ import PasswordResetResult from "../components/Auth/PasswordResetResult";
 import ProtectedRoute from "../components/Auth/ProtectedRoute";
 
 // Admin
-import AdminDashboard from "@/pages/AdminDashboard";
 import AdminPanel from "../components/Admin/AdminPanel";
-import UsersList from "@/components/Admin/UserManagement/UsersList";
-import AdminItemsTable from "../components/Admin/AdminItemsTable";
-import BookingList from "@/components/Admin/Bookings/BookingList";
-import TagList from "@/components/Admin/Items/TagList";
-import Logs from "../components/Admin/Logs";
+import AdminDashboard from "@/pages/AdminPanel/AdminDashboard";
+import UsersList from "@/pages/AdminPanel/UsersList";
+import AdminItemsTable from "@/pages/AdminPanel/AdminItemsTable";
+import BookingList from "@/pages/AdminPanel/BookingList";
+import TagList from "@/pages/AdminPanel/TagList";
+import Logs from "@/pages/AdminPanel/Logs";
+import Organizations from "@/pages/AdminPanel/Organizations";
 
 // General
 import LandingPage from "@/pages/LandingPage";
@@ -70,6 +71,7 @@ export const router = createBrowserRouter([
           { path: "tags", element: <TagList /> },
           { path: "logs", element: <Logs /> },
           { path: "roles", element: <RoleManagement /> },
+          { path: "organizations", element: <Organizations /> },
         ],
       },
       {

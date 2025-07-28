@@ -3,15 +3,7 @@ import { itemImagesApi } from "@/api/services/itemImages";
 import { ItemImage, UploadItemImageDto } from "@/types/storage";
 import { RootState } from "../store";
 import { ErrorContext } from "@/types/common";
-
-// Helper type to safely unwrap an Axios‑style error object
-type ApiError = {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-};
+import { extractErrorMessage } from "../utils/errorHandlers";
 
 interface ItemImagesState {
   images: ItemImage[];
@@ -45,10 +37,9 @@ export const getItemImages = createAsyncThunk(
       const images = await itemImagesApi.getItemImages(itemId);
       return { images, itemId };
     } catch (error: unknown) {
-      const message =
-        (error as ApiError).response?.data?.message ??
-        "Failed to fetch item images";
-      return rejectWithValue(message);
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch item images"),
+      );
     }
   },
 );
@@ -66,9 +57,9 @@ export const uploadItemImage = createAsyncThunk(
     try {
       return await itemImagesApi.uploadItemImage(itemId, file, metadata);
     } catch (error: unknown) {
-      const message =
-        (error as ApiError).response?.data?.message ?? "Failed to upload image";
-      return rejectWithValue(message);
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to upload image"),
+      );
     }
   },
 );
@@ -80,9 +71,9 @@ export const deleteItemImage = createAsyncThunk(
       await itemImagesApi.deleteItemImage(imageId);
       return imageId;
     } catch (error: unknown) {
-      const message =
-        (error as ApiError).response?.data?.message ?? "Failed to delete image";
-      return rejectWithValue(message);
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to delete image"),
+      );
     }
   },
 );

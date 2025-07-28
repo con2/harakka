@@ -9,17 +9,21 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   deleteItem,
-  fetchAllItems,
   fetchOrderedItems,
+  getItemById,
   selectAllItems,
   selectItemsError,
-  selectItemsLimit,
+  selectItemsPagination,
   selectItemsLoading,
-  selectItemsPage,
-  selectItemsTotalPages,
   updateItem,
+  selectSelectedItem,
 } from "@/store/slices/itemsSlice";
-import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
+import {
+  fetchAllTags,
+  fetchTagsForItem,
+  selectAllTags,
+} from "@/store/slices/tagSlice";
+import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { useRoles } from "@/hooks/useRoles";
 import { Item, ValidItemOrder } from "@/types/item";
@@ -27,34 +31,32 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "../ui/button";
-import { Checkbox } from "../ui/checkbox";
-import { Command, CommandGroup, CommandItem } from "../ui/command";
-import { PaginatedDataTable } from "../ui/data-table-paginated";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { toastConfirm } from "../ui/toastConfirm";
-import AddItemModal from "./Items/AddItemModal";
-import AssignTagsModal from "./Items/AssignTagsModal";
-import UpdateItemModal from "./Items/UpdateItemModal";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
+import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import AddItemModal from "@/components/Admin/Items/AddItemModal";
+import AssignTagsModal from "@/components/Admin/Items/AssignTagsModal";
+import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
   const items = useAppSelector(selectAllItems);
-  const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const [showModal, setShowModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const { hasAnyRole } = useRoles();
-  const isAdmin = hasAnyRole(["admin", "main_admin"]);
-  const isSuperAdmin = hasAnyRole(["super_admin", "superVera"]);
+  const isAdmin = useAppSelector(selectIsAdmin);
+  const isSuperVera = useAppSelector(selectIsSuperVera);
   // Translation
   const { lang } = useLanguage();
-  const page = useAppSelector(selectItemsPage);
-  const totalPages = useAppSelector(selectItemsTotalPages);
-  const limit = useAppSelector(selectItemsLimit);
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   // filtering states:
@@ -69,12 +71,19 @@ const AdminItemsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [order, setOrder] = useState<ValidItemOrder>("created_at");
   const [ascending, setAscending] = useState<boolean | null>(null);
+  const selectedItem = useAppSelector(selectSelectedItem);
+  const { page, totalPages } = useAppSelector(selectItemsPagination);
+  const loading = useAppSelector(selectItemsLoading);
+  const ITEMS_PER_PAGE = 10;
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
 
-  const handleEdit = (item: Item) => {
-    setSelectedItem(item); // Set the selected item
+  const handleEdit = (id: string) => {
+    if (!selectedItem || id !== selectedItem.id) {
+      void dispatch(getItemById(id));
+      void dispatch(fetchTagsForItem(id));
+    }
     setShowModal(true); // Show the modal
   };
 
@@ -91,7 +100,6 @@ const AdminItemsTable = () => {
             success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
             error: t.adminItemsTable.messages.toast.deleteFail[lang],
           });
-          void dispatch(fetchAllItems({ page: 1, limit: limit }));
         } catch {
           toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
         }
@@ -104,7 +112,6 @@ const AdminItemsTable = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setSelectedItem(null); // Reset selected item
   };
 
   const handleBooking = (order: string) =>
@@ -116,34 +123,29 @@ const AdminItemsTable = () => {
     setAssignTagsModalOpen(false);
     setCurrentItemId(null);
   };
-  useEffect(() => console.log(tagFilter), [tagFilter]);
 
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
-    if (debouncedSearchQuery || order) {
-      void dispatch(
-        fetchOrderedItems({
-          ordered_by: order,
-          page: currentPage,
-          limit: limit,
-          searchquery: debouncedSearchQuery,
-          ascending: ascending === false ? false : true,
-          tag_filters: tagFilter,
-          location_filter: [],
-          categories: [],
-          activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        }),
-      );
-    } else {
-      void dispatch(fetchAllItems({ page: currentPage, limit: limit }));
-    }
+    void dispatch(
+      fetchOrderedItems({
+        ordered_by: order,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        searchquery: debouncedSearchQuery,
+        ascending: ascending === false ? false : true,
+        tag_filters: tagFilter,
+        location_filter: [],
+        categories: [],
+        activity_filter: statusFilter !== "all" ? statusFilter : undefined,
+      }),
+    );
   }, [
     dispatch,
     ascending,
     order,
     debouncedSearchQuery,
     currentPage,
-    limit,
+    ITEMS_PER_PAGE,
     page,
     tagFilter,
     statusFilter,
@@ -248,16 +250,16 @@ const AdminItemsTable = () => {
       enableSorting: false,
       enableColumnFilter: false,
       cell: ({ row }) => {
-        const targetUser = row.original;
-        const canEdit = isSuperAdmin || isAdmin;
-        const canDelete = isSuperAdmin || isAdmin;
-        const isDeletable = deletableItems[targetUser.id] !== false;
+        const item = row.original;
+        const canEdit = isSuperVera || isAdmin;
+        const canDelete = isSuperVera || isAdmin;
+        const isDeletable = deletableItems[item.id] !== false;
         return (
           <div className="flex gap-2">
             {canEdit && (
               <Button
                 size="sm"
-                onClick={() => handleEdit(targetUser)}
+                onClick={() => handleEdit(item.id)}
                 className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
               >
                 <Edit className="h-4 w-4" />
@@ -272,9 +274,9 @@ const AdminItemsTable = () => {
                         size="sm"
                         variant="ghost"
                         className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                        onClick={() => handleDelete(targetUser.id)}
+                        onClick={() => handleDelete(item.id)}
                         disabled={!isDeletable}
-                        aria-label={`Delete ${targetUser.translations.fi.item_name}`}
+                        aria-label={`Delete ${item.translations.fi.item_name}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -450,8 +452,8 @@ const AdminItemsTable = () => {
         pageCount={totalPages}
         onPageChange={(page) => handlePageChange(page + 1)}
         handleAscending={handleAscending}
-        handleBooking={handleBooking}
-        booking={order}
+        handleOrder={handleBooking}
+        order={order}
         ascending={ascending}
         originalSorting="items_number_total"
       />
