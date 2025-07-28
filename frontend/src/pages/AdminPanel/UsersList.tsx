@@ -21,7 +21,6 @@ import {
   selectAvailableRoles,
 } from "@/store/slices/rolesSlice";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import AddUserModal from "@/components/Admin/UserManagement/AddUserModal";
 import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
 import UserEditModal from "@/components/Admin/UserManagement/UserEditModal";
 import UserBanActionsDropdown from "@/components/Admin/UserManagement/Banning/UserBanActionsDropdown";
@@ -314,13 +313,14 @@ const UsersList = () => {
             </Button>
           )}
         </div>
+        {/*  Not needed anymore?
         <div className="flex gap-4">
           <AddUserModal>
             <Button variant="outline" size={"sm"}>
               {t.usersList.buttons.addNew[lang]}
             </Button>
           </AddUserModal>
-        </div>
+        </div> */}
       </div>
 
       <PaginatedDataTable
