@@ -198,8 +198,8 @@ export const Navigation = () => {
               </Button>
             </div>
           ) : (
-            <Button variant={"ghost"} asChild>
-              <Link to="/login" data-cy="nav-login">
+            <Button variant={"ghost"} data-cy="nav-login-btn" asChild>
+              <Link to="/login">
                 {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
               </Link>
             </Button>
