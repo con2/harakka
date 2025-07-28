@@ -9,43 +9,53 @@ describe("Anon user booking attempt", () => {
       }
     });
     cy.visit("/storage");
-    cy.get("[data-cy=timeframe-start-btn]", { timeout: 10000 }).should("exist");
+    cy.get("[data-cy=timeframe-start-btn]").should("exist");
   });
 
-  it("should prevent anonymous user from booking an item", () => {
-    // Select the first item card
+  it("should allow anonymous user to add item to cart, but block checkout", () => {
     cy.get("[data-cy=items-card]").first().as("itemCard");
 
-    // Select booking dates using the popover calendar
-    const startDate = getDateISO(1);
-    const endDate = getDateISO(2);
+    const startDateISO = getDateISO(1); //TODO: refactor later. It can't set a date outside current month (picks from Calendar)
+    const endDateISO = getDateISO(2);
 
-    // Open start date picker and select a date
-    cy.get("[data-cy=timeframe-start-btn]")
-      .scrollIntoView()
-      .click({ force: true });
-    cy.get(".day").contains(new Date(startDate).getDate().toString()).click();
+    // Convert ISO string to Date object for day number
+    const startDay = new Date(startDateISO).getDate();
+    const endDay = new Date(endDateISO).getDate();
 
-    // Open end date picker and select a date
-    cy.get("[data-cy=timeframe-end-btn]")
-      .scrollIntoView()
-      .click({ force: true });
-    cy.get(".day").contains(new Date(endDate).getDate().toString()).click();
+    // Open start date picker and select a valid date
+    cy.get("[data-cy=timeframe-start-btn]").click();
+    cy.get('button[role="gridcell"]:not([disabled])')
+      .contains(startDay.toString())
+      .click();
 
-    // Set quantity to 1
+    // Wait for the end date popover to open
+    cy.wait(300);
+
+    // Open end date picker and select a valid date
+    cy.get("[data-cy=timeframe-end-btn]").click();
+    cy.get('button[role="gridcell"]:not([disabled])')
+      .contains(endDay.toString())
+      .click();
+
+    // Set quantity
     cy.get("@itemCard")
       .find("[data-cy=item-quantity-section] input")
       .clear()
       .type("1");
 
-    // Try to add to cart
+    // Add to cart
     cy.get("@itemCard")
       .find("[data-cy=item-add-to-cart-btn]")
       .should("not.be.disabled")
       .click();
 
-    // Should redirect to login or show login required toast/message
+    // Go to cart and try to checkout
+    cy.get("[data-cy=nav-cart]").click();
+    cy.get("[data-cy=cart-checkout-btn]").should("exist").click();
+
+    // Check if now user sees Login page
     cy.url().should("include", "/login");
-    cy.contains(/please log in|kirjaudu/i).should("exist");
+    cy.get("[data-cy=login-root]").should("exist");
+    cy.get("[data-cy=login-card]").should("exist");
   });
 });

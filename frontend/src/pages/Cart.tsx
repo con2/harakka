@@ -238,22 +238,32 @@ const Cart: React.FC = () => {
       : 0;
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-10 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white">
+    <div
+      className="w-full max-w-6xl mx-auto px-10 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white"
+      data-cy="cart-root"
+    >
       <div className="mb-3 mt-4 md:mt-0">
         <Button
           onClick={() => navigate("/storage")}
           className="text-secondary mb-4 ml-2 px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+          data-cy="cart-back-btn"
         >
           <ChevronLeft /> {t.itemDetails.buttons.back[lang]}
         </Button>
-        <p className="text-xl mb-4 text-left pl-2 text-secondary">
+        <p
+          className="text-xl mb-4 text-left pl-2 text-secondary"
+          data-cy="cart-title"
+        >
           {t.cart.review.title[lang]}
         </p>
       </div>
       <div className="flex flex-col md:flex-row gap-10 mb-2">
         <div className="flex flex-col flex-2/3">
           {/* Booking Timeframe Summary */}
-          <div className="bg-slate-50 p-4 rounded-lg mb-6">
+          <div
+            className="bg-slate-50 p-4 rounded-lg mb-6"
+            data-cy="cart-timeframe-summary"
+          >
             {startDate && endDate ? (
               <div className="flex items-center my-1">
                 <div className="flex items-center gap-2 flex-1/3">
@@ -263,12 +273,18 @@ const Cart: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex items-center justify-end flex-2/3">
-                  <p className="text-md font-semibold mr-3">
+                  <p
+                    className="text-md font-semibold mr-3"
+                    data-cy="cart-timeframe-dates"
+                  >
                     {formatDate(startDate, "d MMM yyyy")}
                     <span className="font-semibold"> -</span>{" "}
                     {formatDate(endDate, "d MMM yyyy")}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p
+                    className="text-xs text-muted-foreground"
+                    data-cy="cart-rental-days"
+                  >
                     ({rentalDays}{" "}
                     {rentalDays === 1
                       ? t.cart.booking.day[lang]
@@ -278,12 +294,14 @@ const Cart: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-amber-600">{t.cart.booking.noDates[lang]}</p>
+              <p className="text-amber-600" data-cy="cart-no-dates">
+                {t.cart.booking.noDates[lang]}
+              </p>
             )}
           </div>
 
           {/* Cart Items */}
-          <div className="space-y-4 p-2">
+          <div className="space-y-4 p-2" data-cy="cart-items-list">
             {cartItems.map((cartItem) => {
               const itemContent = getTranslation(cartItem.item, lang) as
                 | ItemTranslation
@@ -293,20 +311,27 @@ const Cart: React.FC = () => {
                 <div
                   key={cartItem.item.id}
                   className="flex flex-col border-b pb-4"
+                  data-cy="cart-item"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="font-medium mb-2">
+                      <h3 className="font-medium mb-2" data-cy="cart-item-name">
                         {itemContent?.item_name
                           .toLowerCase()
                           .replace(/^./, (c) => c.toUpperCase())}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p
+                        className="text-sm text-gray-500"
+                        data-cy="cart-item-type"
+                      >
                         {itemContent?.item_type
                           .toLowerCase()
                           .replace(/^./, (c) => c.toUpperCase())}
                       </p>
-                      <p className="text-xs text-slate-400">
+                      <p
+                        className="text-xs text-slate-400"
+                        data-cy="cart-item-available"
+                      >
                         {t.cart.item.available[lang]}{" "}
                         {availabilityMap[cartItem.item.id]?.availableQuantity ??
                           "-"}{" "}
@@ -315,7 +340,10 @@ const Cart: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center">
+                      <div
+                        className="flex items-center"
+                        data-cy="cart-item-quantity-section"
+                      >
                         <Button
                           variant="outline"
                           size="sm"
@@ -325,6 +353,7 @@ const Cart: React.FC = () => {
                               cartItem.quantity - 1,
                             )
                           }
+                          data-cy="cart-item-quantity-minus"
                         >
                           -
                         </Button>
@@ -341,6 +370,7 @@ const Cart: React.FC = () => {
                           max={
                             availabilityMap[cartItem.item.id]?.availableQuantity
                           }
+                          data-cy="cart-item-quantity-input"
                         />
                         <Button
                           variant="outline"
@@ -356,6 +386,7 @@ const Cart: React.FC = () => {
                             (availabilityMap[cartItem.item.id]
                               ?.availableQuantity ?? 0)
                           }
+                          data-cy="cart-item-quantity-plus"
                         >
                           +
                         </Button>
@@ -368,6 +399,7 @@ const Cart: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleRemoveItem(cartItem.item.id)}
+                        data-cy="cart-item-remove-btn"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -378,9 +410,17 @@ const Cart: React.FC = () => {
             })}
           </div>
         </div>
-        <div className="flex flex-col w-full md:w-1/3 mt-6 md:mt-0 max-h-[80vh] overflow-y-auto sticky top-24">
-          <div className="bg-slate-50 p-4 rounded-lg w-full mb-4">
-            <h3 className="font-semibold mb-3">{t.cart.summary.title[lang]}</h3>
+        <div
+          className="flex flex-col w-full md:w-1/3 mt-6 md:mt-0 max-h-[80vh] overflow-y-auto sticky top-24"
+          data-cy="cart-summary-section"
+        >
+          <div
+            className="bg-slate-50 p-4 rounded-lg w-full mb-4"
+            data-cy="cart-summary-box"
+          >
+            <h3 className="font-semibold mb-3" data-cy="cart-summary-title">
+              {t.cart.summary.title[lang]}
+            </h3>
             <div className="space-y-2">
               {/* <div className="flex justify-between text-sm">
                 <span>{t.cart.summary.subtotal[lang]}</span>
@@ -395,13 +435,12 @@ const Cart: React.FC = () => {
                     : t.cart.booking.days[lang]}
                 </span>
               </div>
-              <div className="border-t pt-2 mt-2 flex justify-between text-xs">
+              <div
+                className="border-t pt-2 mt-2 flex justify-between text-xs"
+                data-cy="cart-summary-explanation"
+              >
                 <span className="mt-2">{t.cart.booking.explanation[lang]}</span>
               </div>
-              {/* <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
-                <span>{t.cart.summary.total[lang]}</span>
-                <span>€{(cartTotal * rentalDays).toFixed(2)}</span>
-              </div> */}
             </div>
           </div>
 
@@ -412,6 +451,7 @@ const Cart: React.FC = () => {
               !startDate || !endDate || bookingLoading || cartItems.length === 0
             }
             onClick={handleCheckout}
+            data-cy="cart-checkout-btn"
           >
             {bookingLoading ? (
               <>
@@ -426,10 +466,14 @@ const Cart: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-row items-center justify-between gap-4">
+      <div
+        className="flex flex-row items-center justify-between gap-4"
+        data-cy="cart-actions"
+      >
         <Button
           onClick={handleClearCart}
           className="text-primary/50 bg-background rounded-2xl border-1 border-primary/50 hover:bg-primary hover:text-white ml-2"
+          data-cy="cart-clear-btn"
         >
           {t.cart.buttons.clearCart[lang]}
         </Button>
