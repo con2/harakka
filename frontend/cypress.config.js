@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Load Cypress-specific env file
-dotenv.config({ path: path.resolve(__dirname, ".env.cypress.local") });
+dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
 
 // Collect all envs to expose
 const envVars = [
