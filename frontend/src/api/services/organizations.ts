@@ -23,12 +23,16 @@ export const organizationApi = {
     const response = await api.get(
       `/organizations?page=${page}&limit=${limit}`,
     );
-    const data = response.data;
+    console.log("DEBUG getAllOrganizations response:", response.data);
+
+    const data = response.data.data;
+    const metadata = response.data.metadata;
+
     return {
       data,
-      total: data.length,
-      page,
-      totalPages: 1,
+      total: metadata?.total ?? data.length,
+      page: metadata?.page ?? page,
+      totalPages: metadata?.totalPages ?? 1,
     };
   },
 
