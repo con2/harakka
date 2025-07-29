@@ -32,6 +32,10 @@ export const adminPanel = {
       fi: "Asetukset",
       en: "Settings",
     },
+    orgs: {
+      fi: "Yhdistys",
+      en: "Organization",
+    },
     logs: {
       fi: "Lokit",
       en: "Logs",

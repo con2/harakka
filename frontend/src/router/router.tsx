@@ -15,6 +15,7 @@ import BookingList from "@/pages/AdminPanel/BookingList";
 import TagList from "@/pages/AdminPanel/TagList";
 import Logs from "@/pages/AdminPanel/Logs";
 import Organizations from "@/pages/AdminPanel/Organizations";
+import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
 
 // General
 import LandingPage from "@/pages/LandingPage";
@@ -93,6 +94,7 @@ export const router = createBrowserRouter([
           { path: "roles", element: <RoleManagement /> },
           { path: "organizations", element: <Organizations /> },
           { path: "items/add", element: <AddItem /> },
+          { path: "locations", element: <OrganizationLocations /> },
         ],
       },
       {
