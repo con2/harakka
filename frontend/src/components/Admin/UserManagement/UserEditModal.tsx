@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -16,26 +17,41 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLanguage } from "@/context/LanguageContext";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateUser } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { UserFormData } from "@/types";
 import { Edit } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Label } from "../../ui/label";
 import { MultiSelect } from "../../ui/multi-select";
 import { UserProfile } from "@common/user.types";
+import {
+  selectOrganizations,
+  fetchAllOrganizations,
+} from "@/store/slices/organizationSlice";
+import { useRoles } from "@/hooks/useRoles";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();
   // Translation
   const { lang } = useLanguage();
 
+  const {
+    availableRoles,
+    allUserRoles,
+    createRole,
+    permanentDeleteRole,
+    isSuperAdmin,
+    isSuperVera,
+  } = useRoles({ skipInitialFetch: true });
+
+  const canManageRoles = isSuperAdmin || isSuperVera;
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
     email: user.email || "",
-    roles: [(user.role as "user" | "admin" | "superVera") || "user"], // Should be fixed when we setup new roles
+    roles: [],
     phone: user.phone || "",
     visible_name: user.visible_name || "",
     preferences:
@@ -54,6 +70,40 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
         ? user.saved_lists
         : [],
   });
+
+  // Role assignments across organizations
+  type RoleAssignment = {
+    organization_id: string | null;
+    role_name: string | null;
+  };
+  const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
+
+  // Org info
+  const organizations = useAppSelector(selectOrganizations);
+  // Populate initial role assignments once roles are loaded
+  useEffect(() => {
+    const userRoles = allUserRoles
+      .filter((r) => r.user_id === user.id && r.organization_id && r.role_name)
+      .map((r) => ({
+        organization_id: r.organization_id as string,
+        role_name: r.role_name as string,
+      }));
+    setRoleAssignments(userRoles);
+  }, [allUserRoles, user.id]);
+
+  // Ensure availableRoles are present (skipInitialFetch suppresses it in the hook)
+  /*   useEffect(() => {
+    if (canManageRoles && !availableRoles.length) {
+      void refreshAvailableRoles();
+    }
+  }, [canManageRoles, availableRoles.length, refreshAvailableRoles]);
+ */
+  // Ensure organizations list is loaded for the org picker
+  useEffect(() => {
+    if (organizations.length === 0) {
+      void dispatch(fetchAllOrganizations({ page: 1, limit: 30 }));
+    }
+  }, [organizations.length, dispatch]);
 
   // Handle changes for normal input fields
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,17 +139,76 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     setFormData({ ...formData, saved_lists: newSavedLists });
   };
 
-  // Handle changes for role
-  const handleRoleChange = (newRole: "user" | "admin" | "superVera") => {
-    setFormData({ ...formData, roles: [newRole] });
+  // Role assignment helpers
+  const handleRoleAssignmentChange = (
+    index: number,
+    field: "organization_id" | "role_name",
+    value: string | null,
+  ) => {
+    if (!canManageRoles) return;
+    setRoleAssignments((prev) =>
+      prev.map((ra, i) => (i === index ? { ...ra, [field]: value } : ra)),
+    );
+  };
+
+  const addRoleAssignment = () => {
+    if (!canManageRoles) return;
+    setRoleAssignments((prev) => [
+      ...prev,
+      { organization_id: null, role_name: null },
+    ]);
+  };
+
+  const removeRoleAssignment = (index: number) => {
+    if (!canManageRoles) return;
+    setRoleAssignments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
     try {
+      // Remove "roles" key—the column no longer exists in user_profiles
+      const { roles: _roles, ...profileData } = formData;
       await dispatch(
-        updateUser({ id: user.id, data: { ...formData, id: user.id } }),
+        updateUser({ id: user.id, data: { ...profileData, id: user.id } }),
       ).unwrap();
       toast.success(t.userEditModal.messages.success[lang]);
+
+      // --- Sync role assignments with backend ---
+      const originalRoles = allUserRoles.filter((r) => r.user_id === user.id);
+      const toCreate = roleAssignments.filter(
+        (ra) =>
+          !originalRoles.some(
+            (or) =>
+              or.organization_id === ra.organization_id &&
+              or.role_name === ra.role_name,
+          ),
+      );
+      const toDelete = originalRoles.filter(
+        (or) =>
+          !roleAssignments.some(
+            (ra) =>
+              ra.organization_id === or.organization_id &&
+              ra.role_name === or.role_name,
+          ),
+      );
+
+      for (const ra of toCreate) {
+        if (!ra.organization_id || !ra.role_name) continue; // skip incomplete rows
+        const roleDef = availableRoles.find((ar) => ar.role === ra.role_name);
+        if (roleDef) {
+          await createRole({
+            user_id: user.id,
+            organization_id: ra.organization_id,
+            role_id: roleDef.id,
+          });
+        }
+      }
+
+      for (const rd of toDelete) {
+        if (rd.id) {
+          await permanentDeleteRole(rd.id);
+        }
+      }
     } catch {
       toast.error(t.userEditModal.messages.error[lang]);
     }
@@ -122,6 +231,9 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
             {t.userEditModal.title[lang]}
           </DialogTitle>
         </DialogHeader>
+        <DialogDescription>
+          {t.userEditModal.description[lang]}
+        </DialogDescription>
 
         <div className="space-y-4">
           <div>
@@ -153,29 +265,106 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
               placeholder={t.userEditModal.placeholders.phone[lang]}
             />
           </div>
+
           <div>
-            <Label htmlFor="role">{t.userEditModal.labels.role[lang]}</Label>
-            <Select
-              onValueChange={handleRoleChange}
-              defaultValue={formData.roles?.[0]}
-            >
-              <SelectTrigger className="w-[120px]">
-                <SelectValue
-                  placeholder={t.userEditModal.placeholders.selectRole[lang]}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">
-                  {t.userEditModal.roles.admin[lang]}
-                </SelectItem>
-                <SelectItem value="user">
-                  {t.userEditModal.roles.user[lang]}
-                </SelectItem>
-                <SelectItem value="superVera">
-                  {t.userEditModal.roles.superVera[lang]}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>{t.userEditModal.labels.roles[lang]}</Label>
+
+            {canManageRoles ? (
+              <>
+                {roleAssignments.map((ra, index) => (
+                  <div key={index} className="flex space-x-2 mb-2">
+                    {/* Organization picker */}
+                    <Select
+                      onValueChange={(value) =>
+                        handleRoleAssignmentChange(
+                          index,
+                          "organization_id",
+                          value,
+                        )
+                      }
+                      defaultValue={ra.organization_id ?? undefined}
+                    >
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue
+                          placeholder={
+                            t.userEditModal.placeholders.selectOrganization[
+                              lang
+                            ]
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organizations.map((org) => (
+                          <SelectItem key={org.id} value={org.id}>
+                            {org.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Role picker */}
+                    <Select
+                      onValueChange={(value) =>
+                        handleRoleAssignmentChange(index, "role_name", value)
+                      }
+                      defaultValue={ra.role_name ?? undefined}
+                    >
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue
+                          placeholder={
+                            t.userEditModal.placeholders.selectRole[lang]
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableRoles.map((r) => (
+                          <SelectItem key={r.id} value={r.role}>
+                            {r.role}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Remove row */}
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => removeRoleAssignment(index)}
+                    >
+                      {t.userEditModal.buttons.remove[lang]}
+                    </Button>
+                  </div>
+                ))}
+
+                <Button
+                  className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+                  type="button"
+                  size="sm"
+                  onClick={addRoleAssignment}
+                >
+                  {t.userEditModal.buttons.addRole[lang]}
+                </Button>
+              </>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {roleAssignments.length > 0 ? (
+                  roleAssignments.map((ra, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded w-max"
+                    >
+                      {organizations.find((o) => o.id === ra.organization_id)
+                        ?.name ?? ra.organization_id}{" "}
+                      — {ra.role_name}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-slate-500">
+                    {t.userEditModal.status.noRoles[lang]}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div>

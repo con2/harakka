@@ -8,7 +8,6 @@ import ProtectedRoute from "../components/Auth/ProtectedRoute";
 
 // Admin
 import AdminPanel from "../components/Admin/AdminPanel";
-import TeamList from "@/components/Admin/UserManagement/TeamList";
 import AdminDashboard from "@/pages/AdminPanel/AdminDashboard";
 import UsersList from "@/pages/AdminPanel/UsersList";
 import AdminItemsTable from "@/pages/AdminPanel/AdminItemsTable";
@@ -52,7 +51,17 @@ export const router = createBrowserRouter([
       {
         path: "/profile",
         element: (
-          <ProtectedRoute allowedRoles={["user", "admin", "superVera"]}>
+          <ProtectedRoute
+            allowedRoles={[
+              "user",
+              "storage_manager",
+              "requester",
+              "admin",
+              "main_admin",
+              "super_admin",
+              "superVera",
+            ]}
+          >
             <MyProfile />
           </ProtectedRoute>
         ),
@@ -60,14 +69,22 @@ export const router = createBrowserRouter([
       {
         path: "/admin",
         element: (
-          <ProtectedRoute allowedRoles={["admin", "superVera"]}>
+          <ProtectedRoute
+            allowedRoles={[
+              "requester",
+              "storage_manager",
+              "admin",
+              "main_admin",
+              "super_admin",
+              "superVera",
+            ]}
+          >
             <AdminPanel />
           </ProtectedRoute>
         ),
         children: [
           { index: true, element: <AdminDashboard /> },
           { path: "users", element: <UsersList /> },
-          { path: "team", element: <TeamList /> },
           { path: "items", element: <AdminItemsTable /> },
           { path: "bookings", element: <BookingList /> },
           { path: "tags", element: <TagList /> },

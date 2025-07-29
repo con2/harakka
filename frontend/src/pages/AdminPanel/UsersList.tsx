@@ -12,12 +12,15 @@ import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
+import {
+  selectAllUserRoles,
+  selectAvailableRoles,
+} from "@/store/slices/rolesSlice";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import AddUserModal from "@/components/Admin/UserManagement/AddUserModal";
 import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
 import UserEditModal from "@/components/Admin/UserManagement/UserEditModal";
 import UserBanActionsDropdown from "@/components/Admin/UserManagement/Banning/UserBanActionsDropdown";
@@ -26,19 +29,18 @@ import UserBanHistoryModal from "@/components/Admin/UserManagement/Banning/UserB
 import UnbanUserModal from "@/components/Admin/UserManagement/Banning/UnbanUserModal";
 
 const UsersList = () => {
+  // ————————————— Hooks & Selectors —————————————
   const dispatch = useAppDispatch();
   const { authLoading } = useAuth();
   const users = useAppSelector(selectAllUsers);
   const loading = useAppSelector(selectLoading);
   const error = useAppSelector(selectError);
-  const { hasAnyRole } = useRoles();
-  const isAuthorized = hasAnyRole([
-    "admin",
-    "main_admin",
-    "superAdmin",
-    "superVera",
-  ]);
-  const isSuperAdmin = hasAnyRole(["superAdmin", "superVera"]); // TODO: replace with hasRole(["superAdmin"]) once superVera is obsolete
+  const allUserRoles = useAppSelector(selectAllUserRoles);
+  const availableRoles = useAppSelector(selectAvailableRoles);
+  const { isAdmin, isSuperAdmin, isSuperVera, refreshAllUserRoles } =
+    useRoles();
+
+  // ————————————— State —————————————
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -55,30 +57,60 @@ const UsersList = () => {
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
 
-  // Close modals when user changes
+  // ————————————— Derived Values —————————————
+  // Authorization helpers based on new role system
+  const isAuthorized = isAdmin || isSuperAdmin || isSuperVera;
+
+  // Track whether we've already kicked off the initial data load
+  const initialFetchDone = useRef(false);
+
+  // ————————————— Side Effects —————————————
+
+  /* 
+  useEffect(() => {
+    if (!allUserRoles.length) {
+      void refreshAllUserRoles();
+    }
+  }, [allUserRoles.length, refreshAllUserRoles]);
+ */
   useEffect(() => {
     if (!activeUser) {
       setActiveModal(null);
     }
   }, [activeUser]);
 
+  useEffect(() => {
+    if (
+      !initialFetchDone.current &&
+      !authLoading &&
+      isAuthorized &&
+      isModalOpen
+    ) {
+      initialFetchDone.current = true;
+      void dispatch(fetchAllUsers());
+      void refreshAllUserRoles();
+    }
+  }, [authLoading, isAuthorized, isModalOpen, dispatch, refreshAllUserRoles]);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchQuery, roleFilter]);
+
+  // ————————————— Helper Functions —————————————
   // Reset modal state
   const resetModalState = () => {
     setActiveUser(null);
     setActiveModal(null);
   };
 
-  useEffect(() => {
-    if (
-      !authLoading &&
-      isAuthorized &&
-      users.length === 0 &&
-      isModalOpen === true
-    ) {
-      void dispatch(fetchAllUsers());
-    }
-  }, [authLoading, isAuthorized, users.length, isModalOpen, dispatch]);
+  // Helper function to get user's roles from the new role system
+  const getUserRoles = (userId: string) => {
+    return allUserRoles
+      .filter((role) => role.user_id === userId && role.is_active)
+      .map((role) => role.role_name);
+  };
 
+  // ————————————— Computed Data —————————————
   const filteredUsers = users
     .filter((u) => {
       const query = searchQuery.toLowerCase();
@@ -89,13 +121,12 @@ const UsersList = () => {
     })
     .filter((u) => {
       if (roleFilter === "all") return true;
-      return u.role === roleFilter;
+      // Check if user has the filtered role in the new role system
+      const userRoles = getUserRoles(u.id);
+      return userRoles.includes(roleFilter as (typeof userRoles)[number]);
     });
 
   // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [searchQuery, roleFilter]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -108,6 +139,7 @@ const UsersList = () => {
     setCurrentPage(pageIndex);
   };
 
+  // ————————————— Columns —————————————
   const columns: ColumnDef<UserProfile>[] = [
     {
       accessorKey: "full_name",
@@ -142,15 +174,24 @@ const UsersList = () => {
         formatDate(new Date(row.original.created_at ?? ""), "d MMM yyyy"),
     },
     {
-      id: "role",
+      id: "roles",
       header: t.usersList.columns.role[lang],
-      size: 100,
+      size: 150,
       enableSorting: true,
       enableColumnFilter: true,
       cell: ({ row }) => {
-        const userRole = row.original.role;
-        return userRole ? (
-          userRole
+        const userRoles = getUserRoles(row.original.id);
+        return userRoles.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {userRoles.map((role, index) => (
+              <span
+                key={index}
+                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
+              >
+                {role}
+              </span>
+            ))}
+          </div>
         ) : (
           <span className="text-slate-500">{t.usersList.status.na[lang]}</span>
         );
@@ -163,13 +204,15 @@ const UsersList = () => {
       enableColumnFilter: false,
       cell: ({ row }) => {
         const targetUser = row.original;
-        // logic needs to be updated based on who gets to ban whom
+        const targetUserRoles = getUserRoles(targetUser.id);
+
+        // Updated logic based on new role system
         const canEdit = isAuthorized;
         const canDelete =
-          isSuperAdmin || (isAuthorized && targetUser.role === "user");
+          isSuperAdmin || (isAuthorized && targetUserRoles.includes("user"));
         const canBan =
-          (isSuperAdmin && targetUser.role === "admin") ||
-          (isAuthorized && targetUser.role === "user");
+          (isSuperAdmin && targetUserRoles.includes("admin")) ||
+          (isAuthorized && targetUserRoles.includes("user"));
 
         const handleBanClick = () => {
           setActiveUser(targetUser);
@@ -209,6 +252,7 @@ const UsersList = () => {
     },
   ];
 
+  // ————————————— Render —————————————
   if (authLoading || loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -250,13 +294,11 @@ const UsersList = () => {
             className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           >
             <option value="all">{t.usersList.filters.roles.all[lang]}</option>
-            <option value="user">{t.usersList.filters.roles.user[lang]}</option>
-            <option value="admin">
-              {t.usersList.filters.roles.admin[lang]}
-            </option>
-            <option value="superVera">
-              {t.usersList.filters.roles.superVera[lang]}
-            </option>
+            {availableRoles.map((role) => (
+              <option key={role.id} value={role.role}>
+                {role.role}
+              </option>
+            ))}
           </select>
           {(searchQuery || roleFilter !== "all") && (
             <Button
@@ -271,13 +313,14 @@ const UsersList = () => {
             </Button>
           )}
         </div>
+        {/*  Not needed anymore?
         <div className="flex gap-4">
           <AddUserModal>
             <Button variant="outline" size={"sm"}>
               {t.usersList.buttons.addNew[lang]}
             </Button>
           </AddUserModal>
-        </div>
+        </div> */}
       </div>
 
       <PaginatedDataTable

@@ -418,14 +418,6 @@ export const selectErrorWithContext = (state: RootState) => ({
 });
 export const selectSelectedUser = (state: RootState) =>
   state.users.selectedUser;
-export const selectUserRole = (state: RootState) =>
-  state.users.selectedUser?.role || null; // deprecated
-export const selectIsAdmin = (state: RootState) =>
-  state.users.selectedUser?.role === "admin"; // deprecated
-export const selectIsSuperVera = (state: RootState) =>
-  state.users.selectedUser?.role === "superVera"; // deprecated
-export const selectIsUser = (state: RootState) =>
-  state.users.selectedUser?.role === "user"; // deprecated
 export const selectSelectedUserLoading = (state: RootState) =>
   state.users.selectedUserLoading;
 

@@ -2,10 +2,10 @@ import { api } from "../axios";
 import {
   CreateUserRoleDto,
   RoleCheckResponse,
+  RolesRow,
   UpdateUserRoleDto,
   UserOrganization,
 } from "@/types/roles";
-import type { Database } from "@common/database.types";
 import { ViewUserRolesWithDetails } from "@common/role.types";
 
 export const roleApi = {
@@ -54,9 +54,7 @@ export const roleApi = {
   },
 
   // Get all available roles for dropdowns
-  async getAvailableRoles(): Promise<
-    Database["public"]["Tables"]["roles"]["Row"][]
-  > {
+  async getAvailableRoles(): Promise<RolesRow[]> {
     return await api.get("/roles/list");
   },
 
