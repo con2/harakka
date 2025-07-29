@@ -5,6 +5,8 @@
 1. [Sources](#sources)
 1. [Prerequisites](#prerequisites)
 1. [Guide](#guide)
+1. [Generate Local Types](#generate-local-types)
+1. [Making Local Changes](#making-local-changes)
 
 ## Sources
 
@@ -43,3 +45,18 @@ Make sure you have the following things:
 
 ## Generate Local Types
 `npx supabase gen types typescript --local > common/supabase.types.ts`
+
+## Making Local Changes
+Local changes are done using "migration" files.
+
+[Documentation](https://supabase.com/docs/guides/deployment/database-migrations)
+
+**1. Create a migration file**  
+`supabase migration new <file-name>`
+
+**2. Add SQL to migration file**
+
+**3. Apply locally**  
+`supabase migration up`
+
+### Applying Local Changes
