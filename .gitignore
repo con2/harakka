@@ -4,8 +4,7 @@ NOTES.md
 # Node.js dependencies
 node_modules/*
 .nvmrc
-*/videos
-*/screenshots
+
 
 # compiled output
 /dist
