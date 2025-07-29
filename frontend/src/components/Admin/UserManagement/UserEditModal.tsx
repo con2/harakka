@@ -48,7 +48,6 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   } = useRoles({ skipInitialFetch: true });
 
   const canManageRoles = isSuperAdmin || isSuperVera;
-  console.log("UserEditModal", { user, canManageRoles });
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
     email: user.email || "",
