@@ -4,13 +4,19 @@
 Cypress.Commands.add("login", (email, password) => {
   cy.session([email, password], () => {
     cy.visit("/login");
-    cy.get("[data-cy=email-input]").type(email);
-    cy.get("[data-cy=password-input]").type(password);
-    cy.get("[data-cy=login-button]").click();
 
-    // Verify successful login by checking for authenticated element
-    cy.url().should("not.include", "/login");
+    // Use only type selectors for Supabase Auth UI fields
+    cy.get('input[type="email"]').should("be.visible").clear().type(email);
+    cy.get('input[type="password"]')
+      .should("be.visible")
+      .clear()
+      .type(password);
+
+    cy.get('button[type="submit"]').should("be.visible").click();
+
+    cy.url({ timeout: 10000 }).should("not.include", "/login");
   });
+  cy.visit("/storage");
 });
 
 // Add the setupUserRole command
@@ -31,12 +37,6 @@ Cypress.Commands.add("setupUserRole", (role) => {
       statusCode: 200,
     }).as("getCurrentUserRegular");
   }
-
-  // Common intercept for all users
-  cy.intercept("GET", "**/users", {
-    fixture: "users-list.json",
-    statusCode: 200,
-  }).as("getUsers");
 });
 
 // Add the loginWithSupabase command
@@ -65,22 +65,11 @@ Cypress.Commands.add("loginWithSupabase", (email, password) => {
   );
 });
 
-// Storage item commands
-Cypress.Commands.add("viewStorageItems", () => {
-  cy.visit("/storage");
-  cy.wait("@getItems");
-});
-
-Cypress.Commands.add("mockStorageItems", () => {
-  cy.intercept("GET", "**/storage-items", { fixture: "storage-items.json" }).as(
-    "getItems",
-  );
-});
-
-// Demo pause - used for customer presentations
-Cypress.Commands.add("demoPause", (ms = 500) => {
-  // Always pause when running demo - no environment check needed for demos
-  cy.wait(ms);
+// Login as a regular user
+Cypress.Commands.add("loginAsRegularUser", () => {
+  const email = Cypress.env("CYPRESS_REGULAR_USER_EMAIL");
+  const password = Cypress.env("CYPRESS_REGULAR_USER_PASSWORD");
+  cy.login(email, password);
 });
 
 // Declare the types for your custom commands
@@ -93,6 +82,7 @@ declare global {
       setupUserRole(role: string): Chainable<void>;
       loginWithSupabase(email: string, password: string): Chainable<void>;
       demoPause(ms?: number): Chainable<void>;
+      loginAsRegularUser(): Chainable<void>;
     }
   }
 }
