@@ -177,8 +177,8 @@ const UsersList = () => {
       id: "roles",
       header: t.usersList.columns.role[lang],
       size: 150,
-      enableSorting: false,
-      enableColumnFilter: false,
+      enableSorting: true,
+      enableColumnFilter: true,
       cell: ({ row }) => {
         const userRoles = getUserRoles(row.original.id);
         return userRoles.length > 0 ? (

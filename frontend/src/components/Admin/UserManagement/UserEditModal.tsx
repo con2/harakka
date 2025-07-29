@@ -42,7 +42,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     availableRoles,
     allUserRoles,
     createRole,
-    deleteRole,
+    permanentDeleteRole,
     isSuperAdmin,
     isSuperVera,
   } = useRoles({ skipInitialFetch: true });
@@ -206,7 +206,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
 
       for (const rd of toDelete) {
         if (rd.id) {
-          await deleteRole(rd.id);
+          await permanentDeleteRole(rd.id);
         }
       }
     } catch {
