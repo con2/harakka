@@ -1,8 +1,8 @@
 import { ApiResponse } from "@/types/api";
 import {
-  OrgLocationRow,
   OrgLocationInsert,
   OrgLocationUpdate,
+  OrgLocationWithNames,
 } from "@/types/organizationLocation";
 import { api } from "../axios";
 
@@ -18,10 +18,10 @@ export const orgLocationsApi = {
    * @returns Promise with paginated org locations
    */
   getAllOrgLocs: (
-    orgId: number,
+    orgId: string,
     pageSize: number = 10,
     currentPage: number = 1,
-  ): Promise<ApiResponse<OrgLocationRow[]>> =>
+  ): Promise<ApiResponse<OrgLocationWithNames[]>> =>
     api.get(
       `/organization-locations/organization/${orgId}?pageSize=${pageSize}&currentPage=${currentPage}`,
     ),
@@ -31,7 +31,7 @@ export const orgLocationsApi = {
    * @param id - Org location ID to fetch
    * @returns Promise with the requested org location
    */
-  getOrgLocById: (id: number): Promise<OrgLocationRow> =>
+  getOrgLocById: (id: string): Promise<OrgLocationWithNames> =>
     api.get(`/organization-locations/${id}`),
 
   /**
@@ -39,7 +39,9 @@ export const orgLocationsApi = {
    * @param orgLocationData - Org location data to create
    * @returns Promise with the created org location
    */
-  createOrgLoc: (orgLocationData: OrgLocationInsert): Promise<OrgLocationRow> =>
+  createOrgLoc: (
+    orgLocationData: OrgLocationInsert,
+  ): Promise<OrgLocationWithNames> =>
     api.post("/organization-locations", orgLocationData),
 
   /**
@@ -49,9 +51,9 @@ export const orgLocationsApi = {
    * @returns Promise with the updated org location
    */
   updateOrgLoc: (
-    id: number,
+    id: string,
     orgLocationData: OrgLocationUpdate,
-  ): Promise<OrgLocationRow> =>
+  ): Promise<OrgLocationWithNames> =>
     api.put(`/organization-locations/${id}`, orgLocationData),
 
   /**
@@ -59,6 +61,6 @@ export const orgLocationsApi = {
    * @param id - Org location ID to delete
    * @returns Promise that resolves when deletion is complete
    */
-  deleteOrgLoc: (id: number): Promise<void> =>
+  deleteOrgLoc: (id: string): Promise<void> =>
     api.delete(`/organization-locations/${id}`),
 };
