@@ -324,42 +324,42 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                       key={index}
                       className="grid grid-cols-[1fr_1fr_80px_auto] gap-2 px-3 py-2 items-center"
                     >
-                      {/* Organization picker */}
-                      <Select
-                        disabled={ra.id !== null}
-                        onValueChange={(value) =>
-                          handleRoleAssignmentChange(
-                            index,
-                            "organization_id",
-                            value,
-                          )
-                        }
-                        defaultValue={ra.organization_id ?? undefined}
-                      >
-                        <SelectTrigger
-                          className="w-full"
-                          title={
-                            ra.id
-                              ? t.userEditModal.tooltips.cannotChangeOrg[lang]
-                              : undefined
+                      {/* Organization column */}
+                      {ra.id ? (
+                        <span className="truncate">
+                          {organizations.find(
+                            (o) => o.id === ra.organization_id,
+                          )?.name ?? ra.organization_id}
+                        </span>
+                      ) : (
+                        <Select
+                          onValueChange={(value) =>
+                            handleRoleAssignmentChange(
+                              index,
+                              "organization_id",
+                              value,
+                            )
                           }
+                          defaultValue={ra.organization_id ?? undefined}
                         >
-                          <SelectValue
-                            placeholder={
-                              t.userEditModal.placeholders.selectOrganization[
-                                lang
-                              ]
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {organizations.map((org) => (
-                            <SelectItem key={org.id} value={org.id}>
-                              {org.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectTrigger className="w-full">
+                            <SelectValue
+                              placeholder={
+                                t.userEditModal.placeholders.selectOrganization[
+                                  lang
+                                ]
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {organizations.map((org) => (
+                              <SelectItem key={org.id} value={org.id}>
+                                {org.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
 
                       {/* Role picker */}
                       <Select

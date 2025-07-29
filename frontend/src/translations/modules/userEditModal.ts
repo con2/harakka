@@ -137,6 +137,12 @@ export const userEditModal = {
       en: "Add Role",
     },
   },
+  tooltips: {
+    cannotChangeOrg: {
+      fi: "Organisaatiota ei voi muuttaa olemassa olevalle roolikytkökselle",
+      en: "Cannot change organization on existing assignment",
+    },
+  },
   status: {
     noRoles: {
       fi: "Ei rooleja",
