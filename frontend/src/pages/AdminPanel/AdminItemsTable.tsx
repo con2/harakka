@@ -41,9 +41,9 @@ import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import AddItemModal from "@/components/Admin/Items/AddItemModal";
 import AssignTagsModal from "@/components/Admin/Items/AssignTagsModal";
 import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
+import { useNavigate } from "react-router-dom";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -54,6 +54,7 @@ const AdminItemsTable = () => {
   const [showModal, setShowModal] = useState(false);
   const isAdmin = useAppSelector(selectIsAdmin);
   const isSuperVera = useAppSelector(selectIsSuperVera);
+  const navigate = useNavigate();
   // Translation
   const { lang } = useLanguage();
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
@@ -436,11 +437,13 @@ const AdminItemsTable = () => {
         </div>
         {/* Add New Item button */}
         <div className="flex gap-4 justify-end">
-          <AddItemModal>
-            <Button className="addBtn" size={"sm"}>
-              {t.adminItemsTable.buttons.addNew[lang]}
-            </Button>
-          </AddItemModal>
+          <Button
+            className="addBtn"
+            onClick={() => navigate("/admin/items/add")}
+            size={"sm"}
+          >
+            {t.adminItemsTable.buttons.addNew[lang]}
+          </Button>
         </div>
       </div>
 

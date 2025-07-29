@@ -45,9 +45,14 @@ import { LoaderCircle } from "lucide-react";
 type UpdateItemModalProps = {
   onClose: () => void;
   initialData: Item; // Assume initialData is always passed for updating
+  onUpdate?: (item: Omit<Item, "created_at" | "compartment_id">) => void;
 };
 
-const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
+const UpdateItemModal = ({
+  onClose,
+  initialData,
+  onUpdate,
+}: UpdateItemModalProps) => {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<Item>(initialData); // Initialize directly from initialData
   const [loading, setLoading] = useState(false);
@@ -152,8 +157,8 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
   // Handle form submission (only for updating)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
+    setLoading(true);
     try {
       // Clean the data by only including the fields that should be sent to the database
       const {
@@ -178,6 +183,10 @@ const UpdateItemModal = ({ onClose, initialData }: UpdateItemModalProps) => {
         is_active: cleanedData.is_active,
         translations: cleanedData.translations,
       };
+      if (onUpdate) {
+        onUpdate(updateData);
+        return onClose();
+      }
 
       await dispatch(
         updateItem({ id: formData.id, data: updateData }),

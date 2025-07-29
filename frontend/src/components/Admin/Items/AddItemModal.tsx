@@ -21,7 +21,6 @@ import { Label } from "../../ui/label";
 import { Textarea } from "../../ui/textarea";
 import { Switch } from "../../ui/switch";
 import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
-import { Loader2 } from "lucide-react";
 import { ItemFormData } from "@/types";
 import { Checkbox } from "../../ui/checkbox";
 import ItemImageManager from "./ItemImageManager";
@@ -53,6 +52,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 
 const initialFormState: ItemFormData = {
+  id: crypto.randomUUID(),
   location_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
   compartment_id: "0ffa5562-82a9-4352-b804-1adebbb7d80c",
   items_number_total: 1,
@@ -74,13 +74,19 @@ const initialFormState: ItemFormData = {
   tagIds: [],
 };
 
-const AddItemModal = ({ children }: { children: React.ReactNode }) => {
+type AddItemModalProps = {
+  onAdd: (item: ItemFormData) => void;
+  children?: React.ReactNode;
+};
+
+const AddItemModal = (props: AddItemModalProps) => {
   const dispatch = useAppDispatch();
   const availableTags = useAppSelector(selectAllTags);
   const error = useAppSelector(selectItemsError);
   const errorContext = useAppSelector(selectItemsErrorContext);
   const { lang } = useLanguage(); // Get current language
   const tags = useAppSelector(selectAllTags);
+  const { onAdd, children } = props;
 
   // Use global modal state from Redux
   const modalState = useAppSelector(selectItemModalState);
@@ -524,20 +530,18 @@ const AddItemModal = ({ children }: { children: React.ReactNode }) => {
             </div>
             <DialogFooter>
               <Button
-                type="submit"
+                type="button"
                 variant={"secondary"}
+                onClick={() => {
+                  onAdd(formData);
+                  dispatch(closeItemModal());
+                  resetForm();
+                }}
                 className="w-full"
                 disabled={loading}
                 size="sm"
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t.addItemModal.buttons.creating[lang]}
-                  </>
-                ) : (
-                  t.addItemModal.buttons.create[lang]
-                )}
+                Add
               </Button>
             </DialogFooter>
           </form>
