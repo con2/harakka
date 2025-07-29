@@ -16,7 +16,7 @@ import {
 } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
-import { ApiResponse } from "../../../../common/response.types";
+// import { ApiResponse } from "../../../../common/response.types";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Injectable()
@@ -33,7 +33,7 @@ export class OrganizationsService {
     limit: number,
     ascending: boolean,
     order?: string,
-  ): Promise<ApiResponse<OrganizationRow>> {
+  ) {
     const supabase = this.supabaseService.getServiceClient();
     const { from, to } = getPaginationRange(page, limit);
 
@@ -47,15 +47,23 @@ export class OrganizationsService {
       query.order(order, { ascending: ascending });
     }
 
-    const result = await query;
-    const { error, count } = result;
+    const { data, error, count } = await query;
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("Supabase error in getAllOrganizations():", error);
+      throw new Error(error.message);
+    }
 
-    const metadata = getPaginationMeta(count, page, limit);
+    const metadata = { ...getPaginationMeta(count, page, limit), limit };
+    console.log("DEBUG BACKEND", {
+      data: data ?? [], // before: ...data,
+      count: count ?? 0,
+      metadata: metadata,
+    });
     return {
-      ...result,
-      metadata,
+      data: data ?? [], // before: ...data,
+      count: count ?? 0,
+      metadata: metadata,
     };
   }
 
@@ -208,6 +216,7 @@ export class OrganizationsService {
       .eq("id", id);
 
     if (error) throw new Error(error.message);
+    await this.toggleActivation(req, id, false);
 
     return { success: true, id };
   }
