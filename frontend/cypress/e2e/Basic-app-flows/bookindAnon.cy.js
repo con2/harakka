@@ -29,7 +29,7 @@ describe("Anon user booking attempt", () => {
       .click();
 
     // Wait for the end date popover to open
-    cy.wait(300);
+    cy.wait(1000);
 
     // Open end date picker and select a valid date
     cy.get("[data-cy=timeframe-end-btn]").click();
