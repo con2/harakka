@@ -101,9 +101,9 @@ const OrgLocationManagement = ({
                   </Badge>
                 </div>
                 <CardDescription className="text-xs">
-                  Storage Location:{" "}
-                  {location.storage_locations?.name ||
-                    location.storage_location_id}
+                  Address:{" "}
+                  {location.storage_locations?.address ||
+                    "No address available"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
