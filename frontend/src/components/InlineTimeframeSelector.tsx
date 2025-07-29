@@ -30,7 +30,7 @@ export default function InlineTimeframePicker({
         <Popover open={startOpen} onOpenChange={setStartOpen}>
           <PopoverTrigger asChild>
             <DatePickerButton
-              value={startDate ? startDate.toLocaleDateString() : null}
+              value={startDate ? startDate.toLocaleDateString() : ""}
               placeholder="Select start date"
             />
           </PopoverTrigger>
@@ -61,7 +61,7 @@ export default function InlineTimeframePicker({
           <PopoverTrigger asChild>
             <DatePickerButton
               ref={endPopoverRef}
-              value={endDate ? endDate.toLocaleDateString() : null}
+              value={endDate ? endDate.toLocaleDateString() : ""}
               placeholder="Select end date"
             />
           </PopoverTrigger>

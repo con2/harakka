@@ -23,7 +23,13 @@ import {
 } from "@/store/slices/rolesSlice";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
 
-export const useRoles = () => {
+interface UseRolesOptions {
+  /** When true, suppresses the hook’s initial fetch effect. */
+  skipInitialFetch?: boolean;
+}
+
+export const useRoles = (options: UseRolesOptions = {}) => {
+  const { skipInitialFetch = false } = options;
   const dispatch = useAppDispatch();
 
   // Track fetch attempts with a state to ensure it survives re-renders
@@ -147,6 +153,7 @@ export const useRoles = () => {
   // Auto-fetch current user roles and available roles on mount exactly once on mount and limit retries
   useEffect(() => {
     if (
+      !skipInitialFetch &&
       !initialFetchAttempted.current &&
       !loading &&
       fetchAttempts < MAX_FETCH_ATTEMPTS
@@ -163,7 +170,7 @@ export const useRoles = () => {
         });
       void dispatch(fetchAvailableRoles());
     }
-  }, [dispatch, loading, fetchAttempts]);
+  }, [dispatch, loading, fetchAttempts, skipInitialFetch]);
 
   return {
     // Data

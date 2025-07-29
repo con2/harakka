@@ -8,7 +8,6 @@ import {
   BanForAppRequest,
   UnbanRequest,
   UserBanningState,
-  BanStatusItem,
 } from "@/types/userBanning";
 
 const initialState: UserBanningState = {
@@ -199,7 +198,7 @@ const userBanningSlice = createSlice({
       })
       .addCase(fetchAllUserBanStatuses.fulfilled, (state, action) => {
         state.loading = false;
-        state.banStatuses = action.payload as BanStatusItem[];
+        state.banStatuses = action.payload;
       })
       .addCase(fetchAllUserBanStatuses.rejected, (state, action) => {
         state.loading = false;

@@ -52,6 +52,16 @@ export const fetchAllOrganizations = createAsyncThunk(
       );
     }
   },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as RootState;
+      // Skip if the organizations list is already populated or a fetch is in progress
+      return (
+        state.organizations.organizations.length === 0 &&
+        !state.organizations.loading
+      );
+    },
+  },
 );
 
 export const fetchOrganizationById = createAsyncThunk(

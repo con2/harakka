@@ -1,19 +1,18 @@
 import { Navigate } from "react-router-dom";
-import { useAppSelector } from "@/store/hooks";
-import {
-  selectSelectedUser,
-  selectSelectedUserLoading,
-} from "@/store/slices/usersSlice";
 import { ReactNode, useEffect, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
-
+import { Org_Roles } from "@common/role.types";
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRoles: string[];
+  /**
+   * Accepts one or more roles from the Org_Roles union.
+   * Writing `<ProtectedRoute allowedRoles={["admin", "super_admin"]} />`
+   * now gives IntelliSense suggestions and compile‑time safety.
+   */
+  allowedRoles: Org_Roles[];
   requiredOrganization?: string;
-  requireSuperVera?: boolean;
 }
 
 const ProtectedRoute = ({
@@ -22,9 +21,7 @@ const ProtectedRoute = ({
   requiredOrganization,
 }: ProtectedRouteProps) => {
   const { authLoading } = useAuth(); // wait for supabase auth to finish
-  const { loading: rolesLoading, hasAnyRole, isSuperVera } = useRoles(); //roles from the new schema
-  const selectedUser = useAppSelector(selectSelectedUser); // pull profile from redux
-  const userLoading = useAppSelector(selectSelectedUserLoading);
+  const { loading: rolesLoading, hasAnyRole, isSuperVera } = useRoles(); // roles from the new schema
 
   // Use a state variable to track if access check has been performed
   const [accessChecked, setAccessChecked] = useState(false);
@@ -32,30 +29,19 @@ const ProtectedRoute = ({
 
   useEffect(() => {
     // Only perform the check once when data is loaded
-    if (
-      !authLoading &&
-      !userLoading &&
-      !rolesLoading &&
-      selectedUser &&
-      !accessChecked
-    ) {
-      // OLD SYSTEM: Check if user has role in selectedUser.role
-      const hasOldRole = allowedRoles.includes(selectedUser.role || "");
-
-      // NEW SYSTEM: Check if user has role in JWT-based roles
+    if (!authLoading && !rolesLoading && !accessChecked) {
+      // NEW SYSTEM: Check if user has role in JWT-based roles across all organizations
       const hasNewRole = hasAnyRole(allowedRoles, requiredOrganization);
 
-      // Allow access if user has required role in EITHER system OR is SuperVera
-      const userHasAccess = hasOldRole || hasNewRole || isSuperVera;
+      // Allow access if user has required role OR is SuperVera (development bypass)
+      const userHasAccess = hasNewRole || isSuperVera;
 
       setHasAccess(userHasAccess);
       setAccessChecked(true);
     }
   }, [
     authLoading,
-    userLoading,
     rolesLoading,
-    selectedUser,
     allowedRoles,
     hasAnyRole,
     isSuperVera,
@@ -64,7 +50,7 @@ const ProtectedRoute = ({
   ]);
 
   // Show loading state while authentication or checking is in progress
-  if (authLoading || userLoading || rolesLoading || !accessChecked) {
+  if (authLoading || rolesLoading || !accessChecked) {
     return (
       <div className="flex justify-center items-center h-screen">
         <LoaderCircle className="animate-spin w-6 h-6" />
