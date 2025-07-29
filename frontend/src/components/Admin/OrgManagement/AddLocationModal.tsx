@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useAppDispatch } from "@/store/hooks";
-import { createOrgLocationWithStorage } from "@/store/slices/organizationLocationsSlice";
+import {
+  createOrgLocationWithStorage,
+  fetchAllOrgLocations,
+} from "@/store/slices/organizationLocationsSlice";
 import {
   Dialog,
   DialogContent,
@@ -87,6 +90,15 @@ const AddLocationModal = ({
       };
 
       await dispatch(createOrgLocationWithStorage(locationData)).unwrap();
+
+      // Refresh the organization locations list
+      await dispatch(
+        fetchAllOrgLocations({
+          orgId: organizationId,
+          pageSize: 100,
+          currentPage: 1,
+        }),
+      );
 
       toast.success("Location created successfully");
       resetForm();

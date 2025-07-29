@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAppDispatch } from "@/store/hooks";
-import { updateOrgLocationWithStorage } from "@/store/slices/organizationLocationsSlice";
+import {
+  updateOrgLocationWithStorage,
+  fetchAllOrgLocations,
+} from "@/store/slices/organizationLocationsSlice";
 import {
   Dialog,
   DialogContent,
@@ -180,6 +183,15 @@ const EditLocationModal = ({
           data: updateData,
         }),
       ).unwrap();
+
+      // Refresh the organization locations list
+      await dispatch(
+        fetchAllOrgLocations({
+          orgId: location.organization_id,
+          pageSize: 100,
+          currentPage: 1,
+        }),
+      );
 
       toast.success("Location updated successfully");
       onClose();

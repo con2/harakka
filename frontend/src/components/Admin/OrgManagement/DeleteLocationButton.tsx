@@ -1,5 +1,8 @@
 import { useAppDispatch } from "@/store/hooks";
-import { deleteOrgLocationWithStorage } from "@/store/slices/organizationLocationsSlice";
+import {
+  deleteOrgLocationWithStorage,
+  fetchAllOrgLocations,
+} from "@/store/slices/organizationLocationsSlice";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,11 +21,13 @@ import { toast } from "sonner";
 interface DeleteLocationButtonProps {
   locationId: string;
   locationName?: string;
+  organizationId: string;
 }
 
 const DeleteLocationButton = ({
   locationId,
   locationName = "this location",
+  organizationId,
 }: DeleteLocationButtonProps) => {
   const dispatch = useAppDispatch();
 
@@ -35,6 +40,15 @@ const DeleteLocationButton = ({
           success: "Location removed from organization successfully",
           error: "Failed to remove location",
         },
+      );
+
+      // Refresh the organization locations list
+      await dispatch(
+        fetchAllOrgLocations({
+          orgId: organizationId,
+          pageSize: 100,
+          currentPage: 1,
+        }),
       );
     } catch (error) {
       // Error is already handled by toast.promise

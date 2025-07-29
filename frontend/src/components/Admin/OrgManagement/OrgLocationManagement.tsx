@@ -135,6 +135,7 @@ const OrgLocationManagement = ({
                       location.storage_locations?.name ||
                       `Location #${location.id}`
                     }
+                    organizationId={organizationId}
                   />
                 </div>
               </CardContent>
