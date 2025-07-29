@@ -4,7 +4,6 @@ import {
   selectAllItems,
   selectItemsLoading,
   selectItemsError,
-  selectItemsLimit,
   fetchOrderedItems,
 } from "../../store/slices/itemsSlice";
 import ItemCard from "./ItemCard";
@@ -20,13 +19,12 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
   const filters = useOutletContext<FiltersState>(); // Get filters from context
-  const dispatch = useAppDispatch();
-  const pageLimit = useAppSelector(selectItemsLimit);
-  // Redux state selectors
+  const dispatch = useAppDispatch(); // Redux state selectors
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
   const currentPage = 1;
+  const ITEMS_PER_PAGE = 10;
 
   // Translation
   const { lang } = useLanguage();
@@ -42,12 +40,12 @@ const ItemsList: React.FC = () => {
   // Fetch all items when the component mounts
   useEffect(() => {
     const active = isActive ? "active" : "inactive";
-    dispatch(
+    void dispatch(
       fetchOrderedItems({
         ordered_by: "created_at",
         ascending: true,
         page: currentPage,
-        limit: pageLimit,
+        limit: ITEMS_PER_PAGE,
         searchquery: debouncedSearchQuery,
         tag_filters: tagIds,
         activity_filter: active,
@@ -63,7 +61,7 @@ const ItemsList: React.FC = () => {
     debouncedSearchQuery,
     locationIds,
     tagIds,
-    pageLimit,
+    ITEMS_PER_PAGE,
   ]);
 
   // Loading state

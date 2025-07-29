@@ -1,4 +1,4 @@
-import { Database } from "src/types/supabase.types";
+import { Database } from "@common/supabase.types";
 import { Translations } from "./translations.types";
 
 export interface BookingItem {
@@ -68,7 +68,7 @@ export type BookingTable = Database["public"]["Tables"]["bookings"];
 export type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
 export type BookingInsert = Database["public"]["Tables"]["bookings"]["Insert"];
 export type BookingUpdate = Database["public"]["Tables"]["bookings"]["Update"];
-export type ValidBooking =
+export type ValidBookingOrder =
   | "created_at"
   | "booking_number"
   | "payment_status"

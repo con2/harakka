@@ -1,4 +1,4 @@
-import { UserRoleWithDetails } from "../interfaces/role.interface";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 
 /**
  * DTO for creating a new user role assignment
@@ -23,5 +23,5 @@ export interface UpdateUserRoleDto {
 export interface RoleOperationResponse {
   success: boolean;
   message: string;
-  data?: UserRoleWithDetails;
+  data?: ViewUserRolesWithDetails;
 }

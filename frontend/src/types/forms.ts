@@ -1,7 +1,7 @@
 import { Tag } from "./tag";
 import { Item, ItemTranslation } from "./item";
-import { UserRole } from "./user";
 import { TagTranslations } from "./databaseGenerated";
+import { Org_Roles } from "@common/role.types";
 
 /**
  * Base form state for all forms in the application
@@ -21,7 +21,7 @@ export interface UserFormData {
   visible_name: string;
   email: string;
   phone: string;
-  roles: UserRole[];
+  roles: NonNullable<Org_Roles>[]; // Use new role system, exclude null
   preferences: Record<string, string>;
   saved_lists?: string[];
 }

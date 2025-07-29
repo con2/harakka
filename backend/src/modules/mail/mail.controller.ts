@@ -13,7 +13,7 @@ import { Throttle, ThrottlerGuard } from "@nestjs/throttler";
 import { EmailProps } from "./interfaces/mail.interface";
 import { SendMailDto } from "./dto/send-mail.dto";
 import BookingConfirmationEmail from "src/emails/BookingConfirmationEmail";
-import WelcomeEmail from "src/emails/WelcomeEmail";
+import WelcomeEmail, { WelcomeEmailProps } from "src/emails/WelcomeEmail";
 import * as React from "react";
 
 @Controller("mail")
@@ -59,7 +59,7 @@ export class MailController {
   } */
 
   @Post("send-email")
-  async sendMail(@Body() sendMailDto: SendMailDto): Promise<string> {
+  async sendMail(@Body() sendMailDto: SendMailDto<unknown>): Promise<string> {
     try {
       const { email, subject, type, data } = sendMailDto;
 
@@ -68,7 +68,7 @@ export class MailController {
       if (type === "bookingConfirmation") {
         templateHtml = BookingConfirmationEmail(data as EmailProps);
       } else if (type === "welcome") {
-        templateHtml = WelcomeEmail(data);
+        templateHtml = WelcomeEmail(data as WelcomeEmailProps);
       } else {
         throw new BadRequestException("Unknown email type");
       }

@@ -3,6 +3,7 @@ import { itemImagesApi } from "@/api/services/itemImages";
 import { ItemImage, UploadItemImageDto } from "@/types/storage";
 import { RootState } from "../store";
 import { ErrorContext } from "@/types/common";
+import { extractErrorMessage } from "../utils/errorHandlers";
 
 interface ItemImagesState {
   images: ItemImage[];
@@ -35,9 +36,9 @@ export const getItemImages = createAsyncThunk(
 
       const images = await itemImagesApi.getItemImages(itemId);
       return { images, itemId };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch item images",
+        extractErrorMessage(error, "Failed to fetch item images"),
       );
     }
   },
@@ -55,9 +56,9 @@ export const uploadItemImage = createAsyncThunk(
   ) => {
     try {
       return await itemImagesApi.uploadItemImage(itemId, file, metadata);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to upload image",
+        extractErrorMessage(error, "Failed to upload image"),
       );
     }
   },
@@ -69,9 +70,9 @@ export const deleteItemImage = createAsyncThunk(
     try {
       await itemImagesApi.deleteItemImage(imageId);
       return imageId;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to delete image",
+        extractErrorMessage(error, "Failed to delete image"),
       );
     }
   },

@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import RoleEditer from "./RoleEditer";
+import { toast } from "sonner";
+import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 
 export const RoleManagement: React.FC = () => {
   const {
@@ -50,6 +52,7 @@ export const RoleManagement: React.FC = () => {
   const [fetchingAdminData, setFetchingAdminData] = useState(false);
   const fetchAttemptsRef = useRef(0);
   const MAX_FETCH_ATTEMPTS = 2;
+  const [sessionRefreshing, setSessionRefreshing] = useState(false);
 
   useEffect(() => {
     // Only fetch admin roles if user is admin and we don't have them yet
@@ -61,13 +64,10 @@ export const RoleManagement: React.FC = () => {
       !fetchingAdminData &&
       fetchAttemptsRef.current < MAX_FETCH_ATTEMPTS // Limit to 2 attempts
     ) {
-      console.log(
-        `Attempting to fetch admin roles (attempt ${fetchAttemptsRef.current + 1}/2)`,
-      );
       fetchAttemptsRef.current += 1;
       setFetchingAdminData(true);
 
-      refreshAllUserRoles().finally(() => {
+      void refreshAllUserRoles().finally(() => {
         setFetchingAdminData(false);
       });
     }
@@ -91,6 +91,20 @@ export const RoleManagement: React.FC = () => {
       console.error("❌ RoleManagement - Manual refresh failed:", err);
     }
   }, [refreshCurrentUserRoles, refreshAllUserRoles, isAdmin]);
+
+  // Handler for refreshing Supabase session
+  const handleRefreshSession = useCallback(async () => {
+    setSessionRefreshing(true);
+    try {
+      await refreshSupabaseSession();
+      toast.success("Supabase session refreshed!");
+    } catch (err) {
+      toast.error("Failed to refresh Supabase session");
+      console.error("❌ Supabase session refresh failed:", err);
+    } finally {
+      setSessionRefreshing(false);
+    }
+  }, []);
 
   // For hasAnyRole testing
   const [roleTestInput, setRoleTestInput] = useState("");
@@ -116,12 +130,6 @@ export const RoleManagement: React.FC = () => {
     const result = hasAnyRole(rolesToTest, orgTestInput || undefined);
     setRoleTestResult(result);
     setRoleTestPerformed(true);
-
-    console.log("Role test (hasAnyRole):", {
-      roles: rolesToTest,
-      organizationId: orgTestInput || "any",
-      result,
-    });
   }, [roleTestInput, orgTestInput, hasAnyRole]);
 
   // Handler for testing a single role (hasRole)
@@ -129,13 +137,16 @@ export const RoleManagement: React.FC = () => {
     setSingleRoleTestPerformed(true);
     const result = hasRole(singleRoleInput, singleOrgInput || undefined);
     setSingleRoleResult(result);
-
-    console.log("Role test (hasRole):", {
-      role: singleRoleInput,
-      organizationId: singleOrgInput || "any",
-      result,
-    });
   }, [singleRoleInput, singleOrgInput, hasRole]);
+
+  // Handler to refresh roles after any role operation
+  const handleRolesChanged = useCallback(async () => {
+    await refreshCurrentUserRoles();
+    if (isAdmin) {
+      await refreshAllUserRoles();
+    }
+    toast.success("Roles updated!");
+  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAdmin]);
 
   // Loading state
   if (loading) {
@@ -172,6 +183,19 @@ export const RoleManagement: React.FC = () => {
         <Button onClick={handleRefresh} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
+        </Button>
+        <Button
+          onClick={handleRefreshSession}
+          variant="outline"
+          size="sm"
+          disabled={sessionRefreshing}
+        >
+          {sessionRefreshing ? (
+            <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4 mr-2" />
+          )}
+          Refresh session
         </Button>
       </div>
 
@@ -343,9 +367,9 @@ export const RoleManagement: React.FC = () => {
                         Inactive
                       </Badge>
                     )}
-                    {role.created_at && (
+                    {role.assigned_at && (
                       <span className="text-xs text-muted-foreground">
-                        {new Date(role.created_at).toLocaleDateString()}
+                        {new Date(role.assigned_at).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -414,9 +438,9 @@ export const RoleManagement: React.FC = () => {
                           Inactive
                         </Badge>
                       )}
-                      {role.created_at && (
+                      {role.assigned_at && (
                         <span className="text-xs text-muted-foreground">
-                          {new Date(role.created_at).toLocaleDateString()}
+                          {new Date(role.assigned_at).toLocaleDateString()}
                         </span>
                       )}
                     </div>
@@ -431,7 +455,7 @@ export const RoleManagement: React.FC = () => {
       {/* Roles editing Section */}
       {isAdmin && (
         <div className="my-6">
-          <RoleEditer />
+          <RoleEditer onRolesChanged={handleRolesChanged} />
         </div>
       )}
 

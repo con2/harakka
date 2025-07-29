@@ -469,11 +469,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
                     <CardHeader className="p-2">
                       <CardTitle className="text-sm flex justify-between items-center">
                         <span className="capitalize">
-                          {
-                            t.itemImageManager.options[
-                              image.image_type as ImageType
-                            ][lang]
-                          }
+                          {t.itemImageManager.options[image.image_type][lang]}
                         </span>
                         <span className="text-xs text-gray-500">
                           #{image.display_order}

@@ -14,8 +14,11 @@ import {
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
-import { ValidItemOrder } from "./interfaces/storage-item.interface";
-import { Tables } from "../../types/supabase.types"; // Import the Database type for type safety
+import {
+  LocationRow,
+  ValidItemOrder,
+} from "./interfaces/storage-item.interface";
+import { TablesUpdate } from "@common/supabase.types"; // Import the Database type for type safety
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { ApiSingleResponse } from "../../../../common/response.types";
 import { StorageItem } from "./interfaces/storage-item.interface";
@@ -77,6 +80,16 @@ export class StorageItemsController {
       category,
     );
   }
+
+  /**
+   * Get the total item count of unique items in the system
+   * @returns number of total items (active and inactive)
+   */
+  @Get("count")
+  async getItemCount(): Promise<ApiSingleResponse<number>> {
+    const supabase = this.supabaseService.getAnonClient();
+    return this.storageItemsService.getItemCount(supabase);
+  }
   // (if we dont find the solution we could use that)
   @Get(":id")
   async getById(@Param("id") id: string): Promise<StorageItem | null> {
@@ -101,7 +114,11 @@ export class StorageItemsController {
   async update(
     @Req() req: Request,
     @Param("id") id: string,
-    @Body() item: Partial<Tables<"storage_items">>, // Use the type from your Supabase types
+    @Body()
+    item: Partial<TablesUpdate<"storage_items">> & {
+      tagIds?: string[];
+      location_details?: LocationRow;
+    }, // Use the type from your Supabase types
   ): Promise<StorageItem> {
     return this.storageItemsService.updateItem(req, id, item); // PUT /storage-items/:id (update item)
   }

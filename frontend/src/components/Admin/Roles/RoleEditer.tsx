@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useRoles } from "@/hooks/useRoles";
-import { CreateUserRoleDto, UserRoleWithDetails } from "@/types/roles";
+import { CreateUserRoleDto } from "@/types/roles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,10 +13,12 @@ import {
 import { toast } from "sonner";
 import { ColumnDef } from "@tanstack/react-table";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 
 interface RoleEditerProps {
-  role?: UserRoleWithDetails;
+  role?: ViewUserRolesWithDetails;
   onClose?: () => void;
+  onRolesChanged?: () => void;
 }
 
 const modeOptions = [
@@ -26,13 +28,18 @@ const modeOptions = [
   { value: "hardDelete", label: "Hard Delete" },
 ] as const;
 
-export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
+export const RoleEditer: React.FC<RoleEditerProps> = ({
+  role,
+  onClose,
+  onRolesChanged,
+}) => {
   const {
     createRole,
     updateRole,
     deleteRole,
     permanentDeleteRole,
     refreshAllUserRoles,
+    refreshCurrentUserRoles,
     availableRoles,
     allUserRoles,
   } = useRoles();
@@ -123,6 +130,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
         toast.success("Role created");
         await new Promise((res) => setTimeout(res, 300));
         await refreshAllUserRoles();
+        await refreshCurrentUserRoles();
         setCreateForm({ user_id: "", organization_id: "", role_id: "" });
       } else if (mode === "softDelete" && assignmentId) {
         await deleteRole(assignmentId);
@@ -137,6 +145,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
         toast.success("Role permanently deleted");
         await refreshAllUserRoles();
       }
+      onRolesChanged?.();
       onClose?.();
     } catch {
       toast.error("Operation failed");
@@ -145,7 +154,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
     }
   };
 
-  const assignmentColumns: ColumnDef<UserRoleWithDetails>[] = [
+  const assignmentColumns: ColumnDef<ViewUserRolesWithDetails>[] = [
     {
       accessorKey: "user_email",
       size: 10,
@@ -199,6 +208,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
                 toast.success("Role permanently deleted");
               }
               await refreshAllUserRoles();
+              await refreshCurrentUserRoles();
               onClose?.();
             } catch {
               toast.error("Operation failed");
@@ -254,7 +264,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({ role, onClose }) => {
             </SelectTrigger>
             <SelectContent>
               {userOptions.map((user) => (
-                <SelectItem key={user.user_id} value={user.user_id}>
+                <SelectItem key={user.user_id} value={user.user_id ?? ""}>
                   {user.email}
                   {user.full_name ? ` (${user.full_name})` : ""}
                 </SelectItem>

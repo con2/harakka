@@ -11,26 +11,19 @@ import {
   Patch,
   UnauthorizedException,
   BadRequestException,
-  ForbiddenException,
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
-import { InvoiceService } from "./invoice.service";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import {
-  BookingItem,
-  BookingStatus,
-  ValidBooking,
-} from "./types/booking.interface";
+import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
+import { BookingItem } from "@common/bookings/booking-items.types";
 import { Public, Roles } from "src/decorators/roles.decorator";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Controller("bookings")
 export class BookingController {
-  constructor(
-    private readonly bookingService: BookingService,
-    private readonly invoiceService: InvoiceService,
-  ) {}
+  constructor(private readonly bookingService: BookingService) {}
 
   // gets all bookings - use case: admin
   @Public()
@@ -67,6 +60,12 @@ export class BookingController {
       pageNumber,
       limitNumber,
     );
+  }
+
+  @Get("count")
+  async getBookingsCount(@Req() req: AuthRequest) {
+    const supabase = req.supabase;
+    return this.bookingService.getBookingsCount(supabase);
   }
 
   // gets the bookings of a specific user
@@ -112,18 +111,7 @@ export class BookingController {
       const dtoWithUserId = { ...dto, user_id: userId };
       return this.bookingService.createBooking(dtoWithUserId, req.supabase);
     } catch (error) {
-      console.error("Booking creation failed:", error);
-
-      // Return a structured error but avoid 500
-      if (
-        error instanceof BadRequestException ||
-        error instanceof ForbiddenException
-      ) {
-        throw error;
-      }
-      throw new BadRequestException(
-        "There was an issue processing your booking. If this persists, please contact support.",
-      );
+      handleSupabaseError(error);
     }
   }
 
@@ -144,37 +132,28 @@ export class BookingController {
     @Req() req: AuthRequest,
   ) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.updateBooking(
-      id,
-      userId,
-      updatedItems,
-      supabase,
-    );
+    return this.bookingService.updateBooking(id, userId, updatedItems, req);
   }
 
   // rejects a booking by admin
   @Put(":id/reject")
   async reject(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.rejectBooking(id, userId, supabase);
+    return this.bookingService.rejectBooking(id, userId, req);
   }
 
   // cancels own booking by user or admin cancels any booking
   @Delete(":id/cancel")
   async cancel(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.cancelBooking(id, userId, supabase);
+    return this.bookingService.cancelBooking(id, userId, req);
   }
 
   // admin deletes booking
   @Delete(":id/delete")
   async delete(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.deleteBooking(id, userId, supabase);
+    return this.bookingService.deleteBooking(id, userId, req);
   }
 
   // admin returns items
@@ -212,7 +191,7 @@ export class BookingController {
   getOrderedBookings(
     @Req() req: AuthRequest,
     @Query("search") searchquery: string,
-    @Query("booking") ordered_by: ValidBooking = "booking_number",
+    @Query("order") ordered_by: ValidBookingOrder = "booking_number",
     @Query("status") status_filter: BookingStatus,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
@@ -232,12 +211,24 @@ export class BookingController {
       status_filter,
     );
   }
-  // commented out because it is not used atm
-  /* @Get(":orderId/generate") // unsafe - anyone can create files
-  async generateInvoice(@Param("orderId") orderId: string) {
-    const url = await this.invoiceService.generateInvoice(orderId);
 
-    return url; // should not send url, becaause it is not a public url - will get new endpoint with auth and so on...
-  } */
+  @Get("id/:id")
+  @Roles(["admin", "main_admin", "super_admin"])
+  async getBookingByID(
+    @Req() req: AuthRequest,
+    @Param("id") booking_id: string,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const supabase = req.supabase;
+    return this.bookingService.getBookingByID(
+      supabase,
+      booking_id,
+      pageNum,
+      limitNum,
+    );
+  }
 }
 // handles the booking process, including creating, confirming, rejecting, and canceling bookings.

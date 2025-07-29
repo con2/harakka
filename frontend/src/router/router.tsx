@@ -7,14 +7,15 @@ import PasswordResetResult from "../components/Auth/PasswordResetResult";
 import ProtectedRoute from "../components/Auth/ProtectedRoute";
 
 // Admin
-import AdminDashboard from "@/pages/AdminDashboard";
 import AdminPanel from "../components/Admin/AdminPanel";
-import UsersList from "@/components/Admin/UserManagement/UsersList";
-import TeamList from "@/components/Admin/UserManagement/TeamList";
-import AdminItemsTable from "../components/Admin/AdminItemsTable";
-import BookingList from "@/components/Admin/Bookings/BookingList";
-import TagList from "@/components/Admin/Items/TagList";
-import Logs from "../components/Admin/Logs";
+import AdminDashboard from "@/pages/AdminPanel/AdminDashboard";
+import UsersList from "@/pages/AdminPanel/UsersList";
+import AdminItemsTable from "@/pages/AdminPanel/AdminItemsTable";
+import BookingList from "@/pages/AdminPanel/BookingList";
+import TagList from "@/pages/AdminPanel/TagList";
+import Logs from "@/pages/AdminPanel/Logs";
+import Organizations from "@/pages/AdminPanel/Organizations";
+import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
 
 // General
 import LandingPage from "@/pages/LandingPage";
@@ -51,7 +52,17 @@ export const router = createBrowserRouter([
       {
         path: "/profile",
         element: (
-          <ProtectedRoute allowedRoles={["user", "admin", "superVera"]}>
+          <ProtectedRoute
+            allowedRoles={[
+              "user",
+              "storage_manager",
+              "requester",
+              "admin",
+              "main_admin",
+              "super_admin",
+              "superVera",
+            ]}
+          >
             <MyProfile />
           </ProtectedRoute>
         ),
@@ -59,19 +70,29 @@ export const router = createBrowserRouter([
       {
         path: "/admin",
         element: (
-          <ProtectedRoute allowedRoles={["admin", "superVera"]}>
+          <ProtectedRoute
+            allowedRoles={[
+              "requester",
+              "storage_manager",
+              "admin",
+              "main_admin",
+              "super_admin",
+              "superVera",
+            ]}
+          >
             <AdminPanel />
           </ProtectedRoute>
         ),
         children: [
           { index: true, element: <AdminDashboard /> },
           { path: "users", element: <UsersList /> },
-          { path: "team", element: <TeamList /> },
           { path: "items", element: <AdminItemsTable /> },
           { path: "bookings", element: <BookingList /> },
           { path: "tags", element: <TagList /> },
           { path: "logs", element: <Logs /> },
           { path: "roles", element: <RoleManagement /> },
+          { path: "organizations", element: <Organizations /> },
+          { path: "locations", element: <OrganizationLocations /> },
         ],
       },
       {

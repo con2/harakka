@@ -2,15 +2,15 @@ import { api } from "../axios";
 import {
   CreateUserRoleDto,
   RoleCheckResponse,
+  RolesRow,
   UpdateUserRoleDto,
   UserOrganization,
-  UserRoleWithDetails,
 } from "@/types/roles";
-import type { Database } from "@common/database.types";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 
 export const roleApi = {
   // Get current user's roles
-  async getCurrentUserRoles(): Promise<UserRoleWithDetails[]> {
+  async getCurrentUserRoles(): Promise<ViewUserRolesWithDetails[]> {
     return await api.get("/roles/current");
   },
 
@@ -35,7 +35,7 @@ export const roleApi = {
   // Get user's roles in a specific organization
   async getUserRolesInOrganization(
     orgId: string,
-  ): Promise<UserRoleWithDetails[]> {
+  ): Promise<ViewUserRolesWithDetails[]> {
     return await api.get(`/roles/organization/${orgId}`);
   },
 
@@ -45,21 +45,23 @@ export const roleApi = {
   },
 
   // Get all user roles
-  async getAllUserRoles(): Promise<UserRoleWithDetails[]> {
+  async getAllUserRoles(): Promise<
+    /* `ViewUserRolesWithDetails` is a type that represents detailed
+  information about a user role.  */
+    ViewUserRolesWithDetails[]
+  > {
     return await api.get("/roles/all");
   },
 
   // Get all available roles for dropdowns
-  async getAvailableRoles(): Promise<
-    Database["public"]["Tables"]["roles"]["Row"][]
-  > {
+  async getAvailableRoles(): Promise<RolesRow[]> {
     return await api.get("/roles/list");
   },
 
   // Assign a role to a user in an organization
   async createUserRole(
     createRoleDto: CreateUserRoleDto,
-  ): Promise<UserRoleWithDetails> {
+  ): Promise<ViewUserRolesWithDetails> {
     return await api.post("/roles", createRoleDto);
   },
 
@@ -67,7 +69,7 @@ export const roleApi = {
   async updateUserRole(
     tableKeyId: string,
     updateRoleDto: UpdateUserRoleDto,
-  ): Promise<UserRoleWithDetails> {
+  ): Promise<ViewUserRolesWithDetails> {
     return await api.put(`/roles/${tableKeyId}`, updateRoleDto);
   },
 
