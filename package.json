@@ -18,6 +18,7 @@
     "type-fest": "^4.41.0"
   },
   "dependencies": {
+    "postgres": "^3.4.7",
     "supabase": "^2.30.4"
   }
 }
