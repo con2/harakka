@@ -1,5 +1,6 @@
 import { OrganizationDetails } from "@/types/organization";
 import { api } from "../axios";
+import { ApiResponse } from "@common/response.types";
 
 /**
  * API service for organization endpoints
@@ -11,15 +12,12 @@ export const organizationApi = {
    * @param limit - Number of items per page (default: 10)
    * @returns Paginated response with organizations
    */
-  getAllOrganizations: (
+  getAllOrganizations: async (
     page: number = 1,
     limit: number = 10,
-  ): Promise<{
-    data: OrganizationDetails[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }> => api.get(`/organizations?page=${page}&limit=${limit}`),
+  ): Promise<ApiResponse<OrganizationDetails>> => {
+    return await api.get(`/organizations?page=${page}&limit=${limit}`);
+  },
 
   /**
    * Get a specific organization by ID
