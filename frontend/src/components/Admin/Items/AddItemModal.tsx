@@ -221,7 +221,7 @@ const AddItemModal = (props: AddItemModalProps) => {
 
   // Reset form and close modal
   const resetForm = () => {
-    setFormData(initialFormState);
+    setFormData({ ...initialFormState, id: crypto.randomUUID() });
     setSelectedTags([]);
     setActiveTab("details");
     dispatch(closeItemModal());
