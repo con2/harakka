@@ -18,6 +18,6 @@
     "type-fest": "^4.41.0"
   },
   "dependencies": {
-    "supabase": "^2.30.4"
+    "supabase": "^2.31.8"
   }
 }
