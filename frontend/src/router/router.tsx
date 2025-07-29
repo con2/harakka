@@ -35,6 +35,7 @@ import ContactForm from "../components/ContactForm";
 import App from "../App";
 import LoginPage from "@/pages/LoginPage";
 import { RoleManagement } from "@/components/Admin/Roles/RoleManagement";
+import AddItem from "@/pages/AddItem/AddItem";
 
 export const router = createBrowserRouter([
   {
@@ -74,6 +75,7 @@ export const router = createBrowserRouter([
           { path: "logs", element: <Logs /> },
           { path: "roles", element: <RoleManagement /> },
           { path: "organizations", element: <Organizations /> },
+          { path: "items/add", element: <AddItem /> },
         ],
       },
       {
