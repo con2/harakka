@@ -52,6 +52,16 @@ export const fetchAllOrganizations = createAsyncThunk(
       );
     }
   },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as RootState;
+      // Skip if the organizations list is already populated or a fetch is in progress
+      return (
+        state.organizations.organizations.length === 0 &&
+        !state.organizations.loading
+      );
+    },
+  },
 );
 
 export const fetchOrganizationById = createAsyncThunk(
@@ -141,10 +151,10 @@ const organizationSlice = createSlice({
       })
       .addCase(fetchAllOrganizations.fulfilled, (state, action) => {
         state.loading = false;
-        state.organizations = action.payload.data;
-        state.total = action.payload.total;
-        state.page = action.payload.page;
-        state.totalPages = action.payload.totalPages;
+        state.organizations = action.payload.data!;
+        state.total = action.payload.metadata.total;
+        state.page = action.payload.metadata.page;
+        state.totalPages = action.payload.metadata.totalPages;
       })
       .addCase(fetchAllOrganizations.rejected, (state, action) => {
         state.loading = false;

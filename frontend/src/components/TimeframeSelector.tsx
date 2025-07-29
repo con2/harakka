@@ -96,7 +96,8 @@ const TimeframeSelector: React.FC = () => {
             <Popover>
               <PopoverTrigger asChild>
                 <DatePickerButton
-                  value={startDate ? formatDate(startDate, "d MMM yyyy") : null}
+                  data-cy="timeframe-start-btn"
+                  value={startDate ? formatDate(startDate, "d MMM yyyy") : ""}
                   placeholder={t.timeframeSelector.startDate.placeholder[lang]}
                 />
               </PopoverTrigger>
@@ -125,7 +126,8 @@ const TimeframeSelector: React.FC = () => {
               <PopoverTrigger asChild>
                 <DatePickerButton
                   ref={endDatePopoverRef}
-                  value={endDate ? formatDate(endDate, "d MMM yyyy") : null}
+                  data-cy="timeframe-end-btn"
+                  value={endDate ? formatDate(endDate, "d MMM yyyy") : ""}
                   placeholder={t.timeframeSelector.endDate.placeholder[lang]}
                 />
               </PopoverTrigger>

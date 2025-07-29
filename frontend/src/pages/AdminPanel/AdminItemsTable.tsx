@@ -23,7 +23,6 @@ import {
   fetchTagsForItem,
   selectAllTags,
 } from "@/store/slices/tagSlice";
-import { selectIsAdmin, selectIsSuperVera } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { Item, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
@@ -37,6 +36,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useRoles } from "@/hooks/useRoles";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Button } from "@/components/ui/button";
@@ -52,9 +52,7 @@ const AdminItemsTable = () => {
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const [showModal, setShowModal] = useState(false);
-  const isAdmin = useAppSelector(selectIsAdmin);
-  const isSuperVera = useAppSelector(selectIsSuperVera);
-  const navigate = useNavigate();
+  const { isAdmin, isSuperVera } = useRoles();
   // Translation
   const { lang } = useLanguage();
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
@@ -66,6 +64,7 @@ const AdminItemsTable = () => {
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchTerm);
+  const navigate = useNavigate();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);

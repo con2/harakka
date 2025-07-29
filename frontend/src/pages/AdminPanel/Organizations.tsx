@@ -61,7 +61,7 @@ const OrganizationList = () => {
     } else {
       toast.error(
         t.organizationList.toasts.creationFailed[lang] ||
-          "Aktion fehlgeschlagen.",
+          "Something went wrong.",
       );
     }
   };
@@ -76,7 +76,7 @@ const OrganizationList = () => {
     } else {
       toast.error(
         t.organizationList.toasts.creationFailed[lang] ||
-          "Aktion fehlgeschlagen.",
+          "Something went wrong.",
       );
     }
   };
@@ -115,8 +115,7 @@ const OrganizationList = () => {
           updateOrganization({ id: selectedOrg.id, data }),
         ).unwrap();
         toast.success(
-          t.organizationList.toasts.updated[lang] ||
-            "Organisation aktualisiert!",
+          t.organizationList.toasts.updated[lang] || "Organization updated!",
         );
       }
       setModalOpen(false);
@@ -126,7 +125,7 @@ const OrganizationList = () => {
     } catch {
       toast.error(
         t.organizationList.toasts.creationFailed[lang] ||
-          "Aktion fehlgeschlagen.",
+          "Something went wrong.",
       );
     }
   };

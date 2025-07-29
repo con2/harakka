@@ -12,7 +12,6 @@ import {
 import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
-import { ApiResponse } from "../../../../common/response.types";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Injectable()
@@ -29,7 +28,7 @@ export class OrganizationsService {
     limit: number,
     ascending: boolean,
     order?: string,
-  ): Promise<ApiResponse<OrganizationRow>> {
+  ) {
     const supabase = this.supabaseService.getServiceClient();
     const { from, to } = getPaginationRange(page, limit);
 
@@ -67,6 +66,7 @@ export class OrganizationsService {
         .single();
 
     if (error) handleSupabaseError(error);
+    if (!data) throw new NotFoundException("Organization not found");
     return data;
   }
 
@@ -124,21 +124,49 @@ export class OrganizationsService {
     return data;
   }
 
-  // 6. delete
+  /*
+  // 6. hard-delete ---- not in use at the moment
   async deleteOrganization(
     req: AuthRequest,
     id: string,
   ): Promise<{ success: boolean; id: string }> {
     const supabase = this.getClient(req);
-    const { error } = await supabase
-      .from("organizations")
+
+    // deletion of the org roles first
+    const deleteRoles = supabase
+      .from("user_organization_roles")
       .delete()
-      .eq("id", id);
+      .eq("organization_id", id);
 
-    if (error) handleSupabaseError(error);
+    // delete org items
+    const deleteItems = supabase
+      .from("organization_items")
+      .delete()
+      .eq("organization_id", id);
 
+    // delete org locations
+    const deleteLocations = supabase
+      .from("organization_locations")
+      .delete()
+      .eq("organization_id", id);
+
+    // ... then delete the organization
+    const deleteOrg = supabase.from("organizations").delete().eq("id", id);
+
+    const [rolesResult, itemsResult, locationsResult, orgResult] =
+      await Promise.all([deleteRoles, deleteItems, deleteLocations, deleteOrg]);
+    const errors = [
+      rolesResult.error,
+      itemsResult.error,
+      locationsResult.error,
+      orgResult.error,
+    ].filter(Boolean);
+    if (errors.length > 0) {
+      throw new Error(errors.map((e) => e?.message).join("; "));
+    }
     return { success: true, id };
   }
+    */
 
   // 7. soft-delete an organization
   async softDeleteOrganization(
@@ -170,6 +198,7 @@ export class OrganizationsService {
       .eq("id", id);
 
     if (error) throw new Error(error.message);
+    await this.toggleActivation(req, id, false);
 
     return { success: true, id };
   }
