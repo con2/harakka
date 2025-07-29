@@ -7,6 +7,7 @@ import {
 import {
   LocationRow,
   StorageItem,
+  StorageItemRow,
   StorageItemWithJoin,
   ValidItemOrder,
 } from "./interfaces/storage-item.interface";
@@ -20,12 +21,14 @@ import {
   ApiSingleResponse,
 } from "../../../../common/response.types"; // Import ApiSingleResponse for type safety
 import { handleSupabaseError } from "@src/utils/handleError.utils";
+import { TagService } from "../tag/tag.service";
 // this is used by the controller
 
 @Injectable()
 export class StorageItemsService {
   constructor(
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
+    private readonly tagService: TagService,
   ) {}
 
   /**
@@ -128,10 +131,7 @@ export class StorageItemsService {
         .eq("id", id)
         .single();
 
-    if (error) {
-      if (error.code === "PGRST116") return null;
-      throw new Error(error.message);
-    }
+    if (error) handleSupabaseError(error);
 
     // Flatten the tags to make them easier to work with
     return {
@@ -143,38 +143,35 @@ export class StorageItemsService {
     };
   }
 
-  // 3. create Item
+  /**
+   * Insert either one item or an array of items
+   * @param req An authorized request
+   * @param payload Can be either one item with an array of tagIds or an array of items of the same structure
+   * @returns
+   */
   async createItem(
     req: Request,
-    item: Partial<TablesUpdate<"storage_items">> & { tagIds?: string[] },
-  ): Promise<StorageItem> {
-    const supabase = req["supabase"] as SupabaseClient;
+    payload:
+      | (StorageItemRow & { tagIds?: string[] })
+      | Array<StorageItemRow & { tagIds?: string[] }>,
+  ): Promise<StorageItem[]> {
+    const supabase = req["supabase"];
 
-    // Extract tagIds from the item object
-    // and keep the rest of the item data in storageItemData
-    const { tagIds, ...storageItemData } = item;
-    // Insert the item into the storage_items table
-    const { data: insertedItems, error }: PostgrestResponse<StorageItem> =
-      await supabase.from("storage_items").insert(storageItemData).select();
-    if (error) throw new Error(error.message);
+    const { data, error }: PostgrestResponse<StorageItem> = await supabase
+      .from("countries")
+      .insert(payload)
+      .select();
+    if (error) handleSupabaseError(error);
 
-    const insertedItem = insertedItems?.[0];
-    if (!insertedItem) throw new Error("Failed to insert storage item");
-    // If tagIds are provided, insert them into the storage_item_tags table
-    if (tagIds && tagIds.length > 0) {
-      const tagLinks = tagIds.map((tagId) => ({
-        item_id: insertedItem.id,
-        tag_id: tagId,
+    if (Array.isArray(payload)) {
+      const mappedTags = payload.map((i) => ({
+        tagIds: i.tagIds,
+        itemId: i.id,
       }));
-      // Insert the tag links into the storage_item_tags table
-      const { error: tagError } = await supabase
-        .from("storage_item_tags")
-        .insert(tagLinks);
 
-      if (tagError) throw new Error(tagError.message);
     }
-
-    return insertedItem;
+      
+    return data;
   }
 
   // 4 update an item

@@ -1,6 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
-import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
+import {
+  PostgrestResponse,
+  PostgrestSingleResponse,
+  SupabaseClient,
+} from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { TagRow, TagUpdate } from "./interfaces/tag.interface";
 import { Database } from "../../../../common/database.types";
@@ -160,7 +164,7 @@ export class TagService {
     return data;
   }
 
-  async assignTagsToItem(
+  async assignTagsToItems(
     req: AuthRequest,
     itemId: string,
     tagIds: string[],
@@ -185,6 +189,17 @@ export class TagService {
       .insert(insertData);
 
     if (insertError) throw new Error(insertError.message);
+  }
+
+  async assignTagsToBulk(
+    req: AuthRequest,
+    payload:
+      | { itemId: string; tagIds: string[] }
+      | { itemId: string; tagIds: string[] }[],
+  ) {
+    const supabase = req.supabase;
+
+    const { error } = await supabase.from("storage_item_tags").insert(payload);
   }
 
   async updateTag(
