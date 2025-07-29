@@ -19,6 +19,7 @@ export class LogsController {
   constructor(private readonly logsService: LogsService) {}
 
   @Get()
+  // Role guarding happens on controller level now.
   @Roles(["admin", "super_admin", "main_admin", "superVera"], { match: "any" })
   async getAllLogs(
     @Req() req: AuthRequest,

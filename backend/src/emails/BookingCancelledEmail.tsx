@@ -7,7 +7,7 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-import type { UserRole } from "../modules/user/interfaces/user";
+import type { Org_Roles } from "@common/role.types";
 import type { BookingItem } from "../modules/booking/types/order";
 
 type ExtendedBookingItem = BookingItem & {
@@ -20,7 +20,7 @@ type ExtendedBookingItem = BookingItem & {
 type BookingCancelledEmailProps = {
   bookingId: string;
   items: ExtendedBookingItem[];
-  recipientRole: Extract<UserRole, "user" | "admin" | "superVera">;
+  recipientRole: Org_Roles;
   startDate: string;
 };
 
@@ -30,7 +30,15 @@ const BookingCancelledEmail = ({
   recipientRole,
   startDate,
 }: BookingCancelledEmailProps): React.ReactElement => {
-  const isAdmin = recipientRole === "admin" || recipientRole === "superVera";
+  // Define elevated roles who should *not* see the user-specific CTA
+  const elevatedRoles: Org_Roles[] = [
+    "admin",
+    "superVera",
+    "super_admin",
+    "main_admin",
+    "storage_manager",
+  ];
+  const isElevated = elevatedRoles.includes(recipientRole);
 
   return (
     <Html>
@@ -123,7 +131,8 @@ const BookingCancelledEmail = ({
 
           {/* --- english --- */}
           <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
-            A booking with booking number <strong>{bookingId}</strong> has been cancelled.
+            A booking with booking number <strong>{bookingId}</strong> has been
+            cancelled.
           </Text>
 
           <Text style={{ fontWeight: "bold", marginTop: "20px" }}>
@@ -144,7 +153,7 @@ const BookingCancelledEmail = ({
             )}
           </ul>
 
-          {!isAdmin && (
+          {!isElevated && (
             <Section style={{ textAlign: "center", marginTop: "30px" }}>
               <a
                 href="http://localhost:5180/profile?tab=bookings"

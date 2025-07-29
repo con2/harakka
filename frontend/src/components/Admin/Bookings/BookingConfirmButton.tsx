@@ -25,8 +25,8 @@ const BookingConfirmButton = ({
       description: "Are you sure you want to confirm this booking?",
       confirmText: "Confirm",
       cancelText: "Cancel",
-      onConfirm: async () => {
-        await toast.promise(dispatch(confirmBooking(id)).unwrap(), {
+      onConfirm: () => {
+        toast.promise(dispatch(confirmBooking(id)).unwrap(), {
           loading: "Confirming booking...",
           success: "Booking has been successfully confirmed.",
           error: "Failed to confirm the booking.",

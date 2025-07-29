@@ -66,7 +66,7 @@ export class RolesGuard implements CanActivate {
 
     const { roles: required, match = "any", sameOrg } = meta;
     const req = context.switchToHttp().getRequest<AuthRequest>();
-    const userRoles = req.userRoles ?? [];
+    const userRoles = req.user?.app_metadata?.roles ?? [];
 
     // Optional super_admin bypass
     if (userRoles.some((r) => r.role_name === "super_admin")) return true;

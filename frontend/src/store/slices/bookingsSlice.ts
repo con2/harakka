@@ -1,49 +1,45 @@
-import {
-  createEntityAdapter,
-  createSlice,
-  createAsyncThunk,
-} from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { bookingsApi } from "../../api/services/bookings";
 import { RootState } from "../store";
 import {
-  Booking,
-  BookingItem,
   BookingsState,
   CreateBookingDto,
   PaymentStatus,
-  ValidBooking,
   BookingStatus,
-  BookingUserViewRow,
+  BookingPreview,
+  BookingWithDetails,
+  ValidBookingOrder,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
-
-// Create an entity adapter for bookings
-const bookingsAdapter = createEntityAdapter<Booking, string>({
-  selectId: (e) => e.id,
-  sortComparer: (a, b) => {
-    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-    return bTime - aTime;
-  },
-});
+import { BookingItemUpdate } from "@common/bookings/booking-items.types";
+import { Booking } from "@common/bookings/booking.types";
 
 // Create initial state
-const initialState = bookingsAdapter.getInitialState<
-  Omit<BookingsState, "entities" | "ids">
->({
-  userBookings: [] as Booking[] | BookingUserViewRow[],
+const initialState: BookingsState = {
+  bookings: [],
+  userBookings: [],
   loading: false,
   error: null,
   errorContext: null,
   currentBooking: null,
-  page: 1,
-  limit: 10,
-  total: 0,
-  totalPages: 1,
-});
+  currentBookingLoading: false,
+  bookings_pagination: {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  },
+  booking_items_pagination: {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  },
+  bookingsCount: 0,
+};
 
 // Create booking thunk
-export const createBooking = createAsyncThunk<Booking, CreateBookingDto>(
+export const createBooking = createAsyncThunk<BookingPreview, CreateBookingDto>(
   "bookings/createBooking",
   async (bookingData, { rejectWithValue }) => {
     try {
@@ -72,6 +68,49 @@ export const getUserBookings = createAsyncThunk(
     }
   },
 );
+
+// get booking by ID
+export const getBookingByID = createAsyncThunk(
+  "bookings/getBookingByID",
+  async (booking_id: string, { rejectWithValue }) => {
+    try {
+      return await bookingsApi.getBookingByID(booking_id);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch user bookings"),
+      );
+    }
+  },
+);
+
+// get booking count (all bookings, active and inactive)
+export const getBookingsCount = createAsyncThunk(
+  "bookings/getBookingsCount",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await bookingsApi.getBookingsCount();
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch bookings count"),
+      );
+    }
+  },
+);
+
+// get items for a booking
+export const getBookingItems = createAsyncThunk(
+  "bookings/getBookingItems",
+  async (booking_id: string, { rejectWithValue }) => {
+    try {
+      return await bookingsApi.getBookingItems(booking_id);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch user bookings"),
+      );
+    }
+  },
+);
+
 // Get user bookings thunk
 export const getOrderedBookings = createAsyncThunk(
   "bookings/getOrderedBookings",
@@ -84,10 +123,10 @@ export const getOrderedBookings = createAsyncThunk(
       searchquery,
       status_filter,
     }: {
-      ordered_by: ValidBooking;
+      ordered_by: ValidBookingOrder;
       page: number;
       limit: number;
-      searchquery: string;
+      searchquery?: string;
       ascending?: boolean;
       status_filter?: BookingStatus;
     },
@@ -152,7 +191,7 @@ export const confirmBooking = createAsyncThunk<
 // Update booking thunk
 export const updateBooking = createAsyncThunk<
   Booking,
-  { bookingId: string; items: BookingItem[] }
+  { bookingId: string; items: BookingItemUpdate[] }
 >(
   "bookings/updateBooking",
   async ({ bookingId, items }, { rejectWithValue }) => {
@@ -270,24 +309,42 @@ export const bookingsSlice = createSlice({
       state.error = null;
       state.errorContext = null;
     },
+    clearCurrentBookingItems: (state) => {
+      if (state.currentBooking) state.currentBooking.booking_items = null;
+      state.error = null;
+      state.errorContext = null;
+    },
+    selectBooking: (state, action) => {
+      state.currentBooking = action.payload;
+      if (state.currentBooking && "booking_items" in state.currentBooking)
+        state.currentBooking.booking_items = null;
+    },
   },
   extraReducers: (builder) => {
     builder
+      .addCase(getBookingsCount.fulfilled, (state, action) => {
+        state.bookingsCount = action.payload.data!;
+      })
+      .addCase(getBookingsCount.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+        state.loading = false;
+      })
       // Create booking
       .addCase(createBooking.pending, (state) => {
-        state.loading = true;
         state.error = null;
         state.errorContext = null;
+        state.loading = true;
       })
       .addCase(createBooking.fulfilled, (state, action) => {
+        state.currentBooking = action.payload;
+        state.bookings.push(action.payload);
         state.loading = false;
-        state.currentBooking = action.payload.id;
-        bookingsAdapter.addOne(state, action.payload);
       })
       .addCase(createBooking.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "create";
+        state.loading = false;
       })
       // Get user bookings
       .addCase(getUserBookings.pending, (state) => {
@@ -296,22 +353,54 @@ export const bookingsSlice = createSlice({
         state.errorContext = null;
       })
       .addCase(getUserBookings.fulfilled, (state, action) => {
+        state.userBookings = action.payload.data as unknown as BookingPreview[];
+        state.bookings_pagination = action.payload.metadata;
         state.loading = false;
-        state.userBookings = (action.payload.data ?? []) as unknown as
-          | Booking[]
-          | BookingUserViewRow[];
-        state.total = action.payload.metadata.total;
-        state.page = action.payload.metadata.page;
-        state.totalPages = action.payload.metadata.totalPages;
-        bookingsAdapter.setAll(
-          state,
-          (action.payload.data ?? []) as unknown as Booking[],
-        );
       })
       .addCase(getUserBookings.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";
+        state.loading = false;
+      })
+      // Get booking by ID
+      .addCase(getBookingByID.pending, (state) => {
+        state.currentBookingLoading = true;
+        state.currentBooking = null;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(getBookingByID.fulfilled, (state, action) => {
+        if (action.payload && "data" in action.payload && action.payload.data) {
+          state.currentBooking = action.payload.data as BookingWithDetails;
+          state.booking_items_pagination = action.payload.metadata;
+        } else {
+          state.currentBooking = null;
+        }
+        state.currentBookingLoading = false;
+      })
+      .addCase(getBookingByID.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.currentBookingLoading = false;
+      })
+      .addCase(getBookingItems.pending, (state) => {
+        state.currentBookingLoading = true;
+        if (state.currentBooking && "booking_items" in state.currentBooking)
+          state.currentBooking.booking_items = null;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(getBookingItems.fulfilled, (state, action) => {
+        if (state.currentBooking) {
+          state.currentBooking.booking_items = action.payload.data;
+          if (action.payload.data && action.payload.data.length === 0)
+            state.currentBooking.booking_items = null;
+        }
+        state.booking_items_pagination = action.payload.metadata;
+        state.currentBookingLoading = false;
+      })
+      .addCase(getBookingItems.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.currentBookingLoading = false;
       })
       // Get ordered bookings
       .addCase(getOrderedBookings.pending, (state) => {
@@ -320,22 +409,14 @@ export const bookingsSlice = createSlice({
         state.errorContext = null;
       })
       .addCase(getOrderedBookings.fulfilled, (state, action) => {
+        state.bookings = action.payload.data ?? [];
+        state.bookings_pagination = action.payload.metadata;
         state.loading = false;
-        state.userBookings = (action.payload.data ?? []) as unknown as
-          | Booking[]
-          | BookingUserViewRow[];
-        state.total = action.payload.metadata.total;
-        state.page = action.payload.metadata.page;
-        state.totalPages = action.payload.metadata.totalPages;
-        bookingsAdapter.setAll(
-          state,
-          (action.payload.data ?? []) as unknown as Booking[],
-        );
       })
       .addCase(getOrderedBookings.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";
+        state.loading = false;
       })
       // Get all booking
       .addCase(getAllBookings.pending, (state) => {
@@ -345,10 +426,7 @@ export const bookingsSlice = createSlice({
       })
       .addCase(getAllBookings.fulfilled, (state, action) => {
         state.loading = false;
-        state.total = action.payload.metadata.total;
-        state.page = action.payload.metadata.page;
-        state.totalPages = action.payload.metadata.totalPages;
-        bookingsAdapter.setAll(state, action.payload.data ?? []);
+        state.bookings_pagination = action.payload.metadata;
       })
       .addCase(getAllBookings.rejected, (state, action) => {
         state.loading = false;
@@ -366,19 +444,17 @@ export const bookingsSlice = createSlice({
         // Use the bookingId from payload
         const bookingId = action.payload.bookingId;
 
-        // Update the booking status in the normalized state
-        bookingsAdapter.updateOne(state, {
-          id: bookingId,
-          changes: { status: "confirmed" },
+        // Also update in the bookings array
+        state.bookings.forEach((booking) => {
+          if (booking.id === bookingId) {
+            booking.status = "confirmed";
+          }
         });
-
-        // Also update in the user bookings array
-        state.userBookings = state.userBookings.map(
-          (booking: Booking | BookingUserViewRow) =>
-            booking.id === bookingId
-              ? { ...booking, status: "confirmed" }
-              : booking,
-        );
+        state.userBookings.forEach((booking) => {
+          if (booking.id === bookingId) {
+            booking.status = "confirmed";
+          }
+        });
       })
       .addCase(confirmBooking.rejected, (state, action) => {
         state.loading = false;
@@ -393,14 +469,17 @@ export const bookingsSlice = createSlice({
       })
       .addCase(updateBooking.fulfilled, (state, action) => {
         state.loading = false;
-        bookingsAdapter.updateOne(state, {
-          id: action.payload.id,
-          changes: action.payload,
+
+        state.bookings.forEach((booking) => {
+          if (booking.id === action.payload.id) {
+            Object.assign(booking, action.payload);
+          }
         });
-        state.userBookings = state.userBookings.map(
-          (booking: Booking | BookingUserViewRow) =>
-            booking.id === action.payload.id ? action.payload : booking,
-        );
+        state.userBookings.forEach((booking) => {
+          if (booking.id === action.payload.id) {
+            Object.assign(booking, action.payload);
+          }
+        });
       })
       .addCase(updateBooking.rejected, (state, action) => {
         state.loading = false;
@@ -418,19 +497,17 @@ export const bookingsSlice = createSlice({
         // Use the bookingId from payload
         const bookingId = action.payload.bookingId;
 
-        // Update the booking status in the normalized state
-        bookingsAdapter.updateOne(state, {
-          id: bookingId,
-          changes: { status: "rejected" },
-        });
-
         // Also update in the user bookings array
-        state.userBookings = state.userBookings.map(
-          (booking: Booking | BookingUserViewRow) =>
-            booking.id === bookingId
-              ? { ...booking, status: "rejected" }
-              : booking,
-        );
+        state.bookings.forEach((booking) => {
+          if (booking.id === bookingId) {
+            booking.status = "rejected";
+          }
+        });
+        state.userBookings.forEach((booking) => {
+          if (booking.id === bookingId) {
+            booking.status = "rejected";
+          }
+        });
       })
       .addCase(rejectBooking.rejected, (state, action) => {
         state.loading = false;
@@ -449,19 +526,12 @@ export const bookingsSlice = createSlice({
         // Use the bookingId we added to the payload
         const bookingId = action.payload.bookingId;
 
-        // Update the booking status in the normalized state
-        bookingsAdapter.updateOne(state, {
-          id: bookingId,
-          changes: { status: "cancelled by user" },
-        });
-
         // Also update in the user bookings array
-        state.userBookings = state.userBookings.map(
-          (booking: Booking | BookingUserViewRow) =>
-            booking.id === bookingId
-              ? { ...booking, status: "cancelled by user" }
-              : booking,
-        );
+        state.userBookings.forEach((booking) => {
+          if (booking.id === bookingId) {
+            booking.status = "cancelled by user";
+          }
+        });
       })
       .addCase(cancelBooking.rejected, (state, action) => {
         state.loading = false;
@@ -476,10 +546,8 @@ export const bookingsSlice = createSlice({
       })
       .addCase(deleteBooking.fulfilled, (state, action) => {
         state.loading = false;
-        bookingsAdapter.removeOne(state, action.payload);
         state.userBookings = state.userBookings.filter(
-          (booking: Booking | BookingUserViewRow) =>
-            booking.id !== action.payload,
+          (booking: Booking | BookingPreview) => booking.id !== action.payload,
         );
       })
       .addCase(deleteBooking.rejected, (state, action) => {
@@ -497,17 +565,16 @@ export const bookingsSlice = createSlice({
         state.loading = false;
         const { bookingId } = action.payload;
 
-        bookingsAdapter.updateOne(state, {
-          id: bookingId,
-          changes: { status: "completed" },
+        state.bookings.forEach((booking) => {
+          if (booking.id === bookingId) {
+            booking.status = "completed";
+          }
         });
-
-        state.userBookings = state.userBookings.map(
-          (booking: Booking | BookingUserViewRow) =>
-            booking.id === bookingId
-              ? { ...booking, status: "completed" }
-              : booking,
-        );
+        state.userBookings.forEach((booking) => {
+          if (booking.id === bookingId) {
+            booking.status = "completed";
+          }
+        });
       })
       .addCase(returnItems.rejected, (state, action) => {
         state.loading = false;
@@ -525,10 +592,11 @@ export const bookingsSlice = createSlice({
         const { bookingId, status } = action.payload;
 
         // Update the booking in the normalized state
-        bookingsAdapter.updateOne(state, {
-          id: bookingId,
-          changes: { payment_status: status as Booking["payment_status"] },
-        });
+        state.bookings = state.bookings.map((booking) =>
+          booking.id === bookingId
+            ? { ...booking, payment_status: status! }
+            : booking,
+        );
       })
       .addCase(updatePaymentStatus.rejected, (state, action) => {
         state.loading = false;
@@ -539,21 +607,15 @@ export const bookingsSlice = createSlice({
 });
 
 // Export actions
-export const { clearCurrentBooking } = bookingsSlice.actions;
+export const { clearCurrentBooking, selectBooking, clearCurrentBookingItems } =
+  bookingsSlice.actions;
 
-// Export selectors
-const bookingSelectors = bookingsAdapter.getSelectors<RootState>(
-  (state) => state.bookings,
-);
-
-// Export selectors
-export const selectAllBookings = bookingSelectors.selectAll;
-export const selectBookingById = bookingSelectors.selectById;
-export const selectBookingIds = bookingSelectors.selectIds;
+// // Export selectors
+export const selectAllBookings = (state: RootState) => state.bookings.bookings;
 export const selectCurrentBooking = (state: RootState) =>
-  state.bookings.currentBooking
-    ? selectBookingById(state, state.bookings.currentBooking)
-    : null;
+  state.bookings.currentBooking;
+export const selectCurrentBookingLoading = (state: RootState) =>
+  state.bookings.currentBookingLoading;
 export const selectBookingLoading = (state: RootState) =>
   state.bookings.loading;
 export const selectBookingError = (state: RootState) => state.bookings.error;
@@ -563,17 +625,16 @@ export const selectbookingErrorWithContext = (state: RootState) => ({
   message: state.bookings.error,
   context: state.bookings.errorContext,
 });
-export const selectBookingTotal = bookingSelectors.selectTotal;
 export const selectUserBookings = (state: RootState) =>
   state.bookings.userBookings;
 
 // Pagination data
-export const selectBookingPage = (state: RootState) => state.bookings.page;
-export const selectBookingLimit = (state: RootState) => state.bookings.limit;
-export const selectBookingTotalData = (state: RootState) =>
-  state.bookings.total;
-export const selectBookingTotalPages = (state: RootState) =>
-  state.bookings.totalPages;
+export const selectBookingPagination = (state: RootState) =>
+  state.bookings.bookings_pagination;
+export const selectBookingItemsPagination = (state: RootState) =>
+  state.bookings.booking_items_pagination;
+export const selectTotalBookingsCount = (state: RootState) =>
+  state.bookings.bookingsCount;
 
 // Export reducer
 export default bookingsSlice.reducer;

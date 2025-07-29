@@ -3,7 +3,6 @@ import {
   ErrorContext,
   Translatable,
   Tag,
-  LocationDetails,
   TagTranslation,
 } from "@/types";
 
@@ -26,8 +25,11 @@ export interface Item extends BaseEntity, Translatable<ItemTranslation> {
   average_rating?: number;
   tagIds?: string[];
   storage_item_tags?: Tag[];
-  location_details?: LocationDetails | null;
   location_name?: string;
+  location_details?: {
+    name: string;
+    address: string;
+  };
 }
 
 /**
@@ -40,10 +42,12 @@ export interface ItemState {
   selectedItem: Item | null;
   errorContext: ErrorContext;
   deletableItems: Record<string, boolean>;
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
+  item_pagination: {
+    page: number;
+    total: number;
+    totalPages: number;
+  };
+  itemCount: number;
 }
 
 /**
