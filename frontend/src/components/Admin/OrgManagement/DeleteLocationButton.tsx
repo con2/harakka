@@ -6,6 +6,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { toastConfirm } from "../../ui/toastConfirm";
 
 interface DeleteLocationButtonProps {
   locationId: string;
@@ -21,47 +22,31 @@ const DeleteLocationButton = ({
   const dispatch = useAppDispatch();
 
   const handleDelete = () => {
-    // Show confirmation toast
-    toast(
-      `Are you sure you want to remove "${locationName}" from this organization?`,
-      {
-        description:
-          "The storage location data will be preserved in the system for potential future use.",
-        action: {
-          label: "Remove",
-          onClick: async () => {
-            try {
-              await toast.promise(
-                dispatch(deleteOrgLocationWithStorage(locationId)).unwrap(),
-                {
-                  loading: "Removing location from organization...",
-                  success: "Location removed from organization successfully",
-                  error: "Failed to remove location",
-                },
-              );
+    toastConfirm({
+      title: "Remove Organization Location",
+      description: `Are you sure you want to remove "${locationName}" from this organization? The storage location data will be preserved in the system for potential future use.`,
+      confirmText: "Remove",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        await toast.promise(
+          dispatch(deleteOrgLocationWithStorage(locationId)).unwrap(),
+          {
+            loading: "Removing location from organization...",
+            success: "Location removed from organization successfully",
+            error: "Failed to remove location",
+          },
+        );
 
-              // Refresh the organization locations list
-              await dispatch(
-                fetchAllOrgLocations({
-                  orgId: organizationId,
-                  pageSize: 100,
-                  currentPage: 1,
-                }),
-              );
-            } catch (error) {
-              // Error is already handled by toast.promise
-              console.error("Error deleting location:", error);
-            }
-          },
-        },
-        cancel: {
-          label: "Cancel",
-          onClick: () => {
-            // Do nothing, just dismiss
-          },
-        },
+        // Refresh the organization locations list
+        await dispatch(
+          fetchAllOrgLocations({
+            orgId: organizationId,
+            pageSize: 100,
+            currentPage: 1,
+          }),
+        );
       },
-    );
+    });
   };
 
   return (
