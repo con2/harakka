@@ -41,6 +41,24 @@ export const userEditModal = {
       en: "Saved Lists",
     },
   },
+  columns: {
+    organization: {
+      fi: "Organisaatio",
+      en: "Organization",
+    },
+    role: {
+      fi: "Rooli",
+      en: "Role",
+    },
+    active: {
+      fi: "Aktiivinen",
+      en: "Active",
+    },
+    actions: {
+      fi: "Toiminnot",
+      en: "Actions",
+    },
+  },
   placeholders: {
     fullName: {
       fi: "Koko nimi",
@@ -117,6 +135,12 @@ export const userEditModal = {
     addRole: {
       fi: "Lisää rooli",
       en: "Add Role",
+    },
+  },
+  tooltips: {
+    cannotChangeOrg: {
+      fi: "Organisaatiota ei voi muuttaa olemassa olevalle roolikytkökselle",
+      en: "Cannot change organization on existing assignment",
     },
   },
   status: {
