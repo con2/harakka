@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -38,10 +39,19 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   // Translation
   const { lang } = useLanguage();
 
+  // Column header keys for the role grid
+  const columns = {
+    org: t.userEditModal.columns?.organization?.[lang] ?? "Organization",
+    role: t.userEditModal.columns?.role?.[lang] ?? "Role",
+    active: t.userEditModal.columns?.active?.[lang] ?? "Active",
+    actions: t.userEditModal.columns?.actions?.[lang] ?? "Actions",
+  };
+
   const {
     availableRoles,
     allUserRoles,
     createRole,
+    updateRole,
     permanentDeleteRole,
     isSuperAdmin,
     isSuperVera,
@@ -73,8 +83,10 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
 
   // Role assignments across organizations
   type RoleAssignment = {
+    id: string | null; // row id if existing
     organization_id: string | null;
     role_name: string | null;
+    is_active: boolean;
   };
   const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
 
@@ -85,8 +97,10 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     const userRoles = allUserRoles
       .filter((r) => r.user_id === user.id && r.organization_id && r.role_name)
       .map((r) => ({
+        id: r.id,
         organization_id: r.organization_id as string,
         role_name: r.role_name as string,
+        is_active: !!r.is_active,
       }));
     setRoleAssignments(userRoles);
   }, [allUserRoles, user.id]);
@@ -147,7 +161,13 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   ) => {
     if (!canManageRoles) return;
     setRoleAssignments((prev) =>
-      prev.map((ra, i) => (i === index ? { ...ra, [field]: value } : ra)),
+      prev.map((ra, i) =>
+        i === index
+          ? field === "organization_id" && ra.id
+            ? ra // keep as‑is; org edit disabled
+            : { ...ra, [field]: value }
+          : ra,
+      ),
     );
   };
 
@@ -155,8 +175,16 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     if (!canManageRoles) return;
     setRoleAssignments((prev) => [
       ...prev,
-      { organization_id: null, role_name: null },
+      { id: null, organization_id: null, role_name: null, is_active: true },
     ]);
+  };
+  const toggleRoleActive = (index: number) => {
+    if (!canManageRoles) return;
+    setRoleAssignments((prev) =>
+      prev.map((ra, i) =>
+        i === index ? { ...ra, is_active: !ra.is_active } : ra,
+      ),
+    );
   };
 
   const removeRoleAssignment = (index: number) => {
@@ -191,6 +219,16 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
               ra.role_name === or.role_name,
           ),
       );
+
+      // Detect rows whose active flag changed
+      const toUpdate = roleAssignments.filter((ra) => {
+        const orig = originalRoles.find((or) => or.id === ra.id);
+        return ra.id && orig && orig.is_active !== ra.is_active;
+      });
+
+      for (const ru of toUpdate) {
+        await updateRole(ru.id as string, { is_active: ru.is_active });
+      }
 
       for (const ra of toCreate) {
         if (!ra.organization_id || !ra.role_name) continue; // skip incomplete rows
@@ -271,73 +309,104 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
 
             {canManageRoles ? (
               <>
-                {roleAssignments.map((ra, index) => (
-                  <div key={index} className="flex space-x-2 mb-2">
-                    {/* Organization picker */}
-                    <Select
-                      onValueChange={(value) =>
-                        handleRoleAssignmentChange(
-                          index,
-                          "organization_id",
-                          value,
-                        )
-                      }
-                      defaultValue={ra.organization_id ?? undefined}
-                    >
-                      <SelectTrigger className="w-[160px]">
-                        <SelectValue
-                          placeholder={
-                            t.userEditModal.placeholders.selectOrganization[
-                              lang
-                            ]
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {organizations.map((org) => (
-                          <SelectItem key={org.id} value={org.id}>
-                            {org.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {/* Role picker */}
-                    <Select
-                      onValueChange={(value) =>
-                        handleRoleAssignmentChange(index, "role_name", value)
-                      }
-                      defaultValue={ra.role_name ?? undefined}
-                    >
-                      <SelectTrigger className="w-[160px]">
-                        <SelectValue
-                          placeholder={
-                            t.userEditModal.placeholders.selectRole[lang]
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableRoles.map((r) => (
-                          <SelectItem key={r.id} value={r.role}>
-                            {r.role}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {/* Remove row */}
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => removeRoleAssignment(index)}
-                    >
-                      {t.userEditModal.buttons.remove[lang]}
-                    </Button>
+                <div className="border rounded-md max-h-64 overflow-y-auto">
+                  {/* header */}
+                  <div className="grid grid-cols-[1fr_1fr_80px_auto] gap-2 px-3 py-2 text-xs font-medium text-muted-foreground sticky top-0 bg-background z-10">
+                    <span>{columns.org}</span>
+                    <span>{columns.role}</span>
+                    <span>{columns.active}</span>
+                    <span>{columns.actions}</span>
                   </div>
-                ))}
+
+                  {/* rows */}
+                  {roleAssignments.map((ra, index) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-[1fr_1fr_80px_auto] gap-2 px-3 py-2 items-center"
+                    >
+                      {/* Organization picker */}
+                      <Select
+                        disabled={ra.id !== null}
+                        onValueChange={(value) =>
+                          handleRoleAssignmentChange(
+                            index,
+                            "organization_id",
+                            value,
+                          )
+                        }
+                        defaultValue={ra.organization_id ?? undefined}
+                      >
+                        <SelectTrigger
+                          className="w-full"
+                          title={
+                            ra.id
+                              ? t.userEditModal.tooltips.cannotChangeOrg[lang]
+                              : undefined
+                          }
+                        >
+                          <SelectValue
+                            placeholder={
+                              t.userEditModal.placeholders.selectOrganization[
+                                lang
+                              ]
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {organizations.map((org) => (
+                            <SelectItem key={org.id} value={org.id}>
+                              {org.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Role picker */}
+                      <Select
+                        onValueChange={(value) =>
+                          handleRoleAssignmentChange(index, "role_name", value)
+                        }
+                        defaultValue={ra.role_name ?? undefined}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={
+                              t.userEditModal.placeholders.selectRole[lang]
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableRoles.map((r) => (
+                            <SelectItem key={r.id} value={r.role}>
+                              {r.role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Active toggle */}
+                      <Switch
+                        checked={ra.is_active}
+                        onCheckedChange={() => toggleRoleActive(index)}
+                        className="justify-self-center"
+                      />
+
+                      {/* Remove */}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="justify-self-end"
+                        onClick={() => removeRoleAssignment(index)}
+                      >
+                        {t.userEditModal.buttons.remove[lang]}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
 
                 <Button
-                  className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+                  className="mt-3 bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
                   type="button"
                   size="sm"
                   onClick={addRoleAssignment}
