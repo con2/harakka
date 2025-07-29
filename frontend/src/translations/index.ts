@@ -5,7 +5,6 @@ import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
 import { adminPanel } from "./modules/adminPanel";
 import { assignTagsModal } from "./modules/assignTagsModal";
-import { authUi } from "./modules/authUi";
 import { cart } from "./modules/cart";
 import { contactForm } from "./modules/contactForm";
 import { countries } from "./modules/countries";
@@ -54,7 +53,6 @@ export const t = {
   adminItemsTable,
   adminPanel,
   assignTagsModal,
-  authUi,
   cart,
   common: general.common, // Shorthand for general.common
   contactForm,

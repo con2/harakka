@@ -63,7 +63,7 @@ export const Navigation = () => {
     <nav className={navClasses}>
       <div className="container md:mx-auto mx-0 flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <Link to="/">
+          <Link to="/" data-cy="nav-home">
             <img
               src={logo}
               alt="Logo"
@@ -84,6 +84,7 @@ export const Navigation = () => {
                     <Link
                       to="/profile"
                       className="flex items-center gap-1 text-secondary font-medium"
+                      data-cy="nav-profile"
                     >
                       {t.navigation.myProfile[lang]}
                     </Link>
@@ -98,6 +99,7 @@ export const Navigation = () => {
                     <Link
                       to="/admin"
                       className="flex items-center gap-1 text-secondary font-medium"
+                      data-cy="nav-admin"
                     >
                       {t.navigation.admin[lang]}
                     </Link>
@@ -111,6 +113,7 @@ export const Navigation = () => {
                   <Link
                     to="/storage"
                     className="flex items-center gap-1 text-secondary font-medium"
+                    data-cy="nav-storage"
                   >
                     {t.navigation.storage[lang]}
                   </Link>
@@ -124,6 +127,7 @@ export const Navigation = () => {
                     <Link
                       to="/howItWorks"
                       className="flex items-center gap-1 text-secondary font-medium"
+                      data-cy="nav-guide"
                     >
                       {t.navigation.guides[lang]}
                     </Link>
@@ -138,6 +142,7 @@ export const Navigation = () => {
                     <Link
                       to="/contact-us"
                       className="flex items-center gap-1 text-secondary font-medium"
+                      data-cy="nav-contact"
                     >
                       {t.navigation.contactUs[lang]}
                     </Link>
@@ -156,6 +161,7 @@ export const Navigation = () => {
           <Link
             to="/cart"
             className="flex items-center gap-1 text-secondary font-medium hover:text-secondary"
+            data-cy="nav-cart"
           >
             <ShoppingCart className="h-5 w-5" />
             {cartItemsCount > 0 && (
@@ -174,6 +180,7 @@ export const Navigation = () => {
                 onClick={() => {
                   void navigate("/profile");
                 }}
+                data-cy="nav-profile-btn"
               >
                 {/* Show name on desktop, icon on mobile */}
                 <UserIcon className="inline sm:hidden h-5 w-5" />
@@ -181,12 +188,17 @@ export const Navigation = () => {
                   {selectedUser.full_name}
                 </span>
               </Button>
-              <Button variant={"ghost"} size={"sm"} onClick={handleSignOut}>
+              <Button
+                variant={"ghost"}
+                size={"sm"}
+                onClick={handleSignOut}
+                data-cy="nav-signout-btn"
+              >
                 <LogOutIcon className="h-5 w-5" />
               </Button>
             </div>
           ) : (
-            <Button variant={"ghost"} asChild>
+            <Button variant={"ghost"} data-cy="nav-login-btn" asChild>
               <Link to="/login">
                 {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
               </Link>
