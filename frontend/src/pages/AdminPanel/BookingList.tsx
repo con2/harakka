@@ -1,24 +1,28 @@
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  getAllBookings,
   selectBookingLoading,
   selectBookingError,
   selectAllBookings,
   updatePaymentStatus,
-  selectBookingPage,
-  selectBookingTotalPages,
   getOrderedBookings,
+  selectCurrentBooking,
+  selectBookingItemsPagination,
+  selectCurrentBookingLoading,
+  getBookingItems,
+  selectBooking,
+  selectBookingPagination,
 } from "@/store/slices/bookingsSlice";
 import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "../../ui/button";
+import { Button } from "@/components/ui/button";
 import {
   PaymentStatus,
-  ValidBooking,
+  ValidBookingOrder,
   BookingUserViewRow,
   BookingStatus,
+  BookingWithDetails,
 } from "@/types";
 import {
   Dialog,
@@ -26,53 +30,59 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { selectSelectedUser } from "@/store/slices/usersSlice";
-import BookingReturnButton from "./BookingReturnButton";
-import BookingConfirmButton from "./BookingConfirmButton";
-import BookingRejectButton from "./BookingRejectButton";
-import BookingDeleteButton from "./BookingDeleteButton";
+import BookingConfirmButton from "@/components/Admin/Bookings/BookingConfirmButton";
+import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton";
+import BookingDeleteButton from "@/components/Admin/Bookings/BookingDeleteButton";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
-import { Separator } from "../../ui/separator";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../ui/select";
-import BookingPickupButton from "./BookingPickupButton";
+} from "@/components/ui/select";
+import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
 import { useAuth } from "@/hooks/useAuth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
+import { BookingItem } from "@common/bookings/booking-items.types";
+import { StorageItemRow } from "@common/items/storage-items.types";
+import Spinner from "@/components/Spinner";
+import { DataTable } from "@/components/ui/data-table";
+import { BookingPreview } from "@common/bookings/booking.types";
 
 const BookingList = () => {
   const dispatch = useAppDispatch();
   const bookings = useAppSelector(selectAllBookings);
   const loading = useAppSelector(selectBookingLoading);
   const error = useAppSelector(selectBookingError);
-  const bookingsLoadedRef = useRef(false);
-  const user = useAppSelector(selectSelectedUser);
   const { authLoading } = useAuth();
-  const [selectedBooking, setSelectedBooking] =
-    useState<BookingUserViewRow | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
-  const [booking, setBooking] = useState<ValidBooking>("booking_number");
+  const [orderBy, setOrderBy] = useState<ValidBookingOrder>("booking_number");
   const [ascending, setAscending] = useState<boolean | null>(null);
-  const page = useAppSelector(selectBookingPage);
-  const totalPages = useAppSelector(selectBookingTotalPages);
+  const { totalPages, page } = useAppSelector(selectBookingPagination);
   // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const [currentPage, setCurrentPage] = useState(1);
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
+  const selectedBooking = useAppSelector(selectCurrentBooking);
+  const { totalPages: itemPages } = useAppSelector(
+    selectBookingItemsPagination,
+  );
+  const [currentItemPage, setCurrentItemPage] = useState(1);
+  const currentBookingLoading = useAppSelector(selectCurrentBookingLoading);
 
   /*----------------------handlers----------------------------------*/
   const handleViewDetails = (booking: BookingUserViewRow) => {
-    setSelectedBooking(booking);
+    dispatch(selectBooking(booking));
+    void dispatch(getBookingItems(booking.id!));
     setShowDetailsModal(true);
   };
 
@@ -81,43 +91,41 @@ const BookingList = () => {
     setCurrentPage(newPage);
   };
 
+  const handleItemPageChange = (newPage: number) => setCurrentItemPage(newPage);
+
   const handleSearchQuery = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
-  const handleBooking = (booking: string) =>
-    setBooking(booking as ValidBooking);
+  const handleOrderBy = (orderBy: string) =>
+    setOrderBy(orderBy as ValidBookingOrder);
+
   const handleAscending = (ascending: boolean | null) =>
     setAscending(ascending);
 
   /*----------------------side-effects----------------------------------*/
   useEffect(() => {
-    if (debouncedSearchQuery || statusFilter || booking)
-      void dispatch(
-        getOrderedBookings({
-          ordered_by: booking,
-          page: currentPage,
-          limit: 10,
-          searchquery: debouncedSearchQuery,
-          ascending: ascending === false ? false : true,
-          status_filter: statusFilter !== "all" ? statusFilter : undefined,
-        }),
-      );
-    else {
-      void dispatch(getAllBookings({ page: currentPage, limit: 10 }));
-      bookingsLoadedRef.current = true;
-    }
+    void dispatch(
+      getOrderedBookings({
+        ordered_by: orderBy,
+        page: currentPage,
+        limit: 10,
+        searchquery: debouncedSearchQuery,
+        ascending: ascending === false ? false : true,
+        status_filter: statusFilter !== "all" ? statusFilter : undefined,
+      }),
+    );
   }, [
     debouncedSearchQuery,
     statusFilter,
     page,
-    booking,
+    orderBy,
     dispatch,
     currentPage,
     ascending,
   ]);
 
-  const columns: ColumnDef<BookingUserViewRow>[] = [
+  const columns: ColumnDef<BookingPreview>[] = [
     {
       accessorKey: "booking_number",
       header: t.bookingList.columns.bookingNumber[lang],
@@ -140,7 +148,7 @@ const BookingList = () => {
       accessorKey: "status",
       header: t.bookingList.columns.status[lang],
       enableSorting: true,
-      cell: ({ row }) => <StatusBadge status={row.original.status!} />,
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "created_at",
@@ -149,33 +157,6 @@ const BookingList = () => {
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
-    // {
-    //   accessorKey: "date_range",
-    //   header: t.bookingList.columns.dateRange[lang],
-    //   cell: ({ row }) => {
-    //     const items = row.original.booking_items || [];
-    //     if (items.length === 0) return "-";
-
-    //     // Get earliest start_date
-    //     const minStartDate = items.reduce((minDate, item) => {
-    //       const date = new Date(item.start_date);
-    //       return date < minDate ? date : minDate;
-    //     }, new Date(items[0].start_date));
-
-    //     // Get latest end_date
-    //     const maxEndDate = items.reduce((maxDate, item) => {
-    //       const date = new Date(item.end_date);
-    //       return date > maxDate ? date : maxDate;
-    //     }, new Date(items[0].end_date));
-
-    //     return (
-    //       <div className="text-xs flex flex-col">
-    //         <span>{`${formatDate(minStartDate, "d MMM yyyy")} -`}</span>
-    //         <span>{`${formatDate(maxEndDate, "d MMM yyyy")}`}</span>
-    //       </div>
-    //     );
-    //   },
-    // },
     {
       accessorKey: "final_amount",
       header: t.bookingList.columns.total[lang],
@@ -199,7 +180,7 @@ const BookingList = () => {
         ) => {
           void dispatch(
             updatePaymentStatus({
-              bookingId: row.original.id!,
+              bookingId: row.original.id,
               status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
             }),
           );
@@ -248,13 +229,16 @@ const BookingList = () => {
         const booking = row.original;
         const isPending = booking.status === "pending";
         const isConfirmed = booking.status === "confirmed";
+        const isDeleted = booking.status === "deleted";
 
         return (
           <div className="flex space-x-1">
             <Button
               variant={"ghost"}
               size="sm"
-              onClick={() => handleViewDetails(booking)}
+              onClick={() => {
+                handleViewDetails(booking);
+              }}
               title={t.bookingList.buttons.viewDetails[lang]}
               className="hover:text-slate-900 hover:bg-slate-300"
             >
@@ -264,11 +248,11 @@ const BookingList = () => {
             {isPending && (
               <>
                 <BookingConfirmButton
-                  id={booking.id!}
+                  id={booking.id}
                   closeModal={() => setShowDetailsModal(false)}
                 />
                 <BookingRejectButton
-                  id={booking.id!}
+                  id={booking.id}
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
@@ -276,57 +260,59 @@ const BookingList = () => {
 
             {isConfirmed && (
               <BookingReturnButton
-                id={booking.id!}
+                id={booking.id}
                 closeModal={() => setShowDetailsModal(false)}
               />
             )}
 
             {isConfirmed && <BookingPickupButton />}
-
-            <BookingDeleteButton
-              id={booking.id!}
-              closeModal={() => setShowDetailsModal(false)}
-            />
+            {!isDeleted && (
+              <BookingDeleteButton
+                id={booking.id}
+                closeModal={() => setShowDetailsModal(false)}
+              />
+            )}
           </div>
         );
       },
     },
   ];
 
-  // const bookingColumns: ColumnDef<BookingItem>[] = [
-  //   {
-  //     accessorKey: "item_name",
-  //     header: t.bookingList.modal.bookingItems.columns.item[lang],
-  //     cell: (i) => {
-  //       const itemName = i.getValue();
-  //       return (
-  //         String(itemName).charAt(0).toUpperCase() + String(itemName).slice(1)
-  //       );
-  //     },
-  //   },
-  //   {
-  //     accessorKey: "quantity",
-  //     header: t.bookingList.modal.bookingItems.columns.quantity[lang],
-  //   },
-  //   {
-  //     accessorKey: "start_date",
-  //     header: t.bookingList.modal.bookingItems.columns.startDate[lang],
-  //     cell: ({ row }) => {
-  //       formatDate(new Date(row.original.start_date || ""), "d MMM yyyy");
-  //     },
-  //   },
-  //   {
-  //     accessorKey: "end_date",
-  //     header: t.bookingList.modal.bookingItems.columns.endDate[lang],
-  //     cell: ({ row }) =>
-  //       formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
-  //   },
-  //   {
-  //     accessorKey: "subtotal",
-  //     header: t.bookingList.modal.bookingItems.columns.subtotal[lang],
-  //     cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
-  //   },
-  // ];
+  const bookingItemsColumns: ColumnDef<
+    BookingItem & { storage_items: Partial<StorageItemRow> }
+  >[] = [
+    {
+      accessorKey: "item_name",
+      header: t.bookingList.modal.bookingItems.columns.item[lang],
+      cell: ({ row }) => {
+        const itemName =
+          row.original.storage_items.translations![lang].item_name;
+        return itemName.charAt(0).toUpperCase() + itemName.slice(1);
+      },
+    },
+    {
+      accessorKey: "quantity",
+      header: t.bookingList.modal.bookingItems.columns.quantity[lang],
+    },
+    {
+      accessorKey: "start_date",
+      header: t.bookingList.modal.bookingItems.columns.startDate[lang],
+      cell: ({ row }) => {
+        formatDate(new Date(row.original.start_date || ""), "d MMM yyyy");
+      },
+    },
+    {
+      accessorKey: "end_date",
+      header: t.bookingList.modal.bookingItems.columns.endDate[lang],
+      cell: ({ row }) =>
+        formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
+    },
+    {
+      accessorKey: "subtotal",
+      header: t.bookingList.modal.bookingItems.columns.subtotal[lang],
+      cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
+    },
+  ];
 
   if (authLoading || loading) {
     return (
@@ -348,7 +334,19 @@ const BookingList = () => {
           <h1 className="text-xl">{t.bookingList.title[lang]}</h1>
 
           <Button
-            onClick={() => user && user?.id && dispatch(getAllBookings({}))}
+            onClick={() =>
+              dispatch(
+                getOrderedBookings({
+                  ordered_by: orderBy,
+                  page: currentPage,
+                  limit: 10,
+                  searchquery: debouncedSearchQuery,
+                  ascending: ascending === false ? false : true,
+                  status_filter:
+                    statusFilter !== "all" ? statusFilter : undefined,
+                }),
+              )
+            }
             className="bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
           >
             {t.bookingList.buttons.refresh[lang]}
@@ -410,14 +408,15 @@ const BookingList = () => {
         </div>
         <PaginatedDataTable
           columns={columns}
-          data={bookings as unknown as BookingUserViewRow[]}
+          data={bookings}
           pageIndex={currentPage - 1}
           pageCount={totalPages}
           onPageChange={(page) => handlePageChange(page + 1)}
-          booking={booking}
+          order={orderBy}
           ascending={ascending}
-          handleBooking={handleBooking}
+          handleOrder={handleOrderBy}
           handleAscending={handleAscending}
+          originalSorting="booking_number"
         />
       </div>
 
@@ -441,11 +440,11 @@ const BookingList = () => {
                       {t.bookingList.modal.customer[lang]}
                     </h3>
                     <p className="text-sm mb-0">
-                      {selectedBooking.full_name ||
+                      {(selectedBooking as BookingWithDetails).full_name ||
                         t.bookingList.status.unknown[lang]}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {selectedBooking.email}
+                      {(selectedBooking as BookingWithDetails).email}
                     </p>
                   </div>
 
@@ -455,7 +454,7 @@ const BookingList = () => {
                     </h3>
                     <p className="text-sm mb-0">
                       {t.bookingList.modal.status[lang]}{" "}
-                      <StatusBadge status={selectedBooking.status!} />
+                      <StatusBadge status={selectedBooking.status} />
                     </p>
                     <p className="text-sm">
                       {t.bookingList.modal.date[lang]}{" "}
@@ -469,10 +468,30 @@ const BookingList = () => {
 
                 {/* booking Items */}
                 <div>
-                  {/* <DataTable
-                    columns={bookingColumns}
-                    data={selectedBooking.booking_items || []}
-                  /> */}
+                  {currentBookingLoading && (
+                    <Spinner containerClasses="py-10" />
+                  )}
+
+                  {!currentBookingLoading && itemPages > 1 ? (
+                    <PaginatedDataTable
+                      pageCount={itemPages}
+                      onPageChange={handleItemPageChange}
+                      pageIndex={currentItemPage - 1}
+                      columns={bookingItemsColumns}
+                      data={
+                        (selectedBooking as BookingWithDetails).booking_items ||
+                        []
+                      }
+                    />
+                  ) : !currentBookingLoading && itemPages === 1 ? (
+                    <DataTable
+                      columns={bookingItemsColumns}
+                      data={
+                        (selectedBooking as BookingWithDetails).booking_items ||
+                        []
+                      }
+                    />
+                  ) : null}
                 </div>
 
                 {/* booking Modal Actions */}

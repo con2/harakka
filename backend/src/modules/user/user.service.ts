@@ -1,14 +1,17 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
+
 import {
   PostgrestResponse,
   PostgrestSingleResponse,
+  SupabaseClient,
 } from "@supabase/supabase-js";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { MailService } from "../mail/mail.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { UserEmailAssembler } from "../mail/user-email-assembler";
+import { ApiSingleResponse } from "@common/response.types";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Injectable()
@@ -34,7 +37,7 @@ export class UserService {
     return data;
   }
 
-  async getUserById(id: string, req: AuthRequest): Promise<UserProfile | null> {
+  async getUserById(id: string, req: AuthRequest): Promise<UserProfile> {
     const supabase = req.supabase;
 
     const { data, error }: PostgrestSingleResponse<UserProfile> = await supabase
@@ -48,7 +51,7 @@ export class UserService {
     }
     return data;
   }
-  async getCurrentUser(req: AuthRequest): Promise<UserProfile | null> {
+  async getCurrentUser(req: AuthRequest): Promise<UserProfile> {
     const supabase = req.supabase;
     const userId = req.user?.id;
     if (!userId) {
@@ -71,7 +74,7 @@ export class UserService {
     id: string,
     user: Partial<CreateUserDto>,
     req: AuthRequest,
-  ): Promise<UserProfile | null> {
+  ): Promise<UserProfile> {
     const supabase = req.supabase;
 
     const { data, error }: PostgrestSingleResponse<UserProfile> = await supabase
@@ -175,5 +178,20 @@ export class UserService {
     if (error) {
       handleSupabaseError(error);
     }
+  }
+
+  async getUserCount(
+    supabase: SupabaseClient,
+  ): Promise<ApiSingleResponse<number>> {
+    const result: PostgrestResponse<undefined> = await supabase
+      .from("user_profiles")
+      .select(undefined, { count: "exact" });
+
+    if (result.error) handleSupabaseError(result.error);
+
+    return {
+      ...result,
+      data: result.count ?? 0,
+    };
   }
 }

@@ -355,7 +355,7 @@ export const tagSlice = createSlice({
 
 // Selectors
 export const selectAllTags = (state: RootState) => state.tags.tags;
-export const selectLoading = (state: RootState) => state.tags.loading;
+export const selectTagsLoading = (state: RootState) => state.tags.loading;
 export const selectError = (state: RootState) => state.tags.error;
 export const selectSelectedTags = (state: RootState) => state.tags.selectedTags;
 // Pagination data

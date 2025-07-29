@@ -26,4 +26,5 @@ export interface UserState {
   selectedUser: UserProfile | null;
   selectedUserLoading?: boolean;
   selectedUserAddresses?: Address[];
+  userCount: number;
 }

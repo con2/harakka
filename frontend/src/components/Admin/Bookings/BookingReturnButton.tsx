@@ -28,8 +28,8 @@ const BookingReturnButton = ({
       description: "Are you sure you want to mark this booking as returned?",
       confirmText: "Confirm",
       cancelText: "Cancel",
-      onConfirm: async () => {
-        await toast.promise(dispatch(returnItems(id)).unwrap(), {
+      onConfirm: () => {
+        toast.promise(dispatch(returnItems(id)).unwrap(), {
           loading: "Processing return...",
           success: "Booking has been successfully marked as returned.",
           error: "Failed to process the return.",

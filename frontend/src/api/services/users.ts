@@ -82,4 +82,9 @@ export const usersApi = {
    */
   deleteAddress: (id: string, addressId: string): Promise<void> =>
     api.delete(`/users/${id}/addresses/${addressId}`),
+
+  /**
+   * Get the total user count
+   */
+  getUserCount: () => api.get("users/count"),
 };

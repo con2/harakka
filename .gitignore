@@ -5,6 +5,7 @@ NOTES.md
 node_modules/*
 .nvmrc
 
+.vscode
 
 # compiled output
 /dist

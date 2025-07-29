@@ -2,6 +2,7 @@ import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/context/LanguageContext";
+import { useRoles } from "@/hooks/useRoles";
 import { t } from "@/translations";
 import {
   FileText,
@@ -13,6 +14,7 @@ import {
   Users,
   Warehouse,
   ShieldUser,
+  Building2,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -24,6 +26,7 @@ const AdminPanel = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Translation
   const { lang } = useLanguage();
+  const { isSuperAdmin } = useRoles();
 
   return (
     <div className="flex min-h-screen relative">
@@ -36,6 +39,14 @@ const AdminPanel = () => {
             label={t.adminPanel.navigation.dashboard[lang]}
             end={true}
           />
+          {isSuperAdmin && (
+            <SidebarLink
+              to="/admin/organizations"
+              icon={<Building2 className="w-5 h-5" />}
+              label={t.adminPanel.navigation.organizations[lang]}
+              end={true}
+            />
+          )}
 
           <SidebarLink
             to="/admin/bookings"
@@ -79,6 +90,13 @@ const AdminPanel = () => {
             to="/admin/roles"
             icon={<ShieldUser className="w-5 h-5" />}
             label={t.adminPanel.navigation.roles[lang]}
+          />
+
+          {/* Add the new Organizations link */}
+          <SidebarLink
+            to="/admin/organizations"
+            icon={<Building2 className="w-5 h-5" />}
+            label={"Organizations"} /* change to translation version */
           />
 
           <SidebarLink

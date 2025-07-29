@@ -14,6 +14,7 @@ import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { Roles } from "src/decorators/roles.decorator";
+import { ApiSingleResponse } from "@common/response.types";
 
 @Controller("users")
 export class UserController {
@@ -33,6 +34,18 @@ export class UserController {
     }
     // Return the user profile without sensitive data
     return user;
+  }
+
+  /**
+   * Get the total user count of unique users in the system
+   * @returns number of total users
+   */
+  @Get("count")
+  async getUserCount(
+    @Req() req: AuthRequest,
+  ): Promise<ApiSingleResponse<number>> {
+    const supabase = req.supabase;
+    return this.userService.getUserCount(supabase);
   }
 
   @Get(":id")

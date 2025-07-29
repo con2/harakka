@@ -1,6 +1,8 @@
-import { BaseEntity, ErrorContext } from "./common";
+import { BookingItem } from "@common/bookings/booking-items.types";
+import { BaseEntity, ErrorContext, Translatable } from "./common";
 import { ItemTranslation } from "./item";
 import { Database } from "@common/database.types";
+import { StripNull } from "@common/helper.types";
 
 /**
  * Booking status values
@@ -27,33 +29,9 @@ export type PaymentStatus =
   | null;
 
 /**
- * Booked item in an booking
- */
-export interface BookingItem {
-  id?: string;
-  item_id: string;
-  quantity: number;
-  start_date: string;
-  end_date: string;
-  unit_price?: number;
-  total_days?: number;
-  subtotal?: number;
-  status?: "pending" | "confirmed" | "cancelled";
-  location_id?: string;
-  item_name?: string;
-  storage_items?: {
-    location_id?: string;
-    translations?: {
-      fi: ItemTranslation;
-      en: ItemTranslation;
-    };
-  };
-}
-
-/**
  * Order entity representing a booking in the system
  */
-export interface Booking extends BaseEntity {
+export interface BookingType extends BaseEntity {
   user_id: string;
   booking_number: string;
   status: BookingStatus;
@@ -72,17 +50,26 @@ export interface Booking extends BaseEntity {
  * Booking state in Redux store
  */
 export interface BookingsState {
-  entities: Record<string, Booking>;
-  ids: string[];
-  userBookings: Array<Booking | BookingUserViewRow>;
+  bookings: BookingPreview[];
+  userBookings: BookingPreview[];
   loading: boolean;
-  error: string | null; // Change to simple string like tags
+  error: string | null;
   errorContext: ErrorContext;
-  currentBooking: string | null;
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
+  currentBooking: Partial<BookingWithDetails> | null;
+  currentBookingLoading: boolean;
+  bookings_pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  booking_items_pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  bookingsCount: number;
 }
 
 /**
@@ -105,7 +92,7 @@ export type BookingsRow = BookingsTable["Row"];
  * Valid values for the /ordered endpoint.
  * Data can be ordered by the following values
  */
-export type ValidBooking =
+export type ValidBookingOrder =
   | "created_at"
   | "booking_number"
   | "payment_status"
@@ -116,3 +103,14 @@ export type ValidBooking =
 export type BookingUserView =
   Database["public"]["Views"]["view_bookings_with_user_info"];
 export type BookingUserViewRow = BookingUserView["Row"];
+
+/* Non-nullable type of the BookingUserViewRow */
+export type BookingPreview = StripNull<BookingUserViewRow>;
+
+export type BookingWithDetails = BookingPreview & {
+  booking_items: BookingItemWithDetails[] | null;
+};
+
+export type BookingItemWithDetails = BookingItem & {
+  storage_items: Translatable<ItemTranslation>;
+};
