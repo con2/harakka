@@ -76,7 +76,7 @@ export class OrganizationLocationsService {
         `
         *,
         organizations(name),
-        storage_locations(name)
+        storage_locations(name, address, description, latitude, longitude, image_url, is_active)
       `,
         { count: "exact" },
       )

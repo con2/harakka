@@ -26,6 +26,10 @@ export interface OrgLocationWithNames extends OrgLocationRow {
     name: string;
     address?: string;
     description?: string;
+    latitude?: number;
+    longitude?: number;
+    image_url?: string;
+    is_active?: boolean;
   } | null;
 }
 
