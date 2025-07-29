@@ -39,7 +39,7 @@ import { UserBanningModule } from "../user-banning/user-banning.module";
 import { OrganizationLocationsModule } from "../organization-locations/organization_locations.module";
 
 // Load and expand environment variables before NestJS modules initialize
-const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
+const envFile = path.resolve(process.cwd(), "../.env.local");
 const env = dotenv.config({ path: envFile });
 dotenvExpand.expand(env);
 

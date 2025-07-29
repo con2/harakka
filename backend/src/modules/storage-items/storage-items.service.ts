@@ -22,6 +22,7 @@ import {
 } from "../../../../common/response.types"; // Import ApiSingleResponse for type safety
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagService } from "../tag/tag.service";
+import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 // this is used by the controller
 
 @Injectable()
@@ -149,28 +150,30 @@ export class StorageItemsService {
    * @param payload Can be either one item with an array of tagIds or an array of items of the same structure
    * @returns
    */
-  async createItem(
-    req: Request,
-    payload:
-      | (StorageItemRow & { tagIds?: string[] })
-      | Array<StorageItemRow & { tagIds?: string[] }>,
+  async createItems(
+    req: AuthRequest,
+    payload: Array<StorageItemRow & { tagIds?: string[] }>,
   ): Promise<StorageItem[]> {
-    const supabase = req["supabase"];
+    const supabase = req.supabase;
 
     const { data, error }: PostgrestResponse<StorageItem> = await supabase
-      .from("countries")
+      .from("storage_items")
       .insert(payload)
       .select();
+
+    const now = new Date().toISOString();
+    const mappedTags = payload.flatMap((i) =>
+      Array.isArray(i.tagIds)
+        ? i.tagIds.map((tag) => ({
+            tag_id: tag,
+            item_id: i.id,
+            created_at: now,
+          }))
+        : [],
+    );
+    await this.tagService.assignTagsToBulk(req, mappedTags);
     if (error) handleSupabaseError(error);
 
-    if (Array.isArray(payload)) {
-      const mappedTags = payload.map((i) => ({
-        tagIds: i.tagIds,
-        itemId: i.id,
-      }));
-
-    }
-      
     return data;
   }
 

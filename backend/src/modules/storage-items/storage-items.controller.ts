@@ -16,6 +16,7 @@ import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
   LocationRow,
+  StorageItemRow,
   ValidItemOrder,
 } from "./interfaces/storage-item.interface";
 import { TablesUpdate } from "@common/supabase.types"; // Import the Database type for type safety
@@ -103,11 +104,11 @@ export class StorageItemsController {
 
   @Post()
   async create(
-    @Req() req: Request,
+    @Req() req: AuthRequest,
     @Body()
-    item,
-  ): Promise<StorageItem> {
-    return this.storageItemsService.createItem(req, item); // POST /storage-items (new item)
+    items: Array<StorageItemRow & { tagIds?: string[] }>,
+  ): Promise<StorageItem[]> {
+    return this.storageItemsService.createItems(req, items); // POST /storage-items (new item)
   }
 
   @Put(":id")
