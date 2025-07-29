@@ -41,7 +41,6 @@ export interface CreateUserFormData extends UserFormData {
 export interface ItemFormData
   extends Omit<
     Item,
-    | "id"
     | "created_at"
     | "updated_at"
     | "storage_item_tags"

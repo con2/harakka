@@ -202,6 +202,8 @@ export const selectOrganizationLoading = (state: RootState) =>
   state.organizations.loading;
 export const selectOrganizationError = (state: RootState) =>
   state.organizations.error;
+export const selectedOrganization = (state: RootState) =>
+  state.organizations.selectedOrganization;
 export const { setSelectedOrganization } = organizationSlice.actions;
 
 export default organizationSlice.reducer;
