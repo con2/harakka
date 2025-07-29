@@ -332,7 +332,7 @@ const EditLocationModal = ({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} variant="secondary">
               {isSubmitting ? "Updating..." : "Update Location"}
             </Button>
           </DialogFooter>
