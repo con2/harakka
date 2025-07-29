@@ -47,23 +47,15 @@ export class OrganizationsService {
       query.order(order, { ascending: ascending });
     }
 
-    const { data, error, count } = await query;
+    const result = await query;
+    const { error, count } = result;
 
-    if (error) {
-      console.error("Supabase error in getAllOrganizations():", error);
-      throw new Error(error.message);
-    }
+    if (error) throw new Error(error.message);
 
-    const metadata = { ...getPaginationMeta(count, page, limit), limit };
-    console.log("DEBUG BACKEND", {
-      data: data ?? [], // before: ...data,
-      count: count ?? 0,
-      metadata: metadata,
-    });
+    const metadata = getPaginationMeta(count, page, limit);
     return {
-      data: data ?? [], // before: ...data,
-      count: count ?? 0,
-      metadata: metadata,
+      ...result,
+      metadata,
     };
   }
 
