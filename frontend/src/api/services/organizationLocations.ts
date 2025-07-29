@@ -3,6 +3,8 @@ import {
   OrgLocationInsert,
   OrgLocationUpdate,
   OrgLocationWithNames,
+  CreateOrgLocationWithStorage,
+  UpdateOrgLocationWithStorage,
 } from "@/types/organizationLocation";
 import { api } from "../axios";
 
@@ -63,4 +65,34 @@ export const orgLocationsApi = {
    */
   deleteOrgLoc: (id: string): Promise<void> =>
     api.delete(`/organization-locations/${id}`),
+
+  /**
+   * Create a new org location with storage location
+   * @param data - Combined org location and storage location data
+   * @returns Promise with the created org location
+   */
+  createOrgLocWithStorage: (
+    data: CreateOrgLocationWithStorage,
+  ): Promise<OrgLocationWithNames> =>
+    api.post("/organization-locations/with-storage", data),
+
+  /**
+   * Update an existing org location with storage location
+   * @param id - Org location ID to update
+   * @param data - Updated org location and storage location data
+   * @returns Promise with the updated org location
+   */
+  updateOrgLocWithStorage: (
+    id: string,
+    data: UpdateOrgLocationWithStorage,
+  ): Promise<OrgLocationWithNames> =>
+    api.put(`/organization-locations/${id}/with-storage`, data),
+
+  /**
+   * Remove an org location (preserves storage location data)
+   * @param id - Org location ID to remove
+   * @returns Promise that resolves when removal is complete
+   */
+  deleteOrgLocWithStorage: (id: string): Promise<void> =>
+    api.delete(`/organization-locations/${id}/with-storage`),
 };
