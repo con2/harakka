@@ -64,7 +64,9 @@ export class UserController {
   }
 
   @Put(":id")
-  @Roles(["admin", "super_admin", "superVera", "main_admin"], { match: "any" })
+  @Roles(["user", "admin", "super_admin", "superVera", "main_admin"], {
+    match: "any",
+  })
   async updateUser(
     @Param("id") id: string,
     @Body() user: Partial<CreateUserDto>,
@@ -89,7 +91,9 @@ export class UserController {
   // Address Endpoints
 
   @Get(":id/addresses")
-  @Roles(["admin", "super_admin", "superVera", "main_admin"], { match: "any" })
+  @Roles(["user", "admin", "super_admin", "superVera", "main_admin"], {
+    match: "any",
+  })
   async getAddresses(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -100,7 +104,9 @@ export class UserController {
   }
 
   @Post(":id/addresses")
-  @Roles(["admin", "super_admin", "main_admin", "superVera"], { match: "any" })
+  @Roles(["user", "admin", "super_admin", "main_admin", "superVera"], {
+    match: "any",
+  })
   async addAddress(
     @Param("id") id: string,
     @Body() address: CreateAddressDto,
@@ -110,7 +116,9 @@ export class UserController {
   }
 
   @Put(":id/addresses/:addressId")
-  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
+  @Roles(["user", "admin", "super_admin", "main_admin", "superVera"], {
+    match: "any",
+  })
   async updateAddress(
     @Param("id") id: string,
     @Param("addressId") addressId: string,
@@ -121,7 +129,9 @@ export class UserController {
   }
 
   @Delete(":id/addresses/:addressId")
-  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
+  @Roles(["user", "admin", "super_admin", "main_admin", "superVera"], {
+    match: "any",
+  })
   async deleteAddress(
     @Param("id") id: string,
     @Param("addressId") addressId: string,

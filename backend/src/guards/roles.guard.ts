@@ -71,6 +71,20 @@ export class RolesGuard implements CanActivate {
     // Optional super_admin bypass
     if (userRoles.some((r) => r.role_name === "super_admin")) return true;
 
+    //Allow "user" role to access/modify their own user resource
+    if (
+      userRoles.some((r) => r.role_name === "user") &&
+      req.user &&
+      req.params &&
+      req.params.id &&
+      req.user.id === req.params.id
+    ) {
+      // Only allow if the required role is "user"
+      if (required.includes("user")) {
+        return true;
+      }
+    }
+
     // Determine organisation context when sameOrg flag is set
     const orgCtx =
       sameOrg &&
