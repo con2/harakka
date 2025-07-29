@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   NotFoundException,
@@ -86,6 +85,7 @@ export class OrganizationsController {
     return await this.organizationService.updateOrganization(req, id, dto);
   }
 
+  /*
   // 6. delete --- does not work atm
   @Delete(":organizationId")
   @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
@@ -97,6 +97,7 @@ export class OrganizationsController {
 
     return this.organizationService.deleteOrganization(req, id);
   }
+    */
 
   // 7. soft-delete org
   @Patch(":organizationId/soft-delete")
