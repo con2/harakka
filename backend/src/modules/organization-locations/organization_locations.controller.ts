@@ -16,6 +16,8 @@ import { OrganizationLocationsService } from "./organization_locations.service";
 import {
   OrgLocationInsert,
   OrgLocationUpdate,
+  CreateOrgLocationWithStorage,
+  UpdateOrgLocationWithStorage,
 } from "./interfaces/organization_locations.interface";
 
 @Controller("organization-locations")
@@ -88,5 +90,36 @@ export class OrganizationLocationsController {
   @Roles(["super_admin", "main_admin", "storage_manager"], { match: "any" })
   async deleteOrgLoc(@Req() req: AuthRequest, @Param("id") id: string) {
     return this.orgLocService.deleteOrgLoc(req, id);
+  }
+
+  // 7. Create with storage location
+  @Post("with-storage")
+  @Roles(["super_admin", "main_admin", "storage_manager"], { match: "any" })
+  async createOrgLocWithStorage(
+    @Req() req: AuthRequest,
+    @Body() body: CreateOrgLocationWithStorage,
+  ) {
+    return this.orgLocService.createOrgLocWithStorage(req, body);
+  }
+
+  // 8. Update with storage location
+  @Put(":id/with-storage")
+  @Roles(["super_admin", "main_admin", "storage_manager"], { match: "any" })
+  async updateOrgLocWithStorage(
+    @Req() req: AuthRequest,
+    @Param("id") id: string,
+    @Body() dto: UpdateOrgLocationWithStorage,
+  ) {
+    return this.orgLocService.updateOrgLocWithStorage(req, id, dto);
+  }
+
+  // 9. Delete with storage location
+  @Delete(":id/with-storage")
+  @Roles(["super_admin", "main_admin", "storage_manager"], { match: "any" })
+  async deleteOrgLocWithStorage(
+    @Req() req: AuthRequest,
+    @Param("id") id: string,
+  ) {
+    return this.orgLocService.deleteOrgLocWithStorage(req, id);
   }
 }
