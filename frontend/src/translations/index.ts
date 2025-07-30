@@ -40,12 +40,15 @@ import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
 import { usersList } from "./modules/usersList";
 import { currentUserRoles } from "./modules/currentUserRoles";
+import { addItem } from "./modules/addItem";
+
 import {
   organizationDelete,
   organizationList,
 } from "./modules/organizationsList";
 
 export const t = {
+  addItem,
   addItemModal,
   addTagModal,
   addUserModal,

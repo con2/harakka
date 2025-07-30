@@ -16,7 +16,6 @@ import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
   LocationRow,
-  StorageItemRow,
   ValidItemOrder,
 } from "./interfaces/storage-item.interface";
 import { TablesUpdate } from "@common/supabase.types"; // Import the Database type for type safety
@@ -24,6 +23,7 @@ import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { ApiSingleResponse } from "../../../../common/response.types";
 import { StorageItem } from "./interfaces/storage-item.interface";
 import { Public } from "src/decorators/roles.decorator";
+import { CreateItemPayload } from "@common/items/storage-items.types";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
@@ -106,7 +106,7 @@ export class StorageItemsController {
   async create(
     @Req() req: AuthRequest,
     @Body()
-    items: Array<StorageItemRow & { tagIds?: string[] }>,
+    items: Array<CreateItemPayload>,
   ): Promise<StorageItem[]> {
     return this.storageItemsService.createItems(req, items); // POST /storage-items (new item)
   }

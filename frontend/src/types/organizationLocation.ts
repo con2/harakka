@@ -40,10 +40,24 @@ export interface OrgLocationWithNames extends OrgLocationRow {
 export interface OrgLocationsState {
   orgLocations: OrgLocationWithNames[];
   currentOrgLocation: OrgLocationWithNames | null;
+  currentOrgLocations: OrgLocationsWithStorageDetails[] | null;
   loading: boolean;
   error: string | null;
   totalPages: number;
   currentPage: number;
+}
+
+export interface OrgLocationsWithStorageDetails extends OrgLocationRow {
+  organizations: { name: string };
+  storage_locations: {
+    name: string;
+    address: string;
+    description: string;
+    latitude: number;
+    longitude: number;
+    image_url: string;
+    is_active: boolean;
+  };
 }
 
 // Combined interface for creating organization location with storage location

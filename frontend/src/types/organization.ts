@@ -1,3 +1,5 @@
+import { OrgLocationWithNames } from "./organizationLocation";
+
 export interface OrganizationDetails {
   id: string;
   name: string;
@@ -12,7 +14,9 @@ export interface OrganizationDetails {
 
 export interface OrganizationState {
   organizations: OrganizationDetails[];
-  selectedOrganization: OrganizationDetails | null;
+  selectedOrganization:
+    | (OrganizationDetails & { locations?: OrgLocationWithNames })
+    | null;
   loading: boolean;
   error: string | null;
   page: number;

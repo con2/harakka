@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  createItem,
   selectItemsError,
   selectItemsErrorContext,
 } from "@/store/slices/itemsSlice";
@@ -20,14 +19,17 @@ import { toast } from "sonner";
 import { Label } from "../../ui/label";
 import { Textarea } from "../../ui/textarea";
 import { Switch } from "../../ui/switch";
-import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
+import {
+  fetchAllTags,
+  selectAllTags,
+  selectTagsLoading,
+} from "@/store/slices/tagSlice";
 import { ItemFormData } from "@/types";
 import { Checkbox } from "../../ui/checkbox";
 import ItemImageManager from "./ItemImageManager";
 import {
   openItemModal,
   closeItemModal,
-  setCreatedItemId,
   selectItemModalState,
 } from "@/store/slices/uiSlice";
 import {
@@ -43,18 +45,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  fetchAllLocations,
-  selectAllLocations,
-} from "@/store/slices/locationsSlice";
 // Import translation utilities
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { selectCurrentOrgLocations } from "@/store/slices/organizationLocationsSlice";
+import { createItemDto } from "@/store/utils/validate";
 
 const initialFormState: ItemFormData = {
-  id: crypto.randomUUID(),
-  location_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  compartment_id: "0ffa5562-82a9-4352-b804-1adebbb7d80c",
+  id: "",
+  location_id: "",
+  location_details: {
+    name: "",
+    address: "",
+  },
   items_number_total: 1,
   items_number_currently_in_storage: 1,
   price: 0,
@@ -76,6 +79,7 @@ const initialFormState: ItemFormData = {
 
 type AddItemModalProps = {
   onAdd: (item: ItemFormData) => void;
+  storage: { name: string; id: string; address: string } | null | undefined;
   children?: React.ReactNode;
 };
 
@@ -86,23 +90,24 @@ const AddItemModal = (props: AddItemModalProps) => {
   const errorContext = useAppSelector(selectItemsErrorContext);
   const { lang } = useLanguage(); // Get current language
   const tags = useAppSelector(selectAllTags);
-  const { onAdd, children } = props;
+  const { onAdd, children, storage } = props;
+  const orgLocations = useAppSelector(selectCurrentOrgLocations)!;
+  const loading = useAppSelector(selectTagsLoading);
 
   // Use global modal state from Redux
   const modalState = useAppSelector(selectItemModalState);
 
-  const [formData, setFormData] = useState<ItemFormData>(initialFormState);
+  const [formData, setFormData] = useState<ItemFormData>({
+    ...initialFormState,
+    location_id: storage?.id ?? orgLocations?.[0].storage_location_id,
+    location_details: {
+      name: storage?.name ?? orgLocations?.[0].storage_locations.name ?? "",
+      address:
+        storage?.address ?? orgLocations?.[0].storage_locations.name ?? "",
+    },
+  });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "images">("details");
-
-  // Fetch the created item from Redux store when we have the ID
-  const createdItem = useAppSelector((state) =>
-    modalState.createdItemId
-      ? state.items.items.find((item) => item.id === modalState.createdItemId)
-      : null,
-  );
-  const locations = useAppSelector(selectAllLocations);
 
   // Display errors when they occur
   useEffect(() => {
@@ -112,19 +117,26 @@ const AddItemModal = (props: AddItemModalProps) => {
   }, [error, errorContext]);
 
   useEffect(() => {
-    if (modalState.isOpen && tags.length === 0)
-      void dispatch(fetchAllTags({ limit: 20 }));
-
-    if (modalState.isOpen && locations.length === 0)
-      void dispatch(fetchAllLocations({ limit: 10 }));
-  }, [dispatch, modalState.isOpen, tags.length, locations.length]);
-
-  // When item is created, switch to images tab
-  useEffect(() => {
-    if (modalState.createdItemId) {
-      setActiveTab("images");
+    const location_details = orgLocations.find(
+      (loc) => loc.storage_location_id === formData.location_id,
+    );
+    if (location_details && "storage_locations" in location_details) {
+      setFormData({
+        ...formData,
+        location_id: location_details.storage_location_id,
+        location_details: {
+          name:
+            location_details?.storage_locations?.name ??
+            `Location #${formData.location_id}`,
+          address: location_details?.storage_locations?.address ?? "",
+        },
+      });
     }
-  }, [modalState.createdItemId]);
+  }, [formData.location_id]);
+
+  useEffect(() => {
+    if (tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
+  }, [dispatch, modalState.isOpen, tags.length]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -184,44 +196,34 @@ const AddItemModal = (props: AddItemModalProps) => {
     );
   };
 
+  useEffect(
+    () => setFormData({ ...formData, id: crypto.randomUUID() }),
+    [] /* eslint-disable-line */,
+  );
+
   // Handle form submission
-  const handleSubmit = async (e?: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
 
-    setLoading(true);
+    const result = createItemDto.safeParse(formData);
 
-    try {
-      // Create the item
-      const newItem = await dispatch(
-        createItem({ ...formData, tagIds: selectedTags }),
-      ).unwrap();
-
-      console.log("Item created successfully:", newItem);
-
-      // Update the global state
-      dispatch(setCreatedItemId(newItem.id));
-      setActiveTab("images");
-
-      toast.success(
-        t.addItemModal.messages.success[lang].replace(
-          "{name}",
-          newItem.translations.en.item_name,
-        ),
-      );
-    } catch (error) {
-      console.error("Error creating item:", error);
-      toast.error(t.addItemModal.messages.error[lang]);
-    } finally {
-      setLoading(false);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      const fieldErrors = result.error.flatten().fieldErrors;
+      console.log("Validation errors:", fieldErrors);
+      return;
     }
+
+    onAdd(formData);
+    resetForm();
+    dispatch(closeItemModal());
   };
 
   // Reset form and close modal
   const resetForm = () => {
-    setFormData({ ...initialFormState, id: crypto.randomUUID() });
     setSelectedTags([]);
     setActiveTab("details");
     dispatch(closeItemModal());
@@ -254,16 +256,7 @@ const AddItemModal = (props: AddItemModalProps) => {
           <DialogTitle className="mb-0">
             {t.addItemModal.title[lang]}
           </DialogTitle>
-          <DialogDescription className="text-center">
-            {activeTab === "details"
-              ? t.addItemModal.description.details[lang]
-              : createdItem
-                ? t.addItemModal.description.images[lang].replace(
-                    "{name}",
-                    createdItem.translations.en.item_name,
-                  )
-                : t.addItemModal.description.createFirst[lang]}
-          </DialogDescription>
+          <DialogDescription className="text-center"></DialogDescription>
         </DialogHeader>
 
         {/* Tab Navigation */}
@@ -287,10 +280,7 @@ const AddItemModal = (props: AddItemModalProps) => {
                       ? "border-b-2 border-secondary font-medium"
                       : "text-gray-500"
                   }`}
-                  onClick={() =>
-                    modalState.createdItemId && setActiveTab("images")
-                  }
-                  disabled={!modalState.createdItemId}
+                  onClick={() => setActiveTab("images")}
                 >
                   {t.addItemModal.tabs.images[lang]}
                 </button>
@@ -406,7 +396,7 @@ const AddItemModal = (props: AddItemModalProps) => {
                     placeholder={
                       t.addItemModal.placeholders.descriptionEn[lang]
                     }
-                    className="placeholder:text-xs italic p-2 shadow-sm ring-1 ring-inset ring-muted"
+                    className="placeholder:text-xs p-2 shadow-sm ring-1 ring-inset ring-muted"
                     rows={3}
                   />
                 </div>
@@ -421,12 +411,15 @@ const AddItemModal = (props: AddItemModalProps) => {
                     {t.addItemModal.labels.location[lang]}
                   </Label>
                   <Select
-                    value={formData.location_id || ""}
+                    value={storage?.id ?? orgLocations?.[0].storage_location_id}
                     onValueChange={(value) =>
                       setFormData({ ...formData, location_id: value })
                     }
                   >
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger
+                      className="w-40"
+                      disabled={storage ? true : false}
+                    >
                       <SelectValue
                         placeholder={
                           t.addItemModal.placeholders.selectLocation[lang]
@@ -434,9 +427,13 @@ const AddItemModal = (props: AddItemModalProps) => {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {locations.map((location) => (
-                        <SelectItem key={location.id} value={location.id}>
-                          {location.name}
+                      {orgLocations.map((loc) => (
+                        <SelectItem
+                          disabled={storage ? true : false}
+                          key={loc.id}
+                          value={loc.storage_location_id}
+                        >
+                          {loc.storage_locations.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -532,11 +529,7 @@ const AddItemModal = (props: AddItemModalProps) => {
               <Button
                 type="button"
                 variant={"secondary"}
-                onClick={() => {
-                  onAdd(formData);
-                  dispatch(closeItemModal());
-                  resetForm();
-                }}
+                onClick={handleSubmit}
                 className="w-full"
                 disabled={loading}
                 size="sm"

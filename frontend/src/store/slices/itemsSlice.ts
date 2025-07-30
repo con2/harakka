@@ -151,10 +151,9 @@ export const getItemById = createAsyncThunk<Item, string>(
 // create Item
 export const createItem = createAsyncThunk(
   "items/createItem",
-  async (itemData: ItemFormData, { rejectWithValue }) => {
+  async (itemData: ItemFormData | ItemFormData[], { rejectWithValue }) => {
     try {
-      const createdItem = await itemsApi.createItem(itemData);
-      return createdItem;
+      return await itemsApi.createItem(itemData);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to create item"),
@@ -289,9 +288,8 @@ export const itemsSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(createItem.fulfilled, (state, action) => {
+      .addCase(createItem.fulfilled, (state) => {
         state.loading = false;
-        state.items.push(action.payload);
       })
       .addCase(createItem.rejected, (state, action) => {
         state.loading = false;

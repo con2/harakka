@@ -7,7 +7,6 @@ import {
 import {
   LocationRow,
   StorageItem,
-  StorageItemRow,
   StorageItemWithJoin,
   ValidItemOrder,
 } from "./interfaces/storage-item.interface";
@@ -23,6 +22,12 @@ import {
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagService } from "../tag/tag.service";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
+import { CreateItemPayload } from "@common/items/storage-items.types";
+import {
+  mapOrgLinks,
+  mapStorageItems,
+  mapTagLinks,
+} from "@src/utils/storage-items.utils";
 // this is used by the controller
 
 @Injectable()
@@ -152,29 +157,44 @@ export class StorageItemsService {
    */
   async createItems(
     req: AuthRequest,
-    payload: Array<StorageItemRow & { tagIds?: string[] }>,
+    payload: Array<CreateItemPayload>,
   ): Promise<StorageItem[]> {
     const supabase = req.supabase;
 
-    const { data, error }: PostgrestResponse<StorageItem> = await supabase
-      .from("storage_items")
-      .insert(payload)
-      .select();
+    // Insert item data
+    const mappedItems = mapStorageItems(payload);
 
-    const now = new Date().toISOString();
-    const mappedTags = payload.flatMap((i) =>
-      Array.isArray(i.tagIds)
-        ? i.tagIds.map((tag) => ({
-            tag_id: tag,
-            item_id: i.id,
-            created_at: now,
-          }))
-        : [],
-    );
-    await this.tagService.assignTagsToBulk(req, mappedTags);
-    if (error) handleSupabaseError(error);
+    try {
+      const { data, error }: PostgrestResponse<StorageItem> = await supabase
+        .from("storage_items")
+        .insert(mappedItems)
+        .select();
+      if (error) handleSupabaseError(error);
 
-    return data;
+      // Insert org data
+      const mappedOrg = mapOrgLinks(payload);
+      const { error: orgError } = await supabase
+        .from("organization_items")
+        .insert(mappedOrg);
+      if (orgError) handleSupabaseError(orgError);
+
+      // Insert item tags
+      const mappedTags = mapTagLinks(payload);
+      const { error: tagError } = await this.tagService.assignTagsToBulk(
+        req,
+        mappedTags,
+      );
+      if (tagError) handleSupabaseError(tagError);
+      return data;
+    } catch (error) {
+      const item_ids = mappedItems.map((i) => i.id);
+      await supabase.from("storage_items").delete().in("id", item_ids);
+      await supabase
+        .from("organization_items")
+        .delete()
+        .in("item_id", item_ids);
+      return error;
+    }
   }
 
   // 4 update an item

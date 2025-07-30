@@ -15,6 +15,16 @@ export const getItemColumns = (
     cell: ({ row }) => row.original.translations.en.item_name,
   },
   {
+    header: "Quantity",
+    id: "quantity",
+    cell: ({ row }) => row.original.items_number_total,
+  },
+  {
+    header: "Storage",
+    id: "organization-location",
+    cell: ({ row }) => row.original.location_details?.name,
+  },
+  {
     header: "Actions",
     cell: ({ row }) => {
       const item = row.original;
