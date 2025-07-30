@@ -1,7 +1,7 @@
 # Jons hidden files
 NOTES.md
 .vscode
-.env.*
+.env.vault
 
 # Node.js dependencies
 node_modules/*
