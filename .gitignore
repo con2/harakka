@@ -1,5 +1,7 @@
 # Jons hidden files
 NOTES.md
+.env.*
+
 # Node.js dependencies
 node_modules/*
 .nvmrc
