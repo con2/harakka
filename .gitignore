@@ -2,6 +2,8 @@
 NOTES.md
 .vscode
 .env.vault
+.env.local
+.env.*.local
 
 # Node.js dependencies
 node_modules/*
