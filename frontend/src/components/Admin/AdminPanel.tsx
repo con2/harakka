@@ -38,6 +38,7 @@ const AdminPanel = () => {
             icon={<LayoutDashboard className="w-5 h-5" />}
             label={t.adminPanel.navigation.dashboard[lang]}
             end={true}
+            dataCy="admin-nav-dashboard"
           />
           {isSuperAdmin && (
             <SidebarLink
@@ -52,24 +53,28 @@ const AdminPanel = () => {
             to="/admin/bookings"
             icon={<ShoppingBag className="w-5 h-5" />}
             label={t.adminPanel.navigation.bookings[lang]}
+            dataCy="admin-nav-bookings"
           />
 
           <SidebarLink
             to="/admin/items"
             icon={<Warehouse className="w-5 h-5" />}
             label={t.adminPanel.navigation.items[lang]}
+            dataCy="admin-nav-items"
           />
 
           <SidebarLink
             to="/admin/tags"
             icon={<PinIcon className="w-5 h-5" />}
             label={t.adminPanel.navigation.tags[lang]}
+            dataCy="admin-nav-tags"
           />
 
           <SidebarLink
             to="/admin/users"
             icon={<Users className="w-5 h-5" />}
             label={t.adminPanel.navigation.users[lang]}
+            dataCy="admin-nav-users"
           />
 
           {/* {isSuperVera && (
@@ -83,6 +88,7 @@ const AdminPanel = () => {
             to="/admin/logs"
             icon={<FileText className="w-5 h-5" />}
             label={t.adminPanel.navigation.logs[lang] || "Logs"}
+            dataCy="admin-nav-logs"
           />
 
           {/* Add the new Roles link */}
@@ -90,19 +96,24 @@ const AdminPanel = () => {
             to="/admin/roles"
             icon={<ShieldUser className="w-5 h-5" />}
             label={t.adminPanel.navigation.roles[lang]}
+            dataCy="admin-nav-roles"
           />
 
           {/* Add the new Organizations link */}
           <SidebarLink
             to="/admin/organizations"
             icon={<Building2 className="w-5 h-5" />}
-            label={"Organizations"} /* change to translation version */
+            label={
+              t.adminPanel.navigation.organizations?.[lang] || "Organizations"
+            }
+            dataCy="admin-nav-organizations"
           />
 
           <SidebarLink
             to="/profile"
             icon={<Settings className="w-5 h-5" />}
             label={t.adminPanel.navigation.settings[lang]}
+            dataCy="admin-nav-settings"
           />
         </nav>
       </aside>
@@ -182,15 +193,18 @@ const SidebarLink = ({
   icon,
   label,
   end = false,
+  dataCy,
 }: {
   to: string;
   icon: React.ReactNode;
   label: string;
   end?: boolean;
+  dataCy?: string;
 }) => (
   <NavLink
     to={to}
-    end={end} // Ensures exact match
+    end={end}
+    data-cy={dataCy}
     className={({ isActive }: { isActive: boolean }) =>
       `flex items-center gap-3 p-2 rounded hover:bg-gray-200 ${
         isActive ? "text-highlight2" : "text-gray-700"
