@@ -1,5 +1,9 @@
 import { Database } from "@common/database.types";
 
+/**
+ * Org location types using Supabase Database types.
+ */
+
 export type OrgLocationRow =
   Database["public"]["Tables"]["organization_locations"]["Row"];
 
@@ -9,7 +13,7 @@ export type OrgLocationInsert =
 export type OrgLocationUpdate =
   Database["public"]["Tables"]["organization_locations"]["Update"];
 
-// Storage location types
+// Storage location types from common database types
 export type StorageLocationRow =
   Database["public"]["Tables"]["storage_locations"]["Row"];
 
@@ -33,19 +37,20 @@ export interface OrgLocationWithNames extends OrgLocationRow {
   } | null;
 }
 
+export interface OrgLocationsState {
+  orgLocations: OrgLocationWithNames[];
+  currentOrgLocation: OrgLocationWithNames | null;
+  loading: boolean;
+  error: string | null;
+  totalPages: number;
+  currentPage: number;
+}
+
 // Combined interface for creating organization location with storage location
 export interface CreateOrgLocationWithStorage {
   organization_id: string;
   is_active?: boolean;
-  storage_location: {
-    name: string;
-    address: string;
-    description?: string;
-    latitude?: number;
-    longitude?: number;
-    image_url?: string;
-    is_active?: boolean;
-  };
+  storage_location: Omit<StorageLocationInsert, "id" | "created_at">;
 }
 
 // Combined interface for updating organization location with storage location

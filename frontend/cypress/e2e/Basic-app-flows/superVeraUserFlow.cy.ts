@@ -19,6 +19,7 @@ describe("Basic App Flows (Real Data) for 'user' user", () => {
     cy.get('[data-cy="admin-nav-users"]').should("exist");
     cy.get('[data-cy="admin-nav-roles"]').should("exist");
     cy.get('[data-cy="admin-nav-organizations"]').should("exist");
+    cy.get('[data-cy="admin-nav-locations"]').should("exist");
     cy.get('[data-cy="admin-nav-logs"]').should("exist");
     cy.get('[data-cy="admin-nav-settings"]').should("exist");
   });

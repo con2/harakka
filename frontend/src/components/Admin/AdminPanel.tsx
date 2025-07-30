@@ -15,6 +15,7 @@ import {
   Warehouse,
   ShieldUser,
   Building2,
+  MapPin,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -26,7 +27,13 @@ const AdminPanel = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Translation
   const { lang } = useLanguage();
-  const { isSuperAdmin } = useRoles();
+  const { isSuperAdmin, hasAnyRole } = useRoles();
+  const canManageLocations = hasAnyRole([
+    "main_admin",
+    "storage_manager",
+    "super_admin",
+    "superVera",
+  ]);
 
   return (
     <div className="flex min-h-screen relative">
@@ -108,6 +115,16 @@ const AdminPanel = () => {
             }
             dataCy="admin-nav-organizations"
           />
+
+          {/* Organization Locations - accessible to storage managers and above */}
+          {canManageLocations && (
+            <SidebarLink
+              to="/admin/locations"
+              icon={<MapPin className="w-5 h-5" />}
+              label="Locations"
+              dataCy="admin-nav-locations"
+            />
+          )}
 
           <SidebarLink
             to="/profile"

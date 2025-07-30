@@ -379,6 +379,8 @@ export const selectIsAdmin = (state: RootState) => {
   return (
     hasRole(state, "admin") ||
     hasRole(state, "superVera") ||
+    hasRole(state, "main_admin") ||
+    hasRole(state, "super_admin") ||
     state.roles.isSuperVera
   );
 };
