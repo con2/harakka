@@ -46,26 +46,32 @@ supabase --version
 ### Initial Setup for New Team Members
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/con2/FullStack_Storage_and_Booking_App.git
    cd FullStack_Storage_and_Booking_App
    ```
 
 2. **Install dependencies**:
+
    ```bash
    npm run install-all
    ```
 
 3. **Login to Supabase**:
+
    ```bash
    supabase login
    ```
+
    This will open a browser for authentication.
 
 4. **Verify project linking**:
+
    ```bash
    supabase status
    ```
+
    The project should already be linked to `rcbddkhvysexkvgqpcud`.
 
 ## Local Development Workflow
@@ -81,6 +87,7 @@ supabase start
 ```
 
 This will start:
+
 - **PostgreSQL Database** (port 54322)
 - **API Gateway** (port 54321)
 - **Supabase Studio** (port 54323)
@@ -91,10 +98,10 @@ This will start:
 
 ### Accessing Local Services
 
-- **Supabase Studio**: http://localhost:54323
-- **API Endpoint**: http://localhost:54321
+- **Supabase Studio**: <http://localhost:54323>
+- **API Endpoint**: <http://localhost:54321>
 - **Database**: `postgresql://postgres:postgres@localhost:54322/postgres`
-- **Email Testing**: http://localhost:54324
+- **Email Testing**: <http://localhost:54324>
 
 ### Stopping Local Services
 
@@ -110,6 +117,7 @@ npm run dev:local
 ```
 
 This is ideal for:
+
 - Offline development
 - Testing database changes
 - Developing edge functions
@@ -122,6 +130,7 @@ This is ideal for:
 #### Making Changes Locally
 
 1. **Create a new migration**:
+
    ```bash
    npm run supabase:migration:new "add_new_table"
    ```
@@ -129,6 +138,7 @@ This is ideal for:
 2. **Edit the migration file** in `supabase/migrations/`
 
 3. **Apply locally**:
+
    ```bash
    npm run supabase:reset  # Resets and applies all migrations
    ```
@@ -165,6 +175,7 @@ npm run supabase:reset
 ```
 
 The reset will:
+
 1. Drop the local database
 2. Recreate it
 3. Apply all migrations in order
@@ -187,6 +198,7 @@ npm run supabase:functions:serve
 ```
 
 Functions will be available at:
+
 - `http://localhost:54321/functions/v1/{function-name}`
 
 ### Available Functions
@@ -210,6 +222,7 @@ supabase functions deploy {function-name}
 ### Migration Workflow
 
 1. **Before starting work**:
+
    ```bash
    git pull origin main
    npm run supabase:pull  # Get latest schema changes
@@ -217,6 +230,7 @@ supabase functions deploy {function-name}
    ```
 
 2. **Making schema changes**:
+
    ```bash
    npm run supabase:migration:new "descriptive_name"
    # Edit the migration file
@@ -224,6 +238,7 @@ supabase functions deploy {function-name}
    ```
 
 3. **Before committing**:
+
    ```bash
    npm run generate:types  # Update TypeScript types
    git add supabase/migrations/ common/supabase.types.ts
@@ -231,6 +246,7 @@ supabase functions deploy {function-name}
    ```
 
 4. **After merging to main**:
+
    ```bash
    npm run supabase:push  # Apply to remote database
    ```
@@ -259,53 +275,57 @@ supabase migration repair --status applied {migration-name}
 ## Available npm Scripts
 
 ### Core Development
+
 - `npm run dev` - Start frontend + backend (remote DB)
 - `npm run dev:local` - Start local Supabase + frontend + backend
 - `npm run frontend` - Start only frontend
 - `npm run backend` - Start only backend
 
 ### Supabase Management
-- `npm run supabase:start` - Start local Supabase stack
-- `npm run supabase:stop` - Stop local Supabase stack
-- `npm run supabase:restart` - Restart local Supabase stack
-- `npm run supabase:status` - Show status of local services
-- `npm run supabase:studio` - Open Supabase Studio
+
+- `npm run s:start` - Start local Supabase stack
+- `npm run s:stop` - Stop local Supabase stack
+- `npm run s:restart` - Restart local Supabase stack
+- `npm run s:status` - Show status of local services
+- `npm run s:studio` - Open Supabase Studio
 
 ### Database Operations
-- `npm run supabase:reset` - Reset local DB and apply all migrations
-- `npm run supabase:pull` - Pull schema changes from remote
-- `npm run supabase:push` - Push local migrations to remote
-- `npm run supabase:seed` - Create seed data from remote DB
+
+- `npm run s:reset` - Reset local DB and apply all migrations
+- `npm run s:pull` - Pull schema changes from remote
+- `npm run s:push` - Push local migrations to remote
+- `npm run s:seed` - Create seed data from remote DB
 
 ### Migrations
-- `npm run supabase:migration:new` - Create new migration
-- `npm run supabase:migration:up` - Apply pending migrations
+
+- `npm run s:migration:new` - Create new migration
+- `npm run s:migration:up` - Apply pending migrations
 
 ### Edge Functions
-- `npm run supabase:functions:serve` - Serve functions locally
-- `npm run supabase:functions:deploy` - Deploy functions to remote
 
-### Type Generation
-- `npm run generate:types` - Generate types from local DB
-- `npm run generate:types:remote` - Generate types from remote DB
+- `npm run s:functions:serve` - Serve functions locally
+- `npm run s:functions:deploy` - Deploy functions to remote
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **"Database not found" error**:
+
    ```bash
    npm run supabase:stop
    npm run supabase:start
    ```
 
 2. **Migration conflicts**:
+
    ```bash
    supabase migration list
    # Check for conflicts and resolve manually
    ```
 
 3. **Authentication issues**:
+
    ```bash
    supabase logout
    supabase login
@@ -316,6 +336,7 @@ supabase migration repair --status applied {migration-name}
    - Stop conflicting services or modify `supabase/config.toml`
 
 5. **Type generation fails**:
+
    ```bash
    # Fallback to remote types
    npm run generate:types:remote
@@ -348,6 +369,7 @@ After setting up the CLI:
 5. **Read the main project documentation** in `docs/developers/`
 
 For more advanced usage, see:
+
 - [Database Schema Documentation](./backend/database-schema.md)
 - [API Reference](./backend/api-reference.md)
 - [Development Cycle](../workflows/development-cycle.md)

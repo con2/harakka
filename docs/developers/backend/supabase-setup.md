@@ -131,11 +131,12 @@ Supabase provides built-in authentication functionality:
    - Configure additional providers if needed (e.g., Google, GitHub)
 
 3. **Set up URL Configuration**:
+
    - Go to Authentication > URL Configuration
-   - Set Site URL to your frontend URL (e.g., http://localhost:5180 for development)
+   - Set Site URL to your frontend URL (e.g., <http://localhost:5180> for development)
    - Set Redirect URLs to include your authorized redirect paths:
-     - http://localhost:5180/auth/callback
-     - https://your-production-domain.com/auth/callback (for production)
+     - <http://localhost:5180/auth/callback>
+     - <https://your-production-domain.com/auth/callback> (for production)
 
 ### Email Confirmation
 
@@ -144,10 +145,6 @@ For email verification:
 1. Go to Authentication > Providers
 2. Under Email, toggle "Enable email confirmations"
 3. Configure "Confirm email template"
-
-## Storage Configuration
-
-Supabase Storage is used for file uploads (like item images and invoices):
 
 ### Create Storage Buckets
 
@@ -213,7 +210,7 @@ Configure API settings for secure access:
 
 1. Go to Project Settings > API
 2. Under API Settings, configure CORS:
-   - Add your frontend URL to "Allow origins" (e.g., http://localhost:5180)
+   - Add your frontend URL to "Allow origins" (e.g., <http://localhost:5180>)
    - Enable "Allow credentials"
 
 ### API Authorization
@@ -262,35 +259,41 @@ The project now includes a complete Supabase CLI setup for local development. Se
 **Quick Start:**
 
 1. **Install dependencies and login**:
+
    ```bash
    npm run install-all
    supabase login
    ```
 
 2. **Start local development environment**:
+
    ```bash
    npm run dev:local  # Starts local Supabase + frontend + backend
    ```
 
 3. **Access local services**:
-   - **Supabase Studio**: http://localhost:54323
-   - **API Endpoint**: http://localhost:54321
-   - **Email Testing**: http://localhost:54324
+   - **Supabase Studio**: <http://localhost:54323>
+   - **API Endpoint**: <http://localhost:54321>
+   - **Email Testing**: <http://localhost:54324>
 
 ### Local Development Workflow
 
 1. **Full local stack** (recommended for development):
+
    ```bash
    npm run dev:local
    ```
+
    This runs everything locally with seeded data and offline capability.
 
 2. **Remote development** (original workflow):
+
    ```bash
    npm run dev  # Uses remote Supabase instance
    ```
 
 3. **Database operations**:
+
    ```bash
    npm run supabase:reset    # Reset local DB with latest schema
    npm run supabase:pull     # Pull schema changes from remote
