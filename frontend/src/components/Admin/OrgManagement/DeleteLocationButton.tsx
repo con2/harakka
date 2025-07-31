@@ -25,23 +25,24 @@ const DeleteLocationButton = ({
   const { lang } = useLanguage();
 
   const handleDelete = () => {
-    const locationInfo = t.orgLocationManagement.deleteModal.locationInfo[
-      lang
-    ].replace("{name}", locationName);
-    const description = `${locationInfo}\n\n${t.orgLocationManagement.deleteModal.description[lang]}`;
+    const locationInfo = t.deleteLocationButton.locationInfo[lang].replace(
+      "{name}",
+      locationName,
+    );
+    const description = `${locationInfo}\n\n${t.deleteLocationButton.description[lang]}`;
 
     toastConfirm({
-      title: t.orgLocationManagement.deleteModal.title[lang],
+      title: t.deleteLocationButton.title[lang],
       description: description,
-      confirmText: t.orgLocationManagement.deleteModal.buttons.delete[lang],
-      cancelText: t.orgLocationManagement.deleteModal.buttons.cancel[lang],
+      confirmText: t.deleteLocationButton.buttons.delete[lang],
+      cancelText: t.deleteLocationButton.buttons.cancel[lang],
       onConfirm: async () => {
         await toast.promise(
           dispatch(deleteOrgLocationWithStorage(locationId)).unwrap(),
           {
-            loading: t.orgLocationManagement.deleteModal.messages.loading[lang],
-            success: t.orgLocationManagement.deleteModal.messages.success[lang],
-            error: t.orgLocationManagement.deleteModal.messages.error[lang],
+            loading: t.deleteLocationButton.messages.loading[lang],
+            success: t.deleteLocationButton.messages.success[lang],
+            error: t.deleteLocationButton.messages.error[lang],
           },
         );
 
@@ -60,7 +61,7 @@ const DeleteLocationButton = ({
   return (
     <Button variant="outline" size="sm" onClick={handleDelete}>
       <Trash2 className="h-3 w-3 mr-1" />
-      {t.orgLocationManagement.deleteModal.buttons.delete[lang]}
+      {t.deleteLocationButton.buttons.delete[lang]}
     </Button>
   );
 };

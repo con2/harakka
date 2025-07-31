@@ -69,7 +69,7 @@ const AddLocationModal = ({
       !formData.city.trim() ||
       !formData.postcode.trim()
     ) {
-      toast.error(t.orgLocationManagement.validation.requiredFields[lang]);
+      toast.error(t.addLocationModal.validation.requiredFields[lang]);
       return;
     }
 
@@ -103,11 +103,11 @@ const AddLocationModal = ({
         }),
       );
 
-      toast.success(t.orgLocationManagement.addModal.messages.success[lang]);
+      toast.success(t.addLocationModal.messages.success[lang]);
       resetForm();
       onClose();
     } catch (error) {
-      toast.error(t.orgLocationManagement.addModal.messages.error[lang]);
+      toast.error(t.addLocationModal.messages.error[lang]);
       console.error("Error creating location:", error);
     } finally {
       setIsSubmitting(false);
@@ -137,11 +137,9 @@ const AddLocationModal = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {t.orgLocationManagement.addModal.title[lang]}
-          </DialogTitle>
+          <DialogTitle>{t.addLocationModal.title[lang]}</DialogTitle>
           <DialogDescription>
-            {t.orgLocationManagement.addModal.description[lang]}
+            {t.addLocationModal.description[lang]}
           </DialogDescription>
         </DialogHeader>
 
@@ -150,7 +148,7 @@ const AddLocationModal = ({
             {/* Name */}
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium">
-                {t.orgLocationManagement.addModal.fields.name.label[lang]} *
+                {t.addLocationModal.fields.name.label[lang]} *
               </Label>
               <Input
                 id="name"
@@ -158,9 +156,7 @@ const AddLocationModal = ({
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
-                placeholder={
-                  t.orgLocationManagement.addModal.fields.name.placeholder[lang]
-                }
+                placeholder={t.addLocationModal.fields.name.placeholder[lang]}
                 required
               />
             </div>
@@ -168,7 +164,7 @@ const AddLocationModal = ({
             {/* Image URL */}
             <div className="space-y-2">
               <Label htmlFor="image_url" className="text-sm font-medium">
-                {t.orgLocationManagement.addModal.fields.imageUrl.label[lang]}
+                {t.addLocationModal.fields.imageUrl.label[lang]}
               </Label>
               <Input
                 id="image_url"
@@ -181,9 +177,7 @@ const AddLocationModal = ({
                   }))
                 }
                 placeholder={
-                  t.orgLocationManagement.addModal.fields.imageUrl.placeholder[
-                    lang
-                  ]
+                  t.addLocationModal.fields.imageUrl.placeholder[lang]
                 }
               />
             </div>
@@ -192,7 +186,7 @@ const AddLocationModal = ({
           {/* Address Fields */}
           <div className="space-y-4">
             <Label className="text-sm font-medium">
-              {t.orgLocationManagement.addModal.labels.address[lang]} *
+              {t.addLocationModal.labels.address[lang]} *
             </Label>
 
             <div className="space-y-3">
@@ -201,7 +195,7 @@ const AddLocationModal = ({
                   htmlFor="street"
                   className="text-sm font-medium text-muted-foreground"
                 >
-                  {t.orgLocationManagement.addModal.fields.street.label[lang]}
+                  {t.addLocationModal.fields.street.label[lang]}
                 </Label>
                 <Input
                   id="street"
@@ -210,9 +204,7 @@ const AddLocationModal = ({
                     setFormData((prev) => ({ ...prev, street: e.target.value }))
                   }
                   placeholder={
-                    t.orgLocationManagement.addModal.fields.street.placeholder[
-                      lang
-                    ]
+                    t.addLocationModal.fields.street.placeholder[lang]
                   }
                   required
                 />
@@ -224,7 +216,7 @@ const AddLocationModal = ({
                     htmlFor="city"
                     className="text-sm font-medium text-muted-foreground"
                   >
-                    {t.orgLocationManagement.addModal.fields.city.label[lang]}
+                    {t.addLocationModal.fields.city.label[lang]}
                   </Label>
                   <Input
                     id="city"
@@ -233,9 +225,7 @@ const AddLocationModal = ({
                       setFormData((prev) => ({ ...prev, city: e.target.value }))
                     }
                     placeholder={
-                      t.orgLocationManagement.addModal.fields.city.placeholder[
-                        lang
-                      ]
+                      t.addLocationModal.fields.city.placeholder[lang]
                     }
                     required
                   />
@@ -246,11 +236,7 @@ const AddLocationModal = ({
                     htmlFor="postcode"
                     className="text-sm font-medium text-muted-foreground"
                   >
-                    {
-                      t.orgLocationManagement.addModal.fields.postcode.label[
-                        lang
-                      ]
-                    }
+                    {t.addLocationModal.fields.postcode.label[lang]}
                   </Label>
                   <Input
                     id="postcode"
@@ -262,8 +248,7 @@ const AddLocationModal = ({
                       }))
                     }
                     placeholder={
-                      t.orgLocationManagement.addModal.fields.postcode
-                        .placeholder[lang]
+                      t.addLocationModal.fields.postcode.placeholder[lang]
                     }
                     required
                   />
@@ -275,7 +260,7 @@ const AddLocationModal = ({
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description" className="text-sm font-medium">
-              {t.orgLocationManagement.addModal.fields.description.label[lang]}
+              {t.addLocationModal.fields.description.label[lang]}
             </Label>
             <Textarea
               id="description"
@@ -287,9 +272,7 @@ const AddLocationModal = ({
                 }))
               }
               placeholder={
-                t.orgLocationManagement.addModal.fields.description.placeholder[
-                  lang
-                ]
+                t.addLocationModal.fields.description.placeholder[lang]
               }
               rows={3}
             />
@@ -299,7 +282,7 @@ const AddLocationModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="latitude" className="text-sm font-medium">
-                {t.orgLocationManagement.addModal.fields.latitude.label[lang]}
+                {t.addLocationModal.fields.latitude.label[lang]}
               </Label>
               <Input
                 id="latitude"
@@ -315,16 +298,14 @@ const AddLocationModal = ({
                   }))
                 }
                 placeholder={
-                  t.orgLocationManagement.addModal.fields.latitude.placeholder[
-                    lang
-                  ]
+                  t.addLocationModal.fields.latitude.placeholder[lang]
                 }
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="longitude" className="text-sm font-medium">
-                {t.orgLocationManagement.addModal.fields.longitude.label[lang]}
+                {t.addLocationModal.fields.longitude.label[lang]}
               </Label>
               <Input
                 id="longitude"
@@ -340,9 +321,7 @@ const AddLocationModal = ({
                   }))
                 }
                 placeholder={
-                  t.orgLocationManagement.addModal.fields.longitude.placeholder[
-                    lang
-                  ]
+                  t.addLocationModal.fields.longitude.placeholder[lang]
                 }
               />
             </div>
@@ -358,18 +337,18 @@ const AddLocationModal = ({
               }
             />
             <Label htmlFor="is_active" className="text-sm font-medium">
-              {t.orgLocationManagement.addModal.fields.isActive.label[lang]}
+              {t.addLocationModal.fields.isActive.label[lang]}
             </Label>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              {t.orgLocationManagement.addModal.buttons.cancel[lang]}
+              {t.addLocationModal.buttons.cancel[lang]}
             </Button>
             <Button type="submit" disabled={isSubmitting} variant={"secondary"}>
               {isSubmitting
-                ? t.orgLocationManagement.addModal.buttons.creating[lang]
-                : t.orgLocationManagement.addModal.buttons.create[lang]}
+                ? t.addLocationModal.buttons.creating[lang]
+                : t.addLocationModal.buttons.create[lang]}
             </Button>
           </DialogFooter>
         </form>
