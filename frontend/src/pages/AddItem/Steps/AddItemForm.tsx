@@ -9,10 +9,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { useLanguage, validLanguages } from "@/context/LanguageContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectCurrentOrgLocations } from "@/store/slices/organizationLocationsSlice";
-import { createItemDto } from "@/store/utils/validate";
+import { createItemDto, CreateItemType } from "@/store/utils/validate";
 import { ItemFormTag } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -25,7 +25,7 @@ import {
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { t } from "@/translations";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
   fetchAllTags,
@@ -39,15 +39,13 @@ import {
   selectItemCreation,
   selectOrgLocation,
 } from "@/store/slices/itemsSlice";
+import { TRANSLATION_FIELDS } from "../add-item.data";
+import { toast } from "sonner";
+import ItemImageUpload from "../ItemImageUpload";
 
 function AddItemForm() {
   const orgLocations = useAppSelector(selectCurrentOrgLocations)!;
   const { lang: appLang } = useLanguage();
-  const TRANSLATION_FIELDS = [
-    "item_name",
-    "item_type",
-    "item_description",
-  ] as const;
   const [tagSearchValue, setTagSearchValue] = useState("");
   const tagSearch = useDebouncedValue(tagSearchValue, 200);
   const dispatch = useAppDispatch();
@@ -69,25 +67,60 @@ function AddItemForm() {
       items_number_total: 1,
       price: 0,
       tags: [],
+      translations: {
+        fi: {
+          item_name: "",
+          item_type: "",
+          item_description: "",
+        },
+        en: {
+          item_name: "",
+          item_type: "",
+          item_description: "",
+        },
+      },
+      items_number_currently_in_storage: 1,
+      mainImage: "",
+      detailImages: [],
     },
   });
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
-    // This only runs if validation passes
     console.log("Valid form values:", values);
-
-    // Your custom logic here
-    // customAction(values);
+    const storageItems = localStorage.get("newItems");
+    if (!storageItems) {
+      localStorage.setItem("newItems", JSON.stringify(values));
+    }
+    const parsedStorage = JSON.parse(storageItems);
+    const exists = parsedStorage.findIndex(
+      (item: CreateItemType) => item.id === values.id,
+    );
+    if (exists) {
+      parsedStorage[exists] = values;
+    }
+    localStorage.setItem("newItems", parsedStorage);
   };
 
-  const onInvalidSubmit = (errors: any) => {
-    console.log("Invalid submit");
-    console.error("Validation errors:", errors);
+  const onInvalidSubmit = () => {
+    console.log("form is invalid");
+    const result = createItemDto.safeParse(form);
+    if (result.error) {
+      const allErrors = result.error.flatten().fieldErrors;
+
+      const firstErrorMessage = Object.values(allErrors)
+        .flat()
+        .find((msg) => !!msg);
+
+      if (firstErrorMessage) {
+        toast.error(firstErrorMessage);
+      } else {
+        toast.error("Form contains errors");
+      }
+    }
   };
 
   const toggleTag = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
-
     const { id } = e.currentTarget.dataset;
     if (!id) return;
     const currentTags: string[] = form.getValues("tags") ?? [];
@@ -151,237 +184,248 @@ function AddItemForm() {
       void dispatch(
         fetchFilteredTags({ page: 1, limit: 20, search: tagSearch }),
       );
-    void dispatch(fetchAllTags({ page: 1, limit: 20 }));
-  }, [tagSearch, dispatch]);
+    if (tags.length === 0) void dispatch(fetchAllTags({ page: 1, limit: 20 }));
+  }, [tagSearch, dispatch, tags.length]);
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onValidSubmit, onInvalidSubmit)}
-        className={`bg-white flex flex-wrap rounded border mt-4 max-w-[900px] ${storage === undefined ? "disabled-form" : ""}`}
-      >
-        {/* Translations | Item Details */}
-        <div className="p-10 flex flex-wrap gap-x-6 space-y-8 justify-between">
-          <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
-            Item Details
-          </p>
+    <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px]">
+      <Form {...form}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit(onValidSubmit, onInvalidSubmit);
+          }}
+        >
+          {/* Translations | Item Details */}
+          <div className="p-10 flex flex-wrap gap-x-6 space-y-8 justify-between">
+            <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
+              Item Details
+            </p>
 
-          <div className="flex flex-wrap gap-x-6 space-y-4">
-            {validLanguages.map((lang) =>
-              TRANSLATION_FIELDS.map((fieldKey) => (
-                <div className="flex w-[48%] gap-8">
-                  <FormField
-                    key={`${lang}.${fieldKey}`}
-                    name={`translations.${lang}.${fieldKey}`}
-                    control={form.control}
-                    render={({ field }) => (
-                      <div className="w-full">
-                        <FormItem>
+            <div className="flex flex-wrap w-full gap-x-6 space-y-4 justify-between">
+              {TRANSLATION_FIELDS.map((entry) => {
+                const { lang: fieldLang, fieldKey, nameValue } = entry;
+                return (
+                  <div className="flex w-[48%] gap-8">
+                    <FormField
+                      key={`${fieldLang}.${fieldKey}`}
+                      name={nameValue as any}
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem className="w-full">
                           <FormLabel>
-                            {fieldKey.replace(/_/g, " ")} ({lang.toUpperCase()})
+                            {fieldKey
+                              .replace(/_/g, " ")
+                              .replace(/^./, (c) => c.toUpperCase())}{" "}
+                            ({fieldLang.toUpperCase()})
                           </FormLabel>
                           <FormControl>
                             <Input
-                              className="border shadow-none border-grey"
-                              placeholder={`${fieldKey.replace(/_/g, " ")} in ${lang}`}
                               {...field}
+                              className="border shadow-none border-grey w-full"
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
-                      </div>
-                    )}
-                  />
-                </div>
-              )),
-            )}
-          </div>
-
-          {/* Location | Total Quantity | Is active */}
-          <div className="gap-4 flex w-full">
-            <FormField
-              name="items_number_total"
-              control={form.control}
-              render={({ field }) => (
-                <div className="w-full">
-                  <FormItem>
-                    <FormLabel>Total Quantity</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder=""
-                        {...field}
-                        className="border shadow-none border-grey"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                </div>
-              )}
-            />
-            <FormField
-              name="price"
-              control={form.control}
-              render={({ field }) => (
-                <div className="w-full">
-                  <FormItem>
-                    <FormLabel>Price</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder=""
-                        {...field}
-                        className="border shadow-none border-grey"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                </div>
-              )}
-            />
-            <FormField
-              name="location_id"
-              control={form.control}
-              render={() => (
-                <div className="w-full">
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <Select
-                      defaultValue={storage?.org_id ?? ""}
-                      onValueChange={handleLocationChange}
-                      disabled={storage === null ? false : true}
-                    >
-                      <SelectTrigger className="border shadow-none border-grey w-full">
-                        <SelectValue
-                          className="border shadow-none border-grey"
-                          placeholder={
-                            t.addItemModal.placeholders.selectLocation[appLang]
-                          }
-                        >
-                          {storage?.name}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {orgLocations?.map((loc) => (
-                          <SelectItem
-                            disabled={storage === undefined}
-                            key={loc.id}
-                            value={loc.id}
-                          >
-                            {loc.storage_locations.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                </div>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="is_active"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg p-4 gap-6 w-full">
-                <div className="space-y-0.5">
-                  <FormLabel>Active</FormLabel>
-                  <FormDescription>
-                    Users can view and book the item immediately
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    aria-readonly
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <Separator />
-
-        {/* Search tags */}
-        <div className="p-10 w-full">
-          <div>
-            <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-1">
-              Assign Tags
-            </p>
-            <p className="text-sm leading-none font-medium">
-              Tags help users find items using search or filter functions.
-            </p>
-            <Input
-              placeholder="Search tags"
-              className="max-w-[300px] border shadow-none border-grey my-4"
-              onChange={(e) => setTagSearchValue(e.target.value)}
-            />
-          </div>
-
-          <div className="flex flex-col gap-3 mb-8">
-            <p className="font-semibold">Popular tags</p>
-            <div className="flex gap-2 flex-wrap">
-              {...tags.map((tag) => {
-                const currentTags = form.getValues("tags");
-                const isSelected = currentTags.find((t) => t === tag.id);
-                return (
-                  <Badge
-                    key={tag.id}
-                    variant={isSelected ? "default" : "outline"}
-                    onClick={toggleTag}
-                    data-id={tag.id}
-                    data-translations={tag.translations}
-                    className=""
-                  >
-                    {tag.translations?.[appLang].name}
-                  </Badge>
+                      )}
+                    />
+                  </div>
                 );
               })}
             </div>
-          </div>
-          <div>
-            <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-2">
-              Selected tags
-            </p>
-            <div className="flex gap-2 flex-wrap">
-              {selectedTags.length > 0 ? (
-                selectedTags.map((tag) => (
-                  <Badge
-                    key={`selected-${tag.tag_id}`}
-                    onClick={toggleTag}
-                    variant="default"
-                    data-id={tag.tag_id}
-                  >
-                    {tag.translations?.[appLang].name}
-                  </Badge>
-                ))
-              ) : (
-                <p className="text-sm leading-none font-medium">
-                  No tags selected.
-                </p>
+
+            {/* Location | Total Quantity | Is active */}
+            <div className="gap-4 flex w-full">
+              <FormField
+                name="items_number_total"
+                control={form.control}
+                render={({ field }) => (
+                  <div className="w-full">
+                    <FormItem>
+                      <FormLabel>Total Quantity</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder=""
+                          {...field}
+                          className="border shadow-none border-grey"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  </div>
+                )}
+              />
+              <FormField
+                name="price"
+                control={form.control}
+                render={({ field }) => (
+                  <div className="w-full">
+                    <FormItem>
+                      <FormLabel>Price (€)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder=""
+                          {...field}
+                          className="border shadow-none border-grey"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  </div>
+                )}
+              />
+              <FormField
+                name="location_id"
+                control={form.control}
+                render={() => (
+                  <div className="w-full">
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <Select
+                        defaultValue={storage?.org_id ?? ""}
+                        onValueChange={handleLocationChange}
+                        disabled={storage === null ? false : true}
+                      >
+                        <SelectTrigger className="border shadow-none border-grey w-full">
+                          <SelectValue
+                            className="border shadow-none border-grey"
+                            placeholder={
+                              t.addItemModal.placeholders.selectLocation[
+                                appLang
+                              ]
+                            }
+                          >
+                            {storage?.name}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {orgLocations?.map((loc) => (
+                            <SelectItem
+                              disabled={storage === undefined}
+                              key={loc.id}
+                              value={loc.id}
+                            >
+                              {loc.storage_locations.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  </div>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="is_active"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg p-4 gap-6 w-full">
+                  <div className="space-y-0.5">
+                    <FormLabel>Active</FormLabel>
+                    <FormDescription>
+                      Users can view and book the item immediately
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      aria-readonly
+                    />
+                  </FormControl>
+                </FormItem>
               )}
+            />
+          </div>
+
+          <Separator />
+
+          {/* Search tags */}
+          <div className="p-10 w-full">
+            <div>
+              <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-1">
+                Assign Tags
+              </p>
+              <p className="text-sm leading-none font-medium">
+                Tags help users find items using search or filter functions.
+              </p>
+              <Input
+                placeholder="Search tags"
+                className="max-w-[300px] border shadow-none border-grey my-4"
+                onChange={(e) => setTagSearchValue(e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-3 mb-8">
+              <p className="font-semibold">Popular tags</p>
+              <div className="flex gap-2 flex-wrap">
+                {...tags.map((tag) => {
+                  const currentTags = form.getValues("tags");
+                  const isSelected = currentTags.find((t) => t === tag.id);
+                  return (
+                    <Badge
+                      key={tag.id}
+                      variant={isSelected ? "default" : "outline"}
+                      onClick={toggleTag}
+                      data-id={tag.id}
+                      data-translations={tag.translations}
+                      className=""
+                    >
+                      {tag.translations?.[appLang].name}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-2">
+                Selected tags
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {selectedTags.length > 0 ? (
+                  selectedTags.map((tag) => (
+                    <Badge
+                      key={`selected-${tag.tag_id}`}
+                      onClick={toggleTag}
+                      variant="default"
+                      data-id={tag.tag_id}
+                    >
+                      {tag.translations?.[appLang].name}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-sm leading-none font-medium">
+                    No tags selected.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </form>
+      </Form>
+      <Separator />
 
-        <Separator />
-
-        {/* Images */}
-        <div className="p-10 w-full">
-          <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-1">
+      {/* Images */}
+      <div className="p-10 w-full">
+        <div className="mb-6">
+          <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
             Add Images
           </p>
           <p className="text-sm leading-none font-medium">
-            We recommend uploading at least one image
+            We recommend uploading at least one image for the item.
           </p>
         </div>
-        <div className="p-10 pt-2">
-          <Button variant="outline" type="submit">
-            Add Item
-          </Button>
-        </div>
-      </form>
-    </Form>
+
+        <ItemImageUpload item_id={form.getValues("id")} />
+      </div>
+
+      <div className="p-10 pt-2">
+        <Button variant="outline" type="submit">
+          Add Item
+        </Button>
+      </div>
+    </div>
   );
 }
 

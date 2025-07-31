@@ -87,6 +87,48 @@ export class ItemImagesService {
   }
 
   /**
+   * Upload to bucket without creating a db record for it.
+   * If a file already exists at the path, it will be overwritten.
+   * @param req An authorized request
+   * @param bucket Name of bucket to upload to
+   * @param files An array of files to upload
+   * @param uuid Optional. A uuid used for the path
+   * @returns An array of paths
+   */
+  async uploadToBucket(
+    req: AuthRequest,
+    bucket: string,
+    files: Express.Multer.File[],
+    uuid: string = crypto.randomUUID(),
+  ): Promise<string[]> {
+    const supabase = req.supabase;
+    const paths: string[] = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const fileExt = files[i].originalname.split(".").pop();
+        const fileName = `${uuid}/${uuidv4()}.${fileExt}`;
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .upload(fileName, files[i].buffer, {
+            upsert: true,
+            contentType: "image/jpeg",
+          });
+        console.log("data: ", data);
+        console.log("full path: ", data?.fullPath);
+        if (error)
+          throw new Error(`Failed to upload image: ${files[i].originalname}`);
+        if (data)
+          paths.push(`${process.env.SUPABASE_URL}/storage/v1/${data.fullPath}`);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    console.log("paths: ", paths);
+    return paths;
+  }
+
+  /**
    * Get all images for an item
    */
   async getItemImages(itemId: string): Promise<ItemImageRow[]> {

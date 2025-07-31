@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getItemImages,
-  uploadItemImage,
   deleteItemImage,
   selectItemImagesById,
   selectItemImagesLoading,
@@ -249,16 +248,16 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
     setUploadProgress(10); // Start progress
 
     try {
-      toast.promise(
-        dispatch(
-          uploadItemImage({ itemId, file: selectedFile, metadata }),
-        ).unwrap(),
-        {
-          loading: t.itemImageManager.messages.toast.upload.loading[lang],
-          success: t.itemImageManager.messages.toast.upload.success[lang],
-          error: t.itemImageManager.messages.toast.upload.error[lang],
-        },
-      );
+      // toast.promise(
+      //   dispatch(
+      //     uploadItemImages({ itemId, file: selectedFile, metadata }),
+      //   ).unwrap(),
+      //   {
+      //     loading: t.itemImageManager.messages.toast.upload.loading[lang],
+      //     success: t.itemImageManager.messages.toast.upload.success[lang],
+      //     error: t.itemImageManager.messages.toast.upload.error[lang],
+      //   },
+      // );
 
       // Reset form after successful upload
       resetUploadForm();

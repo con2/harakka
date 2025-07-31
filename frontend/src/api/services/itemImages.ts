@@ -1,5 +1,5 @@
 import { api } from "../axios";
-import { ItemImage, UploadItemImageDto } from "@/types/storage";
+import { FileWithMetadata, ItemImage } from "@/types/storage";
 
 export const itemImagesApi = {
   /**
@@ -9,26 +9,73 @@ export const itemImagesApi = {
     api.get(`/item-images/${itemId}`),
 
   /**
-   * Upload an image for an item
+   * Upload an image and create a database record
    */
-  uploadItemImage: (
+  uploadItemImages: async (
     itemId: string,
-    file: File,
-    metadata: UploadItemImageDto,
-  ): Promise<ItemImage> => {
-    const formData = new FormData();
-    formData.append("image", file);
-    formData.append("image_type", metadata.image_type);
-    formData.append("display_order", metadata.display_order.toString());
-    if (metadata.alt_text) {
-      formData.append("alt_text", metadata.alt_text);
+    files: FileWithMetadata[],
+  ): Promise<ItemImage[]> => {
+    const results: ItemImage[] = [];
+
+    for (const { file, metadata } of files) {
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("image_type", metadata.image_type);
+      formData.append("display_order", metadata.display_order.toString());
+      formData.append("is_active", metadata.is_active.toString());
+      if (metadata.alt_text) {
+        formData.append("alt_text", metadata.alt_text);
+      }
+
+      const response = await api.post<ItemImage>(
+        `/item-images/${itemId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      results.push(response.data);
     }
 
-    return api.post(`/item-images/${itemId}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+    return results;
+  },
+
+  /**
+   * Upload to bucket without creating a db record for it.
+   * If a file already exists at the path, it will be overwritten.
+   * @param files An array with files and metadata
+   * @param bucket Name for the bucket to upload to
+   * @param uuid Optional. If to upload the image under a particular UUID
+   */
+  uploadToBucket: async (
+    files: FileWithMetadata[],
+    bucket: string,
+    uuid?: string,
+  ): Promise<string[]> => {
+    if (files.length > 5) throw new Error("File limit exceeded.");
+    const formData = new FormData();
+
+    files.forEach(({ file, metadata }) => {
+      // append the file itself under the *same* field name “image”
+      formData.append("image", file);
+
+      // append each piece of metadata as its own field
+      formData.append("image_type", metadata.image_type);
+      formData.append("display_order", metadata.display_order.toString());
+      if (metadata.alt_text) formData.append("alt_text", metadata.alt_text);
+      formData.append("is_active", metadata.is_active ? "true" : "false");
     });
+
+    return await api.post<string[]>(
+      `item-images/bucket/${bucket}?uuid=${uuid}`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
   },
 
   /**

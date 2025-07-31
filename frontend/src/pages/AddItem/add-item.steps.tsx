@@ -11,7 +11,7 @@ export const steps: Step[] = [
     icon: <Box />,
   },
   {
-    title: "Items Summary",
+    title: "Item summary",
     icon: <ClipboardList />,
   },
 ];

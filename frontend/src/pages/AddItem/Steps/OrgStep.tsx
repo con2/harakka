@@ -41,8 +41,16 @@ function OrgStep() {
   };
   /*---------------------side effects--------------------------------------------*/
   useEffect(() => {
-    if (orgLocations?.length === 1)
-      dispatch(selectOrgLocation(orgLocations?.[0]));
+    if (orgLocations?.length === 1) {
+      const newOrg = orgLocations[0];
+      dispatch(
+        selectOrgLocation({
+          org_id: newOrg.id,
+          name: newOrg.storage_locations.name,
+          address: newOrg.storage_locations.address,
+        }),
+      );
+    }
   }, [orgLocations, dispatch]);
 
   return (
@@ -82,13 +90,8 @@ function OrgStep() {
             {orgLocations.map((loc) => (
               <Button
                 key={loc.storage_location_id}
-                variant={
-                  storage?.org_id === loc.storage_location_id
-                    ? "outline"
-                    : "default"
-                }
+                variant={storage?.org_id === loc.id ? "outline" : "default"}
                 className="gap-2"
-                disabled={orgLocations.length === 1}
                 onClick={() =>
                   dispatch(
                     selectOrgLocation({

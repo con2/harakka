@@ -24,4 +24,34 @@ export const createItemDto = z.object({
   is_active: z.boolean(),
   translations: itemTranslationsSchema,
   tags: z.array(z.string()),
+  mainImage: z.string().optional(),
+  detailImages: z.array(z.string()).optional(),
 });
+
+export type CreateItemType = {
+  id: string;
+  location_id: string;
+  location_details: {
+    name: string;
+    address: string;
+  };
+  items_number_total: number;
+  items_number_currently_in_storage: number;
+  price: number;
+  is_active: boolean;
+  translations: {
+    fi: {
+      item_name: string;
+      item_type: string;
+      item_description: string;
+    };
+    en: {
+      item_name: string;
+      item_type: string;
+      item_description: string;
+    };
+  };
+  tags: string[];
+  mainImage: string;
+  detailImages: string[];
+};

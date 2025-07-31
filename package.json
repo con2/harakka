@@ -19,6 +19,7 @@
     "type-fest": "^4.41.0"
   },
   "dependencies": {
+    "react-dropzone": "^14.3.8",
     "supabase": "^2.31.8"
   }
 }

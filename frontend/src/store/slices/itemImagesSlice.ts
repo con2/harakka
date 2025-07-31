@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { itemImagesApi } from "@/api/services/itemImages";
-import { ItemImage, UploadItemImageDto } from "@/types/storage";
+import { FileWithMetadata, ItemImage } from "@/types/storage";
 import { RootState } from "../store";
 import { ErrorContext } from "@/types/common";
 import { extractErrorMessage } from "../utils/errorHandlers";
@@ -12,6 +12,7 @@ interface ItemImagesState {
   error: string | null;
   currentItemId: string | null;
   errorContext: ErrorContext;
+  image_urls: string[];
 }
 
 const initialState: ItemImagesState = {
@@ -21,6 +22,7 @@ const initialState: ItemImagesState = {
   error: null,
   currentItemId: null,
   errorContext: null,
+  image_urls: [],
 };
 
 export const getItemImages = createAsyncThunk(
@@ -44,18 +46,38 @@ export const getItemImages = createAsyncThunk(
   },
 );
 
-export const uploadItemImage = createAsyncThunk(
-  "itemImages/uploadItemImage",
+export const uploadToBucket = createAsyncThunk(
+  "itemImages/uploadToBucket",
   async (
     {
-      itemId,
-      file,
-      metadata,
-    }: { itemId: string; file: File; metadata: UploadItemImageDto },
+      files,
+      bucket,
+      uuid,
+    }: {
+      files: FileWithMetadata[];
+      bucket: string;
+      uuid?: string;
+    },
     { rejectWithValue },
   ) => {
     try {
-      return await itemImagesApi.uploadItemImage(itemId, file, metadata);
+      return await itemImagesApi.uploadToBucket(files, bucket, uuid);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to upload image"),
+      );
+    }
+  },
+);
+
+export const uploadItemImages = createAsyncThunk(
+  "itemImages/uploadItemImage",
+  async (
+    { itemId, files }: { itemId: string; files: FileWithMetadata[] },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await itemImagesApi.uploadItemImages(itemId, files);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to upload image"),
@@ -124,20 +146,33 @@ const itemImagesSlice = createSlice({
       })
 
       // Upload Item Image - Fix this to update the correct item's images
-      .addCase(uploadItemImage.pending, (state) => {
+      .addCase(uploadItemImages.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(uploadItemImage.fulfilled, (state, action) => {
-        state.loading = false;
-        state.images.push(action.payload);
-
-        // Make sure we track this item
-        if (!state.itemsWithLoadedImages.includes(action.payload.item_id)) {
-          state.itemsWithLoadedImages.push(action.payload.item_id);
-        }
+      .addCase(uploadItemImages.fulfilled, (_, __) => {
+        // state.loading = false;
+        // state.images.push(action.payload);
+        // // Make sure we track this item
+        // if (!state.itemsWithLoadedImages.includes(action.payload.item_id)) {
+        //   state.itemsWithLoadedImages.push(action.payload.item_id);
+        // }
       })
-      .addCase(uploadItemImage.rejected, (state, action) => {
+      .addCase(uploadItemImages.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Upload Item Image - Fix this to update the correct item's images
+      .addCase(uploadToBucket.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadToBucket.fulfilled, (state, action) => {
+        state.loading = false;
+        console.log("action payload: ", action.payload);
+        state.image_urls = action.payload;
+      })
+      .addCase(uploadToBucket.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
@@ -174,5 +209,7 @@ export const selectItemImagesError = (state: RootState) =>
   state.itemImages.error;
 export const selectCurrentItemId = (state: RootState) =>
   state.itemImages.currentItemId;
+export const selectUploadUrls = (state: RootState) =>
+  state.itemImages.image_urls;
 
 export default itemImagesSlice.reducer;

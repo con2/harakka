@@ -47,7 +47,28 @@ export interface UploadItemImageDto {
   image_type: ImageType;
   display_order: number;
   alt_text?: string;
+  is_active: boolean;
 }
+
+export type FileWithMetadata = {
+  file: File;
+  metadata: UploadItemImageDto;
+};
+
+export type MainImageData = {
+  image: {
+    file: File | null;
+    metadata: UploadItemImageDto;
+  };
+  preview: string | null;
+  loading: boolean;
+};
+
+export type DetailImageData = {
+  images: FileWithMetadata[];
+  previews: string[];
+  loading: boolean;
+};
 
 /**
  * Image availability info for client-side display
