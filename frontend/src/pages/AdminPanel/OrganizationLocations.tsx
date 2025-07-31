@@ -80,12 +80,12 @@ const OrganizationLocations = () => {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">
-          {t.orgLocationManagement.page.noAccess.title[lang]}
+          {t.organizationLocations.noAccess.title[lang]}
         </h1>
         <Card>
           <CardContent className="pt-6">
             <p className="text-muted-foreground">
-              {t.orgLocationManagement.page.noAccess.message[lang]}
+              {t.organizationLocations.noAccess.message[lang]}
             </p>
           </CardContent>
         </Card>
@@ -97,7 +97,7 @@ const OrganizationLocations = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-3">
-        <h1 className="text-xl">{t.orgLocationManagement.page.title[lang]}</h1>
+        <h1 className="text-xl">{t.organizationLocations.title[lang]}</h1>
       </div>
 
       {/* Organization Selector (if user belongs to multiple orgs) */}
@@ -105,10 +105,10 @@ const OrganizationLocations = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">
-              {t.orgLocationManagement.page.selector.title[lang]}
+              {t.organizationLocations.selector.title[lang]}
             </CardTitle>
             <CardDescription>
-              {t.orgLocationManagement.page.selector.description[lang]}
+              {t.organizationLocations.selector.description[lang]}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -116,7 +116,7 @@ const OrganizationLocations = () => {
               <SelectTrigger>
                 <SelectValue
                   placeholder={
-                    t.orgLocationManagement.page.selector.placeholder[lang]
+                    t.organizationLocations.selector.placeholder[lang]
                   }
                 />
               </SelectTrigger>
@@ -144,10 +144,7 @@ const OrganizationLocations = () => {
         <Card className="border-destructive">
           <CardContent className="pt-6">
             <p className="text-destructive">
-              {t.orgLocationManagement.page.error[lang].replace(
-                "{error}",
-                error,
-              )}
+              {t.organizationLocations.error[lang].replace("{error}", error)}
             </p>
           </CardContent>
         </Card>
