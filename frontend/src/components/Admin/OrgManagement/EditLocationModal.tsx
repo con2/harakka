@@ -156,7 +156,7 @@ const EditLocationModal = ({
       !formData.city.trim() ||
       !formData.postcode.trim()
     ) {
-      toast.error("Name, street, city, and postcode are required");
+      toast.error(t.editLocationModal.validation.requiredFields[lang]);
       return;
     }
 
@@ -240,43 +240,47 @@ const EditLocationModal = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           <FormField
             id="name"
-            label={t.addLocationModal.fields.name.label[lang]}
+            label={t.editLocationModal.fields.name.label[lang]}
             value={formData.name}
             onChange={updateField("name")}
-            placeholder={t.addLocationModal.fields.name.placeholder[lang]}
+            placeholder={t.editLocationModal.fields.name.placeholder[lang]}
             required
           />
 
           {/* Address Fields */}
           <div className="space-y-4">
             <Label className="text-sm font-medium">
-              {t.addLocationModal.labels.address[lang]} *
+              {t.editLocationModal.labels.address[lang]} *
             </Label>
             <div className="space-y-3">
               <FormField
                 id="street"
-                label={t.addLocationModal.fields.street.label[lang]}
+                label={t.editLocationModal.fields.street.label[lang]}
                 value={formData.street}
                 onChange={updateField("street")}
-                placeholder={t.addLocationModal.fields.street.placeholder[lang]}
+                placeholder={
+                  t.editLocationModal.fields.street.placeholder[lang]
+                }
                 required
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   id="city"
-                  label={t.addLocationModal.fields.city.label[lang]}
+                  label={t.editLocationModal.fields.city.label[lang]}
                   value={formData.city}
                   onChange={updateField("city")}
-                  placeholder={t.addLocationModal.fields.city.placeholder[lang]}
+                  placeholder={
+                    t.editLocationModal.fields.city.placeholder[lang]
+                  }
                   required
                 />
                 <FormField
                   id="postcode"
-                  label={t.addLocationModal.fields.postcode.label[lang]}
+                  label={t.editLocationModal.fields.postcode.label[lang]}
                   value={formData.postcode}
                   onChange={updateField("postcode")}
                   placeholder={
-                    t.addLocationModal.fields.postcode.placeholder[lang]
+                    t.editLocationModal.fields.postcode.placeholder[lang]
                   }
                   required
                 />
@@ -286,11 +290,11 @@ const EditLocationModal = ({
 
           <FormField
             id="description"
-            label={t.addLocationModal.fields.description.label[lang]}
+            label={t.editLocationModal.fields.description.label[lang]}
             value={formData.description}
             onChange={updateField("description")}
             placeholder={
-              t.addLocationModal.fields.description.placeholder[lang]
+              t.editLocationModal.fields.description.placeholder[lang]
             }
             rows={3}
           />
@@ -299,19 +303,21 @@ const EditLocationModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               id="latitude"
-              label={t.addLocationModal.fields.latitude.label[lang]}
+              label={t.editLocationModal.fields.latitude.label[lang]}
               value={formData.latitude}
               onChange={updateField("latitude")}
-              placeholder={t.addLocationModal.fields.latitude.placeholder[lang]}
+              placeholder={
+                t.editLocationModal.fields.latitude.placeholder[lang]
+              }
               type="number"
             />
             <FormField
               id="longitude"
-              label={t.addLocationModal.fields.longitude.label[lang]}
+              label={t.editLocationModal.fields.longitude.label[lang]}
               value={formData.longitude}
               onChange={updateField("longitude")}
               placeholder={
-                t.addLocationModal.fields.longitude.placeholder[lang]
+                t.editLocationModal.fields.longitude.placeholder[lang]
               }
               type="number"
             />
@@ -319,10 +325,10 @@ const EditLocationModal = ({
 
           <FormField
             id="image_url"
-            label={t.addLocationModal.fields.imageUrl.label[lang]}
+            label={t.editLocationModal.fields.imageUrl.label[lang]}
             value={formData.image_url}
             onChange={updateField("image_url")}
-            placeholder={t.addLocationModal.fields.imageUrl.placeholder[lang]}
+            placeholder={t.editLocationModal.fields.imageUrl.placeholder[lang]}
           />
 
           {/* Active Status */}
@@ -335,7 +341,7 @@ const EditLocationModal = ({
               }
             />
             <Label htmlFor="is_active" className="text-sm font-medium">
-              {t.addLocationModal.labels.activeLocation[lang]}
+              {t.editLocationModal.labels.activeLocation[lang]}
             </Label>
           </div>
 
