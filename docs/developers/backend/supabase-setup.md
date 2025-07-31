@@ -257,46 +257,47 @@ S3_BUCKET=item-images
 
 ### Using Supabase CLI
 
-1. **Install the Supabase CLI**:
+The project now includes a complete Supabase CLI setup for local development. See the [Supabase CLI Setup Guide](../supabase-cli-setup.md) for detailed instructions.
 
-```bash
-npm install -g supabase
-```
+**Quick Start:**
 
-2. **Login to Supabase CLI**:
+1. **Install dependencies and login**:
+   ```bash
+   npm run install-all
+   supabase login
+   ```
 
-```bash
-supabase login
-```
+2. **Start local development environment**:
+   ```bash
+   npm run dev:local  # Starts local Supabase + frontend + backend
+   ```
 
-3. **Link your project**:
-
-```bash
-supabase link --project-ref your-project-id --password your-db-password
-```
-
-4. **Pull database schema locally**:
-
-```bash
-supabase db pull
-```
-
-5. **Run database migrations**:
-
-```bash
-supabase db push
-```
+3. **Access local services**:
+   - **Supabase Studio**: http://localhost:54323
+   - **API Endpoint**: http://localhost:54321
+   - **Email Testing**: http://localhost:54324
 
 ### Local Development Workflow
 
-1. **Local API testing**:
+1. **Full local stack** (recommended for development):
+   ```bash
+   npm run dev:local
+   ```
+   This runs everything locally with seeded data and offline capability.
 
-   - Start your backend: `npm run start` from the backend directory
-   - Use the Supabase client in your code to connect to your remote project
+2. **Remote development** (original workflow):
+   ```bash
+   npm run dev  # Uses remote Supabase instance
+   ```
 
-2. **Viewing logs**:
-   - Access Supabase logs from the Dashboard
-   - Review function logs, auth logs, and database logs
+3. **Database operations**:
+   ```bash
+   npm run supabase:reset    # Reset local DB with latest schema
+   npm run supabase:pull     # Pull schema changes from remote
+   npm run generate:types    # Update TypeScript types
+   ```
+
+For complete CLI documentation, see [Supabase CLI Setup Guide](../supabase-cli-setup.md).
 
 ## Database Extensions
 
