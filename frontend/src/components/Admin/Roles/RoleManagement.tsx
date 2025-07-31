@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import RoleEditer from "./RoleEditer";
+import { toast } from "sonner";
+import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 
 export const RoleManagement: React.FC = () => {
   const {
@@ -50,6 +52,7 @@ export const RoleManagement: React.FC = () => {
   const [fetchingAdminData, setFetchingAdminData] = useState(false);
   const fetchAttemptsRef = useRef(0);
   const MAX_FETCH_ATTEMPTS = 2;
+  const [sessionRefreshing, setSessionRefreshing] = useState(false);
 
   useEffect(() => {
     // Only fetch admin roles if user is admin and we don't have them yet
@@ -64,7 +67,7 @@ export const RoleManagement: React.FC = () => {
       fetchAttemptsRef.current += 1;
       setFetchingAdminData(true);
 
-      refreshAllUserRoles().finally(() => {
+      void refreshAllUserRoles().finally(() => {
         setFetchingAdminData(false);
       });
     }
@@ -88,6 +91,20 @@ export const RoleManagement: React.FC = () => {
       console.error("❌ RoleManagement - Manual refresh failed:", err);
     }
   }, [refreshCurrentUserRoles, refreshAllUserRoles, isAdmin]);
+
+  // Handler for refreshing Supabase session
+  const handleRefreshSession = useCallback(async () => {
+    setSessionRefreshing(true);
+    try {
+      await refreshSupabaseSession();
+      toast.success("Supabase session refreshed!");
+    } catch (err) {
+      toast.error("Failed to refresh Supabase session");
+      console.error("❌ Supabase session refresh failed:", err);
+    } finally {
+      setSessionRefreshing(false);
+    }
+  }, []);
 
   // For hasAnyRole testing
   const [roleTestInput, setRoleTestInput] = useState("");
@@ -122,6 +139,15 @@ export const RoleManagement: React.FC = () => {
     setSingleRoleResult(result);
   }, [singleRoleInput, singleOrgInput, hasRole]);
 
+  // Handler to refresh roles after any role operation
+  const handleRolesChanged = useCallback(async () => {
+    await refreshCurrentUserRoles();
+    if (isAdmin) {
+      await refreshAllUserRoles();
+    }
+    toast.success("Roles updated!");
+  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAdmin]);
+
   // Loading state
   if (loading) {
     return (
@@ -151,17 +177,41 @@ export const RoleManagement: React.FC = () => {
 
   // Main render
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Role Management Dashboard</h2>
-        <Button onClick={handleRefresh} variant="outline" size="sm">
+    <div className="space-y-6" data-cy="role-management-root">
+      <div
+        className="flex justify-between items-center"
+        data-cy="role-management-header"
+      >
+        <h2 className="text-2xl font-bold" data-cy="role-management-title">
+          Role Management Dashboard
+        </h2>
+        <Button
+          onClick={handleRefresh}
+          variant="outline"
+          size="sm"
+          data-cy="role-management-refresh-btn"
+        >
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
+        </Button>
+        <Button
+          onClick={handleRefreshSession}
+          variant="outline"
+          size="sm"
+          disabled={sessionRefreshing}
+          data-cy="role-management-refresh-session-btn"
+        >
+          {sessionRefreshing ? (
+            <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4 mr-2" />
+          )}
+          Refresh session
         </Button>
       </div>
 
       {/* Debug Information */}
-      <Card>
+      <Card data-cy="role-management-debug-card">
         <CardHeader>
           <CardTitle>Debug Information</CardTitle>
         </CardHeader>
@@ -169,7 +219,10 @@ export const RoleManagement: React.FC = () => {
           <div className="space-y-1 text-sm font-mono">
             <div>
               Loading:{" "}
-              <span className={loading ? "text-red-600" : "text-green-600"}>
+              <span
+                className={loading ? "text-red-600" : "text-green-600"}
+                data-cy="role-management-loading"
+              >
                 {loading.toString()}
               </span>
             </div>
@@ -177,35 +230,53 @@ export const RoleManagement: React.FC = () => {
               Admin Loading:{" "}
               <span
                 className={adminLoading ? "text-red-600" : "text-green-600"}
+                data-cy="role-management-admin-loading"
               >
                 {adminLoading.toString()}
               </span>
             </div>
             <div>
               Error:{" "}
-              <span className={error ? "text-red-600" : "text-green-600"}>
+              <span
+                className={error ? "text-red-600" : "text-green-600"}
+                data-cy="role-management-error"
+              >
                 {error || "None"}
               </span>
             </div>
             <div>
               Admin Error:{" "}
-              <span className={adminError ? "text-red-600" : "text-green-600"}>
+              <span
+                className={adminError ? "text-red-600" : "text-green-600"}
+                data-cy="role-management-admin-error"
+              >
                 {adminError || "None"}
               </span>
             </div>
             <div>
               Current User Roles:{" "}
-              <span className="text-blue-600">
+              <span
+                className="text-blue-600"
+                data-cy="role-management-current-user-roles"
+              >
                 {currentUserRoles?.length || 0}
               </span>
             </div>
             <div>
               All User Roles:{" "}
-              <span className="text-blue-600">{allUserRoles?.length || 0}</span>
+              <span
+                className="text-blue-600"
+                data-cy="role-management-all-user-roles"
+              >
+                {allUserRoles?.length || 0}
+              </span>
             </div>
             <div>
               Is Admin:{" "}
-              <span className={isAdmin ? "text-green-600" : "text-orange-600"}>
+              <span
+                className={isAdmin ? "text-green-600" : "text-orange-600"}
+                data-cy="role-management-is-admin"
+              >
                 {isAdmin.toString()}
               </span>
             </div>
@@ -213,13 +284,17 @@ export const RoleManagement: React.FC = () => {
               Is SuperVera:{" "}
               <span
                 className={isSuperVera ? "text-purple-600" : "text-gray-600"}
+                data-cy="role-management-is-supervera"
               >
                 {isSuperVera.toString()}
               </span>
             </div>
             <div>
               Refresh Function:{" "}
-              <span className="text-blue-600">
+              <span
+                className="text-blue-600"
+                data-cy="role-management-refresh-fn"
+              >
                 {typeof refreshCurrentUserRoles}
               </span>
             </div>
@@ -228,7 +303,7 @@ export const RoleManagement: React.FC = () => {
       </Card>
 
       {/* User Status Card */}
-      <Card>
+      <Card data-cy="role-management-status-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5" />
@@ -237,37 +312,65 @@ export const RoleManagement: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2"
+              data-cy="role-management-status-row"
+            >
               <span className="font-medium">Status:</span>
               {isSuperVera ? (
-                <Badge variant="destructive">SuperVera (Global Admin)</Badge>
+                <Badge
+                  variant="destructive"
+                  data-cy="role-management-status-badge-supervera"
+                >
+                  SuperVera (Global Admin)
+                </Badge>
               ) : isAdmin ? (
-                <Badge variant="default">Admin</Badge>
+                <Badge
+                  variant="default"
+                  data-cy="role-management-status-badge-admin"
+                >
+                  Admin
+                </Badge>
               ) : (
-                <Badge variant="secondary">User</Badge>
+                <Badge
+                  variant="secondary"
+                  data-cy="role-management-status-badge-user"
+                >
+                  User
+                </Badge>
               )}
             </div>
-
             <div>
               <span className="font-medium">Organizations & Roles:</span>
-              <div className="mt-2 space-y-2">
+              <div
+                className="mt-2 space-y-2"
+                data-cy="role-management-orgs-list"
+              >
                 {currentUserOrganizations &&
                 currentUserOrganizations.length > 0 ? (
                   currentUserOrganizations.map((org) => (
                     <div
                       key={org.organization_id}
                       className="flex items-center gap-2"
+                      data-cy="role-management-org-row"
                     >
                       <Building className="w-4 h-4" />
-                      <span className="font-medium">
+                      <span
+                        className="font-medium"
+                        data-cy="role-management-org-name"
+                      >
                         {org.organization_name}:
                       </span>
-                      <div className="flex gap-1">
+                      <div
+                        className="flex gap-1"
+                        data-cy="role-management-org-roles"
+                      >
                         {org.roles.map((role) => (
                           <Badge
                             key={role}
                             variant="outline"
                             className="text-xs"
+                            data-cy="role-management-org-role"
                           >
                             {role}
                           </Badge>
@@ -276,7 +379,10 @@ export const RoleManagement: React.FC = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-muted-foreground">
+                  <p
+                    className="text-muted-foreground"
+                    data-cy="role-management-no-orgs"
+                  >
                     No organizations found.
                   </p>
                 )}
@@ -287,7 +393,7 @@ export const RoleManagement: React.FC = () => {
       </Card>
 
       {/* Current User Roles */}
-      <Card>
+      <Card data-cy="role-management-current-roles-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
@@ -296,22 +402,39 @@ export const RoleManagement: React.FC = () => {
         </CardHeader>
         <CardContent>
           {!currentUserRoles || currentUserRoles.length === 0 ? (
-            <p className="text-muted-foreground">No roles assigned.</p>
+            <p
+              className="text-muted-foreground"
+              data-cy="role-management-no-roles"
+            >
+              No roles assigned.
+            </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3" data-cy="role-management-roles-list">
               {currentUserRoles.map((role, index) => (
                 <div
                   key={role.id || index}
                   className="flex items-center justify-between p-3 border rounded-lg"
+                  data-cy="role-management-role-row"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Badge variant="default">{role.role_name}</Badge>
-                      <span className="text-sm text-muted-foreground">
+                      <Badge
+                        variant="default"
+                        data-cy="role-management-role-badge"
+                      >
+                        {role.role_name}
+                      </Badge>
+                      <span
+                        className="text-sm text-muted-foreground"
+                        data-cy="role-management-role-org"
+                      >
                         in {role.organization_name}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p
+                      className="text-xs text-muted-foreground"
+                      data-cy="role-management-role-ids"
+                    >
                       Role ID: {role.role_id} • Org ID: {role.organization_id}
                     </p>
                   </div>
@@ -320,16 +443,24 @@ export const RoleManagement: React.FC = () => {
                       <Badge
                         variant="default"
                         className="text-xs bg-green-100 text-green-800"
+                        data-cy="role-management-role-active"
                       >
                         Active
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge
+                        variant="secondary"
+                        className="text-xs"
+                        data-cy="role-management-role-inactive"
+                      >
                         Inactive
                       </Badge>
                     )}
                     {role.assigned_at && (
-                      <span className="text-xs text-muted-foreground">
+                      <span
+                        className="text-xs text-muted-foreground"
+                        data-cy="role-management-role-assigned-at"
+                      >
                         {new Date(role.assigned_at).toLocaleDateString()}
                       </span>
                     )}
@@ -343,7 +474,7 @@ export const RoleManagement: React.FC = () => {
 
       {/* Admin Section */}
       {isAdmin && (
-        <Card>
+        <Card data-cy="role-management-admin-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
@@ -352,37 +483,67 @@ export const RoleManagement: React.FC = () => {
           </CardHeader>
           <CardContent>
             {adminLoading ? (
-              <div className="flex justify-center items-center h-32">
+              <div
+                className="flex justify-center items-center h-32"
+                data-cy="role-management-admin-loading-row"
+              >
                 <LoaderCircle className="animate-spin w-6 h-6" />
                 <span className="ml-2">Loading admin data...</span>
               </div>
             ) : adminError ? (
-              <Alert variant="destructive">
+              <Alert
+                variant="destructive"
+                data-cy="role-management-admin-error-alert"
+              >
                 <AlertDescription>{adminError}</AlertDescription>
               </Alert>
             ) : !allUserRoles || allUserRoles.length === 0 ? (
-              <p className="text-muted-foreground">
+              <p
+                className="text-muted-foreground"
+                data-cy="role-management-admin-no-roles"
+              >
                 No role assignments found.
               </p>
             ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div
+                className="space-y-3 max-h-96 overflow-y-auto"
+                data-cy="role-management-admin-roles-list"
+              >
                 {allUserRoles.map((role, index) => (
                   <div
                     key={role.id || index}
                     className="flex items-center justify-between p-3 border rounded-lg"
+                    data-cy="role-management-admin-role-row"
                   >
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="default">{role.role_name}</Badge>
-                        <span className="text-sm font-medium">
+                        <Badge
+                          variant="default"
+                          data-cy="role-management-admin-role-badge"
+                        >
+                          {role.role_name}
+                        </Badge>
+                        <span
+                          className="text-sm font-medium"
+                          data-cy="role-management-admin-role-org"
+                        >
                           {role.organization_name}
                         </span>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>User email: {role.user_email}</span>
-                        {role.user_phone && <span>📞 {role.user_phone}</span>}
+                        <span data-cy="role-management-admin-role-email">
+                          User email: {role.user_email}
+                        </span>
+                        {role.user_phone && (
+                          <span data-cy="role-management-admin-role-phone">
+                            📞 {role.user_phone}
+                          </span>
+                        )}
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p
+                        className="text-xs text-muted-foreground"
+                        data-cy="role-management-admin-role-ids"
+                      >
                         Role ID: {role.role_id} • Org ID: {role.organization_id}
                       </p>
                     </div>
@@ -391,16 +552,24 @@ export const RoleManagement: React.FC = () => {
                         <Badge
                           variant="default"
                           className="text-xs bg-green-100 text-green-800"
+                          data-cy="role-management-admin-role-active"
                         >
                           Active
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge
+                          variant="secondary"
+                          className="text-xs"
+                          data-cy="role-management-admin-role-inactive"
+                        >
                           Inactive
                         </Badge>
                       )}
                       {role.assigned_at && (
-                        <span className="text-xs text-muted-foreground">
+                        <span
+                          className="text-xs text-muted-foreground"
+                          data-cy="role-management-admin-role-assigned-at"
+                        >
                           {new Date(role.assigned_at).toLocaleDateString()}
                         </span>
                       )}
@@ -415,28 +584,35 @@ export const RoleManagement: React.FC = () => {
 
       {/* Roles editing Section */}
       {isAdmin && (
-        <div className="my-6">
-          <RoleEditer />
+        <div className="my-6" data-cy="role-management-editer">
+          <RoleEditer onRolesChanged={handleRolesChanged} />
         </div>
       )}
 
       {/* Permission Testing Section */}
-      <Card>
+      <Card data-cy="role-management-permission-testing-card">
         <CardHeader>
           <CardTitle>Permission Testing</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2"
+              data-cy="role-management-permission-admin-row"
+            >
               <span className="font-medium">Can access admin functions:</span>
               <Badge
                 variant={isAdmin ? "default" : "secondary"}
                 className={isAdmin ? "bg-green-100 text-green-800" : ""}
+                data-cy="role-management-permission-admin-badge"
               >
                 {isAdmin ? "Yes" : "No"}
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2"
+              data-cy="role-management-permission-has-admin-row"
+            >
               <span className="font-medium">Has 'admin' role:</span>
               <Badge
                 variant={
@@ -449,13 +625,17 @@ export const RoleManagement: React.FC = () => {
                     ? "bg-green-100 text-green-800"
                     : ""
                 }
+                data-cy="role-management-permission-has-admin-badge"
               >
                 {currentUserRoles?.some((r) => r.role_name === "admin")
                   ? "Yes"
                   : "No"}
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2"
+              data-cy="role-management-permission-has-user-row"
+            >
               <span className="font-medium">Has 'user' role:</span>
               <Badge
                 variant={
@@ -468,15 +648,22 @@ export const RoleManagement: React.FC = () => {
                     ? "bg-green-100 text-green-800"
                     : ""
                 }
+                data-cy="role-management-permission-has-user-badge"
               >
                 {currentUserRoles?.some((r) => r.role_name === "user")
                   ? "Yes"
                   : "No"}
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2"
+              data-cy="role-management-permission-supervera-row"
+            >
               <span className="font-medium">Is SuperVera:</span>
-              <Badge variant={isSuperVera ? "destructive" : "secondary"}>
+              <Badge
+                variant={isSuperVera ? "destructive" : "secondary"}
+                data-cy="role-management-permission-supervera-badge"
+              >
                 {isSuperVera ? "Yes" : "No"}
               </Badge>
             </div>
@@ -485,7 +672,7 @@ export const RoleManagement: React.FC = () => {
       </Card>
 
       {/* Role Check Testing Section (hasAnyRole) */}
-      <Card>
+      <Card data-cy="role-management-hasanyrole-card">
         <CardHeader>
           <CardTitle>Test hasAnyRole Function</CardTitle>
         </CardHeader>
@@ -493,22 +680,28 @@ export const RoleManagement: React.FC = () => {
           <div className="space-y-6">
             <div>
               <Label htmlFor="roleTest">Role Names (comma separated)</Label>
-              <div className="flex gap-2 mt-1">
+              <div
+                className="flex gap-2 mt-1"
+                data-cy="role-management-hasanyrole-inputs"
+              >
                 <Input
                   id="roleTest"
                   placeholder="e.g. admin,user,manager"
                   value={roleTestInput}
                   onChange={(e) => setRoleTestInput(e.target.value)}
+                  data-cy="role-management-hasanyrole-roles-input"
                 />
                 <Input
                   placeholder="Organization ID (optional)"
                   value={orgTestInput}
                   onChange={(e) => setOrgTestInput(e.target.value)}
+                  data-cy="role-management-hasanyrole-org-input"
                 />
                 <Button
                   onClick={handleTestRoles}
                   variant="default"
                   className="bg-blue-600 hover:bg-blue-700 text-white"
+                  data-cy="role-management-hasanyrole-test-btn"
                 >
                   <Shield className="w-4 h-4 mr-2" />
                   Test Multiple Roles
@@ -519,12 +712,19 @@ export const RoleManagement: React.FC = () => {
             {roleTestPerformed && (
               <>
                 <Separator />
-                <div className="space-y-2">
+                <div
+                  className="space-y-2"
+                  data-cy="role-management-hasanyrole-result"
+                >
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Testing roles:</span>
                     <div className="flex flex-wrap gap-1">
                       {testRoles.map((role, i) => (
-                        <Badge key={i} variant="outline">
+                        <Badge
+                          key={i}
+                          variant="outline"
+                          data-cy="role-management-hasanyrole-tested-role"
+                        >
                           {role}
                         </Badge>
                       ))}
@@ -534,19 +734,30 @@ export const RoleManagement: React.FC = () => {
                   {orgTestInput && (
                     <div className="flex items-center gap-2">
                       <span className="font-medium">In organization:</span>
-                      <Badge variant="outline">{orgTestInput}</Badge>
+                      <Badge
+                        variant="outline"
+                        data-cy="role-management-hasanyrole-tested-org"
+                      >
+                        {orgTestInput}
+                      </Badge>
                     </div>
                   )}
 
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Result:</span>
                     {roleTestResult ? (
-                      <div className="flex items-center text-green-600">
+                      <div
+                        className="flex items-center text-green-600"
+                        data-cy="role-management-hasanyrole-result-yes"
+                      >
                         <Check className="w-4 h-4 mr-1" />
                         <span>User has at least one of these roles</span>
                       </div>
                     ) : (
-                      <div className="flex items-center text-red-600">
+                      <div
+                        className="flex items-center text-red-600"
+                        data-cy="role-management-hasanyrole-result-no"
+                      >
                         <X className="w-4 h-4 mr-1" />
                         <span>User does not have any of these roles</span>
                       </div>
@@ -554,7 +765,10 @@ export const RoleManagement: React.FC = () => {
                   </div>
 
                   <div className="text-xs text-muted-foreground mt-2">
-                    <pre className="p-2 bg-slate-100 rounded overflow-x-auto">
+                    <pre
+                      className="p-2 bg-slate-100 rounded overflow-x-auto"
+                      data-cy="role-management-hasanyrole-result-json"
+                    >
                       {JSON.stringify(
                         {
                           testedRoles: testRoles,
@@ -579,7 +793,7 @@ export const RoleManagement: React.FC = () => {
       </Card>
 
       {/* Single Role Testing Section (hasRole) */}
-      <Card>
+      <Card data-cy="role-management-hasrole-card">
         <CardHeader>
           <CardTitle>Test hasRole Function</CardTitle>
         </CardHeader>
@@ -587,22 +801,28 @@ export const RoleManagement: React.FC = () => {
           <div className="space-y-6">
             <div>
               <Label htmlFor="singleRoleTest">Single Role Name</Label>
-              <div className="flex gap-2 mt-1">
+              <div
+                className="flex gap-2 mt-1"
+                data-cy="role-management-hasrole-inputs"
+              >
                 <Input
                   id="singleRoleTest"
                   placeholder="e.g. admin"
                   value={singleRoleInput}
                   onChange={(e) => setSingleRoleInput(e.target.value)}
+                  data-cy="role-management-hasrole-role-input"
                 />
                 <Input
                   placeholder="Organization ID (optional)"
                   value={singleOrgInput}
                   onChange={(e) => setSingleOrgInput(e.target.value)}
+                  data-cy="role-management-hasrole-org-input"
                 />
                 <Button
                   onClick={handleTestSingleRole}
                   variant="default"
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  data-cy="role-management-hasrole-test-btn"
                 >
                   <Check className="w-4 h-4 mr-2" />
                   Test Single Role
@@ -613,28 +833,47 @@ export const RoleManagement: React.FC = () => {
             {singleRoleTestPerformed && (
               <>
                 <Separator />
-                <div className="space-y-2">
+                <div
+                  className="space-y-2"
+                  data-cy="role-management-hasrole-result"
+                >
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Testing role:</span>
-                    <Badge variant="outline">{singleRoleInput}</Badge>
+                    <Badge
+                      variant="outline"
+                      data-cy="role-management-hasrole-tested-role"
+                    >
+                      {singleRoleInput}
+                    </Badge>
                   </div>
 
                   {singleOrgInput && (
                     <div className="flex items-center gap-2">
                       <span className="font-medium">In organization:</span>
-                      <Badge variant="outline">{singleOrgInput}</Badge>
+                      <Badge
+                        variant="outline"
+                        data-cy="role-management-hasrole-tested-org"
+                      >
+                        {singleOrgInput}
+                      </Badge>
                     </div>
                   )}
 
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Result:</span>
                     {singleRoleResult ? (
-                      <div className="flex items-center text-green-600">
+                      <div
+                        className="flex items-center text-green-600"
+                        data-cy="role-management-hasrole-result-yes"
+                      >
                         <Check className="w-4 h-4 mr-1" />
                         <span>User has this specific role</span>
                       </div>
                     ) : (
-                      <div className="flex items-center text-red-600">
+                      <div
+                        className="flex items-center text-red-600"
+                        data-cy="role-management-hasrole-result-no"
+                      >
                         <X className="w-4 h-4 mr-1" />
                         <span>User does not have this role</span>
                       </div>
@@ -642,7 +881,10 @@ export const RoleManagement: React.FC = () => {
                   </div>
 
                   <div className="text-xs text-muted-foreground mt-2">
-                    <pre className="p-2 bg-slate-100 rounded overflow-x-auto">
+                    <pre
+                      className="p-2 bg-slate-100 rounded overflow-x-auto"
+                      data-cy="role-management-hasrole-result-json"
+                    >
                       {JSON.stringify(
                         {
                           testedRole: singleRoleInput,

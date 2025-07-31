@@ -7,6 +7,7 @@ import { AuthContext } from "./AuthContext";
 import { useAppDispatch } from "@/store/hooks";
 import { resetRoles } from "@/store/slices/rolesSlice";
 import { clearSelectedUser } from "@/store/slices/usersSlice";
+import { AuthRedirect } from "@/components/Auth/AuthRedirect";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -18,7 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    void supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setAuthLoading(false);
@@ -48,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (user && location.pathname === "/login") {
-      navigate("/");
+      void navigate("/");
     }
   }, [user, location.pathname, navigate]);
 
@@ -81,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
     } finally {
       // Always navigate to home page after logout
-      navigate("/");
+      void navigate("/");
     }
   };
 
@@ -99,7 +100,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           <LoaderCircle className="animate-spin w-6 h-6" />
         </div>
       ) : (
-        children
+        <>
+          {user && <AuthRedirect />}
+          {children}
+        </>
       )}
     </AuthContext.Provider>
   );

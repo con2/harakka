@@ -32,7 +32,7 @@ const PasswordReset = () => {
       }
     };
 
-    ensureSignedOut();
+    void ensureSignedOut();
   }, []); // Run only once on component mount
 
   useEffect(() => {
@@ -58,7 +58,7 @@ const PasswordReset = () => {
         if (formSubmittedRef.current) {
           // Add a small delay to ensure password update completes
           setTimeout(() => {
-            navigate("/password-reset-success", { replace: true });
+            void navigate("/password-reset-success", { replace: true });
           }, 1000);
         }
       }
@@ -135,7 +135,7 @@ const PasswordReset = () => {
 
             // Success - navigate to success page
             // Keep isSubmitting true to show loading state until navigation
-            navigate("/password-reset-success", { replace: true });
+            void navigate("/password-reset-success", { replace: true });
           } catch (error) {
             console.error("Error during password update:", error);
             setError("An unexpected error occurred");

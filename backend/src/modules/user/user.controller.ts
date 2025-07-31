@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   NotFoundException,
-  ForbiddenException,
   Req,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
@@ -15,6 +14,7 @@ import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { Roles } from "src/decorators/roles.decorator";
+import { ApiSingleResponse } from "@common/response.types";
 
 @Controller("users")
 export class UserController {
@@ -36,53 +36,37 @@ export class UserController {
     return user;
   }
 
+  /**
+   * Get the total user count of unique users in the system
+   * @returns number of total users
+   */
+  @Get("count")
+  async getUserCount(
+    @Req() req: AuthRequest,
+  ): Promise<ApiSingleResponse<number>> {
+    const supabase = req.supabase;
+    return this.userService.getUserCount(supabase);
+  }
+
   @Get(":id")
+  // TODO: Update which roles can access this endpoint when we know more about the user roles
+  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
   async getUserById(
     @Param("id") id: string,
     @Req() req: AuthRequest,
   ): Promise<UserProfile> {
-    // Check if the user is accessing their own profile
-    if (req.user?.id === id) {
-      // Allow users to access their own profile
-      const user = await this.userService.getUserById(id, req);
-      if (!user) {
-        throw new NotFoundException(`User with ID ${id} not found`);
-      }
-      return user;
-    }
-
-    // For accessing other users' profiles, check admin roles
-    const hasAdminRole = req.userRoles?.some((role) =>
-      ["admin", "super_admin", "superVera"].includes(role.role_name ?? ""),
-    );
-
-    if (!hasAdminRole) {
-      throw new ForbiddenException(
-        "You do not have permission to access other users' profiles",
-      );
-    }
-
     const user = await this.userService.getUserById(id, req);
+
     if (!user) {
-      throw new NotFoundException(
-        `User with ID ${id} not found or you do not have access to it`,
-      );
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
     return user;
   }
 
-  @Post()
-  @Roles(["admin", "super_admin", "superVera", "main_admin"], { match: "any" })
-  async createUser(
-    @Body() user: CreateUserDto,
-    @Req() req: AuthRequest,
-  ): Promise<UserProfile> {
-    // await for Body
-    return this.userService.createUser(user, req);
-  }
-
   @Put(":id")
-  @Roles(["admin", "super_admin", "superVera", "main_admin"], { match: "any" })
+  @Roles(["user", "admin", "super_admin", "superVera", "main_admin"], {
+    match: "any",
+  })
   async updateUser(
     @Param("id") id: string,
     @Body() user: Partial<CreateUserDto>,
@@ -107,7 +91,9 @@ export class UserController {
   // Address Endpoints
 
   @Get(":id/addresses")
-  @Roles(["admin", "super_admin", "superVera", "main_admin"], { match: "any" })
+  @Roles(["user", "admin", "super_admin", "superVera", "main_admin"], {
+    match: "any",
+  })
   async getAddresses(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -118,7 +104,9 @@ export class UserController {
   }
 
   @Post(":id/addresses")
-  @Roles(["admin", "super_admin", "main_admin", "superVera"], { match: "any" })
+  @Roles(["user", "admin", "super_admin", "main_admin", "superVera"], {
+    match: "any",
+  })
   async addAddress(
     @Param("id") id: string,
     @Body() address: CreateAddressDto,
@@ -128,7 +116,9 @@ export class UserController {
   }
 
   @Put(":id/addresses/:addressId")
-  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
+  @Roles(["user", "admin", "super_admin", "main_admin", "superVera"], {
+    match: "any",
+  })
   async updateAddress(
     @Param("id") id: string,
     @Param("addressId") addressId: string,
@@ -139,7 +129,9 @@ export class UserController {
   }
 
   @Delete(":id/addresses/:addressId")
-  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
+  @Roles(["user", "admin", "super_admin", "main_admin", "superVera"], {
+    match: "any",
+  })
   async deleteAddress(
     @Param("id") id: string,
     @Param("addressId") addressId: string,
@@ -147,10 +139,4 @@ export class UserController {
   ) {
     return this.userService.deleteAddress(id, addressId, req);
   }
-
-  /* @Post(":id/send-welcome-mail")
-  async sendWelcomeEmail(@Param("id") id: string) {
-    await this.userService.sendWelcomeEmail(id);
-    return { message: `Welcome mail sent to user ${id}` };
-  } */
 }

@@ -7,6 +7,7 @@ import {
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { ApiResponse } from "../../../../common/response.types";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Injectable()
 export class StorageLocationsService {
@@ -39,7 +40,7 @@ export class StorageLocationsService {
   async getLocationById(
     id: string,
     supabase: SupabaseClient,
-  ): Promise<StorageLocationsRow | null> {
+  ): Promise<StorageLocationsRow> {
     const { data, error }: PostgrestSingleResponse<StorageLocationsRow> =
       await supabase
         .from("storage_locations")
@@ -48,13 +49,10 @@ export class StorageLocationsService {
         .single();
 
     if (error) {
-      if (error.code === "PGRST116") {
-        return null; // Not found
-      }
-      throw new Error(error.message);
+      handleSupabaseError(error);
     }
 
-    return data ?? null;
+    return data;
   }
 
   /**

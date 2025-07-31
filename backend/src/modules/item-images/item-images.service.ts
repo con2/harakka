@@ -7,6 +7,7 @@ import {
   PostgrestResponse,
   PostgrestSingleResponse,
 } from "@supabase/supabase-js";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Injectable()
 export class ItemImagesService {
@@ -80,7 +81,8 @@ export class ItemImagesService {
       await supabase.storage
         .from("public/item-images")
         .remove([uploadData.fullPath]);
-      throw error;
+      // Handle any other errors
+      handleSupabaseError(error);
     }
   }
 
@@ -97,7 +99,9 @@ export class ItemImagesService {
       .eq("is_active", true)
       .order("display_order");
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      handleSupabaseError(error);
+    }
 
     return data || [];
   }
@@ -109,19 +113,15 @@ export class ItemImagesService {
     const supabase = this.supabaseService.getServiceClient();
 
     // 1. Get the image record
-    const {
-      data: image,
-      error: fetchError,
-    }: PostgrestSingleResponse<ItemImageRow> = await supabase
-      .from("storage_item_images")
-      .select("*")
-      .eq("id", imageId)
-      .single();
+    const { data: image, error }: PostgrestSingleResponse<ItemImageRow> =
+      await supabase
+        .from("storage_item_images")
+        .select("*")
+        .eq("id", imageId)
+        .single();
 
-    if (fetchError || !image || !image.storage_path) {
-      const message =
-        fetchError instanceof Error ? fetchError.message : "Image not found";
-      throw new Error(message);
+    if (error) {
+      handleSupabaseError(error);
     }
 
     // 2. Delete from storage
@@ -136,7 +136,9 @@ export class ItemImagesService {
       .delete()
       .eq("id", imageId);
 
-    if (deleteError) throw new Error(deleteError.message);
+    if (deleteError) {
+      handleSupabaseError(deleteError);
+    }
 
     return { success: true };
   }

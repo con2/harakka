@@ -5,7 +5,7 @@ import {
   fetchTagsForItem,
   selectAllTags,
   selectSelectedTags,
-  selectLoading,
+  selectTagsLoading,
 } from "@/store/slices/tagSlice";
 import { TagAssignFormProps } from "@/types";
 import { toast } from "sonner";
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 const TagAssignmentForm: React.FC<TagAssignFormProps> = ({ itemId }) => {
   const dispatch = useAppDispatch();
   const [selectedTags, setSelectedTags] = useState<string[]>([]); // Track selected tag ids
-  const loading = useAppSelector(selectLoading);
+  const loading = useAppSelector(selectTagsLoading);
 
   // Get all tags and the selected tags for the specific item
   const tags = useAppSelector(selectAllTags); // Get all available tags
@@ -27,7 +27,7 @@ const TagAssignmentForm: React.FC<TagAssignFormProps> = ({ itemId }) => {
   const { lang } = useLanguage();
 
   useEffect(() => {
-    dispatch(fetchTagsForItem(itemId)); // Fetch existing tags assigned to the item
+    void dispatch(fetchTagsForItem(itemId)); // Fetch existing tags assigned to the item
   }, [itemId, dispatch]);
 
   // Update the useEffect to initialize selectedTags from existingTags

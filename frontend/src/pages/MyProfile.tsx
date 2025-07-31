@@ -44,6 +44,7 @@ import {
 import { toastConfirm } from "../components/ui/toastConfirm";
 import profilePlaceholder from "../assets/profilePlaceholder.png";
 import MyBookings from "@/components/MyBookings";
+import { CurrentUserRoles } from "@/components/Admin/Roles/CurrentUserRoles";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();
@@ -78,7 +79,8 @@ const MyProfile = () => {
       setPhone(selectedUser.phone || "");
       setVisibleName(selectedUser.visible_name || "");
       // setPreferences(selectedUser.preferences || "");
-      if (addresses.length === 0) dispatch(getUserAddresses(selectedUser.id));
+      if (addresses.length === 0)
+        void dispatch(getUserAddresses(selectedUser.id));
     }
   }, [selectedUser, dispatch, addresses.length]);
 
@@ -98,7 +100,7 @@ const MyProfile = () => {
 
   // Handle tab change with URL update
   const handleTabChange = (value: string) => {
-    navigate(`/profile?tab=${value}`);
+    void navigate(`/profile?tab=${value}`);
   };
 
   const handleSaveChanges = () => {
@@ -112,14 +114,14 @@ const MyProfile = () => {
         // preferences: typeof preferences === "string" ? undefined : preferences
       };
       try {
-        dispatch(
+        void dispatch(
           updateUser({ id: selectedUser.id, data: updatedUserData }),
         ).unwrap();
 
         // Loop through addresses and update or add them
         for (const addr of addresses) {
           if (addr.id) {
-            dispatch(
+            void dispatch(
               updateAddress({
                 id: selectedUser.id,
                 addressId: addr.id,
@@ -127,13 +129,13 @@ const MyProfile = () => {
               }),
             ).unwrap();
           } else {
-            dispatch(
+            void dispatch(
               addAddress({ id: selectedUser.id, address: addr }),
             ).unwrap();
           }
         }
         // refresh addresses after all updates/adds
-        dispatch(getUserAddresses(selectedUser.id));
+        void dispatch(getUserAddresses(selectedUser.id));
         toast.success(t.myProfile.toast.updateSuccess[lang]);
       } catch {
         toast.error(t.myProfile.toast.updateError[lang]);
@@ -195,7 +197,7 @@ const MyProfile = () => {
             toast.error(t.myProfile.deleteUser.missingId[lang]);
           }
           toast.success(t.myProfile.deleteUser.success[lang]);
-          navigate("/");
+          void navigate("/");
         } catch {
           toast.error(t.myProfile.deleteUser.error[lang]);
         }
@@ -305,6 +307,9 @@ const MyProfile = () => {
                     />
                   </div>
                 </div>
+
+                {/* Roles */}
+                <CurrentUserRoles />
 
                 {/* Addresses */}
                 <div>
@@ -660,7 +665,7 @@ const MyProfile = () => {
                           )
                             .unwrap()
                             .then(() => {
-                              dispatch(
+                              void dispatch(
                                 getUserAddresses(selectedUser?.id || ""),
                               );
                               setNewAddress({

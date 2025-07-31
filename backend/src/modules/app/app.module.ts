@@ -36,11 +36,18 @@ import { OrganizationsController } from "../organization/organizations.controlle
 import { Org_ItemsModule } from "../org_items/org_items.module";
 import { OrgItemsController } from "../org_items/org_items.controller";
 import { UserBanningModule } from "../user-banning/user-banning.module";
+import { OrganizationLocationsModule } from "../organization-locations/organization_locations.module";
 
 // Load and expand environment variables before NestJS modules initialize
-const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
-const env = dotenv.config({ path: envFile });
-dotenvExpand.expand(env);
+// Load .env first (base configuration)
+const baseEnvFile = path.resolve(process.cwd(), "../.env");
+const baseEnv = dotenv.config({ path: baseEnvFile });
+dotenvExpand.expand(baseEnv);
+
+// Load .env.local second (overrides base configuration)
+const localEnvFile = path.resolve(process.cwd(), "../.env.local");
+const localEnv = dotenv.config({ path: localEnvFile });
+dotenvExpand.expand(localEnv);
 
 @Module({
   imports: [
@@ -72,6 +79,7 @@ dotenvExpand.expand(env);
     OrganizationsModule,
     Org_ItemsModule,
     UserBanningModule,
+    OrganizationLocationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: "APP_GUARD", useClass: RolesGuard }],

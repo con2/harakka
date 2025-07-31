@@ -8,13 +8,13 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  ForbiddenException,
   Req,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ItemImagesService } from "./item-images.service";
 import { SupabaseService } from "../supabase/supabase.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import { Roles } from "@src/decorators/roles.decorator";
 
 @Controller("item-images")
 export class ItemImagesController {
@@ -29,6 +29,12 @@ export class ItemImagesController {
   }
 
   @Post(":itemId")
+  @Roles(
+    ["admin", "superVera", "main_admin", "storage_manager", "super_admin"],
+    {
+      match: "any",
+    },
+  ) // Auth Guard use
   @UseInterceptors(FileInterceptor("image"))
   async uploadImage(
     @Req() req: AuthRequest,
@@ -41,27 +47,6 @@ export class ItemImagesController {
       display_order: number;
     },
   ) {
-    if (!req.user || !req.user.id) {
-      throw new ForbiddenException("Authentication required");
-    }
-    const userId = req.user.id;
-    // Get user profile to check role
-    const supabase = this.supabaseService.getServiceClient();
-    const { data: userProfile, error } = await supabase
-      .from("user_profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (error || !userProfile) {
-      throw new ForbiddenException("Unable to verify user permissions");
-    }
-
-    // Check if user has admin or superVera role
-    if (!["admin", "superVera"].includes(userProfile.role)) {
-      throw new ForbiddenException("Insufficient permissions");
-    }
-
     if (!file) {
       throw new BadRequestException("No image file provided");
     }
@@ -70,34 +55,16 @@ export class ItemImagesController {
   }
 
   @Delete(":imageId")
+  @Roles(
+    ["admin", "superVera", "main_admin", "storage_manager", "super_admin"],
+    {
+      match: "any",
+    },
+  )
   async deleteImage(
     @Req() req: AuthRequest,
     @Param("imageId") imageId: string,
   ) {
-    // Extract user ID from request headers or auth info
-    const userId = req.user?.id;
-
-    if (!userId) {
-      throw new ForbiddenException("Authentication required");
-    }
-
-    // Get user profile to check role
-    const supabase = this.supabaseService.getServiceClient();
-    const { data: userProfile, error } = await supabase
-      .from("user_profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (error || !userProfile) {
-      throw new ForbiddenException("Unable to verify user permissions");
-    }
-
-    // Check if user has admin or superVera role
-    if (!["admin", "superVera"].includes(userProfile.role)) {
-      throw new ForbiddenException("Insufficient permissions");
-    }
-
     return this.itemImagesService.deleteItemImage(imageId);
   }
 }

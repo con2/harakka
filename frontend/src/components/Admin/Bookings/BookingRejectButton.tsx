@@ -28,8 +28,8 @@ const BookingRejectButton = ({
       description: "Are you sure you want to reject this booking?",
       confirmText: "Confirm",
       cancelText: "Cancel",
-      onConfirm: async () => {
-        await toast.promise(dispatch(rejectBooking(id)).unwrap(), {
+      onConfirm: () => {
+        toast.promise(dispatch(rejectBooking(id)).unwrap(), {
           loading: "Rejecting booking...",
           success: "Booking has been successfully rejected.",
           error: "Failed to reject the booking.",

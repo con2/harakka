@@ -1,3 +1,5 @@
+// Added this to avoid refactoring 50+ files
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext } from "react";
 
 // Define available languages

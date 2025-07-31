@@ -1,5 +1,6 @@
 import { CreateItemDto, Item, UpdateItemDto, ValidItemOrder } from "@/types";
 import { api } from "../axios";
+import { ApiSingleResponse } from "@common/response.types";
 
 /**
  * API service for item-related endpoints
@@ -117,5 +118,13 @@ export const itemsApi = {
     if (location_filter) call += `&location=${location_filter.join(",")}`;
     if (categories) call += `&category=${categories.join(",")}`;
     return api.get(call);
+  },
+
+  /**
+   * Get total amount of bookings in the system (active and inactive)
+   * @returns number
+   */
+  getItemCount: async (): Promise<ApiSingleResponse<number>> => {
+    return await api.get(`/storage-items/count`);
   },
 };

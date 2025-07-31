@@ -139,14 +139,14 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
-    dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
-    navigate(`/storage/items/${itemId}`);
+    void dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
+    void navigate(`/storage/items/${itemId}`);
   };
 
   // Handle adding item to cart
   const handleAddToCart = () => {
     if (item) {
-      dispatch(
+      void dispatch(
         addToCart({
           item: item,
           quantity: quantity,
@@ -189,7 +189,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           });
         });
     }
-  }, [item.id, startDate, endDate]);
+  }, [item.id, startDate, endDate, item.items_number_currently_in_storage]);
 
   const isItemAvailableForTimeframe = availabilityInfo.availableQuantity > 0;
 
@@ -207,7 +207,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       className="w-full max-w-[350px] flex flex-col justify-between p-4"
     >
       {/* Image Section */}
-      <div className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden">
+      <div
+        className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden"
+        data-cy="item-image-section"
+      >
         {isImageLoading && !loadFailed && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
             <div className="w-8 h-8 border-4 border-gray-300 border-t-secondary rounded-full animate-spin"></div>
@@ -251,15 +254,21 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       </div>
 
       {/* Item Details */}
-      <div>
-        <h2 className="text-lg text-primary font-normal text-center mb-1">
+      <div data-cy="item-details">
+        <h2
+          className="text-lg text-primary font-normal text-center mb-1"
+          data-cy="item-name"
+        >
           {itemContent?.item_name
             ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
             : "Tuote"}
         </h2>
         {/* Display location name */}
         {item.location_details && (
-          <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          <div
+            className="flex items-center justify-center gap-1 text-xs text-muted-foreground"
+            data-cy="item-location"
+          >
             <MapPin className="h-3.5 w-3.5" />
             <span>{item.location_details.name}</span>
           </div>
@@ -268,7 +277,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
       {/* Display selected booking timeframe if it exists */}
       {startDate && endDate && (
-        <div className="bg-slate-100 p-2 rounded-md mb-1 flex flex-col items-center">
+        <div
+          className="bg-slate-100 p-2 rounded-md mb-1 flex flex-col items-center"
+          data-cy="item-timeframe"
+        >
           <div className="flex items-center text-sm text-slate-400">
             <Clock className="h-4 w-4 mr-1" />
             <span className="font-medium text-xs">
@@ -283,7 +295,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       )}
 
       {/* Quantity Input */}
-      <div>
+      <div data-cy="item-quantity-section">
         <div className="flex flex-col flex-wrap items-center space-y-2 justify-between">
           <div className="flex items-center">
             <Button
@@ -316,7 +328,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
               size="sm"
               onClick={() => {
                 console.log(
-                  `Quantity: ${quantity}, availableQUantity: ${availabilityInfo}`,
+                  `Quantity: ${quantity}, availableQQuantity: ${availabilityInfo.availableQuantity}`,
                 );
                 setQuantity(
                   // HIER!!
@@ -370,6 +382,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                   style={{
                     pointerEvents: isAddToCartDisabled ? "none" : "auto",
                   }}
+                  data-cy="item-add-to-cart-btn"
                 >
                   {t.itemDetails.items.addToCart[lang]}
                 </Button>
@@ -392,6 +405,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       <Button
         onClick={() => handleItemClick(item.id)}
         className="w-full bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
+        data-cy="item-view-details-btn"
       >
         {t.itemCard.viewDetails ? t.itemCard.viewDetails[lang] : "Katso tiedot"}
       </Button>

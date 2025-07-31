@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   NotFoundException,
@@ -11,6 +10,7 @@ import {
   SetMetadata,
   Req,
   BadRequestException,
+  Patch,
 } from "@nestjs/common";
 import { OrganizationsService } from "./organizations.service";
 import { Roles } from "src/decorators/roles.decorator";
@@ -66,7 +66,7 @@ export class OrganizationsController {
 
   // 4. create
   @Post()
-  @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
   async createOrganization(
     @Req() req: AuthRequest,
     @Body() org: CreateOrganizationDto,
@@ -76,7 +76,7 @@ export class OrganizationsController {
 
   // 5. update
   @Put(":organizationId")
-  @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
   async updateOrganization(
     @Req() req: AuthRequest,
     @Param("organizationId") id: string,
@@ -85,9 +85,10 @@ export class OrganizationsController {
     return await this.organizationService.updateOrganization(req, id, dto);
   }
 
-  // 6. delete
+  /*
+  // 6. delete --- does not work atm
   @Delete(":organizationId")
-  @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
   async deleteOrganization(
     @Req() req: AuthRequest,
     @Param("organizationId") id: string,
@@ -96,10 +97,22 @@ export class OrganizationsController {
 
     return this.organizationService.deleteOrganization(req, id);
   }
+    */
 
-  // 7. activate or deactivate orgs
+  // 7. soft-delete org
+  @Patch(":organizationId/soft-delete")
+  @Roles(["super_admin", "superVera"], { match: "any" })
+  async softDeleteOrganization(
+    @Req() req: AuthRequest,
+    @Param("organizationId") id: string,
+  ): Promise<{ success: boolean; id: string }> {
+    if (!id) throw new BadRequestException("Organization ID is required");
+    return this.organizationService.softDeleteOrganization(req, id);
+  }
+
+  // 8. activate or deactivate orgs
   @Put(":organizationId/activation")
-  @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
   async toggleOrganizationActivation(
     @Req() req: AuthRequest,
     @Param("organizationId") id: string,

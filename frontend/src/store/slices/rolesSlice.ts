@@ -9,11 +9,13 @@ import {
 } from "@/types/roles";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { ViewUserRolesWithDetails } from "@common/role.types";
+import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 
 const initialState: RolesState = {
   currentUserRoles: [] as ViewUserRolesWithDetails[],
   currentUserOrganizations: [] as UserOrganization[],
   isSuperVera: false,
+  isSuperAdmin: false,
   allUserRoles: [] as ViewUserRolesWithDetails[],
   loading: false,
   adminLoading: false,
@@ -75,9 +77,23 @@ export const fetchAvailableRoles = createAsyncThunk(
 
 export const createUserRole = createAsyncThunk(
   "roles/createUserRole",
-  async (roleData: CreateUserRoleDto, { rejectWithValue }) => {
+  async (
+    roleData: CreateUserRoleDto,
+    { getState, rejectWithValue, dispatch },
+  ) => {
     try {
-      return await roleApi.createUserRole(roleData);
+      const result = await roleApi.createUserRole(roleData);
+
+      // If the affected user is the current user, clear refresh session and get new JWT
+      const state = getState() as RootState;
+      const currentUserId = state.users.selectedUser?.id;
+      if (roleData.user_id === currentUserId && currentUserId) {
+        await refreshSupabaseSession();
+        // Refetch roles
+        void dispatch(fetchCurrentUserRoles());
+      }
+
+      return result;
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to create user role"),
@@ -93,10 +109,20 @@ export const updateUserRole = createAsyncThunk(
       tableKeyId,
       updateData,
     }: { tableKeyId: string; updateData: UpdateUserRoleDto },
-    { rejectWithValue },
+    { getState, rejectWithValue, dispatch },
   ) => {
     try {
-      return await roleApi.updateUserRole(tableKeyId, updateData);
+      const result = await roleApi.updateUserRole(tableKeyId, updateData);
+
+      // If the affected user is the current user, clear localStorage and refresh session
+      const state = getState() as RootState;
+      const currentUserId = state.users.selectedUser?.id;
+      if (result.user_id === currentUserId && currentUserId) {
+        await refreshSupabaseSession();
+        void dispatch(fetchCurrentUserRoles());
+      }
+
+      return result;
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to update user role"),
@@ -107,9 +133,20 @@ export const updateUserRole = createAsyncThunk(
 
 export const deleteUserRole = createAsyncThunk(
   "roles/deleteUserRole",
-  async (tableKeyId: string, { rejectWithValue }) => {
+  async (tableKeyId: string, { getState, rejectWithValue, dispatch }) => {
     try {
+      // Find the role before deleting to check user_id
+      const state = getState() as RootState;
+      const role = state.roles.allUserRoles.find((r) => r.id === tableKeyId);
+      const currentUserId = state.users.selectedUser?.id;
+
       await roleApi.deleteUserRole(tableKeyId);
+
+      if (role && role.user_id === currentUserId && currentUserId) {
+        await refreshSupabaseSession();
+        void dispatch(fetchCurrentUserRoles());
+      }
+
       return tableKeyId;
     } catch (error: unknown) {
       return rejectWithValue(
@@ -121,9 +158,20 @@ export const deleteUserRole = createAsyncThunk(
 
 export const permanentDeleteUserRole = createAsyncThunk(
   "roles/permanentDeleteUserRole",
-  async (tableKeyId: string, { rejectWithValue }) => {
+  async (tableKeyId: string, { getState, rejectWithValue, dispatch }) => {
     try {
+      // Find the role before deleting to check user_id
+      const state = getState() as RootState;
+      const role = state.roles.allUserRoles.find((r) => r.id === tableKeyId);
+      const currentUserId = state.users.selectedUser?.id;
+
       await roleApi.permanentDeleteUserRole(tableKeyId);
+
+      if (role && role.user_id === currentUserId && currentUserId) {
+        await refreshSupabaseSession();
+        void dispatch(fetchCurrentUserRoles());
+      }
+
       return tableKeyId;
     } catch (error: unknown) {
       return rejectWithValue(
@@ -148,6 +196,7 @@ const rolesSlice = createSlice({
       state.currentUserRoles = [];
       state.currentUserOrganizations = [];
       state.isSuperVera = false;
+      state.isSuperAdmin = false;
       state.allUserRoles = [];
       state.error = null;
       state.adminError = null;
@@ -164,10 +213,11 @@ const rolesSlice = createSlice({
       })
       .addCase(fetchCurrentUserRoles.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentUserRoles = action.payload
-          .roles as ViewUserRolesWithDetails[];
+        state.currentUserRoles = action.payload.roles;
         state.currentUserOrganizations = action.payload.organizations;
         state.isSuperVera = action.payload.isSuperVera;
+        const userRoles = action.payload.roles.map((r) => r.role_name);
+        state.isSuperAdmin = userRoles.every((r) => r === "super_admin");
       })
       .addCase(fetchCurrentUserRoles.rejected, (state, action) => {
         state.loading = false;
@@ -182,7 +232,7 @@ const rolesSlice = createSlice({
       })
       .addCase(fetchAllUserRoles.fulfilled, (state, action) => {
         state.adminLoading = false;
-        state.allUserRoles = action.payload as ViewUserRolesWithDetails[];
+        state.allUserRoles = action.payload;
       })
       .addCase(fetchAllUserRoles.rejected, (state, action) => {
         state.adminLoading = false;
@@ -197,7 +247,7 @@ const rolesSlice = createSlice({
       })
       .addCase(createUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
-        state.allUserRoles.push(action.payload as ViewUserRolesWithDetails);
+        state.allUserRoles.push(action.payload);
       })
       .addCase(createUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -232,8 +282,7 @@ const rolesSlice = createSlice({
           (role: ViewUserRolesWithDetails) => role.id === action.payload.id,
         );
         if (index !== -1) {
-          state.allUserRoles[index] =
-            action.payload as ViewUserRolesWithDetails;
+          state.allUserRoles[index] = action.payload;
         }
       })
       .addCase(updateUserRole.rejected, (state, action) => {
@@ -310,6 +359,8 @@ export const selectCurrentUserRoles = (state: RootState) =>
 export const selectCurrentUserOrganizations = (state: RootState) =>
   state.roles.currentUserOrganizations;
 export const selectIsSuperVera = (state: RootState) => state.roles.isSuperVera;
+export const selectIsSuperAdmin = (state: RootState) =>
+  state.roles.isSuperAdmin;
 export const selectAllUserRoles = (state: RootState) =>
   state.roles.allUserRoles;
 export const selectRolesLoading = (state: RootState) => state.roles.loading;
@@ -328,6 +379,8 @@ export const selectIsAdmin = (state: RootState) => {
   return (
     hasRole(state, "admin") ||
     hasRole(state, "superVera") ||
+    hasRole(state, "main_admin") ||
+    hasRole(state, "super_admin") ||
     state.roles.isSuperVera
   );
 };

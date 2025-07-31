@@ -19,10 +19,17 @@ import {
   selectAdminError,
   selectIsAdmin,
   selectAvailableRoles,
+  selectIsSuperAdmin,
 } from "@/store/slices/rolesSlice";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
 
-export const useRoles = () => {
+interface UseRolesOptions {
+  /** When true, suppresses the hook’s initial fetch effect. */
+  skipInitialFetch?: boolean;
+}
+
+export const useRoles = (options: UseRolesOptions = {}) => {
+  const { skipInitialFetch = false } = options;
   const dispatch = useAppDispatch();
 
   // Track fetch attempts with a state to ensure it survives re-renders
@@ -40,6 +47,7 @@ export const useRoles = () => {
   );
   const isSuperVera = useAppSelector(selectIsSuperVera);
   const isAdmin = useAppSelector(selectIsAdmin);
+  const isSuperAdmin = useAppSelector(selectIsSuperAdmin);
 
   // Admin data
   const allUserRoles = useAppSelector(selectAllUserRoles);
@@ -145,6 +153,7 @@ export const useRoles = () => {
   // Auto-fetch current user roles and available roles on mount exactly once on mount and limit retries
   useEffect(() => {
     if (
+      !skipInitialFetch &&
       !initialFetchAttempted.current &&
       !loading &&
       fetchAttempts < MAX_FETCH_ATTEMPTS
@@ -159,9 +168,9 @@ export const useRoles = () => {
         .catch(() => {
           setResponseReceived(true); // Even on error, we've received a response
         });
-      dispatch(fetchAvailableRoles());
+      void dispatch(fetchAvailableRoles());
     }
-  }, [dispatch, loading, fetchAttempts]);
+  }, [dispatch, loading, fetchAttempts, skipInitialFetch]);
 
   return {
     // Data
@@ -172,6 +181,7 @@ export const useRoles = () => {
 
     // Status
     isSuperVera,
+    isSuperAdmin,
     isAdmin,
     loading: loading && !responseReceived, // Only show loading if we haven't received any response
     adminLoading,

@@ -14,6 +14,7 @@ import {
   ApiSingleResponse,
 } from "../../../../common/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
+import { StorageItemRow } from "../storage-items/interfaces/storage-item.interface";
 
 @Injectable()
 export class BookingItemsService {
@@ -36,22 +37,46 @@ export class BookingItemsService {
     return { ...result, metadata };
   }
 
+  /**
+   * Get booking-items of a certain booking.
+   * Joins with storage_items to get desired data
+   * @param supabase The supabase client to use. Should be an authorized client
+   * @param booking_id The booking ID of which to retrieve item data for
+   * @param page What page to retrieve. Default 1.
+   * @param limit How many rows to retrieve. Default 10.
+   * @param storage_items_columns Get data about the item itself. Default gets translations
+   * @returns booking items with a joined storage_items row
+   */
   async getBookingItems(
     supabase: SupabaseClient,
     booking_id: string,
-    page: number,
-    limit: number,
-  ): Promise<ApiResponse<BookingItemsRow>> {
+    page: number = 1,
+    limit: number = 10,
+    storage_items_columns: string = "translations",
+  ): Promise<
+    ApiResponse<
+      BookingItemsRow & {
+        storage_items: Partial<StorageItemRow>;
+      }
+    >
+  > {
     const { from, to } = getPaginationRange(page, limit);
-    const result: PostgrestResponse<BookingItemsRow> = await supabase
+
+    const result: PostgrestResponse<
+      BookingItemsRow & {
+        storage_items: Partial<StorageItemRow>;
+      }
+    > = await supabase
       .from("booking_items")
-      .select("*", { count: "exact" })
+      .select(`*, storage_items (${storage_items_columns})` as "*", {
+        count: "exact",
+      })
       .eq("booking_id", booking_id)
       .range(from, to);
 
     if (result.error) {
       console.error(result.error);
-      throw new Error("Could not retrieve booking-item");
+      throw new Error("Could not retrieve booking-items");
     }
     const metadata = getPaginationMeta(result.count, page, limit);
     return { ...result, metadata };

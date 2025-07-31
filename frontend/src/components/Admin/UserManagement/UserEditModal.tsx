@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -16,26 +18,50 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLanguage } from "@/context/LanguageContext";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateUser } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { UserFormData } from "@/types";
 import { Edit } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Label } from "../../ui/label";
 import { MultiSelect } from "../../ui/multi-select";
 import { UserProfile } from "@common/user.types";
+import {
+  selectOrganizations,
+  fetchAllOrganizations,
+} from "@/store/slices/organizationSlice";
+import { useRoles } from "@/hooks/useRoles";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();
   // Translation
   const { lang } = useLanguage();
 
+  // Column header keys for the role grid
+  const columns = {
+    org: t.userEditModal.columns?.organization?.[lang] ?? "Organization",
+    role: t.userEditModal.columns?.role?.[lang] ?? "Role",
+    active: t.userEditModal.columns?.active?.[lang] ?? "Active",
+    actions: t.userEditModal.columns?.actions?.[lang] ?? "Actions",
+  };
+
+  const {
+    availableRoles,
+    allUserRoles,
+    createRole,
+    updateRole,
+    permanentDeleteRole,
+    isSuperAdmin,
+    isSuperVera,
+  } = useRoles({ skipInitialFetch: true });
+
+  const canManageRoles = isSuperAdmin || isSuperVera;
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
     email: user.email || "",
-    roles: [(user.role as "user" | "admin" | "superVera") || "user"], // Should be fixed when we setup new roles
+    roles: [],
     phone: user.phone || "",
     visible_name: user.visible_name || "",
     preferences:
@@ -51,9 +77,47 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     saved_lists:
       Array.isArray(user.saved_lists) &&
       user.saved_lists.every((item: unknown) => typeof item === "string")
-        ? (user.saved_lists as string[])
+        ? user.saved_lists
         : [],
   });
+
+  // Role assignments across organizations
+  type RoleAssignment = {
+    id: string | null; // row id if existing
+    organization_id: string | null;
+    role_name: string | null;
+    is_active: boolean;
+  };
+  const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
+
+  // Org info
+  const organizations = useAppSelector(selectOrganizations);
+  // Populate initial role assignments once roles are loaded
+  useEffect(() => {
+    const userRoles = allUserRoles
+      .filter((r) => r.user_id === user.id && r.organization_id && r.role_name)
+      .map((r) => ({
+        id: r.id,
+        organization_id: r.organization_id as string,
+        role_name: r.role_name as string,
+        is_active: !!r.is_active,
+      }));
+    setRoleAssignments(userRoles);
+  }, [allUserRoles, user.id]);
+
+  // Ensure availableRoles are present (skipInitialFetch suppresses it in the hook)
+  /*   useEffect(() => {
+    if (canManageRoles && !availableRoles.length) {
+      void refreshAvailableRoles();
+    }
+  }, [canManageRoles, availableRoles.length, refreshAvailableRoles]);
+ */
+  // Ensure organizations list is loaded for the org picker
+  useEffect(() => {
+    if (organizations.length === 0) {
+      void dispatch(fetchAllOrganizations({ page: 1, limit: 30 }));
+    }
+  }, [organizations.length, dispatch]);
 
   // Handle changes for normal input fields
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,17 +153,100 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     setFormData({ ...formData, saved_lists: newSavedLists });
   };
 
-  // Handle changes for role
-  const handleRoleChange = (newRole: "user" | "admin" | "superVera") => {
-    setFormData({ ...formData, roles: [newRole] });
+  // Role assignment helpers
+  const handleRoleAssignmentChange = (
+    index: number,
+    field: "organization_id" | "role_name",
+    value: string | null,
+  ) => {
+    if (!canManageRoles) return;
+    setRoleAssignments((prev) =>
+      prev.map((ra, i) =>
+        i === index
+          ? field === "organization_id" && ra.id
+            ? ra // keep as‑is; org edit disabled
+            : { ...ra, [field]: value }
+          : ra,
+      ),
+    );
+  };
+
+  const addRoleAssignment = () => {
+    if (!canManageRoles) return;
+    setRoleAssignments((prev) => [
+      ...prev,
+      { id: null, organization_id: null, role_name: null, is_active: true },
+    ]);
+  };
+  const toggleRoleActive = (index: number) => {
+    if (!canManageRoles) return;
+    setRoleAssignments((prev) =>
+      prev.map((ra, i) =>
+        i === index ? { ...ra, is_active: !ra.is_active } : ra,
+      ),
+    );
+  };
+
+  const removeRoleAssignment = (index: number) => {
+    if (!canManageRoles) return;
+    setRoleAssignments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
     try {
+      // Remove "roles" key—the column no longer exists in user_profiles
+      const { roles: _roles, ...profileData } = formData;
       await dispatch(
-        updateUser({ id: user.id, data: { ...formData, id: user.id } }),
+        updateUser({ id: user.id, data: { ...profileData, id: user.id } }),
       ).unwrap();
       toast.success(t.userEditModal.messages.success[lang]);
+
+      // --- Sync role assignments with backend ---
+      const originalRoles = allUserRoles.filter((r) => r.user_id === user.id);
+      const toCreate = roleAssignments.filter(
+        (ra) =>
+          !originalRoles.some(
+            (or) =>
+              or.organization_id === ra.organization_id &&
+              or.role_name === ra.role_name,
+          ),
+      );
+      const toDelete = originalRoles.filter(
+        (or) =>
+          !roleAssignments.some(
+            (ra) =>
+              ra.organization_id === or.organization_id &&
+              ra.role_name === or.role_name,
+          ),
+      );
+
+      // Detect rows whose active flag changed
+      const toUpdate = roleAssignments.filter((ra) => {
+        const orig = originalRoles.find((or) => or.id === ra.id);
+        return ra.id && orig && orig.is_active !== ra.is_active;
+      });
+
+      for (const ru of toUpdate) {
+        await updateRole(ru.id as string, { is_active: ru.is_active });
+      }
+
+      for (const ra of toCreate) {
+        if (!ra.organization_id || !ra.role_name) continue; // skip incomplete rows
+        const roleDef = availableRoles.find((ar) => ar.role === ra.role_name);
+        if (roleDef) {
+          await createRole({
+            user_id: user.id,
+            organization_id: ra.organization_id,
+            role_id: roleDef.id,
+          });
+        }
+      }
+
+      for (const rd of toDelete) {
+        if (rd.id) {
+          await permanentDeleteRole(rd.id);
+        }
+      }
     } catch {
       toast.error(t.userEditModal.messages.error[lang]);
     }
@@ -122,6 +269,9 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
             {t.userEditModal.title[lang]}
           </DialogTitle>
         </DialogHeader>
+        <DialogDescription>
+          {t.userEditModal.description[lang]}
+        </DialogDescription>
 
         <div className="space-y-4">
           <div>
@@ -153,29 +303,137 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
               placeholder={t.userEditModal.placeholders.phone[lang]}
             />
           </div>
+
           <div>
-            <Label htmlFor="role">{t.userEditModal.labels.role[lang]}</Label>
-            <Select
-              onValueChange={handleRoleChange}
-              defaultValue={formData.roles?.[0]}
-            >
-              <SelectTrigger className="w-[120px]">
-                <SelectValue
-                  placeholder={t.userEditModal.placeholders.selectRole[lang]}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">
-                  {t.userEditModal.roles.admin[lang]}
-                </SelectItem>
-                <SelectItem value="user">
-                  {t.userEditModal.roles.user[lang]}
-                </SelectItem>
-                <SelectItem value="superVera">
-                  {t.userEditModal.roles.superVera[lang]}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>{t.userEditModal.labels.roles[lang]}</Label>
+
+            {canManageRoles ? (
+              <>
+                <div className="border rounded-md max-h-64 overflow-y-auto">
+                  {/* header */}
+                  <div className="grid grid-cols-[1fr_1fr_80px_auto] gap-2 px-3 py-2 text-xs font-medium text-muted-foreground sticky top-0 bg-background z-10">
+                    <span>{columns.org}</span>
+                    <span>{columns.role}</span>
+                    <span>{columns.active}</span>
+                    <span>{columns.actions}</span>
+                  </div>
+
+                  {/* rows */}
+                  {roleAssignments.map((ra, index) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-[1fr_1fr_80px_auto] gap-2 px-3 py-2 items-center"
+                    >
+                      {/* Organization column */}
+                      {ra.id ? (
+                        <span className="truncate">
+                          {organizations.find(
+                            (o) => o.id === ra.organization_id,
+                          )?.name ?? ra.organization_id}
+                        </span>
+                      ) : (
+                        <Select
+                          onValueChange={(value) =>
+                            handleRoleAssignmentChange(
+                              index,
+                              "organization_id",
+                              value,
+                            )
+                          }
+                          defaultValue={ra.organization_id ?? undefined}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue
+                              placeholder={
+                                t.userEditModal.placeholders.selectOrganization[
+                                  lang
+                                ]
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {organizations.map((org) => (
+                              <SelectItem key={org.id} value={org.id}>
+                                {org.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+
+                      {/* Role picker */}
+                      <Select
+                        onValueChange={(value) =>
+                          handleRoleAssignmentChange(index, "role_name", value)
+                        }
+                        defaultValue={ra.role_name ?? undefined}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={
+                              t.userEditModal.placeholders.selectRole[lang]
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableRoles.map((r) => (
+                            <SelectItem key={r.id} value={r.role}>
+                              {r.role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Active toggle */}
+                      <Switch
+                        checked={ra.is_active}
+                        onCheckedChange={() => toggleRoleActive(index)}
+                        className="justify-self-center"
+                      />
+
+                      {/* Remove */}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="justify-self-end"
+                        onClick={() => removeRoleAssignment(index)}
+                      >
+                        {t.userEditModal.buttons.remove[lang]}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  className="mt-3 bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+                  type="button"
+                  size="sm"
+                  onClick={addRoleAssignment}
+                >
+                  {t.userEditModal.buttons.addRole[lang]}
+                </Button>
+              </>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {roleAssignments.length > 0 ? (
+                  roleAssignments.map((ra, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded w-max"
+                    >
+                      {organizations.find((o) => o.id === ra.organization_id)
+                        ?.name ?? ra.organization_id}{" "}
+                      — {ra.role_name}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-slate-500">
+                    {t.userEditModal.status.noRoles[lang]}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div>

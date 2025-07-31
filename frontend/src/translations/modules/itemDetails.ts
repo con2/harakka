@@ -55,4 +55,32 @@ export const itemDetails = {
       en: "Selected booking",
     },
   },
+  availabilityError: {
+    fi: "Saatavuuden tarkistus epäonnistui",
+    en: "Failed to check availability",
+  },
+  checkingAvailability: {
+    fi: "Tarkistetaan saatavuutta...",
+    en: "Checking availability...",
+  },
+  available: {
+    fi: "Saatavilla",
+    en: "Available",
+  },
+  notAvailable: {
+    fi: "Ei saatavilla",
+    en: "Not available",
+  },
+  totalUnits: {
+    fi: "Yksiköitä yhteensä",
+    en: "Total units",
+  },
+  notFound: {
+    fi: "Tuotetta ei löytynyt",
+    en: "Item not found",
+  },
+  error: {
+    fi: "Virhe",
+    en: "Error",
+  },
 };

@@ -3,19 +3,6 @@ import { Address } from "./address";
 import { ErrorContext } from "./common";
 
 /**
- * User roles in the application
- * Used for permission control throughout the system
- */
-export type UserRole =
-  | "user"
-  | "admin"
-  | "main_admin"
-  | "super_admin"
-  | "superVera"
-  | "storage_manager"
-  | "requester";
-
-/**
  * User state in Redux store
  */
 export interface UserState {
@@ -26,4 +13,5 @@ export interface UserState {
   selectedUser: UserProfile | null;
   selectedUserLoading?: boolean;
   selectedUserAddresses?: Address[];
+  userCount: number;
 }

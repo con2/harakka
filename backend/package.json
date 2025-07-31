@@ -11,7 +11,8 @@
     "start:dev": "nodemon --watch src --ext ts --exec \"ts-node -r tsconfig-paths/register src/main.ts\"",
     "start:debug": "nest start --debug --watch -r tsconfig-paths/register",
     "start:prod": "node -r tsconfig-paths/register dist/backend/src/main.js",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" ",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -34,7 +35,9 @@
     "bwip-js": "^4.6.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "common": "file:../common",
     "dayjs": "^1.11.13",
+    "full-stack-booking-app": "file:..",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.2",
@@ -42,8 +45,8 @@
     "react-email": "^4.0.13",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "uuid": "^11.1.0",
-    "common": "file:../common"
+    "type-fest": "^4.41.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

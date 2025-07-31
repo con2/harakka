@@ -8,12 +8,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchAllTags,
   assignTagToItem,
   selectAllTags,
-  fetchTagsForItem,
-  selectLoading,
+  selectTagsLoading,
   selectSelectedTags,
+  fetchAllTags,
+  fetchTagsForItem,
 } from "@/store/slices/tagSlice";
 import { Tag } from "@/types/tag";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,15 +39,15 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
   const dispatch = useAppDispatch();
   const tags = useAppSelector(selectAllTags);
   const selectedTags = useAppSelector(selectSelectedTags);
-  const loading = useAppSelector(selectLoading);
+  const loading = useAppSelector(selectTagsLoading);
   const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]);
   // Translation
   const { lang } = useLanguage();
 
   useEffect(() => {
     if (open && tags.length === 0) {
-      dispatch(fetchAllTags({ limit: 20 }));
-      dispatch(fetchTagsForItem(itemId));
+      void dispatch(fetchAllTags({ limit: 20 }));
+      void dispatch(fetchTagsForItem(itemId));
     }
   }, [open, dispatch, itemId, tags.length]);
 

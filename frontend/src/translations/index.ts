@@ -5,7 +5,6 @@ import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
 import { adminPanel } from "./modules/adminPanel";
 import { assignTagsModal } from "./modules/assignTagsModal";
-import { authUi } from "./modules/authUi";
 import { cart } from "./modules/cart";
 import { contactForm } from "./modules/contactForm";
 import { countries } from "./modules/countries";
@@ -35,10 +34,16 @@ import { timeframeSelector } from "./modules/timeframeSelector";
 import { unauthorized } from "./modules/unauthorized";
 import { updateItemModal } from "./modules/updateItemModal";
 import { userDelete } from "./modules/userDelete";
+import { userBanning } from "./modules/userBanning";
 import { userEditModal } from "./modules/userEditModal";
 import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
 import { usersList } from "./modules/usersList";
+import { currentUserRoles } from "./modules/currentUserRoles";
+import {
+  organizationDelete,
+  organizationList,
+} from "./modules/organizationsList";
 
 export const t = {
   addItemModal,
@@ -48,7 +53,6 @@ export const t = {
   adminItemsTable,
   adminPanel,
   assignTagsModal,
-  authUi,
   cart,
   common: general.common, // Shorthand for general.common
   contactForm,
@@ -79,8 +83,12 @@ export const t = {
   unauthorized,
   updateItemModal,
   userDelete,
+  userBanning,
   userEditModal,
   userGuide,
   userPanel,
   usersList,
+  currentUserRoles,
+  organizationList,
+  organizationDelete,
 };

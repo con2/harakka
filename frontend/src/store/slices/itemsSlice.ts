@@ -24,10 +24,12 @@ const initialState: ItemState = {
   errorContext: null,
   selectedItem: null,
   deletableItems: {},
-  page: 1,
-  limit: 10,
-  totalPages: 0,
-  total: 0,
+  item_pagination: {
+    page: 1,
+    totalPages: 0,
+    total: 0,
+  },
+  itemCount: 0,
 };
 
 // Fetch all available items
@@ -118,6 +120,20 @@ export const fetchOrderedItems = createAsyncThunk<
   },
 );
 
+// get items count (all items, active and inactive)
+export const getItemCount = createAsyncThunk(
+  "items/getItemCount",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await itemsApi.getItemCount();
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch bookings count"),
+      );
+    }
+  },
+);
+
 // Fetch single item by ID
 export const getItemById = createAsyncThunk<Item, string>(
   "items/getItemById",
@@ -138,7 +154,6 @@ export const createItem = createAsyncThunk(
   async (itemData: ItemFormData, { rejectWithValue }) => {
     try {
       const createdItem = await itemsApi.createItem(itemData);
-      console.log("Item created in API:", createdItem); // Debug log
       return createdItem;
     } catch (error: unknown) {
       return rejectWithValue(
@@ -190,24 +205,6 @@ export const getItemsByTag = createAsyncThunk<Item[], string>(
   },
 );
 
-// NOT NEEDED? because we are using now the api response directly
-// Get available items within a timeframe
-/* export const getAvailableItems = createAsyncThunk<
-  Item[],
-  { startDate?: Date | null; endDate?: Date | null }
->(
-  "items/getAvailableItems",
-  async ({ startDate, endDate }, { rejectWithValue }) => {
-    try {
-      return await itemsApi.getAvailableItems(startDate, endDate);
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch available items"),
-      );
-    }
-  },
-); */
-
 export const itemsSlice = createSlice({
   name: "items",
   initialState,
@@ -222,7 +219,7 @@ export const itemsSlice = createSlice({
     ) => {
       const { itemId, tags } = action.payload;
       const item = state.items.find((item) => item.id === itemId);
-      if (item) {
+      if (item && "storage_item_tags" in item) {
         item.storage_item_tags = tags;
       }
     },
@@ -230,6 +227,17 @@ export const itemsSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
+      .addCase(getItemCount.pending, (state) => {
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(getItemCount.fulfilled, (state, action) => {
+        state.itemCount = action.payload.data!;
+      })
+      .addCase(getItemCount.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
       .addCase(fetchAllItems.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -240,9 +248,7 @@ export const itemsSlice = createSlice({
         state.items = (action.payload.data ?? []) as Array<
           Item | ManageItemViewRow
         >;
-        state.total = action.payload.metadata.total;
-        state.page = action.payload.metadata.page;
-        state.totalPages = action.payload.metadata.totalPages;
+        state.item_pagination = action.payload.metadata;
       })
       .addCase(fetchAllItems.rejected, (state, action) => {
         state.loading = false;
@@ -259,9 +265,7 @@ export const itemsSlice = createSlice({
         state.items = (action.payload.data ?? []) as Array<
           Item | ManageItemViewRow
         >;
-        state.total = action.payload.metadata.total;
-        state.page = action.payload.metadata.page;
-        state.totalPages = action.payload.metadata.totalPages;
+        state.item_pagination = action.payload.metadata;
       })
       .addCase(fetchOrderedItems.rejected, (state, action) => {
         state.loading = false;
@@ -308,7 +312,6 @@ export const itemsSlice = createSlice({
         state.errorContext = "delete";
       })
       .addCase(updateItem.pending, (state) => {
-        state.loading = true;
         state.error = null;
       })
       .addCase(updateItem.fulfilled, (state, action) => {
@@ -326,29 +329,18 @@ export const itemsSlice = createSlice({
           );
         }
 
-        state.loading = false;
-        state.items = state.items.map((item) =>
-          item.id === updatedItem.id ? updatedItem : item,
-        );
+        // Find the item in local state, update only necessary properties
+        state.items.map((i) => {
+          if (i.id === updatedItem.id) Object.assign(i, action.payload);
+        });
+        const index = state.items.findIndex((i) => i.id === updatedItem.id);
+        Object.assign(state.items[index], updatedItem);
+        state.selectedItem = updatedItem;
       })
       .addCase(updateItem.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "update";
       })
-      /* .addCase(getAvailableItems.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(getAvailableItems.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
-      })
-      .addCase(getAvailableItems.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-        state.errorContext = "fetch";
-      }) */
       .addCase(getItemsByTag.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -396,11 +388,10 @@ export const selectSelectedItem = (state: RootState) =>
   state.items.selectedItem;
 
 // Pagination data
-export const selectItemsPage = (state: RootState) => state.items.page;
-export const selectItemsLimit = (state: RootState) => state.items.limit;
-export const selectItemsTotalData = (state: RootState) => state.items.total;
-export const selectItemsTotalPages = (state: RootState) =>
-  state.items.totalPages;
+export const selectItemsPagination = (state: RootState) =>
+  state.items.item_pagination;
+export const selectTotalItemsCount = (state: RootState) =>
+  state.items.itemCount;
 
 // Actions
 export const { clearSelectedItem, updateItemTags } = itemsSlice.actions;

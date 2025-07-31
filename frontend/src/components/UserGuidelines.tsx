@@ -11,23 +11,33 @@ import { useRoles } from "@/hooks/useRoles";
 export const UserGuide: React.FC = () => {
   const { hasAnyRole } = useRoles();
   const isAnyTypeOfAdmin = hasAnyRole(["admin", "superVera"]);
-  // Add language support
   const { lang } = useLanguage();
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white">
+    <div
+      className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white"
+      data-cy="guide-root"
+    >
       {/* Guidelines */}
-      <div className="flex flex-col items-start">
+      <div className="flex flex-col items-start" data-cy="guide-section">
         <section className="w-full max-w-xl px-4 sm:px-6 md:px-8 mx-auto mb-10">
-          <h2 className="text-2xl font-bold text-center mb-6">
+          <h2
+            className="text-2xl font-bold text-center mb-6"
+            data-cy="guide-heading"
+          >
             {t.userGuide.title.user[lang]}
           </h2>
-          <Accordion type="single" collapsible className="w-full mb-10">
-            <AccordionItem value="user-1">
-              <AccordionTrigger>
+          <Accordion
+            type="single"
+            collapsible
+            className="w-full mb-10"
+            data-cy="guide-accordion"
+          >
+            <AccordionItem value="user-1" data-cy="guide-getstarted">
+              <AccordionTrigger data-cy="guide-getstarted-trigger">
                 {t.userGuide.sections.getStarted.title[lang]}
               </AccordionTrigger>
-              <AccordionContent>
+              <AccordionContent data-cy="guide-getstarted-content">
                 <ol className="list-decimal ml-6 space-y-2 text-gray-700">
                   <li
                     dangerouslySetInnerHTML={{
@@ -74,11 +84,11 @@ export const UserGuide: React.FC = () => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="user-2">
-              <AccordionTrigger>
+            <AccordionItem value="user-2" data-cy="guide-howtobook">
+              <AccordionTrigger data-cy="guide-howtobook-trigger">
                 {t.userGuide.sections.howToBook.title[lang]}
               </AccordionTrigger>
-              <AccordionContent>
+              <AccordionContent data-cy="guide-howtobook-content">
                 <ol className="list-decimal ml-6 space-y-2 text-gray-700">
                   {t.userGuide.sections.howToBook.content[lang].map(
                     (step: string, index: number) => (
@@ -95,10 +105,18 @@ export const UserGuide: React.FC = () => {
 
           {isAnyTypeOfAdmin && (
             <>
-              <h2 className="text-2xl font-bold text-center mb-6">
+              <h2
+                className="text-2xl font-bold text-center mb-6"
+                data-cy="guide-admin-heading"
+              >
                 {t.userGuide.title.admin[lang]}
               </h2>
-              <Accordion type="single" collapsible className="w-full mb-10">
+              <Accordion
+                type="single"
+                collapsible
+                className="w-full mb-10"
+                data-cy="guide-admin-accordion"
+              >
                 <AccordionItem value="admin-1">
                   <AccordionTrigger>
                     {t.userGuide.sections.dashboard.title[lang]}
@@ -184,44 +202,76 @@ export const UserGuide: React.FC = () => {
       </div>
 
       {/* FAQ Section */}
-      <div className="flex flex-col items-start">
+      <div className="flex flex-col items-start" data-cy="faq-section">
         <section className="w-full max-w-xl px-4 sm:px-6 md:px-8 mx-auto mb-10">
-          <h2 className="text-2xl font-bold text-center mb-6">
+          <h2
+            className="text-2xl font-bold text-center mb-6"
+            data-cy="faq-heading"
+          >
             {t.userGuide.title.faq[lang]}
           </h2>
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="q1" className="w-full">
-              <AccordionTrigger className="w-full text-left">
+          <Accordion
+            type="single"
+            collapsible
+            className="w-full"
+            data-cy="faq-accordion"
+          >
+            <AccordionItem value="q1" className="w-full" data-cy="faq-q1">
+              <AccordionTrigger
+                className="w-full text-left"
+                data-cy="faq-q1-trigger"
+              >
                 {t.userGuide.faq.q1.question[lang]}
               </AccordionTrigger>
-              <AccordionContent className="w-full text-base text-gray-700 whitespace-pre-wrap break-words">
+              <AccordionContent
+                className="w-full text-base text-gray-700 whitespace-pre-wrap break-words"
+                data-cy="faq-q1-content"
+              >
                 {t.userGuide.faq.q1.answer[lang]}
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="q2" className="w-full">
-              <AccordionTrigger className="w-full text-left">
+              <AccordionTrigger
+                className="w-full text-left"
+                data-cy="faq-q2-trigger"
+              >
                 {t.userGuide.faq.q2.question[lang]}
               </AccordionTrigger>
-              <AccordionContent className="w-full text-base text-gray-700 whitespace-pre-wrap break-words">
+              <AccordionContent
+                className="w-full text-base text-gray-700 whitespace-pre-wrap break-words"
+                data-cy="faq-q2-content"
+              >
                 {t.userGuide.faq.q2.answer[lang]}
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="q3" className="w-full">
-              <AccordionTrigger className="w-full text-left">
+              <AccordionTrigger
+                className="w-full text-left"
+                data-cy="faq-q3-trigger"
+              >
                 {t.userGuide.faq.q3.question[lang]}
               </AccordionTrigger>
-              <AccordionContent className="w-full text-base text-gray-700 whitespace-pre-wrap break-words">
+              <AccordionContent
+                className="w-full text-base text-gray-700 whitespace-pre-wrap break-words"
+                data-cy="faq-q3-content"
+              >
                 {t.userGuide.faq.q3.answer[lang]}
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="q4" className="w-full">
-              <AccordionTrigger className="w-full text-left">
+              <AccordionTrigger
+                className="w-full text-left"
+                data-cy="faq-q4-trigger"
+              >
                 {t.userGuide.faq.q4.question[lang]}
               </AccordionTrigger>
-              <AccordionContent className="w-full text-base text-gray-700 whitespace-pre-wrap break-words">
+              <AccordionContent
+                className="w-full text-base text-gray-700 whitespace-pre-wrap break-words"
+                data-cy="faq-q4-content"
+              >
                 {t.userGuide.faq.q4.answer[lang]}
               </AccordionContent>
             </AccordionItem>
