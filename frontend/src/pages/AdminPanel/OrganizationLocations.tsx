@@ -23,10 +23,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import OrgLocationManagement from "@/components/Admin/OrgManagement/OrgLocationManagement";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const OrganizationLocations = () => {
   const dispatch = useAppDispatch();
   const { currentUserOrganizations } = useRoles();
+  const { lang } = useLanguage();
 
   // Redux state using selectors
   const orgLocations = useAppSelector(selectOrgLocations);
@@ -76,12 +79,13 @@ const OrganizationLocations = () => {
   if (!orgsWithLocationAccess || orgsWithLocationAccess.length === 0) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Organization Locations</h1>
+        <h1 className="text-2xl font-bold">
+          {t.orgLocationManagement.page.noAccess.title[lang]}
+        </h1>
         <Card>
           <CardContent className="pt-6">
             <p className="text-muted-foreground">
-              You don't have permission to manage locations in any organization.
-              Please contact your administrator.
+              {t.orgLocationManagement.page.noAccess.message[lang]}
             </p>
           </CardContent>
         </Card>
@@ -93,22 +97,28 @@ const OrganizationLocations = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-3">
-        <h1 className="text-xl">Organization Locations</h1>
+        <h1 className="text-xl">{t.orgLocationManagement.page.title[lang]}</h1>
       </div>
 
       {/* Organization Selector (if user belongs to multiple orgs) */}
       {orgsWithLocationAccess.length > 1 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Select Organization</CardTitle>
+            <CardTitle className="text-lg">
+              {t.orgLocationManagement.page.selector.title[lang]}
+            </CardTitle>
             <CardDescription>
-              Choose which organization's locations you want to manage
+              {t.orgLocationManagement.page.selector.description[lang]}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select an organization" />
+                <SelectValue
+                  placeholder={
+                    t.orgLocationManagement.page.selector.placeholder[lang]
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {orgsWithLocationAccess.map((org) => (
@@ -133,7 +143,12 @@ const OrganizationLocations = () => {
       {error && (
         <Card className="border-destructive">
           <CardContent className="pt-6">
-            <p className="text-destructive">Error loading locations: {error}</p>
+            <p className="text-destructive">
+              {t.orgLocationManagement.page.error[lang].replace(
+                "{error}",
+                error,
+              )}
+            </p>
           </CardContent>
         </Card>
       )}

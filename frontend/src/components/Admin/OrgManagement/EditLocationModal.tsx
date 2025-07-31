@@ -22,6 +22,8 @@ import {
   UpdateOrgLocationWithStorage,
 } from "@/types/organizationLocation";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 interface EditLocationModalProps {
   location: OrgLocationWithNames | null;
@@ -93,6 +95,7 @@ const EditLocationModal = ({
   onClose,
 }: EditLocationModalProps) => {
   const dispatch = useAppDispatch();
+  const { lang } = useLanguage();
   const [formData, setFormData] = useState<FormData>({
     name: "",
     street: "",
@@ -193,10 +196,10 @@ const EditLocationModal = ({
         }),
       );
 
-      toast.success("Location updated successfully");
+      toast.success(t.orgLocationManagement.editModal.messages.success[lang]);
       onClose();
     } catch (error) {
-      toast.error("Failed to update location");
+      toast.error(t.orgLocationManagement.editModal.messages.error[lang]);
       console.error("Error updating location:", error);
     } finally {
       setIsSubmitting(false);
@@ -228,49 +231,72 @@ const EditLocationModal = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Location</DialogTitle>
+          <DialogTitle>
+            {t.orgLocationManagement.editModal.title[lang]}
+          </DialogTitle>
           <DialogDescription>
-            Update the organization location settings
+            {t.orgLocationManagement.editModal.description[lang]}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <FormField
             id="name"
-            label="Location Name"
+            label={t.orgLocationManagement.addModal.fields.name.label[lang]}
             value={formData.name}
             onChange={updateField("name")}
-            placeholder="Enter location name"
+            placeholder={
+              t.orgLocationManagement.addModal.fields.name.placeholder[lang]
+            }
             required
           />
 
           {/* Address Fields */}
           <div className="space-y-4">
-            <Label className="text-sm font-medium">Address *</Label>
+            <Label className="text-sm font-medium">
+              {t.orgLocationManagement.addModal.labels.address[lang]} *
+            </Label>
             <div className="space-y-3">
               <FormField
                 id="street"
-                label="Street Address"
+                label={
+                  t.orgLocationManagement.addModal.fields.street.label[lang]
+                }
                 value={formData.street}
                 onChange={updateField("street")}
-                placeholder="Enter street address"
+                placeholder={
+                  t.orgLocationManagement.addModal.fields.street.placeholder[
+                    lang
+                  ]
+                }
                 required
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   id="city"
-                  label="City"
+                  label={
+                    t.orgLocationManagement.addModal.fields.city.label[lang]
+                  }
                   value={formData.city}
                   onChange={updateField("city")}
-                  placeholder="Enter city"
+                  placeholder={
+                    t.orgLocationManagement.addModal.fields.city.placeholder[
+                      lang
+                    ]
+                  }
                   required
                 />
                 <FormField
                   id="postcode"
-                  label="Postcode"
+                  label={
+                    t.orgLocationManagement.addModal.fields.postcode.label[lang]
+                  }
                   value={formData.postcode}
                   onChange={updateField("postcode")}
-                  placeholder="Enter postcode"
+                  placeholder={
+                    t.orgLocationManagement.addModal.fields.postcode
+                      .placeholder[lang]
+                  }
                   required
                 />
               </div>
@@ -279,10 +305,16 @@ const EditLocationModal = ({
 
           <FormField
             id="description"
-            label="Description"
+            label={
+              t.orgLocationManagement.addModal.fields.description.label[lang]
+            }
             value={formData.description}
             onChange={updateField("description")}
-            placeholder="Enter location description"
+            placeholder={
+              t.orgLocationManagement.addModal.fields.description.placeholder[
+                lang
+              ]
+            }
             rows={3}
           />
 
@@ -290,28 +322,42 @@ const EditLocationModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               id="latitude"
-              label="Latitude"
+              label={
+                t.orgLocationManagement.addModal.fields.latitude.label[lang]
+              }
               value={formData.latitude}
               onChange={updateField("latitude")}
-              placeholder="Enter latitude"
+              placeholder={
+                t.orgLocationManagement.addModal.fields.latitude.placeholder[
+                  lang
+                ]
+              }
               type="number"
             />
             <FormField
               id="longitude"
-              label="Longitude"
+              label={
+                t.orgLocationManagement.addModal.fields.longitude.label[lang]
+              }
               value={formData.longitude}
               onChange={updateField("longitude")}
-              placeholder="Enter longitude"
+              placeholder={
+                t.orgLocationManagement.addModal.fields.longitude.placeholder[
+                  lang
+                ]
+              }
               type="number"
             />
           </div>
 
           <FormField
             id="image_url"
-            label="Image URL"
+            label={t.orgLocationManagement.addModal.fields.imageUrl.label[lang]}
             value={formData.image_url}
             onChange={updateField("image_url")}
-            placeholder="Enter image URL"
+            placeholder={
+              t.orgLocationManagement.addModal.fields.imageUrl.placeholder[lang]
+            }
           />
 
           {/* Active Status */}
@@ -324,16 +370,18 @@ const EditLocationModal = ({
               }
             />
             <Label htmlFor="is_active" className="text-sm font-medium">
-              Active Location
+              {t.orgLocationManagement.addModal.labels.activeLocation[lang]}
             </Label>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t.orgLocationManagement.editModal.buttons.cancel[lang]}
             </Button>
             <Button type="submit" disabled={isSubmitting} variant="secondary">
-              {isSubmitting ? "Updating..." : "Update Location"}
+              {isSubmitting
+                ? t.orgLocationManagement.editModal.buttons.saving[lang]
+                : t.orgLocationManagement.editModal.buttons.save[lang]}
             </Button>
           </DialogFooter>
         </form>

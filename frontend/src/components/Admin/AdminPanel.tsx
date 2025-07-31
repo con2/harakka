@@ -24,7 +24,7 @@ const AdminPanel = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Translation
   const { lang } = useLanguage();
-  const { isSuperAdmin, hasAnyRole } = useRoles();
+  const { hasAnyRole, hasRole } = useRoles();
   const canManageLocations = hasAnyRole([
     "main_admin",
     "storage_manager",
@@ -44,12 +44,15 @@ const AdminPanel = () => {
             end={true}
             dataCy="admin-nav-dashboard"
           />
-          {isSuperAdmin && (
+          {hasRole("super_admin") && (
             <SidebarLink
               to="/admin/organizations"
               icon={<Building2 className="w-5 h-5" />}
-              label={t.adminPanel.navigation.organizations[lang]}
+              label={
+                t.adminPanel.navigation.organizations[lang] || "Organizations"
+              }
               end={true}
+              dataCy="admin-nav-organizations"
             />
           )}
 
@@ -81,13 +84,6 @@ const AdminPanel = () => {
             dataCy="admin-nav-users"
           />
 
-          {/* {isSuperVera && (
-            <SidebarLink
-              to="/admin/team"
-              icon={<Users className="w-5 h-5"/>}
-              label={t.adminPanel.navigation.team[lang]}
-            />
-          )} */}
           <SidebarLink
             to="/admin/logs"
             icon={<FileText className="w-5 h-5" />}
@@ -103,22 +99,12 @@ const AdminPanel = () => {
             dataCy="admin-nav-roles"
           />
 
-          {/* Add the new Organizations link */}
-          <SidebarLink
-            to="/admin/organizations"
-            icon={<Building2 className="w-5 h-5" />}
-            label={
-              t.adminPanel.navigation.organizations?.[lang] || "Organizations"
-            }
-            dataCy="admin-nav-organizations"
-          />
-
           {/* Organization Locations - accessible to storage managers and above */}
           {canManageLocations && (
             <SidebarLink
               to="/admin/locations"
               icon={<MapPin className="w-5 h-5" />}
-              label="Locations"
+              label={t.adminPanel.navigation.locations[lang]}
               dataCy="admin-nav-locations"
             />
           )}
@@ -173,13 +159,6 @@ const AdminPanel = () => {
               icon={<Users />}
               label={t.adminPanel.navigation.users[lang]}
             />
-            {/* {isSuperVera && (
-              <SidebarLink 
-                to="/admin/team" 
-                icon={<Users />} 
-                label={t.adminPanel.navigation.team[lang]} 
-              />
-            )} */}
             <SidebarLink
               to="/admin/logs"
               icon={<FileText />}

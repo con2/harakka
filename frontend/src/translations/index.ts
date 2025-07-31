@@ -44,6 +44,7 @@ import {
   organizationDelete,
   organizationList,
 } from "./modules/organizationsList";
+import { orgLocationManagement } from "./modules/orgLocationManagement";
 
 export const t = {
   addItemModal,
@@ -91,4 +92,5 @@ export const t = {
   currentUserRoles,
   organizationList,
   organizationDelete,
+  orgLocationManagement,
 };
