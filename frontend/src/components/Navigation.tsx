@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import logo from "../assets/logoNav.png";
 import { LogInIcon, LogOutIcon, ShoppingCart, UserIcon } from "lucide-react";
+import { Notifications } from "@/components/Notification";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
 import { toast } from "sonner";
 import { toastConfirm } from "./ui/toastConfirm";
@@ -170,6 +171,7 @@ export const Navigation = () => {
               </span>
             )}
           </Link>
+          {selectedUser && <Notifications userId={selectedUser.id} />}
 
           {selectedUser ? (
             <div className="flex items-center">
