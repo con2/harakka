@@ -30,6 +30,11 @@ const initialState: ItemState = {
     total: 0,
   },
   itemCount: 0,
+  itemCreation: {
+    selectedOrg: null,
+    selectedLocation: null,
+    items: [],
+  },
 };
 
 // Fetch all available items
@@ -222,6 +227,12 @@ export const itemsSlice = createSlice({
         item.storage_item_tags = tags;
       }
     },
+    selectOrgLocation: (state, action) => {
+      state.itemCreation.selectedLocation = action.payload;
+    },
+    selectOrg: (state, action) => {
+      state.itemCreation.selectedOrg = action.payload;
+    },
   },
 
   extraReducers: (builder) => {
@@ -390,8 +401,15 @@ export const selectItemsPagination = (state: RootState) =>
   state.items.item_pagination;
 export const selectTotalItemsCount = (state: RootState) =>
   state.items.itemCount;
+export const selectItemCreation = (state: RootState) =>
+  state.items.itemCreation;
 
 // Actions
-export const { clearSelectedItem, updateItemTags } = itemsSlice.actions;
+export const {
+  clearSelectedItem,
+  updateItemTags,
+  selectOrgLocation,
+  selectOrg,
+} = itemsSlice.actions;
 
 export default itemsSlice.reducer;

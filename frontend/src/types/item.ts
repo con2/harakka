@@ -1,9 +1,11 @@
+import { SelectedOrg, SelectedStorage } from "@/pages/AddItem/add-item.types";
 import {
   BaseEntity,
   ErrorContext,
   Translatable,
   Tag,
   TagTranslation,
+  ItemFormData,
 } from "@/types";
 
 /**
@@ -48,6 +50,11 @@ export interface ItemState {
     totalPages: number;
   };
   itemCount: number;
+  itemCreation: {
+    selectedOrg: SelectedOrg | null;
+    selectedLocation: SelectedStorage | null | undefined;
+    items: ItemFormData[];
+  };
 }
 
 /**

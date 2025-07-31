@@ -7,6 +7,9 @@ interface UiState {
     currentStep: "details" | "images";
     createdItemId: string | null;
   };
+  stepperState: {
+    currentStep: number;
+  };
 }
 
 const initialState: UiState = {
@@ -14,6 +17,9 @@ const initialState: UiState = {
     isOpen: false,
     currentStep: "details",
     createdItemId: null,
+  },
+  stepperState: {
+    currentStep: 1,
   },
 };
 
@@ -37,6 +43,15 @@ export const uiSlice = createSlice({
     setCreatedItemId: (state, action: PayloadAction<string>) => {
       state.itemModalState.createdItemId = action.payload;
     },
+    setStepper: (state, action) => {
+      state.stepperState.currentStep = action.payload;
+    },
+    setNextStep: (state) => {
+      state.stepperState.currentStep = state.stepperState.currentStep + 1;
+    },
+    setPrevStep: (state) => {
+      state.stepperState.currentStep = state.stepperState.currentStep - 1;
+    },
   },
 });
 
@@ -45,9 +60,14 @@ export const {
   closeItemModal,
   setItemModalStep,
   setCreatedItemId,
+  setStepper,
+  setNextStep,
+  setPrevStep,
 } = uiSlice.actions;
 
 export const selectItemModalState = (state: RootState) =>
   state.ui.itemModalState;
+export const stepperCurrentNum = (state: RootState) =>
+  state.ui.stepperState.currentStep;
 
 export default uiSlice.reducer;
