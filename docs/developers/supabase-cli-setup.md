@@ -106,7 +106,7 @@ This will start:
 ### Stopping Local Services
 
 ```bash
-npm run supabase:stop
+npm run s:stop
 ```
 
 ### Development with Local Stack
@@ -132,7 +132,7 @@ This is ideal for:
 1. **Create a new migration**:
 
    ```bash
-   npm run supabase:migration:new "add_new_table"
+   npm run s:migration:new "add_new_table"
    ```
 
 2. **Edit the migration file** in `supabase/migrations/`
@@ -140,38 +140,38 @@ This is ideal for:
 3. **Apply locally**:
 
    ```bash
-   npm run supabase:reset  # Resets and applies all migrations
+   npm run s:reset  # Resets and applies all migrations
    ```
 
 #### Pulling Remote Changes
 
 ```bash
 # Pull latest schema changes from remote
-npm run supabase:pull
+npm run s:pull
 ```
 
 #### Pushing Local Changes to Remote
 
 ```bash
 # Push local migrations to remote database
-npm run supabase:push
+npm run s:push
 ```
 
 ### Type Generation
 
 ```bash
 # Generate types from local database
-npm run generate:types
+npm run generate:types:local
 
 # Generate types from remote database (fallback)
-npm run generate:types:remote
+npm run generate:types
 ```
 
 ### Database Reset and Seeding
 
 ```bash
 # Reset local database and apply all migrations + seed data
-npm run supabase:reset
+npm run s:reset
 ```
 
 The reset will:
@@ -185,7 +185,7 @@ The reset will:
 
 ```bash
 # Dump current remote data for seeding (requires proper authentication)
-npm run supabase:seed
+npm run s:seed
 ```
 
 ## Edge Functions Development
@@ -194,7 +194,7 @@ npm run supabase:seed
 
 ```bash
 # Serve edge functions locally
-npm run supabase:functions:serve
+npm run s:functions:serve
 ```
 
 Functions will be available at:
@@ -209,12 +209,14 @@ Functions will be available at:
 
 ### Deploying Functions
 
+Deploying functions is the same a pushing your changes to the live version. They become deployed but not in use.
+
 ```bash
 # Deploy all functions
-npm run supabase:functions:deploy
+npm run s:functions:deploy
 
 # Deploy specific function
-supabase functions deploy {function-name}
+supabase s deploy {function-name}
 ```
 
 ## Team Collaboration
@@ -225,14 +227,14 @@ supabase functions deploy {function-name}
 
    ```bash
    git pull origin main
-   npm run supabase:pull  # Get latest schema changes
-   npm run supabase:reset # Apply everything locally
+   npm run s:pull  # Get latest schema changes
+   npm run s:reset # Apply everything locally
    ```
 
 2. **Making schema changes**:
 
    ```bash
-   npm run supabase:migration:new "descriptive_name"
+   npm run s:migration:new "descriptive_name"
    # Edit the migration file
    npm run supabase:reset  # Test locally
    ```
@@ -248,7 +250,7 @@ supabase functions deploy {function-name}
 4. **After merging to main**:
 
    ```bash
-   npm run supabase:push  # Apply to remote database
+   npm run s:push  # Apply to remote database
    ```
 
 ### Best Practices
@@ -270,6 +272,13 @@ supabase migration list
 
 # Repair migration history if needed
 supabase migration repair --status applied {migration-name}
+```
+
+OR
+
+```bash
+npx supabase migration list
+npx migration repair --status applied {migration-name}
 ```
 
 ## Available npm Scripts
@@ -312,24 +321,29 @@ supabase migration repair --status applied {migration-name}
 
 1. **"Database not found" error**:
 
-   ```bash
-   npm run supabase:stop
-   npm run supabase:start
-   ```
+```bash
+   npm run s:stop
+   npm run s:start
+```
 
 2. **Migration conflicts**:
 
-   ```bash
+```bash
    supabase migration list
    # Check for conflicts and resolve manually
-   ```
+```
 
 3. **Authentication issues**:
 
-   ```bash
+```bash
    supabase logout
    supabase login
-   ```
+```
+
+```bash
+   npx supabase logout
+   npx supabase login
+```
 
 4. **Port conflicts**:
    - Check if other services are using ports 54321-54327
@@ -337,10 +351,10 @@ supabase migration repair --status applied {migration-name}
 
 5. **Type generation fails**:
 
-   ```bash
+```bash
    # Fallback to remote types
    npm run generate:types:remote
-   ```
+```
 
 ### Getting Help
 

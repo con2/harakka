@@ -295,8 +295,8 @@ The project now includes a complete Supabase CLI setup for local development. Se
 3. **Database operations**:
 
    ```bash
-   npm run supabase:reset    # Reset local DB with latest schema
-   npm run supabase:pull     # Pull schema changes from remote
+   npm run s:reset    # Reset local DB with latest schema
+   npm run s:pull     # Pull schema changes from remote
    npm run generate:types    # Update TypeScript types
    ```
 
