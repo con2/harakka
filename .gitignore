@@ -1,6 +1,8 @@
 # Jons hidden files
 NOTES.md
 .vscode
+.env.*
+latest_data.sql
 # Node.js dependencies
 node_modules/*
 .nvmrc
