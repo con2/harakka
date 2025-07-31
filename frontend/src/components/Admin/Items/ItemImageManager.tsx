@@ -229,7 +229,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (!selectedFile) {
       toast.error(t.itemImageManager.messages.validation.noFile[lang]);
       return;
@@ -249,7 +249,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
     setUploadProgress(10); // Start progress
 
     try {
-      await toast.promise(
+      toast.promise(
         dispatch(
           uploadItemImage({ itemId, file: selectedFile, metadata }),
         ).unwrap(),
@@ -272,11 +272,11 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
     setDeleteConfirmOpen(true);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!imageToDelete) return;
 
     try {
-      await toast.promise(dispatch(deleteItemImage(imageToDelete)).unwrap(), {
+      toast.promise(dispatch(deleteItemImage(imageToDelete)).unwrap(), {
         loading: t.itemImageManager.messages.toast.delete.loading[lang],
         success: t.itemImageManager.messages.toast.delete.success[lang],
         error: t.itemImageManager.messages.toast.delete.error[lang],
