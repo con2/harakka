@@ -19,6 +19,15 @@ export type Database = MergeDeep<
   {
     public: {
       Tables: {
+        notifications: {
+          Row: {
+            metadata: {
+              new_user_id?: string;
+              status?: "confirmed" | "rejected";
+              booking_id?: string;
+            };
+          };
+        };
         storage_items: {
           Row: { translations: ItemTranslations | null };
           Insert: { translations?: ItemTranslations | null };
@@ -75,9 +84,8 @@ export type Database = MergeDeep<
  * };
  * ```
  */
-export type DBTables<
-  N extends keyof Database["public"]["Tables"]
-> = Database["public"]["Tables"][N]["Row"];
+export type DBTables<N extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][N]["Row"];
 
 /**
  * Get the **insert payload** type for any public table.
@@ -95,9 +103,8 @@ export type DBTables<
  * };
  * ```
  */
-export type DBTablesInsert<
-  N extends keyof Database["public"]["Tables"]
-> = Database["public"]["Tables"][N]["Insert"];
+export type DBTablesInsert<N extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][N]["Insert"];
 
 /**
  * Get the **partial update** type for any public table.
@@ -113,6 +120,5 @@ export type DBTablesInsert<
  * };
  * ```
  */
-export type DBTablesUpdate<
-  N extends keyof Database["public"]["Tables"]
-> = Database["public"]["Tables"][N]["Update"];
+export type DBTablesUpdate<N extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][N]["Update"];
