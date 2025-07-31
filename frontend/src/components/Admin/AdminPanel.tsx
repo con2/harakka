@@ -19,11 +19,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-//import { useAppSelector } from "@/store/hooks";
-//import { selectIsSuperVera } from "@/store/slices/usersSlice";
 
 const AdminPanel = () => {
-  //const isSuperVera = useAppSelector(selectIsSuperVera);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Translation
   const { lang } = useLanguage();
