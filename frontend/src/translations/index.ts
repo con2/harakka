@@ -1,4 +1,5 @@
 import { addItemModal } from "./modules/addItemModal";
+import { addLocationModal } from "./modules/addLocationModal";
 import { addTagModal } from "./modules/addTagModal";
 import { addUserModal } from "./modules/addUserModal";
 import { adminDashboard } from "./modules/adminDashboard";
@@ -44,6 +45,10 @@ import {
   organizationDelete,
   organizationList,
 } from "./modules/organizationsList";
+import { orgLocationManagement } from "./modules/orgLocationManagement";
+import { deleteLocationButton } from "./modules/deleteLocationButton";
+import { editLocationModal } from "./modules/editLocationModal";
+import { organizationLocations } from "./modules/organizationLocations";
 
 export const t = {
   addItemModal,
@@ -91,4 +96,9 @@ export const t = {
   currentUserRoles,
   organizationList,
   organizationDelete,
+  orgLocationManagement,
+  addLocationModal,
+  deleteLocationButton,
+  editLocationModal,
+  organizationLocations,
 };

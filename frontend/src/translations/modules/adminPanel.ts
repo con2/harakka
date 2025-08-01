@@ -48,5 +48,9 @@ export const adminPanel = {
       fi: "Organisaatiot",
       en: "Organizations",
     },
+    locations: {
+      fi: "Sijainti",
+      en: "Locations",
+    },
   },
 };
