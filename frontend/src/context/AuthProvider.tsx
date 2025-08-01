@@ -7,6 +7,7 @@ import { AuthContext } from "./AuthContext";
 import { useAppDispatch } from "@/store/hooks";
 import { resetRoles } from "@/store/slices/rolesSlice";
 import { clearSelectedUser } from "@/store/slices/usersSlice";
+import { AuthRedirect } from "@/components/Auth/AuthRedirect";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -99,7 +100,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           <LoaderCircle className="animate-spin w-6 h-6" />
         </div>
       ) : (
-        children
+        <>
+          {user && <AuthRedirect />}
+          {children}
+        </>
       )}
     </AuthContext.Provider>
   );

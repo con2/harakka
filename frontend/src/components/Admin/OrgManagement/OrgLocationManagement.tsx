@@ -13,6 +13,8 @@ import { OrgLocationWithNames } from "@/types/organizationLocation";
 import AddLocationModal from "./AddLocationModal";
 import EditLocationModal from "./EditLocationModal";
 import DeleteLocationButton from "./DeleteLocationButton";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 interface OrgLocationManagementProps {
   organizationId: string;
@@ -25,6 +27,7 @@ const OrgLocationManagement = ({
   orgLocations,
   loading,
 }: OrgLocationManagementProps) => {
+  const { lang } = useLanguage();
   const [editingLocation, setEditingLocation] =
     useState<OrgLocationWithNames | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -46,12 +49,12 @@ const OrgLocationManagement = ({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-muted-foreground">
-            Manage storage locations for this organization
+            {t.orgLocationManagement.header.description[lang]}
           </p>
         </div>
         <Button onClick={() => setIsCreateModalOpen(true)} variant="outline">
           <Plus className="h-4 w-4 mr-2" />
-          Add Location
+          {t.orgLocationManagement.header.addButton[lang]}
         </Button>
       </div>
 
@@ -97,24 +100,26 @@ const OrgLocationManagement = ({
                     </CardTitle>
                   </div>
                   <Badge variant={location.is_active ? "default" : "secondary"}>
-                    {location.is_active ? "Active" : "Inactive"}
+                    {location.is_active
+                      ? t.orgLocationManagement.status.active[lang]
+                      : t.orgLocationManagement.status.inactive[lang]}
                   </Badge>
                 </div>
                 <CardDescription className="text-xs">
-                  Address:{" "}
+                  {t.orgLocationManagement.locationCard.address[lang]}:{" "}
                   {location.storage_locations?.address ||
-                    "No address available"}
+                    t.orgLocationManagement.locationCard.noAddress[lang]}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-xs text-muted-foreground">
                   <p>
-                    Organization:{" "}
+                    {t.orgLocationManagement.locationCard.organization[lang]}:{" "}
                     {location.organizations?.name || location.organization_id}
                   </p>
                   {location.created_at && (
                     <p>
-                      {"Created: "}
+                      {t.orgLocationManagement.locationCard.created[lang]}:{" "}
                       {new Date(location.created_at).toLocaleDateString()}
                     </p>
                   )}
@@ -126,7 +131,7 @@ const OrgLocationManagement = ({
                     onClick={() => openEditModal(location)}
                   >
                     <Edit className="h-3 w-3 mr-1" />
-                    Edit
+                    {t.orgLocationManagement.locationCard.editButton[lang]}
                   </Button>
 
                   <DeleteLocationButton
@@ -147,14 +152,14 @@ const OrgLocationManagement = ({
               <CardContent className="text-center py-12">
                 <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
-                  No locations found
+                  {t.orgLocationManagement.emptyState.title[lang]}
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  This organization doesn't have any storage locations yet.
+                  {t.orgLocationManagement.emptyState.description[lang]}
                 </p>
                 <Button onClick={() => setIsCreateModalOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add First Location
+                  {t.orgLocationManagement.header.addFirstButton[lang]}
                 </Button>
               </CardContent>
             </Card>
