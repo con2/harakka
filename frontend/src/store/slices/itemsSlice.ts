@@ -233,6 +233,17 @@ export const itemsSlice = createSlice({
     selectOrg: (state, action) => {
       state.itemCreation.selectedOrg = action.payload;
     },
+    addToItemCreation: (state, action) => {
+      state.itemCreation.items.push(action.payload);
+      localStorage.setItem("newItem", JSON.stringify(state.itemCreation.items));
+    },
+    removeFromItemCreation: (state, action) => {
+      const id = action.payload;
+      state.itemCreation.items = state.itemCreation.items.filter(
+        (item) => item.id !== id,
+      );
+      localStorage.setItem("newItem", JSON.stringify(state.itemCreation.items));
+    },
   },
 
   extraReducers: (builder) => {
@@ -410,6 +421,7 @@ export const {
   updateItemTags,
   selectOrgLocation,
   selectOrg,
+  addToItemCreation,
 } = itemsSlice.actions;
 
 export default itemsSlice.reducer;
