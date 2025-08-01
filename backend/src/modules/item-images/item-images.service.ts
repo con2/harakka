@@ -114,18 +114,42 @@ export class ItemImagesService {
             upsert: true,
             contentType: "image/jpeg",
           });
-        console.log("data: ", data);
-        console.log("full path: ", data?.fullPath);
-        if (error)
+        if (error) {
           throw new Error(`Failed to upload image: ${files[i].originalname}`);
-        if (data)
-          paths.push(`${process.env.SUPABASE_URL}/storage/v1/${data.fullPath}`);
+        }
+        if (data?.fullPath)
+          paths.push(
+            `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.fullPath}`,
+          );
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      throw error;
     }
-    console.log("paths: ", paths);
     return paths;
+  }
+
+  async moveFromBucket(
+    req: AuthRequest,
+    from_bucket: string,
+    to_bucket: string,
+    files: string[],
+    to_path: string,
+  ) {
+    const supabase = req.supabase;
+    const result: { file: string; status: string }[] = [];
+    try {
+      for (const file of files) {
+        const { data, error } = await supabase.storage
+          .from(from_bucket)
+          .move(file, `${to_bucket}/${to_path}`);
+        if (error) throw new Error(`Failed to move image with id ${file}`);
+        result.push({ file: file, status: data.message });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    return result;
   }
 
   /**

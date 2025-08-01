@@ -52,6 +52,6 @@ export type CreateItemType = {
     };
   };
   tags: string[];
-  mainImage: string;
-  detailImages: string[];
+  mainImage?: string;
+  detailImages?: string[];
 };

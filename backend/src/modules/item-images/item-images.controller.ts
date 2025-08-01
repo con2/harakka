@@ -70,13 +70,12 @@ export class ItemImagesController {
     @UploadedFiles() files: Express.Multer.File[],
     @Query("uuid") uuid: string,
   ) {
-    console.log("received request in controller!");
-    console.log("files: ", files);
-    console.log("files length: ", files.length);
-    console.log("bucket: ", bucket);
-    console.log("files: ", files);
-    console.log("uuid: ", uuid);
-    await this.itemImagesService.uploadToBucket(req, bucket, files, uuid);
+    return await this.itemImagesService.uploadToBucket(
+      req,
+      bucket,
+      files,
+      uuid,
+    );
   }
 
   @Delete(":imageId")

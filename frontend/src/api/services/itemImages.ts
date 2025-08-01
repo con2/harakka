@@ -57,25 +57,16 @@ export const itemImagesApi = {
   ): Promise<string[]> => {
     if (files.length > 5) throw new Error("File limit exceeded.");
     const formData = new FormData();
+    files.forEach(({ file }) => formData.append("image", file));
 
-    files.forEach(({ file, metadata }) => {
-      // append the file itself under the *same* field name “image”
-      formData.append("image", file);
-
-      // append each piece of metadata as its own field
-      formData.append("image_type", metadata.image_type);
-      formData.append("display_order", metadata.display_order.toString());
-      if (metadata.alt_text) formData.append("alt_text", metadata.alt_text);
-      formData.append("is_active", metadata.is_active ? "true" : "false");
-    });
-
-    return await api.post<string[]>(
+    const result = await api.post(
       `item-images/bucket/${bucket}?uuid=${uuid}`,
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
       },
     );
+    return result;
   },
 
   /**

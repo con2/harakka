@@ -9,15 +9,19 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   selectUploadUrls,
+  setUploadImageType,
   uploadToBucket,
 } from "@/store/slices/itemImagesSlice";
+import { CreateItemType } from "@/store/utils/validate";
 import { DetailImageData, FileWithMetadata, MainImageData } from "@/types";
 import { Info, Trash } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { UseFormSetValue } from "react-hook-form";
 import { toast } from "sonner";
 
 type ItemImageUploadProps = {
   item_id: string;
+  updateForm: UseFormSetValue<CreateItemType>;
 };
 const getDefaultMeta = (imageType: "main" | "detail") => ({
   image_type: imageType,
@@ -27,9 +31,9 @@ const getDefaultMeta = (imageType: "main" | "detail") => ({
 });
 
 function ItemImageUpload(props: ItemImageUploadProps) {
-  const { item_id } = props;
+  const { item_id, updateForm } = props;
   const dispatch = useAppDispatch();
-  const image_urls = useAppSelector(selectUploadUrls);
+  const uploadedImages = useAppSelector(selectUploadUrls);
   const [mainImageData, setMainImageData] = useState<MainImageData>({
     image: {
       file: null,
@@ -50,40 +54,39 @@ function ItemImageUpload(props: ItemImageUploadProps) {
   });
 
   const submitMain = () => {
-    console.log("Submitting! ...");
+    console.log("Submitting image! ...");
     try {
+      void dispatch(setUploadImageType("main"));
       void dispatch(
         uploadToBucket({
           files: [mainImageData.image as FileWithMetadata],
-          bucket: "item-images",
+          bucket: "item-images-drafts",
           uuid: item_id,
         }),
       );
-      console.log("image urls: ", image_urls);
+      console.log("uploadedImages: ", uploadedImages);
+      updateForm("mainImage", uploadedImages.urls[0]);
     } catch (error) {
       console.log(error);
-      toast.error(
-        "File upload failed :( Reach out to us if the issue persists",
-      );
+      toast.error("File upload failed. Reach out to us if the issue persists");
     }
   };
 
   const submitDetail = () => {
-    console.log("Submitting! ...");
+    console.log("Submitting images! ...");
     try {
+      void dispatch(setUploadImageType("detail"));
       void dispatch(
         uploadToBucket({
           files: detailData.images,
-          bucket: "item-images",
+          bucket: "item-images-drafts",
           uuid: item_id,
         }),
       );
-      console.log("image urls: ", image_urls);
+      console.log("image urls: ", uploadedImages);
     } catch (error) {
       console.log(error);
-      toast.error(
-        "File upload failed :( Reach out to us if the issue persists",
-      );
+      toast.error("File upload failed. Reach out to us if the issue persists");
     }
   };
 
@@ -199,6 +202,17 @@ function ItemImageUpload(props: ItemImageUploadProps) {
     }
   };
 
+  /*-------------------side effects------------------------------------------*/
+
+  /* Update form when dispatch has completed */
+  useEffect(() => {
+    if (uploadedImages) {
+      const { imageType, urls } = uploadedImages;
+      if (imageType === "main") updateForm("mainImage", urls[0]);
+      else updateForm("detailImages", urls);
+    }
+  }, [uploadedImages, updateForm]);
+
   return (
     <>
       <div className="mb-8">
@@ -253,7 +267,6 @@ function ItemImageUpload(props: ItemImageUploadProps) {
             </div>
 
             <Input
-              required
               name="alt_text"
               placeholder="Describe the image"
               className="w-[280px] border shadow-none border-grey"

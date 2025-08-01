@@ -59,13 +59,16 @@ function AddItemForm() {
       id: crypto.randomUUID(),
       location_id: storage?.org_id ?? orgLocations?.[0]?.id,
       location_details: {
-        name: storage?.name ?? orgLocations?.[0]?.storage_locations.name,
+        name: storage?.name ?? orgLocations?.[0]?.storage_locations.name ?? "",
         address:
-          storage?.address ?? orgLocations?.[0]?.storage_locations.address,
+          storage?.address ??
+          orgLocations?.[0]?.storage_locations.address ??
+          "",
       },
-      is_active: true,
       items_number_total: 1,
+      items_number_currently_in_storage: 1,
       price: 0,
+      is_active: false,
       tags: [],
       translations: {
         fi: {
@@ -79,7 +82,6 @@ function AddItemForm() {
           item_description: "",
         },
       },
-      items_number_currently_in_storage: 1,
       mainImage: "",
       detailImages: [],
     },
@@ -180,6 +182,12 @@ function AddItemForm() {
   }, [storage, form]);
 
   useEffect(() => {
+    console.log("Form was updated: ", form.getValues());
+    console.log("MainImage field: ", form.getValues("mainImage"));
+    console.log("DetailImages field: ", form.getValues("detailImages"));
+  }, [form.getValues, form]);
+
+  useEffect(() => {
     if (tagSearch)
       void dispatch(
         fetchFilteredTags({ page: 1, limit: 20, search: tagSearch }),
@@ -187,15 +195,12 @@ function AddItemForm() {
     if (tags.length === 0) void dispatch(fetchAllTags({ page: 1, limit: 20 }));
   }, [tagSearch, dispatch, tags.length]);
 
+  /*------------------render-------------------------------------------------*/
+
   return (
     <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px]">
       <Form {...form}>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit(onValidSubmit, onInvalidSubmit);
-          }}
-        >
+        <form onSubmit={form.handleSubmit(onValidSubmit, onInvalidSubmit)}>
           {/* Translations | Item Details */}
           <div className="p-10 flex flex-wrap gap-x-6 space-y-8 justify-between">
             <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
@@ -206,9 +211,11 @@ function AddItemForm() {
               {TRANSLATION_FIELDS.map((entry) => {
                 const { lang: fieldLang, fieldKey, nameValue } = entry;
                 return (
-                  <div className="flex w-[48%] gap-8">
+                  <div
+                    key={`${fieldLang}.${fieldKey}`}
+                    className="flex flex-[48%] gap-8"
+                  >
                     <FormField
-                      key={`${fieldLang}.${fieldKey}`}
                       name={nameValue as any}
                       control={form.control}
                       render={({ field }) => (
@@ -402,29 +409,32 @@ function AddItemForm() {
               </div>
             </div>
           </div>
+          <Separator />
+
+          {/* Images */}
+          <div className="p-10 w-full">
+            <div className="mb-6">
+              <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
+                Add Images
+              </p>
+              <p className="text-sm leading-none font-medium">
+                We recommend uploading at least one image for the item.
+              </p>
+            </div>
+
+            <ItemImageUpload
+              item_id={form.getValues("id")}
+              updateForm={form.setValue}
+            />
+          </div>
+
+          <div className="p-10 pt-2">
+            <Button variant="outline" type="submit">
+              Add Item
+            </Button>
+          </div>
         </form>
       </Form>
-      <Separator />
-
-      {/* Images */}
-      <div className="p-10 w-full">
-        <div className="mb-6">
-          <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
-            Add Images
-          </p>
-          <p className="text-sm leading-none font-medium">
-            We recommend uploading at least one image for the item.
-          </p>
-        </div>
-
-        <ItemImageUpload item_id={form.getValues("id")} />
-      </div>
-
-      <div className="p-10 pt-2">
-        <Button variant="outline" type="submit">
-          Add Item
-        </Button>
-      </div>
     </div>
   );
 }

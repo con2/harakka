@@ -12,7 +12,10 @@ interface ItemImagesState {
   error: string | null;
   currentItemId: string | null;
   errorContext: ErrorContext;
-  image_urls: string[];
+  uploadedImages: {
+    imageType?: string;
+    urls: string[];
+  };
 }
 
 const initialState: ItemImagesState = {
@@ -22,7 +25,9 @@ const initialState: ItemImagesState = {
   error: null,
   currentItemId: null,
   errorContext: null,
-  image_urls: [],
+  uploadedImages: {
+    urls: [],
+  },
 };
 
 export const getItemImages = createAsyncThunk(
@@ -112,6 +117,9 @@ const itemImagesSlice = createSlice({
       state.error = null;
       state.currentItemId = null;
     },
+    setUploadImageType: (state, action) => {
+      state.uploadedImages.imageType = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -170,7 +178,10 @@ const itemImagesSlice = createSlice({
       .addCase(uploadToBucket.fulfilled, (state, action) => {
         state.loading = false;
         console.log("action payload: ", action.payload);
-        state.image_urls = action.payload;
+        state.uploadedImages = {
+          ...state.uploadedImages,
+          urls: action.payload,
+        };
       })
       .addCase(uploadToBucket.rejected, (state, action) => {
         state.loading = false;
@@ -195,7 +206,7 @@ const itemImagesSlice = createSlice({
   },
 });
 
-export const { resetItemImages } = itemImagesSlice.actions;
+export const { resetItemImages, setUploadImageType } = itemImagesSlice.actions;
 
 // Selector to get images for a specific item
 export const selectItemImagesById = (state: RootState, itemId: string) =>
@@ -210,6 +221,6 @@ export const selectItemImagesError = (state: RootState) =>
 export const selectCurrentItemId = (state: RootState) =>
   state.itemImages.currentItemId;
 export const selectUploadUrls = (state: RootState) =>
-  state.itemImages.image_urls;
+  state.itemImages.uploadedImages;
 
 export default itemImagesSlice.reducer;

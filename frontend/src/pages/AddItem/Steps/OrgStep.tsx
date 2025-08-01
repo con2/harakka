@@ -27,8 +27,11 @@ function OrgStep() {
   const { lang } = useLanguage();
   const orgs = useAppSelector(selectCurrentUserOrganizations);
   const orgLocations = useAppSelector(selectCurrentOrgLocations);
-  const { selectedOrg, selectedLocation: storage } =
-    useAppSelector(selectItemCreation);
+  const {
+    selectedOrg,
+    selectedLocation: storage,
+    items,
+  } = useAppSelector(selectItemCreation);
   const dispatch = useAppDispatch();
 
   /*---------------------handlers------------------------------------------------*/
@@ -64,6 +67,7 @@ function OrgStep() {
           onValueChange={handleOrgChange}
           required
           name="organization"
+          disabled={items.length > 0}
         >
           <SelectTrigger
             disabled={orgs.length === 1}

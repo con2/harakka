@@ -31,9 +31,7 @@ export function Stepper({ steps, data }: StepperProps) {
               <Button
                 variant={isActive ? "outline" : "default"}
                 size="lg"
-                className={cn(
-                  "w-10 h-10 p-0 rounded-full text-lg font-semibold",
-                )}
+                className="w-10 h-10 p-0 rounded-full text-lg font-semibold"
                 onClick={() => dispatch(setStepper(stepNum))}
                 aria-label={`Go to step ${stepNum}`}
               >
