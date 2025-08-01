@@ -98,10 +98,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthLoading(false);
       return;
     }
-
-    if (user && location.pathname === "/login") {
-      void navigate("/");
-    }
   }, [user, location.pathname, navigate]);
 
   const signOut = async () => {
