@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRoles } from "@/hooks/useRoles";
 import { useAuth } from "@/hooks/useAuth";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  fetchAllOrganizations,
+  selectOrganizations,
+} from "@/store/slices/organizationSlice";
+import { fetchAllUsers, selectAllUsers } from "@/store/slices/usersSlice";
 import { CreateUserRoleDto } from "@/types/roles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +42,22 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
   onRolesChanged,
 }) => {
   const { user } = useAuth();
+  const dispatch = useAppDispatch();
+
+  // Get organizations from Redux store
+  const organizations = useAppSelector(selectOrganizations);
+  // Fetch organizations when component mounts
+  useEffect(() => {
+    // Fetch organizations with a larger limit to get all for the dropdown
+    void dispatch(fetchAllOrganizations({ limit: 100 }));
+  }, [dispatch]);
+
+  // Get all users from Redux store
+  const allUsers = useAppSelector(selectAllUsers);
+  // Fetch all users when component mounts
+  useEffect(() => {
+    void dispatch(fetchAllUsers());
+  }, [dispatch]);
 
   const {
     createRole,
@@ -57,26 +79,24 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
 
   // Memoized list of unique users by email
   const userOptions = useMemo(() => {
-    const seen = new Set();
-    const options = allUserRoles
-      .filter(
-        (r) =>
-          r.user_email && !seen.has(r.user_email) && seen.add(r.user_email),
-      )
-      .map((r) => ({
-        user_id: r.user_id,
-        email: r.user_email,
-        full_name: r.user_full_name,
-        isCurrentUser: r.user_id === user?.id,
-      }));
-
-    // Sort to put current user first
-    return options.sort((a, b) => {
-      if (a.isCurrentUser) return -1;
-      if (b.isCurrentUser) return 1;
-      return 0;
-    });
-  }, [allUserRoles, user?.id]);
+    // Map all users from the Redux store
+    const currentUserId = user?.id;
+    return (
+      allUsers
+        .map((u) => ({
+          user_id: u.id,
+          email: u.email,
+          full_name: u.full_name,
+          isCurrentUser: u.id === currentUserId,
+        }))
+        // Sort to put current user first, then alphabetical by email
+        .sort((a, b) => {
+          if (a.isCurrentUser) return -1;
+          if (b.isCurrentUser) return 1;
+          return a.email?.localeCompare(b.email || "") || 0;
+        })
+    );
+  }, [allUsers, user?.id]);
 
   //For update, soft delete, delete
   const [assignmentId, setAssignmentId] = useState(role?.id || "");
@@ -380,13 +400,43 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
               ))}
             </SelectContent>
           </Select>
-          {/* TODO: replace by dropdown when organizations backend is ready */}
-          <Input
-            name="organization_id"
-            placeholder="Organization ID"
-            value={createForm.organization_id}
-            onChange={handleCreateChange}
-          />
+
+          {/*Organizations dropdown */}
+          <label className="font-semibold">Organization</label>
+          {organizations.length > 0 ? (
+            <Select
+              value={createForm.organization_id}
+              onValueChange={(orgId) =>
+                setCreateForm((prev) => ({ ...prev, organization_id: orgId }))
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select an organization" />
+              </SelectTrigger>
+              <SelectContent>
+                {organizations.map((org) => (
+                  <SelectItem key={org.id} value={org.id}>
+                    {org.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="flex gap-2 items-center">
+              <Input
+                name="organization_id"
+                placeholder="Organization ID"
+                value={createForm.organization_id}
+                onChange={handleCreateChange}
+              />
+              <span className="text-xs text-muted-foreground">
+                {organizations.length === 0
+                  ? "(Loading organizations...)"
+                  : "(No organizations found)"}
+              </span>
+            </div>
+          )}
+
           {/* List of all roles dropdown */}
           <label className="font-semibold">Role</label>
           <Select value={createForm.role_id} onValueChange={handleRoleSelect}>
