@@ -13,6 +13,7 @@ import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { UserEmailAssembler } from "../mail/user-email-assembler";
 import { ApiSingleResponse } from "@common/response.types";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class UserService {
@@ -193,5 +194,45 @@ export class UserService {
       ...result,
       data: result.count ?? 0,
     };
+  }
+
+  async uploadProfilePicture(
+    fileBuffer: Buffer,
+    fileName: string,
+    userId: string,
+    req: AuthRequest,
+  ): Promise<string> {
+    const fileExtension = fileName.split(".").pop();
+    const newFileName = `${userId}-${uuidv4()}.${fileExtension}`;
+    const filePath = `${userId}/${newFileName}`;
+    const contentType = `image/${fileExtension}`;
+
+    const supabase = req.supabase;
+    const storage = supabase.storage;
+
+    const { error: uploadError } = await storage
+      .from("profile-pictures")
+      .upload(filePath, fileBuffer, {
+        contentType,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      this.logger.error(`Upload failed: ${uploadError.message}`);
+      throw new Error(`Upload failed: ${uploadError.message}`);
+    }
+
+    const { data: publicUrlData } = storage
+      .from("profile-pictures")
+      .getPublicUrl(filePath);
+
+    if (!publicUrlData || !publicUrlData.publicUrl) {
+      this.logger.error(
+        `Failed to retrieve public URL for user ${userId}: public URL not found`,
+      );
+      throw new Error("Failed to retrieve public URL for profile picture.");
+    }
+
+    return publicUrlData.publicUrl;
   }
 }
