@@ -3,15 +3,7 @@ import { useRoles } from "@/hooks/useRoles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  LoaderCircle,
-  Shield,
-  Users,
-  Building,
-  RefreshCw,
-  Check,
-  X,
-} from "lucide-react";
+import { LoaderCircle, Shield, Users, RefreshCw, Check, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,13 +11,16 @@ import { Separator } from "@/components/ui/separator";
 import RoleEditer from "./RoleEditer";
 import { toast } from "sonner";
 import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
+import { useAuth } from "@/hooks/useAuth";
 
 export const RoleManagement: React.FC = () => {
+  // Get auth state directly from Auth context
+  const { authLoading } = useAuth();
+
+  // Get role-specific functions and data from useRoles
   const {
     currentUserRoles,
-    currentUserOrganizations,
     allUserRoles,
-    loading,
     adminLoading,
     error,
     adminError,
@@ -35,18 +30,16 @@ export const RoleManagement: React.FC = () => {
     hasRole,
   } = useRoles();
 
-  // Define admin status solely from new user roles (without old system)
-  const isAdmin =
-    currentUserRoles?.some(
-      (role) =>
-        role.role_name === "admin" ||
-        role.role_name === "superVera" ||
-        role.role_name === "super_admin" ||
-        role.role_name === "main_admin",
-    ) ?? false;
+  // Define admin status solely from new user roles
+  const isAnyTypeOfAdmin = hasAnyRole([
+    "admin",
+    "superVera",
+    "main_admin",
+    "super_admin",
+    "store_manager",
+  ]);
 
-  const isSuperVera =
-    currentUserRoles?.some((role) => role.role_name === "superVera") ?? false;
+  const isSuperVera = hasRole("superVera");
 
   // Add fetch attempt tracking with a "roles attempted" flag
   const [fetchingAdminData, setFetchingAdminData] = useState(false);
@@ -57,7 +50,7 @@ export const RoleManagement: React.FC = () => {
   useEffect(() => {
     // Only fetch admin roles if user is admin and we don't have them yet
     if (
-      isAdmin &&
+      isAnyTypeOfAdmin &&
       allUserRoles.length === 0 &&
       !adminLoading &&
       !adminError &&
@@ -72,7 +65,7 @@ export const RoleManagement: React.FC = () => {
       });
     }
   }, [
-    isAdmin,
+    isAnyTypeOfAdmin,
     allUserRoles.length,
     adminLoading,
     adminError,
@@ -84,13 +77,15 @@ export const RoleManagement: React.FC = () => {
   const handleRefresh = useCallback(async () => {
     try {
       await refreshCurrentUserRoles();
-      if (isAdmin) {
+      if (isAnyTypeOfAdmin) {
         await refreshAllUserRoles();
       }
+      toast.success("Roles refreshed successfully");
     } catch (err) {
       console.error("❌ RoleManagement - Manual refresh failed:", err);
+      toast.error("Failed to refresh roles");
     }
-  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAdmin]);
+  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAnyTypeOfAdmin]);
 
   // Handler for refreshing Supabase session
   const handleRefreshSession = useCallback(async () => {
@@ -142,14 +137,17 @@ export const RoleManagement: React.FC = () => {
   // Handler to refresh roles after any role operation
   const handleRolesChanged = useCallback(async () => {
     await refreshCurrentUserRoles();
-    if (isAdmin) {
+    if (isAnyTypeOfAdmin) {
       await refreshAllUserRoles();
     }
     toast.success("Roles updated!");
-  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAdmin]);
+  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAnyTypeOfAdmin]);
+
+  // Combined loading state from both auth and roles
+  const isLoading = authLoading || (!currentUserRoles && !error);
 
   // Loading state
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <LoaderCircle className="animate-spin w-8 h-8" />
@@ -218,12 +216,12 @@ export const RoleManagement: React.FC = () => {
         <CardContent>
           <div className="space-y-1 text-sm font-mono">
             <div>
-              Loading:{" "}
+              Auth Loading:{" "}
               <span
-                className={loading ? "text-red-600" : "text-green-600"}
+                className={authLoading ? "text-red-600" : "text-green-600"}
                 data-cy="role-management-loading"
               >
-                {loading.toString()}
+                {authLoading.toString()}
               </span>
             </div>
             <div>
@@ -272,12 +270,14 @@ export const RoleManagement: React.FC = () => {
               </span>
             </div>
             <div>
-              Is Admin:{" "}
+              is Any Type Of Admin:{" "}
               <span
-                className={isAdmin ? "text-green-600" : "text-orange-600"}
+                className={
+                  isAnyTypeOfAdmin ? "text-green-600" : "text-orange-600"
+                }
                 data-cy="role-management-is-admin"
               >
-                {isAdmin.toString()}
+                {isAnyTypeOfAdmin.toString()}
               </span>
             </div>
             <div>
@@ -288,105 +288,6 @@ export const RoleManagement: React.FC = () => {
               >
                 {isSuperVera.toString()}
               </span>
-            </div>
-            <div>
-              Refresh Function:{" "}
-              <span
-                className="text-blue-600"
-                data-cy="role-management-refresh-fn"
-              >
-                {typeof refreshCurrentUserRoles}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* User Status Card */}
-      <Card data-cy="role-management-status-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Your Access Level
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div
-              className="flex items-center gap-2"
-              data-cy="role-management-status-row"
-            >
-              <span className="font-medium">Status:</span>
-              {isSuperVera ? (
-                <Badge
-                  variant="destructive"
-                  data-cy="role-management-status-badge-supervera"
-                >
-                  SuperVera (Global Admin)
-                </Badge>
-              ) : isAdmin ? (
-                <Badge
-                  variant="default"
-                  data-cy="role-management-status-badge-admin"
-                >
-                  Admin
-                </Badge>
-              ) : (
-                <Badge
-                  variant="secondary"
-                  data-cy="role-management-status-badge-user"
-                >
-                  User
-                </Badge>
-              )}
-            </div>
-            <div>
-              <span className="font-medium">Organizations & Roles:</span>
-              <div
-                className="mt-2 space-y-2"
-                data-cy="role-management-orgs-list"
-              >
-                {currentUserOrganizations &&
-                currentUserOrganizations.length > 0 ? (
-                  currentUserOrganizations.map((org) => (
-                    <div
-                      key={org.organization_id}
-                      className="flex items-center gap-2"
-                      data-cy="role-management-org-row"
-                    >
-                      <Building className="w-4 h-4" />
-                      <span
-                        className="font-medium"
-                        data-cy="role-management-org-name"
-                      >
-                        {org.organization_name}:
-                      </span>
-                      <div
-                        className="flex gap-1"
-                        data-cy="role-management-org-roles"
-                      >
-                        {org.roles.map((role) => (
-                          <Badge
-                            key={role}
-                            variant="outline"
-                            className="text-xs"
-                            data-cy="role-management-org-role"
-                          >
-                            {role}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p
-                    className="text-muted-foreground"
-                    data-cy="role-management-no-orgs"
-                  >
-                    No organizations found.
-                  </p>
-                )}
-              </div>
             </div>
           </div>
         </CardContent>
@@ -473,7 +374,7 @@ export const RoleManagement: React.FC = () => {
       </Card>
 
       {/* Admin Section */}
-      {isAdmin && (
+      {isAnyTypeOfAdmin && (
         <Card data-cy="role-management-admin-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -583,93 +484,11 @@ export const RoleManagement: React.FC = () => {
       )}
 
       {/* Roles editing Section */}
-      {isAdmin && (
+      {isAnyTypeOfAdmin && (
         <div className="my-6" data-cy="role-management-editer">
           <RoleEditer onRolesChanged={handleRolesChanged} />
         </div>
       )}
-
-      {/* Permission Testing Section */}
-      <Card data-cy="role-management-permission-testing-card">
-        <CardHeader>
-          <CardTitle>Permission Testing</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div
-              className="flex items-center gap-2"
-              data-cy="role-management-permission-admin-row"
-            >
-              <span className="font-medium">Can access admin functions:</span>
-              <Badge
-                variant={isAdmin ? "default" : "secondary"}
-                className={isAdmin ? "bg-green-100 text-green-800" : ""}
-                data-cy="role-management-permission-admin-badge"
-              >
-                {isAdmin ? "Yes" : "No"}
-              </Badge>
-            </div>
-            <div
-              className="flex items-center gap-2"
-              data-cy="role-management-permission-has-admin-row"
-            >
-              <span className="font-medium">Has 'admin' role:</span>
-              <Badge
-                variant={
-                  currentUserRoles?.some((r) => r.role_name === "admin")
-                    ? "default"
-                    : "secondary"
-                }
-                className={
-                  currentUserRoles?.some((r) => r.role_name === "admin")
-                    ? "bg-green-100 text-green-800"
-                    : ""
-                }
-                data-cy="role-management-permission-has-admin-badge"
-              >
-                {currentUserRoles?.some((r) => r.role_name === "admin")
-                  ? "Yes"
-                  : "No"}
-              </Badge>
-            </div>
-            <div
-              className="flex items-center gap-2"
-              data-cy="role-management-permission-has-user-row"
-            >
-              <span className="font-medium">Has 'user' role:</span>
-              <Badge
-                variant={
-                  currentUserRoles?.some((r) => r.role_name === "user")
-                    ? "default"
-                    : "secondary"
-                }
-                className={
-                  currentUserRoles?.some((r) => r.role_name === "user")
-                    ? "bg-green-100 text-green-800"
-                    : ""
-                }
-                data-cy="role-management-permission-has-user-badge"
-              >
-                {currentUserRoles?.some((r) => r.role_name === "user")
-                  ? "Yes"
-                  : "No"}
-              </Badge>
-            </div>
-            <div
-              className="flex items-center gap-2"
-              data-cy="role-management-permission-supervera-row"
-            >
-              <span className="font-medium">Is SuperVera:</span>
-              <Badge
-                variant={isSuperVera ? "destructive" : "secondary"}
-                data-cy="role-management-permission-supervera-badge"
-              >
-                {isSuperVera ? "Yes" : "No"}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Role Check Testing Section (hasAnyRole) */}
       <Card data-cy="role-management-hasanyrole-card">
