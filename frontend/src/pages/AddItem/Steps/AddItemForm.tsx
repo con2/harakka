@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
+  addToItemCreation,
   selectItemCreation,
   selectOrgLocation,
 } from "@/store/slices/itemsSlice";
@@ -89,18 +90,7 @@ function AddItemForm() {
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
     console.log("Valid form values:", values);
-    const storageItems = localStorage.get("newItems");
-    if (!storageItems) {
-      localStorage.setItem("newItems", JSON.stringify(values));
-    }
-    const parsedStorage = JSON.parse(storageItems);
-    const exists = parsedStorage.findIndex(
-      (item: CreateItemType) => item.id === values.id,
-    );
-    if (exists) {
-      parsedStorage[exists] = values;
-    }
-    localStorage.setItem("newItems", parsedStorage);
+    void dispatch(addToItemCreation(values));
   };
 
   const onInvalidSubmit = () => {
