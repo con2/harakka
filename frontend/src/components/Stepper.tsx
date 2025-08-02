@@ -1,6 +1,5 @@
-import { useState, ReactNode } from "react";
+import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setStepper, stepperCurrentNum } from "@/store/slices/uiSlice";
 
@@ -31,6 +30,7 @@ export function Stepper({ steps, data }: StepperProps) {
               <Button
                 variant={isActive ? "outline" : "default"}
                 size="lg"
+                type="button"
                 className="w-10 h-10 p-0 rounded-full text-lg font-semibold"
                 onClick={() => dispatch(setStepper(stepNum))}
                 aria-label={`Go to step ${stepNum}`}

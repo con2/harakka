@@ -51,8 +51,8 @@ export interface ItemState {
   };
   itemCount: number;
   itemCreation: {
-    selectedOrg: SelectedOrg | null;
-    selectedLocation: SelectedStorage | null | undefined;
+    org: SelectedOrg | null;
+    location: SelectedStorage | null | undefined;
     items: ItemFormData[];
   };
 }
