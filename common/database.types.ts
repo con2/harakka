@@ -95,14 +95,17 @@ export type Database = MergeDeep<
           Row: {
             preferences: Record<string, string> | null;
             saved_lists: string[] | null;
+            profile_picture_url?: string | null;
           };
           Insert: {
             preferences?: Record<string, string> | null;
             saved_lists?: string[] | null;
+            profile_picture_url?: string | null;
           };
           Update: {
             preferences?: Record<string, string> | null;
             saved_lists?: string[] | null;
+            profile_picture_url?: string | null;
           };
         };
       };
