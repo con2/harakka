@@ -44,14 +44,17 @@ export type Database = MergeDeep<
           Row: {
             preferences: Record<string, string> | null;
             saved_lists: string[] | null;
+            profile_picture_url?: string | null;
           };
           Insert: {
             preferences?: Record<string, string> | null;
             saved_lists?: string[] | null;
+            profile_picture_url?: string | null;
           };
           Update: {
             preferences?: Record<string, string> | null;
             saved_lists?: string[] | null;
+            profile_picture_url?: string | null;
           };
         };
       };
@@ -75,9 +78,8 @@ export type Database = MergeDeep<
  * };
  * ```
  */
-export type DBTables<
-  N extends keyof Database["public"]["Tables"]
-> = Database["public"]["Tables"][N]["Row"];
+export type DBTables<N extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][N]["Row"];
 
 /**
  * Get the **insert payload** type for any public table.
@@ -95,9 +97,8 @@ export type DBTables<
  * };
  * ```
  */
-export type DBTablesInsert<
-  N extends keyof Database["public"]["Tables"]
-> = Database["public"]["Tables"][N]["Insert"];
+export type DBTablesInsert<N extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][N]["Insert"];
 
 /**
  * Get the **partial update** type for any public table.
@@ -113,6 +114,5 @@ export type DBTablesInsert<
  * };
  * ```
  */
-export type DBTablesUpdate<
-  N extends keyof Database["public"]["Tables"]
-> = Database["public"]["Tables"][N]["Update"];
+export type DBTablesUpdate<N extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][N]["Update"];
