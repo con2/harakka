@@ -8,210 +8,373 @@ import {
 } from "@/components/ui/tooltip";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
+  removeFromBucket,
   selectUploadUrls,
   setUploadImageType,
   uploadToBucket,
 } from "@/store/slices/itemImagesSlice";
-import { CreateItemType } from "@/store/utils/validate";
-import { DetailImageData, FileWithMetadata, MainImageData } from "@/types";
+import { CreateItemType } from "@common/items/form.types";
 import { Info, Trash } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { UseFormSetValue } from "react-hook-form";
 import { toast } from "sonner";
+
+const MAX_DETAIL_IMAGES = 5;
+const MAX_FILE_SIZE_MB = 5;
+
+type ImageData = {
+  id: string;
+  preview: string | null;
+  path: string;
+  alt_text: string;
+  uploading: boolean;
+};
 
 type ItemImageUploadProps = {
   item_id: string;
   updateForm: UseFormSetValue<CreateItemType>;
+  formImages: CreateItemType["images"];
 };
-const getDefaultMeta = (imageType: "main" | "detail") => ({
-  image_type: imageType,
-  display_order: 0,
-  alt_text: "",
-  is_active: false,
-});
 
-function ItemImageUpload(props: ItemImageUploadProps) {
-  const { item_id, updateForm } = props;
+function ItemImageUpload({
+  item_id,
+  updateForm,
+  formImages,
+}: ItemImageUploadProps) {
   const dispatch = useAppDispatch();
   const uploadedImages = useAppSelector(selectUploadUrls);
-  const [mainImageData, setMainImageData] = useState<MainImageData>({
-    image: {
-      file: null,
-      metadata: {
-        image_type: "main",
-        display_order: 0,
-        alt_text: "",
-        is_active: false,
-      },
-    },
-    preview: null,
-    loading: false,
-  });
-  const [detailData, setDetailData] = useState<DetailImageData>({
-    images: [],
-    previews: [],
-    loading: false,
-  });
 
-  const submitMain = () => {
-    console.log("Submitting image! ...");
-    try {
-      void dispatch(setUploadImageType("main"));
-      void dispatch(
-        uploadToBucket({
-          files: [mainImageData.image as FileWithMetadata],
-          bucket: "item-images-drafts",
-          uuid: item_id,
-        }),
-      );
-      console.log("uploadedImages: ", uploadedImages);
-      updateForm("mainImage", uploadedImages.urls[0]);
-    } catch (error) {
-      console.log(error);
-      toast.error("File upload failed. Reach out to us if the issue persists");
-    }
-  };
-
-  const submitDetail = () => {
-    console.log("Submitting images! ...");
-    try {
-      void dispatch(setUploadImageType("detail"));
-      void dispatch(
-        uploadToBucket({
-          files: detailData.images,
-          bucket: "item-images-drafts",
-          uuid: item_id,
-        }),
-      );
-      console.log("image urls: ", uploadedImages);
-    } catch (error) {
-      console.log(error);
-      toast.error("File upload failed. Reach out to us if the issue persists");
-    }
-  };
-
-  const handleMainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.currentTarget;
-    const { image } = mainImageData;
-    setMainImageData({
-      ...mainImageData,
-      image: {
-        file: image?.file,
-        metadata: {
-          ...image?.metadata,
-          [name]: value,
-        },
-      },
-    });
-  };
-  const handleDetailChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    index: number,
-  ) => {
-    const { name, value } = e.currentTarget;
-    if (name !== "alt_text" || isNaN(index)) return;
-
-    setDetailData((prev) => {
-      if (!prev || !prev.images[index]) return prev;
-
-      const updatedImages = [...prev.images];
-      const currentImage = updatedImages[index];
-
-      updatedImages[index] = {
-        ...currentImage,
-        metadata: {
-          ...currentImage.metadata,
-          alt_text: value,
-        },
-      };
-
-      return {
-        ...prev,
-        images: updatedImages,
-      };
-    });
-  };
-
-  const validateImageFile = (file: File) => {
-    const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
-    const isImage = file.type.startsWith("image/");
-    if (!isValidSize) throw new Error(`${file.name} is too large`);
-    if (!isImage) throw new Error(`${file.name} is not an image`);
-    return isValidSize && isImage;
-  };
-
-  const handleDelete = (
-    e: React.MouseEvent<HTMLButtonElement>,
-    index: number,
-  ) => {
-    e.preventDefault();
-    setDetailData({
-      ...detailData,
-      images: detailData.images.filter((_, idx) => idx !== index),
-      previews: detailData.previews.filter((_, idx) => idx !== index),
-    });
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name } = e.currentTarget;
-    if (!e.target.files) return;
-
-    try {
-      if (name === "detail") {
-        if (
-          e.target.files.length > 5 ||
-          detailData.previews.length + e.target.files.length > 5
-        )
-          throw new Error("Only 5 images allowed");
-
-        const newImages: FileWithMetadata[] = [];
-        const newPreviews: string[] = [];
-
-        for (const image of e.target.files) {
-          validateImageFile(image);
-          const objectUrl = URL.createObjectURL(image);
-          newPreviews.push(objectUrl);
-          newImages.push({
-            file: image,
-            metadata: getDefaultMeta("detail"),
-          });
+  const [images, setImages] = useState<{
+    main: ImageData | null;
+    details: ImageData[];
+  }>({
+    main: formImages
+      ? {
+          id: formImages?.main?.id ?? crypto.randomUUID(),
+          preview: formImages?.main?.url ?? null,
+          path: formImages?.main?.path ?? "",
+          alt_text: formImages?.main?.metadata.alt_text ?? "",
+          uploading: false,
         }
+      : null,
+    details: formImages?.details?.map((img) => ({
+      id: img.id ?? crypto.randomUUID(),
+      preview: img.url ?? "",
+      path: img.path ?? "",
+      alt_text: img.metadata.alt_text ?? "",
+      uploading: false,
+    })),
+  });
 
-        setDetailData({
-          ...detailData,
-          images: [...detailData.images, ...newImages],
-          previews: [...detailData.previews, ...newPreviews],
-        });
+  const [dragStates, setDragStates] = useState({
+    main: false,
+    detail: false,
+  });
 
+  const previewUrls = useRef<Set<string>>(new Set());
+
+  const validateFile = useCallback((file: File): void => {
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      throw new Error(`${file.name} is too large (max ${MAX_FILE_SIZE_MB}MB)`);
+    }
+    if (!file.type.startsWith("image/")) {
+      throw new Error(`${file.name} is not an image`);
+    }
+  }, []);
+
+  const createImageData = useCallback((file: File): ImageData => {
+    const preview = URL.createObjectURL(file);
+    previewUrls.current.add(preview);
+
+    return {
+      id: crypto.randomUUID(),
+      preview,
+      path: "",
+      alt_text: "",
+      uploading: false,
+    };
+  }, []);
+
+  const uploadImage = useCallback(
+    async (file: File, imageType: "main" | "detail", path: string) => {
+      dispatch(setUploadImageType(imageType));
+      return dispatch(
+        uploadToBucket({
+          files: [file],
+          bucket: "item-images-drafts",
+          path: `${item_id}/${path}`,
+        }),
+      ).unwrap();
+    },
+    [dispatch, item_id],
+  );
+
+  const handleMainImageUpload = useCallback(
+    async (file: File) => {
+      try {
+        validateFile(file);
+        const imageData = createImageData(file);
+
+        setImages((prev) => ({
+          ...prev,
+          main: { ...imageData, uploading: true },
+        }));
+
+        await uploadImage(file, "main", imageData.id);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Upload failed";
+        toast.error(message);
+        setImages((prev) => ({
+          ...prev,
+          main: prev.main ? { ...prev.main, uploading: false } : null,
+        }));
+      }
+    },
+    [validateFile, createImageData, uploadImage],
+  );
+
+  const handleDetailImagesUpload = useCallback(
+    async (files: FileList) => {
+      const fileArray = Array.from(files);
+      const currentCount = images.details.length;
+
+      if (currentCount + fileArray.length > MAX_DETAIL_IMAGES) {
+        toast.error(`Only ${MAX_DETAIL_IMAGES} images allowed`);
         return;
       }
-      if (e.target.files.length > 1)
-        throw new Error(`Only 1 image allowed for ${name} type`);
-      const newImg = e.target.files[0];
-      validateImageFile(newImg);
-      const objectUrl = URL.createObjectURL(newImg);
-      const { metadata } = mainImageData.image;
-      setMainImageData({
-        ...mainImageData,
-        image: { file: newImg, metadata },
-        preview: objectUrl,
+
+      try {
+        // Validate all files first
+        fileArray.forEach(validateFile);
+
+        const newImages = fileArray.map(createImageData);
+
+        setImages((prev) => ({
+          ...prev,
+          details: [
+            ...prev.details,
+            ...newImages.map((img) => ({ ...img, uploading: true })),
+          ],
+        }));
+
+        // Upload all files
+        await Promise.all(
+          fileArray.map((file, index) =>
+            uploadImage(file, "detail", `detail-${currentCount + index + 1}`),
+          ),
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Upload failed";
+        toast.error(message);
+
+        // Remove failed uploads
+        setImages((prev) => ({
+          ...prev,
+          details: prev.details.slice(0, currentCount),
+        }));
+      }
+    },
+    [images.details.length, validateFile, createImageData, uploadImage],
+  );
+
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>, type: "main" | "detail") => {
+      const files = event.target.files;
+      if (!files) return;
+
+      if (type === "main") {
+        if (files.length > 1) {
+          toast.error("Only one main image allowed");
+          return;
+        }
+        void handleMainImageUpload(files[0]);
+      } else {
+        void handleDetailImagesUpload(files);
+      }
+
+      // Reset input
+      event.target.value = "";
+    },
+    [handleMainImageUpload, handleDetailImagesUpload],
+  );
+
+  // Drag and drop handlers
+  const handleDragEnter = useCallback(
+    (e: React.DragEvent, type: "main" | "detail") => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragStates((prev) => ({ ...prev, [type]: true }));
+    },
+    [],
+  );
+
+  const handleDragLeave = useCallback(
+    (e: React.DragEvent, type: "main" | "detail") => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Only set to false if we're leaving the drop zone entirely
+      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+        setDragStates((prev) => ({ ...prev, [type]: false }));
+      }
+    },
+    [],
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent, type: "main" | "detail") => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragStates((prev) => ({ ...prev, [type]: false }));
+
+      const files = e.dataTransfer.files;
+      if (!files || files.length === 0) return;
+
+      if (type === "main") {
+        if (files.length > 1) {
+          toast.error("Only one main image allowed");
+          return;
+        }
+        void handleMainImageUpload(files[0]);
+      } else {
+        void handleDetailImagesUpload(files);
+      }
+    },
+    [handleMainImageUpload, handleDetailImagesUpload],
+  );
+
+  const updateImageAltText = useCallback(
+    (type: "main" | "detail", index: number | null, altText: string) => {
+      setImages((prev) => {
+        if (type === "main" && prev.main) {
+          return {
+            ...prev,
+            main: { ...prev.main, alt_text: altText },
+          };
+        } else if (type === "detail" && index !== null && prev.details[index]) {
+          const newDetails = [...prev.details];
+          newDetails[index] = { ...newDetails[index], alt_text: altText };
+          return { ...prev, details: newDetails };
+        }
+        return prev;
       });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      toast.error(message);
+    },
+    [],
+  );
+
+  const removeDetailImage = useCallback(
+    (index: number) => {
+      const imageToRemove = images.details[index];
+      if (!imageToRemove) return;
+
+      if (imageToRemove.path) {
+        void dispatch(
+          removeFromBucket({
+            bucket: "item-images-drafts",
+            paths: [imageToRemove.path],
+          }),
+        );
+      }
+
+      setImages((prev) => ({
+        ...prev,
+        details: prev.details.filter((_, idx) => idx !== index),
+      }));
+    },
+    [images.details, dispatch],
+  );
+
+  const removeMainImage = useCallback(() => {
+    if (!images.main) return;
+
+    if (images.main.path) {
+      void dispatch(
+        removeFromBucket({
+          bucket: "item-images-drafts",
+          paths: [images.main.path],
+        }),
+      );
     }
-  };
 
-  /*-------------------side effects------------------------------------------*/
+    // Clear from form
+    updateForm("images.main", null);
 
-  /* Update form when dispatch has completed */
+    setImages((prev) => ({
+      ...prev,
+      main: null,
+    }));
+  }, [images.main, dispatch, updateForm]);
+
+  // Update form when upload completes
   useEffect(() => {
-    if (uploadedImages) {
-      const { imageType, urls } = uploadedImages;
-      if (imageType === "main") updateForm("mainImage", urls[0]);
-      else updateForm("detailImages", urls);
+    if (!uploadedImages) return;
+
+    const { imageType, urls, paths, full_paths } = uploadedImages;
+
+    if (imageType === "main" && images.main) {
+      setImages((prev) => ({
+        ...prev,
+        main: prev.main
+          ? { ...prev.main, path: paths[0], uploading: false }
+          : null,
+      }));
+
+      updateForm("images.main", {
+        id: images.main.id,
+        url: urls[0],
+        full_path: full_paths[0],
+        path: paths[0],
+        metadata: {
+          image_type: "main",
+          display_order: 0,
+          alt_text: images.main.alt_text,
+          is_active: false,
+        },
+      });
+    } else if (imageType === "detail") {
+      setImages((prev) => ({
+        ...prev,
+        details: prev.details.map((img, i) => ({
+          ...img,
+          path: paths[i] || img.path,
+          uploading: false,
+        })),
+      }));
+
+      updateForm(
+        "images.details",
+        images.details.map((img, i) => ({
+          id: img.id ?? crypto.randomUUID(),
+          url: urls[i],
+          full_path: full_paths[i],
+          path: paths[i],
+          metadata: {
+            image_type: "detail",
+            display_order: i,
+            alt_text: img.alt_text,
+            is_active: false,
+          },
+        })),
+      );
     }
-  }, [uploadedImages, updateForm]);
+  }, [uploadedImages, updateForm, images.main, images.details]);
+
+  // Cleanup URLs on unmount
+  useEffect(() => {
+    return () => {
+      previewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+      previewUrls.current.clear();
+    };
+  }, []);
+
+  const isMainUploading = images.main?.uploading ?? false;
+  const isDetailUploading = images.details.some((img) => img.uploading);
 
   return (
     <>
@@ -228,63 +391,91 @@ function ItemImageUpload(props: ItemImageUploadProps) {
         <div className="mb-3">
           <Button
             type="button"
-            className="flex flex-1 border-1 border-dashed w-full min-h-[200px] flex-col"
+            className={`flex flex-1 border-1 border-dashed w-full min-h-[200px] flex-col transition-colors ${
+              dragStates.main ? "border-primary bg-primary/5" : ""
+            } ${isMainUploading ? "opacity-50 cursor-not-allowed" : ""}`}
+            disabled={isMainUploading}
             onClick={(e) => {
               e.preventDefault();
-              document.getElementById("main-image")?.click();
+              if (!isMainUploading) {
+                document.getElementById("main-image")?.click();
+              }
             }}
+            onDragEnter={(e) => handleDragEnter(e, "main")}
+            onDragLeave={(e) => handleDragLeave(e, "main")}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, "main")}
           >
-            {mainImageData.preview && (
-              <img src={mainImageData.preview} className="w-30 h-30 rounded" />
+            {images.main?.preview ? (
+              <img
+                src={images.main.preview}
+                className="w-30 h-30 rounded"
+                alt="Main image preview"
+              />
+            ) : (
+              <>
+                {isMainUploading ? "Uploading..." : "Choose an image"}
+                <p className="text-xs mt-1 text-muted-foreground">
+                  Click or drag and drop
+                </p>
+              </>
             )}
-            {mainImageData.preview ? "" : "Choose an image"}
           </Button>
           <input
             id="main-image"
-            name="alt_text"
             type="file"
             accept="image/*"
-            multiple
             className="hidden"
-            onChange={handleFileSelect}
+            onChange={(e) => handleFileSelect(e, "main")}
           />
         </div>
         <div className="flex justify-between items-end">
-          <div className="max-w-[400px]">
-            <div className="flex gap-2 w-fit items-center mb-2">
-              <Label className="mb-0">Alt text</Label>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="w-4 h-4" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-[300px]">
-                  <p>
-                    Alt text is important for accessibility. Describe the image
-                    as you would to a friend who couldn't see it.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+          {images?.main?.preview && (
+            <div className="max-w-[400px]">
+              <div className="flex gap-2 w-fit items-center mb-2">
+                <Label className="mb-0">Alt text</Label>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="w-4 h-4" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[300px]">
+                    <p>
+                      Alt text is important for accessibility. Describe the
+                      image as you would to a friend who couldn't see it.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
 
-            <Input
-              name="alt_text"
-              placeholder="Describe the image"
-              className="w-[280px] border shadow-none border-grey"
-              onChange={handleMainChange}
-            />
-          </div>
-          <Button
-            variant="outline"
-            type="button"
-            onClick={submitMain}
-            size="lg"
-          >
-            Upload
-          </Button>
+              <Input
+                placeholder="Describe the image"
+                className="w-[280px] border shadow-none border-grey"
+                value={images.main?.alt_text || ""}
+                onChange={(e) =>
+                  updateImageAltText("main", null, e.target.value)
+                }
+                disabled={!images.main}
+              />
+            </div>
+          )}
+          {images.main?.preview && (
+            <Button
+              variant="destructive"
+              className="self-center"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                removeMainImage();
+              }}
+              disabled={isMainUploading}
+            >
+              <Trash />
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Detailed images */}
+      {/* Detail images */}
       <div>
         <div>
           <p className="scroll-m-20 text-base font-semibold tracking-tight w-full mb-1">
@@ -297,64 +488,91 @@ function ItemImageUpload(props: ItemImageUploadProps) {
         <div className="mb-6">
           <Button
             type="button"
-            className="flex flex-1 border-1 border-dashed w-full min-h-[200px] flex-col"
+            className={`flex flex-1 border-1 border-dashed w-full min-h-[200px] flex-col transition-colors ${
+              dragStates.detail ? "border-primary bg-primary/5" : ""
+            } ${isDetailUploading || images.details.length >= MAX_DETAIL_IMAGES ? "opacity-50 cursor-not-allowed" : ""}`}
+            disabled={
+              isDetailUploading || images.details.length >= MAX_DETAIL_IMAGES
+            }
             onClick={(e) => {
               e.preventDefault();
-              document.getElementById("detail-image")?.click();
+              if (
+                !isDetailUploading &&
+                images.details.length < MAX_DETAIL_IMAGES
+              ) {
+                document.getElementById("detail-image")?.click();
+              }
             }}
+            onDragEnter={(e) => handleDragEnter(e, "detail")}
+            onDragLeave={(e) => handleDragLeave(e, "detail")}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, "detail")}
           >
-            Choose up to 5 images
+            {isDetailUploading ? (
+              "Uploading..."
+            ) : dragStates.detail ? (
+              "Drop images here"
+            ) : images.details.length >= MAX_DETAIL_IMAGES ? (
+              "Maximum images reached"
+            ) : (
+              <>
+                Choose up to 5 images
+                <p className="text-xs mt-1 text-muted-foreground">
+                  Click or drag and drop
+                </p>
+              </>
+            )}
           </Button>
           <input
             id="detail-image"
-            name="detail"
             type="file"
             accept="image/*"
             multiple
             className="hidden"
-            onChange={handleFileSelect}
+            onChange={(e) => handleFileSelect(e, "detail")}
           />
         </div>
-        {detailData.previews.length > 0 && (
+        {images.details.length > 0 && (
           <div className="flex flex-col gap-4">
-            {detailData.previews.length > 0 &&
-              detailData.previews?.map((image, idx) => (
-                <div key={image} className="flex gap-4">
-                  <img src={image} className="w-20 rounded" />
-                  <div className="flex justify-between w-full">
-                    <div>
-                      <div className="flex gap-2 w-fit items-center mb-2">
-                        <Label className="mb-0">Alt text</Label>
-                      </div>
-
-                      <Input
-                        name="alt_text"
-                        type="text"
-                        placeholder="Describe the image"
-                        className="w-[250px] border shadow-none border-grey"
-                        onChange={(e) => handleDetailChange(e, idx)}
-                      />
+            {images.details.map((image, idx) => (
+              <div key={image.id} className="flex gap-4">
+                <img
+                  src={image.preview || ""}
+                  className="w-20 rounded"
+                  alt={`Detail image ${idx + 1}`}
+                />
+                <div className="flex justify-between w-full">
+                  <div>
+                    <div className="flex gap-2 w-fit items-center mb-2">
+                      <Label className="mb-0">Alt text</Label>
                     </div>
-                    <Button
-                      variant="outline"
-                      className="self-center"
-                      type="button"
-                      onClick={(e) => handleDelete(e, idx)}
-                    >
-                      <Trash />
-                    </Button>
+
+                    <Input
+                      type="text"
+                      placeholder="Describe the image"
+                      className="w-[250px] border shadow-none border-grey"
+                      value={image.alt_text}
+                      onChange={(e) =>
+                        updateImageAltText("detail", idx, e.target.value)
+                      }
+                      disabled={image.uploading}
+                    />
                   </div>
+                  <Button
+                    variant="destructive"
+                    className="self-center"
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      removeDetailImage(idx);
+                    }}
+                    disabled={image.uploading}
+                  >
+                    <Trash />
+                  </Button>
                 </div>
-              ))}
-            <Button
-              variant="outline"
-              type="button"
-              className="w-fit self-end"
-              onClick={submitDetail}
-              size="lg"
-            >
-              Upload
-            </Button>
+              </div>
+            ))}
           </div>
         )}
       </div>

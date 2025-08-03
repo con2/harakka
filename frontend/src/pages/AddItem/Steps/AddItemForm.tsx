@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectCurrentOrgLocations } from "@/store/slices/organizationLocationsSlice";
-import { createItemDto, CreateItemType } from "@/store/utils/validate";
+import { createItemDto } from "@/store/utils/validate";
 import { ItemFormTag } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
+import { SubmitErrorHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { t } from "@/translations";
 import React, { useEffect, useState } from "react";
@@ -31,34 +31,45 @@ import {
   fetchAllTags,
   fetchFilteredTags,
   selectAllTags,
+  selectTagsLoading,
 } from "@/store/slices/tagSlice";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
   addToItemCreation,
+  clearSelectedItem,
+  selectIsEditing,
   selectItemCreation,
   selectOrgLocation,
+  selectSelectedItem,
+  toggleIsEditing,
+  updateLocalItem,
 } from "@/store/slices/itemsSlice";
 import { TRANSLATION_FIELDS } from "../add-item.data";
 import { toast } from "sonner";
 import ItemImageUpload from "../ItemImageUpload";
+import { setNextStep } from "@/store/slices/uiSlice";
+import { CreateItemType } from "@common/items/form.types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function AddItemForm() {
-  const orgLocations = useAppSelector(selectCurrentOrgLocations)!;
+  const orgLocations = useAppSelector(selectCurrentOrgLocations);
+  const editItem = useAppSelector(selectSelectedItem);
   const { lang: appLang } = useLanguage();
   const [tagSearchValue, setTagSearchValue] = useState("");
   const tagSearch = useDebouncedValue(tagSearchValue, 200);
   const dispatch = useAppDispatch();
   const [selectedTags, setSelectedTags] = useState<ItemFormTag[]>([]);
-  const { selectedLocation: storage } = useAppSelector(selectItemCreation);
+  const { location: storage } = useAppSelector(selectItemCreation);
   const tags = useAppSelector(selectAllTags);
-
+  const tagsLoading = useAppSelector(selectTagsLoading);
+  const isEditing = useAppSelector(selectIsEditing);
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
-    defaultValues: {
+    defaultValues: editItem ?? {
       id: crypto.randomUUID(),
-      location_id: storage?.org_id ?? orgLocations?.[0]?.id,
+      location_id: storage?.id ?? orgLocations?.[0]?.id,
       location_details: {
         name: storage?.name ?? orgLocations?.[0]?.storage_locations.name ?? "",
         address:
@@ -69,7 +80,7 @@ function AddItemForm() {
       items_number_total: 1,
       items_number_currently_in_storage: 1,
       price: 0,
-      is_active: false,
+      is_active: true,
       tags: [],
       translations: {
         fi: {
@@ -83,22 +94,25 @@ function AddItemForm() {
           item_description: "",
         },
       },
-      mainImage: "",
-      detailImages: [],
+      images: {
+        main: null,
+        details: [],
+      },
     },
   });
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
-    console.log("Valid form values:", values);
+    form.reset();
     void dispatch(addToItemCreation(values));
+    dispatch(setNextStep());
   };
 
-  const onInvalidSubmit = () => {
-    console.log("form is invalid");
+  const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
+    console.log("form is invalid: ", errors);
     const result = createItemDto.safeParse(form);
     if (result.error) {
       const allErrors = result.error.flatten().fieldErrors;
-
+      console.log("allerrors", allErrors);
       const firstErrorMessage = Object.values(allErrors)
         .flat()
         .find((msg) => !!msg);
@@ -136,6 +150,13 @@ function AddItemForm() {
     form.setValue("tags", newTags, { shouldValidate: true, shouldDirty: true });
   };
 
+  const handleUpdateItem = (item: CreateItemType) => {
+    dispatch(clearSelectedItem());
+    dispatch(toggleIsEditing());
+    dispatch(updateLocalItem({ item }));
+    dispatch(setNextStep());
+  };
+
   const handleLocationChange = (selectedId: string) => {
     const newLoc = orgLocations.find((org) => org.id === selectedId);
     if (!newLoc) return;
@@ -164,7 +185,7 @@ function AddItemForm() {
   /*------------------side effects-------------------------------------------*/
   useEffect(() => {
     if (!storage) return;
-    form.setValue("location_id", storage.org_id);
+    form.setValue("location_id", storage.id);
     form.setValue("location_details", {
       name: storage.name,
       address: storage.address,
@@ -172,18 +193,16 @@ function AddItemForm() {
   }, [storage, form]);
 
   useEffect(() => {
-    console.log("Form was updated: ", form.getValues());
-    console.log("MainImage field: ", form.getValues("mainImage"));
-    console.log("DetailImages field: ", form.getValues("detailImages"));
-  }, [form.getValues, form]);
+    if (tags.length === 0) void dispatch(fetchAllTags({ page: 1, limit: 20 }));
+  }, []);
 
   useEffect(() => {
     if (tagSearch)
       void dispatch(
         fetchFilteredTags({ page: 1, limit: 20, search: tagSearch }),
       );
-    if (tags.length === 0) void dispatch(fetchAllTags({ page: 1, limit: 20 }));
-  }, [tagSearch, dispatch, tags.length]);
+    else void dispatch(fetchAllTags({ page: 1, limit: 20 }));
+  }, [tagSearch, dispatch]);
 
   /*------------------render-------------------------------------------------*/
 
@@ -242,8 +261,16 @@ function AddItemForm() {
                       <FormLabel>Total Quantity</FormLabel>
                       <FormControl>
                         <Input
+                          type="number"
+                          min="1"
                           placeholder=""
                           {...field}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const numValue =
+                              value === "" ? "" : parseInt(value, 10);
+                            field.onChange(numValue);
+                          }}
                           className="border shadow-none border-grey"
                         />
                       </FormControl>
@@ -261,8 +288,16 @@ function AddItemForm() {
                       <FormLabel>Price (€)</FormLabel>
                       <FormControl>
                         <Input
+                          type="number"
+                          min="0"
                           placeholder=""
                           {...field}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const numValue =
+                              value === "" ? "" : parseInt(value, 10);
+                            field.onChange(numValue);
+                          }}
                           className="border shadow-none border-grey"
                         />
                       </FormControl>
@@ -279,7 +314,7 @@ function AddItemForm() {
                     <FormItem>
                       <FormLabel>Location</FormLabel>
                       <Select
-                        defaultValue={storage?.org_id ?? ""}
+                        defaultValue={storage?.id ?? ""}
                         onValueChange={handleLocationChange}
                         disabled={storage === null ? false : true}
                       >
@@ -355,24 +390,35 @@ function AddItemForm() {
             </div>
 
             <div className="flex flex-col gap-3 mb-8">
-              <p className="font-semibold">Popular tags</p>
               <div className="flex gap-2 flex-wrap">
-                {...tags.map((tag) => {
-                  const currentTags = form.getValues("tags");
-                  const isSelected = currentTags.find((t) => t === tag.id);
-                  return (
-                    <Badge
-                      key={tag.id}
-                      variant={isSelected ? "default" : "outline"}
-                      onClick={toggleTag}
-                      data-id={tag.id}
-                      data-translations={tag.translations}
-                      className=""
-                    >
-                      {tag.translations?.[appLang].name}
-                    </Badge>
-                  );
-                })}
+                {!tagsLoading &&
+                  tags.map((tag) => {
+                    const currentTags = form.getValues("tags");
+                    const isSelected = currentTags.find((t) => t === tag.id);
+                    return (
+                      <Badge
+                        key={tag.id}
+                        variant={isSelected ? "default" : "outline"}
+                        onClick={toggleTag}
+                        data-id={tag.id}
+                        data-translations={tag.translations}
+                        className=""
+                      >
+                        {tag.translations?.[appLang].name}
+                      </Badge>
+                    );
+                  })}
+                {tagsLoading && (
+                  <div className="flex flex-wrap gap-x-2">
+                    {Array(20)
+                      .fill("")
+                      .map((_, idx) => (
+                        <Skeleton
+                          className={`animate-pulse h-[18px] bg-muted rounded-md w-${idx % 2 === 0 ? "10" : "16"} mb-2`}
+                        />
+                      ))}
+                  </div>
+                )}
               </div>
             </div>
             <div>
@@ -413,14 +459,24 @@ function AddItemForm() {
             </div>
 
             <ItemImageUpload
-              item_id={form.getValues("id")}
+              item_id={form.watch("id")}
+              formImages={form.watch("images")}
               updateForm={form.setValue}
             />
           </div>
 
-          <div className="p-10 pt-2">
-            <Button variant="outline" type="submit">
-              Add Item
+          <div className="p-10 pt-2 flex justify-end gap-4">
+            <Button variant="default" onClick={() => dispatch(setNextStep())}>
+              Go to summary
+            </Button>
+            <Button
+              variant="outline"
+              type={isEditing ? "button" : "submit"}
+              onClick={
+                !isEditing ? () => {} : () => handleUpdateItem(form.getValues())
+              }
+            >
+              {isEditing ? "Update item" : "Add Item"}
             </Button>
           </div>
         </form>

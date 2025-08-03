@@ -1,11 +1,15 @@
-import { SelectedOrg, SelectedStorage } from "@/pages/AddItem/add-item.types";
+import {
+  CreateItemType,
+  ItemFormData,
+  SelectedOrg,
+  SelectedStorage,
+} from "@common/items/form.types";
 import {
   BaseEntity,
   ErrorContext,
   Translatable,
   Tag,
   TagTranslation,
-  ItemFormData,
 } from "@/types";
 
 /**
@@ -41,7 +45,7 @@ export interface ItemState {
   items: Array<Item | ManageItemViewRow>;
   loading: boolean;
   error: string | null;
-  selectedItem: Item | null;
+  selectedItem: Item | CreateItemType | null;
   errorContext: ErrorContext;
   deletableItems: Record<string, boolean>;
   item_pagination: {
@@ -53,8 +57,9 @@ export interface ItemState {
   itemCreation: {
     org: SelectedOrg | null;
     location: SelectedStorage | null | undefined;
-    items: ItemFormData[];
+    items: CreateItemType[];
   };
+  isEditingItem: boolean;
 }
 
 /**
@@ -107,3 +112,9 @@ export type ValidItemOrder =
   | "items_number_total"
   | "is_active"
   | "created_at";
+
+export type BucketUploadResult = {
+  paths: string[];
+  urls: string[];
+  full_paths: string[];
+};

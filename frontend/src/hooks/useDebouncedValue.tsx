@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 
 /**
  * Get a debounced value after a desired amount of time
- * @param value string value that will be resolved after x milliseconds
- * @param delay time to debounce in ms. Default 2000
+ * @param value value (any type) that will be resolved after x milliseconds
+ * @param delay time to debounce in ms. Default 1000.
  * @returns value
  */
 export const useDebouncedValue = (value: any, delay: number = 1000) => {

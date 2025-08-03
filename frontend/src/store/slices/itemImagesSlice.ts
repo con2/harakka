@@ -15,6 +15,8 @@ interface ItemImagesState {
   uploadedImages: {
     imageType?: string;
     urls: string[];
+    full_paths: string[];
+    paths: string[];
   };
 }
 
@@ -26,6 +28,8 @@ const initialState: ItemImagesState = {
   currentItemId: null,
   errorContext: null,
   uploadedImages: {
+    full_paths: [],
+    paths: [],
     urls: [],
   },
 };
@@ -57,16 +61,38 @@ export const uploadToBucket = createAsyncThunk(
     {
       files,
       bucket,
-      uuid,
+      path,
     }: {
-      files: FileWithMetadata[];
+      files: File[];
       bucket: string;
-      uuid?: string;
+      path?: string;
     },
     { rejectWithValue },
   ) => {
     try {
-      return await itemImagesApi.uploadToBucket(files, bucket, uuid);
+      return await itemImagesApi.uploadToBucket(files, bucket, path);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to upload image"),
+      );
+    }
+  },
+);
+
+export const removeFromBucket = createAsyncThunk(
+  "itemImages/removeFromBucket",
+  async (
+    {
+      bucket,
+      paths,
+    }: {
+      bucket: string;
+      paths: string[];
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await itemImagesApi.removeFromBucket(bucket, paths);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to upload image"),
@@ -170,7 +196,8 @@ const itemImagesSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      // Upload Item Image - Fix this to update the correct item's images
+
+      // Upload to bucket
       .addCase(uploadToBucket.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -180,10 +207,25 @@ const itemImagesSlice = createSlice({
         console.log("action payload: ", action.payload);
         state.uploadedImages = {
           ...state.uploadedImages,
-          urls: action.payload,
+          urls: action.payload.urls,
+          full_paths: action.payload.full_paths,
+          paths: action.payload.paths,
         };
       })
       .addCase(uploadToBucket.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Remove from bucket
+      .addCase(removeFromBucket.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(removeFromBucket.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(removeFromBucket.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

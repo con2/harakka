@@ -11,6 +11,17 @@ const itemTranslationsSchema = z.object({
   en: translationSchema,
 });
 
+const imageSchema = z.object({
+  url: z.string(),
+  path: z.string(),
+  metadata: z.object({
+    image_type: z.string(),
+    display_order: z.number(),
+    alt_text: z.string().optional(),
+    is_active: z.boolean(),
+  }),
+});
+
 export const createItemDto = z.object({
   id: z.string().uuid(),
   location_id: z.string().uuid(),
@@ -18,40 +29,14 @@ export const createItemDto = z.object({
     name: z.string().min(1, "Location name is required"),
     address: z.string().min(1, "Location address is required"),
   }),
-  items_number_total: z.number().int().min(1),
+  items_number_total: z.number().int().min(1, "Item count must be at least 1"),
   items_number_currently_in_storage: z.number().int().min(0),
   price: z.number().min(0),
   is_active: z.boolean(),
   translations: itemTranslationsSchema,
   tags: z.array(z.string()),
-  mainImage: z.string().optional(),
-  detailImages: z.array(z.string()).optional(),
+  images: z.object({
+    main: z.nullable(imageSchema),
+    details: z.array(imageSchema),
+  }),
 });
-
-export type CreateItemType = {
-  id: string;
-  location_id: string;
-  location_details: {
-    name: string;
-    address: string;
-  };
-  items_number_total: number;
-  items_number_currently_in_storage: number;
-  price: number;
-  is_active: boolean;
-  translations: {
-    fi: {
-      item_name: string;
-      item_type: string;
-      item_description: string;
-    };
-    en: {
-      item_name: string;
-      item_type: string;
-      item_description: string;
-    };
-  };
-  tags: string[];
-  mainImage?: string;
-  detailImages?: string[];
-};

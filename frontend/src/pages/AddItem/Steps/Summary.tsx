@@ -10,18 +10,41 @@ import {
 } from "@/components/ui/original-table";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { selectItemCreation } from "@/store/slices/itemsSlice";
+import {
+  createItem,
+  editLocalItem,
+  removeFromItemCreation,
+  selectItemCreation,
+  toggleIsEditing,
+} from "@/store/slices/itemsSlice";
 import { setPrevStep } from "@/store/slices/uiSlice";
+import { ItemFormData } from "@common/items/form.types";
+import { ClipboardPen, Trash } from "lucide-react";
+import { useState } from "react";
 
 function Summary() {
-  const { items } = useAppSelector(selectItemCreation);
+  const form = useAppSelector(selectItemCreation);
+  const { items } = form;
   const { lang } = useLanguage();
   const dispatch = useAppDispatch();
-  
+  const [loading, setLoading] = useState(false);
 
-  const createNext = () => {
-    
-  }
+  const createNext = () => dispatch(setPrevStep());
+  const editItem = (id: string) => {
+    void dispatch(toggleIsEditing());
+    void dispatch(editLocalItem(id));
+    dispatch(setPrevStep());
+  };
+  const handleSubmit = () => {
+    try {
+      setLoading(true);
+      void dispatch(createItem(form as ItemFormData));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -45,7 +68,10 @@ function Summary() {
               <OriginalTableBody>
                 {items.map((item) => (
                   <OriginalTableRow key={item.id}>
-                    <OriginalTableCell className="font-medium">
+                    <OriginalTableCell
+                      width="250"
+                      className="font-medium max-w-[250px] text-ellipsis overflow-hidden"
+                    >
                       {item.translations[lang].item_name}
                     </OriginalTableCell>
                     <OriginalTableCell>
@@ -55,7 +81,24 @@ function Summary() {
                       {item.location_details.name}
                     </OriginalTableCell>
                     <OriginalTableCell className="text-right">
-                      Actions here
+                      <Button
+                        onClick={() => editItem(item.id)}
+                        variant="outline"
+                        className="mr-1 p-2"
+                        disabled={loading}
+                      >
+                        <ClipboardPen />
+                      </Button>
+                      <Button
+                        className="p-2"
+                        variant="destructive"
+                        onClick={() =>
+                          dispatch(removeFromItemCreation(item.id))
+                        }
+                        disabled={loading}
+                      >
+                        <Trash />
+                      </Button>
                     </OriginalTableCell>
                   </OriginalTableRow>
                 ))}
@@ -69,8 +112,12 @@ function Summary() {
               </OriginalTableFooter>
             </OriginalTable>
             <div className="flex justify-end gap-4">
-              <Button variant="default" onClick={createNext}>Create another item</Button>
-              <Button variant="outline">Add items to organization</Button>
+              <Button variant="default" onClick={createNext}>
+                Create another item
+              </Button>
+              <Button variant="outline" onClick={handleSubmit}>
+                Upload items to organization
+              </Button>
             </div>
           </>
         ) : (

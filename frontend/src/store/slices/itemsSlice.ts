@@ -6,13 +6,13 @@ import {
   UpdateItemDto,
   Tag,
   RootState,
-  ItemFormData,
   ValidItemOrder,
   ManageItemViewRow,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { ApiResponse } from "@common/response.types";
 import { AxiosResponse } from "axios";
+import { ItemFormData } from "@common/items/form.types";
 
 /**
  * Initial state for items slice
@@ -31,10 +31,11 @@ const initialState: ItemState = {
   },
   itemCount: 0,
   itemCreation: {
-    selectedOrg: null,
-    selectedLocation: null,
+    org: null,
+    location: null,
     items: [],
   },
+  isEditingItem: false,
 };
 
 // Fetch all available items
@@ -156,9 +157,9 @@ export const getItemById = createAsyncThunk<Item, string>(
 // create Item
 export const createItem = createAsyncThunk(
   "items/createItem",
-  async (itemData: ItemFormData | ItemFormData[], { rejectWithValue }) => {
+  async (itemData: ItemFormData, { rejectWithValue }) => {
     try {
-      return await itemsApi.createItem(itemData);
+      return await itemsApi.createItems(itemData);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to create item"),
@@ -228,21 +229,44 @@ export const itemsSlice = createSlice({
       }
     },
     selectOrgLocation: (state, action) => {
-      state.itemCreation.selectedLocation = action.payload;
+      state.itemCreation.location = action.payload;
     },
     selectOrg: (state, action) => {
-      state.itemCreation.selectedOrg = action.payload;
+      state.itemCreation.org = action.payload;
     },
     addToItemCreation: (state, action) => {
       state.itemCreation.items.push(action.payload);
-      localStorage.setItem("newItem", JSON.stringify(state.itemCreation.items));
+      localStorage.setItem(
+        "itemsInProgress",
+        JSON.stringify(state.itemCreation),
+      );
     },
     removeFromItemCreation: (state, action) => {
       const id = action.payload;
       state.itemCreation.items = state.itemCreation.items.filter(
         (item) => item.id !== id,
       );
-      localStorage.setItem("newItem", JSON.stringify(state.itemCreation.items));
+      localStorage.setItem(
+        "itemsInProgress",
+        JSON.stringify(state.itemCreation),
+      );
+    },
+    loadItemsFromStorage: (state) => {
+      const storage = localStorage.getItem("itemsInProgress");
+      if (storage) state.itemCreation = JSON.parse(storage);
+    },
+    editLocalItem: (state, action) => {
+      const id = action.payload;
+      const editItem = state.itemCreation.items.find((item) => item.id === id);
+      if (editItem) state.selectedItem = editItem;
+    },
+    toggleIsEditing: (state) => {
+      state.isEditingItem = !state.isEditingItem;
+    },
+    updateLocalItem: (state, action) => {
+      const { item } = action.payload;
+      const index = state.itemCreation.items.findIndex((i) => i.id === item.id);
+      state.itemCreation.items[index] = item;
     },
   },
 
@@ -414,6 +438,7 @@ export const selectTotalItemsCount = (state: RootState) =>
   state.items.itemCount;
 export const selectItemCreation = (state: RootState) =>
   state.items.itemCreation;
+export const selectIsEditing = (state: RootState) => state.items.isEditingItem;
 
 // Actions
 export const {
@@ -422,6 +447,11 @@ export const {
   selectOrgLocation,
   selectOrg,
   addToItemCreation,
+  removeFromItemCreation,
+  loadItemsFromStorage,
+  editLocalItem,
+  toggleIsEditing,
+  updateLocalItem,
 } = itemsSlice.actions;
 
 export default itemsSlice.reducer;

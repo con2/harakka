@@ -12,7 +12,7 @@ import {
 const initialState: OrgLocationsState = {
   orgLocations: [],
   currentOrgLocation: null,
-  currentOrgLocations: null,
+  currentOrgLocations: [],
   loading: false,
   error: null,
   totalPages: 0,
@@ -181,7 +181,7 @@ const orgLocationsSlice = createSlice({
       })
       .addCase(fetchLocationsByOrgId.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentOrgLocations = action.payload.data;
+        state.currentOrgLocations = action.payload.data ?? [];
       })
       .addCase(fetchLocationsByOrgId.rejected, (state, action) => {
         state.loading = false;

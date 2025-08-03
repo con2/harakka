@@ -40,7 +40,7 @@ export interface OrgLocationWithNames extends OrgLocationRow {
 export interface OrgLocationsState {
   orgLocations: OrgLocationWithNames[];
   currentOrgLocation: OrgLocationWithNames | null;
-  currentOrgLocations: OrgLocationsWithStorageDetails[] | null;
+  currentOrgLocations: OrgLocationsWithStorageDetails[];
   loading: boolean;
   error: string | null;
   totalPages: number;

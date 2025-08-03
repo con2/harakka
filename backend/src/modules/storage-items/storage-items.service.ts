@@ -22,19 +22,22 @@ import {
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagService } from "../tag/tag.service";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
-import { CreateItemPayload } from "@common/items/storage-items.types";
+import { ItemFormData } from "@common/items/form.types";
 import {
+  mapImagePaths,
+  mapItemImages,
   mapOrgLinks,
   mapStorageItems,
   mapTagLinks,
 } from "@src/utils/storage-items.utils";
-// this is used by the controller
+import { ItemImagesService } from "../item-images/item-images.service";
 
 @Injectable()
 export class StorageItemsService {
   constructor(
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
     private readonly tagService: TagService,
+    private readonly imageService: ItemImagesService,
   ) {}
 
   /**
@@ -155,17 +158,13 @@ export class StorageItemsService {
    * @param payload Can be either one item with an array of tagIds or an array of items of the same structure
    * @returns
    */
-  async createItems(
-    req: AuthRequest,
-    payload: Array<CreateItemPayload>,
-  ): Promise<StorageItem[]> {
+  async createItems(req: AuthRequest, payload: ItemFormData): Promise<boolean> {
     const supabase = req.supabase;
-
-    // Insert item data
     const mappedItems = mapStorageItems(payload);
 
     try {
-      const { data, error }: PostgrestResponse<StorageItem> = await supabase
+      // Insert item data
+      const { error }: PostgrestResponse<StorageItem> = await supabase
         .from("storage_items")
         .insert(mappedItems)
         .select();
@@ -185,7 +184,21 @@ export class StorageItemsService {
         mappedTags,
       );
       if (tagError) handleSupabaseError(tagError);
-      return data;
+
+      // Move uploaded images
+      const imagePaths = mapImagePaths(payload);
+      await this.imageService.moveFromBucket(
+        req,
+        "item-images-drafts",
+        "item-images",
+        imagePaths,
+      );
+      const mappedImageData = mapItemImages(payload);
+      const { error: imageError } = await supabase
+        .from("storage_item_images")
+        .insert(mappedImageData);
+      if (imageError) handleSupabaseError(imageError);
+      return true;
     } catch (error) {
       const item_ids = mappedItems.map((i) => i.id);
       await supabase.from("storage_items").delete().in("id", item_ids);

@@ -59,13 +59,14 @@ export type MainImageData = {
   image: {
     file: File | null;
     metadata: UploadItemImageDto;
+    id: string;
   };
   preview: string | null;
   loading: boolean;
 };
 
 export type DetailImageData = {
-  images: FileWithMetadata[];
+  images: (FileWithMetadata & { path: string; id: string })[];
   previews: string[];
   loading: boolean;
 };

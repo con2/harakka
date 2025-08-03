@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { v4 as uuidv4 } from "uuid";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { ItemImageRow } from "./types/item-image.types";
+import { BucketUploadResult, ItemImageRow } from "./types/item-image.types";
 import {
   PostgrestResponse,
   PostgrestSingleResponse,
@@ -99,15 +99,21 @@ export class ItemImagesService {
     req: AuthRequest,
     bucket: string,
     files: Express.Multer.File[],
-    uuid: string = crypto.randomUUID(),
-  ): Promise<string[]> {
+    path?: string,
+  ): Promise<BucketUploadResult> {
     const supabase = req.supabase;
-    const paths: string[] = [];
+    const result: BucketUploadResult = {
+      paths: [],
+      urls: [],
+      full_paths: [],
+    };
+    console.log("path: ", path);
 
     try {
       for (let i = 0; i < files.length; i++) {
         const fileExt = files[i].originalname.split(".").pop();
-        const fileName = `${uuid}/${uuidv4()}.${fileExt}`;
+        const fileName = path ? `${path}.${fileExt}` : `${uuidv4()}.${fileExt}`;
+        console.log("filename: ", fileName);
         const { data, error } = await supabase.storage
           .from(bucket)
           .upload(fileName, files[i].buffer, {
@@ -117,39 +123,53 @@ export class ItemImagesService {
         if (error) {
           throw new Error(`Failed to upload image: ${files[i].originalname}`);
         }
-        if (data?.fullPath)
-          paths.push(
-            `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.fullPath}`,
-          );
+        console.log("Data: ", data);
+        if (data?.fullPath) {
+          const full_url = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.fullPath}`;
+          result.urls.push(full_url);
+          result.paths.push(data.path);
+          result.full_paths.push(data.fullPath);
+        }
       }
     } catch (error) {
       console.error(error);
       throw error;
     }
-    return paths;
+    return result;
   }
 
   async moveFromBucket(
     req: AuthRequest,
     from_bucket: string,
     to_bucket: string,
-    files: string[],
-    to_path: string,
+    paths: string[],
   ) {
     const supabase = req.supabase;
     const result: { file: string; status: string }[] = [];
     try {
-      for (const file of files) {
+      for (const path of paths) {
         const { data, error } = await supabase.storage
           .from(from_bucket)
-          .move(file, `${to_bucket}/${to_path}`);
-        if (error) throw new Error(`Failed to move image with id ${file}`);
-        result.push({ file: file, status: data.message });
+          .move(path, `${to_bucket}/${path}`);
+        if (error) throw new Error(`Failed to move image with id ${path}`);
+        result.push({ file: path, status: data.message });
       }
     } catch (error) {
       console.error(error);
     }
     return result;
+  }
+
+  async removeFromBucket(req: AuthRequest, bucket: string, paths: string[]) {
+    const supabase = req.supabase;
+    try {
+      const { error } = await supabase.storage.from(bucket).remove(paths);
+      if (error) throw new Error("Failed to remove files.");
+      return { success: true };
+    } catch (error) {
+      console.error(error);
+      return { success: false };
+    }
   }
 
   /**
@@ -175,8 +195,11 @@ export class ItemImagesService {
   /**
    * Delete an item image
    */
-  async deleteItemImage(imageId: string): Promise<{ success: boolean }> {
-    const supabase = this.supabaseService.getServiceClient();
+  async deleteItemImage(
+    req: AuthRequest,
+    imageId: string,
+  ): Promise<{ success: boolean }> {
+    const supabase = req.supabase;
 
     // 1. Get the image record
     const { data: image, error }: PostgrestSingleResponse<ItemImageRow> =

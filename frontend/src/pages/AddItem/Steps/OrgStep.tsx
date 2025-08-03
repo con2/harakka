@@ -28,8 +28,8 @@ function OrgStep() {
   const orgs = useAppSelector(selectCurrentUserOrganizations);
   const orgLocations = useAppSelector(selectCurrentOrgLocations);
   const {
-    selectedOrg,
-    selectedLocation: storage,
+    org: selectedOrg,
+    location: selectedLoc,
     items,
   } = useAppSelector(selectItemCreation);
   const dispatch = useAppDispatch();
@@ -40,7 +40,12 @@ function OrgStep() {
     if (!newOrg) return dispatch(selectOrg(undefined));
     void dispatch(selectOrgLocation(undefined));
     void dispatch(fetchLocationsByOrgId(newOrg.organization_id));
-    void dispatch(selectOrg(newOrg));
+    void dispatch(
+      selectOrg({
+        id: newOrg.organization_id,
+        name: newOrg.organization_name,
+      }),
+    );
   };
   /*---------------------side effects--------------------------------------------*/
   useEffect(() => {
@@ -48,7 +53,7 @@ function OrgStep() {
       const newOrg = orgLocations[0];
       dispatch(
         selectOrgLocation({
-          org_id: newOrg.id,
+          id: newOrg.id,
           name: newOrg.storage_locations.name,
           address: newOrg.storage_locations.address,
         }),
@@ -56,73 +61,89 @@ function OrgStep() {
     }
   }, [orgLocations, dispatch]);
 
-  return (
-    <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px] flex-col p-10 gap-4">
-      <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
-        Organization
-      </p>
-      <div>
-        <Select
-          value={selectedOrg?.organization_name ?? ""}
-          onValueChange={handleOrgChange}
-          required
-          name="organization"
-          disabled={items.length > 0}
-        >
-          <SelectTrigger
-            disabled={orgs.length === 1}
-            className="min-w-[250px] border shadow-none border-grey w-[300px]"
-          >
-            <SelectValue placeholder={t.addItem.placeholders.selectOrg[lang]}>
-              {selectedOrg?.organization_name ?? ""}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {orgs.map((org) => (
-              <SelectItem key={org.organization_id} value={org.organization_id}>
-                {org.organization_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+  useEffect(() => {
+    if (selectedOrg && orgLocations.length < 1)
+      void dispatch(fetchLocationsByOrgId(selectedOrg?.id));
+  }, [dispatch, orgLocations, selectedOrg]);
 
-      {/* Location Selection */}
-      <div className="flex justify-between items-center">
-        {orgLocations && (
-          <div className="flex gap-2">
-            {orgLocations.map((loc) => (
-              <Button
-                key={loc.storage_location_id}
-                variant={storage?.org_id === loc.id ? "outline" : "default"}
-                className="gap-2"
-                onClick={() =>
-                  dispatch(
-                    selectOrgLocation({
-                      org_id: loc.id,
-                      name: loc.storage_locations.name,
-                      address: loc.storage_locations.address,
-                    }),
-                  )
-                }
-              >
-                <MapPin />
-                {loc.storage_locations?.name || `Location #${loc.id}`}
-              </Button>
-            ))}
-            {orgLocations.length > 1 && (
-              <Button
-                variant={storage === null ? "outline" : "default"}
-                onClick={() => dispatch(selectOrgLocation(null))}
-              >
-                {t.addItem.buttons.chooseLocation[lang]}
-              </Button>
-            )}
-          </div>
-        )}
+  return (
+    <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px] p-10 gap-4">
+      <div className="flex flex-col gap-2 flex-3">
+        <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
+          Organization
+        </p>
+        <div>
+          <Select
+            value={selectedOrg?.name ?? ""}
+            onValueChange={handleOrgChange}
+            required
+            name="organization"
+            disabled={items.length > 0}
+          >
+            <SelectTrigger
+              disabled={orgs.length === 1}
+              className="min-w-[250px] border shadow-none border-grey w-[300px]"
+            >
+              <SelectValue placeholder={t.addItem.placeholders.selectOrg[lang]}>
+                {selectedOrg?.name ?? ""}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {orgs.map((org) => (
+                <SelectItem
+                  key={org.organization_id}
+                  value={org.organization_id}
+                >
+                  {org.organization_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Location Selection */}
+        <div className="flex justify-between items-center">
+          {orgLocations && (
+            <div className="flex gap-2">
+              {orgLocations.map((loc) => (
+                <Button
+                  key={loc.storage_location_id}
+                  variant={selectedLoc?.id === loc.id ? "outline" : "default"}
+                  className="gap-2"
+                  disabled={items.length > 0}
+                  onClick={() =>
+                    dispatch(
+                      selectOrgLocation({
+                        id: loc.id,
+                        name: loc.storage_locations.name,
+                        address: loc.storage_locations.address,
+                      }),
+                    )
+                  }
+                >
+                  <MapPin />
+                  {loc.storage_locations?.name || `Location #${loc.id}`}
+                </Button>
+              ))}
+              {orgLocations.length > 1 && (
+                <Button
+                  disabled={items.length > 0}
+                  variant={selectedLoc === null ? "outline" : "default"}
+                  onClick={() => dispatch(selectOrgLocation(null))}
+                >
+                  {t.addItem.buttons.chooseLocation[lang]}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      {/* Info and Next Button */}
+      <div className="flex flex-2 flex-col justify-end">
         <Button
           variant="outline"
-          className="ml-[auto] px-10"
+          className="w-fit px-10 self-end"
+          disabled={!selectedOrg || selectedLoc === undefined}
           onClick={() => dispatch(setNextStep())}
         >
           Next
