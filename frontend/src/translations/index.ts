@@ -49,6 +49,7 @@ import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
 import { editLocationModal } from "./modules/editLocationModal";
 import { organizationLocations } from "./modules/organizationLocations";
+import { notifications } from "./modules/notifications";
 
 export const t = {
   addItemModal,
@@ -74,6 +75,7 @@ export const t = {
   myBookings,
   myProfile,
   navigation,
+  notifications,
   bookingConfirmation,
   bookingList,
   pagination,
