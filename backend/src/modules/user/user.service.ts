@@ -210,6 +210,7 @@ export class UserService {
     const supabase = req.supabase;
     const storage = supabase.storage;
 
+    // upload
     const { error: uploadError } = await storage
       .from("profile-pictures")
       .upload(filePath, fileBuffer, {
@@ -222,6 +223,7 @@ export class UserService {
       throw new Error(`Upload failed: ${uploadError.message}`);
     }
 
+    // get public URL
     const { data: publicUrlData } = storage
       .from("profile-pictures")
       .getPublicUrl(filePath);
@@ -234,5 +236,25 @@ export class UserService {
     }
 
     return publicUrlData.publicUrl;
+  }
+
+  async handleProfilePictureUpload(
+    fileBuffer: Buffer,
+    fileName: string,
+    userId: string,
+    req: AuthRequest,
+  ): Promise<string> {
+    // get upload pic and url
+    const url = await this.uploadProfilePicture(
+      fileBuffer,
+      fileName,
+      userId,
+      req,
+    );
+
+    // update user profile
+    await this.updateUser(userId, { profile_picture_url: url }, req);
+
+    return url;
   }
 }
