@@ -14,8 +14,6 @@ import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 const initialState: RolesState = {
   currentUserRoles: [] as ViewUserRolesWithDetails[],
   currentUserOrganizations: [] as UserOrganization[],
-  isSuperVera: false,
-  isSuperAdmin: false,
   allUserRoles: [] as ViewUserRolesWithDetails[],
   loading: false,
   adminLoading: false,
@@ -30,16 +28,14 @@ export const fetchCurrentUserRoles = createAsyncThunk(
   "roles/fetchCurrentUserRoles",
   async (_, { rejectWithValue }) => {
     try {
-      const [rolesData, orgsData, superVeraData] = await Promise.all([
+      const [rolesData, orgsData] = await Promise.all([
         roleApi.getCurrentUserRoles(),
         roleApi.getUserOrganizations(),
-        roleApi.isSuperVera(),
       ]);
 
       return {
         roles: rolesData,
         organizations: orgsData,
-        isSuperVera: superVeraData.isSuperVera,
       };
     } catch (error: unknown) {
       return rejectWithValue(
@@ -195,8 +191,6 @@ const rolesSlice = createSlice({
     resetRoles: (state) => {
       state.currentUserRoles = [];
       state.currentUserOrganizations = [];
-      state.isSuperVera = false;
-      state.isSuperAdmin = false;
       state.allUserRoles = [];
       state.error = null;
       state.adminError = null;
@@ -215,9 +209,6 @@ const rolesSlice = createSlice({
         state.loading = false;
         state.currentUserRoles = action.payload.roles;
         state.currentUserOrganizations = action.payload.organizations;
-        state.isSuperVera = action.payload.isSuperVera;
-        const userRoles = action.payload.roles.map((r) => r.role_name);
-        state.isSuperAdmin = userRoles.every((r) => r === "super_admin");
       })
       .addCase(fetchCurrentUserRoles.rejected, (state, action) => {
         state.loading = false;
@@ -358,9 +349,6 @@ export const selectCurrentUserRoles = (state: RootState) =>
   state.roles.currentUserRoles;
 export const selectCurrentUserOrganizations = (state: RootState) =>
   state.roles.currentUserOrganizations;
-export const selectIsSuperVera = (state: RootState) => state.roles.isSuperVera;
-export const selectIsSuperAdmin = (state: RootState) =>
-  state.roles.isSuperAdmin;
 export const selectAllUserRoles = (state: RootState) =>
   state.roles.allUserRoles;
 export const selectRolesLoading = (state: RootState) => state.roles.loading;
@@ -380,8 +368,7 @@ export const selectIsAdmin = (state: RootState) => {
     hasRole(state, "admin") ||
     hasRole(state, "superVera") ||
     hasRole(state, "main_admin") ||
-    hasRole(state, "super_admin") ||
-    state.roles.isSuperVera
+    hasRole(state, "super_admin")
   );
 };
 
