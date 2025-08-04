@@ -107,7 +107,6 @@ export class ItemImagesService {
       urls: [],
       full_paths: [],
     };
-    console.log("path: ", path);
 
     try {
       for (let i = 0; i < files.length; i++) {
@@ -134,28 +133,6 @@ export class ItemImagesService {
     } catch (error) {
       console.error(error);
       throw error;
-    }
-    return result;
-  }
-
-  async moveFromBucket(
-    req: AuthRequest,
-    from_bucket: string,
-    to_bucket: string,
-    paths: string[],
-  ) {
-    const supabase = req.supabase;
-    const result: { file: string; status: string }[] = [];
-    try {
-      for (const path of paths) {
-        const { data, error } = await supabase.storage
-          .from(from_bucket)
-          .move(path, `${to_bucket}/${path}`);
-        if (error) throw new Error(`Failed to move image with id ${path}`);
-        result.push({ file: path, status: data.message });
-      }
-    } catch (error) {
-      console.error(error);
     }
     return result;
   }
