@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchCurrentUserRoles,
@@ -30,13 +30,7 @@ let fetchInProgress = false;
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 let lastFetchTimestamp = 0;
 
-interface UseRolesOptions {
-  /** When true, suppresses the hook's initial fetch effect. */
-  skipInitialFetch?: boolean;
-}
-
-export const useRoles = (options: UseRolesOptions = {}) => {
-  const { skipInitialFetch = false } = options;
+export const useRoles = () => {
   const dispatch = useAppDispatch();
 
   // Track if we've received a response (even an empty one)
@@ -101,36 +95,43 @@ export const useRoles = (options: UseRolesOptions = {}) => {
     return Date.now() - lastFetchTimestamp > CACHE_EXPIRY;
   };
 
-  // Actions with smart caching
+  // Module-level promise ref to persist across renders
+  const globalFetchPromiseRef = useRef<Promise<unknown> | null>(null);
+
   const refreshCurrentUserRoles = useCallback(
     async (force = false) => {
-      // Skip if a fetch is already in progress (unless forced)
       if (fetchInProgress && !force) {
-        console.log("🔄 Skipping current roles fetch - already in progress");
-        return Promise.resolve({ type: "roles/fetchCurrentUserRoles/skipped" });
+        // Only return the shared promise
+        return (
+          globalFetchPromiseRef.current ||
+          Promise.resolve({ type: "roles/fetchCurrentUserRoles/skipped" })
+        );
       }
 
-      // Skip if data is already cached and not stale (unless forced)
       if (currentRolesFetched && !isCacheStale() && !force) {
-        console.log("🔄 Skipping current roles fetch - using cached data");
         return Promise.resolve({ type: "roles/fetchCurrentUserRoles/cached" });
       }
 
+      // Only log when actually starting a fetch
       console.log("🔄 Fetching current user roles");
       fetchInProgress = true;
+      globalFetchPromiseRef.current = dispatch(fetchCurrentUserRoles())
+        .unwrap()
+        .then((result) => {
+          currentRolesFetched = true;
+          lastFetchTimestamp = Date.now();
+          setResponseReceived(true);
+          return {
+            type: "roles/fetchCurrentUserRoles/fulfilled",
+            payload: result,
+          };
+        })
+        .finally(() => {
+          fetchInProgress = false;
+          globalFetchPromiseRef.current = null;
+        });
 
-      try {
-        const result = await dispatch(fetchCurrentUserRoles()).unwrap();
-        currentRolesFetched = true;
-        lastFetchTimestamp = Date.now();
-        setResponseReceived(true);
-        return {
-          type: "roles/fetchCurrentUserRoles/fulfilled",
-          payload: result,
-        };
-      } finally {
-        fetchInProgress = false;
-      }
+      return globalFetchPromiseRef.current;
     },
     [dispatch],
   );
@@ -138,9 +139,7 @@ export const useRoles = (options: UseRolesOptions = {}) => {
   const refreshAllUserRoles = useCallback(
     async (force = false) => {
       // Only admins should fetch all roles
-      const shouldFetchAdminData = isAdmin || isSuperVera || isSuperAdmin; // TODO: remove isSuperVera and isSuperAdmin and so on, use hasAnyRole instead
-
-      if (!shouldFetchAdminData) {
+      if (!isAnyTypeOfAdmin) {
         console.log("⚠️ Skipping all roles fetch - user is not admin");
         return Promise.resolve({ type: "roles/fetchAllUserRoles/notAdmin" });
       }
@@ -169,7 +168,7 @@ export const useRoles = (options: UseRolesOptions = {}) => {
         fetchInProgress = false;
       }
     },
-    [dispatch, isAdmin, isSuperVera, isSuperAdmin],
+    [dispatch, isAnyTypeOfAdmin],
   );
 
   const refreshAvailableRoles = useCallback(() => {
@@ -245,32 +244,6 @@ export const useRoles = (options: UseRolesOptions = {}) => {
     },
     [dispatch, isAnyTypeOfAdmin, refreshCurrentUserRoles, refreshAllUserRoles],
   );
-
-  // Auto-fetch current user roles on mount - only if not already fetched
-  useEffect(() => {
-    if (skipInitialFetch) return;
-
-    if (!currentRolesFetched || isCacheStale()) {
-      void refreshCurrentUserRoles();
-      void dispatch(fetchAvailableRoles());
-    } else {
-      console.log("📌 Using cached role data - skipping initial fetch");
-      setResponseReceived(true);
-    }
-  }, [dispatch, skipInitialFetch, refreshCurrentUserRoles]);
-
-  // Auto-fetch admin roles if needed - separate from current user roles
-  useEffect(() => {
-    if (skipInitialFetch) return;
-
-    if (
-      isAnyTypeOfAdmin &&
-      (!allRolesFetched || isCacheStale()) &&
-      currentRolesFetched
-    ) {
-      void refreshAllUserRoles();
-    }
-  }, [isAnyTypeOfAdmin, skipInitialFetch, refreshAllUserRoles]);
 
   return {
     // Data
