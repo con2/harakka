@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import profilePlaceholder from "@/assets/profile-placeholder.jpg";
+//import profilePlaceholder from "@/assets/profile-placeholder.jpg";
 
 const ProfilePictureUploader = () => {
   const dispatch = useAppDispatch();
@@ -31,7 +31,7 @@ const ProfilePictureUploader = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
 
-  const currentImage = selectedUser?.profile_picture_url || profilePlaceholder;
+  const currentImage = selectedUser?.profile_picture_url;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
