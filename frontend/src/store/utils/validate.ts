@@ -12,7 +12,9 @@ const itemTranslationsSchema = z.object({
 });
 
 const imageSchema = z.object({
+  id: z.string(),
   url: z.string(),
+  full_path: z.string(),
   path: z.string(),
   metadata: z.object({
     image_type: z.string(),
