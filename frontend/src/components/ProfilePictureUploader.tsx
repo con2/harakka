@@ -47,19 +47,12 @@ const ProfilePictureUploader = () => {
     formData.append("file", file);
 
     try {
-      await dispatch(
-        uploadProfilePicture(
-          /* {
-          id: selectedUser.id,
-          formData: formData,
-        } */ file,
-        ),
-      ).unwrap();
+      await dispatch(uploadProfilePicture(file)).unwrap();
 
-      toast.success("Profilbild aktualisiert");
+      toast.success("Profile picture updated");
       setOpen(false);
     } catch {
-      toast.error("Fehler beim Hochladen des Profilbilds");
+      toast.error("Error uploading the profile picture");
     }
   };
 
@@ -72,7 +65,7 @@ const ProfilePictureUploader = () => {
         <Avatar className="w-24 h-24 border border-secondary">
           <AvatarImage
             src={currentImage ?? undefined}
-            alt="Profilbild"
+            alt="Profile picture"
             className="object-cover"
           />
           <AvatarFallback>U</AvatarFallback>
@@ -86,7 +79,7 @@ const ProfilePictureUploader = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Profilbild ändern</DialogTitle>
+            <DialogTitle>Change Profile Picture</DialogTitle>
           </DialogHeader>
 
           <div className="flex flex-col gap-4">
@@ -107,10 +100,10 @@ const ProfilePictureUploader = () => {
 
             <div className="flex justify-end gap-2">
               <Button onClick={handleUpload} disabled={!file}>
-                Hochladen
+                Upload
               </Button>
               <Button variant="outline" onClick={() => setOpen(false)}>
-                Abbrechen
+                Cancel
               </Button>
             </div>
           </div>
