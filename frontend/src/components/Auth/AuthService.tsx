@@ -25,8 +25,6 @@ export class AuthService {
     signupMethod: "email" | "oauth" = "email",
   ): Promise<SignUpResult> {
     try {
-      console.log(`Setting up new user via ${signupMethod}:`, user.id);
-
       // Extract user data based on signup method
       const profileData = this.extractUserProfileData(user, signupMethod);
 
@@ -34,15 +32,8 @@ export class AuthService {
       const setupStatus = await this.checkUserSetupStatus(user.id);
 
       if (!setupStatus.needsSetup) {
-        console.log(
-          "User already has complete setup (profile + role), skipping creation",
-        );
         return { success: true, user, isNewUser: false };
       }
-
-      console.log(
-        `User needs setup - Profile: ${setupStatus.hasProfile}, Role: ${setupStatus.hasRole}`,
-      );
 
       // Call backend API to setup user (will handle both profile creation and role assignment)
       const setupPayload = {
@@ -86,14 +77,8 @@ export class AuthService {
       const result = await response.json();
 
       if (result.success) {
-        console.log("User setup completed successfully");
-
         // Force refresh the session to update JWT with new role information
         try {
-          console.log(
-            "Refreshing session to update JWT with role information...",
-          );
-
           // Wait a moment for the backend JWT update to propagate
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -103,60 +88,26 @@ export class AuthService {
 
           while (refreshAttempts < maxRefreshAttempts) {
             refreshAttempts++;
-            console.log(
-              `Session refresh attempt ${refreshAttempts}/${maxRefreshAttempts}`,
-            );
 
             const { data: refreshData, error: refreshError } =
               await supabase.auth.refreshSession();
 
             if (refreshError) {
-              console.warn(
-                `Session refresh attempt ${refreshAttempts} failed:`,
-                refreshError.message,
-              );
-
               if (refreshAttempts < maxRefreshAttempts) {
                 // Wait before retrying
                 await new Promise((resolve) => setTimeout(resolve, 1500));
                 continue;
               }
             } else {
-              console.log(
-                `Session refreshed successfully on attempt ${refreshAttempts} with updated role information`,
-              );
-
               // Verify we have a valid session with token
               if (refreshData?.session?.access_token) {
-                console.log(
-                  "✅ New access token obtained, roles should be updated",
-                );
-
-                // Decode and log JWT content for debugging
-                try {
-                  const tokenPayload = JSON.parse(
-                    atob(refreshData.session.access_token.split(".")[1]),
-                  );
-                  console.log(
-                    "🔍 JWT app_metadata:",
-                    tokenPayload.app_metadata,
-                  );
-                  console.log(
-                    "🔍 JWT roles:",
-                    tokenPayload.app_metadata?.roles,
-                  );
-                } catch (decodeError) {
-                  console.log(
-                    "Could not decode JWT for debugging:",
-                    decodeError,
-                  );
-                }
+                // Token successfully obtained
               }
               break;
             }
           }
-        } catch (refreshError) {
-          console.warn("Failed to refresh session:", refreshError);
+        } catch {
+          // Silently handle refresh errors
         }
 
         return {
@@ -168,7 +119,6 @@ export class AuthService {
         throw new Error(result.error || "User setup failed");
       }
     } catch (error) {
-      console.error("User setup process failed:", error);
       return {
         success: false,
         error:
@@ -244,21 +194,20 @@ export class AuthService {
       const hasProfile = !profileError && !!profile;
 
       // Check role in user_organization_roles table
-      const { data: role, error: roleError } = await supabase
+      const { data: roles, error: roleError } = await supabase
         .from("user_organization_roles")
         .select("id")
         .eq("user_id", userId)
-        .single();
+        .limit(1);
 
-      const hasRole = !roleError && !!role;
+      const hasRole = !roleError && roles && roles.length > 0;
 
       return {
         hasProfile,
         hasRole,
         needsSetup: !hasProfile || !hasRole,
       };
-    } catch (error) {
-      console.error("Error checking user setup status:", error);
+    } catch {
       return {
         hasProfile: false,
         hasRole: false,
