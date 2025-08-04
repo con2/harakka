@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRoles } from "@/hooks/useRoles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -71,12 +71,20 @@ export const RoleManagement: React.FC = () => {
 
   // Handler to refresh roles after any role operation
   const handleRolesChanged = useCallback(async () => {
-    await refreshCurrentUserRoles();
-    if (isAnyTypeOfAdmin) {
-      await refreshAllUserRoles();
-    }
+    await Promise.all([
+      refreshCurrentUserRoles(true), // Force refresh with true
+      isAnyTypeOfAdmin ? refreshAllUserRoles(true) : Promise.resolve(),
+    ]);
     toast.success("Roles updated!");
   }, [refreshCurrentUserRoles, refreshAllUserRoles, isAnyTypeOfAdmin]);
+
+  // Explicitly fetch all roles when the admin page loads
+  useEffect(() => {
+    // This only runs when the admin page is mounted
+    if (isAnyTypeOfAdmin) {
+      refreshAllUserRoles(false).catch(console.error);
+    }
+  }, [isAnyTypeOfAdmin, refreshAllUserRoles]);
 
   // Combined loading state from both auth and roles
   const isLoading = authLoading || (!currentUserRoles && !error);
