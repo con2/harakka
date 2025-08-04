@@ -108,20 +108,25 @@ function AddItemForm() {
   };
 
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
-    console.log("form is invalid: ", errors);
-    const result = createItemDto.safeParse(form);
-    if (result.error) {
-      const allErrors = result.error.flatten().fieldErrors;
-      console.log("allerrors", allErrors);
-      const firstErrorMessage = Object.values(allErrors)
-        .flat()
-        .find((msg) => !!msg);
-
-      if (firstErrorMessage) {
-        toast.error(firstErrorMessage);
-      } else {
-        toast.error("Form contains errors");
+    const getFirstErrorMessage = (obj: any): string | null => {
+      for (const value of Object.values(obj)) {
+        if (value && typeof value === "object") {
+          if ("message" in value && typeof value.message === "string") {
+            return value.message;
+          }
+          const nested = getFirstErrorMessage(value);
+          if (nested) return nested;
+        }
       }
+      return null;
+    };
+
+    const firstErrorMessage = getFirstErrorMessage(errors);
+
+    if (firstErrorMessage) {
+      toast.error(firstErrorMessage);
+    } else {
+      toast.error("Form contains errors");
     }
   };
 
