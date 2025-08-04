@@ -157,17 +157,12 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
         ) : (
           <ScrollArea className="max-h-[70vh]">
             {feedUniq.map((n) => {
-              const meta = n.metadata as Record<string, unknown> | null;
-
               // -------- translate title / message ---------------------------------
-              const tpl =
+              const tpl = // Translation template for this notification type
                 (
                   t.notifications as Record<
                     string,
-                    {
-                      title: Record<"en" | "fi", string>;
-                      message: Record<"en" | "fi", string>;
-                    }
+                    (typeof t.notifications)[keyof typeof t.notifications]
                   >
                 )[n.type] ?? null;
 
@@ -176,8 +171,16 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
 
               const interpolate = (s: string) =>
                 s
-                  .replace("{num}", safe(meta?.booking_number))
-                  .replace("{email}", safe(meta?.email));
+                  .replace(
+                    "{num}",
+                    "booking_number" in n.metadata
+                      ? safe(n.metadata.booking_number)
+                      : "",
+                  )
+                  .replace(
+                    "{email}",
+                    "email" in n.metadata ? safe(n.metadata.email) : "",
+                  );
 
               const title = tpl ? interpolate(tpl.title[lang]) : n.title;
               const message =
@@ -191,14 +194,13 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                   key={n.id}
                   onClick={() => {
                     void markRead(n.id); // mark read on click
-                    const meta = n.metadata as Record<string, unknown> | null;
 
-                    if (meta?.new_user_id) {
+                    if (n.type === "user.created") {
                       void navigate("/admin/users");
                     } else if (
-                      meta?.booking_id &&
-                      (typeof meta.booking_id === "string" ||
-                        typeof meta.booking_id === "number")
+                      (n.type === "booking.status_approved" ||
+                        n.type === "booking.status_rejected") &&
+                      "booking_id" in n.metadata
                     ) {
                       void navigate(`/profile?tab=bookings`);
                     }
