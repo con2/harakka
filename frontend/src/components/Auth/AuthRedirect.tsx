@@ -1,26 +1,67 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const AuthRedirect = () => {
-  const { user } = useAuth();
-  const { hasRole, isAdmin, isSuperVera } = useRoles();
+  const { user, authLoading } = useAuth();
+  const {
+    hasRole,
+    hasAnyRole,
+    loading: rolesLoading,
+    currentUserRoles,
+  } = useRoles();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTriggered = useRef(false);
+
+  const isAnyTypeOfAdmin = hasAnyRole([
+    "admin",
+    "superVera",
+    "main_admin",
+    "super_admin",
+    "store_manager",
+  ]);
 
   useEffect(() => {
-    if (user) {
-      // Check if user has admin privileges (admin role or superVera)
-      if (isAdmin || isSuperVera) {
-        void navigate("/admin"); // redirect to Admin Panel for admin users
-      } else if (hasRole("user")) {
-        void navigate("/"); // redirect to Landing Page for regular users
-      } else {
-        // Fallback: if no specific role found, redirect to landing page
-        void navigate("/");
-      }
+    // Only redirect if:
+    // 1. User and roles are loaded
+    // 2. We're on the login page or root page (suggesting fresh login)
+    // 3. Haven't already triggered a redirect
+    const hasRoleData = currentUserRoles && currentUserRoles.length > 0;
+    const dataReady = user && !authLoading && !rolesLoading && hasRoleData;
+
+    // Only redirect if on login or root page
+    const shouldRedirect =
+      dataReady &&
+      !redirectTriggered.current &&
+      (location.pathname === "/login" || location.pathname === "/");
+
+    if (shouldRedirect) {
+      // Small timeout to ensure state is fully updated
+      setTimeout(() => {
+        redirectTriggered.current = true;
+
+        // Use isAnyTypeOfAdmin for admin check
+        if (isAnyTypeOfAdmin) {
+          void navigate("/admin");
+        } else if (hasRole("user") || hasRole("requester")) {
+          void navigate("/storage");
+        } else {
+          void navigate("/storage");
+        }
+      }, 100);
     }
-  }, [user, hasRole, isAdmin, isSuperVera, navigate]);
+  }, [
+    user,
+    authLoading,
+    rolesLoading,
+    currentUserRoles,
+    isAnyTypeOfAdmin,
+    hasRole,
+    navigate,
+    location.pathname,
+  ]);
 
   return null;
 };
