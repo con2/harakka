@@ -1,6 +1,6 @@
 {
   "name": "full-stack-booking-app",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Full-Stack Storage & Booking Application",
   "main": "index.js",
   "scripts": {
@@ -10,14 +10,29 @@
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
     "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend",
     "deploy": "echo 'Add deployment scripts here'",
-    "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > common/supabase.types.ts"
+    "generate:types:local": "npx supabase gen types typescript --local > common/supabase.types.ts",
+    "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > common/supabase.types.ts",
+    "s:start": "npx supabase start",
+    "s:stop": "npx supabase stop",
+    "s:restart": "npx supabase stop && npx supabase start",
+    "s:reset": "npx supabase db reset",
+    "s:pull": "npx supabase db pull",
+    "s:push": "npx supabase db push",
+    "s:status": "npx supabase status",
+    "s:studio": "npx supabase studio",
+    "s:migration:new": "npx supabase migration new",
+    "s:migration:up": "npx supabase migration up",
+    "s:functions:serve": "npx supabase functions serve",
+    "s:functions:deploy": "npx supabase functions deploy",
+    "s:seed": "npx supabase db dump --data-only --file supabase/seed.sql",
+    "dev:local": "concurrently \"npm run s:start\" \"npm run frontend\" \"npm run backend\""
   },
   "devDependencies": {
-    "@supabase/supabase-js": "^2.50.4",
+    "@supabase/supabase-js": "^2.53.0",
     "concurrently": "^9.1.2",
     "type-fest": "^4.41.0"
   },
   "dependencies": {
-    "supabase": "^2.30.4"
+    "supabase": "^2.33.7"
   }
 }
