@@ -347,7 +347,7 @@ export class BookingService {
       .eq("id", bookingId);
 
     if (updateError) {
-      throw new BadRequestException("Could not confirm booking");
+      handleSupabaseError(updateError);
     }
 
     // Change the booking items' status to 'confirmed'
