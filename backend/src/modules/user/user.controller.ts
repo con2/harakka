@@ -164,7 +164,7 @@ export class UserController {
       req,
     );
 
-    // Save it to the user profile
+    // Save it to the user profiel
     await this.userService.updateUser(
       userId,
       { profile_picture_url: url },

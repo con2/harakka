@@ -22,11 +22,10 @@ const ProfilePictureUploader = () => {
   // Define the expected user type
   type User = {
     id: string;
-    profile_picture_url?: string;
-    // add other properties as needed
+    profile_picture_url?: string | null;
   };
 
-  const selectedUser: User = useAppSelector(selectSelectedUser);
+  const selectedUser: User | null = useAppSelector(selectSelectedUser);
   const [open, setOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -49,10 +48,12 @@ const ProfilePictureUploader = () => {
 
     try {
       await dispatch(
-        uploadProfilePicture({
+        uploadProfilePicture(
+          /* {
           id: selectedUser.id,
           formData: formData,
-        }),
+        } */ file,
+        ),
       ).unwrap();
 
       toast.success("Profilbild aktualisiert");
@@ -70,7 +71,7 @@ const ProfilePictureUploader = () => {
       >
         <Avatar className="w-24 h-24 border border-secondary">
           <AvatarImage
-            src={currentImage}
+            src={currentImage ?? undefined}
             alt="Profilbild"
             className="object-cover"
           />

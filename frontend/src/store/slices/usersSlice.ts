@@ -429,7 +429,6 @@ export const usersSlice = createSlice({
           state.selectedUser.profile_picture_url = action.payload.url;
         }
       })
-
       .addCase(uploadProfilePicture.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
