@@ -157,17 +157,10 @@ export class UserController {
     if (!userId)
       throw new BadRequestException("User ID not found in request context");
 
-    const url = await this.userService.uploadProfilePicture(
+    const url = await this.userService.handleProfilePictureUpload(
       file.buffer,
       file.originalname,
       userId,
-      req,
-    );
-
-    // Save it to the user profiel
-    await this.userService.updateUser(
-      userId,
-      { profile_picture_url: url },
       req,
     );
 
