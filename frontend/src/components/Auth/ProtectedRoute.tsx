@@ -21,7 +21,8 @@ const ProtectedRoute = ({
   requiredOrganization,
 }: ProtectedRouteProps) => {
   const { authLoading, user } = useAuth(); // wait for supabase auth to finish
-  const { loading: rolesLoading, hasAnyRole, isSuperVera } = useRoles(); // roles from the new schema
+  const { loading: rolesLoading, hasRole, hasAnyRole } = useRoles();
+  const isSuperVera = hasRole("superVera");
 
   // Use a state variable to track if access check has been performed
   const [accessChecked, setAccessChecked] = useState(false);

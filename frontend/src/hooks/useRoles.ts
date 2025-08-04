@@ -11,15 +11,12 @@ import {
   clearRoleErrors,
   selectCurrentUserRoles,
   selectCurrentUserOrganizations,
-  selectIsSuperVera,
   selectAllUserRoles,
   selectRolesLoading,
   selectAdminLoading,
   selectRolesError,
   selectAdminError,
-  selectIsAdmin,
   selectAvailableRoles,
-  selectIsSuperAdmin,
 } from "@/store/slices/rolesSlice";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
 
@@ -41,9 +38,6 @@ export const useRoles = () => {
   const currentUserOrganizations = useAppSelector(
     selectCurrentUserOrganizations,
   );
-  const isSuperVera = useAppSelector(selectIsSuperVera);
-  const isAdmin = useAppSelector(selectIsAdmin);
-  const isSuperAdmin = useAppSelector(selectIsSuperAdmin);
 
   // Admin data
   const allUserRoles = useAppSelector(selectAllUserRoles);
@@ -253,9 +247,6 @@ export const useRoles = () => {
     availableRoles,
 
     // Status
-    isSuperVera,
-    isSuperAdmin,
-    isAdmin,
     loading: loading && !responseReceived,
     adminLoading,
     error,

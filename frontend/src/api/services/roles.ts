@@ -39,11 +39,6 @@ export const roleApi = {
     return await api.get(`/roles/organization/${orgId}`);
   },
 
-  // Check if user is superVera
-  async isSuperVera(): Promise<{ isSuperVera: boolean }> {
-    return await api.get("/roles/super-vera");
-  },
-
   // Get all user roles
   async getAllUserRoles(): Promise<
     /* `ViewUserRolesWithDetails` is a type that represents detailed
