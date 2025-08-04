@@ -6,6 +6,8 @@ import { DBTables } from "@common/database.types";
 import { subscribeToNotifications } from "@/lib/notifications";
 import { useNavigate } from "react-router-dom";
 
+import { navigation as navT } from "@/translations/modules/navigation";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +65,28 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   );
 
   const navigate = useNavigate();
+
+  const locale = React.useMemo<"fi" | "en">(
+    () => (navigator.language.startsWith("fi") ? "fi" : "en"),
+    [],
+  );
+
+  // Helper function to safely get translations with fallbacks
+  const getTranslation = React.useCallback(
+    (key: string, fallback: string) => {
+      try {
+        const keys = key.split(".");
+        let value: any = navT;
+        for (const k of keys) {
+          value = value?.[k];
+        }
+        return value?.[locale] || value?.en || fallback;
+      } catch {
+        return fallback;
+      }
+    },
+    [locale],
+  );
 
   // live subscription — mount / unmount
   React.useEffect(() => {
@@ -124,18 +148,23 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
               {unseen}
             </Badge>
           )}
-          <span className="sr-only">Open notifications</span>
+          <span className="sr-only">
+            {getTranslation("notifications.srOpen", "Open notifications")}
+          </span>
         </Button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="w-80 md:w-96" align="end">
         <DropdownMenuLabel className="flex items-center justify-between">
-          <span>Notifications</span>
+          <span>{getTranslation("notifications.label", "Notifications")}</span>
           {unseen > 0 && (
             <Button
               size="sm"
               variant="ghost"
-              title="Mark all as read"
+              title={getTranslation(
+                "notifications.markAllRead",
+                "Mark all as read",
+              )}
               onClick={markAllRead}
               className="h-5 w-5"
             >
@@ -145,7 +174,9 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {feedUniq.length === 0 ? (
-          <p className="p-4 text-sm text-muted-foreground">Nothing new yet.</p>
+          <p className="p-4 text-sm text-muted-foreground">
+            {getTranslation("notifications.none", "No notifications")}
+          </p>
         ) : (
           <ScrollArea className="max-h-[70vh]">
             {feedUniq.map((n) => (
