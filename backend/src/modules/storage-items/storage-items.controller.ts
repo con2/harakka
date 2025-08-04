@@ -107,7 +107,7 @@ export class StorageItemsController {
     @Req() req: AuthRequest,
     @Body()
     formData: ItemFormData,
-  ): Promise<boolean> {
+  ): Promise<{ status: number; error: string | null }> {
     return this.storageItemsService.createItems(req, formData); // POST /storage-items (new item)
   }
 
