@@ -87,4 +87,18 @@ export const usersApi = {
    * Get the total user count
    */
   getUserCount: () => api.get("users/count"),
+
+  /**
+   * Upload new proile picture for the current user
+   * @param file - The file to upload
+   * @returns Promise with the URL of the uploaded picture
+   */
+  uploadProfilePicture: (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return api.post("/users/upload-picture", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };

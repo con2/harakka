@@ -205,6 +205,21 @@ export const getUserCount = createAsyncThunk(
   },
 );
 
+// upload a profile picture of the current user
+export const uploadProfilePicture = createAsyncThunk(
+  "/users/upload-picture",
+  async (file: File, { rejectWithValue }) => {
+    try {
+      const url = await usersApi.uploadProfilePicture(file);
+      return url;
+    } catch (error) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to upload profile picture"),
+      );
+    }
+  },
+);
+
 export const usersSlice = createSlice({
   name: "users",
   initialState,
@@ -402,6 +417,22 @@ export const usersSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "delete";
+      })
+      // upload profile picture
+      .addCase(uploadProfilePicture.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadProfilePicture.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.selectedUser) {
+          state.selectedUser.profile_picture_url = action.payload.url;
+        }
+      })
+
+      .addCase(uploadProfilePicture.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

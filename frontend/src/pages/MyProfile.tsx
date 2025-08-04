@@ -24,7 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "../components/ui/accordion";
-import { Avatar } from "../components/ui/avatar";
+//import { Avatar } from "../components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -42,9 +42,10 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { toastConfirm } from "../components/ui/toastConfirm";
-import profilePlaceholder from "../assets/profilePlaceholder.png";
+//import profilePlaceholder from "../assets/profilePlaceholder.png";
 import MyBookings from "@/components/MyBookings";
 import { CurrentUserRoles } from "@/components/Admin/Roles/CurrentUserRoles";
+import ProfilePictureUploader from "@/components/ProfilePictureUploader";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();
@@ -70,7 +71,7 @@ const MyProfile = () => {
     userAddresses || [],
   );
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
-  const profileImage = profilePlaceholder;
+  // const profileImage = profilePlaceholder;
 
   useEffect(() => {
     if (selectedUser) {
@@ -226,7 +227,7 @@ const MyProfile = () => {
           {selectedUser ? (
             <div className="flex flex-col md:flex-row items-start">
               {/* user avatar */}
-              <div className="flex md:w-1/4 justify-center p-2">
+              {/* <div className="flex md:w-1/4 justify-center p-2">
                 <Avatar className="w-24 h-24 rounded-full border-1 border-secondary flex">
                   <img
                     src={profileImage || ""}
@@ -234,6 +235,9 @@ const MyProfile = () => {
                     className="w-full h-full object-cover rounded-full"
                   />
                 </Avatar>
+              </div> */}
+              <div className="flex md:w-1/4 justify-center p-2">
+                <ProfilePictureUploader />
               </div>
 
               {/* user details */}
