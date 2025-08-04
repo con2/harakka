@@ -26,7 +26,9 @@ export const itemsApi = {
    * @param item - Item data to create
    * @returns Promise with the created item
    */
-  createItems: (payload: ItemFormData): Promise<boolean> =>
+  createItems: (
+    payload: ItemFormData,
+  ): Promise<{ status: number; error: string | null }> =>
     api.post("/storage-items", payload),
 
   /**

@@ -157,6 +157,11 @@ function AddItemForm() {
     dispatch(setNextStep());
   };
 
+  const handleNavigateSummary = () => {
+    form.reset();
+    dispatch(setNextStep());
+  };
+
   const handleLocationChange = (selectedId: string) => {
     const newLoc = orgLocations.find((org) => org.id === selectedId);
     if (!newLoc) return;
@@ -193,16 +198,27 @@ function AddItemForm() {
   }, [storage, form]);
 
   useEffect(() => {
-    if (tags.length === 0) void dispatch(fetchAllTags({ page: 1, limit: 20 }));
-  }, []);
-
-  useEffect(() => {
     if (tagSearch)
       void dispatch(
         fetchFilteredTags({ page: 1, limit: 20, search: tagSearch }),
       );
-    else void dispatch(fetchAllTags({ page: 1, limit: 20 }));
+    else if (tags.length < 1)
+      void dispatch(fetchAllTags({ page: 1, limit: 20 }));
   }, [tagSearch, dispatch]);
+
+  useEffect(() => {
+    if ((editItem as CreateItemType)?.tags && tags.length > 0) {
+      const activeTags = tags.filter((tag) =>
+        (editItem as CreateItemType)?.tags.includes(tag.id),
+      );
+      setSelectedTags(
+        activeTags.map((t) => ({
+          tag_id: t.id,
+          translations: t.translations!,
+        })),
+      );
+    }
+  }, [tags, editItem]);
 
   /*------------------render-------------------------------------------------*/
 
@@ -466,7 +482,12 @@ function AddItemForm() {
           </div>
 
           <div className="p-10 pt-2 flex justify-end gap-4">
-            <Button variant="default" onClick={() => dispatch(setNextStep())}>
+            <Button
+              variant="default"
+              disabled={isEditing}
+              onClick={handleNavigateSummary}
+              type="button"
+            >
               Go to summary
             </Button>
             <Button
