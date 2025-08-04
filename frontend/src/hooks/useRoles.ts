@@ -93,6 +93,11 @@ export const useRoles = () => {
     async (force = false) => {
       const requestKey = "currentUserRoles";
 
+      // Always clear existing request when forced
+      if (force && pendingRequests.has(requestKey)) {
+        pendingRequests.delete(requestKey);
+      }
+
       // Return existing promise if already in progress and not forced
       if (pendingRequests.has(requestKey) && !force) {
         return pendingRequests.get(requestKey);
@@ -317,6 +322,27 @@ export const useRoles = () => {
     ],
   );
 
+  const clearRoleCache = useCallback(
+    (types?: ("current" | "all" | "available")[]) => {
+      if (!types || types.length === 0) {
+        // Clear all caches if no specific type provided
+        roleCache.currentRoles.fetched = false;
+        roleCache.allRoles.fetched = false;
+        roleCache.availableRoles.fetched = false;
+        console.log("All role caches cleared");
+      } else {
+        // Clear only specified caches
+        types.forEach((type) => {
+          if (type === "current") roleCache.currentRoles.fetched = false;
+          if (type === "all") roleCache.allRoles.fetched = false;
+          if (type === "available") roleCache.availableRoles.fetched = false;
+        });
+        console.log(`Role caches cleared: ${types.join(", ")}`);
+      }
+    },
+    [],
+  );
+
   return {
     // Data
     currentUserRoles,
@@ -344,5 +370,6 @@ export const useRoles = () => {
     permanentDeleteRole,
     clearErrors,
     refreshAll,
+    clearRoleCache,
   };
 };

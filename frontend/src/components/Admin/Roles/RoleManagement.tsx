@@ -25,6 +25,7 @@ export const RoleManagement: React.FC = () => {
     refreshAllUserRoles,
     hasAnyRole,
     hasRole,
+    clearRoleCache,
   } = useRoles();
 
   // Define admin status solely from new user roles
@@ -71,12 +72,26 @@ export const RoleManagement: React.FC = () => {
 
   // Handler to refresh roles after any role operation
   const handleRolesChanged = useCallback(async () => {
-    await Promise.all([
-      refreshCurrentUserRoles(true), // Force refresh with true
-      isAnyTypeOfAdmin ? refreshAllUserRoles(true) : Promise.resolve(),
-    ]);
-    toast.success("Roles updated!");
-  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAnyTypeOfAdmin]);
+    try {
+      // Clear the cache entry before forcing a refresh
+      clearRoleCache(["current", "all"]);
+
+      // Now force refresh with the cleared cache
+      await Promise.all([
+        refreshCurrentUserRoles(true),
+        isAnyTypeOfAdmin ? refreshAllUserRoles(true) : Promise.resolve(),
+      ]);
+      toast.success("Roles updated!");
+    } catch (error) {
+      console.error("Error refreshing roles:", error);
+      toast.error("Failed to refresh roles");
+    }
+  }, [
+    refreshCurrentUserRoles,
+    refreshAllUserRoles,
+    isAnyTypeOfAdmin,
+    clearRoleCache,
+  ]);
 
   // Explicitly fetch all roles when the admin page loads
   useEffect(() => {
