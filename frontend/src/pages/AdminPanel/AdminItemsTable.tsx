@@ -43,16 +43,19 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import AssignTagsModal from "@/components/Admin/Items/AssignTagsModal";
 import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
+  const redirectState = useLocation().state;
   const items = useAppSelector(selectAllItems);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const [showModal, setShowModal] = useState(false);
   const { isAdmin, isSuperVera } = useRoles();
+  const deletableItems = useAppSelector((state) => state.items.deletableItems);
+
   // Translation
   const { lang } = useLanguage();
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
@@ -60,16 +63,22 @@ const AdminItemsTable = () => {
   // filtering states:
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
-  >("all");
-  const [tagFilter, setTagFilter] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  >(redirectState?.statusFilter ?? "all");
+  const [tagFilter, setTagFilter] = useState<string[]>(
+    redirectState?.tagFilter ?? [],
+  );
+  const [searchTerm, setSearchTerm] = useState(redirectState?.searchTerm ?? "");
   const debouncedSearchQuery = useDebouncedValue(searchTerm);
   const navigate = useNavigate();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [order, setOrder] = useState<ValidItemOrder>("created_at");
-  const [ascending, setAscending] = useState<boolean | null>(null);
+  const [order, setOrder] = useState<ValidItemOrder>(
+    redirectState?.order ?? "created_at",
+  );
+  const [ascending, setAscending] = useState<boolean | null>(
+    redirectState?.ascending ?? null,
+  );
   const selectedItem = useAppSelector(selectSelectedItem);
   const { page, totalPages } = useAppSelector(selectItemsPagination);
   const loading = useAppSelector(selectItemsLoading);
@@ -155,8 +164,6 @@ const AdminItemsTable = () => {
     if (tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
   }, [dispatch, tags.length, items.length]);
 
-  const deletableItems = useAppSelector((state) => state.items.deletableItems);
-
   /* ————————————————————————— Item Columns ———————————————————————— */
   const itemsColumns: ColumnDef<Item>[] = [
     {
@@ -165,7 +172,6 @@ const AdminItemsTable = () => {
       id: "fi_item_name",
       accessorFn: (row) => row.translations.fi.item_name,
       sortingFn: "alphanumeric",
-      enableSorting: true,
       cell: ({ row }) => {
         const name = row.original.translations.fi.item_name || "";
         return name.charAt(0).toUpperCase() + name.slice(1);
@@ -177,7 +183,6 @@ const AdminItemsTable = () => {
       id: "fi_item_type",
       accessorFn: (row) => row.translations.en.item_type,
       sortingFn: "alphanumeric",
-      enableSorting: true,
       cell: ({ row }) => {
         const type = row.original.translations.en.item_type || "";
         return type.charAt(0).toUpperCase() + type.slice(1);
@@ -188,7 +193,6 @@ const AdminItemsTable = () => {
       size: 70,
       id: "location_name",
       accessorFn: (row) => row.location_name || "N/A", // For sorting
-      enableSorting: true,
       cell: ({ row }) => (
         <div className="flex items-center gap-1 text-sm">
           {row.original.location_name || "N/A"}
@@ -246,7 +250,6 @@ const AdminItemsTable = () => {
     {
       id: "actions",
       size: 30,
-      enableSorting: false,
       enableColumnFilter: false,
       cell: ({ row }) => {
         const item = row.original;
@@ -463,7 +466,7 @@ const AdminItemsTable = () => {
       {showModal && selectedItem && (
         <UpdateItemModal
           onClose={handleCloseModal}
-          initialData={selectedItem} // Pass the selected item data to the modal
+          initialData={selectedItem as Item} // Pass the selected item data to the modal
         />
       )}
       {assignTagsModalOpen && currentItemId && (
