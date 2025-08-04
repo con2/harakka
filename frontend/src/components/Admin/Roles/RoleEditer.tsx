@@ -50,6 +50,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
   useEffect(() => {
     // Fetch organizations with a larger limit to get all for the dropdown
     void dispatch(fetchAllOrganizations({ limit: 100 }));
+    void refreshAvailableRoles();
   }, [dispatch]);
 
   // Get all users from Redux store
@@ -66,6 +67,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
     permanentDeleteRole,
     refreshAllUserRoles,
     refreshCurrentUserRoles,
+    refreshAvailableRoles,
     availableRoles,
     allUserRoles,
   } = useRoles();
