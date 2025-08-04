@@ -1718,11 +1718,31 @@ export type Database = {
         }
         Returns: boolean
       }
+      notify: {
+        Args: {
+          p_user_id: string
+          p_type_txt: string
+          p_title?: string
+          p_message?: string
+          p_channel?: Database["public"]["Enums"]["notification_channel"]
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_metadata?: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       notification_channel: "in_app" | "web_push" | "email"
       notification_severity: "info" | "warning" | "critical"
-      notification_type: "comment" | "mention" | "system" | "custom"
+      notification_type:
+        | "comment"
+        | "mention"
+        | "system"
+        | "custom"
+        | "booking.status_approved"
+        | "booking.status_rejected"
+        | "booking.created"
+        | "user.created"
       role_type:
         | "User"
         | "Admin"
@@ -1869,7 +1889,16 @@ export const Constants = {
     Enums: {
       notification_channel: ["in_app", "web_push", "email"],
       notification_severity: ["info", "warning", "critical"],
-      notification_type: ["comment", "mention", "system", "custom"],
+      notification_type: [
+        "comment",
+        "mention",
+        "system",
+        "custom",
+        "booking.status_approved",
+        "booking.status_rejected",
+        "booking.created",
+        "user.created",
+      ],
       role_type: [
         "User",
         "Admin",
