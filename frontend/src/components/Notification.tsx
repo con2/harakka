@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bell, X, Trash2 } from "lucide-react";
+import { Bell, X, Trash2, Check } from "lucide-react";
 
 import { supabase } from "@/config/supabase";
 import { DBTables } from "@common/database.types";
@@ -85,6 +85,23 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
       .eq("id", id);
   };
 
+  /** Marks **every** unread notification as read in one batch. */
+  const markAllRead = async () => {
+    const ids = feedUniq.filter((n) => n.read_at === null).map((n) => n.id);
+    if (ids.length === 0) return;
+
+    setFeed((prev) =>
+      prev.map((n) =>
+        n.read_at === null ? { ...n, read_at: new Date().toISOString() } : n,
+      ),
+    );
+
+    await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .in("id", ids);
+  };
+
   /** Deletes a row locally *and* remotely (requires RLS delete policy). */
   const removeNotification = async (id: string) => {
     // delete from local state first
@@ -94,28 +111,8 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
     await supabase.from("notifications").delete().eq("id", id);
   };
 
-  /**
-   * When the dropdown first opens:
-   * • Patch all unseen rows as read (badge goes away)
-   * • Batch the update in a single SQL call.
-   */
-  const handleOpenChange = async (open: boolean) => {
-    if (!open || unseen === 0) return;
-    const ids = feedUniq.filter((n) => n.read_at === null).map((n) => n.id);
-    setFeed((prev) =>
-      prev.map((n) =>
-        n.read_at === null ? { ...n, read_at: new Date().toISOString() } : n,
-      ),
-    );
-    // no need to await individually; single batched update
-    await supabase
-      .from("notifications")
-      .update({ read_at: new Date().toISOString() })
-      .in("id", ids);
-  };
-
   return (
-    <DropdownMenu onOpenChange={handleOpenChange}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
@@ -132,7 +129,20 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="w-80 md:w-96" align="end">
-        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+        <DropdownMenuLabel className="flex items-center justify-between">
+          <span>Notifications</span>
+          {unseen > 0 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              title="Mark all as read"
+              onClick={markAllRead}
+              className="h-5 w-5"
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+          )}
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {feedUniq.length === 0 ? (
           <p className="p-4 text-sm text-muted-foreground">Nothing new yet.</p>
