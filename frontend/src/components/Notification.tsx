@@ -6,8 +6,7 @@ import { DBTables } from "@common/database.types";
 import { subscribeToNotifications } from "@/lib/notifications";
 import { useNavigate } from "react-router-dom";
 
-import { navigation as navT } from "@/translations/modules/navigation";
-
+import { t } from "@/translations";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +18,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useLanguage } from "@/context/LanguageContext";
 
 /**
  * <Notifications />
@@ -66,27 +66,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
 
   const navigate = useNavigate();
 
-  const locale = React.useMemo<"fi" | "en">(
-    () => (navigator.language.startsWith("fi") ? "fi" : "en"),
-    [],
-  );
-
-  // Helper function to safely get translations with fallbacks
-  const getTranslation = React.useCallback(
-    (key: string, fallback: string) => {
-      try {
-        const keys = key.split(".");
-        let value: any = navT;
-        for (const k of keys) {
-          value = value?.[k];
-        }
-        return value?.[locale] || value?.en || fallback;
-      } catch {
-        return fallback;
-      }
-    },
-    [locale],
-  );
+  const { lang } = useLanguage();
 
   // live subscription — mount / unmount
   React.useEffect(() => {
@@ -149,22 +129,19 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
             </Badge>
           )}
           <span className="sr-only">
-            {getTranslation("notifications.srOpen", "Open notifications")}
+            {t.navigation.notifications.srOpen[lang]}
           </span>
         </Button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="w-80 md:w-96" align="end">
         <DropdownMenuLabel className="flex items-center justify-between">
-          <span>{getTranslation("notifications.label", "Notifications")}</span>
+          <span>{t.navigation.notifications.label[lang]}</span>
           {unseen > 0 && (
             <Button
               size="sm"
               variant="ghost"
-              title={getTranslation(
-                "notifications.markAllRead",
-                "Mark all as read",
-              )}
+              title={t.navigation.notifications.markAllRead[lang]}
               onClick={markAllRead}
               className="h-5 w-5"
             >
@@ -175,71 +152,101 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
         <DropdownMenuSeparator />
         {feedUniq.length === 0 ? (
           <p className="p-4 text-sm text-muted-foreground">
-            {getTranslation("notifications.none", "No notifications")}
+            {t.navigation.notifications.none[lang]}
           </p>
         ) : (
           <ScrollArea className="max-h-[70vh]">
-            {feedUniq.map((n) => (
-              // One notification card — click -> navigate; small buttons handle read/delete
-              <DropdownMenuItem
-                key={n.id}
-                onClick={() => {
-                  void markRead(n.id); // mark read on click
-                  const meta = n.metadata as Record<string, unknown> | null;
+            {feedUniq.map((n) => {
+              const meta = n.metadata as Record<string, unknown> | null;
 
-                  if (meta?.new_user_id) {
-                    void navigate("/admin/users");
-                  } else if (
-                    meta?.booking_id &&
-                    (typeof meta.booking_id === "string" ||
-                      typeof meta.booking_id === "number")
-                  ) {
-                    void navigate(`/profile?tab=bookings`);
-                  }
-                }}
-                className="flex flex-col gap-0.5 py-2 cursor-pointer"
-              >
-                <div className="flex w-full items-start justify-between gap-2">
-                  <div className="flex flex-col">
-                    <span className="font-medium">{n.title}</span>
-                    {n.message && (
-                      <span className="text-xs text-muted-foreground">
-                        {n.message}
-                      </span>
-                    )}
-                  </div>
+              // -------- translate title / message ---------------------------------
+              const tpl =
+                (
+                  t.notifications as Record<
+                    string,
+                    {
+                      title: Record<"en" | "fi", string>;
+                      message: Record<"en" | "fi", string>;
+                    }
+                  >
+                )[n.type] ?? null;
 
-                  <div className="flex items-center gap-1">
-                    {n.read_at === null && (
+              const safe = (v: unknown) =>
+                typeof v === "string" || typeof v === "number" ? String(v) : "";
+
+              const interpolate = (s: string) =>
+                s
+                  .replace("{num}", safe(meta?.booking_number))
+                  .replace("{email}", safe(meta?.email));
+
+              const title = tpl ? interpolate(tpl.title[lang]) : n.title;
+              const message =
+                tpl && tpl.message[lang]
+                  ? interpolate(tpl.message[lang])
+                  : (n.message ?? "");
+
+              return (
+                // One notification card — click -> navigate; small buttons handle read/delete
+                <DropdownMenuItem
+                  key={n.id}
+                  onClick={() => {
+                    void markRead(n.id); // mark read on click
+                    const meta = n.metadata as Record<string, unknown> | null;
+
+                    if (meta?.new_user_id) {
+                      void navigate("/admin/users");
+                    } else if (
+                      meta?.booking_id &&
+                      (typeof meta.booking_id === "string" ||
+                        typeof meta.booking_id === "number")
+                    ) {
+                      void navigate(`/profile?tab=bookings`);
+                    }
+                  }}
+                  className="flex flex-col gap-0.5 py-2 cursor-pointer"
+                >
+                  <div className="flex w-full items-start justify-between gap-2">
+                    <div className="flex flex-col">
+                      <span className="font-medium">{title}</span>
+                      {message && (
+                        <span className="text-xs text-muted-foreground">
+                          {message}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {n.read_at === null && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void markRead(n.id);
+                          }}
+                          className="h-5 w-5"
+                          title="Mark as read"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
-                          void markRead(n.id);
+                          void removeNotification(n.id);
                         }}
                         className="h-5 w-5"
-                        title="Mark as read"
+                        title="Delete notification"
                       >
-                        <X className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void removeNotification(n.id);
-                      }}
-                      className="h-5 w-5"
-                      title="Delete notification"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </div>
                   </div>
-                </div>
-              </DropdownMenuItem>
-            ))}
+                </DropdownMenuItem>
+              );
+            })}
           </ScrollArea>
         )}
       </DropdownMenuContent>

@@ -46,9 +46,9 @@ export const navigation = {
     },
   },
   notifications: {
-    label: { fi: "Ilmoitukset", en: "Notifications" },
-    none: { fi: "Ei uusia ilmoituksia", en: "Nothing new yet." },
-    markAllRead: { fi: "Merkitse kaikki luetuiksi", en: "Mark all as read" },
-    srOpen: { fi: "Avaa ilmoitukset", en: "Open notifications" },
+    label: { en: "Notifications", fi: "Ilmoitukset" },
+    none: { en: "Nothing new yet.", fi: "Ei uusia ilmoituksia" },
+    markAllRead: { en: "Mark all as read", fi: "Merkitse kaikki luetuiksi" },
+    srOpen: { en: "Open notifications", fi: "Avaa ilmoitukset" },
   },
 };
