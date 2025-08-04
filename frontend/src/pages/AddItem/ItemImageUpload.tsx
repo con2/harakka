@@ -101,7 +101,7 @@ function ItemImageUpload({
       return dispatch(
         uploadToBucket({
           files: [file],
-          bucket: "item-images-drafts",
+          bucket: "item-images",
           path: `${item_id}/${path}`,
         }),
       ).unwrap();
