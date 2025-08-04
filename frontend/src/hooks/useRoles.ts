@@ -104,7 +104,7 @@ export const useRoles = () => {
         !isCacheStale(roleCache.currentRoles) &&
         !force
       ) {
-        console.log("🔄 Using cached current roles data");
+        // Use cached current roles data
         return Promise.resolve({
           type: "roles/fetchCurrentUserRoles/cached",
           payload: {
@@ -143,7 +143,7 @@ export const useRoles = () => {
 
       // Only admins should fetch all roles
       if (!isAnyTypeOfAdmin) {
-        console.log("🛑 Skipping all roles fetch - not an admin");
+        // Skip all roles fetch - not an admin");
         return Promise.resolve({ type: "roles/fetchAllUserRoles/notAdmin" });
       }
 
@@ -158,7 +158,7 @@ export const useRoles = () => {
         !isCacheStale(roleCache.allRoles) &&
         !force
       ) {
-        console.log("🔄 Using cached all roles data");
+        // Use cached all roles data
         return Promise.resolve({
           type: "roles/fetchAllUserRoles/cached",
           payload: allUserRoles,
@@ -200,7 +200,7 @@ export const useRoles = () => {
         !isCacheStale(roleCache.availableRoles) &&
         !force
       ) {
-        console.log("🔄 Using cached available roles data");
+        // Use cached available roles data
         return Promise.resolve({
           type: "roles/fetchAvailableRoles/cached",
           payload: availableRoles,
