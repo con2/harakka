@@ -239,6 +239,13 @@ const rolesSlice = createSlice({
       .addCase(createUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
         state.allUserRoles.push(action.payload);
+
+        // If this role belongs to the current user, add it to currentUserRoles too
+        const currentUserId = action.meta.arg.user_id;
+        const stateUserId = state.currentUserRoles[0]?.user_id;
+        if (currentUserId && currentUserId === stateUserId) {
+          state.currentUserRoles.push(action.payload);
+        }
       })
       .addCase(createUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -275,6 +282,13 @@ const rolesSlice = createSlice({
         if (index !== -1) {
           state.allUserRoles[index] = action.payload;
         }
+        // Also update in current user roles if it exists there
+        const currentIndex = state.currentUserRoles.findIndex(
+          (role) => role.id === action.payload.id,
+        );
+        if (currentIndex !== -1) {
+          state.currentUserRoles[currentIndex] = action.payload;
+        }
       })
       .addCase(updateUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -295,6 +309,13 @@ const rolesSlice = createSlice({
         if (idx !== -1) {
           state.allUserRoles[idx].is_active = false;
         }
+        // Also update in current user roles
+        const currentIdx = state.currentUserRoles.findIndex(
+          (role) => role.id === action.payload,
+        );
+        if (currentIdx !== -1) {
+          state.currentUserRoles[currentIdx].is_active = false;
+        }
       })
       .addCase(deleteUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -312,6 +333,13 @@ const rolesSlice = createSlice({
         state.allUserRoles = state.allUserRoles.filter(
           (role: ViewUserRolesWithDetails) => role.id !== action.payload,
         );
+        // Also update in current user roles
+        const currentIdx = state.currentUserRoles.findIndex(
+          (role) => role.id === action.payload,
+        );
+        if (currentIdx !== -1) {
+          state.currentUserRoles[currentIdx].is_active = false;
+        }
       })
       .addCase(permanentDeleteUserRole.rejected, (state, action) => {
         state.adminLoading = false;
