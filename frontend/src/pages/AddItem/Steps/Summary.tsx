@@ -11,16 +11,20 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
+  clearItemCreation,
   createItem,
   editLocalItem,
   removeFromItemCreation,
   selectItemCreation,
+  selectItemsError,
   toggleIsEditing,
 } from "@/store/slices/itemsSlice";
 import { setPrevStep } from "@/store/slices/uiSlice";
 import { ItemFormData } from "@common/items/form.types";
-import { ClipboardPen, Trash } from "lucide-react";
+import { ClipboardPen, Loader2Icon, Trash } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 function Summary() {
   const form = useAppSelector(selectItemCreation);
@@ -28,6 +32,8 @@ function Summary() {
   const { lang } = useLanguage();
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
+  const uploadError = useAppSelector(selectItemsError);
+  const navigate = useNavigate();
 
   const createNext = () => dispatch(setPrevStep());
   const editItem = (id: string) => {
@@ -35,12 +41,22 @@ function Summary() {
     void dispatch(editLocalItem(id));
     dispatch(setPrevStep());
   };
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     try {
       setLoading(true);
-      void dispatch(createItem(form as ItemFormData));
+      await dispatch(createItem(form as ItemFormData));
+      if (uploadError) throw new Error(uploadError);
+      toast.success("Your items were created!");
+      dispatch(clearItemCreation());
+      void navigate("/admin/items", {
+        state: { ascending: false },
+      });
     } catch (error) {
-      console.error(error);
+      toast.error(
+        typeof error === "string"
+          ? error
+          : "Items could not be created. Contact support if the error persists.",
+      );
     } finally {
       setLoading(false);
     }
@@ -112,10 +128,14 @@ function Summary() {
               </OriginalTableFooter>
             </OriginalTable>
             <div className="flex justify-end gap-4">
-              <Button variant="default" onClick={createNext}>
+              <Button variant="default" disabled={loading} onClick={createNext}>
                 Create another item
               </Button>
-              <Button variant="outline" onClick={handleSubmit}>
+              <Button
+                variant="outline"
+                disabled={loading}
+                onClick={handleSubmit}
+              >
                 Upload items to organization
               </Button>
             </div>
@@ -123,9 +143,20 @@ function Summary() {
         ) : (
           <div className="text-center my-6">
             <p className="font-semibold mb-2">No items added yet</p>
-            <Button variant="outline" onClick={() => dispatch(setPrevStep())}>
-              Go to item creation
-            </Button>
+            {loading ? (
+              <Button variant="outline" disabled>
+                <Loader2Icon className="animate-spin" />
+                Uploading items...
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                disabled={loading}
+                onClick={() => dispatch(setPrevStep())}
+              >
+                Go to item creation
+              </Button>
+            )}
           </div>
         )}
       </div>
