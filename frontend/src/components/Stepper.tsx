@@ -2,19 +2,32 @@ import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setStepper, stepperCurrentNum } from "@/store/slices/uiSlice";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 export interface Step {
-  title: string;
-  description?: string;
   icon?: ReactNode;
 }
 
 export interface StepperProps {
+  parent: string;
   steps: Step[];
   data: ReactNode[];
+  disabled?: boolean;
 }
 
-export function Stepper({ steps, data }: StepperProps) {
+/**
+ *
+ * @param parent Used to index the translations. See @translations/modules/stepper.ts for more info.
+ * @returns
+ */
+export function Stepper({
+  parent,
+  steps,
+  data,
+  disabled = false,
+}: StepperProps) {
+  const { lang } = useLanguage();
   const currentStep = useAppSelector(stepperCurrentNum);
   const dispatch = useAppDispatch();
 
@@ -32,14 +45,16 @@ export function Stepper({ steps, data }: StepperProps) {
                 size="lg"
                 type="button"
                 className="w-10 h-10 p-0 rounded-full text-lg font-semibold"
-                onClick={() => dispatch(setStepper(stepNum))}
-                aria-label={`Go to step ${stepNum}`}
+                onClick={
+                  !disabled ? () => dispatch(setStepper(stepNum)) : undefined
+                }
+                aria-label={`${t.stepper.general.goToStep[lang]} ${stepNum}`}
               >
                 {step.icon ?? stepNum}
               </Button>
               <div className="mt-2 text-center">
                 <p className="text-sm font-medium">
-                  {stepNum}. {step.title}
+                  {stepNum}. {t.stepper[parent][String(idx + 1)][lang]}
                 </p>
               </div>
             </div>
