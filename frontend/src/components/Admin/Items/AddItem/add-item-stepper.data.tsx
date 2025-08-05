@@ -8,15 +8,12 @@ import { Box, Building2, ClipboardList } from "lucide-react";
 /* Titles and icons for steps */
 export const steps: Step[] = [
   {
-    title: "Choose organization and location",
     icon: <Building2 />,
   },
   {
-    title: "Create your item",
     icon: <Box />,
   },
   {
-    title: "Item summary",
     icon: <ClipboardList />,
   },
 ];

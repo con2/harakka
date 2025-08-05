@@ -20,7 +20,7 @@ function AddItem() {
   /*---------------------render--------------------------------*/
   if (orgsLoading) return <Spinner height="h-4/6" />;
 
-  return <Stepper steps={steps} data={stepperData} />;
+  return <Stepper parent="addItem" steps={steps} data={stepperData} disabled />;
 }
 
 export default AddItem;
