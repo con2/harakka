@@ -11,27 +11,27 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  clearItemCreation,
   createItem,
   editLocalItem,
   removeFromItemCreation,
   selectItemCreation,
   selectItemsError,
+  selectItemsLoading,
   toggleIsEditing,
 } from "@/store/slices/itemsSlice";
 import { setPrevStep } from "@/store/slices/uiSlice";
 import { ItemFormData } from "@common/items/form.types";
 import { ClipboardPen, Loader2Icon, Trash } from "lucide-react";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { t } from "@/translations";
 
 function Summary() {
   const form = useAppSelector(selectItemCreation);
   const { items } = form;
   const { lang } = useLanguage();
   const dispatch = useAppDispatch();
-  const [loading, setLoading] = useState(false);
+  const loading = useAppSelector(selectItemsLoading);
   const uploadError = useAppSelector(selectItemsError);
   const navigate = useNavigate();
 
@@ -43,13 +43,12 @@ function Summary() {
   };
   const handleSubmit = async () => {
     try {
-      setLoading(true);
       await dispatch(createItem(form as ItemFormData));
       if (uploadError) throw new Error(uploadError);
       toast.success("Your items were created!");
-      dispatch(clearItemCreation());
+      const newItems = items.flatMap((item) => item.id);
       void navigate("/admin/items", {
-        state: { ascending: false },
+        state: { ascending: false, newItems: newItems },
       });
     } catch (error) {
       toast.error(
@@ -57,8 +56,6 @@ function Summary() {
           ? error
           : "Items could not be created. Contact support if the error persists.",
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -66,18 +63,25 @@ function Summary() {
     <>
       <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px] flex-col p-10 gap-4">
         <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
-          New Items Summary
+          {t.itemSummary.headings[lang]}
         </p>
+        {/* Items */}
         {items.length > 0 ? (
           <>
             <OriginalTable>
               <OriginalTableHeader>
                 <OriginalTableRow>
-                  <OriginalTableHead>Item</OriginalTableHead>
-                  <OriginalTableHead>Quantity</OriginalTableHead>
-                  <OriginalTableHead>Storage</OriginalTableHead>
+                  <OriginalTableHead>
+                    {t.itemSummary.tableHeaders.item[lang]}
+                  </OriginalTableHead>
+                  <OriginalTableHead>
+                    {t.itemSummary.tableHeaders.quantity[lang]}
+                  </OriginalTableHead>
+                  <OriginalTableHead>
+                    {t.itemSummary.tableHeaders.storage[lang]}
+                  </OriginalTableHead>
                   <OriginalTableHead className="text-right">
-                    Actions
+                    {t.itemSummary.tableHeaders.actions[lang]}
                   </OriginalTableHead>
                 </OriginalTableRow>
               </OriginalTableHeader>
@@ -122,41 +126,48 @@ function Summary() {
               <OriginalTableFooter>
                 <OriginalTableRow>
                   <OriginalTableCell colSpan={4}>
-                    Total items {items.length}
+                    {t.itemSummary.tableFooter.totalItems[lang]} {items.length}
                   </OriginalTableCell>
                 </OriginalTableRow>
               </OriginalTableFooter>
             </OriginalTable>
+
+            {/* Summary Actions */}
             <div className="flex justify-end gap-4">
+              {/* Create another */}
               <Button variant="default" disabled={loading} onClick={createNext}>
-                Create another item
+                {t.itemSummary.buttons.createAnother[lang]}
               </Button>
-              <Button
-                variant="outline"
-                disabled={loading}
-                onClick={handleSubmit}
-              >
-                Upload items to organization
-              </Button>
+
+              {/* Upload Items */}
+              {loading ? (
+                <Button variant="outline" disabled>
+                  <Loader2Icon className="animate-spin mr-2" />
+                  {t.itemSummary.buttons.uploading[lang]}
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  disabled={loading}
+                  onClick={handleSubmit}
+                >
+                  {t.itemSummary.buttons.uploadItems[lang]}
+                </Button>
+              )}
             </div>
           </>
         ) : (
           <div className="text-center my-6">
-            <p className="font-semibold mb-2">No items added yet</p>
-            {loading ? (
-              <Button variant="outline" disabled>
-                <Loader2Icon className="animate-spin" />
-                Uploading items...
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                disabled={loading}
-                onClick={() => dispatch(setPrevStep())}
-              >
-                Go to item creation
-              </Button>
-            )}
+            <p className="font-semibold mb-2">
+              {t.itemSummary.paragraphs.noItems[lang]}
+            </p>
+            <Button
+              variant="outline"
+              disabled={loading}
+              onClick={() => dispatch(setPrevStep())}
+            >
+              {t.itemSummary.buttons.goToItemCreation[lang]}
+            </Button>
           </div>
         )}
       </div>

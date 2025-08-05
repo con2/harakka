@@ -18,6 +18,8 @@ import { Info, Trash } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { UseFormSetValue } from "react-hook-form";
 import { toast } from "sonner";
+import { t } from "@/translations";
+import { useLanguage } from "@/context/LanguageContext";
 
 const MAX_DETAIL_IMAGES = 5;
 const MAX_FILE_SIZE_MB = 5;
@@ -43,6 +45,7 @@ function ItemImageUpload({
 }: ItemImageUploadProps) {
   const dispatch = useAppDispatch();
   const uploadedImages = useAppSelector(selectUploadUrls);
+  const { lang } = useLanguage();
 
   const [images, setImages] = useState<{
     main: ImageData | null;
@@ -381,11 +384,10 @@ function ItemImageUpload({
       <div className="mb-8">
         <div>
           <p className="scroll-m-20 text-base font-semibold tracking-tight w-full mb-1">
-            Main image
+            {t.addItemForm.paragraphs.mainImage[lang]}
           </p>
           <p className="text-sm leading-none font-medium mb-4">
-            The main image is the first thing a user sees on the storage page
-            and in the detailed view.
+            {t.addItemForm.paragraphs.mainImageDescription[lang]}
           </p>
         </div>
         <div className="mb-3">
@@ -414,9 +416,11 @@ function ItemImageUpload({
               />
             ) : (
               <>
-                {isMainUploading ? "Uploading..." : "Choose an image"}
+                {isMainUploading
+                  ? t.addItemForm.buttons.uploading[lang]
+                  : t.addItemForm.buttons.mainImageUpload[lang]}
                 <p className="text-xs mt-1 text-muted-foreground">
-                  Click or drag and drop
+                  {t.addItemForm.buttons.uploadSubtext[lang]}
                 </p>
               </>
             )}
@@ -439,16 +443,13 @@ function ItemImageUpload({
                     <Info className="w-4 h-4" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-[300px]">
-                    <p>
-                      Alt text is important for accessibility. Describe the
-                      image as you would to a friend who couldn't see it.
-                    </p>
+                    <p>{t.addItemForm.tooltips.altText[lang]}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
 
               <Input
-                placeholder="Describe the image"
+                placeholder={t.addItemForm.placeholders.describeImage[lang]}
                 className="w-[280px] border shadow-none border-grey"
                 value={images.main?.alt_text || ""}
                 onChange={(e) =>
@@ -479,10 +480,10 @@ function ItemImageUpload({
       <div>
         <div>
           <p className="scroll-m-20 text-base font-semibold tracking-tight w-full mb-1">
-            Details
+            {t.addItemForm.paragraphs.detailImage[lang]}
           </p>
           <p className="text-sm leading-none font-medium mb-4">
-            Show your item in more detail. Select up to 5 images.
+            {t.addItemForm.paragraphs.detailImageDescription[lang]}
           </p>
         </div>
         <div className="mb-6">
@@ -509,16 +510,16 @@ function ItemImageUpload({
             onDrop={(e) => handleDrop(e, "detail")}
           >
             {isDetailUploading ? (
-              "Uploading..."
+              t.addItemForm.buttons.uploading[lang]
             ) : dragStates.detail ? (
-              "Drop images here"
+              t.addItemForm.buttons.dropImages[lang]
             ) : images.details.length >= MAX_DETAIL_IMAGES ? (
-              "Maximum images reached"
+              t.addItemForm.buttons.maxReached[lang]
             ) : (
               <>
-                Choose up to 5 images
+                {t.addItemForm.buttons.detailImageUpload[lang]}
                 <p className="text-xs mt-1 text-muted-foreground">
-                  Click or drag and drop
+                  {t.addItemForm.buttons.uploadSubtext[lang]}
                 </p>
               </>
             )}
@@ -549,7 +550,9 @@ function ItemImageUpload({
 
                     <Input
                       type="text"
-                      placeholder="Describe the image"
+                      placeholder={
+                        t.addItemForm.placeholders.describeImage[lang]
+                      }
                       className="w-[250px] border shadow-none border-grey"
                       value={image.alt_text}
                       onChange={(e) =>

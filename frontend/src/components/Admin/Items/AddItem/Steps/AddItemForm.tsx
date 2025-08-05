@@ -231,30 +231,33 @@ function AddItemForm() {
     <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px]">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onValidSubmit, onInvalidSubmit)}>
-          {/* Translations | Item Details */}
+          {/* Item Details */}
           <div className="p-10 flex flex-wrap gap-x-6 space-y-8 justify-between">
             <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
-              Item Details
+              {t.addItemForm.headings.itemDetails[appLang]}
             </p>
 
             <div className="flex flex-wrap w-full gap-x-6 space-y-4 justify-between">
               {TRANSLATION_FIELDS.map((entry) => {
-                const { lang: fieldLang, fieldKey, nameValue } = entry;
+                const {
+                  lang: fieldLang,
+                  fieldKey,
+                  nameValue,
+                  translationKey,
+                } = entry;
                 return (
                   <div
                     key={`${fieldLang}.${fieldKey}`}
                     className="flex flex-[48%] gap-8"
                   >
+                    {/* Translations */}
                     <FormField
                       name={nameValue as any}
                       control={form.control}
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel>
-                            {fieldKey
-                              .replace(/_/g, " ")
-                              .replace(/^./, (c) => c.toUpperCase())}{" "}
-                            ({fieldLang.toUpperCase()})
+                            {t.addItemForm.labels[translationKey][appLang]}
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -279,7 +282,9 @@ function AddItemForm() {
                 render={({ field }) => (
                   <div className="w-full">
                     <FormItem>
-                      <FormLabel>Total Quantity</FormLabel>
+                      <FormLabel>
+                        {t.addItemForm.labels.totalQuantity[appLang]}
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -306,7 +311,9 @@ function AddItemForm() {
                 render={({ field }) => (
                   <div className="w-full">
                     <FormItem>
-                      <FormLabel>Price (€)</FormLabel>
+                      <FormLabel>
+                        {t.addItemForm.labels.price[appLang]} (€)
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -333,7 +340,9 @@ function AddItemForm() {
                 render={() => (
                   <div className="w-full">
                     <FormItem>
-                      <FormLabel>Location</FormLabel>
+                      <FormLabel>
+                        {t.addItemForm.labels.location[appLang]}
+                      </FormLabel>
                       <Select
                         defaultValue={storage?.id ?? ""}
                         onValueChange={handleLocationChange}
@@ -342,11 +351,7 @@ function AddItemForm() {
                         <SelectTrigger className="border shadow-none border-grey w-full">
                           <SelectValue
                             className="border shadow-none border-grey"
-                            placeholder={
-                              t.addItemModal.placeholders.selectLocation[
-                                appLang
-                              ]
-                            }
+                            placeholder={""}
                           >
                             {storage?.name}
                           </SelectValue>
@@ -375,9 +380,11 @@ function AddItemForm() {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg p-4 gap-6 w-full">
                   <div className="space-y-0.5">
-                    <FormLabel>Active</FormLabel>
+                    <FormLabel>
+                      {t.addItemForm.labels.active[appLang]}
+                    </FormLabel>
                     <FormDescription>
-                      Users can view and book the item immediately
+                      {t.addItemForm.paragraphs.activeDescription[appLang]}
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -398,13 +405,13 @@ function AddItemForm() {
           <div className="p-10 w-full">
             <div>
               <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-1">
-                Assign Tags
+                {t.addItemForm.headings.assignTags[appLang]}
               </p>
               <p className="text-sm leading-none font-medium">
-                Tags help users find items using search or filter functions.
+                {t.addItemForm.paragraphs.tagPrompt[appLang]}
               </p>
               <Input
-                placeholder="Search tags"
+                placeholder={t.addItemForm.placeholders.searchTags[appLang]}
                 className="max-w-[300px] border shadow-none border-grey my-4"
                 onChange={(e) => setTagSearchValue(e.target.value)}
               />
@@ -435,6 +442,7 @@ function AddItemForm() {
                       .fill("")
                       .map((_, idx) => (
                         <Skeleton
+                          key={`skeleton-${idx}`}
                           className={`animate-pulse h-[18px] bg-muted rounded-md w-${idx % 2 === 0 ? "10" : "16"} mb-2`}
                         />
                       ))}
@@ -444,7 +452,7 @@ function AddItemForm() {
             </div>
             <div>
               <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-2">
-                Selected tags
+                {t.addItemForm.subheadings.selectedTags[appLang]}
               </p>
               <div className="flex gap-2 flex-wrap">
                 {selectedTags.length > 0 ? (
@@ -460,7 +468,7 @@ function AddItemForm() {
                   ))
                 ) : (
                   <p className="text-sm leading-none font-medium">
-                    No tags selected.
+                    {t.addItemForm.paragraphs.noTagsSelected[appLang]}
                   </p>
                 )}
               </div>
@@ -472,10 +480,10 @@ function AddItemForm() {
           <div className="p-10 w-full">
             <div className="mb-6">
               <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
-                Add Images
+                {t.addItemForm.headings.addImages[appLang]}
               </p>
               <p className="text-sm leading-none font-medium">
-                We recommend uploading at least one image for the item.
+                {t.addItemForm.paragraphs.imagePrompt[appLang]}
               </p>
             </div>
 
@@ -493,7 +501,7 @@ function AddItemForm() {
               onClick={handleNavigateSummary}
               type="button"
             >
-              Go to summary
+              {t.addItemForm.buttons.goToSummary[appLang]}
             </Button>
             <Button
               variant="outline"
@@ -502,7 +510,9 @@ function AddItemForm() {
                 !isEditing ? () => {} : () => handleUpdateItem(form.getValues())
               }
             >
-              {isEditing ? "Update item" : "Add Item"}
+              {isEditing
+                ? t.addItemForm.buttons.updateItem[appLang]
+                : t.addItemForm.buttons.addItem[appLang]}
             </Button>
           </div>
         </form>

@@ -74,7 +74,7 @@ function OrgStep() {
     <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px] p-10 gap-4">
       <div className="flex flex-col gap-2 flex-3">
         <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
-          Organization
+          {t.orgStep.heading.org[lang]}
         </p>
         <div>
           {/* Select Organization */}
@@ -89,7 +89,7 @@ function OrgStep() {
               disabled={orgs.length === 1}
               className="min-w-[250px] border shadow-none border-grey w-[300px]"
             >
-              <SelectValue placeholder={t.addItem.placeholders.selectOrg[lang]}>
+              <SelectValue placeholder={t.orgStep.placeholders.selectOrg[lang]}>
                 {selectedOrg?.name ?? ""}
               </SelectValue>
             </SelectTrigger>
@@ -152,7 +152,7 @@ function OrgStep() {
                 variant={selectedLoc === null ? "outline" : "default"}
                 onClick={() => dispatch(selectOrgLocation(null))}
               >
-                {t.addItem.buttons.chooseLocation[lang]}
+                {t.orgStep.buttons.chooseLocation[lang]}
               </Button>
             )}
           </div>
@@ -166,7 +166,7 @@ function OrgStep() {
           disabled={!selectedOrg || selectedLoc === undefined}
           onClick={() => dispatch(setNextStep())}
         >
-          Next
+          {t.orgStep.buttons.next[lang]}
         </Button>
       </div>
     </div>

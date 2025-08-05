@@ -159,7 +159,8 @@ export const createItem = createAsyncThunk(
   "items/createItem",
   async (itemData: ItemFormData, { rejectWithValue }) => {
     try {
-      return await itemsApi.createItems(itemData);
+      const result = await itemsApi.createItems(itemData);
+      if (result.error) throw new Error("Failed to create items");
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to create item"),
@@ -339,6 +340,12 @@ export const itemsSlice = createSlice({
       })
       .addCase(createItem.rejected, (state, action) => {
         state.loading = false;
+        state.itemCreation = {
+          org: null,
+          location: undefined,
+          items: [],
+        };
+        localStorage.removeItem("itemsInProgress");
         state.error = action.payload as string;
         state.errorContext = "create";
       })
@@ -452,6 +459,7 @@ export const {
   editLocalItem,
   toggleIsEditing,
   updateLocalItem,
+  clearItemCreation,
 } = itemsSlice.actions;
 
 export default itemsSlice.reducer;

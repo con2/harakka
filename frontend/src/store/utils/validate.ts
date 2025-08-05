@@ -1,9 +1,21 @@
 import { z } from "zod";
 
 const translationSchema = z.object({
-  item_name: z.string().min(1, "Item name is required"),
-  item_type: z.string().min(1, "Item type is required"),
-  item_description: z.string().min(1, "Item description is required"),
+  item_name: z
+    .string({
+      required_error: "Item name is required",
+    })
+    .min(1, "Item name is required"),
+  item_type: z
+    .string({
+      required_error: "Item type is required",
+    })
+    .min(1, "Item type is required"),
+  item_description: z
+    .string({
+      required_error: "Item description is required",
+    })
+    .min(1, "Item description is required"),
 });
 
 const itemTranslationsSchema = z.object({

@@ -35,7 +35,7 @@ import ContactForm from "../components/ContactForm";
 import App from "../App";
 import LoginPage from "@/pages/LoginPage";
 import { RoleManagement } from "@/components/Admin/Roles/RoleManagement";
-import AddItem from "@/pages/AddItem/AddItem";
+import AddItem from "@/pages/AdminPanel/AddItem";
 
 export const router = createBrowserRouter([
   {
