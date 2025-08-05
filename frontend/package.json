@@ -16,6 +16,7 @@
     "test:e2e": "start-server-and-test dev http://localhost:5180 cy:run"
   },
   "dependencies": {
+    "@hookform/error-message": "^2.0.1",
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-accordion": "^1.2.4",
     "@radix-ui/react-alert-dialog": "^1.1.11",
