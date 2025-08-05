@@ -69,16 +69,19 @@ export function mapItemImages(data: ItemFormData): ItemImageInsert[] {
   return images;
 }
 
-export function mapImagePaths(data: ItemFormData): string[] {
+export function mapImageData(
+  data: ItemFormData,
+  property: string = "url",
+): string[] {
   const urls: string[] = [];
 
   data.items.forEach((item) => {
     if (item.images.main) {
-      urls.push(item.images.main.url);
+      urls.push(item.images.main[property]);
     }
 
     item.images.details.forEach((img) => {
-      urls.push(img.url);
+      urls.push(img[property]);
     });
   });
 

@@ -370,9 +370,10 @@ function ItemImageUpload({
 
   // Cleanup URLs on unmount
   useEffect(() => {
+    const current = previewUrls.current;
     return () => {
-      previewUrls.current.forEach((url) => URL.revokeObjectURL(url));
-      previewUrls.current.clear();
+      current.forEach((url) => URL.revokeObjectURL(url));
+      current.clear();
     };
   }, []);
 
