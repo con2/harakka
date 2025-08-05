@@ -50,14 +50,13 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   const {
     availableRoles,
     allUserRoles,
+    hasAnyRole,
     createRole,
     updateRole,
     permanentDeleteRole,
-    isSuperAdmin,
-    isSuperVera,
-  } = useRoles({ skipInitialFetch: true });
+  } = useRoles();
 
-  const canManageRoles = isSuperAdmin || isSuperVera;
+  const canManageRoles = hasAnyRole(["super_admin", "superVera"]);
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
     email: user.email || "",

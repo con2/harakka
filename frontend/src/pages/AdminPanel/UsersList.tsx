@@ -37,8 +37,7 @@ const UsersList = () => {
   const error = useAppSelector(selectError);
   const allUserRoles = useAppSelector(selectAllUserRoles);
   const availableRoles = useAppSelector(selectAvailableRoles);
-  const { isAdmin, isSuperAdmin, isSuperVera, refreshAllUserRoles } =
-    useRoles();
+  const { refreshAllUserRoles, hasRole, hasAnyRole } = useRoles();
 
   // ————————————— State —————————————
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -59,7 +58,13 @@ const UsersList = () => {
 
   // ————————————— Derived Values —————————————
   // Authorization helpers based on new role system
-  const isAuthorized = isAdmin || isSuperAdmin || isSuperVera;
+  const isAuthorized = hasAnyRole([
+    "admin",
+    "superVera",
+    "main_admin",
+    "super_admin",
+  ]);
+  const isSuperAdmin = hasRole("super_admin");
 
   // Track whether we've already kicked off the initial data load
   const initialFetchDone = useRef(false);
@@ -206,7 +211,6 @@ const UsersList = () => {
         const targetUser = row.original;
         const targetUserRoles = getUserRoles(targetUser.id);
 
-        // Updated logic based on new role system
         const canEdit = isAuthorized;
         const canDelete =
           isSuperAdmin || (isAuthorized && targetUserRoles.includes("user"));
