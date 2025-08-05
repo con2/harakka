@@ -153,22 +153,38 @@ export const addItemForm = {
       fi: "Vaihtoehtoinen teksti on tärkeä saavutettavuuden kannalta. Kuvaile kuva ystävälle, joka ei näe sitä.",
     },
   },
-  validation: {
-    itemName: {
-      en: "Item name is required",
-      fi: "Tuotteen nimi on pakollinen",
+  messages: {
+    validation: {
+      itemName: {
+        en: "Item name is required",
+        fi: "Tuotteen nimi on pakollinen",
+      },
+      itemType: {
+        en: "Item type is required",
+        fi: "Tuotteen tyyppi on pakollinen",
+      },
+      itemDescription: {
+        en: "Item description is required",
+        fi: "Tuotteen kuvaus on pakollinen",
+      },
+      location: {
+        en: "Location is required",
+        fi: "Sijainti on pakollinen",
+      },
+      items_number_total: {
+        en: "Quantity is required",
+        fi: "Määrä on pakollinen",
+      },
+      price: {
+        en: "Price is required",
+        fi: "Hinta on pakollinen",
+      },
     },
-    itemType: {
-      en: "Item type is required",
-      fi: "Tuotteen tyyppi on pakollinen",
-    },
-    itemDescription: {
-      en: "Item description is required",
-      fi: "Tuotteen kuvaus on pakollinen",
-    },
-    location: {
-      en: "Location is required",
-      fi: "Sijainti on pakollinen",
+    error: {
+      fallbackFormError: {
+        en: "Form contains errors",
+        fi: "Lomakkeessa on virheitä",
+      },
     },
   },
 };

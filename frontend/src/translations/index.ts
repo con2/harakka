@@ -1,4 +1,3 @@
-import { addItemModal } from "./modules/addItemModal";
 import { addLocationModal } from "./modules/addLocationModal";
 import { addTagModal } from "./modules/addTagModal";
 import { addUserModal } from "./modules/addUserModal";
@@ -52,8 +51,10 @@ import { organizationLocations } from "./modules/organizationLocations";
 import { orgStep } from "./modules/orgStep";
 import { addItemForm } from "./modules/addItemForm";
 import { itemSummary } from "./modules/itemSummary";
+import { stepper } from "./modules/stepper";
 
 export const t = {
+  stepper,
   addItemForm,
   itemSummary,
   addTagModal,

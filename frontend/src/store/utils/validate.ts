@@ -3,19 +3,19 @@ import { z } from "zod";
 const translationSchema = z.object({
   item_name: z
     .string({
-      required_error: "Item name is required",
+      required_error: "itemName",
     })
-    .min(1, "Item name is required"),
+    .min(1, "itemName"),
   item_type: z
     .string({
-      required_error: "Item type is required",
+      required_error: "itemType",
     })
-    .min(1, "Item type is required"),
+    .min(1, "itemType"),
   item_description: z
     .string({
-      required_error: "Item description is required",
+      required_error: "itemDescription",
     })
-    .min(1, "Item description is required"),
+    .min(1, "itemDescription"),
 });
 
 const itemTranslationsSchema = z.object({
@@ -40,12 +40,15 @@ export const createItemDto = z.object({
   id: z.string().uuid(),
   location_id: z.string().uuid(),
   location_details: z.object({
-    name: z.string().min(1, "Location name is required"),
-    address: z.string().min(1, "Location address is required"),
+    name: z.string().min(1, "location"),
+    address: z.string().min(1, "location"),
   }),
-  items_number_total: z.number().int().min(1, "Item count must be at least 1"),
+  items_number_total: z
+    .number({ invalid_type_error: "items_number_total" })
+    .int()
+    .min(1, "items_number_total"),
   items_number_currently_in_storage: z.number().int().min(0),
-  price: z.number().min(0),
+  price: z.number({ invalid_type_error: "price" }).min(0),
   is_active: z.boolean(),
   translations: itemTranslationsSchema,
   tags: z.array(z.string()),
