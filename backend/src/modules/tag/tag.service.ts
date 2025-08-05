@@ -6,7 +6,6 @@ import { TagRow, TagUpdate } from "./interfaces/tag.interface";
 import { Database } from "../../../../common/database.types";
 import { ApiResponse } from "../../../../common/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
-import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagLink } from "@common/items/storage-items.types";
 
 @Injectable()
@@ -195,7 +194,7 @@ export class TagService {
       const { error } = await supabase
         .from("storage_item_tags")
         .insert(payload);
-      if (error) handleSupabaseError(error);
+      if (error) throw error;
     } catch (error) {
       return error;
     }
