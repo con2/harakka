@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import {
+  PostgrestMaybeSingleResponse,
   PostgrestResponse,
   PostgrestSingleResponse,
   SupabaseClient,
@@ -24,7 +25,6 @@ import { TagService } from "../tag/tag.service";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 import { ItemFormData } from "@common/items/form.types";
 import {
-  mapImagePaths,
   mapItemImages,
   mapOrgLinks,
   mapStorageItems,
@@ -153,60 +153,66 @@ export class StorageItemsService {
   }
 
   /**
-   * Insert either one item or an array of items
+   * Insert items with org data, image data, tags
    * @param req An authorized request
    * @param payload Can be either one item with an array of tagIds or an array of items of the same structure
    * @returns
    */
-  async createItems(req: AuthRequest, payload: ItemFormData): Promise<boolean> {
+  async createItems(
+    req: AuthRequest,
+    payload: ItemFormData,
+  ): Promise<{ status: number; error: string | null }> {
     const supabase = req.supabase;
     const mappedItems = mapStorageItems(payload);
+    const mappedImageData = mapItemImages(payload);
+    const item_ids = mappedItems.map((i) => i.id);
 
     try {
       // Insert item data
-      const { error }: PostgrestResponse<StorageItem> = await supabase
-        .from("storage_items")
-        .insert(mappedItems)
-        .select();
-      if (error) handleSupabaseError(error);
+      const { error }: PostgrestMaybeSingleResponse<StorageItem> =
+        await supabase.from("storage_items").insert(mappedItems);
+      if (error) {
+        throw new Error(error.message);
+      }
 
       // Insert org data
       const mappedOrg = mapOrgLinks(payload);
       const { error: orgError } = await supabase
         .from("organization_items")
         .insert(mappedOrg);
-      if (orgError) handleSupabaseError(orgError);
+      if (orgError) {
+        throw new Error(orgError.message);
+      }
 
       // Insert item tags
       const mappedTags = mapTagLinks(payload);
-      const { error: tagError } = await this.tagService.assignTagsToBulk(
-        req,
-        mappedTags,
-      );
-      if (tagError) handleSupabaseError(tagError);
+      const tagResult = await this.tagService.assignTagsToBulk(req, mappedTags);
+      if (tagResult) {
+        throw new Error(tagResult.message);
+      }
 
-      // Move uploaded images
-      const imagePaths = mapImagePaths(payload);
-      await this.imageService.moveFromBucket(
-        req,
-        "item-images-drafts",
-        "item-images",
-        imagePaths,
-      );
-      const mappedImageData = mapItemImages(payload);
+      // Insert item images
       const { error: imageError } = await supabase
         .from("storage_item_images")
         .insert(mappedImageData);
-      if (imageError) handleSupabaseError(imageError);
-      return true;
+      if (imageError) {
+        throw new Error(imageError.message);
+      }
+
+      return { status: 201, error: null };
     } catch (error) {
-      const item_ids = mappedItems.map((i) => i.id);
-      await supabase.from("storage_items").delete().in("id", item_ids);
-      await supabase
-        .from("organization_items")
-        .delete()
-        .in("item_id", item_ids);
-      return error;
+      // Rollback: Clean up any partially inserted data
+      await Promise.allSettled([
+        supabase.from("storage_item_images").delete().in("item_id", item_ids),
+        supabase.from("storage_item_tags").delete().in("item_id", item_ids),
+        supabase.from("organization_items").delete().in("item_id", item_ids),
+        supabase.from("storage_items").delete().in("id", item_ids),
+      ]);
+
+      return {
+        status: error?.code ?? 500,
+        error: error?.message ?? "An unexpected error occurred",
+      };
     }
   }
 
@@ -439,6 +445,8 @@ export class StorageItemsService {
     activity_filter?: "active" | "inactive",
     location_filter?: string,
     category?: string,
+    from_date?: string,
+    to_date?: string,
   ) {
     const supabase = this.supabaseClient.getAnonClient();
     const { from, to } = getPaginationRange(page, limit);
@@ -472,6 +480,9 @@ export class StorageItemsService {
       const categories = category.split(",");
       query.in("en_item_type", categories);
     }
+
+    if (from_date) query.gte("created_at", from_date);
+    if (to_date) query.lt("created_at", to_date);
 
     const result = await query;
     const { error, count } = result;
