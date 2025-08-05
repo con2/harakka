@@ -41,8 +41,6 @@ import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
 import { usersList } from "./modules/usersList";
 import { currentUserRoles } from "./modules/currentUserRoles";
-import { addItem } from "./modules/addItem";
-
 import {
   organizationDelete,
   organizationList,
@@ -51,10 +49,13 @@ import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
 import { editLocationModal } from "./modules/editLocationModal";
 import { organizationLocations } from "./modules/organizationLocations";
+import { orgStep } from "./modules/orgStep";
+import { addItemForm } from "./modules/addItemForm";
+import { itemSummary } from "./modules/itemSummary";
 
 export const t = {
-  addItem,
-  addItemModal,
+  addItemForm,
+  itemSummary,
   addTagModal,
   addUserModal,
   adminDashboard,
@@ -79,6 +80,7 @@ export const t = {
   navigation,
   bookingConfirmation,
   bookingList,
+  orgStep,
   pagination,
   passwordReset,
   passwordResetResult,

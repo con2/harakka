@@ -1,4 +1,10 @@
-export const addItem = {
+export const orgStep = {
+  heading: {
+    org: {
+      en: "Organization",
+      fi: "Organisaatio",
+    },
+  },
   placeholders: {
     selectOrg: {
       en: "Select organization",
@@ -13,6 +19,10 @@ export const addItem = {
     addItems: {
       en: "Add Items to Organization",
       fi: "Lisää tuotteita organisaatioon",
+    },
+    next: {
+      en: "Next",
+      fi: "Seuraava",
     },
   },
 };
