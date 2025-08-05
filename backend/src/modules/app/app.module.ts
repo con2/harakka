@@ -39,15 +39,27 @@ import { UserBanningModule } from "../user-banning/user-banning.module";
 import { OrganizationLocationsModule } from "../organization-locations/organization_locations.module";
 
 // Load and expand environment variables before NestJS modules initialize
-// Load .env first (base configuration)
-const baseEnvFile = path.resolve(process.cwd(), "../.env");
-const baseEnv = dotenv.config({ path: baseEnvFile });
-dotenvExpand.expand(baseEnv);
+// Only load env files if SUPABASE_URL is not already set (meaning env-cmd hasn't run)
+if (!process.env.SUPABASE_URL) {
+  console.log("SUPABASE_URL not found in environment, loading env files...");
 
-// Load .env.local second (overrides base configuration)
-const localEnvFile = path.resolve(process.cwd(), "../.env.local");
-const localEnv = dotenv.config({ path: localEnvFile });
-dotenvExpand.expand(localEnv);
+  // Load .env first (base configuration)
+  const baseEnvFile = path.resolve(process.cwd(), "../.env");
+  const baseEnv = dotenv.config({ path: baseEnvFile });
+  dotenvExpand.expand(baseEnv);
+
+  // Load .env.local second (overrides base configuration)
+  const localEnvFile = path.resolve(process.cwd(), "../.env.local");
+  const localEnv = dotenv.config({ path: localEnvFile });
+  dotenvExpand.expand(localEnv);
+  console.log(
+    "Loaded env files manually:",
+    localEnv.parsed ? "SUCCESS" : "FAILED",
+  );
+} else {
+  console.log("Using environment variables from env-cmd or external source");
+  console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
+}
 
 @Module({
   imports: [
