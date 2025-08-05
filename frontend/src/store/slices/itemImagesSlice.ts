@@ -1,6 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { itemImagesApi } from "@/api/services/itemImages";
-import { FileWithMetadata, ItemImage } from "@/types/storage";
+import {
+  FileWithMetadata,
+  ItemImage,
+  UploadItemImageDto,
+} from "@/types/storage";
 import { RootState } from "../store";
 import { ErrorContext } from "@/types/common";
 import { extractErrorMessage } from "../utils/errorHandlers";
@@ -101,6 +105,26 @@ export const removeFromBucket = createAsyncThunk(
   },
 );
 
+export const uploadItemImageModal = createAsyncThunk(
+  "itemImages/uploadItemImageModal",
+  async (
+    {
+      itemId,
+      file,
+      metadata,
+    }: { itemId: string; file: File; metadata: UploadItemImageDto },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await itemImagesApi.uploadItemImageModal(itemId, file, metadata);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to upload image"),
+      );
+    }
+  },
+);
+
 export const uploadItemImages = createAsyncThunk(
   "itemImages/uploadItemImage",
   async (
@@ -180,19 +204,19 @@ const itemImagesSlice = createSlice({
       })
 
       // Upload Item Image - Fix this to update the correct item's images
-      .addCase(uploadItemImages.pending, (state) => {
+      .addCase(uploadItemImageModal.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(uploadItemImages.fulfilled, (_, __) => {
-        // state.loading = false;
-        // state.images.push(action.payload);
-        // // Make sure we track this item
-        // if (!state.itemsWithLoadedImages.includes(action.payload.item_id)) {
-        //   state.itemsWithLoadedImages.push(action.payload.item_id);
-        // }
+      .addCase(uploadItemImageModal.fulfilled, (state, action) => {
+        state.loading = false;
+        state.images.push(action.payload);
+        // Make sure we track this item
+        if (!state.itemsWithLoadedImages.includes(action.payload.item_id)) {
+          state.itemsWithLoadedImages.push(action.payload.item_id);
+        }
       })
-      .addCase(uploadItemImages.rejected, (state, action) => {
+      .addCase(uploadItemImageModal.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

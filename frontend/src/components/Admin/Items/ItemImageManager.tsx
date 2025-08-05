@@ -5,6 +5,7 @@ import {
   deleteItemImage,
   selectItemImagesById,
   selectItemImagesLoading,
+  uploadItemImageModal,
 } from "@/store/slices/itemImagesSlice";
 import { Button } from "@/components/ui/button";
 import {
@@ -243,21 +244,22 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
       image_type: imageType,
       display_order: highestOrder + 1,
       alt_text: altText,
+      is_active: true,
     };
 
     setUploadProgress(10); // Start progress
 
     try {
-      // toast.promise(
-      //   dispatch(
-      //     uploadItemImages({ itemId, file: selectedFile, metadata }),
-      //   ).unwrap(),
-      //   {
-      //     loading: t.itemImageManager.messages.toast.upload.loading[lang],
-      //     success: t.itemImageManager.messages.toast.upload.success[lang],
-      //     error: t.itemImageManager.messages.toast.upload.error[lang],
-      //   },
-      // );
+      toast.promise(
+        dispatch(
+          uploadItemImageModal({ itemId, file: selectedFile, metadata }),
+        ).unwrap(),
+        {
+          loading: t.itemImageManager.messages.toast.upload.loading[lang],
+          success: t.itemImageManager.messages.toast.upload.success[lang],
+          error: t.itemImageManager.messages.toast.upload.error[lang],
+        },
+      );
 
       // Reset form after successful upload
       resetUploadForm();
