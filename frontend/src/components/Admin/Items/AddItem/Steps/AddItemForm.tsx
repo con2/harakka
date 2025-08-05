@@ -4,7 +4,6 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
   Form,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -52,6 +51,10 @@ import ItemImageUpload from "../ItemImageUpload";
 import { setNextStep } from "@/store/slices/uiSlice";
 import { CreateItemType } from "@common/items/form.types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorMessage } from "@hookform/error-message";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
 
 function AddItemForm() {
   const orgLocations = useAppSelector(selectCurrentOrgLocations);
@@ -107,6 +110,10 @@ function AddItemForm() {
     dispatch(setNextStep());
   };
 
+  useEffect(() => {
+    if (form.formState.errors) console.log("errors: ", form.formState.errors);
+  }, [form.formState.errors]);
+
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
     const getFirstErrorMessage = (obj: any): string | null => {
       for (const value of Object.values(obj)) {
@@ -121,15 +128,23 @@ function AddItemForm() {
       return null;
     };
 
-    const firstErrorMessage = getFirstErrorMessage(errors);
+    const firstErrorKey = getFirstErrorMessage(errors);
 
-    if (firstErrorMessage) {
-      toast.error(firstErrorMessage);
+    if (
+      firstErrorKey &&
+      t.addItemForm.messages.validation[
+        firstErrorKey as keyof typeof t.addItemForm.messages.validation
+      ]
+    ) {
+      toast.error(
+        t.addItemForm.messages.validation[
+          firstErrorKey as keyof typeof t.addItemForm.messages.validation
+        ][appLang],
+      );
     } else {
-      toast.error("Form contains errors");
+      toast.error(t.addItemForm.messages.error.fallbackFormError[appLang]);
     }
   };
-
   const toggleTag = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
     const { id } = e.currentTarget.dataset;
@@ -257,15 +272,31 @@ function AddItemForm() {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel>
-                            {t.addItemForm.labels[translationKey][appLang]}
+                            {
+                              t.addItemForm.labels[
+                                translationKey as keyof typeof t.addItemForm.labels
+                              ][appLang]
+                            }
                           </FormLabel>
                           <FormControl>
                             <Input
                               {...field}
-                              className="border shadow-none border-grey w-full"
+                              className="border shadow-none border-grey w-full mb-1"
                             />
                           </FormControl>
-                          <FormMessage />
+                          <ErrorMessage
+                            errors={form.formState.errors}
+                            name={nameValue}
+                            render={({ message }) => (
+                              <p className="text-[0.8rem] font-medium text-destructive">
+                                {
+                                  t.addItemForm.messages.validation[
+                                    message as keyof typeof t.addItemForm.messages.validation
+                                  ][appLang]
+                                }
+                              </p>
+                            )}
+                          />
                         </FormItem>
                       )}
                     />
@@ -300,7 +331,19 @@ function AddItemForm() {
                           className="border shadow-none border-grey"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <ErrorMessage
+                        errors={form.formState.errors}
+                        name="items_number_total"
+                        render={({ message }) => (
+                          <p className="text-[0.8rem] font-medium text-destructive">
+                            {
+                              t.addItemForm.messages.validation[
+                                message as keyof typeof t.addItemForm.messages.validation
+                              ][appLang]
+                            }
+                          </p>
+                        )}
+                      />
                     </FormItem>
                   </div>
                 )}
@@ -329,7 +372,19 @@ function AddItemForm() {
                           className="border shadow-none border-grey"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <ErrorMessage
+                        errors={form.formState.errors}
+                        name="price"
+                        render={({ message }) => (
+                          <p className="text-[0.8rem] font-medium text-destructive">
+                            {
+                              t.addItemForm.messages.validation[
+                                message as keyof typeof t.addItemForm.messages.validation
+                              ][appLang]
+                            }
+                          </p>
+                        )}
+                      />
                     </FormItem>
                   </div>
                 )}
