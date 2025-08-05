@@ -19,6 +19,7 @@ import {
   selectAvailableRoles,
 } from "@/store/slices/rolesSlice";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
+import { useAuth } from "./useAuth";
 
 // Global cache states with proper timestamps
 const roleCache = {
@@ -33,6 +34,8 @@ const pendingRequests = new Map();
 
 export const useRoles = () => {
   const dispatch = useAppDispatch();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [responseReceived, setResponseReceived] = useState(false);
 
@@ -91,6 +94,11 @@ export const useRoles = () => {
   // Improved refreshCurrentUserRoles with better caching and deduplication
   const refreshCurrentUserRoles = useCallback(
     async (force = false) => {
+      if (!isAuthenticated && !force) {
+        return Promise.resolve({
+          type: "roles/fetchCurrentUserRoles/notLoggedIn",
+        });
+      }
       const requestKey = "currentUserRoles";
 
       // Always clear existing request when forced
@@ -138,7 +146,7 @@ export const useRoles = () => {
       pendingRequests.set(requestKey, promise);
       return promise;
     },
-    [dispatch, currentUserRoles, currentUserOrganizations],
+    [dispatch, currentUserRoles, currentUserOrganizations, isAuthenticated],
   );
 
   // Specialized refreshAllUserRoles that only runs for admins and doesn't auto-load
@@ -234,7 +242,12 @@ export const useRoles = () => {
 
   // Only load CURRENT user roles on initial mount - not ALL roles
   useEffect(() => {
-    if (!initialLoadComplete && !loading && currentUserRoles.length === 0) {
+    if (
+      isAuthenticated &&
+      !initialLoadComplete &&
+      !loading &&
+      currentUserRoles.length === 0
+    ) {
       // Load only current user roles on initial mount
       refreshCurrentUserRoles()
         .then(() => {
@@ -243,7 +256,13 @@ export const useRoles = () => {
         })
         .catch(console.error);
     }
-  }, [refreshCurrentUserRoles, initialLoadComplete, loading, currentUserRoles]);
+  }, [
+    refreshCurrentUserRoles,
+    initialLoadComplete,
+    loading,
+    currentUserRoles,
+    isAuthenticated,
+  ]);
 
   // Role modification operations with cache invalidation
   const createRole = useCallback(
