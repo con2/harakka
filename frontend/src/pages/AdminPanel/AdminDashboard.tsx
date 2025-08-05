@@ -26,7 +26,7 @@ import {
   selectTotalBookingsCount,
   updatePaymentStatus,
 } from "@/store/slices/bookingsSlice";
-import { BookingWithDetails, PaymentStatus } from "@/types";
+import { PaymentStatus } from "@/types";
 import {
   fetchAllItems,
   getItemCount,

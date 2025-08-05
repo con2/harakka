@@ -3,7 +3,7 @@ import { ItemTranslation } from "./item";
 import { TagTranslations } from "./databaseGenerated";
 import { Org_Roles } from "@common/role.types";
 import { StorageItemRow } from "@common/items/storage-items.types";
-import { SelectedStorage } from "@/pages/AddItem/add-item.types";
+import { SelectedStorage } from "@common/items/form.types";
 
 /**
  * Base form state for all forms in the application

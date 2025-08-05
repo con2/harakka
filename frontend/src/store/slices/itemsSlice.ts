@@ -459,7 +459,6 @@ export const {
   editLocalItem,
   toggleIsEditing,
   updateLocalItem,
-  clearItemCreation,
 } = itemsSlice.actions;
 
 export default itemsSlice.reducer;

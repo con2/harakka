@@ -5,6 +5,7 @@ import {
   OrgLocationWithNames,
   CreateOrgLocationWithStorage,
   UpdateOrgLocationWithStorage,
+  OrgLocationsWithStorageDetails,
 } from "@/types/organizationLocation";
 import { api } from "../axios";
 
@@ -49,7 +50,7 @@ export const orgLocationsApi = {
     id: string,
     page: number = 1,
     limit: number = 10,
-  ): Promise<ApiResponse<OrgLocationWithNames[]>> =>
+  ): Promise<ApiResponse<OrgLocationsWithStorageDetails[]>> =>
     api.get(
       `organization-locations/organization/${id}?page=${page}?limit=${limit}`,
     ),

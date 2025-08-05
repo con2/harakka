@@ -112,7 +112,6 @@ export class ItemImagesService {
       for (let i = 0; i < files.length; i++) {
         const fileExt = files[i].originalname.split(".").pop();
         const fileName = path ? `${path}.${fileExt}` : `${uuidv4()}.${fileExt}`;
-        console.log("filename: ", fileName);
         const { data, error } = await supabase.storage
           .from(bucket)
           .upload(fileName, files[i].buffer, {
@@ -122,7 +121,6 @@ export class ItemImagesService {
         if (error) {
           throw new Error(`Failed to upload image: ${files[i].originalname}`);
         }
-        console.log("Data: ", data);
         if (data?.fullPath) {
           const full_url = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.fullPath}`;
           result.urls.push(full_url);

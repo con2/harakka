@@ -81,14 +81,13 @@ export const itemImagesApi = {
     const formData = new FormData();
     files.forEach((file) => formData.append("image", file));
 
-    const result = await api.post(
+    return await api.post(
       `item-images/bucket/${bucket}?path=${path}`,
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
       },
     );
-    return result;
   },
 
   /**
