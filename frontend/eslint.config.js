@@ -44,7 +44,7 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-function-type": "off",
-      "@typescript-eslint/no-unsafe-type-assertion": "off",
+      "@typescript-eslint/no-unsafe-type-assertion": "warn",
       "@typescript-eslint/no-redundant-type-constituents": "error",
 
       // -------- Promise‑related safety nets --------
@@ -55,6 +55,8 @@ export default tseslint.config(
       /* Still surface *explicit* `any` usage so devs notice it, but don't block
          CI while we work through the backlog. */
       "@typescript-eslint/no-explicit-any": "warn",
+
+      /*  */
 
       // -------- Unused variables configuration --------
       "@typescript-eslint/no-unused-vars": [

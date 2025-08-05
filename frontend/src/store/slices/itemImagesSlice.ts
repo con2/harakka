@@ -200,7 +200,10 @@ const itemImagesSlice = createSlice({
       })
       .addCase(getItemImages.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error =
+          typeof action.payload === "string"
+            ? action.payload
+            : "Failed to get item images";
       })
 
       // Upload Item Image - Fix this to update the correct item's images
@@ -218,7 +221,10 @@ const itemImagesSlice = createSlice({
       })
       .addCase(uploadItemImageModal.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error =
+          typeof action.payload === "string"
+            ? action.payload
+            : "Failed to upload item images";
       })
 
       // Upload to bucket
@@ -238,7 +244,10 @@ const itemImagesSlice = createSlice({
       })
       .addCase(uploadToBucket.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error =
+          typeof action.payload === "string"
+            ? action.payload
+            : "Failed to upload files to bucket";
       })
 
       // Remove from bucket
@@ -251,7 +260,10 @@ const itemImagesSlice = createSlice({
       })
       .addCase(removeFromBucket.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error =
+          typeof action.payload === "string"
+            ? action.payload
+            : "Failed to remove files from bucket";
       })
 
       // Delete Item Image - This should remain mostly the same
@@ -267,7 +279,10 @@ const itemImagesSlice = createSlice({
       })
       .addCase(deleteItemImage.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error =
+          typeof action.payload === "string"
+            ? action.payload
+            : "Failed to delete item image";
       });
   },
 });
