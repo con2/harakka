@@ -25,11 +25,17 @@
     "s:functions:serve": "npx supabase functions serve",
     "s:functions:deploy": "npx supabase functions deploy",
     "s:seed": "npx supabase db dump --data-only --file supabase/seed.sql",
-    "dev:local": "concurrently \"npm run s:start\" \"npm run frontend\" \"npm run backend\""
+    "dev:local": "env-cmd -f supabase-local.env concurrently \"npm run s:start\" \"npm run frontend\" \"npm run backend\"",
+    "dev:live": "env-cmd -f .env.local concurrently \"npm run frontend\" \"npm run backend\"",
+    "frontend:local": "env-cmd -f supabase-local.env npm --prefix frontend run dev",
+    "frontend:live": "env-cmd -f .env.local npm --prefix frontend run dev",
+    "backend:local": "env-cmd -f supabase-local.env npm --prefix backend run start:dev",
+    "backend:live": "env-cmd -f .env.local npm --prefix backend run start:dev"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.53.0",
     "concurrently": "^9.1.2",
+    "env-cmd": "^10.1.0",
     "type-fest": "^4.41.0"
   },
   "dependencies": {
