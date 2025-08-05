@@ -52,6 +52,7 @@ import { orgStep } from "./modules/orgStep";
 import { addItemForm } from "./modules/addItemForm";
 import { itemSummary } from "./modules/itemSummary";
 import { stepper } from "./modules/stepper";
+import { notifications } from "./modules/notifications";
 
 export const t = {
   stepper,
@@ -79,6 +80,7 @@ export const t = {
   myBookings,
   myProfile,
   navigation,
+  notifications,
   bookingConfirmation,
   bookingList,
   orgStep,

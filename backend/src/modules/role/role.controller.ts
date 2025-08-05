@@ -86,16 +86,6 @@ export class RoleController {
   }
 
   /**
-   * GET /roles/super-vera
-   * Check if user is superVera (global admin)
-   */
-  @Get("super-vera")
-  isSuperVera(@Req() req: AuthRequest): { isSuperVera: boolean } {
-    const isSuperVera = this.roleService.isSuperVera(req);
-    return { isSuperVera };
-  }
-
-  /**
    * GET /roles/list
    * Get all available roles from the roles table
    */

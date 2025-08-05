@@ -272,6 +272,73 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          created_at: string
+          delivered_at: string | null
+          id: string
+          idempotency_key: string
+          message: string | null
+          metadata: Json | null
+          read_at: string | null
+          severity: Database["public"]["Enums"]["notification_severity"]
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string | null
+        }
+        Insert: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          idempotency_key?: string
+          message?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          severity?: Database["public"]["Enums"]["notification_severity"]
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id?: string | null
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          idempotency_key?: string
+          message?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          severity?: Database["public"]["Enums"]["notification_severity"]
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_with_user_info"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "view_user_ban_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_items: {
         Row: {
           created_at: string | null
@@ -1347,6 +1414,7 @@ export type Database = {
           id: string
           phone: string | null
           preferences: Json | null
+          profile_picture_url: string | null
           role: string | null
           saved_lists: Json | null
           visible_name: string | null
@@ -1358,6 +1426,7 @@ export type Database = {
           id: string
           phone?: string | null
           preferences?: Json | null
+          profile_picture_url?: string | null
           role?: string | null
           saved_lists?: Json | null
           visible_name?: string | null
@@ -1369,6 +1438,7 @@ export type Database = {
           id?: string
           phone?: string | null
           preferences?: Json | null
+          profile_picture_url?: string | null
           role?: string | null
           saved_lists?: Json | null
           visible_name?: string | null
@@ -1547,6 +1617,19 @@ export type Database = {
         Args: { item_id: string }
         Returns: number
       }
+      create_notification: {
+        Args: {
+          p_user_id: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_title: string
+          p_message?: string
+          p_channel?: Database["public"]["Enums"]["notification_channel"]
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_metadata?: Json
+          p_idempotency_key?: string
+        }
+        Returns: undefined
+      }
       generate_slug: {
         Args: { input_text: string }
         Returns: string
@@ -1615,6 +1698,10 @@ export type Database = {
           organization_slug: string
         }[]
       }
+      is_admin: {
+        Args: { p_user_id: string; p_org_id?: string }
+        Returns: boolean
+      }
       is_user_banned_for_app: {
         Args: { check_user_id: string }
         Returns: boolean
@@ -1631,8 +1718,31 @@ export type Database = {
         }
         Returns: boolean
       }
+      notify: {
+        Args: {
+          p_user_id: string
+          p_type_txt: string
+          p_title?: string
+          p_message?: string
+          p_channel?: Database["public"]["Enums"]["notification_channel"]
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_metadata?: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
+      notification_channel: "in_app" | "web_push" | "email"
+      notification_severity: "info" | "warning" | "critical"
+      notification_type:
+        | "comment"
+        | "mention"
+        | "system"
+        | "custom"
+        | "booking.status_approved"
+        | "booking.status_rejected"
+        | "booking.created"
+        | "user.created"
       role_type:
         | "User"
         | "Admin"
@@ -1777,6 +1887,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      notification_channel: ["in_app", "web_push", "email"],
+      notification_severity: ["info", "warning", "critical"],
+      notification_type: [
+        "comment",
+        "mention",
+        "system",
+        "custom",
+        "booking.status_approved",
+        "booking.status_rejected",
+        "booking.created",
+        "user.created",
+      ],
       role_type: [
         "User",
         "Admin",
