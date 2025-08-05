@@ -356,7 +356,6 @@ export const useRoles = () => {
           if (type === "all") roleCache.allRoles.fetched = false;
           if (type === "available") roleCache.availableRoles.fetched = false;
         });
-        console.log(`Role caches cleared: ${types.join(", ")}`);
       }
     },
     [],
