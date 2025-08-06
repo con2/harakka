@@ -327,11 +327,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
               variant="outline"
               size="sm"
               onClick={() => {
-                console.log(
-                  `Quantity: ${quantity}, availableQQuantity: ${availabilityInfo.availableQuantity}`,
-                );
                 setQuantity(
-                  // HIER!!
                   Math.min(availabilityInfo.availableQuantity, quantity + 1),
                 );
               }}
