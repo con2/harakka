@@ -20,6 +20,7 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
+import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
 
 export const Navigation = () => {
   // Get auth state directly from Auth context
@@ -70,6 +71,7 @@ export const Navigation = () => {
   return (
     <nav className={navClasses}>
       <div className="container md:mx-auto mx-0 flex items-center justify-between">
+        {/* Left side: Logo + navigation links */}
         <div className="flex items-center gap-1">
           <Link to="/" data-cy="nav-home">
             <img
@@ -161,8 +163,15 @@ export const Navigation = () => {
           </NavigationMenu>
         </div>
 
-        {/* Always show Cart */}
+        {/* Right side: Cart, notifications, language, auth */}
         <div className="flex items-center gap-2">
+          {/* Active role context switcher if user is logged in and has roles */}
+          {isLoggedIn && (
+            <div className="hidden md:flex mr-2">
+              <RoleContextSwitcher />
+            </div>
+          )}
+
           <div className="flex items-center md:mr-6">
             <LanguageSwitcher />
           </div>

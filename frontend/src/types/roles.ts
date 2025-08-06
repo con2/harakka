@@ -33,6 +33,12 @@ export interface UseRolesReturn {
   refreshRoles: () => Promise<void>;
 }
 
+export interface ActiveRoleContext {
+  organizationId: string | null;
+  roleName: string | null;
+  organizationName: string | null;
+}
+
 export interface RolesState {
   currentUserRoles: ViewUserRolesWithDetails[];
   currentUserOrganizations: UserOrganization[];
@@ -43,4 +49,5 @@ export interface RolesState {
   adminError: string | null;
   errorContext: string | null;
   availableRoles: RolesRow[];
+  activeRoleContext: ActiveRoleContext;
 }

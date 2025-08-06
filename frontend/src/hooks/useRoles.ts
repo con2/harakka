@@ -17,8 +17,16 @@ import {
   selectRolesError,
   selectAdminError,
   selectAvailableRoles,
+  setActiveRoleContext,
+  clearActiveRoleContext,
+  selectActiveRoleContext,
+  selectHasActiveContext,
 } from "@/store/slices/rolesSlice";
-import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
+import {
+  CreateUserRoleDto,
+  UpdateUserRoleDto,
+  ActiveRoleContext,
+} from "@/types/roles";
 import { useAuth } from "./useAuth";
 
 // Global cache states with proper timestamps
@@ -38,6 +46,31 @@ export const useRoles = () => {
   const isAuthenticated = !!user;
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [responseReceived, setResponseReceived] = useState(false);
+
+  // Get active role context from Redux
+  const activeContext: ActiveRoleContext = useAppSelector(
+    selectActiveRoleContext,
+  );
+  const hasActiveContext = useAppSelector(selectHasActiveContext);
+
+  // Method for setting active roel
+  const setActiveContext = useCallback(
+    (organizationId: string, roleName: string, organizationName: string) => {
+      dispatch(
+        setActiveRoleContext({
+          organizationId,
+          roleName,
+          organizationName,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  // Method for clearing active role context
+  const clearActiveContext = useCallback(() => {
+    dispatch(clearActiveRoleContext());
+  }, [dispatch]);
 
   // Current user roles and organizations
   const currentUserRoles = useAppSelector(selectCurrentUserRoles);
@@ -78,6 +111,29 @@ export const useRoles = () => {
     [checkHasRole],
   );
 
+  // Enhanced hasRole that can use active role context as fallback
+  const checkHasRoleInContext = useCallback(
+    (requiredRole: string, specificOrgId?: string) => {
+      // If specific org ID provided, use that
+      if (specificOrgId) {
+        return checkHasRole(requiredRole, specificOrgId);
+      }
+
+      // Otherwise use active context if available
+      if (hasActiveContext) {
+        return checkHasRole(
+          requiredRole,
+          activeContext.organizationId || undefined,
+        );
+      }
+
+      // Default to checking any organization
+      return checkHasRole(requiredRole);
+    },
+    [checkHasRole, hasActiveContext, activeContext],
+  );
+
+  // The isAnyTypeOfAdmin should now be defined after checkHasAnyRole
   const isAnyTypeOfAdmin = checkHasAnyRole([
     "admin",
     "superVera",
@@ -376,6 +432,7 @@ export const useRoles = () => {
     // Role checking
     hasRole: checkHasRole,
     hasAnyRole: checkHasAnyRole,
+    hasRoleInContext: checkHasRoleInContext,
 
     // Actions
     refreshCurrentUserRoles,
@@ -388,5 +445,11 @@ export const useRoles = () => {
     clearErrors,
     refreshAll,
     clearRoleCache,
+
+    // Active role context values and methods
+    activeContext,
+    hasActiveContext,
+    setActiveContext,
+    clearActiveContext,
   };
 };
