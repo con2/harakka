@@ -112,6 +112,7 @@ function AddItemForm() {
 
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
     const getFirstErrorMessage = (obj: any): string | null => {
+      console.log(obj);
       for (const value of Object.values(obj)) {
         if (value && typeof value === "object") {
           if ("message" in value && typeof value.message === "string") {
@@ -151,7 +152,7 @@ function AddItemForm() {
     if (exists) {
       setSelectedTags(selectedTags.filter((t) => t.tag_id !== id));
     } else {
-      const newTag = tags.find((t) => t.id === id);
+      const newTag = tags?.find((t) => t.id === id);
       if (newTag)
         setSelectedTags([
           ...selectedTags,
@@ -179,7 +180,7 @@ function AddItemForm() {
   };
 
   const handleLocationChange = (selectedId: string) => {
-    const newLoc = orgLocations.find((org) => org.id === selectedId);
+    const newLoc = orgLocations?.find((org) => org.id === selectedId);
     if (!newLoc) return;
 
     form.setValue("location_id", newLoc.id, {
@@ -473,7 +474,7 @@ function AddItemForm() {
                 {!tagsLoading &&
                   tags.map((tag) => {
                     const currentTags = form.getValues("tags");
-                    const isSelected = currentTags.find((t) => t === tag.id);
+                    const isSelected = currentTags?.find((t) => t === tag.id);
                     return (
                       <Badge
                         key={tag.id}

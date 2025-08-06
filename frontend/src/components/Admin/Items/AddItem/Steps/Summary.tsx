@@ -19,12 +19,13 @@ import {
   selectItemsLoading,
   toggleIsEditing,
 } from "@/store/slices/itemsSlice";
-import { setPrevStep } from "@/store/slices/uiSlice";
+import { setPrevStep, setStepper } from "@/store/slices/uiSlice";
 import { ItemFormData } from "@common/items/form.types";
 import { ClipboardPen, Loader2Icon, Trash } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { t } from "@/translations";
+import { clearOrgLocations } from "@/store/slices/organizationLocationsSlice";
 
 function Summary() {
   const form = useAppSelector(selectItemCreation);
@@ -43,13 +44,15 @@ function Summary() {
   };
   const handleSubmit = async () => {
     try {
-      await dispatch(createItem(form as ItemFormData));
+      await dispatch(createItem(form as ItemFormData)).unwrap();
       if (uploadError) throw new Error(uploadError);
       toast.success("Your items were created!");
       const newItems = items.flatMap((item) => item.id);
       void navigate("/admin/items", {
         state: { ascending: false, newItems: newItems },
       });
+      void dispatch(setStepper(1));
+      void dispatch(clearOrgLocations());
     } catch (error) {
       toast.error(
         typeof error === "string"

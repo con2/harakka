@@ -141,6 +141,9 @@ const orgLocationsSlice = createSlice({
     clearCurrentOrgLocation: (state) => {
       state.currentOrgLocation = null;
     },
+    clearOrgLocations: (state) => {
+      state.currentOrgLocations = [];
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -303,8 +306,12 @@ const orgLocationsSlice = createSlice({
   },
 });
 
-export const { clearError, setCurrentPage, clearCurrentOrgLocation } =
-  orgLocationsSlice.actions;
+export const {
+  clearError,
+  setCurrentPage,
+  clearCurrentOrgLocation,
+  clearOrgLocations,
+} = orgLocationsSlice.actions;
 
 // Selectors
 export const selectOrgLocations = (state: RootState) =>
