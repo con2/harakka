@@ -110,10 +110,6 @@ function AddItemForm() {
     dispatch(setNextStep());
   };
 
-  useEffect(() => {
-    if (form.formState.errors) console.log("errors: ", form.formState.errors);
-  }, [form.formState.errors]);
-
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
     const getFirstErrorMessage = (obj: any): string | null => {
       for (const value of Object.values(obj)) {

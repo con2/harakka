@@ -337,7 +337,7 @@ function ItemImageUpload({
           image_type: "main",
           display_order: 0,
           alt_text: images.main.alt_text,
-          is_active: false,
+          is_active: true,
         },
       });
     } else if (imageType === "detail") {
@@ -361,7 +361,7 @@ function ItemImageUpload({
             image_type: "detail",
             display_order: i,
             alt_text: img.alt_text,
-            is_active: false,
+            is_active: true,
           },
         })),
       );
