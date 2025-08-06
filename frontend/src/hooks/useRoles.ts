@@ -22,11 +22,7 @@ import {
   selectActiveRoleContext,
   selectHasActiveContext,
 } from "@/store/slices/rolesSlice";
-import {
-  CreateUserRoleDto,
-  UpdateUserRoleDto,
-  ActiveRoleContext,
-} from "@/types/roles";
+import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
 import { useAuth } from "./useAuth";
 
 // Global cache states with proper timestamps
@@ -48,9 +44,7 @@ export const useRoles = () => {
   const [responseReceived, setResponseReceived] = useState(false);
 
   // Get active role context from Redux
-  const activeContext: ActiveRoleContext = useAppSelector(
-    selectActiveRoleContext,
-  );
+  const activeContext = useAppSelector(selectActiveRoleContext);
   const hasActiveContext = useAppSelector(selectHasActiveContext);
 
   // Method for setting active roel

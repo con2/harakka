@@ -213,7 +213,7 @@ const rolesSlice = createSlice({
     },
 
     // Reducers for active role context
-    setActiveRoleContext: (state, action: PayloadAction<ActiveRoleContext>) => {
+    setActiveRoleContext: (state, action) => {
       state.activeRoleContext = action.payload;
       localStorage.setItem("activeRoleContext", JSON.stringify(action.payload));
     },
