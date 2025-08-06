@@ -92,7 +92,8 @@ export class ItemImagesService {
    * @param req An authorized request
    * @param bucket Name of bucket to upload to
    * @param files An array of files to upload
-   * @param uuid Optional. A uuid used for the path
+   * @param path Optional. Defines where the image will be stored. Use "/" to create folders
+   * e.g. path = `${item_id}/${image_id}` where the folder is the item ID.
    * @returns An array of paths
    */
   async uploadToBucket(
@@ -119,6 +120,7 @@ export class ItemImagesService {
             contentType: "image/jpeg",
           });
         if (error) {
+          console.log(error);
           throw new Error(`Failed to upload image: ${files[i].originalname}`);
         }
         if (data?.fullPath) {
