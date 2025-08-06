@@ -228,7 +228,6 @@ const itemImagesSlice = createSlice({
       })
       .addCase(uploadToBucket.fulfilled, (state, action) => {
         state.loading = false;
-        console.log("action payload: ", action.payload);
         state.uploadedImages = {
           ...state.uploadedImages,
           urls: action.payload.urls,
