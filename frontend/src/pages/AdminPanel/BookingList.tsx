@@ -165,7 +165,7 @@ const BookingList = () => {
     },
     {
       accessorKey: "payment_status",
-      header: t.bookingList.columns.invoice[lang],
+      header: t.bookingList.columns.invoice.invoice[lang],
       enableSorting: true,
       cell: ({ row }) => {
         const paymentStatus = row.original.payment_status ?? "N/A";

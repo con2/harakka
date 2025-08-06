@@ -99,8 +99,10 @@ export const bookingList = {
           en: "N/A",
         },
       },
-      fi: "Lasku",
-      en: "Invoice",
+      invoice: {
+        fi: "Lasku",
+        en: "Invoice",
+      },
     },
     actions: {
       fi: "Toiminnot",

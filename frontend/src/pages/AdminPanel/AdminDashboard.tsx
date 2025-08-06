@@ -150,7 +150,7 @@ const AdminDashboard = () => {
     },
     {
       accessorKey: "invoice_status",
-      header: t.bookingList.columns.invoice[lang],
+      header: t.bookingList.columns.invoice.invoice[lang],
       cell: ({ row }) => {
         const paymentStatus = row.original.payment_status ?? "N/A";
 
