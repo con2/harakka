@@ -13,13 +13,13 @@ try {
   );
   const results = checkAllTranslations(strictMode);
   console.log(
-    "\nCheck completed. Summary:",
-    results.translationIssues?.length
-      ? `${results.translationIssues.length} translation issues found`
-      : "No translation issues found",
-    results.hardcodedStrings?.length
-      ? `${results.hardcodedStrings.length} hardcoded strings found`
-      : "No hardcoded strings found",
+    "\nCheck completed. Summary:" +
+      (results.translationIssues?.length
+        ? ` ${results.translationIssues.length} translation issues found`
+        : " No translation issues found") +
+      (results.hardcodedStrings?.length
+        ? `, ${results.hardcodedStrings.length} hardcoded strings found`
+        : ", no hardcoded strings found"),
   );
 } catch (error) {
   console.error("Error running translation checker:", error);
