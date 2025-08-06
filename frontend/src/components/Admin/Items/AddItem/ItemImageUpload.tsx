@@ -6,10 +6,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import {
   removeFromBucket,
-  selectUploadUrls,
   setUploadImageType,
   uploadToBucket,
 } from "@/store/slices/itemImagesSlice";
@@ -24,13 +23,7 @@ import { useLanguage } from "@/context/LanguageContext";
 const MAX_DETAIL_IMAGES = 5;
 const MAX_FILE_SIZE_MB = 5;
 
-type ImageData = {
-  id: string;
-  preview: string | null;
-  path: string;
-  alt_text: string;
-  uploading: boolean;
-};
+type UUID = `${string}-${string}-${string}-${string}-${string}`;
 
 type ItemImageUploadProps = {
   item_id: string;
@@ -44,39 +37,18 @@ function ItemImageUpload({
   formImages,
 }: ItemImageUploadProps) {
   const dispatch = useAppDispatch();
-  const uploadedImages = useAppSelector(selectUploadUrls);
   const { lang } = useLanguage();
 
-  const [images, setImages] = useState<{
-    main: ImageData | null;
-    details: ImageData[];
-  }>({
-    main: formImages
-      ? {
-          id: formImages?.main?.id ?? crypto.randomUUID(),
-          preview: formImages?.main?.url ?? null,
-          path: formImages?.main?.path ?? "",
-          alt_text: formImages?.main?.metadata.alt_text ?? "",
-          uploading: false,
-        }
-      : null,
-    details: formImages?.details?.map((img) => ({
-      id: img.id ?? crypto.randomUUID(),
-      preview: img.url ?? "",
-      path: img.path ?? "",
-      alt_text: img.metadata.alt_text ?? "",
-      uploading: false,
-    })),
-  });
-
-  const [dragStates, setDragStates] = useState({
+  // Simplified state - only track uploading status and drag states
+  const [uploadingStates, setUploadingStates] = useState({
     main: false,
-    detail: false,
+    details: new Set<string>(), // Track uploading detail images by ID
   });
 
+  const [dragStates, setDragStates] = useState({ main: false, detail: false });
   const previewUrls = useRef<Set<string>>(new Set());
 
-  const validateFile = useCallback((file: File): void => {
+  const validateFile = useCallback((file: File) => {
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
       throw new Error(`${file.name} is too large (max ${MAX_FILE_SIZE_MB}MB)`);
     }
@@ -85,125 +57,184 @@ function ItemImageUpload({
     }
   }, []);
 
-  const createImageData = useCallback((file: File): ImageData => {
+  const createPreviewUrl = useCallback((file: File): string => {
     const preview = URL.createObjectURL(file);
     previewUrls.current.add(preview);
-
-    return {
-      id: crypto.randomUUID(),
-      preview,
-      path: "",
-      alt_text: "",
-      uploading: false,
-    };
+    return preview;
   }, []);
 
   const uploadImage = useCallback(
-    async (file: File, imageType: "main" | "detail", path: string) => {
-      dispatch(setUploadImageType(imageType));
+    (files: File[], image_id: string) => {
       return dispatch(
         uploadToBucket({
-          files: [file],
+          files,
           bucket: "item-images",
-          path: `${item_id}/${path}`,
+          path: `${item_id}/${image_id}`,
         }),
       ).unwrap();
     },
-    [dispatch, item_id],
+    [dispatch],
   );
 
+  // MAIN IMAGE HANDLERS
   const handleMainImageUpload = useCallback(
     async (file: File) => {
       try {
         validateFile(file);
-        const imageData = createImageData(file);
 
-        setImages((prev) => ({
-          ...prev,
-          main: { ...imageData, uploading: true },
-        }));
+        const id = crypto.randomUUID();
+        const preview = createPreviewUrl(file);
 
-        await uploadImage(file, "main", imageData.id);
+        // Set uploading state and update form with preview
+        setUploadingStates((prev) => ({ ...prev, main: true }));
+        dispatch(setUploadImageType("main"));
+
+        updateForm("images.main", {
+          id,
+          url: preview, // Use preview URL initially
+          full_path: "",
+          path: "",
+          metadata: {
+            image_type: "main",
+            display_order: 0,
+            alt_text: "",
+            is_active: true,
+          },
+        });
+
+        // Upload and update with real URLs
+        const { urls, paths, full_paths } = await uploadImage([file], id);
+
+        updateForm("images.main", {
+          id,
+          url: urls[0],
+          full_path: full_paths[0],
+          path: paths[0],
+          metadata: {
+            image_type: "main",
+            display_order: 0,
+            alt_text: "",
+            is_active: true,
+          },
+        });
+
+        setUploadingStates((prev) => ({ ...prev, main: false }));
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Upload failed";
-        toast.error(message);
-        setImages((prev) => ({
-          ...prev,
-          main: prev.main ? { ...prev.main, uploading: false } : null,
-        }));
+        toast.error(error instanceof Error ? error.message : "Upload failed");
+        setUploadingStates((prev) => ({ ...prev, main: false }));
       }
     },
-    [validateFile, createImageData, uploadImage],
+    [validateFile, createPreviewUrl, uploadImage, updateForm, dispatch],
   );
 
   const handleDetailImagesUpload = useCallback(
-    async (files: FileList) => {
-      const fileArray = Array.from(files);
-      const currentCount = images.details.length;
+    async (filesList: FileList) => {
+      const files = Array.from(filesList);
+      const currentDetailsCount = formImages?.details?.length || 0;
 
-      if (currentCount + fileArray.length > MAX_DETAIL_IMAGES) {
+      if (currentDetailsCount + files.length > MAX_DETAIL_IMAGES) {
         toast.error(`Only ${MAX_DETAIL_IMAGES} images allowed`);
         return;
       }
 
       try {
-        // Validate all files first
-        fileArray.forEach(validateFile);
+        files.forEach(validateFile);
 
-        const newImages = fileArray.map(createImageData);
+        // Create image data with previews
+        const newImageData = files.map((file, idx) => {
+          const id = crypto.randomUUID();
+          const preview = createPreviewUrl(file);
+          return {
+            id,
+            url: preview, // Use preview URL initially
+            full_path: "",
+            path: "",
+            metadata: {
+              image_type: "detail" as const,
+              display_order: currentDetailsCount + idx,
+              alt_text: "",
+              is_active: true,
+            },
+          };
+        });
 
-        setImages((prev) => ({
+        // Track uploading states
+        const newUploadingIds = new Set(newImageData.map((img) => img.id));
+        setUploadingStates((prev) => ({
           ...prev,
-          details: [
-            ...prev.details,
-            ...newImages.map((img) => ({ ...img, uploading: true })),
-          ],
+          details: new Set([...prev.details, ...newUploadingIds]),
         }));
 
-        // Upload all files
-        await Promise.all(
-          fileArray.map((file, index) =>
-            uploadImage(file, "detail", `detail-${currentCount + index + 1}`),
-          ),
-        );
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Upload failed";
-        toast.error(message);
+        // Update form with preview data immediately
+        const currentDetails = formImages?.details || [];
+        updateForm("images.details", [...currentDetails, ...newImageData]);
 
-        // Remove failed uploads
-        setImages((prev) => ({
+        dispatch(setUploadImageType("detail"));
+
+        // Upload files - need to upload each file with its corresponding ID
+        const uploadPromises = files.map((file, idx) =>
+          uploadImage([file], newImageData[idx].id),
+        );
+        const uploadResults = await Promise.all(uploadPromises);
+
+        // Update form with real URLs
+        const updatedImageData = newImageData.map((img, idx) => ({
+          ...img,
+          url: uploadResults[idx].urls[0],
+          full_path: uploadResults[idx].full_paths[0],
+          path: uploadResults[idx].paths[0],
+        }));
+
+        updateForm("images.details", [...currentDetails, ...updatedImageData]);
+
+        // Clear uploading states
+        setUploadingStates((prev) => ({
           ...prev,
-          details: prev.details.slice(0, currentCount),
+          details: new Set(
+            [...prev.details].filter((id) => !newUploadingIds.has(id as UUID)),
+          ),
+        }));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Upload failed");
+        // Clear uploading states on error
+        setUploadingStates((prev) => ({
+          ...prev,
+          details: new Set(
+            [...prev.details].filter(
+              (id) =>
+                !files.map(() => crypto.randomUUID()).includes(id as UUID),
+            ),
+          ),
         }));
       }
     },
-    [images.details.length, validateFile, createImageData, uploadImage],
+    [
+      formImages?.details,
+      validateFile,
+      createPreviewUrl,
+      uploadImage,
+      updateForm,
+      dispatch,
+    ],
   );
 
+  // FILE SELECT HANDLER
   const handleFileSelect = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>, type: "main" | "detail") => {
-      const files = event.target.files;
+    (e: React.ChangeEvent<HTMLInputElement>, type: "main" | "detail") => {
+      const files = e.target.files;
       if (!files) return;
-
       if (type === "main") {
-        if (files.length > 1) {
-          toast.error("Only one main image allowed");
-          return;
-        }
+        if (files.length > 1) return toast.error("Only one main image allowed");
         void handleMainImageUpload(files[0]);
       } else {
         void handleDetailImagesUpload(files);
       }
-
-      // Reset input
-      event.target.value = "";
+      e.target.value = "";
     },
     [handleMainImageUpload, handleDetailImagesUpload],
   );
 
-  // Drag and drop handlers
+  // DRAG & DROP
   const handleDragEnter = useCallback(
     (e: React.DragEvent, type: "main" | "detail") => {
       e.preventDefault();
@@ -217,7 +248,6 @@ function ItemImageUpload({
     (e: React.DragEvent, type: "main" | "detail") => {
       e.preventDefault();
       e.stopPropagation();
-      // Only set to false if we're leaving the drop zone entirely
       if (!e.currentTarget.contains(e.relatedTarget as Node)) {
         setDragStates((prev) => ({ ...prev, [type]: false }));
       }
@@ -235,150 +265,75 @@ function ItemImageUpload({
       e.preventDefault();
       e.stopPropagation();
       setDragStates((prev) => ({ ...prev, [type]: false }));
-
       const files = e.dataTransfer.files;
-      if (!files || files.length === 0) return;
-
-      if (type === "main") {
-        if (files.length > 1) {
-          toast.error("Only one main image allowed");
-          return;
-        }
-        void handleMainImageUpload(files[0]);
-      } else {
-        void handleDetailImagesUpload(files);
-      }
+      if (!files.length) return;
+      if (type === "main") void handleMainImageUpload(files[0]);
+      else void handleDetailImagesUpload(files);
     },
     [handleMainImageUpload, handleDetailImagesUpload],
   );
 
   const updateImageAltText = useCallback(
-    (type: "main" | "detail", index: number | null, altText: string) => {
-      setImages((prev) => {
-        if (type === "main" && prev.main) {
-          return {
-            ...prev,
-            main: { ...prev.main, alt_text: altText },
-          };
-        } else if (type === "detail" && index !== null && prev.details[index]) {
-          const newDetails = [...prev.details];
-          newDetails[index] = { ...newDetails[index], alt_text: altText };
-          return { ...prev, details: newDetails };
-        }
-        return prev;
-      });
+    (type: "main" | "detail", idx: number, text: string) => {
+      if (type === "main" && formImages?.main) {
+        updateForm("images.main", {
+          ...formImages.main,
+          metadata: { ...formImages.main.metadata, alt_text: text },
+        });
+      } else if (type === "detail" && formImages?.details) {
+        const details = [...formImages.details];
+        details[idx] = {
+          ...details[idx],
+          metadata: { ...details[idx].metadata, alt_text: text },
+        };
+        updateForm("images.details", details);
+      }
+    },
+    [formImages, updateForm],
+  );
+
+  const removeMainImage = useCallback(() => {
+    if (!formImages?.main) return;
+    if (formImages.main.path) {
+      void dispatch(
+        removeFromBucket({
+          bucket: "item-images-drafts",
+          paths: [formImages.main.path],
+        }),
+      );
+    }
+    updateForm("images.main", null);
+  }, [formImages?.main, dispatch, updateForm]);
+
+  const removeDetailImage = useCallback(
+    (idx: number) => {
+      if (!formImages?.details) return;
+      const img = formImages.details[idx];
+      if (!img) return;
+
+      if (img.path) {
+        void dispatch(
+          removeFromBucket({ bucket: "item-images-drafts", paths: [img.path] }),
+        );
+      }
+
+      const newDetails = formImages.details.filter((_, i) => i !== idx);
+      updateForm("images.details", newDetails);
+    },
+    [formImages?.details, dispatch, updateForm],
+  );
+
+  // CLEANUP previews
+  useEffect(
+    () => () => {
+      previewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+      previewUrls.current.clear();
     },
     [],
   );
 
-  const removeDetailImage = useCallback(
-    (index: number) => {
-      const imageToRemove = images.details[index];
-      if (!imageToRemove) return;
-
-      if (imageToRemove.path) {
-        void dispatch(
-          removeFromBucket({
-            bucket: "item-images-drafts",
-            paths: [imageToRemove.path],
-          }),
-        );
-      }
-
-      setImages((prev) => ({
-        ...prev,
-        details: prev.details.filter((_, idx) => idx !== index),
-      }));
-    },
-    [images.details, dispatch],
-  );
-
-  const removeMainImage = useCallback(() => {
-    if (!images.main) return;
-
-    if (images.main.path) {
-      void dispatch(
-        removeFromBucket({
-          bucket: "item-images-drafts",
-          paths: [images.main.path],
-        }),
-      );
-    }
-
-    // Clear from form
-    updateForm("images.main", null);
-
-    setImages((prev) => ({
-      ...prev,
-      main: null,
-    }));
-  }, [images.main, dispatch, updateForm]);
-
-  // Update form when upload completes
-  useEffect(() => {
-    if (!uploadedImages) return;
-
-    const { imageType, urls, paths, full_paths } = uploadedImages;
-
-    if (imageType === "main" && images.main) {
-      setImages((prev) => ({
-        ...prev,
-        main: prev.main
-          ? { ...prev.main, path: paths[0], uploading: false }
-          : null,
-      }));
-
-      updateForm("images.main", {
-        id: images.main.id,
-        url: urls[0],
-        full_path: full_paths[0],
-        path: paths[0],
-        metadata: {
-          image_type: "main",
-          display_order: 0,
-          alt_text: images.main.alt_text,
-          is_active: true,
-        },
-      });
-    } else if (imageType === "detail") {
-      setImages((prev) => ({
-        ...prev,
-        details: prev.details.map((img, i) => ({
-          ...img,
-          path: paths[i] || img.path,
-          uploading: false,
-        })),
-      }));
-
-      updateForm(
-        "images.details",
-        images.details.map((img, i) => ({
-          id: img.id ?? crypto.randomUUID(),
-          url: urls[i],
-          full_path: full_paths[i],
-          path: paths[i],
-          metadata: {
-            image_type: "detail",
-            display_order: i,
-            alt_text: img.alt_text,
-            is_active: true,
-          },
-        })),
-      );
-    }
-  }, [uploadedImages, updateForm, images.main, images.details]);
-
-  // Cleanup URLs on unmount
-  useEffect(() => {
-    const current = previewUrls.current;
-    return () => {
-      current.forEach((url) => URL.revokeObjectURL(url));
-      current.clear();
-    };
-  }, []);
-
-  const isMainUploading = images.main?.uploading ?? false;
-  const isDetailUploading = images.details.some((img) => img.uploading);
+  const isMainUploading = uploadingStates?.main;
+  const isDetailUploading = uploadingStates.details.size > 0;
 
   return (
     <>
@@ -409,9 +364,9 @@ function ItemImageUpload({
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, "main")}
           >
-            {images.main?.preview ? (
+            {formImages.main?.url ? (
               <img
-                src={images.main.preview}
+                src={formImages.main.url}
                 className="w-30 h-30 rounded"
                 alt="Main image preview"
               />
@@ -435,7 +390,7 @@ function ItemImageUpload({
           />
         </div>
         <div className="flex justify-between items-end">
-          {images?.main?.preview && (
+          {formImages?.main?.url && (
             <div className="max-w-[400px]">
               <div className="flex gap-2 w-fit items-center mb-2">
                 <Label className="mb-0">Alt text</Label>
@@ -452,15 +407,13 @@ function ItemImageUpload({
               <Input
                 placeholder={t.addItemForm.placeholders.describeImage[lang]}
                 className="w-[280px] border shadow-none border-grey"
-                value={images.main?.alt_text || ""}
-                onChange={(e) =>
-                  updateImageAltText("main", null, e.target.value)
-                }
-                disabled={!images.main}
+                value={formImages.main?.metadata.alt_text || ""}
+                onChange={(e) => updateImageAltText("main", 0, e.target.value)}
+                disabled={!formImages.main}
               />
             </div>
           )}
-          {images.main?.preview && (
+          {formImages.main?.url && (
             <Button
               variant="destructive"
               className="self-center"
@@ -492,15 +445,16 @@ function ItemImageUpload({
             type="button"
             className={`flex flex-1 border-1 border-dashed w-full min-h-[200px] flex-col transition-colors ${
               dragStates.detail ? "border-primary bg-primary/5" : ""
-            } ${isDetailUploading || images.details.length >= MAX_DETAIL_IMAGES ? "opacity-50 cursor-not-allowed" : ""}`}
+            } ${isDetailUploading || formImages.details.length >= MAX_DETAIL_IMAGES ? "opacity-50 cursor-not-allowed" : ""}`}
             disabled={
-              isDetailUploading || images.details.length >= MAX_DETAIL_IMAGES
+              isDetailUploading ||
+              formImages.details.length >= MAX_DETAIL_IMAGES
             }
             onClick={(e) => {
               e.preventDefault();
               if (
                 !isDetailUploading &&
-                images.details.length < MAX_DETAIL_IMAGES
+                formImages.details.length < MAX_DETAIL_IMAGES
               ) {
                 document.getElementById("detail-image")?.click();
               }
@@ -514,7 +468,7 @@ function ItemImageUpload({
               t.addItemForm.buttons.uploading[lang]
             ) : dragStates.detail ? (
               t.addItemForm.buttons.dropImages[lang]
-            ) : images.details.length >= MAX_DETAIL_IMAGES ? (
+            ) : formImages.details.length >= MAX_DETAIL_IMAGES ? (
               t.addItemForm.buttons.maxReached[lang]
             ) : (
               <>
@@ -534,12 +488,12 @@ function ItemImageUpload({
             onChange={(e) => handleFileSelect(e, "detail")}
           />
         </div>
-        {images.details.length > 0 && (
+        {formImages.details.length > 0 && (
           <div className="flex flex-col gap-4">
-            {images.details.map((image, idx) => (
+            {formImages.details.map((image, idx) => (
               <div key={image.id} className="flex gap-4">
                 <img
-                  src={image.preview || ""}
+                  src={image.url || ""}
                   className="w-20 rounded"
                   alt={`Detail image ${idx + 1}`}
                 />
@@ -555,11 +509,11 @@ function ItemImageUpload({
                         t.addItemForm.placeholders.describeImage[lang]
                       }
                       className="w-[250px] border shadow-none border-grey"
-                      value={image.alt_text}
+                      value={image.metadata.alt_text}
                       onChange={(e) =>
                         updateImageAltText("detail", idx, e.target.value)
                       }
-                      disabled={image.uploading}
+                      disabled={uploadingStates.details.has(image.id)}
                     />
                   </div>
                   <Button
@@ -570,7 +524,7 @@ function ItemImageUpload({
                       e.preventDefault();
                       removeDetailImage(idx);
                     }}
-                    disabled={image.uploading}
+                    disabled={uploadingStates.details.has(image.id)}
                   >
                     <Trash />
                   </Button>
