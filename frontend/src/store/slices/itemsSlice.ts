@@ -245,9 +245,7 @@ export const itemsSlice = createSlice({
       })
       .addCase(fetchAllItems.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = (action.payload.data ?? []) as Array<
-          Item | ManageItemViewRow
-        >;
+        state.items = action.payload.data ?? [];
         state.item_pagination = action.payload.metadata;
       })
       .addCase(fetchAllItems.rejected, (state, action) => {
@@ -262,9 +260,7 @@ export const itemsSlice = createSlice({
       })
       .addCase(fetchOrderedItems.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = (action.payload.data ?? []) as Array<
-          Item | ManageItemViewRow
-        >;
+        state.items = action.payload.data ?? [];
         state.item_pagination = action.payload.metadata;
       })
       .addCase(fetchOrderedItems.rejected, (state, action) => {
@@ -324,7 +320,7 @@ export const itemsSlice = createSlice({
         ) {
           updatedItem.storage_item_tags = Array.from(
             new Map(
-              updatedItem.storage_item_tags.map((tag) => [tag.id, tag]),
+              updatedItem.storage_item_tags.map((tag: Tag) => [tag.id, tag]),
             ).values(),
           );
         }

@@ -47,6 +47,7 @@ export interface ItemFormData
     | "storage_item_tags"
     | "tagIds"
     | "average_rating"
+    | "test_metadata"
   > {
   // Override translations to ensure they always exist with required fields
   translations: {
