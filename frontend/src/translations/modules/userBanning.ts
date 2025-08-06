@@ -45,6 +45,10 @@ export const userBanning = {
         fi: "Syötä syy estolle...",
         en: "Enter reason for ban...",
       },
+      custom: {
+        fi: "Mukautettu esto-syy",
+        en: "Custom Ban Reason",
+      },
     },
     notes: {
       label: {
@@ -100,15 +104,39 @@ export const userBanning = {
       fi: "Peruuta",
       en: "Cancel",
     },
+    openMenu: {
+      fi: "Avaa valikko",
+      en: "Open menu",
+    },
   },
   status: {
     banned: {
       fi: "Estetty",
       en: "Banned",
     },
+    unbanned: {
+      fi: "Esto poistettu",
+      en: "Unbanned",
+    },
     active: {
       fi: "Aktiivinen",
       en: "Active",
+    },
+    status: {
+      fi: "Tila",
+      en: "Status",
+    },
+    action: {
+      fi: "Toiminto",
+      en: "Action",
+    },
+    loading: {
+      fi: "Ladataan...",
+      en: "Loading...",
+    },
+    date: {
+      fi: "Päivämäärä",
+      en: "Date",
     },
   },
   messages: {
@@ -119,6 +147,14 @@ export const userBanning = {
     missingFields: {
       fi: "Täytä kaikki vaaditut kentät.",
       en: "Please fill in all required fields.",
+    },
+    noActiveBans: {
+      fi: "Tällä käyttäjällä ei ole aktiivisia estoja poistettavana.",
+      en: "This user has no active bans to remove.",
+    },
+    loadingBanInfo: {
+      fi: "Ladataan esto-tietoja...",
+      en: "Loading ban information...",
     },
   },
   toast: {
@@ -168,6 +204,46 @@ export const userBanning = {
       isPermanent: {
         fi: "Pysyvä",
         en: "Permanent",
+      },
+      permanent: {
+        fi: "Kyllä",
+        en: "Yes",
+      },
+      notPermanent: {
+        fi: "Ei",
+        en: "No",
+      },
+    },
+  },
+  unban: {
+    modal: {
+      title: {
+        fi: "Poista esto käyttäjältä",
+        en: "Unban User",
+      },
+      subtitle: {
+        fi: "Poista esto käyttäjältä",
+        en: "Remove ban for user",
+      },
+    },
+    fields: {
+      banTypeToRemove: {
+        fi: "Poistettava esto-tyyppi",
+        en: "Ban Type to Remove",
+      },
+      selectTypes: {
+        application: {
+          fi: "Sovellus-esto",
+          en: "Application Ban",
+        },
+        organization: {
+          fi: "Organisaatio-esto",
+          en: "Organization Ban",
+        },
+        role: {
+          fi: "Rooli-esto",
+          en: "Role Ban",
+        },
       },
     },
   },

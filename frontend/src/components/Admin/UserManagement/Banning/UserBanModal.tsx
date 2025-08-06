@@ -347,7 +347,9 @@ const UserBanModal = ({
 
           {selectedBanReason === CUSTOM_BAN_REASON && (
             <div className="space-y-2">
-              <Label htmlFor="customBanReason">Custom Ban Reason</Label>
+              <Label htmlFor="customBanReason">
+                {t.userBanning.fields.banReason.custom[lang]}
+              </Label>
               <Textarea
                 id="customBanReason"
                 value={customBanReason}

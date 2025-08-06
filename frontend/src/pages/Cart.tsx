@@ -205,7 +205,9 @@ const Cart: React.FC = () => {
       console.error("Booking data that failed:", bookingData);
       toast.error(
         `Checkout error: ${
-          error instanceof Error ? error.message : "Unknown error"
+          error instanceof Error
+            ? error.message
+            : t.cart.buttons.unknownError[lang]
         }`,
       );
     }
