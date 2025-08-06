@@ -12,7 +12,7 @@ export interface ItemTranslation {
 }
 
 /** Overrides for JSON / joined columns so we avoid the recursive `Json` type */
-interface ItemJsonOverrides {
+interface ItemAugmentedFields {
   /** Localised text payload is *always* present in UI logic */
   translations: {
     en: ItemTranslation;
@@ -58,8 +58,10 @@ interface ItemJsonOverrides {
   tagIds?: string[];
 }
 
-/** Final row type — no `Json`, no deep-instantiation error */
-export type Item = Override<StorageItemRow, ItemJsonOverrides>;
+/** Final row type — no `Json`, no deep-instantiation error
+ * taken from the raw row from the database
+ */
+export type Item = Override<StorageItemRow, ItemAugmentedFields>;
 
 /**
  * Row shape returned by GET /storage-items/ordered

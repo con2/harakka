@@ -5,6 +5,7 @@ import {
   selectItemsLoading,
   selectItemsError,
   fetchOrderedItems,
+  selectItemsPagination,
 } from "../../store/slices/itemsSlice";
 import ItemCard from "./ItemCard";
 import { Input } from "../ui/input";
@@ -23,9 +24,9 @@ const ItemsList: React.FC = () => {
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
-  const currentPage = 1;
-  const ITEMS_PER_PAGE = 100; // Increased to get more items for client-side filtering
-
+  const pagination = useAppSelector(selectItemsPagination);
+  const ITEMS_PER_PAGE = 10;
+  const [page, setPage] = useState(1);
   // Translation
   const { lang } = useLanguage();
 
@@ -44,7 +45,7 @@ const ItemsList: React.FC = () => {
       fetchOrderedItems({
         ordered_by: "created_at",
         ascending: true,
-        page: currentPage,
+        page: page,
         limit: ITEMS_PER_PAGE,
         searchquery: debouncedSearchQuery,
         tag_filters: tagIds,
@@ -55,9 +56,9 @@ const ItemsList: React.FC = () => {
     );
   }, [
     dispatch,
-    items.length,
     isActive,
     itemTypes,
+    page,
     debouncedSearchQuery,
     locationIds,
     tagIds,
@@ -120,6 +121,30 @@ const ItemsList: React.FC = () => {
           filteredItems.map((item) => <ItemCard key={item.id} item={item} />)
         )}
       </div>
+      {/* Pagination controls */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-center gap-4 my-6">
+          <button
+            className="px-4 py-2 bg-slate-200 rounded disabled:opacity-50"
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Prev
+          </button>
+          <span className="self-center">
+            {page} / {pagination.totalPages}
+          </span>
+          <button
+            className="px-4 py-2 bg-slate-200 rounded disabled:opacity-50"
+            disabled={page >= pagination.totalPages}
+            onClick={() =>
+              setPage((p) => Math.min(pagination.totalPages, p + 1))
+            }
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };
