@@ -394,7 +394,6 @@ export class RoleService {
   }
 
   /**
-   * TEST THIS! MAYBE THE REGULAR CREATEUSERROLE WILL WORK AS WELL, IF THE PRIVATE AUTHREQUEST WORKS
    * Create a new user role assignment (INTERNAL SERVICE-TO-SERVICE ONLY)
    * SECURITY WARNING: This method bypasses all authentication/authorization checks
    * NEVER expose this method through public API endpoints
@@ -476,7 +475,6 @@ export class RoleService {
   }
 
   /**
-   * THIS ALSO NEEDS TO GO IF THE PRIVATE METHOD WITH A AUTHREQUEST WORKS TEST THIS!
    * Update user JWT with fresh roles (public method for service-to-service calls)
    */
   async updateUserJWTById(userId: string): Promise<void> {
