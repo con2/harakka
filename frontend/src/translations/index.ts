@@ -6,6 +6,12 @@ import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
 import { adminPanel } from "./modules/adminPanel";
 import { assignTagsModal } from "./modules/assignTagsModal";
+import { bookingCancel } from "./modules/bookingCancel";
+import { bookingConfirm } from "./modules/bookingConfirm";
+import { bookingDelete } from "./modules/bookingDelete";
+import { bookingEdit } from "./modules/bookingEdit";
+import { bookingReject } from "./modules/bookingReject";
+import { bookingReturn } from "./modules/bookingReturn";
 import { cart } from "./modules/cart";
 import { contactForm } from "./modules/contactForm";
 import { countries } from "./modules/countries";
@@ -49,7 +55,6 @@ import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
 import { editLocationModal } from "./modules/editLocationModal";
 import { organizationLocations } from "./modules/organizationLocations";
-import { notifications } from "./modules/notifications";
 
 export const t = {
   addItemModal,
@@ -59,6 +64,12 @@ export const t = {
   adminItemsTable,
   adminPanel,
   assignTagsModal,
+  bookingCancel,
+  bookingConfirm,
+  bookingDelete,
+  bookingEdit,
+  bookingReject,
+  bookingReturn,
   cart,
   common: general.common, // Shorthand for general.common
   contactForm,
@@ -75,7 +86,6 @@ export const t = {
   myBookings,
   myProfile,
   navigation,
-  notifications,
   bookingConfirmation,
   bookingList,
   pagination,

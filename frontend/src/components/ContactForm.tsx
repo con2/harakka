@@ -45,8 +45,8 @@ export const ContactForm = () => {
         from: values.email, // The user's email will be the sender
         subject: values.subject, // Subject of the email
         message: `
-          <p><strong>From:</strong> ${values.email}</p>
-          <p><strong>Subject:</strong> ${values.subject}</p>
+          <p><strong>${t.contactForm.emailTemplate.from[lang]}</strong> ${values.email}</p>
+          <p><strong>${t.contactForm.emailTemplate.subject[lang]}</strong> ${values.subject}</p>
           <p>${values.message}</p>
         `, // The actual message body
         to: "illusia.rental.service@gmail.com", // Admin email where contact form is sent
