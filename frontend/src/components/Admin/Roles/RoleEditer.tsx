@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRoles } from "@/hooks/useRoles";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllOrganizations,
@@ -29,20 +31,24 @@ interface RoleEditerProps {
   onRolesChanged?: () => void;
 }
 
-const modeOptions = [
-  { value: "create", label: "Create" },
-  { value: "softDelete", label: "Soft Delete" },
-  { value: "restoreRole", label: "Restore Role" },
-  { value: "hardDelete", label: "Hard Delete" },
-] as const;
-
 export const RoleEditer: React.FC<RoleEditerProps> = ({
   role,
   onClose,
   onRolesChanged,
 }) => {
   const { user } = useAuth();
+  const { lang } = useLanguage();
   const dispatch = useAppDispatch();
+
+  const modeOptions = [
+    { value: "create", label: t.roleEditor.modes.options.create[lang] },
+    { value: "softDelete", label: t.roleEditor.modes.options.softDelete[lang] },
+    {
+      value: "restoreRole",
+      label: t.roleEditor.modes.options.restoreRole[lang],
+    },
+    { value: "hardDelete", label: t.roleEditor.modes.options.hardDelete[lang] },
+  ] as const;
 
   const {
     createRole,
@@ -178,10 +184,10 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
           !createForm.organization_id ||
           !createForm.role_id
         ) {
-          throw new Error("All fields are required");
+          throw new Error(t.roleEditor.messages.allFieldsRequired[lang]);
         }
         await createRole(createForm);
-        toast.success("Role created");
+        toast.success(t.roleEditor.toast.success.created[lang]);
         actionPerformed = true; // Mark that we performed an action
 
         // Slight delay to ensure backend has time to process
@@ -191,15 +197,15 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
         setCreateForm({ user_id: "", organization_id: "", role_id: "" });
       } else if (mode === "softDelete" && assignmentId) {
         await deleteRole(assignmentId);
-        toast.success("Role deactivated");
+        toast.success(t.roleEditor.toast.success.deactivated[lang]);
         actionPerformed = true; // Mark that we performed an action
       } else if (mode === "restoreRole" && assignmentId) {
         await updateRole(assignmentId, { is_active: true });
-        toast.success("Role restored");
+        toast.success(t.roleEditor.toast.success.restored[lang]);
         actionPerformed = true; // Mark that we performed an action
       } else if (mode === "hardDelete" && assignmentId) {
         await permanentDeleteRole(assignmentId);
-        toast.success("Role permanently deleted");
+        toast.success(t.roleEditor.toast.success.deleted[lang]);
         actionPerformed = true; // Mark that we performed an action
       }
 
@@ -215,7 +221,9 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Operation failed";
+        error instanceof Error
+          ? error.message
+          : t.roleEditor.messages.operationFailed[lang];
       setOperationError(errorMessage);
       toast.error(errorMessage);
       console.error("Role operation failed:", error);
@@ -234,15 +242,15 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
         setAssignmentId(roleId);
         if (mode === "softDelete") {
           await deleteRole(roleId);
-          toast.success("Role deactivated");
+          toast.success(t.roleEditor.toast.success.deactivated[lang]);
           actionPerformed = true;
         } else if (mode === "restoreRole") {
           await updateRole(roleId, { is_active: true });
-          toast.success("Role restored");
+          toast.success(t.roleEditor.toast.success.restored[lang]);
           actionPerformed = true;
         } else if (mode === "hardDelete") {
           await permanentDeleteRole(roleId);
-          toast.success("Role permanently deleted");
+          toast.success(t.roleEditor.toast.success.deleted[lang]);
           actionPerformed = true;
         }
 
@@ -255,7 +263,9 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
         }
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : "Operation failed";
+          error instanceof Error
+            ? error.message
+            : t.roleEditor.messages.operationFailed[lang];
         setOperationError(errorMessage);
         toast.error(errorMessage);
         console.error("Role operation failed:", error);
@@ -273,6 +283,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
       refreshCurrentUserRoles,
       onRolesChanged,
       setOperationError,
+      lang,
     ],
   );
 
@@ -280,7 +291,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
     {
       accessorKey: "user_email",
       size: 10,
-      header: "User Email",
+      header: t.roleEditor.table.headers.userEmail[lang],
       cell: ({ row }) => (
         <span>
           {row.original.user_email}
@@ -292,25 +303,29 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
     },
     {
       accessorKey: "role_name",
-      header: "Role",
+      header: t.roleEditor.table.headers.role[lang],
     },
     {
       accessorKey: "organization_name",
-      header: "Organization",
+      header: t.roleEditor.table.headers.organization[lang],
     },
     {
       accessorKey: "is_active",
-      header: "Active",
+      header: t.roleEditor.table.headers.active[lang],
       cell: ({ row }) =>
         row.original.is_active ? (
-          <span className="text-green-600">Yes</span>
+          <span className="text-green-600">
+            {t.roleEditor.table.status.yes[lang]}
+          </span>
         ) : (
-          <span className="text-red-600">No</span>
+          <span className="text-red-600">
+            {t.roleEditor.table.status.no[lang]}
+          </span>
         ),
     },
     {
       id: "action",
-      header: "Action",
+      header: t.roleEditor.table.headers.action[lang],
       cell: ({ row }) => {
         const roleId = row.original.id!;
         const isLoading = loadingRoles[roleId] || false;
@@ -340,7 +355,9 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
   return (
     <form className="space-y-4 p-4 border rounded" onSubmit={handleSubmit}>
       <div className="flex items-center gap-4">
-        <label className="font-semibold">Mode:</label>
+        <label className="font-semibold">
+          {t.roleEditor.modes.label[lang]}
+        </label>
         <Select value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
           <SelectTrigger className="w-40">
             <SelectValue />
@@ -371,7 +388,9 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
       {mode === "create" && (
         <>
           {/* User dropdown by email and name */}
-          <label className="font-semibold">User (by email)</label>
+          <label className="font-semibold">
+            {t.roleEditor.fields.userByEmail[lang]}
+          </label>
           <Select
             value={createForm.user_id}
             onValueChange={(userId) =>
@@ -379,7 +398,9 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
             }
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a user" />
+              <SelectValue
+                placeholder={t.roleEditor.placeholders.selectUser[lang]}
+              />
             </SelectTrigger>
             <SelectContent>
               {userOptions.map((userOption) => (
@@ -389,7 +410,8 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
                 >
                   {userOption.isCurrentUser ? (
                     <span className="font-medium text-blue-600">
-                      This user ({userOption.email})
+                      {t.roleEditor.userLabels.thisUser[lang]} (
+                      {userOption.email})
                       {userOption.full_name && ` - ${userOption.full_name}`}
                     </span>
                   ) : (
@@ -404,7 +426,9 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
           </Select>
 
           {/*Organizations dropdown */}
-          <label className="font-semibold">Organization</label>
+          <label className="font-semibold">
+            {t.roleEditor.fields.organization[lang]}
+          </label>
           {organizations.length > 0 ? (
             <Select
               value={createForm.organization_id}
@@ -413,7 +437,11 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
               }
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select an organization" />
+                <SelectValue
+                  placeholder={
+                    t.roleEditor.placeholders.selectOrganization[lang]
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {organizations.map((org) => (
@@ -440,10 +468,14 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
           )}
 
           {/* List of all roles dropdown */}
-          <label className="font-semibold">Role</label>
+          <label className="font-semibold">
+            {t.roleEditor.fields.role[lang]}
+          </label>
           <Select value={createForm.role_id} onValueChange={handleRoleSelect}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a role" />
+              <SelectValue
+                placeholder={t.roleEditor.placeholders.selectRole[lang]}
+              />
             </SelectTrigger>
             <SelectContent>
               {availableRoles?.map((role) => (
@@ -460,15 +492,15 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
               {loadingRoles["form"] ? (
                 <>
                   <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
-                  Creating...
+                  {t.roleEditor.buttons.creating[lang]}
                 </>
               ) : (
-                "Create Role"
+                t.roleEditor.buttons.createRole[lang]
               )}
             </Button>
             {onClose && (
               <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
+                {t.roleEditor.buttons.cancel[lang]}
               </Button>
             )}
           </div>
@@ -480,10 +512,12 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
         mode === "hardDelete" ||
         mode === "restoreRole") && (
         <>
-          <label className="font-semibold">Role Assignment</label>
+          <label className="font-semibold">
+            {t.roleEditor.fields.roleAssignment[lang]}
+          </label>
           <div className="flex gap-2 mb-2 flex-wrap">
             <Input
-              placeholder="Filter by user email"
+              placeholder={t.roleEditor.placeholders.filterByUserEmail[lang]}
               value={filterUser}
               onChange={(e) => {
                 setFilterUser(e.target.value);
@@ -492,7 +526,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
               className="w-40"
             />
             <Input
-              placeholder="Filter by organization"
+              placeholder={t.roleEditor.placeholders.filterByOrganization[lang]}
               value={filterOrg}
               onChange={(e) => {
                 setFilterOrg(e.target.value);
@@ -501,7 +535,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
               className="w-40"
             />
             <Input
-              placeholder="Filter by role"
+              placeholder={t.roleEditor.placeholders.filterByRole[lang]}
               value={filterRole}
               onChange={(e) => {
                 setFilterRole(e.target.value);
@@ -522,7 +556,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
                   setPageIndex(0);
                 }}
               >
-                Clear Filters
+                {t.roleEditor.buttons.clearFilters[lang]}
               </Button>
             )}
           </div>
@@ -530,7 +564,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
           {/* Show empty state message if no results */}
           {filteredAssignments.length === 0 ? (
             <div className="text-center py-8 text-gray-500 border rounded">
-              No role assignments match your filters
+              {t.roleEditor.messages.noRoleAssignments[lang]}
             </div>
           ) : (
             <PaginatedDataTable
@@ -545,7 +579,7 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
           {onClose && (
             <div className="flex gap-2 flex-wrap mt-4">
               <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
+                {t.roleEditor.buttons.cancel[lang]}
               </Button>
             </div>
           )}
