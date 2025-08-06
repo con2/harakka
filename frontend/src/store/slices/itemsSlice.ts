@@ -72,6 +72,8 @@ export const fetchOrderedItems = createAsyncThunk<
     activity_filter?: "active" | "inactive";
     location_filter: string[];
     categories: string[];
+    availability_min?: number;
+    availability_max?: number;
   }
 >(
   "items/fetchOrderedItems",
@@ -86,6 +88,8 @@ export const fetchOrderedItems = createAsyncThunk<
       activity_filter,
       location_filter,
       categories,
+      availability_min,
+      availability_max,
     }: {
       ordered_by: ValidItemOrder;
       page: number;
@@ -96,6 +100,8 @@ export const fetchOrderedItems = createAsyncThunk<
       activity_filter?: "active" | "inactive";
       location_filter: string[];
       categories?: string[];
+      availability_min?: number;
+      availability_max?: number;
     },
     { rejectWithValue },
   ) => {
@@ -110,6 +116,8 @@ export const fetchOrderedItems = createAsyncThunk<
         activity_filter,
         location_filter,
         categories,
+        availability_min,
+        availability_max,
       );
       return response as AxiosResponse["data"];
     } catch (error: unknown) {

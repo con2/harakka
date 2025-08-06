@@ -16,6 +16,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { FiltersState } from "@/types";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { Button } from "../ui/button";
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
@@ -45,13 +46,15 @@ const ItemsList: React.FC = () => {
       fetchOrderedItems({
         ordered_by: "created_at",
         ascending: true,
-        page: page,
+        page,
         limit: ITEMS_PER_PAGE,
         searchquery: debouncedSearchQuery,
         tag_filters: tagIds,
         activity_filter: active,
         categories: itemTypes,
         location_filter: locationIds,
+        availability_min: filters.itemsNumberAvailable[0],
+        availability_max: filters.itemsNumberAvailable[1],
       }),
     );
   }, [
@@ -60,6 +63,7 @@ const ItemsList: React.FC = () => {
     itemTypes,
     page,
     debouncedSearchQuery,
+    filters.itemsNumberAvailable,
     locationIds,
     tagIds,
     ITEMS_PER_PAGE,
@@ -124,25 +128,27 @@ const ItemsList: React.FC = () => {
       {/* Pagination controls */}
       {pagination.totalPages > 1 && (
         <div className="flex justify-center gap-4 my-6">
-          <button
-            className="px-4 py-2 bg-slate-200 rounded disabled:opacity-50"
+          <Button
+            variant="outline" // or "secondary" or "ghost"
+            size="sm"
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
             Prev
-          </button>
+          </Button>
           <span className="self-center">
             {page} / {pagination.totalPages}
           </span>
-          <button
-            className="px-4 py-2 bg-slate-200 rounded disabled:opacity-50"
+          <Button
+            variant="outline" // or "secondary" or "ghost"
+            size="sm"
             disabled={page >= pagination.totalPages}
             onClick={() =>
               setPage((p) => Math.min(pagination.totalPages, p + 1))
             }
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
     </div>
