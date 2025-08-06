@@ -11,23 +11,6 @@ export interface ItemTranslation {
   item_description: string;
 }
 
-// export interface Item extends BaseEntity, Translatable<ItemTranslation> {
-//   location_id: string;
-//   compartment_id: string;
-//   items_number_total: number;
-//   items_number_currently_in_storage: number;
-//   price: number;
-//   is_active: boolean;
-//   average_rating?: number;
-//   tagIds?: string[];
-//   storage_item_tags?: Tag[];
-//   location_name?: string;
-//   location_details?: {
-//     name: string;
-//     address: string;
-//   };
-// }
-
 /** Overrides for JSON / joined columns so we avoid the recursive `Json` type */
 interface ItemJsonOverrides {
   /** Localised text payload is *always* present in UI logic */
@@ -77,70 +60,6 @@ interface ItemJsonOverrides {
 
 /** Final row type — no `Json`, no deep-instantiation error */
 export type Item = Override<StorageItemRow, ItemJsonOverrides>;
-
-// export type Item = {
-//   id: string;
-//   /* ─ Location & compartment ─ */
-//   location_id: string;
-//   compartment_id?: string | null;
-
-//   /* ─ Inventory & pricing ─ */
-//   items_number_total: number;
-//   items_number_currently_in_storage: number;
-//   price: number;
-//   average_rating?: number;
-
-//   /* ─ Status & timestamps ─ */
-//   is_active: boolean;
-//   is_deleted: boolean;
-//   created_at: string; // ISO-8601 string
-
-//   /* ─ i18n text fields ─ */
-//   translations: {
-//     en: {
-//       item_name: string;
-//       item_type: string;
-//       item_description: string;
-//     };
-//     fi: {
-//       item_name: string;
-//       item_type: string;
-//       item_description: string;
-//     };
-//     /** allow future locales without breaking the type */
-//     [locale: string]: unknown;
-//   };
-
-//   /* ─ Test / metadata ─ */
-//   test_priority_score?: number;
-//   test_metadata?: {
-//     version: number;
-//     test_flag: boolean;
-//     last_modified: string; // ISO-8601
-//     [key: string]: unknown;
-//   };
-
-//   /* ─ Joined relations ─ */
-//   storage_item_tags: Tag[];
-//   // {
-//   //   tag_id: string;
-//   //   translations?: Record<string, unknown>;
-//   // }[];
-//   tagIds?: string[];
-
-//   storage_locations?: {
-//     id: string;
-//     name: string;
-//     address: string;
-//     latitude: number;
-//     longitude: number;
-//     is_active: boolean;
-//     description?: string;
-//   } | null;
-
-//   /** Convenience copy added in the service layer */
-//   location_details?: Item["storage_locations"];
-// };
 
 /**
  * Row shape returned by GET /storage-items/ordered
@@ -245,8 +164,7 @@ export type CreateItemDto = Partial<ItemCreatable> & {
   price: number;
   /** tag IDs selected in the form */
   tagIds?: string[];
-  /** optionally send a pre‑calculated rating */
-  average_rating?: number | null;
+  average_rating?: number | null; // not used anywhere yet
 };
 
 /**
@@ -257,25 +175,6 @@ export type UpdateItemDto = Partial<
 > & {
   tagIds?: string[];
 };
-
-/**
- * Type used for `/admin/items`
- * Gets the basic, necessary data plus some pre‑flattened translations.
- */
-// export interface ManageItemViewRow extends Item {
-//   /* Flattened, language‑specific name/type strings for quick sorting */
-//   fi_item_name: string;
-//   fi_item_type: string;
-
-//   en_item_name: string;
-//   en_item_type: string;
-
-//   /** Tag IDs linked to this item */
-//   tags: string[];
-
-//   /** Localised tag translation object */
-//   tag_translations: TagTranslation;
-// }
 
 /**
  * Valid orders/filters for the manage items page.
