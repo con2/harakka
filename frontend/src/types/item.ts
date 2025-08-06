@@ -46,7 +46,8 @@ interface ItemJsonOverrides {
     [k: string]: unknown;
   } | null;
 
-  /** Random json column *
+  /** Random json column */
+  test_priority_score?: number | null;
 
   /** Ratings */
   average_rating?: number; // make non-nullable for UI
