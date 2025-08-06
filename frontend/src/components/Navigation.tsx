@@ -28,18 +28,18 @@ export const Navigation = () => {
   // Get user profile data from Redux
   const selectedUser = useAppSelector(selectSelectedUser);
   // Get user role information from the hook
-  const { hasAnyRole } = useRoles();
+  const { hasRoleInContext } = useRoles();
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
 
-  const isAnyTypeOfAdmin = hasAnyRole([
-    "admin",
-    "superVera",
-    "main_admin",
-    "super_admin",
-    "store_manager",
-  ]);
+  // Check if user is switched admin role
+  const isAnyTypeOfAdmin =
+    hasRoleInContext("admin") ||
+    hasRoleInContext("superVera") ||
+    hasRoleInContext("main_admin") ||
+    hasRoleInContext("super_admin") ||
+    hasRoleInContext("storage_manager");
 
   const cartItemsCount = useAppSelector(selectCartItemsCount);
   const location = useLocation();
@@ -102,7 +102,7 @@ export const Navigation = () => {
                 </NavigationMenuItem>
               )}
 
-              {/* Show Admin Panel link only for admins/superVera */}
+              {/* Show Admin Panel link only for admins in current context*/}
               {isAnyTypeOfAdmin && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>

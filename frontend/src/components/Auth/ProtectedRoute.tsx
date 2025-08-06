@@ -21,8 +21,7 @@ const ProtectedRoute = ({
   requiredOrganization,
 }: ProtectedRouteProps) => {
   const { authLoading, user } = useAuth(); // wait for supabase auth to finish
-  const { loading: rolesLoading, hasRole, hasAnyRole } = useRoles();
-  const isSuperVera = hasRole("superVera");
+  const { loading: rolesLoading, hasRoleInContext } = useRoles();
 
   // Use a state variable to track if access check has been performed
   const [accessChecked, setAccessChecked] = useState(false);
@@ -39,11 +38,10 @@ const ProtectedRoute = ({
   useEffect(() => {
     // Only perform the check once when data is loaded AND user is authenticated
     if (!authLoading && !rolesLoading && !accessChecked && user) {
-      // NEW SYSTEM: Check if user has role in JWT-based roles across all organizations
-      const hasNewRole = hasAnyRole(allowedRoles, requiredOrganization);
-
-      // Allow access if user has required role OR is SuperVera (development bypass)
-      const userHasAccess = hasNewRole || isSuperVera;
+      // Check if user has any of the allowed roles in current context
+      const userHasAccess = allowedRoles.some((role) =>
+        hasRoleInContext(role, requiredOrganization),
+      );
 
       setHasAccess(userHasAccess);
       setAccessChecked(true);
@@ -52,8 +50,7 @@ const ProtectedRoute = ({
     authLoading,
     rolesLoading,
     allowedRoles,
-    hasAnyRole,
-    isSuperVera,
+    hasRoleInContext,
     requiredOrganization,
     accessChecked,
     user,

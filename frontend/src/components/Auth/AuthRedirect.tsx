@@ -7,21 +7,21 @@ export const AuthRedirect = () => {
   const { user, authLoading } = useAuth();
   const {
     hasRole,
-    hasAnyRole,
     loading: rolesLoading,
     currentUserRoles,
+    hasRoleInContext,
+    activeContext,
   } = useRoles();
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTriggered = useRef(false);
 
-  const isAnyTypeOfAdmin = hasAnyRole([
-    "admin",
-    "superVera",
-    "main_admin",
-    "super_admin",
-    "store_manager",
-  ]);
+  const isAnyTypeOfAdmin =
+    hasRoleInContext("admin") ||
+    hasRoleInContext("superVera") ||
+    hasRoleInContext("main_admin") ||
+    hasRoleInContext("super_admin") ||
+    hasRoleInContext("store_manager");
 
   useEffect(() => {
     // Only redirect if:
@@ -59,8 +59,10 @@ export const AuthRedirect = () => {
     currentUserRoles,
     isAnyTypeOfAdmin,
     hasRole,
+    hasRoleInContext,
     navigate,
     location.pathname,
+    activeContext,
   ]);
 
   return null;

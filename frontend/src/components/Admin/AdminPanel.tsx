@@ -22,15 +22,17 @@ import { NavLink, Outlet } from "react-router-dom";
 
 const AdminPanel = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // Translation
   const { lang } = useLanguage();
-  const { hasAnyRole, hasRole } = useRoles();
-  const canManageLocations = hasAnyRole([
-    "main_admin",
-    "storage_manager",
-    "super_admin",
-    "superVera",
-  ]);
+  const { hasRoleInContext } = useRoles();
+
+  const canManageLocations =
+    hasRoleInContext("main_admin") ||
+    hasRoleInContext("storage_manager") ||
+    hasRoleInContext("super_admin") ||
+    hasRoleInContext("superVera");
+
+  const isSuperAdmin = hasRoleInContext("super_admin");
+  const isSuperVera = hasRoleInContext("superVera");
 
   return (
     <div className="flex min-h-screen relative">
@@ -44,7 +46,7 @@ const AdminPanel = () => {
             end={true}
             dataCy="admin-nav-dashboard"
           />
-          {hasRole("super_admin") && (
+          {isSuperAdmin && (
             <SidebarLink
               to="/admin/organizations"
               icon={<Building2 className="w-5 h-5" />}
@@ -84,12 +86,15 @@ const AdminPanel = () => {
             dataCy="admin-nav-users"
           />
 
-          <SidebarLink
-            to="/admin/logs"
-            icon={<FileText className="w-5 h-5" />}
-            label={t.adminPanel.navigation.logs[lang] || "Logs"}
-            dataCy="admin-nav-logs"
-          />
+          {isSuperAdmin ||
+            (isSuperVera && (
+              <SidebarLink
+                to="/admin/logs"
+                icon={<FileText className="w-5 h-5" />}
+                label={t.adminPanel.navigation.logs[lang] || "Logs"}
+                dataCy="admin-nav-logs"
+              />
+            ))}
 
           {/* Add the new Roles link */}
           <SidebarLink
@@ -159,11 +164,14 @@ const AdminPanel = () => {
               icon={<Users />}
               label={t.adminPanel.navigation.users[lang]}
             />
-            <SidebarLink
-              to="/admin/logs"
-              icon={<FileText />}
-              label={t.adminPanel.navigation.logs[lang] || "Logs"}
-            />
+            {isSuperAdmin ||
+              (isSuperVera && (
+                <SidebarLink
+                  to="/admin/logs"
+                  icon={<FileText />}
+                  label={t.adminPanel.navigation.logs[lang] || "Logs"}
+                />
+              ))}
             <SidebarLink
               to="/profile"
               icon={<Settings />}
