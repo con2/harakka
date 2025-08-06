@@ -16,7 +16,7 @@ const SUPPORTED_LANGUAGES = ["fi", "en"];
 interface TranslationIssue {
   path: string;
   issue: string;
-  value?: unknown; // Changed from 'any' to 'unknown'
+  value?: unknown;
 }
 
 function checkObject(obj: unknown, pathArr: string[] = []): TranslationIssue[] {
@@ -62,7 +62,7 @@ function checkObject(obj: unknown, pathArr: string[] = []): TranslationIssue[] {
   return issues;
 }
 
-// --- Improved hardcoded string checker ---
+// --- Hardcoded string checker ---
 function checkHardcodedStrings(strictMode = false) {
   const srcPath = path.join(ROOT_DIR, "src");
 
@@ -92,7 +92,7 @@ function checkHardcodedStrings(strictMode = false) {
     return checkFilesForHardcodedStrings(files, strictMode);
   }
 
-  // Fallback to manual approach - keep existing code
+  // Fallback to manual approach
   console.warn(
     "No files found with standard glob pattern, trying alternative approach...",
   );
@@ -148,18 +148,18 @@ function checkFilesForHardcodedStrings(
 ) {
   // Use different patterns based on strictness
   const jsxContentRegex = strictMode
-    ? />\s*([^<>{}\n]+?)\s*</g // Standard pattern
-    : />\s*([\w\s.,!?;:'"()-]+?)\s*</g; // More restrictive pattern in relaxed mode
+    ? />\s*([^<>{}\n]+?)\s*</g // strict
+    : />\s*([\w\s.,!?;:'"()-]+?)\s*</g; // relaxed
 
   // Enhanced regex for property assignments with more keys in strict mode
   const propAssignmentRegex = strictMode
-    ? /\b(header|title|label|placeholder|aria-label|alt|text|description|message|content|name|button|heading|tooltip|summary|value|className|style|aria-description)\s*:\s*["']([^"']+?)["']/g
-    : /\b(header|title|label|placeholder|aria-label|alt|text|description|message|content|name|button|heading|tooltip|summary|value)\s*:\s*["']([^"']+?)["']/g;
+    ? /\b(header|title|label|placeholder|aria-label|alt|text|description|message|content|name|button|heading|tooltip|summary|value|className|style|aria-description)\s*:\s*["']([^"']+?)["']/g // strict
+    : /\b(header|title|label|placeholder|aria-label|alt|text|description|message|content|name|button|heading|tooltip|summary|value)\s*:\s*["']([^"']+?)["']/g; // relaxed
 
   // Check more variable types in strict mode
   const stringAssignmentRegex = strictMode
-    ? /\b(const|let|var|return)\s+\w+\s*=\s*["']([^"']+?)["']/g
-    : /\b(const|let|var)\s+\w+\s*=\s*["']([^"']+?)["']/g;
+    ? /\b(const|let|var|return)\s+\w+\s*=\s*["']([^"']+?)["']/g // strict
+    : /\b(const|let|var)\s+\w+\s*=\s*["']([^"']+?)["']/g; // relaxed
 
   const issues = [];
 
@@ -203,8 +203,8 @@ function checkFilesForHardcodedStrings(
 
         // Lower threshold in strict mode
         const shouldReport = strictMode
-          ? str && str.length > 0 // Much more aggressive in strict mode
-          : str && str.length > 2; // Default behavior
+          ? str && str.length > 0 // Much more aggressive, even single-character strings will be flagged
+          : str && str.length > 2; // Relaxed, only reports hardcoded strings in JSX if they are longer than 2 characters
 
         // Less filtering in strict mode
         const punctuationRegex = strictMode
