@@ -123,6 +123,22 @@ const Logs: React.FC = () => {
     }
   };
 
+  // Get translated level name
+  const getLevelDisplayName = (level: string) => {
+    switch (level) {
+      case "error":
+        return t.logs.levelDisplay.error[lang];
+      case "warning":
+        return t.logs.levelDisplay.warning[lang];
+      case "info":
+        return t.logs.levelDisplay.info[lang];
+      case "debug":
+        return t.logs.levelDisplay.debug[lang];
+      default:
+        return level; // fallback to original level string
+    }
+  };
+
   const handleViewLogDetails = (log: LogMessage) => {
     setSelectedLog(log);
     setShowLogDetails(true);
@@ -173,7 +189,7 @@ const Logs: React.FC = () => {
         return (
           <div className="p-2">
             <Badge variant={"outline"} className={classes}>
-              {level}
+              {getLevelDisplayName(level)}
             </Badge>
           </div>
         );

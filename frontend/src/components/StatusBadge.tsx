@@ -11,7 +11,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
 
   if (!status) {
     return (
-      <Badge variant="outline">{t.adminDashboard.status.unknown[lang]}</Badge>
+      <Badge variant="outline">{t.statusBadge.status.unknown[lang]}</Badge>
     );
   }
 
@@ -22,7 +22,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           variant="outline"
           className="bg-yellow-100 text-yellow-800 border-yellow-300"
         >
-          {t.adminDashboard.status.pending[lang]}
+          {t.statusBadge.status.pending[lang]}
         </Badge>
       );
     case "confirmed":
@@ -31,7 +31,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           variant="outline"
           className="bg-green-100 text-green-800 border-green-300"
         >
-          {t.adminDashboard.status.confirmed[lang]}
+          {t.statusBadge.status.confirmed[lang]}
         </Badge>
       );
     case "cancelled":
@@ -40,7 +40,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           variant="outline"
           className="bg-red-100 text-red-800 border-red-300"
         >
-          {t.adminDashboard.status.cancelled[lang]}
+          {t.statusBadge.status.cancelled[lang]}
         </Badge>
       );
     case "cancelled by user":
@@ -49,7 +49,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           variant="outline"
           className="bg-red-100 text-red-800 border-red-300"
         >
-          {t.adminDashboard.status.cancelled[lang]}
+          {t.statusBadge.status.cancelledByUser[lang]}
         </Badge>
       );
     case "cancelled by admin":
@@ -58,7 +58,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           variant="outline"
           className="bg-red-100 text-red-800 border-red-300"
         >
-          {t.adminDashboard.status.cancelledByAdmin[lang]}
+          {t.statusBadge.status.cancelledByAdmin[lang]}
         </Badge>
       );
     case "rejected":
@@ -67,7 +67,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           variant="outline"
           className="bg-red-100 text-red-800 border-red-300"
         >
-          {t.adminDashboard.status.rejected[lang]}
+          {t.statusBadge.status.rejected[lang]}
         </Badge>
       );
     case "completed":
@@ -76,7 +76,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           variant="outline"
           className="bg-blue-100 text-blue-800 border-blue-300"
         >
-          {t.adminDashboard.status.completed[lang]}
+          {t.statusBadge.status.completed[lang]}
         </Badge>
       );
     case "picked up":
@@ -85,7 +85,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           variant="outline"
           className="bg-green-100 text-green-800 border-green-300"
         >
-          {t.bookingList.status.pickedUp[lang]}
+          {t.statusBadge.status.pickedUp[lang]}
         </Badge>
       );
     default:
