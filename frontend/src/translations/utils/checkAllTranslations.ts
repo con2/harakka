@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import * as globModule from "glob";
+import chalk from "chalk";
 
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
@@ -328,38 +329,46 @@ export function checkAllTranslations(strictMode = false) {
   try {
     const issues = checkObject(t);
     if (issues.length === 0) {
-      console.log("✅ All translations are present (in modules).");
+      console.log(chalk.green("✅ All translations are present (in modules)."));
     } else {
       console.warn(
-        `❌ Found ${issues.length} missing translations (in modules):`,
+        chalk.red(
+          `❌ Found ${issues.length} missing translations (in modules):`,
+        ),
       );
       for (const issue of issues) {
-        console.warn(`- ${issue.path}: ${issue.issue}`);
+        console.warn(
+          `- ${chalk.blue(issue.path)}: ${chalk.yellow(issue.issue)}`,
+        );
       }
     }
 
     console.log("\nChecking for hardcoded strings in components...");
     const hardcoded = checkHardcodedStrings(strictMode);
     if (hardcoded.length === 0) {
-      console.log("✅ No hardcoded strings found.");
+      console.log(chalk.green("✅ No hardcoded strings found."));
     } else {
       console.warn(
-        `❌ Found ${hardcoded.length} potential hardcoded UI strings:`,
+        chalk.red(
+          `❌ Found ${hardcoded.length} potential hardcoded UI strings:`,
+        ),
       );
       for (const issue of hardcoded) {
         if (issue.propName) {
           console.warn(
-            `- ${issue.file}:${issue.line} ${issue.propName}: "${issue.text}"`,
+            `- ${chalk.blue(issue.file)}:${chalk.yellow(issue.line)} ${chalk.magenta(issue.propName)}: "${chalk.red(issue.text)}"`,
           );
         } else {
-          console.warn(`- ${issue.file}:${issue.line} "${issue.text}"`);
+          console.warn(
+            `- ${chalk.blue(issue.file)}:${chalk.yellow(issue.line)} "${chalk.red(issue.text)}"`,
+          );
         }
       }
     }
 
     return { translationIssues: issues, hardcodedStrings: hardcoded };
   } catch (error: unknown) {
-    console.error("Error checking translations:", error);
+    console.error(chalk.red("Error checking translations:"), error);
     if (error instanceof Error) {
       return { error: error.message };
     }
