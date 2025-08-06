@@ -10,7 +10,7 @@ import { clearSelectedUser, getUserById } from "@/store/slices/usersSlice";
 import { AuthRedirect } from "@/components/Auth/AuthRedirect";
 import { getAuthToken, clearCachedAuthToken } from "@/api/axios";
 import { toast } from "sonner";
-import { AuthService } from "@/components/Auth/AuthService";
+import { AuthService } from "@/api/services/auth";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
