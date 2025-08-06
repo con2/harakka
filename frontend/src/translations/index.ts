@@ -56,6 +56,7 @@ import { deleteLocationButton } from "./modules/deleteLocationButton";
 import { editLocationModal } from "./modules/editLocationModal";
 import { organizationLocations } from "./modules/organizationLocations";
 import { roleEditor } from "./modules/roleEditor";
+import { roleManagement } from "./modules/roleManagement";
 
 export const t = {
   addItemModal,
@@ -115,4 +116,5 @@ export const t = {
   editLocationModal,
   organizationLocations,
   roleEditor,
+  roleManagement,
 };
