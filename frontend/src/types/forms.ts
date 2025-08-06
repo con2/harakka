@@ -1,6 +1,6 @@
 import { Tag } from "./tag";
 import { Item, ItemTranslation } from "./item";
-import { TagTranslations } from "./databaseGenerated";
+import { TagTranslations } from "./manualOverride";
 import { Org_Roles } from "@common/role.types";
 
 /**
