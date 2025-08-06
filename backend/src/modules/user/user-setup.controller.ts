@@ -2,27 +2,20 @@ import {
   Controller,
   Post,
   Body,
-  HttpStatus,
-  HttpException,
+  ForbiddenException,
+  BadRequestException,
+  InternalServerErrorException,
   Logger,
   Get,
   Req,
 } from "@nestjs/common";
+import { UserSetupService } from "./user-setup.service";
 import {
-  UserSetupService,
   SetupUserRequest,
   SetupUserResponse,
-} from "./user-setup.service";
+  CreateUserProfileDto,
+} from "./interfaces/user-setup.interface";
 import { AuthRequest } from "../../middleware/interfaces/auth-request.interface";
-
-export class CreateUserProfileDto {
-  userId: string;
-  email: string;
-  full_name?: string;
-  phone?: string;
-  visible_name?: string;
-  provider?: string;
-}
 
 @Controller("user-setup")
 export class UserSetupController {
@@ -36,21 +29,13 @@ export class UserSetupController {
     @Req() req: AuthRequest,
   ): Promise<SetupUserResponse> {
     try {
-      this.logger.log(`Setting up user: ${createUserDto.userId}`);
-
       // Security: Ensure user can only set up their own profile
       if (createUserDto.userId !== req.user.id) {
-        throw new HttpException(
-          "You can only set up your own profile",
-          HttpStatus.FORBIDDEN,
-        );
+        throw new ForbiddenException("You can only set up your own profile");
       }
 
       if (!createUserDto.userId || !createUserDto.email) {
-        throw new HttpException(
-          "userId and email are required",
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new BadRequestException("userId and email are required");
       }
 
       const setupData: SetupUserRequest = {
@@ -65,9 +50,8 @@ export class UserSetupController {
       const result = await this.userSetupService.setupNewUser(setupData);
 
       if (!result.success) {
-        throw new HttpException(
+        throw new InternalServerErrorException(
           result.error || "User setup failed",
-          HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
 
@@ -75,13 +59,16 @@ export class UserSetupController {
     } catch (error) {
       this.logger.error(`User setup failed: ${error.message}`, error.stack);
 
-      if (error instanceof HttpException) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException ||
+        error instanceof InternalServerErrorException
+      ) {
         throw error;
       }
 
-      throw new HttpException(
+      throw new InternalServerErrorException(
         "Internal server error during user setup",
-        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -93,7 +80,7 @@ export class UserSetupController {
   ) {
     try {
       if (!body.userId) {
-        throw new HttpException("userId is required", HttpStatus.BAD_REQUEST);
+        throw new BadRequestException("userId is required");
       }
 
       // Security: Users can only check their own status, unless they have admin roles
@@ -103,9 +90,8 @@ export class UserSetupController {
       );
 
       if (!isOwnStatus && !isAdmin) {
-        throw new HttpException(
+        throw new ForbiddenException(
           "You can only check your own setup status",
-          HttpStatus.FORBIDDEN,
         );
       }
 
@@ -118,9 +104,16 @@ export class UserSetupController {
       };
     } catch (error) {
       this.logger.error(`Check status failed: ${error.message}`, error.stack);
-      throw new HttpException(
+
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
         "Failed to check user setup status",
-        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -128,8 +121,6 @@ export class UserSetupController {
   @Get("debug-jwt")
   debugJWT(@Req() req: AuthRequest) {
     try {
-      this.logger.log(`🔍 JWT Debug requested by user: ${req.user.id}`);
-
       return {
         success: true,
         data: {
@@ -146,10 +137,7 @@ export class UserSetupController {
       };
     } catch (error) {
       this.logger.error(`JWT debug failed: ${error.message}`, error.stack);
-      throw new HttpException(
-        "Failed to debug JWT",
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException("Failed to debug JWT");
     }
   }
 }
