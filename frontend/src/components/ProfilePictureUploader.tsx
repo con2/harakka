@@ -132,60 +132,99 @@ const ProfilePictureUploader = () => {
 
       {/* open the modal containing also the cropper*/}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[700px]">
           <DialogHeader>
-            <DialogTitle>Change Profile Picture</DialogTitle>
+            <DialogTitle className="text-2xl font-semibold tracking-tight">
+              Change Profile Picture
+            </DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              ref={fileInputRef}
-            />
+          <div className="p-6 flex flex-col gap-6">
+            {/* File Input */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Choose Image</label>
+              <div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center px-4 py-2 bg-secondary text-white rounded hover:bg-secondary/90 transition"
+                >
+                  Upload File
+                </button>
+                <span className="ml-4 text-sm text-muted-foreground">
+                  {file?.name ?? "No file selected"}
+                </span>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+                className="hidden"
+              />
+            </div>
 
+            {/* Cropper */}
             {previewUrl && (
-              <div className="relative w-full h-64 bg-gray-200">
-                <Cropper
-                  image={previewUrl}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={1}
-                  onCropChange={setCrop}
-                  onZoomChange={setZoom}
-                  onCropComplete={handleCropComplete}
-                  rotation={rotation}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Crop Image</label>
+                <div className="relative w-full h-64 bg-gray-200 rounded overflow-hidden">
+                  <Cropper
+                    image={previewUrl}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={1}
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={handleCropComplete}
+                    rotation={rotation}
+                    cropShape="round"
+                    showGrid={false}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Zoom</label>
+                  <input
+                    type="range"
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    value={zoom}
+                    onChange={(e) => setZoom(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Live Preview */}
+            {livePreviewUrl && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Preview</label>
+                <img
+                  src={livePreviewUrl}
+                  className="w-24 h-24 rounded-full border"
                 />
               </div>
             )}
 
-            {/* zoom regulator */}
+            {/* Rotate Button */}
             {previewUrl && (
-              <input
-                type="range"
-                min={1}
-                max={3}
-                step={0.1}
-                value={zoom}
-                onChange={(e) => setZoom(Number(e.target.value))}
-              />
+              <div>
+                <Button
+                  variant="ghost"
+                  className="border border-gray-300 hover:bg-gray-100"
+                  onClick={() => setRotation((prev) => (prev + 90) % 360)}
+                >
+                  Rotate 90°
+                </Button>
+              </div>
             )}
 
-            {livePreviewUrl && (
-              <img src={livePreviewUrl} className="w-24 h-24 rounded-full" />
-            )}
-
-            <Button onClick={() => setRotation((prev) => (prev + 90) % 360)}>
-              Rotate 90°
-            </Button>
-
-            <div className="flex justify-end gap-2">
-              <Button onClick={handleUpload} disabled={!file}>
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-4">
+              <Button onClick={() => setOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={handleUpload} disabled={!file}>
                 Upload
-              </Button>
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
               </Button>
             </div>
           </div>
