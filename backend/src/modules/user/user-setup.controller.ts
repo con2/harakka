@@ -37,7 +37,7 @@ export class UserSetupController {
       if (!createUserDto.userId || !createUserDto.email) {
         throw new BadRequestException("userId and email are required");
       }
-
+      console.log("CreateUserDto:", createUserDto);
       const setupData: SetupUserRequest = {
         userId: createUserDto.userId,
         email: createUserDto.email,
@@ -46,9 +46,9 @@ export class UserSetupController {
         visible_name: createUserDto.visible_name,
         provider: createUserDto.provider || "manual",
       };
-
+      console.log("SetupData:", setupData);
       const result = await this.userSetupService.setupNewUser(setupData);
-
+      console.log("Setup Result:", result);
       if (!result.success) {
         throw new InternalServerErrorException(
           result.error || "User setup failed",

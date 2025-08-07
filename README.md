@@ -72,6 +72,8 @@ Comprehensive documentation is available in the `docs` directory:
 
 ## Quick Start
 
+### Option 1: Development with Node.js (Traditional)
+
 1. **Clone the repository:**
 
 ```sh
@@ -101,6 +103,31 @@ npm run dev
 5. **Access the application:**
    - Frontend: http://localhost:5180
    - Backend API: http://localhost:3000
+
+### Option 2: Development with Docker (Recommended)
+
+1. **Clone the repository:**
+
+```sh
+git clone https://github.com/Ermegilius/FullStack_Storage_and_Booking_App.git
+cd FullStack_Storage_and_Booking_App
+```
+
+2. **Set up environment and run:**
+
+```sh
+./scripts/setup.sh
+```
+
+3. **Access the application:**
+   - Frontend: http://localhost:80
+   - Backend API: http://localhost:3000
+
+For subsequent runs, simply use:
+
+```sh
+./scripts/run.sh
+```
 
 ## Project Structure
 
