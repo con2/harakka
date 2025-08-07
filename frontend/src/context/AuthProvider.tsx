@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../config/supabase";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -11,6 +11,10 @@ import { AuthRedirect } from "@/components/Auth/AuthRedirect";
 import { getAuthToken, clearCachedAuthToken } from "@/api/axios";
 import { toast } from "sonner";
 import { AuthService } from "@/api/services/auth";
+import {
+  UserSignupModal,
+  UserSignupData,
+} from "@/components/Auth/UserSignupModal";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -18,6 +22,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [rolesLoaded, setRolesLoaded] = useState(false);
   const [setupInProgress, setSetupInProgress] = useState(false);
+
+  // Signup modal state
+  const [showModal, setShowModal] = useState(false);
+  const [pendingUser, setPendingUser] = useState<User | null>(null);
+  const [pendingSignupMethod, setPendingSignupMethod] = useState<
+    "email" | "oauth"
+  >("email");
+  const modalResolveRef = useRef<((value: boolean) => void) | null>(null);
+
+  // Modal handlers
+  const openSignupModal = useCallback(
+    async (user: User, signupMethod: "email" | "oauth"): Promise<boolean> => {
+      setPendingUser(user);
+      setPendingSignupMethod(signupMethod);
+      setShowModal(true);
+      return new Promise((resolve) => {
+        modalResolveRef.current = resolve;
+      });
+    },
+    [],
+  );
+
+  const handleSignupComplete = (_data: UserSignupData): Promise<void> => {
+    setShowModal(false);
+    setPendingUser(null);
+    if (modalResolveRef.current) {
+      modalResolveRef.current(true);
+      modalResolveRef.current = null;
+    }
+    return Promise.resolve();
+  };
+
+  const handleSignupSkip = (): Promise<void> => {
+    setShowModal(false);
+    setPendingUser(null);
+    if (modalResolveRef.current) {
+      modalResolveRef.current(false);
+      modalResolveRef.current = null;
+    }
+    return Promise.resolve();
+  };
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,15 +89,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             !!user.user_metadata?.provider;
           const signupMethod = isOAuthUser ? "oauth" : "email";
 
-          const result = await AuthService.setupNewUser(user, signupMethod);
+          // Show signup modal for user input
+          const success = await openSignupModal(user, signupMethod);
 
-          if (result.success) {
-            if (result.isNewUser) {
-              toast.success(
-                "Welcome! Your account has been set up successfully.",
-              );
-            }
-
+          if (success) {
             // After successful setup, clear cached token and force session refresh
             clearCachedAuthToken();
 
@@ -72,15 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Trigger role reload by resetting rolesLoaded
             setRolesLoaded(false);
           } else {
-            toast.error(`Account setup failed: ${result.error}`);
-
-            // Optionally sign out the user if setup fails critically
-            if (
-              result.error?.includes("organization") ||
-              result.error?.includes("Profile creation failed")
-            ) {
-              await supabase.auth.signOut();
-            }
+            toast.error("Account setup failed");
+            // Sign out the user if setup fails
+            await supabase.auth.signOut();
           }
         }
       } catch {
@@ -91,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSetupInProgress(false);
       }
     },
-    [setupInProgress],
+    [setupInProgress, openSignupModal],
   );
 
   // get inital session
@@ -130,12 +164,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   !!session.user.user_metadata?.provider;
                 const signupMethod = isOAuthUser ? "oauth" : "email";
 
-                const result = await AuthService.setupNewUser(
+                // Show signup modal for user input
+                const success = await openSignupModal(
                   session.user,
                   signupMethod,
                 );
 
-                if (result.success) {
+                if (success) {
                   // Clear cached token and force session refresh
                   clearCachedAuthToken();
 
@@ -153,15 +188,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   }
 
                   setRolesLoaded(false); // Trigger role reload
-                  if (result.isNewUser) {
-                    toast.success(
-                      "Welcome! Your account has been set up successfully.",
-                    );
-                  } else {
-                    toast.success("Your account setup has been completed.");
-                  }
                 } else {
-                  toast.error(`Account setup failed: ${result.error}`);
+                  toast.error("Account setup failed");
                 }
 
                 setSetupInProgress(false);
@@ -175,7 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [handleUserAuthentication]);
+  }, [handleUserAuthentication, openSignupModal]);
 
   // Handle role loading after authentication
   useEffect(() => {
@@ -389,6 +417,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         <>
           {user && <AuthRedirect />}
           {children}
+
+          {/* Signup Modal */}
+          {showModal && pendingUser && (
+            <UserSignupModal
+              user={pendingUser}
+              isOpen={showModal}
+              onComplete={handleSignupComplete}
+              onSkip={handleSignupSkip}
+              signupMethod={pendingSignupMethod}
+            />
+          )}
         </>
       )}
     </AuthContext.Provider>

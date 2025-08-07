@@ -29,17 +29,15 @@ export class UserSetupController {
     @Req() req: AuthRequest,
   ): Promise<SetupUserResponse> {
     try {
-      // Security: Ensure user can only set up their own profile
-      if (createUserDto.userId !== req.user.id) {
-        throw new ForbiddenException("You can only set up your own profile");
-      }
+      // Get userId from authenticated request
+      const userId = req.user.id;
 
-      if (!createUserDto.userId || !createUserDto.email) {
-        throw new BadRequestException("userId and email are required");
+      if (!createUserDto.email) {
+        throw new BadRequestException("email is required");
       }
 
       const setupData: SetupUserRequest = {
-        userId: createUserDto.userId,
+        userId: userId,
         email: createUserDto.email,
         full_name: createUserDto.full_name,
         phone: createUserDto.phone,

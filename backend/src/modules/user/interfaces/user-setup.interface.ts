@@ -27,7 +27,6 @@ export interface UserSetupStatus {
 }
 
 export class CreateUserProfileDto {
-  userId: string;
   email: string;
   full_name?: string;
   phone?: string;

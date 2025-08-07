@@ -34,10 +34,22 @@ export class AuthService {
   static async setupNewUser(
     user: User,
     signupMethod: "email" | "oauth" = "email",
+    userInput?: { full_name?: string; phone?: string },
   ): Promise<SignUpResult> {
     try {
       // Extract user data based on signup method
       const profileData = this.extractUserProfileData(user, signupMethod);
+
+      // Override with user input if provided
+      if (userInput) {
+        if (userInput.full_name) {
+          profileData.full_name = userInput.full_name;
+          profileData.visible_name = userInput.full_name;
+        }
+        if (userInput.phone) {
+          profileData.phone = userInput.phone;
+        }
+      }
 
       // Check if user has both profile AND role (complete setup)
       const setupStatus = await this.checkUserSetupStatus(user.id);
@@ -48,7 +60,6 @@ export class AuthService {
 
       // Call backend API to setup user (will handle both profile creation and role assignment)
       const setupPayload = {
-        userId: user.id,
         email: profileData.email,
         full_name: profileData.full_name,
         phone: profileData.phone,
