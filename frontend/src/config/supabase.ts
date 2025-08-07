@@ -41,10 +41,6 @@ supabase.auth.onAuthStateChange((event) => {
     console.log("Password recovery requested");
   } else if (event === "TOKEN_REFRESHED") {
     console.log("Token refreshed");
-  } else if (event === "INITIAL_SESSION") {
-    console.log("Initial session detected");
-  } else if (event === "MFA_CHALLENGE_VERIFIED") {
-    console.log("MFA challenge verified");
   } else {
     console.log("Auth state change:", event);
   }
