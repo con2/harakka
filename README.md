@@ -47,6 +47,7 @@ Comprehensive documentation is available in the `docs` directory:
 - [State Management](docs/developers/frontend/state-management.md) - Redux guide
 - [Routing](docs/developers/frontend/routing.md) - Navigation system
 - [Styling Guide](docs/developers/frontend/styling-guide.md) - UI design system
+- [Translation & Localization Guide](docs/developers/frontend/translation.md) - Multi-language support and usage
 
 ### Backend Documentation
 

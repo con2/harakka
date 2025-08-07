@@ -1,0 +1,9 @@
+# Supabase
+.branches
+.temp
+# Keep user data out of github and only use for local development
+seed.sql
+# dotenvx
+.env.keys
+.env.local
+.env.*.local

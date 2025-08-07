@@ -14,8 +14,6 @@ import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 const initialState: RolesState = {
   currentUserRoles: [] as ViewUserRolesWithDetails[],
   currentUserOrganizations: [] as UserOrganization[],
-  isSuperVera: false,
-  isSuperAdmin: false,
   allUserRoles: [] as ViewUserRolesWithDetails[],
   loading: false,
   adminLoading: false,
@@ -30,16 +28,14 @@ export const fetchCurrentUserRoles = createAsyncThunk(
   "roles/fetchCurrentUserRoles",
   async (_, { rejectWithValue }) => {
     try {
-      const [rolesData, orgsData, superVeraData] = await Promise.all([
+      const [rolesData, orgsData] = await Promise.all([
         roleApi.getCurrentUserRoles(),
         roleApi.getUserOrganizations(),
-        roleApi.isSuperVera(),
       ]);
 
       return {
         roles: rolesData,
         organizations: orgsData,
-        isSuperVera: superVeraData.isSuperVera,
       };
     } catch (error: unknown) {
       return rejectWithValue(
@@ -195,8 +191,6 @@ const rolesSlice = createSlice({
     resetRoles: (state) => {
       state.currentUserRoles = [];
       state.currentUserOrganizations = [];
-      state.isSuperVera = false;
-      state.isSuperAdmin = false;
       state.allUserRoles = [];
       state.error = null;
       state.adminError = null;
@@ -215,9 +209,6 @@ const rolesSlice = createSlice({
         state.loading = false;
         state.currentUserRoles = action.payload.roles;
         state.currentUserOrganizations = action.payload.organizations;
-        state.isSuperVera = action.payload.isSuperVera;
-        const userRoles = action.payload.roles.map((r) => r.role_name);
-        state.isSuperAdmin = userRoles.every((r) => r === "super_admin");
       })
       .addCase(fetchCurrentUserRoles.rejected, (state, action) => {
         state.loading = false;
@@ -248,6 +239,13 @@ const rolesSlice = createSlice({
       .addCase(createUserRole.fulfilled, (state, action) => {
         state.adminLoading = false;
         state.allUserRoles.push(action.payload);
+
+        // If this role belongs to the current user, add it to currentUserRoles too
+        const currentUserId = action.meta.arg.user_id;
+        const stateUserId = state.currentUserRoles[0]?.user_id;
+        if (currentUserId && currentUserId === stateUserId) {
+          state.currentUserRoles.push(action.payload);
+        }
       })
       .addCase(createUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -284,6 +282,13 @@ const rolesSlice = createSlice({
         if (index !== -1) {
           state.allUserRoles[index] = action.payload;
         }
+        // Also update in current user roles if it exists there
+        const currentIndex = state.currentUserRoles.findIndex(
+          (role) => role.id === action.payload.id,
+        );
+        if (currentIndex !== -1) {
+          state.currentUserRoles[currentIndex] = action.payload;
+        }
       })
       .addCase(updateUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -304,6 +309,13 @@ const rolesSlice = createSlice({
         if (idx !== -1) {
           state.allUserRoles[idx].is_active = false;
         }
+        // Also update in current user roles
+        const currentIdx = state.currentUserRoles.findIndex(
+          (role) => role.id === action.payload,
+        );
+        if (currentIdx !== -1) {
+          state.currentUserRoles[currentIdx].is_active = false;
+        }
       })
       .addCase(deleteUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -321,6 +333,13 @@ const rolesSlice = createSlice({
         state.allUserRoles = state.allUserRoles.filter(
           (role: ViewUserRolesWithDetails) => role.id !== action.payload,
         );
+        // Also update in current user roles
+        const currentIdx = state.currentUserRoles.findIndex(
+          (role) => role.id === action.payload,
+        );
+        if (currentIdx !== -1) {
+          state.currentUserRoles[currentIdx].is_active = false;
+        }
       })
       .addCase(permanentDeleteUserRole.rejected, (state, action) => {
         state.adminLoading = false;
@@ -358,9 +377,6 @@ export const selectCurrentUserRoles = (state: RootState) =>
   state.roles.currentUserRoles;
 export const selectCurrentUserOrganizations = (state: RootState) =>
   state.roles.currentUserOrganizations;
-export const selectIsSuperVera = (state: RootState) => state.roles.isSuperVera;
-export const selectIsSuperAdmin = (state: RootState) =>
-  state.roles.isSuperAdmin;
 export const selectAllUserRoles = (state: RootState) =>
   state.roles.allUserRoles;
 export const selectRolesLoading = (state: RootState) => state.roles.loading;
@@ -380,8 +396,7 @@ export const selectIsAdmin = (state: RootState) => {
     hasRole(state, "admin") ||
     hasRole(state, "superVera") ||
     hasRole(state, "main_admin") ||
-    hasRole(state, "super_admin") ||
-    state.roles.isSuperVera
+    hasRole(state, "super_admin")
   );
 };
 

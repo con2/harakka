@@ -8,6 +8,9 @@ import {
   Param,
   NotFoundException,
   Req,
+  BadRequestException,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
@@ -15,6 +18,7 @@ import { CreateAddressDto } from "./dto/create-address.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { Roles } from "src/decorators/roles.decorator";
 import { ApiSingleResponse } from "@common/response.types";
+import { FileInterceptor } from "@nestjs/platform-express";
 
 @Controller("users")
 export class UserController {
@@ -138,5 +142,28 @@ export class UserController {
     @Req() req: AuthRequest,
   ) {
     return this.userService.deleteAddress(id, addressId, req);
+  }
+
+  @Post("upload-picture")
+  @Roles(["user", "admin", "super_admin", "main_admin", "superVera"])
+  @UseInterceptors(FileInterceptor("file"))
+  async uploadProfilePicture(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: AuthRequest,
+  ) {
+    if (!file) throw new BadRequestException("No file provided");
+
+    const userId = req.user?.id;
+    if (!userId)
+      throw new BadRequestException("User ID not found in request context");
+
+    const url = await this.userService.handleProfilePictureUpload(
+      file.buffer,
+      file.originalname,
+      userId,
+      req,
+    );
+
+    return { url };
   }
 }

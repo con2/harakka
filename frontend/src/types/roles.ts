@@ -28,7 +28,6 @@ export interface UseRolesReturn {
   organizations: UserOrganization[];
   loading: boolean;
   error: string | null;
-  isSuperVera: boolean;
   hasRole: (roleName: string, organizationId?: string) => boolean;
   hasAnyRole: (roleNames: string[], organizationId?: string) => boolean;
   refreshRoles: () => Promise<void>;
@@ -37,8 +36,6 @@ export interface UseRolesReturn {
 export interface RolesState {
   currentUserRoles: ViewUserRolesWithDetails[];
   currentUserOrganizations: UserOrganization[];
-  isSuperVera: boolean;
-  isSuperAdmin: boolean;
   allUserRoles: ViewUserRolesWithDetails[];
   loading: boolean;
   adminLoading: boolean;
