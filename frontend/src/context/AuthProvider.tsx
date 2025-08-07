@@ -6,7 +6,7 @@ import { LoaderCircle } from "lucide-react";
 import { AuthContext } from "./AuthContext";
 import { useAppDispatch } from "@/store/hooks";
 import { resetRoles, fetchCurrentUserRoles } from "@/store/slices/rolesSlice";
-import { clearSelectedUser, getUserById } from "@/store/slices/usersSlice";
+import { clearSelectedUser, getCurrentUser } from "@/store/slices/usersSlice";
 import { AuthRedirect } from "@/components/Auth/AuthRedirect";
 import { getAuthToken, clearCachedAuthToken } from "@/api/axios";
 import { toast } from "sonner";
@@ -221,7 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .then(() => {
               setRolesLoaded(true);
               // After roles are loaded, fetch user profile data
-              void dispatch(getUserById(user.id));
+              void dispatch(getCurrentUser());
             })
             .catch((error) => {
               // If role loading fails, wait a bit and retry
@@ -231,12 +231,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
               setRolesLoaded(true);
               // Still try to load user profile even if roles failed
-              void dispatch(getUserById(user.id));
+              void dispatch(getCurrentUser());
             });
         } catch {
           setRolesLoaded(true);
           // Try to load profile even if token verification failed
-          void dispatch(getUserById(user.id));
+          void dispatch(getCurrentUser());
         }
       };
 
