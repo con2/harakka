@@ -5,34 +5,60 @@
 
 set -e
 
+# ----------------------------------------
+# Helper: display usage information
+usage() {
+	echo ""
+	echo "Usage: $(basename "$0") [--rebuild] [-h|--help]"
+	echo ""
+	echo "Options:"
+	echo "  --rebuild    Rebuild Docker images before starting the containers."
+	echo "  -h, --help   Show this help message and exit."
+	echo ""
+}
+# ----------------------------------------
+
 # Parse command line arguments
 REBUILD=false
-if [[ "$1" == "--rebuild" ]]; then
-    REBUILD=true
-    echo "🔄 Rebuild mode enabled"
-fi
+
+case "$1" in
+--rebuild)
+	REBUILD=true
+	echo "🔄 Rebuild mode enabled"
+	;;
+-h | --help)
+	usage
+	exit 0
+	;;
+"") ;; # no arguments; continue
+*)
+	echo "❌ Unknown option: $1"
+	usage
+	exit 1
+	;;
+esac
 
 echo "🚀 Starting Full-Stack Storage and Booking App"
 echo "============================================="
 
 # Check if .env.production exists
 if [ ! -f ".env.production" ]; then
-    echo "❌ .env.production not found. Please run ./setup.sh first."
-    exit 1
+	echo "❌ .env.production not found. Please run ./setup.sh first."
+	exit 1
 fi
 
 # Load environment variables
 echo "📋 Loading environment variables..."
-set -a  # automatically export all variables
+set -a # automatically export all variables
 source .env.production
-set +a  # disable automatic export
+set +a # disable automatic export
 echo "✅ Environment variables loaded"
 
 # Verify critical frontend variables are set
 if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
-    echo "❌ Missing required frontend environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)"
-    echo "   Please check your .env.production file"
-    exit 1
+	echo "❌ Missing required frontend environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)"
+	echo "   Please check your .env.production file"
+	exit 1
 fi
 
 echo "🔧 Frontend variables configured:"
@@ -41,10 +67,10 @@ echo "   - VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}"
 
 # Rebuild if requested
 if [ "$REBUILD" = true ]; then
-    echo ""
-    echo "🏗️  Rebuilding application with current environment variables..."
-    docker-compose -f docker-compose.production.yml build --no-cache
-    echo "✅ Rebuild completed!"
+	echo ""
+	echo "🏗️  Rebuilding application with current environment variables..."
+	docker-compose -f docker-compose.production.yml build --no-cache
+	echo "✅ Rebuild completed!"
 fi
 
 # Start the application
@@ -56,10 +82,10 @@ echo "⏳ Waiting for services to start..."
 sleep 5
 
 # Health check
-if curl -s http://localhost:3000/health > /dev/null 2>&1; then
-    echo "✅ Application is running!"
+if curl -s http://localhost:3000/health >/dev/null 2>&1; then
+	echo "✅ Application is running!"
 else
-    echo "⚠️  Services may still be starting up..."
+	echo "⚠️  Services may still be starting up..."
 fi
 
 echo ""

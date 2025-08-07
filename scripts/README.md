@@ -8,9 +8,22 @@ This directory conta## Requirements
 
 ## Available Scripts
 
+- **`make-executable.sh`** - Makes all files executable(Must run `chmod +x <script-name>` first)
+
 - **`setup.sh`** - Initial setup script that creates environment files and builds containers
 - **`run.sh`** - Quick script to start/restart the application  
 - **`build.sh`** - Builds Docker images for production deployment
+
+- **On all scripts you can run them with the -h flag to see more info**
+
+## First script to run
+
+Paste this in the terminal:
+
+```sh
+chmod +x scripts/make-executable.sh
+./scripts/make-executable.sh        # sets +x on every file in scripts/
+```
 
 ## Usage
 
