@@ -16,12 +16,16 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 
 # Build arguments for frontend environment variables
+# Note: ANON_KEY and URL are public by design (visible in frontend JS)
+# hadolint ignore=DL3059
 ARG VITE_SUPABASE_URL
+# hadolint ignore=DL3059
 ARG VITE_SUPABASE_ANON_KEY
 ARG VITE_API_URL
 
 # Make them available as environment variables during build
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+# hadolint ignore=DL3059
 ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 ENV VITE_API_URL=$VITE_API_URL
 

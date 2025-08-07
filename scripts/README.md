@@ -4,7 +4,7 @@ This directory conta## Requirements
 
 - Docker and Docker Compose installed
 
-## Script Flow Diagramployment and utility scripts for the Booking App.
+## Script Flow Diagramployment and utility scripts for the Booking App
 
 ## Available Scripts
 
@@ -17,16 +17,19 @@ This directory conta## Requirements
 ### For Local Development with Docker
 
 1. **First time setup:**
+
    ```bash
    ./scripts/setup.sh
    ```
 
 2. **Start the application:**
+
    ```bash
    ./scripts/run.sh
    ```
 
 3. **Build images manually:**
+
    ```bash
    ./scripts/build.sh
    ```
@@ -44,10 +47,12 @@ This directory conta## Requirements
 ## Prerequisites
 
 ### For Docker Development
+
 - Docker and Docker Compose installed
 - `.env.production` file (created by setup.sh)
 
 ### For Kubernetes Deployment
+
 - Docker installed
 - kubectl configured for your Azure AKS cluster
 - Access to a container registry (Azure Container Registry recommended)
@@ -61,7 +66,7 @@ This directory conta## Requirements
 
 ## Script Dependencies
 
-```
+```bash
 setup.sh (creates .env.production)
 ├── run.sh (uses .env.production)  
 └── build.sh (uses .env.production)

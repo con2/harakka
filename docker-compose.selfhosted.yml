@@ -1,0 +1,251 @@
+# Complete Self-Hosted Supabase Docker Compose
+# This replaces your cloud Supabase with a local instance
+
+version: '3.8'
+
+services:
+  # Your Application
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "3001:80"
+    environment:
+      - NODE_ENV=development
+      - VITE_SUPABASE_URL=http://localhost:8000  # Points to local Supabase
+      - VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+    depends_on:
+      - backend
+      - supabase-kong
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - SUPABASE_URL=http://supabase-kong:8000  # Local Supabase
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
+      - ALLOWED_ORIGINS=http://localhost:3001,http://frontend
+    depends_on:
+      - supabase-db
+      - supabase-kong
+    networks:
+      - app-network
+
+  # Self-Hosted Supabase Stack
+  supabase-db:
+    image: supabase/postgres:15.1.0.147
+    ports:
+      - "54322:5432"
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-your-super-secret-and-long-postgres-password}
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+    volumes:
+      - supabase-db-data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
+
+  supabase-kong:
+    image: kong:2.8.1
+    ports:
+      - "8000:8000"    # Main API
+      - "8443:8443"    # HTTPS API
+      - "8001:8001"    # Admin API
+      - "8444:8444"    # Admin HTTPS
+    environment:
+      - KONG_DATABASE=off
+      - KONG_DECLARATIVE_CONFIG=/kong.yml
+      - KONG_DNS_ORDER=LAST,A,CNAME
+      - KONG_PLUGINS=request-transformer,cors,key-auth,acl,basic-auth
+      - KONG_NGINX_PROXY_PROXY_BUFFER_SIZE=160k
+      - KONG_NGINX_PROXY_PROXY_BUFFERS=64 160k
+    volumes:
+      - ./supabase/config/kong.yml:/kong.yml:ro
+    depends_on:
+      - supabase-db
+      - supabase-auth
+      - supabase-rest
+      - supabase-realtime
+      - supabase-storage
+    networks:
+      - app-network
+
+  supabase-auth:
+    image: supabase/gotrue:v2.151.0
+    ports:
+      - "9999:9999"
+    environment:
+      - GOTRUE_API_HOST=0.0.0.0
+      - GOTRUE_API_PORT=9999
+      - API_EXTERNAL_URL=http://localhost:8000
+      - GOTRUE_DB_DRIVER=postgres
+      - GOTRUE_DB_DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-your-super-secret-and-long-postgres-password}@supabase-db:5432/postgres?search_path=auth
+      - GOTRUE_SITE_URL=http://localhost:3001
+      - GOTRUE_URI_ALLOW_LIST=http://localhost:3001
+      - GOTRUE_DISABLE_SIGNUP=false
+      - GOTRUE_JWT_ADMIN_ROLES=service_role
+      - GOTRUE_JWT_AUD=authenticated
+      - GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated
+      - GOTRUE_JWT_EXP=${JWT_EXPIRY:-3600}
+      - GOTRUE_JWT_SECRET=${JWT_SECRET}
+      - GOTRUE_EXTERNAL_EMAIL_ENABLED=true
+      - GOTRUE_MAILER_AUTOCONFIRM=false
+      - GOTRUE_SMTP_ADMIN_EMAIL=${SMTP_ADMIN_EMAIL}
+      - GOTRUE_SMTP_HOST=${SMTP_HOST}
+      - GOTRUE_SMTP_PORT=${SMTP_PORT}
+      - GOTRUE_SMTP_USER=${SMTP_USER}
+      - GOTRUE_SMTP_PASS=${SMTP_PASS}
+      - GOTRUE_SMTP_SENDER_NAME=${SMTP_SENDER_NAME}
+    depends_on:
+      - supabase-db
+    networks:
+      - app-network
+
+  supabase-rest:
+    image: postgrest/postgrest:v12.0.1
+    ports:
+      - "3001:3000"
+    environment:
+      - PGRST_DB_URI=postgresql://postgres:${POSTGRES_PASSWORD:-your-super-secret-and-long-postgres-password}@supabase-db:5432/postgres
+      - PGRST_DB_SCHEMAS=${PGRST_DB_SCHEMAS:-public}
+      - PGRST_DB_ANON_ROLE=anon
+      - PGRST_JWT_SECRET=${JWT_SECRET}
+      - PGRST_DB_USE_LEGACY_GUCS=false
+    depends_on:
+      - supabase-db
+    networks:
+      - app-network
+
+  supabase-realtime:
+    image: supabase/realtime:v2.28.32
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - DB_HOST=supabase-db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-your-super-secret-and-long-postgres-password}
+      - DB_NAME=postgres
+      - DB_AFTER_CONNECT_QUERY=SET search_path TO _realtime
+      - DB_ENC_KEY=supabaserealtime
+      - API_JWT_SECRET=${JWT_SECRET}
+      - FLY_ALLOC_ID=fly123
+      - FLY_APP_NAME=realtime
+      - SECRET_KEY_BASE=UpNVntn3cDxHJpq99YMc1T1AQgQpc8kfYTuRgBiYa15BLrx8etQoXz3gZv1/u2oq
+      - ERL_AFLAGS=-proto_dist inet_tcp
+      - ENABLE_TAILSCALE=false
+      - DNS_NODES='"127.0.0.1"'
+    depends_on:
+      - supabase-db
+    networks:
+      - app-network
+
+  supabase-storage:
+    image: supabase/storage-api:v0.46.4
+    ports:
+      - "5000:5000"
+    environment:
+      - ANON_KEY=${SUPABASE_ANON_KEY}
+      - SERVICE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - POSTGREST_URL=http://supabase-rest:3000
+      - PGRST_JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-your-super-secret-and-long-postgres-password}@supabase-db:5432/postgres
+      - FILE_SIZE_LIMIT=52428800
+      - STORAGE_BACKEND=file
+      - FILE_STORAGE_BACKEND_PATH=/var/lib/storage
+      - TENANT_ID=stub
+      - REGION=stub
+      - GLOBAL_S3_BUCKET=stub
+      - ENABLE_IMAGE_TRANSFORMATION=true
+      - IMGPROXY_URL=http://supabase-imgproxy:5001
+    volumes:
+      - supabase-storage-data:/var/lib/storage
+    depends_on:
+      - supabase-db
+      - supabase-rest
+    networks:
+      - app-network
+
+  supabase-imgproxy:
+    image: darthsim/imgproxy:v3.8.0
+    ports:
+      - "5001:8080"
+    environment:
+      - IMGPROXY_BIND=0.0.0.0:8080
+      - IMGPROXY_LOCAL_FILESYSTEM_ROOT=/
+      - IMGPROXY_USE_ETAG=true
+      - IMGPROXY_ENABLE_WEBP_DETECTION=true
+    volumes:
+      - supabase-storage-data:/var/lib/storage:ro
+    networks:
+      - app-network
+
+  # Supabase Studio (Admin Interface)
+  supabase-studio:
+    image: supabase/studio:20240101-ce42139
+    ports:
+      - "54323:3000"
+    environment:
+      - STUDIO_PG_META_URL=http://supabase-meta:8080
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-your-super-secret-and-long-postgres-password}
+      - DEFAULT_ORGANIZATION_NAME=${STUDIO_DEFAULT_ORGANIZATION}
+      - DEFAULT_PROJECT_NAME=${STUDIO_DEFAULT_PROJECT}
+      - SUPABASE_URL=http://supabase-kong:8000
+      - SUPABASE_PUBLIC_URL=http://localhost:8000
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    depends_on:
+      - supabase-meta
+    networks:
+      - app-network
+
+  supabase-meta:
+    image: supabase/postgres-meta:v0.83.2
+    ports:
+      - "8080:8080"
+    environment:
+      - PG_META_PORT=8080
+      - PG_META_DB_HOST=supabase-db
+      - PG_META_DB_PORT=5432
+      - PG_META_DB_NAME=postgres
+      - PG_META_DB_USER=postgres
+      - PG_META_DB_PASSWORD=${POSTGRES_PASSWORD:-your-super-secret-and-long-postgres-password}
+    depends_on:
+      - supabase-db
+    networks:
+      - app-network
+
+  # Email Testing (Inbucket)
+  inbucket:
+    image: inbucket/inbucket:sha-2d409bb
+    ports:
+      - "54324:9000"  # Web interface
+      - "54325:2500"  # SMTP
+      - "54326:1100"  # POP3
+    environment:
+      - INBUCKET_WEB_ADDR=0.0.0.0:9000
+      - INBUCKET_POP3_ADDR=0.0.0.0:1100
+      - INBUCKET_SMTP_ADDR=0.0.0.0:2500
+    networks:
+      - app-network
+
+volumes:
+  supabase-db-data:
+  supabase-storage-data:
+
+networks:
+  app-network:
+    driver: bridge
