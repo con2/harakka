@@ -81,10 +81,8 @@ export const RoleManagement: React.FC = () => {
         refreshCurrentUserRoles(true),
         isAnyTypeOfAdmin ? refreshAllUserRoles(true) : Promise.resolve(),
       ]);
-      toast.success("Roles updated!");
     } catch (error) {
       console.error("Error refreshing roles:", error);
-      toast.error("Failed to refresh roles");
     }
   }, [
     refreshCurrentUserRoles,

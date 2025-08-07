@@ -21,7 +21,7 @@ const ProtectedRoute = ({
   requiredOrganization,
 }: ProtectedRouteProps) => {
   const { authLoading, user } = useAuth(); // wait for supabase auth to finish
-  const { loading: rolesLoading, hasRoleInContext } = useRoles();
+  const { loading: rolesLoading, hasRoleInContext, activeContext } = useRoles();
 
   // Use a state variable to track if access check has been performed
   const [accessChecked, setAccessChecked] = useState(false);
@@ -54,6 +54,7 @@ const ProtectedRoute = ({
     requiredOrganization,
     accessChecked,
     user,
+    activeContext,
   ]);
 
   // Show loading state while authentication or checking is in progress

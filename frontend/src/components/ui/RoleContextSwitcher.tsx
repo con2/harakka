@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useRoles } from "@/hooks/useRoles";
 import {
   Select,
@@ -7,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 
 export const RoleContextSwitcher: React.FC = () => {
   const {
@@ -16,7 +16,22 @@ export const RoleContextSwitcher: React.FC = () => {
     activeContext,
     setActiveContext,
     clearActiveContext,
+    hasRoleInContext,
   } = useRoles();
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if user would lose admin access with this role change
+  const isInAdminArea = location.pathname.startsWith("/admin");
+
+  // Check if user is switched admin role
+  const isAnyTypeOfAdmin =
+    hasRoleInContext("admin") ||
+    hasRoleInContext("superVera") ||
+    hasRoleInContext("main_admin") ||
+    hasRoleInContext("super_admin") ||
+    hasRoleInContext("storage_manager");
 
   // Filter to only active roles
   const activeRoles = currentUserRoles.filter((role) => role.is_active);
@@ -34,6 +49,11 @@ export const RoleContextSwitcher: React.FC = () => {
   const handleContextChange = (value: string) => {
     if (value === "clear") {
       clearActiveContext();
+
+      // If in admin area and clearing role, redirect to a safe page
+      if (isInAdminArea) {
+        navigate("/storage");
+      }
       return;
     }
 
@@ -43,18 +63,31 @@ export const RoleContextSwitcher: React.FC = () => {
     );
 
     if (orgId && roleName && org) {
+      // Save the new role context
       setActiveContext(orgId, roleName, org.organization_name);
+
+      // Get the current path to check if redirection is needed
+      const currentPath = location.pathname;
+
+      // If we're in the admin area, check if the new role has admin access
+      if (currentPath.startsWith("/admin")) {
+        const willHaveAdminAccess =
+          roleName === "admin" ||
+          roleName === "superVera" ||
+          roleName === "main_admin" ||
+          roleName === "super_admin" ||
+          roleName === "storage_manager";
+
+        // If switching to a non-admin role while in admin area, redirect
+        if (!willHaveAdminAccess) {
+          navigate("/storage");
+        }
+      }
     }
   };
 
-  return (
+  return activeRoles.length > 1 ? (
     <div className="flex items-center gap-2">
-      {activeContext.roleName ? (
-        <Badge className="bg-secondary text-white">
-          {activeContext.roleName} @ {activeContext.organizationName}
-        </Badge>
-      ) : null}
-
       <Select
         value={
           activeContext.organizationId && activeContext.roleName
@@ -64,7 +97,7 @@ export const RoleContextSwitcher: React.FC = () => {
         onValueChange={handleContextChange}
       >
         <SelectTrigger className="w-[220px]">
-          <SelectValue placeholder="Select role context" />
+          <SelectValue placeholder="Select active role" />
         </SelectTrigger>
         <SelectContent>
           {roleOptions.map((option) => (
@@ -78,5 +111,5 @@ export const RoleContextSwitcher: React.FC = () => {
         </SelectContent>
       </Select>
     </div>
-  );
+  ) : null;
 };

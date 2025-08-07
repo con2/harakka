@@ -6,7 +6,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 export const AuthRedirect = () => {
   const { user, authLoading } = useAuth();
   const {
-    hasRole,
     loading: rolesLoading,
     currentUserRoles,
     hasRoleInContext,
@@ -45,7 +44,7 @@ export const AuthRedirect = () => {
         // Use isAnyTypeOfAdmin for admin check
         if (isAnyTypeOfAdmin) {
           void navigate("/admin");
-        } else if (hasRole("user") || hasRole("requester")) {
+        } else if (hasRoleInContext("user") || hasRoleInContext("requester")) {
           void navigate("/storage");
         } else {
           void navigate("/storage");
@@ -58,7 +57,6 @@ export const AuthRedirect = () => {
     rolesLoading,
     currentUserRoles,
     isAnyTypeOfAdmin,
-    hasRole,
     hasRoleInContext,
     navigate,
     location.pathname,
