@@ -10,8 +10,8 @@ export type SelectedStorage = {
 
 export type CreateItemType = {
   id: string;
-  location_id: string;
-  location_details: {
+  location: {
+    id: string;
     name: string;
     address: string;
   };
@@ -58,6 +58,10 @@ export type CreateItemType = {
       };
     }[];
   };
+};
+
+export type MappedItem = Omit<CreateItemType, "location" | "tags" | "images"> & {
+  location_id: string;
 };
 
 export type ItemFormData = {

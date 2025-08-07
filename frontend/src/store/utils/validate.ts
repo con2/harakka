@@ -38,11 +38,14 @@ const imageSchema = z.object({
 
 export const createItemDto = z.object({
   id: z.string().uuid(),
-  location_id: z.string().uuid(),
-  location_details: z.object({
-    name: z.string().min(1, "location"),
-    address: z.string().min(1, "location"),
-  }),
+  location: z.object(
+    {
+      id: z.string().uuid({ message: "location" }),
+      name: z.string().min(1, "location"),
+      address: z.string().min(1, "location"),
+    },
+    { message: "location" },
+  ),
   items_number_total: z
     .number({ invalid_type_error: "items_number_total" })
     .int()

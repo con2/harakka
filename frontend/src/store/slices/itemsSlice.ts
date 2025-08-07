@@ -261,8 +261,8 @@ export const itemsSlice = createSlice({
       const editItem = state.itemCreation.items.find((item) => item.id === id);
       if (editItem) state.selectedItem = editItem;
     },
-    toggleIsEditing: (state) => {
-      state.isEditingItem = !state.isEditingItem;
+    toggleIsEditing: (state, action) => {
+      state.isEditingItem = action.payload;
     },
     updateLocalItem: (state, action) => {
       const { item } = action.payload;
@@ -337,15 +337,15 @@ export const itemsSlice = createSlice({
       })
       .addCase(createItem.fulfilled, (state) => {
         state.loading = false;
-      })
-      .addCase(createItem.rejected, (state, action) => {
-        state.loading = false;
         state.itemCreation = {
           org: null,
           location: undefined,
           items: [],
         };
         localStorage.removeItem("itemsInProgress");
+      })
+      .addCase(createItem.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "create";
       })

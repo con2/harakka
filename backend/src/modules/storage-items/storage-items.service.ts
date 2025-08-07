@@ -201,6 +201,7 @@ export class StorageItemsService {
 
       return { status: 201, error: null };
     } catch (error) {
+      console.log(error);
       // Rollback: Clean up any partially inserted data
       await Promise.allSettled([
         supabase.from("storage_item_images").delete().in("item_id", item_ids),
