@@ -5,6 +5,7 @@ import {
   selectItemsLoading,
   selectItemsError,
   fetchOrderedItems,
+  selectItemsPagination,
 } from "../../store/slices/itemsSlice";
 import ItemCard from "./ItemCard";
 import { Input } from "../ui/input";
@@ -15,6 +16,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { FiltersState } from "@/types";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { Button } from "../ui/button";
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
@@ -23,9 +25,9 @@ const ItemsList: React.FC = () => {
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
-  const currentPage = 1;
+  const pagination = useAppSelector(selectItemsPagination);
   const ITEMS_PER_PAGE = 10;
-
+  const [page, setPage] = useState(1);
   // Translation
   const { lang } = useLanguage();
 
@@ -44,26 +46,40 @@ const ItemsList: React.FC = () => {
       fetchOrderedItems({
         ordered_by: "created_at",
         ascending: true,
-        page: currentPage,
+        page,
         limit: ITEMS_PER_PAGE,
         searchquery: debouncedSearchQuery,
         tag_filters: tagIds,
         activity_filter: active,
         categories: itemTypes,
         location_filter: locationIds,
+        availability_min: filters.itemsNumberAvailable[0],
+        availability_max: filters.itemsNumberAvailable[1],
       }),
     );
   }, [
     dispatch,
-    items.length,
     isActive,
     itemTypes,
+    page,
     debouncedSearchQuery,
+    filters.itemsNumberAvailable,
     locationIds,
     tagIds,
     ITEMS_PER_PAGE,
   ]);
 
+  // Apply availability filter to items (client‑side filtering for availability range)
+  const filteredItems = items.filter((item) => {
+    // Prefer the new column; fall back to total if not present
+    const availableQuantity =
+      item.items_number_currently_in_storage ?? item.items_number_total ?? 0;
+
+    return (
+      availableQuantity >= filters.itemsNumberAvailable[0] &&
+      availableQuantity <= filters.itemsNumberAvailable[1]
+    );
+  });
   // Loading state
   if (loading) {
     return (
@@ -103,12 +119,38 @@ const ItemsList: React.FC = () => {
 
       {/* Render the list of filtered items */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 mb-4">
-        {items.length === 0 ? (
+        {filteredItems.length === 0 ? (
           <p>{t.itemsList.noItemsFound[lang]}</p> // Message when no items exist
         ) : (
-          items.map((item) => <ItemCard key={item.id} item={item} />)
+          filteredItems.map((item) => <ItemCard key={item.id} item={item} />)
         )}
       </div>
+      {/* Pagination controls */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-center gap-4 my-6">
+          <Button
+            variant="outline" // or "secondary" or "ghost"
+            size="sm"
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Prev
+          </Button>
+          <span className="self-center">
+            {page} / {pagination.totalPages}
+          </span>
+          <Button
+            variant="outline" // or "secondary" or "ghost"
+            size="sm"
+            disabled={page >= pagination.totalPages}
+            onClick={() =>
+              setPage((p) => Math.min(pagination.totalPages, p + 1))
+            }
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
