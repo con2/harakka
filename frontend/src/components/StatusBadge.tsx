@@ -6,6 +6,18 @@ interface StatusBadgeProps {
   status?: string;
 }
 
+// Backend status constants - these values come from the API and should not be translated
+const BACKEND_STATUS = {
+  PENDING: "pending",
+  CONFIRMED: "confirmed",
+  CANCELLED: "cancelled",
+  CANCELLED_BY_USER: "cancelled by user",
+  CANCELLED_BY_ADMIN: "cancelled by admin",
+  REJECTED: "rejected",
+  COMPLETED: "completed",
+  PICKED_UP: "picked up",
+} as const;
+
 export const StatusBadge = ({ status }: StatusBadgeProps) => {
   const { lang } = useLanguage();
 
@@ -16,7 +28,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
   }
 
   switch (status) {
-    case "pending":
+    case BACKEND_STATUS.PENDING: // Backend status value
       return (
         <Badge
           variant="outline"
@@ -25,7 +37,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           {t.statusBadge.status.pending[lang]}
         </Badge>
       );
-    case "confirmed":
+    case BACKEND_STATUS.CONFIRMED: // Backend status value
       return (
         <Badge
           variant="outline"
@@ -34,7 +46,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           {t.statusBadge.status.confirmed[lang]}
         </Badge>
       );
-    case "cancelled":
+    case BACKEND_STATUS.CANCELLED: // Backend status value
       return (
         <Badge
           variant="outline"
@@ -43,7 +55,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           {t.statusBadge.status.cancelled[lang]}
         </Badge>
       );
-    case "cancelled by user":
+    case BACKEND_STATUS.CANCELLED_BY_USER: // Backend status value
       return (
         <Badge
           variant="outline"
@@ -52,7 +64,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           {t.statusBadge.status.cancelledByUser[lang]}
         </Badge>
       );
-    case "cancelled by admin":
+    case BACKEND_STATUS.CANCELLED_BY_ADMIN: // Backend status value
       return (
         <Badge
           variant="outline"
@@ -61,7 +73,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           {t.statusBadge.status.cancelledByAdmin[lang]}
         </Badge>
       );
-    case "rejected":
+    case BACKEND_STATUS.REJECTED: // Backend status value
       return (
         <Badge
           variant="outline"
@@ -70,7 +82,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           {t.statusBadge.status.rejected[lang]}
         </Badge>
       );
-    case "completed":
+    case BACKEND_STATUS.COMPLETED: // Backend status value
       return (
         <Badge
           variant="outline"
@@ -79,7 +91,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           {t.statusBadge.status.completed[lang]}
         </Badge>
       );
-    case "picked up":
+    case BACKEND_STATUS.PICKED_UP: // Backend status value
       return (
         <Badge
           variant="outline"

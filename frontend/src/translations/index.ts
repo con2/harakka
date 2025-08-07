@@ -47,6 +47,8 @@ import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
 import { usersList } from "./modules/usersList";
 import { currentUserRoles } from "./modules/currentUserRoles";
+import { privacyPolicy } from "./modules/privacyPolicy";
+import { termsOfUse } from "./modules/termsOfUse";
 import {
   organizationDelete,
   organizationList,
@@ -58,6 +60,7 @@ import { organizationLocations } from "./modules/organizationLocations";
 import { roleEditor } from "./modules/roleEditor";
 import { roleManagement } from "./modules/roleManagement";
 import { statusBadge } from "./modules/statusBadge";
+import { notifications } from "./modules/notifications";
 
 export const t = {
   addItemModal,
@@ -119,4 +122,7 @@ export const t = {
   roleEditor,
   roleManagement,
   statusBadge,
+  privacyPolicy,
+  termsOfUse,
+  notifications,
 };
