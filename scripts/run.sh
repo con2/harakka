@@ -5,6 +5,13 @@
 
 set -e
 
+# Parse command line arguments
+REBUILD=false
+if [[ "$1" == "--rebuild" ]]; then
+    REBUILD=true
+    echo "🔄 Rebuild mode enabled"
+fi
+
 echo "🚀 Starting Full-Stack Storage and Booking App"
 echo "============================================="
 
@@ -16,8 +23,29 @@ fi
 
 # Load environment variables
 echo "📋 Loading environment variables..."
-export $(grep -v '^#' .env.production | xargs)
+set -a  # automatically export all variables
+source .env.production
+set +a  # disable automatic export
 echo "✅ Environment variables loaded"
+
+# Verify critical frontend variables are set
+if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+    echo "❌ Missing required frontend environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)"
+    echo "   Please check your .env.production file"
+    exit 1
+fi
+
+echo "🔧 Frontend variables configured:"
+echo "   - VITE_SUPABASE_URL: $VITE_SUPABASE_URL"
+echo "   - VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}"
+
+# Rebuild if requested
+if [ "$REBUILD" = true ]; then
+    echo ""
+    echo "🏗️  Rebuilding application with current environment variables..."
+    docker-compose -f docker-compose.production.yml build --no-cache
+    echo "✅ Rebuild completed!"
+fi
 
 # Start the application
 echo "🚀 Starting containers..."

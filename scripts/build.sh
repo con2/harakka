@@ -9,11 +9,37 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Load environment variables if .env.production exists
+if [ -f ".env.production" ]; then
+    echo -e "${YELLOW}📋 Loading environment variables from .env.production...${NC}"
+    set -a  # automatically export all variables
+    source .env.production
+    set +a  # disable automatic export
+    echo -e "${GREEN}✅ Environment variables loaded${NC}"
+    
+    # Show key frontend variables
+    echo "🔧 Frontend build variables:"
+    echo "   - VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}"
+    echo "   - VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}"
+    echo ""
+else
+    echo -e "${YELLOW}⚠️  No .env.production found. Frontend variables may not be configured.${NC}"
+    echo "   Run ./scripts/setup.sh first to configure environment variables."
+    echo ""
+fi
+
 # Configuration
 IMAGE_NAME="booking-app"
 REGISTRY_URL="${REGISTRY_URL:-your-registry.azurecr.io}"  # Update with your ACR
 TAG="${TAG:-latest}"
 FULL_IMAGE="${REGISTRY_URL}/${IMAGE_NAME}:${TAG}"
+
+# Parse command line arguments
+BUILD_SEPARATE=false
+if [[ "$1" == "--separate" ]]; then
+    BUILD_SEPARATE=true
+    echo -e "${YELLOW}🔄 Separate build mode enabled${NC}"
+fi
 
 echo -e "${GREEN}Building Full-Stack Booking App Docker Image${NC}"
 echo "Image: ${FULL_IMAGE}"
@@ -30,10 +56,15 @@ else
     exit 1
 fi
 
-# Optional: Build separate frontend and backend images for microservice architecture
-read -p "Build separate frontend and backend images? (y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+# Build separate images if requested or ask user
+if [ "$BUILD_SEPARATE" = true ]; then
+    REPLY="y"
+else
+    read -p "Build separate frontend and backend images? (y/N): " -n 1 -r
+    echo
+fi
+
+if [[ $REPLY =~ ^[Yy]$ ]] || [ "$BUILD_SEPARATE" = true ]; then
     echo -e "${YELLOW}Building frontend image...${NC}"
     docker build -t "${REGISTRY_URL}/${IMAGE_NAME}-frontend:${TAG}" -f frontend/Dockerfile .
     
