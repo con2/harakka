@@ -16,7 +16,6 @@ export const RoleContextSwitcher: React.FC = () => {
     activeContext,
     setActiveContext,
     clearActiveContext,
-    hasRoleInContext,
   } = useRoles();
 
   const navigate = useNavigate();
@@ -24,14 +23,6 @@ export const RoleContextSwitcher: React.FC = () => {
 
   // Check if user would lose admin access with this role change
   const isInAdminArea = location.pathname.startsWith("/admin");
-
-  // Check if user is switched admin role
-  const isAnyTypeOfAdmin =
-    hasRoleInContext("admin") ||
-    hasRoleInContext("superVera") ||
-    hasRoleInContext("main_admin") ||
-    hasRoleInContext("super_admin") ||
-    hasRoleInContext("storage_manager");
 
   // Filter to only active roles
   const activeRoles = currentUserRoles.filter((role) => role.is_active);
