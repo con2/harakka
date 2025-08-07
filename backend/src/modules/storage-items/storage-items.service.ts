@@ -406,6 +406,8 @@ export class StorageItemsService {
     activity_filter?: "active" | "inactive",
     location_filter?: string,
     category?: string,
+    availability_min?: number,
+    availability_max?: number,
   ) {
     const supabase = this.supabaseClient.getAnonClient();
     const { from, to } = getPaginationRange(page, limit);
@@ -439,6 +441,13 @@ export class StorageItemsService {
       const categories = category.split(",");
       query.in("en_item_type", categories);
     }
+
+    // Availability range filter (items currently in storage)
+    if (availability_min !== undefined)
+      query.gte("items_number_currently_in_storage", availability_min);
+
+    if (availability_max !== undefined)
+      query.lte("items_number_currently_in_storage", availability_max);
 
     const result = await query;
     const { error, count } = result;

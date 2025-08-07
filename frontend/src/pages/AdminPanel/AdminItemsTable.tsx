@@ -52,7 +52,9 @@ const AdminItemsTable = () => {
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const [showModal, setShowModal] = useState(false);
-  const { isAdmin, isSuperVera } = useRoles();
+  const { hasRole } = useRoles();
+  const isAdmin = hasRole("admin");
+  const isSuperVera = hasRole("superVera");
   // Translation
   const { lang } = useLanguage();
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
