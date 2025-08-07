@@ -31,6 +31,8 @@ import {
   mapTagLinks,
 } from "@src/utils/storage-items.utils";
 import { ItemImagesService } from "../item-images/item-images.service";
+import Papa from "papaparse";
+import { Item, ItemSchema } from "./schema/item-schema";
 
 @Injectable()
 export class StorageItemsService {
@@ -572,6 +574,41 @@ export class StorageItemsService {
     return {
       ...result,
       data: result.count ?? 0,
+    };
+  }
+
+  parseCSV(csv: Express.Multer.File) {
+    // Parse the file into a JSON
+    const parsedCsv = Papa.parse(csv.buffer.toString(), {
+      skipEmptyLines: true,
+      header: true,
+      dynamicTypic: false,
+    });
+
+    const validItems: Item[] = [];
+    const errors: Array<{ row: number; errors: string[] }> = [];
+
+    // Validate each row, add them to validItems/errors arrays.
+    parsedCsv.data.forEach((row: Item, index: number) => {
+      const validation = ItemSchema.safeParse(row);
+
+      if (validation.success) {
+        validItems.push(validation.data);
+      } else {
+        errors.push({
+          row: index + 1,
+          errors: validation.error.issues.map(
+            (issue) => `${issue.path.join(".")}: ${issue.message}`,
+          ),
+        });
+      }
+    });
+
+    return {
+      processed: validItems.length,
+      errors: errors,
+      data: validItems,
+      total: parsedCsv.data.length,
     };
   }
 }
