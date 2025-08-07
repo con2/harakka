@@ -446,10 +446,10 @@ export class StorageItemsService {
     activity_filter?: "active" | "inactive",
     location_filter?: string,
     category?: string,
-    from_date?: string,
-    to_date?: string,
     availability_min?: number,
     availability_max?: number,
+    from_date?: string,
+    to_date?: string,
   ) {
     const supabase = this.supabaseClient.getAnonClient();
     const { from, to } = getPaginationRange(page, limit);
