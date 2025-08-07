@@ -10,7 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { selectCurrentOrgLocations } from "@/store/slices/organizationLocationsSlice";
+import {
+  fetchLocationsByOrgId,
+  selectCurrentOrgLocations,
+} from "@/store/slices/organizationLocationsSlice";
 import { createItemDto } from "@/store/utils/validate";
 import { ItemFormTag } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,7 +43,6 @@ import {
   clearSelectedItem,
   selectIsEditing,
   selectItemCreation,
-  selectOrgLocation,
   selectSelectedItem,
   toggleIsEditing,
   updateLocalItem,
@@ -64,7 +66,7 @@ function AddItemForm() {
   const tagSearch = useDebouncedValue(tagSearchValue, 200);
   const dispatch = useAppDispatch();
   const [selectedTags, setSelectedTags] = useState<ItemFormTag[]>([]);
-  const { location: storage } = useAppSelector(selectItemCreation);
+  const { location: storage, org } = useAppSelector(selectItemCreation);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector(selectTagsLoading);
   const isEditing = useAppSelector(selectIsEditing);
@@ -72,13 +74,10 @@ function AddItemForm() {
     resolver: zodResolver(createItemDto),
     defaultValues: editItem ?? {
       id: crypto.randomUUID(),
-      location_id: storage?.id ?? orgLocations?.[0]?.id,
-      location_details: {
-        name: storage?.name ?? orgLocations?.[0]?.storage_locations.name ?? "",
-        address:
-          storage?.address ??
-          orgLocations?.[0]?.storage_locations.address ??
-          "",
+      location: {
+        id: storage?.id ?? "",
+        name: storage?.name ?? "",
+        address: storage?.address ?? "",
       },
       items_number_total: 1,
       items_number_currently_in_storage: 1,
@@ -169,7 +168,7 @@ function AddItemForm() {
 
   const handleUpdateItem = (item: CreateItemType) => {
     dispatch(clearSelectedItem());
-    dispatch(toggleIsEditing());
+    dispatch(toggleIsEditing(false));
     dispatch(updateLocalItem({ item }));
     dispatch(setNextStep());
   };
@@ -180,35 +179,33 @@ function AddItemForm() {
   };
 
   const handleLocationChange = (selectedId: string) => {
-    const newLoc = orgLocations?.find((org) => org.id === selectedId);
-    if (!newLoc) return;
-
-    form.setValue("location_id", newLoc.id, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
+    const newLoc = orgLocations?.find(
+      (org) => org.storage_location_id === selectedId,
+    );
+    if (!newLoc) return toast.error("Loc error");
+    console.log("Location name: ", newLoc.storage_locations.name);
+    console.log("Location address: ", newLoc.storage_locations.address);
     form.setValue(
-      "location_details",
+      "location",
       {
+        id: newLoc.storage_location_id,
         name: newLoc.storage_locations.name,
         address: newLoc.storage_locations.address,
       },
       { shouldValidate: true, shouldDirty: true },
     );
-    dispatch(
-      selectOrgLocation({
-        org_id: newLoc.id,
-        name: newLoc.storage_locations.name,
-        address: newLoc.storage_locations.address,
-      }),
-    );
   };
 
   /*------------------side effects-------------------------------------------*/
   useEffect(() => {
+    if (org && orgLocations.length < 1)
+      void dispatch(fetchLocationsByOrgId(org.id));
+  }, []);
+
+  useEffect(() => {
     if (!storage) return;
-    form.setValue("location_id", storage.id);
-    form.setValue("location_details", {
+    form.setValue("location", {
+      id: storage.id,
       name: storage.name,
       address: storage.address,
     });
@@ -387,16 +384,16 @@ function AddItemForm() {
                 )}
               />
               <FormField
-                name="location_id"
+                name="location"
                 control={form.control}
-                render={() => (
+                render={({ field }) => (
                   <div className="w-full">
                     <FormItem>
                       <FormLabel>
                         {t.addItemForm.labels.location[appLang]}
                       </FormLabel>
                       <Select
-                        defaultValue={storage?.id ?? ""}
+                        defaultValue={field.value.id ?? ""}
                         onValueChange={handleLocationChange}
                         disabled={storage === null ? false : true}
                       >
@@ -405,15 +402,15 @@ function AddItemForm() {
                             className="border shadow-none border-grey"
                             placeholder={""}
                           >
-                            {storage?.name}
+                            {field.value.name ?? ""}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {orgLocations?.map((loc) => (
                             <SelectItem
                               disabled={storage === undefined}
-                              key={loc.id}
-                              value={loc.id}
+                              key={loc.storage_location_id}
+                              value={loc.storage_location_id}
                             >
                               {loc.storage_locations.name}
                             </SelectItem>
