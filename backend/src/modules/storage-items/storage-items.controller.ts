@@ -65,10 +65,21 @@ export class StorageItemsController {
     @Query("active") active_filter: "active" | "inactive",
     @Query("locations") location_filter: string,
     @Query("category") category: string,
+    @Query("availability_min") availability_min?: string,
+    @Query("availability_max") availability_max?: string,
   ) {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const is_ascending = ascending.toLowerCase() === "true";
+    const availMinNum =
+      availability_min !== undefined
+        ? parseInt(availability_min, 10)
+        : undefined;
+    const availMaxNum =
+      availability_max !== undefined
+        ? parseInt(availability_max, 10)
+        : undefined;
+
     return this.storageItemsService.getOrderedStorageItems(
       pageNum,
       limitNum,
@@ -79,6 +90,8 @@ export class StorageItemsController {
       active_filter,
       location_filter,
       category,
+      availMinNum,
+      availMaxNum,
     );
   }
 

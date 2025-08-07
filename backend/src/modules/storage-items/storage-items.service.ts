@@ -448,6 +448,8 @@ export class StorageItemsService {
     category?: string,
     from_date?: string,
     to_date?: string,
+    availability_min?: number,
+    availability_max?: number,
   ) {
     const supabase = this.supabaseClient.getAnonClient();
     const { from, to } = getPaginationRange(page, limit);
@@ -484,6 +486,12 @@ export class StorageItemsService {
 
     if (from_date) query.gte("created_at", from_date);
     if (to_date) query.lt("created_at", to_date);
+    // Availability range filter (items currently in storage)
+    if (availability_min !== undefined)
+      query.gte("items_number_currently_in_storage", availability_min);
+
+    if (availability_max !== undefined)
+      query.lte("items_number_currently_in_storage", availability_max);
 
     const result = await query;
     const { error, count } = result;

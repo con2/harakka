@@ -2,6 +2,7 @@
 NOTES.md
 .env.*
 supabase-local.env
+
 # Node.js dependencies
 node_modules/*
 .nvmrc
