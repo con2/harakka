@@ -10,6 +10,15 @@ import {
 import { t } from "@/translations";
 import { LogMessage } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
+
+// Backend log level constants - these values come from the API and should not be translated
+const LOG_LEVELS = {
+  ERROR: "error",
+  WARNING: "warning",
+  INFO: "info",
+  DEBUG: "debug",
+} as const;
+
 import {
   AlertTriangle,
   Bug,
@@ -110,13 +119,13 @@ const Logs: React.FC = () => {
   // Get level icon based on log level
   const getLevelIcon = (level: string) => {
     switch (level) {
-      case "error":
+      case LOG_LEVELS.ERROR: // Backend log level value
         return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case "warning":
+      case LOG_LEVELS.WARNING: // Backend log level value
         return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-      case "info":
+      case LOG_LEVELS.INFO: // Backend log level value
         return <Info className="h-4 w-4 text-blue-500" />;
-      case "debug":
+      case LOG_LEVELS.DEBUG: // Backend log level value
         return <Bug className="h-4 w-4 text-gray-500" />;
       default:
         return null;
@@ -126,13 +135,13 @@ const Logs: React.FC = () => {
   // Get translated level name
   const getLevelDisplayName = (level: string) => {
     switch (level) {
-      case "error":
+      case LOG_LEVELS.ERROR: // Backend log level value
         return t.logs.levelDisplay.error[lang];
-      case "warning":
+      case LOG_LEVELS.WARNING: // Backend log level value
         return t.logs.levelDisplay.warning[lang];
-      case "info":
+      case LOG_LEVELS.INFO: // Backend log level value
         return t.logs.levelDisplay.info[lang];
-      case "debug":
+      case LOG_LEVELS.DEBUG: // Backend log level value
         return t.logs.levelDisplay.debug[lang];
       default:
         return level; // fallback to original level string
