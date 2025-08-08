@@ -62,6 +62,7 @@ import { roleEditor } from "./modules/roleEditor";
 import { roleManagement } from "./modules/roleManagement";
 import { statusBadge } from "./modules/statusBadge";
 import { notifications } from "./modules/notifications";
+import { uiComponents } from "./modules/uiComponents";
 
 export const t = {
   addItemModal,
@@ -127,4 +128,5 @@ export const t = {
   privacyPolicy,
   termsOfUse,
   notifications,
+  uiComponents,
 };
