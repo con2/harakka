@@ -26,7 +26,7 @@ import {
   selectTotalBookingsCount,
   updatePaymentStatus,
 } from "@/store/slices/bookingsSlice";
-import { BookingWithDetails, PaymentStatus } from "@/types";
+import { PaymentStatus } from "@/types";
 import {
   fetchAllItems,
   getItemCount,
@@ -150,7 +150,7 @@ const AdminDashboard = () => {
     },
     {
       accessorKey: "invoice_status",
-      header: t.bookingList.columns.invoice[lang],
+      header: t.bookingList.columns.invoice.invoice[lang],
       cell: ({ row }) => {
         const paymentStatus = row.original.payment_status ?? "N/A";
 
@@ -386,11 +386,11 @@ const AdminDashboard = () => {
                       {t.bookingList.modal.customer[lang]}
                     </h3>
                     <p className="text-sm mb-0">
-                      {(selectedBooking as BookingWithDetails).full_name ||
+                      {selectedBooking.full_name ||
                         t.bookingList.status.unknown[lang]}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {(selectedBooking as BookingWithDetails).email}
+                      {selectedBooking.email}
                     </p>
                   </div>
 
@@ -421,18 +421,12 @@ const AdminDashboard = () => {
                       onPageChange={handleItemPageChange}
                       pageIndex={currentItemPage - 1}
                       columns={bookingItemsColumns}
-                      data={
-                        (selectedBooking as BookingWithDetails).booking_items ||
-                        []
-                      }
+                      data={selectedBooking.booking_items || []}
                     />
                   ) : !itemsLoading && itemTotalPages === 1 ? (
                     <DataTable
                       columns={bookingItemsColumns}
-                      data={
-                        (selectedBooking as BookingWithDetails).booking_items ||
-                        []
-                      }
+                      data={selectedBooking.booking_items || []}
                     />
                   ) : null}
                 </div>

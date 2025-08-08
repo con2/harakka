@@ -58,7 +58,7 @@ export class OrganizationLocationsController {
     );
   }
 
-  // 3. Get one by ID
+  // 3. Get location by location ID
   @Public()
   @Get(":id")
   async getOrgLocById(@Param("id") id: string) {

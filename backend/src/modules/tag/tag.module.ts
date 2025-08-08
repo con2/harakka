@@ -7,5 +7,6 @@ import { SupabaseModule } from "../supabase/supabase.module";
   imports: [SupabaseModule],
   controllers: [TagController],
   providers: [TagService],
+  exports: [TagService],
 })
 export class TagModule {}

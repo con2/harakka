@@ -44,21 +44,6 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
   const { user } = useAuth();
   const dispatch = useAppDispatch();
 
-  // Get organizations from Redux store
-  const organizations = useAppSelector(selectOrganizations);
-  // Fetch organizations when component mounts
-  useEffect(() => {
-    // Fetch organizations with a larger limit to get all for the dropdown
-    void dispatch(fetchAllOrganizations({ limit: 100 }));
-  }, [dispatch]);
-
-  // Get all users from Redux store
-  const allUsers = useAppSelector(selectAllUsers);
-  // Fetch all users when component mounts
-  useEffect(() => {
-    void dispatch(fetchAllUsers());
-  }, [dispatch]);
-
   const {
     createRole,
     updateRole,
@@ -66,9 +51,26 @@ export const RoleEditer: React.FC<RoleEditerProps> = ({
     permanentDeleteRole,
     refreshAllUserRoles,
     refreshCurrentUserRoles,
+    refreshAvailableRoles,
     availableRoles,
     allUserRoles,
   } = useRoles();
+
+  // Get organizations from Redux store
+  const organizations = useAppSelector(selectOrganizations);
+  // Fetch organizations when component mounts
+  useEffect(() => {
+    // Fetch organizations with a larger limit to get all for the dropdown
+    void dispatch(fetchAllOrganizations({ limit: 100 }));
+    void refreshAvailableRoles();
+  }, [dispatch, refreshAvailableRoles]);
+
+  // Get all users from Redux store
+  const allUsers = useAppSelector(selectAllUsers);
+  // Fetch all users when component mounts
+  useEffect(() => {
+    void dispatch(fetchAllUsers());
+  }, [dispatch]);
 
   // For create
   const [createForm, setCreateForm] = useState<CreateUserRoleDto>({

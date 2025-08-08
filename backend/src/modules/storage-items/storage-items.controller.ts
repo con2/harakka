@@ -23,6 +23,7 @@ import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { ApiSingleResponse } from "../../../../common/response.types";
 import { StorageItem } from "./interfaces/storage-item.interface";
 import { Public } from "src/decorators/roles.decorator";
+import { ItemFormData } from "@common/items/form.types";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
@@ -64,10 +65,21 @@ export class StorageItemsController {
     @Query("active") active_filter: "active" | "inactive",
     @Query("locations") location_filter: string,
     @Query("category") category: string,
+    @Query("availability_min") availability_min?: string,
+    @Query("availability_max") availability_max?: string,
   ) {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const is_ascending = ascending.toLowerCase() === "true";
+    const availMinNum =
+      availability_min !== undefined
+        ? parseInt(availability_min, 10)
+        : undefined;
+    const availMaxNum =
+      availability_max !== undefined
+        ? parseInt(availability_max, 10)
+        : undefined;
+
     return this.storageItemsService.getOrderedStorageItems(
       pageNum,
       limitNum,
@@ -78,6 +90,8 @@ export class StorageItemsController {
       active_filter,
       location_filter,
       category,
+      availMinNum,
+      availMaxNum,
     );
   }
 
@@ -103,11 +117,11 @@ export class StorageItemsController {
 
   @Post()
   async create(
-    @Req() req: Request,
+    @Req() req: AuthRequest,
     @Body()
-    item,
-  ): Promise<StorageItem> {
-    return this.storageItemsService.createItem(req, item); // POST /storage-items (new item)
+    formData: ItemFormData,
+  ): Promise<{ status: number; error: string | null }> {
+    return this.storageItemsService.createItems(req, formData); // POST /storage-items (new item)
   }
 
   @Put(":id")

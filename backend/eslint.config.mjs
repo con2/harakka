@@ -36,6 +36,7 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-type-assertion": "off",
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-redundant-type-constituents": "error",
       // -------- Promise‑related safety nets --------
       "@typescript-eslint/no-floating-promises": "warn",
       "@typescript-eslint/no-unsafe-assignment": "off",

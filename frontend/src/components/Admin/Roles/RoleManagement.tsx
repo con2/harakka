@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRoles } from "@/hooks/useRoles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ export const RoleManagement: React.FC = () => {
     refreshAllUserRoles,
     hasAnyRole,
     hasRole,
+    clearRoleCache,
   } = useRoles();
 
   // Define admin status solely from new user roles
@@ -38,44 +39,15 @@ export const RoleManagement: React.FC = () => {
 
   const isSuperVera = hasRole("superVera");
 
-  // Add fetch attempt tracking with a "roles attempted" flag
-  const [fetchingAdminData, setFetchingAdminData] = useState(false);
-  const fetchAttemptsRef = useRef(0);
-  const MAX_FETCH_ATTEMPTS = 2;
+  // Track only session refreshing state
   const [sessionRefreshing, setSessionRefreshing] = useState(false);
 
-  useEffect(() => {
-    // Only fetch admin roles if user is admin and we don't have them yet
-    if (
-      isAnyTypeOfAdmin &&
-      allUserRoles.length === 0 &&
-      !adminLoading &&
-      !adminError &&
-      !fetchingAdminData &&
-      fetchAttemptsRef.current < MAX_FETCH_ATTEMPTS // Limit to 2 attempts
-    ) {
-      fetchAttemptsRef.current += 1;
-      setFetchingAdminData(true);
-
-      void refreshAllUserRoles().finally(() => {
-        setFetchingAdminData(false);
-      });
-    }
-  }, [
-    isAnyTypeOfAdmin,
-    allUserRoles.length,
-    adminLoading,
-    adminError,
-    refreshAllUserRoles,
-    fetchingAdminData,
-  ]);
-
-  // Manual refresh function
+  // Manual refresh function - now using force=true to bypass cache
   const handleRefresh = useCallback(async () => {
     try {
-      await refreshCurrentUserRoles();
+      await refreshCurrentUserRoles(true);
       if (isAnyTypeOfAdmin) {
-        await refreshAllUserRoles();
+        await refreshAllUserRoles(true);
       }
       toast.success("Roles refreshed successfully");
     } catch (err) {
@@ -100,12 +72,34 @@ export const RoleManagement: React.FC = () => {
 
   // Handler to refresh roles after any role operation
   const handleRolesChanged = useCallback(async () => {
-    await refreshCurrentUserRoles();
-    if (isAnyTypeOfAdmin) {
-      await refreshAllUserRoles();
+    try {
+      // Clear the cache entry before forcing a refresh
+      clearRoleCache(["current", "all"]);
+
+      // Now force refresh with the cleared cache
+      await Promise.all([
+        refreshCurrentUserRoles(true),
+        isAnyTypeOfAdmin ? refreshAllUserRoles(true) : Promise.resolve(),
+      ]);
+      toast.success("Roles updated!");
+    } catch (error) {
+      console.error("Error refreshing roles:", error);
+      toast.error("Failed to refresh roles");
     }
-    toast.success("Roles updated!");
-  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAnyTypeOfAdmin]);
+  }, [
+    refreshCurrentUserRoles,
+    refreshAllUserRoles,
+    isAnyTypeOfAdmin,
+    clearRoleCache,
+  ]);
+
+  // Explicitly fetch all roles when the admin page loads
+  useEffect(() => {
+    // This only runs when the admin page is mounted
+    if (isAnyTypeOfAdmin) {
+      refreshAllUserRoles(false).catch(console.error);
+    }
+  }, [isAnyTypeOfAdmin, refreshAllUserRoles]);
 
   // Combined loading state from both auth and roles
   const isLoading = authLoading || (!currentUserRoles && !error);
