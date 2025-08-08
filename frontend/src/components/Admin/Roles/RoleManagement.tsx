@@ -9,8 +9,13 @@ import RoleEditer from "./RoleEditer";
 import { toast } from "sonner";
 import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 export const RoleManagement: React.FC = () => {
+  // Get language context
+  const { lang } = useLanguage();
+
   // Get auth state directly from Auth context
   const { authLoading } = useAuth();
 
@@ -49,26 +54,30 @@ export const RoleManagement: React.FC = () => {
       if (isAnyTypeOfAdmin) {
         await refreshAllUserRoles(true);
       }
-      toast.success("Roles refreshed successfully");
+      toast.success(t.roleManagement.toast.success.refreshed[lang]);
     } catch (err) {
       console.error("❌ RoleManagement - Manual refresh failed:", err);
-      toast.error("Failed to refresh roles");
+      toast.error(t.roleManagement.toast.error.refreshFailed[lang]);
     }
-  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAnyTypeOfAdmin]);
+  }, [refreshCurrentUserRoles, refreshAllUserRoles, isAnyTypeOfAdmin, lang]);
 
   // Handler for refreshing Supabase session
   const handleRefreshSession = useCallback(async () => {
     setSessionRefreshing(true);
     try {
       await refreshSupabaseSession();
-      toast.success("Supabase session refreshed!");
+      toast.success(
+        t.roleManagement.toast.success.supabaseSessionRefreshed[lang],
+      );
     } catch (err) {
-      toast.error("Failed to refresh Supabase session");
+      toast.error(
+        t.roleManagement.toast.error.supabaseSessionRefreshFailed[lang],
+      );
       console.error("❌ Supabase session refresh failed:", err);
     } finally {
       setSessionRefreshing(false);
     }
-  }, []);
+  }, [lang]);
 
   // Handler to refresh roles after any role operation
   const handleRolesChanged = useCallback(async () => {
@@ -81,16 +90,17 @@ export const RoleManagement: React.FC = () => {
         refreshCurrentUserRoles(true),
         isAnyTypeOfAdmin ? refreshAllUserRoles(true) : Promise.resolve(),
       ]);
-      toast.success("Roles updated!");
+      toast.success(t.roleManagement.toast.success.updated[lang]);
     } catch (error) {
       console.error("Error refreshing roles:", error);
-      toast.error("Failed to refresh roles");
+      toast.error(t.roleManagement.toast.error.refreshFailed[lang]);
     }
   }, [
     refreshCurrentUserRoles,
     refreshAllUserRoles,
     isAnyTypeOfAdmin,
     clearRoleCache,
+    lang,
   ]);
 
   // Explicitly fetch all roles when the admin page loads
@@ -109,7 +119,7 @@ export const RoleManagement: React.FC = () => {
     return (
       <div className="flex justify-center items-center h-64">
         <LoaderCircle className="animate-spin w-8 h-8" />
-        <span className="ml-2">Loading roles...</span>
+        <span className="ml-2">{t.roleManagement.loading.roles[lang]}</span>
       </div>
     );
   }
@@ -120,12 +130,13 @@ export const RoleManagement: React.FC = () => {
       <div className="space-y-4">
         <Alert variant="destructive">
           <AlertDescription>
-            Failed to load role information: {error}
+            {t.roleManagement.messages.failedToLoadRoleInformation[lang]}{" "}
+            {error}
           </AlertDescription>
         </Alert>
         <Button onClick={handleRefresh} variant="outline">
           <RefreshCw className="w-4 h-4 mr-2" />
-          Try Again
+          {t.roleManagement.buttons.tryAgain[lang]}
         </Button>
       </div>
     );
@@ -139,7 +150,7 @@ export const RoleManagement: React.FC = () => {
         data-cy="role-management-header"
       >
         <h2 className="text-2xl font-bold" data-cy="role-management-title">
-          Role Management Dashboard
+          {t.roleManagement.titles.dashboard[lang]}
         </h2>
         <Button
           onClick={handleRefresh}
@@ -148,7 +159,7 @@ export const RoleManagement: React.FC = () => {
           data-cy="role-management-refresh-btn"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
+          {t.roleManagement.buttons.refresh[lang]}
         </Button>
         <Button
           onClick={handleRefreshSession}
@@ -162,19 +173,19 @@ export const RoleManagement: React.FC = () => {
           ) : (
             <RefreshCw className="w-4 h-4 mr-2" />
           )}
-          Refresh session
+          {t.roleManagement.buttons.refreshSession[lang]}
         </Button>
       </div>
 
       {/* Debug Information */}
       <Card data-cy="role-management-debug-card">
         <CardHeader>
-          <CardTitle>Debug Information</CardTitle>
+          <CardTitle>{t.roleManagement.titles.debugInfo[lang]}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-1 text-sm font-mono">
             <div>
-              Auth Loading:{" "}
+              {t.roleManagement.debugInfo.authLoading[lang]}:{" "}
               <span
                 className={authLoading ? "text-red-600" : "text-green-600"}
                 data-cy="role-management-loading"
@@ -183,7 +194,7 @@ export const RoleManagement: React.FC = () => {
               </span>
             </div>
             <div>
-              Admin Loading:{" "}
+              {t.roleManagement.debugInfo.adminLoading[lang]}:{" "}
               <span
                 className={adminLoading ? "text-red-600" : "text-green-600"}
                 data-cy="role-management-admin-loading"
@@ -192,25 +203,25 @@ export const RoleManagement: React.FC = () => {
               </span>
             </div>
             <div>
-              Error:{" "}
+              {t.roleManagement.debugInfo.error[lang]}:{" "}
               <span
                 className={error ? "text-red-600" : "text-green-600"}
                 data-cy="role-management-error"
               >
-                {error || "None"}
+                {error || t.roleManagement.debugInfo.none[lang]}
               </span>
             </div>
             <div>
-              Admin Error:{" "}
+              {t.roleManagement.debugInfo.adminError[lang]}:{" "}
               <span
                 className={adminError ? "text-red-600" : "text-green-600"}
                 data-cy="role-management-admin-error"
               >
-                {adminError || "None"}
+                {adminError || t.roleManagement.debugInfo.none[lang]}
               </span>
             </div>
             <div>
-              Current User Roles:{" "}
+              {t.roleManagement.debugInfo.currentUserRoles[lang]}:{" "}
               <span
                 className="text-blue-600"
                 data-cy="role-management-current-user-roles"
@@ -219,7 +230,7 @@ export const RoleManagement: React.FC = () => {
               </span>
             </div>
             <div>
-              All User Roles:{" "}
+              {t.roleManagement.debugInfo.allUserRoles[lang]}:{" "}
               <span
                 className="text-blue-600"
                 data-cy="role-management-all-user-roles"
@@ -228,7 +239,7 @@ export const RoleManagement: React.FC = () => {
               </span>
             </div>
             <div>
-              is Any Type Of Admin:{" "}
+              {t.roleManagement.debugInfo.isAnyTypeOfAdmin[lang]}:{" "}
               <span
                 className={
                   isAnyTypeOfAdmin ? "text-green-600" : "text-orange-600"
@@ -239,7 +250,7 @@ export const RoleManagement: React.FC = () => {
               </span>
             </div>
             <div>
-              Is SuperVera:{" "}
+              {t.roleManagement.debugInfo.isSuperVera[lang]}:{" "}
               <span
                 className={isSuperVera ? "text-purple-600" : "text-gray-600"}
                 data-cy="role-management-is-supervera"
@@ -256,7 +267,8 @@ export const RoleManagement: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Your Role Assignments ({currentUserRoles?.length || 0})
+            {t.roleManagement.titles.yourRoleAssignments[lang]} (
+            {currentUserRoles?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -265,7 +277,7 @@ export const RoleManagement: React.FC = () => {
               className="text-muted-foreground"
               data-cy="role-management-no-roles"
             >
-              No roles assigned.
+              {t.roleManagement.messages.noRolesAssigned[lang]}
             </p>
           ) : (
             <div className="space-y-3" data-cy="role-management-roles-list">
@@ -294,7 +306,9 @@ export const RoleManagement: React.FC = () => {
                       className="text-xs text-muted-foreground"
                       data-cy="role-management-role-ids"
                     >
-                      Role ID: {role.role_id} • Org ID: {role.organization_id}
+                      {t.roleManagement.labels.roleId[lang]}: {role.role_id} •{" "}
+                      {t.roleManagement.labels.orgId[lang]}:{" "}
+                      {role.organization_id}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -304,7 +318,7 @@ export const RoleManagement: React.FC = () => {
                         className="text-xs bg-green-100 text-green-800"
                         data-cy="role-management-role-active"
                       >
-                        Active
+                        {t.roleManagement.status.active[lang]}
                       </Badge>
                     ) : (
                       <Badge
@@ -312,7 +326,7 @@ export const RoleManagement: React.FC = () => {
                         className="text-xs"
                         data-cy="role-management-role-inactive"
                       >
-                        Inactive
+                        {t.roleManagement.status.inactive[lang]}
                       </Badge>
                     )}
                     {role.assigned_at && (
@@ -347,7 +361,9 @@ export const RoleManagement: React.FC = () => {
                 data-cy="role-management-admin-loading-row"
               >
                 <LoaderCircle className="animate-spin w-6 h-6" />
-                <span className="ml-2">Loading admin data...</span>
+                <span className="ml-2">
+                  {t.roleManagement.loading.adminData[lang]}
+                </span>
               </div>
             ) : adminError ? (
               <Alert
@@ -361,7 +377,7 @@ export const RoleManagement: React.FC = () => {
                 className="text-muted-foreground"
                 data-cy="role-management-admin-no-roles"
               >
-                No role assignments found.
+                {t.roleManagement.messages.noRoleAssignmentsFound[lang]}
               </p>
             ) : (
               <div
@@ -391,7 +407,8 @@ export const RoleManagement: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span data-cy="role-management-admin-role-email">
-                          User email: {role.user_email}
+                          {t.roleManagement.labels.userEmail[lang]}:{" "}
+                          {role.user_email}
                         </span>
                         {role.user_phone && (
                           <span data-cy="role-management-admin-role-phone">
@@ -403,7 +420,9 @@ export const RoleManagement: React.FC = () => {
                         className="text-xs text-muted-foreground"
                         data-cy="role-management-admin-role-ids"
                       >
-                        Role ID: {role.role_id} • Org ID: {role.organization_id}
+                        {t.roleManagement.labels.roleId[lang]}: {role.role_id} •{" "}
+                        {t.roleManagement.labels.orgId[lang]}:{" "}
+                        {role.organization_id}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -413,7 +432,7 @@ export const RoleManagement: React.FC = () => {
                           className="text-xs bg-green-100 text-green-800"
                           data-cy="role-management-admin-role-active"
                         >
-                          Active
+                          {t.roleManagement.status.active[lang]}
                         </Badge>
                       ) : (
                         <Badge
@@ -421,7 +440,7 @@ export const RoleManagement: React.FC = () => {
                           className="text-xs"
                           data-cy="role-management-admin-role-inactive"
                         >
-                          Inactive
+                          {t.roleManagement.status.inactive[lang]}
                         </Badge>
                       )}
                       {role.assigned_at && (
