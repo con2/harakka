@@ -45,7 +45,9 @@ import { LoaderCircle } from "lucide-react";
 type UpdateItemModalProps = {
   onClose: () => void;
   initialData: Item; // Assume initialData is always passed for updating
-  onUpdate?: (item: Omit<Item, "created_at" | "compartment_id">) => void;
+  onUpdate?: (
+    item: Omit<Item, "created_at" | "compartment_id" | "test_metadata">,
+  ) => void;
 };
 
 const UpdateItemModal = ({

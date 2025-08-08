@@ -4,6 +4,8 @@ import { Database } from "@common/supabase.types";
 /* ── Supabase base rows ──────────────────────────────────────────────── */
 export type StorageItemRow =
   Database["public"]["Tables"]["storage_items"]["Row"];
+export type StorageItemInsert =
+  Database["public"]["Tables"]["storage_items"]["Insert"];
 export type LocationRow =
   Database["public"]["Tables"]["storage_locations"]["Row"];
 
@@ -32,3 +34,8 @@ export type ValidItemOrder =
   | "items_number_total"
   | "is_active"
   | "created_at";
+
+export type UpdateItem = StorageItemInsert & {
+  tagIds: string[];
+  location_details: LocationRow;
+};

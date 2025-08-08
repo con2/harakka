@@ -364,7 +364,7 @@ function ItemImageUpload({
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, "main")}
           >
-            {formImages.main?.url ? (
+            {formImages?.main?.url ? (
               <img
                 src={formImages.main.url}
                 className="w-30 h-30 rounded"
@@ -413,7 +413,7 @@ function ItemImageUpload({
               />
             </div>
           )}
-          {formImages.main?.url && (
+          {formImages?.main?.url && (
             <Button
               variant="destructive"
               className="self-center"
@@ -488,7 +488,7 @@ function ItemImageUpload({
             onChange={(e) => handleFileSelect(e, "detail")}
           />
         </div>
-        {formImages.details.length > 0 && (
+        {formImages?.details?.length > 0 && (
           <div className="flex flex-col gap-4">
             {formImages.details.map((image, idx) => (
               <div key={image.id} className="flex gap-4">

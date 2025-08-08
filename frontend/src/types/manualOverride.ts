@@ -18,7 +18,7 @@ export type TagTranslations = {
  * definition of `tags.translations`.
  *
  * The override keeps every other table, view and enum exactly as generated,
- * but replaces the loose `Json | null` column type with the concrete
+ * but replaces the loose `Json | null` column type with the concrete without the helpl of type-fest.
  * {@link TagTranslations} shape so that application code can rely on strict
  * typings without additional casting.
  */

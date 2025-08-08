@@ -1,29 +1,22 @@
-import { ItemFormData } from "@common/items/form.types";
+import { ItemFormData, MappedItem } from "@common/items/form.types";
 import { OrgItem, TagLink } from "@common/items/storage-items.types";
 import { ItemImageInsert } from "@src/modules/item-images/types/item-image.types";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
-function omit<T extends Record<string, any>, K extends keyof T>(
-  obj: T,
-  keys: K[],
-): Omit<T, K> {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([k]) => !keys.includes(k as K)),
-  ) as Omit<T, K>;
-}
-
-export function mapStorageItems(payload: ItemFormData) {
-  return payload.items.map((item) =>
-    omit(item, ["images", "tags", "location_details"]),
-  );
+export function mapStorageItems(payload: ItemFormData): MappedItem[] {
+  return payload.items.map((item) => {
+    const { images, location, tags, ...rest } = item;
+    const newItem: MappedItem = { ...rest, location_id: location.id };
+    return newItem;
+  });
 }
 
 export function mapOrgLinks(payload: ItemFormData): OrgItem[] {
-  return payload.items.map(({ id, items_number_total }) => ({
+  return payload.items.map(({ id, items_number_total, location }) => ({
     storage_item_id: id,
     organization_id: payload.org.id,
-    storage_location_id: payload.location.id,
+    storage_location_id: location.id,
     owned_quantity: items_number_total,
     is_active: true,
   }));

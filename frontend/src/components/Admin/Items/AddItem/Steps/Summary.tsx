@@ -38,7 +38,7 @@ function Summary() {
 
   const createNext = () => dispatch(setPrevStep());
   const editItem = (id: string) => {
-    void dispatch(toggleIsEditing());
+    void dispatch(toggleIsEditing(true));
     void dispatch(editLocalItem(id));
     dispatch(setPrevStep());
   };
@@ -48,11 +48,11 @@ function Summary() {
       if (uploadError) throw new Error(uploadError);
       toast.success("Your items were created!");
       const newItems = items.flatMap((item) => item.id);
+      void dispatch(setStepper(1));
+      void dispatch(clearOrgLocations());
       void navigate("/admin/items", {
         state: { ascending: false, newItems: newItems },
       });
-      void dispatch(setStepper(1));
-      void dispatch(clearOrgLocations());
     } catch (error) {
       toast.error(
         typeof error === "string"
@@ -68,6 +68,14 @@ function Summary() {
         <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
           {t.itemSummary.headings[lang]}
         </p>
+
+        {form.org && items.length > 0 && (
+          <div>
+            <p className="text-sm leading-none font-medium mb-4">
+              Adding items to organization {form.org?.name}
+            </p>
+          </div>
+        )}
         {/* Items */}
         {items.length > 0 ? (
           <>
@@ -100,9 +108,7 @@ function Summary() {
                     <OriginalTableCell>
                       {item.items_number_total}
                     </OriginalTableCell>
-                    <OriginalTableCell>
-                      {item.location_details.name}
-                    </OriginalTableCell>
+                    <OriginalTableCell>{item.location.name}</OriginalTableCell>
                     <OriginalTableCell className="text-right">
                       <Button
                         onClick={() => editItem(item.id)}

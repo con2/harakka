@@ -112,6 +112,8 @@ export const itemsApi = {
     activity_filter?: "active" | "inactive",
     location_filter?: string[],
     categories?: string[],
+    availability_min?: number,
+    availability_max?: number,
   ) => {
     const activity = activity_filter === "active" ? true : false;
     let call = `/storage-items/ordered?order=${ordered_by}&page=${page}&limit=${limit}&ascending=${ascending}`;
@@ -120,6 +122,10 @@ export const itemsApi = {
     if (activity_filter) call += `&active=${activity}`;
     if (location_filter) call += `&location=${location_filter.join(",")}`;
     if (categories) call += `&category=${categories.join(",")}`;
+    if (availability_min !== undefined)
+      call += `&availability_min=${availability_min}`;
+    if (availability_max !== undefined)
+      call += `&availability_max=${availability_max}`;
     return api.get(call);
   },
 

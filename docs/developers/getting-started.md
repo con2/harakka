@@ -62,7 +62,7 @@ PORT=3000
 NODE_ENV=development
 ALLOWED_ORIGINS=http://localhost:5180
 
-# Frontend Configuration  
+# Frontend Configuration
 VITE_SUPABASE_URL="http://127.0.0.1:54321"
 VITE_SUPABASE_ANON_KEY="your-local-anon-key"
 VITE_API_URL="http://127.0.0.1:3000"
@@ -159,7 +159,7 @@ When using local Supabase CLI, the database schema is automatically set up. You 
 ```sh
 # Supabase CLI Commands
 npm run s:start          # Start local Supabase
-npm run s:stop           # Stop local Supabase  
+npm run s:stop           # Stop local Supabase
 npm run s:restart        # Restart local Supabase
 npm run s:reset          # Reset local database
 npm run s:status         # Check Supabase status
@@ -213,7 +213,7 @@ You can also start frontend and backend separately:
 npm run frontend:local
 npm run backend:local
 
-# Live development  
+# Live development
 npm run frontend:live
 npm run backend:live
 ```
@@ -243,7 +243,7 @@ The frontend is built with:
 - Vite as the build tool
 - Redux Toolkit for state management
 - Shadcn/ui for UI components
-- Multilingual support (English/Finnish)
+- Multilingual support (English/Finnish). See [Translation Guide](./frontend/translation.md) for details.
 
 Backend (REST API)
 The backend provides:
@@ -298,6 +298,6 @@ This application is configured for deployment to Azure:
   - Ensure Docker is running (required for Supabase CLI)
 - **Port conflicts**:
   - Frontend runs on port 5180
-  - Backend runs on port 3000  
+  - Backend runs on port 3000
   - Local Supabase runs on port 54321
   - Supabase Studio runs on port 54323

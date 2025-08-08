@@ -1,6 +1,6 @@
 import { Tag } from "./tag";
 import { ItemTranslation } from "./item";
-import { TagTranslations } from "./databaseGenerated";
+import { TagTranslations } from "./manualOverride";
 import { Org_Roles } from "@common/role.types";
 import { StorageItemRow } from "@common/items/storage-items.types";
 import { SelectedStorage } from "@common/items/form.types";
@@ -47,11 +47,7 @@ export interface ItemFormData
     | "updated_at"
     | "storage_item_tags"
     | "average_rating"
-    | "compartment_id"
-    | "is_deleted"
-    | "items_number_available"
     | "test_metadata"
-    | "test_priority_score"
   > {
   // Override translations to ensure they always exist with required fields
   translations: {

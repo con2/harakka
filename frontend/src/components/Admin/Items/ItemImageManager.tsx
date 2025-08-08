@@ -101,14 +101,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
 
   useEffect(() => {
     if (itemId) {
-      console.log("Fetching images for item:", itemId);
-
       try {
         dispatch(getItemImages(itemId))
           .unwrap()
-          .then((response) => {
-            console.log("Images fetched successfully:", response);
-          })
           .catch((error) => {
             console.error("Error fetching images:", error);
             toast.error(t.itemImageManager.messages.toast.loadError[lang]);

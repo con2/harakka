@@ -67,6 +67,16 @@ const UserPanel = () => {
     locationIds: [],
   });
 
+  // --- slider thumb state so the handle moves smoothly without refetching ---
+  const [tempAvailableRange, setTempAvailableRange] = useState<
+    [number, number]
+  >(filters.itemsNumberAvailable);
+
+  // keep local thumb state in sync when filters reset externally
+  useEffect(() => {
+    setTempAvailableRange(filters.itemsNumberAvailable);
+  }, [filters.itemsNumberAvailable]);
+
   // Handle filter change
   const handleFilterChange = (filterKey: string, value: FilterValue) => {
     setFilters((prevFilters) => ({
@@ -206,16 +216,21 @@ const UserPanel = () => {
               </label>
               <Slider
                 min={0}
-                max={100} // edit upper limit
-                value={filters.itemsNumberAvailable}
+                max={100}
+                value={tempAvailableRange}
+                // update thumb position instantly
                 onValueChange={([min, max]) =>
-                  handleFilterChange("itemsNumberAvailable", [min, max])
+                  setTempAvailableRange([min, max])
                 }
+                // commit filter (and trigger API refetch) only on release
+                onValueCommit={([min, max]) => {
+                  setTempAvailableRange([min, max]);
+                  handleFilterChange("itemsNumberAvailable", [min, max]);
+                }}
                 className="w-full"
               />
               <div className="mt-2 text-secondary text-center">
-                {filters.itemsNumberAvailable[0]} -{" "}
-                {filters.itemsNumberAvailable[1]}{" "}
+                {tempAvailableRange[0]} - {tempAvailableRange[1]}{" "}
                 {t.userPanel.availability.items[lang]}
               </div>
             </div>

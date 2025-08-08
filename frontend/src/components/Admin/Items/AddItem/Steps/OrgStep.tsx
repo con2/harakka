@@ -8,7 +8,7 @@ import {
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
+import { Info, MapPin } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectCurrentUserOrganizations } from "@/store/slices/rolesSlice";
 import {
@@ -22,7 +22,7 @@ import {
   selectOrg,
   selectOrgLocation,
 } from "@/store/slices/itemsSlice";
-import { setNextStep } from "@/store/slices/uiSlice";
+import { setNextStep, setStepper } from "@/store/slices/uiSlice";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function OrgStep() {
@@ -76,90 +76,116 @@ function OrgStep() {
         <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
           {t.orgStep.heading.org[lang]}
         </p>
-        <div>
-          {/* Select Organization */}
-          <Select
-            value={selectedOrg?.name ?? ""}
-            onValueChange={handleOrgChange}
-            required
-            name="organization"
-            disabled={items.length > 0}
-          >
-            <SelectTrigger
-              disabled={orgs.length === 1}
-              className="min-w-[250px] border shadow-none border-grey w-[300px]"
-            >
-              <SelectValue placeholder={t.orgStep.placeholders.selectOrg[lang]}>
-                {selectedOrg?.name ?? ""}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {orgs.map((org) => (
-                <SelectItem
-                  key={org.organization_id}
-                  value={org.organization_id}
-                >
-                  {org.organization_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Location Selection */}
-        <div className="flex justify-between items-center">
-          <div className="flex flex-wrap gap-2">
-            {/* Locations of selected org */}
-            {locationLoading
-              ? Array(5)
-                  .fill("")
-                  .map((_, idx) => (
-                    <Skeleton
-                      key={idx}
-                      className={`animate-pulse h-8 rounded-[1rem] bg-muted ${idx % 2 === 0 ? "w-16" : "w-20"} mb-2`}
-                    />
-                  ))
-              : orgLocations.map((loc) => (
-                  <Button
-                    key={loc.storage_location_id}
-                    variant={
-                      selectedLoc?.id === loc.storage_location_id
-                        ? "outline"
-                        : "default"
-                    }
-                    className="gap-2"
-                    disabled={items.length > 0}
-                    onClick={() =>
-                      dispatch(
-                        selectOrgLocation({
-                          id: loc.storage_location_id,
-                          name: loc.storage_locations.name,
-                          address: loc.storage_locations.address,
-                        }),
-                      )
-                    }
-                  >
-                    <MapPin />
-                    {loc.storage_locations?.name ||
-                      `Location #${loc.storage_location_id}`}
-                  </Button>
-                ))}
-
-            {/* Choose location for each item */}
-            {!locationLoading && orgLocations.length > 1 && (
-              <Button
-                disabled={items.length > 0}
-                variant={selectedLoc === null ? "outline" : "default"}
-                onClick={() => dispatch(selectOrgLocation(null))}
-              >
-                {t.orgStep.buttons.chooseLocation[lang]}
-              </Button>
-            )}
+        {items.length > 0 && (
+          <div className="flex align-center gap-3 p-4 border rounded justify-center">
+            <Info color="#3d3d3d" className="self-center" />
+            <p className="text-sm font-medium leading-[1.1rem]">
+              You have unfinished items. Upload or remove these to change
+              organization
+            </p>
           </div>
-        </div>
+        )}
+        {items.length < 1 && (
+          <>
+            <div>
+              {/* Select Organization */}
+
+              <Select
+                value={selectedOrg?.name ?? ""}
+                onValueChange={handleOrgChange}
+                required
+                name="organization"
+                disabled={items.length > 0}
+              >
+                <SelectTrigger
+                  disabled={orgs.length === 1}
+                  className="min-w-[250px] border shadow-none border-grey w-[300px]"
+                >
+                  <SelectValue
+                    placeholder={t.orgStep.placeholders.selectOrg[lang]}
+                  >
+                    {selectedOrg?.name ?? ""}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {orgs.map((org) => (
+                    <SelectItem
+                      key={org.organization_id}
+                      value={org.organization_id}
+                    >
+                      {org.organization_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Location Selection */}
+            <div className="flex justify-between items-center">
+              <div className="flex flex-wrap gap-2">
+                {/* Locations of selected org */}
+                {locationLoading
+                  ? Array(5)
+                      .fill("")
+                      .map((_, idx) => (
+                        <Skeleton
+                          key={idx}
+                          className={`animate-pulse h-8 rounded-[1rem] bg-muted ${idx % 2 === 0 ? "w-16" : "w-20"} mb-2`}
+                        />
+                      ))
+                  : orgLocations.map((loc) => (
+                      <Button
+                        key={loc.storage_location_id}
+                        variant={
+                          selectedLoc?.id === loc.storage_location_id
+                            ? "outline"
+                            : "default"
+                        }
+                        className="gap-2"
+                        disabled={items.length > 0}
+                        onClick={() =>
+                          dispatch(
+                            selectOrgLocation({
+                              id: loc.storage_location_id,
+                              name: loc.storage_locations.name,
+                              address: loc.storage_locations.address,
+                            }),
+                          )
+                        }
+                      >
+                        <MapPin />
+                        {loc.storage_locations?.name ||
+                          `Location #${loc.storage_location_id}`}
+                      </Button>
+                    ))}
+
+                {/* Choose location for each item */}
+                {!locationLoading && orgLocations.length > 1 && (
+                  <Button
+                    disabled={items.length > 0}
+                    variant={selectedLoc === null ? "outline" : "default"}
+                    onClick={() => dispatch(selectOrgLocation(null))}
+                  >
+                    {t.orgStep.buttons.chooseLocation[lang]}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
       {/* Info and Next Button */}
-      <div className="flex flex-2 flex-col justify-end">
+      <div className="flex flex-2 justify-end gap-3">
+        {items.length > 0 && (
+          <Button
+            variant="default"
+            className="w-fit self-end"
+            disabled={!selectedOrg || selectedLoc === undefined}
+            onClick={() => dispatch(setStepper(3))}
+          >
+            {t.addItemForm.buttons.goToSummary[lang]}
+          </Button>
+        )}
         <Button
           variant="outline"
           className="w-fit px-10 self-end"
