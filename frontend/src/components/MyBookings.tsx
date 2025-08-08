@@ -16,11 +16,7 @@ import {
   clearCurrentBookingItems,
 } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
-import {
-  BookingWithDetails,
-  BookingPreview,
-  BookingItemWithDetails,
-} from "@/types";
+import { BookingPreview, BookingItemWithDetails } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -758,18 +754,12 @@ const MyBookings = () => {
                         onPageChange={handleItemPageChange}
                         pageIndex={currentItemPage - 1}
                         columns={bookingColumns}
-                        data={
-                          (selectedBooking as BookingWithDetails)
-                            .booking_items || []
-                        }
+                        data={selectedBooking.booking_items || []}
                       />
                     ) : itemTotalPages === 1 ? (
                       <DataTable
                         columns={bookingColumns}
-                        data={
-                          (selectedBooking as BookingWithDetails)
-                            .booking_items || []
-                        }
+                        data={selectedBooking.booking_items || []}
                       />
                     ) : null}
                   </div>

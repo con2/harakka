@@ -38,5 +38,7 @@ export interface TagAssignment {
   tagIds: string[];
 }
 
+export type ItemFormTag = { tag_id: string; translations: TagTranslations };
+
 /** UI filter values for tag‑assignment status. */
 export type TagAssignmentFilter = "all" | "assigned" | "unassigned";

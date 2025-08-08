@@ -1,6 +1,7 @@
-import { CreateItemDto, Item, UpdateItemDto, ValidItemOrder } from "@/types";
+import { Item, UpdateItemDto, ValidItemOrder } from "@/types";
 import { api } from "../axios";
 import { ApiSingleResponse } from "@common/response.types";
+import { ItemFormData } from "@common/items/form.types";
 
 /**
  * API service for item-related endpoints
@@ -21,12 +22,14 @@ export const itemsApi = {
   getItemById: (id: string): Promise<Item> => api.get(`/storage-items/${id}`),
 
   /**
-   * Create a new item
+   * Create a new item or multiple items
    * @param item - Item data to create
    * @returns Promise with the created item
    */
-  createItem: (item: CreateItemDto): Promise<Item> =>
-    api.post("/storage-items", item),
+  createItems: (
+    payload: ItemFormData,
+  ): Promise<{ status: number; error: string | null }> =>
+    api.post("/storage-items", payload),
 
   /**
    * Update an existing item

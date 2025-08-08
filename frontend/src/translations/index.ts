@@ -1,4 +1,3 @@
-import { addItemModal } from "./modules/addItemModal";
 import { addLocationModal } from "./modules/addLocationModal";
 import { addTagModal } from "./modules/addTagModal";
 import { addUserModal } from "./modules/addUserModal";
@@ -61,11 +60,17 @@ import { organizationLocations } from "./modules/organizationLocations";
 import { roleEditor } from "./modules/roleEditor";
 import { roleManagement } from "./modules/roleManagement";
 import { statusBadge } from "./modules/statusBadge";
+import { orgStep } from "./modules/orgStep";
+import { addItemForm } from "./modules/addItemForm";
+import { itemSummary } from "./modules/itemSummary";
+import { stepper } from "./modules/stepper";
 import { notifications } from "./modules/notifications";
 import { uiComponents } from "./modules/uiComponents";
 
 export const t = {
-  addItemModal,
+  stepper,
+  addItemForm,
+  itemSummary,
   addTagModal,
   addUserModal,
   adminDashboard,
@@ -97,6 +102,7 @@ export const t = {
   navigation,
   bookingConfirmation,
   bookingList,
+  orgStep,
   pagination,
   passwordReset,
   passwordResetResult,
