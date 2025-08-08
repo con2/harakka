@@ -226,16 +226,7 @@ const MyProfile = () => {
         <TabsContent value="user-details">
           {selectedUser ? (
             <div className="flex flex-col md:flex-row items-start">
-              {/* user avatar */}
-              {/* <div className="flex md:w-1/4 justify-center p-2">
-                <Avatar className="w-24 h-24 rounded-full border-1 border-secondary flex">
-                  <img
-                    src={profileImage || ""}
-                    alt="Profile"
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                </Avatar>
-              </div> */}
+              {/* Profile Picture Uploader */}
               <div className="flex md:w-1/4 justify-center p-2">
                 <ProfilePictureUploader />
               </div>
