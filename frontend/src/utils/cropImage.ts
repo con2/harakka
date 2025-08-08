@@ -23,7 +23,7 @@ export const getCroppedImg = async (
   ctx.rotate(radians);
   ctx.translate(-safeArea / 2, -safeArea / 2);
 
-  // draw the image on the canvas
+  // ToDo: handle zoom doesn't work properly
   const scaledWidth = image.width * zoom;
   const scaledHeight = image.height * zoom;
 
