@@ -53,6 +53,7 @@ import { addItemForm } from "./modules/addItemForm";
 import { itemSummary } from "./modules/itemSummary";
 import { stepper } from "./modules/stepper";
 import { notifications } from "./modules/notifications";
+import { profilePicUploader } from "./modules/profilePicUploader";
 
 export const t = {
   stepper,
@@ -109,4 +110,5 @@ export const t = {
   deleteLocationButton,
   editLocationModal,
   organizationLocations,
+  profilePicUploader,
 };

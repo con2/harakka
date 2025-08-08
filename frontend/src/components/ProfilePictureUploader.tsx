@@ -18,6 +18,8 @@ import profilePlaceholder from "../assets/profilePlaceholder.png";
 import Cropper from "react-easy-crop";
 import { getCroppedImg } from "@/utils/cropImage";
 import { Area } from "react-easy-crop";
+import { t } from "@/translations";
+import { useLanguage } from "@/context/LanguageContext";
 
 const ProfilePictureUploader = () => {
   const dispatch = useAppDispatch();
@@ -44,6 +46,9 @@ const ProfilePictureUploader = () => {
   }>(null);
   const [livePreviewUrl, setLivePreviewUrl] = useState<string | null>(null);
   const [rotation, setRotation] = useState(0);
+
+  // Translation hook
+  const { lang } = useLanguage();
 
   const currentImage = selectedUser?.profile_picture_url;
 
@@ -78,7 +83,7 @@ const ProfilePictureUploader = () => {
     };
 
     void generatePreview();
-  }, [previewUrl, croppedAreaPixels, crop, zoom]);
+  }, [previewUrl, croppedAreaPixels, crop, zoom, rotation]);
 
   const handleUpload = async () => {
     if (!file || !selectedUser || !croppedAreaPixels || !previewUrl) return;
@@ -136,20 +141,22 @@ const ProfilePictureUploader = () => {
         <DialogContent className="max-w-[700px]">
           <DialogHeader>
             <DialogTitle className="text-2xl font-semibold tracking-tight">
-              Change Profile Picture
+              {t.profilePicUploader.changeProfilePicture[lang]}
             </DialogTitle>
           </DialogHeader>
 
           <div className="p-6 flex flex-col gap-6">
             {/* File Input */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Choose Image</label>
+              <label className="text-sm font-medium">
+                {t.profilePicUploader.chooseImage[lang]}
+              </label>
               <div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="inline-flex items-center px-4 py-2 bg-secondary text-white rounded hover:bg-secondary/90 transition"
                 >
-                  Upload File
+                  {t.profilePicUploader.uploadFile[lang]}
                 </button>
                 <span className="ml-4 text-sm text-muted-foreground">
                   {file?.name ?? "No file selected"}
@@ -167,7 +174,9 @@ const ProfilePictureUploader = () => {
             {/* Cropper */}
             {previewUrl && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Crop Image</label>
+                <label className="text-sm font-medium">
+                  {t.profilePicUploader.cropImage[lang]}
+                </label>
                 <div className="relative w-full h-64 bg-gray-200 rounded overflow-hidden">
                   <Cropper
                     image={previewUrl}
@@ -183,7 +192,9 @@ const ProfilePictureUploader = () => {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Zoom</label>
+                  <label className="text-sm font-medium">
+                    {t.profilePicUploader.zoom[lang]}
+                  </label>
                   <input
                     type="range"
                     min={1}
@@ -200,7 +211,9 @@ const ProfilePictureUploader = () => {
             {/* Live Preview */}
             {livePreviewUrl && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Preview</label>
+                <label className="text-sm font-medium">
+                  {t.profilePicUploader.preview[lang]}
+                </label>
                 <img
                   src={livePreviewUrl}
                   className="w-24 h-24 rounded-full border"
@@ -216,16 +229,18 @@ const ProfilePictureUploader = () => {
                   className="border border-gray-300 hover:bg-gray-100"
                   onClick={() => setRotation((prev) => (prev + 90) % 360)}
                 >
-                  Rotate 90°
+                  {t.profilePicUploader.rotate[lang]}
                 </Button>
               </div>
             )}
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-4">
-              <Button onClick={() => setOpen(false)}>Cancel</Button>
+              <Button onClick={() => setOpen(false)}>
+                {t.profilePicUploader.cancel[lang]}
+              </Button>
               <Button variant="outline" onClick={handleUpload} disabled={!file}>
-                Upload
+                {t.profilePicUploader.upload[lang]}
               </Button>
             </div>
           </div>
