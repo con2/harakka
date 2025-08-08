@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import profilePlaceholder from "../assets/profilePlaceholder.png";
 import Cropper from "react-easy-crop";
-import { getCroppedImg } from "@/store/utils/cropImage";
+import { getCroppedImg } from "@/utils/cropImage";
 import { Area } from "react-easy-crop";
 
 const ProfilePictureUploader = () => {
@@ -70,6 +70,7 @@ const ProfilePictureUploader = () => {
           zoom,
           1,
           croppedAreaPixels,
+          rotation,
         );
         const newPreviewUrl = URL.createObjectURL(blob);
         setLivePreviewUrl(newPreviewUrl);

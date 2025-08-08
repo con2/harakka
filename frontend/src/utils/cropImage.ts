@@ -4,7 +4,7 @@ export const getCroppedImg = async (
   zoom: number,
   aspect: number,
   croppedAreaPixels: { width: number; height: number; x: number; y: number },
-  rotation: number = 0,
+  rotation: number,
 ): Promise<Blob> => {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
