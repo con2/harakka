@@ -1,4 +1,3 @@
-import { addItemModal } from "./modules/addItemModal";
 import { addLocationModal } from "./modules/addLocationModal";
 import { addTagModal } from "./modules/addTagModal";
 import { addUserModal } from "./modules/addUserModal";
@@ -49,10 +48,16 @@ import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
 import { editLocationModal } from "./modules/editLocationModal";
 import { organizationLocations } from "./modules/organizationLocations";
+import { orgStep } from "./modules/orgStep";
+import { addItemForm } from "./modules/addItemForm";
+import { itemSummary } from "./modules/itemSummary";
+import { stepper } from "./modules/stepper";
 import { notifications } from "./modules/notifications";
 
 export const t = {
-  addItemModal,
+  stepper,
+  addItemForm,
+  itemSummary,
   addTagModal,
   addUserModal,
   adminDashboard,
@@ -78,6 +83,7 @@ export const t = {
   notifications,
   bookingConfirmation,
   bookingList,
+  orgStep,
   pagination,
   passwordReset,
   passwordResetResult,
