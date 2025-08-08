@@ -119,6 +119,24 @@ export const logs = {
       en: "logs",
     },
   },
+  levelDisplay: {
+    error: {
+      fi: "Virhe",
+      en: "Error",
+    },
+    warning: {
+      fi: "Varoitus",
+      en: "Warning",
+    },
+    info: {
+      fi: "Tieto",
+      en: "Info",
+    },
+    debug: {
+      fi: "Debug",
+      en: "Debug",
+    },
+  },
   details: {
     title: {
       fi: "Lokin tiedot",
