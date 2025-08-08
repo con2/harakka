@@ -437,15 +437,6 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
           </CardTitle>
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void refreshAllUserRoles(true)}
-              data-cy="role-management-admin-refresh"
-            >
-              {/* TODO: remove it later */}
-              Refresh (debug)
-            </Button>
-            <Button
               size="sm"
               className="addBtn"
               onClick={() => void startAdd()}

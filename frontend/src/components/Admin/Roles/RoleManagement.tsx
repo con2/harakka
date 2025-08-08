@@ -108,31 +108,33 @@ export const RoleManagement: React.FC = () => {
         <h2 className="text-2xl font-bold" data-cy="role-management-title">
           Role Management Dashboard
         </h2>
-        <Button
-          onClick={handleRefresh}
-          variant="outline"
-          size="sm"
-          data-cy="role-management-refresh-btn"
-        >
-          <RefreshCw className="w-4 h-4 mr-2" />
-          {/* TODO: remove it later */}
-          Refresh (debug)
-        </Button>
-        <Button
-          onClick={handleRefreshSession}
-          variant="outline"
-          size="sm"
-          disabled={sessionRefreshing}
-          data-cy="role-management-refresh-session-btn"
-        >
-          {sessionRefreshing ? (
-            <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
+        <div className="flex space-x-2">
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            size="sm"
+            data-cy="role-management-refresh-btn"
+          >
             <RefreshCw className="w-4 h-4 mr-2" />
-          )}
-          {/* TODO: remove it later */}
-          Refresh session (debug)
-        </Button>
+            {/* TODO: remove it later */}
+            Refresh (debug)
+          </Button>
+          <Button
+            onClick={handleRefreshSession}
+            variant="outline"
+            size="sm"
+            disabled={sessionRefreshing}
+            data-cy="role-management-refresh-session-btn"
+          >
+            {sessionRefreshing ? (
+              <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4 mr-2" />
+            )}
+            {/* TODO: remove it later */}
+            Refresh session (debug)
+          </Button>
+        </div>
       </div>
 
       {/* All assigned roles list */}
