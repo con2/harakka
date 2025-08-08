@@ -1,6 +1,6 @@
 import { Tag } from "./tag";
 import { Item, ItemTranslation } from "./item";
-import { TagTranslations } from "./databaseGenerated";
+import { TagTranslations } from "./manualOverride";
 import { Org_Roles } from "@common/role.types";
 
 /**
@@ -47,6 +47,7 @@ export interface ItemFormData
     | "storage_item_tags"
     | "tagIds"
     | "average_rating"
+    | "test_metadata"
   > {
   // Override translations to ensure they always exist with required fields
   translations: {

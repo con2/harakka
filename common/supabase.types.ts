@@ -1006,7 +1006,6 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_deleted: boolean | null
-          items_number_available: number | null
           items_number_currently_in_storage: number | null
           items_number_total: number
           location_id: string
@@ -1022,7 +1021,6 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_deleted?: boolean | null
-          items_number_available?: number | null
           items_number_currently_in_storage?: number | null
           items_number_total: number
           location_id: string
@@ -1038,7 +1036,6 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_deleted?: boolean | null
-          items_number_available?: number | null
           items_number_currently_in_storage?: number | null
           items_number_total?: number
           location_id?: string
@@ -1537,6 +1534,7 @@ export type Database = {
           fi_item_type: string | null
           id: string | null
           is_active: boolean | null
+          items_number_currently_in_storage: number | null
           items_number_total: number | null
           location_id: string | null
           location_name: string | null
@@ -1616,6 +1614,10 @@ export type Database = {
       calculate_storage_item_total: {
         Args: { item_id: string }
         Returns: number
+      }
+      cleanup_item_images: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       create_notification: {
         Args: {

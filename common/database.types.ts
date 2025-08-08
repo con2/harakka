@@ -58,6 +58,15 @@ type NotificationRowFallback = BaseNotificationRow & {
   metadata: Record<string, unknown>;
 };
 
+type StorageItemsJsonColumns = {
+  translations?: ItemTranslations | null;
+  test_metadata?: {
+    version?: number;
+    test_flag?: boolean;
+    last_modified?: string;
+  };
+};
+
 // Helps to override the `Json | null` type in the database schema
 /* ── Add the shape of translations here ──────────────────────────── */
 export type Database = MergeDeep<
@@ -71,9 +80,9 @@ export type Database = MergeDeep<
           Update: Partial<NotificationRow> | NotificationRowFallback;
         };
         storage_items: {
-          Row: { translations: ItemTranslations | null };
-          Insert: { translations?: ItemTranslations | null };
-          Update: { translations?: ItemTranslations | null };
+          Row: StorageItemsJsonColumns;
+          Insert: StorageItemsJsonColumns;
+          Update: Partial<StorageItemsJsonColumns>;
         };
         tags: {
           Row: { translations: TagTranslations | null };
