@@ -143,15 +143,9 @@ export class StorageItemsController {
     return this.storageItemsService.updateItem(req, id, org_id, item);
   }
 
-  // soft delete
-  @Post(":id/soft-delete")
-  async softDeleteStorageItem(@Req() req: Request, @Param("id") id: string) {
-    return this.storageItemsService.softDeleteItem(req, id);
-  }
-
-  @Post(":id/can-delete")
+  @Get(":id/can-delete")
   async canDelete(
-    @Req() req: Request,
+    @Req() req: AuthRequest,
     @Param("id") id: string,
   ): Promise<{ success: boolean; reason?: string; id: string }> {
     try {

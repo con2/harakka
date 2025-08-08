@@ -226,8 +226,7 @@ export class StorageItemsService {
     org_id: string,
     item: UpdateItem,
   ): Promise<StorageItem> {
-    const supabase = req["supabase"] as SupabaseClient;
-
+    const supabase = req.supabase;
     // Extract properties that shouldn't be sent to the database
     const { tagIds, location_details, ...itemData } = item;
 
@@ -287,7 +286,7 @@ export class StorageItemsService {
    * @returns
    */
   async deleteItem(
-    req: Request,
+    req: AuthRequest,
     item_id: string,
     org_id: string,
     confirm?: string,
@@ -381,27 +380,11 @@ export class StorageItemsService {
     return data.map((entry) => entry.items); // Extract items from the relation
   }
 
-  // 7. soft-delete item (to keep the data just in case)
-  async softDeleteItem(
-    req: Request,
-    id: string,
-  ): Promise<{ success: boolean; id: string }> {
-    const supabase = req["supabase"] as SupabaseClient;
-    const { error } = await supabase
-      .from("storage_items")
-      .update({ is_deleted: true })
-      .eq("id", id);
-
-    if (error) {
-      throw new Error(`Soft delete failed: ${error.message}`);
-    }
-
-    return { success: true, id };
-  }
-
-  // 8. check if the item can be deleted (if it exists in some bookings)
+  /**
+   * See if an item is currently in any bookings.
+   */
   async canDeleteItem(
-    req: Request,
+    req: AuthRequest,
     id: string,
     confirm?: string,
   ): Promise<{ success: boolean; reason?: string; id: string }> {
