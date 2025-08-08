@@ -1,8 +1,8 @@
 export const getCroppedImg = async (
   imageSrc: string,
-  crop: { x: number; y: number },
+  _crop: { x: number; y: number },
   zoom: number,
-  aspect: number,
+  _aspect: number,
   croppedAreaPixels: { width: number; height: number; x: number; y: number },
   rotation: number,
 ): Promise<Blob> => {
