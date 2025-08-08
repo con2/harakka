@@ -64,7 +64,6 @@ export const RoleContextSwitcher: React.FC = () => {
 
       try {
         await clearActiveContext();
-        console.log("Context cleared successfully");
       } catch (error) {
         console.error("Failed to clear context:", error);
       } finally {

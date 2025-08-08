@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect, useState, lazy, Suspense } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRoles } from "@/hooks/useRoles";
 import { Button } from "@/components/ui/button";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-const RoleEditer = lazy(() => import("./RoleEditer"));
 import { toast } from "sonner";
 import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,7 +19,6 @@ export const RoleManagement: React.FC = () => {
     refreshCurrentUserRoles,
     refreshAllUserRoles,
     hasAnyRole,
-    clearRoleCache,
   } = useRoles();
 
   // Define admin status solely from new user roles
@@ -34,8 +32,6 @@ export const RoleManagement: React.FC = () => {
 
   // Track only session refreshing state
   const [sessionRefreshing, setSessionRefreshing] = useState(false);
-  const [showEditor, setShowEditor] = useState(false);
-
   // Manual refresh function - now using force=true to bypass cache
   const handleRefresh = useCallback(async () => {
     try {
@@ -63,27 +59,6 @@ export const RoleManagement: React.FC = () => {
       setSessionRefreshing(false);
     }
   }, []);
-
-  // Handler to refresh roles after any role operation
-  const handleRolesChanged = useCallback(async () => {
-    try {
-      // Clear the cache entry before forcing a refresh
-      clearRoleCache(["current", "all"]);
-
-      // Now force refresh with the cleared cache
-      await Promise.all([
-        refreshCurrentUserRoles(true),
-        isAnyTypeOfAdmin ? refreshAllUserRoles(true) : Promise.resolve(),
-      ]);
-    } catch (error) {
-      console.error("Error refreshing roles:", error);
-    }
-  }, [
-    refreshCurrentUserRoles,
-    refreshAllUserRoles,
-    isAnyTypeOfAdmin,
-    clearRoleCache,
-  ]);
 
   // Explicitly fetch all roles when the admin page loads
   useEffect(() => {
@@ -140,7 +115,8 @@ export const RoleManagement: React.FC = () => {
           data-cy="role-management-refresh-btn"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
+          {/* TODO: remove it later */}
+          Refresh (debug)
         </Button>
         <Button
           onClick={handleRefreshSession}
@@ -154,37 +130,13 @@ export const RoleManagement: React.FC = () => {
           ) : (
             <RefreshCw className="w-4 h-4 mr-2" />
           )}
-          Refresh session
+          {/* TODO: remove it later */}
+          Refresh session (debug)
         </Button>
       </div>
 
       {/* All assigned roles list */}
       {isAnyTypeOfAdmin && <RolesList />}
-
-      {/* Roles editing Section */}
-      {isAnyTypeOfAdmin && (
-        <div className="my-6" data-cy="role-management-editer">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowEditor((v) => !v)}
-          >
-            {showEditor ? "Hide Role Editor" : "Open Role Editor"}
-          </Button>
-          {showEditor && (
-            <Suspense
-              fallback={
-                <div className="flex items-center gap-2 mt-3">
-                  <LoaderCircle className="w-4 h-4 animate-spin" />
-                  <span>Loading editor…</span>
-                </div>
-              }
-            >
-              <RoleEditer onRolesChanged={handleRolesChanged} />
-            </Suspense>
-          )}
-        </div>
-      )}
     </div>
   );
 };
