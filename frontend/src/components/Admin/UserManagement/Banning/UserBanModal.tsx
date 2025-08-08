@@ -333,7 +333,11 @@ const UserBanModal = ({
               onValueChange={setSelectedBanReason}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a reason..." />
+                <SelectValue
+                  placeholder={
+                    t.userBanning.fields.banReason.selectPlaceholder[lang]
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {COMMON_BAN_REASONS.map((reason) => (
@@ -354,7 +358,9 @@ const UserBanModal = ({
                 id="customBanReason"
                 value={customBanReason}
                 onChange={(e) => setCustomBanReason(e.target.value)}
-                placeholder="Please specify the reason for banning..."
+                placeholder={
+                  t.userBanning.fields.banReason.customPlaceholder[lang]
+                }
                 rows={3}
               />
             </div>

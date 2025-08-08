@@ -45,9 +45,17 @@ export const userBanning = {
         fi: "Syötä syy estolle...",
         en: "Enter reason for ban...",
       },
+      selectPlaceholder: {
+        fi: "Valitse syy...",
+        en: "Select a reason...",
+      },
       custom: {
         fi: "Mukautettu esto-syy",
         en: "Custom Ban Reason",
+      },
+      customPlaceholder: {
+        fi: "Täsmennä esto-syy...",
+        en: "Please specify the reason for banning...",
       },
     },
     notes: {
@@ -244,6 +252,40 @@ export const userBanning = {
           fi: "Rooli-esto",
           en: "Role Ban",
         },
+      },
+      organization: {
+        fi: "Organisaatio",
+        en: "Organization",
+      },
+      organizationPlaceholder: {
+        fi: "Valitse organisaatio, josta esto poistetaan...",
+        en: "Select organization to unban from...",
+      },
+      role: {
+        fi: "Rooli",
+        en: "Role",
+      },
+      rolePlaceholder: {
+        fi: "Valitse rooli, josta esto poistetaan...",
+        en: "Select role to unban from...",
+      },
+      reason: {
+        fi: "Syy",
+        en: "Reason",
+      },
+      reasonPlaceholder: {
+        fi: "Syy eston poistamiselle...",
+        en: "Reason for unbanning...",
+      },
+    },
+    actions: {
+      confirm: {
+        fi: "Poista esto",
+        en: "Unban",
+      },
+      cancel: {
+        fi: "Peruuta",
+        en: "Cancel",
       },
     },
   },

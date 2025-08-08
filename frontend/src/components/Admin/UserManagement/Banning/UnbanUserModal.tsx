@@ -286,7 +286,7 @@ const UnbanUserModal = ({
             variant="outline"
             size="sm"
             className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
-            title="Unban User"
+            title={t.userBanning.unban.modal.title[lang]}
           >
             <UserCheck className="h-4 w-4" />
           </Button>
@@ -360,7 +360,13 @@ const UnbanUserModal = ({
                     onValueChange={setOrganizationId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select organization to unban from..." />
+                      <SelectValue
+                        placeholder={
+                          t.userBanning.unban.fields.organizationPlaceholder[
+                            lang
+                          ]
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {getOrganizationsWithActiveBans().map(
@@ -385,7 +391,11 @@ const UnbanUserModal = ({
                   </Label>
                   <Select value={roleId} onValueChange={setRoleId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select role to unban from..." />
+                      <SelectValue
+                        placeholder={
+                          t.userBanning.unban.fields.rolePlaceholder[lang]
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {getRolesWithActiveBansForOrg(organizationId).map(
@@ -408,7 +418,9 @@ const UnbanUserModal = ({
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Reason for unbanning..."
+                  placeholder={
+                    t.userBanning.unban.fields.reasonPlaceholder[lang]
+                  }
                   rows={2}
                 />
               </div>
