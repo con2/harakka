@@ -187,6 +187,9 @@ function checkFilesForHardcodedStrings(
     /value:\s*"(create|update|delete|edit|softDelete|restoreRole|hardDelete)"/, // CRUD operation values
     /\)\s*:\s*\w+\s*\?\s*\(/, // Ternary operator patterns
     /^\w+\.\w+\./, // Property access patterns like "row.original.is_active"
+    /\w+\.toLowerCase\(\)/, // Method calls like toLowerCase()
+    /\w+\.includes\(/, // Method calls like includes()
+    /^\s*\)\s*[=:>]\s*/, // Function/method endings
   ];
 
   for (const file of files) {
@@ -227,7 +230,11 @@ function checkFilesForHardcodedStrings(
           !str.includes("t.") && // Not using translation system
           !punctuationRegex.test(str) &&
           !ignorePatterns.some((pattern) => pattern.test(str)) &&
-          !falsePositivePatterns.some((pattern) => pattern.test(str)) // Enhanced filtering
+          !falsePositivePatterns.some((pattern) => pattern.test(str)) && // Enhanced filtering
+          !/\w+\.\w+\(/.test(str) && // Skip method calls
+          !/^[a-zA-Z_$][a-zA-Z0-9_$]*\s*\(/.test(str) && // Skip function calls
+          !/\)\s*[,;}\]]/.test(str) && // Skip function/method endings
+          !/^\s*\w+\s*[(){}[\]]/.test(str) // Skip code expressions with brackets/parens
         ) {
           const relPath = path.relative(ROOT_DIR, file);
           issues.push({
@@ -258,7 +265,9 @@ function checkFilesForHardcodedStrings(
           !falsePositivePatterns.some((pattern) =>
             pattern.test(`${propName}: "${str}"`),
           ) &&
-          !/^(transition|hover|bg-|text-|border-|font-)/.test(str) // Skip Tailwind classes
+          !/^(transition|hover|bg-|text-|border-|font-|p-|m-|w-|h-|flex|grid|rounded|shadow|space-|gap-|justify-|items-|absolute|relative|fixed|static|sticky|top-|bottom-|left-|right-|z-|opacity-|cursor-|select-|pointer-|overflow-|hidden|visible|block|inline|table-|sr-only|not-sr-only)/.test(
+            str,
+          ) // Skip Tailwind classes
         ) {
           const relPath = path.relative(ROOT_DIR, file);
           issues.push({
@@ -290,6 +299,8 @@ function checkFilesForHardcodedStrings(
           !/^[\s\d.,:;!?@#$%^&*()+=\-€$%]+$/.test(str) && // Not just symbols/punctuation
           !/^(https?:\/\/|www\.)/.test(str) && // Not a URL
           !/^[A-Z][a-zA-Z0-9]*$/.test(str) && // Not a component name
+          !/\w+\.\w+\(/.test(str) && // Not method calls
+          !/\)\s*[,;}\]]/.test(str) && // Not method/function endings
           !ignorePatterns.some((pattern) => pattern.test(str))
         ) {
           const relPath = path.relative(ROOT_DIR, file);

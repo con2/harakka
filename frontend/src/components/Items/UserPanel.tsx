@@ -116,7 +116,9 @@ const UserPanel = () => {
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
           <div>
             <div className="flex items-center justify-between my-2">
-              <h3 className="text-secondary font-bold mb-0">Filters</h3>
+              <h3 className="text-secondary font-bold mb-0">
+                {t.userPanel.filters.title[lang]}
+              </h3>
               <div className="flex items-center gap-2">
                 {/* Clear filters button */}
                 {countActiveFilters() > 0 && (
@@ -136,7 +138,7 @@ const UserPanel = () => {
                         })
                       }
                     >
-                      Clear Filters
+                      {t.userPanel.filters.clearFilters[lang]}
                     </Button>
                   </div>
                 )}
@@ -147,7 +149,7 @@ const UserPanel = () => {
                 <Button
                   onClick={() => setIsFilterVisible(false)}
                   className="md:hidden p-1 rounded hover:bg-slate-100 transition-colors"
-                  aria-label="Close Filters"
+                  aria-label={t.userPanel.filters.closeFilters[lang]}
                 >
                   <SlidersIcon className="w-5 h-5 text-highlight2" />
                 </Button>
