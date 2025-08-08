@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useRoles } from "@/hooks/useRoles";
 import {
@@ -21,6 +21,25 @@ export const RoleContextSwitcher: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Track when clearing is in progress
+  const [isClearing, setIsClearing] = useState(false);
+
+  // Important: Initialize with empty string instead of undefined to keep component controlled
+  const [localValue, setLocalValue] = useState<string>(
+    activeContext.organizationId && activeContext.roleName
+      ? `${activeContext.organizationId}:${activeContext.roleName}`
+      : "",
+  );
+
+  // Keep localValue in sync with activeContext changes
+  useEffect(() => {
+    const v =
+      activeContext.organizationId && activeContext.roleName
+        ? `${activeContext.organizationId}:${activeContext.roleName}`
+        : "";
+    setLocalValue(v);
+  }, [activeContext.organizationId, activeContext.roleName]);
+
   // Check if user would lose admin access with this role change
   const isInAdminArea = location.pathname.startsWith("/admin");
 
@@ -37,9 +56,20 @@ export const RoleContextSwitcher: React.FC = () => {
   }));
 
   // Handler for changing the active context
-  const handleContextChange = (value: string) => {
+  const handleContextChange = async (value: string) => {
+    // First check if we're clearing the selection
     if (value === "clear") {
-      clearActiveContext();
+      setIsClearing(true);
+      setLocalValue(""); // Use empty string instead of undefined
+
+      try {
+        await clearActiveContext();
+        console.log("Context cleared successfully");
+      } catch (error) {
+        console.error("Failed to clear context:", error);
+      } finally {
+        setIsClearing(false);
+      }
 
       // If in admin area and clearing role, redirect to a safe page
       if (isInAdminArea) {
@@ -48,6 +78,10 @@ export const RoleContextSwitcher: React.FC = () => {
       return;
     }
 
+    // Set local value for immediate UI feedback
+    setLocalValue(value);
+
+    // Otherwise, we're setting a new context
     const [orgId, roleName] = value.split(":");
     const org = currentUserOrganizations.find(
       (o) => o.organization_id === orgId,
@@ -55,7 +89,7 @@ export const RoleContextSwitcher: React.FC = () => {
 
     if (orgId && roleName && org) {
       // Save the new role context
-      setActiveContext(orgId, roleName, org.organization_name);
+      await setActiveContext(orgId, roleName, org.organization_name);
 
       // Get the current path to check if redirection is needed
       const currentPath = location.pathname;
@@ -77,17 +111,18 @@ export const RoleContextSwitcher: React.FC = () => {
     }
   };
 
+  // Add a key to force remounting when roles change
+  const componentKey = `role-switcher-${activeRoles.length}-${isClearing}`;
+
   return activeRoles.length > 1 ? (
     <div className="flex items-center gap-2">
       <Select
-        value={
-          activeContext.organizationId && activeContext.roleName
-            ? `${activeContext.organizationId}:${activeContext.roleName}`
-            : undefined
-        }
+        key={componentKey}
+        value={localValue}
         onValueChange={handleContextChange}
+        defaultValue=""
       >
-        <SelectTrigger className="w-[220px]">
+        <SelectTrigger className="w-[250px]">
           <SelectValue placeholder="Select active role" />
         </SelectTrigger>
         <SelectContent>

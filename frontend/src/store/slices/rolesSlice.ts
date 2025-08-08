@@ -442,13 +442,6 @@ export const selectActiveRoleName = (state: RootState) =>
 export const selectActiveOrganizationName = (state: RootState) =>
   state.roles.activeRoleContext.organizationName;
 
-// Helper for checking if active context is set
-export const selectHasActiveContext = (state: RootState) =>
-  !!(
-    state.roles.activeRoleContext.organizationId &&
-    state.roles.activeRoleContext.roleName
-  );
-
 // Export actions
 export const {
   clearRoleErrors,

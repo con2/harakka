@@ -28,18 +28,19 @@ export const Navigation = () => {
   // Get user profile data from Redux
   const selectedUser = useAppSelector(selectSelectedUser);
   // Get user role information from the hook
-  const { hasRoleInContext } = useRoles();
+  const { hasAnyRole } = useRoles();
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
 
-  // Check if user is switched admin role
-  const isAnyTypeOfAdmin =
-    hasRoleInContext("admin") ||
-    hasRoleInContext("superVera") ||
-    hasRoleInContext("main_admin") ||
-    hasRoleInContext("super_admin") ||
-    hasRoleInContext("storage_manager");
+  // Check if user has any admin role using hasAnyRole for efficiency
+  const isAnyTypeOfAdmin = hasAnyRole([
+    "admin",
+    "superVera",
+    "main_admin",
+    "super_admin",
+    "storage_manager",
+  ]);
 
   const cartItemsCount = useAppSelector(selectCartItemsCount);
   const location = useLocation();

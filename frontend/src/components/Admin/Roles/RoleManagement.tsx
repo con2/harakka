@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, lazy, Suspense } from "react";
 import { useRoles } from "@/hooks/useRoles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LoaderCircle, Shield, Users, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import RoleEditer from "./RoleEditer";
+const RoleEditer = lazy(() => import("./RoleEditer"));
 import { toast } from "sonner";
 import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,13 +34,14 @@ export const RoleManagement: React.FC = () => {
     "superVera",
     "main_admin",
     "super_admin",
-    "store_manager",
+    "storage_manager",
   ]);
 
   const isSuperVera = hasRole("superVera");
 
   // Track only session refreshing state
   const [sessionRefreshing, setSessionRefreshing] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
 
   // Manual refresh function - now using force=true to bypass cache
   const handleRefresh = useCallback(async () => {
@@ -442,7 +443,25 @@ export const RoleManagement: React.FC = () => {
       {/* Roles editing Section */}
       {isAnyTypeOfAdmin && (
         <div className="my-6" data-cy="role-management-editer">
-          <RoleEditer onRolesChanged={handleRolesChanged} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEditor((v) => !v)}
+          >
+            {showEditor ? "Hide Role Editor" : "Open Role Editor"}
+          </Button>
+          {showEditor && (
+            <Suspense
+              fallback={
+                <div className="flex items-center gap-2 mt-3">
+                  <LoaderCircle className="w-4 h-4 animate-spin" />
+                  <span>Loading editor…</span>
+                </div>
+              }
+            >
+              <RoleEditer onRolesChanged={handleRolesChanged} />
+            </Suspense>
+          )}
         </div>
       )}
     </div>
