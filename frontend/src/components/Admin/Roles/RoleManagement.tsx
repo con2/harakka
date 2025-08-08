@@ -1,14 +1,13 @@
 import React, { useCallback, useEffect, useState, lazy, Suspense } from "react";
 import { useRoles } from "@/hooks/useRoles";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoaderCircle, Shield, Users, RefreshCw } from "lucide-react";
+import { LoaderCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 const RoleEditer = lazy(() => import("./RoleEditer"));
 import { toast } from "sonner";
 import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 import { useAuth } from "@/hooks/useAuth";
+import RolesList from "./RolesList";
 
 export const RoleManagement: React.FC = () => {
   // Get auth state directly from Auth context
@@ -17,14 +16,10 @@ export const RoleManagement: React.FC = () => {
   // Get role-specific functions and data from useRoles
   const {
     currentUserRoles,
-    allUserRoles,
-    adminLoading,
     error,
-    adminError,
     refreshCurrentUserRoles,
     refreshAllUserRoles,
     hasAnyRole,
-    hasRole,
     clearRoleCache,
   } = useRoles();
 
@@ -36,8 +31,6 @@ export const RoleManagement: React.FC = () => {
     "super_admin",
     "storage_manager",
   ]);
-
-  const isSuperVera = hasRole("superVera");
 
   // Track only session refreshing state
   const [sessionRefreshing, setSessionRefreshing] = useState(false);
@@ -165,280 +158,8 @@ export const RoleManagement: React.FC = () => {
         </Button>
       </div>
 
-      {/* Debug Information */}
-      <Card data-cy="role-management-debug-card">
-        <CardHeader>
-          <CardTitle>Debug Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-1 text-sm font-mono">
-            <div>
-              Auth Loading:{" "}
-              <span
-                className={authLoading ? "text-red-600" : "text-green-600"}
-                data-cy="role-management-loading"
-              >
-                {authLoading.toString()}
-              </span>
-            </div>
-            <div>
-              Admin Loading:{" "}
-              <span
-                className={adminLoading ? "text-red-600" : "text-green-600"}
-                data-cy="role-management-admin-loading"
-              >
-                {adminLoading.toString()}
-              </span>
-            </div>
-            <div>
-              Error:{" "}
-              <span
-                className={error ? "text-red-600" : "text-green-600"}
-                data-cy="role-management-error"
-              >
-                {error || "None"}
-              </span>
-            </div>
-            <div>
-              Admin Error:{" "}
-              <span
-                className={adminError ? "text-red-600" : "text-green-600"}
-                data-cy="role-management-admin-error"
-              >
-                {adminError || "None"}
-              </span>
-            </div>
-            <div>
-              Current User Roles:{" "}
-              <span
-                className="text-blue-600"
-                data-cy="role-management-current-user-roles"
-              >
-                {currentUserRoles?.length || 0}
-              </span>
-            </div>
-            <div>
-              All User Roles:{" "}
-              <span
-                className="text-blue-600"
-                data-cy="role-management-all-user-roles"
-              >
-                {allUserRoles?.length || 0}
-              </span>
-            </div>
-            <div>
-              is Any Type Of Admin:{" "}
-              <span
-                className={
-                  isAnyTypeOfAdmin ? "text-green-600" : "text-orange-600"
-                }
-                data-cy="role-management-is-admin"
-              >
-                {isAnyTypeOfAdmin.toString()}
-              </span>
-            </div>
-            <div>
-              Is SuperVera:{" "}
-              <span
-                className={isSuperVera ? "text-purple-600" : "text-gray-600"}
-                data-cy="role-management-is-supervera"
-              >
-                {isSuperVera.toString()}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Current User Roles */}
-      <Card data-cy="role-management-current-roles-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Your Role Assignments ({currentUserRoles?.length || 0})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!currentUserRoles || currentUserRoles.length === 0 ? (
-            <p
-              className="text-muted-foreground"
-              data-cy="role-management-no-roles"
-            >
-              No roles assigned.
-            </p>
-          ) : (
-            <div className="space-y-3" data-cy="role-management-roles-list">
-              {currentUserRoles.map((role, index) => (
-                <div
-                  key={role.id || index}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                  data-cy="role-management-role-row"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant="default"
-                        data-cy="role-management-role-badge"
-                      >
-                        {role.role_name}
-                      </Badge>
-                      <span
-                        className="text-sm text-muted-foreground"
-                        data-cy="role-management-role-org"
-                      >
-                        in {role.organization_name}
-                      </span>
-                    </div>
-                    <p
-                      className="text-xs text-muted-foreground"
-                      data-cy="role-management-role-ids"
-                    >
-                      Role ID: {role.role_id} • Org ID: {role.organization_id}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {role.is_active ? (
-                      <Badge
-                        variant="default"
-                        className="text-xs bg-green-100 text-green-800"
-                        data-cy="role-management-role-active"
-                      >
-                        Active
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs"
-                        data-cy="role-management-role-inactive"
-                      >
-                        Inactive
-                      </Badge>
-                    )}
-                    {role.assigned_at && (
-                      <span
-                        className="text-xs text-muted-foreground"
-                        data-cy="role-management-role-assigned-at"
-                      >
-                        {new Date(role.assigned_at).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Admin Section */}
-      {isAnyTypeOfAdmin && (
-        <Card data-cy="role-management-admin-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5" />
-              All Users Roles ({allUserRoles?.length || 0})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {adminLoading ? (
-              <div
-                className="flex justify-center items-center h-32"
-                data-cy="role-management-admin-loading-row"
-              >
-                <LoaderCircle className="animate-spin w-6 h-6" />
-                <span className="ml-2">Loading admin data...</span>
-              </div>
-            ) : adminError ? (
-              <Alert
-                variant="destructive"
-                data-cy="role-management-admin-error-alert"
-              >
-                <AlertDescription>{adminError}</AlertDescription>
-              </Alert>
-            ) : !allUserRoles || allUserRoles.length === 0 ? (
-              <p
-                className="text-muted-foreground"
-                data-cy="role-management-admin-no-roles"
-              >
-                No role assignments found.
-              </p>
-            ) : (
-              <div
-                className="space-y-3 max-h-96 overflow-y-auto"
-                data-cy="role-management-admin-roles-list"
-              >
-                {allUserRoles.map((role, index) => (
-                  <div
-                    key={role.id || index}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                    data-cy="role-management-admin-role-row"
-                  >
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant="default"
-                          data-cy="role-management-admin-role-badge"
-                        >
-                          {role.role_name}
-                        </Badge>
-                        <span
-                          className="text-sm font-medium"
-                          data-cy="role-management-admin-role-org"
-                        >
-                          {role.organization_name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span data-cy="role-management-admin-role-email">
-                          User email: {role.user_email}
-                        </span>
-                        {role.user_phone && (
-                          <span data-cy="role-management-admin-role-phone">
-                            📞 {role.user_phone}
-                          </span>
-                        )}
-                      </div>
-                      <p
-                        className="text-xs text-muted-foreground"
-                        data-cy="role-management-admin-role-ids"
-                      >
-                        Role ID: {role.role_id} • Org ID: {role.organization_id}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {role.is_active ? (
-                        <Badge
-                          variant="default"
-                          className="text-xs bg-green-100 text-green-800"
-                          data-cy="role-management-admin-role-active"
-                        >
-                          Active
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="secondary"
-                          className="text-xs"
-                          data-cy="role-management-admin-role-inactive"
-                        >
-                          Inactive
-                        </Badge>
-                      )}
-                      {role.assigned_at && (
-                        <span
-                          className="text-xs text-muted-foreground"
-                          data-cy="role-management-admin-role-assigned-at"
-                        >
-                          {new Date(role.assigned_at).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* All assigned roles list */}
+      {isAnyTypeOfAdmin && <RolesList />}
 
       {/* Roles editing Section */}
       {isAnyTypeOfAdmin && (
