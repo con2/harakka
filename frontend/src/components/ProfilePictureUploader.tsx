@@ -159,7 +159,7 @@ const ProfilePictureUploader = () => {
                   {t.profilePicUploader.uploadFile[lang]}
                 </button>
                 <span className="ml-4 text-sm text-muted-foreground">
-                  {file?.name ?? "No file selected"}
+                  {file?.name ?? t.profilePicUploader.noFileSelected[lang]}
                 </span>
               </div>
               <input

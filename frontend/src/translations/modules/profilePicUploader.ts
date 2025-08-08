@@ -35,4 +35,8 @@ export const profilePicUploader = {
     fi: "Käännä 90°",
     en: "Rotate 90°",
   },
+  noFileSelected: {
+    fi: "Ei tiedostoa valittu",
+    en: "No file selected",
+  },
 };
