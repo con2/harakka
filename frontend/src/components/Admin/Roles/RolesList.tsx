@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRoles } from "@/hooks/useRoles";
+import { useAuth } from "@/hooks/useAuth";
 import { ColumnDef } from "@tanstack/react-table";
 import { ViewUserRolesWithDetails } from "@common/role.types";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
@@ -16,6 +17,8 @@ type RolesListProps = {
 };
 
 export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
+  const { user } = useAuth();
+  const currentUserId = user?.id;
   const { allUserRoles, adminLoading, adminError, refreshAllUserRoles } =
     useRoles();
 
@@ -65,27 +68,54 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
     });
   }, [allUserRoles, filterUser, filterOrg, filterRole, statusFilter]);
 
+  // Sort: current user roles first (default), then by assigned_at (newest first)
+  const sorted = useMemo(() => {
+    const isMine = (r: ViewUserRolesWithDetails) =>
+      currentUserId && r.user_id === currentUserId ? 1 : 0;
+    const ts = (r: ViewUserRolesWithDetails) =>
+      r.assigned_at ? new Date(r.assigned_at).getTime() : 0;
+
+    return [...filtered].sort((a, b) => {
+      const mineDiff = isMine(b) - isMine(a);
+      if (mineDiff !== 0) return mineDiff;
+      return ts(b) - ts(a);
+    });
+  }, [filtered, currentUserId]);
+
   // Paginate
-  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+  const totalPages = Math.ceil(sorted.length / pageSize) || 1;
   const paginated = useMemo(() => {
     const start = pageIndex * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, pageIndex, pageSize]);
+    return sorted.slice(start, start + pageSize);
+  }, [sorted, pageIndex, pageSize]);
 
   // Columns
   const columns: ColumnDef<ViewUserRolesWithDetails>[] = [
     {
       accessorKey: "user_email",
       header: "User",
-      size: 220,
-      cell: ({ row }) => (
-        <span>
-          {row.original.user_email}
-          {row.original.user_full_name
-            ? ` (${row.original.user_full_name})`
-            : ""}
-        </span>
-      ),
+      size: 260,
+      cell: ({ row }) => {
+        const r = row.original;
+        const isCurrent = currentUserId && r.user_id === currentUserId;
+        return (
+          <span className="flex items-center gap-2">
+            <span className={isCurrent ? "font-semibold text-blue-700" : ""}>
+              {r.user_email}
+              {r.user_full_name ? ` (${r.user_full_name})` : ""}
+            </span>
+            {isCurrent && (
+              <Badge
+                variant="outline"
+                className="border-blue-300 text-blue-700"
+                data-cy="roles-list-you-badge"
+              >
+                You
+              </Badge>
+            )}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "role_name",
