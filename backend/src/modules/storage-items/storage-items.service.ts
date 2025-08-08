@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import {
+  PostgrestMaybeSingleResponse,
   PostgrestResponse,
   PostgrestSingleResponse,
   SupabaseClient,
@@ -20,12 +21,23 @@ import {
   ApiSingleResponse,
 } from "../../../../common/response.types"; // Import ApiSingleResponse for type safety
 import { handleSupabaseError } from "@src/utils/handleError.utils";
-// this is used by the controller
+import { TagService } from "../tag/tag.service";
+import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
+import { ItemFormData } from "@common/items/form.types";
+import {
+  mapItemImages,
+  mapOrgLinks,
+  mapStorageItems,
+  mapTagLinks,
+} from "@src/utils/storage-items.utils";
+import { ItemImagesService } from "../item-images/item-images.service";
 
 @Injectable()
 export class StorageItemsService {
   constructor(
     private readonly supabaseClient: SupabaseService, // Supabase client for database queries
+    private readonly tagService: TagService,
+    private readonly imageService: ItemImagesService,
   ) {}
 
   /**
@@ -128,10 +140,7 @@ export class StorageItemsService {
         .eq("id", id)
         .single();
 
-    if (error) {
-      if (error.code === "PGRST116") return null;
-      throw new Error(error.message);
-    }
+    if (error) handleSupabaseError(error);
 
     // Flatten the tags to make them easier to work with
     return {
@@ -143,38 +152,69 @@ export class StorageItemsService {
     };
   }
 
-  // 3. create Item
-  async createItem(
-    req: Request,
-    item: Partial<TablesUpdate<"storage_items">> & { tagIds?: string[] },
-  ): Promise<StorageItem> {
-    const supabase = req["supabase"] as SupabaseClient;
+  /**
+   * Insert items with org data, image data, tags
+   * @param req An authorized request
+   * @param payload Can be either one item with an array of tagIds or an array of items of the same structure
+   * @returns
+   */
+  async createItems(
+    req: AuthRequest,
+    payload: ItemFormData,
+  ): Promise<{ status: number; error: string | null }> {
+    const supabase = req.supabase;
+    const mappedItems = mapStorageItems(payload);
+    const mappedImageData = mapItemImages(payload);
+    const item_ids = mappedItems.map((i) => i.id);
 
-    // Extract tagIds from the item object
-    // and keep the rest of the item data in storageItemData
-    const { tagIds, ...storageItemData } = item;
-    // Insert the item into the storage_items table
-    const { data: insertedItems, error }: PostgrestResponse<StorageItem> =
-      await supabase.from("storage_items").insert(storageItemData).select();
-    if (error) throw new Error(error.message);
+    try {
+      // Insert item data
+      const { error }: PostgrestMaybeSingleResponse<StorageItem> =
+        await supabase.from("storage_items").insert(mappedItems);
+      if (error) {
+        throw new Error(error.message);
+      }
 
-    const insertedItem = insertedItems?.[0];
-    if (!insertedItem) throw new Error("Failed to insert storage item");
-    // If tagIds are provided, insert them into the storage_item_tags table
-    if (tagIds && tagIds.length > 0) {
-      const tagLinks = tagIds.map((tagId) => ({
-        item_id: insertedItem.id,
-        tag_id: tagId,
-      }));
-      // Insert the tag links into the storage_item_tags table
-      const { error: tagError } = await supabase
-        .from("storage_item_tags")
-        .insert(tagLinks);
+      // Insert org data
+      const mappedOrg = mapOrgLinks(payload);
+      const { error: orgError } = await supabase
+        .from("organization_items")
+        .insert(mappedOrg);
+      if (orgError) {
+        throw new Error(orgError.message);
+      }
 
-      if (tagError) throw new Error(tagError.message);
+      // Insert item tags
+      const mappedTags = mapTagLinks(payload);
+      const tagResult = await this.tagService.assignTagsToBulk(req, mappedTags);
+      if (tagResult) {
+        throw new Error(tagResult.message);
+      }
+
+      // Insert item images
+      const { error: imageError } = await supabase
+        .from("storage_item_images")
+        .insert(mappedImageData);
+      if (imageError) {
+        throw new Error(imageError.message);
+      }
+
+      return { status: 201, error: null };
+    } catch (error) {
+      console.log(error);
+      // Rollback: Clean up any partially inserted data
+      await Promise.allSettled([
+        supabase.from("storage_item_images").delete().in("item_id", item_ids),
+        supabase.from("storage_item_tags").delete().in("item_id", item_ids),
+        supabase.from("organization_items").delete().in("item_id", item_ids),
+        supabase.from("storage_items").delete().in("id", item_ids),
+      ]);
+
+      return {
+        status: error?.code ?? 500,
+        error: error?.message ?? "An unexpected error occurred",
+      };
     }
-
-    return insertedItem;
   }
 
   // 4 update an item
@@ -406,6 +446,10 @@ export class StorageItemsService {
     activity_filter?: "active" | "inactive",
     location_filter?: string,
     category?: string,
+    availability_min?: number,
+    availability_max?: number,
+    from_date?: string,
+    to_date?: string,
   ) {
     const supabase = this.supabaseClient.getAnonClient();
     const { from, to } = getPaginationRange(page, limit);
@@ -439,6 +483,15 @@ export class StorageItemsService {
       const categories = category.split(",");
       query.in("en_item_type", categories);
     }
+
+    if (from_date) query.gte("created_at", from_date);
+    if (to_date) query.lt("created_at", to_date);
+    // Availability range filter (items currently in storage)
+    if (availability_min !== undefined)
+      query.gte("items_number_currently_in_storage", availability_min);
+
+    if (availability_max !== undefined)
+      query.lte("items_number_currently_in_storage", availability_max);
 
     const result = await query;
     const { error, count } = result;

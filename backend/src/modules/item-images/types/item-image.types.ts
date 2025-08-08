@@ -13,3 +13,14 @@ export type ItemImageInsert =
 /** Shape accepted on update (all columns optional) */
 export type ItemImageUpdate =
   Database["public"]["Tables"]["storage_item_images"]["Update"];
+
+/**
+ * URL: "http://my-database.fi/bucket/my-example-file.png"
+ * FULL PATH: "bucket/my-example-file.png"
+ * PATH: "my-example-file.png"
+ */
+export type BucketUploadResult = {
+  urls: string[];
+  full_paths: string[];
+  paths: string[];
+};

@@ -1,5 +1,5 @@
 import { ErrorContext } from "./common";
-import { Database, TagTranslations } from "./databaseGenerated";
+import { Database, TagTranslations } from "./manualOverride";
 
 /** Runtime row shape for the `tags` table with typed `translations`. */
 export type Tag = Database["public"]["Tables"]["tags"]["Row"];
@@ -37,6 +37,8 @@ export interface TagAssignment {
   itemId: string;
   tagIds: string[];
 }
+
+export type ItemFormTag = { tag_id: string; translations: TagTranslations };
 
 /** UI filter values for tag‑assignment status. */
 export type TagAssignmentFilter = "all" | "assigned" | "unassigned";

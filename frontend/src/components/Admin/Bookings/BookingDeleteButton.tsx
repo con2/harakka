@@ -19,20 +19,20 @@ const BookingDeleteButton = ({
 
   const handleDelete = () => {
     if (!id) {
-      toast.error("Invalid booking ID.");
+      toast.error(t.bookingDelete.errors.invalidId[lang]);
       return;
     }
 
     toastConfirm({
-      title: "Confirm Deletion",
-      description: "Are you sure you want to delete this booking?",
-      confirmText: "Confirm",
-      cancelText: "Cancel",
+      title: t.bookingDelete.confirmDialog.title[lang],
+      description: t.bookingDelete.confirmDialog.description[lang],
+      confirmText: t.bookingDelete.confirmDialog.confirmText[lang],
+      cancelText: t.bookingDelete.confirmDialog.cancelText[lang],
       onConfirm: () => {
         toast.promise(dispatch(deleteBooking(id)).unwrap(), {
-          loading: "Deleting booking...",
-          success: "Booking has been successfully deleted.",
-          error: "Failed to delete booking.",
+          loading: t.bookingDelete.toast.loading[lang],
+          success: t.bookingDelete.toast.success[lang],
+          error: t.bookingDelete.toast.error[lang],
         });
         closeModal();
       },

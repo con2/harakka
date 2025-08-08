@@ -21,7 +21,7 @@ import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { useTranslation } from "@/hooks/useTranslation";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
-import { ItemImageAvailabilityInfo, ItemTranslation } from "@/types";
+import { Item, ItemImageAvailabilityInfo, ItemTranslation } from "@/types";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { itemsApi } from "@/api/services/items";
 
@@ -101,7 +101,7 @@ const ItemsDetails: React.FC = () => {
     if (item) {
       dispatch(
         addToCart({
-          item: item,
+          item: item as Item,
           quantity: quantity,
           startDate: startDate,
           endDate: endDate,
@@ -282,31 +282,35 @@ const ItemsDetails: React.FC = () => {
           </h2>
 
           {/* Rating Component */}
-          {item.average_rating ? (
+          {(item as Item).average_rating ? (
             <div
               className="flex items-center justify-start mt-1"
               data-cy="item-details-rating"
             >
-              <Rating rating={item.average_rating ?? 0} readOnly />
+              <Rating rating={(item as Item).average_rating ?? 0} readOnly />
             </div>
           ) : (
             ""
           )}
 
           {/* Location Details Section */}
-          {item.location_details && (
+          {(item as Item).location_details && (
             <div className="text-sm mt-2" data-cy="item-details-location">
-              {item.location_details.name && (
+              {(item as Item).location_details?.name && (
                 <div className="flex items-start">
                   <span>{t.itemDetails.locations.location[lang]}:</span>
-                  <span className="ml-1">{item.location_details.name}</span>
+                  <span className="ml-1">
+                    {(item as Item).location_details?.name}
+                  </span>
                 </div>
               )}
 
-              {item.location_details.address && (
+              {(item as Item).location_details?.address && (
                 <div className="flex items-start">
                   <span> {t.itemDetails.locations.address[lang]}:</span>
-                  <span className="ml-1">{item.location_details.address}</span>
+                  <span className="ml-1">
+                    {(item as Item).location_details?.address}
+                  </span>
                 </div>
               )}
             </div>

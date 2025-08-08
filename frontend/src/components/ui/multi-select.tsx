@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 type MultiSelectProps = {
   selected: string[];
@@ -14,6 +16,7 @@ export const MultiSelect = ({
 }: MultiSelectProps) => {
   const [search, setSearch] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const { lang } = useLanguage();
 
   const handleToggle = (value: string) => {
     const updatedSelected = selected.includes(value)
@@ -30,7 +33,7 @@ export const MultiSelect = ({
     <div className="relative">
       <Input
         type="text"
-        placeholder="Search lists..."
+        placeholder={t.uiComponents.multiSelect.searchPlaceholder[lang]}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="border rounded-lg px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-primary transition"
@@ -44,7 +47,7 @@ export const MultiSelect = ({
         >
           {filteredOptions.length === 0 ? (
             <div className="px-4 py-2 text-sm text-gray-500">
-              No results found
+              {t.uiComponents.multiSelect.noResults[lang]}
             </div>
           ) : (
             filteredOptions.map((option) => (
