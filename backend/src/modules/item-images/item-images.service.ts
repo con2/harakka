@@ -6,6 +6,7 @@ import { BucketUploadResult, ItemImageRow } from "./types/item-image.types";
 import {
   PostgrestResponse,
   PostgrestSingleResponse,
+  SupabaseClient,
 } from "@supabase/supabase-js";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 

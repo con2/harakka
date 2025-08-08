@@ -15,14 +15,13 @@ import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
-  LocationRow,
+  UpdateItem,
   ValidItemOrder,
 } from "./interfaces/storage-item.interface";
-import { TablesUpdate } from "@common/supabase.types"; // Import the Database type for type safety
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { ApiSingleResponse } from "../../../../common/response.types";
 import { StorageItem } from "./interfaces/storage-item.interface";
-import { Public } from "src/decorators/roles.decorator";
+import { Public, Roles } from "src/decorators/roles.decorator";
 import { ItemFormData } from "@common/items/form.types";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
@@ -124,17 +123,24 @@ export class StorageItemsController {
     return this.storageItemsService.createItems(req, formData); // POST /storage-items (new item)
   }
 
+  /**
+   * Update an item of an organization
+   * @param req An authorized request
+   * @param item_id ID of the item to update
+   * @param org_id ID of the org to update item
+   * @body Update item object including tagsIds and location details.
+   * @returns The updated item
+   */
   @Put(":id")
+  @Roles(["super_admin", "admin", "main_admin", "storage_manager", "superVera"])
   async update(
-    @Req() req: Request,
+    @Req() req: AuthRequest,
     @Param("id") id: string,
+    @Query("org") org_id: string,
     @Body()
-    item: Partial<TablesUpdate<"storage_items">> & {
-      tagIds?: string[];
-      location_details?: LocationRow;
-    }, // Use the type from your Supabase types
+    item: UpdateItem,
   ): Promise<StorageItem> {
-    return this.storageItemsService.updateItem(req, id, item); // PUT /storage-items/:id (update item)
+    return this.storageItemsService.updateItem(req, id, org_id, item);
   }
 
   // soft delete
