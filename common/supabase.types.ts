@@ -345,6 +345,7 @@ export type Database = {
           created_by: string | null
           id: string
           is_active: boolean
+          is_deleted: boolean
           organization_id: string
           owned_quantity: number
           storage_item_id: string
@@ -357,6 +358,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean
+          is_deleted?: boolean
           organization_id: string
           owned_quantity?: number
           storage_item_id: string
@@ -369,6 +371,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean
+          is_deleted?: boolean
           organization_id?: string
           owned_quantity?: number
           storage_item_id?: string
