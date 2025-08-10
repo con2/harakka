@@ -120,7 +120,7 @@ export class StorageItemsController {
     @Body()
     formData: ItemFormData,
   ): Promise<{ status: number; error: string | null }> {
-    return this.storageItemsService.createItems(req, formData); // POST /storage-items (new item)
+    return await this.storageItemsService.createItemsFromForm(req, formData); // POST /storage-items (new item)
   }
 
   /**

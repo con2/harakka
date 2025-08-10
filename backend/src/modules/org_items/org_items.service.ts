@@ -29,11 +29,11 @@ export class OrgItemsService {
         this.supabaseService.getServiceClient(),
         "organization_items",
         "*",
+        eq,
         page,
         limit,
         ascending,
         order,
-        eq,
       );
 
       const result = await query;
@@ -47,7 +47,7 @@ export class OrgItemsService {
 
       return {
         ...result,
-        data: (data as unknown as OrgItemRow[]) || [],
+        data: data || [],
         metadata,
       };
     } catch (error) {

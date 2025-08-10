@@ -35,10 +35,14 @@ export const itemsApi = {
    * Update an existing item
    * @param id - Item ID to update
    * @param item - Updated item data
+   * @param org_id - ID of org which item belongs to
    * @returns Promise with the updated item
    */
-  updateItem: (id: string, item: UpdateItemDto): Promise<Item> =>
-    api.put(`/storage-items/${id}`, item),
+  updateItem: (
+    id: string,
+    item: UpdateItemDto,
+    org_id: string,
+  ): Promise<Item> => api.put(`/storage-items/${id}?org=${org_id}`, item),
 
   /**
    * Delete an item
@@ -100,7 +104,7 @@ export const itemsApi = {
   canDeleteItem: (
     id: string,
   ): Promise<{ deletable: boolean; reason?: string }> =>
-    api.post(`/storage-items/${id}/can-delete`),
+    api.get(`/storage-items/${id}/can-delete`),
 
   getOrderedItems: (
     ordered_by: ValidItemOrder = "created_at",

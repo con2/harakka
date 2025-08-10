@@ -155,7 +155,7 @@ export class StorageItemsService {
    * @param payload Can be either one item with an array of tagIds or an array of items of the same structure
    * @returns
    */
-  async createItems(
+  async createItemsFromForm(
     req: AuthRequest,
     payload: ItemFormData,
   ): Promise<{ status: number; error: string | null }> {
@@ -237,7 +237,7 @@ export class StorageItemsService {
       .select("storage_item_id")
       .eq("storage_item_id", item_id);
     if (orgItemError) handleSupabaseError(orgItemError);
-    if (data.length > 1) return this.copyItem(req, item_id, item);
+    if (data.length > 1) return this.copyItem(req, item_id, org_id, item);
 
     // Update the main item
     const {
@@ -262,14 +262,7 @@ export class StorageItemsService {
     // Update tag relationships
     if (tagIds) {
       if (tagIds.length > 0) {
-        const tagLinks = tagIds.map((tagId) => ({
-          item_id,
-          tag_id: tagId,
-        }));
-        const { error: tagError } = await supabase
-          .from("storage_item_tags")
-          .upsert(tagLinks);
-        if (tagError) throw new Error(tagError.message);
+        await this.tagService.assignTagsToItem(req, item_id, tagIds);
       }
     }
 
@@ -291,7 +284,7 @@ export class StorageItemsService {
     org_id: string,
     confirm?: string,
   ): Promise<{ success: boolean; id: string }> {
-    const supabase = req["supabase"] as SupabaseClient;
+    const supabase = req.supabase;
     if (!item_id) {
       throw new Error("No item ID provided for deletion");
     }
@@ -388,7 +381,7 @@ export class StorageItemsService {
     id: string,
     confirm?: string,
   ): Promise<{ success: boolean; reason?: string; id: string }> {
-    const supabase = req["supabase"] as SupabaseClient;
+    const supabase = req.supabase;
     if (!id) {
       throw new Error("No item ID provided for deletion");
     }
@@ -585,74 +578,96 @@ export class StorageItemsService {
   }
 
   /**
-   * Copy an item
-   * This occurrs when two organizations have the same item, and one organization tries to update the item.
-   * If the item belongs to multiple organizations the item is copied (and updated) as another item and the new item is updated accordingly.
-   * @param supabase A valid and authorized supabase client
-   * @param item_id ID of the item to be "split"
-   * @returns the new item
+   * Copy an item from one organization to another.
+   * Creates a new record with copied images, tags, and updated org references.
    */
   async copyItem(
     req: AuthRequest,
     item_id: string,
+    org_id: string,
     newItem: UpdateItem,
   ): Promise<StorageItem> {
     const supabase = req.supabase;
     const NEW_ITEM_ID = crypto.randomUUID();
-    newItem.id = NEW_ITEM_ID;
-    const { tagIds, location_details, ...rest } = newItem;
 
-    // Create the new item
-    const { data: itemData, error: itemErr } = await supabase
+    try {
+      const itemData = await this.createItem(supabase, NEW_ITEM_ID, newItem);
+      await this.imageService.copyImages(supabase, item_id, NEW_ITEM_ID);
+      await this.updateOrgReferences(supabase, org_id, item_id, NEW_ITEM_ID);
+
+      if (newItem.tagIds?.length) {
+        await this.tagService.assignTagsToItem(
+          req,
+          NEW_ITEM_ID,
+          newItem.tagIds,
+        );
+      }
+
+      return itemData;
+    } catch (error) {
+      console.error(`Failed to copy item ${item_id} for org ${org_id}:`, error);
+      await this.rollbackCopy(req.supabase, NEW_ITEM_ID, org_id);
+      throw error;
+    }
+  }
+
+  /** Create a new storage item record */
+  private async createItem(
+    supabase: SupabaseClient,
+    newId: string,
+    newItem: UpdateItem,
+  ) {
+    const { tagIds, location_details, ...rest } = newItem;
+    const { data, error } = await supabase
       .from("storage_items")
-      .insert({ ...rest, location_id: location_details.id })
+      .insert({ ...rest, id: newId, location_id: location_details.id })
       .select()
       .single();
-    if (itemErr) handleSupabaseError(itemErr);
 
-    // Copy item image records
-    const { data: imgData, error: imgErr }: PostgrestResponse<ItemImageRow> =
-      await supabase
-        .from("storage_item_images")
-        .select("*")
-        .eq("item_id", item_id);
-    if (imgErr) handleSupabaseError(imgErr);
+    if (error) handleSupabaseError(error);
+    return data as StorageItem;
+  }
 
-    // Duplicate the image files
-    for (const [index, img] of imgData.entries()) {
-      const parts = img.storage_path.split("/");
-      const NEW_FILE_NAME = parts[parts.length - 1];
-      const NEW_STORAGE_PATH = `${NEW_ITEM_ID}/${NEW_FILE_NAME}`;
-      const NEW_FILE_URL = `https://${process.env.SUPABASE_URL}.supabase.co/storage/v1/object/public/item-images/${NEW_STORAGE_PATH}`;
-      const { error: imgCopyErr } = await supabase.storage
-        .from("item-images")
-        .copy(img.storage_path, NEW_STORAGE_PATH);
-      Object.assign(imgData[index], {
-        storage_path: NEW_STORAGE_PATH,
-        image_url: NEW_FILE_URL,
-        item_id: NEW_ITEM_ID,
-      });
-      if (imgCopyErr) throw new Error("Failed to copy images: ", imgCopyErr);
-    }
-
-    // Insert new image records that reference the new item ID.
-    const { error: imgInsertErr } = await supabase
-      .from("storage_item_images")
-      .insert(imgData);
-    if (imgInsertErr) handleSupabaseError(imgInsertErr);
-
-    // Update the organization data which references the "old" item
-    const { error: orgErr } = await supabase
+  /** Update the org-item reference to the new item */
+  private async updateOrgReferences(
+    supabase: SupabaseClient,
+    orgId: string,
+    oldItemId: string,
+    newItemId: string,
+  ) {
+    const { error } = await supabase
       .from("organization_items")
-      .update({ storage_item_id: NEW_ITEM_ID })
-      .eq("storage_item_id", item_id);
-    if (orgErr) handleSupabaseError(orgErr);
+      .update({ storage_item_id: newItemId })
+      .eq("storage_item_id", oldItemId)
+      .eq("organization_id", orgId);
 
-    // Insert tags
-    if (tagIds && tagIds.length > 0) {
-      await this.tagService.assignTagsToItem(req, NEW_ITEM_ID, tagIds);
-    }
+    if (error) handleSupabaseError(error);
+  }
 
-    return itemData as StorageItem;
+  /** Rollback changes if something fails */
+  private async rollbackCopy(
+    supabase: SupabaseClient,
+    newItemId: string,
+    orgId: string,
+  ) {
+    // Get all image paths for cleanup
+    const { data: imgData } = await supabase
+      .from("storage_item_images")
+      .select("storage_path")
+      .eq("item_id", newItemId);
+
+    const imgPaths = (imgData ?? []).map((img) => img.storage_path);
+
+    await Promise.allSettled([
+      supabase.from("storage_item_images").delete().eq("item_id", newItemId),
+      supabase.storage.from("item-images").remove(imgPaths),
+      supabase.from("storage_item_tags").delete().eq("item_id", newItemId),
+      supabase
+        .from("organization_items")
+        .delete()
+        .eq("storage_item_id", newItemId)
+        .eq("organization_id", orgId),
+      supabase.from("storage_items").delete().eq("id", newItemId),
+    ]);
   }
 }

@@ -9,6 +9,8 @@ import {
   SupabaseClient,
 } from "@supabase/supabase-js";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
+import { Eq } from "@src/types/queryconstructor.types";
+import { queryConstructor } from "@src/utils/queryconstructor.utils";
 
 @Injectable()
 export class ItemImagesService {
@@ -225,5 +227,69 @@ export class ItemImagesService {
     }
 
     return pathParts.slice(bucketIndex + 1).join("/");
+  }
+
+  constructUrl(path: string) {
+    return `${process.env.SUPABASE_URL}/storage/v1/object/public/item-images/${path}`;
+  }
+
+  async getImageData(
+    supabase: SupabaseClient,
+    select: string[],
+    eq: Eq[],
+  ): Promise<ItemImageRow[]> {
+    const query = queryConstructor(
+      supabase,
+      "storage_item_images",
+      select.join(","),
+      eq,
+    );
+
+    const { data, error } = await query;
+    if (error) throw new Error("Failed to retrieve item image data");
+    return data as ItemImageRow[];
+  }
+
+  /** Copy images in storage and insert new metadata records */
+  async copyImages(
+    supabase: SupabaseClient,
+    oldItemId: string,
+    newItemId: string,
+  ) {
+    const { data: images, error } = await supabase
+      .from("storage_item_images")
+      .select("*")
+      .eq("item_id", oldItemId);
+
+    if (error) handleSupabaseError(error);
+    if (!images) return [];
+
+    const updatedImages: ItemImageRow[] = [];
+    for (const img of images) {
+      const parts = img.storage_path.split("/");
+      const fileName = parts[parts.length - 1];
+      const newPath = `${newItemId}/${fileName}`;
+      const newUrl = this.constructUrl(newPath);
+
+      const { error: copyErr } = await supabase.storage
+        .from("item-images")
+        .copy(img.storage_path, newPath);
+
+      if (copyErr) throw new Error(`Failed to copy image: ${copyErr.message}`);
+
+      updatedImages.push({
+        ...img,
+        storage_path: newPath,
+        image_url: newUrl,
+        item_id: newItemId,
+      });
+    }
+
+    const { error: insertErr } = await supabase
+      .from("storage_item_images")
+      .insert(updatedImages);
+
+    if (insertErr) handleSupabaseError(insertErr);
+    return updatedImages;
   }
 }
