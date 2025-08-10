@@ -10,6 +10,8 @@ import {
   Req,
   Query,
   BadRequestException,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
@@ -23,6 +25,7 @@ import { ApiSingleResponse } from "../../../../common/response.types";
 import { StorageItem } from "./interfaces/storage-item.interface";
 import { Public, Roles } from "src/decorators/roles.decorator";
 import { ItemFormData } from "@common/items/form.types";
+import { FileInterceptor } from "@nestjs/platform-express";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
@@ -121,6 +124,14 @@ export class StorageItemsController {
     formData: ItemFormData,
   ): Promise<{ status: number; error: string | null }> {
     return this.storageItemsService.createItems(req, formData); // POST /storage-items (new item)
+  }
+  @Post("csv")
+  @UseInterceptors(FileInterceptor("file"))
+  createFromCSV(
+    @Req() req: AuthRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.storageItemsService.parseCSV(file);
   }
 
   /**

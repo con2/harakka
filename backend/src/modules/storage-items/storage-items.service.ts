@@ -27,7 +27,7 @@ import {
   mapTagLinks,
 } from "@src/utils/storage-items.utils";
 import { ItemImagesService } from "../item-images/item-images.service";
-import Papa from "papaparse";
+import { parse, ParseResult } from "papaparse";
 import { Item, ItemSchema } from "./schema/item-schema";
 import { ItemImageRow } from "../item-images/types/item-image.types";
 
@@ -605,17 +605,20 @@ export class StorageItemsService {
 
   parseCSV(csv: Express.Multer.File) {
     // Parse the file into a JSON
-    const parsedCsv = Papa.parse(csv.buffer.toString(), {
-      skipEmptyLines: true,
+    const csvString = csv.buffer.toString("utf8");
+    const result: ParseResult<Record<string, unknown>> = parse<
+      Record<string, unknown>
+    >(csvString, {
       header: true,
-      dynamicTypic: false,
+      skipEmptyLines: true,
+      dynamicTyping: false,
     });
 
     const validItems: Item[] = [];
     const errors: Array<{ row: number; errors: string[] }> = [];
 
     // Validate each row, add them to validItems/errors arrays.
-    parsedCsv.data.forEach((row: Item, index: number) => {
+    result.data.forEach((row: Item, index: number) => {
       const validation = ItemSchema.safeParse(row);
 
       if (validation.success) {
@@ -634,7 +637,7 @@ export class StorageItemsService {
       processed: validItems.length,
       errors: errors,
       data: validItems,
-      total: parsedCsv.data.length,
+      total: result.data.length,
     };
   }
 
