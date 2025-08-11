@@ -244,6 +244,22 @@ export class UserService {
     userId: string,
     req: AuthRequest,
   ): Promise<string> {
+    // get current user to delete old picture if exists
+    const currentUser = await this.getUserById(userId, req);
+
+    if (currentUser?.profile_picture_url) {
+      const oldPath = this.extractStoragePath(currentUser.profile_picture_url);
+      if (oldPath) {
+        const { error } = await req.supabase.storage
+          .from("profile-pictures") // Bucket-name
+          .remove([oldPath]);
+
+        if (error) {
+          console.error("Error deleting old profile picture:", error);
+        }
+      }
+    }
+
     // get upload pic and url
     const url = await this.uploadProfilePicture(
       fileBuffer,
@@ -256,5 +272,17 @@ export class UserService {
     await this.updateUser(userId, { profile_picture_url: url }, req);
 
     return url;
+  }
+
+  /**
+   * Extracts the path from a Supabase public URL.
+   */
+  private extractStoragePath(url: string): string | null {
+    try {
+      const parts = new URL(url).pathname.split("/");
+      return parts.slice(5).join("/");
+    } catch {
+      return null;
+    }
   }
 }
