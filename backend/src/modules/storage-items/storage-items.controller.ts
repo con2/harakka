@@ -63,7 +63,7 @@ export class StorageItemsController {
     @Query("ascending") ascending: string = "true",
     @Query("tags") tags: string,
     @Query("active") active_filter: "active" | "inactive",
-    @Query("location") location_filter: string,
+    @Query("locations") location_filter: string,
     @Query("category") category: string,
     @Query("availability_min") availability_min?: string,
     @Query("availability_max") availability_max?: string,
