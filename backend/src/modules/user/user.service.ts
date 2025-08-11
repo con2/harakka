@@ -251,7 +251,7 @@ export class UserService {
       const oldPath = this.extractStoragePath(currentUser.profile_picture_url);
       if (oldPath) {
         const { error } = await req.supabase.storage
-          .from("profile-pictures") // Bucket-name
+          .from("profile-pictures")
           .remove([oldPath]);
 
         if (error) {
@@ -267,7 +267,6 @@ export class UserService {
       userId,
       req,
     );
-
     // update user profile
     await this.updateUser(userId, { profile_picture_url: url }, req);
 
@@ -279,8 +278,10 @@ export class UserService {
    */
   private extractStoragePath(url: string): string | null {
     try {
-      const parts = new URL(url).pathname.split("/");
-      return parts.slice(5).join("/");
+      const pathname = new URL(url).pathname;
+      const parts = pathname.split("/");
+      // ['', 'storage', 'v1', 'object', 'public', '<bucket>', ...rest]
+      return parts.slice(6).join("/"); // ab dem Pfad nach dem Bucket
     } catch {
       return null;
     }
