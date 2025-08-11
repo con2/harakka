@@ -65,12 +65,16 @@ Comprehensive documentation is available in the `docs` directory:
 
 ## Prerequisites
 
-- **Node.js**: v18 or higher
-- **npm**: Comes with Node.js
+- **Docker**: For containerized deployment (Recommended)
+- **Docker Compose**: For multi-container orchestration
+- **Node.js**: v18 or higher (for local development)
 - **Supabase Account**: Free tier works for development
-- **Azure Account**: For deployment (we use student account)
 
 ## Quick Start
+
+### Option 1: Docker (Recommended for Production)
+
+The easiest way to run the full application:
 
 1. **Clone the repository:**
 
@@ -79,13 +83,65 @@ git clone https://github.com/Ermegilius/FullStack_Storage_and_Booking_App.git
 cd FullStack_Storage_and_Booking_App
 ```
 
-2. **Install dependencies:**
+2. **Set up environment variables:**
+
+```sh
+./scripts/setup.sh
+# Choose option 1 for Docker
+```
+
+3. **Build and run the application:**
+
+```sh
+# Build containers
+docker compose --env-file .env.production -f docker-compose.production.yml build
+
+# Run application
+docker compose --env-file .env.production -f docker-compose.production.yml up -d
+```
+
+4. **Access the application:**
+   - Frontend: http://localhost
+   - Backend API: http://localhost:3000
+   - Health Check: http://localhost:3000/health
+
+### Option 2: Local Development
+
+For development with hot reload and debugging:
+
+1. **Clone the repository:**
+
+```sh
+git clone https://github.com/Ermegilius/FullStack_Storage_and_Booking_App.git
+cd FullStack_Storage_and_Booking_App
+```
+
+2. **Set up environment variables:**
+
+```sh
+./scripts/setup.sh
+# Choose option 2 for Local Development
+```
+
+3. **Install dependencies:**
 
 ```sh
 npm run install-all
 ```
 
-3. **Set up environment variables:**
+4. **Run the application:**
+
+```sh
+# Terminal 1: Start backend
+cd backend && npm run start:dev
+
+# Terminal 2: Start frontend  
+cd frontend && npm run dev
+```
+
+5. **Access the application:**
+   - Frontend: http://localhost:5180
+   - Backend API: http://localhost:3000
 
 ```sh
 cp .env.local

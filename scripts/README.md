@@ -1,92 +1,87 @@
 # Scripts Directory
 
-This directory conta## Requirements
+This directory contains setup scripts for the Full-Stack Storage and Booking App.
 
-- Docker and Docker Compose installed
+## Quick Start (Recommended)
 
-## Script Flow Diagramployment and utility scripts for the Booking App
+The containerized app only needs **2 simple commands** after initial setup:
+
+### First time setup
+
+```bash
+chmod +x scripts/setup.sh
+./scripts/setup.sh
+```
+
+### Build and run
+
+```bash
+# Build the containers
+docker compose --env-file .env.production -f docker-compose.production.yml build
+
+# Run the application  
+docker compose --env-file .env.production -f docker-compose.production.yml up -d
+```
 
 ## Available Scripts
 
-- **`make-executable.sh`** - Makes all files executable(Must run `chmod +x <script-name>` first)
+- **`setup.sh`** - Creates `.env.production` from template and validates configuration
 
-- **`setup.sh`** - Initial setup script that creates environment files and builds containers
-- **`run.sh`** - Quick script to start/restart the application  
-- **`build.sh`** - Builds Docker images for production deployment
+## Manual Commands (no scripts needed)
 
-- **On all scripts you can run them with the -h flag to see more info**
+You can also run everything manually without any scripts:
 
-## First script to run
+### 1. Setup environment file
 
-Paste this in the terminal:
-
-```sh
-chmod +x scripts/make-executable.sh
-./scripts/make-executable.sh        # sets +x on every file in scripts/
+```bash
+cp .env.production.template .env.production
+# Edit .env.production with your actual values
 ```
 
-## Usage
+### 2. Build
 
-### For Local Development with Docker
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml build
+```
 
-1. **First time setup:**
+### 3. Run
 
-   ```bash
-   ./scripts/setup.sh
-   ```
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml up -d
+```
 
-2. **Start the application:**
+## Access Points
 
-   ```bash
-   ./scripts/run.sh
-   ```
+After running, access your application at:
 
-3. **Build images manually:**
+- **Frontend**: <http://localhost>
+- **Backend API**: <http://localhost:3000>  
+- **Health Check**: <http://localhost:3000/health>
 
-   ```bash
-   ./scripts/build.sh
-   ```
+## Useful Commands
 
-## Production Deployment
+```bash
+# View logs
+docker compose -f docker-compose.production.yml logs -f
 
-1. Build production images:
+# Stop application
+docker compose -f docker-compose.production.yml down
 
-   ```bash
-   ./scripts/build.sh
-   ```
+# Restart specific service
+docker compose -f docker-compose.production.yml restart frontend
+docker compose -f docker-compose.production.yml restart backend
+```
 
-2. Deploy using methods outlined in DEPLOYMENT.md
+## How the Multi-Container Setup Works
+
+- **Frontend Container**: Nginx serving React app + proxy to backend
+- **Backend Container**: NestJS API server
+- **Networking**: Frontend proxies `/api/*` requests to backend container
+- **Environment**: Variables passed via `.env.production` file
+
+The `frontend/nginx.conf` file is **essential** - it serves the React app and proxies API calls to the backend container.
 
 ## Prerequisites
 
-### For Docker Development
-
 - Docker and Docker Compose installed
-- `.env.production` file (created by setup.sh)
-
-### For Kubernetes Deployment
-
-- Docker installed
-- kubectl configured for your Azure AKS cluster
-- Access to a container registry (Azure Container Registry recommended)
-- `.env.production` file with production values
-
-## Security Notes
-
-- All scripts use the `.env.production` template system to avoid committing secrets to Git
-- Kubernetes secrets are created dynamically from environment variables
-- No sensitive information is stored in the repository
-
-## Script Dependencies
-
-```bash
-setup.sh (creates .env.production)
-├── run.sh (uses .env.production)  
-└── build.sh (uses .env.production)
-```
-
-## Troubleshooting
-
-- If scripts fail with permission errors, ensure they are executable: `chmod +x scripts/*.sh`
-- If environment variables are missing, run `./scripts/setup.sh` again
-- For deployment issues, check the methods in DEPLOYMENT.md
+- `.env.production` file with your actual credentials (created by `setup.sh`)
