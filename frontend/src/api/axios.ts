@@ -1,5 +1,7 @@
 import axios from "axios";
 import { supabase } from "../config/supabase";
+import { store } from "@/store/store";
+import { fetchCurrentUserRoles } from "@/store/slices/rolesSlice";
 
 // Cache the token to avoid unnecessary async calls
 let cachedToken: string | null = null;
@@ -56,13 +58,42 @@ api.interceptors.request.use(
     Promise.reject(error instanceof Error ? error : new Error(String(error))),
 );
 
-// Return response.data directly
+let rolesRefreshPromise: Promise<unknown> | null = null;
+
+// Return response.data directly with role refresh handling
 api.interceptors.response.use(
   (response) => {
     return response.data;
   },
-  (error) => {
+  async (error) => {
     console.error("API Error:", error);
+
+    // Check if the error is a 403 (Forbidden) and we haven't retried already
+    const originalRequest = error.config;
+    if (error.response?.status === 403 && !originalRequest._retry) {
+      originalRequest._retry = true; // Mark that we've retried
+
+      try {
+        // De-dupe concurrent refreshes
+        console.error("Permission denied - refreshing roles");
+        if (!rolesRefreshPromise) {
+          rolesRefreshPromise = store
+            .dispatch(fetchCurrentUserRoles())
+            .unwrap()
+            .finally(() => {
+              rolesRefreshPromise = null;
+            });
+        }
+        await rolesRefreshPromise;
+
+        // Retry the original request with the same configuration
+        return api(originalRequest);
+      } catch (refreshError) {
+        console.error("Failed to refresh roles:", refreshError);
+        // Continue with the original error if role refresh fails
+      }
+    }
+
     return Promise.reject(
       error instanceof Error ? error : new Error(String(error)),
     );

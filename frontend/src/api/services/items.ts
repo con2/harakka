@@ -1,6 +1,7 @@
-import { CreateItemDto, Item, UpdateItemDto, ValidItemOrder } from "@/types";
+import { Item, UpdateItemDto, ValidItemOrder } from "@/types";
 import { api } from "../axios";
 import { ApiSingleResponse } from "@common/response.types";
+import { ItemFormData } from "@common/items/form.types";
 
 /**
  * API service for item-related endpoints
@@ -21,12 +22,14 @@ export const itemsApi = {
   getItemById: (id: string): Promise<Item> => api.get(`/storage-items/${id}`),
 
   /**
-   * Create a new item
+   * Create a new item or multiple items
    * @param item - Item data to create
    * @returns Promise with the created item
    */
-  createItem: (item: CreateItemDto): Promise<Item> =>
-    api.post("/storage-items", item),
+  createItems: (
+    payload: ItemFormData,
+  ): Promise<{ status: number; error: string | null }> =>
+    api.post("/storage-items", payload),
 
   /**
    * Update an existing item
@@ -109,6 +112,8 @@ export const itemsApi = {
     activity_filter?: "active" | "inactive",
     location_filter?: string[],
     categories?: string[],
+    availability_min?: number,
+    availability_max?: number,
   ) => {
     const activity = activity_filter === "active" ? true : false;
     let call = `/storage-items/ordered?order=${ordered_by}&page=${page}&limit=${limit}&ascending=${ascending}`;
@@ -117,6 +122,10 @@ export const itemsApi = {
     if (activity_filter) call += `&active=${activity}`;
     if (location_filter) call += `&location=${location_filter.join(",")}`;
     if (categories) call += `&category=${categories.join(",")}`;
+    if (availability_min !== undefined)
+      call += `&availability_min=${availability_min}`;
+    if (availability_max !== undefined)
+      call += `&availability_max=${availability_max}`;
     return api.get(call);
   },
 

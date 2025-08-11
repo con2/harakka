@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import logo from "../assets/logoNav.png";
 import { LogInIcon, LogOutIcon, ShoppingCart, UserIcon } from "lucide-react";
+import { Notifications } from "@/components/Notification";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
 import { toast } from "sonner";
 import { toastConfirm } from "./ui/toastConfirm";
@@ -19,23 +20,32 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
+import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
 
 export const Navigation = () => {
-  const { signOut } = useAuth();
-  // get user role information from the hook
+  // Get auth state directly from Auth context
+  const { signOut, user, authLoading } = useAuth();
+  // Get user profile data from Redux
+  const selectedUser = useAppSelector(selectSelectedUser);
+  // Get user role information from the hook
   const { hasAnyRole } = useRoles();
+
+  // Use auth context to determine login status
+  const isLoggedIn = !!user;
+
+  // Check if user has any admin role using hasAnyRole for efficiency
   const isAnyTypeOfAdmin = hasAnyRole([
     "admin",
     "superVera",
     "main_admin",
     "super_admin",
+    "storage_manager",
   ]);
-  const selectedUser = useAppSelector(selectSelectedUser);
+
   const cartItemsCount = useAppSelector(selectCartItemsCount);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isLoggedIn = !!selectedUser;
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
     ? "absolute top-0 left-0 w-full z-50 bg-white/80 text-white px-2 md:px-10 py-2 md:py-3"
@@ -62,6 +72,7 @@ export const Navigation = () => {
   return (
     <nav className={navClasses}>
       <div className="container md:mx-auto mx-0 flex items-center justify-between">
+        {/* Left side: Logo + navigation links */}
         <div className="flex items-center gap-1">
           <Link to="/" data-cy="nav-home">
             <img
@@ -92,7 +103,7 @@ export const Navigation = () => {
                 </NavigationMenuItem>
               )}
 
-              {/* Show Admin Panel link only for admins/superVera */}
+              {/* Show Admin Panel link only for admins in current context*/}
               {isAnyTypeOfAdmin && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
@@ -153,8 +164,15 @@ export const Navigation = () => {
           </NavigationMenu>
         </div>
 
-        {/* Always show Cart */}
+        {/* Right side: Cart, notifications, language, auth */}
         <div className="flex items-center gap-2">
+          {/* Active role context switcher if user is logged in and has roles */}
+          {isLoggedIn && (
+            <div className="hidden md:flex mr-2">
+              <RoleContextSwitcher />
+            </div>
+          )}
+
           <div className="flex items-center md:mr-6">
             <LanguageSwitcher />
           </div>
@@ -170,39 +188,45 @@ export const Navigation = () => {
               </span>
             )}
           </Link>
+          {selectedUser && <Notifications userId={selectedUser.id} />}
 
-          {selectedUser ? (
-            <div className="flex items-center">
-              <Button
-                variant={"ghost"}
-                className="p-o m-0"
-                size={"sm"}
-                onClick={() => {
-                  void navigate("/profile");
-                }}
-                data-cy="nav-profile-btn"
-              >
-                {/* Show name on desktop, icon on mobile */}
-                <UserIcon className="inline sm:hidden h-5 w-5" />
-                <span className="hidden sm:inline">
-                  {selectedUser.full_name}
-                </span>
-              </Button>
-              <Button
-                variant={"ghost"}
-                size={"sm"}
-                onClick={handleSignOut}
-                data-cy="nav-signout-btn"
-              >
-                <LogOutIcon className="h-5 w-5" />
-              </Button>
-            </div>
-          ) : (
-            <Button variant={"ghost"} data-cy="nav-login-btn" asChild>
-              <Link to="/login">
-                {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
-              </Link>
-            </Button>
+          {!authLoading && (
+            <>
+              {isLoggedIn ? (
+                <div className="flex items-center" key={user?.id}>
+                  <Button
+                    variant={"ghost"}
+                    className="p-o m-0"
+                    size={"sm"}
+                    onClick={() => void navigate("/profile")}
+                    data-cy="nav-profile-btn"
+                  >
+                    {/* Show name on desktop, icon on mobile */}
+                    <UserIcon className="inline sm:hidden h-5 w-5" />
+                    <span className="hidden sm:inline">
+                      {/* Display full_name if available, fall back to email */}
+                      {selectedUser?.full_name
+                        ? selectedUser?.full_name
+                        : user?.email}
+                    </span>
+                  </Button>
+                  <Button
+                    variant={"ghost"}
+                    size={"sm"}
+                    onClick={handleSignOut}
+                    data-cy="nav-signout-btn"
+                  >
+                    <LogOutIcon className="h-5 w-5" />
+                  </Button>
+                </div>
+              ) : (
+                <Button variant={"ghost"} data-cy="nav-login-btn" asChild>
+                  <Link to="/login">
+                    {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
+                  </Link>
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>

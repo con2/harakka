@@ -45,4 +45,10 @@ export const navigation = {
       en: "Logout canceled.",
     },
   },
+  notifications: {
+    label: { en: "Notifications", fi: "Ilmoitukset" },
+    none: { en: "Nothing new yet.", fi: "Ei uusia ilmoituksia" },
+    markAllRead: { en: "Mark all as read", fi: "Merkitse kaikki luetuiksi" },
+    srOpen: { en: "Open notifications", fi: "Avaa ilmoitukset" },
+  },
 };

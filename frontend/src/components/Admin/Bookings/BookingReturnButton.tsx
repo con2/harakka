@@ -19,20 +19,20 @@ const BookingReturnButton = ({
 
   const handleReturnItems = () => {
     if (!id) {
-      toast.error("Invalid booking ID.");
+      toast.error(t.bookingReturn.errors.invalidId[lang]);
       return;
     }
 
     toastConfirm({
-      title: "Confirm Return",
-      description: "Are you sure you want to mark this booking as returned?",
-      confirmText: "Confirm",
-      cancelText: "Cancel",
+      title: t.bookingReturn.confirmDialog.title[lang],
+      description: t.bookingReturn.confirmDialog.description[lang],
+      confirmText: t.bookingReturn.confirmDialog.confirmText[lang],
+      cancelText: t.bookingReturn.confirmDialog.cancelText[lang],
       onConfirm: () => {
         toast.promise(dispatch(returnItems(id)).unwrap(), {
-          loading: "Processing return...",
-          success: "Booking has been successfully marked as returned.",
-          error: "Failed to process the return.",
+          loading: t.bookingReturn.toast.loading[lang],
+          success: t.bookingReturn.toast.success[lang],
+          error: t.bookingReturn.toast.error[lang],
         });
         closeModal();
       },

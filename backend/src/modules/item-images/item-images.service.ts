@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { v4 as uuidv4 } from "uuid";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { ItemImageRow } from "./types/item-image.types";
+import { BucketUploadResult, ItemImageRow } from "./types/item-image.types";
 import {
   PostgrestResponse,
   PostgrestSingleResponse,
@@ -87,6 +87,69 @@ export class ItemImagesService {
   }
 
   /**
+   * Upload to bucket without creating a db record for it.
+   * If a file already exists at the path, it will be overwritten.
+   * @param req An authorized request
+   * @param bucket Name of bucket to upload to
+   * @param files An array of files to upload
+   * @param path Optional. Defines where the image will be stored. Use "/" to create folders
+   * e.g. path = `${item_id}/${image_id}` where the folder is the item ID.
+   * @returns An array of paths
+   */
+  async uploadToBucket(
+    req: AuthRequest,
+    bucket: string,
+    files: Express.Multer.File[],
+    path?: string,
+  ): Promise<BucketUploadResult> {
+    const supabase = req.supabase;
+    const result: BucketUploadResult = {
+      paths: [],
+      urls: [],
+      full_paths: [],
+    };
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const fileExt = files[i].originalname.split(".").pop();
+        const fileName = path ? `${path}.${fileExt}` : `${uuidv4()}.${fileExt}`;
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .upload(fileName, files[i].buffer, {
+            upsert: true,
+            contentType: "image/jpeg",
+          });
+        if (error) {
+          console.log(error);
+          throw new Error(`Failed to upload image: ${files[i].originalname}`);
+        }
+        if (data?.fullPath) {
+          const full_url = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.fullPath}`;
+          result.urls.push(full_url);
+          result.paths.push(data.path);
+          result.full_paths.push(data.fullPath);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+    return result;
+  }
+
+  async removeFromBucket(req: AuthRequest, bucket: string, paths: string[]) {
+    const supabase = req.supabase;
+    try {
+      const { error } = await supabase.storage.from(bucket).remove(paths);
+      if (error) throw new Error("Failed to remove files.");
+      return { success: true };
+    } catch (error) {
+      console.error(error);
+      return { success: false };
+    }
+  }
+
+  /**
    * Get all images for an item
    */
   async getItemImages(itemId: string): Promise<ItemImageRow[]> {
@@ -109,8 +172,11 @@ export class ItemImagesService {
   /**
    * Delete an item image
    */
-  async deleteItemImage(imageId: string): Promise<{ success: boolean }> {
-    const supabase = this.supabaseService.getServiceClient();
+  async deleteItemImage(
+    req: AuthRequest,
+    imageId: string,
+  ): Promise<{ success: boolean }> {
+    const supabase = req.supabase;
 
     // 1. Get the image record
     const { data: image, error }: PostgrestSingleResponse<ItemImageRow> =

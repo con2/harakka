@@ -26,7 +26,6 @@ import {
 } from "../../store/slices/itemImagesSlice";
 import { Item } from "../../types/item";
 import { Input } from "../ui/input";
-import { itemsApi } from "@/api/services/items";
 
 interface ItemsCardProps {
   item: Item;
@@ -160,36 +159,31 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
     }
   };
 
-  // Check if the item is available for the selected timeframe
+  // Update availability info based on dates selection
+  // Since backend filtering already handles availability, no need for individual API calls
   useEffect(() => {
-    // Only check availability if dates are selected
-    if (!item.id || !startDate || !endDate) return;
     if (startDate && endDate) {
-      setAvailabilityInfo((prev) => ({
-        ...prev,
-        isChecking: true,
+      // Backend filtering ensures only available items are shown
+      // Use the item's currently available quantity as the available quantity
+      setAvailabilityInfo({
+        availableQuantity: item.items_number_currently_in_storage || 0,
+        isChecking: false,
         error: null,
-      }));
-
-      itemsApi
-        .checkAvailability(item.id, new Date(startDate), new Date(endDate))
-        .then((response) => {
-          setAvailabilityInfo({
-            availableQuantity: response.availableQuantity,
-            isChecking: false,
-            error: null,
-          });
-        })
-        .catch((error) => {
-          console.error("Error checking availability:", error);
-          setAvailabilityInfo({
-            availableQuantity: item.items_number_currently_in_storage,
-            isChecking: false,
-            error: "Failed to check availability",
-          });
-        });
+      });
+    } else {
+      // When no dates selected, show total quantity
+      setAvailabilityInfo({
+        availableQuantity: item.items_number_total || 0,
+        isChecking: false,
+        error: null,
+      });
     }
-  }, [item.id, startDate, endDate, item.items_number_currently_in_storage]);
+  }, [
+    startDate,
+    endDate,
+    item.items_number_currently_in_storage,
+    item.items_number_total,
+  ]);
 
   const isItemAvailableForTimeframe = availabilityInfo.availableQuantity > 0;
 
@@ -327,11 +321,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
               variant="outline"
               size="sm"
               onClick={() => {
-                console.log(
-                  `Quantity: ${quantity}, availableQQuantity: ${availabilityInfo.availableQuantity}`,
-                );
                 setQuantity(
-                  // HIER!!
                   Math.min(availabilityInfo.availableQuantity, quantity + 1),
                 );
               }}
