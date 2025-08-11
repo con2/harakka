@@ -22,8 +22,10 @@ export function clearCachedAuthToken() {
 // Get API URL from runtime config with fallback to development URL
 const apiUrl = import.meta.env.VITE_API_URL as string;
 const baseURL = apiUrl
-  ? // Ensure URL has proper protocol
-    apiUrl.startsWith("http")
+  ? // If it starts with "/" (relative path), use as-is for nginx proxy
+    // If it starts with "http", use as-is
+    // Otherwise, assume it needs https protocol
+    apiUrl.startsWith("/") || apiUrl.startsWith("http")
     ? apiUrl
     : `https://${apiUrl}`
   : "http://localhost:3000";
