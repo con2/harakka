@@ -6,22 +6,15 @@ import { useNavigate, useLocation } from "react-router-dom";
 export const AuthRedirect = () => {
   const { user, authLoading } = useAuth();
   const {
-    hasRole,
-    hasAnyRole,
     loading: rolesLoading,
     currentUserRoles,
+    hasRole,
+    hasAnyRole,
+    activeContext,
   } = useRoles();
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTriggered = useRef(false);
-
-  const isAnyTypeOfAdmin = hasAnyRole([
-    "admin",
-    "superVera",
-    "main_admin",
-    "super_admin",
-    "store_manager",
-  ]);
 
   useEffect(() => {
     // Only redirect if:
@@ -30,37 +23,39 @@ export const AuthRedirect = () => {
     // 3. Haven't already triggered a redirect
     const hasRoleData = currentUserRoles && currentUserRoles.length > 0;
     const dataReady = user && !authLoading && !rolesLoading && hasRoleData;
+    const isEntry = location.pathname === "/login" || location.pathname === "/";
 
-    // Only redirect if on login or root page
-    const shouldRedirect =
-      dataReady &&
-      !redirectTriggered.current &&
-      (location.pathname === "/login" || location.pathname === "/");
+    if (!dataReady || !isEntry || redirectTriggered.current) return;
 
-    if (shouldRedirect) {
-      // Small timeout to ensure state is fully updated
-      setTimeout(() => {
-        redirectTriggered.current = true;
+    // Evaluate admin after roles are ready to avoid early false
+    const isAnyTypeOfAdmin = hasAnyRole([
+      "admin",
+      "superVera",
+      "main_admin",
+      "super_admin",
+      "storage_manager",
+    ]);
 
-        // Use isAnyTypeOfAdmin for admin check
-        if (isAnyTypeOfAdmin) {
-          void navigate("/admin");
-        } else if (hasRole("user") || hasRole("requester")) {
-          void navigate("/storage");
-        } else {
-          void navigate("/storage");
-        }
-      }, 100);
-    }
+    setTimeout(() => {
+      redirectTriggered.current = true;
+      if (isAnyTypeOfAdmin) {
+        void navigate("/admin");
+      } else if (hasRole("user") || hasRole("requester")) {
+        void navigate("/storage");
+      } else {
+        void navigate("/storage");
+      }
+    }, 50);
   }, [
     user,
     authLoading,
     rolesLoading,
     currentUserRoles,
-    isAnyTypeOfAdmin,
     hasRole,
+    hasAnyRole,
     navigate,
     location.pathname,
+    activeContext,
   ]);
 
   return null;

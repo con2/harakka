@@ -58,6 +58,8 @@ api.interceptors.request.use(
     Promise.reject(error instanceof Error ? error : new Error(String(error))),
 );
 
+let rolesRefreshPromise: Promise<unknown> | null = null;
+
 // Return response.data directly with role refresh handling
 api.interceptors.response.use(
   (response) => {
@@ -72,9 +74,17 @@ api.interceptors.response.use(
       originalRequest._retry = true; // Mark that we've retried
 
       try {
+        // De-dupe concurrent refreshes
         console.error("Permission denied - refreshing roles");
-        // Refresh the roles
-        await store.dispatch(fetchCurrentUserRoles()).unwrap();
+        if (!rolesRefreshPromise) {
+          rolesRefreshPromise = store
+            .dispatch(fetchCurrentUserRoles())
+            .unwrap()
+            .finally(() => {
+              rolesRefreshPromise = null;
+            });
+        }
+        await rolesRefreshPromise;
 
         // Retry the original request with the same configuration
         return api(originalRequest);
