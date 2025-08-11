@@ -16,7 +16,9 @@ describe("AppController", () => {
 
   describe("root", () => {
     it("Welcome to the Storage and Booking App API!", () => {
-      expect(appController.getHello()).toBe("Hello World!");
+      expect(appController.getHello()).toBe(
+        "Welcome to the Storage and Booking App API!",
+      );
     });
   });
 });

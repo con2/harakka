@@ -86,6 +86,10 @@ export const cart = {
       fi: "Tyhjennä ostoskori",
       en: "Clear Cart",
     },
+    unknownError: {
+      fi: "Tuntematon virhe",
+      en: "Unknown error",
+    },
   },
   toast: {
     clearCartTitle: {

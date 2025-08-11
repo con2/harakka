@@ -1,4 +1,3 @@
-import { addItemModal } from "./modules/addItemModal";
 import { addLocationModal } from "./modules/addLocationModal";
 import { addTagModal } from "./modules/addTagModal";
 import { addUserModal } from "./modules/addUserModal";
@@ -6,6 +5,13 @@ import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
 import { adminPanel } from "./modules/adminPanel";
 import { assignTagsModal } from "./modules/assignTagsModal";
+import { authCallback } from "./modules/authCallback";
+import { bookingCancel } from "./modules/bookingCancel";
+import { bookingConfirm } from "./modules/bookingConfirm";
+import { bookingDelete } from "./modules/bookingDelete";
+import { bookingEdit } from "./modules/bookingEdit";
+import { bookingReject } from "./modules/bookingReject";
+import { bookingReturn } from "./modules/bookingReturn";
 import { cart } from "./modules/cart";
 import { contactForm } from "./modules/contactForm";
 import { countries } from "./modules/countries";
@@ -41,6 +47,8 @@ import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
 import { usersList } from "./modules/usersList";
 import { currentUserRoles } from "./modules/currentUserRoles";
+import { privacyPolicy } from "./modules/privacyPolicy";
+import { termsOfUse } from "./modules/termsOfUse";
 import {
   organizationDelete,
   organizationList,
@@ -49,16 +57,33 @@ import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
 import { editLocationModal } from "./modules/editLocationModal";
 import { organizationLocations } from "./modules/organizationLocations";
+import { roleEditor } from "./modules/roleEditor";
+import { roleManagement } from "./modules/roleManagement";
+import { statusBadge } from "./modules/statusBadge";
+import { orgStep } from "./modules/orgStep";
+import { addItemForm } from "./modules/addItemForm";
+import { itemSummary } from "./modules/itemSummary";
+import { stepper } from "./modules/stepper";
 import { notifications } from "./modules/notifications";
+import { uiComponents } from "./modules/uiComponents";
 
 export const t = {
-  addItemModal,
+  stepper,
+  addItemForm,
+  itemSummary,
   addTagModal,
   addUserModal,
   adminDashboard,
   adminItemsTable,
   adminPanel,
   assignTagsModal,
+  authCallback,
+  bookingCancel,
+  bookingConfirm,
+  bookingDelete,
+  bookingEdit,
+  bookingReject,
+  bookingReturn,
   cart,
   common: general.common, // Shorthand for general.common
   contactForm,
@@ -75,9 +100,9 @@ export const t = {
   myBookings,
   myProfile,
   navigation,
-  notifications,
   bookingConfirmation,
   bookingList,
+  orgStep,
   pagination,
   passwordReset,
   passwordResetResult,
@@ -103,4 +128,11 @@ export const t = {
   deleteLocationButton,
   editLocationModal,
   organizationLocations,
+  roleEditor,
+  roleManagement,
+  statusBadge,
+  privacyPolicy,
+  termsOfUse,
+  notifications,
+  uiComponents,
 };

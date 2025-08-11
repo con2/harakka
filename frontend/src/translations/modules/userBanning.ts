@@ -45,6 +45,18 @@ export const userBanning = {
         fi: "Syötä syy estolle...",
         en: "Enter reason for ban...",
       },
+      selectPlaceholder: {
+        fi: "Valitse syy...",
+        en: "Select a reason...",
+      },
+      custom: {
+        fi: "Mukautettu esto-syy",
+        en: "Custom Ban Reason",
+      },
+      customPlaceholder: {
+        fi: "Täsmennä esto-syy...",
+        en: "Please specify the reason for banning...",
+      },
     },
     notes: {
       label: {
@@ -100,15 +112,39 @@ export const userBanning = {
       fi: "Peruuta",
       en: "Cancel",
     },
+    openMenu: {
+      fi: "Avaa valikko",
+      en: "Open menu",
+    },
   },
   status: {
     banned: {
       fi: "Estetty",
       en: "Banned",
     },
+    unbanned: {
+      fi: "Esto poistettu",
+      en: "Unbanned",
+    },
     active: {
       fi: "Aktiivinen",
       en: "Active",
+    },
+    status: {
+      fi: "Tila",
+      en: "Status",
+    },
+    action: {
+      fi: "Toiminto",
+      en: "Action",
+    },
+    loading: {
+      fi: "Ladataan...",
+      en: "Loading...",
+    },
+    date: {
+      fi: "Päivämäärä",
+      en: "Date",
     },
   },
   messages: {
@@ -119,6 +155,14 @@ export const userBanning = {
     missingFields: {
       fi: "Täytä kaikki vaaditut kentät.",
       en: "Please fill in all required fields.",
+    },
+    noActiveBans: {
+      fi: "Tällä käyttäjällä ei ole aktiivisia estoja poistettavana.",
+      en: "This user has no active bans to remove.",
+    },
+    loadingBanInfo: {
+      fi: "Ladataan esto-tietoja...",
+      en: "Loading ban information...",
     },
   },
   toast: {
@@ -168,6 +212,80 @@ export const userBanning = {
       isPermanent: {
         fi: "Pysyvä",
         en: "Permanent",
+      },
+      permanent: {
+        fi: "Kyllä",
+        en: "Yes",
+      },
+      notPermanent: {
+        fi: "Ei",
+        en: "No",
+      },
+    },
+  },
+  unban: {
+    modal: {
+      title: {
+        fi: "Poista esto käyttäjältä",
+        en: "Unban User",
+      },
+      subtitle: {
+        fi: "Poista esto käyttäjältä",
+        en: "Remove ban for user",
+      },
+    },
+    fields: {
+      banTypeToRemove: {
+        fi: "Poistettava esto-tyyppi",
+        en: "Ban Type to Remove",
+      },
+      selectTypes: {
+        application: {
+          fi: "Sovellus-esto",
+          en: "Application Ban",
+        },
+        organization: {
+          fi: "Organisaatio-esto",
+          en: "Organization Ban",
+        },
+        role: {
+          fi: "Rooli-esto",
+          en: "Role Ban",
+        },
+      },
+      organization: {
+        fi: "Organisaatio",
+        en: "Organization",
+      },
+      organizationPlaceholder: {
+        fi: "Valitse organisaatio, josta esto poistetaan...",
+        en: "Select organization to unban from...",
+      },
+      role: {
+        fi: "Rooli",
+        en: "Role",
+      },
+      rolePlaceholder: {
+        fi: "Valitse rooli, josta esto poistetaan...",
+        en: "Select role to unban from...",
+      },
+      reason: {
+        fi: "Syy",
+        en: "Reason",
+      },
+      reasonPlaceholder: {
+        fi: "Syy eston poistamiselle...",
+        en: "Reason for unbanning...",
+      },
+    },
+    actions: {
+      confirm: {
+        fi: "Poista esto",
+        en: "Unban",
+      },
+      cancel: {
+        fi: "Peruuta",
+        en: "Cancel",
       },
     },
   },

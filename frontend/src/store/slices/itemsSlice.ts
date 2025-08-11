@@ -6,13 +6,13 @@ import {
   UpdateItemDto,
   Tag,
   RootState,
-  ItemFormData,
   ValidItemOrder,
   ManageItemViewRow,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { ApiResponse } from "@common/response.types";
 import { AxiosResponse } from "axios";
+import { ItemFormData } from "@common/items/form.types";
 
 /**
  * Initial state for items slice
@@ -30,6 +30,12 @@ const initialState: ItemState = {
     total: 0,
   },
   itemCount: 0,
+  itemCreation: {
+    org: null,
+    location: null,
+    items: [],
+  },
+  isEditingItem: false,
 };
 
 // Fetch all available items
@@ -161,8 +167,8 @@ export const createItem = createAsyncThunk(
   "items/createItem",
   async (itemData: ItemFormData, { rejectWithValue }) => {
     try {
-      const createdItem = await itemsApi.createItem(itemData);
-      return createdItem;
+      const result = await itemsApi.createItems(itemData);
+      if (result.error) throw new Error("Failed to create items");
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to create item"),
@@ -231,6 +237,46 @@ export const itemsSlice = createSlice({
         item.storage_item_tags = tags;
       }
     },
+    selectOrgLocation: (state, action) => {
+      state.itemCreation.location = action.payload;
+    },
+    selectOrg: (state, action) => {
+      state.itemCreation.org = action.payload;
+    },
+    addToItemCreation: (state, action) => {
+      state.itemCreation.items.push(action.payload);
+      localStorage.setItem(
+        "itemsInProgress",
+        JSON.stringify(state.itemCreation),
+      );
+    },
+    removeFromItemCreation: (state, action) => {
+      const id = action.payload;
+      state.itemCreation.items = state.itemCreation.items.filter(
+        (item) => item.id !== id,
+      );
+      localStorage.setItem(
+        "itemsInProgress",
+        JSON.stringify(state.itemCreation),
+      );
+    },
+    loadItemsFromStorage: (state) => {
+      const storage = localStorage.getItem("itemsInProgress");
+      if (storage) state.itemCreation = JSON.parse(storage);
+    },
+    editLocalItem: (state, action) => {
+      const id = action.payload;
+      const editItem = state.itemCreation.items.find((item) => item.id === id);
+      if (editItem) state.selectedItem = editItem;
+    },
+    toggleIsEditing: (state, action) => {
+      state.isEditingItem = action.payload;
+    },
+    updateLocalItem: (state, action) => {
+      const { item } = action.payload;
+      const index = state.itemCreation.items.findIndex((i) => i.id === item.id);
+      state.itemCreation.items[index] = item;
+    },
   },
 
   extraReducers: (builder) => {
@@ -293,9 +339,14 @@ export const itemsSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(createItem.fulfilled, (state, action) => {
+      .addCase(createItem.fulfilled, (state) => {
         state.loading = false;
-        state.items.push(action.payload);
+        state.itemCreation = {
+          org: null,
+          location: undefined,
+          items: [],
+        };
+        localStorage.removeItem("itemsInProgress");
       })
       .addCase(createItem.rejected, (state, action) => {
         state.loading = false;
@@ -396,8 +447,22 @@ export const selectItemsPagination = (state: RootState) =>
   state.items.item_pagination;
 export const selectTotalItemsCount = (state: RootState) =>
   state.items.itemCount;
+export const selectItemCreation = (state: RootState) =>
+  state.items.itemCreation;
+export const selectIsEditing = (state: RootState) => state.items.isEditingItem;
 
 // Actions
-export const { clearSelectedItem, updateItemTags } = itemsSlice.actions;
+export const {
+  clearSelectedItem,
+  updateItemTags,
+  selectOrgLocation,
+  selectOrg,
+  addToItemCreation,
+  removeFromItemCreation,
+  loadItemsFromStorage,
+  editLocalItem,
+  toggleIsEditing,
+  updateLocalItem,
+} = itemsSlice.actions;
 
 export default itemsSlice.reducer;

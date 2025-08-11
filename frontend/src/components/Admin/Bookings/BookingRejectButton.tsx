@@ -19,20 +19,20 @@ const BookingRejectButton = ({
 
   const handleRejectBooking = () => {
     if (!id) {
-      toast.error("Invalid booking ID.");
+      toast.error(t.bookingReject.errors.invalidId[lang]);
       return;
     }
 
     toastConfirm({
-      title: "Confirm Rejection",
-      description: "Are you sure you want to reject this booking?",
-      confirmText: "Confirm",
-      cancelText: "Cancel",
+      title: t.bookingReject.confirmDialog.title[lang],
+      description: t.bookingReject.confirmDialog.description[lang],
+      confirmText: t.bookingReject.confirmDialog.confirmText[lang],
+      cancelText: t.bookingReject.confirmDialog.cancelText[lang],
       onConfirm: () => {
         toast.promise(dispatch(rejectBooking(id)).unwrap(), {
-          loading: "Rejecting booking...",
-          success: "Booking has been successfully rejected.",
-          error: "Failed to reject the booking.",
+          loading: t.bookingReject.toast.loading[lang],
+          success: t.bookingReject.toast.success[lang],
+          error: t.bookingReject.toast.error[lang],
         });
         closeModal();
       },
