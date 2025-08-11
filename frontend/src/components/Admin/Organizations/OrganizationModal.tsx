@@ -79,13 +79,17 @@ export default function OrganizationModal({
           </DialogHeader>
           <div className="space-y-2 text-sm">
             <p>
-              <strong>Beschreibung:</strong> {organization?.description || "—"}
+              <strong>
+                {t.organizationList.modal.labels.description[lang]}:
+              </strong>{" "}
+              {organization?.description || "—"}
             </p>
             <p>
-              <strong>Slug:</strong> {organization?.slug || "—"}
+              <strong>{t.organizationList.modal.labels.slug[lang]}:</strong>{" "}
+              {organization?.slug || "—"}
             </p>
             <p>
-              <strong>Active:</strong>{" "}
+              <strong>{t.organizationList.modal.labels.active[lang]}:</strong>{" "}
               {organization?.is_active
                 ? t.organizationList.values.isActive.yes[lang]
                 : t.organizationList.values.isActive.no[lang]}
@@ -121,7 +125,7 @@ export default function OrganizationModal({
           </div>
           <DialogFooter className="flex justify-end">
             <Button onClick={() => onOpenChange(false)}>
-              <strong>{t.organizationList.modal.buttons.close[lang]}:</strong>
+              {t.organizationList.modal.buttons.close[lang]}
             </Button>
           </DialogFooter>
         </DialogContent>

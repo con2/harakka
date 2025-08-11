@@ -65,6 +65,10 @@ export const organizationList = {
         fi: "Kuvaus",
         en: "Description",
       },
+      active: {
+        fi: "Aktiivinen",
+        en: "Active",
+      },
       createdBy: {
         fi: "Luonut",
         en: "Created by",

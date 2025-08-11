@@ -2,6 +2,8 @@ import { Calendar } from "./ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import DatePickerButton from "./ui/DatePickerButton";
 import { useRef, useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 type Props = {
   startDate: Date | null;
@@ -18,6 +20,7 @@ export default function InlineTimeframePicker({
   minDate = new Date(),
   maxRangeDays = 14,
 }: Props) {
+  const { lang } = useLanguage();
   const endPopoverRef = useRef<HTMLButtonElement>(null);
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
@@ -26,7 +29,9 @@ export default function InlineTimeframePicker({
     <div className="flex flex-col sm:flex-row gap-4">
       {/* Start Date */}
       <div>
-        <span className="text-sm font-medium block mb-1">Start Date</span>
+        <span className="text-sm font-medium block mb-1">
+          {t.timeframeSelector.startDate.label[lang]}
+        </span>
         <Popover open={startOpen} onOpenChange={setStartOpen}>
           <PopoverTrigger asChild>
             <DatePickerButton
@@ -56,7 +61,9 @@ export default function InlineTimeframePicker({
 
       {/* End Date */}
       <div>
-        <span className="text-sm font-medium block mb-1">End Date</span>
+        <span className="text-sm font-medium block mb-1">
+          {t.timeframeSelector.endDate.label[lang]}
+        </span>
         <Popover open={endOpen} onOpenChange={setEndOpen}>
           <PopoverTrigger asChild>
             <DatePickerButton
