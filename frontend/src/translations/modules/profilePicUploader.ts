@@ -39,4 +39,8 @@ export const profilePicUploader = {
     fi: "Ei tiedostoa valittu",
     en: "No file selected",
   },
+  dragAndDrop: {
+    fi: "Raahaa ja pudota kuva tähän tai klikkaa valitaksesi",
+    en: "Drag & Drop your image here or click to select",
+  },
 };

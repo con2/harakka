@@ -34,6 +34,7 @@ const ProfilePictureUploader = () => {
   const [open, setOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // crop states
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -52,12 +53,35 @@ const ProfilePictureUploader = () => {
 
   const currentImage = selectedUser?.profile_picture_url;
 
+  // Handle file selection
+  const handleSelectedFile = (selected: File) => {
+    setFile(selected);
+    setPreviewUrl(URL.createObjectURL(selected));
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) {
-      setFile(selected);
-      setPreviewUrl(URL.createObjectURL(selected));
+      handleSelectedFile(selected);
     }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+      handleSelectedFile(droppedFile);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
   };
 
   // saves the exact crop area when cropping is complete
@@ -233,6 +257,21 @@ const ProfilePictureUploader = () => {
                 </Button>
               </div>
             )}
+
+            {/* Drop-Zone */}
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition 
+    ${isDragging ? "border-secondary bg-secondary/10" : "border-gray-300"}`}
+            >
+              <p className="text-sm text-gray-500">
+                {t.profilePicUploader.dragAndDrop[lang] ??
+                  "Drag & Drop your image here or click to select"}
+              </p>
+            </div>
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-4">
