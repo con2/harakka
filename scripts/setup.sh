@@ -74,22 +74,43 @@ fi
 # Validate required environment variables
 echo "🔍 Validating environment variables..."
 
-if ! grep -q "YOUR_SUPABASE_URL\|https://.*\.supabase\.co" .env.production; then
-	echo "❌ SUPABASE_URL not configured properly"
-	exit 1
-fi
+# Function to check if a variable is set and not a template value
+check_env_var() {
+  local var_name="$1"
+  local var_value=$(grep "^$var_name=" .env.production | cut -d'=' -f2-)
+  
+  if [ -z "$var_value" ] || [[ "$var_value" =~ ^YOUR_ ]]; then
+    echo "❌ $var_name is not configured properly (value: '$var_value')"
+    return 1
+  else
+    echo "✅ $var_name is configured"
+    return 0
+  fi
+}
 
-if grep -q "YOUR_SUPABASE_ANON_KEY" .env.production; then
-	echo "❌ SUPABASE_ANON_KEY not configured"
-	exit 1
-fi
+# Check required variables
+failed_vars=0
 
-if grep -q "YOUR_GMAIL_CLIENT_ID" .env.production; then
-	echo "❌ Gmail configuration not complete"
-	exit 1
-fi
+check_env_var "SUPABASE_URL" || ((failed_vars++))
+check_env_var "SUPABASE_ANON_KEY" || ((failed_vars++))
+check_env_var "SUPABASE_SERVICE_ROLE_KEY" || ((failed_vars++))
+check_env_var "EMAIL_FROM_2" || ((failed_vars++))
+check_env_var "GMAIL_APP_PASSWORD" || ((failed_vars++))
 
-echo "✅ Environment variables appear to be configured"
+if [ $failed_vars -gt 0 ]; then
+  echo ""
+  echo "❌ Found $failed_vars unconfigured environment variables."
+  echo "Please edit .env.production and set the required values before continuing."
+  echo ""
+  echo "Required variables:"
+  echo "  - SUPABASE_URL: Your Supabase project URL"
+  echo "  - SUPABASE_ANON_KEY: Your Supabase anonymous key"
+  echo "  - SUPABASE_SERVICE_ROLE_KEY: Your Supabase service role key"
+  echo "  - EMAIL_FROM_2: Your Gmail address"
+  echo "  - GMAIL_APP_PASSWORD: Your Gmail app password"
+  echo ""
+  exit 1
+fi
 
 # Check Docker
 if ! command -v docker &>/dev/null; then

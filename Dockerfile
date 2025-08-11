@@ -48,6 +48,51 @@ COPY common/ ../common/
 RUN npm run build && echo "✅ Frontend build completed successfully!"
 RUN echo "📁 Frontend dist contents:" && ls -la dist/
 
+# Create a default nginx config with SPA fallback and /api reverse proxy
+RUN cat > /etc/nginx/nginx.conf <<'NGINXCONF'
+user  nginx;
+worker_processes  auto;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+events { worker_connections 1024; }
+
+http {
+  include       /etc/nginx/mime.types;
+  default_type  application/octet-stream;
+  sendfile      on;
+  keepalive_timeout  65;
+  gzip on;
+
+  server {
+    listen 80;
+    server_name localhost;
+
+    root /usr/share/nginx/html;
+    index index.html index.htm;
+
+    # Frontend SPA: fallback to index.html
+    location / {
+      try_files $uri $uri/ /index.html;
+    }
+
+    # Proxy API requests to the backend service (Compose service name "backend")
+    location /api/ {
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_read_timeout 60s;
+      proxy_send_timeout 60s;
+      proxy_pass http://backend:3000/;
+    }
+  }
+}
+NGINXCONF
+
 # Stage 3: Build the backend
 FROM node:20-alpine AS backend-builder
 WORKDIR /app
