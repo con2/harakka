@@ -45,6 +45,7 @@ import { userBanning } from "./modules/userBanning";
 import { userEditModal } from "./modules/userEditModal";
 import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
+import { userSignupModal } from "./modules/userSignupModal";
 import { usersList } from "./modules/usersList";
 import { currentUserRoles } from "./modules/currentUserRoles";
 import { privacyPolicy } from "./modules/privacyPolicy";
@@ -119,6 +120,7 @@ export const t = {
   userEditModal,
   userGuide,
   userPanel,
+  userSignupModal,
   usersList,
   currentUserRoles,
   organizationList,

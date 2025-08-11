@@ -55,6 +55,22 @@ export const RoleContextSwitcher: React.FC = () => {
     orgName: role.organization_name,
   }));
 
+  // Automatically set the only role as active if there's just one role
+  useEffect(() => {
+    if (activeRoles.length === 1 && !activeContext.organizationId) {
+      const singleRole = activeRoles[0] as {
+        organization_id: string;
+        role_name: string;
+        organization_name: string;
+      };
+      void setActiveContext(
+        singleRole.organization_id,
+        singleRole.role_name,
+        singleRole.organization_name,
+      );
+    }
+  }, [activeRoles, activeContext, setActiveContext]);
+
   // Handler for changing the active context
   const handleContextChange = async (value: string) => {
     // First check if we're clearing the selection
@@ -113,7 +129,12 @@ export const RoleContextSwitcher: React.FC = () => {
   // Add a key to force remounting when roles change
   const componentKey = `role-switcher-${activeRoles.length}-${isClearing}`;
 
-  return activeRoles.length > 1 ? (
+  // Hide the switcher if there's only one role
+  if (activeRoles.length <= 1) {
+    return null;
+  }
+
+  return (
     <div className="flex items-center gap-2">
       <Select
         key={componentKey}
@@ -136,5 +157,5 @@ export const RoleContextSwitcher: React.FC = () => {
         </SelectContent>
       </Select>
     </div>
-  ) : null;
+  );
 };
