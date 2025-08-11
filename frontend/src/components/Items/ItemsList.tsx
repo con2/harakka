@@ -32,7 +32,7 @@ const ItemsList: React.FC = () => {
   const { lang } = useLanguage();
 
   // Get all filters from the UserPanel
-  const { isActive, itemTypes, tagIds, locationIds } = filters;
+  const { isActive, itemTypes, tagIds, locationIds, orgIds } = filters;
 
   //state for search query
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,6 +55,7 @@ const ItemsList: React.FC = () => {
         location_filter: locationIds,
         availability_min: filters.itemsNumberAvailable[0],
         availability_max: filters.itemsNumberAvailable[1],
+        org_ids: orgIds && orgIds.length > 0 ? orgIds : undefined,
       }),
     );
   }, [
@@ -66,6 +67,7 @@ const ItemsList: React.FC = () => {
     filters.itemsNumberAvailable,
     locationIds,
     tagIds,
+    orgIds,
     ITEMS_PER_PAGE,
   ]);
 
