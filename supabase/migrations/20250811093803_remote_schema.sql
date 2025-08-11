@@ -2,7 +2,7 @@ create type "public"."notification_channel" as enum ('in_app', 'web_push', 'emai
 
 create type "public"."notification_severity" as enum ('info', 'warning', 'critical');
 
-create type "public"."notification_type" as enum ('comment', 'mention', 'system', 'custom');
+create type "public"."notification_type" as enum ('comment', 'mention', 'system', 'custom', 'booking.status_approved', 'booking.status_rejected', 'booking.created', 'user.created');
 
 create type "public"."role_type" as enum ('User', 'Admin', 'SuperVera', 'app_admin', 'main_admin', 'admin', 'user', 'superVera');
 
@@ -95,7 +95,8 @@ create table "public"."organization_items" (
     "updated_at" timestamp with time zone default now(),
     "created_by" uuid,
     "updated_by" uuid,
-    "storage_location_id" uuid not null
+    "storage_location_id" uuid not null,
+    "is_deleted" boolean not null default false
 );
 
 
@@ -264,10 +265,7 @@ create table "public"."storage_items" (
     "created_at" timestamp with time zone default now(),
     "translations" jsonb,
     "items_number_currently_in_storage" numeric,
-    "is_deleted" boolean default false,
-    "test_priority_score" numeric default 0,
-    "test_metadata" jsonb default '{}'::jsonb,
-    "items_number_available" numeric
+    "is_deleted" boolean default false
 );
 
 
@@ -476,8 +474,6 @@ CREATE UNIQUE INDEX storage_item_images_pkey ON public.storage_item_images USING
 CREATE UNIQUE INDEX storage_item_tags_pkey ON public.storage_item_tags USING btree (id);
 
 CREATE UNIQUE INDEX storage_items_pkey ON public.storage_items USING btree (id);
-
-CREATE INDEX storage_items_test_metadata_idx ON public.storage_items USING gin (test_metadata);
 
 CREATE UNIQUE INDEX storage_locations_pkey ON public.storage_locations USING btree (id);
 
@@ -912,6 +908,21 @@ BEGIN
      AND is_active = TRUE),
     0
   );
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.cleanup_item_images()
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+BEGIN
+  DELETE FROM storage.objects
+  WHERE bucket_id = 'item-images'
+    -- metadata->>'is_active' is stored as text, so cast it to boolean
+    AND is_active = FALSE
+    AND created_at < NOW() - INTERVAL '30 days';
 END;
 $function$
 ;
@@ -1454,25 +1465,6 @@ AS $function$
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.handle_new_user()
- RETURNS trigger
- LANGUAGE plpgsql
- SECURITY DEFINER
-AS $function$BEGIN
-  -- Removed the problematic "SET LOCAL ROLE postgres;" line
-  
-  INSERT INTO public.user_profiles (
-    id, email, phone, created_at
-  )
-  VALUES (
-    NEW.id, NEW.email, NEW.phone, NOW()
-  )
-  ON CONFLICT (id) DO NOTHING;
-  
-  RETURN NEW;
-END;$function$
-;
-
 CREATE OR REPLACE FUNCTION public.is_admin(p_user_id uuid, p_org_id uuid DEFAULT NULL::uuid)
  RETURNS boolean
  LANGUAGE sql
@@ -1539,6 +1531,23 @@ END;
 $function$
 ;
 
+CREATE OR REPLACE FUNCTION public.notify(p_user_id uuid, p_type_txt text, p_title text DEFAULT ''::text, p_message text DEFAULT ''::text, p_channel notification_channel DEFAULT 'in_app'::notification_channel, p_severity notification_severity DEFAULT 'info'::notification_severity, p_metadata jsonb DEFAULT '{}'::jsonb)
+ RETURNS void
+ LANGUAGE sql
+ SECURITY DEFINER
+AS $function$
+  select public.create_notification(
+    p_user_id,
+    p_type_txt::notification_type,  -- single cast lives here
+    p_title,
+    p_message,
+    p_channel,
+    p_severity,
+    p_metadata
+  );
+$function$
+;
+
 CREATE OR REPLACE FUNCTION public.trg_booking_status_change()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -1546,36 +1555,31 @@ CREATE OR REPLACE FUNCTION public.trg_booking_status_change()
  SET search_path TO 'public'
 AS $function$
 begin
-  if new.status is distinct from old.status
-     and new.status in ('confirmed','rejected') then
+  if new.status is distinct from old.status then
+    perform public.create_notification(
+      new.user_id,
 
-    perform public.create_notification( -- create a notification
-      new.user_id, -- owner of the booking
-      'system'::notification_type,        -- type
+      case
+        when new.status = 'confirmed'
+          then 'booking.status_approved'::notification_type
+        when new.status = 'rejected'
+          then 'booking.status_rejected'::notification_type
+      end,
 
-      -- Title and message depend on the new status
-      (case
-         when new.status = 'confirmed' then 'Booking confirmed'
-         when new.status = 'rejected'  then 'Booking rejected'
-         else format('Booking %s status changed', new.booking_number)
-       end),
-      (case
-         when new.status = 'confirmed'
-         then format('Your booking %s has been confirmed.', new.booking_number)
-         when new.status = 'rejected'
-         then format('Unfortunately, your booking %s was rejected.', new.booking_number)
-         else format('Your booking %s is now %s.', new.booking_number, new.status)
-       end),
-      'in_app'::notification_channel,         -- channel
-      (case                                    -- severity
+      '', '',                                -- titles/messages from UI
+      'in_app'::notification_channel,        -- 👈 explicit cast
+      (case                                   -- 👈 cast both branches
          when new.status = 'confirmed'
          then 'info'::notification_severity
          else 'warning'::notification_severity
        end),
-      jsonb_build_object('booking_id', new.id, 'status', new.status)
+      jsonb_build_object(
+        'booking_id',     new.id,
+        'booking_number', new.booking_number,
+        'status',         new.status
+      )
     );
   end if;
-
   return new;
 end;
 $function$
@@ -1594,20 +1598,20 @@ begin
     select distinct uor.user_id
     from public.user_organization_roles uor
     join public.roles r on r.id = uor.role_id
-    where uor.is_active = true
-      and r.role        = 'admin'
+    where r.role = 'admin' and uor.is_active
   loop
     perform public.create_notification(
       admin_id,
-      'system',
-      'A new user joined',
-      format('User %s just registered', new.email),
-      'in_app',
-      'info',
-      jsonb_build_object('new_user_id', new.id)
+      'user.created'::notification_type,
+      '', '',
+      'in_app'::notification_channel,        -- 👈 cast
+      'info'::notification_severity,         -- 👈 cast
+      jsonb_build_object(
+        'new_user_id', new.id,
+        'email',       new.email
+      )
     );
   end loop;
-
   return new;
 end;
 $function$
@@ -1818,12 +1822,13 @@ create or replace view "public"."view_manage_storage_items" as  SELECT ((s.trans
     s.location_id,
     l.name AS location_name,
     array_agg(t.tag_id) AS tag_ids,
-    array_agg(g.translations) AS tag_translations
+    array_agg(g.translations) AS tag_translations,
+    s.items_number_currently_in_storage
    FROM (((storage_items s
      JOIN storage_locations l ON ((s.location_id = l.id)))
      LEFT JOIN storage_item_tags t ON ((s.id = t.item_id)))
      LEFT JOIN tags g ON ((t.tag_id = g.id)))
-  GROUP BY s.id, s.translations, s.items_number_total, s.price, s.is_active, l.name;
+  GROUP BY s.id, s.translations, s.items_number_total, s.price, s.is_active, l.name, s.items_number_currently_in_storage;
 
 
 create or replace view "public"."view_user_ban_status" as  SELECT up.id,
@@ -1892,12 +1897,29 @@ create or replace view "public"."view_user_roles_with_details" as  SELECT uor.id
      JOIN organizations o ON ((uor.organization_id = o.id)));
 
 
+create policy "User can delete own notifications"
+on "public"."notifications"
+as permissive
+for delete
+to public
+using ((user_id = auth.uid()));
+
+
 create policy "User can select own notifications"
 on "public"."notifications"
 as permissive
 for select
 to public
 using ((user_id = auth.uid()));
+
+
+create policy "User can update own notifications"
+on "public"."notifications"
+as permissive
+for update
+to public
+using ((user_id = auth.uid()))
+with check ((user_id = auth.uid()));
 
 
 CREATE TRIGGER audit_booking_items_trigger AFTER INSERT OR DELETE OR UPDATE ON public.booking_items FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
