@@ -24,7 +24,7 @@ import {
   selectAllTags,
 } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
-import { Item, ValidItemOrder } from "@/types/item";
+import { Item, ManageItemViewRow, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -44,6 +44,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import AssignTagsModal from "@/components/Admin/Items/AssignTagsModal";
 import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
 import { useLocation, useNavigate } from "react-router-dom";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -54,6 +55,7 @@ const AdminItemsTable = () => {
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const [showModal, setShowModal] = useState(false);
   const deletableItems = useAppSelector((state) => state.items.deletableItems);
+  const org_id = useAppSelector(selectActiveOrganizationId);
 
   const { hasRole } = useRoles();
   const isAdmin = hasRole("admin") || hasRole("super_admin");
@@ -79,7 +81,7 @@ const AdminItemsTable = () => {
     redirectState?.order ?? "created_at",
   );
   const [ascending, setAscending] = useState<boolean | null>(
-    redirectState?.ascending ?? null,
+    redirectState?.ascending ?? false,
   );
   const selectedItem = useAppSelector(selectSelectedItem);
   const { page, totalPages } = useAppSelector(selectItemsPagination);
@@ -97,7 +99,11 @@ const AdminItemsTable = () => {
     setShowModal(true); // Show the modal
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (item: ManageItemViewRow) => {
+    console.log("item: ", item);
+    // Currently reference the org_id of the item since we display items of all orgs
+    // Later this needs to be refactored to use the org_id which is currently selected (selectActiveOrganizationId)
+    if (!item.organization_id) return toast.error("No organization selected");
     toastConfirm({
       title: t.adminItemsTable.messages.deletion.title[lang],
       description: t.adminItemsTable.messages.deletion.description[lang],
@@ -105,11 +111,16 @@ const AdminItemsTable = () => {
       cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
       onConfirm: () => {
         try {
-          void toast.promise(dispatch(deleteItem(id)).unwrap(), {
-            loading: t.adminItemsTable.messages.toast.deleting[lang],
-            success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
-            error: t.adminItemsTable.messages.toast.deleteFail[lang],
-          });
+          void toast.promise(
+            dispatch(
+              deleteItem({ org_id: item.organization_id, item_id: item.id }),
+            ).unwrap(),
+            {
+              loading: t.adminItemsTable.messages.toast.deleting[lang],
+              success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
+              error: t.adminItemsTable.messages.toast.deleteFail[lang],
+            },
+          );
         } catch {
           toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
         }
@@ -224,9 +235,11 @@ const AdminItemsTable = () => {
 
         const handleToggle = async (checked: boolean) => {
           try {
+            if (!org_id) return toast.error("No organization selected");
             await dispatch(
               updateItem({
-                id: item.id,
+                orgId: org_id,
+                item_id: item.id,
                 data: {
                   is_active: checked,
                 },
@@ -278,7 +291,9 @@ const AdminItemsTable = () => {
                         size="sm"
                         variant="ghost"
                         className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() =>
+                          handleDelete(item as unknown as ManageItemViewRow)
+                        }
                         disabled={!isDeletable}
                         aria-label={`Delete ${item.translations.fi.item_name}`}
                       >
@@ -453,7 +468,7 @@ const AdminItemsTable = () => {
 
       <PaginatedDataTable
         columns={itemsColumns}
-        data={items}
+        data={items as Item[]}
         pageIndex={currentPage - 1}
         pageCount={totalPages}
         onPageChange={(page) => handlePageChange(page + 1)}
@@ -468,7 +483,7 @@ const AdminItemsTable = () => {
       {showModal && selectedItem && (
         <UpdateItemModal
           onClose={handleCloseModal}
-          initialData={selectedItem as Item} // Pass the selected item data to the modal
+          initialData={selectedItem as Item}
         />
       )}
       {assignTagsModalOpen && currentItemId && (

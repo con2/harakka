@@ -8,7 +8,6 @@ import {
 import {
   StorageItem,
   StorageItemWithJoin,
-  UpdateItem,
   ValidItemOrder,
 } from "./interfaces/storage-item.interface";
 import { Request } from "express";
@@ -27,7 +26,7 @@ import {
   mapTagLinks,
 } from "@src/utils/storage-items.utils";
 import { ItemImagesService } from "../item-images/item-images.service";
-import { ItemImageRow } from "../item-images/types/item-image.types";
+import { UpdateItem } from "@common/items/storage-items.types";
 
 @Injectable()
 export class StorageItemsService {
@@ -88,7 +87,7 @@ export class StorageItemsService {
     const mappedData = result.data.map(
       (item: StorageItemWithJoin): StorageItem => ({
         ...item,
-        storage_item_tags:
+        tags:
           item.storage_item_tags.map(
             (tagLink) => tagLink.tags, // Flatten out the tags object to just be the tag itself
           ) ?? [], // Fallback to empty array if no tags are available
@@ -138,11 +137,11 @@ export class StorageItemsService {
         .single();
 
     if (error) handleSupabaseError(error);
-
+    const { storage_item_tags, storage_locations, ...item } = data;
     // Flatten the tags to make them easier to work with
     return {
-      ...data,
-      storage_item_tags: data?.storage_item_tags
+      ...item,
+      tags: data?.storage_item_tags
         ? data.storage_item_tags.map((tagLink) => tagLink.tags) // Extract just the tag itself
         : [],
       location_details: data?.storage_locations || null,
@@ -227,8 +226,9 @@ export class StorageItemsService {
     item: UpdateItem,
   ): Promise<StorageItem> {
     const supabase = req.supabase;
+    console.log("Update item: ", item);
     // Extract properties that shouldn't be sent to the database
-    const { tagIds, location_details, ...itemData } = item;
+    const { tags, location_details, ...itemData } = item;
 
     // Check if item belongs to multiple orgs.
     // If yes, duplicate the item and update it.
@@ -245,8 +245,8 @@ export class StorageItemsService {
       error: updateError,
     }: PostgrestResponse<StorageItem> = await supabase
       .from("storage_items")
-      .update({ ...itemData, location_id: location_details.id })
-      .eq("storage_item_id", item_id)
+      .update(itemData)
+      .eq("id", item_id)
       .select();
 
     if (updateError) {
@@ -260,9 +260,9 @@ export class StorageItemsService {
       );
 
     // Update tag relationships
-    if (tagIds) {
-      if (tagIds.length > 0) {
-        await this.tagService.assignTagsToItem(req, item_id, tagIds);
+    if (tags) {
+      if (tags.length > 0) {
+        await this.tagService.assignTagsToItem(req, item_id, tags);
       }
     }
 
@@ -271,84 +271,87 @@ export class StorageItemsService {
 
   /**
    * Delete an organizations item.
-   * This method soft-deletes the item, then relies on a daily CRON job to remove completely inactive and *unreferenced items.
+   * This method soft-deletes the item, then relies on a daily CRON job to remove completely inactive and * unreferenced items. (CRON JOB: 'delete_inactive_items')
    * @param req An Authorized request
    * @param item_id The ID of the item to soft-delete
    * @param org_id The organization ID which to soft-delete the item from
-   * @param confirm
    * @returns
    */
   async deleteItem(
     req: AuthRequest,
     item_id: string,
     org_id: string,
-    confirm?: string,
   ): Promise<{ success: boolean; id: string }> {
     const supabase = req.supabase;
     if (!item_id) {
       throw new Error("No item ID provided for deletion");
     }
 
-    // Safety check: only allow deletion if confirmed
-    const check = await this.canDeleteItem(req, item_id, confirm);
-    if (!check.success) {
-      throw new Error(
-        check.reason || "Item cannot be deleted due to unknown restrictions",
-      );
-    }
+    try {
+      // Get image paths
+      const {
+        data: images,
+        error: imagesError,
+      }: PostgrestResponse<{ id: string; storage_path: string }> =
+        await supabase
+          .from("storage_item_images")
+          .select("id, storage_path")
+          .eq("item_id", item_id);
 
-    // Get image paths
-    const {
-      data: images,
-      error: imagesError,
-    }: PostgrestResponse<{ id: string; storage_path: string }> = await supabase
-      .from("storage_item_images")
-      .select("id, storage_path")
-      .eq("item_id", item_id);
+      if (imagesError) {
+        throw new Error(`Failed to get images: ${imagesError.message}`);
+      }
 
-    if (imagesError) {
-      throw new Error(`Failed to get images: ${imagesError.message}`);
-    }
+      console.log("org id: ", org_id)
+      console.log("item id: ", item_id)
 
-    // Update the org_items data
-    // Set is_deleted to true and is_active to false
-    // This way it cannot be booked, and is scheduled to be deleted once
-    // there are no future or ongoing bookings with the item (CRON JOB: 'delete_inactive_items')
-    const { error: orgError } = await supabase
-      .from("organization_items")
-      .update({ is_deleted: true, is_active: false })
-      .eq("storage_item_id", item_id)
-      .eq("organization_id", org_id);
-    if (orgError) handleSupabaseError(orgError);
+      // Update the org_items data
+      // Set is_deleted to true and is_active to false
+      // This way it cannot be booked, and is scheduled to be deleted once
+      // there are no future or ongoing bookings with the item (CRON JOB: 'delete_inactive_items')
+      const { data, error: orgError } = await supabase
+        .from("organization_items")
+        .update({ is_deleted: true, is_active: false })
+        .eq("storage_item_id", item_id)
+        .eq("organization_id", org_id)
+        .select();
+        if (orgError) throw new Error(
+          `Failed to update org items: ${orgError.message}`,
+        );
+        console.log("data: ", data);
 
-    // Delete any found images
-    if (images && images.length > 0) {
-      const paths = images.map((i) => i.storage_path);
-      await supabase.storage.from("item-images").remove(paths);
+      // Delete any found images
+      if (images && images.length > 0) {
+        const paths = images.map((i) => i.storage_path);
+        await supabase.storage.from("item-images").remove(paths);
 
-      // Then delete the image records
-      const { error: deleteImagesError } = await supabase
-        .from("storage_item_images")
+        // Then delete the image records
+        const { error: deleteImagesError } = await supabase
+          .from("storage_item_images")
+          .delete()
+          .eq("item_id", item_id);
+
+        if (deleteImagesError) {
+          throw new Error(
+            `Failed to delete item images: ${deleteImagesError.message}`,
+          );
+        }
+      }
+
+      // Step 2: Delete related tags from the join table
+      const { error: tagDeleteError } = await supabase
+        .from("storage_item_tags")
         .delete()
         .eq("item_id", item_id);
 
-      if (deleteImagesError) {
+      if (tagDeleteError) {
         throw new Error(
-          `Failed to delete item images: ${deleteImagesError.message}`,
+          `Failed to delete related tags: ${tagDeleteError.message}`,
         );
       }
-    }
-
-    // Step 2: Delete related tags from the join table
-    const { error: tagDeleteError } = await supabase
-      .from("storage_item_tags")
-      .delete()
-      .eq("item_id", item_id);
-
-    if (tagDeleteError) {
-      throw new Error(
-        `Failed to delete related tags: ${tagDeleteError.message}`,
-      );
+    } catch (error) {
+      console.error(error);
+      return { success: false, id: item_id };
     }
 
     return { success: true, id: item_id };
@@ -450,6 +453,7 @@ export class StorageItemsService {
     const query = supabase
       .from("view_manage_storage_items")
       .select("*", { count: "exact" })
+      .eq("is_deleted", false)
       .range(from, to);
 
     if (order_by)
@@ -595,12 +599,8 @@ export class StorageItemsService {
       await this.imageService.copyImages(supabase, item_id, NEW_ITEM_ID);
       await this.updateOrgReferences(supabase, org_id, item_id, NEW_ITEM_ID);
 
-      if (newItem.tagIds?.length) {
-        await this.tagService.assignTagsToItem(
-          req,
-          NEW_ITEM_ID,
-          newItem.tagIds,
-        );
+      if (newItem.tags?.length) {
+        await this.tagService.assignTagsToItem(req, NEW_ITEM_ID, newItem.tags);
       }
 
       return itemData;
@@ -617,7 +617,7 @@ export class StorageItemsService {
     newId: string,
     newItem: UpdateItem,
   ) {
-    const { tagIds, location_details, ...rest } = newItem;
+    const { tags, location_details, ...rest } = newItem;
     const { data, error } = await supabase
       .from("storage_items")
       .insert({ ...rest, id: newId, location_id: location_details.id })

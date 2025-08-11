@@ -10,19 +10,18 @@ import {
   Req,
   Query,
   BadRequestException,
+  Delete,
 } from "@nestjs/common";
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
-import {
-  UpdateItem,
-  ValidItemOrder,
-} from "./interfaces/storage-item.interface";
+import { ValidItemOrder } from "./interfaces/storage-item.interface";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { ApiSingleResponse } from "../../../../common/response.types";
 import { StorageItem } from "./interfaces/storage-item.interface";
 import { Public, Roles } from "src/decorators/roles.decorator";
 import { ItemFormData } from "@common/items/form.types";
+import { UpdateItem } from "@common/items/storage-items.types";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
@@ -131,16 +130,16 @@ export class StorageItemsController {
    * @body Update item object including tagsIds and location details.
    * @returns The updated item
    */
-  @Put(":id")
+  @Put(":org_id/:item_id")
   @Roles(["super_admin", "admin", "main_admin", "storage_manager", "superVera"])
   async update(
     @Req() req: AuthRequest,
-    @Param("id") id: string,
-    @Query("org") org_id: string,
+    @Param("org_id") org_id: string,
+    @Param("item_id") item_id: string,
     @Body()
     item: UpdateItem,
   ): Promise<StorageItem> {
-    return this.storageItemsService.updateItem(req, id, org_id, item);
+    return this.storageItemsService.updateItem(req, item_id, org_id, item);
   }
 
   @Get(":id/can-delete")
@@ -192,5 +191,14 @@ export class StorageItemsController {
       endDate,
       supabase,
     );
+  }
+
+  @Delete(":org_id/:item_id")
+  async deleteItem(
+    @Req() req: AuthRequest,
+    @Param("org_id") org_id: string,
+    @Param("item_id") item_id: string,
+  ) {
+    return await this.storageItemsService.deleteItem(req, item_id, org_id);
   }
 }

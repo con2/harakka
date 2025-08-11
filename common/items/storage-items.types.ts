@@ -2,6 +2,10 @@ import { Database } from "@common/database.types";
 
 export type StorageItemRow =
   Database["public"]["Tables"]["storage_items"]["Row"];
+export type StorageItemInsert =
+  Database["public"]["Tables"]["storage_items"]["Insert"];
+export type LocationRow =
+  Database["public"]["Tables"]["storage_locations"]["Row"];
 
 /**
  * TagLink:
@@ -19,4 +23,9 @@ export type OrgItem = {
   storage_location_id: string;
   owned_quantity: number;
   is_active: boolean;
+};
+
+export type UpdateItem = StorageItemInsert & {
+  tags: string[];
+  location_details: LocationRow;
 };

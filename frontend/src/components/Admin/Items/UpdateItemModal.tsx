@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import {
   fetchAllTags,
-  assignTagToItem,
   selectAllTags,
   selectSelectedTags,
   selectTagsLoading,
@@ -41,13 +40,12 @@ import { t } from "@/translations";
 import { Textarea } from "../../ui/textarea";
 import { itemsApi } from "@/api/services/items";
 import { LoaderCircle } from "lucide-react";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 type UpdateItemModalProps = {
   onClose: () => void;
   initialData: Item; // Assume initialData is always passed for updating
-  onUpdate?: (
-    item: Omit<Item, "created_at" | "compartment_id" | "test_metadata">,
-  ) => void;
+  onUpdate?: (item: Omit<Item, "created_at" | "compartment_id">) => void;
 };
 
 const UpdateItemModal = ({
@@ -65,6 +63,7 @@ const UpdateItemModal = ({
   const locations = useAppSelector(selectAllLocations);
   const itemsLoading = useAppSelector(selectItemsLoading);
   const tagsLoading = useAppSelector(selectTagsLoading);
+  const orgId = useAppSelector(selectActiveOrganizationId);
   // Translation
   const { lang } = useLanguage();
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
@@ -162,39 +161,18 @@ const UpdateItemModal = ({
 
     setLoading(true);
     try {
-      // Clean the data by only including the fields that should be sent to the database
-      const {
-        // Remove joined/computed fields that exist on Item type
-        storage_item_tags: _storage_item_tags,
-        tagIds: _tagIds,
-        location_name: _location_name,
-        created_at: _created_at,
-        // Remove any other fields that don't belong in the database update
-        average_rating: _average_rating,
-        ...cleanedData
-      } = formData;
-
-      // Only send the core database fields
-      const updateData = {
-        id: cleanedData.id,
-        location_id: cleanedData.location_id,
-        items_number_total: cleanedData.items_number_total,
-        items_number_currently_in_storage:
-          cleanedData.items_number_currently_in_storage,
-        price: cleanedData.price,
-        is_active: cleanedData.is_active,
-        translations: cleanedData.translations,
-      };
+      if (!orgId) return toast.error("No organization selected");
+      console.log("formdata: ", formData);
       if (onUpdate) {
-        onUpdate(updateData);
+        onUpdate(formData);
         return onClose();
       }
-
       await dispatch(
-        updateItem({ id: formData.id, data: updateData }),
-      ).unwrap();
-      await dispatch(
-        assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
+        updateItem({
+          orgId: orgId,
+          item_id: formData.id,
+          data: { ...formData, tags: localSelectedTags },
+        }),
       ).unwrap();
       toast.success(t.updateItemModal.messages.success[lang]);
       onClose();
@@ -453,6 +431,8 @@ const UpdateItemModal = ({
                         id="items_number_currently_in_storage"
                         name="items_number_currently_in_storage"
                         type="number"
+                        max={formData.items_number_total}
+                        min="0"
                         value={formData.items_number_currently_in_storage || 0}
                         onChange={handleChange}
                         placeholder={

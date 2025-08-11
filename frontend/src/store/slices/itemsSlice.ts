@@ -3,7 +3,6 @@ import { itemsApi } from "../../api/services/items";
 import {
   ItemState,
   Item,
-  UpdateItemDto,
   Tag,
   RootState,
   ValidItemOrder,
@@ -13,6 +12,7 @@ import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { ApiResponse } from "@common/response.types";
 import { AxiosResponse } from "axios";
 import { ItemFormData } from "@common/items/form.types";
+import { UpdateItem } from "@common/items/storage-items.types";
 
 /**
  * Initial state for items slice
@@ -178,12 +178,21 @@ export const createItem = createAsyncThunk(
 );
 
 // Delete item by ID
-export const deleteItem = createAsyncThunk<string, string>(
+export const deleteItem = createAsyncThunk(
   "items/deleteItem",
-  async (id: string, { rejectWithValue }) => {
+  async (
+    {
+      org_id,
+      item_id,
+    }: {
+      org_id: string;
+      item_id: string;
+    },
+    { rejectWithValue },
+  ) => {
     try {
-      await itemsApi.deleteItem(id);
-      return id;
+      const response = await itemsApi.deleteItem(org_id, item_id);
+      if (!response.success) throw new Error("Failed to delete item");
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to delete item"),
@@ -195,11 +204,10 @@ export const deleteItem = createAsyncThunk<string, string>(
 // Update item
 export const updateItem = createAsyncThunk<
   Item,
-  { id: string; data: UpdateItemDto; orgId: string }
->("items/updateItem", async ({ id, data, orgId }, { rejectWithValue }) => {
+  { item_id: string; data: Partial<UpdateItem>; orgId: string }
+>("items/updateItem", async ({ item_id, data, orgId }, { rejectWithValue }) => {
   try {
-    const { ...cleanData } = data;
-    return await itemsApi.updateItem(id, cleanData, orgId);
+    return await itemsApi.updateItem(item_id, data, orgId);
   } catch (error: unknown) {
     return rejectWithValue(extractErrorMessage(error, "Failed to update item"));
   }
@@ -371,18 +379,6 @@ export const itemsSlice = createSlice({
       })
       .addCase(updateItem.fulfilled, (state, action) => {
         const updatedItem = action.payload;
-
-        // Deduplicate tags if they exist
-        if (
-          updatedItem.storage_item_tags &&
-          updatedItem.storage_item_tags.length > 0
-        ) {
-          updatedItem.storage_item_tags = Array.from(
-            new Map(
-              updatedItem.storage_item_tags.map((tag: Tag) => [tag.id, tag]),
-            ).values(),
-          );
-        }
 
         // Find the item in local state, update only necessary properties
         state.items.map((i) => {

@@ -1,7 +1,8 @@
-import { Item, UpdateItemDto, ValidItemOrder } from "@/types";
+import { Item, ValidItemOrder } from "@/types";
 import { api } from "../axios";
 import { ApiSingleResponse } from "@common/response.types";
 import { ItemFormData } from "@common/items/form.types";
+import { UpdateItem } from "@common/items/storage-items.types";
 
 /**
  * API service for item-related endpoints
@@ -33,23 +34,26 @@ export const itemsApi = {
 
   /**
    * Update an existing item
-   * @param id - Item ID to update
-   * @param item - Updated item data
    * @param org_id - ID of org which item belongs to
+   * @param item - Updated item data
+   * @param id - Item ID to update
    * @returns Promise with the updated item
    */
   updateItem: (
-    id: string,
-    item: UpdateItemDto,
+    item_id: string,
+    item: Partial<UpdateItem>,
     org_id: string,
-  ): Promise<Item> => api.put(`/storage-items/${id}?org=${org_id}`, item),
+  ): Promise<Item> => api.put(`/storage-items/${org_id}/${item_id}`, item),
 
   /**
    * Delete an item
    * @param id - Item ID to delete
    */
-  deleteItem: (id: string): Promise<void> =>
-    api.post(`/storage-items/${id}/soft-delete`),
+  deleteItem: (
+    org_id: string,
+    item_id: string,
+  ): Promise<{ success: boolean; item_id: string }> =>
+    api.delete(`/storage-items/${org_id}/${item_id}`),
 
   /**
    * Get all items with a specific tag
@@ -58,23 +62,6 @@ export const itemsApi = {
    */
   getItemsByTag: (tagId: string): Promise<Item[]> =>
     api.get(`/storage-items/by-tag/${tagId}`),
-
-  /* commented out this code to test
-   * Get items available within a specific date range
-   * @param startDate - Start date for availability check
-   * @param endDate - End date for availability check
-   * @returns Promise with an array of available items
-   
-  getAvailableItems: (
-    startDate?: Date | null,
-    endDate?: Date | null,
-  ): Promise<Item[]> => {
-    const params = new URLSearchParams();
-    if (startDate) params.append("startDate", startDate.toISOString());
-    if (endDate) params.append("endDate", endDate.toISOString());
-
-    return api.get(`/storage-items/available?${params.toString()}`);
-  },*/
 
   /**
    * Get availability information for a specific item within a date range

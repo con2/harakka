@@ -43,11 +43,7 @@ export interface CreateUserFormData extends UserFormData {
 export interface ItemFormData
   extends Omit<
     StorageItemRow,
-    | "created_at"
-    | "updated_at"
-    | "storage_item_tags"
-    | "average_rating"
-    | "test_metadata"
+    "created_at" | "updated_at" | "storage_item_tags" | "average_rating"
   > {
   // Override translations to ensure they always exist with required fields
   translations: {

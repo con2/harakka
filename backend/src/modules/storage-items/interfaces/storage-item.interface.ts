@@ -11,7 +11,7 @@ export type LocationRow =
 
 export type StorageItem = StorageItemRow & {
   /** Tags flattened from the join table */
-  storage_item_tags: TagRow[];
+  tags: TagRow[];
   /** Convenience copy of the joined location row */
   location_details: LocationRow | null;
 };
@@ -34,8 +34,3 @@ export type ValidItemOrder =
   | "items_number_total"
   | "is_active"
   | "created_at";
-
-export type UpdateItem = StorageItemInsert & {
-  tagIds: string[];
-  location_details: LocationRow;
-};
