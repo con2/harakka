@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "build": "nest build",
+    "postbuild": "echo \"✅ Backend build completed successfully!\" && echo \"📁 Backend dist contents:\" && ls -la dist/backend || ls -la dist",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node -r tsconfig-paths/register dist/backend/src/main.js",
     "start:watch": "nest start --watch -r tsconfig-paths/register",
