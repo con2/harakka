@@ -28,7 +28,6 @@ export const usersApi = {
     // Access current user ID from Redux store
     const state = store.getState();
     const currentUserId = state.users.selectedUser?.id;
-    console.log(currentUserId, id);
 
     if (id === currentUserId) {
       return usersApi.getCurrentUser();
