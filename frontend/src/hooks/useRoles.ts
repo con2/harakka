@@ -149,6 +149,8 @@ export const useRoles = () => {
   const refreshCurrentUserRoles = useCallback(
     async (force = false) => {
       if (!isAuthenticated && !force) {
+        setResponseReceived(true);
+        setInitialLoadComplete(true);
         return Promise.resolve({
           type: "roles/fetchCurrentUserRoles/notLoggedIn",
         });
@@ -294,7 +296,7 @@ export const useRoles = () => {
     [dispatch, availableRoles],
   );
 
-  // Only load CURRENT user roles on initial mount - not ALL roles
+  // Only load CURRENT user roles on initial mount for authenticated users
   useEffect(() => {
     if (
       isAuthenticated &&
@@ -308,7 +310,15 @@ export const useRoles = () => {
           setInitialLoadComplete(true);
           // NOTE: We do NOT automatically load all user roles here
         })
-        .catch(console.error);
+        .catch((error) => {
+          console.error("Unauthorized: Missing access token", error);
+          setResponseReceived(true);
+          setInitialLoadComplete(true);
+        });
+    } else if (!isAuthenticated && !initialLoadComplete) {
+      // If not authenticated, mark as complete immediately
+      setInitialLoadComplete(true);
+      setResponseReceived(true);
     }
   }, [
     refreshCurrentUserRoles,
@@ -326,13 +336,19 @@ export const useRoles = () => {
     }
   }, [currentUserRoles.length, responseReceived]);
 
-  // Reset caches and pending requests when user changes to avoid stale roles between accounts
+  // Reset states when user changes (including logout)
   useEffect(() => {
     // Clear module-level caches and in-flight promises on user switch
     roleCache.currentRoles = { fetched: false, timestamp: 0 };
     roleCache.allRoles = { fetched: false, timestamp: 0 };
     roleCache.availableRoles = { fetched: false, timestamp: 0 };
     pendingRequests.clear();
+
+    // Reset component state on logout (when user becomes null)
+    if (!user) {
+      setInitialLoadComplete(false);
+      setResponseReceived(false);
+    }
   }, [user]);
 
   // Role modification operations with cache invalidation
