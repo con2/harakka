@@ -302,23 +302,18 @@ export class StorageItemsService {
         throw new Error(`Failed to get images: ${imagesError.message}`);
       }
 
-      console.log("org id: ", org_id)
-      console.log("item id: ", item_id)
-
       // Update the org_items data
       // Set is_deleted to true and is_active to false
       // This way it cannot be booked, and is scheduled to be deleted once
       // there are no future or ongoing bookings with the item (CRON JOB: 'delete_inactive_items')
-      const { data, error: orgError } = await supabase
+      const { error: orgError } = await supabase
         .from("organization_items")
         .update({ is_deleted: true, is_active: false })
         .eq("storage_item_id", item_id)
-        .eq("organization_id", org_id)
-        .select();
+        .eq("organization_id", org_id);
         if (orgError) throw new Error(
           `Failed to update org items: ${orgError.message}`,
         );
-        console.log("data: ", data);
 
       // Delete any found images
       if (images && images.length > 0) {
@@ -353,7 +348,6 @@ export class StorageItemsService {
       console.error(error);
       return { success: false, id: item_id };
     }
-
     return { success: true, id: item_id };
   }
 
@@ -374,51 +368,6 @@ export class StorageItemsService {
 
     // The data will now have the related 'items' fetched in the same query
     return data.map((entry) => entry.items); // Extract items from the relation
-  }
-
-  /**
-   * See if an item is currently in any bookings.
-   */
-  async canDeleteItem(
-    req: AuthRequest,
-    id: string,
-    confirm?: string,
-  ): Promise<{ success: boolean; reason?: string; id: string }> {
-    const supabase = req.supabase;
-    if (!id) {
-      throw new Error("No item ID provided for deletion");
-    }
-    const CURRENT_DATE = new Date();
-
-    // Check if item exists in any bookings
-    const { data, error } = await supabase
-      .from("booking_items")
-      .select("id")
-      .eq("item_id", id)
-      .limit(1)
-      .gt("end_date", CURRENT_DATE);
-
-    if (error) {
-      throw new Error(
-        `Error checking if item can be deleted: ${error.message}`,
-      );
-    }
-
-    const hasBookings = data?.length > 0;
-
-    if (hasBookings && confirm !== "yes") {
-      return {
-        success: false,
-        reason:
-          "This item is linked to existing bookings. Pass confirm='yes' to delete anyway.",
-        id,
-      };
-    }
-
-    return {
-      success: true,
-      id,
-    };
   }
 
   /**

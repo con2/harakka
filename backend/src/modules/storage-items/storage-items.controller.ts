@@ -142,28 +142,6 @@ export class StorageItemsController {
     return this.storageItemsService.updateItem(req, item_id, org_id, item);
   }
 
-  @Get(":id/can-delete")
-  async canDelete(
-    @Req() req: AuthRequest,
-    @Param("id") id: string,
-  ): Promise<{ success: boolean; reason?: string; id: string }> {
-    try {
-      const result = await this.storageItemsService.canDeleteItem(req, id);
-      return result;
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        throw new HttpException(
-          error.message,
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
-      throw new HttpException(
-        "Failed to check if item can be deleted",
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
   // checks availability of items by date range
   @Get("availability/:itemId")
   async getItemAvailability(
@@ -193,6 +171,14 @@ export class StorageItemsController {
     );
   }
 
+  /**
+   * Delete an organizations item.
+   * This method soft-deletes the item, then relies on a daily CRON job to remove completely inactive and * unreferenced items. (CRON JOB: 'delete_inactive_items')
+   * @param req An Authorized request
+   * @param item_id The ID of the item to soft-delete
+   * @param org_id The organization ID which to soft-delete the item from
+   * @returns 
+   */
   @Delete(":org_id/:item_id")
   async deleteItem(
     @Req() req: AuthRequest,

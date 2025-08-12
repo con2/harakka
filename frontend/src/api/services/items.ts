@@ -88,11 +88,6 @@ export const itemsApi = {
       .then((res) => res.data);
   },
 
-  canDeleteItem: (
-    id: string,
-  ): Promise<{ deletable: boolean; reason?: string }> =>
-    api.get(`/storage-items/${id}/can-delete`),
-
   getOrderedItems: (
     ordered_by: ValidItemOrder = "created_at",
     ascending: boolean = true,
