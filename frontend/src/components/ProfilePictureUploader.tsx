@@ -126,11 +126,6 @@ const ProfilePictureUploader = () => {
         croppedAreaPixels,
         rotation,
       );
-      console.log("Uploader: croppedFile type:", croppedFile.type);
-      console.log(
-        "Uploader: croppedFile size (KB):",
-        (croppedFile.size / 1024).toFixed(2),
-      );
 
       await dispatch(uploadProfilePicture(croppedFile)).unwrap();
       toast.success("Profile picture updated");
