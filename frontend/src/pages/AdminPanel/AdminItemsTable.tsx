@@ -44,6 +44,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import AssignTagsModal from "@/components/Admin/Items/AssignTagsModal";
 import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
 import { useLocation, useNavigate } from "react-router-dom";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -85,6 +86,7 @@ const AdminItemsTable = () => {
   const { page, totalPages } = useAppSelector(selectItemsPagination);
   const loading = useAppSelector(selectItemsLoading);
   const ITEMS_PER_PAGE = 10;
+  const activeOrganizationId = useAppSelector(selectActiveOrganizationId);
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
@@ -147,6 +149,7 @@ const AdminItemsTable = () => {
         location_filter: [],
         categories: [],
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
+        org_ids: activeOrganizationId ?? undefined,
       }),
     );
   }, [
@@ -159,6 +162,7 @@ const AdminItemsTable = () => {
     page,
     tagFilter,
     statusFilter,
+    activeOrganizationId,
   ]);
 
   //fetch tags list

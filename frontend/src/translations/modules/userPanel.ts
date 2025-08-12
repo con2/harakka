@@ -25,6 +25,12 @@ export const userPanel = {
       en: "Close Filters",
     },
   },
+  organizations: {
+    title: {
+      fi: "Organisaatiot",
+      en: "Organizations",
+    },
+  },
   categories: {
     showLess: {
       fi: "Näytä vähemmän",
