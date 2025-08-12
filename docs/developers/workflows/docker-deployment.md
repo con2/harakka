@@ -8,6 +8,20 @@ This guide covers how to deploy the Full-Stack Storage and Booking Application u
 - **Docker Compose**: v2.0 or higher
 - **Git**: For cloning the repository
 
+# Available also on Docker Hub
+
+**Frontend:**
+
+```sh
+docker pull codingcatv1/booking-app-frontend:latest
+```
+
+**Backend:**
+
+```sh
+docker pull codingcatv1/booking-app-backend:latest
+```
+
 ## Quick Start (Recommended)
 
 The containerized app only needs **2 simple commands** after initial setup:
