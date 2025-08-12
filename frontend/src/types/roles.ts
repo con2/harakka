@@ -37,6 +37,7 @@ export interface ActiveRoleContext {
   organizationId: string | null;
   roleName: string | null;
   organizationName: string | null;
+  slug: string | null;
 }
 
 export interface RolesState {

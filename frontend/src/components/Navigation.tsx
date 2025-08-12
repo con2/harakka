@@ -28,7 +28,7 @@ export const Navigation = () => {
   // Get user profile data from Redux
   const selectedUser = useAppSelector(selectSelectedUser);
   // Get user role information from the hook
-  const { hasAnyRole } = useRoles();
+  const { hasAnyRole, activeContext } = useRoles();
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
@@ -127,6 +127,25 @@ export const Navigation = () => {
                     data-cy="nav-storage"
                   >
                     {t.navigation.storage[lang]}
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
+              {/* Organizations Link */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to={
+                      activeContext.slug
+                        ? `/organization/${activeContext.slug}`
+                        : "/organizations"
+                    }
+                    className="flex items-center gap-1 text-secondary font-medium"
+                    data-cy="nav-organizations"
+                  >
+                    {activeContext.organizationId
+                      ? t.navigation.myOrganization[lang]
+                      : t.navigation.organizations[lang]}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>

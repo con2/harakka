@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { fetchOrganizationLocations } from "../api/organizations";
+import { locationsApi } from "../api/services/locations";
 import OrganizationLocationsList from "../components/Organization/OrganizationLocationsList";
 
 const OrganizationLocationsPage = () => {
@@ -12,8 +12,11 @@ const OrganizationLocationsPage = () => {
   useEffect(() => {
     const getLocations = async () => {
       try {
-        const data = await fetchOrganizationLocations(org_slug);
-        setLocations(data);
+        const data = await locationsApi.getAllLocations();
+        const filteredLocations = data.data.filter(
+          (location) => location.org_slug === org_slug,
+        );
+        setLocations(filteredLocations);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -24,13 +27,8 @@ const OrganizationLocationsPage = () => {
     getLocations();
   }, [org_slug]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div>

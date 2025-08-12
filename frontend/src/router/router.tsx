@@ -38,6 +38,7 @@ import { RoleManagement } from "@/components/Admin/Roles/RoleManagement";
 import AddItem from "@/pages/AdminPanel/AddItem";
 import OrganizationPage from "@/pages/OrganizationPage";
 import OrganizationLocationsPage from "@/pages/OrganizationLocationsPage";
+import OrganizationsList from "../components/Organization/OrganizationsList";
 
 export const router = createBrowserRouter([
   {
@@ -248,6 +249,10 @@ export const router = createBrowserRouter([
       {
         path: "/password-reset-success",
         element: <PasswordResetResult />,
+      },
+      {
+        path: "/organizations",
+        element: <OrganizationsList />,
       },
       {
         path: "/organization/:org_slug",
