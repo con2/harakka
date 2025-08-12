@@ -73,7 +73,6 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute
             allowedRoles={[
-              "requester",
               "storage_manager",
               "admin",
               "main_admin",
@@ -86,15 +85,112 @@ export const router = createBrowserRouter([
         ),
         children: [
           { index: true, element: <AdminDashboard /> },
-          { path: "users", element: <UsersList /> },
-          { path: "items", element: <AdminItemsTable /> },
-          { path: "bookings", element: <BookingList /> },
-          { path: "tags", element: <TagList /> },
-          { path: "logs", element: <Logs /> },
-          { path: "roles", element: <RoleManagement /> },
-          { path: "organizations", element: <Organizations /> },
-          { path: "items/add", element: <AddItem /> },
-          { path: "locations", element: <OrganizationLocations /> },
+          {
+            path: "users",
+            element: (
+              <ProtectedRoute
+                allowedRoles={[
+                  "superVera",
+                  "super_admin",
+                  "main_admin",
+                  "admin",
+                ]}
+              >
+                <UsersList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "items",
+            element: (
+              <ProtectedRoute
+                allowedRoles={[
+                  "superVera",
+                  "main_admin",
+                  "admin",
+                  "storage_manager",
+                ]}
+              >
+                <AdminItemsTable />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "bookings",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["superVera", "main_admin", "admin"]}
+              >
+                <BookingList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "tags",
+            element: (
+              <ProtectedRoute
+                allowedRoles={[
+                  "superVera",
+                  "main_admin",
+                  "admin",
+                  "storage_manager",
+                ]}
+              >
+                <TagList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "logs",
+            element: (
+              <ProtectedRoute allowedRoles={["superVera", "super_admin"]}>
+                <Logs />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "roles",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["superVera", "super_admin", "main_admin"]}
+              >
+                <RoleManagement />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "organizations",
+            element: (
+              <ProtectedRoute allowedRoles={["superVera", "super_admin"]}>
+                <Organizations />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "items/add",
+            element: (
+              <ProtectedRoute
+                allowedRoles={[
+                  "superVera",
+                  "main_admin",
+                  "admin",
+                  "storage_manager",
+                ]}
+              >
+                <AddItem />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "locations",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["superVera", "main_admin", "storage_manager"]}
+              >
+                <OrganizationLocations />
+              </ProtectedRoute>
+            ),
+          },
         ],
       },
       {

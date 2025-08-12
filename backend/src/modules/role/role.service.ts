@@ -8,12 +8,16 @@ import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 
 import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
 import { JwtService } from "../jwt/jwt.service";
+import { SupabaseService } from "../supabase/supabase.service";
 import { ViewUserRolesWithDetails } from "@common/role.types";
 
 @Injectable()
 export class RoleService {
   private readonly logger = new Logger(RoleService.name);
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly supabaseService: SupabaseService,
+  ) {}
   /**
    * Get all active roles for the current authenticated user
    * Uses roles already fetched and attached to request by AuthMiddleware
@@ -387,6 +391,112 @@ export class RoleService {
     // Regular admins can only see roles in their organizations
     const userOrgIds = req.userRoles.map((role) => role.organization_id);
     return roles.filter((role) => userOrgIds.includes(role.organization_id));
+  }
+
+  /**
+   * Create a new user role assignment (INTERNAL SERVICE-TO-SERVICE ONLY)
+   * SECURITY WARNING: This method bypasses all authentication/authorization checks
+   * NEVER expose this method through public API endpoints
+   * Only use for trusted internal operations like user signup automation
+   *
+   * This version doesn't require an AuthRequest and uses the service client
+   */
+  async createUserRoleById(
+    userId: string,
+    organizationId: string,
+    roleId: string,
+  ): Promise<ViewUserRolesWithDetails> {
+    const supabase = this.supabaseService.getServiceClient();
+
+    // Check if assignment already exists
+    const { data: existing } = await supabase
+      .from("user_organization_roles")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("organization_id", organizationId)
+      .eq("role_id", roleId)
+      .single();
+
+    if (existing) {
+      this.logger.warn(
+        `User ${userId} already has role ${roleId} in organization ${organizationId}`,
+      );
+      // Fetch and return existing role details
+      const { data: existingRole } = await supabase
+        .from("view_user_roles_with_details")
+        .select("*")
+        .eq("id", existing.id)
+        .single();
+
+      if (existingRole) {
+        return existingRole;
+      }
+    }
+
+    // Create the role assignment
+    const { data, error } = await supabase
+      .from("user_organization_roles")
+      .insert({
+        user_id: userId,
+        organization_id: organizationId,
+        role_id: roleId,
+        is_active: true,
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      this.logger.error(`Failed to create user role: ${error.message}`);
+      throw new Error(`Failed to create role assignment: ${error.message}`);
+    }
+
+    // Get the complete role details using the view
+    const { data: roleDetails, error: viewError } = await supabase
+      .from("view_user_roles_with_details")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+
+    if (viewError || !roleDetails) {
+      this.logger.error(
+        `Failed to fetch created role details: ${viewError?.message}`,
+      );
+      throw new Error("Failed to fetch created role details");
+    }
+
+    // After successful role creation, update JWT
+    await this.updateUserJWTById(userId);
+
+    this.logger.log(
+      `Role assignment created for user ${userId}: ${roleDetails.role_name}@${roleDetails.organization_name}`,
+    );
+
+    return roleDetails;
+  }
+
+  /**
+   * Update user JWT with fresh roles (public method for service-to-service calls)
+   */
+  async updateUserJWTById(userId: string): Promise<void> {
+    try {
+      // Create a service client to fetch roles
+      const supabase = this.supabaseService.getServiceClient();
+
+      // Get fresh roles using the optimized view
+      const { data: freshRoles } = await supabase
+        .from("view_user_roles_with_details")
+        .select("*")
+        .eq("user_id", userId);
+
+      if (freshRoles) {
+        // Use the JWT service to force update
+        await this.jwtService.forceUpdateJWTWithRoles(userId, freshRoles);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to update JWT for user ${userId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   private async updateUserJWT(userId: string, req: AuthRequest): Promise<void> {

@@ -7,10 +7,20 @@ import {
   UserOrganization,
 } from "@/types/roles";
 import { ViewUserRolesWithDetails } from "@common/role.types";
+import { supabase } from "@/config/supabase";
+
+// Helper function to check session existance
+const noSession = async (): Promise<boolean> => {
+  const { data } = await supabase.auth.getSession();
+  return !data.session;
+};
 
 export const roleApi = {
   // Get current user's roles
   async getCurrentUserRoles(): Promise<ViewUserRolesWithDetails[]> {
+    if (await noSession()) {
+      return []; // No active session = no roles
+    }
     return await api.get("/roles/current");
   },
 
@@ -29,6 +39,9 @@ export const roleApi = {
 
   // Get user's organizations and roles
   async getUserOrganizations(): Promise<UserOrganization[]> {
+    if (await noSession()) {
+      return []; // // No active session = no user orgs
+    }
     return await api.get("/roles/organizations");
   },
 
