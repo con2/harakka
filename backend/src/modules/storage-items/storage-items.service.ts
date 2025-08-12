@@ -26,7 +26,7 @@ import {
   mapTagLinks,
 } from "@src/utils/storage-items.utils";
 import { ItemImagesService } from "../item-images/item-images.service";
-import { UpdateItem } from "@common/items/storage-items.types";
+import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 
 @Injectable()
 export class StorageItemsService {
@@ -224,11 +224,11 @@ export class StorageItemsService {
     item_id: string,
     org_id: string,
     item: UpdateItem,
-  ): Promise<StorageItem> {
+  ): Promise<UpdateResponse> {
     const supabase = req.supabase;
-    console.log("Update item: ", item);
     // Extract properties that shouldn't be sent to the database
     const { tags, location_details, ...itemData } = item;
+    let WAS_COPIED: boolean = false;
 
     // Check if item belongs to multiple orgs.
     // If yes, duplicate the item and update it.
@@ -237,8 +237,10 @@ export class StorageItemsService {
       .select("storage_item_id")
       .eq("storage_item_id", item_id);
     if (orgItemError) handleSupabaseError(orgItemError);
-    if (data.length > 1) return this.copyItem(req, item_id, org_id, item);
-
+    if (data.length > 1) {
+      WAS_COPIED = true;
+      return this.copyItem(req, item_id, org_id, item);
+    }
     // Update the main item
     const {
       data: updatedItemData,
@@ -266,7 +268,11 @@ export class StorageItemsService {
       }
     }
 
-    return updatedItem;
+    return {
+      success: true,
+      item: updatedItem,
+      wasCopied: false,
+    };
   }
 
   /**
@@ -543,7 +549,7 @@ export class StorageItemsService {
     item_id: string,
     org_id: string,
     newItem: UpdateItem,
-  ): Promise<StorageItem> {
+  ): Promise<UpdateResponse> {
     const supabase = req.supabase;
     const NEW_ITEM_ID = crypto.randomUUID();
 
@@ -556,7 +562,12 @@ export class StorageItemsService {
         await this.tagService.assignTagsToItem(req, NEW_ITEM_ID, newItem.tags);
       }
 
-      return itemData;
+      return {
+        success: true,
+        item: itemData,
+        wasCopied: true,
+        prev_id: item_id,
+      };
     } catch (error) {
       console.error(`Failed to copy item ${item_id} for org ${org_id}:`, error);
       await this.rollbackCopy(req.supabase, NEW_ITEM_ID, org_id);

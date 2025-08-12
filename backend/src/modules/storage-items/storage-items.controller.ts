@@ -21,7 +21,7 @@ import { ApiSingleResponse } from "../../../../common/response.types";
 import { StorageItem } from "./interfaces/storage-item.interface";
 import { Public, Roles } from "src/decorators/roles.decorator";
 import { ItemFormData } from "@common/items/form.types";
-import { UpdateItem } from "@common/items/storage-items.types";
+import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
@@ -143,7 +143,7 @@ export class StorageItemsController {
     @Param("item_id") item_id: string,
     @Body()
     item: UpdateItem,
-  ): Promise<StorageItem> {
+  ): Promise<UpdateResponse> {
     return this.storageItemsService.updateItem(req, item_id, org_id, item);
   }
 

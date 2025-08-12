@@ -7,6 +7,11 @@ export type StorageItemInsert =
 export type LocationRow =
   Database["public"]["Tables"]["storage_locations"]["Row"];
 
+export type TagRow = Database["public"]["Tables"]["tags"]["Row"];
+export type TagUpdate = Database["public"]["Tables"]["tags"]["Update"];
+export type TagInsert = Database["public"]["Tables"]["tags"]["Insert"];
+
+
 /**
  * TagLink:
  * Extract the tags from the payload
@@ -28,4 +33,17 @@ export type OrgItem = {
 export type UpdateItem = StorageItemInsert & {
   tags: string[];
   location_details: LocationRow;
+};
+
+export type StorageItem = StorageItemRow & {
+  /** Tags flattened from the join table */
+  tags: TagRow[];
+  /** Convenience copy of the joined location row */
+  location_details: LocationRow | null;
+};
+export type UpdateResponse = {
+  success: boolean;
+  item: StorageItem;
+  wasCopied: boolean;
+  prev_id?: string;
 };

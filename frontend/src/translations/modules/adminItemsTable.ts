@@ -57,13 +57,13 @@ export const adminItemsTable = {
     },
   },
   columns: {
-    namefi: {
-      fi: "Tuotteen nimi (FI)",
-      en: "Item Name (FI)",
+    name: {
+      fi: "Tuotteen nimi",
+      en: "Item Name",
     },
-    typefi: {
-      fi: "Tuotteen tyyppi (FI)",
-      en: "Item Type (FI)",
+    type: {
+      fi: "Tuotteen tyyppi",
+      en: "Item Type",
     },
     location: {
       fi: "Sijainti",

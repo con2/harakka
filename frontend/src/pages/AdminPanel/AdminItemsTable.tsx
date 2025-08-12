@@ -24,7 +24,7 @@ import {
   selectAllTags,
 } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
-import { Item, ManageItemViewRow, ValidItemOrder } from "@/types/item";
+import { Item, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -58,7 +58,8 @@ const AdminItemsTable = () => {
   const org_id = useAppSelector(selectActiveOrganizationId);
 
   const { hasRole } = useRoles();
-  const isAdmin = hasRole("admin") || hasRole("super_admin");
+  const isAdmin =
+    hasRole("admin") || hasRole("super_admin") || hasRole("storage_manager");
   const isSuperVera = hasRole("superVera");
   // Translation
   const { lang } = useLanguage();
@@ -100,11 +101,10 @@ const AdminItemsTable = () => {
     setShowModal(true); // Show the modal
   };
 
-  const handleDelete = (item: ManageItemViewRow) => {
-    console.log("item: ", item);
+  const handleDelete = (item_id: string) => {
     // Currently reference the org_id of the item since we display items of all orgs
     // Later this needs to be refactored to use the org_id which is currently selected (selectActiveOrganizationId)
-    if (!item.organization_id) return toast.error("No organization selected");
+    if (!org_id) return toast.error("No organization selected");
     toastConfirm({
       title: t.adminItemsTable.messages.deletion.title[lang],
       description: t.adminItemsTable.messages.deletion.description[lang],
@@ -113,9 +113,7 @@ const AdminItemsTable = () => {
       onConfirm: () => {
         try {
           void toast.promise(
-            dispatch(
-              deleteItem({ org_id: item.organization_id, item_id: item.id }),
-            ).unwrap(),
+            dispatch(deleteItem({ org_id, item_id })).unwrap(),
             {
               loading: t.adminItemsTable.messages.toast.deleting[lang],
               success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
@@ -183,24 +181,24 @@ const AdminItemsTable = () => {
   /* ————————————————————————— Item Columns ———————————————————————— */
   const itemsColumns: ColumnDef<Item>[] = [
     {
-      header: t.adminItemsTable.columns.namefi[lang],
+      header: t.adminItemsTable.columns.name[lang],
       size: 120,
-      id: "fi_item_name",
-      accessorFn: (row) => row.translations.fi.item_name,
+      id: `${lang}_item_name`,
+      accessorFn: (row) => row.translations[lang].item_type,
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
-        const name = row.original.translations.fi.item_name || "";
+        const name = row.original.translations[lang].item_name || "";
         return name.charAt(0).toUpperCase() + name.slice(1);
       },
     },
     {
-      header: t.adminItemsTable.columns.typefi[lang],
+      header: t.adminItemsTable.columns.type[lang],
       size: 120,
-      id: "fi_item_type",
-      accessorFn: (row) => row.translations.en.item_type,
+      id: `${lang}_item_type`,
+      accessorFn: (row) => row.translations[lang].item_type,
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
-        const type = row.original.translations.en.item_type || "";
+        const type = row.original.translations[lang].item_type || "";
         return type.charAt(0).toUpperCase() + type.slice(1);
       },
     },
@@ -294,9 +292,7 @@ const AdminItemsTable = () => {
                         size="sm"
                         variant="ghost"
                         className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                        onClick={() =>
-                          handleDelete(item as unknown as ManageItemViewRow)
-                        }
+                        onClick={() => handleDelete(item.id)}
                         disabled={!isDeletable}
                         aria-label={`Delete ${item.translations.fi.item_name}`}
                       >

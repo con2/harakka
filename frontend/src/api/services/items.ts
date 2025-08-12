@@ -2,7 +2,7 @@ import { Item, ValidItemOrder } from "@/types";
 import { api } from "../axios";
 import { ApiSingleResponse } from "@common/response.types";
 import { ItemFormData } from "@common/items/form.types";
-import { UpdateItem } from "@common/items/storage-items.types";
+import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 
 /**
  * API service for item-related endpoints
@@ -43,7 +43,8 @@ export const itemsApi = {
     item_id: string,
     item: Partial<UpdateItem>,
     org_id: string,
-  ): Promise<Item> => api.put(`/storage-items/${org_id}/${item_id}`, item),
+  ): Promise<UpdateResponse> =>
+    api.put(`/storage-items/${org_id}/${item_id}`, item),
 
   /**
    * Delete an item
@@ -52,7 +53,7 @@ export const itemsApi = {
   deleteItem: (
     org_id: string,
     item_id: string,
-  ): Promise<{ success: boolean; item_id: string }> =>
+  ): Promise<{ success: boolean; id: string }> =>
     api.delete(`/storage-items/${org_id}/${item_id}`),
 
   /**

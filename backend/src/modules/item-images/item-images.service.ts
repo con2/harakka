@@ -277,8 +277,9 @@ export class ItemImagesService {
 
       if (copyErr) throw new Error(`Failed to copy image: ${copyErr.message}`);
 
+      const { id, created_at, updated_at, ...rest } = img;
       updatedImages.push({
-        ...img,
+        ...rest,
         storage_path: newPath,
         image_url: newUrl,
         item_id: newItemId,
