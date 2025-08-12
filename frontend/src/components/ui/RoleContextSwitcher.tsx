@@ -88,7 +88,7 @@ export const RoleContextSwitcher: React.FC = () => {
 
       // If in admin area and clearing role, redirect to a safe page
       if (isInAdminArea) {
-        navigate("/storage");
+        void navigate("/storage");
       }
       return;
     }
@@ -120,7 +120,7 @@ export const RoleContextSwitcher: React.FC = () => {
 
         // If switching to a non-admin role while in admin area, redirect
         if (!willHaveAdminAccess) {
-          navigate("/storage");
+          void navigate("/storage");
         }
       }
     }

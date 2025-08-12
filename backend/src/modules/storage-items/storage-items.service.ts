@@ -245,7 +245,7 @@ export class StorageItemsService {
       .eq("storage_item_id", item_id);
     if (orgItemError) handleSupabaseError(orgItemError);
     if (data.length > 1) return this.copyItem(req, item_id, org_id, item);
-    
+
     // Update the main item
     const {
       data: updatedItem,
@@ -267,7 +267,8 @@ export class StorageItemsService {
       );
 
     // Update tag relationships
-    if (tags && tags.length > 0) await this.tagService.assignTagsToItem(req, item_id, tags);
+    if (tags && tags.length > 0)
+      await this.tagService.assignTagsToItem(req, item_id, tags);
 
     return {
       success: true,

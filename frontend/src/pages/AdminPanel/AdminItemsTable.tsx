@@ -82,7 +82,7 @@ const AdminItemsTable = () => {
     redirectState?.order ?? "created_at",
   );
   const [ascending, setAscending] = useState<boolean | null>(
-    redirectState?.ascending ?? false,
+    redirectState?.ascending ?? null,
   );
   const selectedItem = useAppSelector(selectSelectedItem);
   const { page, totalPages } = useAppSelector(selectItemsPagination);
@@ -183,7 +183,7 @@ const AdminItemsTable = () => {
     {
       header: t.adminItemsTable.columns.name[lang],
       size: 120,
-      id: `${lang}_item_name`,
+      id: `item_name`,
       accessorFn: (row) => row.translations[lang].item_type,
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
@@ -194,7 +194,7 @@ const AdminItemsTable = () => {
     {
       header: t.adminItemsTable.columns.type[lang],
       size: 120,
-      id: `${lang}_item_type`,
+      id: `item_type`,
       accessorFn: (row) => row.translations[lang].item_type,
       sortingFn: "alphanumeric",
       cell: ({ row }) => {

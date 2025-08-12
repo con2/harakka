@@ -14,7 +14,7 @@ import TimeframeSelector from "../TimeframeSelector";
 import { LoaderCircle, Search } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import { FiltersState } from "@/types";
+import { FiltersState, Item } from "@/types";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Button } from "../ui/button";
 
@@ -124,7 +124,9 @@ const ItemsList: React.FC = () => {
         {filteredItems.length === 0 ? (
           <p>{t.itemsList.noItemsFound[lang]}</p> // Message when no items exist
         ) : (
-          filteredItems.map((item) => <ItemCard key={item.id} item={item} />)
+          filteredItems.map((item) => (
+            <ItemCard key={item.id} item={item as Item} />
+          ))
         )}
       </div>
       {/* Pagination controls */}

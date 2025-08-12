@@ -5,8 +5,6 @@ import {
   Put,
   Body,
   Param,
-  HttpException,
-  HttpStatus,
   Req,
   Query,
   BadRequestException,
@@ -182,7 +180,7 @@ export class StorageItemsController {
    * @param req An Authorized request
    * @param item_id The ID of the item to soft-delete
    * @param org_id The organization ID which to soft-delete the item from
-   * @returns 
+   * @returns
    */
   @Delete(":org_id/:item_id")
   async deleteItem(
