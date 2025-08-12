@@ -57,7 +57,7 @@ const ProfilePictureUploader = () => {
   const handleSelectedFile = (selected: File) => {
     const result = validateImage().safeParse(selected);
     if (!result.success) {
-      toast.error(result.error.message);
+      toast.error(result.error.errors[0]?.message ?? "Invalid file");
       return;
     }
     setFile(selected);
