@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export const getCroppedImg = async (
   imageSrc: string,
   _crop: { x: number; y: number },
@@ -5,7 +7,7 @@ export const getCroppedImg = async (
   _aspect: number,
   croppedAreaPixels: { width: number; height: number; x: number; y: number },
   rotation: number,
-): Promise<Blob> => {
+): Promise<File> => {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -51,11 +53,23 @@ export const getCroppedImg = async (
   if (!outputCtx) throw new Error("Failed to get canvas context");
 
   outputCtx.putImageData(data, 0, 0);
+  console.log("utils: Cropped image size:", data);
 
   return new Promise((resolve, reject) => {
     outputCanvas.toBlob((blob) => {
-      if (blob) resolve(blob);
-      else reject(new Error("Canvas is empty"));
+      if (!blob) return reject(new Error("Canvas is empty"));
+
+      const croppedFile = new File([blob], "cropped.jpg", {
+        type: "image/jpeg",
+      });
+
+      const result = validateImage().safeParse(croppedFile);
+      if (!result.success) {
+        reject(new Error(result.error.errors[0]?.message ?? "Invalid file"));
+        return;
+      }
+
+      resolve(croppedFile);
     }, "image/jpeg");
   });
 };
@@ -71,3 +85,21 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
         new Error(typeof error === "string" ? error : "Image failed to load"),
       );
   });
+
+// image validation
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+export function validateImage(
+  maxSize = MAX_FILE_SIZE,
+  acceptedTypes = ACCEPTED_IMAGE_TYPES,
+) {
+  return z
+    .instanceof(File)
+    .refine((file) => file.size <= maxSize, {
+      message: `File size must be less than ${Math.round(maxSize / (1024 * 1024))}MB`,
+    })
+    .refine((file) => acceptedTypes.includes(file.type), {
+      message: `Only ${acceptedTypes.map((type) => "." + type.split("/")[1]).join(", ")} formats are supported`,
+    });
+}

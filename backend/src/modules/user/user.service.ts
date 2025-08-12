@@ -14,6 +14,7 @@ import { UserEmailAssembler } from "../mail/user-email-assembler";
 import { ApiSingleResponse } from "@common/response.types";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { v4 as uuidv4 } from "uuid";
+import { fileTypeFromBuffer } from "file-type";
 
 @Injectable()
 export class UserService {
@@ -238,12 +239,40 @@ export class UserService {
     return publicUrlData.publicUrl;
   }
 
+  // validate the file size
+
+  private readonly MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+  private readonly ACCEPTED_IMAGE_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ];
+
+  private async validateImage(fileBuffer: Buffer) {
+    if (fileBuffer.length > this.MAX_FILE_SIZE) {
+      throw new Error("File is too large");
+    }
+    console.log("Backend: File Buffer length:", fileBuffer.length);
+    console.log(
+      "Backend: File size: ",
+      (fileBuffer.length / 1024).toFixed(2),
+      "KB",
+    );
+
+    const type = await fileTypeFromBuffer(fileBuffer);
+    if (!type || !this.ACCEPTED_IMAGE_TYPES.includes(type.mime)) {
+      throw new Error("Invalid file type");
+    }
+  }
+
   async handleProfilePictureUpload(
     fileBuffer: Buffer,
     fileName: string,
     userId: string,
     req: AuthRequest,
   ): Promise<string> {
+    await this.validateImage(fileBuffer);
+
     // get current user to delete old picture if exists
     const currentUser = await this.getUserById(userId, req);
 
@@ -267,6 +296,7 @@ export class UserService {
       userId,
       req,
     );
+
     // update user profile
     await this.updateUser(userId, { profile_picture_url: url }, req);
 

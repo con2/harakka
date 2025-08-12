@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import profilePlaceholder from "../assets/profilePlaceholder.png";
 import Cropper from "react-easy-crop";
-import { getCroppedImg } from "@/utils/cropImage";
+import { getCroppedImg, validateImage } from "@/utils/imageUtils";
 import { Area } from "react-easy-crop";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
@@ -53,8 +53,13 @@ const ProfilePictureUploader = () => {
 
   const currentImage = selectedUser?.profile_picture_url;
 
-  // Handle file selection
+  // handle file selection
   const handleSelectedFile = (selected: File) => {
+    const result = validateImage().safeParse(selected);
+    if (!result.success) {
+      toast.error(result.error.message);
+      return;
+    }
     setFile(selected);
     setPreviewUrl(URL.createObjectURL(selected));
   };
@@ -112,11 +117,8 @@ const ProfilePictureUploader = () => {
   const handleUpload = async () => {
     if (!file || !selectedUser || !croppedAreaPixels || !previewUrl) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const croppedBlob = await getCroppedImg(
+      const croppedFile = await getCroppedImg(
         previewUrl,
         crop,
         zoom,
@@ -124,17 +126,17 @@ const ProfilePictureUploader = () => {
         croppedAreaPixels,
         rotation,
       );
-
-      const croppedFile = new File([croppedBlob], file.name, {
-        type: "image/jpeg",
-      });
+      console.log("Uploader: croppedFile type:", croppedFile.type);
+      console.log(
+        "Uploader: croppedFile size (KB):",
+        (croppedFile.size / 1024).toFixed(2),
+      );
 
       await dispatch(uploadProfilePicture(croppedFile)).unwrap();
-
       toast.success("Profile picture updated");
       setOpen(false);
-    } catch {
-      toast.error("Error uploading the profile picture");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error uploading");
     }
   };
 
