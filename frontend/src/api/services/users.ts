@@ -1,6 +1,7 @@
 import { CreateUserDto, UserProfile } from "@common/user.types";
 import { api } from "../axios";
 import { Address } from "@/types/address";
+import { store } from "@/store/store";
 
 /**
  * API service for user-related endpoints
@@ -13,13 +14,27 @@ export const usersApi = {
   getAllUsers: (): Promise<UserProfile[]> => api.get("/users"),
 
   /**
+   * Get current user's profile using the dedicated endpoint
+   * @returns Promise with the current user
+   */
+  getCurrentUser: (): Promise<UserProfile> => api.get("/users/me"),
+
+  /**
    * Get a specific user by ID
    * @param id - User ID to fetch
    * @returns Promise with the requested user
    */
-  getUserById: (id: string): Promise<UserProfile> => api.get(`/users/${id}`),
+  getUserById: (id: string): Promise<UserProfile> => {
+    // Access current user ID from Redux store
+    const state = store.getState();
+    const currentUserId = state.users.selectedUser?.id;
 
-  getCurrentUser: (): Promise<UserProfile> => api.get("/users/me"),
+    if (id === currentUserId) {
+      return usersApi.getCurrentUser();
+    }
+    return api.get(`/users/${id}`);
+  },
+
   /**
    * Create a new user
    * @param user - User data to create

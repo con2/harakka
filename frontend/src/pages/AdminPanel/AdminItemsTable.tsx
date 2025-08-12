@@ -87,6 +87,7 @@ const AdminItemsTable = () => {
   const { page, totalPages } = useAppSelector(selectItemsPagination);
   const loading = useAppSelector(selectItemsLoading);
   const ITEMS_PER_PAGE = 10;
+  const activeOrganizationId = useAppSelector(selectActiveOrganizationId);
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
@@ -158,6 +159,7 @@ const AdminItemsTable = () => {
         location_filter: [],
         categories: [],
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
+        org_ids: activeOrganizationId ?? undefined,
       }),
     );
   }, [
@@ -170,6 +172,7 @@ const AdminItemsTable = () => {
     page,
     tagFilter,
     statusFilter,
+    activeOrganizationId,
   ]);
 
   //fetch tags list

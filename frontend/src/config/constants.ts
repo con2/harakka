@@ -21,3 +21,9 @@ export type BanReason = (typeof COMMON_BAN_REASONS)[number];
  * Special value for custom ban reason
  */
 export const CUSTOM_BAN_REASON = "Other" as const;
+
+/**
+ * Default Org and Role assigned to a user signing up
+ */
+export const DEFAULT_ORGANIZATION = "Global" as const;
+export const DEFAULT_ROLE = "user" as const;

@@ -100,6 +100,7 @@ export const itemsApi = {
     categories?: string[],
     availability_min?: number,
     availability_max?: number,
+    org_ids?: string[] | string,
   ) => {
     const activity = activity_filter === "active" ? true : false;
     let call = `/storage-items/ordered?order=${ordered_by}&page=${page}&limit=${limit}&ascending=${ascending}`;
@@ -112,6 +113,10 @@ export const itemsApi = {
       call += `&availability_min=${availability_min}`;
     if (availability_max !== undefined)
       call += `&availability_max=${availability_max}`;
+    if (org_ids && (Array.isArray(org_ids) ? org_ids.length > 0 : true)) {
+      const orgParam = Array.isArray(org_ids) ? org_ids.join(",") : org_ids;
+      call += `&org=${orgParam}`;
+    }
     return api.get(call);
   },
 

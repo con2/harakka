@@ -65,6 +65,8 @@ export class StorageItemsController {
     @Query("category") category: string,
     @Query("availability_min") availability_min?: string,
     @Query("availability_max") availability_max?: string,
+    // Optional organization filter (comma-separated list of org IDs or single ID)
+    @Query("org") org_filter?: string,
   ) {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
@@ -90,6 +92,9 @@ export class StorageItemsController {
       category,
       availMinNum,
       availMaxNum,
+      undefined,
+      undefined,
+      org_filter,
     );
   }
 
