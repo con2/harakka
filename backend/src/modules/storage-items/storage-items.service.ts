@@ -218,7 +218,15 @@ export class StorageItemsService {
     }
   }
 
-  // 4 update an item
+  /**
+   * Update an item in the system.
+   * If the item exists within more than one organization, a copy is made, which is updated and returned.
+   * @param req An authenticated request
+   * @param item_id The ID of the item which to update
+   * @param org_id The org the item belongs to
+   * @param item The updated item properties
+   * @returns {UpdateResponse}
+   */
   async updateItem(
     req: AuthRequest,
     item_id: string,
@@ -228,7 +236,6 @@ export class StorageItemsService {
     const supabase = req.supabase;
     // Extract properties that shouldn't be sent to the database
     const { tags, location_details, ...itemData } = item;
-    let WAS_COPIED: boolean = false;
 
     // Check if item belongs to multiple orgs.
     // If yes, duplicate the item and update it.
@@ -237,36 +244,30 @@ export class StorageItemsService {
       .select("storage_item_id")
       .eq("storage_item_id", item_id);
     if (orgItemError) handleSupabaseError(orgItemError);
-    if (data.length > 1) {
-      WAS_COPIED = true;
-      return this.copyItem(req, item_id, org_id, item);
-    }
+    if (data.length > 1) return this.copyItem(req, item_id, org_id, item);
+    
     // Update the main item
     const {
-      data: updatedItemData,
+      data: updatedItem,
       error: updateError,
-    }: PostgrestResponse<StorageItem> = await supabase
+    }: PostgrestSingleResponse<StorageItem> = await supabase
       .from("storage_items")
       .update(itemData)
       .eq("id", item_id)
-      .select();
+      .select()
+      .single();
 
     if (updateError) {
       throw new Error(updateError.message);
     }
 
-    const updatedItem = updatedItemData?.[0];
     if (!updatedItem)
       throw new BadRequestException(
         updateError || "Failed to update storage item",
       );
 
     // Update tag relationships
-    if (tags) {
-      if (tags.length > 0) {
-        await this.tagService.assignTagsToItem(req, item_id, tags);
-      }
-    }
+    if (tags && tags.length > 0) await this.tagService.assignTagsToItem(req, item_id, tags);
 
     return {
       success: true,
