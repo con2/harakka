@@ -571,7 +571,12 @@ export class StorageItemsService {
         prev_id: item_id,
       };
     } catch (error) {
-      console.error(`Failed to copy item ${item_id} for org ${org_id}:`, error);
+      console.error(
+        "Failed to copy item %s for org %s:",
+        item_id,
+        org_id,
+        error,
+      );
       await this.rollbackCopy(req.supabase, NEW_ITEM_ID, org_id);
       throw error;
     }
