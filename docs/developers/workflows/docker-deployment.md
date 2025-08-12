@@ -8,7 +8,7 @@ This guide covers how to deploy the Full-Stack Storage and Booking Application u
 - **Docker Compose**: v2.0 or higher
 - **Git**: For cloning the repository
 
-# Available also on Docker Hub
+## Available also on Docker Hub
 
 **Frontend:**
 
