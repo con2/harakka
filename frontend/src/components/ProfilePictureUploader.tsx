@@ -48,7 +48,7 @@ const ProfilePictureUploader = () => {
   const [livePreviewUrl, setLivePreviewUrl] = useState<string | null>(null);
   const [rotation, setRotation] = useState(0);
 
-  // Translation hook
+  // translation hook
   const { lang } = useLanguage();
 
   const currentImage = selectedUser?.profile_picture_url;
@@ -60,6 +60,7 @@ const ProfilePictureUploader = () => {
       toast.error(result.error.errors[0]?.message ?? "Invalid file");
       return;
     }
+
     setFile(selected);
     setPreviewUrl(URL.createObjectURL(selected));
   };
