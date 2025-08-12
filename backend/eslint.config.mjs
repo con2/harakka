@@ -49,7 +49,9 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-assignment": "off",
 
       // Allow "unused" vars when destructuring irrelevant properties
-      "no-unused-vars": [
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
         {
           ignoreRestSiblings: true,
         },
