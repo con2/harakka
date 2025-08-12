@@ -311,9 +311,8 @@ export class StorageItemsService {
         .update({ is_deleted: true, is_active: false })
         .eq("storage_item_id", item_id)
         .eq("organization_id", org_id);
-        if (orgError) throw new Error(
-          `Failed to update org items: ${orgError.message}`,
-        );
+      if (orgError)
+        throw new Error(`Failed to update org items: ${orgError.message}`);
 
       // Delete any found images
       if (images && images.length > 0) {
@@ -399,36 +398,6 @@ export class StorageItemsService {
   ) {
     const supabase = this.supabaseClient.getAnonClient();
     // If org filter provided, get the set of item IDs linked to those orgs
-    let orgFilteredItemIds: string[] | null = null;
-    if (org_filter) {
-      const orgIds = org_filter
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      if (orgIds.length > 0) {
-        const { data: orgLinks, error: orgErr } = await supabase
-          .from("organization_items")
-          .select("storage_item_id")
-          .in("organization_id", orgIds)
-          .eq("is_active", true);
-
-        if (orgErr) handleSupabaseError(orgErr);
-        orgFilteredItemIds = (orgLinks ?? [])
-          .map((r) => r.storage_item_id)
-          .filter(Boolean);
-        // If no items are linked to the requested org(s), return empty result early
-        if (orgFilteredItemIds.length === 0) {
-          return {
-            data: [],
-            error: null,
-            status: 200,
-            statusText: "OK",
-            count: 0,
-            metadata: getPaginationMeta(0, page, limit),
-          };
-        }
-      }
-    }
     const { from, to } = getPaginationRange(page, limit);
 
     const query = supabase
@@ -458,7 +427,7 @@ export class StorageItemsService {
       query.overlaps("location_id", location_filter.split(","));
 
     // Apply org-based item ID filter
-    if (orgFilteredItemIds) query.in("id", orgFilteredItemIds);
+    if (org_filter) query.overlaps("organization_id", org_filter.split(","));
 
     if (category) {
       const categories = category.split(",");
