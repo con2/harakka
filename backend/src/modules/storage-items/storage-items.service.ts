@@ -431,8 +431,15 @@ export class StorageItemsService {
 
     if (activity_filter) query.eq("is_active", activity_filter);
     if (tags) query.overlaps("tag_ids", tags.split(","));
-    if (location_filter)
-      query.overlaps("location_id", location_filter.split(","));
+    if (location_filter) {
+      const locIds = location_filter
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
+      if (locIds.length > 0) {
+        query.in("location_id", locIds);
+      }
+    }
 
     // Apply org-based item ID filter
     if (org_filter) query.overlaps("organization_id", org_filter.split(","));
