@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
+import { GetOrderedUsersDto } from "./dto/get-ordered-users.dto";
 
 import {
   PostgrestResponse,
@@ -11,8 +12,9 @@ import { CreateAddressDto } from "./dto/create-address.dto";
 import { MailService } from "../mail/mail.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { UserEmailAssembler } from "../mail/user-email-assembler";
-import { ApiSingleResponse } from "@common/response.types";
+import { ApiSingleResponse, ApiResponse } from "@common/response.types";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
+import { getPaginationMeta } from "@src/utils/pagination";
 import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
@@ -25,6 +27,7 @@ export class UserService {
     private readonly userEmailAssembler: UserEmailAssembler,
   ) {}
 
+  // Only super_admin/superVera: return ALL users, no org filtering, no pagination
   async getAllUsers(req: AuthRequest): Promise<UserProfile[]> {
     const supabase = req.supabase;
 
@@ -36,6 +39,110 @@ export class UserService {
       handleSupabaseError(error);
     }
     return data;
+  }
+
+  // Admin/main_admin: paginated, filtered, org-aware (org_filter + Global)
+  async getAllOrderedUsers(
+    req: AuthRequest,
+    dto: GetOrderedUsersDto,
+  ): Promise<ApiResponse<UserProfile[]>> {
+    const supabase = req.supabase;
+
+    // First, get the user IDs that match organization criteria
+    let userIds: string[] = [];
+
+    if (dto.org_filter) {
+      // Query 1: Users from the specified organization
+      const { data: orgUsers, error: orgError } = await supabase
+        .from("user_organization_roles")
+        .select(
+          `
+          user_id,
+          organizations!inner(id, name),
+          roles!inner(role)
+        `,
+        )
+        .eq("is_active", true)
+        .eq("organization_id", dto.org_filter);
+
+      if (orgError) {
+        handleSupabaseError(orgError);
+      }
+
+      // Query 2: Users from Global org with "user" role
+      const { data: globalUsers, error: globalError } = await supabase
+        .from("user_organization_roles")
+        .select(
+          `
+          user_id,
+          organizations!inner(id, name),
+          roles!inner(role)
+        `,
+        )
+        .eq("is_active", true)
+        .eq("organizations.name", "Global")
+        .eq("roles.role", "user");
+
+      if (globalError) {
+        handleSupabaseError(globalError);
+      }
+
+      // Combine and deduplicate user IDs
+      const orgUserIds =
+        orgUsers?.map((r: { user_id: string }) => r.user_id) || [];
+      const globalUserIds =
+        globalUsers?.map((r: { user_id: string }) => r.user_id) || [];
+      userIds = [...new Set([...orgUserIds, ...globalUserIds])];
+    }
+
+    // Build the main user query
+    let query = supabase.from("user_profiles").select("*", { count: "exact" });
+
+    // Apply organization filtering if specified
+    if (dto.org_filter && userIds.length > 0) {
+      query = query.in("id", userIds);
+    } else if (dto.org_filter && userIds.length === 0) {
+      // No users match the criteria, return empty response
+      return {
+        data: [],
+        error: null,
+        count: 0,
+        status: 200,
+        statusText: "OK",
+        metadata: getPaginationMeta(0, dto.page || 1, dto.limit || 10),
+      };
+    }
+
+    // Apply search query if provided
+    if (dto.searchquery) {
+      query = query.or(
+        `email.ilike.%${dto.searchquery}%,full_name.ilike.%${dto.searchquery}%`,
+      );
+    }
+
+    // Apply ordering
+    const orderColumn = dto.ordered_by || "created_at";
+    const ascending = dto.ascending !== false;
+    query = query.order(orderColumn, { ascending });
+
+    // Apply pagination
+    const page = dto.page || 1;
+    const limit = dto.limit || 10;
+    const offset = (page - 1) * limit;
+    query = query.range(offset, offset + limit - 1);
+
+    const result = await query;
+
+    if (result.error) {
+      handleSupabaseError(result.error);
+    }
+
+    const metadata = getPaginationMeta(result.count || 0, page, limit);
+
+    return {
+      ...result,
+      metadata,
+    } as unknown as ApiResponse<UserProfile[]>;
   }
 
   async getUserById(id: string, req: AuthRequest): Promise<UserProfile> {

@@ -11,10 +11,12 @@ import {
   BadRequestException,
   UploadedFile,
   UseInterceptors,
+  Query,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
 import { CreateAddressDto } from "./dto/create-address.dto";
+import { GetOrderedUsersDto } from "./dto/get-ordered-users.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { Roles } from "src/decorators/roles.decorator";
 import { ApiSingleResponse } from "@common/response.types";
@@ -24,10 +26,21 @@ import { FileInterceptor } from "@nestjs/platform-express";
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  // Super roles only: return ALL users (unfiltered)
   @Get()
-  @Roles(["admin", "super_admin", "superVera"], { match: "any" }) // Auth Guard use
+  @Roles(["super_admin", "superVera"], { match: "any" })
   async getAllUsers(@Req() req: AuthRequest): Promise<UserProfile[]> {
     return this.userService.getAllUsers(req);
+  }
+
+  // Admin/main_admin and super roles: paginated, filtered; super roles see all orgs
+  @Get("ordered")
+  @Roles(["admin", "main_admin", "super_admin", "superVera"], { match: "any" })
+  async getAllOrderedUsers(
+    @Req() req: AuthRequest,
+    @Query() query: GetOrderedUsersDto,
+  ) {
+    return this.userService.getAllOrderedUsers(req, query);
   }
 
   @Get("me")
