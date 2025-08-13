@@ -297,7 +297,7 @@ export class BookingService {
       if (itemError || !storageItem) {
         throw new BadRequestException("Storage item data not found");
       }
-  const currentStock = storageItem.items_number_currently_in_storage ?? 0;
+      const currentStock = storageItem.items_number_currently_in_storage ?? 0;
       if (quantity > currentStock) {
         throw new BadRequestException(
           `Not enough physical stock in storage for item ${effectiveItemId}`,

@@ -22,8 +22,8 @@ export async function calculateAvailableQuantity(
     .from("booking_items")
     .select("quantity")
     .eq("item_id", itemId)
-    // Count only statuses that actually reserve inventory
-    .in("status", ["confirmed", "picked_up"])
+    // Count pending + confirmed (+ picked_up if within range) as reserving inventory
+    .in("status", ["pending", "confirmed", "picked_up"])
     .lte("start_date", endDate)
     .gte("end_date", startDate);
   if (location_id) overlapQuery = overlapQuery.eq("location_id", location_id);
@@ -108,7 +108,7 @@ export async function calculateAvailableQuantityForOrg(
     .select("quantity")
     .eq("item_id", itemId)
     .eq("provider_organization_id", organizationId)
-    .in("status", ["confirmed", "picked_up"])
+    .in("status", ["pending", "confirmed", "picked_up"])
     .lte("start_date", endDate)
     .gte("end_date", startDate);
   if (location_id) orgOverlap = orgOverlap.eq("location_id", location_id);
@@ -188,7 +188,7 @@ export async function calculateAvailableQuantityGroupedByOrg(
     .from("booking_items")
     .select("quantity, provider_organization_id, location_id")
     .eq("item_id", itemId)
-    .in("status", ["confirmed", "picked_up"])
+    .in("status", ["pending", "confirmed", "picked_up"])
     .lte("start_date", endDate)
     .gte("end_date", startDate);
   if (location_id)
