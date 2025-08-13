@@ -205,10 +205,8 @@ export const updateItem = createAsyncThunk<
 >("items/updateItem", async ({ item_id, data, orgId }, { rejectWithValue }) => {
   try {
     const response = await itemsApi.updateItem(item_id, data, orgId);
-    console.log("response: ", response);
     return response;
   } catch (error: unknown) {
-    console.log(error);
     return rejectWithValue(extractErrorMessage(error, "Failed to update item"));
   }
 });
