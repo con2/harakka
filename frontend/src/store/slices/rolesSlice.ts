@@ -243,8 +243,6 @@ const rolesSlice = createSlice({
         // If user has no initial context, set it to their GLOBAL role or the first role
         // that they do have.
         if (!state.activeRoleContext.organizationId) {
-          console.log("has no active context");
-
           const GLOBAL_ROLE = state.currentUserRoles.find(
             (role) => role.organization_name === "Global",
           );
