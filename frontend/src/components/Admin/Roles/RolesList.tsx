@@ -26,6 +26,8 @@ import { Input } from "@/components/ui/input";
 import { LoaderCircle, Shield, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { toastConfirm } from "@/components/ui/toastConfirm";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 type RolesListProps = {
   pageSize?: number;
@@ -35,6 +37,7 @@ type RolesListProps = {
 type RowType = ViewUserRolesWithDetails & { __isNew?: boolean };
 
 export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
+  const { lang } = useLanguage();
   const dispatch = useAppDispatch();
   const { user } = useAuth();
   const currentUserId = user?.id;
@@ -122,18 +125,18 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
 
   const handleSaveNew = async () => {
     if (!newRole.user_id || !newRole.organization_id || !newRole.role_id) {
-      toast.error("Please select user, organization and role");
+      toast.error(t.rolesList.messages.selectUser[lang]);
       return;
     }
     try {
       setSaving(true);
       await createRole(newRole);
-      toast.success("Role created");
+      toast.success(t.rolesList.messages.roleCreated[lang]);
       setAdding(false);
       setNewRole({ user_id: "", organization_id: "", role_id: "" });
       // No hard refresh needed; slice updates allUserRoles on fulfilled
     } catch {
-      toast.error("Failed to create role");
+      toast.error(t.rolesList.messages.createFailed[lang]);
     } finally {
       setSaving(false);
     }
@@ -145,24 +148,28 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
   ) => {
     try {
       await updateRole(row.id as string, { is_active: checked });
-      toast.success(checked ? "Role activated" : "Role deactivated");
+      toast.success(
+        checked
+          ? t.rolesList.messages.roleActivated[lang]
+          : t.rolesList.messages.roleDeactivated[lang],
+      );
     } catch {
-      toast.error("Failed to update role");
+      toast.error(t.rolesList.messages.failedRoleUpdate[lang]);
     }
   };
 
   const handleHardDelete = (row: ViewUserRolesWithDetails) => {
     toastConfirm({
-      title: "Delete role permanently?",
-      description: `This will permanently remove role "${row.role_name}" for ${row.user_email}.`,
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t.rolesList.messages.confirmDelete.title[lang],
+      description: t.rolesList.messages.confirmDelete.confirmText[lang],
+      confirmText: t.rolesList.messages.confirmDelete.confirmText[lang],
+      cancelText: t.rolesList.messages.confirmDelete.cancelText[lang],
       onConfirm: async () => {
         try {
           await permanentDeleteRole(row.id as string);
-          toast.success("Role permanently deleted");
+          toast.success(t.rolesList.messages.roleDeletedSuccess[lang]);
         } catch {
-          toast.error("Failed to delete role");
+          toast.error(t.rolesList.messages.roleDeletedFail[lang]);
         }
       },
       onCancel: () => {},
@@ -238,7 +245,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
   const columns: ColumnDef<RowType>[] = [
     {
       accessorKey: "user_email",
-      header: "User",
+      header: t.rolesList.table.headers.user[lang],
       size: 260,
       cell: ({ row }) => {
         const r = row.original;
@@ -251,7 +258,9 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
               }
             >
               <SelectTrigger className="w-[240px]">
-                <SelectValue placeholder="Select user" />
+                <SelectValue
+                  placeholder={t.rolesList.placeholders.selectUser[lang]}
+                />
               </SelectTrigger>
               <SelectContent>
                 {users
@@ -279,7 +288,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
                 className="border-blue-300 text-blue-700"
                 data-cy="roles-list-you-badge"
               >
-                You
+                {t.rolesList.badges.you[lang]}
               </Badge>
             )}
           </span>
@@ -288,7 +297,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
     },
     {
       accessorKey: "role_name",
-      header: "Role",
+      header: t.rolesList.table.headers.role[lang],
       size: 160,
       cell: ({ row }) => {
         const r = row.original;
@@ -318,7 +327,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
     },
     {
       accessorKey: "organization_name",
-      header: "Organization",
+      header: t.rolesList.table.headers.org[lang],
       size: 220,
       cell: ({ row }) => {
         const r = row.original;
@@ -351,14 +360,14 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
     },
     {
       id: "is_active",
-      header: "Active",
+      header: t.rolesList.table.headers.active[lang],
       size: 120,
       cell: ({ row }) => {
         const r = row.original;
         if (r.__isNew) {
           return (
             <Badge variant="secondary" className="text-xs">
-              Will be active
+              {t.rolesList.badges.willBeActive[lang]}
             </Badge>
           );
         }
@@ -372,6 +381,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
     },
     {
       id: "actions",
+      header: t.rolesList.table.headers.actions[lang],
       size: 140,
       enableSorting: false,
       enableColumnFilter: false,
@@ -404,7 +414,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
                 onClick={cancelAdd}
                 data-cy="roles-cancel-new"
               >
-                Cancel
+                {t.rolesList.buttons.cancel[lang]}
               </Button>
             </div>
           );
@@ -416,7 +426,9 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
               variant="ghost"
               className="text-red-600 hover:text-red-800 hover:bg-red-100"
               onClick={() => handleHardDelete(r)}
-              aria-label="Delete permanently"
+              aria-label={
+                t.rolesList.buttons.ariaLabels.deletePermanently[lang]
+              }
               data-cy="roles-hard-delete"
             >
               <Trash2 className="h-4 w-4" />
@@ -433,7 +445,8 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5" />
-            All Users Roles ({allUserRoles?.length || 0})
+            {t.rolesList.paragraphs.allUserRoles[lang]} (
+            {allUserRoles?.length || 0})
           </CardTitle>
           <div className="flex items-center gap-2">
             <Button
@@ -443,7 +456,8 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
               disabled={adding}
               data-cy="roles-add-new"
             >
-              <Plus className="h-4 w-4 mr-1" /> Create New Role
+              <Plus className="h-4 w-4 mr-1" />
+              {t.rolesList.buttons.createNewRole[lang]}
             </Button>
           </div>
         </div>
@@ -455,7 +469,9 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
             data-cy="role-management-admin-loading-row"
           >
             <LoaderCircle className="animate-spin w-6 h-6" />
-            <span className="ml-2">Loading admin data...</span>
+            <span className="ml-2">
+              {t.rolesList.paragraphs.loadingAdminData[lang]}
+            </span>
           </div>
         ) : adminError ? (
           <Alert
@@ -469,7 +485,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
             className="text-muted-foreground"
             data-cy="role-management-admin-no-roles"
           >
-            No role assignments found.
+            {t.rolesList.paragraphs.noRoleAssignmentsFound[lang]}
           </p>
         ) : (
           <>
@@ -485,7 +501,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
                 className="w-52"
               />
               <Input
-                placeholder="Filter by organization"
+                placeholder={t.rolesList.placeholders.filterByOrg[lang]}
                 value={filterOrg}
                 onChange={(e) => {
                   setFilterOrg(e.target.value);
@@ -495,7 +511,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
               />
               <div className="flex gap-2">
                 <Input
-                  placeholder="Search roles"
+                  placeholder={t.rolesList.placeholders.searchRoles[lang]}
                   value={filterRoleText}
                   onChange={(e) => {
                     setFilterRoleText(e.target.value);
@@ -514,7 +530,9 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="all">
+                      {t.rolesList.input.selectRoles.allRoles[lang]}
+                    </SelectItem>
                     {availableRoles.map((role) => (
                       <SelectItem key={role.id} value={role.role}>
                         {role.role}
@@ -531,9 +549,15 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
                 }}
                 className="select bg-white text-sm p-2 rounded-md border"
               >
-                <option value="all">All</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="all">
+                  {t.rolesList.input.selectRoles.all[lang]}
+                </option>
+                <option value="active">
+                  {t.rolesList.input.selectRoles.active[lang]}
+                </option>
+                <option value="inactive">
+                  {t.rolesList.input.selectRoles.inactive[lang]}
+                </option>
               </select>
               {(filterUser ||
                 filterOrg ||
@@ -553,7 +577,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
                     setPageIndex(0);
                   }}
                 >
-                  Clear Filters
+                  {t.rolesList.buttons.clearFilters[lang]}
                 </Button>
               )}
             </div>

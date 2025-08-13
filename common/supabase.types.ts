@@ -116,13 +116,6 @@ export type Database = {
             referencedColumns: ["storage_item_id"]
           },
           {
-            foreignKeyName: "order_items_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_manage_storage_items"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "order_items_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
@@ -345,6 +338,7 @@ export type Database = {
           created_by: string | null
           id: string
           is_active: boolean
+          is_deleted: boolean
           organization_id: string
           owned_quantity: number
           storage_item_id: string
@@ -357,6 +351,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean
+          is_deleted?: boolean
           organization_id: string
           owned_quantity?: number
           storage_item_id: string
@@ -369,6 +364,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean
+          is_deleted?: boolean
           organization_id?: string
           owned_quantity?: number
           storage_item_id?: string
@@ -404,13 +400,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "erm_organization_items_storage_item_id_fkey"
-            columns: ["storage_item_id"]
-            isOneToOne: false
-            referencedRelation: "view_manage_storage_items"
-            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "organization_items_storage_location_id_fkey"
@@ -665,13 +654,6 @@ export type Database = {
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
           },
-          {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_manage_storage_items"
-            referencedColumns: ["id"]
-          },
         ]
       }
       roles: {
@@ -732,13 +714,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "saved_list_items_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_manage_storage_items"
-            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "saved_list_items_list_id_fkey"
@@ -929,13 +904,6 @@ export type Database = {
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
           },
-          {
-            foreignKeyName: "storage_item_images_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_manage_storage_items"
-            referencedColumns: ["id"]
-          },
         ]
       }
       storage_item_tags: {
@@ -983,13 +951,6 @@ export type Database = {
             referencedColumns: ["storage_item_id"]
           },
           {
-            foreignKeyName: "storage_item_tags_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_manage_storage_items"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "storage_item_tags_tag_id_fkey"
             columns: ["tag_id"]
             isOneToOne: false
@@ -1010,8 +971,6 @@ export type Database = {
           items_number_total: number
           location_id: string
           price: number
-          test_metadata: Json | null
-          test_priority_score: number | null
           translations: Json | null
         }
         Insert: {
@@ -1025,8 +984,6 @@ export type Database = {
           items_number_total: number
           location_id: string
           price: number
-          test_metadata?: Json | null
-          test_priority_score?: number | null
           translations?: Json | null
         }
         Update: {
@@ -1040,8 +997,6 @@ export type Database = {
           items_number_total?: number
           location_id?: string
           price?: number
-          test_metadata?: Json | null
-          test_priority_score?: number | null
           translations?: Json | null
         }
         Relationships: [
@@ -1532,18 +1487,41 @@ export type Database = {
           en_item_type: string | null
           fi_item_name: string | null
           fi_item_type: string | null
-          id: string | null
           is_active: boolean | null
+          is_deleted: boolean | null
           items_number_currently_in_storage: number | null
           items_number_total: number | null
           location_id: string | null
           location_name: string | null
+          organization_id: string | null
           price: number | null
+          storage_item_id: string | null
           tag_ids: string[] | null
           tag_translations: Json[] | null
           translations: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "erm_organization_items_storage_item_id_fkey"
+            columns: ["storage_item_id"]
+            isOneToOne: false
+            referencedRelation: "storage_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "erm_organization_items_storage_item_id_fkey"
+            columns: ["storage_item_id"]
+            isOneToOne: false
+            referencedRelation: "view_item_location_summary"
+            referencedColumns: ["storage_item_id"]
+          },
+          {
+            foreignKeyName: "erm_organization_items_storage_item_id_fkey"
+            columns: ["storage_item_id"]
+            isOneToOne: false
+            referencedRelation: "view_item_ownership_summary"
+            referencedColumns: ["storage_item_id"]
+          },
           {
             foreignKeyName: "storage_items_location_id_fkey"
             columns: ["location_id"]

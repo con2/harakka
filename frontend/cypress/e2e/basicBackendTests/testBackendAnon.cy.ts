@@ -28,8 +28,6 @@ describe("Backend API endpoints, not logged in (anon user)", () => {
           "translations",
           "items_number_currently_in_storage",
           "is_deleted",
-          "test_priority_score",
-          "test_metadata",
           "items_number_available",
           "storage_item_tags",
           "storage_locations",

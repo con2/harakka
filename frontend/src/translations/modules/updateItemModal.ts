@@ -138,5 +138,9 @@ export const updateItemModal = {
       fi: "Tuotteen päivittäminen epäonnistui.",
       en: "Failed to update item.",
     },
+    missingOrg: {
+      fi: "Organisaatiota ei ole valittu",
+      en: "No organization selected",
+    },
   },
 };
