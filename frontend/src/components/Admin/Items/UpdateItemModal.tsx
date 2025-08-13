@@ -161,8 +161,8 @@ const UpdateItemModal = ({
 
     setLoading(true);
     try {
-      if (!orgId) return toast.error("No organization selected");
-      console.log("formdata: ", formData);
+      if (!orgId)
+        return toast.error(t.updateItemModal.messages.missingOrg[lang]);
       if (onUpdate) {
         onUpdate(formData);
         return onClose();
