@@ -122,7 +122,7 @@ export class UserService {
 
     // Apply ordering
     const orderColumn = dto.ordered_by || "created_at";
-    const ascending = dto.ascending !== false;
+    const ascending = dto.ascending === true;
     query = query.order(orderColumn, { ascending });
 
     // Apply pagination - ensure proper type conversion from query strings
