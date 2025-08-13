@@ -19,7 +19,7 @@ import {
 interface UserBanActionsDropdownProps {
   user: UserProfile;
   canBan: boolean;
-  isSuperAdmin: boolean;
+  isSuper: boolean;
   isAuthorized: boolean;
   onBanClick: () => void;
   onUnbanClick: () => void;
@@ -29,7 +29,7 @@ interface UserBanActionsDropdownProps {
 const UserBanActionsDropdown = ({
   user,
   canBan,
-  isSuperAdmin,
+  isSuper,
   isAuthorized,
   onBanClick,
   onUnbanClick,
@@ -121,7 +121,7 @@ const UserBanActionsDropdown = ({
               {t.userBanning.actions.unban[lang]}
             </Button>
           )}
-          {(isSuperAdmin || isAuthorized) && (
+          {(isSuper || isAuthorized) && (
             <>
               <div className="h-px bg-gray-200 my-1" />
               <Button

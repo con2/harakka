@@ -1,25 +1,13 @@
-import { CreateUserDto } from "@common/user.types";
-import { Database } from "@common/supabase.types";
+import { CreateUserDto, UserProfile } from "@common/user.types";
 import { api } from "../axios";
 import { Address } from "@/types/address";
 import { store } from "@/store/store";
 import { ApiResponse } from "@/types/api";
-
-// Params accepted by the /users/ordered endpoint
-export type OrderedUsersParams = Partial<{
-  page: number;
-  limit: number;
-  ordered_by: string;
-  ascending: boolean;
-  searchquery: string;
-  org_filter: string;
-}>;
+import { OrderedUsersParams } from "@/types/user";
 
 /**
  * API service for user-related endpoints
  */
-export type UserProfile = Database["public"]["Tables"]["user_profiles"]["Row"];
-
 export const usersApi = {
   /**
    * Get all users for admin/main_admin with backend filtering/pagination
@@ -28,16 +16,20 @@ export const usersApi = {
    */
   getAllOrderedUsers: (
     params: OrderedUsersParams,
-  ): Promise<ApiResponse<UserProfile[]>> =>
-    api.get("/users/ordered", { params }),
+  ): Promise<ApiResponse<UserProfile[]>> => {
+    // Filter out undefined values to prevent them from being sent as query parameters
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).filter(([, value]) => value !== undefined),
+    );
+    return api.get("/users/ordered", { params: cleanParams });
+  },
+
   /**
-   * Get all users, optionally filtered by org
-   * @param org_filter - Optional organization ID to filter users by
-   * @returns Promise with an array of users
+   * Get all users (super admins only) - returns all users without filtering
+   * @returns Promise with an array of all users
    */
-  getAllUsers: (org_filter?: string): Promise<UserProfile[]> => {
-    const params = org_filter ? { org_filter } : undefined;
-    return api.get("/users", { params });
+  getAllUsers: (): Promise<UserProfile[]> => {
+    return api.get("/users");
   },
 
   /**

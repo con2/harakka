@@ -9,12 +9,15 @@ import {
   selectError,
   selectLoading,
 } from "@/store/slices/usersSlice";
-import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
+import {
+  selectActiveOrganizationId,
+  selectActiveRoleName,
+} from "@/store/slices/rolesSlice";
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
@@ -36,7 +39,8 @@ const UsersList = () => {
   const error = useAppSelector(selectError);
   const allUserRoles = useAppSelector(selectAllUserRoles);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
-  const { refreshAllUserRoles, hasRole, hasAnyRole } = useRoles();
+  const activeRoleName = useAppSelector(selectActiveRoleName);
+  const { refreshAllUserRoles, hasAnyRole } = useRoles();
 
   // ————————————— State —————————————
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -60,7 +64,23 @@ const UsersList = () => {
     "main_admin",
     "super_admin",
   ]);
-  const isSuperAdmin = hasRole("super_admin");
+  const isSuper = hasAnyRole(["super_admin", "superVera"]);
+
+  // Determine if we should fetch all users (no org filter)
+  // This happens when:
+  // 1. User has super_admin or superVera role AND no org/role is selected (activeOrgId is null/undefined)
+  // 2. User has selected a super_admin or superVera role from the navbar selector
+  const isActiveRoleSuper =
+    activeRoleName === "super_admin" || activeRoleName === "superVera";
+  const shouldFetchAllUsers = isSuper && (!activeOrgId || isActiveRoleSuper);
+
+  // Get the org_filter value based on super user logic
+  const getOrgFilter = useCallback(() => {
+    if (shouldFetchAllUsers) {
+      return undefined; // No filter - fetch all users
+    }
+    return activeOrgId ?? undefined; // Use selected org or undefined
+  }, [shouldFetchAllUsers, activeOrgId]);
 
   // ————————————— Side Effects —————————————
 
@@ -83,7 +103,7 @@ const UsersList = () => {
     if (!authLoading && isAuthorized && isModalOpen) {
       void dispatch(
         fetchAllOrderedUsers({
-          org_filter: activeOrgId ?? undefined,
+          org_filter: getOrgFilter(),
           page: 1,
           limit: 10,
           ascending: true,
@@ -98,7 +118,10 @@ const UsersList = () => {
     isModalOpen,
     dispatch,
     activeOrgId,
+    activeRoleName,
     debouncedSearchQuery,
+    isSuper,
+    getOrgFilter,
   ]);
 
   // ————————————— Helper Functions —————————————
@@ -209,9 +232,9 @@ const UsersList = () => {
 
         const canEdit = isAuthorized;
         const canDelete =
-          isSuperAdmin || (isAuthorized && targetUserRoles.includes("user"));
+          isSuper || (isAuthorized && targetUserRoles.includes("user"));
         const canBan =
-          (isSuperAdmin && targetUserRoles.includes("admin")) ||
+          (isSuper && targetUserRoles.includes("admin")) ||
           (isAuthorized && targetUserRoles.includes("user"));
 
         const handleBanClick = () => {
@@ -235,11 +258,11 @@ const UsersList = () => {
             {canDelete && (
               <DeleteUserButton id={targetUser.id} closeModal={closeModal} />
             )}
-            {(canBan || isSuperAdmin || isAuthorized) && (
+            {(canBan || isSuper || isAuthorized) && (
               <UserBanActionsDropdown
                 user={targetUser}
                 canBan={canBan}
-                isSuperAdmin={isSuperAdmin}
+                isSuper={isSuper}
                 isAuthorized={isAuthorized}
                 onBanClick={handleBanClick}
                 onUnbanClick={handleUnbanClick}
@@ -310,7 +333,7 @@ const UsersList = () => {
         onPageChange={(page) =>
           dispatch(
             fetchAllOrderedUsers({
-              org_filter: activeOrgId ?? undefined,
+              org_filter: getOrgFilter(),
               page: page + 1,
               limit: 10,
               ascending: true,
