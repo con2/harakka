@@ -10,7 +10,7 @@ import {
   calculateDuration,
   generateBookingNumber,
   dayDiffFromToday,
-} from "src/utils/booking.utils";
+} from "@src/utils/booking.utils";
 import { MailService } from "../mail/mail.service";
 import { BookingMailType } from "../mail/interfaces/mail.interface";
 import * as dayjs from "dayjs";
@@ -41,6 +41,10 @@ import { BookingPreview } from "@common/bookings/booking.types";
 import { BookingItemsService } from "../booking_items/booking-items.service";
 import { BookingItem } from "@common/bookings/booking-items.types";
 import { StorageItemRow } from "../storage-items/interfaces/storage-item.interface";
+import { calculateAvailableQuantityGroupedByOrg } from "@src/utils/booking.utils";
+import { UpdateBookingItemDto } from "./dto/update-booking-item.dto";
+import { calculateAvailableQuantityForOrg } from "@src/utils/booking.utils";
+// import { OrgItemRow } from "../org_items/interfaces/org_items.interface";
 dayjs.extend(utc);
 @Injectable()
 export class BookingService {
@@ -51,6 +55,49 @@ export class BookingService {
     private readonly roleService: RoleService,
     private readonly bookingItemsService: BookingItemsService,
   ) {}
+  /**
+   * Resolve which organization "provides" an item for a booking.
+   * Strategy:
+   * 1) Prefer orgs that own the item *and* are linked to the item's location.
+   * 2) If multiple remain, pick the one with the largest owned_quantity.
+   * 3) If none are linked to that location, pick the org with the largest owned_quantity overall.
+   * Returns `null` if no owning orgs exist.
+   */
+  private async resolveProviderOrganizationId(
+    supabase: SupabaseClient<Database>,
+    itemId: string,
+    locationId: string | null,
+  ): Promise<string | null> {
+    const { data: ownerships } = await supabase
+      .from("organization_items")
+      .select("organization_id, owned_quantity")
+      .eq("item_id", itemId);
+
+    if (!ownerships || ownerships.length === 0) return null;
+
+    let candidates = ownerships;
+
+    if (locationId) {
+      const { data: orgAtLoc } = await supabase
+        .from("organization_locations")
+        .select("organization_id")
+        .eq("storage_location_id", locationId);
+
+      if (orgAtLoc && orgAtLoc.length > 0) {
+        const allowed = new Set(orgAtLoc.map((o) => o.organization_id));
+        const filtered = ownerships.filter((o) =>
+          allowed.has(o.organization_id),
+        );
+        if (filtered.length > 0) candidates = filtered;
+      }
+    }
+
+    candidates.sort(
+      (a, b) => (b.owned_quantity ?? 0) - (a.owned_quantity ?? 0),
+    );
+
+    return candidates[0]?.organization_id ?? null;
+  }
 
   // 1. get all bookings
   async getAllBookings(
@@ -166,6 +213,9 @@ export class BookingService {
     dto: CreateBookingDto,
     supabase: SupabaseClient<Database>,
   ) {
+    // Use service client for reads that must see all rows (bypass RLS)
+    const svc =
+      this.supabaseService.getServiceClient() as SupabaseClient<Database>;
     const userId = dto.user_id;
 
     if (!userId) {
@@ -175,7 +225,9 @@ export class BookingService {
     let warningMessage: string | null = null;
 
     for (const item of dto.items) {
-      const { item_id, quantity, start_date, end_date } = item;
+      // Accept either storage_item_id or item_id (which may be an organization_items.id)
+      const rawItemId = item.storage_item_id;
+      const { quantity, start_date, end_date } = item;
 
       const start = new Date(start_date);
       const differenceInDays = dayDiffFromToday(start);
@@ -191,35 +243,64 @@ export class BookingService {
           "This is a short-notice booking. Please be aware that it might not be fulfilled in time.";
       }
 
+      // Resolve to an effective storage_item_id
+      let effectiveItemId: string | null = null;
+      if (rawItemId) {
+        // Try as storage_items.id
+        const { data: si } = await supabase
+          .from("storage_items")
+          .select("id")
+          .eq("id", rawItemId)
+          .maybeSingle();
+
+        if (si?.id) {
+          effectiveItemId = si.id;
+        } else {
+          // Try as organization_items.id
+          const { data: orgItem } = await supabase
+            .from("organization_items")
+            .select("storage_item_id")
+            .eq("id", rawItemId)
+            .maybeSingle();
+          if (orgItem?.storage_item_id) {
+            effectiveItemId = orgItem.storage_item_id;
+          }
+        }
+      }
+
+      if (!effectiveItemId) {
+        throw new BadRequestException(
+          `Invalid item identifier. Provide storage_item_id (storage_items.id) or organization_items.id in each item. Received: ${rawItemId}`,
+        );
+      }
+
       // 3.1. Check availability for requested date range
       const available = await calculateAvailableQuantity(
-        supabase,
-        item_id,
+        svc,
+        effectiveItemId,
         start_date,
         end_date,
       );
 
       if (quantity > available.availableQuantity) {
         throw new BadRequestException(
-          `Not enough virtual stock available for item ${item_id}`,
+          `Not enough virtual stock available for item ${effectiveItemId}`,
         );
       }
 
-      // 3.2. Check physical stock (currently in storage)
+      // 3.2. Physical stock: enforce strictly at creation to avoid overbook.
       const { data: storageItem, error: itemError } = await supabase
         .from("storage_items")
         .select("items_number_currently_in_storage")
-        .eq("id", item_id)
+        .eq("id", effectiveItemId)
         .single();
-
       if (itemError || !storageItem) {
         throw new BadRequestException("Storage item data not found");
       }
-
-      const currentStock = storageItem.items_number_currently_in_storage ?? 0;
+  const currentStock = storageItem.items_number_currently_in_storage ?? 0;
       if (quantity > currentStock) {
         throw new BadRequestException(
-          `Not enough physical stock in storage for item ${item_id}`,
+          `Not enough physical stock in storage for item ${effectiveItemId}`,
         );
       }
     }
@@ -242,41 +323,201 @@ export class BookingService {
       throw new BadRequestException("Could not create booking");
     }
 
-    // 3.5. Create booking items
+    // 3.5. Create booking items with provider organization ownership
     for (const item of dto.items) {
       const start = new Date(item.start_date);
       const end = new Date(item.end_date);
       const totalDays = calculateDuration(start, end);
 
-      // get location_id
+      // Resolve effective storage item id again (accept storage_item_id or item_id that points to org-item)
+      const rawItemId = item.storage_item_id;
+      let effectiveItemId: string | null = null;
+      if (rawItemId) {
+        const { data: si } = await supabase
+          .from("storage_items")
+          .select("id, location_id")
+          .eq("id", rawItemId)
+          .maybeSingle();
+        if (si?.id) {
+          effectiveItemId = si.id;
+        } else {
+          const { data: orgItem } = await supabase
+            .from("organization_items")
+            .select("storage_item_id")
+            .eq("id", rawItemId)
+            .maybeSingle();
+          if (orgItem?.storage_item_id) {
+            effectiveItemId = orgItem.storage_item_id;
+          }
+        }
+      }
+
+      if (!effectiveItemId) {
+        throw new BadRequestException(
+          `Invalid item identifier. Provide storage_item_id (storage_items.id) or organization_items.id in each item. Received: ${rawItemId}`,
+        );
+      }
+
+      // 3.5.1 Get location_id for the storage item
       const { data: storageItem, error: locationError } = await supabase
         .from("storage_items")
         .select("location_id")
-        .eq("id", item.item_id)
+        .eq("id", effectiveItemId)
         .single();
 
       if (locationError || !storageItem) {
         throw new BadRequestException(
-          `Location ID not found for item ${item.item_id}`,
+          `Location ID not found for item ${effectiveItemId}`,
+          handleSupabaseError(locationError),
         );
       }
 
-      // insert booking item
-      const { error: insertError } = await supabase
-        .from("booking_items")
-        .insert({
-          booking_id: booking.id,
-          item_id: item.item_id,
-          location_id: storageItem.location_id,
-          quantity: item.quantity,
-          start_date: item.start_date,
-          end_date: item.end_date,
-          total_days: totalDays,
-          status: "pending",
-        });
+      // 3.5.2 Find owning organizations for this item at this location
+      const { data: orgLinks, error: orgError } = await supabase
+        .from("organization_items")
+        .select("organization_id, owned_quantity")
+        .eq("storage_item_id", effectiveItemId)
+        .eq("storage_location_id", storageItem.location_id)
+        .eq("is_active", true);
 
-      if (insertError) {
-        throw new BadRequestException("Could not create booking items");
+      if (orgError) {
+        throw new BadRequestException(
+          `Failed to resolve owning organization for item ${effectiveItemId}`,
+          handleSupabaseError(orgError),
+        );
+      }
+
+      if (!orgLinks || orgLinks.length === 0) {
+        throw new BadRequestException(
+          `No owning organization configured for item ${effectiveItemId} at its location`,
+        );
+      }
+
+      // 3.5.3 If frontend asked for a specific org, allocate only from that org
+      const requestedQty = item.quantity;
+
+      if (item.provider_organization_id) {
+        const target = orgLinks.find(
+          (l) => l.organization_id === item.provider_organization_id,
+        );
+        if (!target) {
+          throw new BadRequestException(
+            `Organization ${item.provider_organization_id} does not own item ${effectiveItemId} at this location`,
+          );
+        }
+
+        // Enforce per-org virtual capacity and owned capacity
+        // Availability is implicitly enforced by owned capacity and overlapping rows per org
+        // Owned capacity for org at this location
+        const ownedForOrg = target.owned_quantity ?? 0;
+        if (requestedQty > ownedForOrg) {
+          throw new BadRequestException(
+            `Requested quantity (${requestedQty}) exceeds org-owned quantity (${ownedForOrg}) for item ${effectiveItemId}`,
+          );
+        }
+        // Also enforce per-org virtual availability across overlapping bookings
+        const perOrgAvail = await calculateAvailableQuantityForOrg(
+          svc,
+          effectiveItemId,
+          item.start_date,
+          item.end_date,
+          item.provider_organization_id,
+          storageItem.location_id,
+        );
+        if (requestedQty > perOrgAvail.availableQuantity) {
+          throw new BadRequestException(
+            `Not enough virtual availability for org ${item.provider_organization_id}; requested ${requestedQty}, available ${perOrgAvail.availableQuantity}`,
+          );
+        }
+        // Insert single row tied to the requested org
+        const { error: insertError } = await supabase
+          .from("booking_items")
+          .insert({
+            booking_id: booking.id,
+            item_id: effectiveItemId,
+            location_id: storageItem.location_id,
+            provider_organization_id: item.provider_organization_id,
+            quantity: requestedQty,
+            start_date: item.start_date,
+            end_date: item.end_date,
+            total_days: totalDays,
+            status: "pending",
+          });
+
+        if (insertError) handleSupabaseError(insertError);
+        continue;
+      }
+
+      if (orgLinks.length === 1) {
+        const providerOrgId = orgLinks[0].organization_id;
+        const { error: insertError } = await supabase
+          .from("booking_items")
+          .insert({
+            booking_id: booking.id,
+            item_id: effectiveItemId,
+            location_id: storageItem.location_id,
+            provider_organization_id: providerOrgId,
+            quantity: requestedQty,
+            start_date: item.start_date,
+            end_date: item.end_date,
+            total_days: totalDays,
+            status: "pending",
+          });
+
+        if (insertError) {
+          handleSupabaseError(insertError);
+        }
+        continue;
+      }
+
+      // Multiple orgs: allocate quantity across orgs up to their owned_quantity
+      const totalOwned = orgLinks.reduce(
+        (sum, l) => sum + (l.owned_quantity ?? 0),
+        0,
+      );
+
+      if (requestedQty > totalOwned) {
+        throw new BadRequestException(
+          `Requested quantity (${requestedQty}) exceeds total owned across organizations (${totalOwned}) for item ${effectiveItemId}`,
+        );
+      }
+
+      let remaining = requestedQty;
+      // Simple allocation strategy: iterate in given order; could sort by owned_quantity desc if desired
+      for (const link of orgLinks) {
+        if (remaining <= 0) break;
+        const allocatable = Math.min(remaining, link.owned_quantity ?? 0);
+        if (allocatable <= 0) continue;
+
+        const { error: insertError } = await supabase
+          .from("booking_items")
+          .insert({
+            booking_id: booking.id,
+            item_id: effectiveItemId,
+            location_id: storageItem.location_id,
+            provider_organization_id: link.organization_id,
+            quantity: allocatable,
+            start_date: item.start_date,
+            end_date: item.end_date,
+            total_days: totalDays,
+            status: "pending",
+          });
+
+        if (insertError) {
+          throw new BadRequestException(
+            "Could not create booking items",
+            handleSupabaseError(insertError),
+          );
+        }
+
+        remaining -= allocatable;
+      }
+
+      if (remaining > 0) {
+        // Defensive: should not happen due to previous check
+        throw new BadRequestException(
+          `Internal allocation error: ${remaining} units could not be allocated to any organization for item ${effectiveItemId}`,
+        );
       }
     }
 
@@ -290,11 +531,10 @@ export class BookingService {
   }
 
   // 4. confirm a Booking
-  async confirmBooking(
-    bookingId: string,
-    userId: string,
-    supabase: SupabaseClient,
-  ) {
+  async confirmBooking(bookingId: string, req: AuthRequest) {
+    const supabase = req.supabase;
+    const userId = req.user.id;
+    console.log(req.userRoles);
     // 4.1 check if already confirmed
     const { data: booking } = await supabase
       .from("bookings")
@@ -333,7 +573,9 @@ export class BookingService {
       }
 
       // check if stock is enough
-      if (storageItem.items_number_currently_in_storage < item.quantity) {
+      if (
+        (storageItem.items_number_currently_in_storage ?? 0) < item.quantity
+      ) {
         throw new BadRequestException(
           `Not enough available quantity for item ${item.item_id}`,
         );
@@ -377,9 +619,13 @@ export class BookingService {
   async updateBooking(
     booking_id: string,
     userId: string,
-    updatedItems: BookingItem[],
+    updatedItems: UpdateBookingItemDto[],
     req: AuthRequest,
   ) {
+    // Used for availability checks only
+    const svc =
+      this.supabaseService.getServiceClient() as SupabaseClient<Database>;
+
     const supabase = req.supabase;
     // 5.1 check the booking
     const { data: booking } = await supabase
@@ -412,12 +658,46 @@ export class BookingService {
       );
     }
 
-    // 5.3. Delete existing items from booking_items to avoid douplicates
-    await supabase.from("booking_items").delete().eq("booking_id", booking_id);
+    // 5.3. Delete existing items from booking_items to avoid duplicates
+    await this.bookingItemsService.removeAllBookingItems(supabase, booking_id);
 
     // 5.4. insert updated items with availability check
     for (const item of updatedItems) {
-      const { item_id, quantity, start_date, end_date } = item;
+      // Accept storage_item_id (preferred) or item_id fallback
+      const rawItemId = item.storage_item_id ?? item.item_id;
+      if (!rawItemId) {
+        throw new BadRequestException(
+          "Each item must provide storage_item_id or item_id",
+        );
+      }
+
+      // Resolve to a storage_items.id
+      let effectiveItemId: string | null = null;
+      const { data: si } = await supabase
+        .from("storage_items")
+        .select("id, location_id")
+        .eq("id", rawItemId)
+        .maybeSingle();
+      if (si?.id) {
+        effectiveItemId = si.id;
+      } else {
+        const { data: orgItem } = await supabase
+          .from("organization_items")
+          .select("storage_item_id")
+          .eq("id", rawItemId)
+          .maybeSingle();
+        if (orgItem?.storage_item_id) {
+          effectiveItemId = orgItem.storage_item_id;
+        }
+      }
+
+      if (!effectiveItemId) {
+        throw new BadRequestException(
+          `Invalid item identifier. Provide storage_item_id (storage_items.id) or organization_items.id. Received: ${rawItemId}`,
+        );
+      }
+
+      const { quantity, start_date, end_date } = item;
 
       const totalDays = calculateDuration(
         new Date(start_date),
@@ -426,15 +706,15 @@ export class BookingService {
 
       // 5.5. Check virtual availability for the time range
       const available = await calculateAvailableQuantity(
-        supabase,
-        item_id,
+        svc,
+        effectiveItemId,
         start_date,
         end_date,
       );
 
       if (quantity > available.availableQuantity) {
         throw new BadRequestException(
-          `Not enough virtual stock available for item ${item_id}`,
+          `Not enough virtual stock available for item ${effectiveItemId}`,
         );
       }
 
@@ -442,32 +722,131 @@ export class BookingService {
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
         .select("location_id")
-        .eq("id", item_id)
+        .eq("id", effectiveItemId)
         .single<StorageItemsRow>();
 
       if (storageError || !storageItem) {
         throw new BadRequestException(
-          `Could not find storage item for item ${item_id}`,
+          `Could not find storage item for item ${effectiveItemId}`,
+        );
+      }
+      // 5.7. Determine provider org(s) and insert booking_items accordingly (same logic as create)
+      const { data: orgLinks, error: orgError } = await supabase
+        .from("organization_items")
+        .select("organization_id, owned_quantity")
+        .eq("storage_item_id", effectiveItemId)
+        .eq("storage_location_id", storageItem.location_id)
+        .eq("is_active", true);
+
+      if (orgError) {
+        throw new BadRequestException(
+          `Failed to resolve owning organization for item ${effectiveItemId}`,
         );
       }
 
-      // 5.7. insert new booking item
-      const { error: itemInsertError } = await supabase
-        .from("booking_items")
-        .insert<BookingItemInsert>({
+      if (!orgLinks || orgLinks.length === 0) {
+        throw new BadRequestException(
+          `No owning organization configured for item ${effectiveItemId} at its location`,
+        );
+      }
+
+      // If a specific provider org is requested, validate and insert only for that org
+      if (item.provider_organization_id) {
+        const target = orgLinks.find(
+          (l) => l.organization_id === item.provider_organization_id,
+        );
+        if (!target) {
+          throw new BadRequestException(
+            `Organization ${item.provider_organization_id} does not own item ${effectiveItemId} at this location`,
+          );
+        }
+        const ownedForOrg = target.owned_quantity ?? 0;
+        if (quantity > ownedForOrg) {
+          throw new BadRequestException(
+            `Requested quantity (${quantity}) exceeds org-owned quantity (${ownedForOrg}) for item ${effectiveItemId}`,
+          );
+        }
+        const perOrgAvail = await calculateAvailableQuantityForOrg(
+          svc,
+          effectiveItemId,
+          start_date,
+          end_date,
+          item.provider_organization_id,
+          storageItem.location_id,
+        );
+        if (quantity > perOrgAvail.availableQuantity) {
+          throw new BadRequestException(
+            `Not enough virtual availability for org ${item.provider_organization_id}; requested ${quantity}, available ${perOrgAvail.availableQuantity}`,
+          );
+        }
+
+        const res = await this.bookingItemsService.createBookingItem(supabase, {
           booking_id: booking_id,
-          item_id: item.item_id,
+          item_id: effectiveItemId,
           location_id: storageItem.location_id,
-          quantity: item.quantity,
-          start_date: item.start_date,
-          end_date: item.end_date,
+          provider_organization_id: item.provider_organization_id,
+          quantity: quantity,
+          start_date: start_date,
+          end_date: end_date,
           total_days: totalDays,
           status: "pending",
-        });
+        } as BookingItemInsert);
+        if (res.error) handleSupabaseError(res.error);
+        continue;
+      }
 
-      if (itemInsertError) {
-        console.error("Booking item insert error:", itemInsertError);
-        throw new BadRequestException("Could not create updated booking items");
+      if (orgLinks.length === 1) {
+        const providerOrgId = orgLinks[0].organization_id;
+        const res = await this.bookingItemsService.createBookingItem(supabase, {
+          booking_id: booking_id,
+          item_id: effectiveItemId,
+          location_id: storageItem.location_id,
+          provider_organization_id: providerOrgId,
+          quantity: quantity,
+          start_date: start_date,
+          end_date: end_date,
+          total_days: totalDays,
+          status: "pending",
+        } as BookingItemInsert);
+        if (res.error) handleSupabaseError(res.error);
+        continue;
+      }
+
+      const totalOwned = orgLinks.reduce(
+        (sum, l) => sum + (l.owned_quantity ?? 0),
+        0,
+      );
+      if (quantity > totalOwned) {
+        throw new BadRequestException(
+          `Requested quantity (${quantity}) exceeds total owned across organizations (${totalOwned}) for item ${effectiveItemId}`,
+        );
+      }
+
+      let remaining = quantity;
+      for (const link of orgLinks) {
+        if (remaining <= 0) break;
+        const allocatable = Math.min(remaining, link.owned_quantity ?? 0);
+        if (allocatable <= 0) continue;
+
+        const res = await this.bookingItemsService.createBookingItem(supabase, {
+          booking_id: booking_id,
+          item_id: effectiveItemId,
+          location_id: storageItem.location_id,
+          provider_organization_id: link.organization_id,
+          quantity: allocatable,
+          start_date: start_date,
+          end_date: end_date,
+          total_days: totalDays,
+          status: "pending",
+        } as BookingItemInsert);
+        if (res.error) handleSupabaseError(res.error);
+        remaining -= allocatable;
+      }
+
+      if (remaining > 0) {
+        throw new BadRequestException(
+          `Internal allocation error: ${remaining} units could not be allocated to any organization for item ${effectiveItemId}`,
+        );
       }
     }
 
@@ -920,6 +1299,130 @@ export class BookingService {
     };
   }
 
+  /**
+   * Approve a single booking item by an authorized org/admin user.
+   * Only allowed if the user has roles in the provider_organization_id of the item
+   * or has elevated roles (admin, super_admin, main_admin, superVera, storage_manager).
+   */
+  async approveBookingItem(
+    bookingId: string,
+    bookingItemId: string,
+    reason: string | undefined,
+    req: AuthRequest,
+  ) {
+    const supabase = req.supabase;
+    // Fetch the item and validate it belongs to booking
+    const { data: item, error } = await supabase
+      .from("booking_items")
+      .select("id, booking_id, provider_organization_id, status")
+      .eq("id", bookingItemId)
+      .maybeSingle();
+
+    if (error || !item || item.booking_id !== bookingId) {
+      throw new BadRequestException("Booking item not found for booking");
+    }
+
+    // Permission: user must be elevated or have a role in the provider org
+    const isElevated = this.roleService.hasAnyRole(req, [
+      "admin",
+      "super_admin",
+      "main_admin",
+      "superVera",
+      "storage_manager",
+    ]);
+
+    const inProviderOrg = item.provider_organization_id
+      ? this.roleService.hasAnyRole(
+          req,
+          ["admin", "storage_manager", "user", "requester"],
+          item.provider_organization_id,
+        )
+      : false;
+
+    if (!isElevated && !inProviderOrg) {
+      throw new ForbiddenException(
+        "Not allowed to approve items for this organization",
+      );
+    }
+
+    // Update item to confirmed and set decision fields
+    const { error: updErr } = await supabase
+      .from("booking_items")
+      .update({
+        status: "confirmed",
+        decision_by_user_id: req.user.id,
+        decision_at: new Date().toISOString(),
+        decision_reason: reason ?? null,
+      })
+      .eq("id", bookingItemId)
+      .eq("booking_id", bookingId);
+
+    if (updErr) throw new BadRequestException("Failed to approve booking item");
+
+    // Optional: mail could be sent when whole booking becomes confirmed via trigger aggregation
+    return { message: "Booking item approved" };
+  }
+
+  /**
+   * Reject a single booking item by an authorized org/admin user.
+   * Same permissions as approve.
+   */
+  async rejectBookingItem(
+    bookingId: string,
+    bookingItemId: string,
+    reason: string | undefined,
+    req: AuthRequest,
+  ) {
+    const supabase = req.supabase;
+    // Fetch the item and validate it belongs to booking
+    const { data: item, error } = await supabase
+      .from("booking_items")
+      .select("id, booking_id, provider_organization_id, status")
+      .eq("id", bookingItemId)
+      .maybeSingle();
+
+    if (error || !item || item.booking_id !== bookingId) {
+      throw new BadRequestException("Booking item not found for booking");
+    }
+
+    // Permission checks
+    const isElevated = this.roleService.hasAnyRole(req, [
+      "admin",
+      "super_admin",
+      "main_admin",
+      "superVera",
+      "storage_manager",
+    ]);
+    const inProviderOrg = item.provider_organization_id
+      ? this.roleService.hasAnyRole(
+          req,
+          ["admin", "storage_manager", "user", "requester"],
+          item.provider_organization_id,
+        )
+      : false;
+    if (!isElevated && !inProviderOrg) {
+      throw new ForbiddenException(
+        "Not allowed to reject items for this organization",
+      );
+    }
+
+    const { error: updErr } = await supabase
+      .from("booking_items")
+      .update({
+        status: "rejected",
+        decision_by_user_id: req.user.id,
+        decision_at: new Date().toISOString(),
+        decision_reason: reason ?? null,
+      })
+      .eq("id", bookingItemId)
+      .eq("booking_id", bookingId);
+
+    if (updErr) throw new BadRequestException("Failed to reject booking item");
+
+    // Aggregation to booking.status is handled by DB trigger in migration
+    return { message: "Booking item rejected" };
+  }
+
   // 12. virtual number of items for a specific date
   async getAvailableQuantityForDate(
     itemId: string,
@@ -1087,5 +1590,26 @@ export class BookingService {
       ...result,
       data: result.count ?? 0,
     };
+  }
+
+  /** Per-organization availability for an item and date range */
+  async getPerOrgAvailability(
+    supabase: SupabaseClient,
+    item_id: string,
+    start: string,
+    end: string,
+    location_id?: string,
+  ) {
+    // Use service client so RLS doesn't hide booking_items from anon/user contexts
+    const svc =
+      this.supabaseService.getServiceClient() as SupabaseClient<Database>;
+    const rows = await calculateAvailableQuantityGroupedByOrg(
+      svc,
+      item_id,
+      start,
+      end,
+      location_id,
+    );
+    return rows;
   }
 }

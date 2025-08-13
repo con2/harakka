@@ -15,7 +15,7 @@ import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { TablesUpdate } from "@common/supabase.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
-import { calculateAvailableQuantity } from "src/utils/booking.utils";
+import { calculateAvailableQuantity } from "@src/utils/booking.utils";
 import {
   ApiResponse,
   ApiSingleResponse,

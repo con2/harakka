@@ -9,7 +9,7 @@ import { Type } from "class-transformer";
 
 class BookingItemDto {
   @IsString()
-  item_id: string;
+  storage_item_id: string;
 
   @IsNumber()
   quantity: number;
@@ -19,6 +19,10 @@ class BookingItemDto {
 
   @IsString()
   end_date: string;
+
+  @IsOptional()
+  @IsString()
+  provider_organization_id?: string;
 }
 
 export class CreateBookingDto {

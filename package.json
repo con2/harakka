@@ -29,7 +29,7 @@
     "dev:live": "env-cmd -f .env.local concurrently \"npm run frontend\" \"npm run backend\"",
     "frontend:local": "env-cmd -f supabase-local.env npm --prefix frontend run dev",
     "frontend:live": "env-cmd -f .env.local npm --prefix frontend run dev",
-    "backend:local": "env-cmd -f supabase-local.env npm --prefix backend run start:dev",
+    "backend:local": "env-cmd -f supabase-local.env npm --prefix backend run start:watch",
     "backend:live": "env-cmd -f .env.local npm --prefix backend run start:dev",
     "check-translation": "cd frontend && npx tsx src/scripts/check-translations.ts",
     "check-translation:strict": "cd frontend && npx tsx src/scripts/check-translations.ts strict",

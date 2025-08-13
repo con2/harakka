@@ -14,10 +14,11 @@ import {
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
+import { DecisionDto } from "./dto/decision.dto";
 import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
-import { BookingItem } from "@common/bookings/booking-items.types";
+import { UpdateBookingItemDto } from "./dto/update-booking-item.dto";
 import { Public, Roles } from "src/decorators/roles.decorator";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 
@@ -66,6 +67,28 @@ export class BookingController {
   async getBookingsCount(@Req() req: AuthRequest) {
     const supabase = req.supabase;
     return this.bookingService.getBookingsCount(supabase);
+  }
+
+  // per-organization availability for an item
+  @Get("availability/org")
+  @Public()
+  async getPerOrgAvailability(
+    @Req() req: AuthRequest,
+    @Query("item_id") item_id: string,
+    @Query("start") start: string,
+    @Query("end") end: string,
+    @Query("location_id") location_id?: string,
+  ) {
+    if (!item_id || !start || !end)
+      throw new BadRequestException("item_id, start and end are required");
+    const supabase = req.supabase;
+    return this.bookingService.getPerOrgAvailability(
+      supabase,
+      item_id,
+      start,
+      end,
+      location_id,
+    );
   }
 
   // gets the bookings of a specific user
@@ -118,17 +141,15 @@ export class BookingController {
   // confirms a booking
   @Put(":id/confirm") // admin confirms booking
   async confirm(@Param("id") bookingId: string, @Req() req: AuthRequest) {
-    const userId = req.user.id;
-    const supabase = req.supabase;
-
-    return this.bookingService.confirmBooking(bookingId, userId, supabase);
+    console.log("userRoles", req.userRoles);
+    return this.bookingService.confirmBooking(bookingId, req);
   }
 
   // updates a booking
   @Put(":id/update") // user updates own booking or admin updates booking
   async updateBooking(
     @Param("id") id: string,
-    @Body("items") updatedItems: BookingItem[],
+    @Body("items") updatedItems: UpdateBookingItemDto[],
     @Req() req: AuthRequest,
   ) {
     const userId = req.user.id;
@@ -170,6 +191,40 @@ export class BookingController {
     // const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.confirmPickup(bookingId, supabase);
+  }
+
+  // per-organization approval of a single booking item
+  @Patch(":bookingId/items/:bookingItemId/approve")
+  @Roles(["admin", "storage_manager", "super_admin", "main_admin", "superVera"])
+  async approveBookingItem(
+    @Param("bookingId") bookingId: string,
+    @Param("bookingItemId") bookingItemId: string,
+    @Body() body: DecisionDto,
+    @Req() req: AuthRequest,
+  ) {
+    return await this.bookingService.approveBookingItem(
+      bookingId,
+      bookingItemId,
+      body?.reason,
+      req,
+    );
+  }
+
+  // per-organization rejection of a single booking item
+  @Patch(":bookingId/items/:bookingItemId/reject")
+  @Roles(["admin", "storage_manager", "super_admin", "main_admin", "superVera"])
+  async rejectBookingItem(
+    @Param("bookingId") bookingId: string,
+    @Param("bookingItemId") bookingItemId: string,
+    @Body() body: DecisionDto,
+    @Req() req: AuthRequest,
+  ) {
+    return await this.bookingService.rejectBookingItem(
+      bookingId,
+      bookingItemId,
+      body?.reason,
+      req,
+    );
   }
 
   // change payment status
