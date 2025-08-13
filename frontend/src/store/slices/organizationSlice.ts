@@ -77,6 +77,19 @@ export const fetchOrganizationById = createAsyncThunk(
   },
 );
 
+export const fetchOrganizationBySlug = createAsyncThunk(
+  "organizations/fetchOrganizationBySlug",
+  async (slug: string, { rejectWithValue }) => {
+    try {
+      return await organizationApi.getOrganizationBySlug(slug);
+    } catch (error) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch organization by slug"),
+      );
+    }
+  },
+);
+
 export const createOrganization = createAsyncThunk(
   "organizations/createOrganization",
   async (data: Partial<OrganizationDetails>, { rejectWithValue }) => {
@@ -169,6 +182,18 @@ const organizationSlice = createSlice({
         state.selectedOrganization = action.payload;
       })
       .addCase(fetchOrganizationById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(fetchOrganizationBySlug.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchOrganizationBySlug.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedOrganization = action.payload;
+      })
+      .addCase(fetchOrganizationBySlug.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

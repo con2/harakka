@@ -37,7 +37,6 @@ import LoginPage from "@/pages/LoginPage";
 import { RoleManagement } from "@/components/Admin/Roles/RoleManagement";
 import AddItem from "@/pages/AdminPanel/AddItem";
 import OrganizationPage from "@/pages/OrganizationPage";
-import OrganizationLocationsPage from "@/pages/OrganizationLocationsPage";
 import OrganizationsList from "../components/Organization/OrganizationsList";
 
 export const router = createBrowserRouter([
@@ -259,11 +258,6 @@ export const router = createBrowserRouter([
         element: <OrganizationPage />,
       },
       {
-        path: "/organization/:org_slug/locations",
-        element: <OrganizationLocationsPage />,
-      },
-      {
-        // all other routes lead to landing page
         path: "*",
         element: <Navigate to="/" />,
       },
