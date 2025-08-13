@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useRoles } from "@/hooks/useRoles";
 import {
   Select,
@@ -10,6 +10,11 @@ import {
 } from "@/components/ui/select";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
+import { getOrgLabel } from "@/utils/format";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { setRedirectUrl } from "@/store/slices/uiSlice";
+import { useAppDispatch } from "@/store/hooks";
 
 export const RoleContextSwitcher: React.FC = () => {
   const {
@@ -17,15 +22,12 @@ export const RoleContextSwitcher: React.FC = () => {
     currentUserOrganizations,
     activeContext,
     setActiveContext,
-    clearActiveContext,
   } = useRoles();
   const { lang } = useLanguage();
-
-  const navigate = useNavigate();
   const location = useLocation();
-
-  // Track when clearing is in progress
-  const [isClearing, setIsClearing] = useState(false);
+  const { user } = useAuth();
+  const { name: userName } = useProfile(user);
+  const dispatch = useAppDispatch();
 
   // Important: Initialize with empty string instead of undefined to keep component controlled
   const [localValue, setLocalValue] = useState<string>(
@@ -43,20 +45,24 @@ export const RoleContextSwitcher: React.FC = () => {
     setLocalValue(v);
   }, [activeContext.organizationId, activeContext.roleName]);
 
-  // Check if user would lose admin access with this role change
-  const isInAdminArea = location.pathname.startsWith("/admin");
-
   // Filter to only active roles
   const activeRoles = currentUserRoles.filter((role) => role.is_active);
 
   // Create role options with format "Role @ Organization"
-  const roleOptions = activeRoles.map((role) => ({
-    value: `${role.organization_id}:${role.role_name}`,
-    label: `${role.role_name} @ ${role.organization_name}`,
-    orgId: role.organization_id,
-    roleName: role.role_name,
-    orgName: role.organization_name,
-  }));
+  const roleOptions = activeRoles.map((role) => {
+    const {
+      organization_id: orgId,
+      role_name: roleName,
+      organization_name: orgName,
+    } = role;
+    return {
+      value: `${orgId}:${roleName}`,
+      label: getOrgLabel(userName, roleName ?? "", orgName ?? ""),
+      orgId: orgId,
+      roleName: roleName,
+      orgName: orgName,
+    };
+  });
 
   // Automatically set the only role as active if there's just one role
   useEffect(() => {
@@ -72,30 +78,10 @@ export const RoleContextSwitcher: React.FC = () => {
         singleRole.organization_name,
       );
     }
-  }, [activeRoles, activeContext, setActiveContext]);
+  }, [activeRoles]);
 
   // Handler for changing the active context
-  const handleContextChange = async (value: string) => {
-    // First check if we're clearing the selection
-    if (value === "clear") {
-      setIsClearing(true);
-      setLocalValue(""); // Use empty string instead of undefined
-
-      try {
-        clearActiveContext();
-      } catch (error) {
-        console.error("Failed to clear context:", error);
-      } finally {
-        setIsClearing(false);
-      }
-
-      // If in admin area and clearing role, redirect to a safe page
-      if (isInAdminArea) {
-        void navigate("/storage");
-      }
-      return;
-    }
-
+  const handleContextChange = (value: string) => {
     // Set local value for immediate UI feedback
     setLocalValue(value);
 
@@ -107,30 +93,26 @@ export const RoleContextSwitcher: React.FC = () => {
 
     if (orgId && roleName && org) {
       // Save the new role context
-      await setActiveContext(orgId, roleName, org.organization_name);
-
       // Get the current path to check if redirection is needed
       const currentPath = location.pathname;
-
+      const ROLES_WITH_ACCESS = [
+        "admin",
+        "superVera",
+        "main_admin",
+        "super_admin",
+        "storage_manager",
+      ];
+      const willHaveAdminAccess = ROLES_WITH_ACCESS.includes(roleName);
       // If we're in the admin area, check if the new role has admin access
-      if (currentPath.startsWith("/admin")) {
-        const willHaveAdminAccess =
-          roleName === "admin" ||
-          roleName === "superVera" ||
-          roleName === "main_admin" ||
-          roleName === "super_admin" ||
-          roleName === "storage_manager";
-
-        // If switching to a non-admin role while in admin area, redirect
-        if (!willHaveAdminAccess) {
-          void navigate("/storage");
-        }
+      if (currentPath.startsWith("/admin") && !willHaveAdminAccess) {
+        void dispatch(setRedirectUrl("/storage"));
       }
+      setActiveContext(orgId, roleName, org.organization_name);
     }
   };
 
   // Add a key to force remounting when roles change
-  const componentKey = `role-switcher-${activeRoles.length}-${isClearing}`;
+  const componentKey = `role-switcher-${activeRoles.length}`;
 
   // Hide the switcher if there's only one role
   if (activeRoles.length <= 1) {
@@ -146,7 +128,7 @@ export const RoleContextSwitcher: React.FC = () => {
         defaultValue=""
       >
         <SelectTrigger className="w-[250px]">
-          <SelectValue placeholder="Select active role" />
+          <SelectValue placeholder={t.roleContextSwitcher.placeholders[lang]} />
         </SelectTrigger>
         <SelectContent>
           {roleOptions.map((option) => (
@@ -154,11 +136,6 @@ export const RoleContextSwitcher: React.FC = () => {
               {option.label}
             </SelectItem>
           ))}
-          {activeContext.organizationId && (
-            <SelectItem value="clear">
-              {t.roleContextSwitcher.dropdown.clearSelection[lang]}
-            </SelectItem>
-          )}
         </SelectContent>
       </Select>
     </div>
