@@ -5,8 +5,10 @@ import { ErrorContext } from "./common";
 /**
  * User state in Redux store
  */
+import { ApiResponse } from "./api";
+
 export interface UserState {
-  users: UserProfile[]; // Array of user profiles
+  users: ApiResponse<UserProfile[]>; // Paginated user response
   loading: boolean;
   error: string | null;
   errorContext: ErrorContext;

@@ -1,17 +1,44 @@
-import { CreateUserDto, UserProfile } from "@common/user.types";
+import { CreateUserDto } from "@common/user.types";
+import { Database } from "@common/supabase.types";
 import { api } from "../axios";
 import { Address } from "@/types/address";
 import { store } from "@/store/store";
+import { ApiResponse } from "@/types/api";
+
+// Params accepted by the /users/ordered endpoint
+export type OrderedUsersParams = Partial<{
+  page: number;
+  limit: number;
+  ordered_by: string;
+  ascending: boolean;
+  searchquery: string;
+  org_filter: string;
+}>;
 
 /**
  * API service for user-related endpoints
  */
+export type UserProfile = Database["public"]["Tables"]["user_profiles"]["Row"];
+
 export const usersApi = {
   /**
-   * Get all users
+   * Get all users for admin/main_admin with backend filtering/pagination
+   * @param params - Query params for filtering, pagination, etc.
+   * @returns Promise with paginated/filterable users
+   */
+  getAllOrderedUsers: (
+    params: OrderedUsersParams,
+  ): Promise<ApiResponse<UserProfile[]>> =>
+    api.get("/users/ordered", { params }),
+  /**
+   * Get all users, optionally filtered by org
+   * @param org_filter - Optional organization ID to filter users by
    * @returns Promise with an array of users
    */
-  getAllUsers: (): Promise<UserProfile[]> => api.get("/users"),
+  getAllUsers: (org_filter?: string): Promise<UserProfile[]> => {
+    const params = org_filter ? { org_filter } : undefined;
+    return api.get("/users", { params });
+  },
 
   /**
    * Get current user's profile using the dedicated endpoint

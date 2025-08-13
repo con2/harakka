@@ -1,15 +1,16 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { usersApi } from "../../api/services/users";
-
 import { RootState } from "../store";
 import { supabase } from "../../config/supabase";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { Address } from "@/types/address";
 import { UserState } from "@/types";
 import { CreateUserDto, UpdateUserDto, UserProfile } from "@common/user.types";
+import { ApiResponse } from "@/types/api";
+import type { OrderedUsersParams } from "@/api/services/users";
 
 const initialState: UserState = {
-  users: [],
+  users: { data: [], metadata: { total: 0, page: 0, totalPages: 1 } },
   loading: false,
   error: null,
   errorContext: null,
@@ -19,18 +20,67 @@ const initialState: UserState = {
   userCount: 0,
 };
 
-export const fetchAllUsers = createAsyncThunk(
-  "users/fetchAllUsers",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await usersApi.getAllUsers();
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch users"),
-      );
-    }
-  },
-);
+/**
+ * Fetch all users (super_admin/superVera, no pagination/filtering)
+ */
+export const fetchAllUsers = createAsyncThunk<
+  UserProfile[],
+  string | undefined,
+  { rejectValue: string }
+>("users/fetchAllUsers", async (org_filter, thunkAPI) => {
+  try {
+    const users = await usersApi.getAllUsers(org_filter);
+    // Map/convert preferences and saved_lists to the expected types
+    return users.map((user: any) => ({
+      ...user,
+      preferences:
+        typeof user.preferences === "string"
+          ? JSON.parse(user.preferences)
+          : user.preferences,
+      saved_lists:
+        typeof user.saved_lists === "string"
+          ? JSON.parse(user.saved_lists)
+          : user.saved_lists,
+    }));
+  } catch (error: unknown) {
+    return thunkAPI.rejectWithValue(
+      extractErrorMessage(error, "Failed to fetch users"),
+    );
+  }
+});
+
+/**
+ * Fetch all users for admin/main_admin with backend filtering/pagination
+ * @param params - Query params for filtering, pagination, etc.
+ */
+export const fetchAllOrderedUsers = createAsyncThunk<
+  ApiResponse<UserProfile[]>,
+  OrderedUsersParams,
+  { rejectValue: string }
+>("users/fetchAllOrderedUsers", async (params, thunkAPI) => {
+  try {
+    const response = await usersApi.getAllOrderedUsers(params);
+    // Map/convert preferences and saved_lists for each user in the data array
+    return {
+      ...response,
+      data: response.data.map((user: any) => ({
+        ...user,
+        preferences:
+          typeof user.preferences === "string"
+            ? JSON.parse(user.preferences)
+            : user.preferences,
+        saved_lists:
+          typeof user.saved_lists === "string"
+            ? JSON.parse(user.saved_lists)
+            : user.saved_lists,
+      })),
+    };
+  } catch (error: unknown) {
+    return thunkAPI.rejectWithValue(
+      extractErrorMessage(error, "Failed to fetch users"),
+    );
+  }
+});
 
 // Create user thunk
 export const createUser = createAsyncThunk(
@@ -240,9 +290,27 @@ export const usersSlice = createSlice({
       })
       .addCase(fetchAllUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload;
+        state.users = {
+          data: action.payload,
+          metadata: { total: action.payload.length, page: 0, totalPages: 1 },
+        };
       })
       .addCase(fetchAllUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
+      // fetchAllOrderedUsers (admin/main_admin)
+      .addCase(fetchAllOrderedUsers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(fetchAllOrderedUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = action.payload;
+      })
+      .addCase(fetchAllOrderedUsers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";
@@ -288,7 +356,7 @@ export const usersSlice = createSlice({
       })
       .addCase(createUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users.push(action.payload);
+        state.users.data.push(action.payload);
       })
       .addCase(createUser.rejected, (state, action) => {
         state.loading = false;
@@ -304,7 +372,7 @@ export const usersSlice = createSlice({
       })
       .addCase(deleteUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = state.users.filter(
+        state.users.data = state.users.data.filter(
           (user: UserProfile) => user.id !== action.payload,
         );
       })
@@ -322,7 +390,7 @@ export const usersSlice = createSlice({
       })
       .addCase(updateUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = state.users.map((user: UserProfile) =>
+        state.users.data = state.users.data.map((user: UserProfile) =>
           user.id === action.payload.id ? action.payload : user,
         );
       })

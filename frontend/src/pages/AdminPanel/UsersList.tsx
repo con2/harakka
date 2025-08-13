@@ -1,25 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchAllUsers,
+  fetchAllOrderedUsers,
   selectAllUsers,
   selectError,
   selectLoading,
 } from "@/store/slices/usersSlice";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
-import {
-  selectAllUserRoles,
-  selectAvailableRoles,
-} from "@/store/slices/rolesSlice";
+import { selectAllUserRoles } from "@/store/slices/rolesSlice";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
 import UserEditModal from "@/components/Admin/UserManagement/UserEditModal";
@@ -36,25 +35,22 @@ const UsersList = () => {
   const loading = useAppSelector(selectLoading);
   const error = useAppSelector(selectError);
   const allUserRoles = useAppSelector(selectAllUserRoles);
-  const availableRoles = useAppSelector(selectAvailableRoles);
+  const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const { refreshAllUserRoles, hasRole, hasAnyRole } = useRoles();
 
   // ————————————— State —————————————
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
   // Modal state management
   const [activeUser, setActiveUser] = useState<UserProfile | null>(null);
   const [activeModal, setActiveModal] = useState<
     "ban" | "unban" | "history" | null
   >(null);
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 10;
+
   const closeModal = () => setIsModalOpen(false);
-  // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 500);
 
   // ————————————— Derived Values —————————————
   // Authorization helpers based on new role system
@@ -66,40 +62,44 @@ const UsersList = () => {
   ]);
   const isSuperAdmin = hasRole("super_admin");
 
-  // Track whether we've already kicked off the initial data load
-  const initialFetchDone = useRef(false);
-
   // ————————————— Side Effects —————————————
 
-  /* 
-  useEffect(() => {
-    if (!allUserRoles.length) {
-      void refreshAllUserRoles();
-    }
-  }, [allUserRoles.length, refreshAllUserRoles]);
- */
+  // Reset modal state when activeUser changes
   useEffect(() => {
     if (!activeUser) {
       setActiveModal(null);
     }
   }, [activeUser]);
 
+  // Load user roles once when authorized (separate from user data)
   useEffect(() => {
-    if (
-      !initialFetchDone.current &&
-      !authLoading &&
-      isAuthorized &&
-      isModalOpen
-    ) {
-      initialFetchDone.current = true;
-      void dispatch(fetchAllUsers());
+    if (!authLoading && isAuthorized && !allUserRoles.length) {
       void refreshAllUserRoles();
     }
-  }, [authLoading, isAuthorized, isModalOpen, dispatch, refreshAllUserRoles]);
+  }, [authLoading, isAuthorized, allUserRoles.length, refreshAllUserRoles]);
 
+  // Fetch users when key dependencies change
   useEffect(() => {
-    setCurrentPage(0);
-  }, [searchQuery, roleFilter]);
+    if (!authLoading && isAuthorized && isModalOpen) {
+      void dispatch(
+        fetchAllOrderedUsers({
+          org_filter: activeOrgId ?? undefined,
+          page: 1,
+          limit: 10,
+          ascending: true,
+          ordered_by: "created_at",
+          searchquery: debouncedSearchQuery || undefined,
+        }),
+      );
+    }
+  }, [
+    authLoading,
+    isAuthorized,
+    isModalOpen,
+    dispatch,
+    activeOrgId,
+    debouncedSearchQuery,
+  ]);
 
   // ————————————— Helper Functions —————————————
   // Reset modal state
@@ -115,33 +115,21 @@ const UsersList = () => {
       .map((role) => role.role_name);
   };
 
-  // ————————————— Computed Data —————————————
-  const filteredUsers = users
-    .filter((u) => {
-      const query = searchQuery.toLowerCase();
-      return (
-        u.full_name?.toLowerCase().includes(query) ||
-        u.email?.toLowerCase().includes(query)
-      );
-    })
-    .filter((u) => {
-      if (roleFilter === "all") return true;
-      // Check if user has the filtered role in the new role system
-      const userRoles = getUserRoles(u.id);
-      return userRoles.includes(roleFilter as (typeof userRoles)[number]);
-    });
-
-  // Reset to first page when filters change
-
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const startIndex = currentPage * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
-
-  // Handle page change
-  const handlePageChange = (pageIndex: number) => {
-    setCurrentPage(pageIndex);
+  // Helper: derive the organization name for a given user for this view
+  const getUserOrgName = (userId: string) => {
+    const roles = allUserRoles.filter(
+      (r) => r.user_id === userId && r.is_active,
+    );
+    // Prefer Global when present
+    const global = roles.find((r) => r.organization_name === "Global");
+    if (global) return "Global";
+    // Fallback to the active org if the user has a role there
+    if (activeOrgId) {
+      const inActive = roles.find((r) => r.organization_id === activeOrgId);
+      if (inActive?.organization_name) return inActive.organization_name;
+    }
+    // Otherwise, show the first org name if any
+    return roles[0]?.organization_name ?? "";
   };
 
   // ————————————— Columns —————————————
@@ -178,30 +166,38 @@ const UsersList = () => {
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at ?? ""), "d MMM yyyy"),
     },
+    // Org Name column
     {
-      id: "roles",
-      header: t.usersList.columns.role[lang],
-      size: 150,
-      enableSorting: true,
-      enableColumnFilter: true,
-      cell: ({ row }) => {
-        const userRoles = getUserRoles(row.original.id);
-        return userRoles.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {userRoles.map((role, index) => (
-              <span
-                key={index}
-                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
-              >
-                {role}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <span className="text-slate-500">{t.usersList.status.na[lang]}</span>
-        );
-      },
+      id: "orgName",
+      header: "Org Name",
+      size: 120,
+      cell: ({ row }) => getUserOrgName(row.original.id),
     },
+    // Commented out Roles column for now
+    // {
+    //   id: "roles",
+    //   header: t.usersList.columns.role[lang],
+    //   size: 150,
+    //   enableSorting: true,
+    //   enableColumnFilter: true,
+    //   cell: ({ row }) => {
+    //     const userRoles = getUserRoles(row.original.id);
+    //     return userRoles.length > 0 ? (
+    //       <div className="flex flex-wrap gap-1">
+    //         {userRoles.map((role, index) => (
+    //           <span
+    //             key={index}
+    //             className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
+    //           >
+    //             {role}
+    //           </span>
+    //         ))}
+    //       </div>
+    //     ) : (
+    //       <span className="text-slate-500">{t.usersList.status.na[lang]}</span>
+    //     );
+    //   },
+    // },
     {
       id: "actions",
       size: 30,
@@ -292,23 +288,10 @@ const UsersList = () => {
             className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           />
 
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-          >
-            <option value="all">{t.usersList.filters.roles.all[lang]}</option>
-            {availableRoles.map((role) => (
-              <option key={role.id} value={role.role}>
-                {role.role}
-              </option>
-            ))}
-          </select>
-          {(searchQuery || roleFilter !== "all") && (
+          {searchQuery && (
             <Button
               onClick={() => {
                 setSearchQuery("");
-                setRoleFilter("all");
               }}
               size={"sm"}
               className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
@@ -317,22 +300,25 @@ const UsersList = () => {
             </Button>
           )}
         </div>
-        {/*  Not needed anymore?
-        <div className="flex gap-4">
-          <AddUserModal>
-            <Button variant="outline" size={"sm"}>
-              {t.usersList.buttons.addNew[lang]}
-            </Button>
-          </AddUserModal>
-        </div> */}
       </div>
 
       <PaginatedDataTable
         columns={columns}
-        data={paginatedUsers}
-        pageIndex={currentPage}
-        pageCount={totalPages}
-        onPageChange={handlePageChange}
+        data={users.data || []}
+        pageIndex={Math.max(0, (users.metadata?.page ?? 1) - 1)}
+        pageCount={users.metadata?.totalPages || 1}
+        onPageChange={(page) =>
+          dispatch(
+            fetchAllOrderedUsers({
+              org_filter: activeOrgId ?? undefined,
+              page: page + 1,
+              limit: 10,
+              ascending: true,
+              ordered_by: "created_at",
+              searchquery: debouncedSearchQuery || undefined,
+            }),
+          )
+        }
       />
 
       {/* Ban-related modals - only render the active modal */}
