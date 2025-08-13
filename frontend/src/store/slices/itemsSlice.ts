@@ -3,7 +3,6 @@ import { itemsApi } from "../../api/services/items";
 import {
   ItemState,
   Item,
-  UpdateItemDto,
   Tag,
   RootState,
   ValidItemOrder,
@@ -13,6 +12,7 @@ import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { ApiResponse } from "@common/response.types";
 import { AxiosResponse } from "axios";
 import { ItemFormData } from "@common/items/form.types";
+import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 
 /**
  * Initial state for items slice
@@ -182,28 +182,30 @@ export const createItem = createAsyncThunk(
 );
 
 // Delete item by ID
-export const deleteItem = createAsyncThunk<string, string>(
-  "items/deleteItem",
-  async (id: string, { rejectWithValue }) => {
-    try {
-      await itemsApi.deleteItem(id);
-      return id;
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to delete item"),
-      );
+export const deleteItem = createAsyncThunk<
+  { success: boolean; id: string },
+  { org_id: string; item_id: string },
+  { rejectValue: string }
+>("items/deleteItem", async ({ org_id, item_id }, { rejectWithValue }) => {
+  try {
+    const response = await itemsApi.deleteItem(org_id, item_id);
+    if (!response || !response.success || !response.id) {
+      return rejectWithValue("Failed to delete item");
     }
-  },
-);
+    return { success: true, id: response.id };
+  } catch (error: unknown) {
+    return rejectWithValue(extractErrorMessage(error, "Failed to delete item"));
+  }
+});
 
 // Update item
 export const updateItem = createAsyncThunk<
-  Item,
-  { id: string; data: UpdateItemDto }
->("items/updateItem", async ({ id, data }, { rejectWithValue }) => {
+  UpdateResponse,
+  { item_id: string; data: Partial<UpdateItem>; orgId: string }
+>("items/updateItem", async ({ item_id, data, orgId }, { rejectWithValue }) => {
   try {
-    const { ...cleanData } = data;
-    return await itemsApi.updateItem(id, cleanData);
+    const response = await itemsApi.updateItem(item_id, data, orgId);
+    return response;
   } catch (error: unknown) {
     return rejectWithValue(extractErrorMessage(error, "Failed to update item"));
   }
@@ -363,7 +365,10 @@ export const itemsSlice = createSlice({
       })
       .addCase(deleteItem.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = state.items.filter((item) => item.id !== action.payload);
+
+        state.items = state.items.filter(
+          (item) => item.id !== action.payload.id,
+        );
       })
       .addCase(deleteItem.rejected, (state, action) => {
         state.loading = false;
@@ -374,27 +379,12 @@ export const itemsSlice = createSlice({
         state.error = null;
       })
       .addCase(updateItem.fulfilled, (state, action) => {
-        const updatedItem = action.payload;
+        const { item: updatedItem, prev_id } = action.payload;
+        const index = prev_id
+          ? state.items.findIndex((i) => i.id === prev_id)
+          : state.items.findIndex((i) => i.id === updatedItem.id);
 
-        // Deduplicate tags if they exist
-        if (
-          updatedItem.storage_item_tags &&
-          updatedItem.storage_item_tags.length > 0
-        ) {
-          updatedItem.storage_item_tags = Array.from(
-            new Map(
-              updatedItem.storage_item_tags.map((tag: Tag) => [tag.id, tag]),
-            ).values(),
-          );
-        }
-
-        // Find the item in local state, update only necessary properties
-        state.items.map((i) => {
-          if (i.id === updatedItem.id) Object.assign(i, action.payload);
-        });
-        const index = state.items.findIndex((i) => i.id === updatedItem.id);
-        Object.assign(state.items[index], updatedItem);
-        state.selectedItem = updatedItem;
+        state.items[index] = updatedItem as Item;
       })
       .addCase(updateItem.rejected, (state, action) => {
         state.error = action.payload as string;
@@ -412,25 +402,8 @@ export const itemsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";
-      })
-      .addCase(checkItemDeletability.fulfilled, (state, action) => {
-        state.deletableItems[action.payload.id] = action.payload.deletable;
       });
   },
-});
-
-export const checkItemDeletability = createAsyncThunk<
-  { id: string; deletable: boolean; reason?: string },
-  string
->("items/checkItemDeletability", async (id: string, { rejectWithValue }) => {
-  try {
-    const result = await itemsApi.canDeleteItem(id);
-    return { id, ...result };
-  } catch (error: unknown) {
-    return rejectWithValue(
-      extractErrorMessage(error, "Failed to check if item can be deleted"),
-    );
-  }
 });
 
 // Selectors

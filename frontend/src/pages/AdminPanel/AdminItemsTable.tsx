@@ -55,9 +55,11 @@ const AdminItemsTable = () => {
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const [showModal, setShowModal] = useState(false);
   const deletableItems = useAppSelector((state) => state.items.deletableItems);
+  const org_id = useAppSelector(selectActiveOrganizationId);
 
   const { hasRole } = useRoles();
-  const isAdmin = hasRole("admin") || hasRole("super_admin");
+  const isAdmin =
+    hasRole("admin") || hasRole("super_admin") || hasRole("storage_manager");
   const isSuperVera = hasRole("superVera");
   // Translation
   const { lang } = useLanguage();
@@ -99,7 +101,10 @@ const AdminItemsTable = () => {
     setShowModal(true); // Show the modal
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (item_id: string) => {
+    // Currently reference the org_id of the item since we display items of all orgs
+    // Later this needs to be refactored to use the org_id which is currently selected (selectActiveOrganizationId)
+    if (!org_id) return toast.error("No organization selected");
     toastConfirm({
       title: t.adminItemsTable.messages.deletion.title[lang],
       description: t.adminItemsTable.messages.deletion.description[lang],
@@ -107,11 +112,14 @@ const AdminItemsTable = () => {
       cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
       onConfirm: () => {
         try {
-          void toast.promise(dispatch(deleteItem(id)).unwrap(), {
-            loading: t.adminItemsTable.messages.toast.deleting[lang],
-            success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
-            error: t.adminItemsTable.messages.toast.deleteFail[lang],
-          });
+          void toast.promise(
+            dispatch(deleteItem({ org_id, item_id })).unwrap(),
+            {
+              loading: t.adminItemsTable.messages.toast.deleting[lang],
+              success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
+              error: t.adminItemsTable.messages.toast.deleteFail[lang],
+            },
+          );
         } catch {
           toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
         }
@@ -173,24 +181,24 @@ const AdminItemsTable = () => {
   /* ————————————————————————— Item Columns ———————————————————————— */
   const itemsColumns: ColumnDef<Item>[] = [
     {
-      header: t.adminItemsTable.columns.namefi[lang],
+      header: t.adminItemsTable.columns.name[lang],
       size: 120,
-      id: "fi_item_name",
-      accessorFn: (row) => row.translations.fi.item_name,
+      id: `item_name`,
+      accessorFn: (row) => row.translations[lang].item_type,
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
-        const name = row.original.translations.fi.item_name || "";
+        const name = row.original.translations[lang].item_name || "";
         return name.charAt(0).toUpperCase() + name.slice(1);
       },
     },
     {
-      header: t.adminItemsTable.columns.typefi[lang],
+      header: t.adminItemsTable.columns.type[lang],
       size: 120,
-      id: "fi_item_type",
-      accessorFn: (row) => row.translations.en.item_type,
+      id: `item_type`,
+      accessorFn: (row) => row.translations[lang].item_type,
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
-        const type = row.original.translations.en.item_type || "";
+        const type = row.original.translations[lang].item_type || "";
         return type.charAt(0).toUpperCase() + type.slice(1);
       },
     },
@@ -228,9 +236,11 @@ const AdminItemsTable = () => {
 
         const handleToggle = async (checked: boolean) => {
           try {
+            if (!org_id) return toast.error("No organization selected");
             await dispatch(
               updateItem({
-                id: item.id,
+                orgId: org_id,
+                item_id: item.id,
                 data: {
                   is_active: checked,
                 },
@@ -457,7 +467,7 @@ const AdminItemsTable = () => {
 
       <PaginatedDataTable
         columns={itemsColumns}
-        data={items}
+        data={items as Item[]}
         pageIndex={currentPage - 1}
         pageCount={totalPages}
         onPageChange={(page) => handlePageChange(page + 1)}
@@ -472,7 +482,7 @@ const AdminItemsTable = () => {
       {showModal && selectedItem && (
         <UpdateItemModal
           onClose={handleCloseModal}
-          initialData={selectedItem as Item} // Pass the selected item data to the modal
+          initialData={selectedItem as Item}
         />
       )}
       {assignTagsModalOpen && currentItemId && (

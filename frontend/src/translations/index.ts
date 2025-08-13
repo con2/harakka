@@ -67,8 +67,14 @@ import { itemSummary } from "./modules/itemSummary";
 import { stepper } from "./modules/stepper";
 import { notifications } from "./modules/notifications";
 import { uiComponents } from "./modules/uiComponents";
+import { itemImageUpload } from "./modules/itemImageUpload";
+import { roleContextSwitcher } from "./modules/roleContextSwitcher";
+import { rolesList } from "./modules/rolesList";
 
 export const t = {
+  rolesList,
+  roleContextSwitcher,
+  itemImageUpload,
   stepper,
   addItemForm,
   itemSummary,

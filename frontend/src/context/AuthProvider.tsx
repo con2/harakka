@@ -163,6 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle role loading after authentication
   useEffect(() => {
+    if (rolesLoaded) return;
     // Reset roles loaded state when auth state changes
     setRolesLoaded(false);
 

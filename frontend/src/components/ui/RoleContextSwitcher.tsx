@@ -8,6 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { t } from "@/translations";
+import { useLanguage } from "@/context/LanguageContext";
 
 export const RoleContextSwitcher: React.FC = () => {
   const {
@@ -17,6 +19,7 @@ export const RoleContextSwitcher: React.FC = () => {
     setActiveContext,
     clearActiveContext,
   } = useRoles();
+  const { lang } = useLanguage();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -79,7 +82,7 @@ export const RoleContextSwitcher: React.FC = () => {
       setLocalValue(""); // Use empty string instead of undefined
 
       try {
-        await clearActiveContext();
+        clearActiveContext();
       } catch (error) {
         console.error("Failed to clear context:", error);
       } finally {
@@ -88,7 +91,7 @@ export const RoleContextSwitcher: React.FC = () => {
 
       // If in admin area and clearing role, redirect to a safe page
       if (isInAdminArea) {
-        navigate("/storage");
+        void navigate("/storage");
       }
       return;
     }
@@ -120,7 +123,7 @@ export const RoleContextSwitcher: React.FC = () => {
 
         // If switching to a non-admin role while in admin area, redirect
         if (!willHaveAdminAccess) {
-          navigate("/storage");
+          void navigate("/storage");
         }
       }
     }
@@ -152,7 +155,9 @@ export const RoleContextSwitcher: React.FC = () => {
             </SelectItem>
           ))}
           {activeContext.organizationId && (
-            <SelectItem value="clear">Clear selection</SelectItem>
+            <SelectItem value="clear">
+              {t.roleContextSwitcher.dropdown.clearSelection[lang]}
+            </SelectItem>
           )}
         </SelectContent>
       </Select>

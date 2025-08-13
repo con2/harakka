@@ -2,8 +2,6 @@ import { ItemFormData, MappedItem } from "@common/items/form.types";
 import { OrgItem, TagLink } from "@common/items/storage-items.types";
 import { ItemImageInsert } from "@src/modules/item-images/types/item-image.types";
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 export function mapStorageItems(payload: ItemFormData): MappedItem[] {
   return payload.items.map((item) => {
     const { images, location, tags, ...rest } = item;
