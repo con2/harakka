@@ -4,10 +4,21 @@ import { RootState } from "../store";
 import { supabase } from "../../config/supabase";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { Address } from "@/types/address";
-import { UserState } from "@/types";
+import { UserState, OrderedUsersParams } from "@/types/user";
 import { CreateUserDto, UpdateUserDto, UserProfile } from "@common/user.types";
 import { ApiResponse } from "@/types/api";
-import type { OrderedUsersParams } from "@/api/services/users";
+
+// Helper function to safely parse JSON with fallback
+const safeJsonParse = <T>(value: unknown, fallback: T): T => {
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+  return (value as T) ?? fallback;
+};
 
 const initialState: UserState = {
   users: { data: [], metadata: { total: 0, page: 0, totalPages: 1 } },
@@ -25,27 +36,19 @@ const initialState: UserState = {
  */
 export const fetchAllUsers = createAsyncThunk<
   UserProfile[],
-  string | undefined,
+  void,
   { rejectValue: string }
->("users/fetchAllUsers", async (org_filter, thunkAPI) => {
+>("users/fetchAllUsers", async (_, { rejectWithValue }) => {
   try {
-    const users = await usersApi.getAllUsers(org_filter);
+    const users = await usersApi.getAllUsers();
     // Map/convert preferences and saved_lists to the expected types
-    return users.map((user: any) => ({
+    return users.map((user: UserProfile) => ({
       ...user,
-      preferences:
-        typeof user.preferences === "string"
-          ? JSON.parse(user.preferences)
-          : user.preferences,
-      saved_lists:
-        typeof user.saved_lists === "string"
-          ? JSON.parse(user.saved_lists)
-          : user.saved_lists,
+      preferences: safeJsonParse(user.preferences, {}),
+      saved_lists: safeJsonParse(user.saved_lists, []),
     }));
   } catch (error: unknown) {
-    return thunkAPI.rejectWithValue(
-      extractErrorMessage(error, "Failed to fetch users"),
-    );
+    return rejectWithValue(extractErrorMessage(error, "Failed to fetch users"));
   }
 });
 
@@ -63,16 +66,10 @@ export const fetchAllOrderedUsers = createAsyncThunk<
     // Map/convert preferences and saved_lists for each user in the data array
     return {
       ...response,
-      data: response.data.map((user: any) => ({
+      data: response.data.map((user: UserProfile) => ({
         ...user,
-        preferences:
-          typeof user.preferences === "string"
-            ? JSON.parse(user.preferences)
-            : user.preferences,
-        saved_lists:
-          typeof user.saved_lists === "string"
-            ? JSON.parse(user.saved_lists)
-            : user.saved_lists,
+        preferences: safeJsonParse(user.preferences, {}),
+        saved_lists: safeJsonParse(user.saved_lists, []),
       })),
     };
   } catch (error: unknown) {
