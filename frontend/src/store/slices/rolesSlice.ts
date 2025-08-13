@@ -239,6 +239,27 @@ const rolesSlice = createSlice({
         state.loading = false;
         state.currentUserRoles = action.payload.roles;
         state.currentUserOrganizations = action.payload.organizations;
+
+        // If user has no initial context, set it to their GLOBAL role or the first role
+        // that they do have.
+        if (!state.activeRoleContext.organizationId) {
+          console.log("has no active context");
+
+          const GLOBAL_ROLE = state.currentUserRoles.find(
+            (role) => role.organization_name === "Global",
+          );
+          const FIRST_ROLE = state.currentUserRoles[0];
+          const newContext = {
+            organizationId:
+              GLOBAL_ROLE?.organization_id ?? FIRST_ROLE.organization_id,
+            organizationName:
+              GLOBAL_ROLE?.organization_name ?? FIRST_ROLE.organization_name,
+            roleName: GLOBAL_ROLE?.role_name ?? FIRST_ROLE.role_name,
+          };
+
+          state.activeRoleContext = newContext;
+          localStorage.setItem("activeRoleContext", JSON.stringify(newContext));
+        }
       })
       .addCase(fetchCurrentUserRoles.rejected, (state, action) => {
         state.loading = false;
