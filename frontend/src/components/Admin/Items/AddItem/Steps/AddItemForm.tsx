@@ -182,9 +182,7 @@ function AddItemForm() {
     const newLoc = orgLocations?.find(
       (org) => org.storage_location_id === selectedId,
     );
-    if (!newLoc) return toast.error("Loc error");
-    console.log("Location name: ", newLoc.storage_locations.name);
-    console.log("Location address: ", newLoc.storage_locations.address);
+    if (!newLoc) return;
     form.setValue(
       "location",
       {

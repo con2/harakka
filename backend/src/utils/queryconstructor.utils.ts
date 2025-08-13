@@ -22,16 +22,16 @@ export function queryConstructor(
   supabase: SupabaseClient,
   table_name: string,
   select: string = "*",
+  eq?: Eq | Eq[],
   page: number = 1,
   limit: number = 10,
   ascending: boolean = true,
   order?: string,
-  eq?: Eq | Eq[],
 ) {
   const { from, to } = getPaginationRange(page, limit);
   const query = supabase
     .from(table_name)
-    .select(select, { count: "exact" })
+    .select(select as "*", { count: "exact" })
     .range(from, to);
 
   if (eq) {

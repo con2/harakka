@@ -6,7 +6,13 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   {
     // Add ecosystem.config.js to ignores
-    ignores: ["eslint.config.mjs", "ecosystem.config.js", "dist", "node_modules", "src/types/supabase.types.ts"],
+    ignores: [
+      "eslint.config.mjs",
+      "ecosystem.config.js",
+      "dist",
+      "node_modules",
+      "src/types/supabase.types.ts",
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -26,7 +32,8 @@ export default tseslint.config(
     },
   },
   {
-    rules: {      // -------- “any”‑related safety nets --------
+    rules: {
+      // -------- “any”‑related safety nets --------
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
@@ -40,6 +47,15 @@ export default tseslint.config(
       // -------- Promise‑related safety nets --------
       "@typescript-eslint/no-floating-promises": "warn",
       "@typescript-eslint/no-unsafe-assignment": "off",
+
+      // Allow "unused" vars when destructuring irrelevant properties
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          ignoreRestSiblings: true,
+        },
+      ],
       "prettier/prettier": [
         "error",
         {

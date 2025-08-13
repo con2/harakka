@@ -8,10 +8,6 @@ export const addItemForm = {
       en: "Select a location",
       fi: "Valitse sijainti",
     },
-    describeImage: {
-      en: "Describe the image",
-      fi: "Kuvaile kuvaa",
-    },
   },
   labels: {
     itemNameFi: {
@@ -68,30 +64,6 @@ export const addItemForm = {
       en: "Go to summary",
       fi: "Siirry yhteenvetoon",
     },
-    mainImageUpload: {
-      en: "Choose an image",
-      fi: "Valitse kuva",
-    },
-    detailImageUpload: {
-      en: "Choose up to 5 images",
-      fi: "Valitse enintään 5 kuvaa",
-    },
-    uploadSubtext: {
-      en: "Click or drag and drop",
-      fi: "Klikkaa tai raahaa ja pudota",
-    },
-    uploading: {
-      en: "Uploading...",
-      fi: "Ladataan...",
-    },
-    dropImages: {
-      en: "Drop images here",
-      fi: "Pudota kuvat tähän",
-    },
-    maxReached: {
-      en: "Maximum images reached",
-      fi: "Kuvien enimmäismäärä saavutettu",
-    },
   },
   headings: {
     itemDetails: {
@@ -130,27 +102,9 @@ export const addItemForm = {
       en: "We recommend uploading at least one image for the item.",
       fi: "Suosittelemme lisäämään vähintään yhden kuvan tuotteelle.",
     },
-    mainImage: {
-      en: "Main Image",
-      fi: "Pääkuva",
-    },
-    mainImageDescription: {
-      en: "The main image is the first thing a user sees on the storage page and in the detailed view.",
-      fi: "Pääkuva on ensimmäinen asia, jonka käyttäjä näkee varastosivulla ja yksityiskohdissa.",
-    },
-    detailImage: {
-      en: "Details",
-      fi: "Yksityiskohdat",
-    },
-    detailImageDescription: {
-      en: "Show your item in more detail. Select up to 5 images.",
-      fi: "Näytä tuotteesi tarkemmin. Valitse enintään 5 kuvaa.",
-    },
-  },
-  tooltips: {
-    altText: {
-      en: "Alt text is important for accessibility. Describe the image as you would to a friend who couldn't see it.",
-      fi: "Vaihtoehtoinen teksti on tärkeä saavutettavuuden kannalta. Kuvaile kuva ystävälle, joka ei näe sitä.",
+    unfinishedItems: {
+      en: "You have unfinished items. Upload or remove these to change organization",
+      fi: "Sinulla on keskeneräisiä tuotteita. Lataa tai poista ne vaihtaaksesi organisaatiota",
     },
   },
   messages: {

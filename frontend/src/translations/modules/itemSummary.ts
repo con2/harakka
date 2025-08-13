@@ -26,6 +26,10 @@ export const itemSummary = {
       en: "No items added yet",
       fi: "Ei tuotteita lisätty vielä",
     },
+    addingItems: {
+      en: "Adding items to organization",
+      fi: "Lisätään tuotteita organisaatioon",
+    },
   },
   tableHeaders: {
     item: {
