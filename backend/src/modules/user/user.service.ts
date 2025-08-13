@@ -27,7 +27,7 @@ export class UserService {
     private readonly userEmailAssembler: UserEmailAssembler,
   ) {}
 
-  // Only super_admin/superVera: return ALL users, no org filtering, no pagination
+  // Return ALL users, no org filtering, no pagination
   async getAllUsers(req: AuthRequest): Promise<UserProfile[]> {
     const supabase = req.supabase;
 
@@ -41,7 +41,7 @@ export class UserService {
     return data;
   }
 
-  // Admin/main_admin: paginated, filtered, org-aware (org_filter + Global)
+  // Paginated, filtered, org-aware (org_filter + Global)
   async getAllOrderedUsers(
     req: AuthRequest,
     dto: GetOrderedUsersDto,
@@ -125,9 +125,9 @@ export class UserService {
     const ascending = dto.ascending !== false;
     query = query.order(orderColumn, { ascending });
 
-    // Apply pagination
-    const page = dto.page || 1;
-    const limit = dto.limit || 10;
+    // Apply pagination - ensure proper type conversion from query strings
+    const page = Number(dto.page) || 1;
+    const limit = Number(dto.limit) || 10;
     const offset = (page - 1) * limit;
     query = query.range(offset, offset + limit - 1);
 
