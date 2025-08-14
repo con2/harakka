@@ -72,7 +72,7 @@ function Summary() {
         {form.org && items.length > 0 && (
           <div>
             <p className="text-sm leading-none font-medium mb-4">
-              Adding items to organization {form.org?.name}
+              {t.itemSummary.paragraphs.addingItems[lang]} {form.org?.name}
             </p>
           </div>
         )}

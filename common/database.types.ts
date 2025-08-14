@@ -60,11 +60,6 @@ type NotificationRowFallback = BaseNotificationRow & {
 
 type StorageItemsJsonColumns = {
   translations?: ItemTranslations | null;
-  test_metadata?: {
-    version?: number;
-    test_flag?: boolean;
-    last_modified?: string;
-  };
 };
 
 // Helps to override the `Json | null` type in the database schema

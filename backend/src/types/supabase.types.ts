@@ -1011,8 +1011,6 @@ export type Database = {
           items_number_total: number
           location_id: string
           price: number
-          test_metadata: Json | null
-          test_priority_score: number | null
           translations: Json | null
         }
         Insert: {
@@ -1027,8 +1025,6 @@ export type Database = {
           items_number_total: number
           location_id: string
           price: number
-          test_metadata?: Json | null
-          test_priority_score?: number | null
           translations?: Json | null
         }
         Update: {
@@ -1043,8 +1039,6 @@ export type Database = {
           items_number_total?: number
           location_id?: string
           price?: number
-          test_metadata?: Json | null
-          test_priority_score?: number | null
           translations?: Json | null
         }
         Relationships: [

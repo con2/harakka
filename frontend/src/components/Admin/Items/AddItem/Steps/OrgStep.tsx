@@ -80,8 +80,7 @@ function OrgStep() {
           <div className="flex align-center gap-3 p-4 border rounded justify-center">
             <Info color="#3d3d3d" className="self-center" />
             <p className="text-sm font-medium leading-[1.1rem]">
-              You have unfinished items. Upload or remove these to change
-              organization
+              {t.addItemForm.paragraphs.unfinishedItems[lang]}
             </p>
           </div>
         )}

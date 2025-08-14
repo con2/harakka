@@ -1,15 +1,12 @@
-import { Navigate } from "react-router-dom";
 import { ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { Org_Roles } from "@common/role.types";
+import { RedirectAndClear } from "./RedirectAndClear";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  /**
-   * Accepts one or more roles from the Org_Roles union.
-   */
   allowedRoles: Org_Roles[];
   requiredOrganization?: string;
 }
@@ -32,16 +29,14 @@ const ProtectedRoute = ({
   }
 
   // If route is protected but no roles provided, consider it "any authenticated user"
-  if (!user) return <Navigate to="/unauthorized" replace />;
+  if (!user) return <RedirectAndClear />;
 
   const ok =
     allowedRoles.length === 0
       ? true
       : hasAnyRole(allowedRoles as string[], requiredOrganization);
 
-  if (!ok) {
-    return <Navigate to="/unauthorized" replace />;
-  }
+  if (!ok) return <RedirectAndClear />;
 
   return <>{children}</>;
 };

@@ -67,10 +67,17 @@ import { itemSummary } from "./modules/itemSummary";
 import { stepper } from "./modules/stepper";
 import { notifications } from "./modules/notifications";
 import { uiComponents } from "./modules/uiComponents";
+import { profilePicUploader } from "./modules/profilePicUploader";
+import { itemImageUpload } from "./modules/itemImageUpload";
+import { roleContextSwitcher } from "./modules/roleContextSwitcher";
+import { rolesList } from "./modules/rolesList";
 import { organizationPage } from "./modules/organizationPage";
 import { locationsList } from "./modules/locationsList";
 
 export const t = {
+  rolesList,
+  roleContextSwitcher,
+  itemImageUpload,
   stepper,
   addItemForm,
   itemSummary,
@@ -139,6 +146,7 @@ export const t = {
   termsOfUse,
   notifications,
   uiComponents,
+  profilePicUploader,
   organizationPage,
   locationsList,
 };

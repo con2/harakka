@@ -10,6 +10,7 @@ interface UiState {
   stepperState: {
     currentStep: number;
   };
+  redirectUrl: string;
 }
 
 const initialState: UiState = {
@@ -21,6 +22,7 @@ const initialState: UiState = {
   stepperState: {
     currentStep: 1,
   },
+  redirectUrl: "",
 };
 
 export const uiSlice = createSlice({
@@ -52,6 +54,9 @@ export const uiSlice = createSlice({
     setPrevStep: (state) => {
       state.stepperState.currentStep = state.stepperState.currentStep - 1;
     },
+    setRedirectUrl: (state, action) => {
+      state.redirectUrl = action.payload;
+    },
   },
 });
 
@@ -63,11 +68,13 @@ export const {
   setStepper,
   setNextStep,
   setPrevStep,
+  setRedirectUrl,
 } = uiSlice.actions;
 
 export const selectItemModalState = (state: RootState) =>
   state.ui.itemModalState;
 export const stepperCurrentNum = (state: RootState) =>
   state.ui.stepperState.currentStep;
+export const redirectUrl = (state: RootState) => state.ui.redirectUrl;
 
 export default uiSlice.reducer;
