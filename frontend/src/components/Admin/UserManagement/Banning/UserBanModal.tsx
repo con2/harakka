@@ -33,7 +33,9 @@ import {
 import { UserProfile } from "@common/user.types";
 import { BanType } from "@/types/userBanning";
 import { useRoles } from "@/hooks/useRoles";
+import { useBanPermissions } from "@/hooks/useBanPermissions";
 import { COMMON_BAN_REASONS, CUSTOM_BAN_REASON } from "@/config/constants";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 interface TargetUserOrganization {
   organization_id: string;
@@ -54,11 +56,36 @@ const UserBanModal = ({
   const dispatch = useAppDispatch();
   const loading = useAppSelector(selectUserBanningLoading);
   const banningError = useAppSelector(selectUserBanningError);
+  const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const { lang } = useLanguage();
-  const { allUserRoles, refreshAllUserRoles, adminLoading } = useRoles();
+  const {
+    allUserRoles,
+    refreshAllUserRoles,
+    adminLoading,
+    hasAnyRole,
+    hasRole,
+  } = useRoles();
+  const { getBanPermissions } = useBanPermissions();
+
+  // Permission checks for different ban types
+  const isSuper = hasAnyRole(["super_admin", "superVera"]);
+  const isMainAdmin = hasRole("main_admin");
+
+  // Get ban permissions for this specific user
+  const { canBanFromApp, canBanFromOrg, canBanFromRole } = getBanPermissions(
+    user.id,
+  );
+
+  // Get default ban type based on permissions (prioritize from most restrictive to least)
+  const getDefaultBanType = (): BanType => {
+    if (canBanFromRole) return "role";
+    if (canBanFromOrg) return "organization";
+    if (canBanFromApp) return "application";
+    return "role"; // fallback
+  };
 
   const [isOpen, setIsOpen] = useState(initialOpen);
-  const [banType, setBanType] = useState<BanType>("role");
+  const [banType, setBanType] = useState<BanType>(getDefaultBanType());
   const [selectedBanReason, setSelectedBanReason] = useState<string>("");
   const [customBanReason, setCustomBanReason] = useState("");
   const [banReason, setBanReason] = useState("");
@@ -75,10 +102,14 @@ const UserBanModal = ({
     const orgMap = new Map<string, TargetUserOrganization>();
     userRoles.forEach((role) => {
       if (role.organization_id && !orgMap.has(role.organization_id)) {
-        orgMap.set(role.organization_id, {
-          organization_id: role.organization_id,
-          organization_name: role.organization_name ?? "",
-        });
+        // For main_admin, only show organizations they have access to (activeOrgId)
+        // For super admins, show all organizations
+        if (isSuper || !activeOrgId || role.organization_id === activeOrgId) {
+          orgMap.set(role.organization_id, {
+            organization_id: role.organization_id,
+            organization_name: role.organization_name ?? "",
+          });
+        }
       }
     });
     const organizations = Array.from(orgMap.values());
@@ -118,10 +149,55 @@ const UserBanModal = ({
     }
   }, [selectedBanReason, customBanReason]);
 
+  // If user has no permission to ban this target user, don't render the modal
+  if (!canBanFromApp && !canBanFromOrg && !canBanFromRole) {
+    return null;
+  }
+
   const handleSubmit = async () => {
     if (!user.id) {
       toast.error(t.userBanning.messages.invalidUserId[lang]);
       return;
+    }
+
+    // Check permissions for the selected ban type
+    if (banType === "application" && !canBanFromApp) {
+      toast.error(t.userBanning.messages.noPermissionApp[lang]);
+      return;
+    }
+    if (banType === "organization" && !canBanFromOrg) {
+      toast.error(t.userBanning.messages.noPermissionOrg[lang]);
+      return;
+    }
+    if (banType === "role" && !canBanFromRole) {
+      toast.error(t.userBanning.messages.noPermissionRole[lang]);
+      return;
+    }
+
+    // Additional validation for main_admin: they can only ban "admin" or "user" roles
+    if (banType === "role" && isMainAdmin && !isSuper) {
+      const selectedRole = getTargetUserRolesForOrg(organizationId).find(
+        (role) => role.id === roleAssignmentId,
+      );
+      if (
+        selectedRole &&
+        !["admin", "user"].includes(selectedRole.role_name || "")
+      ) {
+        toast.error(t.userBanning.messages.onlyAdminUserRoles[lang]);
+        return;
+      }
+    }
+
+    // Organization validation for main_admin: they can only ban from their active org
+    if (
+      (banType === "organization" || banType === "role") &&
+      isMainAdmin &&
+      !isSuper
+    ) {
+      if (activeOrgId && organizationId !== activeOrgId) {
+        toast.error(t.userBanning.messages.onlyActiveOrg[lang]);
+        return;
+      }
     }
 
     if (!banReason.trim()) {
@@ -131,7 +207,7 @@ const UserBanModal = ({
 
     // Additional validation for custom reason
     if (selectedBanReason === CUSTOM_BAN_REASON && !customBanReason.trim()) {
-      toast.error("Please provide a custom ban reason");
+      toast.error(t.userBanning.messages.provideCustomReason[lang]);
       return;
     }
 
@@ -255,15 +331,21 @@ const UserBanModal = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="application">
-                  {t.userBanning.fields.banType.options.application[lang]}
-                </SelectItem>
-                <SelectItem value="organization">
-                  {t.userBanning.fields.banType.options.organization[lang]}
-                </SelectItem>
-                <SelectItem value="role">
-                  {t.userBanning.fields.banType.options.role[lang]}
-                </SelectItem>
+                {canBanFromApp && (
+                  <SelectItem value="application">
+                    {t.userBanning.fields.banType.options.application[lang]}
+                  </SelectItem>
+                )}
+                {canBanFromOrg && (
+                  <SelectItem value="organization">
+                    {t.userBanning.fields.banType.options.organization[lang]}
+                  </SelectItem>
+                )}
+                {canBanFromRole && (
+                  <SelectItem value="role">
+                    {t.userBanning.fields.banType.options.role[lang]}
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>

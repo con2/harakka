@@ -164,6 +164,50 @@ export const userBanning = {
       fi: "Ladataan esto-tietoja...",
       en: "Loading ban information...",
     },
+    noPermissionApp: {
+      fi: "Sinulla ei ole oikeutta estää käyttäjiä sovelluksesta",
+      en: "You don't have permission to ban users from the application",
+    },
+    noPermissionOrg: {
+      fi: "Sinulla ei ole oikeutta estää käyttäjiä organisaatioista",
+      en: "You don't have permission to ban users from organizations",
+    },
+    noPermissionRole: {
+      fi: "Sinulla ei ole oikeutta estää käyttäjiä rooleista",
+      en: "You don't have permission to ban users from roles",
+    },
+    onlyAdminUserRoles: {
+      fi: "Voit estää käyttäjiä vain 'admin' tai 'user' rooleista",
+      en: "You can only ban users from 'admin' or 'user' roles",
+    },
+    onlyActiveOrg: {
+      fi: "Voit estää käyttäjiä vain aktiivisesta organisaatiostasi",
+      en: "You can only ban users from your active organization",
+    },
+    provideCustomReason: {
+      fi: "Anna mukautettu esto-syy",
+      en: "Please provide a custom ban reason",
+    },
+    failedLoadBanHistory: {
+      fi: "Esto-historian lataaminen epäonnistui",
+      en: "Failed to load ban history",
+    },
+    noPermissionUnbanApp: {
+      fi: "Sinulla ei ole oikeutta poistaa sovellus-estoja",
+      en: "You don't have permission to unban users from the application",
+    },
+    noPermissionUnbanOrg: {
+      fi: "Sinulla ei ole oikeutta poistaa organisaatio-estoja",
+      en: "You don't have permission to unban users from organizations",
+    },
+    noPermissionUnbanRole: {
+      fi: "Sinulla ei ole oikeutta poistaa rooli-estoja",
+      en: "You don't have permission to unban users from roles",
+    },
+    onlyUnbanActiveOrg: {
+      fi: "Voit poistaa estoja vain aktiivisesta organisaatiostasi",
+      en: "You can only unban users from your active organization",
+    },
   },
   toast: {
     success: {
@@ -177,6 +221,14 @@ export const userBanning = {
     loading: {
       fi: "Estetään käyttäjää...",
       en: "Banning user...",
+    },
+    unbanSuccess: {
+      fi: "Esto poistettu onnistuneesti",
+      en: "User unbanned successfully",
+    },
+    unbanError: {
+      fi: "Virhe eston poistossa",
+      en: "Error unbanning user",
     },
   },
   history: {
