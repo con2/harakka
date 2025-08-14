@@ -13,6 +13,7 @@ import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class OrganizationsService {
@@ -122,6 +123,96 @@ export class OrganizationsService {
     if (!data) throw new Error("No organization returned after insert.");
 
     return data;
+  }
+
+  // 6. upload org logo picture
+
+  async uploadOrganizationLogo(
+    req: AuthRequest,
+    fileBuffer: Buffer,
+    fileName: string,
+    organizationId: string,
+  ): Promise<string> {
+    const fileExtension = fileName.split(".").pop();
+    const newFileName = `${organizationId}-${uuidv4()}.${fileExtension}`;
+    const filePath = `${organizationId}/${newFileName}`;
+    const contentType = `image/${fileExtension}`;
+
+    const supabase = req.supabase;
+    const storage = supabase.storage;
+
+    // Upload
+    const { error: uploadError } = await storage
+      .from("organization-logo-picture")
+      .upload(filePath, fileBuffer, {
+        contentType,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      throw new Error(`Upload failed: ${uploadError.message}`);
+    }
+
+    // Get public URL
+    const { data: publicUrlData } = storage
+      .from("organization-logo-picture")
+      .getPublicUrl(filePath);
+
+    if (!publicUrlData || !publicUrlData.publicUrl) {
+      throw new Error("Failed to retrieve public URL for organization logo.");
+    }
+
+    return publicUrlData.publicUrl;
+  }
+
+  async handleOrganizationLogoUpload(
+    fileBuffer: Buffer,
+    fileName: string,
+    organizationId: string,
+    req: AuthRequest,
+  ): Promise<string> {
+    // Get current organization to delete old logo if exists
+    const organization = await this.getOrganizationById(organizationId);
+
+    if (organization?.logo_picture_url) {
+      const oldPath = this.extractStoragePath(organization.logo_picture_url);
+      if (oldPath) {
+        const { error } = await req.supabase.storage
+          .from("organization-logo-picture")
+          .remove([oldPath]);
+
+        if (error) {
+          console.error("Error deleting old organization logo:", error);
+        }
+      }
+    }
+
+    // Upload new logo and get URL
+    const url = await this.uploadOrganizationLogo(
+      req,
+      fileBuffer,
+      fileName,
+      organizationId,
+    );
+
+    // Update organization record
+    await this.updateOrganization(req, organizationId, {
+      logo_picture_url: url,
+    });
+
+    return url;
+  }
+
+  /**
+   * Extracts the path from a Supabase public URL
+   */
+  private extractStoragePath(url: string): string | null {
+    try {
+      const pathMatch = url.match(/organization-logo-picture\/(.+)/);
+      return pathMatch ? pathMatch[1] : null;
+    } catch {
+      return null;
+    }
   }
 
   /*

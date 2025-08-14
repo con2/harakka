@@ -14,6 +14,10 @@ export const organizations = {
     },
   },
   columns: {
+    logo: {
+      fi: "Logo",
+      en: "Logo",
+    },
     name: {
       fi: "Nimi",
       en: "Name",
