@@ -26,7 +26,6 @@ import { Edit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Label } from "../../ui/label";
-import { MultiSelect } from "../../ui/multi-select";
 import { UserProfile } from "@common/user.types";
 import {
   selectOrganizations,
@@ -63,21 +62,6 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     roles: [],
     phone: user.phone || "",
     visible_name: user.visible_name || "",
-    preferences:
-      user.preferences &&
-      typeof user.preferences === "object" &&
-      !Array.isArray(user.preferences)
-        ? (Object.fromEntries(
-            Object.entries(user.preferences).filter(
-              ([_, v]) => typeof v === "string",
-            ),
-          ) as Record<string, string>)
-        : {},
-    saved_lists:
-      Array.isArray(user.saved_lists) &&
-      user.saved_lists.every((item: unknown) => typeof item === "string")
-        ? user.saved_lists
-        : [],
   });
 
   // Role assignments across organizations
@@ -121,35 +105,6 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   // Handle changes for normal input fields
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  // Handle changes for preferences input (key-value pairs)
-  const handlePreferencesChange = (key: string, value: string) => {
-    setFormData({
-      ...formData,
-      preferences: { ...formData.preferences, [key]: value },
-    });
-  };
-
-  // Add a new preference field
-  const addPreference = () => {
-    const newPreferenceKey = `new_key_${Date.now()}`;
-    setFormData({
-      ...formData,
-      preferences: { ...formData.preferences, [newPreferenceKey]: "" },
-    });
-  };
-
-  // Remove a preference field by its key
-  const removePreference = (key: string) => {
-    const newPreferences = { ...formData.preferences };
-    delete newPreferences[key];
-    setFormData({ ...formData, preferences: newPreferences });
-  };
-
-  // Handle changes for saved lists (multi-select)
-  const handleSavedListsChange = (newSavedLists: string[]) => {
-    setFormData({ ...formData, saved_lists: newSavedLists });
   };
 
   // Role assignment helpers
@@ -444,46 +399,6 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
               value={formData.visible_name}
               onChange={handleChange}
               placeholder={t.userEditModal.placeholders.visibleName[lang]}
-            />
-          </div>
-
-          <div>
-            <Label>{t.userEditModal.labels.preferences[lang]}</Label>
-            {Object.keys(formData.preferences).map((key) => (
-              <div key={key} className="flex space-x-2">
-                <Input
-                  className="mb-2"
-                  name={`preference_${key}`}
-                  value={formData.preferences[key]}
-                  onChange={(e) => handlePreferencesChange(key, e.target.value)}
-                  placeholder={t.userEditModal.placeholders.preference[lang]}
-                />
-                <Button
-                  type="button"
-                  className="deleteBtn"
-                  onClick={() => removePreference(key)}
-                  size={"sm"}
-                >
-                  {t.userEditModal.buttons.remove[lang]}
-                </Button>
-              </div>
-            ))}
-            <Button
-              className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
-              type="button"
-              onClick={addPreference}
-              size={"sm"}
-            >
-              {t.userEditModal.buttons.addPreference[lang]}
-            </Button>
-          </div>
-
-          <div>
-            <Label>{t.userEditModal.labels.savedLists[lang]}</Label>
-            <MultiSelect
-              selected={formData.saved_lists || []}
-              options={["List 1", "List 2", "List 3", "List 4"]} // Replace with actual saved list options
-              onChange={handleSavedListsChange}
             />
           </div>
         </div>

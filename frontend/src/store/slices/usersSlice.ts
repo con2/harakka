@@ -8,18 +8,6 @@ import { UserState, OrderedUsersParams } from "@/types/user";
 import { CreateUserDto, UpdateUserDto, UserProfile } from "@common/user.types";
 import { ApiResponse } from "@/types/api";
 
-// Helper function to safely parse JSON with fallback
-const safeJsonParse = <T>(value: unknown, fallback: T): T => {
-  if (typeof value === "string") {
-    try {
-      return JSON.parse(value) as T;
-    } catch {
-      return fallback;
-    }
-  }
-  return (value as T) ?? fallback;
-};
-
 const initialState: UserState = {
   users: { data: [], metadata: { total: 0, page: 0, totalPages: 1 } },
   loading: false,
@@ -41,12 +29,8 @@ export const fetchAllUsers = createAsyncThunk<
 >("users/fetchAllUsers", async (_, { rejectWithValue }) => {
   try {
     const users = await usersApi.getAllUsers();
-    // Map/convert preferences and saved_lists to the expected types
-    return users.map((user: UserProfile) => ({
-      ...user,
-      preferences: safeJsonParse(user.preferences, {}),
-      saved_lists: safeJsonParse(user.saved_lists, []),
-    }));
+    // Return users as-is since preferences column was removed
+    return users;
   } catch (error: unknown) {
     return rejectWithValue(extractErrorMessage(error, "Failed to fetch users"));
   }
@@ -63,15 +47,7 @@ export const fetchAllOrderedUsers = createAsyncThunk<
 >("users/fetchAllOrderedUsers", async (params, thunkAPI) => {
   try {
     const response = await usersApi.getAllOrderedUsers(params);
-    // Map/convert preferences and saved_lists for each user in the data array
-    return {
-      ...response,
-      data: response.data.map((user: UserProfile) => ({
-        ...user,
-        preferences: safeJsonParse(user.preferences, {}),
-        saved_lists: safeJsonParse(user.saved_lists, []),
-      })),
-    };
+    return response;
   } catch (error: unknown) {
     return thunkAPI.rejectWithValue(
       extractErrorMessage(error, "Failed to fetch users"),
