@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { formatRoleName } from "@/utils/format";
 
 type RolesListProps = {
   pageSize?: number;
@@ -310,19 +311,25 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
               }
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select role" />
+                <SelectValue
+                  placeholder={t.rolesList.placeholders.selectRole[lang]}
+                />
               </SelectTrigger>
               <SelectContent>
                 {availableRoles.map((ar) => (
                   <SelectItem key={ar.id} value={ar.id}>
-                    {ar.role}
+                    {formatRoleName(ar.role ?? "")}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           );
         }
-        return <span className="font-medium">{r.role_name}</span>;
+        return (
+          <span className="font-medium">
+            {formatRoleName(r.role_name as string)}
+          </span>
+        );
       },
     },
     {
@@ -527,7 +534,9 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
                   }}
                 >
                   <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Select role" />
+                    <SelectValue
+                      placeholder={t.rolesList.placeholders.selectRole[lang]}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">

@@ -68,6 +68,10 @@ export const rolesList = {
       en: "Search roles",
       fi: "Hae rooleja",
     },
+    selectRole: {
+      en: "Select role",
+      fi: "Valitse rooli",
+    },
   },
   input: {
     selectRoles: {

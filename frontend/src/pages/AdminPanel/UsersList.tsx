@@ -27,6 +27,7 @@ import UserBanActionsDropdown from "@/components/Admin/UserManagement/Banning/Us
 import UserBanModal from "@/components/Admin/UserManagement/Banning/UserBanModal";
 import UserBanHistoryModal from "@/components/Admin/UserManagement/Banning/UserBanHistoryModal";
 import UnbanUserModal from "@/components/Admin/UserManagement/Banning/UnbanUserModal";
+import { formatRoleName } from "@/utils/format";
 
 const UsersList = () => {
   // ————————————— Hooks & Selectors —————————————
@@ -193,7 +194,7 @@ const UsersList = () => {
                 key={index}
                 className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
               >
-                {role}
+                {formatRoleName(role ?? "")}
               </span>
             ))}
           </div>
