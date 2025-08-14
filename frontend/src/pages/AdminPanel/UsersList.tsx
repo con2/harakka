@@ -17,7 +17,7 @@ import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
@@ -45,6 +45,7 @@ const UsersList = () => {
   // ————————————— State —————————————
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
   // Modal state management
   const [activeUser, setActiveUser] = useState<UserProfile | null>(null);
   const [activeModal, setActiveModal] = useState<
@@ -72,6 +73,7 @@ const UsersList = () => {
   // 2. User has selected a super_admin or superVera role from the navbar selector
   const isActiveRoleSuper =
     activeRoleName === "super_admin" || activeRoleName === "superVera";
+  const isActiveRoleMainAdmin = activeRoleName === "main_admin";
   const shouldFetchAllUsers = isSuper && (!activeOrgId || isActiveRoleSuper);
 
   // Get the org_filter value based on super user logic
@@ -81,6 +83,17 @@ const UsersList = () => {
     }
     return activeOrgId ?? undefined; // Use selected org or undefined
   }, [shouldFetchAllUsers, activeOrgId]);
+
+  // Get available roles for filtering
+  const availableRoles = useMemo(() => {
+    const uniqueRoles = new Set<string>();
+    allUserRoles.forEach((role) => {
+      if (role.is_active && role.role_name) {
+        uniqueRoles.add(role.role_name);
+      }
+    });
+    return Array.from(uniqueRoles).map((role) => ({ id: role, role }));
+  }, [allUserRoles]);
 
   // ————————————— Side Effects —————————————
 
@@ -136,6 +149,41 @@ const UsersList = () => {
     return allUserRoles
       .filter((role) => role.user_id === userId && role.is_active)
       .map((role) => role.role_name);
+  };
+
+  // Helper function to get user's roles for display based on admin permissions
+  const getUserRolesForDisplay = (userId: string) => {
+    const userRoles = allUserRoles.filter(
+      (role) => role.user_id === userId && role.is_active,
+    );
+
+    // If the current user is super_admin/superVera, show all roles
+    if (isActiveRoleSuper || (isSuper && !activeOrgId)) {
+      return userRoles.map((role) => ({
+        role: role.role_name,
+        org: role.organization_name,
+      }));
+    }
+
+    // For regular admins, only show roles from:
+    // 1. The selected organization (activeOrgId)
+    // 2. Global organization with "user" role
+    const filteredRoles = userRoles.filter((role) => {
+      // Always show Global users
+      if (role.organization_name === "Global" && role.role_name === "user") {
+        return true;
+      }
+      // Show roles from the active organization
+      if (activeOrgId && role.organization_id === activeOrgId) {
+        return true;
+      }
+      return false;
+    });
+
+    return filteredRoles.map((role) => ({
+      role: role.role_name,
+      org: role.organization_name,
+    }));
   };
 
   // Helper: derive the organization name for a given user for this view
@@ -196,31 +244,31 @@ const UsersList = () => {
       size: 120,
       cell: ({ row }) => getUserOrgName(row.original.id),
     },
-    // Commented out Roles column for now
-    // {
-    //   id: "roles",
-    //   header: t.usersList.columns.role[lang],
-    //   size: 150,
-    //   enableSorting: true,
-    //   enableColumnFilter: true,
-    //   cell: ({ row }) => {
-    //     const userRoles = getUserRoles(row.original.id);
-    //     return userRoles.length > 0 ? (
-    //       <div className="flex flex-wrap gap-1">
-    //         {userRoles.map((role, index) => (
-    //           <span
-    //             key={index}
-    //             className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
-    //           >
-    //             {role}
-    //           </span>
-    //         ))}
-    //       </div>
-    //     ) : (
-    //       <span className="text-slate-500">{t.usersList.status.na[lang]}</span>
-    //     );
-    //   },
-    // },
+    {
+      id: "roles",
+      header: t.usersList.columns.role[lang],
+      size: 150,
+      enableSorting: true,
+      enableColumnFilter: true,
+      cell: ({ row }) => {
+        const userRoles = getUserRolesForDisplay(row.original.id);
+        return userRoles.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {userRoles.map((roleInfo, index) => (
+              <span
+                key={index}
+                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
+                title={`${roleInfo.role} in ${roleInfo.org}`}
+              >
+                {roleInfo.role}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className="text-slate-500">{t.usersList.status.na[lang]}</span>
+        );
+      },
+    },
     {
       id: "actions",
       size: 30,
@@ -233,9 +281,12 @@ const UsersList = () => {
         const canEdit = isAuthorized;
         const canDelete =
           isSuper || (isAuthorized && targetUserRoles.includes("user"));
-        const canBan =
-          (isSuper && targetUserRoles.includes("admin")) ||
-          (isAuthorized && targetUserRoles.includes("user"));
+
+        // New banning permission logic based on ACTIVE role:
+        // - When acting as "admin": Cannot ban users at all
+        // - When acting as "main_admin": Can ban users (for Role and Org only)
+        // - When acting as "super_admin"/"superVera": Can ban users (including App ban)
+        const canBan = isActiveRoleSuper || isActiveRoleMainAdmin;
 
         const handleBanClick = () => {
           setActiveUser(targetUser);
@@ -258,7 +309,7 @@ const UsersList = () => {
             {canDelete && (
               <DeleteUserButton id={targetUser.id} closeModal={closeModal} />
             )}
-            {(canBan || isSuper || isAuthorized) && (
+            {canBan && (
               <UserBanActionsDropdown
                 user={targetUser}
                 canBan={canBan}
@@ -311,10 +362,24 @@ const UsersList = () => {
             className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           />
 
-          {searchQuery && (
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+          >
+            <option value="all">{t.usersList.filters.roles.all[lang]}</option>
+            {availableRoles.map((role) => (
+              <option key={role.id} value={role.role}>
+                {role.role}
+              </option>
+            ))}
+          </select>
+
+          {(searchQuery || roleFilter !== "all") && (
             <Button
               onClick={() => {
                 setSearchQuery("");
+                setRoleFilter("all");
               }}
               size={"sm"}
               className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"

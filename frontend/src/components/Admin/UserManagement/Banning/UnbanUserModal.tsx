@@ -31,6 +31,7 @@ import { UserProfile } from "@common/user.types";
 import { BanType, SimpleBanHistoryItem } from "@/types/userBanning";
 import { useRoles } from "@/hooks/useRoles";
 import { userBanningApi } from "@/api/services/userBanning";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 interface TargetUserOrganization {
   organization_id: string;
@@ -51,8 +52,17 @@ const UnbanUserModal = ({
   const dispatch = useAppDispatch();
   const loading = useAppSelector(selectUserBanningLoading);
   const banningError = useAppSelector(selectUserBanningError);
+  const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const { lang } = useLanguage();
-  const { allUserRoles, refreshAllUserRoles } = useRoles();
+  const { allUserRoles, refreshAllUserRoles, hasAnyRole, hasRole } = useRoles();
+
+  // Permission checks for different unban types (same as ban permissions)
+  const isSuper = hasAnyRole(["super_admin", "superVera"]);
+  const isMainAdmin = hasRole("main_admin");
+
+  const canUnbanFromApp = isSuper; // Only super admins can unban from application
+  const canUnbanFromOrg = isSuper || isMainAdmin; // Super admins and main admins can unban from org
+  const canUnbanFromRole = isSuper || isMainAdmin; // Super admins and main admins can unban from role
 
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [banType, setBanType] = useState<BanType>("role");
@@ -234,6 +244,24 @@ const UnbanUserModal = ({
       return;
     }
 
+    // Check permissions for the selected unban type
+    if (banType === "application" && !canUnbanFromApp) {
+      toast.error(
+        "You don't have permission to unban users from the application",
+      );
+      return;
+    }
+    if (banType === "organization" && !canUnbanFromOrg) {
+      toast.error(
+        "You don't have permission to unban users from organizations",
+      );
+      return;
+    }
+    if (banType === "role" && !canUnbanFromRole) {
+      toast.error("You don't have permission to unban users from roles");
+      return;
+    }
+
     // Validate required fields based on ban type
     if (banType === "role" && (!organizationId || !roleId)) {
       toast.error(t.userBanning.messages.missingFields[lang]);
@@ -243,6 +271,18 @@ const UnbanUserModal = ({
     if (banType === "organization" && !organizationId) {
       toast.error(t.userBanning.messages.missingFields[lang]);
       return;
+    }
+
+    // Organization validation for main_admin: they can only unban from their active org
+    if (
+      (banType === "organization" || banType === "role") &&
+      isMainAdmin &&
+      !isSuper
+    ) {
+      if (activeOrgId && organizationId !== activeOrgId) {
+        toast.error("You can only unban users from your active organization");
+        return;
+      }
     }
 
     try {
@@ -323,7 +363,7 @@ const UnbanUserModal = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {hasActiveApplicationBan() && (
+                    {hasActiveApplicationBan() && canUnbanFromApp && (
                       <SelectItem value="application">
                         {
                           t.userBanning.unban.fields.selectTypes.application[
@@ -332,7 +372,7 @@ const UnbanUserModal = ({
                         }
                       </SelectItem>
                     )}
-                    {hasActiveOrganizationBans() && (
+                    {hasActiveOrganizationBans() && canUnbanFromOrg && (
                       <SelectItem value="organization">
                         {
                           t.userBanning.unban.fields.selectTypes.organization[
@@ -341,7 +381,7 @@ const UnbanUserModal = ({
                         }
                       </SelectItem>
                     )}
-                    {hasActiveRoleBans() && (
+                    {hasActiveRoleBans() && canUnbanFromRole && (
                       <SelectItem value="role">
                         {t.userBanning.unban.fields.selectTypes.role[lang]}
                       </SelectItem>
