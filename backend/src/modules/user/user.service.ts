@@ -52,7 +52,8 @@ export class UserService {
     let userIds: string[] = [];
 
     if (dto.org_filter) {
-      // Query 1: Users from the specified organization
+      // Query 1: Users from the specified organization (including banned users)
+      // Include users who have ANY role assignment in this org, active or inactive
       const { data: orgUsers, error: orgError } = await supabase
         .from("user_organization_roles")
         .select(
@@ -62,14 +63,14 @@ export class UserService {
           roles!inner(role)
         `,
         )
-        .eq("is_active", true)
         .eq("organization_id", dto.org_filter);
 
       if (orgError) {
         handleSupabaseError(orgError);
       }
 
-      // Query 2: Users from Global org with "user" role
+      // Query 2: Users from Global org with "user" role (only active ones)
+      // Keep the active filter for Global users to avoid showing unrelated users
       const { data: globalUsers, error: globalError } = await supabase
         .from("user_organization_roles")
         .select(
@@ -120,12 +121,12 @@ export class UserService {
       );
     }
 
-    // Apply ordering
+    // Apply ordering - most recently joined first
     const orderColumn = dto.ordered_by || "created_at";
     const ascending = dto.ascending === true;
     query = query.order(orderColumn, { ascending });
 
-    // Apply pagination - ensure proper type conversion from query strings
+    // Apply pagination
     const page = Number(dto.page) || 1;
     const limit = Number(dto.limit) || 10;
     const offset = (page - 1) * limit;
