@@ -21,6 +21,10 @@ import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
 import { UpdateBookingItemDto } from "./dto/update-booking-item.dto";
 import { Public, Roles } from "src/decorators/roles.decorator";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
+import {
+  normalizeCreateBookingDtoDates,
+  normalizeUpdateItemsDates,
+} from "@src/utils/booking.utils";
 
 @Controller("bookings")
 export class BookingController {
@@ -77,18 +81,10 @@ export class BookingController {
     @Query("item_id") item_id: string,
     @Query("start") start: string,
     @Query("end") end: string,
-    @Query("location_id") location_id?: string,
   ) {
     if (!item_id || !start || !end)
       throw new BadRequestException("item_id, start and end are required");
-    const supabase = req.supabase;
-    return this.bookingService.getPerOrgAvailability(
-      supabase,
-      item_id,
-      start,
-      end,
-      location_id,
-    );
+    return this.bookingService.getPerOrgAvailability(item_id, start, end);
   }
 
   // gets the bookings of a specific user
@@ -125,13 +121,19 @@ export class BookingController {
     "requester",
   ])
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: AuthRequest) {
+    if (!dto?.items || !Array.isArray(dto.items) || dto.items.length === 0) {
+      throw new BadRequestException(
+        "items array is required and must contain at least one item",
+      );
+    }
     try {
       const userId = req.user.id;
       if (!userId)
         throw new BadRequestException("No userId found: user_id is required");
 
       // put user-ID to DTO
-      const dtoWithUserId = { ...dto, user_id: userId };
+      const dtoNormalized = normalizeCreateBookingDtoDates(dto);
+      const dtoWithUserId = { ...dtoNormalized, user_id: userId };
       return this.bookingService.createBooking(dtoWithUserId, req.supabase);
     } catch (error) {
       handleSupabaseError(error);
@@ -152,8 +154,34 @@ export class BookingController {
     @Body("items") updatedItems: UpdateBookingItemDto[],
     @Req() req: AuthRequest,
   ) {
+    try {
+      if (
+        !updatedItems ||
+        !Array.isArray(updatedItems) ||
+        updatedItems.length === 0
+      ) {
+        throw new BadRequestException(
+          "items array is required and must contain at least one item",
+        );
+      }
+      const userId = req.user.id;
+      const normalized = normalizeUpdateItemsDates(updatedItems);
+      return this.bookingService.updateBooking(id, userId, normalized, req);
+    } catch (error) {
+      handleSupabaseError(error);
+    }
+    if (
+      !updatedItems ||
+      !Array.isArray(updatedItems) ||
+      updatedItems.length === 0
+    ) {
+      throw new BadRequestException(
+        "items array is required and must contain at least one item",
+      );
+    }
     const userId = req.user.id;
-    return this.bookingService.updateBooking(id, userId, updatedItems, req);
+    const normalized = normalizeUpdateItemsDates(updatedItems);
+    return this.bookingService.updateBooking(id, userId, normalized, req);
   }
 
   // rejects a booking by admin

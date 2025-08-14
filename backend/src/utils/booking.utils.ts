@@ -220,35 +220,6 @@ export async function calculateAvailableQuantityForOrg(
   };
 }
 
-/**
- * @deprecated Use `getAvailability` instead. This is a thin wrapper for backward compatibility.
- */
-export async function calculateAvailableQuantityGroupedByOrg(
-  supabase: SupabaseClient<Database>,
-  itemId: string,
-  startDate: string,
-  endDate: string,
-  location_id?: string,
-): Promise<
-  Array<{
-    item_id: string;
-    organization_id: string;
-    ownedTotal: number;
-    alreadyBookedQuantity: number;
-    availableQuantity: number;
-  }>
-> {
-  const rows = (await getAvailability(supabase, {
-    itemId,
-    startDate,
-    endDate,
-    location_id,
-    groupBy: "organization",
-    includePending: true,
-  })) as AvailabilityByOrg[];
-  return rows;
-}
-
 export function getUniqueLocationIDs(bookings: UserBooking[]): string[] {
   return Array.from(
     new Set(
@@ -288,4 +259,84 @@ export function generateBookingNumber() {
   return `ORD-${Math.floor(Math.random() * 10000)
     .toString()
     .padStart(4, "0")}`;
+}
+
+/**
+ * Timezone helpers (DST-aware) for Europe/Helsinki normalization
+ */
+export function getTimeZoneOffsetMinutes(timeZone: string, date: Date): number {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = dtf.formatToParts(date);
+  const map: Record<string, string> = {};
+  for (const { type, value } of parts) {
+    map[type] = value;
+  }
+  const localAsUTC = Date.UTC(
+    Number(map.year),
+    Number(map.month) - 1,
+    Number(map.day),
+    Number(map.hour),
+    Number(map.minute),
+    Number(map.second),
+  );
+  const utc = date.getTime();
+  return Math.round((localAsUTC - utc) / 60000);
+}
+
+/**
+ * Accepts 'YYYY-MM-DD' and returns the ISO UTC instant for 00:00:00 at Europe/Helsinki
+ * on that calendar date (handles DST). If already an ISO datetime, returns unchanged.
+ */
+export function toIsoMidnightHelsinki(dateStr: string): string {
+  const onlyDate = /^\d{4}-\d{2}-\d{2}$/;
+  if (!onlyDate.test(dateStr)) return dateStr;
+  const [y, m, d] = dateStr.split("-").map((x) => Number(x));
+  const utcAtMidnight = Date.UTC(y, m - 1, d, 0, 0, 0);
+  const offsetMin = getTimeZoneOffsetMinutes(
+    "Europe/Helsinki",
+    new Date(utcAtMidnight),
+  );
+  const helsinkiMidnightInstant = new Date(
+    utcAtMidnight - offsetMin * 60 * 1000,
+  );
+  return helsinkiMidnightInstant.toISOString();
+}
+
+/**
+ * Normalize CreateBookingDto dates to Helsinki local midnight (ISO UTC instants).
+ * Keeps DTO shape intact; only transforms item.start_date/end_date strings.
+ */
+export function normalizeCreateBookingDtoDates<
+  T extends { items?: Array<{ start_date: string; end_date: string }> },
+>(dto: T): T {
+  if (!dto?.items) return dto;
+  const items = dto.items.map((it) => ({
+    ...it,
+    start_date: toIsoMidnightHelsinki(it.start_date),
+    end_date: toIsoMidnightHelsinki(it.end_date),
+  }));
+  return { ...dto, items };
+}
+
+/**
+ * Normalize UpdateBookingItemDto[] dates to Helsinki local midnight (ISO UTC instants).
+ */
+export function normalizeUpdateItemsDates<
+  T extends { start_date: string; end_date: string },
+>(items: T[]): T[] {
+  if (!items) return items;
+  return items.map((it) => ({
+    ...it,
+    start_date: toIsoMidnightHelsinki(it.start_date),
+    end_date: toIsoMidnightHelsinki(it.end_date),
+  }));
 }

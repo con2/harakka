@@ -3,105 +3,50 @@ import {
   IsOptional,
   ValidateNested,
   IsUUID,
-  IsInt,
   Min,
-  Validate,
-  ValidateIf,
-  IsISO8601,
+  ArrayMinSize,
+  IsNumber,
+  IsString,
+  Matches,
 } from "class-validator";
-import { Type, Transform } from "class-transformer";
-import {
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
-  ValidationArguments,
-} from "class-validator";
+import { Type } from "class-transformer";
 
 /**
- * Ensures that exactly one of `org_item_id` or `storage_item_id` is provided.
+ * CreateBookingItemDto (new system only)
+ * - Requires org_item_id (organization_items.id)
+ * - Removes legacy identifiers (storage_item_id / item_id / provider_organization_id)
+ * - Dates accept 'YYYY-MM-DD' (controller normalizes to Helsinki midnight) or ISO 8601
  */
-@ValidatorConstraint({ name: "OrgOrStorage", async: false })
-class OrgOrStorageConstraint implements ValidatorConstraintInterface {
-  validate(_: unknown, args?: ValidationArguments) {
-    const obj = args?.object as BookingItemDto | undefined;
-    const hasOrg = !!obj?.org_item_id;
-    const storageLike = obj?.storage_item_id ?? obj?.item_id;
-    const hasStorage = !!storageLike;
-    // exactly one must be true
-    return hasOrg !== hasStorage;
-  }
-  defaultMessage() {
-    return "Provide exactly one of 'org_item_id' or ('storage_item_id' | legacy 'item_id').";
-  }
-}
+export class CreateBookingItemDto {
+  @IsUUID("4", { message: "org_item_id must be a valid UUID" })
+  org_item_id!: string;
 
-class BookingItemDto {
-  /**
-   * Preferred path: directly reference the organization_items row.
-   * Required when storage_item_id is NOT provided.
-   */
-  @IsOptional()
-  @ValidateIf((o) => !o.storage_item_id)
-  @Validate(OrgOrStorageConstraint)
-  @IsUUID("4", { message: "org_item_id must be a valid UUID." })
-  org_item_id?: string;
+  @IsNumber({}, { message: "quantity must be a number" })
+  @Min(1, { message: "quantity must be at least 1" })
+  quantity!: number;
 
-  /**
-   * Legacy alias for storage item. Kept to avoid breaking older frontends.
-   * If provided, it will be normalized into storage_item_id during transformation.
-   */
-  @IsOptional()
-  @ValidateIf((o) => !o.org_item_id && !o.storage_item_id)
-  @IsUUID("4", { message: "item_id must be a valid UUID." })
-  item_id?: string;
+  @IsString({ message: "start_date must be a string" })
+  @Matches(/^\d{4}-\d{2}-\d{2}(T.*)?$/, {
+    message: "start_date must be 'YYYY-MM-DD' or an ISO 8601 datetime",
+  })
+  start_date!: string;
 
-  /**
-   * Legacy path: reference the storage item.
-   * Required when org_item_id is NOT provided.
-   */
-  @IsOptional()
-  @ValidateIf((o) => !o.org_item_id)
-  @Transform(({ obj, value }) => value ?? obj.item_id, { toClassOnly: true })
-  @Validate(OrgOrStorageConstraint)
-  @IsUUID("4", { message: "storage_item_id must be a valid UUID." })
-  storage_item_id?: string;
-
-  /**
-   * Optional hint to force allocation to a specific org when using the legacy path.
-   * Only applicable if storage_item_id is used.
-   */
-  @IsOptional()
-  @ValidateIf((o) => (!!o.storage_item_id || !!o.item_id) && !o.org_item_id)
-  @IsUUID("4", { message: "provider_organization_id must be a valid UUID." })
-  provider_organization_id?: string;
-
-  @IsInt()
-  @Min(1)
-  quantity: number;
-
-  @IsISO8601(
-    { strict: true },
-    { message: "start_date must be an ISO8601 string." },
-  )
-  start_date: string;
-
-  @IsISO8601(
-    { strict: true },
-    { message: "end_date must be an ISO8601 string." },
-  )
-  end_date: string;
+  @IsString({ message: "end_date must be a string" })
+  @Matches(/^\d{4}-\d{2}-\d{2}(T.*)?$/, {
+    message: "end_date must be 'YYYY-MM-DD' or an ISO 8601 datetime",
+  })
+  end_date!: string;
 }
 
 export class CreateBookingDto {
+  /** Optional; controller fills from auth user if absent */
   @IsOptional()
-  @IsUUID("4", { message: "user_id must be a valid UUID." })
+  @IsUUID("4", { message: "user_id must be a valid UUID" })
   user_id?: string;
 
-  @IsArray()
+  @IsArray({ message: "items must be an array" })
+  @ArrayMinSize(1, { message: "at least one item is required" })
   @ValidateNested({ each: true })
-  @Type(() => BookingItemDto)
-  items: BookingItemDto[];
+  @Type(() => CreateBookingItemDto)
+  items!: CreateBookingItemDto[];
 }
-
-// This DTO supports the new org_item_id model while maintaining legacy input.
-// Validation rules enforce *exactly one* of org_item_id or storage_item_id.
-// No 'any' types are used; dates are validated as ISO8601 strings; quantity is >= 1.
