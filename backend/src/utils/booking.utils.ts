@@ -3,6 +3,160 @@ import { Database } from "@common/supabase.types";
 import { UserBooking } from "src/modules/booking/types/booking.interface";
 import { handleSupabaseError } from "./handleError.utils";
 
+export type AvailabilityOptions = {
+  itemId: string;
+  startDate: string; // ISO or parsable string
+  endDate: string; // ISO or parsable string
+  location_id?: string;
+  organizationId?: string; // when provided, scope to a single provider org
+  groupBy?: "none" | "organization"; // default 'none'
+  includePending?: boolean; // default true
+  excludeBookingId?: string; // to ignore a booking while editing
+};
+
+export type AvailabilityTotals = {
+  item_id: string;
+  ownedTotal: number; // sum of owned quantities across matched rows (or org)
+  alreadyBookedQuantity: number; // sum of reserved_quantity
+  availableQuantity: number; // sum of available
+};
+
+export type AvailabilityByOrg = {
+  item_id: string;
+  organization_id: string;
+  ownedTotal: number;
+  alreadyBookedQuantity: number;
+  availableQuantity: number;
+};
+
+type RpcRow = {
+  org_item_id: string;
+  storage_item_id: string;
+  location_id: string | null;
+  owned_quantity: number | null;
+  reserved_quantity: number | null;
+  available: number | null;
+};
+
+export async function getAvailability(
+  supabase: SupabaseClient<Database>,
+  opts: AvailabilityOptions,
+): Promise<AvailabilityTotals | AvailabilityByOrg[]> {
+  const {
+    itemId,
+    startDate,
+    endDate,
+    location_id,
+    organizationId,
+    groupBy = "none",
+    includePending = true,
+    excludeBookingId,
+  } = opts;
+
+  if (!itemId) throw new Error("itemId is required");
+
+  const rpcArgs: {
+    p_start: string;
+    p_end: string;
+    p_storage_item_ids: string[];
+    p_location_id?: string;
+    p_provider_organization_id?: string;
+    p_include_pending?: boolean;
+    p_exclude_booking_id?: string;
+  } = {
+    p_start: new Date(startDate).toISOString(),
+    p_end: new Date(endDate).toISOString(),
+    p_storage_item_ids: [itemId],
+  };
+  if (location_id) rpcArgs.p_location_id = location_id;
+  if (organizationId) rpcArgs.p_provider_organization_id = organizationId;
+  if (includePending !== undefined) rpcArgs.p_include_pending = includePending;
+  if (excludeBookingId) rpcArgs.p_exclude_booking_id = excludeBookingId;
+
+  const { data, error } = await supabase.rpc("get_item_availability", rpcArgs);
+  if (error) handleSupabaseError(error);
+
+  const rows: RpcRow[] = (data as RpcRow[]) ?? [];
+
+  // No results
+  if (rows.length === 0) {
+    if (groupBy === "organization") return [];
+    return {
+      item_id: itemId,
+      ownedTotal: 0,
+      alreadyBookedQuantity: 0,
+      availableQuantity: 0,
+    };
+  }
+
+  if (groupBy === "organization") {
+    // Map org_item_id -> organization_id
+    const orgItemIds = Array.from(new Set(rows.map((r) => r.org_item_id)));
+    const { data: orgItems, error: orgErr } = await supabase
+      .from("organization_items")
+      .select("id, organization_id")
+      .in("id", orgItemIds);
+    if (orgErr) handleSupabaseError(orgErr);
+
+    const orgByOrgItem = new Map<string, string>();
+    for (const row of orgItems ?? []) {
+      if (row.id && row.organization_id) {
+        orgByOrgItem.set(row.id, row.organization_id);
+      }
+    }
+
+    const byOrg = new Map<string, AvailabilityTotals>();
+    for (const r of rows) {
+      const orgId = orgByOrgItem.get(r.org_item_id);
+      if (!orgId) continue;
+      const acc = byOrg.get(orgId) ?? {
+        item_id: itemId,
+        ownedTotal: 0,
+        alreadyBookedQuantity: 0,
+        availableQuantity: 0,
+      };
+      acc.ownedTotal += r.owned_quantity ?? 0;
+      acc.alreadyBookedQuantity += r.reserved_quantity ?? 0;
+      acc.availableQuantity += r.available ?? 0;
+      byOrg.set(orgId, acc);
+    }
+
+    const result: AvailabilityByOrg[] = [];
+    for (const [organization_id, acc] of byOrg.entries()) {
+      result.push({
+        item_id: itemId,
+        organization_id,
+        ownedTotal: acc.ownedTotal,
+        alreadyBookedQuantity: acc.alreadyBookedQuantity,
+        availableQuantity: acc.availableQuantity,
+      });
+    }
+    return result;
+  }
+
+  // Totals (optionally scoped to a single organization by RPC filter)
+  const ownedTotal = rows.reduce((sum, r) => sum + (r.owned_quantity ?? 0), 0);
+  const alreadyBookedQuantity = rows.reduce(
+    (sum, r) => sum + (r.reserved_quantity ?? 0),
+    0,
+  );
+  const availableQuantity = rows.reduce(
+    (sum, r) => sum + (r.available ?? 0),
+    0,
+  );
+
+  const totals: AvailabilityTotals = {
+    item_id: itemId,
+    ownedTotal,
+    alreadyBookedQuantity,
+    availableQuantity,
+  };
+  return totals;
+}
+
+/**
+ * @deprecated Use `getAvailability` instead. This is a thin wrapper for backward compatibility.
+ */
 export async function calculateAvailableQuantity(
   supabase: SupabaseClient<Database>,
   itemId: string,
@@ -14,73 +168,24 @@ export async function calculateAvailableQuantity(
   alreadyBookedQuantity: number;
   availableQuantity: number;
 }> {
-  if (!itemId) {
-    throw new Error("calculateAvailableQuantity called with empty itemId");
-  }
-  // get overlapping bookings
-  let overlapQuery = supabase
-    .from("booking_items")
-    .select("quantity")
-    .eq("item_id", itemId)
-    // Count pending + confirmed (+ picked_up if within range) as reserving inventory
-    .in("status", ["pending", "confirmed", "picked_up"])
-    .lte("start_date", endDate)
-    .gte("end_date", startDate);
-  if (location_id) overlapQuery = overlapQuery.eq("location_id", location_id);
-  const { data: overlapping, error } = await overlapQuery;
-
-  if (error) {
-    handleSupabaseError(error);
-  }
-
-  const alreadyBookedQuantity =
-    overlapping?.reduce((sum, o) => sum + (o.quantity || 0), 0) ?? 0;
-
-  // get items total quantity; if location_id provided, use org ownership at that location
-  let itemsTotal: number | null = null;
-  if (location_id) {
-    const { data: orgRows, error: orgErr } = await supabase
-      .from("organization_items")
-      .select("owned_quantity")
-      .eq("storage_item_id", itemId)
-      .eq("storage_location_id", location_id)
-      .eq("is_active", true);
-    if (orgErr) handleSupabaseError(orgErr);
-    itemsTotal =
-      orgRows?.reduce((sum, r) => sum + (r.owned_quantity ?? 0), 0) ?? 0;
-  } else {
-    const { data: item, error: itemError } = await supabase
-      .from("storage_items")
-      .select("items_number_total")
-      .eq("id", itemId)
-      .maybeSingle();
-    if (!itemError && item) {
-      itemsTotal = item.items_number_total ?? null;
-    }
-    if (itemsTotal == null) {
-      const { data: orgRows, error: orgErr } = await supabase
-        .from("organization_items")
-        .select("owned_quantity")
-        .eq("storage_item_id", itemId)
-        .eq("is_active", true);
-      if (orgErr) handleSupabaseError(orgErr);
-      itemsTotal =
-        orgRows?.reduce((sum, r) => sum + (r.owned_quantity ?? 0), 0) ?? 0;
-    }
-  }
-
-  const availableQuantity = itemsTotal - alreadyBookedQuantity;
+  const totals = (await getAvailability(supabase, {
+    itemId,
+    startDate,
+    endDate,
+    location_id,
+    groupBy: "none",
+    includePending: true,
+  })) as AvailabilityTotals;
 
   return {
-    item_id: itemId,
-    alreadyBookedQuantity,
-    availableQuantity,
+    item_id: totals.item_id,
+    alreadyBookedQuantity: totals.alreadyBookedQuantity,
+    availableQuantity: totals.availableQuantity,
   };
 }
 
 /**
- * Calculate availability for a specific organization that owns the item.
- * available = owned_total(org) - alreadyBooked(org, confirmed, overlapping)
+ * @deprecated Use `getAvailability` instead. This is a thin wrapper for backward compatibility.
  */
 export async function calculateAvailableQuantityForOrg(
   supabase: SupabaseClient<Database>,
@@ -96,55 +201,27 @@ export async function calculateAvailableQuantityForOrg(
   alreadyBookedQuantity: number;
   availableQuantity: number;
 }> {
-  if (!itemId || !organizationId) {
-    throw new Error(
-      "calculateAvailableQuantityForOrg called with empty itemId or organizationId",
-    );
-  }
+  const totals = (await getAvailability(supabase, {
+    itemId,
+    startDate,
+    endDate,
+    location_id,
+    organizationId,
+    groupBy: "none",
+    includePending: true,
+  })) as AvailabilityTotals;
 
-  // Sum of overlapping bookings for this org
-  let orgOverlap = supabase
-    .from("booking_items")
-    .select("quantity")
-    .eq("item_id", itemId)
-    .eq("provider_organization_id", organizationId)
-    .in("status", ["pending", "confirmed", "picked_up"])
-    .lte("start_date", endDate)
-    .gte("end_date", startDate);
-  if (location_id) orgOverlap = orgOverlap.eq("location_id", location_id);
-  const { data: overlapping, error: overlapErr } = await orgOverlap;
-  if (overlapErr) handleSupabaseError(overlapErr);
-
-  const alreadyBookedQuantity =
-    overlapping?.reduce((sum, o) => sum + (o.quantity || 0), 0) ?? 0;
-
-  // Org-owned total capacity for this item
-  let ownersQuery = supabase
-    .from("organization_items")
-    .select("owned_quantity")
-    .eq("storage_item_id", itemId)
-    .eq("organization_id", organizationId)
-    .eq("is_active", true);
-  if (location_id)
-    ownersQuery = ownersQuery.eq("storage_location_id", location_id);
-  const { data: orgRows, error: orgErr } = await ownersQuery;
-  if (orgErr) handleSupabaseError(orgErr);
-
-  const ownedTotal =
-    orgRows?.reduce((sum, r) => sum + (r.owned_quantity ?? 0), 0) ?? 0;
-
-  const availableQuantity = Math.max(ownedTotal - alreadyBookedQuantity, 0);
   return {
-    item_id: itemId,
+    item_id: totals.item_id,
     organization_id: organizationId,
-    ownedTotal,
-    alreadyBookedQuantity,
-    availableQuantity,
+    ownedTotal: totals.ownedTotal,
+    alreadyBookedQuantity: totals.alreadyBookedQuantity,
+    availableQuantity: totals.availableQuantity,
   };
 }
 
 /**
- * Calculate availability grouped by organization for an item.
+ * @deprecated Use `getAvailability` instead. This is a thin wrapper for backward compatibility.
  */
 export async function calculateAvailableQuantityGroupedByOrg(
   supabase: SupabaseClient<Database>,
@@ -161,71 +238,15 @@ export async function calculateAvailableQuantityGroupedByOrg(
     availableQuantity: number;
   }>
 > {
-  if (!itemId) throw new Error("itemId is required");
-
-  // Get org ownership for this item
-  let ownersQuery = supabase
-    .from("organization_items")
-    .select("organization_id, owned_quantity")
-    .eq("storage_item_id", itemId)
-    .eq("is_active", true);
-  if (location_id)
-    ownersQuery = ownersQuery.eq("storage_location_id", location_id);
-  const { data: owners, error: ownersErr } = await ownersQuery;
-  if (ownersErr) handleSupabaseError(ownersErr);
-
-  const byOrg = new Map<string, number>();
-  for (const row of owners ?? []) {
-    const key = row.organization_id;
-    if (!key) continue;
-    byOrg.set(key, (byOrg.get(key) ?? 0) + (row.owned_quantity ?? 0));
-  }
-
-  if (byOrg.size === 0) return [];
-
-  // Aggregate bookings per org
-  let groupedOverlap = supabase
-    .from("booking_items")
-    .select("quantity, provider_organization_id, location_id")
-    .eq("item_id", itemId)
-    .in("status", ["pending", "confirmed", "picked_up"])
-    .lte("start_date", endDate)
-    .gte("end_date", startDate);
-  if (location_id)
-    groupedOverlap = groupedOverlap.eq("location_id", location_id);
-  const { data: overlapping, error: overlapErr } = await groupedOverlap;
-  if (overlapErr) handleSupabaseError(overlapErr);
-
-  const bookedByOrg = new Map<string, number>();
-  type OverlapRow = {
-    quantity: number | null;
-    provider_organization_id: string | null;
-  };
-  for (const row of (overlapping ?? []) as OverlapRow[]) {
-    const org = row.provider_organization_id;
-    if (!org) continue;
-    bookedByOrg.set(org, (bookedByOrg.get(org) ?? 0) + (row.quantity ?? 0));
-  }
-
-  const result: Array<{
-    item_id: string;
-    organization_id: string;
-    ownedTotal: number;
-    alreadyBookedQuantity: number;
-    availableQuantity: number;
-  }> = [];
-  for (const [orgId, ownedTotal] of byOrg.entries()) {
-    const alreadyBookedQuantity = bookedByOrg.get(orgId) ?? 0;
-    const availableQuantity = Math.max(ownedTotal - alreadyBookedQuantity, 0);
-    result.push({
-      item_id: itemId,
-      organization_id: orgId,
-      ownedTotal,
-      alreadyBookedQuantity,
-      availableQuantity,
-    });
-  }
-  return result;
+  const rows = (await getAvailability(supabase, {
+    itemId,
+    startDate,
+    endDate,
+    location_id,
+    groupBy: "organization",
+    includePending: true,
+  })) as AvailabilityByOrg[];
+  return rows;
 }
 
 export function getUniqueLocationIDs(bookings: UserBooking[]): string[] {

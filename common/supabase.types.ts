@@ -1684,6 +1684,26 @@ export type Database = {
         Args: { in_limit?: number; in_offset?: number; in_user_id: string }
         Returns: Json
       }
+      get_item_availability: {
+        Args: {
+          p_end: string
+          p_exclude_booking_id?: string
+          p_include_pending?: boolean
+          p_location_id?: string
+          p_org_item_ids?: string[]
+          p_provider_organization_id?: string
+          p_start: string
+          p_storage_item_ids?: string[]
+        }
+        Returns: {
+          org_item_id: string
+          storage_item_id: string
+          location_id: string
+          owned_quantity: number
+          reserved_quantity: number
+          available: number
+        }[]
+      }
       get_latest_ban_record: {
         Args: { check_user_id: string }
         Returns: {
