@@ -12,9 +12,9 @@ import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import {
   checkUserBanStatus,
-  selectUserBanStatuses,
   selectUserBanningLoading,
 } from "@/store/slices/userBanningSlice";
+import { useBanPermissions } from "@/hooks/useBanPermissions";
 
 interface UserBanActionsDropdownProps {
   user: UserProfile;
@@ -37,11 +37,10 @@ const UserBanActionsDropdown = ({
 }: UserBanActionsDropdownProps) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
-  const userBanStatuses = useAppSelector(selectUserBanStatuses);
-  const currentUserBanStatus = userBanStatuses[user.id];
   const loading = useAppSelector(selectUserBanningLoading);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [statusChecked, setStatusChecked] = useState(false);
+  const { isUserBanned } = useBanPermissions();
 
   // Check ban status when dropdown opens for the first time
   const handleDropdownOpenChange = (open: boolean) => {
@@ -52,22 +51,11 @@ const UserBanActionsDropdown = ({
     }
   };
 
-  // Check if user has any active bans based on the backend response structure
-  const isUserBanned = (() => {
-    if (!currentUserBanStatus) return false;
-
-    const banStatus = currentUserBanStatus as unknown as Record<
-      string,
-      unknown
-    >;
-
-    return Boolean(
-      banStatus.isBannedFromApp ||
-        (banStatus.bannedFromOrganizations as string[])?.length > 0 ||
-        (banStatus.bannedFromRoles as string[])?.length > 0 ||
-        currentUserBanStatus.isBanned,
-    );
-  })();
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setDropdownOpen(!dropdownOpen);
+  };
 
   const handleBanClick = () => {
     setDropdownOpen(false);
@@ -84,18 +72,27 @@ const UserBanActionsDropdown = ({
     onHistoryClick();
   };
 
+  const handleContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
   return (
     <Popover open={dropdownOpen} onOpenChange={handleDropdownOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
+        <Button
+          variant="ghost"
+          className="h-8 w-8 p-0"
+          onClick={handleTriggerClick}
+        >
           <span className="sr-only">
             {t.userBanning.actions.openMenu[lang]}
           </span>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-48">
-        <div className="flex flex-col space-y-1">
+      <PopoverContent align="end" className="w-48" onClick={handleContentClick}>
+        <div className="flex flex-col space-y-1" onClick={handleContentClick}>
           {canBan && (
             <Button
               variant="ghost"
@@ -112,9 +109,9 @@ const UserBanActionsDropdown = ({
               variant="ghost"
               size="sm"
               className={`justify-start ${
-                !isUserBanned ? "opacity-50 cursor-not-allowed" : ""
+                !isUserBanned(user.id) ? "opacity-50 cursor-not-allowed" : ""
               }`}
-              disabled={!isUserBanned || loading}
+              disabled={!isUserBanned(user.id) || loading}
               onClick={handleUnbanClick}
             >
               <UserCheck className="mr-2 h-4 w-4" />

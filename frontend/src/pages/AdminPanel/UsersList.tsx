@@ -30,6 +30,11 @@ import UserBanActionsDropdown from "@/components/Admin/UserManagement/Banning/Us
 import UserBanModal from "@/components/Admin/UserManagement/Banning/UserBanModal";
 import UserBanHistoryModal from "@/components/Admin/UserManagement/Banning/UserBanHistoryModal";
 import UnbanUserModal from "@/components/Admin/UserManagement/Banning/UnbanUserModal";
+import {
+  selectUserBanStatuses,
+  fetchAllUserBanStatuses,
+  checkUserBanStatus,
+} from "@/store/slices/userBanningSlice";
 
 const UsersList = () => {
   // ————————————— Hooks & Selectors —————————————
@@ -41,8 +46,9 @@ const UsersList = () => {
   const allUserRoles = useAppSelector(selectAllUserRoles);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRoleName = useAppSelector(selectActiveRoleName);
+  const userBanStatuses = useAppSelector(selectUserBanStatuses);
   const { refreshAllUserRoles, hasAnyRole } = useRoles();
-  const { canBanUser } = useBanPermissions();
+  const { canBanUser, isUserBanned } = useBanPermissions();
 
   // ————————————— State —————————————
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -113,53 +119,45 @@ const UsersList = () => {
   // Helper function to get user's roles for display based on admin permissions
   const getUserRolesForDisplay = useCallback(
     (userId: string) => {
-      const userRoles = allUserRoles.filter(
-        (role) => role.user_id === userId && role.is_active,
-      );
+      const userRoles = allUserRoles.filter((role) => role.user_id === userId);
 
-      // If the current user is super_admin/superVera and no org is selected, show all roles
+      // If the current user is super_admin/superVera and no org is selected, show all active roles
       if (isActiveRoleSuper && !activeOrgId) {
-        return userRoles.map((role) => ({
-          role: role.role_name,
-          org: role.organization_name,
-        }));
+        return userRoles
+          .filter((role) => role.is_active)
+          .map((role) => ({
+            role: role.role_name,
+            org: role.organization_name,
+          }));
       }
 
-      // Otherwise, show roles based on context
-      const filteredRoles = userRoles.filter((role) => {
-        // If we have an active org, show roles from that org OR Global roles
-        if (activeOrgId) {
-          return (
-            role.organization_id === activeOrgId ||
-            role.organization_name === "Global"
-          );
-        }
-        // If no active org selected, show Global roles only
-        return role.organization_name === "Global";
-      });
+      // Check if user is banned to adjust role display strategy
+      // const isBanned = isUserBanned(userId); // Not needed with current logic
 
-      // Prioritize active org roles over Global roles when both exist
-      if (activeOrgId && filteredRoles.length > 1) {
-        const activeOrgRoles = filteredRoles.filter(
+      let filteredRoles;
+      if (activeOrgId) {
+        // When viewing a specific org context
+        const activeOrgRoles = userRoles.filter(
           (role) => role.organization_id === activeOrgId,
         );
-        const globalRoles = filteredRoles.filter(
-          (role) => role.organization_name === "Global",
+        const globalRoles = userRoles.filter(
+          (role) => role.organization_name === "Global" && role.is_active,
         );
 
-        // If user has roles in active org, show those first, then Global
+        // If user has ANY role (active or inactive) in the active org, show those
         if (activeOrgRoles.length > 0) {
-          return [
-            ...activeOrgRoles.map((role) => ({
-              role: role.role_name,
-              org: role.organization_name,
-            })),
-            ...globalRoles.map((role) => ({
-              role: role.role_name,
-              org: role.organization_name,
-            })),
-          ];
+          // For active org roles, show them even if inactive (for banned users)
+          // But for global roles, only show active ones
+          filteredRoles = [...activeOrgRoles, ...globalRoles];
+        } else {
+          // If no roles in active org, show only active global roles
+          filteredRoles = globalRoles;
         }
+      } else {
+        // If no active org selected, show Global roles only (and only active ones)
+        filteredRoles = userRoles.filter(
+          (role) => role.organization_name === "Global" && role.is_active,
+        );
       }
 
       return filteredRoles.map((role) => ({
@@ -196,6 +194,24 @@ const UsersList = () => {
       void refreshAllUserRoles();
     }
   }, [authLoading, isAuthorized, allUserRoles.length, refreshAllUserRoles]);
+
+  // Load ban statuses when authorized
+  useEffect(() => {
+    if (!authLoading && isAuthorized) {
+      void dispatch(fetchAllUserBanStatuses());
+    }
+  }, [authLoading, isAuthorized, dispatch]);
+
+  // Check individual user ban statuses when users are loaded
+  useEffect(() => {
+    if (users.data && users.data.length > 0) {
+      users.data.forEach((user) => {
+        if (!userBanStatuses[user.id]) {
+          void dispatch(checkUserBanStatus(user.id));
+        }
+      });
+    }
+  }, [users.data, userBanStatuses, dispatch]);
 
   // Reset role filter when active organization changes
   useEffect(() => {
@@ -244,29 +260,36 @@ const UsersList = () => {
 
   // Helper: derive the organization name for a given user for this view
   const getUserOrgName = (userId: string) => {
-    const roles = allUserRoles.filter(
-      (r) => r.user_id === userId && r.is_active,
-    );
+    // Get all user roles (active and inactive)
+    const allRoles = allUserRoles.filter((r) => r.user_id === userId);
 
-    // If we're viewing in the context of a specific organization, prioritize that org
+    // If we're viewing in the context of a specific organization
     if (activeOrgId) {
-      const activeOrgRole = roles.find(
+      // First, try to find a role in the active organization
+      const activeOrgRole = allRoles.find(
         (r) => r.organization_id === activeOrgId,
       );
+
       if (activeOrgRole?.organization_name) {
         return activeOrgRole.organization_name;
       }
     }
+
+    // If no role found in active org, fall back to active roles only
+    const activeRoles = allRoles.filter((r) => r.is_active);
+
     // If super admin with no org selected, show Global first if present
     if (isActiveRoleSuper && !activeOrgId) {
-      const global = roles.find((r) => r.organization_name === "Global");
+      const global = activeRoles.find((r) => r.organization_name === "Global");
       if (global) return "Global";
     }
-    // Fallback to Global if user has a Global role but no role in active org
-    const global = roles.find((r) => r.organization_name === "Global");
+
+    // Fallback to Global if user has an active Global role
+    const global = activeRoles.find((r) => r.organization_name === "Global");
     if (global) return "Global";
-    // Otherwise, show the first org name if any
-    return roles[0]?.organization_name ?? "";
+
+    // Otherwise, show the first active org name if any
+    return activeRoles[0]?.organization_name ?? "";
   };
 
   // ————————————— Columns —————————————
@@ -305,9 +328,28 @@ const UsersList = () => {
     },
     {
       id: "orgName",
-      header: "Org Name",
+      header: t.usersList.columns.organization[lang],
       size: 120,
       cell: ({ row }) => getUserOrgName(row.original.id),
+    },
+    {
+      id: "active",
+      header: t.usersList.columns.active[lang],
+      size: 80,
+      cell: ({ row }) => {
+        const banned = isUserBanned(row.original.id);
+        return (
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${
+              banned ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
+            }`}
+          >
+            {banned
+              ? t.usersList.status.banned[lang]
+              : t.usersList.status.active[lang]}
+          </span>
+        );
+      },
     },
     {
       id: "roles",
@@ -375,15 +417,17 @@ const UsersList = () => {
               <DeleteUserButton id={targetUser.id} closeModal={closeModal} />
             )}
             {canBan && (
-              <UserBanActionsDropdown
-                user={targetUser}
-                canBan={canBan}
-                isSuper={isSuper}
-                isAuthorized={isAuthorized}
-                onBanClick={handleBanClick}
-                onUnbanClick={handleUnbanClick}
-                onHistoryClick={handleHistoryClick}
-              />
+              <div onClick={(e) => e.stopPropagation()}>
+                <UserBanActionsDropdown
+                  user={targetUser}
+                  canBan={canBan}
+                  isSuper={isSuper}
+                  isAuthorized={isAuthorized}
+                  onBanClick={handleBanClick}
+                  onUnbanClick={handleUnbanClick}
+                  onHistoryClick={handleHistoryClick}
+                />
+              </div>
             )}
           </div>
         );
