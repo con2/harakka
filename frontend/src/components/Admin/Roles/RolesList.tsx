@@ -55,7 +55,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
   } = useRoles();
 
   const organizations = useAppSelector(selectOrganizations);
-  const users = useAppSelector(selectAllUsers);
+  const { data: users } = useAppSelector(selectAllUsers);
 
   // Fetch once if empty (relies on hook caching/deduping)
   useEffect(() => {

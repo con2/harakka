@@ -2,16 +2,35 @@ import { CreateUserDto, UserProfile } from "@common/user.types";
 import { api } from "../axios";
 import { Address } from "@/types/address";
 import { store } from "@/store/store";
+import { ApiResponse } from "@/types/api";
+import { OrderedUsersParams } from "@/types/user";
 
 /**
  * API service for user-related endpoints
  */
 export const usersApi = {
   /**
-   * Get all users
-   * @returns Promise with an array of users
+   * Get all users for admin/main_admin with backend filtering/pagination
+   * @param params - Query params for filtering, pagination, etc.
+   * @returns Promise with paginated/filterable users
    */
-  getAllUsers: (): Promise<UserProfile[]> => api.get("/users"),
+  getAllOrderedUsers: (
+    params: OrderedUsersParams,
+  ): Promise<ApiResponse<UserProfile[]>> => {
+    // Filter out undefined values to prevent them from being sent as query parameters
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).filter(([, value]) => value !== undefined),
+    );
+    return api.get("/users/ordered", { params: cleanParams });
+  },
+
+  /**
+   * Get all users (super admins only) - returns all users without filtering
+   * @returns Promise with an array of all users
+   */
+  getAllUsers: (): Promise<UserProfile[]> => {
+    return api.get("/users");
+  },
 
   /**
    * Get current user's profile using the dedicated endpoint

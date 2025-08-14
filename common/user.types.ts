@@ -2,14 +2,9 @@
  * Shared user-related types between frontend and backend.
  *
  * These types are derived from Supabase-generated types (via `supabase gen types typescript`)
- * and extended using `type-fest`'s `MergeDeep` utility (see `database.types.ts`) to override
- * `Json` fields like `preferences`, `saved_lists`, and any translation fields with concrete structures.
- *
- * This ensures full type safety and accurate IntelliSense throughout the app.
  */
 
-import { Database } from "./database.types";
-
+import { Database } from "./supabase.types";
 
 /**
  * DTO for creating a new user.
@@ -31,7 +26,6 @@ export type UpdateUserDto =
 
 /**
  * Represents a full row from the `user_profiles` table.
- * Merged to provide typed `preferences` and `saved_lists` structures.
  */
 export type UserProfile = Database["public"]["Tables"]["user_profiles"]["Row"];
 
