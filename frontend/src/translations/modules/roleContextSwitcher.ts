@@ -1,8 +1,6 @@
 export const roleContextSwitcher = {
-  dropdown: {
-    clearSelection: {
-      en: "Clear selection",
-      fi: "Tyhjennä valinta",
-    },
+  placeholders: {
+    en: "Select active role",
+    fi: "Valitse aktiivinen rooli",
   },
 };
