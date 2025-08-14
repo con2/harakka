@@ -17,6 +17,8 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const OrganizationsList = () => {
   const dispatch = useAppDispatch();
@@ -24,6 +26,7 @@ const OrganizationsList = () => {
   const loading = useAppSelector(selectOrganizationLoading);
   const error = useAppSelector(selectOrganizationError);
   const { currentUserOrganizations } = useRoles();
+  const { lang } = useLanguage();
 
   useEffect(() => {
     void dispatch(fetchAllOrganizations({ page: 1, limit: 50 }));
@@ -49,7 +52,11 @@ const OrganizationsList = () => {
   }
 
   if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
+    return (
+      <div className="text-red-500">
+        {t.organizationList.error[lang]} {error}
+      </div>
+    );
   }
 
   // Extract organization roles for the current user
@@ -66,7 +73,7 @@ const OrganizationsList = () => {
       <div className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-xl font-semibold">
           <Building2 className="h-6 w-6 text-blue-500" />
-          All Organizations
+          {t.organizationList.title[lang]}
         </h1>
       </div>
 
@@ -84,14 +91,15 @@ const OrganizationsList = () => {
                 </CardTitle>
               </div>
               <CardDescription className="text-sm text-muted-foreground">
-                {org.description || "No description available"}
+                {org.description ||
+                  t.organizationList.columns.description[lang]}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-grow flex flex-col">
               {userOrgRoles[org.id] && (
                 <div className="mb-4">
                   <h3 className="text-sm font-medium text-gray-700 mb-2">
-                    My Roles:
+                    {t.organizationList.myRoles[lang]}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {userOrgRoles[org.id].map((role) => (
@@ -111,7 +119,7 @@ const OrganizationsList = () => {
                   to={`/organization/${org.slug}`}
                   className="text-blue-500 hover:underline text-sm"
                 >
-                  View Details
+                  {t.organizationList.view[lang]}
                 </Link>
               </div>
             </CardContent>

@@ -149,6 +149,14 @@ export const organizationList = {
     fi: "Näytä",
     en: "View",
   },
+  error: {
+    fi: "Virhe organisaatioiden latauksessa:",
+    en: "Error loading organizations:",
+  },
+  myRoles: {
+    fi: "Omat roolit",
+    en: "My roles",
+  },
 };
 
 export const organizationDelete = {

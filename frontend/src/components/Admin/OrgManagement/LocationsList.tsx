@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Edit } from "lucide-react";
 import DeleteLocationButton from "@/components/Admin/OrgManagement/DeleteLocationButton";
 import { OrgLocationWithNames } from "@/types/organizationLocation";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 interface LocationsListProps {
   locations: OrgLocationWithNames[];
@@ -28,6 +30,7 @@ const LocationsList: React.FC<LocationsListProps> = ({
   showActions = false,
   organizationId,
 }) => {
+  const { lang } = useLanguage();
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -51,7 +54,7 @@ const LocationsList: React.FC<LocationsListProps> = ({
     return (
       <div className="text-center py-10 text-muted-foreground">
         <MapPin className="h-12 w-12 mx-auto mb-4" />
-        <p>No locations available.</p>
+        <p>{t.locationsList.noLocations[lang]}</p>
       </div>
     );
   }
@@ -70,23 +73,27 @@ const LocationsList: React.FC<LocationsListProps> = ({
                 </CardTitle>
               </div>
               <Badge variant={location.is_active ? "default" : "secondary"}>
-                {location.is_active ? "Active" : "Inactive"}
+                {location.is_active
+                  ? t.locationsList.active[lang]
+                  : t.locationsList.inactive[lang]}
               </Badge>
             </div>
             <CardDescription className="text-xs">
-              Address:{" "}
-              {location.storage_locations?.address || "No address available"}
+              {t.locationsList.address[lang]}:{" "}
+              {location.storage_locations?.address ||
+                t.locationsList.noAddress[lang]}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-xs text-muted-foreground">
               <p>
-                Organization:{" "}
+                {t.locationsList.organization[lang]}:{" "}
                 {location.organizations?.name || location.organization_id}
               </p>
               {location.created_at && (
                 <p>
-                  Created: {new Date(location.created_at).toLocaleDateString()}
+                  {t.locationsList.created[lang]}:{" "}
+                  {new Date(location.created_at).toLocaleDateString()}
                 </p>
               )}
             </div>
@@ -98,7 +105,7 @@ const LocationsList: React.FC<LocationsListProps> = ({
                   onClick={() => onEdit?.(location)}
                 >
                   <Edit className="h-3 w-3 mr-1" />
-                  Edit
+                  {t.locationsList.edit[lang]}
                 </Button>
                 <DeleteLocationButton
                   locationId={location.id}

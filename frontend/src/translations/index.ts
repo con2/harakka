@@ -67,6 +67,8 @@ import { itemSummary } from "./modules/itemSummary";
 import { stepper } from "./modules/stepper";
 import { notifications } from "./modules/notifications";
 import { uiComponents } from "./modules/uiComponents";
+import { organizationPage } from "./modules/organizationPage";
+import { locationsList } from "./modules/locationsList";
 
 export const t = {
   stepper,
@@ -137,4 +139,6 @@ export const t = {
   termsOfUse,
   notifications,
   uiComponents,
+  organizationPage,
+  locationsList,
 };

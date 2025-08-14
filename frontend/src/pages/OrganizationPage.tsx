@@ -16,8 +16,11 @@ import {
 } from "@/store/slices/organizationLocationsSlice";
 import OrganizationInfo from "../components/Organization/OrganizationInfo";
 import LocationsList from "@/components/Admin/OrgManagement/LocationsList";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 const OrganizationPage = () => {
+  const { lang } = useLanguage();
   const { org_slug } = useParams();
   const dispatch = useAppDispatch();
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -93,18 +96,28 @@ const OrganizationPage = () => {
 
   // Handle error state
   if (error) {
-    return <div className="text-center py-10 text-red-500">Error: {error}</div>;
+    return (
+      <div className="text-center py-10 text-red-500">
+        {t.organizationPage.error[lang]} {error}
+      </div>
+    );
   }
 
   // Handle loading state
   if (organizationLoading || (organization && locationsLoading)) {
     return (
-      <div className="text-center py-10">Loading organization data...</div>
+      <div className="text-center py-10">
+        {t.organizationPage.loadingOrganization[lang]}
+      </div>
     );
   }
 
   if (!organization) {
-    return <div className="text-center py-10">Organization not found.</div>;
+    return (
+      <div className="text-center py-10">
+        {t.organizationPage.organizationNotFound[lang]}
+      </div>
+    );
   }
 
   // Filter locations to ensure they belong to the current organization
@@ -119,7 +132,9 @@ const OrganizationPage = () => {
 
       {/* Locations List */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Locations</h2>
+        <h2 className="text-xl font-semibold mb-4">
+          {t.organizationPage.locations[lang]}
+        </h2>
 
         {/* Error message */}
         {fetchError && <div className="text-red-500 mb-4">{fetchError}</div>}
