@@ -78,7 +78,7 @@ export const RoleContextSwitcher: React.FC = () => {
         singleRole.organization_name,
       );
     }
-  }, [activeRoles]);
+  }, [activeRoles, activeContext, setActiveContext]);
 
   // Handler for changing the active context
   const handleContextChange = (value: string) => {
