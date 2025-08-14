@@ -208,7 +208,6 @@ const rolesSlice = createSlice({
         organizationId: null,
         roleName: null,
         organizationName: null,
-        slug: null,
       };
       localStorage.removeItem("activeRoleContext");
     },
@@ -224,7 +223,6 @@ const rolesSlice = createSlice({
         organizationId: null,
         roleName: null,
         organizationName: null,
-        slug: null,
       };
       localStorage.removeItem("activeRoleContext");
     },

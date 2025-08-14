@@ -23,8 +23,6 @@ import {
 } from "@/store/slices/rolesSlice";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
 import { useAuth } from "./useAuth";
-import { selectOrganizations } from "@/store/slices/organizationSlice";
-import { store } from "@/store/store";
 
 // Global cache states with proper timestamps
 const roleCache = {
@@ -63,16 +61,11 @@ export const useRoles = () => {
       roleName: string,
       organizationName: string,
     ) => {
-      // Find the slug from the organizations list in the Redux store
-      const organizations = selectOrganizations(store.getState());
-      const org = organizations.find((o) => o.id === organizationId);
-
       await dispatch(
         setActiveRoleContext({
           organizationId,
           roleName,
           organizationName,
-          slug: org?.slug,
         }),
       );
     },

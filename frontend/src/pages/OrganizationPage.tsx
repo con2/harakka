@@ -62,13 +62,7 @@ const OrganizationPage = () => {
             const org = orgAction.payload;
             if (org?.id) {
               // Fetch locations using the organization ID
-              await dispatch(
-                fetchLocationsByOrgId({
-                  id: org.id,
-                  page: 1,
-                  limit: 100,
-                }),
-              ).unwrap();
+              await dispatch(fetchLocationsByOrgId(org.id)).unwrap();
 
               // Verify we're still on the same page after locations fetch
               if (activeRequestSlugRef.current !== org_slug) {
@@ -85,7 +79,7 @@ const OrganizationPage = () => {
         }
       };
 
-      fetchData();
+      void fetchData();
     }
 
     // Clean up when unmounting or slug changes
@@ -129,27 +123,6 @@ const OrganizationPage = () => {
 
         {/* Error message */}
         {fetchError && <div className="text-red-500 mb-4">{fetchError}</div>}
-
-        {/* Debug info */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="text-xs text-muted-foreground mb-2">
-            <p>Organization ID: {organization.id}</p>
-            <p>Total Locations: {orgLocations.length}</p>
-            <p>Filtered Locations: {displayLocations.length}</p>
-            <p>Active Request Slug: {activeRequestSlugRef.current}</p>
-            <p>Current URL Slug: {org_slug}</p>
-            <p>Organization Loading: {organizationLoading ? "Yes" : "No"}</p>
-            <p>Locations Loading: {locationsLoading ? "Yes" : "No"}</p>
-            {orgLocations.length > 0 && displayLocations.length === 0 && (
-              <div className="text-orange-500">
-                <p>
-                  Warning: Locations exist but none match this organization!
-                </p>
-                <p>First location org_id: {orgLocations[0]?.organization_id}</p>
-              </div>
-            )}
-          </div>
-        )}
 
         <LocationsList
           locations={displayLocations}

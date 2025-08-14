@@ -57,16 +57,8 @@ export const fetchOrgLocationById = createAsyncThunk(
  */
 export const fetchLocationsByOrgId = createAsyncThunk(
   "orgLocations/fetchLocationsByOrgId",
-  async ({
-    id,
-    page = 1,
-    limit = 100,
-  }: {
-    id: string;
-    page?: number;
-    limit?: number;
-  }) => {
-    return await orgLocationsApi.getOrgLocsByOrgId(id, page, limit);
+  async (id: string) => {
+    return await orgLocationsApi.getOrgLocsByOrgId(id);
   },
 );
 
