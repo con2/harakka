@@ -73,6 +73,7 @@ import { roleContextSwitcher } from "./modules/roleContextSwitcher";
 import { rolesList } from "./modules/rolesList";
 import { organizationPage } from "./modules/organizationPage";
 import { locationsList } from "./modules/locationsList";
+import { organizations } from "./modules/organizations";
 
 export const t = {
   rolesList,
@@ -149,4 +150,5 @@ export const t = {
   profilePicUploader,
   organizationPage,
   locationsList,
+  organizations,
 };

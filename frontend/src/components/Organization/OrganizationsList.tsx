@@ -70,13 +70,6 @@ const OrganizationsList = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="flex items-center gap-2 text-xl font-semibold">
-          <Building2 className="h-6 w-6 text-blue-500" />
-          {t.organizationList.title[lang]}
-        </h1>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {organizations.map((org) => (
           <Card key={org.id} className="relative flex flex-col h-full">
