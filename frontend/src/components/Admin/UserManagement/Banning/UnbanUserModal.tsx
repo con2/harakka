@@ -201,7 +201,7 @@ const UnbanUserModal = ({
           setActiveBans(bans);
         } catch (error) {
           console.error("Failed to load user ban history:", error);
-          toast.error("Failed to load ban history");
+          toast.error(t.userBanning.messages.failedLoadBanHistory[lang]);
         } finally {
           setBansLoading(false);
         }
@@ -211,7 +211,7 @@ const UnbanUserModal = ({
         void refreshAllUserRoles();
       }
     }
-  }, [isOpen, user.id, allUserRoles, refreshAllUserRoles]);
+  }, [isOpen, user.id, allUserRoles, refreshAllUserRoles, lang]);
 
   // Reset role when organization changes
   useEffect(() => {
@@ -246,19 +246,15 @@ const UnbanUserModal = ({
 
     // Check permissions for the selected unban type
     if (banType === "application" && !canUnbanFromApp) {
-      toast.error(
-        "You don't have permission to unban users from the application",
-      );
+      toast.error(t.userBanning.messages.noPermissionUnbanApp[lang]);
       return;
     }
     if (banType === "organization" && !canUnbanFromOrg) {
-      toast.error(
-        "You don't have permission to unban users from organizations",
-      );
+      toast.error(t.userBanning.messages.noPermissionUnbanOrg[lang]);
       return;
     }
     if (banType === "role" && !canUnbanFromRole) {
-      toast.error("You don't have permission to unban users from roles");
+      toast.error(t.userBanning.messages.noPermissionUnbanRole[lang]);
       return;
     }
 
@@ -280,7 +276,7 @@ const UnbanUserModal = ({
       !isSuper
     ) {
       if (activeOrgId && organizationId !== activeOrgId) {
-        toast.error("You can only unban users from your active organization");
+        toast.error(t.userBanning.messages.onlyUnbanActiveOrg[lang]);
         return;
       }
     }
@@ -297,13 +293,13 @@ const UnbanUserModal = ({
       ).unwrap();
 
       if (result.success) {
-        toast.success("User unbanned successfully");
+        toast.success(t.userBanning.toast.unbanSuccess[lang]);
         handleClose();
       } else {
-        toast.error(result.message || "Error unbanning user");
+        toast.error(result.message || t.userBanning.toast.unbanError[lang]);
       }
     } catch {
-      toast.error(banningError || "Error unbanning user");
+      toast.error(banningError || t.userBanning.toast.unbanError[lang]);
     }
   };
 

@@ -162,17 +162,15 @@ const UserBanModal = ({
 
     // Check permissions for the selected ban type
     if (banType === "application" && !canBanFromApp) {
-      toast.error(
-        "You don't have permission to ban users from the application",
-      );
+      toast.error(t.userBanning.messages.noPermissionApp[lang]);
       return;
     }
     if (banType === "organization" && !canBanFromOrg) {
-      toast.error("You don't have permission to ban users from organizations");
+      toast.error(t.userBanning.messages.noPermissionOrg[lang]);
       return;
     }
     if (banType === "role" && !canBanFromRole) {
-      toast.error("You don't have permission to ban users from roles");
+      toast.error(t.userBanning.messages.noPermissionRole[lang]);
       return;
     }
 
@@ -185,7 +183,7 @@ const UserBanModal = ({
         selectedRole &&
         !["admin", "user"].includes(selectedRole.role_name || "")
       ) {
-        toast.error("You can only ban users from 'admin' or 'user' roles");
+        toast.error(t.userBanning.messages.onlyAdminUserRoles[lang]);
         return;
       }
     }
@@ -197,7 +195,7 @@ const UserBanModal = ({
       !isSuper
     ) {
       if (activeOrgId && organizationId !== activeOrgId) {
-        toast.error("You can only ban users from your active organization");
+        toast.error(t.userBanning.messages.onlyActiveOrg[lang]);
         return;
       }
     }
@@ -209,7 +207,7 @@ const UserBanModal = ({
 
     // Additional validation for custom reason
     if (selectedBanReason === CUSTOM_BAN_REASON && !customBanReason.trim()) {
-      toast.error("Please provide a custom ban reason");
+      toast.error(t.userBanning.messages.provideCustomReason[lang]);
       return;
     }
 
