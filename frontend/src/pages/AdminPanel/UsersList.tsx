@@ -21,6 +21,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
+import { useBanPermissions } from "@/hooks/useBanPermissions";
 import { selectAllUserRoles } from "@/store/slices/rolesSlice";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
@@ -41,6 +42,7 @@ const UsersList = () => {
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRoleName = useAppSelector(selectActiveRoleName);
   const { refreshAllUserRoles, hasAnyRole } = useRoles();
+  const { canBanUser } = useBanPermissions();
 
   // ————————————— State —————————————
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -73,7 +75,6 @@ const UsersList = () => {
   // 2. User has selected a super_admin or superVera role from the navbar selector
   const isActiveRoleSuper =
     activeRoleName === "super_admin" || activeRoleName === "superVera";
-  const isActiveRoleMainAdmin = activeRoleName === "main_admin";
   const shouldFetchAllUsers = isSuper && (!activeOrgId || isActiveRoleSuper);
 
   // Get the org_filter value based on super user logic
@@ -182,7 +183,6 @@ const UsersList = () => {
   }, [users.data, roleFilter, getUserRolesForDisplay]);
 
   // ————————————— Side Effects —————————————
-
   // Reset modal state when activeUser changes
   useEffect(() => {
     if (!activeUser) {
@@ -257,17 +257,14 @@ const UsersList = () => {
         return activeOrgRole.organization_name;
       }
     }
-
     // If super admin with no org selected, show Global first if present
     if (isActiveRoleSuper && !activeOrgId) {
       const global = roles.find((r) => r.organization_name === "Global");
       if (global) return "Global";
     }
-
     // Fallback to Global if user has a Global role but no role in active org
     const global = roles.find((r) => r.organization_name === "Global");
     if (global) return "Global";
-
     // Otherwise, show the first org name if any
     return roles[0]?.organization_name ?? "";
   };
@@ -350,11 +347,11 @@ const UsersList = () => {
         const canDelete =
           isSuper || (isAuthorized && targetUserRoles.includes("user"));
 
-        // Banning permission logic based on ACTIVE role:
-        // - When acting as "admin": Cannot ban users at all
-        // - When acting as "main_admin": Can ban users (for Role and Org only)
-        // - When acting as "super_admin"/"superVera": Can ban users (including App ban)
-        const canBan = isActiveRoleSuper || isActiveRoleMainAdmin;
+        // Banning permission logic based on hierarchy and org:
+        // - super_admin/superVera: Can ban anyone from anywhere
+        // - main_admin: Can only ban users whose role is below their own within their active org
+        // - Others: Cannot ban
+        const canBan = canBanUser(targetUser.id);
 
         const handleBanClick = () => {
           setActiveUser(targetUser);

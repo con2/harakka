@@ -33,6 +33,7 @@ import {
 import { UserProfile } from "@common/user.types";
 import { BanType } from "@/types/userBanning";
 import { useRoles } from "@/hooks/useRoles";
+import { useBanPermissions } from "@/hooks/useBanPermissions";
 import { COMMON_BAN_REASONS, CUSTOM_BAN_REASON } from "@/config/constants";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
@@ -64,15 +65,16 @@ const UserBanModal = ({
     hasAnyRole,
     hasRole,
   } = useRoles();
+  const { getBanPermissions } = useBanPermissions();
 
   // Permission checks for different ban types
   const isSuper = hasAnyRole(["super_admin", "superVera"]);
   const isMainAdmin = hasRole("main_admin");
 
-  // Determine which ban types are available based on user permissions
-  const canBanFromApp = isSuper; // Only super admins can ban from application
-  const canBanFromOrg = isSuper || isMainAdmin; // Super admins and main admins can ban from org
-  const canBanFromRole = isSuper || isMainAdmin; // Super admins and main admins can ban from role
+  // Get ban permissions for this specific user
+  const { canBanFromApp, canBanFromOrg, canBanFromRole } = getBanPermissions(
+    user.id,
+  );
 
   // Get default ban type based on permissions (prioritize from most restrictive to least)
   const getDefaultBanType = (): BanType => {
@@ -146,6 +148,11 @@ const UserBanModal = ({
       setBanReason(selectedBanReason);
     }
   }, [selectedBanReason, customBanReason]);
+
+  // If user has no permission to ban this target user, don't render the modal
+  if (!canBanFromApp && !canBanFromOrg && !canBanFromRole) {
+    return null;
+  }
 
   const handleSubmit = async () => {
     if (!user.id) {
