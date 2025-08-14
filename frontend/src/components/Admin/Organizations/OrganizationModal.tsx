@@ -79,53 +79,43 @@ export default function OrganizationModal({
           </DialogHeader>
           <div className="space-y-2 text-sm">
             <p>
-              <strong>
-                {t.organizationList.modal.labels.description[lang]}:
-              </strong>{" "}
+              <strong>{t.organizations.modal.labels.description[lang]}:</strong>{" "}
               {organization?.description || "—"}
             </p>
             <p>
-              <strong>{t.organizationList.modal.labels.slug[lang]}:</strong>{" "}
+              <strong>{t.organizations.modal.labels.slug[lang]}:</strong>{" "}
               {organization?.slug || "—"}
             </p>
             <p>
-              <strong>{t.organizationList.modal.labels.active[lang]}:</strong>{" "}
+              <strong>{t.organizations.modal.labels.active[lang]}:</strong>{" "}
               {organization?.is_active
-                ? t.organizationList.values.isActive.yes[lang]
-                : t.organizationList.values.isActive.no[lang]}
+                ? t.organizations.values.isActive.yes[lang]
+                : t.organizations.values.isActive.no[lang]}
             </p>
             <p>
-              <strong>
-                {t.organizationList.modal.labels.createdAt[lang]}:
-              </strong>{" "}
+              <strong>{t.organizations.modal.labels.createdAt[lang]}:</strong>{" "}
               {organization?.created_at
                 ? new Date(organization.created_at).toLocaleString()
                 : "—"}
             </p>
             <p>
-              <strong>
-                {t.organizationList.modal.labels.createdBy[lang]}:
-              </strong>{" "}
+              <strong>{t.organizations.modal.labels.createdBy[lang]}:</strong>{" "}
               {organization?.created_by || "—"}
             </p>
             <p>
-              <strong>
-                {t.organizationList.modal.labels.updatedAt[lang]}:
-              </strong>{" "}
+              <strong>{t.organizations.modal.labels.updatedAt[lang]}:</strong>{" "}
               {organization?.updated_at
                 ? new Date(organization.updated_at).toLocaleString()
                 : "—"}
             </p>
             <p>
-              <strong>
-                {t.organizationList.modal.labels.updatedBy[lang]}:
-              </strong>{" "}
+              <strong>{t.organizations.modal.labels.updatedBy[lang]}:</strong>{" "}
               {organization?.updated_by || "—"}
             </p>
           </div>
           <DialogFooter className="flex justify-end">
             <Button onClick={() => onOpenChange(false)}>
-              {t.organizationList.modal.buttons.close[lang]}
+              {t.organizations.modal.buttons.close[lang]}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -138,7 +128,7 @@ export default function OrganizationModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t.organizationList.modal.title[lang]}</DialogTitle>
+          <DialogTitle>{t.organizations.modal.title[lang]}</DialogTitle>
         </DialogHeader>
 
         <Form {...form} key={organization?.id ?? "new"}>
@@ -156,12 +146,12 @@ export default function OrganizationModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t.organizationList.modal.labels.name[lang]}
+                    {t.organizations.modal.labels.name[lang]}
                   </FormLabel>
                   <FormControl>
                     <Input
                       placeholder={
-                        t.organizationList.modal.placeholders.name[lang]
+                        t.organizations.modal.placeholders.name[lang]
                       }
                       {...field}
                     />
@@ -178,12 +168,12 @@ export default function OrganizationModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t.organizationList.modal.labels.description[lang]}
+                    {t.organizations.modal.labels.description[lang]}
                   </FormLabel>
                   <FormControl>
                     <Input
                       placeholder={
-                        t.organizationList.modal.placeholders.description[lang]
+                        t.organizations.modal.placeholders.description[lang]
                       }
                       {...field}
                     />
@@ -201,7 +191,7 @@ export default function OrganizationModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      {t.organizationList.modal.labels.slug[lang]}
+                      {t.organizations.modal.labels.slug[lang]}
                     </FormLabel>
                     <FormControl>
                       <Input placeholder="my-org-slug" {...field} />

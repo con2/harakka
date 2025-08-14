@@ -131,6 +131,14 @@ export class AppModule implements NestModule {
         // Organization_items public endpoints
         { path: "org-items", method: RequestMethod.GET },
         { path: "org-items/*path", method: RequestMethod.GET },
+
+        // Organizations public endpoints
+        { path: "organizations", method: RequestMethod.GET },
+        { path: "organizations/*path", method: RequestMethod.GET },
+
+        // Organization-locations public endpoints
+        { path: "organization-locations", method: RequestMethod.GET },
+        { path: "organization-locations/*path", method: RequestMethod.GET },
       )
       .forRoutes(
         // Protected controllers

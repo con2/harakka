@@ -131,6 +131,19 @@ export const Navigation = () => {
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
+              {/* Organizations Link */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to={"/organizations"}
+                    className="flex items-center gap-1 text-secondary font-medium"
+                    data-cy="nav-organizations"
+                  >
+                    {t.navigation.organizations[lang]}
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
               {/* User GuideLines in Nav only for regular users */}
               {!isAnyTypeOfAdmin && (
                 <NavigationMenuItem>
