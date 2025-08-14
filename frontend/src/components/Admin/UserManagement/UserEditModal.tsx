@@ -33,6 +33,7 @@ import {
   fetchAllOrganizations,
 } from "@/store/slices/organizationSlice";
 import { useRoles } from "@/hooks/useRoles";
+import { formatRoleName } from "@/utils/format";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();
@@ -377,7 +378,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                         <SelectContent>
                           {availableRoles.map((r) => (
                             <SelectItem key={r.id} value={r.role}>
-                              {r.role}
+                              {formatRoleName(r.role)}
                             </SelectItem>
                           ))}
                         </SelectContent>

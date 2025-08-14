@@ -17,6 +17,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import {
+  fetchAvailableRoles,
   selectAllUserRoles,
   selectAvailableRoles,
 } from "@/store/slices/rolesSlice";
@@ -95,6 +96,7 @@ const UsersList = () => {
       initialFetchDone.current = true;
       void dispatch(fetchAllUsers());
       void refreshAllUserRoles();
+      void dispatch(fetchAvailableRoles());
     }
   }, [authLoading, isAuthorized, isModalOpen, dispatch, refreshAllUserRoles]);
 
