@@ -23,6 +23,14 @@ export const navigation = {
     fi: "Ota yhteyttä",
     en: "Contact Us",
   },
+  organizations: {
+    en: "Organizations",
+    fi: "Organisaatiot",
+  },
+  myOrganization: {
+    en: "My Organization",
+    fi: "Oma organisaatio",
+  },
   toast: {
     title: {
       fi: "Vahvista uloskirjautuminen",

@@ -143,6 +143,9 @@ const orgLocationsSlice = createSlice({
     },
     clearOrgLocations: (state) => {
       state.currentOrgLocations = [];
+      state.orgLocations = [];
+      state.currentOrgLocation = null;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {

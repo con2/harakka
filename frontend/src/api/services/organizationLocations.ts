@@ -52,7 +52,7 @@ export const orgLocationsApi = {
     limit: number = 10,
   ): Promise<ApiResponse<OrgLocationsWithStorageDetails[]>> =>
     api.get(
-      `organization-locations/organization/${id}?page=${page}?limit=${limit}`,
+      `organization-locations/organization/${id}?page=${page}&limit=${limit}`,
     ),
 
   /**

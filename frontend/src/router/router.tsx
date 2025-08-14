@@ -36,6 +36,8 @@ import App from "../App";
 import LoginPage from "@/pages/LoginPage";
 import { RoleManagement } from "@/components/Admin/Roles/RoleManagement";
 import AddItem from "@/pages/AdminPanel/AddItem";
+import OrganizationPage from "@/pages/OrganizationPage";
+import OrganizationsList from "../components/Organization/OrganizationsList";
 
 export const router = createBrowserRouter([
   {
@@ -248,7 +250,14 @@ export const router = createBrowserRouter([
         element: <PasswordResetResult />,
       },
       {
-        // all other routes lead to landing page
+        path: "/organizations",
+        element: <OrganizationsList />,
+      },
+      {
+        path: "/organization/:org_slug",
+        element: <OrganizationPage />,
+      },
+      {
         path: "*",
         element: <Navigate to="/" />,
       },

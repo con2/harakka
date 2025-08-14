@@ -23,7 +23,7 @@ import OrganizationModal, {
   OrganizationFormValues,
 } from "@/components/Admin/Organizations/OrganizationModal";
 
-const OrganizationList = () => {
+const Organizations = () => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
 
@@ -60,8 +60,7 @@ const OrganizationList = () => {
       setModalOpen(true);
     } else {
       toast.error(
-        t.organizationList.toasts.creationFailed[lang] ||
-          "Something went wrong.",
+        t.organizations.toasts.creationFailed[lang] || "Something went wrong.",
       );
     }
   };
@@ -75,8 +74,7 @@ const OrganizationList = () => {
       setModalOpen(true);
     } else {
       toast.error(
-        t.organizationList.toasts.creationFailed[lang] ||
-          "Something went wrong.",
+        t.organizations.toasts.creationFailed[lang] || "Something went wrong.",
       );
     }
   };
@@ -109,13 +107,13 @@ const OrganizationList = () => {
     try {
       if (modalMode === "create") {
         await dispatch(createOrganization(data)).unwrap();
-        toast.success(t.organizationList.toasts.created[lang]);
+        toast.success(t.organizations.toasts.created[lang]);
       } else if (modalMode === "edit" && selectedOrg) {
         await dispatch(
           updateOrganization({ id: selectedOrg.id, data }),
         ).unwrap();
         toast.success(
-          t.organizationList.toasts.updated[lang] || "Organization updated!",
+          t.organizations.toasts.updated[lang] || "Organization updated!",
         );
       }
       setModalOpen(false);
@@ -124,8 +122,7 @@ const OrganizationList = () => {
       void dispatch(fetchAllOrganizations({ page: currentPage, limit }));
     } catch {
       toast.error(
-        t.organizationList.toasts.creationFailed[lang] ||
-          "Something went wrong.",
+        t.organizations.toasts.creationFailed[lang] || "Something went wrong.",
       );
     }
   };
@@ -139,7 +136,7 @@ const OrganizationList = () => {
   // Table columns
   const columns: ColumnDef<OrganizationDetails>[] = [
     {
-      header: t.organizationList.columns.name[lang],
+      header: t.organizations.columns.name[lang],
       accessorKey: "name",
       cell: ({ row }) => (
         <button
@@ -151,15 +148,15 @@ const OrganizationList = () => {
       ),
     },
     {
-      header: t.organizationList.columns.slug[lang],
+      header: t.organizations.columns.slug[lang],
       accessorKey: "slug",
     },
     {
-      header: t.organizationList.columns.description[lang],
+      header: t.organizations.columns.description[lang],
       accessorKey: "description",
     },
     {
-      header: t.organizationList.columns.isActive[lang],
+      header: t.organizations.columns.isActive[lang],
       accessorKey: "is_active",
       cell: ({ row }) => (
         <Switch
@@ -169,7 +166,7 @@ const OrganizationList = () => {
       ),
     },
     {
-      header: t.organizationList.columns.createdAt[lang],
+      header: t.organizations.columns.createdAt[lang],
       accessorKey: "created_at",
       cell: ({ row }) =>
         row.original.created_at
@@ -180,14 +177,12 @@ const OrganizationList = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">
-        {t.organizationList.title[lang]}
-      </h1>
+      <h1 className="text-xl font-semibold">{t.organizations.title[lang]}</h1>
 
       {/* Add New Org button */}
       <div className="flex gap-4 justify-end">
         <Button onClick={openCreateModal} variant="outline" size="sm">
-          {t.organizationList.createButton[lang]}
+          {t.organizations.createButton[lang]}
         </Button>
       </div>
 
@@ -209,7 +204,7 @@ const OrganizationList = () => {
                     <Button
                       size="sm"
                       onClick={() => openDetailsModal(org)}
-                      title={t.organizationList.view[lang]}
+                      title={t.organizations.view[lang]}
                       className="text-gray-500 hover:text-primary hover:bg-primary/10"
                     >
                       <Eye className="h-4 w-4" />
@@ -259,4 +254,4 @@ const OrganizationList = () => {
   );
 };
 
-export default OrganizationList;
+export default Organizations;
