@@ -288,7 +288,7 @@ export const usersSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "fetch";
       })
-      // fetchAllOrderedUsers (admin/main_admin)
+      // fetchAllOrderedUsers
       .addCase(fetchAllOrderedUsers.pending, (state) => {
         state.loading = true;
         state.error = null;

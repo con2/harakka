@@ -84,16 +84,102 @@ const UsersList = () => {
     return activeOrgId ?? undefined; // Use selected org or undefined
   }, [shouldFetchAllUsers, activeOrgId]);
 
-  // Get available roles for filtering
+  // Get available roles for filtering - only show roles from current org context
   const availableRoles = useMemo(() => {
     const uniqueRoles = new Set<string>();
     allUserRoles.forEach((role) => {
       if (role.is_active && role.role_name) {
-        uniqueRoles.add(role.role_name);
+        // If super admin with no org selected, show all roles
+        if (isActiveRoleSuper && !activeOrgId) {
+          uniqueRoles.add(role.role_name);
+        }
+        // Otherwise, show roles from active org AND Global roles
+        else if (activeOrgId) {
+          if (
+            role.organization_id === activeOrgId ||
+            role.organization_name === "Global"
+          ) {
+            uniqueRoles.add(role.role_name);
+          }
+        } else if (role.organization_name === "Global") {
+          uniqueRoles.add(role.role_name);
+        }
       }
     });
     return Array.from(uniqueRoles).map((role) => ({ id: role, role }));
-  }, [allUserRoles]);
+  }, [allUserRoles, activeOrgId, isActiveRoleSuper]);
+
+  // Helper function to get user's roles for display based on admin permissions
+  const getUserRolesForDisplay = useCallback(
+    (userId: string) => {
+      const userRoles = allUserRoles.filter(
+        (role) => role.user_id === userId && role.is_active,
+      );
+
+      // If the current user is super_admin/superVera and no org is selected, show all roles
+      if (isActiveRoleSuper && !activeOrgId) {
+        return userRoles.map((role) => ({
+          role: role.role_name,
+          org: role.organization_name,
+        }));
+      }
+
+      // Otherwise, show roles based on context
+      const filteredRoles = userRoles.filter((role) => {
+        // If we have an active org, show roles from that org OR Global roles
+        if (activeOrgId) {
+          return (
+            role.organization_id === activeOrgId ||
+            role.organization_name === "Global"
+          );
+        }
+        // If no active org selected, show Global roles only
+        return role.organization_name === "Global";
+      });
+
+      // Prioritize active org roles over Global roles when both exist
+      if (activeOrgId && filteredRoles.length > 1) {
+        const activeOrgRoles = filteredRoles.filter(
+          (role) => role.organization_id === activeOrgId,
+        );
+        const globalRoles = filteredRoles.filter(
+          (role) => role.organization_name === "Global",
+        );
+
+        // If user has roles in active org, show those first, then Global
+        if (activeOrgRoles.length > 0) {
+          return [
+            ...activeOrgRoles.map((role) => ({
+              role: role.role_name,
+              org: role.organization_name,
+            })),
+            ...globalRoles.map((role) => ({
+              role: role.role_name,
+              org: role.organization_name,
+            })),
+          ];
+        }
+      }
+
+      return filteredRoles.map((role) => ({
+        role: role.role_name,
+        org: role.organization_name,
+      }));
+    },
+    [allUserRoles, isActiveRoleSuper, activeOrgId],
+  );
+
+  // Filter users based on role filter
+  const filteredUsers = useMemo(() => {
+    if (!users.data || roleFilter === "all") {
+      return users.data || [];
+    }
+
+    return users.data.filter((user) => {
+      const userRoles = getUserRolesForDisplay(user.id);
+      return userRoles.some((roleInfo) => roleInfo.role === roleFilter);
+    });
+  }, [users.data, roleFilter, getUserRolesForDisplay]);
 
   // ————————————— Side Effects —————————————
 
@@ -110,6 +196,11 @@ const UsersList = () => {
       void refreshAllUserRoles();
     }
   }, [authLoading, isAuthorized, allUserRoles.length, refreshAllUserRoles]);
+
+  // Reset role filter when active organization changes
+  useEffect(() => {
+    setRoleFilter("all");
+  }, [activeOrgId, activeRoleName]);
 
   // Fetch users when key dependencies change
   useEffect(() => {
@@ -151,54 +242,32 @@ const UsersList = () => {
       .map((role) => role.role_name);
   };
 
-  // Helper function to get user's roles for display based on admin permissions
-  const getUserRolesForDisplay = (userId: string) => {
-    const userRoles = allUserRoles.filter(
-      (role) => role.user_id === userId && role.is_active,
-    );
-
-    // If the current user is super_admin/superVera, show all roles
-    if (isActiveRoleSuper || (isSuper && !activeOrgId)) {
-      return userRoles.map((role) => ({
-        role: role.role_name,
-        org: role.organization_name,
-      }));
-    }
-
-    // For regular admins, only show roles from:
-    // 1. The selected organization (activeOrgId)
-    // 2. Global organization with "user" role
-    const filteredRoles = userRoles.filter((role) => {
-      // Always show Global users
-      if (role.organization_name === "Global" && role.role_name === "user") {
-        return true;
-      }
-      // Show roles from the active organization
-      if (activeOrgId && role.organization_id === activeOrgId) {
-        return true;
-      }
-      return false;
-    });
-
-    return filteredRoles.map((role) => ({
-      role: role.role_name,
-      org: role.organization_name,
-    }));
-  };
-
   // Helper: derive the organization name for a given user for this view
   const getUserOrgName = (userId: string) => {
     const roles = allUserRoles.filter(
       (r) => r.user_id === userId && r.is_active,
     );
-    // Prefer Global when present
+
+    // If we're viewing in the context of a specific organization, prioritize that org
+    if (activeOrgId) {
+      const activeOrgRole = roles.find(
+        (r) => r.organization_id === activeOrgId,
+      );
+      if (activeOrgRole?.organization_name) {
+        return activeOrgRole.organization_name;
+      }
+    }
+
+    // If super admin with no org selected, show Global first if present
+    if (isActiveRoleSuper && !activeOrgId) {
+      const global = roles.find((r) => r.organization_name === "Global");
+      if (global) return "Global";
+    }
+
+    // Fallback to Global if user has a Global role but no role in active org
     const global = roles.find((r) => r.organization_name === "Global");
     if (global) return "Global";
-    // Fallback to the active org if the user has a role there
-    if (activeOrgId) {
-      const inActive = roles.find((r) => r.organization_id === activeOrgId);
-      if (inActive?.organization_name) return inActive.organization_name;
-    }
+
     // Otherwise, show the first org name if any
     return roles[0]?.organization_name ?? "";
   };
@@ -237,7 +306,6 @@ const UsersList = () => {
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at ?? ""), "d MMM yyyy"),
     },
-    // Org Name column
     {
       id: "orgName",
       header: "Org Name",
@@ -282,7 +350,7 @@ const UsersList = () => {
         const canDelete =
           isSuper || (isAuthorized && targetUserRoles.includes("user"));
 
-        // New banning permission logic based on ACTIVE role:
+        // Banning permission logic based on ACTIVE role:
         // - When acting as "admin": Cannot ban users at all
         // - When acting as "main_admin": Can ban users (for Role and Org only)
         // - When acting as "super_admin"/"superVera": Can ban users (including App ban)
@@ -392,7 +460,7 @@ const UsersList = () => {
 
       <PaginatedDataTable
         columns={columns}
-        data={users.data || []}
+        data={filteredUsers}
         pageIndex={Math.max(0, (users.metadata?.page ?? 1) - 1)}
         pageCount={users.metadata?.totalPages || 1}
         onPageChange={(page) =>
