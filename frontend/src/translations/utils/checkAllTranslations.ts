@@ -20,12 +20,6 @@ interface TranslationIssue {
   value?: unknown;
 }
 
-interface UnusedKeyInfo {
-  path: string;
-  moduleFile: string;
-  value: Record<string, string>;
-}
-
 function checkObject(obj: unknown, pathArr: string[] = []): TranslationIssue[] {
   let issues: TranslationIssue[] = [];
 
@@ -542,11 +536,11 @@ export function checkAllTranslations(strictMode = false) {
     console.log("\nChecking for unused translation keys...");
     const unusedKeyResults = checkUnusedKeys();
     if (unusedKeyResults.unusedKeys.length === 0) {
-      console.log(chalk.green("✅ No unused translation keys found."));
+      console.log(chalk.green("No unused translation keys found."));
     } else {
       console.warn(
         chalk.yellow(
-          `⚠️  Found ${unusedKeyResults.unusedKeys.length} unused translation keys:`,
+          `Found ${unusedKeyResults.unusedKeys.length} unused translation keys:`,
         ),
       );
       for (const key of unusedKeyResults.unusedKeys) {
