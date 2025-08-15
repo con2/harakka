@@ -124,7 +124,6 @@ const OrganizationLogoUploader: React.FC<OrganizationLogoUploaderProps> = ({
     if (!file || !effectiveOrgId || !croppedAreaPixels || !previewUrl) return;
 
     try {
-      // getCroppedImg returns a Blob; wrap into File so FormData works
       const croppedBlob = await getCroppedImg(
         previewUrl,
         crop,
@@ -141,10 +140,15 @@ const OrganizationLogoUploader: React.FC<OrganizationLogoUploaderProps> = ({
         uploadOrganizationLogo({ id: effectiveOrgId, file: croppedFile }),
       ).unwrap();
 
-      toast.success("Logo updated successfully");
-      onLogoUpdated?.(result.url);
-      setOpen(false);
+      if (result?.url) {
+        toast.success(t.organizationLogoUploader.messages.success[lang]);
+        onLogoUpdated?.(result.url);
+        setOpen(false);
+      } else {
+        toast.error(t.organizationLogoUploader.messages.error[lang]);
+      }
     } catch {
+      // Only show error if logo was not updated
       toast.error(t.organizationLogoUploader.messages.error[lang]);
     }
   };
