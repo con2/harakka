@@ -1,13 +1,5 @@
 export const organizationList = {
-  title: {
-    fi: "Hallinnoi organisaatioita",
-    en: "Manage Organizations",
-  },
   columns: {
-    name: {
-      fi: "Nimi",
-      en: "Name",
-    },
     description: {
       fi: "Kuvaus",
       en: "Description",

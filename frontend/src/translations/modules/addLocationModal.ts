@@ -93,28 +93,12 @@ export const addLocationModal = {
         en: "Active Location",
         fi: "Aktiivinen sijainti",
       },
-      description: {
-        en: "Whether this location is currently active",
-        fi: "Onko tämä sijainti tällä hetkellä aktiivinen",
-      },
     },
   },
   labels: {
     address: {
       en: "Address",
       fi: "Osoite",
-    },
-    coordinates: {
-      en: "Coordinates",
-      fi: "Koordinaatit",
-    },
-    status: {
-      en: "Status",
-      fi: "Tila",
-    },
-    activeLocation: {
-      en: "Active Location",
-      fi: "Aktiivinen sijainti",
     },
   },
   buttons: {
