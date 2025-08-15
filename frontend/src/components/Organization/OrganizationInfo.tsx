@@ -13,7 +13,7 @@ const OrganizationInfo: React.FC<OrganizationInfoProps> = ({
     <div className="organization-info space-y-6 p-6">
       {/* Organization Header */}
       <div className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 overflow-hidden">
+        <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 overflow-hidden">
           {organization.logo_picture_url ? (
             <img
               src={organization.logo_picture_url}
