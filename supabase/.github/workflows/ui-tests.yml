@@ -1,0 +1,66 @@
+name: UI Tests
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'packages/ui/**'
+
+# Cancel old builds on new commit for same workflow + branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_number: [1]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            packages
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install deps
+        run: pnpm i
+
+      - name: Run tests
+        run: pnpm run test:ci
+        working-directory: ./packages/ui
+
+      - name: Upload coverage results to Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          parallel: true
+          flag-name: ui-tests
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ./packages/ui/coverage/lcov.info
+          base-path: './packages/ui'
+
+  finish:
+    needs: test
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@master
+        with:
+          parallel-finished: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}

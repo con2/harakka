@@ -1,0 +1,353 @@
+import { toString as CronToString } from 'cronstrue'
+import { CircleCheck, CircleX, List, Loader } from 'lucide-react'
+import Link from 'next/link'
+import { UIEvent, useCallback, useMemo } from 'react'
+import DataGrid, { Column, Row } from 'react-data-grid'
+
+import { useParams } from 'common'
+import { useCronJobQuery } from 'data/database-cron-jobs/database-cron-job-query'
+import {
+  CronJobRun,
+  useCronJobRunsInfiniteQuery,
+} from 'data/database-cron-jobs/database-cron-jobs-runs-infinite-query'
+import { useEdgeFunctionsQuery } from 'data/edge-functions/edge-functions-query'
+import dayjs from 'dayjs'
+import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import {
+  Button,
+  cn,
+  LoadingLine,
+  SimpleCodeBlock,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from 'ui'
+import { TimestampInfo } from 'ui-patterns'
+import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
+import {
+  calculateDuration,
+  formatDate,
+  isSecondsFormat,
+  parseCronJobCommand,
+} from './CronJobs.utils'
+import CronJobsEmptyState from './CronJobsEmptyState'
+
+const cronJobColumns = [
+  {
+    id: 'runid',
+    name: 'RunID',
+    minWidth: 60,
+    value: (row: CronJobRun) => (
+      <div className="flex items-center gap-1.5">
+        <h3 className="text-xs">{row.runid}</h3>
+      </div>
+    ),
+  },
+  {
+    id: 'message',
+    name: 'Message',
+    minWidth: 200,
+    value: (row: CronJobRun) => (
+      <div className="flex items-center gap-1.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="text-xs cursor-pointer truncate max-w-[300px]">
+              {row.return_message}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="center" className="max-w-[300px] text-wrap">
+            <SimpleCodeBlock
+              showCopy={true}
+              className="sql"
+              parentClassName="!p-0 [&>div>span]:text-xs"
+            >
+              {row.return_message}
+            </SimpleCodeBlock>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    ),
+  },
+
+  {
+    id: 'status',
+    name: 'Status',
+    minWidth: 75,
+    value: (row: CronJobRun) => <StatusBadge status={row.status} />,
+  },
+  {
+    id: 'start_time',
+    name: 'Start Time',
+    minWidth: 120,
+    value: (row: CronJobRun) => <div className="text-xs">{formatDate(row.start_time)}</div>,
+  },
+  {
+    id: 'end_time',
+    name: 'End Time',
+    minWidth: 120,
+    value: (row: CronJobRun) => (
+      <div className="text-xs">{row.status === 'succeeded' ? formatDate(row.end_time) : '-'}</div>
+    ),
+  },
+
+  {
+    id: 'duration',
+    name: 'Duration',
+    minWidth: 100,
+    value: (row: CronJobRun) => (
+      <span className="text-xs">
+        {row.status === 'succeeded' ? calculateDuration(row.start_time, row.end_time) : ''}
+      </span>
+    ),
+  },
+]
+
+const columns = cronJobColumns.map((col) => {
+  const result: Column<CronJobRun> = {
+    key: col.id,
+    name: col.name,
+    resizable: true,
+    minWidth: col.minWidth ?? 120,
+    headerCellClass: 'first:pl-6 cursor-pointer',
+    renderHeaderCell: () => {
+      return (
+        <div className="flex items-center justify-between font-mono font-normal text-xs w-full">
+          <div className="flex items-center gap-x-2">
+            <p className="!text-foreground">{col.name}</p>
+          </div>
+        </div>
+      )
+    },
+    renderCell: (props) => {
+      const value = col.value(props.row)
+
+      if (['start_time', 'end_time'].includes(col.id)) {
+        const formattedValue = dayjs((props.row as any)[(col as any).id]).valueOf()
+        return (
+          <div className="flex items-center">
+            <TimestampInfo
+              utcTimestamp={formattedValue}
+              labelFormat="DD MMM YYYY HH:mm:ss (ZZ)"
+              className="font-mono text-xs"
+            />
+          </div>
+        )
+      }
+
+      return (
+        <div
+          className={cn(
+            'w-full flex flex-col justify-center font-mono text-xs',
+            typeof value === 'number' ? 'text-right' : ''
+          )}
+        >
+          <span>{value}</span>
+        </div>
+      )
+    },
+  }
+  return result
+})
+
+function isAtBottom({ currentTarget }: UIEvent<HTMLDivElement>): boolean {
+  return currentTarget.scrollTop + 10 >= currentTarget.scrollHeight - currentTarget.clientHeight
+}
+
+export const PreviousRunsTab = () => {
+  const { childId } = useParams()
+  const { data: project } = useSelectedProjectQuery()
+
+  const jobId = Number(childId)
+
+  const { data: job, isLoading: isLoadingCronJobs } = useCronJobQuery({
+    projectRef: project?.ref,
+    connectionString: project?.connectionString,
+    id: jobId,
+  })
+
+  const {
+    data,
+    isLoading: isLoadingCronJobRuns,
+    fetchNextPage,
+    refetch,
+    isFetching,
+  } = useCronJobRunsInfiniteQuery(
+    {
+      projectRef: project?.ref,
+      connectionString: project?.connectionString,
+      jobId: jobId,
+    },
+    { enabled: !!jobId, staleTime: 30000 }
+  )
+
+  const { data: edgeFunctions = [] } = useEdgeFunctionsQuery({ projectRef: project?.ref })
+
+  const cronJobRuns = useMemo(() => data?.pages.flatMap((p) => p) || [], [data?.pages])
+  const cronJobValues = parseCronJobCommand(job?.command || '', project?.ref!)
+  const edgeFunction =
+    cronJobValues.type === 'edge_function' ? cronJobValues.edgeFunctionName : undefined
+  const edgeFunctionSlug = edgeFunction?.split('/functions/v1/').pop()
+  const isValidEdgeFunction = edgeFunctions.some((x) => x.slug === edgeFunctionSlug)
+
+  const handleScroll = useCallback(
+    (event: UIEvent<HTMLDivElement>) => {
+      if (isLoadingCronJobRuns || !isAtBottom(event)) return
+      // the cancelRefetch is to prevent the query from being refetched when the user scrolls back up and down again,
+      // resulting in multiple fetchNextPage calls
+      fetchNextPage({ cancelRefetch: false })
+    },
+    [fetchNextPage, isLoadingCronJobRuns]
+  )
+
+  return (
+    <div className="h-full flex flex-col">
+      <LoadingLine loading={isFetching} />
+      <DataGrid
+        className="flex-grow"
+        rowHeight={44}
+        headerRowHeight={36}
+        onScroll={handleScroll}
+        columns={columns}
+        rows={cronJobRuns ?? []}
+        rowClass={() => {
+          const isSelected = false
+          return cn([
+            `${isSelected ? 'bg-surface-300 dark:bg-surface-300' : 'bg-200'}  `,
+            `${isSelected ? '[&>div:first-child]:border-l-4 border-l-secondary [&>div]:border-l-foreground' : ''}`,
+            '[&>.rdg-cell]:border-box [&>.rdg-cell]:outline-none [&>.rdg-cell]:shadow-none',
+            '[&>.rdg-cell:first-child>div]:ml-4',
+          ])
+        }}
+        renderers={{
+          renderRow(_idx, props) {
+            return <Row key={props.row.job_pid} {...props} />
+          },
+          noRowsFallback: isLoadingCronJobRuns ? (
+            <div className="absolute top-14 px-6 w-full">
+              <GenericSkeletonLoader />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center w-full col-span-6">
+              <CronJobsEmptyState page="runs" />
+            </div>
+          ),
+        }}
+      />
+
+      <div className="px-6 py-6 flex gap-12 border-t bg">
+        {isLoadingCronJobs ? (
+          <GenericSkeletonLoader />
+        ) : (
+          <>
+            <div className="grid gap-2 w-56">
+              <h3 className="text-sm">Schedule</h3>
+              <p className="text-xs text-foreground-light">
+                {job?.schedule ? (
+                  <>
+                    <span className="font-mono text-lg">{job.schedule.toLocaleLowerCase()}</span>
+                    <p>
+                      {isSecondsFormat(job.schedule)
+                        ? ''
+                        : CronToString(job.schedule.toLowerCase())}
+                    </p>
+                  </>
+                ) : (
+                  <span>Loading schedule...</span>
+                )}
+              </p>
+            </div>
+
+            <div className="grid gap-y-2">
+              <h3 className="text-sm">Command</h3>
+              <Tooltip>
+                <TooltipTrigger className=" text-left p-0! cursor-pointer truncate max-w-[300px] h-12 relative">
+                  <SimpleCodeBlock
+                    showCopy={false}
+                    className="sql"
+                    parentClassName=" [&>div>span]:text-xs bg-alternative-200 !p-2 rounded-md"
+                  >
+                    {job?.command}
+                  </SimpleCodeBlock>
+                  <div className="bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background-200 to-transparent absolute " />
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  align="center"
+                  className="max-w-[400px] text-wrap p-0"
+                >
+                  <p className="text-xs font-mono px-2 py-1 border-b bg-surface-100">Command</p>
+                  <SimpleCodeBlock
+                    showCopy={false}
+                    className="sql"
+                    parentClassName=" [&>div>span]:text-xs bg-alternative-200 !p-3"
+                  >
+                    {job?.command}
+                  </SimpleCodeBlock>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+
+            <div className="grid gap-y-2">
+              <h3 className="text-sm">Explore</h3>
+              <div className="flex items-center gap-x-2">
+                <Button asChild type="outline" icon={<List strokeWidth={1.5} size="14" />}>
+                  {/* [Terry] need to link to the exact jobid, but not currently supported */}
+                  <Link
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`/project/${project?.ref}/logs/pgcron-logs/`}
+                  >
+                    View Cron logs
+                  </Link>
+                </Button>
+                {isValidEdgeFunction && (
+                  <Button asChild type="outline">
+                    <Link
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href={`/project/${project?.ref}/functions/${edgeFunctionSlug}/logs`}
+                    >
+                      View Edge Function logs
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+interface StatusBadgeProps {
+  status: string
+}
+
+function StatusBadge({ status }: StatusBadgeProps) {
+  if (status === 'succeeded') {
+    return (
+      <span className="text-brand-600 flex items-center gap-1">
+        <CircleCheck size={14} /> Succeeded
+      </span>
+    )
+  }
+
+  if (status === 'failed') {
+    return (
+      <span className="text-destructive flex items-center gap-1">
+        <CircleX size={14} /> Failed
+      </span>
+    )
+  }
+
+  if (['running', 'starting', 'sending', 'connecting'].includes(status)) {
+    return (
+      <span className="text-_secondary flex items-center gap-1">
+        <Loader size={14} className="animate-spin" /> Running
+      </span>
+    )
+  }
+
+  return null
+}
