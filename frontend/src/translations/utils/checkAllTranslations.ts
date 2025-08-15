@@ -20,6 +20,12 @@ interface TranslationIssue {
   value?: unknown;
 }
 
+interface UnusedKeyInfo {
+  path: string;
+  moduleFile: string;
+  value: Record<string, string>;
+}
+
 function checkObject(obj: unknown, pathArr: string[] = []): TranslationIssue[] {
   let issues: TranslationIssue[] = [];
 
@@ -38,8 +44,9 @@ function checkObject(obj: unknown, pathArr: string[] = []): TranslationIssue[] {
     keys.length <= SUPPORTED_LANGUAGES.length;
 
   if (isTranslationObj) {
+    const typedObj = obj as Record<string, unknown>;
+    // Check for missing translations
     for (const lang of SUPPORTED_LANGUAGES) {
-      const typedObj = obj as Record<string, unknown>;
       if (
         !(lang in typedObj) ||
         typedObj[lang] === undefined ||
@@ -52,15 +59,152 @@ function checkObject(obj: unknown, pathArr: string[] = []): TranslationIssue[] {
         });
       }
     }
+
+    // Check for translation quality issues
+    const translations = SUPPORTED_LANGUAGES.map(
+      (lang) => typedObj[lang] as string,
+    ).filter((t) => typeof t === "string" && t.length > 0);
+
+    if (translations.length >= 2) {
+      // Check for length disparity (one translation is 3x longer than another)
+      const lengths = translations.map((t) => t.length);
+      const minLength = Math.min(...lengths);
+      const maxLength = Math.max(...lengths);
+      if (minLength > 0 && maxLength / minLength > 3) {
+        issues.push({
+          path: pathArr.join("."),
+          issue: `Significant length disparity between translations (${minLength} vs ${maxLength} chars)`,
+        });
+      }
+
+      // Check for identical translations (might indicate copy-paste errors)
+      const uniqueTranslations = new Set(translations);
+      if (uniqueTranslations.size === 1) {
+        issues.push({
+          path: pathArr.join("."),
+          issue: "All translations are identical - possible copy-paste error",
+        });
+      }
+
+      // Check for missing interpolation placeholders
+      const placeholderPattern = /\{[^}]+\}|\$\{[^}]+\}/g;
+      const placeholderCounts = translations.map((t) => {
+        const matches = t.match(placeholderPattern);
+        return matches ? matches.length : 0;
+      });
+      if (new Set(placeholderCounts).size > 1) {
+        issues.push({
+          path: pathArr.join("."),
+          issue: "Inconsistent placeholder count between translations",
+        });
+      }
+    }
+
     return issues;
   }
 
   for (const key of keys) {
+    // Check for naming consistency
+    if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(key)) {
+      issues.push({
+        path: [...pathArr, key].join("."),
+        issue: "Key name should use camelCase or snake_case format",
+      });
+    }
+
     issues = issues.concat(
       checkObject((obj as Record<string, unknown>)[key], [...pathArr, key]),
     );
   }
   return issues;
+}
+
+// --- Unused key detection ---
+function collectAllTranslationKeys(
+  obj: unknown,
+  pathArr: string[] = [],
+): Set<string> {
+  const keys = new Set<string>();
+
+  if (typeof obj !== "object" || obj === null) {
+    return keys;
+  }
+
+  const record = obj as Record<string, unknown>;
+  const objKeys = Object.keys(record);
+
+  // Check if this is a translation leaf node
+  const isTranslationObj =
+    SUPPORTED_LANGUAGES.every((lang) => objKeys.includes(lang)) &&
+    objKeys.length <= SUPPORTED_LANGUAGES.length;
+
+  if (isTranslationObj && pathArr.length > 0) {
+    keys.add(pathArr.join("."));
+    return keys;
+  }
+
+  // Recursively collect keys from nested objects
+  for (const key of objKeys) {
+    const nestedKeys = collectAllTranslationKeys(record[key], [
+      ...pathArr,
+      key,
+    ]);
+    nestedKeys.forEach((k) => keys.add(k));
+  }
+
+  return keys;
+}
+
+function findUsedTranslationKeys(): Set<string> {
+  const srcPath = path.join(ROOT_DIR, "src");
+  const normalizedPath = srcPath.replace(/\\/g, "/");
+
+  const files = globModule.sync(`${normalizedPath}/**/*.{ts,tsx,js,jsx}`, {
+    ignore: [
+      "**/translations/**",
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/types/**",
+      "**/*.d.ts",
+    ],
+    absolute: true,
+  });
+
+  const usedKeys = new Set<string>();
+
+  // Pattern to match t.path.to.key[lang] usage
+  const translationPattern =
+    /t\.([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\[/g;
+
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(file, "utf8");
+      let match;
+
+      while ((match = translationPattern.exec(content)) !== null) {
+        const keyPath = match[1];
+        usedKeys.add(keyPath);
+      }
+    } catch (error) {
+      console.warn(`Warning: Could not read file ${file}:`, error);
+    }
+  }
+
+  return usedKeys;
+}
+
+function checkUnusedKeys() {
+  const allKeys = collectAllTranslationKeys(t);
+  const usedKeys = findUsedTranslationKeys();
+
+  const unusedKeys = Array.from(allKeys).filter((key) => !usedKeys.has(key));
+
+  return {
+    allKeys: Array.from(allKeys),
+    usedKeys: Array.from(usedKeys),
+    unusedKeys,
+  };
 }
 
 // --- Hardcoded string checker ---
@@ -395,7 +539,36 @@ export function checkAllTranslations(strictMode = false) {
       }
     }
 
-    return { translationIssues: issues, hardcodedStrings: hardcoded };
+    console.log("\nChecking for unused translation keys...");
+    const unusedKeyResults = checkUnusedKeys();
+    if (unusedKeyResults.unusedKeys.length === 0) {
+      console.log(chalk.green("✅ No unused translation keys found."));
+    } else {
+      console.warn(
+        chalk.yellow(
+          `⚠️  Found ${unusedKeyResults.unusedKeys.length} unused translation keys:`,
+        ),
+      );
+      for (const key of unusedKeyResults.unusedKeys) {
+        console.warn(`- ${chalk.blue(key)}`);
+      }
+      console.log(
+        chalk.gray(
+          `\nTotal keys: ${unusedKeyResults.allKeys.length}, Used: ${unusedKeyResults.usedKeys.length}, Unused: ${unusedKeyResults.unusedKeys.length}`,
+        ),
+      );
+    }
+
+    return {
+      translationIssues: issues,
+      hardcodedStrings: hardcoded,
+      unusedKeys: unusedKeyResults.unusedKeys,
+      keyStats: {
+        total: unusedKeyResults.allKeys.length,
+        used: unusedKeyResults.usedKeys.length,
+        unused: unusedKeyResults.unusedKeys.length,
+      },
+    };
   } catch (error: unknown) {
     console.error(chalk.red("Error checking translations:"), error);
     if (error instanceof Error) {

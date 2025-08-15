@@ -20,5 +20,9 @@ export const general = {
       fi: "Muokkaa",
       en: "Edit",
     },
+    close: {
+      fi: "Sulje",
+      en: "Close",
+    },
   },
 };

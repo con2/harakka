@@ -1,3 +1,5 @@
+import { common } from "../modules/common";
+
 export const organizations = {
   title: {
     fi: "Hallinnoi organisaatioita",
@@ -6,12 +8,6 @@ export const organizations = {
   createButton: {
     fi: "Luo organisaatio",
     en: "Create Organization",
-  },
-  filters: {
-    search: {
-      fi: "Hae organisaation nimeä",
-      en: "Search organization name",
-    },
   },
   columns: {
     name: {
@@ -98,16 +94,16 @@ export const organizations = {
     },
     buttons: {
       cancel: {
-        fi: "Peruuta",
-        en: "Cancel",
+        fi: common.cancel.fi,
+        en: common.cancel.en,
       },
       save: {
-        fi: "Tallenna",
-        en: "Save",
+        fi: common.save.fi,
+        en: common.save.fi,
       },
       close: {
-        fi: "Sulje",
-        en: "Close",
+        fi: common.close.fi,
+        en: common.close.en,
       },
     },
   },
@@ -131,31 +127,9 @@ export const organizations = {
       en: "Failed to create organization.",
     },
   },
-  messages: {
-    created: {
-      fi: "Organisaatio luotu!",
-      en: "Organization created!",
-    },
-    updated: {
-      fi: "Organisaatio päivitetty!",
-      en: "Organization updated!",
-    },
-    failed: {
-      fi: "Organisaation luominen epäonnistui.",
-      en: "Failed to create organization.",
-    },
-  },
   view: {
     fi: "Näytä",
     en: "View",
-  },
-  error: {
-    fi: "Virhe: ",
-    en: "Error: ",
-  },
-  myRoles: {
-    fi: "Omat roolit",
-    en: "My roles",
   },
 };
 
