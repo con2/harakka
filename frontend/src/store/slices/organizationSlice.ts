@@ -52,16 +52,6 @@ export const fetchAllOrganizations = createAsyncThunk(
       );
     }
   },
-  {
-    condition: (_, { getState }) => {
-      const state = getState() as RootState;
-      // Skip if the organizations list is already populated or a fetch is in progress
-      return (
-        state.organizations.organizations.length === 0 &&
-        !state.organizations.loading
-      );
-    },
-  },
 );
 
 export const fetchOrganizationById = createAsyncThunk(
@@ -216,22 +206,11 @@ const organizationSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      .addCase(
-        createOrganization.fulfilled,
-        (state: OrganizationState, action) => {
-          state.organizations.unshift(action.payload);
-        },
-      )
+
       .addCase(
         updateOrganization.fulfilled,
         (state: OrganizationState, action) => {
-          const index = state.organizations.findIndex(
-            (org) => org.id === action.payload.id,
-          );
-          if (index !== -1) {
-            state.organizations[index] = action.payload;
-          }
-          // optional:
+          // Only update selectedOrganization if needed
           if (state.selectedOrganization?.id === action.payload.id) {
             state.selectedOrganization = action.payload;
           }
@@ -239,6 +218,17 @@ const organizationSlice = createSlice({
       )
       .addCase(deleteOrganization.fulfilled, (state, action) => {
         const deletedId = action.payload;
+        // Remove from current page's organizations list
+        state.organizations = state.organizations.filter(
+          (org) => org.id !== deletedId,
+        );
+        if (state.selectedOrganization?.id === deletedId) {
+          state.selectedOrganization = null;
+        }
+      })
+      .addCase(softDeleteOrganization.fulfilled, (state, action) => {
+        const deletedId = action.payload;
+        // Remove from current page's organizations list
         state.organizations = state.organizations.filter(
           (org) => org.id !== deletedId,
         );
