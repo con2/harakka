@@ -159,7 +159,7 @@ const AdminItemsTable = () => {
         location_filter: [],
         categories: [],
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        org_ids: activeOrganizationId ?? undefined,
+        org_ids: isSuperVera ? undefined : (activeOrganizationId ?? undefined),
       }),
     );
   }, [
@@ -173,6 +173,7 @@ const AdminItemsTable = () => {
     tagFilter,
     statusFilter,
     activeOrganizationId,
+    isSuperVera,
   ]);
 
   //fetch tags list
