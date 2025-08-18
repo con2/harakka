@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const bookingList = {
   title: {
     fi: "Hallinnoi tilauksia",
@@ -57,8 +59,8 @@ export const bookingList = {
       en: "Customer",
     },
     status: {
-      fi: "Tila",
-      en: "Status",
+      fi: common.status.fi,
+      en: common.status.en,
     },
     bookingDate: {
       fi: "Tilauspäivä",
@@ -107,8 +109,8 @@ export const bookingList = {
       en: "Booking Information",
     },
     status: {
-      fi: "Tila:",
-      en: "Status:",
+      fi: common.status.fi,
+      en: common.status.en,
     },
     date: {
       fi: "Päivämäärä:",
@@ -140,8 +142,8 @@ export const bookingList = {
     },
     buttons: {
       confirm: {
-        fi: "Vahvistaa",
-        en: "Confirm",
+        fi: common.confirm.fi,
+        en: common.confirm.en,
       },
       reject: {
         fi: "Hylkää",

@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const userEditModal = {
   title: {
     fi: "Muokkaa käyttäjää",
@@ -9,60 +11,60 @@ export const userEditModal = {
   },
   labels: {
     fullName: {
-      fi: "Koko nimi",
-      en: "Full Name",
+      fi: common.personalData.name.fi,
+      en: common.personalData.name.en,
     },
     email: {
-      fi: "Sähköposti",
-      en: "Email",
+      fi: common.personalData.email.fi,
+      en: common.personalData.email.en,
     },
     phone: {
-      fi: "Puhelinnumero",
-      en: "Phone Number",
+      fi: common.personalData.phone.fi,
+      en: common.personalData.phone.en,
     },
     roles: {
       fi: "Roolit",
       en: "Roles",
     },
     visibleName: {
-      fi: "Näkyvä nimi",
-      en: "Visible Name",
+      fi: common.personalData.visibleName.fi,
+      en: common.personalData.visibleName.en,
     },
   },
   columns: {
     organization: {
-      fi: "Organisaatio",
-      en: "Organization",
+      fi: common.organizations.organization.fi,
+      en: common.organizations.organization.en,
     },
     role: {
-      fi: "Rooli",
-      en: "Role",
+      fi: common.roles.role.fi,
+      en: common.roles.role.en,
     },
     active: {
-      fi: "Aktiivinen",
-      en: "Active",
+      fi: common.active.fi,
+      en: common.active.en,
     },
     actions: {
-      fi: "Toiminnot",
-      en: "Actions",
+      fi: common.actions.fi,
+      en: common.actions.en,
     },
   },
   placeholders: {
     fullName: {
-      fi: "Koko nimi",
-      en: "Full Name",
+      fi: common.personalData.name.fi,
+      en: common.personalData.name.en,
     },
     email: {
-      fi: "Sähköposti",
-      en: "Email",
+      fi: common.personalData.email.fi,
+      en: common.personalData.email.en,
     },
     phone: {
-      fi: "Puhelinnumero",
-      en: "Phone Number",
+      fi: common.personalData.phone.fi,
+      en: common.personalData.phone.en,
     },
     visibleName: {
-      fi: "Näkyvä nimi",
-      en: "Visible Name",
+      fi: common.personalData.visibleName.fi,
+      en: common.personalData.visibleName.en,
     },
     selectRole: {
       fi: "Valitse rooli",
@@ -79,8 +81,8 @@ export const userEditModal = {
       en: "Save Changes",
     },
     remove: {
-      fi: "Poista",
-      en: "Remove",
+      fi: common.remove.fi,
+      en: common.remove.en,
     },
     addRole: {
       fi: "Lisää rooli",

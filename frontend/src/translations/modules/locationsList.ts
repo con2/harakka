@@ -6,24 +6,24 @@ export const locationsList = {
     en: "No locations available.",
   },
   active: {
-    fi: "Aktiivinen",
-    en: "Active",
+    fi: common.active.fi,
+    en: common.active.en,
   },
   inactive: {
-    fi: "Ei aktiivinen",
-    en: "Inactive",
+    fi: common.inactive.fi,
+    en: common.inactive.en,
   },
   address: {
-    fi: "Osoite",
-    en: "Address",
+    fi: common.personalData.address.fi,
+    en: common.personalData.address.en,
   },
   noAddress: {
     fi: "Ei osoitetta saatavilla",
     en: "No address available",
   },
   organization: {
-    fi: "Organisaatio",
-    en: "Organization",
+    fi: common.organizations.organization.fi,
+    en: common.organizations.organization.en,
   },
   created: {
     fi: "Luotu",

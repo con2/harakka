@@ -1,11 +1,13 @@
+import { common } from "./common";
+
 export const navigation = {
   myProfile: {
     fi: "Profiilini",
     en: "My Profile",
   },
   admin: {
-    fi: "Ylläpitäjä",
-    en: "Admin",
+    fi: common.roles.admin.fi,
+    en: common.roles.admin.en,
   },
   storage: {
     fi: "Varasto",
@@ -20,8 +22,8 @@ export const navigation = {
     en: "Contact Us",
   },
   organizations: {
-    en: "Organizations",
-    fi: "Organisaatiot",
+    en: common.organizations.organization.en,
+    fi: common.organizations.organization.fi,
   },
   toast: {
     title: {
@@ -37,8 +39,8 @@ export const navigation = {
       en: "Log Out",
     },
     cancelText: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
     success: {
       fi: "Uloskirjautuminen peruttu.",

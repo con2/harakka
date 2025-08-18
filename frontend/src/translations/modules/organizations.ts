@@ -11,8 +11,8 @@ export const organizations = {
   },
   columns: {
     name: {
-      fi: "Nimi",
-      en: "Name",
+      fi: common.personalData.name.fi,
+      en: common.personalData.name.en,
     },
     slug: {
       fi: "Slug",
@@ -23,8 +23,8 @@ export const organizations = {
       en: "Description",
     },
     isActive: {
-      fi: "Aktiivinen",
-      en: "Active",
+      fi: common.active.fi,
+      en: common.active.en,
     },
     createdAt: {
       fi: "Luotu",
@@ -34,24 +34,24 @@ export const organizations = {
   values: {
     isActive: {
       yes: {
-        fi: "Kyllä",
-        en: "Yes",
+        fi: common.yes.fi,
+        en: common.yes.en,
       },
       no: {
-        fi: "Ei",
-        en: "No",
+        fi: common.no.fi,
+        en: common.no.en,
       },
     },
   },
   modal: {
     title: {
-      fi: "Organisaatio",
-      en: "Organization",
+      fi: common.organizations.organization.fi,
+      en: common.organizations.organization.en,
     },
     labels: {
       name: {
-        fi: "Nimi",
-        en: "Name",
+        fi: common.personalData.name.fi,
+        en: common.personalData.name.en,
       },
       slug: {
         fi: "Slug",
@@ -62,8 +62,8 @@ export const organizations = {
         en: "Description",
       },
       active: {
-        fi: "Aktiivinen",
-        en: "Active",
+        fi: common.active.fi,
+        en: common.active.en,
       },
       createdBy: {
         fi: "Luonut",
@@ -150,12 +150,12 @@ export const organizationDelete = {
       fi: "Tämä poistaa organisaation pysyvästi.",
     },
     confirmText: {
-      en: "Delete",
-      fi: "Poista",
+      en: common.delete.en,
+      fi: common.delete.fi,
     },
     cancelText: {
-      en: "Cancel",
-      fi: "Peruuta",
+      en: common.cancel.en,
+      fi: common.cancel.fi,
     },
   },
   toast: {

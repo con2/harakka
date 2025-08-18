@@ -74,8 +74,8 @@ export const userBanning = {
     },
     organization: {
       label: {
-        fi: "Organisaatio",
-        en: "Organization",
+        fi: common.organizations.organization.fi,
+        en: common.organizations.organization.en,
       },
       placeholder: {
         fi: "Valitse organisaatio",
@@ -84,8 +84,8 @@ export const userBanning = {
     },
     role: {
       label: {
-        fi: "Rooli",
-        en: "Role",
+        fi: common.roles.role.fi,
+        en: common.roles.role.en,
       },
       placeholder: {
         fi: "Valitse rooli",
@@ -125,12 +125,12 @@ export const userBanning = {
       en: "Unbanned",
     },
     active: {
-      fi: "Aktiivinen",
-      en: "Active",
+      fi: common.active.fi,
+      en: common.active.en,
     },
     status: {
-      fi: "Tila",
-      en: "Status",
+      fi: common.status.fi,
+      en: common.status.en,
     },
     action: {
       fi: "Toiminto",
@@ -256,12 +256,12 @@ export const userBanning = {
         en: "Permanent",
       },
       permanent: {
-        fi: "Kyllä",
-        en: "Yes",
+        fi: common.yes.fi,
+        en: common.yes.en,
       },
       notPermanent: {
-        fi: "Ei",
-        en: "No",
+        fi: common.no.fi,
+        en: common.no.en,
       },
     },
   },

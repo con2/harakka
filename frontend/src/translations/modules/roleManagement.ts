@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const roleManagement = {
   loading: {
     roles: {
@@ -43,12 +45,12 @@ export const roleManagement = {
   },
   status: {
     active: {
-      fi: "Aktiivinen",
-      en: "Active",
+      fi: common.active.fi,
+      en: common.active.en,
     },
     inactive: {
-      fi: "Ei-aktiivinen",
-      en: "Inactive",
+      fi: common.inactive.fi,
+      en: common.inactive.en,
     },
   },
   messages: {

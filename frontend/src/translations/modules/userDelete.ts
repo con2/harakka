@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const userDelete = {
   messages: {
     invalidId: {
@@ -19,8 +21,8 @@ export const userDelete = {
       en: "Delete User",
     },
     cancelText: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
   },
   toast: {

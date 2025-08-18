@@ -43,12 +43,12 @@ export const usersList = {
       en: common.roles.role.en,
     },
     organization: {
-      fi: "Organisaatio",
-      en: "Organization",
+      fi: common.organizations.organization.fi,
+      en: common.organizations.organization.en,
     },
     active: {
-      fi: "Tila",
-      en: "Status",
+      fi: common.status.fi,
+      en: common.status.en,
     },
   },
   status: {
@@ -61,8 +61,8 @@ export const usersList = {
       en: "N/A",
     },
     active: {
-      fi: "Aktiivinen",
-      en: "Active",
+      fi: common.active.fi,
+      en: common.active.en,
     },
     banned: {
       fi: "Estetty",

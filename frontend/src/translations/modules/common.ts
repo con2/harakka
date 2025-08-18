@@ -36,6 +36,34 @@ export const common = {
     fi: "Määritä",
     en: "Assign",
   },
+  confirm: {
+    fi: "Vahvista",
+    en: "Confirm",
+  },
+  active: {
+    fi: "Aktiivinen",
+    en: "Active",
+  },
+  inactive: {
+    fi: "Ei aktiivinen",
+    en: "Inactive",
+  },
+  actions: {
+    fi: "Toiminnot",
+    en: "Actions",
+  },
+  yes: {
+    fi: "Kyllä",
+    en: "Yes",
+  },
+  no: {
+    fi: "Ei",
+    en: "No",
+  },
+  status: {
+    fi: "Tila",
+    en: "Status",
+  },
   // Globally used roles
   roles: {
     role: {
@@ -70,7 +98,22 @@ export const common = {
       fi: "Tilaaja",
       en: "Requester",
     },
+    all: {
+      fi: "Kaikki",
+      en: "All",
+    },
   },
+  organizations: {
+    organization: {
+      fi: "Organisaatio",
+      en: "Organization",
+    },
+    user: {
+      fi: "Käyttäjä",
+      en: "User",
+    },
+  },
+  // Personal data
   personalData: {
     name: {
       fi: "Nimi",
@@ -103,6 +146,10 @@ export const common = {
     postalCode: {
       fi: "Postinumero",
       en: "Postal Code",
+    },
+    address: {
+      fi: "Osoite",
+      en: "Address",
     },
   },
 };

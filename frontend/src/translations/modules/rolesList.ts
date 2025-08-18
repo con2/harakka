@@ -44,12 +44,12 @@ export const rolesList = {
         fi: "Tämä poistaa pysyvästi roolin {row.role_name} käyttäjältä {row.user_email}",
       },
       confirmText: {
-        en: "Delete",
-        fi: "Poista",
+        en: common.delete.en,
+        fi: common.delete.fi,
       },
       cancelText: {
-        en: "Cancel",
-        fi: "Peruuta",
+        en: common.cancel.en,
+        fi: common.cancel.fi,
       },
     },
   },
@@ -78,16 +78,16 @@ export const rolesList = {
         fi: "Kaikki roolit",
       },
       all: {
-        en: "All",
-        fi: "Kaikki",
+        en: common.roles.all.en,
+        fi: common.roles.all.fi,
       },
       active: {
-        en: "Active",
-        fi: "Aktiivinen",
+        en: common.active.en,
+        fi: common.active.fi,
       },
       inactive: {
-        en: "Inactive",
-        fi: "Epäaktiivinen",
+        en: common.inactive.en,
+        fi: common.inactive.fi,
       },
     },
   },
@@ -142,24 +142,24 @@ export const rolesList = {
   table: {
     headers: {
       user: {
-        en: "User",
-        fi: "Käyttäjä",
+        en: common.roles.user.en,
+        fi: common.roles.user.fi,
       },
       role: {
-        en: "Role",
-        fi: "Rooli",
+        en: common.roles.role.en,
+        fi: common.roles.role.fi,
       },
       org: {
-        en: "Organization",
-        fi: "Organisaatio",
+        en: common.organizations.organization.en,
+        fi: common.organizations.organization.fi,
       },
       active: {
-        en: "Active",
-        fi: "Aktiivinen",
+        en: common.active.en,
+        fi: common.active.fi,
       },
       actions: {
-        en: "Actions",
-        fi: "Toiminnot",
+        en: common.actions.en,
+        fi: common.actions.fi,
       },
     },
   },

@@ -49,12 +49,12 @@ export const roleEditor = {
       en: "User (by email)",
     },
     organization: {
-      fi: "Organisaatio",
-      en: "Organization",
+      fi: common.organizations.organization.fi,
+      en: common.organizations.organization.en,
     },
     role: {
-      fi: "Rooli",
-      en: "Role",
+      fi: common.roles.role.fi,
+      en: common.roles.role.en,
     },
     roleAssignment: {
       fi: "Roolitehtävä",
@@ -124,30 +124,30 @@ export const roleEditor = {
         en: "User Email",
       },
       role: {
-        fi: "Rooli",
-        en: "Role",
+        fi: common.roles.role.fi,
+        en: common.roles.role.en,
       },
       organization: {
-        fi: "Organisaatio",
-        en: "Organization",
+        fi: common.organizations.organization.fi,
+        en: common.organizations.organization.en,
       },
       active: {
-        fi: "Aktiivinen",
-        en: "Active",
+        fi: common.active.fi,
+        en: common.active.en,
       },
       action: {
-        fi: "Toiminto",
-        en: "Action",
+        fi: common.actions.fi,
+        en: common.actions.en,
       },
     },
     status: {
       yes: {
-        fi: "Kyllä",
-        en: "Yes",
+        fi: common.yes.fi,
+        en: common.yes.en,
       },
       no: {
-        fi: "Ei",
-        en: "No",
+        fi: common.no.fi,
+        en: common.no.en,
       },
     },
   },

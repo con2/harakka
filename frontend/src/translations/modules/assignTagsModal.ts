@@ -15,8 +15,8 @@ export const assignTagsModal = {
       en: common.cancel.en,
     },
     assign: {
-      fi: "Määritä",
-      en: "Assign",
+      fi: common.assign.fi,
+      en: common.assign.en,
     },
   },
   messages: {
