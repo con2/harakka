@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const assignTagsModal = {
   title: {
     fi: "Määritä Tagit",
@@ -9,8 +11,8 @@ export const assignTagsModal = {
   },
   buttons: {
     cancel: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
     assign: {
       fi: "Määritä",

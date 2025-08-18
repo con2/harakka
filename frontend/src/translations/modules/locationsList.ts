@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const locationsList = {
   noLocations: {
     fi: "Ei sijainteja saatavilla.",
@@ -28,7 +30,7 @@ export const locationsList = {
     en: "Created",
   },
   edit: {
-    fi: "Muokkaa",
-    en: "Edit",
+    fi: common.edit.fi,
+    en: common.edit.en,
   },
 };

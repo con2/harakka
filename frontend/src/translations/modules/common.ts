@@ -28,6 +28,10 @@ export const common = {
     fi: "Sulje",
     en: "Close",
   },
+  assign: {
+    fi: "Määritä",
+    en: "Assign",
+  },
   // Globally used roles
   roles: {
     admin: {

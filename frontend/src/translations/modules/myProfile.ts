@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const myProfile = {
   tabs: {
     userDetails: {
@@ -131,8 +133,8 @@ export const myProfile = {
       en: "Save Address",
     },
     cancel: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
   },
   buttons: {

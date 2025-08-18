@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const rolesList = {
   messages: {
     selectUser: {
@@ -99,12 +101,12 @@ export const rolesList = {
       fi: "Luo uusi rooli",
     },
     cancel: {
-      en: "Cancel",
-      fi: "Peruuta",
+      en: common.cancel.en,
+      fi: common.cancel.fi,
     },
     save: {
-      en: "Save",
-      fi: "Tallenna",
+      en: common.save.en,
+      fi: common.save.fi,
     },
     ariaLabels: {
       deletePermanently: {

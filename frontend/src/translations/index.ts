@@ -62,7 +62,7 @@ import { orgStep } from "./modules/orgStep";
 import { addItemForm } from "./modules/addItemForm";
 import { itemSummary } from "./modules/itemSummary";
 import { stepper } from "./modules/stepper";
-import { notifications } from "./modules/notifications";
+import { notification } from "./modules/notification";
 import { uiComponents } from "./modules/uiComponents";
 import { profilePicUploader } from "./modules/profilePicUploader";
 import { itemImageUpload } from "./modules/itemImageUpload";
@@ -140,7 +140,7 @@ export const t = {
   statusBadge,
   privacyPolicy,
   termsOfUse,
-  notifications,
+  notification,
   uiComponents,
   profilePicUploader,
   organizationPage,

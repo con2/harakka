@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const roleEditor = {
   modes: {
     label: {
@@ -95,16 +97,16 @@ export const roleEditor = {
       en: "Create Role",
     },
     cancel: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
     clearFilters: {
       fi: "Tyhjennä suodattimet",
       en: "Clear Filters",
     },
     delete: {
-      fi: "Poista",
-      en: "Delete",
+      fi: common.delete.fi,
+      en: common.delete.en,
     },
     restore: {
       fi: "Palauta",

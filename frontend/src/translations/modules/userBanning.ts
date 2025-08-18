@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const userBanning = {
   button: {
     title: {
@@ -105,8 +107,8 @@ export const userBanning = {
       en: "View History",
     },
     cancel: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
     openMenu: {
       fi: "Avaa valikko",

@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const addLocationModal = {
   title: {
     en: "Add New Location",
@@ -111,8 +113,8 @@ export const addLocationModal = {
       fi: "Luodaan...",
     },
     cancel: {
-      en: "Cancel",
-      fi: "Peruuta",
+      en: common.cancel.en,
+      fi: common.cancel.fi,
     },
   },
   messages: {
