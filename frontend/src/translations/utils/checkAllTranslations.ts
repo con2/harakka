@@ -175,6 +175,10 @@ function findUsedTranslationKeys(): Set<string> {
   const translationPattern2 =
     /t\.([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\?\.\[/g;
 
+  // Pattern to match variable assignments: const varName = t.path.to.key
+  const variableAssignmentPattern =
+    /(?:const|let|var)\s+\w+\s*=\s*t\.([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)/g;
+
   for (const file of files) {
     try {
       const content = fs.readFileSync(file, "utf8");
@@ -192,8 +196,29 @@ function findUsedTranslationKeys(): Set<string> {
         const keyPath = match[1];
         usedKeys.add(keyPath);
       }
+
+      // Reset regex state and check for variable assignments: const varName = t.path.to.key
+      variableAssignmentPattern.lastIndex = 0;
+      while ((match = variableAssignmentPattern.exec(content)) !== null) {
+        const keyPath = match[1];
+        usedKeys.add(keyPath);
+      }
     } catch (error) {
       console.warn(`Warning: Could not read file ${file}:`, error);
+    }
+  }
+
+  // When a parent object is assigned to a variable (e.g., const aliases = t.currentUserRoles.roleAliases),
+  // mark all its child keys as used since they might be accessed dynamically
+  const allKeys = collectAllTranslationKeys(t);
+  const parentKeys = Array.from(usedKeys);
+
+  for (const parentKey of parentKeys) {
+    // Find all child keys that start with this parent key
+    for (const childKey of allKeys) {
+      if (childKey.startsWith(parentKey + ".")) {
+        usedKeys.add(childKey);
+      }
     }
   }
 
