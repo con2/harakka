@@ -237,15 +237,6 @@ export class StorageItemsService {
     // Extract properties that shouldn't be sent to the database
     const { tags, location_details, ...itemData } = item;
 
-    // Check if item belongs to multiple orgs.
-    // If yes, duplicate the item and update it.
-    const { data, error: orgItemError } = await supabase
-      .from("organization_items")
-      .select("storage_item_id")
-      .eq("storage_item_id", item_id);
-    if (orgItemError) handleSupabaseError(orgItemError);
-    if (data.length > 1) return this.copyItem(req, item_id, org_id, item);
-
     // Update the main item
     const {
       data: updatedItem,
@@ -254,6 +245,7 @@ export class StorageItemsService {
       .from("storage_items")
       .update(itemData)
       .eq("id", item_id)
+      .eq("org_id", org_id)
       .select()
       .single();
 
@@ -310,17 +302,19 @@ export class StorageItemsService {
         throw new Error(`Failed to get images: ${imagesError.message}`);
       }
 
-      // Update the org_items data
+      // Update the storage_items data
       // Set is_deleted to true and is_active to false
       // This way it cannot be booked, and is scheduled to be deleted once
       // there are no future or ongoing bookings with the item (CRON JOB: 'delete_inactive_items')
-      const { error: orgError } = await supabase
-        .from("organization_items")
+      const { error: itemUpdateError } = await supabase
+        .from("storage_items")
         .update({ is_deleted: true, is_active: false })
-        .eq("storage_item_id", item_id)
-        .eq("organization_id", org_id);
-      if (orgError)
-        throw new Error(`Failed to update org items: ${orgError.message}`);
+        .eq("id", item_id)
+        .eq("org_id", org_id);
+      if (itemUpdateError)
+        throw new Error(
+          `Failed to update org items: ${itemUpdateError.message}`,
+        );
 
       // Delete any found images
       if (images && images.length > 0) {
@@ -442,7 +436,7 @@ export class StorageItemsService {
     }
 
     // Apply org-based item ID filter
-    if (org_filter) query.overlaps("organization_id", org_filter.split(","));
+    if (org_filter) query.in("organization_id", org_filter.split(","));
 
     if (category) {
       const categories = category.split(",");
@@ -534,6 +528,7 @@ export class StorageItemsService {
       };
     }
   }
+
   async getItemCount(
     supabase: SupabaseClient,
   ): Promise<ApiSingleResponse<number>> {
@@ -547,105 +542,5 @@ export class StorageItemsService {
       ...result,
       data: result.count ?? 0,
     };
-  }
-
-  /**
-   * Copy an item from one organization to another.
-   * Creates a new record with copied images, tags, and updated org references.
-   */
-  async copyItem(
-    req: AuthRequest,
-    item_id: string,
-    org_id: string,
-    newItem: UpdateItem,
-  ): Promise<UpdateResponse> {
-    const supabase = req.supabase;
-    const NEW_ITEM_ID = crypto.randomUUID();
-
-    try {
-      const itemData = await this.createItem(supabase, NEW_ITEM_ID, newItem);
-      await this.imageService.copyImages(supabase, item_id, NEW_ITEM_ID);
-      await this.updateOrgReferences(supabase, org_id, item_id, NEW_ITEM_ID);
-
-      if (newItem.tags?.length) {
-        await this.tagService.assignTagsToItem(req, NEW_ITEM_ID, newItem.tags);
-      }
-
-      return {
-        success: true,
-        item: itemData,
-        wasCopied: true,
-        prev_id: item_id,
-      };
-    } catch (error) {
-      console.error(
-        "Failed to copy item %s for org %s:",
-        item_id,
-        org_id,
-        error,
-      );
-      await this.rollbackCopy(req.supabase, NEW_ITEM_ID, org_id);
-      throw error;
-    }
-  }
-
-  /** Create a new storage item record */
-  private async createItem(
-    supabase: SupabaseClient,
-    newId: string,
-    newItem: UpdateItem,
-  ) {
-    const { tags, location_details, ...rest } = newItem;
-    const { data, error } = await supabase
-      .from("storage_items")
-      .insert({ ...rest, id: newId, location_id: location_details.id })
-      .select()
-      .single();
-
-    if (error) handleSupabaseError(error);
-    return data as StorageItem;
-  }
-
-  /** Update the org-item reference to the new item */
-  private async updateOrgReferences(
-    supabase: SupabaseClient,
-    orgId: string,
-    oldItemId: string,
-    newItemId: string,
-  ) {
-    const { error } = await supabase
-      .from("organization_items")
-      .update({ storage_item_id: newItemId })
-      .eq("storage_item_id", oldItemId)
-      .eq("organization_id", orgId);
-
-    if (error) handleSupabaseError(error);
-  }
-
-  /** Rollback changes if something fails */
-  private async rollbackCopy(
-    supabase: SupabaseClient,
-    newItemId: string,
-    orgId: string,
-  ) {
-    // Get all image paths for cleanup
-    const { data: imgData } = await supabase
-      .from("storage_item_images")
-      .select("storage_path")
-      .eq("item_id", newItemId);
-
-    const imgPaths = (imgData ?? []).map((img) => img.storage_path);
-
-    await Promise.allSettled([
-      supabase.from("storage_item_images").delete().eq("item_id", newItemId),
-      supabase.storage.from("item-images").remove(imgPaths),
-      supabase.from("storage_item_tags").delete().eq("item_id", newItemId),
-      supabase
-        .from("organization_items")
-        .delete()
-        .eq("storage_item_id", newItemId)
-        .eq("organization_id", orgId),
-      supabase.from("storage_items").delete().eq("id", newItemId),
-    ]);
   }
 }

@@ -59,7 +59,7 @@ const AdminItemsTable = () => {
 
   const { hasRole } = useRoles();
   const isAdmin =
-    hasRole("admin") || hasRole("super_admin") || hasRole("storage_manager");
+    hasRole("admin") || hasRole("super_admin") || hasRole("storage_manager") || hasRole("main_admin")
   const isSuperVera = hasRole("superVera");
   // Translation
   const { lang } = useLanguage();
