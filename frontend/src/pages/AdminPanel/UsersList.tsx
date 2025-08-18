@@ -74,7 +74,7 @@ const UsersList = () => {
   const isAuthorized = hasAnyRole([
     "admin",
     "superVera",
-    "main_admin",
+    "tenant_admin",
     "super_admin",
   ]);
   const isSuper = hasAnyRole(["super_admin", "superVera"]);
@@ -409,7 +409,7 @@ const UsersList = () => {
 
         // Banning permission logic based on hierarchy and org:
         // - super_admin/superVera: Can ban anyone from anywhere
-        // - main_admin: Can only ban users whose role is below their own within their active org
+        // - tenant_admin: Can only ban users whose role is below their own within their active org
         // - Others: Cannot ban
         const canBan = canBanUser(targetUser.id);
 

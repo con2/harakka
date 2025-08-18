@@ -42,7 +42,7 @@ const OrganizationLocations = () => {
   // Filter organizations where user has location management permissions
   const orgsWithLocationAccess = useMemo(() => {
     const allowedRoles = [
-      "main_admin",
+      "tenant_admin",
       "storage_manager",
       "super_admin",
       "superVera",

@@ -30,7 +30,7 @@ export const RoleManagement: React.FC = () => {
   const isAnyTypeOfAdmin = hasAnyRole([
     "admin",
     "superVera",
-    "main_admin",
+    "tenant_admin",
     "super_admin",
     "storage_manager",
   ]);

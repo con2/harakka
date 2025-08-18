@@ -1628,13 +1628,13 @@ export type Database = {
         | "Admin"
         | "SuperVera"
         | "app_admin"
-        | "main_admin"
+        | "tenant_admin"
         | "admin"
         | "user"
         | "superVera"
       roles_type:
         | "super_admin"
-        | "main_admin"
+        | "tenant_admin"
         | "admin"
         | "user"
         | "superVera"
@@ -1770,14 +1770,14 @@ export const Constants = {
         "Admin",
         "SuperVera",
         "app_admin",
-        "main_admin",
+        "tenant_admin",
         "admin",
         "user",
         "superVera",
       ],
       roles_type: [
         "super_admin",
-        "main_admin",
+        "tenant_admin",
         "admin",
         "user",
         "superVera",

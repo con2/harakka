@@ -394,7 +394,7 @@ export class BookingService {
     const isElevated = this.roleService.hasAnyRole(req, [
       "admin",
       "super_admin",
-      "main_admin",
+      "tenant_admin",
       "superVera",
       "storage_manager",
     ]);
@@ -525,7 +525,7 @@ export class BookingService {
     const isAdmin = this.roleService.hasAnyRole(req, [
       "admin",
       "super_admin",
-      "main_admin",
+      "tenant_admin",
       "superVera",
       "storage_manager",
     ]);
@@ -607,7 +607,7 @@ export class BookingService {
     const isAdmin = this.roleService.hasAnyRole(req, [
       "admin",
       "super_admin",
-      "main_admin",
+      "tenant_admin",
       "superVera",
       "storage_manager",
     ]);
@@ -701,7 +701,7 @@ export class BookingService {
     const isAdmin = this.roleService.hasAnyRole(req, [
       "admin",
       "super_admin",
-      "main_admin",
+      "tenant_admin",
       "superVera",
       "storage_manager",
     ]);

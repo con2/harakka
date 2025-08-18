@@ -180,7 +180,7 @@ drop table "public"."saved_lists";
 
 alter type "public"."roles_type" rename to "roles_type__old_version_to_be_dropped";
 
-create type "public"."roles_type" as enum ('super_admin', 'main_admin', 'admin', 'user', 'superVera', 'storage_manager', 'requester', 'tenant_admin');
+create type "public"."roles_type" as enum ('super_admin', 'user', 'superVera', 'storage_manager', 'requester', 'tenant_admin');
 
 alter table "public"."roles" alter column role type "public"."roles_type" using role::text::"public"."roles_type";
 

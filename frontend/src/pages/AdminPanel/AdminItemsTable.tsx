@@ -59,7 +59,7 @@ const AdminItemsTable = () => {
 
   const { hasAnyRole, hasRole } = useRoles();
   const isAdmin = hasAnyRole(
-    ["main_admin", "tenant_admin", "super_admin", "storage_manager"],
+    ["tenant_admin", "tenant_admin", "super_admin", "storage_manager"],
     org_id || undefined,
   );
   const isSuperVera = hasRole("superVera");

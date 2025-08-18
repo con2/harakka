@@ -34,7 +34,7 @@ export const useBanPermissions = () => {
 
   /**
    * Check if a user is currently banned (shared logic)
-   * For main_admin: only show bans relevant to their active organization
+   * For tenant_admin: only show bans relevant to their active organization
    * For super_admin/superVera: show all bans
    */
   const isUserBanned = useCallback(
@@ -56,7 +56,7 @@ export const useBanPermissions = () => {
         );
       }
 
-      // For main_admin, only show bans relevant to their organization context
+      // For tenant_admin, only show bans relevant to their organization context
       if (isActiveRoleMainAdmin && activeOrgId) {
         // Check if user is banned from the app (applies to all orgs)
         if (banStatus.isBannedFromApp || userStatus.isBanned) {
@@ -107,7 +107,7 @@ export const useBanPermissions = () => {
         return true;
       }
 
-      // main_admin can only ban users whose role is below their own within their active org
+      // tenant_admin can only ban users whose role is below their own within their active org
       if (isActiveRoleMainAdmin && activeOrgId) {
         // For ban permissions, we need to check ALL roles (active and inactive)
         // because banned users will have inactive roles but we still need to manage them
@@ -120,7 +120,7 @@ export const useBanPermissions = () => {
           (role) => role.organization_id === activeOrgId,
         );
 
-        // If target user has no roles in the active org, they cannot be banned by main_admin
+        // If target user has no roles in the active org, they cannot be banned by tenant_admin
         if (targetOrgRoles.length === 0) {
           return false;
         }
@@ -128,7 +128,7 @@ export const useBanPermissions = () => {
         const currentUserLevel =
           ROLE_HIERARCHY[activeRoleName as RoleName] || -1;
 
-        // Check if all target user's roles in the active org are below main_admin level
+        // Check if all target user's roles in the active org are below tenant_admin level
         const canBanAllRoles = targetOrgRoles.every((role) => {
           const targetRoleLevel =
             ROLE_HIERARCHY[role.role_name as RoleName] ?? -1;

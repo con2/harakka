@@ -20,9 +20,9 @@ export const currentUserRoles = {
       en: "Storage Manager",
       fi: "Varastonhoitaja",
     },
-    main_admin: {
-      en: "Main Admin",
-      fi: "Pääylläpitäjä",
+    tenant_admin: {
+      en: "Tenant Admin",
+      fi: "Vuokralaisjärjestelmänvalvoja",
     },
     super_admin: {
       en: "Super Admin",

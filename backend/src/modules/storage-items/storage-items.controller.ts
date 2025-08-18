@@ -134,7 +134,13 @@ export class StorageItemsController {
    * @returns The updated item
    */
   @Put(":org_id/:item_id")
-  @Roles(["super_admin", "admin", "main_admin", "storage_manager", "superVera"])
+  @Roles([
+    "super_admin",
+    "admin",
+    "tenant_admin",
+    "storage_manager",
+    "superVera",
+  ])
   async update(
     @Req() req: AuthRequest,
     @Param("org_id") org_id: string,

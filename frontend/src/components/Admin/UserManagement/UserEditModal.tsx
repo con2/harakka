@@ -58,10 +58,10 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   } = useRoles();
 
   // Can Manage Roles:
-  // Any "Super" role or tenant/main_admin of current org
+  // Any "Super" role or tenant_admin of current org
   const canManageRoles =
     hasAnyRole(["super_admin", "superVera"]) ||
-    (activeOrgId && hasAnyRole(["tenant_admin", "main_admin"], activeOrgId));
+    (activeOrgId && hasAnyRole(["tenant_admin", "tenant_admin"], activeOrgId));
 
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
@@ -242,7 +242,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
               {t.userEditModal.labels.fullName[lang]}
             </Label>
             <Input
-              className="w-11/12 drop-shadow-md"
+              className="w-11/12"
               name="full_name"
               value={formData.full_name}
               onChange={handleChange}
@@ -252,7 +252,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
           <div className="flex-grow-1 w-6/12">
             <Label htmlFor="email">{t.userEditModal.labels.email[lang]}</Label>
             <Input
-              className="w-11/12 drop-shadow-md"
+              className="w-11/12"
               name="email"
               value={formData.email}
               onChange={handleChange}
@@ -262,7 +262,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
           <div className="flex-grow-1 w-6/12">
             <Label htmlFor="phone">{t.userEditModal.labels.phone[lang]}</Label>
             <Input
-              className="w-11/12 drop-shadow-md"
+              className="w-11/12"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
@@ -274,7 +274,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
               {t.userEditModal.labels.visibleName[lang]}
             </Label>
             <Input
-              className="w-11/12 drop-shadow-md"
+              className="w-11/12"
               name="visible_name"
               value={formData.visible_name}
               onChange={handleChange}
@@ -437,15 +437,6 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
         </div>
 
         <DialogFooter>
-          <Button
-            variant="default"
-            className="border-1-grey"
-            type="button"
-            size="sm"
-            onClick={addRoleAssignment}
-          >
-            Make Super Admin
-          </Button>
           <Button variant="outline" onClick={handleSave} size={"sm"}>
             {t.userEditModal.buttons.save[lang]}
           </Button>

@@ -8,7 +8,7 @@ import { Enums } from "@common/supabase.types";
 export const ROLE_NAMES = [
   "user",
   "admin",
-  "main_admin",
+  "tenant_admin",
   "super_admin",
   "superVera",
   "storage_manager",
@@ -74,7 +74,7 @@ export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
  *
  * @example Require **any** admin‑type role in the same org
  * ```ts
- * @Roles(['admin', 'main_admin'], { sameOrg: true })
+ * @Roles(['admin', 'tenant_admin'], { sameOrg: true })
  * @Patch(':organizationId/bookings/:id')
  * updateBooking() {}
  * ```

@@ -28,7 +28,7 @@ export class ItemImagesController {
 
   @Post(":itemId")
   @Roles(
-    ["admin", "superVera", "main_admin", "storage_manager", "super_admin"],
+    ["admin", "superVera", "tenant_admin", "storage_manager", "super_admin"],
     {
       match: "any",
     },
@@ -55,7 +55,7 @@ export class ItemImagesController {
   @Post("bucket/:bucket_name")
   @UseInterceptors(FilesInterceptor("image", 5))
   @Roles(
-    ["admin", "superVera", "main_admin", "storage_manager", "super_admin"],
+    ["admin", "superVera", "tenant_admin", "storage_manager", "super_admin"],
     {
       match: "any",
     },
@@ -83,7 +83,7 @@ export class ItemImagesController {
    */
   @Delete("bucket/:bucket_name")
   @Roles(
-    ["admin", "superVera", "main_admin", "storage_manager", "super_admin"],
+    ["admin", "superVera", "tenant_admin", "storage_manager", "super_admin"],
     {
       match: "any",
     },
@@ -98,7 +98,7 @@ export class ItemImagesController {
 
   @Delete(":imageId")
   @Roles(
-    ["admin", "superVera", "main_admin", "storage_manager", "super_admin"],
+    ["admin", "superVera", "tenant_admin", "storage_manager", "super_admin"],
     {
       match: "any",
     },

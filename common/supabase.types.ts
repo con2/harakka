@@ -5,11 +5,32 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
+
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -94,25 +115,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "order_items_item_id_fkey"
+            foreignKeyName: "booking_items_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "storage_items"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "order_items_item_id_fkey"
+            foreignKeyName: "booking_items_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "view_item_location_summary"
             referencedColumns: ["storage_item_id"]
           },
           {
-            foreignKeyName: "order_items_item_id_fkey"
+            foreignKeyName: "booking_items_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
+          },
+          {
+            foreignKeyName: "booking_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "order_items_location_id_fkey"
@@ -401,6 +429,13 @@ export type Database = {
             referencedColumns: ["storage_item_id"]
           },
           {
+            foreignKeyName: "organization_items_storage_item_id_fkey"
+            columns: ["storage_item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "organization_items_storage_location_id_fkey"
             columns: ["storage_location_id"]
             isOneToOne: false
@@ -656,6 +691,13 @@ export type Database = {
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
           },
+          {
+            foreignKeyName: "reviews_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
+          },
         ]
       }
       roles: {
@@ -826,6 +868,13 @@ export type Database = {
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
           },
+          {
+            foreignKeyName: "storage_item_images_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
+          },
         ]
       }
       storage_item_tags: {
@@ -873,6 +922,13 @@ export type Database = {
             referencedColumns: ["storage_item_id"]
           },
           {
+            foreignKeyName: "storage_item_tags_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "storage_item_tags_tag_id_fkey"
             columns: ["tag_id"]
             isOneToOne: false
@@ -892,6 +948,7 @@ export type Database = {
           items_number_currently_in_storage: number | null
           items_number_total: number
           location_id: string
+          org_id: string
           price: number
           translations: Json | null
         }
@@ -905,6 +962,7 @@ export type Database = {
           items_number_currently_in_storage?: number | null
           items_number_total: number
           location_id: string
+          org_id: string
           price: number
           translations?: Json | null
         }
@@ -918,6 +976,7 @@ export type Database = {
           items_number_currently_in_storage?: number | null
           items_number_total?: number
           location_id?: string
+          org_id?: string
           price?: number
           translations?: Json | null
         }
@@ -1313,46 +1372,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_roles: {
-        Row: {
-          created_at: string | null
-          profile_id: string
-          role: Database["public"]["Enums"]["role_type"]
-        }
-        Insert: {
-          created_at?: string | null
-          profile_id: string
-          role: Database["public"]["Enums"]["role_type"]
-        }
-        Update: {
-          created_at?: string | null
-          profile_id?: string
-          role?: Database["public"]["Enums"]["role_type"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_roles_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "user_roles_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
-            referencedRelation: "view_user_ban_status"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       view_bookings_with_user_info: {
@@ -1410,34 +1429,13 @@ export type Database = {
           items_number_total: number | null
           location_id: string | null
           location_name: string | null
-          organization_id: string[] | null
+          organization_id: string | null
           price: number | null
           tag_ids: string[] | null
           tag_translations: Json[] | null
           translations: Json | null
         }
         Relationships: [
-          {
-            foreignKeyName: "organization_items_storage_item_id_fkey"
-            columns: ["id"]
-            isOneToOne: false
-            referencedRelation: "storage_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "organization_items_storage_item_id_fkey"
-            columns: ["id"]
-            isOneToOne: false
-            referencedRelation: "view_item_location_summary"
-            referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "organization_items_storage_item_id_fkey"
-            columns: ["id"]
-            isOneToOne: false
-            referencedRelation: "view_item_ownership_summary"
-            referencedColumns: ["storage_item_id"]
-          },
           {
             foreignKeyName: "storage_items_location_id_fkey"
             columns: ["location_id"]
@@ -1644,29 +1642,30 @@ export type Database = {
         | "Admin"
         | "SuperVera"
         | "app_admin"
-        | "main_admin"
+        | "tenant_admin"
         | "admin"
         | "user"
         | "superVera"
       roles_type:
         | "super_admin"
-        | "main_admin"
+        | "tenant_admin"
         | "admin"
         | "user"
         | "superVera"
         | "storage_manager"
         | "requester"
+        | "tenant_admin"
     }
     CompositeTypes: {
       [_ in never]: never
     }
   }
 }
+
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-type DefaultSchema = DatabaseWithoutInternals[Extract<
-  keyof Database,
-  "public"
->]
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
@@ -1687,14 +1686,15 @@ export type Tables<
     ? R
     : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-    ? R
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
     : never
-  : never
+
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1713,12 +1713,13 @@ export type TablesInsert<
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Insert: infer I
-    }
-    ? I
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
     : never
-  : never
+
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1737,12 +1738,13 @@ export type TablesUpdate<
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Update: infer U
-    }
-    ? U
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
     : never
-  : never
+
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
@@ -1757,8 +1759,9 @@ export type Enums<
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
@@ -1773,9 +1776,13 @@ export type CompositeTypes<
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       notification_channel: ["in_app", "web_push", "email"],
@@ -1795,20 +1802,22 @@ export const Constants = {
         "Admin",
         "SuperVera",
         "app_admin",
-        "main_admin",
+        "tenant_admin",
         "admin",
         "user",
         "superVera",
       ],
       roles_type: [
         "super_admin",
-        "main_admin",
+        "tenant_admin",
         "admin",
         "user",
         "superVera",
         "storage_manager",
         "requester",
+        "tenant_admin",
       ],
     },
   },
 } as const
+

@@ -58,7 +58,7 @@ const UnbanUserModal = ({
 
   // Permission checks for different unban types (same as ban permissions)
   const isSuper = hasAnyRole(["super_admin", "superVera"]);
-  const isMainAdmin = hasRole("main_admin");
+  const isMainAdmin = hasRole("tenant_admin");
 
   const canUnbanFromApp = isSuper; // Only super admins can unban from application
   const canUnbanFromOrg = isSuper || isMainAdmin; // Super admins and main admins can unban from org
@@ -269,7 +269,7 @@ const UnbanUserModal = ({
       return;
     }
 
-    // Organization validation for main_admin: they can only unban from their active org
+    // Organization validation for tenant_admin: they can only unban from their active org
     if (
       (banType === "organization" || banType === "role") &&
       isMainAdmin &&

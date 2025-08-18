@@ -35,7 +35,7 @@ const BookingCancelledEmail = ({
     "admin",
     "superVera",
     "super_admin",
-    "main_admin",
+    "tenant_admin",
     "storage_manager",
   ];
   const isElevated = elevatedRoles.includes(recipientRole);
