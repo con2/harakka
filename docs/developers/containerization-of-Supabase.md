@@ -87,5 +87,5 @@ docker compose exec -T db psql -U postgres -d postgres < data.sql
 
 ```shell
 cd supabase-project
-docker compose up -d
+docker compose restart
 ```
