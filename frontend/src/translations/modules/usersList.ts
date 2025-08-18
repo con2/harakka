@@ -1,7 +1,11 @@
 export const usersList = {
-  title: {
+  titleSuper: {
     fi: "Hallinnoi käyttäjiä",
     en: "Manage Users",
+  },
+  titleOrg: {
+    en: "Manage Users of {org}",
+    fi: "Hallinnoi organisaation {org} käyttäjiä",
   },
   filters: {
     search: {

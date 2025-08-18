@@ -29,6 +29,7 @@ import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { formatRoleName } from "@/utils/format";
+import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 
 type RolesListProps = {
   pageSize?: number;
@@ -37,8 +38,17 @@ type RolesListProps = {
 
 type RowType = ViewUserRolesWithDetails & { __isNew?: boolean };
 
+const initialRoleData = {
+  user_id: "",
+  organization_id: "",
+  role_id: "",
+  role_name: "",
+  org_name: "",
+};
+
 export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
   const { lang } = useLanguage();
+  const org = useAppSelector(selectActiveRoleContext);
   const dispatch = useAppDispatch();
   const { user } = useAuth();
   const currentUserId = user?.id;
@@ -52,10 +62,14 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
     createRole,
     updateRole,
     permanentDeleteRole,
+    hasAnyRole,
   } = useRoles();
 
   const organizations = useAppSelector(selectOrganizations);
   const { data: users } = useAppSelector(selectAllUsers);
+  const isSuper =
+    org.organizationName === "High council" &&
+    hasAnyRole(["super_admin", "superVera"], org.organizationId!);
 
   // Fetch once if empty (relies on hook caching/deduping)
   useEffect(() => {
@@ -91,11 +105,20 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
     user_id: string;
     organization_id: string;
     role_id: string;
+    role_name: string;
+    org_name: string;
   }>({
     user_id: "",
     organization_id: "",
     role_id: "",
+    role_name: "",
+    org_name: "",
   });
+
+  useEffect(() => {
+    if (!isSuper && adding)
+      setNewRole({ ...newRole, organization_id: org.organizationId! });
+  }, [isSuper, adding, newRole, org]);
 
   // Ensure dropdown data are available only when starting creation
   const ensureCreateDeps = async () => {
@@ -111,9 +134,37 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
     }
   };
 
+  const handleRoleChange = (roleId: string) => {
+    const updatedRole = availableRoles.find((role) => role.id === roleId);
+    if (newRole.org_name === "Global" && updatedRole?.role !== "user")
+      return toast.error("Only users can belong to the global org");
+    if (
+      newRole.org_name === "High council" &&
+      updatedRole?.role !== "super_admin" &&
+      updatedRole?.role !== "superVera"
+    )
+      return toast.error("Only Super admins can belong to High council");
+    setNewRole({
+      ...newRole,
+      role_id: roleId,
+      role_name: updatedRole?.role ?? "",
+    });
+  };
+
+  const handleOrgChange = (orgId: string) => {
+    const newOrg = organizations.find((org) => org.id === orgId);
+    if (newRole.role_name === "super_admin" && newOrg?.name !== "High council")
+      return toast.error("Only Super admins can belong to High council");
+    setNewRole({
+      ...newRole,
+      org_name: newOrg?.name ?? "",
+      organization_id: orgId,
+    });
+  };
+
   const startAdd = async () => {
     await ensureCreateDeps();
-    setNewRole({ user_id: "", organization_id: "", role_id: "" });
+    setNewRole(initialRoleData);
     setAdding(true);
     setPageIndex(0);
   };
@@ -121,7 +172,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
   const cancelAdd = () => {
     setAdding(false);
     setSaving(false);
-    setNewRole({ user_id: "", organization_id: "", role_id: "" });
+    setNewRole(initialRoleData);
   };
 
   const handleSaveNew = async () => {
@@ -134,7 +185,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
       await createRole(newRole);
       toast.success(t.rolesList.messages.roleCreated[lang]);
       setAdding(false);
-      setNewRole({ user_id: "", organization_id: "", role_id: "" });
+      setNewRole(initialRoleData);
       // No hard refresh needed; slice updates allUserRoles on fulfilled
     } catch {
       toast.error(t.rolesList.messages.createFailed[lang]);
@@ -302,13 +353,16 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
       size: 160,
       cell: ({ row }) => {
         const r = row.original;
+        const options = isSuper
+          ? availableRoles
+          : availableRoles.filter(
+              (r) => r.role !== "super_admin" && r.role !== "superVera",
+            );
         if (r.__isNew) {
           return (
             <Select
               value={newRole.role_id}
-              onValueChange={(v) =>
-                setNewRole((prev) => ({ ...prev, role_id: v }))
-              }
+              onValueChange={(roleId) => handleRoleChange(roleId)}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue
@@ -316,9 +370,9 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
                 />
               </SelectTrigger>
               <SelectContent>
-                {availableRoles.map((ar) => (
-                  <SelectItem key={ar.id} value={ar.id}>
-                    {formatRoleName(ar.role ?? "")}
+                {options.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {formatRoleName(option.role ?? "")}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -338,19 +392,23 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
       size: 220,
       cell: ({ row }) => {
         const r = row.original;
+        const options =
+          newRole.role_name === "super_admin"
+            ? organizations.filter((org) => org.name === "High council")
+            : organizations;
+        if (!isSuper) return <span>{org.organizationName}</span>;
         if (r.__isNew) {
           return (
             <Select
+              disabled={!isSuper}
               value={newRole.organization_id}
-              onValueChange={(v) =>
-                setNewRole((prev) => ({ ...prev, organization_id: v }))
-              }
+              onValueChange={(orgId) => handleOrgChange(orgId)}
             >
               <SelectTrigger className="w-[220px]">
                 <SelectValue placeholder="Select organization" />
               </SelectTrigger>
               <SelectContent>
-                {organizations
+                {options
                   .slice()
                   .sort((a, b) => a.name.localeCompare(b.name))
                   .map((org) => (

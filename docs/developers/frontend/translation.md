@@ -2,6 +2,16 @@
 
 This project supports full English and Finnish localization for all user-facing UI and database content.
 
+## Table of Contents
+
+[Frontend Translations](#1-frontend-translations)  
+[Database Translations](#2-database-translations)  
+[How DB translations are used in the frontend](#how-db-translations-are-used-in-the-frontend)  
+[Usage](#3-usage-in-components)  
+[Naming conventions](#4b-naming-conventions)  
+[Adding translations](#4-adding-translations)  
+[Checking coverage](#5-checking-coverage)
+
 ## 1. Frontend Translations
 
 - All UI translations are stored in [frontend/src/translations/modules/](frontend/src/translations/modules/).
@@ -71,11 +81,30 @@ See [docs/developers/backend/database-schema.md](docs/developers/backend/databas
   const itemName = getTranslation(item)?.item_name;
   ```
 
+- For translations that should include another value, use the replace function as following:
+
+  ```ts
+    titleOrg: {
+      en: "Manage Users of {org}",
+      fi: "Hallinnoi organisaation {org} käyttäjiä",
+    },
+  ```
+
+  ```ts
+  <p>{t.usersList.titleOrg[lang].replace("{org}", orgName)}</p>
+  ```
+
 ## 4. Adding Translations
 
 1. Add new keys to the relevant module file in [frontend/src/translations/modules/](frontend/src/translations/modules/).
 2. Provide both Finnish (`fi`) and English (`en`) values.
 3. Import the module in [frontend/src/translations/index.ts](frontend/src/translations/index.ts).
+
+## 4b. Naming Conventions
+
+Each new file should have its own translation module. The module should have the same naming as the file which uses it, but in camelCase
+
+Therefor the translation module for a file called `ItemModal.tsx` would be called -> `itemModal.ts`
 
 ## 5. Checking Coverage
 

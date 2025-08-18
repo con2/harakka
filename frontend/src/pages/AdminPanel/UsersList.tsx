@@ -5,19 +5,20 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllOrderedUsers,
+  fetchAllUsers,
   selectAllUsers,
   selectError,
   selectLoading,
 } from "@/store/slices/usersSlice";
 import {
   fetchAvailableRoles,
-  selectActiveOrganizationId,
+  selectActiveRoleContext,
   selectActiveRoleName,
 } from "@/store/slices/rolesSlice";
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Swords, User } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,7 +47,8 @@ const UsersList = () => {
   const loading = useAppSelector(selectLoading);
   const error = useAppSelector(selectError);
   const allUserRoles = useAppSelector(selectAllUserRoles);
-  const activeOrgId = useAppSelector(selectActiveOrganizationId);
+  const { organizationId: activeOrgId, organizationName: activeOrgName } =
+    useAppSelector(selectActiveRoleContext);
   const activeRoleName = useAppSelector(selectActiveRoleName);
   const userBanStatuses = useAppSelector(selectUserBanStatuses);
   const { refreshAllUserRoles, hasAnyRole } = useRoles();
@@ -76,6 +78,10 @@ const UsersList = () => {
     "super_admin",
   ]);
   const isSuper = hasAnyRole(["super_admin", "superVera"]);
+
+  useEffect(() => {
+    if (isSuper) fetchAllUsers();
+  }, [isSuper]);
 
   // Determine if we should fetch all users (no org filter)
   // This happens when:
@@ -196,7 +202,13 @@ const UsersList = () => {
       void refreshAllUserRoles();
       void dispatch(fetchAvailableRoles());
     }
-  }, [authLoading, isAuthorized, allUserRoles.length, refreshAllUserRoles]);
+  }, [
+    authLoading,
+    isAuthorized,
+    allUserRoles.length,
+    refreshAllUserRoles,
+    dispatch,
+  ]);
 
   // Load ban statuses when authorized
   useEffect(() => {
@@ -331,9 +343,10 @@ const UsersList = () => {
     },
     {
       id: "orgName",
-      header: t.usersList.columns.organization[lang],
+      header: isSuper ? t.usersList.columns.organization[lang] : undefined,
       size: 120,
-      cell: ({ row }) => getUserOrgName(row.original.id),
+      cell: ({ row }) =>
+        isSuper ? getUserOrgName(row.original.id) : undefined,
     },
     {
       id: "active",
@@ -362,7 +375,6 @@ const UsersList = () => {
       enableColumnFilter: true,
       cell: ({ row }) => {
         const userRoles = getUserRolesForDisplay(row.original.id);
-        console.log("role: ", userRoles[0].role);
         return userRoles.length > 0 ? (
           <div className="flex flex-wrap gap-1">
             {userRoles.map((roleInfo, index) => (
@@ -376,7 +388,9 @@ const UsersList = () => {
             ))}
           </div>
         ) : (
-          <span className="text-slate-500">{t.usersList.status.na[lang]}</span>
+          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+            User
+          </span>
         );
       },
     },
@@ -456,7 +470,14 @@ const UsersList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl">{t.usersList.title[lang]}</h1>
+        <h1 className="text-xl">
+          {isSuper
+            ? t.usersList.titleSuper[lang]
+            : t.usersList.titleOrg[lang].replace(
+                "{org}",
+                activeOrgName ?? "Organization",
+              )}
+        </h1>
       </div>
       {loading && (
         <p>
@@ -500,6 +521,14 @@ const UsersList = () => {
               {t.usersList.filters.clear[lang]}
             </Button>
           )}
+          <Button variant="default" className="flex gap-2">
+            <User />
+            Add New User
+          </Button>
+          <Button variant="default" className="flex gap-2">
+            <Swords />
+            Add New Admin
+          </Button>
         </div>
       </div>
 

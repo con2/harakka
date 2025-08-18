@@ -42,6 +42,6 @@
     "type-fest": "^4.41.0"
   },
   "dependencies": {
-    "supabase": "^2.33.7"
+    "supabase": "^2.34.3"
   }
 }
