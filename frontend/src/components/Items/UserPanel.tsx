@@ -36,7 +36,7 @@ const UserPanel = () => {
       void dispatch(fetchAllLocations({ page: 1, limit: 10 }));
     if (organizations.length < 1)
       void dispatch(fetchAllOrganizations({ page: 1, limit: 50 }));
-  }, [dispatch, tags, locations, organizations.length]);
+  }, [dispatch]);
 
   // Unique item_type values from items
   const uniqueItemTypes = Array.from(
