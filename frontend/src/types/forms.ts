@@ -24,8 +24,6 @@ export interface UserFormData {
   email: string;
   phone: string;
   roles: NonNullable<Org_Roles>[]; // Use new role system, exclude null
-  preferences: Record<string, string>;
-  saved_lists?: string[];
 }
 
 /**

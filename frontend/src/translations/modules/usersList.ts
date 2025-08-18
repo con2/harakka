@@ -58,6 +58,14 @@ export const usersList = {
       fi: "Rooli",
       en: "Role",
     },
+    organization: {
+      fi: "Organisaatio",
+      en: "Organization",
+    },
+    active: {
+      fi: "Tila",
+      en: "Status",
+    },
     actions: {
       fi: "Toiminnot",
       en: "Actions",
@@ -71,6 +79,14 @@ export const usersList = {
     na: {
       fi: "Ei saatavilla",
       en: "N/A",
+    },
+    active: {
+      fi: "Aktiivinen",
+      en: "Active",
+    },
+    banned: {
+      fi: "Estetty",
+      en: "Banned",
     },
   },
   loading: {
