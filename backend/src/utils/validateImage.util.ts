@@ -30,7 +30,7 @@ export function validateImageFile(input: ImageValidationInput) {
     );
   }
 
-  // Validate extension
+  // Validate extension (for feedback/storage, not security)
   const ext = input.filename.split(".").pop()?.toLowerCase();
   if (!ext || !ALLOWED_EXTENSIONS.includes(ext)) {
     throw new BadRequestException(
@@ -44,4 +44,7 @@ export function validateImageFile(input: ImageValidationInput) {
       `File is too large. Maximum size is ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`,
     );
   }
+
+  // Optionally: Validate buffer is a real image (advanced)
+  // Use 'sharp' or 'image-size' for this if needed
 }

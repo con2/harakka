@@ -42,6 +42,12 @@ export class ItemImagesService {
       contentType: contentType,
     });
 
+    console.log("Validating file:", {
+      filename: file.filename,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+    });
+
     // 0. Validate the image file
     validateImageFile(file);
 
@@ -116,8 +122,15 @@ export class ItemImagesService {
 
     try {
       for (let i = 0; i < files.length; i++) {
-        validateImageFile(files[i]);
-        const fileExt = files[i].originalname.split(".").pop();
+        const file = files[i];
+        const filename = file.filename || file.originalname || "cropped.jpg";
+        validateImageFile({
+          buffer: file.buffer,
+          filename,
+          mimetype: file.mimetype,
+          size: file.size,
+        });
+        const fileExt = file.originalname.split(".").pop()?.toLowerCase();
         const fileName = path ? `${path}.${fileExt}` : `${uuidv4()}.${fileExt}`;
         const { data, error } = await supabase.storage
           .from(bucket)

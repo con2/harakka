@@ -311,10 +311,27 @@ export class UserService {
     userId: string,
     req: AuthRequest,
   ): Promise<string> {
-    const fileExtension = fileName.split(".").pop();
+    const fileExtension = fileName.split(".").pop()?.toLowerCase();
     const newFileName = `${userId}-${uuidv4()}.${fileExtension}`;
     const filePath = `${userId}/${newFileName}`;
-    const contentType = `image/${fileExtension}`;
+    let contentType = "";
+    switch (fileExtension) {
+      case "jpg":
+      case "jpeg":
+        contentType = "image/jpeg";
+        break;
+      case "png":
+        contentType = "image/png";
+        break;
+      case "webp":
+        contentType = "image/webp";
+        break;
+      case "gif":
+        contentType = "image/gif";
+        break;
+      default:
+        contentType = "application/octet-stream";
+    }
 
     const supabase = req.supabase;
     const storage = supabase.storage;
