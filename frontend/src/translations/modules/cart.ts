@@ -68,10 +68,6 @@ export const cart = {
       fi: "Vuokra-aika",
       en: "Rental period",
     },
-    total: {
-      fi: "Yhteensä",
-      en: "Total",
-    },
   },
   buttons: {
     checkout: {
@@ -143,10 +139,6 @@ export const cart = {
     bookingError: {
       fi: "Virhe: ",
       en: "Error: ",
-    },
-    checkoutError: {
-      fi: "Tilausvirhe: ",
-      en: "Checkout error: ",
     },
   },
 };

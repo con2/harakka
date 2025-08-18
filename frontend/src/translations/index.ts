@@ -1,6 +1,5 @@
 import { addLocationModal } from "./modules/addLocationModal";
 import { addTagModal } from "./modules/addTagModal";
-import { addUserModal } from "./modules/addUserModal";
 import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
 import { adminPanel } from "./modules/adminPanel";
@@ -9,14 +8,13 @@ import { authCallback } from "./modules/authCallback";
 import { bookingCancel } from "./modules/bookingCancel";
 import { bookingConfirm } from "./modules/bookingConfirm";
 import { bookingDelete } from "./modules/bookingDelete";
-import { bookingEdit } from "./modules/bookingEdit";
+import { bookingDetailsButton } from "./modules/bookingDetailsButton";
+import { bookingEditButton } from "./modules/bookingEdit";
 import { bookingReject } from "./modules/bookingReject";
 import { bookingReturn } from "./modules/bookingReturn";
 import { cart } from "./modules/cart";
 import { contactForm } from "./modules/contactForm";
-import { countries } from "./modules/countries";
 import { footer } from "./modules/footer";
-import { general } from "./modules/general";
 import { itemCard } from "./modules/itemCard";
 import { itemDetails } from "./modules/itemDetails";
 import { itemImageManager } from "./modules/itemImageManager";
@@ -74,6 +72,7 @@ import { rolesList } from "./modules/rolesList";
 import { organizationPage } from "./modules/organizationPage";
 import { locationsList } from "./modules/locationsList";
 import { organizations } from "./modules/organizations";
+import { common } from "./modules/common";
 
 export const t = {
   rolesList,
@@ -83,7 +82,6 @@ export const t = {
   addItemForm,
   itemSummary,
   addTagModal,
-  addUserModal,
   adminDashboard,
   adminItemsTable,
   adminPanel,
@@ -92,15 +90,14 @@ export const t = {
   bookingCancel,
   bookingConfirm,
   bookingDelete,
-  bookingEdit,
+  bookingDetailsButton,
+  bookingEditButton,
   bookingReject,
   bookingReturn,
   cart,
-  common: general.common, // Shorthand for general.common
+  common,
   contactForm,
-  countries,
   footer,
-  general,
   itemCard,
   itemDetails,
   itemImageManager,

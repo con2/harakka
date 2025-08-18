@@ -144,17 +144,12 @@ const Cart: React.FC = () => {
       return;
     }
 
-    //check to ensure valid user ID
-    //console.log("Using user ID for order:", userProfile.id);
-
     // Try to read stored user ID from localStorage
     const storedUserId = localStorage.getItem("userId");
-    //console.log("User ID in localStorage:", storedUserId);
 
     if (storedUserId !== userProfile.id) {
       // Synchronize the localStorage ID with profile ID
       localStorage.setItem("userId", userProfile.id);
-      //console.log("Updated localStorage user ID to match profile");
     }
 
     if (!startDate || !endDate || cartItems.length === 0) {
@@ -183,10 +178,6 @@ const Cart: React.FC = () => {
         end_date: endDate.toISOString(),
       })),
     };
-
-    //console.log("User object:", user);
-    //console.log("User ID:", user.id);
-
     try {
       await toast.promise(dispatch(createBooking(bookingData)).unwrap(), {
         loading: t.cart.toast.creatingBooking[lang],
@@ -393,10 +384,6 @@ const Cart: React.FC = () => {
                           +
                         </Button>
                       </div>
-                      {/* item price commented out */}
-                      {/* <div className="w-20 text-right">
-                        €{(cartItem.item.price * cartItem.quantity).toFixed(2)}
-                      </div> */}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -424,10 +411,6 @@ const Cart: React.FC = () => {
               {t.cart.summary.title[lang]}
             </h3>
             <div className="space-y-2">
-              {/* <div className="flex justify-between text-sm">
-                <span>{t.cart.summary.subtotal[lang]}</span>
-                <span>€{cartTotal.toFixed(2)}</span>
-              </div> */}
               <div className="flex justify-between text-sm">
                 <span>{t.cart.summary.rentalPeriod[lang]}</span>
                 <span>
