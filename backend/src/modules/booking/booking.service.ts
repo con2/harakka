@@ -360,11 +360,6 @@ export class BookingService {
       throw new BadRequestException("Could not confirm booking items");
     }
 
-    // uncomment this when you want the invoice generation inside the app
-    /*  // 4.5 create invoice and save to database
-    const invoice = new InvoiceService(this.supabaseService);
-    invoice.generateInvoice(bookingId); */
-
     // 4.6 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Confirmation, {
       bookingId,
@@ -942,39 +937,6 @@ export class BookingService {
     return num_available ?? 0;
   }
 
-  // 11. Update payment status
-  async updatePaymentStatus(
-    bookingId: string,
-    status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
-    supabase: SupabaseClient,
-  ) {
-    // Check if booking exists
-    const { data: booking, error: bookingError } = await supabase
-      .from("bookings")
-      .select("id")
-      .eq("id", bookingId)
-      .single();
-
-    if (!booking || bookingError) {
-      throw new BadRequestException("Booking not found");
-    }
-
-    // Update payment_status
-    const { error: updateError } = await supabase
-      .from("bookings")
-      .update({ payment_status: status })
-      .eq("id", bookingId);
-
-    if (updateError) {
-      console.error("Supabase error in updatePaymentStatus():", updateError);
-      throw new BadRequestException("Failed to update payment status");
-    }
-
-    return {
-      message: `Payment status updated to '${status}' for booking ${bookingId}`,
-    };
-  }
-
   /**
    * Get bookings in an ordered list
    * @param supabase The supabase client provided by request
@@ -1011,8 +973,7 @@ export class BookingService {
           `status.ilike.%${searchquery}%,` +
           `full_name.ilike.%${searchquery}%,` +
           `created_at_text.ilike.%${searchquery}%,` +
-          `final_amount_text.ilike.%${searchquery}%,` +
-          `payment_status.ilike.%${searchquery}%`,
+          `final_amount_text.ilike.%${searchquery}%`,
       );
     }
 

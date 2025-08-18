@@ -8,13 +8,11 @@ import {
   Post,
   Put,
   Req,
-  Patch,
   UnauthorizedException,
   BadRequestException,
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
-import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
 import { BookingItem } from "@common/bookings/booking-items.types";
@@ -170,21 +168,6 @@ export class BookingController {
     // const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.confirmPickup(bookingId, supabase);
-  }
-
-  // change payment status
-  @Patch("payment-status")
-  async updatePaymentStatus(
-    @Body() dto: UpdatePaymentStatusDto,
-    @Req() req: AuthRequest,
-  ) {
-    // const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.updatePaymentStatus(
-      dto.bookingId,
-      dto.status,
-      supabase,
-    );
   }
 
   @Get("ordered")
