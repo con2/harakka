@@ -87,4 +87,22 @@ export const userEditModal = {
       en: "Failed to update user. Please try again.",
     },
   },
+  columns: {
+    organization: {
+      fi: common.organizations.organization.fi,
+      en: common.organizations.organization.en,
+    },
+    role: {
+      fi: common.roles.role.fi,
+      en: common.roles.role.en,
+    },
+    actions: {
+      fi: common.actions.fi,
+      en: common.actions.en,
+    },
+    active: {
+      fi: common.active.fi,
+      en: common.active.en,
+    },
+  },
 };
