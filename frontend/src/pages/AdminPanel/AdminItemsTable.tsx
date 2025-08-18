@@ -57,9 +57,11 @@ const AdminItemsTable = () => {
   const deletableItems = useAppSelector((state) => state.items.deletableItems);
   const org_id = useAppSelector(selectActiveOrganizationId);
 
-  const { hasRole } = useRoles();
-  const isAdmin =
-    hasRole("admin") || hasRole("super_admin") || hasRole("storage_manager") || hasRole("main_admin")
+  const { hasAnyRole, hasRole } = useRoles();
+  const isAdmin = hasAnyRole(
+    ["main_admin", "tenant_admin", "super_admin", "storage_manager"],
+    org_id || undefined,
+  );
   const isSuperVera = hasRole("superVera");
   // Translation
   const { lang } = useLanguage();
