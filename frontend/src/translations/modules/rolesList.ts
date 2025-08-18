@@ -39,10 +39,6 @@ export const rolesList = {
         en: "Delete role permanently?",
         fi: "Poistetaanko rooli pysyvästi?",
       },
-      description: {
-        en: "This will permanently remove role {row.role_name} for {row.user_email}",
-        fi: "Tämä poistaa pysyvästi roolin {row.role_name} käyttäjältä {row.user_email}",
-      },
       confirmText: {
         en: common.delete.en,
         fi: common.delete.fi,
@@ -57,10 +53,6 @@ export const rolesList = {
     selectUser: {
       en: "Select user",
       fi: "Valitse käyttäjä",
-    },
-    filterByUser: {
-      en: "Filter by user (email or name)",
-      fi: "Suodata käyttäjän mukaan (sähköposti tai nimi)",
     },
     filterByOrg: {
       en: "Filter by organization",
@@ -103,10 +95,6 @@ export const rolesList = {
     cancel: {
       en: common.cancel.en,
       fi: common.cancel.fi,
-    },
-    save: {
-      en: common.save.en,
-      fi: common.save.fi,
     },
     ariaLabels: {
       deletePermanently: {

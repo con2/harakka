@@ -16,10 +16,6 @@ export const itemDetails = {
     },
   },
   locations: {
-    locationInfo: {
-      fi: "Sijaintitiedot",
-      en: "Location Information",
-    },
     location: {
       fi: "Sijainti",
       en: "Location",

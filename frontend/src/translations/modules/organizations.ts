@@ -99,7 +99,7 @@ export const organizations = {
       },
       save: {
         fi: common.save.fi,
-        en: common.save.fi,
+        en: common.save.en,
       },
       close: {
         fi: common.close.fi,
