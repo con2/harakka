@@ -36,6 +36,7 @@ const UserPanel = () => {
       void dispatch(fetchAllLocations({ page: 1, limit: 10 }));
     if (organizations.length < 1)
       void dispatch(fetchAllOrganizations({ page: 1, limit: 50 }));
+    // eslint-disable-next-line
   }, [dispatch]);
 
   // Unique item_type values from items
