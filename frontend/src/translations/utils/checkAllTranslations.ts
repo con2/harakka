@@ -167,16 +167,28 @@ function findUsedTranslationKeys(): Set<string> {
 
   const usedKeys = new Set<string>();
 
-  // Pattern to match t.path.to.key[lang] usage
-  const translationPattern =
+  // Pattern to match t.path.to.key[lang] usage (standard access)
+  const translationPattern1 =
     /t\.([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\[/g;
+
+  // Pattern to match t.path.to.key?.[lang] usage (optional chaining)
+  const translationPattern2 =
+    /t\.([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\?\.\[/g;
 
   for (const file of files) {
     try {
       const content = fs.readFileSync(file, "utf8");
       let match;
 
-      while ((match = translationPattern.exec(content)) !== null) {
+      // Check for standard pattern: t.path.to.key[lang]
+      while ((match = translationPattern1.exec(content)) !== null) {
+        const keyPath = match[1];
+        usedKeys.add(keyPath);
+      }
+
+      // Reset regex state and check for optional chaining pattern: t.path.to.key?.[lang]
+      translationPattern2.lastIndex = 0;
+      while ((match = translationPattern2.exec(content)) !== null) {
         const keyPath = match[1];
         usedKeys.add(keyPath);
       }
