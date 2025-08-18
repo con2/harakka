@@ -13,6 +13,7 @@
     "generate:types:local": "npx supabase gen types typescript --local > common/supabase.types.ts",
     "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > common/supabase.types.ts",
     "s:start": "npx supabase start",
+    "s:start:local": "env-cmd -f supabase-local.env npx supabase start",
     "s:stop": "npx supabase stop",
     "s:restart": "npx supabase stop && npx supabase start",
     "s:reset": "npx supabase db reset",
