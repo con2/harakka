@@ -16,6 +16,7 @@ import { ApiSingleResponse, ApiResponse } from "@common/response.types";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { getPaginationMeta } from "@src/utils/pagination";
 import { v4 as uuidv4 } from "uuid";
+import { validateImageFile } from "@src/utils/validateImage.util";
 
 @Injectable()
 export class UserService {
@@ -317,6 +318,14 @@ export class UserService {
 
     const supabase = req.supabase;
     const storage = supabase.storage;
+
+    // 0. Validate the image file
+    validateImageFile({
+      buffer: fileBuffer,
+      filename: fileName,
+      mimetype: contentType,
+      size: fileBuffer.length,
+    });
 
     // upload
     const { error: uploadError } = await storage

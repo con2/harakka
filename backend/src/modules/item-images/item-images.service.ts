@@ -11,6 +11,7 @@ import {
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { Eq } from "@src/types/queryconstructor.types";
 import { queryConstructor } from "@src/utils/queryconstructor.utils";
+import { validateImageFile } from "@src/utils/validateImage.util";
 
 @Injectable()
 export class ItemImagesService {
@@ -40,6 +41,9 @@ export class ItemImagesService {
       key: fileName,
       contentType: contentType,
     });
+
+    // 0. Validate the image file
+    validateImageFile(file);
 
     // 1. Upload to supabase storage
     const { data: uploadData, error: uploadError } = await supabase.storage
