@@ -74,6 +74,7 @@ import { rolesList } from "./modules/rolesList";
 import { organizationPage } from "./modules/organizationPage";
 import { locationsList } from "./modules/locationsList";
 import { organizations } from "./modules/organizations";
+import { organizationLogoUploader } from "./modules/organizationLogoUploader";
 
 export const t = {
   rolesList,
@@ -151,4 +152,5 @@ export const t = {
   organizationPage,
   locationsList,
   organizations,
+  organizationLogoUploader,
 };
