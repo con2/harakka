@@ -22,6 +22,7 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { OrganizationDetails } from "@/types/organization";
 import { useEffect } from "react";
+import OrganizationLogoUploader from "./OrganizationLogoUploader";
 
 type Props = {
   open: boolean;
@@ -77,6 +78,15 @@ export default function OrganizationModal({
           <DialogHeader>
             <DialogTitle>{organization?.name}</DialogTitle>
           </DialogHeader>
+
+          {/* Add logo uploader */}
+          <div className="flex flex-col items-center mb-4">
+            <OrganizationLogoUploader
+              currentImage={organization?.logo_picture_url}
+              organizationId={organization?.id || ""}
+            />
+          </div>
+
           <div className="space-y-2 text-sm">
             <p>
               <strong>{t.organizations.modal.labels.description[lang]}:</strong>{" "}
@@ -130,6 +140,16 @@ export default function OrganizationModal({
         <DialogHeader>
           <DialogTitle>{t.organizations.modal.title[lang]}</DialogTitle>
         </DialogHeader>
+
+        {/* Add logo uploader for edit mode only */}
+        {mode === "edit" && organization?.id && (
+          <div className="flex flex-col items-center mb-4">
+            <OrganizationLogoUploader
+              currentImage={organization?.logo_picture_url}
+              organizationId={organization.id}
+            />
+          </div>
+        )}
 
         <Form {...form} key={organization?.id ?? "new"}>
           <form
