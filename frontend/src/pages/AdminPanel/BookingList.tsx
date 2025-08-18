@@ -4,7 +4,6 @@ import {
   selectBookingLoading,
   selectBookingError,
   selectAllBookings,
-  updatePaymentStatus,
   getOrderedBookings,
   selectCurrentBooking,
   selectBookingItemsPagination,
@@ -18,7 +17,6 @@ import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
-  PaymentStatus,
   ValidBookingOrder,
   BookingUserViewRow,
   BookingStatus,
@@ -37,13 +35,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
 import { useAuth } from "@/hooks/useAuth";
 import { StatusBadge } from "@/components/StatusBadge";

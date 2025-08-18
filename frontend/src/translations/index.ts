@@ -34,7 +34,6 @@ import { tagAssignForm } from "./modules/tagAssignForm";
 import { tagDelete } from "./modules/tagDelete";
 import { tagDetail } from "./modules/tagDetail";
 import { tagList } from "./modules/tagList";
-import { teamList } from "./modules/teamList";
 import { timeframeSelector } from "./modules/timeframeSelector";
 import { unauthorized } from "./modules/unauthorized";
 import { updateItemModal } from "./modules/updateItemModal";
@@ -118,7 +117,6 @@ export const t = {
   tagDelete,
   tagDetail,
   tagList,
-  teamList,
   timeframeSelector,
   unauthorized,
   updateItemModal,
