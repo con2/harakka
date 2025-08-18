@@ -116,6 +116,7 @@ export class ItemImagesService {
 
     try {
       for (let i = 0; i < files.length; i++) {
+        validateImageFile(files[i]);
         const fileExt = files[i].originalname.split(".").pop();
         const fileName = path ? `${path}.${fileExt}` : `${uuidv4()}.${fileExt}`;
         const { data, error } = await supabase.storage
