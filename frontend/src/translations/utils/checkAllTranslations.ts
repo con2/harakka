@@ -192,7 +192,14 @@ function checkUnusedKeys() {
   const allKeys = collectAllTranslationKeys(t);
   const usedKeys = findUsedTranslationKeys();
 
-  const unusedKeys = Array.from(allKeys).filter((key) => !usedKeys.has(key));
+  // Filter out keys from common.ts module as they are used by other translation modules
+  const unusedKeys = Array.from(allKeys).filter((key) => {
+    // Exclude common module keys from unused detection
+    if (key.startsWith("common.")) {
+      return false;
+    }
+    return !usedKeys.has(key);
+  });
 
   return {
     allKeys: Array.from(allKeys),
