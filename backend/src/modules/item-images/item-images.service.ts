@@ -78,7 +78,7 @@ export class ItemImagesService {
         await supabase.storage
           .from("item-images")
           .remove([uploadData.fullPath]);
-        throw new Error(`Database record creation failed: ${dbError.message}`);
+        handleSupabaseError(dbError);
       }
 
       return imageRecord;
@@ -126,8 +126,8 @@ export class ItemImagesService {
             contentType: "image/jpeg",
           });
         if (error) {
-          console.log(error);
-          throw new Error(`Failed to upload image: ${files[i].originalname}`);
+          error.message = `Failed to upload image: ${files[i].originalname}`;
+          handleSupabaseError(error);
         }
         if (data?.fullPath) {
           const full_url = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.fullPath}`;
@@ -146,7 +146,7 @@ export class ItemImagesService {
     const supabase = req.supabase;
     try {
       const { error } = await supabase.storage.from(bucket).remove(paths);
-      if (error) throw new Error("Failed to remove files.");
+      if (error) handleSupabaseError(error);
       return { success: true };
     } catch (error) {
       console.error(error);

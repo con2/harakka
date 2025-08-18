@@ -337,7 +337,7 @@ export class UserService {
 
     if (uploadError) {
       this.logger.error(`Upload failed: ${uploadError.message}`);
-      throw new Error(`Upload failed: ${uploadError.message}`);
+      handleSupabaseError(uploadError);
     }
 
     // get public URL
@@ -367,12 +367,12 @@ export class UserService {
     if (currentUser?.profile_picture_url) {
       const oldPath = this.extractStoragePath(currentUser.profile_picture_url);
       if (oldPath) {
-        const { error } = await req.supabase.storage
+        const { error: removeError } = await req.supabase.storage
           .from("profile-pictures")
           .remove([oldPath]);
 
-        if (error) {
-          console.error("Error deleting old profile picture:", error);
+        if (removeError) {
+          handleSupabaseError(removeError);
         }
       }
     }
