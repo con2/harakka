@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const usersList = {
   title: {
     fi: "Hallinnoi käyttäjiä",
@@ -21,24 +23,24 @@ export const usersList = {
   },
   columns: {
     name: {
-      fi: "Nimi",
-      en: "Name",
+      fi: common.personalData.name.fi,
+      en: common.personalData.name.en,
     },
     phone: {
-      fi: "Puhelinnumero",
-      en: "Phone",
+      fi: common.personalData.phone.fi,
+      en: common.personalData.phone.en,
     },
     email: {
-      fi: "Sähköposti",
-      en: "Email",
+      fi: common.personalData.email.fi,
+      en: common.personalData.email.en,
     },
     userSince: {
       fi: "Käyttäjä alkaen",
       en: "User Since",
     },
     role: {
-      fi: "Rooli",
-      en: "Role",
+      fi: common.roles.role.fi,
+      en: common.roles.role.en,
     },
     organization: {
       fi: "Organisaatio",

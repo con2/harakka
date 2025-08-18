@@ -20,6 +20,10 @@ export const common = {
     fi: "Poista",
     en: "Delete",
   },
+  remove: {
+    fi: "Poista",
+    en: "Remove",
+  },
   edit: {
     fi: "Muokkaa",
     en: "Edit",
@@ -34,6 +38,10 @@ export const common = {
   },
   // Globally used roles
   roles: {
+    role: {
+      fi: "Rooli",
+      en: "Role",
+    },
     admin: {
       fi: "Ylläpitäjä",
       en: "Admin",
@@ -61,6 +69,40 @@ export const common = {
     requester: {
       fi: "Tilaaja",
       en: "Requester",
+    },
+  },
+  personalData: {
+    name: {
+      fi: "Nimi",
+      en: "Name",
+    },
+    email: {
+      fi: "Sähköposti",
+      en: "Email",
+    },
+    phone: {
+      fi: "Puhelin",
+      en: "Phone",
+    },
+    visibleName: {
+      fi: "Näkyvä nimi",
+      en: "Visible Name",
+    },
+    country: {
+      fi: "Maa",
+      en: "Country",
+    },
+    city: {
+      fi: "Kaupunki",
+      en: "City",
+    },
+    street: {
+      fi: "Katuosoite",
+      en: "Street Address",
+    },
+    postalCode: {
+      fi: "Postinumero",
+      en: "Postal Code",
     },
   },
 };
