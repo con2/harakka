@@ -154,20 +154,6 @@ export const bookingsApi = {
   },
 
   /**
-   * Update payment status of an booking (admin only)
-   * @param bookingId - booking ID to update
-   * @param status - New payment status
-   * @returns Promise with confirmation message
-   */
-  updatePaymentStatus: async (
-    bookingId: string,
-    status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
-  ): Promise<{ bookingId: string; status: string }> => {
-    await api.patch(`/bookings/payment-status`, { bookingId, status });
-    return { bookingId, status: status ?? "" };
-  },
-
-  /**
    * Get ordered and filtered bookings.
    * @param order_by What column to order the columns by. Default "booking_number"
    * @param ascending If to sort booking smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.

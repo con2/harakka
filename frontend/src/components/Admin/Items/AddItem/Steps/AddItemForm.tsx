@@ -81,7 +81,6 @@ function AddItemForm() {
       },
       items_number_total: 1,
       items_number_currently_in_storage: 1,
-      price: 0,
       is_active: true,
       tags: [],
       translations: {
@@ -326,47 +325,6 @@ function AddItemForm() {
                       <ErrorMessage
                         errors={form.formState.errors}
                         name="items_number_total"
-                        render={({ message }) => (
-                          <p className="text-[0.8rem] font-medium text-destructive">
-                            {
-                              t.addItemForm.messages.validation[
-                                message as keyof typeof t.addItemForm.messages.validation
-                              ][appLang]
-                            }
-                          </p>
-                        )}
-                      />
-                    </FormItem>
-                  </div>
-                )}
-              />
-              <FormField
-                name="price"
-                control={form.control}
-                render={({ field }) => (
-                  <div className="w-full">
-                    <FormItem>
-                      <FormLabel>
-                        {t.addItemForm.labels.price[appLang]} (€)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder=""
-                          {...field}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            const numValue =
-                              value === "" ? "" : parseInt(value, 10);
-                            field.onChange(numValue);
-                          }}
-                          className="border shadow-none border-grey"
-                        />
-                      </FormControl>
-                      <ErrorMessage
-                        errors={form.formState.errors}
-                        name="price"
                         render={({ message }) => (
                           <p className="text-[0.8rem] font-medium text-destructive">
                             {

@@ -38,10 +38,6 @@ export const addItemForm = {
       fi: "Sijainti",
       en: "Location",
     },
-    price: {
-      fi: "Hinta",
-      en: "Price",
-    },
     active: {
       fi: "Aktiivinen",
       en: "Active",
@@ -128,10 +124,6 @@ export const addItemForm = {
       items_number_total: {
         en: "Quantity is required",
         fi: "Määrä on pakollinen",
-      },
-      price: {
-        en: "Price is required",
-        fi: "Hinta on pakollinen",
       },
     },
     error: {

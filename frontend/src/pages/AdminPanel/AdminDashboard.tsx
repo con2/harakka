@@ -24,9 +24,7 @@ import {
   selectCurrentBooking,
   selectCurrentBookingLoading,
   selectTotalBookingsCount,
-  updatePaymentStatus,
 } from "@/store/slices/bookingsSlice";
-import { PaymentStatus } from "@/types";
 import {
   fetchAllItems,
   getItemCount,
@@ -43,13 +41,6 @@ import {
   DialogTitle,
 } from "../../components/ui/dialog";
 import { Separator } from "../../components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../components/ui/select";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
 import BookingConfirmButton from "@/components/Admin/Bookings/BookingConfirmButton";
 import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton";
@@ -144,70 +135,6 @@ const AdminDashboard = () => {
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
     {
-      accessorKey: "final_amount",
-      header: t.bookingList.columns.total[lang],
-      cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
-    },
-    {
-      accessorKey: "invoice_status",
-      header: t.bookingList.columns.invoice.invoice[lang],
-      cell: ({ row }) => {
-        const paymentStatus = row.original.payment_status ?? "N/A";
-
-        const handleStatusChange = (
-          newStatus:
-            | "invoice-sent"
-            | "paid"
-            | "payment-rejected"
-            | "overdue"
-            | "N/A",
-        ) => {
-          void dispatch(
-            updatePaymentStatus({
-              bookingId: row.original.id,
-              status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
-            }),
-          );
-        };
-
-        return (
-          <Select onValueChange={handleStatusChange} value={paymentStatus}>
-            <SelectTrigger className="w-[120px] text-xs">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {[
-                "invoice-sent",
-                "paid",
-                "payment-rejected",
-                "overdue",
-                "N/A",
-              ].map((status) => {
-                const statusKeyMap: Record<
-                  string,
-                  keyof typeof t.bookingList.columns.invoice.invoiceStatus
-                > = {
-                  "invoice-sent": "sent",
-                  paid: "paid",
-                  "payment-rejected": "rejected",
-                  overdue: "overdue",
-                  "N/A": "NA",
-                };
-                const statusKey = statusKeyMap[status];
-                return (
-                  <SelectItem className="text-xs" key={status} value={status}>
-                    {t.bookingList.columns.invoice.invoiceStatus?.[statusKey]?.[
-                      lang
-                    ] || status}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        );
-      },
-    },
-    {
       id: "actions",
       cell: ({ row }) => {
         const booking = row.original;
@@ -286,11 +213,6 @@ const AdminDashboard = () => {
       header: t.bookingList.modal.bookingItems.columns.endDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
-    },
-    {
-      accessorKey: "subtotal",
-      header: t.bookingList.modal.bookingItems.columns.subtotal[lang],
-      cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
     },
   ];
 
