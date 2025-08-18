@@ -318,6 +318,7 @@ export type Database = {
           },
           {
             foreignKeyName: "organization_items_storage_item_id_fkey"
+            foreignKeyName: "organization_items_storage_item_id_fkey"
             columns: ["storage_item_id"]
             isOneToOne: false
             referencedRelation: "storage_items"
@@ -325,12 +326,14 @@ export type Database = {
           },
           {
             foreignKeyName: "organization_items_storage_item_id_fkey"
+            foreignKeyName: "organization_items_storage_item_id_fkey"
             columns: ["storage_item_id"]
             isOneToOne: false
             referencedRelation: "view_item_location_summary"
             referencedColumns: ["storage_item_id"]
           },
           {
+            foreignKeyName: "organization_items_storage_item_id_fkey"
             foreignKeyName: "organization_items_storage_item_id_fkey"
             columns: ["storage_item_id"]
             isOneToOne: false
@@ -404,6 +407,7 @@ export type Database = {
           is_active: boolean | null
           is_deleted: boolean | null
           logo_picture_url: string | null
+          logo_picture_url: string | null
           name: string
           slug: string
           updated_at: string | null
@@ -417,6 +421,7 @@ export type Database = {
           is_active?: boolean | null
           is_deleted?: boolean | null
           logo_picture_url?: string | null
+          logo_picture_url?: string | null
           name: string
           slug: string
           updated_at?: string | null
@@ -429,6 +434,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_deleted?: boolean | null
+          logo_picture_url?: string | null
           logo_picture_url?: string | null
           name?: string
           slug?: string
@@ -1299,6 +1305,7 @@ export type Database = {
           fi_item_name: string | null
           fi_item_type: string | null
           id: string | null
+          id: string | null
           is_active: boolean | null
           is_deleted: boolean | null
           items_number_currently_in_storage: number | null
@@ -1396,6 +1403,12 @@ export type Database = {
           p_title: string
           p_type: Database["public"]["Enums"]["notification_type"]
           p_user_id: string
+          p_message?: string
+          p_metadata?: Json
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_title: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_user_id: string
         }
         Returns: undefined
       }
@@ -1405,9 +1418,11 @@ export type Database = {
       }
       get_all_full_bookings: {
         Args: { in_limit: number; in_offset: number }
+        Args: { in_limit: number; in_offset: number }
         Returns: Json
       }
       get_all_full_orders: {
+        Args: { in_limit?: number; in_offset?: number }
         Args: { in_limit?: number; in_offset?: number }
         Returns: Json
       }
@@ -1421,25 +1436,27 @@ export type Database = {
       }
       get_full_user_booking: {
         Args: { in_limit: number; in_offset: number; in_user_id: string }
+        Args: { in_limit: number; in_offset: number; in_user_id: string }
         Returns: Json
       }
       get_full_user_order: {
+        Args: { in_limit?: number; in_offset?: number; in_user_id: string }
         Args: { in_limit?: number; in_offset?: number; in_user_id: string }
         Returns: Json
       }
       get_latest_ban_record: {
         Args: { check_user_id: string }
         Returns: {
-          id: string
-          ban_type: string
           action: string
           ban_reason: string
-          is_permanent: boolean
-          banned_by: string
+          ban_type: string
           banned_at: string
-          unbanned_at: string
+          banned_by: string
+          id: string
+          is_permanent: boolean
           organization_id: string
           role_assignment_id: string
+          unbanned_at: string
         }[]
       }
       get_request_user_id: {
@@ -1456,18 +1473,19 @@ export type Database = {
       get_user_roles: {
         Args: { user_uuid: string }
         Returns: {
-          id: string
-          user_id: string
-          organization_id: string
-          role_id: string
-          is_active: boolean
           created_at: string
-          role_name: string
+          id: string
+          is_active: boolean
+          organization_id: string
           organization_name: string
           organization_slug: string
+          role_id: string
+          role_name: string
+          user_id: string
         }[]
       }
       is_admin: {
+        Args: { p_org_id?: string; p_user_id: string }
         Args: { p_org_id?: string; p_user_id: string }
         Returns: boolean
       }
@@ -1477,12 +1495,14 @@ export type Database = {
       }
       is_user_banned_for_org: {
         Args: { check_org_id: string; check_user_id: string }
+        Args: { check_org_id: string; check_user_id: string }
         Returns: boolean
       }
       is_user_banned_for_role: {
         Args: {
           check_org_id: string
           check_role_id: string
+          check_user_id: string
           check_user_id: string
         }
         Returns: boolean
@@ -1491,7 +1511,12 @@ export type Database = {
         Args: {
           p_channel?: Database["public"]["Enums"]["notification_channel"]
           p_message?: string
+          p_message?: string
           p_metadata?: Json
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_title?: string
+          p_type_txt: string
+          p_user_id: string
           p_severity?: Database["public"]["Enums"]["notification_severity"]
           p_title?: string
           p_type_txt: string

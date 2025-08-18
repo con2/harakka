@@ -47,4 +47,21 @@ export const organizationApi = {
     id: string,
   ): Promise<{ success: boolean; id: string }> =>
     api.patch(`/organizations/${id}/soft-delete`),
+
+  /**
+   * Upload new logo picture for the current org
+   * @param file - The file to upload
+   * @returns Promise with the URL of the uploaded picture
+   */
+  uploadOrganizationLogo: (
+    id: string,
+    file: File,
+  ): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return api.post(`/organizations/${id}/logo`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };

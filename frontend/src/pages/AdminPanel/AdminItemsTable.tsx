@@ -57,9 +57,11 @@ const AdminItemsTable = () => {
   const deletableItems = useAppSelector((state) => state.items.deletableItems);
   const org_id = useAppSelector(selectActiveOrganizationId);
 
-  const { hasRole } = useRoles();
-  const isAdmin =
-    hasRole("admin") || hasRole("super_admin") || hasRole("storage_manager");
+  const { hasAnyRole, hasRole } = useRoles();
+  const isAdmin = hasAnyRole(
+    ["main_admin", "tenant_admin", "super_admin", "storage_manager"],
+    org_id || undefined,
+  );
   const isSuperVera = hasRole("superVera");
   // Translation
   const { lang } = useLanguage();
@@ -157,7 +159,7 @@ const AdminItemsTable = () => {
         location_filter: [],
         categories: [],
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        org_ids: activeOrganizationId ?? undefined,
+        org_ids: isSuperVera ? undefined : (activeOrganizationId ?? undefined),
       }),
     );
   }, [
@@ -171,6 +173,7 @@ const AdminItemsTable = () => {
     tagFilter,
     statusFilter,
     activeOrganizationId,
+    isSuperVera,
   ]);
 
   //fetch tags list
