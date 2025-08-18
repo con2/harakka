@@ -150,7 +150,7 @@ export class OrganizationsService {
       });
 
     if (uploadError) {
-      throw new Error(`Upload failed: ${uploadError.message}`);
+      handleSupabaseError(uploadError);
     }
 
     // Get public URL
@@ -177,12 +177,12 @@ export class OrganizationsService {
     if (organization?.logo_picture_url) {
       const oldPath = this.extractStoragePath(organization.logo_picture_url);
       if (oldPath) {
-        const { error } = await req.supabase.storage
+        const { error: removeError } = await req.supabase.storage
           .from("organization-logo-picture")
           .remove([oldPath]);
 
-        if (error) {
-          console.error("Error deleting old organization logo:", error);
+        if (removeError) {
+          handleSupabaseError(removeError);
         }
       }
     }
