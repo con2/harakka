@@ -88,13 +88,6 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     setRoleAssignments(userRoles);
   }, [allUserRoles, user.id]);
 
-  // Ensure availableRoles are present (skipInitialFetch suppresses it in the hook)
-  /*   useEffect(() => {
-    if (canManageRoles && !availableRoles.length) {
-      void refreshAvailableRoles();
-    }
-  }, [canManageRoles, availableRoles.length, refreshAvailableRoles]);
- */
   // Ensure organizations list is loaded for the org picker
   useEffect(() => {
     if (organizations.length === 0) {

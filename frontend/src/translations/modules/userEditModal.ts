@@ -29,6 +29,24 @@ export const userEditModal = {
       en: "Visible Name",
     },
   },
+  columns: {
+    organization: {
+      fi: "Organisaatio",
+      en: "Organization",
+    },
+    role: {
+      fi: "Rooli",
+      en: "Role",
+    },
+    active: {
+      fi: "Aktiivinen",
+      en: "Active",
+    },
+    actions: {
+      fi: "Toiminnot",
+      en: "Actions",
+    },
+  },
   placeholders: {
     fullName: {
       fi: "Koko nimi",
