@@ -31,24 +31,6 @@ export const userEditModal = {
       en: common.personalData.visibleName.en,
     },
   },
-  columns: {
-    organization: {
-      fi: common.organizations.organization.fi,
-      en: common.organizations.organization.en,
-    },
-    role: {
-      fi: common.roles.role.fi,
-      en: common.roles.role.en,
-    },
-    active: {
-      fi: common.active.fi,
-      en: common.active.en,
-    },
-    actions: {
-      fi: common.actions.fi,
-      en: common.actions.en,
-    },
-  },
   placeholders: {
     fullName: {
       fi: common.personalData.name.fi,
