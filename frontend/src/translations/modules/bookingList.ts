@@ -25,10 +25,6 @@ export const bookingList = {
         fi: "Peruutettu",
         en: "Cancelled",
       },
-      cancelledByUser: {
-        fi: "Käyttäjän peruuttama",
-        en: "Cancelled by user",
-      },
       cancelledByAdmin: {
         fi: "Ylläpitäjän peruuttama",
         en: "Cancelled by admin",
@@ -68,46 +64,6 @@ export const bookingList = {
       fi: "Tilauspäivä",
       en: "Booking Date",
     },
-    dateRange: {
-      fi: "Aika",
-      en: "Booking Time",
-    },
-    total: {
-      fi: "Summa",
-      en: "Total",
-    },
-    invoice: {
-      invoiceStatus: {
-        sent: {
-          fi: "Lähetetty",
-          en: "Invoice Sent",
-        },
-        paid: {
-          fi: "Maksettu",
-          en: "Paid",
-        },
-        rejected: {
-          fi: "Maksu hylätty",
-          en: "Payment Rejected",
-        },
-        overdue: {
-          fi: "Erääntynyt",
-          en: "Overdue",
-        },
-        NA: {
-          fi: "N/A",
-          en: "N/A",
-        },
-      },
-      invoice: {
-        fi: "Lasku",
-        en: "Invoice",
-      },
-    },
-    actions: {
-      fi: "Toiminnot",
-      en: "Actions",
-    },
   },
   buttons: {
     refresh: {
@@ -139,42 +95,6 @@ export const bookingList = {
     unknown: {
       fi: "Tuntematon",
       en: "Unknown",
-    },
-    pending: {
-      fi: "Käsittelyssä",
-      en: "Pending",
-    },
-    confirmed: {
-      fi: "Vahvistettu",
-      en: "Confirmed",
-    },
-    cancelled: {
-      fi: "Peruutettu",
-      en: "Cancelled",
-    },
-    cancelledByUser: {
-      fi: "Käyttäjän peruuttama",
-      en: "Cancelled by user",
-    },
-    cancelledByAdmin: {
-      fi: "Ylläpitäjän peruuttama",
-      en: "Cancelled by admin",
-    },
-    rejected: {
-      fi: "Hylätty",
-      en: "Rejected",
-    },
-    completed: {
-      fi: "Valmis",
-      en: "Completed",
-    },
-    na: {
-      fi: "Ei saatavilla",
-      en: "N/A",
-    },
-    pickedUp: {
-      fi: "Noudettu",
-      en: "Picked Up",
     },
   },
   modal: {

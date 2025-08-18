@@ -1,17 +1,5 @@
 export const itemDetails = {
   buttons: {
-    save: {
-      fi: "Tallenna",
-      en: "Save",
-    },
-    cancel: {
-      fi: "Peruuta",
-      en: "Cancel",
-    },
-    delete: {
-      fi: "Poista",
-      en: "Delete",
-    },
     back: {
       fi: "Takaisin",
       en: "Back",

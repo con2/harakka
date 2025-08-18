@@ -1,8 +1,4 @@
 export const navigation = {
-  home: {
-    fi: "Etusivu",
-    en: "Home",
-  },
   myProfile: {
     fi: "Profiilini",
     en: "My Profile",
@@ -26,10 +22,6 @@ export const navigation = {
   organizations: {
     en: "Organizations",
     fi: "Organisaatiot",
-  },
-  myOrganization: {
-    en: "My Organization",
-    fi: "Oma organisaatio",
   },
   toast: {
     title: {
