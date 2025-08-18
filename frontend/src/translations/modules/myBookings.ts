@@ -86,10 +86,6 @@ export const myBookings = {
       fi: "Loppupäivä",
       en: "End Date",
     },
-    subtotal: {
-      fi: "Välisumma",
-      en: "Subtotal",
-    },
   },
   emptyState: {
     title: {

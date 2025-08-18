@@ -4,10 +4,6 @@ export const userDelete = {
       fi: "Virheellinen käyttäjän tunnus.",
       en: "Invalid user ID.",
     },
-    generalError: {
-      fi: "Virhe poistettaessa käyttäjää.",
-      en: "Error deleting user.",
-    },
   },
   confirmation: {
     title: {

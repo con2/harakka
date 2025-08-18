@@ -73,10 +73,4 @@ export const userPanel = {
       en: "Average Rating",
     },
   },
-  colors: {
-    title: {
-      fi: "Värit",
-      en: "Colors",
-    },
-  },
 };

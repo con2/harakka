@@ -108,10 +108,6 @@ export const updateItemModal = {
       fi: "Varastossa oleva määrä",
       en: "Currently in storage",
     },
-    available: {
-      fi: "Saatavilla oleva määrä",
-      en: "Available quantity",
-    },
   },
   tags: {
     title: {

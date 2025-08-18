@@ -1,4 +1,5 @@
 export const common = {
+  //Buttons
   rotate: {
     en: "Rotate",
     fi: "Käännä",
@@ -26,5 +27,36 @@ export const common = {
   close: {
     fi: "Sulje",
     en: "Close",
+  },
+  // Globally used roles
+  roles: {
+    admin: {
+      fi: "Ylläpitäjä",
+      en: "Admin",
+    },
+    user: {
+      fi: "Käyttäjä",
+      en: "User",
+    },
+    superVera: {
+      fi: "Super Vera",
+      en: "Super Vera",
+    },
+    storageManager: {
+      fi: "Varastonhoitaja",
+      en: "Storage Manager",
+    },
+    mainAdmin: {
+      fi: "Pääkäyttäjä",
+      en: "Main Admin",
+    },
+    superAdmin: {
+      fi: "Pääylläpitäjä",
+      en: "Super Admin",
+    },
+    requester: {
+      fi: "Tilaaja",
+      en: "Requester",
+    },
   },
 };

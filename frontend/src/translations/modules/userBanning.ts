@@ -41,10 +41,6 @@ export const userBanning = {
         fi: "Esto-syy",
         en: "Ban Reason",
       },
-      placeholder: {
-        fi: "Syötä syy estolle...",
-        en: "Enter reason for ban...",
-      },
       selectPlaceholder: {
         fi: "Valitse syy...",
         en: "Select a reason...",
@@ -253,14 +249,6 @@ export const userBanning = {
         fi: "Syy",
         en: "Reason",
       },
-      bannedBy: {
-        fi: "Estänyt",
-        en: "Banned By",
-      },
-      bannedAt: {
-        fi: "Estetty",
-        en: "Banned At",
-      },
       isPermanent: {
         fi: "Pysyvä",
         en: "Permanent",
@@ -305,39 +293,17 @@ export const userBanning = {
           en: "Role Ban",
         },
       },
-      organization: {
-        fi: "Organisaatio",
-        en: "Organization",
-      },
       organizationPlaceholder: {
         fi: "Valitse organisaatio, josta esto poistetaan...",
         en: "Select organization to unban from...",
-      },
-      role: {
-        fi: "Rooli",
-        en: "Role",
       },
       rolePlaceholder: {
         fi: "Valitse rooli, josta esto poistetaan...",
         en: "Select role to unban from...",
       },
-      reason: {
-        fi: "Syy",
-        en: "Reason",
-      },
       reasonPlaceholder: {
         fi: "Syy eston poistamiselle...",
         en: "Reason for unbanning...",
-      },
-    },
-    actions: {
-      confirm: {
-        fi: "Poista esto",
-        en: "Unban",
-      },
-      cancel: {
-        fi: "Peruuta",
-        en: "Cancel",
       },
     },
   },

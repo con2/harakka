@@ -13,28 +13,10 @@ export const usersList = {
         fi: "Kaikki roolit",
         en: "All Roles",
       },
-      user: {
-        fi: "Käyttäjä",
-        en: "User",
-      },
-      admin: {
-        fi: "Ylläpitäjä",
-        en: "Admin",
-      },
-      superVera: {
-        fi: "Super Vera",
-        en: "Super Vera",
-      },
     },
     clear: {
       fi: "Tyhjennä suodattimet",
       en: "Clear Filters",
-    },
-  },
-  buttons: {
-    addNew: {
-      fi: "Lisää uusi käyttäjä",
-      en: "Add New User",
     },
   },
   columns: {
@@ -65,10 +47,6 @@ export const usersList = {
     active: {
       fi: "Tila",
       en: "Status",
-    },
-    actions: {
-      fi: "Toiminnot",
-      en: "Actions",
     },
   },
   status: {
