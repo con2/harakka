@@ -72,38 +72,6 @@ export const bookingList = {
       fi: "Aika",
       en: "Booking Time",
     },
-    total: {
-      fi: "Summa",
-      en: "Total",
-    },
-    invoice: {
-      invoiceStatus: {
-        sent: {
-          fi: "Lähetetty",
-          en: "Invoice Sent",
-        },
-        paid: {
-          fi: "Maksettu",
-          en: "Paid",
-        },
-        rejected: {
-          fi: "Maksu hylätty",
-          en: "Payment Rejected",
-        },
-        overdue: {
-          fi: "Erääntynyt",
-          en: "Overdue",
-        },
-        NA: {
-          fi: "N/A",
-          en: "N/A",
-        },
-      },
-      invoice: {
-        fi: "Lasku",
-        en: "Invoice",
-      },
-    },
     actions: {
       fi: "Toiminnot",
       en: "Actions",
@@ -211,10 +179,6 @@ export const bookingList = {
         endDate: {
           fi: "Loppupäivä",
           en: "End Date",
-        },
-        subtotal: {
-          fi: "Välisumma",
-          en: "Subtotal",
         },
       },
     },

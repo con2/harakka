@@ -51,7 +51,6 @@ export const createItemDto = z.object({
     .int()
     .min(1, "items_number_total"),
   items_number_currently_in_storage: z.number().int().min(0),
-  price: z.number({ invalid_type_error: "price" }).min(0),
   is_active: z.boolean(),
   translations: itemTranslationsSchema,
   tags: z.array(z.string()),

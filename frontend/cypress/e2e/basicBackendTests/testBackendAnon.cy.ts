@@ -21,7 +21,6 @@ describe("Backend API endpoints, not logged in (anon user)", () => {
           "location_id",
           "compartment_id",
           "items_number_total",
-          "price",
           "average_rating",
           "is_active",
           "created_at",

@@ -169,11 +169,7 @@ export const {
 export const selectCartItems = (state: RootState) => state.cart.items;
 export const selectCartItemsCount = (state: RootState) =>
   state.cart.items.reduce((count, item) => count + item.quantity, 0);
-export const selectCartTotal = (state: RootState) =>
-  state.cart.items.reduce(
-    (total, item) => total + item.item.price * item.quantity,
-    0,
-  );
+
 export const selectCartLoading = (state: RootState) => state.cart.loading;
 export const selectCartError = (state: RootState) => state.cart.error;
 export const selectCartErrorContext = (state: RootState) =>

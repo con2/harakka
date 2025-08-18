@@ -217,12 +217,6 @@ const AdminItemsTable = () => {
       ),
     },
     {
-      header: t.adminItemsTable.columns.price[lang],
-      accessorKey: "price",
-      size: 30,
-      cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
-    },
-    {
       header: t.adminItemsTable.columns.quantity[lang], // TODO: add corr. header items total
       size: 30,
       id: "items_number_total",
