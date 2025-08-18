@@ -21,7 +21,6 @@ import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 import { ItemFormData } from "@common/items/form.types";
 import {
   mapItemImages,
-  mapOrgLinks,
   mapStorageItems,
   mapTagLinks,
 } from "@src/utils/storage-items.utils";
