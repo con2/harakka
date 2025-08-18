@@ -134,10 +134,6 @@ export const bookingList = {
           fi: "Loppupäivä",
           en: "End Date",
         },
-        subtotal: {
-          fi: "Välisumma",
-          en: "Subtotal",
-        },
       },
     },
     buttons: {

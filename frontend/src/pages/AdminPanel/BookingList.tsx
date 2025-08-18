@@ -232,11 +232,6 @@ const BookingList = () => {
       cell: ({ row }) =>
         formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
     },
-    {
-      accessorKey: "subtotal",
-      header: t.bookingList.modal.bookingItems.columns.subtotal[lang],
-      cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
-    },
   ];
 
   if (authLoading || loading) {

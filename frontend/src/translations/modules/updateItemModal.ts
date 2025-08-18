@@ -46,10 +46,6 @@ export const updateItemModal = {
       fi: "Sijainti",
       en: "Location",
     },
-    price: {
-      fi: "Hinta",
-      en: "Price",
-    },
     active: {
       fi: "Aktiivinen",
       en: "Active",
@@ -95,10 +91,6 @@ export const updateItemModal = {
     selectLocation: {
       fi: "Valitse sijainti",
       en: "Select a location",
-    },
-    price: {
-      fi: "Hinta",
-      en: "Price",
     },
     totalQuantity: {
       fi: "Kokonaismäärä",

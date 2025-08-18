@@ -14,7 +14,6 @@ import { toastConfirm } from "../components/ui/toastConfirm";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   clearCart,
-  // selectCartTotal,
   removeFromCart,
   selectCartItems,
   updateQuantity,
@@ -29,7 +28,6 @@ const Cart: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const cartItems = useAppSelector(selectCartItems);
-  // const cartTotal = useAppSelector(selectCartTotal);
   const bookingLoading = useAppSelector(selectBookingLoading);
   const userProfile = useAppSelector(selectSelectedUser);
   const user = useAppSelector(selectSelectedUser);

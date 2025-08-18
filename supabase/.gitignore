@@ -3,6 +3,7 @@
 .temp
 # Keep user data out of github and only use for local development
 seed.sql
+schema.sql
 # dotenvx
 .env.keys
 .env.local

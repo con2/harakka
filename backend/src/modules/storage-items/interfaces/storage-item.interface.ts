@@ -30,7 +30,6 @@ export type ValidItemOrder =
   | "fi_item_type"
   | "item_type"
   | "location_name"
-  | "price"
   | "items_number_total"
   | "is_active"
   | "created_at";

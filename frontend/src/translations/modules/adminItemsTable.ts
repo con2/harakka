@@ -61,10 +61,6 @@ export const adminItemsTable = {
       fi: "Sijainti",
       en: "Location",
     },
-    price: {
-      fi: "Hinta",
-      en: "Price",
-    },
     quantity: {
       fi: "Määrä",
       en: "Quantity",
