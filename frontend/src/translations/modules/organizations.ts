@@ -10,6 +10,10 @@ export const organizations = {
     en: "Create Organization",
   },
   columns: {
+    logo: {
+      fi: "Logo",
+      en: "Logo",
+    },
     name: {
       fi: common.personalData.name.fi,
       en: common.personalData.name.en,

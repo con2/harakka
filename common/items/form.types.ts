@@ -62,6 +62,7 @@ export type CreateItemType = {
 
 export type MappedItem = Omit<CreateItemType, "location" | "tags" | "images"> & {
   location_id: string;
+  org_id: string;
 };
 
 export type ItemFormData = {

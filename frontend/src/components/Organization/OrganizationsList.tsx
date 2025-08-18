@@ -74,14 +74,20 @@ const OrganizationsList = () => {
         {organizations.map((org) => (
           <Card key={org.id} className="relative flex flex-col h-full">
             <CardHeader>
-              {/* TODO: this is a temporary placeholder for organization logo, replace with actual logo when available */}
               <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                  <Building2 className="h-6 w-6" />
+                {/* Organization logo */}
+                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                  {org.logo_picture_url ? (
+                    <img
+                      src={org.logo_picture_url}
+                      alt={`${org.name} logo`}
+                      className="h-10 w-10 object-cover"
+                    />
+                  ) : (
+                    <Building2 className="h-6 w-6 text-gray-500" />
+                  )}
                 </div>
-                <CardTitle className="text-lg font-semibold">
-                  {org.name}
-                </CardTitle>
+                <CardTitle className="text-lg font-xl">{org.name}</CardTitle>
               </div>
               <CardDescription className="text-sm text-muted-foreground">
                 {org.description ||
