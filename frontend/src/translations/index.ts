@@ -55,7 +55,6 @@ import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
 import { editLocationModal } from "./modules/editLocationModal";
 import { organizationLocations } from "./modules/organizationLocations";
-import { roleEditor } from "./modules/roleEditor";
 import { roleManagement } from "./modules/roleManagement";
 import { statusBadge } from "./modules/statusBadge";
 import { orgStep } from "./modules/orgStep";
@@ -135,7 +134,6 @@ export const t = {
   deleteLocationButton,
   editLocationModal,
   organizationLocations,
-  roleEditor,
   roleManagement,
   statusBadge,
   privacyPolicy,
