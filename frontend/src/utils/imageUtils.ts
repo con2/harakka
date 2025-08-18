@@ -63,6 +63,9 @@ export const getCroppedImg = async (
         type: "image/jpeg",
       });
 
+      // Log the cropped image size
+      console.log("Cropped image file size:", croppedFile.size, "bytes");
+
       const result = validateImage().safeParse(croppedFile);
       if (!result.success) {
         reject(new Error(result.error.errors[0]?.message ?? "Invalid file"));
