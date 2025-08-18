@@ -79,9 +79,7 @@ export type Database = {
           quantity: number
           start_date: string
           status: string
-          subtotal: number | null
           total_days: number
-          unit_price: number | null
         }
         Insert: {
           booking_id: string
@@ -94,9 +92,7 @@ export type Database = {
           quantity?: number
           start_date: string
           status: string
-          subtotal?: number | null
           total_days: number
-          unit_price?: number | null
         }
         Update: {
           booking_id?: string
@@ -109,9 +105,7 @@ export type Database = {
           quantity?: number
           start_date?: string
           status?: string
-          subtotal?: number | null
           total_days?: number
-          unit_price?: number | null
         }
         Relationships: [
           {
@@ -181,8 +175,6 @@ export type Database = {
           final_amount: number | null
           id: string
           notes: string | null
-          payment_details: Json | null
-          payment_status: string | null
           status: string
           total_amount: number | null
           updated_at: string | null
@@ -196,8 +188,6 @@ export type Database = {
           final_amount?: number | null
           id?: string
           notes?: string | null
-          payment_details?: Json | null
-          payment_status?: string | null
           status: string
           total_amount?: number | null
           updated_at?: string | null
@@ -211,86 +201,12 @@ export type Database = {
           final_amount?: number | null
           id?: string
           notes?: string | null
-          payment_details?: Json | null
-          payment_status?: string | null
           status?: string
           total_amount?: number | null
           updated_at?: string | null
           user_id?: string
         }
         Relationships: []
-      }
-      invoices: {
-        Row: {
-          created_at: string | null
-          due_date: string | null
-          id: string
-          invoice_number: string
-          order_id: string | null
-          pdf_url: string | null
-          reference_number: string | null
-          total_amount: number | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          due_date?: string | null
-          id?: string
-          invoice_number: string
-          order_id?: string | null
-          pdf_url?: string | null
-          reference_number?: string | null
-          total_amount?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          due_date?: string | null
-          id?: string
-          invoice_number?: string
-          order_id?: string | null
-          pdf_url?: string | null
-          reference_number?: string | null
-          total_amount?: number | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invoices_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoices_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoices_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoices_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "invoices_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "view_user_ban_status"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       notifications: {
         Row: {
@@ -342,13 +258,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "notifications_user_id_fkey"
@@ -527,57 +436,6 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
-      }
-      payments: {
-        Row: {
-          amount: number
-          booking_id: string
-          created_at: string | null
-          id: string
-          metadata: Json | null
-          payment_date: string
-          payment_method: string
-          status: string
-          transaction_id: string | null
-        }
-        Insert: {
-          amount: number
-          booking_id: string
-          created_at?: string | null
-          id?: string
-          metadata?: Json | null
-          payment_date: string
-          payment_method: string
-          status: string
-          transaction_id?: string | null
-        }
-        Update: {
-          amount?: number
-          booking_id?: string
-          created_at?: string | null
-          id?: string
-          metadata?: Json | null
-          payment_date?: string
-          payment_method?: string
-          status?: string
-          transaction_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       promotions: {
         Row: {
@@ -948,7 +806,7 @@ export type Database = {
           items_number_currently_in_storage: number | null
           items_number_total: number
           location_id: string
-          org_id: string | null
+          org_id: string
           translations: Json | null
         }
         Insert: {
@@ -961,7 +819,7 @@ export type Database = {
           items_number_currently_in_storage?: number | null
           items_number_total: number
           location_id: string
-          org_id?: string | null
+          org_id: string
           translations?: Json | null
         }
         Update: {
@@ -974,7 +832,7 @@ export type Database = {
           items_number_currently_in_storage?: number | null
           items_number_total?: number
           location_id?: string
-          org_id?: string | null
+          org_id?: string
           translations?: Json | null
         }
         Relationships: [
@@ -1231,13 +1089,6 @@ export type Database = {
             foreignKeyName: "user_ban_history_banned_by_fkey"
             columns: ["banned_by"]
             isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "user_ban_history_banned_by_fkey"
-            columns: ["banned_by"]
-            isOneToOne: false
             referencedRelation: "view_user_ban_status"
             referencedColumns: ["id"]
           },
@@ -1268,13 +1119,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_ban_history_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "user_ban_history_user_id_fkey"
@@ -1397,13 +1241,6 @@ export type Database = {
             foreignKeyName: "user_roles_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "user_roles_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
             referencedRelation: "view_user_ban_status"
             referencedColumns: ["id"]
           },
@@ -1416,16 +1253,18 @@ export type Database = {
           booking_number: string | null
           created_at: string | null
           created_at_text: string | null
+          discount_amount: number | null
+          discount_code: string | null
           email: string | null
           final_amount: number | null
           final_amount_text: string | null
           full_name: string | null
           id: string | null
-          payment_status: string | null
+          notes: string | null
           status: string | null
           total_amount: number | null
+          updated_at: string | null
           user_id: string | null
-          visible_name: string | null
         }
         Relationships: []
       }
@@ -1454,29 +1293,24 @@ export type Database = {
       }
       view_manage_storage_items: {
         Row: {
-          average_rating: number | null
-          compartment_id: string | null
           created_at: string | null
+          en_item_name: string | null
+          en_item_type: string | null
+          fi_item_name: string | null
+          fi_item_type: string | null
           id: string | null
           is_active: boolean | null
           is_deleted: boolean | null
           items_number_currently_in_storage: number | null
           items_number_total: number | null
-          location_address: string | null
           location_id: string | null
           location_name: string | null
-          org_id: string | null
-          organization_name: string | null
+          organization_id: string | null
+          tag_ids: string[] | null
+          tag_translations: Json[] | null
           translations: Json | null
         }
         Relationships: [
-          {
-            foreignKeyName: "storage_items_compartment_id_fkey"
-            columns: ["compartment_id"]
-            isOneToOne: false
-            referencedRelation: "storage_compartments"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "storage_items_location_id_fkey"
             columns: ["location_id"]
