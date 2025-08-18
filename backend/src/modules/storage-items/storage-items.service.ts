@@ -162,7 +162,6 @@ export class StorageItemsService {
     const mappedItems = mapStorageItems(payload);
     const mappedImageData = mapItemImages(payload);
     const item_ids = mappedItems.map((i) => i.id);
-    const orgId = payload.org.id;
 
     try {
       // Insert item data
@@ -170,15 +169,6 @@ export class StorageItemsService {
         await supabase.from("storage_items").insert(mappedItems);
       if (error) {
         throw new Error(error.message);
-      }
-
-      // Insert org data
-      const mappedOrg = mapOrgLinks(payload);
-      const { error: orgError } = await supabase
-        .from("organization_items")
-        .insert(mappedOrg);
-      if (orgError) {
-        throw new Error(orgError.message);
       }
 
       // Insert item tags
@@ -203,11 +193,6 @@ export class StorageItemsService {
       await Promise.allSettled([
         supabase.from("storage_item_images").delete().in("item_id", item_ids),
         supabase.from("storage_item_tags").delete().in("item_id", item_ids),
-        supabase
-          .from("organization_items")
-          .delete()
-          .in("item_id", item_ids)
-          .eq("organization_id", orgId),
         supabase.from("storage_items").delete().in("id", item_ids),
       ]);
 

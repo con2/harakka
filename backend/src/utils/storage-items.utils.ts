@@ -3,9 +3,14 @@ import { OrgItem, TagLink } from "@common/items/storage-items.types";
 import { ItemImageInsert } from "@src/modules/item-images/types/item-image.types";
 
 export function mapStorageItems(payload: ItemFormData): MappedItem[] {
+  const org = payload.org;
   return payload.items.map((item) => {
     const { images, location, tags, ...rest } = item;
-    const newItem: MappedItem = { ...rest, location_id: location.id };
+    const newItem: MappedItem = {
+      ...rest,
+      location_id: location.id,
+      org_id: org.id,
+    };
     return newItem;
   });
 }
