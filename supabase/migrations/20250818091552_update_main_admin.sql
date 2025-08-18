@@ -1,0 +1,1 @@
+update public.roles set role = 'tenant_admin' where id = '700b7f8d-be79-474e-b554-6886a3605277';

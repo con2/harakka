@@ -32,11 +32,13 @@ import {
 } from "@/store/slices/organizationSlice";
 import { useRoles } from "@/hooks/useRoles";
 import { formatRoleName } from "@/utils/format";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();
   // Translation
   const { lang } = useLanguage();
+  const activeOrgId = useAppSelector(selectActiveOrganizationId);
 
   // Column header keys for the role grid
   const columns = {
@@ -55,7 +57,12 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     permanentDeleteRole,
   } = useRoles();
 
-  const canManageRoles = hasAnyRole(["super_admin", "superVera"]);
+  // Can Manage Roles:
+  // Any "Super" role or tenant/main_admin of current org
+  const canManageRoles =
+    hasAnyRole(["super_admin", "superVera"]) ||
+    (activeOrgId && hasAnyRole(["tenant_admin", "main_admin"], activeOrgId));
+
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
     email: user.email || "",
@@ -73,7 +80,6 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     org_name: string;
   };
   const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
-  const [isAdding, setIsAdding] = useState(false);
   // Org info
   const organizations = useAppSelector(selectOrganizations);
   // Populate initial role assignments once roles are loaded
@@ -230,8 +236,8 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 gap-y-4 flex flex-wrap">
-          <div className="flex-grow-1 w-6/12">
+        <div className="space-y-4 gap-y-4 flex flex-wrap ">
+          <div className="flex-grow-1 w-6/12 ">
             <Label htmlFor="full_name">
               {t.userEditModal.labels.fullName[lang]}
             </Label>

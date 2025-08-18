@@ -18,7 +18,7 @@ import {
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle, Swords, User } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -521,14 +521,6 @@ const UsersList = () => {
               {t.usersList.filters.clear[lang]}
             </Button>
           )}
-          <Button variant="default" className="flex gap-2">
-            <User />
-            Add New User
-          </Button>
-          <Button variant="default" className="flex gap-2">
-            <Swords />
-            Add New Admin
-          </Button>
         </div>
       </div>
 
