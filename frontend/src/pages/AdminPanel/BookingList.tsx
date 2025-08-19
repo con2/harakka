@@ -4,7 +4,6 @@ import {
   selectBookingLoading,
   selectBookingError,
   selectAllBookings,
-  updatePaymentStatus,
   getOrderedBookings,
   selectCurrentBooking,
   selectBookingItemsPagination,
@@ -18,7 +17,6 @@ import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
-  PaymentStatus,
   ValidBookingOrder,
   BookingUserViewRow,
   BookingStatus,
@@ -37,13 +35,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
 import { useAuth } from "@/hooks/useAuth";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -158,72 +149,6 @@ const BookingList = () => {
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
     {
-      accessorKey: "final_amount",
-      header: t.bookingList.columns.total[lang],
-      enableSorting: true,
-      cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
-    },
-    {
-      accessorKey: "payment_status",
-      header: t.bookingList.columns.invoice.invoice[lang],
-      enableSorting: true,
-      cell: ({ row }) => {
-        const paymentStatus = row.original.payment_status ?? "N/A";
-
-        const handleStatusChange = (
-          newStatus:
-            | "invoice-sent"
-            | "paid"
-            | "payment-rejected"
-            | "overdue"
-            | "N/A",
-        ) => {
-          void dispatch(
-            updatePaymentStatus({
-              bookingId: row.original.id,
-              status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
-            }),
-          );
-        };
-
-        return (
-          <Select onValueChange={handleStatusChange} value={paymentStatus}>
-            <SelectTrigger className="w-[120px] text-xs">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {[
-                "invoice-sent",
-                "paid",
-                "payment-rejected",
-                "overdue",
-                "N/A",
-              ].map((status) => {
-                const statusKeyMap: Record<
-                  string,
-                  keyof typeof t.bookingList.columns.invoice.invoiceStatus
-                > = {
-                  "invoice-sent": "sent",
-                  paid: "paid",
-                  "payment-rejected": "rejected",
-                  overdue: "overdue",
-                  "N/A": "NA",
-                };
-                const statusKey = statusKeyMap[status];
-                return (
-                  <SelectItem className="text-xs" key={status} value={status}>
-                    {t.bookingList.columns.invoice.invoiceStatus?.[statusKey]?.[
-                      lang
-                    ] || status}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        );
-      },
-    },
-    {
       id: "actions",
       cell: ({ row }) => {
         const booking = row.original;
@@ -306,11 +231,6 @@ const BookingList = () => {
       header: t.bookingList.modal.bookingItems.columns.endDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
-    },
-    {
-      accessorKey: "subtotal",
-      header: t.bookingList.modal.bookingItems.columns.subtotal[lang],
-      cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
     },
   ];
 

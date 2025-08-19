@@ -50,6 +50,10 @@ export const itemImageManager = {
     },
   },
   options: {
+    select: {
+      fi: "Valitse tyyppi",
+      en: "Select type",
+    },
     main: {
       fi: "Pääkuva",
       en: "Main",

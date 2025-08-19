@@ -82,7 +82,6 @@ export type ManageItemViewRow = {
   /* ─ Core item fields ─ */
   id: string;
   items_number_total: number;
-  price: number;
   created_at: string; // ISO‑8601
   is_active: boolean;
   updated_at?: string | null;
@@ -157,7 +156,6 @@ export type CreateItemDto = Partial<ItemCreatable> & {
   /** always required */
   location_id: string;
   items_number_total: number;
-  price: number;
   /** tag IDs selected in the form */
   tagIds?: string[];
   average_rating?: number | null; // not used anywhere yet
@@ -179,7 +177,6 @@ export type ValidItemOrder =
   | "fi_item_name"
   | "fi_item_type"
   | "location_name"
-  | "price"
   | "items_number_total"
   | "is_active"
   | "created_at";

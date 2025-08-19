@@ -52,16 +52,6 @@ export const fetchAllOrganizations = createAsyncThunk(
       );
     }
   },
-  {
-    condition: (_, { getState }) => {
-      const state = getState() as RootState;
-      // Skip if the organizations list is already populated or a fetch is in progress
-      return (
-        state.organizations.organizations.length === 0 &&
-        !state.organizations.loading
-      );
-    },
-  },
 );
 
 export const fetchOrganizationById = createAsyncThunk(
@@ -147,6 +137,25 @@ export const softDeleteOrganization = createAsyncThunk(
   },
 );
 
+export const uploadOrganizationLogo = createAsyncThunk<
+  { id: string; url: string },
+  { id: string; file: File },
+  { rejectValue: string }
+>(
+  "organizations/uploadOrganizationLogo",
+  async ({ id, file }, { rejectWithValue }) => {
+    try {
+      // Destructure to get the string url, NOT the whole object
+      const { url } = await organizationApi.uploadOrganizationLogo(id, file);
+      return { id, url };
+    } catch (error) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to upload logo picture"),
+      );
+    }
+  },
+);
+
 //Create a slice for organization state management
 const organizationSlice = createSlice({
   name: "organization",
@@ -197,22 +206,11 @@ const organizationSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      .addCase(
-        createOrganization.fulfilled,
-        (state: OrganizationState, action) => {
-          state.organizations.unshift(action.payload);
-        },
-      )
+
       .addCase(
         updateOrganization.fulfilled,
         (state: OrganizationState, action) => {
-          const index = state.organizations.findIndex(
-            (org) => org.id === action.payload.id,
-          );
-          if (index !== -1) {
-            state.organizations[index] = action.payload;
-          }
-          // optional:
+          // Only update selectedOrganization if needed
           if (state.selectedOrganization?.id === action.payload.id) {
             state.selectedOrganization = action.payload;
           }
@@ -220,12 +218,47 @@ const organizationSlice = createSlice({
       )
       .addCase(deleteOrganization.fulfilled, (state, action) => {
         const deletedId = action.payload;
+        // Remove from current page's organizations list
         state.organizations = state.organizations.filter(
           (org) => org.id !== deletedId,
         );
         if (state.selectedOrganization?.id === deletedId) {
           state.selectedOrganization = null;
         }
+      })
+      .addCase(softDeleteOrganization.fulfilled, (state, action) => {
+        const deletedId = action.payload;
+        // Remove from current page's organizations list
+        state.organizations = state.organizations.filter(
+          (org) => org.id !== deletedId,
+        );
+        if (state.selectedOrganization?.id === deletedId) {
+          state.selectedOrganization = null;
+        }
+      })
+      // upload logo picture
+      .addCase(uploadOrganizationLogo.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadOrganizationLogo.fulfilled, (state, action) => {
+        state.loading = false;
+        const { id, url } = action.payload;
+        if (
+          state.selectedOrganization &&
+          state.selectedOrganization.id === id
+        ) {
+          state.selectedOrganization.logo_picture_url = url;
+        }
+        // Also update the list entry if present
+        const idx = state.organizations.findIndex((o) => o.id === id);
+        if (idx !== -1) {
+          state.organizations[idx].logo_picture_url = url;
+        }
+      })
+      .addCase(uploadOrganizationLogo.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

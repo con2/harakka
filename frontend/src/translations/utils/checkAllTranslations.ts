@@ -167,21 +167,58 @@ function findUsedTranslationKeys(): Set<string> {
 
   const usedKeys = new Set<string>();
 
-  // Pattern to match t.path.to.key[lang] usage
-  const translationPattern =
+  // Pattern to match t.path.to.key[lang] usage (standard access)
+  const translationPattern1 =
     /t\.([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\[/g;
+
+  // Pattern to match t.path.to.key?.[lang] usage (optional chaining)
+  const translationPattern2 =
+    /t\.([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\?\.\[/g;
+
+  // Pattern to match variable assignments: const varName = t.path.to.key
+  const variableAssignmentPattern =
+    /(?:const|let|var)\s+\w+\s*=\s*t\.([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)/g;
 
   for (const file of files) {
     try {
       const content = fs.readFileSync(file, "utf8");
       let match;
 
-      while ((match = translationPattern.exec(content)) !== null) {
+      // Check for standard pattern: t.path.to.key[lang]
+      while ((match = translationPattern1.exec(content)) !== null) {
+        const keyPath = match[1];
+        usedKeys.add(keyPath);
+      }
+
+      // Reset regex state and check for optional chaining pattern: t.path.to.key?.[lang]
+      translationPattern2.lastIndex = 0;
+      while ((match = translationPattern2.exec(content)) !== null) {
+        const keyPath = match[1];
+        usedKeys.add(keyPath);
+      }
+
+      // Reset regex state and check for variable assignments: const varName = t.path.to.key
+      variableAssignmentPattern.lastIndex = 0;
+      while ((match = variableAssignmentPattern.exec(content)) !== null) {
         const keyPath = match[1];
         usedKeys.add(keyPath);
       }
     } catch (error) {
       console.warn(`Warning: Could not read file ${file}:`, error);
+    }
+  }
+
+  // When a parent object is assigned to a variable (e.g., const aliases = t.currentUserRoles.roleAliases),
+  // mark all its child keys as used since they might be accessed dynamically
+  const allKeys = collectAllTranslationKeys(t);
+  const parentKeys = Array.from(usedKeys);
+
+  for (const parentKey of parentKeys) {
+    // Find all child keys that start with this parent key
+    for (const childKey of allKeys) {
+      if (childKey.startsWith(parentKey + ".")) {
+        usedKeys.add(childKey);
+      }
     }
   }
 
@@ -192,7 +229,14 @@ function checkUnusedKeys() {
   const allKeys = collectAllTranslationKeys(t);
   const usedKeys = findUsedTranslationKeys();
 
-  const unusedKeys = Array.from(allKeys).filter((key) => !usedKeys.has(key));
+  // Filter out keys from common.ts module as they are used by other translation modules
+  const unusedKeys = Array.from(allKeys).filter((key) => {
+    // Exclude common module keys from unused detection
+    if (key.startsWith("common.")) {
+      return false;
+    }
+    return !usedKeys.has(key);
+  });
 
   return {
     allKeys: Array.from(allKeys),

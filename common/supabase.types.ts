@@ -5,11 +5,32 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
+
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -58,9 +79,7 @@ export type Database = {
           quantity: number
           start_date: string
           status: string
-          subtotal: number | null
           total_days: number
-          unit_price: number | null
         }
         Insert: {
           booking_id: string
@@ -73,9 +92,7 @@ export type Database = {
           quantity?: number
           start_date: string
           status: string
-          subtotal?: number | null
           total_days: number
-          unit_price?: number | null
         }
         Update: {
           booking_id?: string
@@ -88,31 +105,36 @@ export type Database = {
           quantity?: number
           start_date?: string
           status?: string
-          subtotal?: number | null
           total_days?: number
-          unit_price?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "order_items_item_id_fkey"
+            foreignKeyName: "booking_items_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "storage_items"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "order_items_item_id_fkey"
+            foreignKeyName: "booking_items_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "view_item_location_summary"
             referencedColumns: ["storage_item_id"]
           },
           {
-            foreignKeyName: "order_items_item_id_fkey"
+            foreignKeyName: "booking_items_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
+          },
+          {
+            foreignKeyName: "booking_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "order_items_location_id_fkey"
@@ -153,8 +175,6 @@ export type Database = {
           final_amount: number | null
           id: string
           notes: string | null
-          payment_details: Json | null
-          payment_status: string | null
           status: string
           total_amount: number | null
           updated_at: string | null
@@ -168,8 +188,6 @@ export type Database = {
           final_amount?: number | null
           id?: string
           notes?: string | null
-          payment_details?: Json | null
-          payment_status?: string | null
           status: string
           total_amount?: number | null
           updated_at?: string | null
@@ -183,86 +201,12 @@ export type Database = {
           final_amount?: number | null
           id?: string
           notes?: string | null
-          payment_details?: Json | null
-          payment_status?: string | null
           status?: string
           total_amount?: number | null
           updated_at?: string | null
           user_id?: string
         }
         Relationships: []
-      }
-      invoices: {
-        Row: {
-          created_at: string | null
-          due_date: string | null
-          id: string
-          invoice_number: string
-          order_id: string | null
-          pdf_url: string | null
-          reference_number: string | null
-          total_amount: number | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          due_date?: string | null
-          id?: string
-          invoice_number: string
-          order_id?: string | null
-          pdf_url?: string | null
-          reference_number?: string | null
-          total_amount?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          due_date?: string | null
-          id?: string
-          invoice_number?: string
-          order_id?: string | null
-          pdf_url?: string | null
-          reference_number?: string | null
-          total_amount?: number | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invoices_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoices_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoices_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoices_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "invoices_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "view_user_ban_status"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       notifications: {
         Row: {
@@ -314,13 +258,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "notifications_user_id_fkey"
@@ -380,25 +317,32 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "erm_organization_items_storage_item_id_fkey"
+            foreignKeyName: "organization_items_storage_item_id_fkey"
             columns: ["storage_item_id"]
             isOneToOne: false
             referencedRelation: "storage_items"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "erm_organization_items_storage_item_id_fkey"
+            foreignKeyName: "organization_items_storage_item_id_fkey"
             columns: ["storage_item_id"]
             isOneToOne: false
             referencedRelation: "view_item_location_summary"
             referencedColumns: ["storage_item_id"]
           },
           {
-            foreignKeyName: "erm_organization_items_storage_item_id_fkey"
+            foreignKeyName: "organization_items_storage_item_id_fkey"
             columns: ["storage_item_id"]
             isOneToOne: false
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
+          },
+          {
+            foreignKeyName: "organization_items_storage_item_id_fkey"
+            columns: ["storage_item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "organization_items_storage_location_id_fkey"
@@ -459,6 +403,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_deleted: boolean | null
+          logo_picture_url: string | null
           name: string
           slug: string
           updated_at: string | null
@@ -471,6 +416,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_deleted?: boolean | null
+          logo_picture_url?: string | null
           name: string
           slug: string
           updated_at?: string | null
@@ -483,63 +429,13 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_deleted?: boolean | null
+          logo_picture_url?: string | null
           name?: string
           slug?: string
           updated_at?: string | null
           updated_by?: string | null
         }
         Relationships: []
-      }
-      payments: {
-        Row: {
-          amount: number
-          booking_id: string
-          created_at: string | null
-          id: string
-          metadata: Json | null
-          payment_date: string
-          payment_method: string
-          status: string
-          transaction_id: string | null
-        }
-        Insert: {
-          amount: number
-          booking_id: string
-          created_at?: string | null
-          id?: string
-          metadata?: Json | null
-          payment_date: string
-          payment_method: string
-          status: string
-          transaction_id?: string | null
-        }
-        Update: {
-          amount?: number
-          booking_id?: string
-          created_at?: string | null
-          id?: string
-          metadata?: Json | null
-          payment_date?: string
-          payment_method?: string
-          status?: string
-          transaction_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       promotions: {
         Row: {
@@ -652,6 +548,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
+          },
+          {
+            foreignKeyName: "reviews_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -823,6 +726,13 @@ export type Database = {
             referencedRelation: "view_item_ownership_summary"
             referencedColumns: ["storage_item_id"]
           },
+          {
+            foreignKeyName: "storage_item_images_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
+          },
         ]
       }
       storage_item_tags: {
@@ -870,6 +780,13 @@ export type Database = {
             referencedColumns: ["storage_item_id"]
           },
           {
+            foreignKeyName: "storage_item_tags_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "storage_item_tags_tag_id_fkey"
             columns: ["tag_id"]
             isOneToOne: false
@@ -889,7 +806,7 @@ export type Database = {
           items_number_currently_in_storage: number | null
           items_number_total: number
           location_id: string
-          price: number
+          org_id: string
           translations: Json | null
         }
         Insert: {
@@ -902,7 +819,7 @@ export type Database = {
           items_number_currently_in_storage?: number | null
           items_number_total: number
           location_id: string
-          price: number
+          org_id: string
           translations?: Json | null
         }
         Update: {
@@ -915,7 +832,7 @@ export type Database = {
           items_number_currently_in_storage?: number | null
           items_number_total?: number
           location_id?: string
-          price?: number
+          org_id?: string
           translations?: Json | null
         }
         Relationships: [
@@ -1172,13 +1089,6 @@ export type Database = {
             foreignKeyName: "user_ban_history_banned_by_fkey"
             columns: ["banned_by"]
             isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "user_ban_history_banned_by_fkey"
-            columns: ["banned_by"]
-            isOneToOne: false
             referencedRelation: "view_user_ban_status"
             referencedColumns: ["id"]
           },
@@ -1209,13 +1119,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_ban_history_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "user_ban_history_user_id_fkey"
@@ -1338,13 +1241,6 @@ export type Database = {
             foreignKeyName: "user_roles_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
-            referencedRelation: "view_bookings_with_user_info"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "user_roles_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
             referencedRelation: "view_user_ban_status"
             referencedColumns: ["id"]
           },
@@ -1357,16 +1253,18 @@ export type Database = {
           booking_number: string | null
           created_at: string | null
           created_at_text: string | null
+          discount_amount: number | null
+          discount_code: string | null
           email: string | null
           final_amount: number | null
           final_amount_text: string | null
           full_name: string | null
           id: string | null
-          payment_status: string | null
+          notes: string | null
           status: string | null
           total_amount: number | null
+          updated_at: string | null
           user_id: string | null
-          visible_name: string | null
         }
         Relationships: []
       }
@@ -1400,6 +1298,7 @@ export type Database = {
           en_item_type: string | null
           fi_item_name: string | null
           fi_item_type: string | null
+          id: string | null
           is_active: boolean | null
           is_deleted: boolean | null
           items_number_currently_in_storage: number | null
@@ -1407,34 +1306,11 @@ export type Database = {
           location_id: string | null
           location_name: string | null
           organization_id: string | null
-          price: number | null
-          storage_item_id: string | null
           tag_ids: string[] | null
           tag_translations: Json[] | null
           translations: Json | null
         }
         Relationships: [
-          {
-            foreignKeyName: "erm_organization_items_storage_item_id_fkey"
-            columns: ["storage_item_id"]
-            isOneToOne: false
-            referencedRelation: "storage_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "erm_organization_items_storage_item_id_fkey"
-            columns: ["storage_item_id"]
-            isOneToOne: false
-            referencedRelation: "view_item_location_summary"
-            referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "erm_organization_items_storage_item_id_fkey"
-            columns: ["storage_item_id"]
-            isOneToOne: false
-            referencedRelation: "view_item_ownership_summary"
-            referencedColumns: ["storage_item_id"]
-          },
           {
             foreignKeyName: "storage_items_location_id_fkey"
             columns: ["location_id"]
@@ -1512,14 +1388,14 @@ export type Database = {
       }
       create_notification: {
         Args: {
-          p_user_id: string
-          p_type: Database["public"]["Enums"]["notification_type"]
-          p_title: string
-          p_message?: string
           p_channel?: Database["public"]["Enums"]["notification_channel"]
-          p_severity?: Database["public"]["Enums"]["notification_severity"]
-          p_metadata?: Json
           p_idempotency_key?: string
+          p_message?: string
+          p_metadata?: Json
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_title: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_user_id: string
         }
         Returns: undefined
       }
@@ -1528,27 +1404,15 @@ export type Database = {
         Returns: string
       }
       get_all_full_bookings: {
-        Args: { in_offset: number; in_limit: number }
-        Returns: Json
-      }
-      get_all_full_orders: {
-        Args: { in_offset?: number; in_limit?: number }
+        Args: { in_limit: number; in_offset: number }
         Returns: Json
       }
       get_full_booking: {
         Args: { booking_id: string }
         Returns: Json
       }
-      get_full_order: {
-        Args: { order_id: string }
-        Returns: Json
-      }
       get_full_user_booking: {
-        Args: { in_user_id: string; in_offset: number; in_limit: number }
-        Returns: Json
-      }
-      get_full_user_order: {
-        Args: { in_user_id: string; in_offset?: number; in_limit?: number }
+        Args: { in_limit: number; in_offset: number; in_user_id: string }
         Returns: Json
       }
       get_latest_ban_record: {
@@ -1592,7 +1456,7 @@ export type Database = {
         }[]
       }
       is_admin: {
-        Args: { p_user_id: string; p_org_id?: string }
+        Args: { p_org_id?: string; p_user_id: string }
         Returns: boolean
       }
       is_user_banned_for_app: {
@@ -1600,26 +1464,26 @@ export type Database = {
         Returns: boolean
       }
       is_user_banned_for_org: {
-        Args: { check_user_id: string; check_org_id: string }
+        Args: { check_org_id: string; check_user_id: string }
         Returns: boolean
       }
       is_user_banned_for_role: {
         Args: {
-          check_user_id: string
           check_org_id: string
           check_role_id: string
+          check_user_id: string
         }
         Returns: boolean
       }
       notify: {
         Args: {
-          p_user_id: string
-          p_type_txt: string
-          p_title?: string
-          p_message?: string
           p_channel?: Database["public"]["Enums"]["notification_channel"]
-          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_message?: string
           p_metadata?: Json
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_title?: string
+          p_type_txt: string
+          p_user_id: string
         }
         Returns: undefined
       }
@@ -1653,17 +1517,18 @@ export type Database = {
         | "superVera"
         | "storage_manager"
         | "requester"
+        | "tenant_admin"
     }
     CompositeTypes: {
       [_ in never]: never
     }
   }
 }
+
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-type DefaultSchema = DatabaseWithoutInternals[Extract<
-  keyof Database,
-  "public"
->]
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
@@ -1684,14 +1549,15 @@ export type Tables<
     ? R
     : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-    ? R
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
     : never
-  : never
+
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1710,12 +1576,13 @@ export type TablesInsert<
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Insert: infer I
-    }
-    ? I
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
     : never
-  : never
+
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1734,12 +1601,13 @@ export type TablesUpdate<
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Update: infer U
-    }
-    ? U
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
     : never
-  : never
+
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
@@ -1754,8 +1622,9 @@ export type Enums<
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
@@ -1770,9 +1639,13 @@ export type CompositeTypes<
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       notification_channel: ["in_app", "web_push", "email"],
@@ -1805,7 +1678,9 @@ export const Constants = {
         "superVera",
         "storage_manager",
         "requester",
+        "tenant_admin",
       ],
     },
   },
 } as const
+

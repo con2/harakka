@@ -60,17 +60,9 @@ export const cart = {
       fi: "Tilauksen yhteenveto",
       en: "Booking Summary",
     },
-    subtotal: {
-      fi: "Tuotteet yhteensä",
-      en: "Items subtotal",
-    },
     rentalPeriod: {
       fi: "Vuokra-aika",
       en: "Rental period",
-    },
-    total: {
-      fi: "Yhteensä",
-      en: "Total",
     },
   },
   buttons: {
@@ -143,10 +135,6 @@ export const cart = {
     bookingError: {
       fi: "Virhe: ",
       en: "Error: ",
-    },
-    checkoutError: {
-      fi: "Tilausvirhe: ",
-      en: "Checkout error: ",
     },
   },
 };

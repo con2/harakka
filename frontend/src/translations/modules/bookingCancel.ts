@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const bookingCancel = {
   confirmDialog: {
     title: {
@@ -9,12 +11,12 @@ export const bookingCancel = {
       en: "Are you sure you want to cancel this booking?",
     },
     confirmText: {
-      fi: "Peruuta varaus",
-      en: "Cancel Booking",
+      fi: common.confirm.fi,
+      en: common.confirm.en,
     },
     cancelText: {
-      fi: "Säilytä varaus",
-      en: "Keep Booking",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
   },
   toast: {

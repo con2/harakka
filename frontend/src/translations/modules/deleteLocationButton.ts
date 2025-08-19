@@ -19,8 +19,8 @@ export const deleteLocationButton = {
       fi: common.delete.fi,
     },
     cancel: {
-      en: "Cancel",
-      fi: "Peruuta",
+      en: common.cancel.en,
+      fi: common.cancel.fi,
     },
   },
   messages: {

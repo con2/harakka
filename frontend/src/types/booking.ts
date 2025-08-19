@@ -10,23 +10,11 @@ import { StripNull } from "@common/helper.types";
 export type BookingStatus =
   | "pending"
   | "confirmed"
-  | "paid"
   | "completed"
   | "cancelled"
   | "cancelled by user"
   | "rejected"
-  | "refunded"
   | "all";
-
-/**
- * Payment status values
- */
-export type PaymentStatus =
-  | "invoice-sent"
-  | "paid"
-  | "payment-rejected"
-  | "overdue"
-  | null;
 
 /**
  * Order entity representing a booking in the system
@@ -35,10 +23,6 @@ export interface BookingType extends BaseEntity {
   user_id: string;
   booking_number: string;
   status: BookingStatus;
-  total_amount?: number | null;
-  discount_amount?: number | null;
-  final_amount?: number | null;
-  payment_status?: PaymentStatus;
   booking_items: BookingItem[];
   user_profile?: {
     name?: string;
@@ -95,9 +79,7 @@ export type BookingsRow = BookingsTable["Row"];
 export type ValidBookingOrder =
   | "created_at"
   | "booking_number"
-  | "payment_status"
   | "status"
-  | "total"
   | "full_name";
 
 export type BookingUserView =

@@ -57,9 +57,11 @@ const AdminItemsTable = () => {
   const deletableItems = useAppSelector((state) => state.items.deletableItems);
   const org_id = useAppSelector(selectActiveOrganizationId);
 
-  const { hasRole } = useRoles();
-  const isAdmin =
-    hasRole("admin") || hasRole("super_admin") || hasRole("storage_manager");
+  const { hasAnyRole, hasRole } = useRoles();
+  const isAdmin = hasAnyRole(
+    ["main_admin", "tenant_admin", "super_admin", "storage_manager"],
+    org_id || undefined,
+  );
   const isSuperVera = hasRole("superVera");
   // Translation
   const { lang } = useLanguage();
@@ -157,7 +159,7 @@ const AdminItemsTable = () => {
         location_filter: [],
         categories: [],
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        org_ids: activeOrganizationId ?? undefined,
+        org_ids: isSuperVera ? undefined : (activeOrganizationId ?? undefined),
       }),
     );
   }, [
@@ -171,6 +173,7 @@ const AdminItemsTable = () => {
     tagFilter,
     statusFilter,
     activeOrganizationId,
+    isSuperVera,
   ]);
 
   //fetch tags list
@@ -184,7 +187,7 @@ const AdminItemsTable = () => {
       header: t.adminItemsTable.columns.name[lang],
       size: 120,
       id: `item_name`,
-      accessorFn: (row) => row.translations[lang].item_type,
+      accessorFn: (row) => row.translations[lang].item_name || "",
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
         const name = row.original.translations[lang].item_name || "";
@@ -195,7 +198,7 @@ const AdminItemsTable = () => {
       header: t.adminItemsTable.columns.type[lang],
       size: 120,
       id: `item_type`,
-      accessorFn: (row) => row.translations[lang].item_type,
+      accessorFn: (row) => row.translations[lang].item_type || "",
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
         const type = row.original.translations[lang].item_type || "";
@@ -206,7 +209,7 @@ const AdminItemsTable = () => {
       header: t.adminItemsTable.columns.location[lang],
       size: 70,
       id: "location_name",
-      accessorFn: (row) => row.location_name || "N/A", // For sorting
+      accessorFn: (row) => row.location_name || "N/A",
       cell: ({ row }) => (
         <div className="flex items-center gap-1 text-sm">
           {row.original.location_name || "N/A"}
@@ -214,13 +217,7 @@ const AdminItemsTable = () => {
       ),
     },
     {
-      header: t.adminItemsTable.columns.price[lang],
-      accessorKey: "price",
-      size: 30,
-      cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
-    },
-    {
-      header: t.adminItemsTable.columns.quantity[lang], // TODO: add corr. header items total
+      header: t.adminItemsTable.columns.quantity[lang],
       size: 30,
       id: "items_number_total",
       accessorFn: (row) => row.items_number_total,

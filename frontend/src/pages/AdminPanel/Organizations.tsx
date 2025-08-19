@@ -10,7 +10,7 @@ import {
   setSelectedOrganization,
 } from "@/store/slices/organizationSlice";
 import { OrganizationDetails } from "@/types/organization";
-import { Edit, Eye, LoaderCircle } from "lucide-react";
+import { Building2, Edit, Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { t } from "@/translations";
@@ -22,6 +22,7 @@ import OrganizationDelete from "@/components/Admin/Organizations/OrganizationDel
 import OrganizationModal, {
   OrganizationFormValues,
 } from "@/components/Admin/Organizations/OrganizationModal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Organizations = () => {
   const dispatch = useAppDispatch();
@@ -49,6 +50,15 @@ const Organizations = () => {
   useEffect(() => {
     void dispatch(fetchAllOrganizations({ page: currentPage, limit }));
   }, [dispatch, currentPage]);
+
+  useEffect(() => {
+    console.log(
+      "totalPages:",
+      totalPages,
+      "organizations:",
+      organizations.length,
+    );
+  }, [totalPages, organizations]);
 
   // Open modal in "view" mode
   const openDetailsModal = async (org: OrganizationDetails) => {
@@ -136,6 +146,22 @@ const Organizations = () => {
   // Table columns
   const columns: ColumnDef<OrganizationDetails>[] = [
     {
+      header: t.organizations.columns.logo[lang],
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <Avatar className="w-10 h-10">
+            <AvatarImage
+              src={row.original.logo_picture_url ?? undefined}
+              alt={`${row.original.name} logo`}
+            />
+            <AvatarFallback>
+              <Building2 className="h-5 w-5 text-gray-400" />
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      ),
+    },
+    {
       header: t.organizations.columns.name[lang],
       accessorKey: "name",
       cell: ({ row }) => (
@@ -177,7 +203,7 @@ const Organizations = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">{t.organizations.title[lang]}</h1>
+      <h1 className="text-xl">{t.organizations.title[lang]}</h1>
 
       {/* Add New Org button */}
       <div className="flex gap-4 justify-end">

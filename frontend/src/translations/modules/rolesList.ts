@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const rolesList = {
   messages: {
     selectUser: {
@@ -37,17 +39,13 @@ export const rolesList = {
         en: "Delete role permanently?",
         fi: "Poistetaanko rooli pysyvästi?",
       },
-      description: {
-        en: "This will permanently remove role {row.role_name} for {row.user_email}",
-        fi: "Tämä poistaa pysyvästi roolin {row.role_name} käyttäjältä {row.user_email}",
-      },
       confirmText: {
-        en: "Delete",
-        fi: "Poista",
+        en: common.delete.en,
+        fi: common.delete.fi,
       },
       cancelText: {
-        en: "Cancel",
-        fi: "Peruuta",
+        en: common.cancel.en,
+        fi: common.cancel.fi,
       },
     },
   },
@@ -55,10 +53,6 @@ export const rolesList = {
     selectUser: {
       en: "Select user",
       fi: "Valitse käyttäjä",
-    },
-    filterByUser: {
-      en: "Filter by user (email or name)",
-      fi: "Suodata käyttäjän mukaan (sähköposti tai nimi)",
     },
     filterByOrg: {
       en: "Filter by organization",
@@ -76,16 +70,16 @@ export const rolesList = {
         fi: "Kaikki roolit",
       },
       all: {
-        en: "All",
-        fi: "Kaikki",
+        en: common.roles.all.en,
+        fi: common.roles.all.fi,
       },
       active: {
-        en: "Active",
-        fi: "Aktiivinen",
+        en: common.active.en,
+        fi: common.active.fi,
       },
       inactive: {
-        en: "Inactive",
-        fi: "Epäaktiivinen",
+        en: common.inactive.en,
+        fi: common.inactive.fi,
       },
     },
   },
@@ -99,12 +93,8 @@ export const rolesList = {
       fi: "Luo uusi rooli",
     },
     cancel: {
-      en: "Cancel",
-      fi: "Peruuta",
-    },
-    save: {
-      en: "Save",
-      fi: "Tallenna",
+      en: common.cancel.en,
+      fi: common.cancel.fi,
     },
     ariaLabels: {
       deletePermanently: {
@@ -140,24 +130,24 @@ export const rolesList = {
   table: {
     headers: {
       user: {
-        en: "User",
-        fi: "Käyttäjä",
+        en: common.roles.user.en,
+        fi: common.roles.user.fi,
       },
       role: {
-        en: "Role",
-        fi: "Rooli",
+        en: common.roles.role.en,
+        fi: common.roles.role.fi,
       },
       org: {
-        en: "Organization",
-        fi: "Organisaatio",
+        en: common.organizations.organization.en,
+        fi: common.organizations.organization.fi,
       },
       active: {
-        en: "Active",
-        fi: "Aktiivinen",
+        en: common.active.en,
+        fi: common.active.fi,
       },
       actions: {
-        en: "Actions",
-        fi: "Toiminnot",
+        en: common.actions.en,
+        fi: common.actions.fi,
       },
     },
   },

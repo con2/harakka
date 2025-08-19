@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const organizationList = {
   columns: {
     description: {
@@ -36,12 +38,12 @@ export const organizationDelete = {
       fi: "Tämä poistaa organisaation pysyvästi.",
     },
     confirmText: {
-      en: "Delete",
-      fi: "Poista",
+      en: common.delete.en,
+      fi: common.delete.fi,
     },
     cancelText: {
-      en: "Cancel",
-      fi: "Peruuta",
+      en: common.cancel.en,
+      fi: common.cancel.fi,
     },
   },
   toast: {

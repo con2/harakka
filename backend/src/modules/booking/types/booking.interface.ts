@@ -71,7 +71,6 @@ export type BookingUpdate = Database["public"]["Tables"]["bookings"]["Update"];
 export type ValidBookingOrder =
   | "created_at"
   | "booking_number"
-  | "payment_status"
   | "status"
   | "final_amount"
   | "full_name";
