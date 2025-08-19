@@ -139,7 +139,7 @@ const Organizations = () => {
     {
       header: t.organizations.columns.logo[lang],
       cell: ({ row }) => (
-        <div className="flex justify-center">
+        <div className="flex justify-start">
           <Avatar className="w-10 h-10">
             <AvatarImage
               src={row.original.logo_picture_url ?? undefined}
@@ -157,12 +157,13 @@ const Organizations = () => {
       accessorKey: "name",
       cell: ({ row }) => (
         <button
-          className="text-primary underline"
+          className="text-primary"
           onClick={() => openDetailsModal(row.original)}
         >
           {row.original.name}
         </button>
       ),
+      size: 200,
     },
     {
       header: t.organizations.columns.slug[lang],
@@ -171,6 +172,11 @@ const Organizations = () => {
     {
       header: t.organizations.columns.description[lang],
       accessorKey: "description",
+      cell: ({ row }) => (
+        <div className="max-w-xs break-words whitespace-normal">
+          {row.original.description || "—"}
+        </div>
+      ),
     },
     {
       header: t.organizations.columns.isActive[lang],
@@ -194,13 +200,15 @@ const Organizations = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl">{t.organizations.title[lang]}</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl">{t.organizations.title[lang]}</h1>
 
-      {/* Add New Org button */}
-      <div className="flex gap-4 justify-end">
-        <Button onClick={openCreateModal} variant="outline" size="sm">
-          {t.organizations.createButton[lang]}
-        </Button>
+        {/* Add New Org button */}
+        <div className="flex gap-4 justify-end">
+          <Button onClick={openCreateModal} variant="outline" size="sm">
+            {t.organizations.createButton[lang]}
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -231,7 +239,7 @@ const Organizations = () => {
                     <Button
                       size="sm"
                       onClick={() => openEditModal(org)}
-                      title={t.tagList.buttons.edit[lang]}
+                      title={t.organizations.edit[lang]}
                       className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
                     >
                       <Edit className="h-4 w-4" />

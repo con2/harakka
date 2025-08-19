@@ -135,6 +135,10 @@ export const organizations = {
     fi: "Näytä",
     en: "View",
   },
+  edit: {
+    fi: "Muokkaa",
+    en: "Edit",
+  },
 };
 
 export const organizationDelete = {
