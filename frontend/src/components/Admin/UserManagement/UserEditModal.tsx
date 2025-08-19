@@ -32,13 +32,27 @@ import {
 } from "@/store/slices/organizationSlice";
 import { useRoles } from "@/hooks/useRoles";
 import { formatRoleName } from "@/utils/format";
-import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
+import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();
+  const {
+    availableRoles,
+    allUserRoles,
+    hasAnyRole,
+    createRole,
+    updateRole,
+    permanentDeleteRole,
+    hasRole,
+  } = useRoles();
+
   // Translation
   const { lang } = useLanguage();
-  const activeOrgId = useAppSelector(selectActiveOrganizationId);
+  const {
+    organizationId: activeOrgId,
+    organizationName: activeOrgName,
+    roleName: activeRole,
+  } = useAppSelector(selectActiveRoleContext);
 
   // Column header keys for the role grid
   const columns = {
@@ -48,20 +62,12 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     actions: t.userEditModal.columns?.actions?.[lang] ?? "Actions",
   };
 
-  const {
-    availableRoles,
-    allUserRoles,
-    hasAnyRole,
-    createRole,
-    updateRole,
-    permanentDeleteRole,
-  } = useRoles();
-
   // Can Manage Roles:
   // Any "Super" role or tenant_admin of current org
-  const canManageRoles =
-    hasAnyRole(["super_admin", "superVera"]) ||
-    (activeOrgId && hasAnyRole(["tenant_admin", "tenant_admin"], activeOrgId));
+  const SUPER_ROLES = ["super_admin", "superVera"];
+  const isSuper = hasAnyRole(SUPER_ROLES, activeOrgId!);
+  const isTenantAdmin = hasRole("tenant_admin", activeOrgId!);
+  const canManageRoles = isSuper || isTenantAdmin;
 
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
@@ -78,6 +84,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     role_name: string | null;
     is_active: boolean;
     org_name: string;
+    isNewRole: boolean;
   };
   const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
   // Org info
@@ -92,9 +99,14 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
         role_name: r.role_name as string,
         is_active: !!r.is_active,
         org_name: r.organization_name!,
+        isNewRole: false,
       }));
     setRoleAssignments(userRoles);
   }, [allUserRoles, user.id]);
+
+  useEffect(() => {
+    console.log("role assignments: ", roleAssignments);
+  }, [roleAssignments]);
 
   // Ensure availableRoles are present (skipInitialFetch suppresses it in the hook)
   /*   useEffect(() => {
@@ -114,6 +126,10 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  // useEffect(() => {
+  //   if (roleAssignments[roleAssignments.length - 1].org_name === "High council") setRoleAssignments({})
+  // }, [roleAssignments]);
 
   // Role assignment helpers
   const handleRoleAssignmentChange = (
@@ -139,10 +155,11 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
       ...prev,
       {
         id: null,
-        org_id: null,
+        org_id: isSuper ? null : activeOrgId,
         role_name: null,
         is_active: true,
-        org_name: "",
+        org_name: isSuper ? "" : activeOrgName!,
+        isNewRole: true,
       },
     ]);
   };
@@ -217,6 +234,23 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
       toast.error(t.userEditModal.messages.error[lang]);
     }
   };
+
+  const orgChoices = isSuper
+    ? organizations
+    : organizations.filter((o) => o.id === activeOrgId);
+  const TENANT_ADMIN_ROLE_CHOICES = [
+    "tenant_admin",
+    "storage_manager",
+    "requester",
+  ];
+  const roleChoices = isSuper
+    ? availableRoles
+    : availableRoles.filter((role) =>
+        TENANT_ADMIN_ROLE_CHOICES.includes(role.role),
+      );
+  const hasOrgRole = roleAssignments.some(
+    (role) => role.org_id === activeOrgId,
+  );
 
   return (
     <Dialog>
@@ -312,6 +346,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                             </span>
                           ) : (
                             <Select
+                              disabled={!isSuper && ra.org_id !== activeOrgId}
                               onValueChange={(value) =>
                                 handleRoleAssignmentChange(
                                   index,
@@ -327,10 +362,12 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                                     t.userEditModal.placeholders
                                       .selectOrganization[lang]
                                   }
-                                />
+                                >
+                                  {ra.org_name}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
-                                {organizations.map((org) => (
+                                {orgChoices.map((org) => (
                                   <SelectItem key={org.id} value={org.id}>
                                     {org.name}
                                   </SelectItem>
@@ -348,17 +385,20 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                                 value,
                               )
                             }
-                            defaultValue={ra.role_name ?? undefined}
+                            disabled={!isSuper && ra.org_id !== activeOrgId}
+                            defaultValue={ra.role_name ?? ""}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue
                                 placeholder={
                                   t.userEditModal.placeholders.selectRole[lang]
                                 }
-                              />
+                              >
+                                {formatRoleName(ra.role_name ?? "")}
+                              </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
-                              {availableRoles.map((r) => (
+                              {roleChoices.map((r) => (
                                 <SelectItem key={r.id} value={r.role}>
                                   {formatRoleName(r.role)}
                                 </SelectItem>
@@ -368,6 +408,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
 
                           {/* Active toggle */}
                           <Switch
+                            disabled={ra.org_id !== activeOrgId && !isSuper}
                             checked={ra.is_active}
                             onCheckedChange={() => toggleRoleActive(index)}
                             className="justify-self-center"
@@ -386,15 +427,6 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                         </div>
                       ))}
                     </div>
-
-                    <Button
-                      className="mt-3 bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
-                      type="button"
-                      size="sm"
-                      onClick={addRoleAssignment}
-                    >
-                      {t.userEditModal.buttons.addRole[lang]}
-                    </Button>
                   </>
                 ) : (
                   <div className="mb-8 flex justify-between w-full">
@@ -436,7 +468,17 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="justify-between w-full">
+          {roleAssignments.length > 0 && !hasOrgRole && (
+            <Button
+              className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+              type="button"
+              size="sm"
+              onClick={addRoleAssignment}
+            >
+              {t.userEditModal.buttons.addRole[lang]}
+            </Button>
+          )}
           <Button variant="outline" onClick={handleSave} size={"sm"}>
             {t.userEditModal.buttons.save[lang]}
           </Button>
