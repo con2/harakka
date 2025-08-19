@@ -69,6 +69,9 @@ export class CreateBookingDto {
   @IsUUID("4", { message: "user_id must be a valid UUID v4 when provided" })
   user_id?: string;
 
+  @IsUUID("4", { message: "org_id must be a valid UUID v4" })
+  org_id!: string; // Add this as required
+
   @IsArray({ message: "items must be an array" })
   @ArrayMinSize(1, { message: "at least one booking item is required" })
   @ValidateNested({ each: true })

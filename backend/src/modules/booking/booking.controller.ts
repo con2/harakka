@@ -104,10 +104,10 @@ export class BookingController {
       const userId = req.user.id;
       if (!userId)
         throw new BadRequestException("No userId found: user_id is required");
-
+      const supabase = req.supabase;
       // put user-ID to DTO
       const dtoWithUserId = { ...dto, user_id: userId };
-      return this.bookingService.createBooking(dtoWithUserId, req.supabase);
+      return this.bookingService.createBooking(dtoWithUserId, supabase, req);
     } catch (error) {
       handleSupabaseError(error);
     }
@@ -121,7 +121,7 @@ export class BookingController {
     @Req() req: AuthRequest,
   ) {
     const userId = req.user.id;
-    return this.bookingService.updateBooking(id, userId, dto.items, req);
+    return this.bookingService.updateBooking(id, userId, dto, req);
   }
 
   // confirms a booking

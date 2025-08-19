@@ -5,7 +5,8 @@ import {
 } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
-import { UpdateBookingItemDto } from "./dto/update-booking.dto";
+import { UpdateBookingDto } from "./dto/update-booking.dto";
+import { BookingItemsInsert } from "../booking_items/interfaces/booking-items.interfaces";
 import {
   calculateAvailableQuantity,
   calculateDuration,
@@ -25,7 +26,6 @@ import { Database } from "@common/supabase.types";
 import { Translations } from "./types/translations.types";
 import {
   CancelBookingResponse,
-  BookingItemInsert,
   BookingItemRow,
   BookingWithItems,
   StorageItemsRow,
@@ -166,12 +166,40 @@ export class BookingService {
   async createBooking(
     dto: CreateBookingDto,
     supabase: SupabaseClient<Database>,
+    req: AuthRequest, // Add AuthRequest parameter
   ) {
     const userId = dto.user_id;
 
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
     }
+
+    // 3.0. Validate user's role context (anti-spoofing)
+    const userRoles = req.userRoles;
+    if (!userRoles || userRoles.length === 0) {
+      throw new BadRequestException("No valid role context found for user");
+    }
+
+    // Get org_id from DTO and validate against user's roles
+    const requestedOrganizationId = dto.org_id;
+    if (!requestedOrganizationId) {
+      throw new BadRequestException("org_id is required");
+    }
+
+    // Validate that user actually has an active role in the requested organization
+    const hasValidRole = userRoles.some(
+      (role) =>
+        role.organization_id === requestedOrganizationId && role.is_active,
+    );
+
+    if (!hasValidRole) {
+      throw new BadRequestException(
+        "User does not have an active role in the specified organization",
+      );
+    }
+
+    const userOrganizationId = requestedOrganizationId;
+
     let warningMessage: string | null = null;
 
     for (const item of dto.items) {
@@ -242,13 +270,13 @@ export class BookingService {
       throw new BadRequestException("Could not create booking");
     }
 
-    // 3.5. Create booking items
+    // 3.5. Create booking items using BookingItemsService
     for (const item of dto.items) {
       const start = new Date(item.start_date);
       const end = new Date(item.end_date);
       const totalDays = calculateDuration(start, end);
 
-      // get location_id and org_id (provider_organization_id)
+      // get location_id from storage_items
       const { data: storageItem, error: locationError } = await supabase
         .from("storage_items")
         .select("location_id, org_id")
@@ -261,24 +289,31 @@ export class BookingService {
         );
       }
 
-      // insert booking item with provider_organization_id
-      const { error: insertError } = await supabase
-        .from("booking_items")
-        .insert({
-          booking_id: booking.id,
-          item_id: item.item_id,
-          location_id: storageItem.location_id,
-          provider_organization_id: storageItem.org_id,
-          quantity: item.quantity,
-          start_date: item.start_date,
-          end_date: item.end_date,
-          total_days: totalDays,
-          status: "pending",
-        });
-
-      if (insertError) {
-        throw new BadRequestException("Could not create booking items");
+      // Validate that user's organization matches storage item's organization (optional security check)
+      if (storageItem.org_id !== userOrganizationId) {
+        throw new BadRequestException(
+          `User does not have permission to book items from organization ${storageItem.org_id}`,
+        );
       }
+
+      // Create booking item using service
+      const bookingItemData: BookingItemsInsert = {
+        booking_id: booking.id,
+        item_id: item.item_id,
+        location_id: storageItem.location_id,
+        provider_organization_id: storageItem.org_id,
+        quantity: item.quantity,
+        start_date: item.start_date,
+        end_date: item.end_date,
+        total_days: totalDays,
+        status: "pending",
+      };
+
+      // Use BookingItemsService instead of direct insert
+      await this.bookingItemsService.createBookingItem(
+        supabase,
+        bookingItemData,
+      );
     }
 
     // 3.6 notify user via centralized mail service
@@ -373,10 +408,37 @@ export class BookingService {
   async updateBooking(
     booking_id: string,
     userId: string,
-    updatedItems: UpdateBookingItemDto[],
+    dto: UpdateBookingDto,
     req: AuthRequest,
   ) {
     const supabase = req.supabase;
+
+    // Validate user's role context (anti-spoofing) and acting organization
+    const userRoles = req.userRoles;
+    if (!userRoles || userRoles.length === 0) {
+      throw new BadRequestException("No valid role context found for user");
+    }
+
+    const requestedOrganizationId = dto.org_id;
+    if (!requestedOrganizationId) {
+      throw new BadRequestException("org_id is required");
+    }
+
+    const hasValidRole = userRoles.some(
+      (role) =>
+        role.organization_id === requestedOrganizationId && role.is_active,
+    );
+
+    if (!hasValidRole) {
+      throw new BadRequestException(
+        "User does not have an active role in the specified organization",
+      );
+    }
+
+    const userOrganizationId = requestedOrganizationId;
+
+    let warningMessage: string | null = null;
+
     // 5.1 check the booking
     const { data: booking } = await supabase
       .from("bookings")
@@ -411,9 +473,22 @@ export class BookingService {
     // 5.3. Delete existing items from booking_items to avoid douplicates
     await supabase.from("booking_items").delete().eq("booking_id", booking_id);
 
-    // 5.4. insert updated items with availability check
-    for (const item of updatedItems) {
+    // 5.4. insert updated items with validations and availability checks
+    for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
+
+      const start = new Date(start_date);
+
+      const diffDays = dayDiffFromToday(start);
+
+      if (diffDays < 0) {
+        throw new BadRequestException("start_date cannot be in the past");
+      }
+
+      if (diffDays < 1) {
+        warningMessage =
+          "Heads up: bookings made less than 24 hours in advance might not be approved in time.";
+      }
 
       const totalDays = calculateDuration(
         new Date(start_date),
@@ -434,6 +509,25 @@ export class BookingService {
         );
       }
 
+      // Check physical stock (currently in storage)
+      const { data: storageCountRow, error: itemError } = await supabase
+        .from("storage_items")
+        .select("items_number_currently_in_storage")
+        .eq("id", item_id)
+        .single();
+
+      if (itemError || !storageCountRow) {
+        throw new BadRequestException("Storage item data not found");
+      }
+
+      const currentStock =
+        storageCountRow.items_number_currently_in_storage ?? 0;
+      if (quantity > currentStock) {
+        throw new BadRequestException(
+          `Not enough physical stock in storage for item ${item_id}`,
+        );
+      }
+
       // 5.6. Fetch location_id and org_id (provider_organization_id)
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
@@ -447,25 +541,25 @@ export class BookingService {
         );
       }
 
-      // 5.7. insert new booking item with provider_organization_id
-      const { error: itemInsertError } = await supabase
-        .from("booking_items")
-        .insert<BookingItemInsert>({
-          booking_id: booking_id,
-          item_id: item.item_id,
-          location_id: storageItem.location_id,
-          provider_organization_id: storageItem.org_id,
-          quantity: item.quantity,
-          start_date: item.start_date,
-          end_date: item.end_date,
-          total_days: totalDays,
-          status: "pending",
-        });
-
-      if (itemInsertError) {
-        console.error("Booking item insert error:", itemInsertError);
-        throw new BadRequestException("Could not create updated booking items");
+      // Ensure the acting organization matches the storage item's organization
+      if (storageItem.org_id !== userOrganizationId) {
+        throw new BadRequestException(
+          "User does not have permission to book items from this organization",
+        );
       }
+
+      // Create booking item using service
+      await this.bookingItemsService.createBookingItem(supabase, {
+        booking_id: booking_id,
+        item_id: item.item_id,
+        location_id: storageItem.location_id,
+        provider_organization_id: storageItem.org_id,
+        quantity: item.quantity,
+        start_date: item.start_date,
+        end_date: item.end_date,
+        total_days: totalDays,
+        status: "pending",
+      });
     }
 
     // 5.8 notify user via centralized mail service
@@ -495,10 +589,13 @@ export class BookingService {
       throw new BadRequestException("Could not fetch updated booking details");
     }
 
-    return {
-      message: "Booking updated",
-      booking: updatedBooking,
-    };
+    return warningMessage
+      ? {
+          message: "Booking updated",
+          booking: updatedBooking,
+          warning: warningMessage,
+        }
+      : { message: "Booking updated", booking: updatedBooking };
   }
 
   // 6. reject a Booking (Admin/SuperVera only)
