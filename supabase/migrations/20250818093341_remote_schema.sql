@@ -142,7 +142,8 @@ CREATE TYPE "public"."roles_type" AS ENUM (
     'user',
     'superVera',
     'storage_manager',
-    'requester'
+    'requester',
+    'tenant_admin'
 );
 
 
@@ -1243,7 +1244,8 @@ CREATE TABLE IF NOT EXISTS "public"."organizations" (
     "updated_at" timestamp with time zone DEFAULT "now"(),
     "created_by" "uuid",
     "updated_by" "uuid",
-    "is_deleted" boolean DEFAULT false
+    "is_deleted" boolean DEFAULT false,
+    "logo_picture_url" "text"
 );
 
 
@@ -1313,31 +1315,6 @@ CREATE TABLE IF NOT EXISTS "public"."roles" (
 
 
 ALTER TABLE "public"."roles" OWNER TO "postgres";
-
-
-CREATE TABLE IF NOT EXISTS "public"."saved_list_items" (
-    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
-    "list_id" "uuid" NOT NULL,
-    "item_id" "uuid" NOT NULL,
-    "added_at" timestamp with time zone DEFAULT "now"(),
-    "notes" "text"
-);
-
-
-ALTER TABLE "public"."saved_list_items" OWNER TO "postgres";
-
-
-CREATE TABLE IF NOT EXISTS "public"."saved_lists" (
-    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
-    "user_id" "uuid" NOT NULL,
-    "name" character varying NOT NULL,
-    "description" "text",
-    "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"()
-);
-
-
-ALTER TABLE "public"."saved_lists" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."storage_analytics" (
@@ -1420,7 +1397,8 @@ CREATE TABLE IF NOT EXISTS "public"."storage_items" (
     "created_at" timestamp with time zone DEFAULT "now"(),
     "translations" "jsonb",
     "items_number_currently_in_storage" numeric,
-    "is_deleted" boolean DEFAULT false
+    "is_deleted" boolean DEFAULT false,
+    "org_id" "uuid" NOT NULL
 );
 
 
@@ -1565,8 +1543,6 @@ CREATE TABLE IF NOT EXISTS "public"."user_profiles" (
     "visible_name" character varying,
     "phone" character varying,
     "email" character varying,
-    "saved_lists" "jsonb",
-    "preferences" "jsonb",
     "created_at" timestamp with time zone DEFAULT "now"(),
     "role" "text",
     "profile_picture_url" "text"
@@ -1656,24 +1632,28 @@ ALTER TABLE "public"."view_item_ownership_summary" OWNER TO "postgres";
 
 
 CREATE OR REPLACE VIEW "public"."view_manage_storage_items" AS
-SELECT
-    NULL::"text" AS "fi_item_name",
-    NULL::"text" AS "fi_item_type",
-    NULL::"text" AS "en_item_name",
-    NULL::"text" AS "en_item_type",
-    NULL::"jsonb" AS "translations",
-    NULL::"uuid" AS "id",
-    NULL::numeric AS "items_number_total",
-    NULL::numeric AS "price",
-    NULL::timestamp with time zone AS "created_at",
-    NULL::boolean AS "is_active",
-    NULL::"uuid" AS "location_id",
-    NULL::character varying AS "location_name",
-    NULL::"uuid"[] AS "tag_ids",
-    NULL::"jsonb"[] AS "tag_translations",
-    NULL::numeric AS "items_number_currently_in_storage",
-    NULL::boolean AS "is_deleted",
-    NULL::"uuid" AS "organization_id";
+ SELECT (("s"."translations" -> 'fi'::"text") ->> 'item_name'::"text") AS "fi_item_name",
+    (("s"."translations" -> 'fi'::"text") ->> 'item_type'::"text") AS "fi_item_type",
+    (("s"."translations" -> 'en'::"text") ->> 'item_name'::"text") AS "en_item_name",
+    (("s"."translations" -> 'en'::"text") ->> 'item_type'::"text") AS "en_item_type",
+    "s"."translations",
+    "s"."id",
+    "s"."items_number_total",
+    "s"."price",
+    "s"."created_at",
+    "s"."is_active",
+    "s"."location_id",
+    "l"."name" AS "location_name",
+    "array_agg"(DISTINCT "t"."tag_id") AS "tag_ids",
+    "array_agg"(DISTINCT "g"."translations") AS "tag_translations",
+    "s"."items_number_currently_in_storage",
+    "s"."is_deleted",
+    "s"."org_id" AS "organization_id"
+   FROM ((("public"."storage_items" "s"
+     JOIN "public"."storage_locations" "l" ON (("s"."location_id" = "l"."id")))
+     LEFT JOIN "public"."storage_item_tags" "t" ON (("s"."id" = "t"."item_id")))
+     LEFT JOIN "public"."tags" "g" ON (("t"."tag_id" = "g"."id")))
+  GROUP BY "s"."id", "s"."translations", "s"."items_number_total", "s"."price", "s"."created_at", "s"."is_active", "s"."location_id", "l"."name", "s"."items_number_currently_in_storage", "s"."is_deleted", "s"."org_id";
 
 
 ALTER TABLE "public"."view_manage_storage_items" OWNER TO "postgres";
@@ -1848,16 +1828,6 @@ ALTER TABLE ONLY "public"."roles"
 
 
 
-ALTER TABLE ONLY "public"."saved_list_items"
-    ADD CONSTRAINT "saved_list_items_pkey" PRIMARY KEY ("id");
-
-
-
-ALTER TABLE ONLY "public"."saved_lists"
-    ADD CONSTRAINT "saved_lists_pkey" PRIMARY KEY ("id");
-
-
-
 ALTER TABLE ONLY "public"."storage_analytics"
     ADD CONSTRAINT "storage_analytics_pkey" PRIMARY KEY ("id");
 
@@ -2021,33 +1991,6 @@ CREATE INDEX "test_features_feature_name_idx" ON "public"."test_features" USING 
 
 
 
-CREATE OR REPLACE VIEW "public"."view_manage_storage_items" AS
- SELECT (("s"."translations" -> 'fi'::"text") ->> 'item_name'::"text") AS "fi_item_name",
-    (("s"."translations" -> 'fi'::"text") ->> 'item_type'::"text") AS "fi_item_type",
-    (("s"."translations" -> 'en'::"text") ->> 'item_name'::"text") AS "en_item_name",
-    (("s"."translations" -> 'en'::"text") ->> 'item_type'::"text") AS "en_item_type",
-    "s"."translations",
-    "o"."storage_item_id" AS "id",
-    "s"."items_number_total",
-    "s"."price",
-    "s"."created_at",
-    "s"."is_active",
-    "s"."location_id",
-    "l"."name" AS "location_name",
-    "array_agg"("t"."tag_id") AS "tag_ids",
-    "array_agg"("g"."translations") AS "tag_translations",
-    "s"."items_number_currently_in_storage",
-    "o"."is_deleted",
-    "o"."organization_id"
-   FROM (((("public"."organization_items" "o"
-     JOIN "public"."storage_items" "s" ON (("o"."storage_item_id" = "s"."id")))
-     JOIN "public"."storage_locations" "l" ON (("s"."location_id" = "l"."id")))
-     LEFT JOIN "public"."storage_item_tags" "t" ON (("s"."id" = "t"."item_id")))
-     LEFT JOIN "public"."tags" "g" ON (("t"."tag_id" = "g"."id")))
-  GROUP BY "s"."id", "s"."translations", "s"."items_number_total", "s"."price", "s"."is_active", "l"."name", "s"."items_number_currently_in_storage", "o"."is_deleted", "o"."organization_id", "o"."storage_item_id";
-
-
-
 CREATE OR REPLACE TRIGGER "audit_booking_items_trigger" AFTER INSERT OR DELETE OR UPDATE ON "public"."booking_items" FOR EACH ROW EXECUTE FUNCTION "public"."audit_trigger_func"();
 
 
@@ -2110,6 +2053,11 @@ CREATE OR REPLACE TRIGGER "update_user_organization_roles_updated_at" BEFORE UPD
 
 ALTER TABLE ONLY "public"."audit_logs"
     ADD CONSTRAINT "audit_logs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
+
+
+
+ALTER TABLE ONLY "public"."booking_items"
+    ADD CONSTRAINT "booking_items_item_id_fkey" FOREIGN KEY ("item_id") REFERENCES "public"."storage_items"("id") ON DELETE CASCADE;
 
 
 
@@ -2189,11 +2137,6 @@ ALTER TABLE ONLY "public"."notifications"
 
 
 ALTER TABLE ONLY "public"."booking_items"
-    ADD CONSTRAINT "order_items_item_id_fkey" FOREIGN KEY ("item_id") REFERENCES "public"."storage_items"("id");
-
-
-
-ALTER TABLE ONLY "public"."booking_items"
     ADD CONSTRAINT "order_items_location_id_fkey" FOREIGN KEY ("location_id") REFERENCES "public"."storage_locations"("id");
 
 
@@ -2240,21 +2183,6 @@ ALTER TABLE ONLY "public"."reviews"
 
 ALTER TABLE ONLY "public"."reviews"
     ADD CONSTRAINT "reviews_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
-
-
-
-ALTER TABLE ONLY "public"."saved_list_items"
-    ADD CONSTRAINT "saved_list_items_item_id_fkey" FOREIGN KEY ("item_id") REFERENCES "public"."storage_items"("id");
-
-
-
-ALTER TABLE ONLY "public"."saved_list_items"
-    ADD CONSTRAINT "saved_list_items_list_id_fkey" FOREIGN KEY ("list_id") REFERENCES "public"."saved_lists"("id");
-
-
-
-ALTER TABLE ONLY "public"."saved_lists"
-    ADD CONSTRAINT "saved_lists_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
 
 
 
@@ -2355,12 +2283,6 @@ ALTER TABLE "public"."promotions" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."reviews" ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE "public"."saved_list_items" ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE "public"."saved_lists" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."storage_working_hours" ENABLE ROW LEVEL SECURITY;
@@ -2861,18 +2783,6 @@ GRANT ALL ON TABLE "public"."roles" TO "anon";
 GRANT ALL ON TABLE "public"."roles" TO "authenticated";
 GRANT ALL ON TABLE "public"."roles" TO "service_role";
 GRANT SELECT ON TABLE "public"."roles" TO "supabase_auth_admin";
-
-
-
-GRANT ALL ON TABLE "public"."saved_list_items" TO "anon";
-GRANT ALL ON TABLE "public"."saved_list_items" TO "authenticated";
-GRANT ALL ON TABLE "public"."saved_list_items" TO "service_role";
-
-
-
-GRANT ALL ON TABLE "public"."saved_lists" TO "anon";
-GRANT ALL ON TABLE "public"."saved_lists" TO "authenticated";
-GRANT ALL ON TABLE "public"."saved_lists" TO "service_role";
 
 
 

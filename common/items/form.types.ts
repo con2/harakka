@@ -17,7 +17,6 @@ export type CreateItemType = {
   };
   items_number_total: number;
   items_number_currently_in_storage: number;
-  price: number;
   is_active: boolean;
   translations: {
     fi: {

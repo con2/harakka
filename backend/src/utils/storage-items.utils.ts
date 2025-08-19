@@ -4,7 +4,6 @@ import { ItemImageInsert } from "@src/modules/item-images/types/item-image.types
 
 export function mapStorageItems(payload: ItemFormData): MappedItem[] {
   const org = payload.org;
-  console.log("org: ", org);
   return payload.items.map((item) => {
     const { images, location, tags, ...rest } = item;
     const newItem: MappedItem = {

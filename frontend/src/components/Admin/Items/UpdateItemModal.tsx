@@ -341,23 +341,8 @@ const UpdateItemModal = ({
                   </div>
                 </div>
 
-                {/* Price */}
+                {/* Location and Active Status */}
                 <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="flex flex-row items-baseline space-x-2">
-                    <Label htmlFor="price" className="font-medium">
-                      {t.updateItemModal.labels.price[lang]}
-                    </Label>
-                    <Input
-                      id="price"
-                      name="price"
-                      type="number"
-                      value={formData.price}
-                      onChange={handleChange}
-                      placeholder={t.updateItemModal.placeholders.price[lang]}
-                      required
-                      className="w-40"
-                    />
-                  </div>
                   {/* Location */}
                   <div className="flex flex-row items-baseline space-x-2">
                     <Label htmlFor="location_id">

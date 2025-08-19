@@ -344,11 +344,6 @@ const MyBookings = () => {
       header: t.myBookings.columns.endDate[lang],
       cell: ({ row }) => formatDate(row.original.end_date),
     },
-    // {
-    //   accessorKey: "subtotal",
-    //   header: t.myBookings.columns.subtotal[lang],
-    //   cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
-    // },
   ];
 
   if (loading) {

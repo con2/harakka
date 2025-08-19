@@ -4,7 +4,6 @@ import { RootState } from "../store";
 import {
   BookingsState,
   CreateBookingDto,
-  PaymentStatus,
   BookingStatus,
   BookingPreview,
   BookingWithDetails,
@@ -277,28 +276,6 @@ export const returnItems = createAsyncThunk<
     );
   }
 });
-
-// update Payment Status thunk
-export const updatePaymentStatus = createAsyncThunk<
-  { bookingId: string; status: PaymentStatus },
-  { bookingId: string; status: PaymentStatus }
->(
-  "bookings/payment-status",
-  async ({ bookingId, status }, { rejectWithValue }) => {
-    try {
-      const response = await bookingsApi.updatePaymentStatus(bookingId, status);
-      // Ensure the returned status is of type PaymentStatus
-      return {
-        bookingId,
-        status: response.status as PaymentStatus,
-      };
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to update the payment status"),
-      );
-    }
-  },
-);
 
 export const bookingsSlice = createSlice({
   name: "bookings",
@@ -580,28 +557,6 @@ export const bookingsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "return";
-      })
-      // Update payment status
-      .addCase(updatePaymentStatus.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.errorContext = null;
-      })
-      .addCase(updatePaymentStatus.fulfilled, (state, action) => {
-        state.loading = false;
-        const { bookingId, status } = action.payload;
-
-        // Update the booking in the normalized state
-        state.bookings = state.bookings.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, payment_status: status! }
-            : booking,
-        );
-      })
-      .addCase(updatePaymentStatus.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-        state.errorContext = "update-payment-status";
       });
   },
 });
