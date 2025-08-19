@@ -34,6 +34,16 @@ import { useRoles } from "@/hooks/useRoles";
 import { formatRoleName } from "@/utils/format";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 
+// Role assignments across organizations
+type RoleAssignment = {
+  id: string | null; // row id if existing
+  org_id: string | null;
+  role_name: string | null;
+  is_active: boolean;
+  org_name: string;
+  isNewRole: boolean;
+};
+
 const UserEditModal = ({ user }: { user: UserProfile }) => {
   const dispatch = useAppDispatch();
   const {
@@ -48,11 +58,8 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
 
   // Translation
   const { lang } = useLanguage();
-  const {
-    organizationId: activeOrgId,
-    organizationName: activeOrgName,
-    roleName: activeRole,
-  } = useAppSelector(selectActiveRoleContext);
+  const { organizationId: activeOrgId, organizationName: activeOrgName } =
+    useAppSelector(selectActiveRoleContext);
 
   // Column header keys for the role grid
   const columns = {
@@ -61,6 +68,11 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     active: t.userEditModal.columns?.active?.[lang] ?? "Active",
     actions: t.userEditModal.columns?.actions?.[lang] ?? "Actions",
   };
+  const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
+  const isAssigningRole =
+    roleAssignments.length > 0 &&
+    (!roleAssignments[roleAssignments.length - 1]?.role_name ||
+      !roleAssignments[roleAssignments.length - 1]?.org_id);
 
   // Can Manage Roles:
   // Any "Super" role or tenant_admin of current org
@@ -68,6 +80,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   const isSuper = hasAnyRole(SUPER_ROLES, activeOrgId!);
   const isTenantAdmin = hasRole("tenant_admin", activeOrgId!);
   const canManageRoles = isSuper || isTenantAdmin;
+  const assignedOrgIds = new Set(roleAssignments.map((r) => r.org_id));
 
   const [formData, setFormData] = useState<UserFormData>({
     full_name: user.full_name || "",
@@ -77,17 +90,6 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     visible_name: user.visible_name || "",
   });
 
-  // Role assignments across organizations
-  type RoleAssignment = {
-    id: string | null; // row id if existing
-    org_id: string | null;
-    role_name: string | null;
-    is_active: boolean;
-    org_name: string;
-    isNewRole: boolean;
-  };
-  const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
-  // Org info
   const organizations = useAppSelector(selectOrganizations);
   // Populate initial role assignments once roles are loaded
   useEffect(() => {
@@ -145,6 +147,16 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
             ? ra // keep as‑is; org edit disabled
             : { ...ra, [field]: value }
           : ra,
+      ),
+    );
+  };
+
+  const handleOrgChange = (index: number, orgId: string) => {
+    const org = organizations.find((org) => org.id === orgId);
+    if (!org) return;
+    setRoleAssignments((prev) =>
+      prev.map((ra, i) =>
+        i === index ? { ...ra, org_id: orgId, org_name: org.name } : ra,
       ),
     );
   };
@@ -235,8 +247,11 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     }
   };
 
+  const unassignedOrgs = organizations.filter(
+    (org) => !assignedOrgIds.has(org.id),
+  );
   const orgChoices = isSuper
-    ? organizations
+    ? unassignedOrgs
     : organizations.filter((o) => o.id === activeOrgId);
   const TENANT_ADMIN_ROLE_CHOICES = [
     "tenant_admin",
@@ -248,9 +263,6 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     : availableRoles.filter((role) =>
         TENANT_ADMIN_ROLE_CHOICES.includes(role.role),
       );
-  const hasOrgRole = roleAssignments.some(
-    (role) => role.org_id === activeOrgId,
-  );
 
   return (
     <Dialog>
@@ -348,11 +360,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                             <Select
                               disabled={!isSuper && ra.org_id !== activeOrgId}
                               onValueChange={(value) =>
-                                handleRoleAssignmentChange(
-                                  index,
-                                  "organization_id",
-                                  value,
-                                )
+                                handleOrgChange(index, value)
                               }
                               defaultValue={ra.org_id ?? undefined}
                             >
@@ -385,7 +393,11 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                                 value,
                               )
                             }
-                            disabled={!isSuper && ra.org_id !== activeOrgId}
+                            disabled={
+                              (!isSuper && ra.org_id !== activeOrgId) ||
+                              (ra.org_name === "Global" &&
+                                Boolean(ra.role_name))
+                            }
                             defaultValue={ra.role_name ?? ""}
                           >
                             <SelectTrigger className="w-full">
@@ -398,7 +410,18 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
-                              {roleChoices.map((r) => (
+                              {(ra.org_name === "High council"
+                                ? roleChoices.filter((r) =>
+                                    SUPER_ROLES.includes(r.role),
+                                  )
+                                : ra.org_name === "Global"
+                                  ? roleChoices.filter((r) => r.role === "user")
+                                  : roleChoices.filter(
+                                      (r) =>
+                                        r.role !== "user" &&
+                                        !SUPER_ROLES.includes(r.role),
+                                    )
+                              ).map((r) => (
                                 <SelectItem key={r.id} value={r.role}>
                                   {formatRoleName(r.role)}
                                 </SelectItem>
@@ -429,20 +452,9 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                     </div>
                   </>
                 ) : (
-                  <div className="mb-8 flex justify-between w-full">
-                    <p className="text-sm mt-4 text-center mb-2">
-                      User has no current roles
-                    </p>
-                    <Button
-                      className="self-end"
-                      variant="outline"
-                      type="button"
-                      size="sm"
-                      onClick={addRoleAssignment}
-                    >
-                      {t.userEditModal.buttons.addRole[lang]}
-                    </Button>
-                  </div>
+                  <p className="text-sm mt-4 text-center mb-2">
+                    User has no current roles
+                  </p>
                 )}
               </>
             ) : (
@@ -469,16 +481,19 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
         </div>
 
         <DialogFooter className="justify-between w-full">
-          {roleAssignments.length > 0 && !hasOrgRole && (
-            <Button
-              className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
-              type="button"
-              size="sm"
-              onClick={addRoleAssignment}
-            >
-              {t.userEditModal.buttons.addRole[lang]}
-            </Button>
-          )}
+          <Button
+            variant="default"
+            className="border-1-grey"
+            type="button"
+            size="sm"
+            onClick={addRoleAssignment}
+            disabled={
+              isAssigningRole || (!isSuper && assignedOrgIds.has(activeOrgId))
+            }
+          >
+            {t.userEditModal.buttons.addRole[lang]}
+          </Button>
+
           <Button variant="outline" onClick={handleSave} size={"sm"}>
             {t.userEditModal.buttons.save[lang]}
           </Button>
