@@ -24,6 +24,13 @@ import { OrganizationDetails } from "@/types/organization";
 import { useEffect } from "react";
 import OrganizationLogoUploader from "./OrganizationLogoUploader";
 
+// Define the form values type for organization
+export type OrganizationFormValues = {
+  name: string;
+  description?: string;
+  slug?: string;
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (value: boolean) => void;
@@ -32,14 +39,6 @@ type Props = {
   organization?: OrganizationDetails | null;
   isLoading?: boolean;
 };
-
-const schema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  slug: z.string().optional(),
-});
-
-export type OrganizationFormValues = z.infer<typeof schema>;
 
 export default function OrganizationModal({
   open,
@@ -51,6 +50,12 @@ export default function OrganizationModal({
   const { lang } = useLanguage();
 
   const isViewMode = mode === "view";
+
+  const schema = z.object({
+    name: z.string().min(1, t.organizations.validation.nameRequired[lang]),
+    description: z.string().optional(),
+    slug: z.string().optional(),
+  });
 
   // schema for organization form
   const form = useForm<OrganizationFormValues>({
@@ -229,9 +234,11 @@ export default function OrganizationModal({
                 variant="secondary"
                 onClick={() => onOpenChange(false)}
               >
-                {t.common.cancel[lang]}
+                {t.organizations.modal.buttons.cancel[lang]}
               </Button>
-              <Button type="submit">{t.common.save[lang]}</Button>
+              <Button type="submit">
+                {t.organizations.modal.buttons.save[lang]}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

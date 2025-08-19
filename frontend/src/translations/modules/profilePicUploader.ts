@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const profilePicUploader = {
   changeProfilePicture: {
     fi: "Vaihda profiilikuva",
@@ -24,8 +26,8 @@ export const profilePicUploader = {
     en: "Preview",
   },
   cancel: {
-    fi: "Peruuta",
-    en: "Cancel",
+    fi: common.cancel.fi,
+    en: common.cancel.en,
   },
   upload: {
     fi: "Lähetä",

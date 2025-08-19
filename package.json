@@ -34,7 +34,9 @@
     "backend:live": "env-cmd -f .env.local npm --prefix backend run start:watch",
     "check-translation": "cd frontend && npx tsx src/scripts/check-translations.ts",
     "check-translation:strict": "cd frontend && npx tsx src/scripts/check-translations.ts strict",
-    "check-translation:relaxed": "cd frontend && npx tsx src/scripts/check-translations.ts"
+    "check-translation:relaxed": "cd frontend && npx tsx src/scripts/check-translations.ts",
+    "check-translation:unused": "cd frontend && npx tsx src/scripts/clean-unused-translations.ts",
+    "check-translation:clean": "cd frontend && npx tsx src/scripts/clean-unused-translations.ts --confirm"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.53.0",

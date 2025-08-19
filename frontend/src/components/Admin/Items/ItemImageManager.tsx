@@ -357,7 +357,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue
+                    placeholder={t.itemImageManager.options.select[lang]}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="main">

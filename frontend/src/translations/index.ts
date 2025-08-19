@@ -1,6 +1,5 @@
 import { addLocationModal } from "./modules/addLocationModal";
 import { addTagModal } from "./modules/addTagModal";
-import { addUserModal } from "./modules/addUserModal";
 import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
 import { adminPanel } from "./modules/adminPanel";
@@ -9,14 +8,13 @@ import { authCallback } from "./modules/authCallback";
 import { bookingCancel } from "./modules/bookingCancel";
 import { bookingConfirm } from "./modules/bookingConfirm";
 import { bookingDelete } from "./modules/bookingDelete";
-import { bookingEdit } from "./modules/bookingEdit";
+import { bookingDetailsButton } from "./modules/bookingDetailsButton";
+import { bookingEditButton } from "./modules/bookingEdit";
 import { bookingReject } from "./modules/bookingReject";
 import { bookingReturn } from "./modules/bookingReturn";
 import { cart } from "./modules/cart";
 import { contactForm } from "./modules/contactForm";
-import { countries } from "./modules/countries";
 import { footer } from "./modules/footer";
-import { general } from "./modules/general";
 import { itemCard } from "./modules/itemCard";
 import { itemDetails } from "./modules/itemDetails";
 import { itemImageManager } from "./modules/itemImageManager";
@@ -36,7 +34,6 @@ import { tagAssignForm } from "./modules/tagAssignForm";
 import { tagDelete } from "./modules/tagDelete";
 import { tagDetail } from "./modules/tagDetail";
 import { tagList } from "./modules/tagList";
-import { teamList } from "./modules/teamList";
 import { timeframeSelector } from "./modules/timeframeSelector";
 import { unauthorized } from "./modules/unauthorized";
 import { updateItemModal } from "./modules/updateItemModal";
@@ -58,14 +55,13 @@ import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
 import { editLocationModal } from "./modules/editLocationModal";
 import { organizationLocations } from "./modules/organizationLocations";
-import { roleEditor } from "./modules/roleEditor";
 import { roleManagement } from "./modules/roleManagement";
 import { statusBadge } from "./modules/statusBadge";
 import { orgStep } from "./modules/orgStep";
 import { addItemForm } from "./modules/addItemForm";
 import { itemSummary } from "./modules/itemSummary";
 import { stepper } from "./modules/stepper";
-import { notifications } from "./modules/notifications";
+import { notification } from "./modules/notification";
 import { uiComponents } from "./modules/uiComponents";
 import { profilePicUploader } from "./modules/profilePicUploader";
 import { itemImageUpload } from "./modules/itemImageUpload";
@@ -75,6 +71,7 @@ import { organizationPage } from "./modules/organizationPage";
 import { locationsList } from "./modules/locationsList";
 import { organizations } from "./modules/organizations";
 import { organizationLogoUploader } from "./modules/organizationLogoUploader";
+import { common } from "./modules/common";
 
 export const t = {
   rolesList,
@@ -84,7 +81,6 @@ export const t = {
   addItemForm,
   itemSummary,
   addTagModal,
-  addUserModal,
   adminDashboard,
   adminItemsTable,
   adminPanel,
@@ -93,15 +89,14 @@ export const t = {
   bookingCancel,
   bookingConfirm,
   bookingDelete,
-  bookingEdit,
+  bookingDetailsButton,
+  bookingEditButton,
   bookingReject,
   bookingReturn,
   cart,
-  common: general.common, // Shorthand for general.common
+  common,
   contactForm,
-  countries,
   footer,
-  general,
   itemCard,
   itemDetails,
   itemImageManager,
@@ -122,7 +117,6 @@ export const t = {
   tagDelete,
   tagDetail,
   tagList,
-  teamList,
   timeframeSelector,
   unauthorized,
   updateItemModal,
@@ -141,12 +135,11 @@ export const t = {
   deleteLocationButton,
   editLocationModal,
   organizationLocations,
-  roleEditor,
   roleManagement,
   statusBadge,
   privacyPolicy,
   termsOfUse,
-  notifications,
+  notification,
   uiComponents,
   profilePicUploader,
   organizationPage,

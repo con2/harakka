@@ -1,3 +1,5 @@
+import { common } from "../modules/common";
+
 export const deleteLocationButton = {
   title: {
     en: "Delete Location",
@@ -13,16 +15,12 @@ export const deleteLocationButton = {
   },
   buttons: {
     delete: {
-      en: "Delete",
-      fi: "Poista",
-    },
-    deleting: {
-      en: "Deleting...",
-      fi: "Poistetaan...",
+      en: common.delete.en,
+      fi: common.delete.fi,
     },
     cancel: {
-      en: "Cancel",
-      fi: "Peruuta",
+      en: common.cancel.en,
+      fi: common.cancel.fi,
     },
   },
   messages: {

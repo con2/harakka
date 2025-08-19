@@ -16,10 +16,6 @@ export const orgStep = {
       en: "Choose location for each item",
       fi: "Valitse sijainti jokaiselle tuotteelle",
     },
-    addItems: {
-      en: "Add Items to Organization",
-      fi: "Lisää tuotteita organisaatioon",
-    },
     next: {
       en: "Next",
       fi: "Seuraava",

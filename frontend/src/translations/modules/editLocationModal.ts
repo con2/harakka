@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const editLocationModal = {
   title: {
     en: "Edit Location",
@@ -20,8 +22,8 @@ export const editLocationModal = {
     },
     street: {
       label: {
-        en: "Street Address",
-        fi: "Katuosoite",
+        en: common.personalData.street.en,
+        fi: common.personalData.street.fi,
       },
       placeholder: {
         en: "Enter street address",
@@ -30,8 +32,8 @@ export const editLocationModal = {
     },
     city: {
       label: {
-        en: "City",
-        fi: "Kaupunki",
+        en: common.personalData.city.en,
+        fi: common.personalData.city.fi,
       },
       placeholder: {
         en: "Enter city",
@@ -40,8 +42,8 @@ export const editLocationModal = {
     },
     postcode: {
       label: {
-        en: "Postal Code",
-        fi: "Postinumero",
+        en: common.personalData.postalCode.en,
+        fi: common.personalData.postalCode.fi,
       },
       placeholder: {
         en: "Enter postal code",
@@ -91,8 +93,8 @@ export const editLocationModal = {
   },
   labels: {
     address: {
-      en: "Address",
-      fi: "Osoite",
+      en: common.personalData.address.en,
+      fi: common.personalData.address.fi,
     },
     activeLocation: {
       en: "Active Location",
@@ -115,8 +117,8 @@ export const editLocationModal = {
       fi: "Tallennetaan...",
     },
     cancel: {
-      en: "Cancel",
-      fi: "Peruuta",
+      en: common.cancel.en,
+      fi: common.cancel.fi,
     },
   },
   messages: {
