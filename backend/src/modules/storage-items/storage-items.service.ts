@@ -373,7 +373,7 @@ export class StorageItemsService {
     order_by?: ValidItemOrder,
     searchquery?: string,
     tags?: string,
-    activity_filter?: "active" | "inactive",
+    isActive?: boolean,
     location_filter?: string,
     category?: string,
     availability_min?: number,
@@ -383,20 +383,67 @@ export class StorageItemsService {
     org_filter?: string,
   ) {
     const supabase = this.supabaseClient.getAnonClient();
-    // If org filter provided, get the set of item IDs linked to those orgs
-    const { from, to } = getPaginationRange(page, limit);
+    // Build a base query without range for counting
+    const base = supabase
+      .from("view_manage_storage_items")
+      .select("*", { count: "exact", head: true })
+      .eq("is_deleted", false);
+    // Apply filters to base count query
+    if (searchquery) {
+      base.or(
+        `fi_item_name.ilike.%${searchquery}%,` +
+          `fi_item_type.ilike.%${searchquery}%,` +
+          `en_item_name.ilike.%${searchquery}%,` +
+          `en_item_type.ilike.%${searchquery}%,` +
+          `location_name.ilike.%${searchquery}%`,
+      );
+    }
+    if (typeof isActive === "boolean") base.eq("is_active", isActive);
+    if (tags) base.overlaps("tag_ids", tags.split(","));
+    if (location_filter) {
+      const locIds = location_filter
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
+      if (locIds.length > 0) base.in("location_id", locIds);
+    }
+    if (org_filter) base.in("organization_id", org_filter.split(","));
+    if (category) base.in("en_item_type", category.split(","));
+    if (from_date) base.gte("created_at", from_date);
+    if (to_date) base.lt("created_at", to_date);
+    if (availability_min !== undefined)
+      base.gte("items_number_currently_in_storage", availability_min);
+    if (availability_max !== undefined)
+      base.lte("items_number_currently_in_storage", availability_max);
+    const countResult = await base;
+    if (countResult.error) {
+      console.log(countResult.error);
+      throw new Error("Failed to get matching items");
+    }
+    const total = countResult.count ?? 0;
+    const meta = getPaginationMeta(total, page, limit);
 
+    // If requested page is out of range, return empty response instead of querying with invalid range
+    if (meta.total === 0 || page > meta.totalPages) {
+      return {
+        data: [],
+        error: null,
+        status: 200,
+        statusText: "OK",
+        count: total,
+        metadata: meta,
+      };
+    }
+
+    // Now fetch the actual page data with range
+    const { from, to } = getPaginationRange(page, limit);
     const query = supabase
       .from("view_manage_storage_items")
       .select("*", { count: "exact" })
       .eq("is_deleted", false)
       .range(from, to);
 
-    if (order_by)
-      query.order(order_by ?? "created_at", {
-        ascending: ascending,
-      });
-
+    if (order_by) query.order(order_by ?? "created_at", { ascending });
     if (searchquery) {
       query.or(
         `fi_item_name.ilike.%${searchquery}%,` +
@@ -406,8 +453,7 @@ export class StorageItemsService {
           `location_name.ilike.%${searchquery}%`,
       );
     }
-
-    if (activity_filter) query.eq("is_active", activity_filter);
+    if (typeof isActive === "boolean") query.eq("is_active", isActive);
     if (tags) query.overlaps("tag_ids", tags.split(","));
     if (location_filter) {
       const locIds = location_filter
@@ -418,21 +464,16 @@ export class StorageItemsService {
         query.in("location_id", locIds);
       }
     }
-
-    // Apply org-based item ID filter
     if (org_filter) query.in("organization_id", org_filter.split(","));
-
     if (category) {
       const categories = category.split(",");
       query.in("en_item_type", categories);
     }
-
     if (from_date) query.gte("created_at", from_date);
     if (to_date) query.lt("created_at", to_date);
     // Availability range filter (items currently in storage)
     if (availability_min !== undefined)
       query.gte("items_number_currently_in_storage", availability_min);
-
     if (availability_max !== undefined)
       query.lte("items_number_currently_in_storage", availability_max);
 

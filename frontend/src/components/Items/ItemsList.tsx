@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   selectAllItems,
@@ -38,6 +38,13 @@ const ItemsList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const userQuery = searchQuery.toLowerCase().trim();
   const debouncedSearchQuery = useDebouncedValue(userQuery);
+  // Stable dependencies for effects
+  const itemTypesKey = useMemo(() => itemTypes.join("|"), [itemTypes]);
+  const locationsKey = useMemo(() => locationIds.join("|"), [locationIds]);
+  const tagsKey = useMemo(() => tagIds.join("|"), [tagIds]);
+  const orgsKey = useMemo(() => (orgIds || []).join("|"), [orgIds]);
+  const availMin = filters.itemsNumberAvailable[0];
+  const availMax = filters.itemsNumberAvailable[1];
 
   // Fetch all items when the component mounts
   useEffect(() => {
@@ -53,8 +60,8 @@ const ItemsList: React.FC = () => {
         activity_filter: active,
         categories: itemTypes,
         location_filter: locationIds,
-        availability_min: filters.itemsNumberAvailable[0],
-        availability_max: filters.itemsNumberAvailable[1],
+        availability_min: availMin,
+        availability_max: availMax,
         org_ids: orgIds && orgIds.length > 0 ? orgIds : undefined,
       }),
     );
@@ -64,11 +71,26 @@ const ItemsList: React.FC = () => {
     itemTypes,
     page,
     debouncedSearchQuery,
-    filters.itemsNumberAvailable,
+    availMin,
+    availMax,
     locationIds,
     tagIds,
     orgIds,
     ITEMS_PER_PAGE,
+  ]);
+
+  // Reset pagination to first page when filters or search change
+  useEffect(() => {
+    setPage(1);
+  }, [
+    isActive,
+    itemTypesKey,
+    debouncedSearchQuery,
+    availMin,
+    availMax,
+    locationsKey,
+    tagsKey,
+    orgsKey,
   ]);
 
   // Apply availability filter to items (client‑side filtering for availability range)

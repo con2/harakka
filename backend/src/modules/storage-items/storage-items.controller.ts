@@ -58,7 +58,7 @@ export class StorageItemsController {
     @Query("limit") limit: string = "10",
     @Query("ascending") ascending: string = "true",
     @Query("tags") tags: string,
-    @Query("active") active_filter: "active" | "inactive",
+    @Query("active") active_filter: string,
     @Query("location") location_filter: string,
     @Query("category") category: string,
     @Query("availability_min") availability_min?: string,
@@ -77,6 +77,13 @@ export class StorageItemsController {
       availability_max !== undefined
         ? parseInt(availability_max, 10)
         : undefined;
+    // Normalize active filter to boolean if provided (supports "true"/"false" and legacy "active"/"inactive")
+    let isActive: boolean | undefined = undefined;
+    if (typeof active_filter === "string") {
+      const v = active_filter.toLowerCase();
+      if (v === "true" || v === "active") isActive = true;
+      else if (v === "false" || v === "inactive") isActive = false;
+    }
 
     return this.storageItemsService.getOrderedStorageItems(
       pageNum,
@@ -85,7 +92,7 @@ export class StorageItemsController {
       ordered_by,
       searchquery,
       tags,
-      active_filter,
+      isActive,
       location_filter,
       category,
       availMinNum,
