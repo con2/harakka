@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
+import { UpdateBookingItemDto } from "./dto/update-booking.dto";
 import {
   calculateAvailableQuantity,
   calculateDuration,
@@ -171,24 +172,23 @@ export class BookingService {
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
     }
-    // variables for date check
     let warningMessage: string | null = null;
 
     for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
 
       const start = new Date(start_date);
-      const differenceInDays = dayDiffFromToday(start);
+      const diffDays = dayDiffFromToday(start);
 
-      if (differenceInDays <= 0) {
-        throw new BadRequestException(
-          "Bookings must start at least one day in the future",
-        );
+      // Prevent past start times
+      if (diffDays < 0) {
+        throw new BadRequestException("start_date cannot be in the past");
       }
 
-      if (differenceInDays <= 2) {
+      // Warn for short notice (< 24h). dayDiffFromToday returns 0 for same-day future times.
+      if (diffDays < 1) {
         warningMessage =
-          "This is a short-notice booking. Please be aware that it might not be fulfilled in time.";
+          "Heads up: bookings made less than 24 hours in advance might not be approved in time.";
       }
 
       // 3.1. Check availability for requested date range
@@ -248,26 +248,27 @@ export class BookingService {
       const end = new Date(item.end_date);
       const totalDays = calculateDuration(start, end);
 
-      // get location_id
+      // get location_id and org_id (provider_organization_id)
       const { data: storageItem, error: locationError } = await supabase
         .from("storage_items")
-        .select("location_id")
+        .select("location_id, org_id")
         .eq("id", item.item_id)
         .single();
 
       if (locationError || !storageItem) {
         throw new BadRequestException(
-          `Location ID not found for item ${item.item_id}`,
+          `Storage item data not found for item ${item.item_id}`,
         );
       }
 
-      // insert booking item
+      // insert booking item with provider_organization_id
       const { error: insertError } = await supabase
         .from("booking_items")
         .insert({
           booking_id: booking.id,
           item_id: item.item_id,
           location_id: storageItem.location_id,
+          provider_organization_id: storageItem.org_id,
           quantity: item.quantity,
           start_date: item.start_date,
           end_date: item.end_date,
@@ -372,7 +373,7 @@ export class BookingService {
   async updateBooking(
     booking_id: string,
     userId: string,
-    updatedItems: BookingItem[],
+    updatedItems: UpdateBookingItemDto[],
     req: AuthRequest,
   ) {
     const supabase = req.supabase;
@@ -433,12 +434,12 @@ export class BookingService {
         );
       }
 
-      // 5.6. Fetch location_id
+      // 5.6. Fetch location_id and org_id (provider_organization_id)
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
-        .select("location_id")
+        .select("location_id, org_id")
         .eq("id", item_id)
-        .single<StorageItemsRow>();
+        .single();
 
       if (storageError || !storageItem) {
         throw new BadRequestException(
@@ -446,13 +447,14 @@ export class BookingService {
         );
       }
 
-      // 5.7. insert new booking item
+      // 5.7. insert new booking item with provider_organization_id
       const { error: itemInsertError } = await supabase
         .from("booking_items")
         .insert<BookingItemInsert>({
           booking_id: booking_id,
           item_id: item.item_id,
           location_id: storageItem.location_id,
+          provider_organization_id: storageItem.org_id,
           quantity: item.quantity,
           start_date: item.start_date,
           end_date: item.end_date,

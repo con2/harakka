@@ -1,14 +1,13 @@
 import {
-  IsArray,
-  IsOptional,
-  IsString,
-  ValidateNested,
-  IsInt,
-  Min,
   ArrayMinSize,
-  IsUUID,
+  IsArray,
+  IsInt,
   IsISO8601,
+  IsString,
+  IsUUID,
+  Min,
   Validate,
+  ValidateNested,
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidationArguments,
@@ -16,25 +15,25 @@ import {
 import { Type } from "class-transformer";
 
 /**
- * Ensures start_date is strictly before end_date on BookingItemDto.
+ * Ensures start_date is strictly before end_date on UpdateBookingItemDto.
  */
-@ValidatorConstraint({ name: "StartBeforeEnd", async: false })
-class StartBeforeEndConstraint implements ValidatorConstraintInterface {
+@ValidatorConstraint({ name: "StartBeforeEndUpdate", async: false })
+class StartBeforeEndUpdateConstraint implements ValidatorConstraintInterface {
   validate(_: unknown, args: ValidationArguments): boolean {
-    const obj = args.object as BookingItemDto;
-    if (!obj?.start_date || !obj?.end_date) return true; // other validators will surface missing values
+    const obj = args.object as UpdateBookingItemDto;
+    if (!obj?.start_date || !obj?.end_date) return true;
     const start = Date.parse(obj.start_date);
     const end = Date.parse(obj.end_date);
-    if (Number.isNaN(start) || Number.isNaN(end)) return true; // ISO validator will handle format errors
+    if (Number.isNaN(start) || Number.isNaN(end)) return true;
     return start < end;
   }
 
-  defaultMessage(_args: ValidationArguments): string {
+  defaultMessage(_: ValidationArguments): string {
     return "start_date must be before end_date";
   }
 }
 
-class BookingItemDto {
+export class UpdateBookingItemDto {
   @IsUUID("4", { message: "item_id must be a valid UUID v4" })
   item_id!: string;
 
@@ -60,25 +59,14 @@ class BookingItemDto {
         "end_date must be an ISO8601 timestamp (e.g. 2025-08-21T12:00:00Z)",
     },
   )
-  @Validate(StartBeforeEndConstraint)
+  @Validate(StartBeforeEndUpdateConstraint)
   end_date!: string;
 }
 
-export class CreateBookingDto {
-  @IsOptional()
-  @IsUUID("4", { message: "user_id must be a valid UUID v4 when provided" })
-  user_id?: string;
-
+export class UpdateBookingDto {
   @IsArray({ message: "items must be an array" })
   @ArrayMinSize(1, { message: "at least one booking item is required" })
   @ValidateNested({ each: true })
-  @Type(() => BookingItemDto)
-  items!: BookingItemDto[];
+  @Type(() => UpdateBookingItemDto)
+  items!: UpdateBookingItemDto[];
 }
-
-// This DTO defines the structure and validation for creating a booking.
-// Validation highlights:
-// - items: non-empty array of BookingItemDto
-// - item_id: UUID v4
-// - quantity: integer >= 1
-// - start_date/end_date: ISO8601 strings, start_date < end_date. (Short-notice warnings are handled in the service, not as hard validation.)
