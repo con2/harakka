@@ -411,10 +411,30 @@ export class StorageItemsService {
     if (category) base.in("en_item_type", category.split(","));
     if (from_date) base.gte("created_at", from_date);
     if (to_date) base.lt("created_at", to_date);
-    if (availability_min !== undefined)
-      base.gte("items_number_currently_in_storage", availability_min);
-    if (availability_max !== undefined)
-      base.lte("items_number_currently_in_storage", availability_max);
+    // Availability range filter (fallback to total when current is null)
+    if (availability_min !== undefined || availability_max !== undefined) {
+      const min = availability_min;
+      const max = availability_max;
+      const currentConds: string[] = [];
+      const totalConds: string[] = [];
+      if (min !== undefined) {
+        currentConds.push(`items_number_currently_in_storage.gte.${min}`);
+        totalConds.push(`items_number_total.gte.${min}`);
+      }
+      if (max !== undefined) {
+        currentConds.push(`items_number_currently_in_storage.lte.${max}`);
+        totalConds.push(`items_number_total.lte.${max}`);
+      }
+      const group1 =
+        currentConds.length > 0 ? `and(${currentConds.join(",")})` : "";
+      const group2Parts = [
+        "items_number_currently_in_storage.is.null",
+        ...totalConds,
+      ];
+      const group2 = `and(${group2Parts.join(",")})`;
+      const orExpr = group1 ? `${group1},${group2}` : group2; // if only max/min given, still works
+      base.or(orExpr);
+    }
     const countResult = await base;
     if (countResult.error) {
       console.log(countResult.error);
@@ -471,11 +491,30 @@ export class StorageItemsService {
     }
     if (from_date) query.gte("created_at", from_date);
     if (to_date) query.lt("created_at", to_date);
-    // Availability range filter (items currently in storage)
-    if (availability_min !== undefined)
-      query.gte("items_number_currently_in_storage", availability_min);
-    if (availability_max !== undefined)
-      query.lte("items_number_currently_in_storage", availability_max);
+    // Availability range filter (server-side, with fallback to total when current is null)
+    if (availability_min !== undefined || availability_max !== undefined) {
+      const min = availability_min;
+      const max = availability_max;
+      const currentConds: string[] = [];
+      const totalConds: string[] = [];
+      if (min !== undefined) {
+        currentConds.push(`items_number_currently_in_storage.gte.${min}`);
+        totalConds.push(`items_number_total.gte.${min}`);
+      }
+      if (max !== undefined) {
+        currentConds.push(`items_number_currently_in_storage.lte.${max}`);
+        totalConds.push(`items_number_total.lte.${max}`);
+      }
+      const group1 =
+        currentConds.length > 0 ? `and(${currentConds.join(",")})` : "";
+      const group2Parts = [
+        "items_number_currently_in_storage.is.null",
+        ...totalConds,
+      ];
+      const group2 = `and(${group2Parts.join(",")})`;
+      const orExpr = group1 ? `${group1},${group2}` : group2;
+      query.or(orExpr);
+    }
 
     const result = await query;
     const { error, count } = result;

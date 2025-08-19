@@ -93,17 +93,6 @@ const ItemsList: React.FC = () => {
     orgsKey,
   ]);
 
-  // Apply availability filter to items (client‑side filtering for availability range)
-  const filteredItems = items.filter((item) => {
-    // Prefer the new column; fall back to total if not present
-    const availableQuantity =
-      item.items_number_currently_in_storage ?? item.items_number_total ?? 0;
-
-    return (
-      availableQuantity >= filters.itemsNumberAvailable[0] &&
-      availableQuantity <= filters.itemsNumberAvailable[1]
-    );
-  });
   // Loading state
   if (loading) {
     return (
@@ -141,14 +130,12 @@ const ItemsList: React.FC = () => {
       {/* Global Timeframe Selector */}
       <TimeframeSelector />
 
-      {/* Render the list of filtered items */}
+      {/* Render the list of items */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 mb-4">
-        {filteredItems.length === 0 ? (
+        {items.length === 0 ? (
           <p>{t.itemsList.noItemsFound[lang]}</p> // Message when no items exist
         ) : (
-          filteredItems.map((item) => (
-            <ItemCard key={item.id} item={item as Item} />
-          ))
+          items.map((item) => <ItemCard key={item.id} item={item as Item} />)
         )}
       </div>
       {/* Pagination controls */}
