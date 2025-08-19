@@ -166,12 +166,6 @@ export class UserController {
   ) {
     if (!file) throw new BadRequestException("No file provided");
 
-    console.log("Received file:", {
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size,
-    });
-
     const userId = req.user?.id;
     if (!userId)
       throw new BadRequestException("User ID not found in request context");
