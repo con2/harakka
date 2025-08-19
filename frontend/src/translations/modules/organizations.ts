@@ -1,3 +1,5 @@
+import { common } from "../modules/common";
+
 export const organizations = {
   title: {
     fi: "Hallinnoi organisaatioita",
@@ -7,20 +9,14 @@ export const organizations = {
     fi: "Luo organisaatio",
     en: "Create Organization",
   },
-  filters: {
-    search: {
-      fi: "Hae organisaation nimeä",
-      en: "Search organization name",
-    },
-  },
   columns: {
     logo: {
       fi: "Logo",
       en: "Logo",
     },
     name: {
-      fi: "Nimi",
-      en: "Name",
+      fi: common.personalData.name.fi,
+      en: common.personalData.name.en,
     },
     slug: {
       fi: "Slug",
@@ -31,8 +27,8 @@ export const organizations = {
       en: "Description",
     },
     isActive: {
-      fi: "Aktiivinen",
-      en: "Active",
+      fi: common.active.fi,
+      en: common.active.en,
     },
     createdAt: {
       fi: "Luotu",
@@ -42,24 +38,24 @@ export const organizations = {
   values: {
     isActive: {
       yes: {
-        fi: "Kyllä",
-        en: "Yes",
+        fi: common.yes.fi,
+        en: common.yes.en,
       },
       no: {
-        fi: "Ei",
-        en: "No",
+        fi: common.no.fi,
+        en: common.no.en,
       },
     },
   },
   modal: {
     title: {
-      fi: "Organisaatio",
-      en: "Organization",
+      fi: common.organizations.organization.fi,
+      en: common.organizations.organization.en,
     },
     labels: {
       name: {
-        fi: "Nimi",
-        en: "Name",
+        fi: common.personalData.name.fi,
+        en: common.personalData.name.en,
       },
       slug: {
         fi: "Slug",
@@ -70,8 +66,8 @@ export const organizations = {
         en: "Description",
       },
       active: {
-        fi: "Aktiivinen",
-        en: "Active",
+        fi: common.active.fi,
+        en: common.active.en,
       },
       createdBy: {
         fi: "Luonut",
@@ -102,16 +98,16 @@ export const organizations = {
     },
     buttons: {
       cancel: {
-        fi: "Peruuta",
-        en: "Cancel",
+        fi: common.cancel.fi,
+        en: common.cancel.en,
       },
       save: {
-        fi: "Tallenna",
-        en: "Save",
+        fi: common.save.fi,
+        en: common.save.en,
       },
       close: {
-        fi: "Sulje",
-        en: "Close",
+        fi: common.close.fi,
+        en: common.close.en,
       },
     },
   },
@@ -135,20 +131,6 @@ export const organizations = {
       en: "Failed to create organization.",
     },
   },
-  messages: {
-    created: {
-      fi: "Organisaatio luotu!",
-      en: "Organization created!",
-    },
-    updated: {
-      fi: "Organisaatio päivitetty!",
-      en: "Organization updated!",
-    },
-    failed: {
-      fi: "Organisaation luominen epäonnistui.",
-      en: "Failed to create organization.",
-    },
-  },
   view: {
     fi: "Näytä",
     en: "View",
@@ -156,14 +138,6 @@ export const organizations = {
   edit: {
     fi: "Muokkaa",
     en: "Edit",
-  },
-  error: {
-    fi: "Virhe: ",
-    en: "Error: ",
-  },
-  myRoles: {
-    fi: "Omat roolit",
-    en: "My roles",
   },
 };
 
@@ -184,12 +158,12 @@ export const organizationDelete = {
       fi: "Tämä poistaa organisaation pysyvästi.",
     },
     confirmText: {
-      en: "Delete",
-      fi: "Poista",
+      en: common.delete.en,
+      fi: common.delete.fi,
     },
     cancelText: {
-      en: "Cancel",
-      fi: "Peruuta",
+      en: common.cancel.en,
+      fi: common.cancel.fi,
     },
   },
   toast: {

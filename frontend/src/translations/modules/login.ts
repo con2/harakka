@@ -15,10 +15,6 @@ export const login = {
     fi: "Kirjaudu sisään",
     en: "Login",
   },
-  logout: {
-    fi: "Kirjaudu ulos",
-    en: "Logout",
-  },
   welcome: {
     en: "Welcome Back",
     fi: "Tervetuloa takaisin",

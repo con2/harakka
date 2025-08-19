@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const bookingList = {
   title: {
     fi: "Hallinnoi tilauksia",
@@ -24,10 +26,6 @@ export const bookingList = {
       cancelled: {
         fi: "Peruutettu",
         en: "Cancelled",
-      },
-      cancelledByUser: {
-        fi: "Käyttäjän peruuttama",
-        en: "Cancelled by user",
       },
       cancelledByAdmin: {
         fi: "Ylläpitäjän peruuttama",
@@ -61,20 +59,12 @@ export const bookingList = {
       en: "Customer",
     },
     status: {
-      fi: "Tila",
-      en: "Status",
+      fi: common.status.fi,
+      en: common.status.en,
     },
     bookingDate: {
       fi: "Tilauspäivä",
       en: "Booking Date",
-    },
-    dateRange: {
-      fi: "Aika",
-      en: "Booking Time",
-    },
-    actions: {
-      fi: "Toiminnot",
-      en: "Actions",
     },
   },
   buttons: {
@@ -108,42 +98,6 @@ export const bookingList = {
       fi: "Tuntematon",
       en: "Unknown",
     },
-    pending: {
-      fi: "Käsittelyssä",
-      en: "Pending",
-    },
-    confirmed: {
-      fi: "Vahvistettu",
-      en: "Confirmed",
-    },
-    cancelled: {
-      fi: "Peruutettu",
-      en: "Cancelled",
-    },
-    cancelledByUser: {
-      fi: "Käyttäjän peruuttama",
-      en: "Cancelled by user",
-    },
-    cancelledByAdmin: {
-      fi: "Ylläpitäjän peruuttama",
-      en: "Cancelled by admin",
-    },
-    rejected: {
-      fi: "Hylätty",
-      en: "Rejected",
-    },
-    completed: {
-      fi: "Valmis",
-      en: "Completed",
-    },
-    na: {
-      fi: "Ei saatavilla",
-      en: "N/A",
-    },
-    pickedUp: {
-      fi: "Noudettu",
-      en: "Picked Up",
-    },
   },
   modal: {
     customer: {
@@ -155,8 +109,8 @@ export const bookingList = {
       en: "Booking Information",
     },
     status: {
-      fi: "Tila:",
-      en: "Status:",
+      fi: common.status.fi,
+      en: common.status.en,
     },
     date: {
       fi: "Päivämäärä:",
@@ -184,8 +138,8 @@ export const bookingList = {
     },
     buttons: {
       confirm: {
-        fi: "Vahvistaa",
-        en: "Confirm",
+        fi: common.confirm.fi,
+        en: common.confirm.en,
       },
       reject: {
         fi: "Hylkää",

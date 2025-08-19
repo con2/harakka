@@ -187,7 +187,7 @@ const AdminItemsTable = () => {
       header: t.adminItemsTable.columns.name[lang],
       size: 120,
       id: `item_name`,
-      accessorFn: (row) => row.translations[lang].item_type,
+      accessorFn: (row) => row.translations[lang].item_name || "",
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
         const name = row.original.translations[lang].item_name || "";
@@ -198,7 +198,7 @@ const AdminItemsTable = () => {
       header: t.adminItemsTable.columns.type[lang],
       size: 120,
       id: `item_type`,
-      accessorFn: (row) => row.translations[lang].item_type,
+      accessorFn: (row) => row.translations[lang].item_type || "",
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
         const type = row.original.translations[lang].item_type || "";
@@ -209,7 +209,7 @@ const AdminItemsTable = () => {
       header: t.adminItemsTable.columns.location[lang],
       size: 70,
       id: "location_name",
-      accessorFn: (row) => row.location_name || "N/A", // For sorting
+      accessorFn: (row) => row.location_name || "N/A",
       cell: ({ row }) => (
         <div className="flex items-center gap-1 text-sm">
           {row.original.location_name || "N/A"}
@@ -217,7 +217,7 @@ const AdminItemsTable = () => {
       ),
     },
     {
-      header: t.adminItemsTable.columns.quantity[lang], // TODO: add corr. header items total
+      header: t.adminItemsTable.columns.quantity[lang],
       size: 30,
       id: "items_number_total",
       accessorFn: (row) => row.items_number_total,

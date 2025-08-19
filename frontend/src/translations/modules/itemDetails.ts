@@ -1,17 +1,5 @@
 export const itemDetails = {
   buttons: {
-    save: {
-      fi: "Tallenna",
-      en: "Save",
-    },
-    cancel: {
-      fi: "Peruuta",
-      en: "Cancel",
-    },
-    delete: {
-      fi: "Poista",
-      en: "Delete",
-    },
     back: {
       fi: "Takaisin",
       en: "Back",
@@ -28,10 +16,6 @@ export const itemDetails = {
     },
   },
   locations: {
-    locationInfo: {
-      fi: "Sijaintitiedot",
-      en: "Location Information",
-    },
     location: {
       fi: "Sijainti",
       en: "Location",

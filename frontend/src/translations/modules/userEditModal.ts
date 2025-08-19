@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const userEditModal = {
   title: {
     fi: "Muokkaa käyttäjää",
@@ -9,76 +11,42 @@ export const userEditModal = {
   },
   labels: {
     fullName: {
-      fi: "Koko nimi",
-      en: "Full Name",
+      fi: common.personalData.name.fi,
+      en: common.personalData.name.en,
     },
     email: {
-      fi: "Sähköposti",
-      en: "Email",
+      fi: common.personalData.email.fi,
+      en: common.personalData.email.en,
     },
     phone: {
-      fi: "Puhelinnumero",
-      en: "Phone Number",
-    },
-    role: {
-      fi: "Rooli",
-      en: "Role",
+      fi: common.personalData.phone.fi,
+      en: common.personalData.phone.en,
     },
     roles: {
       fi: "Roolit",
       en: "Roles",
     },
     visibleName: {
-      fi: "Näkyvä nimi",
-      en: "Visible Name",
-    },
-    preferences: {
-      fi: "Asetukset",
-      en: "Preferences",
-    },
-    savedLists: {
-      fi: "Tallennetut listat",
-      en: "Saved Lists",
-    },
-  },
-  columns: {
-    organization: {
-      fi: "Organisaatio",
-      en: "Organization",
-    },
-    role: {
-      fi: "Rooli",
-      en: "Role",
-    },
-    active: {
-      fi: "Aktiivinen",
-      en: "Active",
-    },
-    actions: {
-      fi: "Toiminnot",
-      en: "Actions",
+      fi: common.personalData.visibleName.fi,
+      en: common.personalData.visibleName.en,
     },
   },
   placeholders: {
     fullName: {
-      fi: "Koko nimi",
-      en: "Full Name",
+      fi: common.personalData.name.fi,
+      en: common.personalData.name.en,
     },
     email: {
-      fi: "Sähköposti",
-      en: "Email",
+      fi: common.personalData.email.fi,
+      en: common.personalData.email.en,
     },
     phone: {
-      fi: "Puhelinnumero",
-      en: "Phone Number",
+      fi: common.personalData.phone.fi,
+      en: common.personalData.phone.en,
     },
     visibleName: {
-      fi: "Näkyvä nimi",
-      en: "Visible Name",
-    },
-    preference: {
-      fi: "Syötä uusi asetus",
-      en: "Enter a new preference",
+      fi: common.personalData.visibleName.fi,
+      en: common.personalData.visibleName.en,
     },
     selectRole: {
       fi: "Valitse rooli",
@@ -89,58 +57,18 @@ export const userEditModal = {
       en: "Select Organization",
     },
   },
-  roles: {
-    admin: {
-      fi: "Ylläpitäjä",
-      en: "Admin",
-    },
-    user: {
-      fi: "Käyttäjä",
-      en: "User",
-    },
-    superVera: {
-      fi: "Super Vera",
-      en: "Super Vera",
-    },
-    storageManager: {
-      fi: "Varastonhoitaja",
-      en: "Storage Manager",
-    },
-    mainAdmin: {
-      fi: "Pääkäyttäjä",
-      en: "Main Admin",
-    },
-    superAdmin: {
-      fi: "Pääylläpitäjä",
-      en: "Super Admin",
-    },
-    requester: {
-      fi: "Tilaaja",
-      en: "Requester",
-    },
-  },
   buttons: {
     save: {
       fi: "Tallenna muutokset",
       en: "Save Changes",
     },
     remove: {
-      fi: "Poista",
-      en: "Remove",
-    },
-    addPreference: {
-      fi: "Lisää asetus",
-      en: "Add Preference",
+      fi: common.remove.fi,
+      en: common.remove.en,
     },
     addRole: {
       fi: "Lisää rooli",
       en: "Add Role",
-    },
-  },
-  tooltips: {
-    cannotChangeOrg: {
-      fi: "Organisaatiota ei voi muuttaa olemassa olevalle roolikytkökselle",
-      en: "Cannot change organization on existing assignment",
     },
   },
   status: {
@@ -157,6 +85,24 @@ export const userEditModal = {
     error: {
       fi: "Käyttäjän päivitys epäonnistui. Yritä uudelleen.",
       en: "Failed to update user. Please try again.",
+    },
+  },
+  columns: {
+    organization: {
+      fi: common.organizations.organization.fi,
+      en: common.organizations.organization.en,
+    },
+    role: {
+      fi: common.roles.role.fi,
+      en: common.roles.role.en,
+    },
+    actions: {
+      fi: common.actions.fi,
+      en: common.actions.en,
+    },
+    active: {
+      fi: common.active.fi,
+      en: common.active.en,
     },
   },
 };

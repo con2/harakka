@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const tagAssignForm = {
   title: {
     fi: "Määritä tagit tuotteelle",
@@ -5,8 +7,8 @@ export const tagAssignForm = {
   },
   buttons: {
     save: {
-      fi: "Tallenna",
-      en: "Save",
+      fi: common.save.fi,
+      en: common.save.en,
     },
     saving: {
       fi: "Tallennetaan...",
