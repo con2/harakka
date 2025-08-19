@@ -69,10 +69,10 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     actions: t.userEditModal.columns?.actions?.[lang] ?? "Actions",
   };
   const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
+  const lastRoleEntry = roleAssignments[roleAssignments.length - 1];
   const isAssigningRole =
     roleAssignments.length > 0 &&
-    (!roleAssignments[roleAssignments.length - 1]?.role_name ||
-      !roleAssignments[roleAssignments.length - 1]?.org_id);
+    (!lastRoleEntry?.role_name || !lastRoleEntry?.org_id);
 
   // Can Manage Roles:
   // Any "Super" role or tenant_admin of current org
@@ -396,7 +396,8 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                             disabled={
                               (!isSuper && ra.org_id !== activeOrgId) ||
                               (ra.org_name === "Global" &&
-                                Boolean(ra.role_name))
+                                Boolean(ra.role_name)) ||
+                              (isAssigningRole && !lastRoleEntry.org_id)
                             }
                             defaultValue={ra.role_name ?? ""}
                           >
