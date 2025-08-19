@@ -121,6 +121,11 @@ const ItemsList: React.FC = () => {
             placeholder={t.itemsList.searchPlaceholder[lang]}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape" && searchQuery) {
+                setSearchQuery("");
+              }
+            }}
             className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
           />
           {searchQuery && (
