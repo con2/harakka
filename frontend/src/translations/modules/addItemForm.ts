@@ -4,10 +4,6 @@ export const addItemForm = {
       en: "Search tags",
       fi: "Hae tunnisteita",
     },
-    selectLocation: {
-      en: "Select a location",
-      fi: "Valitse sijainti",
-    },
   },
   labels: {
     itemNameFi: {
@@ -37,10 +33,6 @@ export const addItemForm = {
     location: {
       fi: "Sijainti",
       en: "Location",
-    },
-    price: {
-      fi: "Hinta",
-      en: "Price",
     },
     active: {
       fi: "Aktiivinen",
@@ -128,10 +120,6 @@ export const addItemForm = {
       items_number_total: {
         en: "Quantity is required",
         fi: "Määrä on pakollinen",
-      },
-      price: {
-        en: "Price is required",
-        fi: "Hinta on pakollinen",
       },
     },
     error: {

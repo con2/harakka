@@ -35,14 +35,6 @@ export const adminItemsTable = {
         fi: "Ei tageja saatavilla",
         en: "No tags found",
       },
-      loading: {
-        fi: "Ladataan tageja...",
-        en: "Loading tags...",
-      },
-      error: {
-        fi: "Virhe ladattaessa tageja",
-        en: "Error loading tags",
-      },
       unnamed: { fi: "Nimetön", en: "Unnamed" },
     },
     clear: {
@@ -69,10 +61,6 @@ export const adminItemsTable = {
       fi: "Sijainti",
       en: "Location",
     },
-    price: {
-      fi: "Hinta",
-      en: "Price",
-    },
     quantity: {
       fi: "Määrä",
       en: "Quantity",
@@ -80,10 +68,6 @@ export const adminItemsTable = {
     active: {
       fi: "Aktiivinen",
       en: "Active",
-    },
-    actions: {
-      fi: "Toiminnot",
-      en: "Actions",
     },
   },
   tooltips: {

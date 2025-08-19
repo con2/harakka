@@ -36,8 +36,8 @@ export const userGuide = {
         ],
       },
       filters: {
-        fi: ["Hinta", "Arvosana", "Tagit"],
-        en: ["Price", "Rating", "Tags"],
+        fi: ["Arvosana", "Tagit"],
+        en: ["Rating", "Tags"],
       },
       search: {
         fi: ["Nimi", "Kategoria", "Tagit", "Kuvaus"],
@@ -56,14 +56,12 @@ export const userGuide = {
       content: {
         fi: [
           "Selaa varastovaihtoehtojamme, valitse tuotteet ja lisää ne ostoskoriisi.",
-          "<strong>Maksuprosessi:</strong> Kassalle siirtymisen jälkeen saat laskun PDF-muodossa.",
           "<strong>Varausvahvistus:</strong> Vahvistus sisältyy laskuun.",
           "<strong>Tuotteiden nouto:</strong> Tiimimme opastaa sinua noutomenettelyissä.",
           "<strong>Tuki:</strong> Kysymyksiin löydät apua 'Ohje'-osiosta.",
         ],
         en: [
           "Browse our storage options, select the items, and add them to your cart.",
-          "<strong>Payment Process:</strong> After checkout, you will receive an invoice in PDF format.",
           "<strong>Booking Confirmation:</strong> Your confirmation will be included in the invoice.",
           "<strong>Item Pick-Up:</strong> Our team will guide you on collection procedures.",
           "<strong>Support:</strong> For questions, visit the 'Help' section.",
@@ -120,8 +118,8 @@ export const userGuide = {
         en: "<strong>Items:</strong> Add, edit, hide, or remove items.",
       },
       details: {
-        fi: "Sisällytä tiedot kuten nimi (EN/FI), sijainti, hinta, määrä, saatavuus ja tagit.",
-        en: "Include details such as name (EN/FIN), location, price, quantity, availability, and tags.",
+        fi: "Sisällytä tiedot kuten nimi (EN/FI), sijainti, määrä, saatavuus ja tagit.",
+        en: "Include details such as name (EN/FIN), location, quantity, availability, and tags.",
       },
       tags: {
         fi: "<strong>Tagit:</strong> Luo/muokkaa/poista tageja sekä englanniksi että suomeksi.",

@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const myProfile = {
   tabs: {
     userDetails: {
@@ -22,20 +24,20 @@ export const myProfile = {
     },
     email: {
       label: {
-        fi: "Sähköposti",
-        en: "Email",
+        fi: common.personalData.email.fi,
+        en: common.personalData.email.en,
       },
     },
     phone: {
       label: {
-        fi: "Puhelin",
-        en: "Phone",
+        fi: common.personalData.phone.fi,
+        en: common.personalData.phone.en,
       },
     },
     visibleName: {
       label: {
-        fi: "Näkyvä nimi",
-        en: "Visible Name",
+        fi: common.personalData.visibleName.fi,
+        en: common.personalData.visibleName.en,
       },
     },
   },
@@ -54,42 +56,42 @@ export const myProfile = {
     },
     streetAddress: {
       label: {
-        fi: "Katuosoite",
-        en: "Street Address",
+        fi: common.personalData.street.fi,
+        en: common.personalData.street.en,
       },
       placeholder: {
-        fi: "Katuosoite",
-        en: "Street Address",
+        fi: common.personalData.street.fi,
+        en: common.personalData.street.en,
       },
     },
     city: {
       label: {
-        fi: "Kaupunki",
-        en: "City",
+        fi: common.personalData.city.fi,
+        en: common.personalData.city.en,
       },
       placeholder: {
-        fi: "Kaupunki",
-        en: "City",
+        fi: common.personalData.city.fi,
+        en: common.personalData.city.en,
       },
     },
     postalCode: {
       label: {
-        fi: "Postinumero",
-        en: "Postal Code",
+        fi: common.personalData.postalCode.fi,
+        en: common.personalData.postalCode.en,
       },
       placeholder: {
-        fi: "Postinumero",
-        en: "Postal Code",
+        fi: common.personalData.postalCode.fi,
+        en: common.personalData.postalCode.en,
       },
     },
     country: {
       label: {
-        fi: "Maa",
-        en: "Country",
+        fi: common.personalData.country.fi,
+        en: common.personalData.country.en,
       },
       placeholder: {
-        fi: "Maa",
-        en: "Country",
+        fi: common.personalData.country.fi,
+        en: common.personalData.country.en,
       },
     },
     type: {
@@ -113,8 +115,8 @@ export const myProfile = {
       },
     },
     remove: {
-      fi: "Poista",
-      en: "Remove",
+      fi: common.remove.fi,
+      en: common.remove.en,
     },
   },
   newAddress: {
@@ -131,8 +133,8 @@ export const myProfile = {
       en: "Save Address",
     },
     cancel: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
   },
   buttons: {
@@ -199,12 +201,12 @@ export const myProfile = {
       en: "This action will permanently delete your account. This action is irreversible.",
     },
     confirmText: {
-      fi: "Poista",
-      en: "Delete",
+      fi: common.delete.fi,
+      en: common.delete.en,
     },
     cancelText: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
     success: {
       fi: "Tilisi on poistettu onnistuneesti.",

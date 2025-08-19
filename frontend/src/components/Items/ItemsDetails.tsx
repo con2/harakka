@@ -450,39 +450,6 @@ const ItemsDetails: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* Tabs and Tab Contents */}
-      {/* <div className="mt-10 w-full"> */}
-      {/* <div className="flex gap-4">
-        <Button
-          onClick={() => setSelectedTab("description")}
-          className={`${
-            selectedTab === "description"
-              ? "bg-secondary text-white"
-              : "bg-transparent text-secondary"
-          } hover:bg-secondary hover:text-white`}
-        >
-          Description
-        </Button>
-        <Button
-          onClick={() => setSelectedTab("reviews")}
-          className={`${
-            selectedTab === "reviews"
-              ? "bg-secondary text-white"
-              : "bg-transparent text-secondary"
-          } hover:bg-secondary hover:text-white`}
-        >
-          Reviews
-        </Button>
-      </div> */}
-
-      {/* Tab Content */}
-      {/* <div className="mt-4 bg-slate-50 p-4 rounded-lg">
-        {selectedTab === "description" && (
-          <p>{item.translations.fi.item_description}</p>
-        )}
-        {selectedTab === "reviews" && <p>Reviews will be displayed here</p>}
-      </div> */}
     </div>
     // </div>
   );
