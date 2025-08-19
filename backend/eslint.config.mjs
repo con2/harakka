@@ -54,6 +54,8 @@ export default tseslint.config(
         "warn",
         {
           ignoreRestSiblings: true,
+          argsIgnorePattern: "^_",// added so we can have unused args and variables
+          varsIgnorePattern: "^_",
         },
       ],
       "prettier/prettier": [
