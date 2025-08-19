@@ -51,15 +51,6 @@ const Organizations = () => {
     void dispatch(fetchAllOrganizations({ page: currentPage, limit }));
   }, [dispatch, currentPage]);
 
-  useEffect(() => {
-    console.log(
-      "totalPages:",
-      totalPages,
-      "organizations:",
-      organizations.length,
-    );
-  }, [totalPages, organizations]);
-
   // Open modal in "view" mode
   const openDetailsModal = async (org: OrganizationDetails) => {
     // Optional: fetch fresh data for this org

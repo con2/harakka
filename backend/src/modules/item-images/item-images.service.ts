@@ -11,6 +11,7 @@ import {
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { Eq } from "@src/types/queryconstructor.types";
 import { queryConstructor } from "@src/utils/queryconstructor.utils";
+import { validateImageFile } from "@src/utils/validateImage.util";
 
 @Injectable()
 export class ItemImagesService {
@@ -41,6 +42,14 @@ export class ItemImagesService {
       contentType: contentType,
     });
 
+    // 0. Validate the image file
+    validateImageFile({
+      buffer: file.buffer,
+      filename: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    });
+
     // 1. Upload to supabase storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(`item-images`)
@@ -48,10 +57,8 @@ export class ItemImagesService {
         contentType: "image/jpeg",
       });
 
-    if (uploadError || !uploadData) {
-      const message =
-        uploadError instanceof Error ? uploadError.message : "Upload failed";
-      throw new Error(message);
+    if (uploadError) {
+      handleSupabaseError(uploadError);
     }
 
     const imageUrl = `https://${process.env.SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/item-images/${uploadData.path}`;
@@ -76,7 +83,7 @@ export class ItemImagesService {
         await supabase.storage
           .from("item-images")
           .remove([uploadData.fullPath]);
-        throw new Error(`Database record creation failed: ${dbError.message}`);
+        handleSupabaseError(dbError);
       }
 
       return imageRecord;
@@ -114,7 +121,15 @@ export class ItemImagesService {
 
     try {
       for (let i = 0; i < files.length; i++) {
-        const fileExt = files[i].originalname.split(".").pop();
+        const file = files[i];
+        const filename = file.filename || file.originalname || "cropped.jpg";
+        validateImageFile({
+          buffer: file.buffer,
+          filename,
+          mimetype: file.mimetype,
+          size: file.size,
+        });
+        const fileExt = file.originalname.split(".").pop()?.toLowerCase();
         const fileName = path ? `${path}.${fileExt}` : `${uuidv4()}.${fileExt}`;
         const { data, error } = await supabase.storage
           .from(bucket)
@@ -123,8 +138,8 @@ export class ItemImagesService {
             contentType: "image/jpeg",
           });
         if (error) {
-          console.log(error);
-          throw new Error(`Failed to upload image: ${files[i].originalname}`);
+          error.message = `Failed to upload image: ${files[i].originalname}`;
+          handleSupabaseError(error);
         }
         if (data?.fullPath) {
           const full_url = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.fullPath}`;
@@ -134,8 +149,7 @@ export class ItemImagesService {
         }
       }
     } catch (error) {
-      console.error(error);
-      throw error;
+      handleSupabaseError(error);
     }
     return result;
   }
@@ -144,7 +158,7 @@ export class ItemImagesService {
     const supabase = req.supabase;
     try {
       const { error } = await supabase.storage.from(bucket).remove(paths);
-      if (error) throw new Error("Failed to remove files.");
+      if (error) handleSupabaseError(error);
       return { success: true };
     } catch (error) {
       console.error(error);
@@ -197,7 +211,7 @@ export class ItemImagesService {
     const { error: removeErr } = await supabase.storage
       .from("item-images")
       .remove([image.storage_path]);
-    if (removeErr) throw new Error("Could not remove from storage");
+    if (removeErr) handleSupabaseError(removeErr);
 
     // 3. Delete database record
     const { error: deleteError } = await supabase
@@ -210,23 +224,6 @@ export class ItemImagesService {
     }
 
     return { success: true };
-  }
-
-  /**
-   * Helper to extract path from URL if storage_path not available
-   */
-  private extractPathFromUrl(url: string): string {
-    // Extract the path after the bucket name
-    const urlObj = new URL(url);
-    const pathParts = urlObj.pathname.split("/");
-
-    // Find the bucket name index and take everything after it
-    const bucketIndex = pathParts.findIndex((part) => part === "item-images");
-    if (bucketIndex === -1) {
-      throw new Error("Could not extract path from URL");
-    }
-
-    return pathParts.slice(bucketIndex + 1).join("/");
   }
 
   constructUrl(path: string) {
@@ -246,7 +243,7 @@ export class ItemImagesService {
     );
 
     const { data, error } = await query;
-    if (error) throw new Error("Failed to retrieve item image data");
+    if (error) handleSupabaseError(error);
     return data as ItemImageRow[];
   }
 
@@ -275,7 +272,7 @@ export class ItemImagesService {
         .from("item-images")
         .copy(img.storage_path, newPath);
 
-      if (copyErr) throw new Error(`Failed to copy image: ${copyErr.message}`);
+      if (copyErr) handleSupabaseError(copyErr);
 
       const { id, created_at, updated_at, ...rest } = img;
       updatedImages.push({
