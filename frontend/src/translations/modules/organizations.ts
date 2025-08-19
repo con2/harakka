@@ -153,6 +153,10 @@ export const organizations = {
     fi: "Näytä",
     en: "View",
   },
+  edit: {
+    fi: "Muokkaa",
+    en: "Edit",
+  },
   error: {
     fi: "Virhe: ",
     en: "Error: ",
