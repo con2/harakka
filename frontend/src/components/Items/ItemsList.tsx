@@ -11,7 +11,7 @@ import ItemCard from "./ItemCard";
 import { Input } from "../ui/input";
 import { useOutletContext } from "react-router-dom";
 import TimeframeSelector from "../TimeframeSelector";
-import { LoaderCircle, Search } from "lucide-react";
+import { LoaderCircle, Search, X } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { FiltersState, Item } from "@/types";
@@ -121,8 +121,17 @@ const ItemsList: React.FC = () => {
             placeholder={t.itemsList.searchPlaceholder[lang]}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
+            className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
