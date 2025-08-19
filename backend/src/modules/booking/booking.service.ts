@@ -27,7 +27,6 @@ import { Translations } from "./types/translations.types";
 import {
   CancelBookingResponse,
   BookingItemRow,
-  BookingWithItems,
   StorageItemsRow,
   BookingRow,
   ValidBookingOrder,
@@ -322,7 +321,24 @@ export class BookingService {
       triggeredBy: userId,
     });
 
-    return warningMessage ? { booking, warning: warningMessage } : booking;
+    // 3.7 Fetch the complete booking with items and translations using the view
+    const { data: createdBooking, error: fetchError } = await supabase
+      .from("view_bookings_with_details")
+      .select("*")
+      .eq("id", booking.id)
+      .single();
+
+    if (fetchError || !createdBooking) {
+      throw new BadRequestException("Could not fetch created booking details");
+    }
+
+    return warningMessage
+      ? {
+          message: "Booking created",
+          booking: createdBooking,
+          warning: warningMessage,
+        }
+      : { message: "Booking created", booking: createdBooking };
   }
 
   // 4. confirm a Booking
@@ -569,21 +585,10 @@ export class BookingService {
     });
 
     const { data: updatedBooking, error: bookingError } = await supabase
-      .from("bookings")
-      .select(
-        `
-    *,
-    booking_items (
-      *,
-      storage_items (
-        translations
-      )
-    )
-  `,
-      )
+      .from("view_bookings_with_details")
+      .select("*")
       .eq("id", booking_id)
-      .single()
-      .overrideTypes<BookingWithItems>();
+      .single();
 
     if (bookingError || !updatedBooking) {
       throw new BadRequestException("Could not fetch updated booking details");

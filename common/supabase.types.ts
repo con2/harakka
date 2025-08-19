@@ -154,6 +154,13 @@ export type Database = {
             foreignKeyName: "order_items_order_id_fkey"
             columns: ["booking_id"]
             isOneToOne: false
+            referencedRelation: "view_bookings_with_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
             referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["id"]
           },
@@ -1179,6 +1186,19 @@ export type Database = {
       }
     }
     Views: {
+      view_bookings_with_details: {
+        Row: {
+          booking_items: Json | null
+          booking_number: string | null
+          created_at: string | null
+          id: string | null
+          notes: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       view_bookings_with_user_info: {
         Row: {
           booking_number: string | null
