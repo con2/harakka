@@ -69,7 +69,7 @@ const UserBanModal = ({
 
   // Permission checks for different ban types
   const isSuper = hasAnyRole(["super_admin", "superVera"]);
-  const isMainAdmin = hasRole("tenant_admin");
+  const isTenantAdmin = hasRole("tenant_admin");
 
   // Get ban permissions for this specific user
   const { canBanFromApp, canBanFromOrg, canBanFromRole } = getBanPermissions(
@@ -175,7 +175,7 @@ const UserBanModal = ({
     }
 
     // Additional validation for tenant_admin: they can only ban "admin" or "user" roles
-    if (banType === "role" && isMainAdmin && !isSuper) {
+    if (banType === "role" && isTenantAdmin && !isSuper) {
       const selectedRole = getTargetUserRolesForOrg(organizationId).find(
         (role) => role.id === roleAssignmentId,
       );
@@ -191,7 +191,7 @@ const UserBanModal = ({
     // Organization validation for tenant_admin: they can only ban from their active org
     if (
       (banType === "organization" || banType === "role") &&
-      isMainAdmin &&
+      isTenantAdmin &&
       !isSuper
     ) {
       if (activeOrgId && organizationId !== activeOrgId) {

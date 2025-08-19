@@ -39,6 +39,6 @@ export const isSuperAdminRole = (roleName: string): boolean => {
 /**
  * Check if a role is a main admin role
  */
-export const isMainAdminRole = (roleName: string): boolean => {
+export const isTenantAdminRole = (roleName: string): boolean => {
   return roleName === "tenant_admin";
 };
