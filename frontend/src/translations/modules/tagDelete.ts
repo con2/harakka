@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const tagDelete = {
   messages: {
     invalidId: {
@@ -19,12 +21,12 @@ export const tagDelete = {
       en: "This will permanently delete the tag and remove it from all associated items. Are you sure?",
     },
     confirmText: {
-      fi: "Vahvista",
-      en: "Confirm",
+      fi: common.confirm.fi,
+      en: common.confirm.en,
     },
     cancelText: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
   },
   toast: {

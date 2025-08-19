@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AllowedMimeType, FILE_CONSTRAINTS } from "@/types/storage";
 
 export const getCroppedImg = async (
   imageSrc: string,
@@ -53,7 +54,6 @@ export const getCroppedImg = async (
   if (!outputCtx) throw new Error("Failed to get canvas context");
 
   outputCtx.putImageData(data, 0, 0);
-  console.log("utils: Cropped image size:", data);
 
   return new Promise((resolve, reject) => {
     outputCanvas.toBlob((blob) => {
@@ -86,20 +86,16 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
       );
   });
 
-// image validation
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
 export function validateImage(
-  maxSize = MAX_FILE_SIZE,
-  acceptedTypes = ACCEPTED_IMAGE_TYPES,
+  maxSize = FILE_CONSTRAINTS.MAX_FILE_SIZE,
+  acceptedTypes = FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
 ) {
   return z
     .instanceof(File)
     .refine((file) => file.size <= maxSize, {
       message: `File size must be less than ${Math.round(maxSize / (1024 * 1024))}MB`,
     })
-    .refine((file) => acceptedTypes.includes(file.type), {
+    .refine((file) => acceptedTypes.includes(file.type as AllowedMimeType), {
       message: `Only ${acceptedTypes.map((type) => "." + type.split("/")[1]).join(", ")} formats are supported`,
     });
 }

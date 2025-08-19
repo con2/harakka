@@ -1,4 +1,4 @@
-export const notifications = {
+export const notification = {
   "booking.status_approved": {
     title: { en: "Booking confirmed", fi: "Varaus vahvistettu" },
     message: {

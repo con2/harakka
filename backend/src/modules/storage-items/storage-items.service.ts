@@ -14,6 +14,7 @@ import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
+import { applyItemFilters } from "@src/utils/storage-items.utils";
 import { ApiResponse, ApiSingleResponse } from "@common/response.types"; // Import ApiSingleResponse for type safety
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagService } from "../tag/tag.service";
@@ -373,7 +374,7 @@ export class StorageItemsService {
     order_by?: ValidItemOrder,
     searchquery?: string,
     tags?: string,
-    activity_filter?: "active" | "inactive",
+    isActive?: boolean,
     location_filter?: string,
     category?: string,
     availability_min?: number,
@@ -383,58 +384,67 @@ export class StorageItemsService {
     org_filter?: string,
   ) {
     const supabase = this.supabaseClient.getAnonClient();
-    // If org filter provided, get the set of item IDs linked to those orgs
-    const { from, to } = getPaginationRange(page, limit);
+    // Build a base query without range for counting and apply all filters
+    const base = applyItemFilters(
+      supabase
+        .from("view_manage_storage_items")
+        .select("*", { count: "exact", head: true })
+        .eq("is_deleted", false),
+      {
+        searchquery,
+        isActive,
+        tags,
+        location_filter,
+        category,
+        from_date,
+        to_date,
+        availability_min,
+        availability_max,
+        org_filter,
+      },
+    );
+    const countResult = await base;
+    if (countResult.error) {
+      console.log(countResult.error);
+      throw new Error("Failed to get matching items");
+    }
+    const total = countResult.count ?? 0;
+    const meta = getPaginationMeta(total, page, limit);
 
-    const query = supabase
+    // If requested page is out of range, return empty response instead of querying with invalid range
+    if (meta.total === 0 || page > meta.totalPages) {
+      return {
+        data: [],
+        error: null,
+        status: 200,
+        statusText: "OK",
+        count: total,
+        metadata: meta,
+      };
+    }
+
+    // Now fetch the actual page data with range
+    const { from, to } = getPaginationRange(page, limit);
+    let query = supabase
       .from("view_manage_storage_items")
       .select("*", { count: "exact" })
       .eq("is_deleted", false)
       .range(from, to);
 
-    if (order_by)
-      query.order(order_by ?? "created_at", {
-        ascending: ascending,
-      });
+    query = applyItemFilters(query, {
+      searchquery,
+      isActive,
+      tags,
+      location_filter,
+      category,
+      from_date,
+      to_date,
+      availability_min,
+      availability_max,
+      org_filter,
+    });
 
-    if (searchquery) {
-      query.or(
-        `fi_item_name.ilike.%${searchquery}%,` +
-          `fi_item_type.ilike.%${searchquery}%,` +
-          `en_item_name.ilike.%${searchquery}%,` +
-          `en_item_type.ilike.%${searchquery}%,` +
-          `location_name.ilike.%${searchquery}%`,
-      );
-    }
-
-    if (activity_filter) query.eq("is_active", activity_filter);
-    if (tags) query.overlaps("tag_ids", tags.split(","));
-    if (location_filter) {
-      const locIds = location_filter
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean);
-      if (locIds.length > 0) {
-        query.in("location_id", locIds);
-      }
-    }
-
-    // Apply org-based item ID filter
-    if (org_filter) query.in("organization_id", org_filter.split(","));
-
-    if (category) {
-      const categories = category.split(",");
-      query.in("en_item_type", categories);
-    }
-
-    if (from_date) query.gte("created_at", from_date);
-    if (to_date) query.lt("created_at", to_date);
-    // Availability range filter (items currently in storage)
-    if (availability_min !== undefined)
-      query.gte("items_number_currently_in_storage", availability_min);
-
-    if (availability_max !== undefined)
-      query.lte("items_number_currently_in_storage", availability_max);
+    if (order_by) query.order(order_by ?? "created_at", { ascending });
 
     const result = await query;
     const { error, count } = result;

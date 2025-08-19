@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const bookingDelete = {
   confirmDialog: {
     title: {
@@ -9,12 +11,12 @@ export const bookingDelete = {
       en: "Are you sure you want to delete this booking?",
     },
     confirmText: {
-      fi: "Vahvista",
-      en: "Confirm",
+      fi: common.confirm.fi,
+      en: common.confirm.en,
     },
     cancelText: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
   },
   toast: {

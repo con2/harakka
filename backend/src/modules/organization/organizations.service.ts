@@ -14,6 +14,7 @@ import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { v4 as uuidv4 } from "uuid";
+import { validateImageFile } from "@src/utils/validateImage.util";
 
 @Injectable()
 export class OrganizationsService {
@@ -141,6 +142,12 @@ export class OrganizationsService {
     const supabase = req.supabase;
     const storage = supabase.storage;
 
+    validateImageFile({
+      buffer: fileBuffer,
+      filename: fileName,
+      mimetype: contentType,
+      size: fileBuffer.length,
+    });
     // Upload
     const { error: uploadError } = await storage
       .from("organization-logo-picture")

@@ -4,10 +4,6 @@ export const addItemForm = {
       en: "Search tags",
       fi: "Hae tunnisteita",
     },
-    selectLocation: {
-      en: "Select a location",
-      fi: "Valitse sijainti",
-    },
   },
   labels: {
     itemNameFi: {

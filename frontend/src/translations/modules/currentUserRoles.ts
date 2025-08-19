@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const currentUserRoles = {
   title: {
     en: "Roles",
@@ -9,40 +11,40 @@ export const currentUserRoles = {
   },
   roleAliases: {
     user: {
-      en: "User",
-      fi: "Käyttäjä",
+      en: common.roles.user.en,
+      fi: common.roles.user.fi,
     },
     superVera: {
       en: "SuperVera",
       fi: "SuperVera",
     },
     storage_manager: {
-      en: "Storage Manager",
-      fi: "Varastonhoitaja",
+      en: common.roles.storageManager.en,
+      fi: common.roles.storageManager.fi,
     },
     tenant_admin: {
-      en: "Tenant Admin",
-      fi: "Vuokralaisjärjestelmänvalvoja",
+      en: common.roles.tenantAdmin.en,
+      fi: common.roles.tenantAdmin.fi,
     },
     super_admin: {
-      en: "Super Admin",
-      fi: "Pääylläpitäjä",
+      en: common.roles.superAdmin.en,
+      fi: common.roles.superAdmin.fi,
     },
     requester: {
-      en: "Requester",
-      fi: "Varaaja",
+      en: common.roles.requester.en,
+      fi: common.roles.requester.fi,
     },
     admin: {
-      en: "Admin",
-      fi: "Ylläpitäjä",
+      en: common.roles.admin.en,
+      fi: common.roles.admin.fi,
     },
   },
   active: {
-    en: "Active",
-    fi: "Aktiivinen",
+    en: common.active.en,
+    fi: common.active.fi,
   },
   inactive: {
-    en: "Inactive",
-    fi: "Ei aktiivinen",
+    en: common.inactive.en,
+    fi: common.inactive.fi,
   },
 };
