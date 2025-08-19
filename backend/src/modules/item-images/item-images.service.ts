@@ -42,12 +42,6 @@ export class ItemImagesService {
       contentType: contentType,
     });
 
-    console.log("Validating file:", {
-      filename: file.filename,
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-    });
-
     // 0. Validate the image file
     validateImageFile(file);
 
