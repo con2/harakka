@@ -54,7 +54,6 @@ export const getCroppedImg = async (
   if (!outputCtx) throw new Error("Failed to get canvas context");
 
   outputCtx.putImageData(data, 0, 0);
-  console.log("utils: Cropped image size:", data);
 
   return new Promise((resolve, reject) => {
     outputCanvas.toBlob((blob) => {
@@ -63,9 +62,6 @@ export const getCroppedImg = async (
       const croppedFile = new File([blob], "cropped.jpg", {
         type: "image/jpeg",
       });
-
-      // Log the cropped image size
-      console.log("Cropped image file size:", croppedFile.size, "bytes");
 
       const result = validateImage().safeParse(croppedFile);
       if (!result.success) {
