@@ -3,6 +3,12 @@ import path from "path";
 import readline from "readline";
 import chalk from "chalk";
 import { fileURLToPath } from "url";
+import { getAllComponentsWithoutModules } from "../translations/utils/getAllComponentsWithoutModules";
+import {
+  filterUIComponents,
+  filterNonUIComponents,
+} from "../translations/utils/getAllComponents";
+import { SUPPORTED_LANGUAGES } from "../translations/SUPPORTED_LANGUAGES";
 
 // Fix for ES module __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -15,31 +21,6 @@ const TRANSLATION_MODULES_DIR = path.resolve(
   "../translations/modules",
 );
 
-// Helper to get all component files (tsx/jsx)
-function getComponentFiles(dir: string): { name: string; fullPath: string }[] {
-  const files: { name: string; fullPath: string }[] = [];
-  for (const entry of fs.readdirSync(dir)) {
-    const fullPath = path.join(dir, entry);
-    if (fs.statSync(fullPath).isDirectory()) {
-      files.push(...getComponentFiles(fullPath));
-    } else if (/\.(tsx|jsx)$/.test(entry)) {
-      files.push({
-        name: entry.replace(/\.(tsx|jsx)$/, ""),
-        fullPath: fullPath,
-      });
-    }
-  }
-  return files;
-}
-
-// Helper to get all translation module files (ts)
-function getTranslationModules(dir: string): string[] {
-  return fs
-    .readdirSync(dir)
-    .filter((f) => f.endsWith(".ts"))
-    .map((f) => f.replace(/\.ts$/, ""));
-}
-
 // Lowercase first letter utility
 function lowerFirst(str: string): string {
   return str.charAt(0).toLowerCase() + str.slice(1);
@@ -48,7 +29,7 @@ function lowerFirst(str: string): string {
 // Get CLI params
 const args = process.argv.slice(2);
 const langArg = args.find((a) => /^[a-zA-Z,]+$/.test(a));
-const languages = langArg ? langArg.split(",") : ["en", "fi"];
+const languages = langArg ? langArg.split(",") : SUPPORTED_LANGUAGES;
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -58,32 +39,42 @@ const rl = readline.createInterface({
 function askIncludeUI(): Promise<boolean> {
   return new Promise((resolve) => {
     rl.question("Include UI components? (y/n): ", (answer) => {
-      rl.close();
       resolve(answer.trim().toLowerCase() === "y");
     });
   });
 }
 
+function askLimit(): Promise<number | undefined> {
+  return new Promise((resolve) => {
+    rl.question(
+      "How many modules to create? (leave blank for all): ",
+      (answer) => {
+        rl.close();
+        const num = Number(answer.trim());
+        resolve(isNaN(num) || num <= 0 ? undefined : num);
+      },
+    );
+  });
+}
+
 async function main() {
-  const componentFiles = getComponentFiles(SRC_COMPONENTS_DIR);
-  const translationModules = getTranslationModules(TRANSLATION_MODULES_DIR);
-
-  // Find missing modules
-  const missingModules = componentFiles.filter(
-    ({ name }) => !translationModules.includes(lowerFirst(name)),
+  // Use util to get missing components
+  const missingModules = getAllComponentsWithoutModules(
+    SRC_COMPONENTS_DIR,
+    TRANSLATION_MODULES_DIR,
   );
 
-  // Separate UI components (in UI or ui folder)
-  const missingUI = missingModules.filter(({ fullPath }) =>
-    /[\\\/](UI|ui)[\\\/]/.test(fullPath),
-  );
-  const missingOther = missingModules.filter(
-    ({ fullPath }) => !/[\\\/](UI|ui)[\\\/]/.test(fullPath),
-  );
+  // Separate UI and non-UI components using utils
+  const missingUI = filterUIComponents(missingModules);
+  const missingOther = filterNonUIComponents(missingModules);
 
   const includeUI = await askIncludeUI();
+  const limit = await askLimit();
 
-  const toCreate = includeUI ? [...missingOther, ...missingUI] : missingOther;
+  const toCreateRaw = includeUI
+    ? [...missingOther, ...missingUI]
+    : missingOther;
+  const toCreate = limit ? toCreateRaw.slice(0, limit) : toCreateRaw;
 
   if (toCreate.length === 0) {
     console.log(chalk.green("No missing translation modules to create!"));
