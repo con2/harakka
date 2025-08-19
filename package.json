@@ -36,7 +36,8 @@
     "check-translation:strict": "cd frontend && npx tsx src/scripts/check-translations.ts strict",
     "check-translation:relaxed": "cd frontend && npx tsx src/scripts/check-translations.ts",
     "check-translation:unused": "cd frontend && npx tsx src/scripts/clean-unused-translations.ts",
-    "check-translation:clean": "cd frontend && npx tsx src/scripts/clean-unused-translations.ts --confirm"
+    "check-translation:clean": "cd frontend && npx tsx src/scripts/clean-unused-translations.ts --confirm",
+    "check-translation:create": "cd frontend && npx tsx src/scripts/create-missing-translation-modules"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.53.0",
