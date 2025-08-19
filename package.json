@@ -15,6 +15,7 @@
     "s:start": "npx supabase start",
     "s:start:local": "env-cmd -f supabase-local.env npx supabase start",
     "s:stop": "npx supabase stop",
+    "s:link": "env-cmd -f supabase-local.env npx supabase link",
     "s:restart": "npx supabase stop && npx supabase start",
     "s:reset": "npx supabase db reset",
     "s:pull": "npx supabase db pull",
