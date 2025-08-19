@@ -44,14 +44,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
-import {
-  ImageType,
-  ItemImage,
-  FILE_CONSTRAINTS,
-  AllowedMimeType,
-} from "@/types/storage";
+import { ImageType, ItemImage } from "@/types/storage";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { validateImage } from "@/utils/imageUtils";
 
 interface ItemImageManagerProps {
   itemId: string;
@@ -146,45 +142,23 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
     }
   }, [loading, uploadProgress]);
 
-  const validateFile = (file: File): boolean => {
-    // Check file type
-    if (
-      !FILE_CONSTRAINTS.ALLOWED_FILE_TYPES.includes(
-        file.type as AllowedMimeType,
-      )
-    ) {
-      toast.error(t.itemImageManager.messages.validation.fileType[lang]);
-      return false;
-    }
-
-    // Check file size
-    if (file.size > FILE_CONSTRAINTS.MAX_FILE_SIZE) {
-      toast.error(
-        t.itemImageManager.messages.validation.fileSize[lang].replace(
-          "{size}",
-          String(FILE_CONSTRAINTS.MAX_FILE_SIZE / (1024 * 1024)),
-        ),
-      );
-      return false;
-    }
-
-    return true;
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (validateFile(file)) {
-        setSelectedFile(file);
-
-        // Auto-generate alt text from filename
-        const nameWithoutExt = file.name.split(".").slice(0, -1).join(".");
-        const formattedName = nameWithoutExt
-          .replace(/[-_]/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
-
-        setAltText(formattedName);
+      const result = validateImage().safeParse(file);
+      if (!result.success) {
+        toast.error(result.error.errors[0]?.message ?? "Invalid file");
+        return;
       }
+      setSelectedFile(file);
+
+      // Auto-generate alt text from filename
+      const nameWithoutExt = file.name.split(".").slice(0, -1).join(".");
+      const formattedName = nameWithoutExt
+        .replace(/[-_]/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+
+      setAltText(formattedName);
     }
   };
 
@@ -203,17 +177,20 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      if (validateFile(file)) {
-        setSelectedFile(file);
-
-        // Auto-generate alt text from filename
-        const nameWithoutExt = file.name.split(".").slice(0, -1).join(".");
-        const formattedName = nameWithoutExt
-          .replace(/[-_]/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
-
-        setAltText(formattedName);
+      const result = validateImage().safeParse(file);
+      if (!result.success) {
+        toast.error(result.error.errors[0]?.message ?? "Invalid file");
+        return;
       }
+      setSelectedFile(file);
+
+      // Auto-generate alt text from filename
+      const nameWithoutExt = file.name.split(".").slice(0, -1).join(".");
+      const formattedName = nameWithoutExt
+        .replace(/[-_]/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+
+      setAltText(formattedName);
     }
   };
 

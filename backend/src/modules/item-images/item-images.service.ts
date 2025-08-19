@@ -43,7 +43,12 @@ export class ItemImagesService {
     });
 
     // 0. Validate the image file
-    validateImageFile(file);
+    validateImageFile({
+      buffer: file.buffer,
+      filename: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    });
 
     // 1. Upload to supabase storage
     const { data: uploadData, error: uploadError } = await supabase.storage

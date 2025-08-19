@@ -1,4 +1,6 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, Logger } from "@nestjs/common";
+
+const logger = new Logger("ImageValidation");
 
 const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
@@ -17,8 +19,19 @@ export interface ImageValidationInput {
 }
 
 export function validateImageFile(input: ImageValidationInput) {
-  if (!input || !input.buffer || !input.filename || !input.mimetype) {
-    throw new BadRequestException("Incomplete image file data provided");
+  const missingFields: string[] = [];
+  if (!input) missingFields.push("input");
+  if (!input?.buffer) missingFields.push("buffer");
+  if (!input?.filename) missingFields.push("filename");
+  if (!input?.mimetype) missingFields.push("mimetype");
+
+  if (missingFields.length > 0) {
+    logger.error(
+      `Image validation failed: missing ${missingFields.join(", ")}`,
+    );
+    throw new BadRequestException(
+      `Incomplete image file data provided. Missing: ${missingFields.join(", ")}`,
+    );
   }
 
   const size = input.size ?? input.buffer.length;
