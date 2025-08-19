@@ -187,7 +187,7 @@ const AdminItemsTable = () => {
       header: t.adminItemsTable.columns.name[lang],
       size: 120,
       id: `item_name`,
-      accessorFn: (row) => row.translations.item_type,
+      accessorFn: (row) => row.translations[lang].item_name || "",
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
         const name = row.original.translations[lang].item_name || "";
@@ -198,7 +198,7 @@ const AdminItemsTable = () => {
       header: t.adminItemsTable.columns.type[lang],
       size: 120,
       id: `item_type`,
-      accessorFn: (row) => row.translations.item_type,
+      accessorFn: (row) => row.translations[lang].item_type || "",
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
         const type = row.original.translations[lang].item_type || "";
