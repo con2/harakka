@@ -14,6 +14,7 @@ import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
+import { applyItemFilters } from "@src/utils/storage-items.utils";
 import { ApiResponse, ApiSingleResponse } from "@common/response.types"; // Import ApiSingleResponse for type safety
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagService } from "../tag/tag.service";
@@ -383,58 +384,25 @@ export class StorageItemsService {
     org_filter?: string,
   ) {
     const supabase = this.supabaseClient.getAnonClient();
-    // Build a base query without range for counting
-    const base = supabase
-      .from("view_manage_storage_items")
-      .select("*", { count: "exact", head: true })
-      .eq("is_deleted", false);
-    // Apply filters to base count query
-    if (searchquery) {
-      base.or(
-        `fi_item_name.ilike.%${searchquery}%,` +
-          `fi_item_type.ilike.%${searchquery}%,` +
-          `en_item_name.ilike.%${searchquery}%,` +
-          `en_item_type.ilike.%${searchquery}%,` +
-          `location_name.ilike.%${searchquery}%`,
-      );
-    }
-    if (typeof isActive === "boolean") base.eq("is_active", isActive);
-    if (tags) base.overlaps("tag_ids", tags.split(","));
-    if (location_filter) {
-      const locIds = location_filter
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean);
-      if (locIds.length > 0) base.in("location_id", locIds);
-    }
-    if (org_filter) base.in("organization_id", org_filter.split(","));
-    if (category) base.in("en_item_type", category.split(","));
-    if (from_date) base.gte("created_at", from_date);
-    if (to_date) base.lt("created_at", to_date);
-    // Availability range filter (fallback to total when current is null)
-    if (availability_min !== undefined || availability_max !== undefined) {
-      const min = availability_min;
-      const max = availability_max;
-      const currentConds: string[] = [];
-      const totalConds: string[] = [];
-      if (min !== undefined) {
-        currentConds.push(`items_number_currently_in_storage.gte.${min}`);
-        totalConds.push(`items_number_total.gte.${min}`);
-      }
-      if (max !== undefined) {
-        currentConds.push(`items_number_currently_in_storage.lte.${max}`);
-        totalConds.push(`items_number_total.lte.${max}`);
-      }
-      const group1 =
-        currentConds.length > 0 ? `and(${currentConds.join(",")})` : "";
-      const group2Parts = [
-        "items_number_currently_in_storage.is.null",
-        ...totalConds,
-      ];
-      const group2 = `and(${group2Parts.join(",")})`;
-      const orExpr = group1 ? `${group1},${group2}` : group2; // if only max/min given, still works
-      base.or(orExpr);
-    }
+    // Build a base query without range for counting and apply all filters
+    const base = applyItemFilters(
+      supabase
+        .from("view_manage_storage_items")
+        .select("*", { count: "exact", head: true })
+        .eq("is_deleted", false),
+      {
+        searchquery,
+        isActive,
+        tags,
+        location_filter,
+        category,
+        from_date,
+        to_date,
+        availability_min,
+        availability_max,
+        org_filter,
+      },
+    );
     const countResult = await base;
     if (countResult.error) {
       console.log(countResult.error);
@@ -457,64 +425,26 @@ export class StorageItemsService {
 
     // Now fetch the actual page data with range
     const { from, to } = getPaginationRange(page, limit);
-    const query = supabase
+    let query = supabase
       .from("view_manage_storage_items")
       .select("*", { count: "exact" })
       .eq("is_deleted", false)
       .range(from, to);
 
+    query = applyItemFilters(query, {
+      searchquery,
+      isActive,
+      tags,
+      location_filter,
+      category,
+      from_date,
+      to_date,
+      availability_min,
+      availability_max,
+      org_filter,
+    });
+
     if (order_by) query.order(order_by ?? "created_at", { ascending });
-    if (searchquery) {
-      query.or(
-        `fi_item_name.ilike.%${searchquery}%,` +
-          `fi_item_type.ilike.%${searchquery}%,` +
-          `en_item_name.ilike.%${searchquery}%,` +
-          `en_item_type.ilike.%${searchquery}%,` +
-          `location_name.ilike.%${searchquery}%`,
-      );
-    }
-    if (typeof isActive === "boolean") query.eq("is_active", isActive);
-    if (tags) query.overlaps("tag_ids", tags.split(","));
-    if (location_filter) {
-      const locIds = location_filter
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean);
-      if (locIds.length > 0) {
-        query.in("location_id", locIds);
-      }
-    }
-    if (org_filter) query.in("organization_id", org_filter.split(","));
-    if (category) {
-      const categories = category.split(",");
-      query.in("en_item_type", categories);
-    }
-    if (from_date) query.gte("created_at", from_date);
-    if (to_date) query.lt("created_at", to_date);
-    // Availability range filter (server-side, with fallback to total when current is null)
-    if (availability_min !== undefined || availability_max !== undefined) {
-      const min = availability_min;
-      const max = availability_max;
-      const currentConds: string[] = [];
-      const totalConds: string[] = [];
-      if (min !== undefined) {
-        currentConds.push(`items_number_currently_in_storage.gte.${min}`);
-        totalConds.push(`items_number_total.gte.${min}`);
-      }
-      if (max !== undefined) {
-        currentConds.push(`items_number_currently_in_storage.lte.${max}`);
-        totalConds.push(`items_number_total.lte.${max}`);
-      }
-      const group1 =
-        currentConds.length > 0 ? `and(${currentConds.join(",")})` : "";
-      const group2Parts = [
-        "items_number_currently_in_storage.is.null",
-        ...totalConds,
-      ];
-      const group2 = `and(${group2Parts.join(",")})`;
-      const orExpr = group1 ? `${group1},${group2}` : group2;
-      query.or(orExpr);
-    }
 
     const result = await query;
     const { error, count } = result;
