@@ -160,9 +160,9 @@ export const useBanPermissions = () => {
       return {
         canBanFromApp: isActiveRoleSuper && canBanTarget, // Only super admins can ban from application
         canBanFromOrg:
-          (isActiveRoleSuper || isActiveRoleTenantAdmin) && canBanTarget, // Super admins and main admins can ban from org
+          (isActiveRoleSuper || isActiveRoleTenantAdmin) && canBanTarget, // Super admins and tenant admins can ban from org
         canBanFromRole:
-          (isActiveRoleSuper || isActiveRoleTenantAdmin) && canBanTarget, // Super admins and main admins can ban from role
+          (isActiveRoleSuper || isActiveRoleTenantAdmin) && canBanTarget, // Super admins and tenant admins can ban from role
       };
     },
     [canBanUser, isActiveRoleSuper, isActiveRoleTenantAdmin],
