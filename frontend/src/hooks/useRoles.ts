@@ -123,7 +123,6 @@ export const useRoles = () => {
   );
 
   const isAnyTypeOfAdmin = hasAnyRole([
-    "admin",
     "superVera",
     "tenant_admin",
     "super_admin",

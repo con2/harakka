@@ -71,12 +71,7 @@ const UsersList = () => {
 
   // ————————————— Derived Values —————————————
   // Authorization helpers based on new role system
-  const isAuthorized = hasAnyRole([
-    "admin",
-    "superVera",
-    "tenant_admin",
-    "super_admin",
-  ]);
+  const isAuthorized = hasAnyRole(["superVera", "tenant_admin", "super_admin"]);
   const isSuper = hasAnyRole(["super_admin", "superVera"]);
 
   useEffect(() => {

@@ -29,7 +29,6 @@ export const AuthRedirect = () => {
 
     // Evaluate admin after roles are ready to avoid early false
     const isAnyTypeOfAdmin = hasAnyRole([
-      "admin",
       "superVera",
       "tenant_admin",
       "super_admin",

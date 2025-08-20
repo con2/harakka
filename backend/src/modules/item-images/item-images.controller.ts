@@ -27,12 +27,9 @@ export class ItemImagesController {
   }
 
   @Post(":itemId")
-  @Roles(
-    ["admin", "superVera", "tenant_admin", "storage_manager", "super_admin"],
-    {
-      match: "any",
-    },
-  ) // Auth Guard use
+  @Roles(["superVera", "tenant_admin", "storage_manager", "super_admin"], {
+    match: "any",
+  }) // Auth Guard use
   @UseInterceptors(FileInterceptor("image"))
   async uploadImage(
     @Req() req: AuthRequest,
@@ -54,12 +51,9 @@ export class ItemImagesController {
 
   @Post("bucket/:bucket_name")
   @UseInterceptors(FilesInterceptor("image", 5))
-  @Roles(
-    ["admin", "superVera", "tenant_admin", "storage_manager", "super_admin"],
-    {
-      match: "any",
-    },
-  )
+  @Roles(["superVera", "tenant_admin", "storage_manager", "super_admin"], {
+    match: "any",
+  })
   async uploadToBucket(
     @Req() req: AuthRequest,
     @Param("bucket_name") bucket: string,
@@ -82,12 +76,9 @@ export class ItemImagesController {
    * @returns a success object
    */
   @Delete("bucket/:bucket_name")
-  @Roles(
-    ["admin", "superVera", "tenant_admin", "storage_manager", "super_admin"],
-    {
-      match: "any",
-    },
-  )
+  @Roles(["superVera", "tenant_admin", "storage_manager", "super_admin"], {
+    match: "any",
+  })
   async removeFromBucket(
     @Req() req: AuthRequest,
     @Param("bucket_name") bucket: string,
@@ -97,12 +88,9 @@ export class ItemImagesController {
   }
 
   @Delete(":imageId")
-  @Roles(
-    ["admin", "superVera", "tenant_admin", "storage_manager", "super_admin"],
-    {
-      match: "any",
-    },
-  )
+  @Roles(["superVera", "tenant_admin", "storage_manager", "super_admin"], {
+    match: "any",
+  })
   async deleteImage(
     @Req() req: AuthRequest,
     @Param("imageId") imageId: string,

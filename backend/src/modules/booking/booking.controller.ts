@@ -91,7 +91,6 @@ export class BookingController {
   // any user creates a booking
   @Post()
   @Roles([
-    "admin",
     "user",
     "tenant_admin",
     "super_admin",
@@ -196,7 +195,7 @@ export class BookingController {
   }
 
   @Get("id/:id")
-  @Roles(["admin", "tenant_admin", "super_admin"])
+  @Roles(["tenant_admin", "super_admin"])
   async getBookingByID(
     @Req() req: AuthRequest,
     @Param("id") booking_id: string,

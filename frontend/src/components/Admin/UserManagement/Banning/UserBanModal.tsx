@@ -181,7 +181,9 @@ const UserBanModal = ({
       );
       if (
         selectedRole &&
-        !["admin", "user"].includes(selectedRole.role_name || "")
+        !["storage_manager", "requester", "user"].includes(
+          selectedRole.role_name || "",
+        )
       ) {
         toast.error(t.userBanning.messages.onlyAdminUserRoles[lang]);
         return;

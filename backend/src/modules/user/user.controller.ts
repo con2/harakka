@@ -35,7 +35,7 @@ export class UserController {
 
   // Admin/tenant_admin and super roles: paginated, filtered; super roles see all orgs
   @Get("ordered")
-  @Roles(["admin", "tenant_admin", "super_admin", "superVera"], { match: "any" })
+  @Roles(["tenant_admin", "super_admin", "superVera"], { match: "any" })
   async getAllOrderedUsers(
     @Req() req: AuthRequest,
     @Query() query: GetOrderedUsersDto,
@@ -67,7 +67,7 @@ export class UserController {
 
   @Get(":id")
   // TODO: Update which roles can access this endpoint when we know more about the user roles
-  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
+  @Roles(["super_admin", "superVera"], { match: "any" })
   async getUserById(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -81,7 +81,7 @@ export class UserController {
   }
 
   @Put(":id")
-  @Roles(["user", "admin", "super_admin", "superVera", "tenant_admin"], {
+  @Roles(["user", "super_admin", "superVera", "tenant_admin"], {
     match: "any",
   })
   async updateUser(
@@ -97,7 +97,7 @@ export class UserController {
   }
 
   @Delete(":id")
-  @Roles(["admin", "super_admin", "superVera", "tenant_admin"], { match: "any" })
+  @Roles(["super_admin", "superVera", "tenant_admin"], { match: "any" })
   async deleteUser(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -108,7 +108,7 @@ export class UserController {
   // Address Endpoints
 
   @Get(":id/addresses")
-  @Roles(["user", "admin", "super_admin", "superVera", "tenant_admin"], {
+  @Roles(["user", "super_admin", "superVera", "tenant_admin"], {
     match: "any",
   })
   async getAddresses(
@@ -121,7 +121,7 @@ export class UserController {
   }
 
   @Post(":id/addresses")
-  @Roles(["user", "admin", "super_admin", "tenant_admin", "superVera"], {
+  @Roles(["user", "super_admin", "tenant_admin", "superVera"], {
     match: "any",
   })
   async addAddress(
@@ -133,7 +133,7 @@ export class UserController {
   }
 
   @Put(":id/addresses/:addressId")
-  @Roles(["user", "admin", "super_admin", "tenant_admin", "superVera"], {
+  @Roles(["user", "super_admin", "tenant_admin", "superVera"], {
     match: "any",
   })
   async updateAddress(
@@ -146,7 +146,7 @@ export class UserController {
   }
 
   @Delete(":id/addresses/:addressId")
-  @Roles(["user", "admin", "super_admin", "tenant_admin", "superVera"], {
+  @Roles(["user", "super_admin", "tenant_admin", "superVera"], {
     match: "any",
   })
   async deleteAddress(
@@ -158,7 +158,7 @@ export class UserController {
   }
 
   @Post("upload-picture")
-  @Roles(["user", "admin", "super_admin", "tenant_admin", "superVera"])
+  @Roles(["user", "super_admin", "tenant_admin", "superVera"])
   @UseInterceptors(FileInterceptor("file"))
   async uploadProfilePicture(
     @UploadedFile() file: Express.Multer.File,

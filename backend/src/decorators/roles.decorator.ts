@@ -7,7 +7,6 @@ import { Enums } from "@common/supabase.types";
  */
 export const ROLE_NAMES = [
   "user",
-  "admin",
   "tenant_admin",
   "super_admin",
   "superVera",

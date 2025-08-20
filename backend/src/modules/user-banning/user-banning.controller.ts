@@ -30,7 +30,7 @@ export class UserBanningController {
    * Ban a user for a specific role in an organization
    */
   @Post("ban-for-role")
-  @Roles(["admin", "tenant_admin", "super_admin", "superVera"])
+  @Roles(["tenant_admin", "super_admin", "superVera"])
   @HttpCode(HttpStatus.OK)
   async banForRole(
     @Body(ValidationPipe) banForRoleDto: BanForRoleDto,
@@ -43,7 +43,7 @@ export class UserBanningController {
    * Ban a user for all roles in an organization
    */
   @Post("ban-for-org")
-  @Roles(["admin", "tenant_admin", "super_admin", "superVera"])
+  @Roles(["tenant_admin", "super_admin", "superVera"])
   @HttpCode(HttpStatus.OK)
   async banForOrg(
     @Body(ValidationPipe) banForOrgDto: BanForOrgDto,
@@ -69,7 +69,7 @@ export class UserBanningController {
    * Unban a user
    */
   @Post("unban")
-  @Roles(["admin", "tenant_admin", "super_admin", "superVera"])
+  @Roles(["tenant_admin", "super_admin", "superVera"])
   @HttpCode(HttpStatus.OK)
   async unbanUser(
     @Body(ValidationPipe) unbanDto: UnbanDto,
@@ -82,7 +82,7 @@ export class UserBanningController {
    * Get ban history for a specific user
    */
   @Get("history/:userId")
-  @Roles(["admin", "tenant_admin", "super_admin", "superVera"])
+  @Roles(["tenant_admin", "super_admin", "superVera"])
   async getUserBanHistory(
     @Param("userId") userId: string,
     @Req() req: AuthRequest,
@@ -94,7 +94,7 @@ export class UserBanningController {
    * Get all user ban statuses (admin overview)
    */
   @Get("statuses")
-  @Roles(["admin", "tenant_admin", "super_admin", "superVera"])
+  @Roles(["tenant_admin", "super_admin", "superVera"])
   async getAllUserBanStatuses(
     @Req() req: AuthRequest,
   ): Promise<UserBanStatusDto[]> {
@@ -105,7 +105,7 @@ export class UserBanningController {
    * Check ban status for a specific user
    */
   @Get("check/:userId")
-  @Roles(["admin", "tenant_admin", "super_admin", "superVera"])
+  @Roles(["tenant_admin", "super_admin", "superVera"])
   async checkUserBanStatus(
     @Param("userId") userId: string,
     @Req() req: AuthRequest,
