@@ -238,9 +238,24 @@ export const itemsSlice = createSlice({
       action: PayloadAction<{ itemId: string; tags: Tag[] }>,
     ) => {
       const { itemId, tags } = action.payload;
-      const item = state.items.find((item) => item.id === itemId);
-      if (item && "storage_item_tags" in item) {
-        item.storage_item_tags = tags;
+      // Immutably update the array to trigger consumers (e.g., DataTable) that rely on referential equality
+      state.items = state.items.map((it) => {
+        if (it.id !== itemId) return it;
+        if ("storage_item_tags" in it) {
+          return { ...(it as Item), storage_item_tags: tags } as Item;
+        }
+        return it;
+      });
+      // Keep selectedItem in sync if it's the same item
+      if (
+        state.selectedItem &&
+        state.selectedItem.id === itemId &&
+        "storage_item_tags" in state.selectedItem
+      ) {
+        state.selectedItem = {
+          ...(state.selectedItem as Item),
+          storage_item_tags: tags,
+        } as Item;
       }
     },
     selectOrgLocation: (state, action) => {
@@ -379,12 +394,30 @@ export const itemsSlice = createSlice({
         state.error = null;
       })
       .addCase(updateItem.fulfilled, (state, action) => {
-        const { item: updatedItem, prev_id } = action.payload;
-        const index = prev_id
-          ? state.items.findIndex((i) => i.id === prev_id)
-          : state.items.findIndex((i) => i.id === updatedItem.id);
+        const { item: updatedItem, prev_id } = action.payload as {
+          item: Partial<Item> & { id?: string };
+          prev_id?: string;
+        };
+        const targetId = prev_id ?? updatedItem.id;
+        if (!targetId) return;
 
-        state.items[index] = updatedItem as Item;
+        const idx = state.items.findIndex((i) => i.id === targetId);
+        if (idx !== -1) {
+          const existing = state.items[idx] as Item;
+          // Shallow-merge to preserve view-only fields (e.g., location_name) that may be omitted in the update response
+          const merged = {
+            ...existing,
+            ...updatedItem,
+          } as Item;
+          state.items[idx] = merged;
+          // If a details view is open for this item, keep it in sync too
+          if (state.selectedItem && state.selectedItem.id === targetId) {
+            state.selectedItem = {
+              ...(state.selectedItem as Item),
+              ...updatedItem,
+            } as Item;
+          }
+        }
       })
       .addCase(updateItem.rejected, (state, action) => {
         state.error = action.payload as string;
