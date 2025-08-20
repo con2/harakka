@@ -102,6 +102,10 @@ export const myBookings = {
       fi: "Tilauksen tiedot #",
       en: "Booking Details #",
     },
+    description: {
+      fi: "Katso yksityiskohtaiset tiedot tästä tilauksesta mukaan lukien tuotteet, päivämäärät ja tila.",
+      en: "View detailed information about this booking including items, dates, and status.",
+    },
     customerInfo: {
       fi: "Asiakkaan tiedot",
       en: "Customer Information",
@@ -151,6 +155,10 @@ export const myBookings = {
     title: {
       fi: "Muokkaa tilausta #",
       en: "Edit Booking #",
+    },
+    description: {
+      fi: "Muokkaa määriä, päivämääriä tai peruuta tuotteita tässä tilauksessa.",
+      en: "Modify quantities, dates, or cancel items in this booking.",
     },
     item: {
       fi: "Tuote",

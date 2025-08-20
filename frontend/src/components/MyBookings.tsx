@@ -16,14 +16,26 @@ import {
   clearCurrentBookingItems,
 } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
+import {
+  getItemImages,
+  selectItemsWithLoadedImages,
+  makeSelectItemImages,
+} from "@/store/slices/itemImagesSlice";
 import { BookingPreview, BookingItemWithDetails } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "./ui/dialog";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import BookingDetailsButton from "@/components/Admin/Bookings/BookingDetailsButton";
 import BookingCancelButton from "@/components/BookingCancelButton";
 import BookingEditButton from "@/components/BookingEditButton";
@@ -72,6 +84,7 @@ const MyBookings = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const selectedBooking = useAppSelector(selectCurrentBooking);
+  const itemsWithLoadedImages = useAppSelector(selectItemsWithLoadedImages);
   const { page: itemPage, totalPages: itemTotalPages } = useAppSelector(
     selectBookingItemsPagination,
   );
@@ -121,6 +134,18 @@ const MyBookings = () => {
     }
   }, [selectedBooking, dispatch, itemsLoading]);
 
+  // Fetch images for booking items when selectedBooking has items
+  useEffect(() => {
+    if (selectedBooking && selectedBooking.booking_items) {
+      selectedBooking.booking_items.forEach((item) => {
+        // Only fetch if we don't already have images for this item
+        if (!itemsWithLoadedImages.includes(item.item_id)) {
+          void dispatch(getItemImages(item.item_id));
+        }
+      });
+    }
+  }, [selectedBooking, itemsWithLoadedImages, dispatch]);
+
   useEffect(() => {
     // Redirect if not authenticated
     if (!user) {
@@ -149,13 +174,13 @@ const MyBookings = () => {
   };
 
   const handleViewDetails = (booking: BookingPreview) => {
-    if (selectedBooking && selectedBooking.id === booking.id)
+    if (selectedBooking && selectedBooking.id === booking.id) {
       return setShowDetailsModal(true);
+    }
     dispatch(selectBooking(booking));
     void dispatch(getBookingItems(booking.id));
     setShowDetailsModal(true);
   };
-
   const handleItemPageChange = (newPage: number) => setCurrentItemPage(newPage);
 
   const handleSubmitEdit = async () => {
@@ -318,9 +343,48 @@ const MyBookings = () => {
   ];
 
   /**
+   * Small image component for booking items in the modal
+   */
+  const ItemImage = React.memo(({ item }: { item: BookingItemWithDetails }) => {
+    // Create the selector once per component instance, then call it inside useAppSelector
+    const selectItemImages = useMemo(() => makeSelectItemImages(), []);
+    const images = useAppSelector((state) =>
+      selectItemImages(state, item.item_id),
+    );
+
+    const firstImageUrl = images?.length > 0 ? images[0].image_url : undefined;
+
+    const itemName =
+      item.storage_items?.translations?.[lang]?.item_name || "Item";
+
+    // Debug logging (you can remove this later)
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `Item: ${itemName}, Item ID: ${item.item_id}, Images found: ${images?.length || 0}`,
+        images,
+      );
+    }
+
+    return (
+      <Avatar className="h-8 w-8 ring-1 ring-gray-200">
+        <AvatarImage src={firstImageUrl} alt={itemName} />
+        <AvatarFallback className="text-xs">
+          {itemName.slice(0, 2).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+    );
+  });
+
+  /**
    * Columns of booking items
    */
   const bookingColumns: ColumnDef<BookingItemWithDetails>[] = [
+    {
+      accessorKey: "image",
+      header: "", // No header for image column
+      cell: ({ row }) => <ItemImage item={row.original} />,
+      size: 60, // Fixed small width for image column
+    },
     {
       accessorKey: "item_name",
       header: t.myBookings.columns.item[lang],
@@ -567,6 +631,9 @@ const MyBookings = () => {
                 {t.myBookings.edit.title[lang]}
                 {selectedBooking.booking_number}
               </DialogTitle>
+              <DialogDescription className="text-sm text-gray-600">
+                {t.myBookings.edit.description[lang]}
+              </DialogDescription>
             </DialogHeader>
 
             {(itemsLoading || loadingAvailability) && (
@@ -706,6 +773,9 @@ const MyBookings = () => {
                 {t.myBookings.bookingDetails.title[lang]}
                 {selectedBooking.booking_number}
               </DialogTitle>
+              <DialogDescription className="text-left text-sm text-gray-600">
+                {t.myBookings.bookingDetails.description[lang]}
+              </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
