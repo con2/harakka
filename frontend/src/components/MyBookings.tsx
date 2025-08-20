@@ -35,7 +35,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "./ui/dialog";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import BookingDetailsButton from "@/components/Admin/Bookings/BookingDetailsButton";
 import BookingCancelButton from "@/components/BookingCancelButton";
 import BookingEditButton from "@/components/BookingEditButton";
@@ -358,12 +357,19 @@ const MyBookings = () => {
       item.storage_items?.translations?.[lang]?.item_name || "Item";
 
     return (
-      <Avatar className="h-8 w-8 ring-1 ring-gray-200">
-        <AvatarImage src={firstImageUrl} alt={itemName} />
-        <AvatarFallback className="text-xs">
-          {itemName.slice(0, 2).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
+      <div className="h-8 w-8 rounded-md ring-1 ring-gray-200 overflow-hidden bg-gray-100 flex items-center justify-center">
+        {firstImageUrl ? (
+          <img
+            src={firstImageUrl}
+            alt={itemName}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <span className="text-xs font-medium text-gray-600">
+            {itemName.slice(0, 2).toUpperCase()}
+          </span>
+        )}
+      </div>
     );
   });
 
