@@ -10,7 +10,7 @@ import { OrderedUsersParams } from "@/types/user";
  */
 export const usersApi = {
   /**
-   * Get all users for admin/main_admin with backend filtering/pagination
+   * Get all users for admin/tenant_admin with backend filtering/pagination
    * @param params - Query params for filtering, pagination, etc.
    * @returns Promise with paginated/filterable users
    */

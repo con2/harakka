@@ -325,7 +325,7 @@ export const selectItemsErrorWithContext = (state: RootState) => ({
 });
 
 export const selectIsAdmin = (state: RootState) =>
-  state.users.selectedUser?.role === "admin" ||
+  state.users.selectedUser?.role === "tenant_admin" ||
   state.users.selectedUser?.role === "superVera";
 ```
 

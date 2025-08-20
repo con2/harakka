@@ -86,9 +86,9 @@ export const common = {
       fi: "Varastonhoitaja",
       en: "Storage Manager",
     },
-    mainAdmin: {
-      fi: "Pääkäyttäjä",
-      en: "Main Admin",
+    tenantAdmin: {
+      en: "Tenant Admin",
+      fi: "Vuokralaisjärjestelmänvalvoja",
     },
     superAdmin: {
       fi: "Pääylläpitäjä",

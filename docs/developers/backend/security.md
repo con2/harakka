@@ -210,7 +210,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 <Route
   path="/admin"
   element={
-    <ProtectedRoute allowedRoles={["admin", "superVera"]}>
+    <ProtectedRoute allowedRoles={["tenant_admin", "superVera"]}>
       <AdminPanel />
     </ProtectedRoute>
   }
@@ -430,7 +430,7 @@ async getSignedInvoiceUrl(orderId: string, user: { id: string; role: string }): 
 
   // Only owner or admin can see the PDF
   const isOwner = order.user_id === user.id;
-  const isAdmin = user.role === "admin" || user.role === "superVera";
+  const isAdmin = user.role === "tenant_admin" || user.role === "superVera";
 
   if (!isOwner && !isAdmin) {
     throw new BadRequestException("You are not authorized to access this invoice");
