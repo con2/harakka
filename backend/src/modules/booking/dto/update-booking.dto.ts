@@ -64,9 +64,6 @@ export class UpdateBookingItemDto {
 }
 
 export class UpdateBookingDto {
-  @IsUUID("4", { message: "org_id must be a valid UUID v4" })
-  org_id!: string;
-
   @IsArray({ message: "items must be an array" })
   @ArrayMinSize(1, { message: "at least one booking item is required" })
   @ValidateNested({ each: true })

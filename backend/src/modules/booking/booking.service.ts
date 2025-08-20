@@ -165,39 +165,12 @@ export class BookingService {
   async createBooking(
     dto: CreateBookingDto,
     supabase: SupabaseClient<Database>,
-    req: AuthRequest, // Add AuthRequest parameter
   ) {
     const userId = dto.user_id;
 
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
     }
-
-    // 3.0. Validate user's role context (anti-spoofing)
-    const userRoles = req.userRoles;
-    if (!userRoles || userRoles.length === 0) {
-      throw new BadRequestException("No valid role context found for user");
-    }
-
-    // Get org_id from DTO and validate against user's roles
-    const requestedOrganizationId = dto.org_id;
-    if (!requestedOrganizationId) {
-      throw new BadRequestException("org_id is required");
-    }
-
-    // Validate that user actually has an active role in the requested organization
-    const hasValidRole = userRoles.some(
-      (role) =>
-        role.organization_id === requestedOrganizationId && role.is_active,
-    );
-
-    if (!hasValidRole) {
-      throw new BadRequestException(
-        "User does not have an active role in the specified organization",
-      );
-    }
-
-    const userOrganizationId = requestedOrganizationId;
 
     let warningMessage: string | null = null;
 
@@ -288,14 +261,7 @@ export class BookingService {
         );
       }
 
-      // Validate that user's organization matches storage item's organization (optional security check)
-      if (storageItem.org_id !== userOrganizationId) {
-        throw new BadRequestException(
-          `User does not have permission to book items from organization ${storageItem.org_id}`,
-        );
-      }
-
-      // Create booking item using service
+      // Create booking item using service, automatically tracking the provider organization
       const bookingItemData: BookingItemsInsert = {
         booking_id: booking.id,
         item_id: item.item_id,
@@ -429,30 +395,6 @@ export class BookingService {
   ) {
     const supabase = req.supabase;
 
-    // Validate user's role context (anti-spoofing) and acting organization
-    const userRoles = req.userRoles;
-    if (!userRoles || userRoles.length === 0) {
-      throw new BadRequestException("No valid role context found for user");
-    }
-
-    const requestedOrganizationId = dto.org_id;
-    if (!requestedOrganizationId) {
-      throw new BadRequestException("org_id is required");
-    }
-
-    const hasValidRole = userRoles.some(
-      (role) =>
-        role.organization_id === requestedOrganizationId && role.is_active,
-    );
-
-    if (!hasValidRole) {
-      throw new BadRequestException(
-        "User does not have an active role in the specified organization",
-      );
-    }
-
-    const userOrganizationId = requestedOrganizationId;
-
     let warningMessage: string | null = null;
 
     // 5.1 check the booking
@@ -556,14 +498,7 @@ export class BookingService {
         );
       }
 
-      // Ensure the acting organization matches the storage item's organization
-      if (storageItem.org_id !== userOrganizationId) {
-        throw new BadRequestException(
-          "User does not have permission to book items from this organization",
-        );
-      }
-
-      // Create booking item using service
+      // Create booking item using service, automatically tracking the provider organization
       await this.bookingItemsService.createBookingItem(supabase, {
         booking_id: booking_id,
         item_id: item.item_id,

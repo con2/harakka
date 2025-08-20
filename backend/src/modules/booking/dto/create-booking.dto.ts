@@ -69,9 +69,6 @@ export class CreateBookingDto {
   @IsUUID("4", { message: "user_id must be a valid UUID v4 when provided" })
   user_id?: string;
 
-  @IsUUID("4", { message: "org_id must be a valid UUID v4" })
-  org_id!: string; // Add this as required
-
   @IsArray({ message: "items must be an array" })
   @ArrayMinSize(1, { message: "at least one booking item is required" })
   @ValidateNested({ each: true })
@@ -80,6 +77,8 @@ export class CreateBookingDto {
 }
 
 // This DTO defines the structure and validation for creating a booking.
+// The organization tracking is handled automatically by copying org_id from storage_items
+// to provider_organization_id in booking_items during creation.
 // Validation highlights:
 // - items: non-empty array of BookingItemDto
 // - item_id: UUID v4

@@ -106,7 +106,7 @@ export class BookingController {
       const supabase = req.supabase;
       // put user-ID to DTO
       const dtoWithUserId = { ...dto, user_id: userId };
-      return this.bookingService.createBooking(dtoWithUserId, supabase, req);
+      return this.bookingService.createBooking(dtoWithUserId, supabase);
     } catch (error) {
       handleSupabaseError(error);
     }
