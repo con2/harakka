@@ -357,14 +357,6 @@ const MyBookings = () => {
     const itemName =
       item.storage_items?.translations?.[lang]?.item_name || "Item";
 
-    // Debug logging (you can remove this later)
-    if (process.env.NODE_ENV === "development") {
-      console.log(
-        `Item: ${itemName}, Item ID: ${item.item_id}, Images found: ${images?.length || 0}`,
-        images,
-      );
-    }
-
     return (
       <Avatar className="h-8 w-8 ring-1 ring-gray-200">
         <AvatarImage src={firstImageUrl} alt={itemName} />
@@ -544,14 +536,6 @@ const MyBookings = () => {
                         <strong>{t.myBookings.mobile.status[lang]}</strong>{" "}
                         <StatusBadge status={booking.status} />
                       </p>
-                      {/* <p>
-                        <strong>{t.myBookings.mobile.start[lang]}</strong>{" "}
-                        {formatDate(booking.booking_items?.[0]?.start_date)}
-                      </p>
-                      <p>
-                        <strong>{t.myBookings.mobile.end[lang]}</strong>{" "}
-                        {formatDate(booking.booking_items?.[0]?.end_date)}
-                      </p> */}
                     </div>
 
                     {/* booking Items */}
@@ -667,9 +651,6 @@ const MyBookings = () => {
                       className="flex flex-col h-full"
                       style={{ zIndex: 50, pointerEvents: "auto" }}
                     >
-                      {/* <Label className="block text-sm font-medium">
-                      {t.myBookings.edit.quantity[lang]}
-                    </Label> */}
                       <div className="flex items-center gap-1 mt-auto">
                         <Button
                           type="button"
