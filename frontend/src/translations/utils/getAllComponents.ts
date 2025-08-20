@@ -17,7 +17,7 @@ export function getAllComponents(
 ): { name: string; fullPath: string }[] {
   // Default directory: frontend/src/components
   if (!dir) {
-    dir = path.resolve(__dirname, "../../components");
+    dir = path.resolve(__dirname, "../../");
   }
 
   const files: { name: string; fullPath: string }[] = [];
