@@ -1363,16 +1363,16 @@ export type Database = {
       get_latest_ban_record: {
         Args: { check_user_id: string }
         Returns: {
-          id: string
-          ban_type: string
           action: string
           ban_reason: string
-          is_permanent: boolean
-          banned_by: string
+          ban_type: string
           banned_at: string
-          unbanned_at: string
+          banned_by: string
+          id: string
+          is_permanent: boolean
           organization_id: string
           role_assignment_id: string
+          unbanned_at: string
         }[]
       }
       get_request_user_id: {
@@ -1389,15 +1389,15 @@ export type Database = {
       get_user_roles: {
         Args: { user_uuid: string }
         Returns: {
-          id: string
-          user_id: string
-          organization_id: string
-          role_id: string
-          is_active: boolean
           created_at: string
-          role_name: string
+          id: string
+          is_active: boolean
+          organization_id: string
           organization_name: string
           organization_slug: string
+          role_id: string
+          role_name: string
+          user_id: string
         }[]
       }
       is_admin: {
