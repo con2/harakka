@@ -16,6 +16,7 @@ import { ApiSingleResponse, ApiResponse } from "@common/response.types";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { getPaginationMeta } from "@src/utils/pagination";
 import { v4 as uuidv4 } from "uuid";
+import { validateImageFile } from "@src/utils/validateImage.util";
 
 @Injectable()
 export class UserService {
@@ -310,13 +311,38 @@ export class UserService {
     userId: string,
     req: AuthRequest,
   ): Promise<string> {
-    const fileExtension = fileName.split(".").pop();
+    const fileExtension = fileName.split(".").pop()?.toLowerCase();
     const newFileName = `${userId}-${uuidv4()}.${fileExtension}`;
     const filePath = `${userId}/${newFileName}`;
-    const contentType = `image/${fileExtension}`;
+    let contentType = "";
+    switch (fileExtension) {
+      case "jpg":
+      case "jpeg":
+        contentType = "image/jpeg";
+        break;
+      case "png":
+        contentType = "image/png";
+        break;
+      case "webp":
+        contentType = "image/webp";
+        break;
+      case "gif":
+        contentType = "image/gif";
+        break;
+      default:
+        contentType = "application/octet-stream";
+    }
 
     const supabase = req.supabase;
     const storage = supabase.storage;
+
+    // 0. Validate the image file
+    validateImageFile({
+      buffer: fileBuffer,
+      filename: fileName,
+      mimetype: contentType,
+      size: fileBuffer.length,
+    });
 
     // upload
     const { error: uploadError } = await storage
@@ -328,7 +354,7 @@ export class UserService {
 
     if (uploadError) {
       this.logger.error(`Upload failed: ${uploadError.message}`);
-      throw new Error(`Upload failed: ${uploadError.message}`);
+      handleSupabaseError(uploadError);
     }
 
     // get public URL
@@ -358,12 +384,12 @@ export class UserService {
     if (currentUser?.profile_picture_url) {
       const oldPath = this.extractStoragePath(currentUser.profile_picture_url);
       if (oldPath) {
-        const { error } = await req.supabase.storage
+        const { error: removeError } = await req.supabase.storage
           .from("profile-pictures")
           .remove([oldPath]);
 
-        if (error) {
-          console.error("Error deleting old profile picture:", error);
+        if (removeError) {
+          handleSupabaseError(removeError);
         }
       }
     }

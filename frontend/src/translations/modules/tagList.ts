@@ -48,10 +48,6 @@ export const tagList = {
       fi: "Liitetty kohteisiin",
       en: "Assigned To",
     },
-    actions: {
-      fi: "Toiminnot",
-      en: "Actions",
-    },
   },
   assignment: {
     yes: {

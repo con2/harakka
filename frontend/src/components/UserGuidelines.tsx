@@ -10,7 +10,12 @@ import { useRoles } from "@/hooks/useRoles";
 
 export const UserGuide: React.FC = () => {
   const { hasAnyRole } = useRoles();
-  const isAnyTypeOfAdmin = hasAnyRole(["admin", "superVera"]);
+  const isAnyTypeOfAdmin = hasAnyRole([
+    "tenant_admin",
+    "storage_manager",
+    "super_admin",
+    "superVera",
+  ]);
   const { lang } = useLanguage();
 
   return (

@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { formatRoleName } from "@/utils/format";
 
 type RolesListProps = {
   pageSize?: number;
@@ -35,6 +36,14 @@ type RolesListProps = {
 };
 
 type RowType = ViewUserRolesWithDetails & { __isNew?: boolean };
+
+const initialRoleData = {
+  user_id: "",
+  organization_id: "",
+  role_id: "",
+  role_name: "",
+  org_name: "",
+};
 
 export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
   const { lang } = useLanguage();
@@ -90,10 +99,14 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
     user_id: string;
     organization_id: string;
     role_id: string;
+    role_name: string;
+    org_name: string;
   }>({
     user_id: "",
     organization_id: "",
     role_id: "",
+    role_name: "",
+    org_name: "",
   });
 
   // Ensure dropdown data are available only when starting creation
@@ -110,9 +123,27 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
     }
   };
 
+  const handleRoleChange = (roleId: string) => {
+    const updatedRole = availableRoles.find((role) => role.id === roleId);
+    setNewRole({
+      ...newRole,
+      role_id: roleId,
+      role_name: updatedRole?.role ?? "",
+    });
+  };
+
+  const handleOrgChange = (orgId: string) => {
+    const newOrg = organizations.find((org) => org.id === orgId);
+    setNewRole({
+      ...newRole,
+      org_name: newOrg?.name ?? "",
+      organization_id: orgId,
+    });
+  };
+
   const startAdd = async () => {
     await ensureCreateDeps();
-    setNewRole({ user_id: "", organization_id: "", role_id: "" });
+    setNewRole(initialRoleData);
     setAdding(true);
     setPageIndex(0);
   };
@@ -120,7 +151,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
   const cancelAdd = () => {
     setAdding(false);
     setSaving(false);
-    setNewRole({ user_id: "", organization_id: "", role_id: "" });
+    setNewRole(initialRoleData);
   };
 
   const handleSaveNew = async () => {
@@ -133,7 +164,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
       await createRole(newRole);
       toast.success(t.rolesList.messages.roleCreated[lang]);
       setAdding(false);
-      setNewRole({ user_id: "", organization_id: "", role_id: "" });
+      setNewRole(initialRoleData);
       // No hard refresh needed; slice updates allUserRoles on fulfilled
     } catch {
       toast.error(t.rolesList.messages.createFailed[lang]);
@@ -305,24 +336,28 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
           return (
             <Select
               value={newRole.role_id}
-              onValueChange={(v) =>
-                setNewRole((prev) => ({ ...prev, role_id: v }))
-              }
+              onValueChange={(roleId) => handleRoleChange(roleId)}
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select role" />
+                <SelectValue
+                  placeholder={t.rolesList.placeholders.selectRole[lang]}
+                />
               </SelectTrigger>
               <SelectContent>
-                {availableRoles.map((ar) => (
-                  <SelectItem key={ar.id} value={ar.id}>
-                    {ar.role}
+                {availableRoles.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {formatRoleName(option.role ?? "")}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           );
         }
-        return <span className="font-medium">{r.role_name}</span>;
+        return (
+          <span className="font-medium">
+            {formatRoleName(r.role_name as string)}
+          </span>
+        );
       },
     },
     {
@@ -335,9 +370,7 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
           return (
             <Select
               value={newRole.organization_id}
-              onValueChange={(v) =>
-                setNewRole((prev) => ({ ...prev, organization_id: v }))
-              }
+              onValueChange={(orgId) => handleOrgChange(orgId)}
             >
               <SelectTrigger className="w-[220px]">
                 <SelectValue placeholder="Select organization" />
@@ -527,7 +560,9 @@ export const RolesList: React.FC<RolesListProps> = ({ pageSize = 15 }) => {
                   }}
                 >
                   <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Select role" />
+                    <SelectValue
+                      placeholder={t.rolesList.placeholders.selectRole[lang]}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">

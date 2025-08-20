@@ -136,9 +136,5 @@ export const cart = {
       fi: "Virhe: ",
       en: "Error: ",
     },
-    checkoutError: {
-      fi: "Tilausvirhe: ",
-      en: "Checkout error: ",
-    },
   },
 };

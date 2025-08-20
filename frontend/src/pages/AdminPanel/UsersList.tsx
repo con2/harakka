@@ -5,12 +5,14 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllOrderedUsers,
+  fetchAllUsers,
   selectAllUsers,
   selectError,
   selectLoading,
 } from "@/store/slices/usersSlice";
 import {
-  selectActiveOrganizationId,
+  fetchAvailableRoles,
+  selectActiveRoleContext,
   selectActiveRoleName,
 } from "@/store/slices/rolesSlice";
 import { t } from "@/translations";
@@ -35,6 +37,7 @@ import {
   fetchAllUserBanStatuses,
   checkUserBanStatus,
 } from "@/store/slices/userBanningSlice";
+import { formatRoleName } from "@/utils/format";
 
 const UsersList = () => {
   // ————————————— Hooks & Selectors —————————————
@@ -44,7 +47,8 @@ const UsersList = () => {
   const loading = useAppSelector(selectLoading);
   const error = useAppSelector(selectError);
   const allUserRoles = useAppSelector(selectAllUserRoles);
-  const activeOrgId = useAppSelector(selectActiveOrganizationId);
+  const { organizationId: activeOrgId, organizationName: activeOrgName } =
+    useAppSelector(selectActiveRoleContext);
   const activeRoleName = useAppSelector(selectActiveRoleName);
   const userBanStatuses = useAppSelector(selectUserBanStatuses);
   const { refreshAllUserRoles, hasAnyRole } = useRoles();
@@ -67,13 +71,12 @@ const UsersList = () => {
 
   // ————————————— Derived Values —————————————
   // Authorization helpers based on new role system
-  const isAuthorized = hasAnyRole([
-    "admin",
-    "superVera",
-    "main_admin",
-    "super_admin",
-  ]);
+  const isAuthorized = hasAnyRole(["superVera", "tenant_admin", "super_admin"]);
   const isSuper = hasAnyRole(["super_admin", "superVera"]);
+
+  useEffect(() => {
+    if (isSuper) fetchAllUsers();
+  }, [isSuper]);
 
   // Determine if we should fetch all users (no org filter)
   // This happens when:
@@ -192,8 +195,15 @@ const UsersList = () => {
   useEffect(() => {
     if (!authLoading && isAuthorized && !allUserRoles.length) {
       void refreshAllUserRoles();
+      void dispatch(fetchAvailableRoles());
     }
-  }, [authLoading, isAuthorized, allUserRoles.length, refreshAllUserRoles]);
+  }, [
+    authLoading,
+    isAuthorized,
+    allUserRoles.length,
+    refreshAllUserRoles,
+    dispatch,
+  ]);
 
   // Load ban statuses when authorized
   useEffect(() => {
@@ -328,9 +338,10 @@ const UsersList = () => {
     },
     {
       id: "orgName",
-      header: t.usersList.columns.organization[lang],
+      header: isSuper ? t.usersList.columns.organization[lang] : undefined,
       size: 120,
-      cell: ({ row }) => getUserOrgName(row.original.id),
+      cell: ({ row }) =>
+        isSuper ? getUserOrgName(row.original.id) : undefined,
     },
     {
       id: "active",
@@ -367,12 +378,14 @@ const UsersList = () => {
                 className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
                 title={`${roleInfo.role} in ${roleInfo.org}`}
               >
-                {roleInfo.role}
+                {formatRoleName(roleInfo.role as string)}
               </span>
             ))}
           </div>
         ) : (
-          <span className="text-slate-500">{t.usersList.status.na[lang]}</span>
+          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+            User
+          </span>
         );
       },
     },
@@ -391,7 +404,7 @@ const UsersList = () => {
 
         // Banning permission logic based on hierarchy and org:
         // - super_admin/superVera: Can ban anyone from anywhere
-        // - main_admin: Can only ban users whose role is below their own within their active org
+        // - tenant_admin: Can only ban users whose role is below their own within their active org
         // - Others: Cannot ban
         const canBan = canBanUser(targetUser.id);
 
@@ -452,7 +465,14 @@ const UsersList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl">{t.usersList.title[lang]}</h1>
+        <h1 className="text-xl">
+          {isSuper
+            ? t.usersList.titleSuper[lang]
+            : t.usersList.titleOrg[lang].replace(
+                "{org}",
+                activeOrgName ?? "Organization",
+              )}
+        </h1>
       </div>
       {loading && (
         <p>

@@ -1,7 +1,13 @@
+import { common } from "./common";
+
 export const usersList = {
-  title: {
+  titleSuper: {
     fi: "Hallinnoi käyttäjiä",
     en: "Manage Users",
+  },
+  titleOrg: {
+    en: "Manage Users of {org}",
+    fi: "Hallinnoi organisaation {org} käyttäjiä",
   },
   filters: {
     search: {
@@ -13,62 +19,40 @@ export const usersList = {
         fi: "Kaikki roolit",
         en: "All Roles",
       },
-      user: {
-        fi: "Käyttäjä",
-        en: "User",
-      },
-      admin: {
-        fi: "Ylläpitäjä",
-        en: "Admin",
-      },
-      superVera: {
-        fi: "Super Vera",
-        en: "Super Vera",
-      },
     },
     clear: {
       fi: "Tyhjennä suodattimet",
       en: "Clear Filters",
     },
   },
-  buttons: {
-    addNew: {
-      fi: "Lisää uusi käyttäjä",
-      en: "Add New User",
-    },
-  },
   columns: {
     name: {
-      fi: "Nimi",
-      en: "Name",
+      fi: common.personalData.name.fi,
+      en: common.personalData.name.en,
     },
     phone: {
-      fi: "Puhelinnumero",
-      en: "Phone",
+      fi: common.personalData.phone.fi,
+      en: common.personalData.phone.en,
     },
     email: {
-      fi: "Sähköposti",
-      en: "Email",
+      fi: common.personalData.email.fi,
+      en: common.personalData.email.en,
     },
     userSince: {
       fi: "Käyttäjä alkaen",
       en: "User Since",
     },
     role: {
-      fi: "Rooli",
-      en: "Role",
+      fi: common.roles.role.fi,
+      en: common.roles.role.en,
     },
     organization: {
-      fi: "Organisaatio",
-      en: "Organization",
+      fi: common.organizations.organization.fi,
+      en: common.organizations.organization.en,
     },
     active: {
-      fi: "Tila",
-      en: "Status",
-    },
-    actions: {
-      fi: "Toiminnot",
-      en: "Actions",
+      fi: common.status.fi,
+      en: common.status.en,
     },
   },
   status: {
@@ -81,8 +65,8 @@ export const usersList = {
       en: "N/A",
     },
     active: {
-      fi: "Aktiivinen",
-      en: "Active",
+      fi: common.active.fi,
+      en: common.active.en,
     },
     banned: {
       fi: "Estetty",

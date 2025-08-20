@@ -32,10 +32,9 @@ const BookingCancelledEmail = ({
 }: BookingCancelledEmailProps): React.ReactElement => {
   // Define elevated roles who should *not* see the user-specific CTA
   const elevatedRoles: Org_Roles[] = [
-    "admin",
     "superVera",
     "super_admin",
-    "main_admin",
+    "tenant_admin",
     "storage_manager",
   ];
   const isElevated = elevatedRoles.includes(recipientRole);

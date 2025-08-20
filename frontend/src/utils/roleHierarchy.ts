@@ -4,7 +4,7 @@
 
 // Define role hierarchy levels (higher number = higher permission level)
 export const ROLE_HIERARCHY = {
-  main_admin: 4,
+  tenant_admin: 4,
   admin: 3,
   storage_manager: 2,
   requester: 1,
@@ -37,8 +37,8 @@ export const isSuperAdminRole = (roleName: string): boolean => {
 };
 
 /**
- * Check if a role is a main admin role
+ * Check if a role is a tenant admin role
  */
-export const isMainAdminRole = (roleName: string): boolean => {
-  return roleName === "main_admin";
+export const isTenantAdminRole = (roleName: string): boolean => {
+  return roleName === "tenant_admin";
 };

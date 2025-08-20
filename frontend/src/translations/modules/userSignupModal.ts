@@ -49,14 +49,4 @@ export const userSignupModal = {
     fi: "Luodaan tiliä...",
     en: "Creating account...",
   },
-  errors: {
-    setup: {
-      fi: "Tilin luominen epäonnistui. Yritä uudelleen.",
-      en: "Account setup failed. Please try again.",
-    },
-    network: {
-      fi: "Verkkovirhe. Tarkista internetyhteytesi.",
-      en: "Network error. Please check your connection.",
-    },
-  },
 };

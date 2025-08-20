@@ -73,3 +73,138 @@ export function mapImageData(
 
   return urls;
 }
+
+// -------- Filters helpers --------
+
+// A minimal structural type for Supabase query builders we can filter.
+// We only declare the methods we actually use so this stays compatible with
+// both head/count queries and data queries.
+export type FilterableQuery = {
+  or(expr: string): unknown;
+  eq(column: string, value: unknown): unknown;
+  overlaps(column: string, value: string[]): unknown;
+  in(column: string, values: string[]): unknown;
+  gte(column: string, value: string | number): unknown;
+  lt(column: string, value: string | number): unknown;
+  order?: (column: string, opts?: { ascending?: boolean }) => unknown;
+};
+
+// Build a PostgREST OR expression for availability range that supports a
+// graceful fallback: use items_number_currently_in_storage when it's present,
+// otherwise allow items where that column is null and we compare against
+// items_number_total instead.
+//
+// The final expression has the shape:
+//   or(
+//     and(current.gte.min,current.lte.max),
+//     and(items_number_currently_in_storage.is.null,total.gte.min,total.lte.max)
+//   )
+// Where min/max are included only if provided.
+export function buildAvailabilityOrExpr(
+  availability_min?: number,
+  availability_max?: number,
+): string | null {
+  if (availability_min === undefined && availability_max === undefined) {
+    return null;
+  }
+
+  const min = availability_min;
+  const max = availability_max;
+  const currentConds: string[] = [];
+  const totalConds: string[] = [];
+  if (min !== undefined) {
+    currentConds.push(`items_number_currently_in_storage.gte.${min}`);
+    totalConds.push(`items_number_total.gte.${min}`);
+  }
+  if (max !== undefined) {
+    currentConds.push(`items_number_currently_in_storage.lte.${max}`);
+    totalConds.push(`items_number_total.lte.${max}`);
+  }
+  const group1 =
+    currentConds.length > 0 ? `and(${currentConds.join(",")})` : "";
+  const group2Parts = [
+    "items_number_currently_in_storage.is.null",
+    ...totalConds,
+  ];
+  const group2 = `and(${group2Parts.join(",")})`;
+  return group1 ? `${group1},${group2}` : group2;
+}
+
+// Apply all shared filters onto a given Supabase query builder.
+// This mutates and returns the same builder, so callers can keep chaining.
+//
+// Notes:
+// - searchquery: applied with or(...) across multiple text columns using ilike.
+// - isActive: strict boolean check to avoid misinterpreting undefined.
+// - tags: uses overlaps on an array column of tag IDs.
+// - location/org/category: converted to IN lists when non-empty.
+// - from_date/to_date: simple created_at gte/lt bounds.
+// - availability_min/max: uses buildAvailabilityOrExpr to combine the
+//   "current in storage" column with a fallback to "total" when current is null.
+export function applyItemFilters<T extends FilterableQuery>(
+  query: T,
+  opts: {
+    searchquery?: string;
+    isActive?: boolean;
+    tags?: string;
+    location_filter?: string;
+    category?: string;
+    from_date?: string;
+    to_date?: string;
+    availability_min?: number;
+    availability_max?: number;
+    org_filter?: string;
+  },
+): T {
+  const {
+    searchquery,
+    isActive,
+    tags,
+    location_filter,
+    category,
+    from_date,
+    to_date,
+    availability_min,
+    availability_max,
+    org_filter,
+  } = opts;
+
+  if (searchquery) {
+    // PostgREST OR with comma-separated conditions.
+    query.or(
+      `fi_item_name.ilike.%${searchquery}%,` +
+        `fi_item_type.ilike.%${searchquery}%,` +
+        `en_item_name.ilike.%${searchquery}%,` +
+        `en_item_type.ilike.%${searchquery}%,` +
+        `location_name.ilike.%${searchquery}%`,
+    );
+  }
+
+  if (typeof isActive === "boolean") query.eq("is_active", isActive);
+
+  if (tags) query.overlaps("tag_ids", tags.split(","));
+
+  if (location_filter) {
+    const locIds = location_filter
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+    if (locIds.length > 0) query.in("location_id", locIds);
+  }
+
+  if (org_filter) query.in("organization_id", org_filter.split(","));
+
+  if (category) query.in("en_item_type", category.split(","));
+
+  if (from_date) query.gte("created_at", from_date);
+  if (to_date) query.lt("created_at", to_date);
+
+  const availExpr = buildAvailabilityOrExpr(availability_min, availability_max);
+  if (availExpr) {
+    // Wrap the availability checks using or(and(...), and(...)) to handle
+    // both the current-in-storage path and the total fallback path.
+    query.or(availExpr);
+  }
+
+  return query;
+}

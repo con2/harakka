@@ -1,12 +1,10 @@
+import { common } from "./common";
+
 export const userDelete = {
   messages: {
     invalidId: {
       fi: "Virheellinen käyttäjän tunnus.",
       en: "Invalid user ID.",
-    },
-    generalError: {
-      fi: "Virhe poistettaessa käyttäjää.",
-      en: "Error deleting user.",
     },
   },
   confirmation: {
@@ -23,8 +21,8 @@ export const userDelete = {
       en: "Delete User",
     },
     cancelText: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
   },
   toast: {
