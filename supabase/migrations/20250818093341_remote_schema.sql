@@ -125,7 +125,7 @@ CREATE TYPE "public"."role_type" AS ENUM (
     'Admin',
     'SuperVera',
     'app_admin',
-    'tenant_admin',
+    'main_admin',
     'admin',
     'user',
     'superVera'
@@ -137,7 +137,7 @@ ALTER TYPE "public"."role_type" OWNER TO "postgres";
 
 CREATE TYPE "public"."roles_type" AS ENUM (
     'super_admin',
-    'tenant_admin',
+    'main_admin',
     'admin',
     'user',
     'superVera',
