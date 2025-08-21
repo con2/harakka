@@ -107,9 +107,9 @@ export const bookingsApi = {
     bookingId: string,
     orgId: string,
   ): Promise<{ message: string }> => {
-    return api.put(`/bookings/${bookingId}/confirm-for-org`, undefined, {
-      headers: { "x-org-id": orgId },
-    });
+    return api.put(
+      `/bookings/${bookingId}/confirm-for-org?org_id=${encodeURIComponent(orgId)}`,
+    );
   },
 
   /**
@@ -141,9 +141,9 @@ export const bookingsApi = {
     bookingId: string,
     orgId: string,
   ): Promise<{ message: string }> => {
-    return api.put(`/bookings/${bookingId}/reject-for-org`, undefined, {
-      headers: { "x-org-id": orgId },
-    });
+    return api.put(
+      `/bookings/${bookingId}/reject-for-org?org_id=${encodeURIComponent(orgId)}`,
+    );
   },
 
   /**

@@ -141,17 +141,25 @@ export class BookingController {
 
   // Confirm all booking items for the active organization (from x-org-id)
   @Put(":id/confirm-for-org")
-  async confirmForOrg(@Param("id") id: string, @Req() req: AuthRequest) {
-    const orgId = (req.headers["x-org-id"] as string) || "";
-    if (!orgId) throw new BadRequestException("x-org-id header is required");
+  async confirmForOrg(
+    @Param("id") id: string,
+    @Req() req: AuthRequest,
+    @Query("org_id") org_id?: string,
+  ) {
+    const orgId = org_id || "";
+    if (!orgId) throw new BadRequestException("org_id query param is required");
     return this.bookingService.confirmBookingItemsForOrg(id, orgId, req);
   }
 
   // reject all booking items for the active organization (from x-org-id)
   @Put(":id/reject-for-org")
-  async rejectForOrg(@Param("id") id: string, @Req() req: AuthRequest) {
-    const orgId = (req.headers["x-org-id"] as string) || "";
-    if (!orgId) throw new BadRequestException("x-org-id header is required");
+  async rejectForOrg(
+    @Param("id") id: string,
+    @Req() req: AuthRequest,
+    @Query("org_id") org_id?: string,
+  ) {
+    const orgId = org_id || "";
+    if (!orgId) throw new BadRequestException("org_id query param is required");
     return this.bookingService.rejectBookingItemsForOrg(id, orgId, req);
   }
 
