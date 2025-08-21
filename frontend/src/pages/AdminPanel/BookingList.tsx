@@ -16,12 +16,7 @@ import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import {
-  ValidBookingOrder,
-  BookingUserViewRow,
-  BookingStatus,
-  BookingWithDetails,
-} from "@/types";
+import { BookingUserViewRow, BookingStatus, BookingWithDetails } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -56,8 +51,9 @@ const BookingList = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
-  const [orderBy, setOrderBy] = useState<ValidBookingOrder>("booking_number");
-  const [ascending, setAscending] = useState<boolean | null>(null);
+  // Always request backend order: created_at desc
+  const ORDER_BY = "created_at" as const;
+  const ASCENDING = false;
   const { totalPages, page } = useAppSelector(selectBookingPagination);
   // Translation
   const { lang } = useLanguage();
@@ -90,21 +86,17 @@ const BookingList = () => {
     setSearchQuery(e.target.value);
   };
 
-  const handleOrderBy = (orderBy: string) =>
-    setOrderBy(orderBy as ValidBookingOrder);
-
-  const handleAscending = (ascending: boolean | null) =>
-    setAscending(ascending);
+  // No-op: sorting removed from frontend
 
   /*----------------------side-effects----------------------------------*/
   useEffect(() => {
     void dispatch(
       getOrderedBookings({
-        ordered_by: orderBy,
+        ordered_by: ORDER_BY,
+        ascending: ASCENDING,
         page: currentPage,
         limit: 10,
         searchquery: debouncedSearchQuery,
-        ascending: ascending === false ? false : true,
         status_filter: statusFilter !== "all" ? statusFilter : undefined,
       }),
     );
@@ -112,10 +104,10 @@ const BookingList = () => {
     debouncedSearchQuery,
     statusFilter,
     page,
-    orderBy,
+    ORDER_BY,
     dispatch,
     currentPage,
-    ascending,
+    ASCENDING,
     activeOrgId,
   ]);
 
@@ -139,8 +131,22 @@ const BookingList = () => {
       ),
     },
     {
+      id: "org_status",
+      header: `${t.bookingList.columns.status[lang]} (Org)`,
+      enableSorting: false,
+      cell: ({ row }) => {
+        const orgConfirmed = (
+          row.original as unknown as {
+            is_org_confirmed?: boolean;
+          }
+        ).is_org_confirmed;
+        const orgStatus: BookingStatus = orgConfirmed ? "confirmed" : "pending";
+        return <StatusBadge status={orgStatus} />;
+      },
+    },
+    {
       accessorKey: "status",
-      header: t.bookingList.columns.status[lang],
+      header: `${t.bookingList.columns.status[lang]} (Total)`,
       enableSorting: true,
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
@@ -260,11 +266,11 @@ const BookingList = () => {
             onClick={() =>
               dispatch(
                 getOrderedBookings({
-                  ordered_by: orderBy,
+                  ordered_by: ORDER_BY,
+                  ascending: ASCENDING,
                   page: currentPage,
                   limit: 10,
                   searchquery: debouncedSearchQuery,
-                  ascending: ascending === false ? false : true,
                   status_filter:
                     statusFilter !== "all" ? statusFilter : undefined,
                 }),
@@ -335,11 +341,6 @@ const BookingList = () => {
           pageIndex={currentPage - 1}
           pageCount={totalPages}
           onPageChange={(page) => handlePageChange(page + 1)}
-          order={orderBy}
-          ascending={ascending}
-          handleOrder={handleOrderBy}
-          handleAscending={handleAscending}
-          originalSorting="booking_number"
         />
       </div>
 

@@ -200,7 +200,7 @@ export const bookingsApi = {
    */
   getOrderedBookings: async (
     ordered_by: ValidBookingOrder,
-    ascending: boolean = true,
+    ascending: boolean,
     page: number,
     limit: number,
     searchquery?: string,

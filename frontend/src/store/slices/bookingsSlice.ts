@@ -125,8 +125,8 @@ export const getOrderedBookings = createAsyncThunk(
   "bookings/getOrderedBookings",
   async (
     {
-      ordered_by = "booking_number",
-      ascending = true,
+      ordered_by = "created_at",
+      ascending = false,
       page = 1,
       limit = 10,
       searchquery,
