@@ -13,7 +13,7 @@ import {
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { BookingItemUpdate } from "@common/bookings/booking-items.types";
 import { Booking } from "@common/bookings/booking.types";
-import { selectActiveOrganizationId } from "./rolesSlice";
+import { selectActiveOrganizationId, selectActiveRoleName } from "./rolesSlice";
 
 // Create initial state
 const initialState: BookingsState = {
@@ -76,7 +76,11 @@ export const getBookingByID = createAsyncThunk(
   async (booking_id: string, { rejectWithValue, getState }) => {
     try {
       const state = getState() as RootState;
-      const orgId = selectActiveOrganizationId(state) || undefined;
+      const roleName = selectActiveRoleName(state);
+      const isElevated = roleName === "super_admin" || roleName === "superVera";
+      const orgId = isElevated
+        ? undefined
+        : selectActiveOrganizationId(state) || undefined;
       return await bookingsApi.getBookingByID(booking_id, orgId);
     } catch (error: unknown) {
       return rejectWithValue(
@@ -106,7 +110,11 @@ export const getBookingItems = createAsyncThunk(
   async (booking_id: string, { rejectWithValue, getState }) => {
     try {
       const state = getState() as RootState;
-      const orgId = selectActiveOrganizationId(state) || undefined;
+      const roleName = selectActiveRoleName(state);
+      const isElevated = roleName === "super_admin" || roleName === "superVera";
+      const orgId = isElevated
+        ? undefined
+        : selectActiveOrganizationId(state) || undefined;
       return await bookingsApi.getBookingItems(
         booking_id,
         ["translations"],
@@ -143,7 +151,11 @@ export const getOrderedBookings = createAsyncThunk(
   ) => {
     try {
       const state = getState() as RootState;
-      const orgId = selectActiveOrganizationId(state) || undefined;
+      const roleName = selectActiveRoleName(state);
+      const isElevated = roleName === "super_admin" || roleName === "superVera";
+      const orgId = isElevated
+        ? undefined
+        : selectActiveOrganizationId(state) || undefined;
       return await bookingsApi.getOrderedBookings(
         ordered_by,
         ascending,
