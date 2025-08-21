@@ -6,6 +6,7 @@ import {
   SupabaseClient,
 } from "@supabase/supabase-js";
 import {
+  LocationRow,
   StorageItem,
   StorageItemWithJoin,
   ValidItemOrder,
@@ -226,12 +227,14 @@ export class StorageItemsService {
     const {
       data: updatedItem,
       error: updateError,
-    }: PostgrestSingleResponse<StorageItem> = await supabase
-      .from("storage_items")
+    }: PostgrestSingleResponse<
+      StorageItem & { storage_locations: LocationRow }
+    > = await supabase
+      .from(`storage_items`)
       .update(itemData)
       .eq("id", item_id)
       .eq("org_id", org_id)
-      .select()
+      .select(`*, storage_locations(*)`)
       .single();
 
     if (updateError) {
@@ -247,10 +250,12 @@ export class StorageItemsService {
     if (tags && tags.length > 0)
       await this.tagService.assignTagsToItem(req, item_id, tags);
 
+    const { storage_locations, ...rest } = updatedItem;
+    const formattedItem = { ...rest, location_details: storage_locations };
+
     return {
       success: true,
-      item: updatedItem,
-      wasCopied: false,
+      item: formattedItem,
     };
   }
 
