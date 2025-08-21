@@ -11,8 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchLocationsByOrgId,
-  selectCurrentOrgLocations,
+  fetchAllOrgLocations,
+  selectOrgLocations,
 } from "@/store/slices/organizationLocationsSlice";
 import { createItemDto } from "@/store/utils/validate";
 import { ItemFormTag } from "@/types";
@@ -59,7 +59,7 @@ import { ErrorMessage } from "@hookform/error-message";
 /* eslint-disable react-hooks/exhaustive-deps */
 
 function AddItemForm() {
-  const orgLocations = useAppSelector(selectCurrentOrgLocations);
+  const orgLocations = useAppSelector(selectOrgLocations);
   const editItem = useAppSelector(selectSelectedItem);
   const { lang: appLang } = useLanguage();
   const [tagSearchValue, setTagSearchValue] = useState("");
@@ -186,8 +186,8 @@ function AddItemForm() {
       "location",
       {
         id: newLoc.storage_location_id,
-        name: newLoc.storage_locations.name,
-        address: newLoc.storage_locations.address,
+        name: newLoc?.storage_locations?.name ?? "",
+        address: newLoc?.storage_locations?.address ?? "",
       },
       { shouldValidate: true, shouldDirty: true },
     );
@@ -196,7 +196,7 @@ function AddItemForm() {
   /*------------------side effects-------------------------------------------*/
   useEffect(() => {
     if (org && orgLocations.length < 1)
-      void dispatch(fetchLocationsByOrgId(org.id));
+      void dispatch(fetchAllOrgLocations({ orgId: org.id, pageSize: 20 }));
   }, []);
 
   useEffect(() => {
@@ -368,7 +368,7 @@ function AddItemForm() {
                               key={loc.storage_location_id}
                               value={loc.storage_location_id}
                             >
-                              {loc.storage_locations.name}
+                              {loc?.storage_locations?.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

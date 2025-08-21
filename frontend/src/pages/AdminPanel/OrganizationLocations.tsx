@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchAllOrgLocations,
-  selectOrgLocations,
   selectOrgLocationsLoading,
   selectOrgLocationsError,
+  fetchAllOrgLocations,
+  selectOrgLocations,
 } from "@/store/slices/organizationLocationsSlice";
 import { useRoles } from "@/hooks/useRoles";
 import { LoaderCircle } from "lucide-react";
@@ -69,7 +69,7 @@ const OrganizationLocations = () => {
       void dispatch(
         fetchAllOrgLocations({
           orgId: selectedOrgId,
-          pageSize: 100, // Load all locations
+          pageSize: 100,
           currentPage: 1,
         }),
       );

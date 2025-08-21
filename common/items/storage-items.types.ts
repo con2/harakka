@@ -11,7 +11,6 @@ export type TagRow = Database["public"]["Tables"]["tags"]["Row"];
 export type TagUpdate = Database["public"]["Tables"]["tags"]["Update"];
 export type TagInsert = Database["public"]["Tables"]["tags"]["Insert"];
 
-
 /**
  * TagLink:
  * Extract the tags from the payload
@@ -43,7 +42,5 @@ export type StorageItem = StorageItemRow & {
 };
 export type UpdateResponse = {
   success: boolean;
-  item: StorageItem;
-  wasCopied: boolean;
-  prev_id?: string;
+  item: StorageItem & { location_details: LocationRow };
 };
