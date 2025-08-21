@@ -42,6 +42,10 @@ import { Textarea } from "../../ui/textarea";
 import { itemsApi } from "@/api/services/items";
 import { LoaderCircle } from "lucide-react";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
+import {
+  fetchAllOrgLocations,
+  selectOrgLocations,
+} from "@/store/slices/organizationLocationsSlice";
 
 type UpdateItemModalProps = {
   onClose: () => void;
@@ -65,9 +69,17 @@ const UpdateItemModal = ({
   const itemsLoading = useAppSelector(selectItemsLoading);
   const tagsLoading = useAppSelector(selectTagsLoading);
   const orgId = useAppSelector(selectActiveOrganizationId);
+  const orgLocations = useAppSelector(selectOrgLocations);
+  const activeOrgId = useAppSelector(selectActiveOrganizationId);
   // Translation
   const { lang } = useLanguage();
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
+
+  // Get the available locations for the org
+  const validLocations = locations.filter((loc) => {
+    const ol = orgLocations.filter((ol) => ol.organization_id === activeOrgId);
+    return ol.some((l) => l.storage_location_id === loc.id);
+  });
 
   // Prefill the form with initial data if available
   useEffect(() => {
@@ -77,7 +89,9 @@ const UpdateItemModal = ({
   useEffect(() => {
     if (!tags || tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
     if (locations.length === 0) void dispatch(fetchAllLocations({ limit: 20 }));
-  }, [dispatch, locations.length, formData.id, tags]);
+    if (orgLocations.length === 0)
+      void dispatch(fetchAllOrgLocations({ page: 1, limit: 50 }));
+  }, [dispatch, locations.length, formData.id, tags, orgLocations]);
 
   // Always refresh assigned tags for this item when the modal opens or item changes
   useEffect(() => {
@@ -372,7 +386,7 @@ const UpdateItemModal = ({
                         />
                       </SelectTrigger>
                       <SelectContent>
-                        {locations.map((location) => (
+                        {validLocations.map((location) => (
                           <SelectItem key={location.id} value={location.id}>
                             {location.name}
                           </SelectItem>

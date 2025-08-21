@@ -12,11 +12,7 @@ import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { ApiResponse } from "@common/response.types";
 import { AxiosResponse } from "axios";
 import { ItemFormData } from "@common/items/form.types";
-import {
-  LocationRow,
-  UpdateItem,
-  UpdateResponse,
-} from "@common/items/storage-items.types";
+import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 
 /**
  * Initial state for items slice
@@ -401,7 +397,6 @@ export const itemsSlice = createSlice({
         const { item: updatedItem } = action.payload as {
           item: Partial<Item> & {
             id?: string;
-            storage_locations: Pick<LocationRow, "name">;
           };
         };
         const targetId = updatedItem.id;
@@ -411,12 +406,16 @@ export const itemsSlice = createSlice({
         if (idx !== -1) {
           const existing = state.items[idx] as Item;
           // Shallow-merge to preserve view-only fields (e.g., location_name) that may be omitted in the update response
+          const { location_details } = updatedItem;
           const merged = {
             ...existing,
             ...updatedItem,
-            location_name: updatedItem.storage_locations.name,
           } as Item;
-          state.items[idx] = merged;
+          state.items[idx] = {
+            ...merged,
+            location_id: location_details?.id ?? "",
+            location_name: location_details?.name,
+          };
           // If a details view is open for this item, keep it in sync too
           if (state.selectedItem && state.selectedItem.id === targetId) {
             state.selectedItem = {

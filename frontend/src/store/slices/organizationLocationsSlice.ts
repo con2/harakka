@@ -24,20 +24,8 @@ const initialState: OrgLocationsState = {
  */
 export const fetchAllOrgLocations = createAsyncThunk(
   "orgLocations/fetchAll",
-  async ({
-    orgId,
-    pageSize = 10,
-    currentPage = 1,
-  }: {
-    orgId: string;
-    pageSize?: number;
-    currentPage?: number;
-  }) => {
-    const response = await orgLocationsApi.getAllOrgLocs(
-      orgId,
-      pageSize,
-      currentPage,
-    );
+  async ({ page = 1, limit = 10 }: { page?: number; limit?: number }) => {
+    const response = await orgLocationsApi.getAllOrgLocs(page, limit);
     return response;
   },
 );

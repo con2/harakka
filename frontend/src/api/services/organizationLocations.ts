@@ -21,13 +21,10 @@ export const orgLocationsApi = {
    * @returns Promise with paginated org locations
    */
   getAllOrgLocs: (
-    orgId: string,
-    pageSize: number = 10,
-    currentPage: number = 1,
+    page: number = 1,
+    limit: number = 10,
   ): Promise<ApiResponse<OrgLocationWithNames[]>> =>
-    api.get(
-      `/organization-locations/organization/${orgId}?pageSize=${pageSize}&currentPage=${currentPage}`,
-    ),
+    api.get(`/organization-locations?page=${page}&limit=${limit}`),
 
   /**
    * Get a specific org location by ID

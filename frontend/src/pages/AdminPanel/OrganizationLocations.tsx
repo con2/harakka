@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchAllOrgLocations,
   selectOrgLocations,
   selectOrgLocationsLoading,
   selectOrgLocationsError,
+  fetchLocationsByOrgId,
+  selectCurrentOrgLocations,
 } from "@/store/slices/organizationLocationsSlice";
 import { useRoles } from "@/hooks/useRoles";
 import { LoaderCircle } from "lucide-react";
@@ -32,7 +33,7 @@ const OrganizationLocations = () => {
   const { lang } = useLanguage();
 
   // Redux state using selectors
-  const orgLocations = useAppSelector(selectOrgLocations);
+  const orgLocations = useAppSelector(selectCurrentOrgLocations);
   const loading = useAppSelector(selectOrgLocationsLoading);
   const error = useAppSelector(selectOrgLocationsError);
 
@@ -66,13 +67,7 @@ const OrganizationLocations = () => {
   // Fetch locations when organization is selected
   useEffect(() => {
     if (selectedOrgId) {
-      void dispatch(
-        fetchAllOrgLocations({
-          orgId: selectedOrgId,
-          pageSize: 100, // Load all locations
-          currentPage: 1,
-        }),
-      );
+      void dispatch(fetchLocationsByOrgId(selectedOrgId));
     }
   }, [dispatch, selectedOrgId]);
 

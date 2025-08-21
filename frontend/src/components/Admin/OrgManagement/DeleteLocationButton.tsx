@@ -1,7 +1,7 @@
 import { useAppDispatch } from "@/store/hooks";
 import {
   deleteOrgLocationWithStorage,
-  fetchAllOrgLocations,
+  fetchLocationsByOrgId,
 } from "@/store/slices/organizationLocationsSlice";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
@@ -37,7 +37,7 @@ const DeleteLocationButton = ({
       confirmText: t.deleteLocationButton.buttons.delete[lang],
       cancelText: t.deleteLocationButton.buttons.cancel[lang],
       onConfirm: async () => {
-        await toast.promise(
+        toast.promise(
           dispatch(deleteOrgLocationWithStorage(locationId)).unwrap(),
           {
             loading: t.deleteLocationButton.messages.loading[lang],
@@ -47,13 +47,7 @@ const DeleteLocationButton = ({
         );
 
         // Refresh the organization locations list
-        await dispatch(
-          fetchAllOrgLocations({
-            orgId: organizationId,
-            pageSize: 100,
-            currentPage: 1,
-          }),
-        );
+        await dispatch(fetchLocationsByOrgId(organizationId));
       },
     });
   };
