@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
@@ -1352,12 +1332,24 @@ export type Database = {
         Args: { in_limit: number; in_offset: number }
         Returns: Json
       }
+      get_all_full_orders: {
+        Args: { in_limit?: number; in_offset?: number }
+        Returns: Json
+      }
       get_full_booking: {
         Args: { booking_id: string }
         Returns: Json
       }
+      get_full_order: {
+        Args: { order_id: string }
+        Returns: Json
+      }
       get_full_user_booking: {
         Args: { in_limit: number; in_offset: number; in_user_id: string }
+        Returns: Json
+      }
+      get_full_user_order: {
+        Args: { in_limit?: number; in_offset?: number; in_user_id: string }
         Returns: Json
       }
       get_latest_ban_record: {
@@ -1588,9 +1580,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       notification_channel: ["in_app", "web_push", "email"],
@@ -1628,4 +1617,3 @@ export const Constants = {
     },
   },
 } as const
-
