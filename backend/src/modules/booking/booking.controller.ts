@@ -15,7 +15,7 @@ import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
-import { BookingItem } from "@common/bookings/booking-items.types";
+import { UpdateBookingDto } from "./dto/update-booking.dto";
 import { Public, Roles } from "src/decorators/roles.decorator";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 
@@ -103,13 +103,24 @@ export class BookingController {
       const userId = req.user.id;
       if (!userId)
         throw new BadRequestException("No userId found: user_id is required");
-
+      const supabase = req.supabase;
       // put user-ID to DTO
       const dtoWithUserId = { ...dto, user_id: userId };
-      return this.bookingService.createBooking(dtoWithUserId, req.supabase);
+      return this.bookingService.createBooking(dtoWithUserId, supabase);
     } catch (error) {
       handleSupabaseError(error);
     }
+  }
+
+  // updates a booking
+  @Put(":id/update") // user updates own booking or admin updates booking
+  async updateBooking(
+    @Param("id") id: string,
+    @Body() dto: UpdateBookingDto,
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    return this.bookingService.updateBooking(id, userId, dto, req);
   }
 
   // confirms a booking
@@ -119,17 +130,6 @@ export class BookingController {
     const supabase = req.supabase;
 
     return this.bookingService.confirmBooking(bookingId, userId, supabase);
-  }
-
-  // updates a booking
-  @Put(":id/update") // user updates own booking or admin updates booking
-  async updateBooking(
-    @Param("id") id: string,
-    @Body("items") updatedItems: BookingItem[],
-    @Req() req: AuthRequest,
-  ) {
-    const userId = req.user.id;
-    return this.bookingService.updateBooking(id, userId, updatedItems, req);
   }
 
   // rejects a booking by admin

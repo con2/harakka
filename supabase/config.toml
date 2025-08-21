@@ -119,7 +119,7 @@ enabled = true
 # in emails.
 site_url = "https://agreeable-grass-049dc8010.6.azurestaticapps.net"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["http://localhost:5180/**", "http://localhost/**", "http://localhost:80/**", "https://agreeable-grass-049dc8010.6.azurestaticapps.net/**"]
+additional_redirect_urls = ["http://localhost:5180/**", "https://agreeable-grass-049dc8010.6.azurestaticapps.net/**", "http://localhost/**", "http://localhost:80/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # Path to JWT signing key. DO NOT commit your signing keys file to git.
