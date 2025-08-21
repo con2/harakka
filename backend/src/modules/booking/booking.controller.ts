@@ -12,6 +12,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
+import { RoleService } from "../role/role.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
@@ -21,7 +22,10 @@ import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Controller("bookings")
 export class BookingController {
-  constructor(private readonly bookingService: BookingService) {}
+  constructor(
+    private readonly bookingService: BookingService,
+    private readonly roleService: RoleService,
+  ) {}
 
   // gets all bookings - use case: admin
   @Public()
@@ -208,6 +212,12 @@ export class BookingController {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const is_ascending = ascending.toLowerCase() === "true";
+    // Elevated roles can see all bookings regardless of org; drop org_id for them
+    const isElevated = this.roleService.hasAnyRole(req, [
+      "super_admin",
+      "superVera",
+    ]);
+    const effectiveOrgId = isElevated ? undefined : org_id;
     return this.bookingService.getOrderedBookings(
       supabase,
       pageNum,
@@ -216,7 +226,7 @@ export class BookingController {
       ordered_by,
       searchquery,
       status_filter,
-      org_id,
+      effectiveOrgId,
     );
   }
 
