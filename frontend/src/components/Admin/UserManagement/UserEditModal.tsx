@@ -431,6 +431,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                           <Button
                             type="button"
                             size="sm"
+                            disabled={!isSuper && ra.org_id !== activeOrgId}
                             variant="ghost"
                             className="justify-self-end"
                             onClick={() => removeRoleAssignment(index)}
