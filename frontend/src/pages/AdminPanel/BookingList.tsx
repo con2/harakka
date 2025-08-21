@@ -77,6 +77,32 @@ const BookingList = () => {
     (it) => it.status === "pending",
   );
 
+  // Compute org status for details view: prefer backend flags, fallback to local computation
+  const isOrgConfirmedFlag = (
+    selectedBooking as unknown as {
+      is_org_confirmed?: boolean;
+    }
+  )?.is_org_confirmed;
+  const isOrgHasItemsFlag = (
+    selectedBooking as unknown as {
+      is_org_has_items?: boolean;
+    }
+  )?.is_org_has_items;
+  const orgHasItems =
+    typeof isOrgHasItemsFlag === "boolean"
+      ? isOrgHasItemsFlag
+      : hasAnyForOrgInSelected;
+  const orgConfirmed =
+    typeof isOrgConfirmedFlag === "boolean"
+      ? isOrgConfirmedFlag
+      : orgHasItems &&
+        ownedItemsForOrg.every((it) => it.status === "confirmed");
+  const orgStatusForDetails: BookingStatus | null = orgHasItems
+    ? orgConfirmed
+      ? "confirmed"
+      : "pending"
+    : null;
+
   // Helper: sort items so that org-owned items are shown first
   const sortItemsOwnedFirst = <
     T extends { provider_organization_id?: string | null },
@@ -442,6 +468,14 @@ const BookingList = () => {
                     <p className="text-sm mb-0">
                       {t.bookingList.modal.status[lang]}{" "}
                       <StatusBadge status={selectedBooking.status} />
+                    </p>
+                    <p className="text-sm mb-0">
+                      {t.bookingList.columns.status[lang]} (Org){" "}
+                      {orgStatusForDetails ? (
+                        <StatusBadge status={orgStatusForDetails} />
+                      ) : (
+                        <span className="text-gray-500">—</span>
+                      )}
                     </p>
                     <p className="text-sm">
                       {t.bookingList.modal.date[lang]}{" "}
