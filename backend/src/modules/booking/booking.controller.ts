@@ -197,11 +197,11 @@ export class BookingController {
   getOrderedBookings(
     @Req() req: AuthRequest,
     @Query("search") searchquery: string,
-    @Query("order") ordered_by: ValidBookingOrder = "booking_number",
+    @Query("order") ordered_by: ValidBookingOrder = "created_at",
     @Query("status") status_filter: BookingStatus,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
-    @Query("ascending") ascending: string = "true",
+    @Query("ascending") ascending: string = "false",
     @Query("org_id") org_id?: string,
   ) {
     const supabase = req.supabase;

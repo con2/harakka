@@ -1145,6 +1145,47 @@ export class BookingService {
 
     const result = await query;
 
+    // When scoped by org, include a derived flag indicating whether all items for this org are confirmed
+    if (orgId && Array.isArray(result.data) && result.data.length > 0) {
+      const bookingIds = result.data
+        .map((b) => b.id)
+        .filter(Boolean) as string[];
+
+      if (bookingIds.length > 0) {
+        const itemsRes = await supabase
+          .from("booking_items")
+          .select("booking_id,status")
+          .in("booking_id", bookingIds)
+          .eq("provider_organization_id", orgId);
+        if (itemsRes.error) {
+          console.log(itemsRes.error);
+          throw new Error("Failed to compute org confirmation status");
+        }
+
+        const counts = new Map<string, { total: number; confirmed: number }>();
+        (itemsRes.data || []).forEach((row) => {
+          const r = row as { booking_id: string; status: string };
+          const bid = r.booking_id;
+          const status = r.status;
+          const cur = counts.get(bid) || { total: 0, confirmed: 0 };
+          cur.total += 1;
+          if (status === "confirmed") cur.confirmed += 1;
+          counts.set(bid, cur);
+        });
+
+        // Attach flag to each booking row
+        (
+          result.data as Array<BookingPreview & { is_org_confirmed?: boolean }>
+        ).forEach((b) => {
+          const bid = b.id;
+          const c = counts.get(bid);
+          b.is_org_confirmed = c
+            ? c.total > 0 && c.total === c.confirmed
+            : false;
+        });
+      }
+    }
+
     const { error, count } = result;
     if (error) {
       console.log(error);
