@@ -23,14 +23,12 @@ function mockContext({
   isPublic = false,
   meta,
   userRoles = [],
-  orgParam,
-  orgHeader,
+  activeOrgId,
 }: {
   isPublic?: boolean;
   meta?: RolesMeta;
   userRoles?: FakeUserRole[];
-  orgParam?: string;
-  orgHeader?: string;
+  activeOrgId?: string;
 } = {}): ExecutionContext {
   const handler = () => {};
   if (isPublic) Reflect.defineMetadata(IS_PUBLIC_KEY, true, handler);
@@ -38,8 +36,9 @@ function mockContext({
 
   const req = {
     userRoles,
-    params: orgParam ? { organizationId: orgParam } : {},
-    headers: orgHeader ? { "x-org-id": orgHeader } : {},
+    activeRoleContext: activeOrgId
+      ? { organizationId: activeOrgId }
+      : undefined,
   };
 
   return {
@@ -100,14 +99,14 @@ describe("RolesGuard", () => {
     const ctx = mockContext({
       meta,
       userRoles: [{ role_name: "tenant_admin", organization_id: "org1" }],
-      orgParam: "org2", // mismatched org
+      activeOrgId: "org2", // mismatched org
     });
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
 
     const ctxMatch = mockContext({
       meta,
       userRoles: [{ role_name: "tenant_admin", organization_id: "org1" }],
-      orgParam: "org1",
+      activeOrgId: "org1",
     });
     expect(guard.canActivate(ctxMatch)).toBe(true);
   });

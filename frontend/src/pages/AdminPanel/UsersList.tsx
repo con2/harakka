@@ -84,15 +84,18 @@ const UsersList = () => {
   // 2. User has selected a super_admin or superVera role from the navbar selector
   const isActiveRoleSuper =
     activeRoleName === "super_admin" || activeRoleName === "superVera";
-  const shouldFetchAllUsers = isSuper && (!activeOrgId || isActiveRoleSuper);
 
   // Get the org_filter value based on super user logic
   const getOrgFilter = useCallback(() => {
-    if (shouldFetchAllUsers) {
+    // Super roles see all users if no org selected
+    if (isSuper) {
       return undefined; // No filter - fetch all users
     }
-    return activeOrgId ?? undefined; // Use selected org or undefined
-  }, [shouldFetchAllUsers, activeOrgId]);
+    // Tenant admin must always filter by their org
+    if (activeRoleName === "tenant_admin") {
+      return activeOrgId;
+    }
+  }, [isSuper, activeOrgId, activeRoleName]);
 
   // Get available roles for filtering - only show roles from current org context
   const availableRoles = useMemo(() => {
@@ -233,7 +236,7 @@ const UsersList = () => {
     if (!authLoading && isAuthorized && isModalOpen) {
       void dispatch(
         fetchAllOrderedUsers({
-          org_filter: getOrgFilter(),
+          org_filter: getOrgFilter() ?? undefined,
           page: 1,
           limit: 10,
           ascending: true,
@@ -527,7 +530,7 @@ const UsersList = () => {
         onPageChange={(page) =>
           dispatch(
             fetchAllOrderedUsers({
-              org_filter: getOrgFilter(),
+              org_filter: getOrgFilter() ?? undefined,
               page: page + 1,
               limit: 10,
               ascending: true,

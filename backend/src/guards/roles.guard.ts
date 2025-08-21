@@ -86,9 +86,7 @@ export class RolesGuard implements CanActivate {
     }
 
     // Determine organisation context when sameOrg flag is set
-    const orgCtx =
-      sameOrg &&
-      (req.params?.organizationId ?? req.headers?.["x-org-id"] ?? null);
+    const orgCtx = sameOrg ? req.activeRoleContext?.organizationId : undefined;
 
     // Evaluate role matches
     const matches = userRoles.filter(
