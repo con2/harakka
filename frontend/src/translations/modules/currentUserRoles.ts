@@ -22,9 +22,9 @@ export const currentUserRoles = {
       en: common.roles.storageManager.en,
       fi: common.roles.storageManager.fi,
     },
-    main_admin: {
-      en: common.roles.mainAdmin.en,
-      fi: common.roles.mainAdmin.fi,
+    tenant_admin: {
+      en: common.roles.tenantAdmin.en,
+      fi: common.roles.tenantAdmin.fi,
     },
     super_admin: {
       en: common.roles.superAdmin.en,

@@ -69,7 +69,7 @@ const UserBanModal = ({
 
   // Permission checks for different ban types
   const isSuper = hasAnyRole(["super_admin", "superVera"]);
-  const isMainAdmin = hasRole("main_admin");
+  const isTenantAdmin = hasRole("tenant_admin");
 
   // Get ban permissions for this specific user
   const { canBanFromApp, canBanFromOrg, canBanFromRole } = getBanPermissions(
@@ -102,7 +102,7 @@ const UserBanModal = ({
     const orgMap = new Map<string, TargetUserOrganization>();
     userRoles.forEach((role) => {
       if (role.organization_id && !orgMap.has(role.organization_id)) {
-        // For main_admin, only show organizations they have access to (activeOrgId)
+        // For tenant_admin, only show organizations they have access to (activeOrgId)
         // For super admins, show all organizations
         if (isSuper || !activeOrgId || role.organization_id === activeOrgId) {
           orgMap.set(role.organization_id, {
@@ -174,24 +174,26 @@ const UserBanModal = ({
       return;
     }
 
-    // Additional validation for main_admin: they can only ban "admin" or "user" roles
-    if (banType === "role" && isMainAdmin && !isSuper) {
+    // Additional validation for tenant_admin: they can only ban "admin" or "user" roles
+    if (banType === "role" && isTenantAdmin && !isSuper) {
       const selectedRole = getTargetUserRolesForOrg(organizationId).find(
         (role) => role.id === roleAssignmentId,
       );
       if (
         selectedRole &&
-        !["admin", "user"].includes(selectedRole.role_name || "")
+        !["storage_manager", "requester", "user"].includes(
+          selectedRole.role_name || "",
+        )
       ) {
         toast.error(t.userBanning.messages.onlyAdminUserRoles[lang]);
         return;
       }
     }
 
-    // Organization validation for main_admin: they can only ban from their active org
+    // Organization validation for tenant_admin: they can only ban from their active org
     if (
       (banType === "organization" || banType === "role") &&
-      isMainAdmin &&
+      isTenantAdmin &&
       !isSuper
     ) {
       if (activeOrgId && organizationId !== activeOrgId) {

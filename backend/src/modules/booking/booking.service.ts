@@ -387,9 +387,8 @@ export class BookingService {
 
     // 5.2. check permissions using RoleService
     const isElevated = this.roleService.hasAnyRole(req, [
-      "admin",
       "super_admin",
-      "main_admin",
+      "tenant_admin",
       "superVera",
       "storage_manager",
     ]);
@@ -518,9 +517,8 @@ export class BookingService {
 
     // 6.1 user role check using RoleService
     const isAdmin = this.roleService.hasAnyRole(req, [
-      "admin",
       "super_admin",
-      "main_admin",
+      "tenant_admin",
       "superVera",
       "storage_manager",
     ]);
@@ -600,9 +598,8 @@ export class BookingService {
 
     // 7.2 permissions check using RoleService
     const isAdmin = this.roleService.hasAnyRole(req, [
-      "admin",
       "super_admin",
-      "main_admin",
+      "tenant_admin",
       "superVera",
       "storage_manager",
     ]);
@@ -694,9 +691,8 @@ export class BookingService {
 
     // 8.2 check user role using RoleService
     const isAdmin = this.roleService.hasAnyRole(req, [
-      "admin",
       "super_admin",
-      "main_admin",
+      "tenant_admin",
       "superVera",
       "storage_manager",
     ]);

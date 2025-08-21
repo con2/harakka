@@ -5,10 +5,6 @@ export const userEditModal = {
     fi: "Muokkaa käyttäjää",
     en: "Edit User",
   },
-  description: {
-    fi: "Muokkaa käyttäjän profiilitietoja ja rooleja.",
-    en: "Edit the user's profile details and roles.",
-  },
   labels: {
     fullName: {
       fi: common.personalData.name.fi,
