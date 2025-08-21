@@ -1125,10 +1125,7 @@ export class BookingService {
         .from("booking_items")
         .select("booking_id")
         .eq("provider_organization_id", orgId);
-      if (itemsRes.error) {
-        console.log(itemsRes.error);
-        throw new Error("Failed to filter bookings by organization");
-      }
+      if (itemsRes.error) handleSupabaseError(itemsRes.error);
       const bookingIds = Array.from(
         new Set(
           ((itemsRes.data || []) as BookingItemRow[]).map((r) => r.booking_id),
@@ -1156,10 +1153,7 @@ export class BookingService {
           .select("booking_id,status")
           .in("booking_id", bookingIds)
           .eq("provider_organization_id", orgId);
-        if (itemsRes.error) {
-          console.log(itemsRes.error);
-          throw new Error("Failed to compute org confirmation status");
-        }
+        if (itemsRes.error) handleSupabaseError(itemsRes.error);
 
         const counts = new Map<string, { total: number; confirmed: number }>();
         (itemsRes.data || []).forEach((row) => {
@@ -1191,10 +1185,7 @@ export class BookingService {
     }
 
     const { error, count } = result;
-    if (error) {
-      console.log(error);
-      throw new Error("Failed to get matching bookings");
-    }
+    if (error) handleSupabaseError(error);
 
     const pagination_meta = getPaginationMeta(count, page, limit);
     return {
