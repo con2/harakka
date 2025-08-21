@@ -68,6 +68,29 @@ const BookingList = () => {
   const currentBookingLoading = useAppSelector(selectCurrentBookingLoading);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
 
+  // Compute org-specific gating for actions in the details modal
+  const ownedItemsForOrg = (
+    (selectedBooking as BookingWithDetails)?.booking_items || []
+  ).filter((it) => it.provider_organization_id === activeOrgId);
+  const hasAnyForOrgInSelected = ownedItemsForOrg.length > 0;
+  const hasPendingForOrgInSelected = ownedItemsForOrg.some(
+    (it) => it.status === "pending",
+  );
+
+  // Helper: sort items so that org-owned items are shown first
+  const sortItemsOwnedFirst = <
+    T extends { provider_organization_id?: string | null },
+  >(
+    items: T[],
+  ): T[] =>
+    items
+      ? [...items].sort((a, b) => {
+          const aOwned = a.provider_organization_id === activeOrgId ? 1 : 0;
+          const bOwned = b.provider_organization_id === activeOrgId ? 1 : 0;
+          return bOwned - aOwned;
+        })
+      : items;
+
   /*----------------------handlers----------------------------------*/
   const handleViewDetails = (booking: BookingUserViewRow) => {
     dispatch(selectBooking(booking));
@@ -85,8 +108,6 @@ const BookingList = () => {
   const handleSearchQuery = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
-
-  // No-op: sorting removed from frontend
 
   /*----------------------side-effects----------------------------------*/
   useEffect(() => {
@@ -164,6 +185,13 @@ const BookingList = () => {
         const isPending = booking.status === "pending";
         const isConfirmed = booking.status === "confirmed";
         const isDeleted = booking.status === "deleted";
+        // Org-specific flags may be attached by backend when org_id is provided
+        const orgFlags = (row.original as unknown as {
+          is_org_confirmed?: boolean;
+          is_org_has_items?: boolean;
+        }) || { is_org_confirmed: undefined, is_org_has_items: undefined };
+        const canOrgAct =
+          !!orgFlags.is_org_has_items && !orgFlags.is_org_confirmed;
 
         return (
           <div className="flex space-x-1">
@@ -179,7 +207,7 @@ const BookingList = () => {
               <Eye className="h-4 w-4" />
             </Button>
 
-            {isPending && (
+            {isPending && canOrgAct && (
               <>
                 <BookingConfirmButton
                   id={booking.id}
@@ -213,33 +241,68 @@ const BookingList = () => {
   ];
 
   const bookingItemsColumns: ColumnDef<
-    BookingItem & { storage_items: Partial<StorageItemRow> }
+    BookingItem & {
+      storage_items: Partial<StorageItemRow>;
+      provider_org?: { name?: string } | null;
+    }
   >[] = [
     {
       accessorKey: "item_name",
       header: t.bookingList.modal.bookingItems.columns.item[lang],
       cell: ({ row }) => {
+        const isOwned = row.original.provider_organization_id === activeOrgId;
         const itemName =
           row.original.storage_items.translations![lang].item_name;
-        return itemName.charAt(0).toUpperCase() + itemName.slice(1);
+        const label = itemName
+          ? itemName.charAt(0).toUpperCase() + itemName.slice(1)
+          : "";
+        return <span className={isOwned ? "" : "opacity-50"}>{label}</span>;
+      },
+    },
+    {
+      id: "provider_org",
+      header: "Organization",
+      cell: ({ row }) => {
+        const isOwned = row.original.provider_organization_id === activeOrgId;
+        const name = row.original.provider_org?.name ?? "-";
+        return <span className={isOwned ? "" : "opacity-50"}>{name}</span>;
       },
     },
     {
       accessorKey: "quantity",
       header: t.bookingList.modal.bookingItems.columns.quantity[lang],
+      cell: ({ row }) => {
+        const isOwned = row.original.provider_organization_id === activeOrgId;
+        return (
+          <span className={isOwned ? "" : "opacity-50"}>
+            {row.original.quantity}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "start_date",
       header: t.bookingList.modal.bookingItems.columns.startDate[lang],
       cell: ({ row }) => {
-        formatDate(new Date(row.original.start_date || ""), "d MMM yyyy");
+        const isOwned = row.original.provider_organization_id === activeOrgId;
+        const text = formatDate(
+          new Date(row.original.start_date || ""),
+          "d MMM yyyy",
+        );
+        return <span className={isOwned ? "" : "opacity-50"}>{text}</span>;
       },
     },
     {
       accessorKey: "end_date",
       header: t.bookingList.modal.bookingItems.columns.endDate[lang],
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
+      cell: ({ row }) => {
+        const isOwned = row.original.provider_organization_id === activeOrgId;
+        const text = formatDate(
+          new Date(row.original.end_date || ""),
+          "d MMM yyyy",
+        );
+        return <span className={isOwned ? "" : "opacity-50"}>{text}</span>;
+      },
     },
   ];
 
@@ -402,18 +465,18 @@ const BookingList = () => {
                       onPageChange={handleItemPageChange}
                       pageIndex={currentItemPage - 1}
                       columns={bookingItemsColumns}
-                      data={
+                      data={sortItemsOwnedFirst(
                         (selectedBooking as BookingWithDetails).booking_items ||
-                        []
-                      }
+                          [],
+                      )}
                     />
                   ) : !currentBookingLoading && itemPages === 1 ? (
                     <DataTable
                       columns={bookingItemsColumns}
-                      data={
+                      data={sortItemsOwnedFirst(
                         (selectedBooking as BookingWithDetails).booking_items ||
-                        []
-                      }
+                          [],
+                      )}
                     />
                   ) : null}
                 </div>
@@ -422,28 +485,30 @@ const BookingList = () => {
                 <div className="flex flex-col justify-center space-x-4">
                   <Separator />
                   <div className="flex flex-row items-center gap-4 mt-4 justify-center">
-                    {selectedBooking.status === "pending" && (
-                      <>
-                        <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">
-                            {t.bookingList.modal.buttons.confirm[lang]}
-                          </span>
-                          <BookingConfirmButton
-                            id={selectedBooking.id!}
-                            closeModal={() => setShowDetailsModal(false)}
-                          />
-                        </div>
-                        <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">
-                            {t.bookingList.modal.buttons.reject[lang]}
-                          </span>
-                          <BookingRejectButton
-                            id={selectedBooking.id!}
-                            closeModal={() => setShowDetailsModal(false)}
-                          />
-                        </div>
-                      </>
-                    )}
+                    {selectedBooking.status === "pending" &&
+                      hasAnyForOrgInSelected &&
+                      hasPendingForOrgInSelected && (
+                        <>
+                          <div className="flex flex-col items-center text-center">
+                            <span className="text-xs text-slate-600">
+                              {t.bookingList.modal.buttons.confirm[lang]}
+                            </span>
+                            <BookingConfirmButton
+                              id={selectedBooking.id!}
+                              closeModal={() => setShowDetailsModal(false)}
+                            />
+                          </div>
+                          <div className="flex flex-col items-center text-center">
+                            <span className="text-xs text-slate-600">
+                              {t.bookingList.modal.buttons.reject[lang]}
+                            </span>
+                            <BookingRejectButton
+                              id={selectedBooking.id!}
+                              closeModal={() => setShowDetailsModal(false)}
+                            />
+                          </div>
+                        </>
+                      )}
 
                     {selectedBooking.status === "confirmed" && (
                       <>

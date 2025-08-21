@@ -66,9 +66,12 @@ export class BookingItemsService {
     // Base query
     let query = supabase
       .from("booking_items")
-      .select(`*, storage_items (${storage_items_columns})` as "*", {
-        count: "exact",
-      })
+      .select(
+        `*, storage_items (${storage_items_columns}), provider_org:organizations(name)` as "*",
+        {
+          count: "exact",
+        },
+      )
       .eq("booking_id", booking_id);
 
     // Optionally filter by provider organization if provided

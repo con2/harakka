@@ -1173,15 +1173,20 @@ export class BookingService {
           counts.set(bid, cur);
         });
 
-        // Attach flag to each booking row
+        // Attach flags to each booking row
         (
-          result.data as Array<BookingPreview & { is_org_confirmed?: boolean }>
+          result.data as Array<
+            BookingPreview & {
+              is_org_confirmed?: boolean;
+              is_org_has_items?: boolean;
+            }
+          >
         ).forEach((b) => {
           const bid = b.id;
           const c = counts.get(bid);
-          b.is_org_confirmed = c
-            ? c.total > 0 && c.total === c.confirmed
-            : false;
+          const has = c ? c.total > 0 : false;
+          b.is_org_has_items = has;
+          b.is_org_confirmed = has ? c!.total === c!.confirmed : false;
         });
       }
     }
