@@ -386,6 +386,112 @@ export class BookingService {
     return { message: "Booking confirmed" };
   }
 
+  /**
+   * Confirm all booking_items owned by a provider organization for a given booking.
+   * If all items in the booking become confirmed, the parent booking is set to confirmed.
+   */
+  async confirmBookingItemsForOrg(
+    bookingId: string,
+    providerOrgId: string,
+    req: AuthRequest,
+  ) {
+    const supabase = req.supabase;
+
+    // Permission: must be admin in that organization (or global admin)
+    const isAdminOfOrg = this.roleService.hasAnyRole(
+      req,
+      ["super_admin", "tenant_admin", "superVera", "storage_manager"],
+      providerOrgId,
+    );
+    if (!isAdminOfOrg) {
+      throw new ForbiddenException(
+        "Not allowed to confirm items for this organization",
+      );
+    }
+
+    // Confirm (confirm) the items belonging to providerOrg for this booking (only pending ones)
+    const { error: updateErr } = await supabase
+      .from("booking_items")
+      .update({ status: "confirmed" })
+      .eq("booking_id", bookingId)
+      .eq("provider_organization_id", providerOrgId)
+      .eq("status", "pending");
+    if (updateErr) {
+      throw new BadRequestException("Failed to confirm booking items");
+    }
+
+    // Check if all items for this booking are now confirmed
+    const { data: items, error: itemsErr } = await supabase
+      .from("booking_items")
+      .select("status")
+      .eq("booking_id", bookingId);
+    if (itemsErr || !items) {
+      throw new BadRequestException("Failed to fetch booking items");
+    }
+
+    const allConfirmed = items.every((it) => it.status === "confirmed");
+    if (allConfirmed) {
+      const { error: bookingUpdateErr } = await supabase
+        .from("bookings")
+        .update({ status: "confirmed" })
+        .eq("id", bookingId);
+      if (bookingUpdateErr) {
+        throw new BadRequestException(
+          "Failed to confirm booking after all items confirmed",
+        );
+      }
+    }
+
+    return {
+      message: allConfirmed
+        ? "Items confirmed and booking confirmed"
+        : "Items confirmed for organization",
+    };
+  }
+
+  /**
+   * Reject all booking_items owned by a provider organization for a given booking.
+   * If any organization rejects, the parent booking is set to rejected.
+   */
+  async rejectBookingItemsForOrg(
+    bookingId: string,
+    providerOrgId: string,
+    req: AuthRequest,
+  ) {
+    const supabase = req.supabase;
+
+    const isAdminOfOrg = this.roleService.hasAnyRole(
+      req,
+      ["super_admin", "tenant_admin", "superVera", "storage_manager"],
+      providerOrgId,
+    );
+    if (!isAdminOfOrg) {
+      throw new ForbiddenException(
+        "Not allowed to reject items for this organization",
+      );
+    }
+
+    const { error: updateErr } = await supabase
+      .from("booking_items")
+      .update({ status: "cancelled" })
+      .eq("booking_id", bookingId)
+      .eq("provider_organization_id", providerOrgId)
+      .in("status", ["pending", "confirmed"]);
+    if (updateErr) {
+      throw new BadRequestException("Failed to reject booking items");
+    }
+
+    const { error: bookingUpdateErr } = await supabase
+      .from("bookings")
+      .update({ status: "rejected" })
+      .eq("id", bookingId);
+    if (bookingUpdateErr) {
+      throw new BadRequestException("Failed to reject booking");
+    }
+
+    return { message: "Items rejected and booking set to rejected" };
+  }
+
   // 5. update a Booking (Admin/SuperVera OR Owner)
   async updateBooking(
     booking_id: string,
@@ -444,7 +550,7 @@ export class BookingService {
 
       if (diffDays < 1) {
         warningMessage =
-          "Heads up: bookings made less than 24 hours in advance might not be approved in time.";
+          "Heads up: bookings made less than 24 hours in advance might not be confirmd in time.";
       }
 
       const totalDays = calculateDuration(
@@ -991,6 +1097,7 @@ export class BookingService {
     order_by: ValidBookingOrder,
     searchquery?: string,
     status_filter?: string,
+    orgId?: string,
   ) {
     const { from, to } = getPaginationRange(page, limit);
 
@@ -1010,6 +1117,30 @@ export class BookingService {
           `created_at_text.ilike.%${searchquery}%,` +
           `final_amount_text.ilike.%${searchquery}%`,
       );
+    }
+
+    // If orgId is provided, filter bookings to only those having items from that provider org
+    if (orgId) {
+      type BookingItemRow = { booking_id: string };
+      const itemsRes = await supabase
+        .from("booking_items")
+        .select("booking_id")
+        .eq("provider_organization_id", orgId);
+      if (itemsRes.error) {
+        console.log(itemsRes.error);
+        throw new Error("Failed to filter bookings by organization");
+      }
+      const bookingIds = Array.from(
+        new Set(
+          ((itemsRes.data || []) as BookingItemRow[]).map((r) => r.booking_id),
+        ),
+      );
+      if (bookingIds.length > 0) {
+        query.in("id", bookingIds);
+      } else {
+        // Force empty results if no matching bookings
+        query.eq("id", "00000000-0000-0000-0000-000000000000");
+      }
     }
 
     const result = await query;

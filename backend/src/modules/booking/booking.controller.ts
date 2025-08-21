@@ -139,6 +139,22 @@ export class BookingController {
     return this.bookingService.rejectBooking(id, userId, req);
   }
 
+  // Confirm all booking items for the active organization (from x-org-id)
+  @Put(":id/confirm-for-org")
+  async confirmForOrg(@Param("id") id: string, @Req() req: AuthRequest) {
+    const orgId = (req.headers["x-org-id"] as string) || "";
+    if (!orgId) throw new BadRequestException("x-org-id header is required");
+    return this.bookingService.confirmBookingItemsForOrg(id, orgId, req);
+  }
+
+  // reject all booking items for the active organization (from x-org-id)
+  @Put(":id/reject-for-org")
+  async rejectForOrg(@Param("id") id: string, @Req() req: AuthRequest) {
+    const orgId = (req.headers["x-org-id"] as string) || "";
+    if (!orgId) throw new BadRequestException("x-org-id header is required");
+    return this.bookingService.rejectBookingItemsForOrg(id, orgId, req);
+  }
+
   // cancels own booking by user or admin cancels any booking
   @Delete(":id/cancel")
   async cancel(@Param("id") id: string, @Req() req: AuthRequest) {
@@ -178,6 +194,7 @@ export class BookingController {
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
     @Query("ascending") ascending: string = "true",
+    @Query("org_id") org_id?: string,
   ) {
     const supabase = req.supabase;
     const pageNum = parseInt(page, 10);
@@ -191,6 +208,7 @@ export class BookingController {
       ordered_by,
       searchquery,
       status_filter,
+      org_id,
     );
   }
 
