@@ -69,6 +69,21 @@ export interface CreateBookingDto {
   }[];
 }
 
+/**
+ * Response from creating a booking - includes full booking details
+ */
+export interface CreateBookingResponse {
+  message: string;
+  booking: BookingWithDetails;
+  warning?: string;
+}
+
+/**
+ * Booking details from view_bookings_with_details database view
+ */
+export type BookingDetailsView =
+  Database["public"]["Views"]["view_bookings_with_details"]["Row"];
+
 export type BookingsTable = Database["public"]["Tables"]["bookings"];
 export type BookingsRow = BookingsTable["Row"];
 
@@ -91,6 +106,7 @@ export type BookingPreview = StripNull<BookingUserViewRow>;
 
 export type BookingWithDetails = BookingPreview & {
   booking_items: BookingItemWithDetails[] | null;
+  notes?: string | null; // Add notes property
 };
 
 export type BookingItemWithDetails = BookingItem & {

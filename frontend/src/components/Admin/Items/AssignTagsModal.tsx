@@ -45,10 +45,13 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
   const { lang } = useLanguage();
 
   useEffect(() => {
-    if (open && tags.length === 0) {
+    if (!open) return;
+    // Ensure full tag list exists
+    if (tags.length === 0) {
       void dispatch(fetchAllTags({ limit: 20 }));
-      void dispatch(fetchTagsForItem(itemId));
     }
+    // Always fetch the latest assigned tags for this item on open
+    void dispatch(fetchTagsForItem(itemId));
   }, [open, dispatch, itemId, tags.length]);
 
   useEffect(() => {
@@ -73,6 +76,9 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
           tagIds: localSelectedTags,
         }),
       ).unwrap();
+
+      // Refresh selected tags from the server to keep subsequent opens in sync
+      await dispatch(fetchTagsForItem(itemId)).unwrap();
 
       const updatedTags = tags.filter((tag) =>
         localSelectedTags.includes(tag.id),

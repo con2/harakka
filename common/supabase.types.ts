@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
@@ -154,6 +134,13 @@ export type Database = {
             foreignKeyName: "order_items_order_id_fkey"
             columns: ["booking_id"]
             isOneToOne: false
+            referencedRelation: "view_bookings_with_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
             referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["id"]
           },
@@ -259,91 +246,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "view_user_ban_status"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      organization_items: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          id: string
-          is_active: boolean
-          is_deleted: boolean
-          organization_id: string
-          owned_quantity: number
-          storage_item_id: string
-          storage_location_id: string
-          updated_at: string | null
-          updated_by: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          is_active?: boolean
-          is_deleted?: boolean
-          organization_id: string
-          owned_quantity?: number
-          storage_item_id: string
-          storage_location_id: string
-          updated_at?: string | null
-          updated_by?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          is_active?: boolean
-          is_deleted?: boolean
-          organization_id?: string
-          owned_quantity?: number
-          storage_item_id?: string
-          storage_location_id?: string
-          updated_at?: string | null
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "erm_organization_items_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "organization_items_storage_item_id_fkey"
-            columns: ["storage_item_id"]
-            isOneToOne: false
-            referencedRelation: "storage_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "organization_items_storage_item_id_fkey"
-            columns: ["storage_item_id"]
-            isOneToOne: false
-            referencedRelation: "view_item_location_summary"
-            referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "organization_items_storage_item_id_fkey"
-            columns: ["storage_item_id"]
-            isOneToOne: false
-            referencedRelation: "view_item_ownership_summary"
-            referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "organization_items_storage_item_id_fkey"
-            columns: ["storage_item_id"]
-            isOneToOne: false
-            referencedRelation: "view_manage_storage_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "organization_items_storage_location_id_fkey"
-            columns: ["storage_location_id"]
-            isOneToOne: false
-            referencedRelation: "storage_locations"
             referencedColumns: ["id"]
           },
         ]
@@ -1264,6 +1166,19 @@ export type Database = {
       }
     }
     Views: {
+      view_bookings_with_details: {
+        Row: {
+          booking_items: Json | null
+          booking_number: string | null
+          created_at: string | null
+          id: string | null
+          notes: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       view_bookings_with_user_info: {
         Row: {
           booking_number: string | null
@@ -1417,27 +1332,39 @@ export type Database = {
         Args: { in_limit: number; in_offset: number }
         Returns: Json
       }
+      get_all_full_orders: {
+        Args: { in_limit?: number; in_offset?: number }
+        Returns: Json
+      }
       get_full_booking: {
         Args: { booking_id: string }
+        Returns: Json
+      }
+      get_full_order: {
+        Args: { order_id: string }
         Returns: Json
       }
       get_full_user_booking: {
         Args: { in_limit: number; in_offset: number; in_user_id: string }
         Returns: Json
       }
+      get_full_user_order: {
+        Args: { in_limit?: number; in_offset?: number; in_user_id: string }
+        Returns: Json
+      }
       get_latest_ban_record: {
         Args: { check_user_id: string }
         Returns: {
-          id: string
-          ban_type: string
           action: string
           ban_reason: string
-          is_permanent: boolean
-          banned_by: string
+          ban_type: string
           banned_at: string
-          unbanned_at: string
+          banned_by: string
+          id: string
+          is_permanent: boolean
           organization_id: string
           role_assignment_id: string
+          unbanned_at: string
         }[]
       }
       get_request_user_id: {
@@ -1454,15 +1381,15 @@ export type Database = {
       get_user_roles: {
         Args: { user_uuid: string }
         Returns: {
-          id: string
-          user_id: string
-          organization_id: string
-          role_id: string
-          is_active: boolean
           created_at: string
-          role_name: string
+          id: string
+          is_active: boolean
+          organization_id: string
           organization_name: string
           organization_slug: string
+          role_id: string
+          role_name: string
+          user_id: string
         }[]
       }
       is_admin: {
@@ -1653,9 +1580,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       notification_channel: ["in_app", "web_push", "email"],
@@ -1693,4 +1617,3 @@ export const Constants = {
     },
   },
 } as const
-

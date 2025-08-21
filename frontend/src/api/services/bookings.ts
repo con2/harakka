@@ -1,6 +1,10 @@
 import { ApiResponse, ApiSingleResponse } from "@common/response.types";
 import { api } from "../axios";
-import { CreateBookingDto, ValidBookingOrder } from "@/types";
+import {
+  CreateBookingDto,
+  CreateBookingResponse,
+  ValidBookingOrder,
+} from "@/types";
 import {
   BookingItemWithDetails,
   BookingPreview,
@@ -16,11 +20,11 @@ export const bookingsApi = {
   /**
    * Create a new booking from cart items
    * @param bookingData - Booking data including items
-   * @returns Promise with created booking
+   * @returns Promise with created booking response
    */
   createBooking: async (
     bookingData: CreateBookingDto,
-  ): Promise<BookingPreview> => {
+  ): Promise<CreateBookingResponse> => {
     return api.post("/bookings", bookingData);
   },
 

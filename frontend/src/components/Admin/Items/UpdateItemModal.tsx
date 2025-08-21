@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import {
   fetchAllTags,
+  fetchTagsForItem,
   selectAllTags,
   selectSelectedTags,
   selectTagsLoading,
@@ -77,6 +78,13 @@ const UpdateItemModal = ({
     if (!tags || tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
     if (locations.length === 0) void dispatch(fetchAllLocations({ limit: 20 }));
   }, [dispatch, locations.length, formData.id, tags]);
+
+  // Always refresh assigned tags for this item when the modal opens or item changes
+  useEffect(() => {
+    if (initialData?.id) {
+      void dispatch(fetchTagsForItem(initialData.id));
+    }
+  }, [dispatch, initialData?.id]);
 
   useEffect(() => {
     if (selectedTags) {
@@ -174,6 +182,8 @@ const UpdateItemModal = ({
           data: { ...formData, tags: localSelectedTags },
         }),
       ).unwrap();
+      // Ensure tag slice reflects latest assignments for next open
+      await dispatch(fetchTagsForItem(formData.id));
       toast.success(t.updateItemModal.messages.success[lang]);
       onClose();
     } catch (error) {
