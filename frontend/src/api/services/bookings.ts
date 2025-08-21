@@ -54,8 +54,13 @@ export const bookingsApi = {
    */
   getBookingByID: async (
     booking_id: string,
+    orgId?: string,
   ): Promise<ApiSingleResponse<BookingPreview>> => {
-    return api.get(`/booking-items/${booking_id}`);
+    return api.get(
+      orgId
+        ? `/booking-items/${booking_id}?org_id=${encodeURIComponent(orgId)}`
+        : `/booking-items/${booking_id}`,
+    );
   },
 
   /**
@@ -67,9 +72,11 @@ export const bookingsApi = {
   getBookingItems: async (
     booking_id: string,
     item_details: string[] = ["translations"],
+    orgId?: string,
   ): Promise<ApiResponse<BookingItemWithDetails>> => {
+    const base = `/booking-items/${booking_id}?item-details=${item_details.join(",")}`;
     return api.get(
-      `/booking-items/${booking_id}?item-details=${item_details.join(",")}`,
+      orgId ? `${base}&org_id=${encodeURIComponent(orgId)}` : base,
     );
   },
 
@@ -94,6 +101,18 @@ export const bookingsApi = {
   },
 
   /**
+   * Confirm booking items for the active organization (uses x-org-id header)
+   */
+  confirmBookingForOrg: async (
+    bookingId: string,
+    orgId: string,
+  ): Promise<{ message: string }> => {
+    return api.put(`/bookings/${bookingId}/confirm-for-org`, undefined, {
+      headers: { "x-org-id": orgId },
+    });
+  },
+
+  /**
    * Update an existing booking
    * @param bookingIdId - booking ID to update
    * @param items - Updated items data
@@ -113,6 +132,18 @@ export const bookingsApi = {
    */
   rejectBooking: async (bookingId: string): Promise<{ message: string }> => {
     return api.put(`/bookings/${bookingId}/reject`);
+  },
+
+  /**
+   * Reject booking items for the active organization (uses x-org-id header)
+   */
+  rejectBookingForOrg: async (
+    bookingId: string,
+    orgId: string,
+  ): Promise<{ message: string }> => {
+    return api.put(`/bookings/${bookingId}/reject-for-org`, undefined, {
+      headers: { "x-org-id": orgId },
+    });
   },
 
   /**
@@ -174,10 +205,12 @@ export const bookingsApi = {
     limit: number,
     searchquery?: string,
     status_filter?: BookingStatus,
+    orgId?: string,
   ): Promise<ApiResponse<BookingPreview>> => {
     let call = `/bookings/ordered?order=${ordered_by}&ascending=${ascending}&page=${page}&limit=${limit}`;
     if (searchquery) call += `&search=${searchquery}`;
     if (status_filter) call += `&status=${status_filter}`;
+    if (orgId) call += `&org_id=${encodeURIComponent(orgId)}`;
     return await api.get(call);
   },
 
