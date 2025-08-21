@@ -45,6 +45,7 @@ import { StorageItemRow } from "@common/items/storage-items.types";
 import Spinner from "@/components/Spinner";
 import { DataTable } from "@/components/ui/data-table";
 import { BookingPreview } from "@common/bookings/booking.types";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 const BookingList = () => {
   const dispatch = useAppDispatch();
@@ -69,6 +70,7 @@ const BookingList = () => {
   );
   const [currentItemPage, setCurrentItemPage] = useState(1);
   const currentBookingLoading = useAppSelector(selectCurrentBookingLoading);
+  const activeOrgId = useAppSelector(selectActiveOrganizationId);
 
   /*----------------------handlers----------------------------------*/
   const handleViewDetails = (booking: BookingUserViewRow) => {
@@ -114,6 +116,7 @@ const BookingList = () => {
     dispatch,
     currentPage,
     ascending,
+    activeOrgId,
   ]);
 
   const columns: ColumnDef<BookingPreview>[] = [
