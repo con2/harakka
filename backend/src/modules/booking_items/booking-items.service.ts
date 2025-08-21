@@ -53,6 +53,7 @@ export class BookingItemsService {
     page: number = 1,
     limit: number = 10,
     storage_items_columns: string = "translations",
+    provider_organization_id?: string,
   ): Promise<
     ApiResponse<
       BookingItemsRow & {
@@ -62,17 +63,24 @@ export class BookingItemsService {
   > {
     const { from, to } = getPaginationRange(page, limit);
 
-    const result: PostgrestResponse<
-      BookingItemsRow & {
-        storage_items: Partial<StorageItemRow>;
-      }
-    > = await supabase
+    // Base query
+    let query = supabase
       .from("booking_items")
       .select(`*, storage_items (${storage_items_columns})` as "*", {
         count: "exact",
       })
-      .eq("booking_id", booking_id)
-      .range(from, to);
+      .eq("booking_id", booking_id);
+
+    // Optionally filter by provider organization if provided
+    if (provider_organization_id) {
+      query = query.eq("provider_organization_id", provider_organization_id);
+    }
+
+    const result: PostgrestResponse<
+      BookingItemsRow & {
+        storage_items: Partial<StorageItemRow>;
+      }
+    > = await query.range(from, to);
 
     if (result.error) {
       console.error(result.error);

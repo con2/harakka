@@ -10,6 +10,7 @@ import {
   Req,
 } from "@nestjs/common";
 import { BookingItemsService } from "./booking-items.service";
+import { RoleService } from "../role/role.service";
 import {
   BookingItemsInsert,
   BookingItemsUpdate,
@@ -19,7 +20,10 @@ import { Public } from "src/decorators/roles.decorator";
 
 @Controller("booking-items")
 export class BookingItemsController {
-  constructor(private readonly bookingItemsService: BookingItemsService) {}
+  constructor(
+    private readonly bookingItemsService: BookingItemsService,
+    private readonly roleService: RoleService,
+  ) {}
 
   /**
    * Get all booked items from the backend
@@ -59,10 +63,23 @@ export class BookingItemsController {
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
     @Query("item-details") storage_item_columns: string = "translations",
+    @Query("org_id") org_id?: string,
   ) {
     const supabase = req.supabase;
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
+
+    // Optional per-organization filtering for admins viewing bookings
+    const activeOrgId = org_id ?? undefined;
+    let providerOrgFilter: string | undefined = undefined;
+    if (activeOrgId) {
+      const isOrgAdmin = this.roleService.hasAnyRole(
+        req,
+        ["super_admin", "tenant_admin", "superVera", "storage_manager"],
+        activeOrgId,
+      );
+      if (isOrgAdmin) providerOrgFilter = activeOrgId;
+    }
 
     return await this.bookingItemsService.getBookingItems(
       supabase,
@@ -70,6 +87,7 @@ export class BookingItemsController {
       pageNumber,
       limitNumber,
       storage_item_columns,
+      providerOrgFilter,
     );
   }
 
