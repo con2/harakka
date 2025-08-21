@@ -87,6 +87,13 @@ export class RolesGuard implements CanActivate {
 
     // Determine organisation context when sameOrg flag is set
     const orgCtx = sameOrg ? req.activeRoleContext?.organizationId : undefined;
+    const roleCtx = sameOrg ? req.activeRoleContext?.roleName : undefined;
+    // If sameOrg is required, but orgId or roleName is missing — forbid access
+    if (sameOrg && (!orgCtx || !roleCtx)) {
+      throw new ForbiddenException(
+        "Organization context or role is missing (check request headers (Postman) or activeRoleContextfrontend)",
+      );
+    }
 
     // Evaluate role matches
     const matches = userRoles.filter(
