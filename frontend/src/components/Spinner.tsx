@@ -5,7 +5,7 @@ type SpinnerProps = {
   padding?: string;
   containerClasses?: string;
   loaderClasses?: string;
-  text?: string
+  text?: string;
 };
 
 function Spinner({

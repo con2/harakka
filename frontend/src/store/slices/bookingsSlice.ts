@@ -13,6 +13,7 @@ import {
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { BookingItemUpdate } from "@common/bookings/booking-items.types";
 import { Booking } from "@common/bookings/booking.types";
+import { selectActiveOrganizationId } from "./rolesSlice";
 
 // Create initial state
 const initialState: BookingsState = {
@@ -72,9 +73,11 @@ export const getUserBookings = createAsyncThunk(
 // get booking by ID
 export const getBookingByID = createAsyncThunk(
   "bookings/getBookingByID",
-  async (booking_id: string, { rejectWithValue }) => {
+  async (booking_id: string, { rejectWithValue, getState }) => {
     try {
-      return await bookingsApi.getBookingByID(booking_id);
+      const state = getState() as RootState;
+      const orgId = selectActiveOrganizationId(state) || undefined;
+      return await bookingsApi.getBookingByID(booking_id, orgId);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch user bookings"),
@@ -100,9 +103,15 @@ export const getBookingsCount = createAsyncThunk(
 // get items for a booking
 export const getBookingItems = createAsyncThunk(
   "bookings/getBookingItems",
-  async (booking_id: string, { rejectWithValue }) => {
+  async (booking_id: string, { rejectWithValue, getState }) => {
     try {
-      return await bookingsApi.getBookingItems(booking_id);
+      const state = getState() as RootState;
+      const orgId = selectActiveOrganizationId(state) || undefined;
+      return await bookingsApi.getBookingItems(
+        booking_id,
+        ["translations"],
+        orgId,
+      );
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch user bookings"),
@@ -130,9 +139,11 @@ export const getOrderedBookings = createAsyncThunk(
       ascending?: boolean;
       status_filter?: BookingStatus;
     },
-    { rejectWithValue },
+    { rejectWithValue, getState },
   ) => {
     try {
+      const state = getState() as RootState;
+      const orgId = selectActiveOrganizationId(state) || undefined;
       return await bookingsApi.getOrderedBookings(
         ordered_by,
         ascending,
@@ -140,6 +151,7 @@ export const getOrderedBookings = createAsyncThunk(
         limit,
         searchquery,
         status_filter,
+        orgId,
       );
     } catch (error: unknown) {
       return rejectWithValue(
@@ -205,6 +217,28 @@ export const updateBooking = createAsyncThunk<
   },
 );
 
+// Confirm booking items for the active organization
+export const confirmBookingForOrg = createAsyncThunk<
+  { message: string; bookingId: string },
+  string,
+  { rejectValue: string }
+>(
+  "bookings/confirmForOrg",
+  async (bookingId, { rejectWithValue, getState }) => {
+    try {
+      const state = getState() as RootState;
+      const orgId = selectActiveOrganizationId(state);
+      if (!orgId) throw new Error("No active organization selected");
+      const response = await bookingsApi.confirmBookingForOrg(bookingId, orgId);
+      return { ...response, bookingId };
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to confirm booking items for org"),
+      );
+    }
+  },
+);
+
 // Reject booking thunk
 export const rejectBooking = createAsyncThunk<
   { message: string; bookingId: string },
@@ -261,6 +295,25 @@ export const deleteBooking = createAsyncThunk<string, string>(
     }
   },
 );
+
+// Reject booking items for the active organization
+export const rejectBookingForOrg = createAsyncThunk<
+  { message: string; bookingId: string },
+  string,
+  { rejectValue: string }
+>("bookings/rejectForOrg", async (bookingId, { rejectWithValue, getState }) => {
+  try {
+    const state = getState() as RootState;
+    const orgId = selectActiveOrganizationId(state);
+    if (!orgId) throw new Error("No active organization selected");
+    const response = await bookingsApi.rejectBookingForOrg(bookingId, orgId);
+    return { ...response, bookingId };
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to reject booking items for org"),
+    );
+  }
+});
 
 // Return items thunk
 export const returnItems = createAsyncThunk<
@@ -440,6 +493,27 @@ export const bookingsSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "confirm";
       })
+      // Confirm for org
+      .addCase(confirmBookingForOrg.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(confirmBookingForOrg.fulfilled, (state, action) => {
+        state.loading = false;
+        const bookingId = action.payload.bookingId;
+        // If the backend rolled up to confirmed, reflect that where present
+        state.bookings.forEach((b) => {
+          if (b.id === bookingId && b.status === "pending") {
+            // stay pending unless the backend set confirmed via refetch elsewhere
+          }
+        });
+      })
+      .addCase(confirmBookingForOrg.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "confirm";
+      })
       // Update booking
       .addCase(updateBooking.pending, (state) => {
         state.loading = true;
@@ -489,6 +563,27 @@ export const bookingsSlice = createSlice({
         });
       })
       .addCase(rejectBooking.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "reject";
+      })
+      // Reject for org
+      .addCase(rejectBookingForOrg.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(rejectBookingForOrg.fulfilled, (state, action) => {
+        state.loading = false;
+        const bookingId = action.payload.bookingId;
+        state.bookings.forEach((booking) => {
+          if (booking.id === bookingId) booking.status = "rejected";
+        });
+        state.userBookings.forEach((booking) => {
+          if (booking.id === bookingId) booking.status = "rejected";
+        });
+      })
+      .addCase(rejectBookingForOrg.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "reject";
