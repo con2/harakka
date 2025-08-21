@@ -90,12 +90,13 @@ async function main() {
     }
     // Draft content
     const content =
-      `// Draft translation module for ${name}\n` +
+      `import { common } from "./common";\n\n` +
       `export const ${moduleName} = {\n` +
+      `  stringTitle: {\n` +
       languages
-        .map((lang) => `  ${lang}: {\n    // TODO: Add keys\n  }`)
-        .join(",\n") +
-      `\n};\n`;
+        .map((lang) => `    ${lang}: "", // TODO: fill keys`)
+        .join("\n") +
+      `\n  },\n  // TODO: Add more keys\n};\n`;
 
     fs.writeFileSync(filePath, content, "utf8");
     console.log(chalk.green(`Created: ${filePath}`));
