@@ -9,6 +9,7 @@ import {
   Put,
   Req,
   UnauthorizedException,
+  ForbiddenException,
   BadRequestException,
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
@@ -17,7 +18,7 @@ import { CreateBookingDto } from "./dto/create-booking.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
 import { UpdateBookingDto } from "./dto/update-booking.dto";
-import { Public, Roles } from "src/decorators/roles.decorator";
+import { Roles } from "src/decorators/roles.decorator";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Controller("bookings")
@@ -27,8 +28,8 @@ export class BookingController {
     private readonly roleService: RoleService,
   ) {}
 
-  // gets all bookings - use case: admin
-  @Public()
+  // gets all bookings - use case: elevated admins only
+  @Roles(["super_admin", "superVera"])
   @Get()
   async getAll(
     @Req() req: AuthRequest,
@@ -217,7 +218,35 @@ export class BookingController {
       "super_admin",
       "superVera",
     ]);
-    const effectiveOrgId = isElevated ? undefined : org_id;
+    // For non-elevated roles, require scoping to an organization:
+    // - If org_id is missing and the user has exactly one org, fallback to it
+    // - Otherwise require org_id explicitly and validate membership
+    let effectiveOrgId = isElevated ? org_id || undefined : org_id;
+    if (!isElevated) {
+      let requestedOrg = (org_id ?? "").trim();
+      if (!requestedOrg) {
+        const userOrgs = this.roleService.getUserOrganizations(req);
+        if (userOrgs.length === 1) {
+          requestedOrg = userOrgs[0].organization_id;
+        }
+      }
+      if (!requestedOrg) {
+        throw new BadRequestException(
+          "org_id query param is required for this role",
+        );
+      }
+      const isMember = this.roleService.hasAnyRole(
+        req,
+        ["tenant_admin", "storage_manager"],
+        requestedOrg,
+      );
+      if (!isMember) {
+        throw new ForbiddenException(
+          "You don't have access to this organization's bookings",
+        );
+      }
+      effectiveOrgId = requestedOrg;
+    }
     return this.bookingService.getOrderedBookings(
       supabase,
       pageNum,
