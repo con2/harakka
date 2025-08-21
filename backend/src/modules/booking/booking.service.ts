@@ -1114,8 +1114,7 @@ export class BookingService {
         `booking_number.ilike.%${searchquery}%,` +
           `status.ilike.%${searchquery}%,` +
           `full_name.ilike.%${searchquery}%,` +
-          `created_at_text.ilike.%${searchquery}%,` +
-          `final_amount_text.ilike.%${searchquery}%`,
+          `created_at_text.ilike.%${searchquery}%`,
       );
     }
 
