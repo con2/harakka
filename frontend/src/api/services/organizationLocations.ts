@@ -20,10 +20,13 @@ export const orgLocationsApi = {
    * @returns Promise with paginated org locations
    */
   getAllOrgLocs: (
-    page: number = 1,
-    limit: number = 10,
+    orgId: string,
+    pageSize: number = 10,
+    currentPage: number = 1,
   ): Promise<ApiResponse<OrgLocationWithNames[]>> =>
-    api.get(`/organization-locations?page=${page}&limit=${limit}`),
+    api.get(
+      `/organization-locations/organization/${orgId}?pageSize=${pageSize}&currentPage=${currentPage}`,
+    ),
 
   /**
    * Get a specific org location by ID
@@ -36,20 +39,6 @@ export const orgLocationsApi = {
     limit: number = 10,
   ): Promise<OrgLocationWithNames> =>
     api.get(`/organization-locations/${id}?page=${page}&limit=${limit}`),
-
-  /**
-   * Get locations of an org
-   * @param id - Org ID
-   * @returns Promise with the requested org locations
-   */
-  getOrgLocsByOrgId: (
-    id: string,
-    page: number = 1,
-    limit: number = 10,
-  ): Promise<ApiResponse<OrgLocationWithNames[]>> =>
-    api.get(
-      `organization-locations/organization/${id}?page=${page}&limit=${limit}`,
-    ),
 
   /**
    * Create a new org location

@@ -11,8 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchLocationsByOrgId,
-  selectCurrentOrgLocations,
+  fetchAllOrgLocations,
+  selectOrgLocations,
 } from "@/store/slices/organizationLocationsSlice";
 import { createItemDto } from "@/store/utils/validate";
 import { ItemFormTag } from "@/types";
@@ -59,7 +59,7 @@ import { ErrorMessage } from "@hookform/error-message";
 /* eslint-disable react-hooks/exhaustive-deps */
 
 function AddItemForm() {
-  const orgLocations = useAppSelector(selectCurrentOrgLocations);
+  const orgLocations = useAppSelector(selectOrgLocations);
   const editItem = useAppSelector(selectSelectedItem);
   const { lang: appLang } = useLanguage();
   const [tagSearchValue, setTagSearchValue] = useState("");
@@ -196,7 +196,7 @@ function AddItemForm() {
   /*------------------side effects-------------------------------------------*/
   useEffect(() => {
     if (org && orgLocations.length < 1)
-      void dispatch(fetchLocationsByOrgId(org.id));
+      void dispatch(fetchAllOrgLocations({ orgId: org.id, pageSize: 20 }));
   }, []);
 
   useEffect(() => {

@@ -75,12 +75,6 @@ const UpdateItemModal = ({
   const { lang } = useLanguage();
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
 
-  // Get the available locations for the org
-  const validLocations = locations.filter((loc) => {
-    const ol = orgLocations.filter((ol) => ol.organization_id === activeOrgId);
-    return ol.some((l) => l.storage_location_id === loc.id);
-  });
-
   // Prefill the form with initial data if available
   useEffect(() => {
     if (initialData) setFormData(initialData); // Set form data directly from initialData
@@ -90,8 +84,17 @@ const UpdateItemModal = ({
     if (!tags || tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
     if (locations.length === 0) void dispatch(fetchAllLocations({ limit: 20 }));
     if (orgLocations.length === 0)
-      void dispatch(fetchAllOrgLocations({ page: 1, limit: 50 }));
-  }, [dispatch, locations.length, formData.id, tags, orgLocations]);
+      void dispatch(
+        fetchAllOrgLocations({ orgId: activeOrgId!, pageSize: 100 }),
+      );
+  }, [
+    dispatch,
+    locations.length,
+    formData.id,
+    tags,
+    orgLocations,
+    activeOrgId,
+  ]);
 
   // Always refresh assigned tags for this item when the modal opens or item changes
   useEffect(() => {
@@ -386,9 +389,12 @@ const UpdateItemModal = ({
                         />
                       </SelectTrigger>
                       <SelectContent>
-                        {validLocations.map((location) => (
-                          <SelectItem key={location.id} value={location.id}>
-                            {location.name}
+                        {orgLocations.map((location) => (
+                          <SelectItem
+                            key={location.id}
+                            value={location.storage_location_id}
+                          >
+                            {location.storage_locations?.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

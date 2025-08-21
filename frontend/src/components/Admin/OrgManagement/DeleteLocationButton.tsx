@@ -1,7 +1,7 @@
 import { useAppDispatch } from "@/store/hooks";
 import {
   deleteOrgLocationWithStorage,
-  fetchLocationsByOrgId,
+  fetchAllOrgLocations,
 } from "@/store/slices/organizationLocationsSlice";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
@@ -47,7 +47,13 @@ const DeleteLocationButton = ({
         );
 
         // Refresh the organization locations list
-        await dispatch(fetchLocationsByOrgId(organizationId));
+        await dispatch(
+          fetchAllOrgLocations({
+            orgId: organizationId,
+            pageSize: 100,
+            currentPage: 1,
+          }),
+        );
       },
     });
   };

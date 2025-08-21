@@ -10,9 +10,8 @@ import {
 } from "@/types/organizationLocation";
 
 const initialState: OrgLocationsState = {
-  orgLocations: [], // All locations, regardless of org
-  currentOrgLocation: null, // Selected org location
-  currentOrgLocations: [], // Active org locations
+  orgLocations: [],
+  currentOrgLocation: null,
   loading: false,
   error: null,
   totalPages: 0,
@@ -24,12 +23,23 @@ const initialState: OrgLocationsState = {
  */
 export const fetchAllOrgLocations = createAsyncThunk(
   "orgLocations/fetchAll",
-  async ({ page = 1, limit = 10 }: { page?: number; limit?: number }) => {
-    const response = await orgLocationsApi.getAllOrgLocs(page, limit);
+  async ({
+    orgId,
+    pageSize = 10,
+    currentPage = 1,
+  }: {
+    orgId: string;
+    pageSize?: number;
+    currentPage?: number;
+  }) => {
+    const response = await orgLocationsApi.getAllOrgLocs(
+      orgId,
+      pageSize,
+      currentPage,
+    );
     return response;
   },
 );
-
 /**
  * Async thunk to fetch a specific org location by ID
  */
@@ -38,15 +48,6 @@ export const fetchOrgLocationById = createAsyncThunk(
   async (id: string) => {
     const response = await orgLocationsApi.getOrgLocById(id);
     return response;
-  },
-);
-/**
- * Async thunk to fetch a locations of specific org ID
- */
-export const fetchLocationsByOrgId = createAsyncThunk(
-  "orgLocations/fetchLocationsByOrgId",
-  async (id: string) => {
-    return await orgLocationsApi.getOrgLocsByOrgId(id);
   },
 );
 
@@ -130,7 +131,6 @@ const orgLocationsSlice = createSlice({
       state.currentOrgLocation = null;
     },
     clearOrgLocations: (state) => {
-      state.currentOrgLocations = [];
       state.orgLocations = [];
       state.currentOrgLocation = null;
       state.error = null;
@@ -168,20 +168,6 @@ const orgLocationsSlice = createSlice({
         state.error = action.error.message || "Failed to fetch org location";
       })
 
-      // Fetch org location by ID
-      .addCase(fetchLocationsByOrgId.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchLocationsByOrgId.fulfilled, (state, action) => {
-        state.loading = false;
-        state.currentOrgLocations = action.payload.data ?? [];
-      })
-      .addCase(fetchLocationsByOrgId.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || "Failed to fetch org locations";
-      })
-
       // Create org location
       .addCase(createOrgLocation.pending, (state) => {
         state.loading = true;
@@ -190,7 +176,6 @@ const orgLocationsSlice = createSlice({
       .addCase(createOrgLocation.fulfilled, (state, action) => {
         state.loading = false;
         state.orgLocations.push(action.payload);
-        state.currentOrgLocations.push(action.payload);
       })
       .addCase(createOrgLocation.rejected, (state, action) => {
         state.loading = false;
@@ -245,7 +230,7 @@ const orgLocationsSlice = createSlice({
       })
       .addCase(createOrgLocationWithStorage.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentOrgLocations.push(action.payload);
+        state.orgLocations.push(action.payload);
       })
       .addCase(createOrgLocationWithStorage.rejected, (state, action) => {
         state.loading = false;
@@ -260,11 +245,11 @@ const orgLocationsSlice = createSlice({
       })
       .addCase(updateOrgLocationWithStorage.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.currentOrgLocations.findIndex(
+        const index = state.orgLocations.findIndex(
           (orgLoc) => orgLoc.id === action.payload.id,
         );
         if (index !== -1) {
-          state.currentOrgLocations[index] = action.payload;
+          state.orgLocations[index] = action.payload;
         }
         if (state.currentOrgLocation?.id === action.payload.id) {
           state.currentOrgLocation = action.payload;
@@ -283,7 +268,7 @@ const orgLocationsSlice = createSlice({
       })
       .addCase(deleteOrgLocationWithStorage.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentOrgLocations = state.currentOrgLocations.filter(
+        state.orgLocations = state.orgLocations.filter(
           (orgLoc) => orgLoc.id !== action.payload,
         );
         if (state.currentOrgLocation?.id === action.payload) {
@@ -314,8 +299,6 @@ export const selectOrgLocationsError = (state: RootState) =>
   state.orgLocations.error;
 export const selectCurrentOrgLocation = (state: RootState) =>
   state.orgLocations.currentOrgLocation;
-export const selectCurrentOrgLocations = (state: RootState) =>
-  state.orgLocations.currentOrgLocations;
 export const selectOrgLocationsTotalPages = (state: RootState) =>
   state.orgLocations.totalPages;
 export const selectOrgLocationsCurrentPage = (state: RootState) =>

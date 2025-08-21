@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import {
   updateOrgLocationWithStorage,
-  fetchLocationsByOrgId,
+  fetchAllOrgLocations,
 } from "@/store/slices/organizationLocationsSlice";
 import {
   Dialog,
@@ -188,7 +188,13 @@ const EditLocationModal = ({
       ).unwrap();
 
       // Refresh the organization locations list
-      await dispatch(fetchLocationsByOrgId(location.organization_id));
+      await dispatch(
+        fetchAllOrgLocations({
+          orgId: location.organization_id,
+          pageSize: 100,
+          currentPage: 1,
+        }),
+      );
 
       toast.success(t.editLocationModal.messages.success[lang]);
       onClose();

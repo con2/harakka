@@ -8,8 +8,8 @@ import {
   selectedOrganization,
 } from "@/store/slices/organizationSlice";
 import {
-  fetchLocationsByOrgId,
-  selectCurrentOrgLocations,
+  fetchAllOrgLocations,
+  selectOrgLocations,
   selectOrgLocationsLoading,
   clearOrgLocations,
   selectOrgLocationsError,
@@ -30,7 +30,7 @@ const OrganizationPage = () => {
 
   // Get data from Redux store
   const organization = useAppSelector(selectedOrganization);
-  const orgLocations = useAppSelector(selectCurrentOrgLocations);
+  const orgLocations = useAppSelector(selectOrgLocations);
   const organizationLoading = useAppSelector(selectOrganizationLoading);
   const locationsLoading = useAppSelector(selectOrgLocationsLoading);
   const organizationError = useAppSelector(selectOrganizationError);
@@ -65,7 +65,13 @@ const OrganizationPage = () => {
             const org = orgAction.payload;
             if (org?.id) {
               // Fetch locations using the organization ID
-              await dispatch(fetchLocationsByOrgId(org.id)).unwrap();
+              await dispatch(
+                fetchAllOrgLocations({
+                  orgId: org.id,
+                  pageSize: 100,
+                  currentPage: 1,
+                }),
+              ).unwrap();
 
               // Verify we're still on the same page after locations fetch
               if (activeRequestSlugRef.current !== org_slug) {
