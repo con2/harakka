@@ -5,6 +5,8 @@ import {
 } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
+import { UpdateBookingDto } from "./dto/update-booking.dto";
+import { BookingItemsInsert } from "../booking_items/interfaces/booking-items.interfaces";
 import {
   calculateAvailableQuantity,
   calculateDuration,
@@ -24,9 +26,7 @@ import { Database } from "@common/supabase.types";
 import { Translations } from "./types/translations.types";
 import {
   CancelBookingResponse,
-  BookingItemInsert,
   BookingItemRow,
-  BookingWithItems,
   StorageItemsRow,
   BookingRow,
   ValidBookingOrder,
@@ -171,24 +171,24 @@ export class BookingService {
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
     }
-    // variables for date check
+
     let warningMessage: string | null = null;
 
     for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
 
       const start = new Date(start_date);
-      const differenceInDays = dayDiffFromToday(start);
+      const diffDays = dayDiffFromToday(start);
 
-      if (differenceInDays <= 0) {
-        throw new BadRequestException(
-          "Bookings must start at least one day in the future",
-        );
+      // Prevent past start times
+      if (diffDays < 0) {
+        throw new BadRequestException("start_date cannot be in the past");
       }
 
-      if (differenceInDays <= 2) {
+      // Warn for short notice (< 24h). dayDiffFromToday returns 0 for same-day future times.
+      if (diffDays < 1) {
         warningMessage =
-          "This is a short-notice booking. Please be aware that it might not be fulfilled in time.";
+          "Heads up: bookings made less than 24 hours in advance might not be approved in time.";
       }
 
       // 3.1. Check availability for requested date range
@@ -242,42 +242,43 @@ export class BookingService {
       throw new BadRequestException("Could not create booking");
     }
 
-    // 3.5. Create booking items
+    // 3.5. Create booking items using BookingItemsService
     for (const item of dto.items) {
       const start = new Date(item.start_date);
       const end = new Date(item.end_date);
       const totalDays = calculateDuration(start, end);
 
-      // get location_id
+      // get location_id from storage_items
       const { data: storageItem, error: locationError } = await supabase
         .from("storage_items")
-        .select("location_id")
+        .select("location_id, org_id")
         .eq("id", item.item_id)
         .single();
 
       if (locationError || !storageItem) {
         throw new BadRequestException(
-          `Location ID not found for item ${item.item_id}`,
+          `Storage item data not found for item ${item.item_id}`,
         );
       }
 
-      // insert booking item
-      const { error: insertError } = await supabase
-        .from("booking_items")
-        .insert({
-          booking_id: booking.id,
-          item_id: item.item_id,
-          location_id: storageItem.location_id,
-          quantity: item.quantity,
-          start_date: item.start_date,
-          end_date: item.end_date,
-          total_days: totalDays,
-          status: "pending",
-        });
+      // Create booking item using service, automatically tracking the provider organization
+      const bookingItemData: BookingItemsInsert = {
+        booking_id: booking.id,
+        item_id: item.item_id,
+        location_id: storageItem.location_id,
+        provider_organization_id: storageItem.org_id,
+        quantity: item.quantity,
+        start_date: item.start_date,
+        end_date: item.end_date,
+        total_days: totalDays,
+        status: "pending",
+      };
 
-      if (insertError) {
-        throw new BadRequestException("Could not create booking items");
-      }
+      // Use BookingItemsService instead of direct insert
+      await this.bookingItemsService.createBookingItem(
+        supabase,
+        bookingItemData,
+      );
     }
 
     // 3.6 notify user via centralized mail service
@@ -286,7 +287,24 @@ export class BookingService {
       triggeredBy: userId,
     });
 
-    return warningMessage ? { booking, warning: warningMessage } : booking;
+    // 3.7 Fetch the complete booking with items and translations using the view
+    const { data: createdBooking, error: fetchError } = await supabase
+      .from("view_bookings_with_details")
+      .select("*")
+      .eq("id", booking.id)
+      .single();
+
+    if (fetchError || !createdBooking) {
+      throw new BadRequestException("Could not fetch created booking details");
+    }
+
+    return warningMessage
+      ? {
+          message: "Booking created",
+          booking: createdBooking,
+          warning: warningMessage,
+        }
+      : { message: "Booking created", booking: createdBooking };
   }
 
   // 4. confirm a Booking
@@ -372,10 +390,13 @@ export class BookingService {
   async updateBooking(
     booking_id: string,
     userId: string,
-    updatedItems: BookingItem[],
+    dto: UpdateBookingDto,
     req: AuthRequest,
   ) {
     const supabase = req.supabase;
+
+    let warningMessage: string | null = null;
+
     // 5.1 check the booking
     const { data: booking } = await supabase
       .from("bookings")
@@ -409,9 +430,22 @@ export class BookingService {
     // 5.3. Delete existing items from booking_items to avoid douplicates
     await supabase.from("booking_items").delete().eq("booking_id", booking_id);
 
-    // 5.4. insert updated items with availability check
-    for (const item of updatedItems) {
+    // 5.4. insert updated items with validations and availability checks
+    for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
+
+      const start = new Date(start_date);
+
+      const diffDays = dayDiffFromToday(start);
+
+      if (diffDays < 0) {
+        throw new BadRequestException("start_date cannot be in the past");
+      }
+
+      if (diffDays < 1) {
+        warningMessage =
+          "Heads up: bookings made less than 24 hours in advance might not be approved in time.";
+      }
 
       const totalDays = calculateDuration(
         new Date(start_date),
@@ -432,12 +466,31 @@ export class BookingService {
         );
       }
 
-      // 5.6. Fetch location_id
+      // Check physical stock (currently in storage)
+      const { data: storageCountRow, error: itemError } = await supabase
+        .from("storage_items")
+        .select("items_number_currently_in_storage")
+        .eq("id", item_id)
+        .single();
+
+      if (itemError || !storageCountRow) {
+        throw new BadRequestException("Storage item data not found");
+      }
+
+      const currentStock =
+        storageCountRow.items_number_currently_in_storage ?? 0;
+      if (quantity > currentStock) {
+        throw new BadRequestException(
+          `Not enough physical stock in storage for item ${item_id}`,
+        );
+      }
+
+      // 5.6. Fetch location_id and org_id (provider_organization_id)
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
-        .select("location_id")
+        .select("location_id, org_id")
         .eq("id", item_id)
-        .single<StorageItemsRow>();
+        .single();
 
       if (storageError || !storageItem) {
         throw new BadRequestException(
@@ -445,24 +498,18 @@ export class BookingService {
         );
       }
 
-      // 5.7. insert new booking item
-      const { error: itemInsertError } = await supabase
-        .from("booking_items")
-        .insert<BookingItemInsert>({
-          booking_id: booking_id,
-          item_id: item.item_id,
-          location_id: storageItem.location_id,
-          quantity: item.quantity,
-          start_date: item.start_date,
-          end_date: item.end_date,
-          total_days: totalDays,
-          status: "pending",
-        });
-
-      if (itemInsertError) {
-        console.error("Booking item insert error:", itemInsertError);
-        throw new BadRequestException("Could not create updated booking items");
-      }
+      // Create booking item using service, automatically tracking the provider organization
+      await this.bookingItemsService.createBookingItem(supabase, {
+        booking_id: booking_id,
+        item_id: item.item_id,
+        location_id: storageItem.location_id,
+        provider_organization_id: storageItem.org_id,
+        quantity: item.quantity,
+        start_date: item.start_date,
+        end_date: item.end_date,
+        total_days: totalDays,
+        status: "pending",
+      });
     }
 
     // 5.8 notify user via centralized mail service
@@ -472,30 +519,22 @@ export class BookingService {
     });
 
     const { data: updatedBooking, error: bookingError } = await supabase
-      .from("bookings")
-      .select(
-        `
-    *,
-    booking_items (
-      *,
-      storage_items (
-        translations
-      )
-    )
-  `,
-      )
+      .from("view_bookings_with_details")
+      .select("*")
       .eq("id", booking_id)
-      .single()
-      .overrideTypes<BookingWithItems>();
+      .single();
 
     if (bookingError || !updatedBooking) {
       throw new BadRequestException("Could not fetch updated booking details");
     }
 
-    return {
-      message: "Booking updated",
-      booking: updatedBooking,
-    };
+    return warningMessage
+      ? {
+          message: "Booking updated",
+          booking: updatedBooking,
+          warning: warningMessage,
+        }
+      : { message: "Booking updated", booking: updatedBooking };
   }
 
   // 6. reject a Booking (Admin/SuperVera only)

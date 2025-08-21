@@ -4,6 +4,7 @@ import { RootState } from "../store";
 import {
   BookingsState,
   CreateBookingDto,
+  CreateBookingResponse,
   BookingStatus,
   BookingPreview,
   BookingWithDetails,
@@ -38,18 +39,18 @@ const initialState: BookingsState = {
 };
 
 // Create booking thunk
-export const createBooking = createAsyncThunk<BookingPreview, CreateBookingDto>(
-  "bookings/createBooking",
-  async (bookingData, { rejectWithValue }) => {
-    try {
-      return await bookingsApi.createBooking(bookingData);
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to create booking"),
-      );
-    }
-  },
-);
+export const createBooking = createAsyncThunk<
+  CreateBookingResponse,
+  CreateBookingDto
+>("bookings/createBooking", async (bookingData, { rejectWithValue }) => {
+  try {
+    return await bookingsApi.createBooking(bookingData);
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to create booking"),
+    );
+  }
+});
 
 // Get user bookings thunk
 export const getUserBookings = createAsyncThunk(
@@ -314,8 +315,9 @@ export const bookingsSlice = createSlice({
         state.loading = true;
       })
       .addCase(createBooking.fulfilled, (state, action) => {
-        state.currentBooking = action.payload;
-        state.bookings.push(action.payload);
+        // Store the detailed booking for the confirmation page
+        state.currentBooking = action.payload.booking;
+        // Don't add to bookings list - let getUserBookings handle that properly
         state.loading = false;
       })
       .addCase(createBooking.rejected, (state, action) => {
