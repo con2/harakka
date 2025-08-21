@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  selectOrgLocations,
   selectOrgLocationsLoading,
   selectOrgLocationsError,
   fetchLocationsByOrgId,

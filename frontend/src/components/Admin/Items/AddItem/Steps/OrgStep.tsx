@@ -57,8 +57,8 @@ function OrgStep() {
       dispatch(
         selectOrgLocation({
           id: newOrg.storage_location_id,
-          name: newOrg.storage_locations.name,
-          address: newOrg.storage_locations.address,
+          name: newOrg.storage_locations?.name,
+          address: newOrg.storage_locations?.address,
         }),
       );
     }
@@ -145,9 +145,9 @@ function OrgStep() {
                         onClick={() =>
                           dispatch(
                             selectOrgLocation({
-                              id: loc.storage_location_id,
-                              name: loc.storage_locations.name,
-                              address: loc.storage_locations.address,
+                              id: loc?.storage_location_id,
+                              name: loc?.storage_locations?.name,
+                              address: loc?.storage_locations?.address,
                             }),
                           )
                         }

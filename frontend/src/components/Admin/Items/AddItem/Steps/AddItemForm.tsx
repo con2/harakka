@@ -186,8 +186,8 @@ function AddItemForm() {
       "location",
       {
         id: newLoc.storage_location_id,
-        name: newLoc.storage_locations.name,
-        address: newLoc.storage_locations.address,
+        name: newLoc?.storage_locations?.name ?? "",
+        address: newLoc?.storage_locations?.address ?? "",
       },
       { shouldValidate: true, shouldDirty: true },
     );
@@ -368,7 +368,7 @@ function AddItemForm() {
                               key={loc.storage_location_id}
                               value={loc.storage_location_id}
                             >
-                              {loc.storage_locations.name}
+                              {loc?.storage_locations?.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
