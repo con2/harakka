@@ -10,9 +10,9 @@ import {
 } from "@/types/organizationLocation";
 
 const initialState: OrgLocationsState = {
-  orgLocations: [],
-  currentOrgLocation: null,
-  currentOrgLocations: [],
+  orgLocations: [], // All locations, regardless of org
+  currentOrgLocation: null, // Selected org location
+  currentOrgLocations: [], // Active org locations
   loading: false,
   error: null,
   totalPages: 0,
@@ -190,6 +190,7 @@ const orgLocationsSlice = createSlice({
       .addCase(createOrgLocation.fulfilled, (state, action) => {
         state.loading = false;
         state.orgLocations.push(action.payload);
+        state.currentOrgLocations.push(action.payload);
       })
       .addCase(createOrgLocation.rejected, (state, action) => {
         state.loading = false;
@@ -244,7 +245,7 @@ const orgLocationsSlice = createSlice({
       })
       .addCase(createOrgLocationWithStorage.fulfilled, (state, action) => {
         state.loading = false;
-        state.orgLocations.push(action.payload);
+        state.currentOrgLocations.push(action.payload);
       })
       .addCase(createOrgLocationWithStorage.rejected, (state, action) => {
         state.loading = false;
@@ -259,11 +260,11 @@ const orgLocationsSlice = createSlice({
       })
       .addCase(updateOrgLocationWithStorage.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.orgLocations.findIndex(
+        const index = state.currentOrgLocations.findIndex(
           (orgLoc) => orgLoc.id === action.payload.id,
         );
         if (index !== -1) {
-          state.orgLocations[index] = action.payload;
+          state.currentOrgLocations[index] = action.payload;
         }
         if (state.currentOrgLocation?.id === action.payload.id) {
           state.currentOrgLocation = action.payload;
@@ -282,7 +283,7 @@ const orgLocationsSlice = createSlice({
       })
       .addCase(deleteOrgLocationWithStorage.fulfilled, (state, action) => {
         state.loading = false;
-        state.orgLocations = state.orgLocations.filter(
+        state.currentOrgLocations = state.currentOrgLocations.filter(
           (orgLoc) => orgLoc.id !== action.payload,
         );
         if (state.currentOrgLocation?.id === action.payload) {
