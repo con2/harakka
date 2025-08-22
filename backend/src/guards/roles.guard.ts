@@ -91,7 +91,7 @@ export class RolesGuard implements CanActivate {
     // If sameOrg is required, but orgId or roleName is missing — forbid access
     if (sameOrg && (!orgCtx || !roleCtx)) {
       throw new ForbiddenException(
-        "Organization context or role is missing (check request headers (Postman) or activeRoleContextfrontend)",
+        "Organization context or role is missing (check request headers (Postman) or activeRoleContext (frontend)",
       );
     }
 
