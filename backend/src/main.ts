@@ -33,7 +33,13 @@ async function bootstrap() {
       origin: origins,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "x-user-id",
+        "x-org-id",
+        "x-role-name",
+      ],
     });
     app.getHttpAdapter().get("/health", async (req, res: Response) => {
       try {

@@ -35,7 +35,10 @@ export class UserController {
 
   // Admin/tenant_admin and super roles: paginated, filtered; super roles see all orgs
   @Get("ordered")
-  @Roles(["tenant_admin", "super_admin", "superVera"], { match: "any" })
+  @Roles(["tenant_admin", "super_admin", "superVera"], {
+    match: "any",
+    sameOrg: true,
+  })
   async getAllOrderedUsers(
     @Req() req: AuthRequest,
     @Query() query: GetOrderedUsersDto,
