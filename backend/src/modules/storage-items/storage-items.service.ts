@@ -29,7 +29,6 @@ import {
 import { ItemImagesService } from "../item-images/item-images.service";
 import { parse, ParseResult } from "papaparse";
 import { Item, ItemSchema } from "./schema/item-schema";
-import { ItemImageRow } from "../item-images/types/item-image.types";
 import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 
 @Injectable()
