@@ -4,7 +4,7 @@ import { RootState } from "../store";
 import {
   BookingsState,
   CreateBookingDto,
-  PaymentStatus,
+  CreateBookingResponse,
   BookingStatus,
   BookingPreview,
   BookingWithDetails,
@@ -39,18 +39,18 @@ const initialState: BookingsState = {
 };
 
 // Create booking thunk
-export const createBooking = createAsyncThunk<BookingPreview, CreateBookingDto>(
-  "bookings/createBooking",
-  async (bookingData, { rejectWithValue }) => {
-    try {
-      return await bookingsApi.createBooking(bookingData);
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to create booking"),
-      );
-    }
-  },
-);
+export const createBooking = createAsyncThunk<
+  CreateBookingResponse,
+  CreateBookingDto
+>("bookings/createBooking", async (bookingData, { rejectWithValue }) => {
+  try {
+    return await bookingsApi.createBooking(bookingData);
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to create booking"),
+    );
+  }
+});
 
 // Get user bookings thunk
 export const getUserBookings = createAsyncThunk(
@@ -278,28 +278,6 @@ export const returnItems = createAsyncThunk<
   }
 });
 
-// update Payment Status thunk
-export const updatePaymentStatus = createAsyncThunk<
-  { bookingId: string; status: PaymentStatus },
-  { bookingId: string; status: PaymentStatus }
->(
-  "bookings/payment-status",
-  async ({ bookingId, status }, { rejectWithValue }) => {
-    try {
-      const response = await bookingsApi.updatePaymentStatus(bookingId, status);
-      // Ensure the returned status is of type PaymentStatus
-      return {
-        bookingId,
-        status: response.status as PaymentStatus,
-      };
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to update the payment status"),
-      );
-    }
-  },
-);
-
 export const bookingsSlice = createSlice({
   name: "bookings",
   initialState,
@@ -337,8 +315,9 @@ export const bookingsSlice = createSlice({
         state.loading = true;
       })
       .addCase(createBooking.fulfilled, (state, action) => {
-        state.currentBooking = action.payload;
-        state.bookings.push(action.payload);
+        // Store the detailed booking for the confirmation page
+        state.currentBooking = action.payload.booking;
+        // Don't add to bookings list - let getUserBookings handle that properly
         state.loading = false;
       })
       .addCase(createBooking.rejected, (state, action) => {
@@ -580,28 +559,6 @@ export const bookingsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "return";
-      })
-      // Update payment status
-      .addCase(updatePaymentStatus.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.errorContext = null;
-      })
-      .addCase(updatePaymentStatus.fulfilled, (state, action) => {
-        state.loading = false;
-        const { bookingId, status } = action.payload;
-
-        // Update the booking in the normalized state
-        state.bookings = state.bookings.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, payment_status: status! }
-            : booking,
-        );
-      })
-      .addCase(updatePaymentStatus.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-        state.errorContext = "update-payment-status";
       });
   },
 });

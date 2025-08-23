@@ -17,7 +17,6 @@ export type CreateItemType = {
   };
   items_number_total: number;
   items_number_currently_in_storage: number;
-  price: number;
   is_active: boolean;
   translations: {
     fi: {
@@ -62,6 +61,7 @@ export type CreateItemType = {
 
 export type MappedItem = Omit<CreateItemType, "location" | "tags" | "images"> & {
   location_id: string;
+  org_id: string;
 };
 
 export type ItemFormData = {

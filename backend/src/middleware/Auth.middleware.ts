@@ -138,6 +138,14 @@ export class AuthMiddleware implements NestMiddleware {
       req.supabase = supabase;
       req.user = user;
       req.userRoles = userRoles;
+      // Extract x-org-id and x-role-name from headers (frontend activeContext) and attach them to the request object for downstream use.
+      req.activeRoleContext = {
+        organizationId: req.headers["x-org-id"] as string | undefined,
+        roleName: req.headers["x-role-name"] as string | undefined,
+      };
+      this.logger.debug(
+        `ActiveRoleContext: orgId=${req.activeRoleContext.organizationId}, roleName=${req.activeRoleContext.roleName}`,
+      );
 
       return next();
     } catch (err: unknown) {

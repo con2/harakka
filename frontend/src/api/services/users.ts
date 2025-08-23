@@ -1,25 +1,59 @@
 import { CreateUserDto, UserProfile } from "@common/user.types";
 import { api } from "../axios";
 import { Address } from "@/types/address";
+import { store } from "@/store/store";
+import { ApiResponse } from "@/types/api";
+import { OrderedUsersParams } from "@/types/user";
 
 /**
  * API service for user-related endpoints
  */
 export const usersApi = {
   /**
-   * Get all users
-   * @returns Promise with an array of users
+   * Get all users for admin/tenant_admin with backend filtering/pagination
+   * @param params - Query params for filtering, pagination, etc.
+   * @returns Promise with paginated/filterable users
    */
-  getAllUsers: (): Promise<UserProfile[]> => api.get("/users"),
+  getAllOrderedUsers: (
+    params: OrderedUsersParams,
+  ): Promise<ApiResponse<UserProfile[]>> => {
+    // Filter out undefined values to prevent them from being sent as query parameters
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).filter(([, value]) => value !== undefined),
+    );
+    return api.get("/users/ordered", { params: cleanParams });
+  },
+
+  /**
+   * Get all users (super admins only) - returns all users without filtering
+   * @returns Promise with an array of all users
+   */
+  getAllUsers: (): Promise<UserProfile[]> => {
+    return api.get("/users");
+  },
+
+  /**
+   * Get current user's profile using the dedicated endpoint
+   * @returns Promise with the current user
+   */
+  getCurrentUser: (): Promise<UserProfile> => api.get("/users/me"),
 
   /**
    * Get a specific user by ID
    * @param id - User ID to fetch
    * @returns Promise with the requested user
    */
-  getUserById: (id: string): Promise<UserProfile> => api.get(`/users/${id}`),
+  getUserById: (id: string): Promise<UserProfile> => {
+    // Access current user ID from Redux store
+    const state = store.getState();
+    const currentUserId = state.users.selectedUser?.id;
 
-  getCurrentUser: (): Promise<UserProfile> => api.get("/users/me"),
+    if (id === currentUserId) {
+      return usersApi.getCurrentUser();
+    }
+    return api.get(`/users/${id}`);
+  },
+
   /**
    * Create a new user
    * @param user - User data to create
@@ -87,4 +121,18 @@ export const usersApi = {
    * Get the total user count
    */
   getUserCount: () => api.get("users/count"),
+
+  /**
+   * Upload new proile picture for the current user
+   * @param file - The file to upload
+   * @returns Promise with the URL of the uploaded picture
+   */
+  uploadProfilePicture: (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return api.post("/users/upload-picture", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };

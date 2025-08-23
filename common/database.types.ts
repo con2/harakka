@@ -60,11 +60,6 @@ type NotificationRowFallback = BaseNotificationRow & {
 
 type StorageItemsJsonColumns = {
   translations?: ItemTranslations | null;
-  test_metadata?: {
-    version?: number;
-    test_flag?: boolean;
-    last_modified?: string;
-  };
 };
 
 // Helps to override the `Json | null` type in the database schema
@@ -98,20 +93,6 @@ export type Database = MergeDeep<
           };
           Update: {
             translations?: TagTranslations | null;
-          };
-        };
-        user_profiles: {
-          Row: {
-            preferences: Record<string, string> | null;
-            saved_lists: string[] | null;
-          };
-          Insert: {
-            preferences?: Record<string, string> | null;
-            saved_lists?: string[] | null;
-          };
-          Update: {
-            preferences?: Record<string, string> | null;
-            saved_lists?: string[] | null;
           };
         };
       };

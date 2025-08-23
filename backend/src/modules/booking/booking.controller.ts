@@ -8,16 +8,14 @@ import {
   Post,
   Put,
   Req,
-  Patch,
   UnauthorizedException,
   BadRequestException,
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
-import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
-import { BookingItem } from "@common/bookings/booking-items.types";
+import { UpdateBookingDto } from "./dto/update-booking.dto";
 import { Public, Roles } from "src/decorators/roles.decorator";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 
@@ -93,9 +91,8 @@ export class BookingController {
   // any user creates a booking
   @Post()
   @Roles([
-    "admin",
     "user",
-    "main_admin",
+    "tenant_admin",
     "super_admin",
     "superVera",
     "storage_manager",
@@ -106,13 +103,24 @@ export class BookingController {
       const userId = req.user.id;
       if (!userId)
         throw new BadRequestException("No userId found: user_id is required");
-
+      const supabase = req.supabase;
       // put user-ID to DTO
       const dtoWithUserId = { ...dto, user_id: userId };
-      return this.bookingService.createBooking(dtoWithUserId, req.supabase);
+      return this.bookingService.createBooking(dtoWithUserId, supabase);
     } catch (error) {
       handleSupabaseError(error);
     }
+  }
+
+  // updates a booking
+  @Put(":id/update") // user updates own booking or admin updates booking
+  async updateBooking(
+    @Param("id") id: string,
+    @Body() dto: UpdateBookingDto,
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    return this.bookingService.updateBooking(id, userId, dto, req);
   }
 
   // confirms a booking
@@ -122,17 +130,6 @@ export class BookingController {
     const supabase = req.supabase;
 
     return this.bookingService.confirmBooking(bookingId, userId, supabase);
-  }
-
-  // updates a booking
-  @Put(":id/update") // user updates own booking or admin updates booking
-  async updateBooking(
-    @Param("id") id: string,
-    @Body("items") updatedItems: BookingItem[],
-    @Req() req: AuthRequest,
-  ) {
-    const userId = req.user.id;
-    return this.bookingService.updateBooking(id, userId, updatedItems, req);
   }
 
   // rejects a booking by admin
@@ -172,21 +169,6 @@ export class BookingController {
     return this.bookingService.confirmPickup(bookingId, supabase);
   }
 
-  // change payment status
-  @Patch("payment-status")
-  async updatePaymentStatus(
-    @Body() dto: UpdatePaymentStatusDto,
-    @Req() req: AuthRequest,
-  ) {
-    // const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.updatePaymentStatus(
-      dto.bookingId,
-      dto.status,
-      supabase,
-    );
-  }
-
   @Get("ordered")
   getOrderedBookings(
     @Req() req: AuthRequest,
@@ -213,7 +195,7 @@ export class BookingController {
   }
 
   @Get("id/:id")
-  @Roles(["admin", "main_admin", "super_admin"])
+  @Roles(["tenant_admin", "super_admin"])
   async getBookingByID(
     @Req() req: AuthRequest,
     @Param("id") booking_id: string,

@@ -11,6 +11,12 @@ import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { ViewUserRolesWithDetails } from "@common/role.types";
 import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 
+// Load initial state for chosen role from localStorage (near the top of the file)
+const savedContext = localStorage.getItem("activeRoleContext");
+const initialActiveContext = savedContext
+  ? JSON.parse(savedContext)
+  : { organizationId: null, roleName: null, organizationName: null };
+
 const initialState: RolesState = {
   currentUserRoles: [] as ViewUserRolesWithDetails[],
   currentUserOrganizations: [] as UserOrganization[],
@@ -21,6 +27,7 @@ const initialState: RolesState = {
   adminError: null,
   errorContext: null,
   availableRoles: [],
+  activeRoleContext: initialActiveContext,
 };
 
 // Async thunks
@@ -195,6 +202,29 @@ const rolesSlice = createSlice({
       state.error = null;
       state.adminError = null;
       state.errorContext = null;
+
+      // Clear active context when resetting roles
+      state.activeRoleContext = {
+        organizationId: null,
+        roleName: null,
+        organizationName: null,
+      };
+      localStorage.removeItem("activeRoleContext");
+    },
+
+    // Reducers for active role context
+    setActiveRoleContext: (state, action) => {
+      state.activeRoleContext = action.payload;
+      localStorage.setItem("activeRoleContext", JSON.stringify(action.payload));
+    },
+
+    clearActiveRoleContext: (state) => {
+      state.activeRoleContext = {
+        organizationId: null,
+        roleName: null,
+        organizationName: null,
+      };
+      localStorage.removeItem("activeRoleContext");
     },
   },
   extraReducers: (builder) => {
@@ -209,6 +239,25 @@ const rolesSlice = createSlice({
         state.loading = false;
         state.currentUserRoles = action.payload.roles;
         state.currentUserOrganizations = action.payload.organizations;
+
+        // If user has no initial context, set it to their GLOBAL role or the first role
+        // that they do have.
+        if (!state.activeRoleContext.organizationId) {
+          const GLOBAL_ROLE = state.currentUserRoles.find(
+            (role) => role.organization_name === "Global",
+          );
+          const FIRST_ROLE = state.currentUserRoles[0];
+          const newContext = {
+            organizationId:
+              GLOBAL_ROLE?.organization_id ?? FIRST_ROLE.organization_id,
+            organizationName:
+              GLOBAL_ROLE?.organization_name ?? FIRST_ROLE.organization_name,
+            roleName: GLOBAL_ROLE?.role_name ?? FIRST_ROLE.role_name,
+          };
+
+          state.activeRoleContext = newContext;
+          localStorage.setItem("activeRoleContext", JSON.stringify(newContext));
+        }
       })
       .addCase(fetchCurrentUserRoles.rejected, (state, action) => {
         state.loading = false;
@@ -390,16 +439,6 @@ export const selectErrorContext = (state: RootState) =>
 export const selectAvailableRoles = (state: RootState) =>
   state.roles.availableRoles;
 
-// Computed selectors
-export const selectIsAdmin = (state: RootState) => {
-  return (
-    hasRole(state, "admin") ||
-    hasRole(state, "superVera") ||
-    hasRole(state, "main_admin") ||
-    hasRole(state, "super_admin")
-  );
-};
-
 export const selectUserRolesByOrganization = (
   state: RootState,
   organizationId: string,
@@ -409,6 +448,24 @@ export const selectUserRolesByOrganization = (
   );
 };
 
+// Selectors for active roles context
+export const selectActiveRoleContext = (state: RootState) =>
+  state.roles.activeRoleContext;
+
+export const selectActiveOrganizationId = (state: RootState) =>
+  state.roles.activeRoleContext.organizationId;
+
+export const selectActiveRoleName = (state: RootState) =>
+  state.roles.activeRoleContext.roleName;
+
+export const selectActiveOrganizationName = (state: RootState) =>
+  state.roles.activeRoleContext.organizationName;
+
 // Export actions
-export const { clearRoleErrors, resetRoles } = rolesSlice.actions;
+export const {
+  clearRoleErrors,
+  resetRoles,
+  setActiveRoleContext,
+  clearActiveRoleContext,
+} = rolesSlice.actions;
 export default rolesSlice.reducer;

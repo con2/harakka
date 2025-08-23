@@ -20,6 +20,7 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
+import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
 
 export const Navigation = () => {
   // Get auth state directly from Auth context
@@ -32,12 +33,12 @@ export const Navigation = () => {
   // Use auth context to determine login status
   const isLoggedIn = !!user;
 
+  // Check if user has any admin role using hasAnyRole for efficiency
   const isAnyTypeOfAdmin = hasAnyRole([
-    "admin",
     "superVera",
-    "main_admin",
+    "tenant_admin",
     "super_admin",
-    "store_manager",
+    "storage_manager",
   ]);
 
   const cartItemsCount = useAppSelector(selectCartItemsCount);
@@ -70,6 +71,7 @@ export const Navigation = () => {
   return (
     <nav className={navClasses}>
       <div className="container md:mx-auto mx-0 flex items-center justify-between">
+        {/* Left side: Logo + navigation links */}
         <div className="flex items-center gap-1">
           <Link to="/" data-cy="nav-home">
             <img
@@ -100,7 +102,7 @@ export const Navigation = () => {
                 </NavigationMenuItem>
               )}
 
-              {/* Show Admin Panel link only for admins/superVera */}
+              {/* Show Admin Panel link only for admins in current context*/}
               {isAnyTypeOfAdmin && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
@@ -124,6 +126,19 @@ export const Navigation = () => {
                     data-cy="nav-storage"
                   >
                     {t.navigation.storage[lang]}
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
+              {/* Organizations Link */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to={"/organizations"}
+                    className="flex items-center gap-1 text-secondary font-medium"
+                    data-cy="nav-organizations"
+                  >
+                    {t.navigation.organizations[lang]}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -161,8 +176,15 @@ export const Navigation = () => {
           </NavigationMenu>
         </div>
 
-        {/* Always show Cart */}
+        {/* Right side: Cart, notifications, language, auth */}
         <div className="flex items-center gap-2">
+          {/* Active role context switcher if user is logged in and has roles */}
+          {isLoggedIn && (
+            <div className="hidden md:flex mr-2">
+              <RoleContextSwitcher />
+            </div>
+          )}
+
           <div className="flex items-center md:mr-6">
             <LanguageSwitcher />
           </div>

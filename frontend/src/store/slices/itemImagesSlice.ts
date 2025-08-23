@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSelector } from "@reduxjs/toolkit";
 import { itemImagesApi } from "@/api/services/itemImages";
 import {
   FileWithMetadata,
@@ -287,5 +288,18 @@ export const selectCurrentItemId = (state: RootState) =>
   state.itemImages.currentItemId;
 export const selectUploadUrls = (state: RootState) =>
   state.itemImages.uploadedImages;
+export const selectItemsWithLoadedImages = (state: RootState) =>
+  state.itemImages.itemsWithLoadedImages;
+
+// Memoized selector factory for item images
+const selectImagesEntities = (state: RootState) => state.itemImages.images;
+export const makeSelectItemImages = () =>
+  createSelector(
+    [selectImagesEntities, (_state: RootState, itemId: string) => itemId],
+    (images, itemId) => {
+      if (!itemId) return [];
+      return images.filter((img) => img.item_id === itemId);
+    },
+  );
 
 export default itemImagesSlice.reducer;

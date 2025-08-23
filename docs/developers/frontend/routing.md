@@ -39,7 +39,7 @@ The main route configuration is defined in `App.tsx` using the declarative JSX a
           <Route
             path="/profile"
             element={
-              <ProtectedRoute allowedRoles={["user", "admin", "superVera"]}>
+              <ProtectedRoute allowedRoles={["user", "tenant_admin", "superVera"]}>
                 <MyProfile />
               </ProtectedRoute>
             }
@@ -49,7 +49,7 @@ The main route configuration is defined in `App.tsx` using the declarative JSX a
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRoles={["admin", "superVera"]}>
+              <ProtectedRoute allowedRoles={["tenant_admin", "superVera"]}>
                 <AdminPanel />
               </ProtectedRoute>
             }
@@ -125,7 +125,7 @@ Usage:
 <Route
   path="/profile"
   element={
-    <ProtectedRoute allowedRoles={["user", "admin", "superVera"]}>
+    <ProtectedRoute allowedRoles={["user", "tenant_admin", "superVera"]}>
       <MyProfile />
     </ProtectedRoute>
   }
@@ -144,7 +144,7 @@ All admin-related pages share the `AdminPanel` layout component:
 <Route
   path="/admin"
   element={
-    <ProtectedRoute allowedRoles={["admin", "superVera"]}>
+    <ProtectedRoute allowedRoles={["tenant_admin", "superVera"]}>
       <AdminPanel />
     </ProtectedRoute>
   }

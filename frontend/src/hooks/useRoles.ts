@@ -17,6 +17,8 @@ import {
   selectRolesError,
   selectAdminError,
   selectAvailableRoles,
+  setActiveRoleContext,
+  selectActiveRoleContext,
 } from "@/store/slices/rolesSlice";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
 import { useAuth } from "./useAuth";
@@ -39,6 +41,32 @@ export const useRoles = () => {
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [responseReceived, setResponseReceived] = useState(false);
 
+  // Get active role context from Redux
+  const activeContext = useAppSelector(selectActiveRoleContext);
+
+  // Helper to check if active context is populated
+  const hasActiveContext = useCallback(() => {
+    return !!(
+      activeContext.organizationId != null &&
+      activeContext.roleName != null &&
+      activeContext.organizationName
+    );
+  }, [activeContext]);
+
+  // Method for setting active role
+  const setActiveContext = useCallback(
+    (organizationId: string, roleName: string, organizationName: string) => {
+      dispatch(
+        setActiveRoleContext({
+          organizationId,
+          roleName,
+          organizationName,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
   // Current user roles and organizations
   const currentUserRoles = useAppSelector(selectCurrentUserRoles);
   const currentUserOrganizations = useAppSelector(
@@ -55,35 +83,50 @@ export const useRoles = () => {
   const error = useAppSelector(selectRolesError);
   const adminError = useAppSelector(selectAdminError);
 
-  // Role checking functions
-  const checkHasRole = useCallback(
-    (roleName: string, organizationId?: string) => {
-      return currentUserRoles.some((role) => {
-        const roleMatch = role.role_name === roleName;
-        const orgMatch = organizationId
-          ? role.organization_id === organizationId
-          : true;
-        return roleMatch && orgMatch && role.is_active;
+  // org-aware but not limited to the selected role in activeContext
+  const hasRole = useCallback(
+    (requiredRole: string, specificOrgId?: string) => {
+      const orgToCheck =
+        specificOrgId ??
+        (hasActiveContext()
+          ? (activeContext.organizationId as string)
+          : undefined);
+
+      return currentUserRoles.some((r) => {
+        if (!r.is_active) return false;
+        if (r.role_name === null) return false;
+        if (r.role_name !== requiredRole) return false;
+        return orgToCheck ? r.organization_id === orgToCheck : true;
       });
     },
-    [currentUserRoles],
+    [currentUserRoles, activeContext, hasActiveContext],
   );
 
-  const checkHasAnyRole = useCallback(
-    (roleNames: string[], organizationId?: string) => {
-      return roleNames.some((roleName) =>
-        checkHasRole(roleName, organizationId),
-      );
+  // FIX: keep behavior consistent with hasRole; prefer active org if present, else any org
+  const hasAnyRole = useCallback(
+    (roleNames: string[], specificOrgId?: string) => {
+      const set = new Set(roleNames);
+      const orgToCheck =
+        specificOrgId ??
+        (hasActiveContext()
+          ? (activeContext.organizationId as string)
+          : undefined);
+
+      return currentUserRoles.some((r) => {
+        if (!r.is_active) return false;
+        if (r.role_name === null) return false;
+        if (!set.has(r.role_name)) return false;
+        return orgToCheck ? r.organization_id === orgToCheck : true;
+      });
     },
-    [checkHasRole],
+    [currentUserRoles, activeContext, hasActiveContext],
   );
 
-  const isAnyTypeOfAdmin = checkHasAnyRole([
-    "admin",
+  const isAnyTypeOfAdmin = hasAnyRole([
     "superVera",
-    "main_admin",
+    "tenant_admin",
     "super_admin",
-    "store_manager",
+    "storage_manager",
   ]);
 
   // Check if cache is stale
@@ -95,6 +138,8 @@ export const useRoles = () => {
   const refreshCurrentUserRoles = useCallback(
     async (force = false) => {
       if (!isAuthenticated && !force) {
+        setResponseReceived(true);
+        setInitialLoadComplete(true);
         return Promise.resolve({
           type: "roles/fetchCurrentUserRoles/notLoggedIn",
         });
@@ -240,7 +285,7 @@ export const useRoles = () => {
     [dispatch, availableRoles],
   );
 
-  // Only load CURRENT user roles on initial mount - not ALL roles
+  // Only load CURRENT user roles on initial mount for authenticated users
   useEffect(() => {
     if (
       isAuthenticated &&
@@ -254,7 +299,15 @@ export const useRoles = () => {
           setInitialLoadComplete(true);
           // NOTE: We do NOT automatically load all user roles here
         })
-        .catch(console.error);
+        .catch((error) => {
+          console.error("Unauthorized: Missing access token", error);
+          setResponseReceived(true);
+          setInitialLoadComplete(true);
+        });
+    } else if (!isAuthenticated && !initialLoadComplete) {
+      // If not authenticated, mark as complete immediately
+      setInitialLoadComplete(true);
+      setResponseReceived(true);
     }
   }, [
     refreshCurrentUserRoles,
@@ -263,6 +316,29 @@ export const useRoles = () => {
     currentUserRoles,
     isAuthenticated,
   ]);
+
+  // Mark this hook instance as "ready" once roles are present in the store,
+  // even if this instance didn't initiate the fetch itself.
+  useEffect(() => {
+    if (!responseReceived && currentUserRoles.length > 0) {
+      setResponseReceived(true);
+    }
+  }, [currentUserRoles.length, responseReceived]);
+
+  // Reset states when user changes (including logout)
+  useEffect(() => {
+    // Clear module-level caches and in-flight promises on user switch
+    roleCache.currentRoles = { fetched: false, timestamp: 0 };
+    roleCache.allRoles = { fetched: false, timestamp: 0 };
+    roleCache.availableRoles = { fetched: false, timestamp: 0 };
+    pendingRequests.clear();
+
+    // Reset component state on logout (when user becomes null)
+    if (!user) {
+      setInitialLoadComplete(false);
+      setResponseReceived(false);
+    }
+  }, [user]);
 
   // Role modification operations with cache invalidation
   const createRole = useCallback(
@@ -374,8 +450,8 @@ export const useRoles = () => {
     adminError,
 
     // Role checking
-    hasRole: checkHasRole,
-    hasAnyRole: checkHasAnyRole,
+    hasRole,
+    hasAnyRole,
 
     // Actions
     refreshCurrentUserRoles,
@@ -388,5 +464,10 @@ export const useRoles = () => {
     clearErrors,
     refreshAll,
     clearRoleCache,
+
+    // Active role context values and methods
+    activeContext,
+    hasActiveContext, // boolean is it populated or null
+    setActiveContext,
   };
 };

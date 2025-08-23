@@ -6,15 +6,16 @@ import {
   SupabaseClient,
 } from "@supabase/supabase-js";
 import {
+  LocationRow,
   StorageItem,
   StorageItemWithJoin,
-  UpdateItem,
   ValidItemOrder,
 } from "./interfaces/storage-item.interface";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
+import { applyItemFilters } from "@src/utils/storage-items.utils";
 import { ApiResponse, ApiSingleResponse } from "@common/response.types"; // Import ApiSingleResponse for type safety
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagService } from "../tag/tag.service";
@@ -22,7 +23,6 @@ import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 import { ItemFormData } from "@common/items/form.types";
 import {
   mapItemImages,
-  mapOrgLinks,
   mapStorageItems,
   mapTagLinks,
 } from "@src/utils/storage-items.utils";
@@ -30,6 +30,7 @@ import { ItemImagesService } from "../item-images/item-images.service";
 import { parse, ParseResult } from "papaparse";
 import { Item, ItemSchema } from "./schema/item-schema";
 import { ItemImageRow } from "../item-images/types/item-image.types";
+import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 
 @Injectable()
 export class StorageItemsService {
@@ -90,7 +91,7 @@ export class StorageItemsService {
     const mappedData = result.data.map(
       (item: StorageItemWithJoin): StorageItem => ({
         ...item,
-        storage_item_tags:
+        tags:
           item.storage_item_tags.map(
             (tagLink) => tagLink.tags, // Flatten out the tags object to just be the tag itself
           ) ?? [], // Fallback to empty array if no tags are available
@@ -140,11 +141,11 @@ export class StorageItemsService {
         .single();
 
     if (error) handleSupabaseError(error);
-
+    const { storage_item_tags, storage_locations, ...item } = data;
     // Flatten the tags to make them easier to work with
     return {
-      ...data,
-      storage_item_tags: data?.storage_item_tags
+      ...item,
+      tags: data?.storage_item_tags
         ? data.storage_item_tags.map((tagLink) => tagLink.tags) // Extract just the tag itself
         : [],
       location_details: data?.storage_locations || null,
@@ -157,7 +158,7 @@ export class StorageItemsService {
    * @param payload Can be either one item with an array of tagIds or an array of items of the same structure
    * @returns
    */
-  async createItems(
+  async createItemsFromForm(
     req: AuthRequest,
     payload: ItemFormData,
   ): Promise<{ status: number; error: string | null }> {
@@ -165,7 +166,6 @@ export class StorageItemsService {
     const mappedItems = mapStorageItems(payload);
     const mappedImageData = mapItemImages(payload);
     const item_ids = mappedItems.map((i) => i.id);
-    const orgId = payload.org.id;
 
     try {
       // Insert item data
@@ -173,15 +173,6 @@ export class StorageItemsService {
         await supabase.from("storage_items").insert(mappedItems);
       if (error) {
         throw new Error(error.message);
-      }
-
-      // Insert org data
-      const mappedOrg = mapOrgLinks(payload);
-      const { error: orgError } = await supabase
-        .from("organization_items")
-        .insert(mappedOrg);
-      if (orgError) {
-        throw new Error(orgError.message);
       }
 
       // Insert item tags
@@ -206,11 +197,6 @@ export class StorageItemsService {
       await Promise.allSettled([
         supabase.from("storage_item_images").delete().in("item_id", item_ids),
         supabase.from("storage_item_tags").delete().in("item_id", item_ids),
-        supabase
-          .from("organization_items")
-          .delete()
-          .in("item_id", item_ids)
-          .eq("organization_id", orgId),
         supabase.from("storage_items").delete().in("id", item_ids),
       ]);
 
@@ -221,146 +207,141 @@ export class StorageItemsService {
     }
   }
 
-  // 4 update an item
+  /**
+   * Update an item in the system.
+   * If the item exists within more than one organization, a copy is made, which is updated and returned.
+   * @param req An authenticated request
+   * @param item_id The ID of the item which to update
+   * @param org_id The org the item belongs to
+   * @param item The updated item properties
+   * @returns {UpdateResponse}
+   */
   async updateItem(
     req: AuthRequest,
     item_id: string,
     org_id: string,
     item: UpdateItem,
-  ): Promise<StorageItem> {
-    const supabase = req["supabase"] as SupabaseClient;
-
+  ): Promise<UpdateResponse> {
+    const supabase = req.supabase;
     // Extract properties that shouldn't be sent to the database
-    const { tagIds, location_details, ...itemData } = item;
-
-    // Check if item belongs to multiple orgs.
-    // If yes, duplicate the item and update it.
-    const { data, error: orgItemError } = await supabase
-      .from("organization_items")
-      .select("storage_item_id")
-      .eq("storage_item_id", item_id);
-    if (orgItemError) handleSupabaseError(orgItemError);
-    if (data.length > 1) return this.copyItem(req, item_id, item);
+    const { tags, location_details, ...itemData } = item;
 
     // Update the main item
     const {
-      data: updatedItemData,
+      data: updatedItem,
       error: updateError,
-    }: PostgrestResponse<StorageItem> = await supabase
-      .from("storage_items")
-      .update({ ...itemData, location_id: location_details.id })
-      .eq("storage_item_id", item_id)
-      .select();
+    }: PostgrestSingleResponse<
+      StorageItem & { storage_locations: LocationRow }
+    > = await supabase
+      .from(`storage_items`)
+      .update(itemData)
+      .eq("id", item_id)
+      .eq("org_id", org_id)
+      .select(`*, storage_locations(*)`)
+      .single();
 
     if (updateError) {
       throw new Error(updateError.message);
     }
 
-    const updatedItem = updatedItemData?.[0];
     if (!updatedItem)
       throw new BadRequestException(
         updateError || "Failed to update storage item",
       );
 
     // Update tag relationships
-    if (tagIds) {
-      if (tagIds.length > 0) {
-        const tagLinks = tagIds.map((tagId) => ({
-          item_id,
-          tag_id: tagId,
-        }));
-        const { error: tagError } = await supabase
-          .from("storage_item_tags")
-          .upsert(tagLinks);
-        if (tagError) throw new Error(tagError.message);
-      }
-    }
+    if (tags && tags.length > 0)
+      await this.tagService.assignTagsToItem(req, item_id, tags);
 
-    return updatedItem;
+    const { storage_locations, ...rest } = updatedItem;
+    const formattedItem = { ...rest, location_details: storage_locations };
+
+    return {
+      success: true,
+      item: formattedItem,
+    };
   }
 
   /**
    * Delete an organizations item.
-   * This method soft-deletes the item, then relies on a daily CRON job to remove completely inactive and *unreferenced items.
+   * This method soft-deletes the item, then relies on a daily CRON job to remove completely inactive and * unreferenced items. (CRON JOB: 'delete_inactive_items')
    * @param req An Authorized request
    * @param item_id The ID of the item to soft-delete
    * @param org_id The organization ID which to soft-delete the item from
-   * @param confirm
    * @returns
    */
   async deleteItem(
-    req: Request,
+    req: AuthRequest,
     item_id: string,
     org_id: string,
-    confirm?: string,
   ): Promise<{ success: boolean; id: string }> {
-    const supabase = req["supabase"] as SupabaseClient;
+    const supabase = req.supabase;
     if (!item_id) {
       throw new Error("No item ID provided for deletion");
     }
 
-    // Safety check: only allow deletion if confirmed
-    const check = await this.canDeleteItem(req, item_id, confirm);
-    if (!check.success) {
-      throw new Error(
-        check.reason || "Item cannot be deleted due to unknown restrictions",
-      );
-    }
+    try {
+      // Get image paths
+      const {
+        data: images,
+        error: imagesError,
+      }: PostgrestResponse<{ id: string; storage_path: string }> =
+        await supabase
+          .from("storage_item_images")
+          .select("id, storage_path")
+          .eq("item_id", item_id);
 
-    // Get image paths
-    const {
-      data: images,
-      error: imagesError,
-    }: PostgrestResponse<{ id: string; storage_path: string }> = await supabase
-      .from("storage_item_images")
-      .select("id, storage_path")
-      .eq("item_id", item_id);
+      if (imagesError) {
+        throw new Error(`Failed to get images: ${imagesError.message}`);
+      }
 
-    if (imagesError) {
-      throw new Error(`Failed to get images: ${imagesError.message}`);
-    }
+      // Update the storage_items data
+      // Set is_deleted to true and is_active to false
+      // This way it cannot be booked, and is scheduled to be deleted once
+      // there are no future or ongoing bookings with the item (CRON JOB: 'delete_inactive_items')
+      const { error: itemUpdateError } = await supabase
+        .from("storage_items")
+        .update({ is_deleted: true, is_active: false })
+        .eq("id", item_id)
+        .eq("org_id", org_id);
+      if (itemUpdateError)
+        throw new Error(
+          `Failed to update org items: ${itemUpdateError.message}`,
+        );
 
-    // Update the org_items data
-    // Set is_deleted to true and is_active to false
-    // This way it cannot be booked, and is scheduled to be deleted once
-    // there are no future or ongoing bookings with the item (CRON JOB: 'delete_inactive_items')
-    const { error: orgError } = await supabase
-      .from("organization_items")
-      .update({ is_deleted: true, is_active: false })
-      .eq("storage_item_id", item_id)
-      .eq("organization_id", org_id);
-    if (orgError) handleSupabaseError(orgError);
+      // Delete any found images
+      if (images && images.length > 0) {
+        const paths = images.map((i) => i.storage_path);
+        await supabase.storage.from("item-images").remove(paths);
 
-    // Delete any found images
-    if (images && images.length > 0) {
-      const paths = images.map((i) => i.storage_path);
-      await supabase.storage.from("item-images").remove(paths);
+        // Then delete the image records
+        const { error: deleteImagesError } = await supabase
+          .from("storage_item_images")
+          .delete()
+          .eq("item_id", item_id);
 
-      // Then delete the image records
-      const { error: deleteImagesError } = await supabase
-        .from("storage_item_images")
+        if (deleteImagesError) {
+          throw new Error(
+            `Failed to delete item images: ${deleteImagesError.message}`,
+          );
+        }
+      }
+
+      // Step 2: Delete related tags from the join table
+      const { error: tagDeleteError } = await supabase
+        .from("storage_item_tags")
         .delete()
         .eq("item_id", item_id);
 
-      if (deleteImagesError) {
+      if (tagDeleteError) {
         throw new Error(
-          `Failed to delete item images: ${deleteImagesError.message}`,
+          `Failed to delete related tags: ${tagDeleteError.message}`,
         );
       }
+    } catch (error) {
+      console.error(error);
+      return { success: false, id: item_id };
     }
-
-    // Step 2: Delete related tags from the join table
-    const { error: tagDeleteError } = await supabase
-      .from("storage_item_tags")
-      .delete()
-      .eq("item_id", item_id);
-
-    if (tagDeleteError) {
-      throw new Error(
-        `Failed to delete related tags: ${tagDeleteError.message}`,
-      );
-    }
-
     return { success: true, id: item_id };
   }
 
@@ -383,67 +364,6 @@ export class StorageItemsService {
     return data.map((entry) => entry.items); // Extract items from the relation
   }
 
-  // 7. soft-delete item (to keep the data just in case)
-  async softDeleteItem(
-    req: Request,
-    id: string,
-  ): Promise<{ success: boolean; id: string }> {
-    const supabase = req["supabase"] as SupabaseClient;
-    const { error } = await supabase
-      .from("storage_items")
-      .update({ is_deleted: true })
-      .eq("id", id);
-
-    if (error) {
-      throw new Error(`Soft delete failed: ${error.message}`);
-    }
-
-    return { success: true, id };
-  }
-
-  // 8. check if the item can be deleted (if it exists in some bookings)
-  async canDeleteItem(
-    req: Request,
-    id: string,
-    confirm?: string,
-  ): Promise<{ success: boolean; reason?: string; id: string }> {
-    const supabase = req["supabase"] as SupabaseClient;
-    if (!id) {
-      throw new Error("No item ID provided for deletion");
-    }
-    const CURRENT_DATE = new Date();
-
-    // Check if item exists in any bookings
-    const { data, error } = await supabase
-      .from("booking_items")
-      .select("id")
-      .eq("item_id", id)
-      .limit(1)
-      .gt("end_date", CURRENT_DATE);
-
-    if (error) {
-      throw new Error(
-        `Error checking if item can be deleted: ${error.message}`,
-      );
-    }
-
-    const hasBookings = data?.length > 0;
-
-    if (hasBookings && confirm !== "yes") {
-      return {
-        success: false,
-        reason:
-          "This item is linked to existing bookings. Pass confirm='yes' to delete anyway.",
-        id,
-      };
-    }
-
-    return {
-      success: true,
-      id,
-    };
-  }
-
   /**
    * Get ordered and/or filtered items
    * @param page What page number is requested
@@ -462,55 +382,77 @@ export class StorageItemsService {
     order_by?: ValidItemOrder,
     searchquery?: string,
     tags?: string,
-    activity_filter?: "active" | "inactive",
+    isActive?: boolean,
     location_filter?: string,
     category?: string,
     availability_min?: number,
     availability_max?: number,
     from_date?: string,
     to_date?: string,
+    org_filter?: string,
   ) {
     const supabase = this.supabaseClient.getAnonClient();
-    const { from, to } = getPaginationRange(page, limit);
+    // Build a base query without range for counting and apply all filters
+    const base = applyItemFilters(
+      supabase
+        .from("view_manage_storage_items")
+        .select("*", { count: "exact", head: true })
+        .eq("is_deleted", false),
+      {
+        searchquery,
+        isActive,
+        tags,
+        location_filter,
+        category,
+        from_date,
+        to_date,
+        availability_min,
+        availability_max,
+        org_filter,
+      },
+    );
+    const countResult = await base;
+    if (countResult.error) {
+      console.log(countResult.error);
+      throw new Error("Failed to get matching items");
+    }
+    const total = countResult.count ?? 0;
+    const meta = getPaginationMeta(total, page, limit);
 
-    const query = supabase
+    // If requested page is out of range, return empty response instead of querying with invalid range
+    if (meta.total === 0 || page > meta.totalPages) {
+      return {
+        data: [],
+        error: null,
+        status: 200,
+        statusText: "OK",
+        count: total,
+        metadata: meta,
+      };
+    }
+
+    // Now fetch the actual page data with range
+    const { from, to } = getPaginationRange(page, limit);
+    let query = supabase
       .from("view_manage_storage_items")
       .select("*", { count: "exact" })
+      .eq("is_deleted", false)
       .range(from, to);
 
-    if (order_by)
-      query.order(order_by ?? "created_at", {
-        ascending: ascending,
-      });
+    query = applyItemFilters(query, {
+      searchquery,
+      isActive,
+      tags,
+      location_filter,
+      category,
+      from_date,
+      to_date,
+      availability_min,
+      availability_max,
+      org_filter,
+    });
 
-    if (searchquery) {
-      query.or(
-        `fi_item_name.ilike.%${searchquery}%,` +
-          `fi_item_type.ilike.%${searchquery}%,` +
-          `en_item_name.ilike.%${searchquery}%,` +
-          `en_item_type.ilike.%${searchquery}%,` +
-          `location_name.ilike.%${searchquery}%`,
-      );
-    }
-
-    if (activity_filter) query.eq("is_active", activity_filter);
-    if (tags) query.overlaps("tag_ids", tags.split(","));
-    if (location_filter)
-      query.overlaps("location_id", location_filter.split(","));
-
-    if (category) {
-      const categories = category.split(",");
-      query.in("en_item_type", categories);
-    }
-
-    if (from_date) query.gte("created_at", from_date);
-    if (to_date) query.lt("created_at", to_date);
-    // Availability range filter (items currently in storage)
-    if (availability_min !== undefined)
-      query.gte("items_number_currently_in_storage", availability_min);
-
-    if (availability_max !== undefined)
-      query.lte("items_number_currently_in_storage", availability_max);
+    if (order_by) query.order(order_by ?? "created_at", { ascending });
 
     const result = await query;
     const { error, count } = result;
@@ -588,6 +530,7 @@ export class StorageItemsService {
       };
     }
   }
+
   async getItemCount(
     supabase: SupabaseClient,
   ): Promise<ApiSingleResponse<number>> {
@@ -639,77 +582,5 @@ export class StorageItemsService {
       data: validItems,
       total: result.data.length,
     };
-  }
-
-  /**
-   * Copy an item
-   * This occurrs when two organizations have the same item, and one organization tries to update the item.
-   * If the item belongs to multiple organizations the item is copied (and updated) as another item and the new item is updated accordingly.
-   * @param supabase A valid and authorized supabase client
-   * @param item_id ID of the item to be "split"
-   * @returns the new item
-   */
-  async copyItem(
-    req: AuthRequest,
-    item_id: string,
-    newItem: UpdateItem,
-  ): Promise<StorageItem> {
-    const supabase = req.supabase;
-    const NEW_ITEM_ID = crypto.randomUUID();
-    newItem.id = NEW_ITEM_ID;
-    const { tagIds, location_details, ...rest } = newItem;
-
-    // Create the new item
-    const { data: itemData, error: itemErr } = await supabase
-      .from("storage_items")
-      .insert({ ...rest, location_id: location_details.id })
-      .select()
-      .single();
-    if (itemErr) handleSupabaseError(itemErr);
-
-    // Copy item image records
-    const { data: imgData, error: imgErr }: PostgrestResponse<ItemImageRow> =
-      await supabase
-        .from("storage_item_images")
-        .select("*")
-        .eq("item_id", item_id);
-    if (imgErr) handleSupabaseError(imgErr);
-
-    // Duplicate the image files
-    for (const [index, img] of imgData.entries()) {
-      const parts = img.storage_path.split("/");
-      const NEW_FILE_NAME = parts[parts.length - 1];
-      const NEW_STORAGE_PATH = `${NEW_ITEM_ID}/${NEW_FILE_NAME}`;
-      const NEW_FILE_URL = `https://${process.env.SUPABASE_URL}.supabase.co/storage/v1/object/public/item-images/${NEW_STORAGE_PATH}`;
-      const { error: imgCopyErr } = await supabase.storage
-        .from("item-images")
-        .copy(img.storage_path, NEW_STORAGE_PATH);
-      Object.assign(imgData[index], {
-        storage_path: NEW_STORAGE_PATH,
-        image_url: NEW_FILE_URL,
-        item_id: NEW_ITEM_ID,
-      });
-      if (imgCopyErr) throw new Error("Failed to copy images: ", imgCopyErr);
-    }
-
-    // Insert new image records that reference the new item ID.
-    const { error: imgInsertErr } = await supabase
-      .from("storage_item_images")
-      .insert(imgData);
-    if (imgInsertErr) handleSupabaseError(imgInsertErr);
-
-    // Update the organization data which references the "old" item
-    const { error: orgErr } = await supabase
-      .from("organization_items")
-      .update({ storage_item_id: NEW_ITEM_ID })
-      .eq("storage_item_id", item_id);
-    if (orgErr) handleSupabaseError(orgErr);
-
-    // Insert tags
-    if (tagIds && tagIds.length > 0) {
-      await this.tagService.assignTagsToItem(req, NEW_ITEM_ID, tagIds);
-    }
-
-    return itemData as StorageItem;
   }
 }

@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const userPanel = {
   filters: {
     title: {
@@ -9,8 +11,8 @@ export const userPanel = {
       en: "Categories",
     },
     active: {
-      fi: "aktiivinen",
-      en: "active",
+      fi: common.active.fi,
+      en: common.active.en,
     },
     clearFilters: {
       fi: "Tyhjennä suodattimet",
@@ -23,6 +25,12 @@ export const userPanel = {
     closeFilters: {
       fi: "Sulje suodattimet",
       en: "Close Filters",
+    },
+  },
+  organizations: {
+    title: {
+      fi: common.organizations.organization.fi,
+      en: common.organizations.organization.en,
     },
   },
   categories: {
@@ -65,12 +73,6 @@ export const userPanel = {
     title: {
       fi: "Keskimääräinen arvosana",
       en: "Average Rating",
-    },
-  },
-  colors: {
-    title: {
-      fi: "Värit",
-      en: "Colors",
     },
   },
 };

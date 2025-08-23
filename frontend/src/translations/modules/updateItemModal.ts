@@ -46,10 +46,6 @@ export const updateItemModal = {
       fi: "Sijainti",
       en: "Location",
     },
-    price: {
-      fi: "Hinta",
-      en: "Price",
-    },
     active: {
       fi: "Aktiivinen",
       en: "Active",
@@ -96,10 +92,6 @@ export const updateItemModal = {
       fi: "Valitse sijainti",
       en: "Select a location",
     },
-    price: {
-      fi: "Hinta",
-      en: "Price",
-    },
     totalQuantity: {
       fi: "Kokonaismäärä",
       en: "Total quantity",
@@ -107,10 +99,6 @@ export const updateItemModal = {
     currentlyInStorage: {
       fi: "Varastossa oleva määrä",
       en: "Currently in storage",
-    },
-    available: {
-      fi: "Saatavilla oleva määrä",
-      en: "Available quantity",
     },
   },
   tags: {
@@ -137,6 +125,10 @@ export const updateItemModal = {
     error: {
       fi: "Tuotteen päivittäminen epäonnistui.",
       en: "Failed to update item.",
+    },
+    missingOrg: {
+      fi: "Organisaatiota ei ole valittu",
+      en: "No organization selected",
     },
   },
 };

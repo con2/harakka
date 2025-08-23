@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchAllOrgLocations,
-  selectOrgLocations,
   selectOrgLocationsLoading,
   selectOrgLocationsError,
+  fetchAllOrgLocations,
+  selectOrgLocations,
 } from "@/store/slices/organizationLocationsSlice";
 import { useRoles } from "@/hooks/useRoles";
 import { LoaderCircle } from "lucide-react";
@@ -42,7 +42,7 @@ const OrganizationLocations = () => {
   // Filter organizations where user has location management permissions
   const orgsWithLocationAccess = useMemo(() => {
     const allowedRoles = [
-      "main_admin",
+      "tenant_admin",
       "storage_manager",
       "super_admin",
       "superVera",
@@ -69,7 +69,7 @@ const OrganizationLocations = () => {
       void dispatch(
         fetchAllOrgLocations({
           orgId: selectedOrgId,
-          pageSize: 100, // Load all locations
+          pageSize: 100,
           currentPage: 1,
         }),
       );

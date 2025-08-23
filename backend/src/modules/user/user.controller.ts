@@ -11,10 +11,12 @@ import {
   BadRequestException,
   UploadedFile,
   UseInterceptors,
+  Query,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
 import { CreateAddressDto } from "./dto/create-address.dto";
+import { GetOrderedUsersDto } from "./dto/get-ordered-users.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { Roles } from "src/decorators/roles.decorator";
 import { ApiSingleResponse } from "@common/response.types";
@@ -24,10 +26,24 @@ import { FileInterceptor } from "@nestjs/platform-express";
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  // Super roles only: return ALL users (unfiltered)
   @Get()
-  @Roles(["admin", "super_admin", "superVera"], { match: "any" }) // Auth Guard use
+  @Roles(["super_admin", "superVera"], { match: "any" })
   async getAllUsers(@Req() req: AuthRequest): Promise<UserProfile[]> {
     return this.userService.getAllUsers(req);
+  }
+
+  // Admin/tenant_admin and super roles: paginated, filtered; super roles see all orgs
+  @Get("ordered")
+  @Roles(["tenant_admin", "super_admin", "superVera"], {
+    match: "any",
+    sameOrg: true,
+  })
+  async getAllOrderedUsers(
+    @Req() req: AuthRequest,
+    @Query() query: GetOrderedUsersDto,
+  ) {
+    return this.userService.getAllOrderedUsers(req, query);
   }
 
   @Get("me")
@@ -54,7 +70,7 @@ export class UserController {
 
   @Get(":id")
   // TODO: Update which roles can access this endpoint when we know more about the user roles
-  @Roles(["admin", "super_admin", "superVera"], { match: "any" })
+  @Roles(["super_admin", "superVera"], { match: "any" })
   async getUserById(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -68,7 +84,7 @@ export class UserController {
   }
 
   @Put(":id")
-  @Roles(["user", "admin", "super_admin", "superVera", "main_admin"], {
+  @Roles(["user", "super_admin", "superVera", "tenant_admin"], {
     match: "any",
   })
   async updateUser(
@@ -84,7 +100,7 @@ export class UserController {
   }
 
   @Delete(":id")
-  @Roles(["admin", "super_admin", "superVera", "main_admin"], { match: "any" })
+  @Roles(["super_admin", "superVera", "tenant_admin"], { match: "any" })
   async deleteUser(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -95,7 +111,7 @@ export class UserController {
   // Address Endpoints
 
   @Get(":id/addresses")
-  @Roles(["user", "admin", "super_admin", "superVera", "main_admin"], {
+  @Roles(["user", "super_admin", "superVera", "tenant_admin"], {
     match: "any",
   })
   async getAddresses(
@@ -108,7 +124,7 @@ export class UserController {
   }
 
   @Post(":id/addresses")
-  @Roles(["user", "admin", "super_admin", "main_admin", "superVera"], {
+  @Roles(["user", "super_admin", "tenant_admin", "superVera"], {
     match: "any",
   })
   async addAddress(
@@ -120,7 +136,7 @@ export class UserController {
   }
 
   @Put(":id/addresses/:addressId")
-  @Roles(["user", "admin", "super_admin", "main_admin", "superVera"], {
+  @Roles(["user", "super_admin", "tenant_admin", "superVera"], {
     match: "any",
   })
   async updateAddress(
@@ -133,7 +149,7 @@ export class UserController {
   }
 
   @Delete(":id/addresses/:addressId")
-  @Roles(["user", "admin", "super_admin", "main_admin", "superVera"], {
+  @Roles(["user", "super_admin", "tenant_admin", "superVera"], {
     match: "any",
   })
   async deleteAddress(
@@ -145,7 +161,7 @@ export class UserController {
   }
 
   @Post("upload-picture")
-  @Roles(["user", "admin", "super_admin", "main_admin", "superVera"])
+  @Roles(["user", "super_admin", "tenant_admin", "superVera"])
   @UseInterceptors(FileInterceptor("file"))
   async uploadProfilePicture(
     @UploadedFile() file: Express.Multer.File,

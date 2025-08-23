@@ -36,6 +36,8 @@ import App from "../App";
 import LoginPage from "@/pages/LoginPage";
 import { RoleManagement } from "@/components/Admin/Roles/RoleManagement";
 import AddItem from "@/pages/AdminPanel/AddItem";
+import OrganizationPage from "@/pages/OrganizationPage";
+import OrganizationsList from "../components/Organization/OrganizationsList";
 
 export const router = createBrowserRouter([
   {
@@ -58,8 +60,7 @@ export const router = createBrowserRouter([
               "user",
               "storage_manager",
               "requester",
-              "admin",
-              "main_admin",
+              "tenant_admin",
               "super_admin",
               "superVera",
             ]}
@@ -73,10 +74,8 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute
             allowedRoles={[
-              "requester",
               "storage_manager",
-              "admin",
-              "main_admin",
+              "tenant_admin",
               "super_admin",
               "superVera",
             ]}
@@ -86,15 +85,90 @@ export const router = createBrowserRouter([
         ),
         children: [
           { index: true, element: <AdminDashboard /> },
-          { path: "users", element: <UsersList /> },
-          { path: "items", element: <AdminItemsTable /> },
-          { path: "bookings", element: <BookingList /> },
-          { path: "tags", element: <TagList /> },
-          { path: "logs", element: <Logs /> },
-          { path: "roles", element: <RoleManagement /> },
-          { path: "organizations", element: <Organizations /> },
-          { path: "items/add", element: <AddItem /> },
-          { path: "locations", element: <OrganizationLocations /> },
+          {
+            path: "users",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["superVera", "super_admin", "tenant_admin"]}
+              >
+                <UsersList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "items",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
+              >
+                <AdminItemsTable />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "bookings",
+            element: (
+              <ProtectedRoute allowedRoles={["superVera", "tenant_admin"]}>
+                <BookingList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "tags",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
+              >
+                <TagList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "logs",
+            element: (
+              <ProtectedRoute allowedRoles={["superVera", "super_admin"]}>
+                <Logs />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "roles",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["superVera", "super_admin", "tenant_admin"]}
+              >
+                <RoleManagement />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "organizations",
+            element: (
+              <ProtectedRoute allowedRoles={["superVera", "super_admin"]}>
+                <Organizations />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "items/add",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
+              >
+                <AddItem />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "locations",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
+              >
+                <OrganizationLocations />
+              </ProtectedRoute>
+            ),
+          },
         ],
       },
       {
@@ -152,7 +226,14 @@ export const router = createBrowserRouter([
         element: <PasswordResetResult />,
       },
       {
-        // all other routes lead to landing page
+        path: "/organizations",
+        element: <OrganizationsList />,
+      },
+      {
+        path: "/organization/:org_slug",
+        element: <OrganizationPage />,
+      },
+      {
         path: "*",
         element: <Navigate to="/" />,
       },

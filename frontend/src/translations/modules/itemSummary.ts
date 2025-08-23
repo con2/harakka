@@ -26,6 +26,10 @@ export const itemSummary = {
       en: "No items added yet",
       fi: "Ei tuotteita lisätty vielä",
     },
+    addingItems: {
+      en: "Adding items to organization",
+      fi: "Lisätään tuotteita organisaatioon",
+    },
   },
   tableHeaders: {
     item: {
@@ -49,16 +53,6 @@ export const itemSummary = {
     totalItems: {
       en: "Total items",
       fi: "Tuotteita yhteensä",
-    },
-  },
-  messages: {
-    uploadFailure: {
-      en: "Items could not be created. Contact support if the error persists.",
-      fi: "Tuotteita ei voitu luoda. Ota yhteyttä tukeen, jos virhe toistuu.",
-    },
-    uploadSuccess: {
-      en: "Your items were created!",
-      fi: "Tuotteesi on luotu!",
     },
   },
 };

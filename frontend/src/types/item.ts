@@ -3,7 +3,7 @@ import {
   SelectedOrg,
   SelectedStorage,
 } from "@common/items/form.types";
-import { ErrorContext, Tag, TagTranslation } from "@/types";
+import { ErrorContext, StorageLocationRow, Tag, TagTranslation } from "@/types";
 import { Override } from "./db-helpers";
 import { StorageItemRow } from "@common/items/storage-items.types";
 
@@ -25,17 +25,6 @@ interface ItemAugmentedFields {
     /** allow future locales without breaking the type */
     [locale: string]: ItemTranslation;
   };
-
-  /** Normalised metadata object */
-  test_metadata: {
-    version?: number;
-    test_flag?: boolean;
-    last_modified?: string;
-    [k: string]: unknown;
-  } | null;
-
-  /** Random json column */
-  test_priority_score?: number | null;
 
   /** Ratings */
   average_rating?: number; // make non-nullable for UI
@@ -66,7 +55,9 @@ interface ItemAugmentedFields {
 /** Final row type — no `Json`, no deep-instantiation error
  * taken from the raw row from the database
  */
-export type Item = Override<StorageItemRow, ItemAugmentedFields>;
+export type Item = Override<StorageItemRow, ItemAugmentedFields> & {
+  location_details: StorageLocationRow;
+};
 
 /**
  * Row shape returned by GET /storage-items/ordered
@@ -91,7 +82,6 @@ export type ManageItemViewRow = {
   /* ─ Core item fields ─ */
   id: string;
   items_number_total: number;
-  price: number;
   created_at: string; // ISO‑8601
   is_active: boolean;
   updated_at?: string | null;
@@ -108,13 +98,6 @@ export type ManageItemViewRow = {
 
   /* ─ Additional fields to match Item interface ─ */
   average_rating?: number;
-  test_metadata: {
-    version?: number;
-    test_flag?: boolean;
-    last_modified?: string;
-    [k: string]: unknown;
-  } | null;
-  test_priority_score: number | null;
 
   /* ─ Location details ─ */
   location_details?: {
@@ -124,6 +107,7 @@ export type ManageItemViewRow = {
     latitude?: number | null;
     longitude?: number | null;
   } | null;
+  organization_id: string;
 
   /* ─ Tag arrays aggregated in the view ─ */
   tag_ids: string[];
@@ -165,8 +149,6 @@ type ItemCreatable = Omit<
   | "items_number_available"
   | "items_number_currently_in_storage"
   | "is_deleted"
-  | "test_metadata"
-  | "test_priority_score"
 >;
 
 /** Data required to create a new item (sent to POST /items) */
@@ -174,7 +156,6 @@ export type CreateItemDto = Partial<ItemCreatable> & {
   /** always required */
   location_id: string;
   items_number_total: number;
-  price: number;
   /** tag IDs selected in the form */
   tagIds?: string[];
   average_rating?: number | null; // not used anywhere yet
@@ -196,7 +177,6 @@ export type ValidItemOrder =
   | "fi_item_name"
   | "fi_item_type"
   | "location_name"
-  | "price"
   | "items_number_total"
   | "is_active"
   | "created_at";

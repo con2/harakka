@@ -11,8 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchLocationsByOrgId,
-  selectCurrentOrgLocations,
+  fetchAllOrgLocations,
+  selectOrgLocations,
 } from "@/store/slices/organizationLocationsSlice";
 import { createItemDto } from "@/store/utils/validate";
 import { ItemFormTag } from "@/types";
@@ -59,7 +59,7 @@ import { ErrorMessage } from "@hookform/error-message";
 /* eslint-disable react-hooks/exhaustive-deps */
 
 function AddItemForm() {
-  const orgLocations = useAppSelector(selectCurrentOrgLocations);
+  const orgLocations = useAppSelector(selectOrgLocations);
   const editItem = useAppSelector(selectSelectedItem);
   const { lang: appLang } = useLanguage();
   const [tagSearchValue, setTagSearchValue] = useState("");
@@ -81,7 +81,6 @@ function AddItemForm() {
       },
       items_number_total: 1,
       items_number_currently_in_storage: 1,
-      price: 0,
       is_active: true,
       tags: [],
       translations: {
@@ -182,15 +181,13 @@ function AddItemForm() {
     const newLoc = orgLocations?.find(
       (org) => org.storage_location_id === selectedId,
     );
-    if (!newLoc) return toast.error("Loc error");
-    console.log("Location name: ", newLoc.storage_locations.name);
-    console.log("Location address: ", newLoc.storage_locations.address);
+    if (!newLoc) return;
     form.setValue(
       "location",
       {
         id: newLoc.storage_location_id,
-        name: newLoc.storage_locations.name,
-        address: newLoc.storage_locations.address,
+        name: newLoc?.storage_locations?.name ?? "",
+        address: newLoc?.storage_locations?.address ?? "",
       },
       { shouldValidate: true, shouldDirty: true },
     );
@@ -199,7 +196,7 @@ function AddItemForm() {
   /*------------------side effects-------------------------------------------*/
   useEffect(() => {
     if (org && orgLocations.length < 1)
-      void dispatch(fetchLocationsByOrgId(org.id));
+      void dispatch(fetchAllOrgLocations({ orgId: org.id, pageSize: 20 }));
   }, []);
 
   useEffect(() => {
@@ -343,47 +340,6 @@ function AddItemForm() {
                 )}
               />
               <FormField
-                name="price"
-                control={form.control}
-                render={({ field }) => (
-                  <div className="w-full">
-                    <FormItem>
-                      <FormLabel>
-                        {t.addItemForm.labels.price[appLang]} (€)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder=""
-                          {...field}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            const numValue =
-                              value === "" ? "" : parseInt(value, 10);
-                            field.onChange(numValue);
-                          }}
-                          className="border shadow-none border-grey"
-                        />
-                      </FormControl>
-                      <ErrorMessage
-                        errors={form.formState.errors}
-                        name="price"
-                        render={({ message }) => (
-                          <p className="text-[0.8rem] font-medium text-destructive">
-                            {
-                              t.addItemForm.messages.validation[
-                                message as keyof typeof t.addItemForm.messages.validation
-                              ][appLang]
-                            }
-                          </p>
-                        )}
-                      />
-                    </FormItem>
-                  </div>
-                )}
-              />
-              <FormField
                 name="location"
                 control={form.control}
                 render={({ field }) => (
@@ -412,7 +368,7 @@ function AddItemForm() {
                               key={loc.storage_location_id}
                               value={loc.storage_location_id}
                             >
-                              {loc.storage_locations.name}
+                              {loc?.storage_locations?.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

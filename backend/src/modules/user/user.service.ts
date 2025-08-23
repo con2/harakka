@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
+import { GetOrderedUsersDto } from "./dto/get-ordered-users.dto";
 
 import {
   PostgrestResponse,
@@ -11,9 +12,11 @@ import { CreateAddressDto } from "./dto/create-address.dto";
 import { MailService } from "../mail/mail.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { UserEmailAssembler } from "../mail/user-email-assembler";
-import { ApiSingleResponse } from "@common/response.types";
+import { ApiSingleResponse, ApiResponse } from "@common/response.types";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
+import { getPaginationMeta } from "@src/utils/pagination";
 import { v4 as uuidv4 } from "uuid";
+import { validateImageFile } from "@src/utils/validateImage.util";
 
 @Injectable()
 export class UserService {
@@ -25,6 +28,7 @@ export class UserService {
     private readonly userEmailAssembler: UserEmailAssembler,
   ) {}
 
+  // Return ALL users, no org filtering, no pagination
   async getAllUsers(req: AuthRequest): Promise<UserProfile[]> {
     const supabase = req.supabase;
 
@@ -36,6 +40,111 @@ export class UserService {
       handleSupabaseError(error);
     }
     return data;
+  }
+
+  // Paginated, filtered, org-aware (org_filter + Global)
+  async getAllOrderedUsers(
+    req: AuthRequest,
+    dto: GetOrderedUsersDto,
+  ): Promise<ApiResponse<UserProfile[]>> {
+    const supabase = req.supabase;
+
+    // First, get the user IDs that match organization criteria
+    let userIds: string[] = [];
+
+    if (dto.org_filter) {
+      // Query 1: Users from the specified organization (including banned users)
+      // Include users who have ANY role assignment in this org, active or inactive
+      const { data: orgUsers, error: orgError } = await supabase
+        .from("user_organization_roles")
+        .select(
+          `
+          user_id,
+          organizations!inner(id, name),
+          roles!inner(role)
+        `,
+        )
+        .eq("organization_id", dto.org_filter);
+
+      if (orgError) {
+        handleSupabaseError(orgError);
+      }
+
+      // Query 2: Users from Global org with "user" role (only active ones)
+      // Keep the active filter for Global users to avoid showing unrelated users
+      const { data: globalUsers, error: globalError } = await supabase
+        .from("user_organization_roles")
+        .select(
+          `
+          user_id,
+          organizations!inner(id, name),
+          roles!inner(role)
+        `,
+        )
+        .eq("is_active", true)
+        .eq("organizations.name", "Global")
+        .eq("roles.role", "user");
+
+      if (globalError) {
+        handleSupabaseError(globalError);
+      }
+
+      // Combine and deduplicate user IDs
+      const orgUserIds =
+        orgUsers?.map((r: { user_id: string }) => r.user_id) || [];
+      const globalUserIds =
+        globalUsers?.map((r: { user_id: string }) => r.user_id) || [];
+      userIds = [...new Set([...orgUserIds, ...globalUserIds])];
+    }
+
+    // Build the main user query
+    let query = supabase.from("user_profiles").select("*", { count: "exact" });
+
+    // Apply organization filtering if specified
+    if (dto.org_filter && userIds.length > 0) {
+      query = query.in("id", userIds);
+    } else if (dto.org_filter && userIds.length === 0) {
+      // No users match the criteria, return empty response
+      return {
+        data: [],
+        error: null,
+        count: 0,
+        status: 200,
+        statusText: "OK",
+        metadata: getPaginationMeta(0, dto.page || 1, dto.limit || 10),
+      };
+    }
+
+    // Apply search query if provided
+    if (dto.searchquery) {
+      query = query.or(
+        `email.ilike.%${dto.searchquery}%,full_name.ilike.%${dto.searchquery}%`,
+      );
+    }
+
+    // Apply ordering - most recently joined first
+    const orderColumn = dto.ordered_by || "created_at";
+    const ascending = dto.ascending === true;
+    query = query.order(orderColumn, { ascending });
+
+    // Apply pagination
+    const page = Number(dto.page) || 1;
+    const limit = Number(dto.limit) || 10;
+    const offset = (page - 1) * limit;
+    query = query.range(offset, offset + limit - 1);
+
+    const result = await query;
+
+    if (result.error) {
+      handleSupabaseError(result.error);
+    }
+
+    const metadata = getPaginationMeta(result.count || 0, page, limit);
+
+    return {
+      ...result,
+      metadata,
+    } as unknown as ApiResponse<UserProfile[]>;
   }
 
   async getUserById(id: string, req: AuthRequest): Promise<UserProfile> {
@@ -202,13 +311,38 @@ export class UserService {
     userId: string,
     req: AuthRequest,
   ): Promise<string> {
-    const fileExtension = fileName.split(".").pop();
+    const fileExtension = fileName.split(".").pop()?.toLowerCase();
     const newFileName = `${userId}-${uuidv4()}.${fileExtension}`;
     const filePath = `${userId}/${newFileName}`;
-    const contentType = `image/${fileExtension}`;
+    let contentType = "";
+    switch (fileExtension) {
+      case "jpg":
+      case "jpeg":
+        contentType = "image/jpeg";
+        break;
+      case "png":
+        contentType = "image/png";
+        break;
+      case "webp":
+        contentType = "image/webp";
+        break;
+      case "gif":
+        contentType = "image/gif";
+        break;
+      default:
+        contentType = "application/octet-stream";
+    }
 
     const supabase = req.supabase;
     const storage = supabase.storage;
+
+    // 0. Validate the image file
+    validateImageFile({
+      buffer: fileBuffer,
+      filename: fileName,
+      mimetype: contentType,
+      size: fileBuffer.length,
+    });
 
     // upload
     const { error: uploadError } = await storage
@@ -220,7 +354,7 @@ export class UserService {
 
     if (uploadError) {
       this.logger.error(`Upload failed: ${uploadError.message}`);
-      throw new Error(`Upload failed: ${uploadError.message}`);
+      handleSupabaseError(uploadError);
     }
 
     // get public URL
@@ -244,6 +378,22 @@ export class UserService {
     userId: string,
     req: AuthRequest,
   ): Promise<string> {
+    // get current user to delete old picture if exists
+    const currentUser = await this.getUserById(userId, req);
+
+    if (currentUser?.profile_picture_url) {
+      const oldPath = this.extractStoragePath(currentUser.profile_picture_url);
+      if (oldPath) {
+        const { error: removeError } = await req.supabase.storage
+          .from("profile-pictures")
+          .remove([oldPath]);
+
+        if (removeError) {
+          handleSupabaseError(removeError);
+        }
+      }
+    }
+
     // get upload pic and url
     const url = await this.uploadProfilePicture(
       fileBuffer,
@@ -256,5 +406,19 @@ export class UserService {
     await this.updateUser(userId, { profile_picture_url: url }, req);
 
     return url;
+  }
+
+  /**
+   * Extracts the path from a Supabase public URL.
+   */
+  private extractStoragePath(url: string): string | null {
+    try {
+      const pathname = new URL(url).pathname;
+      const parts = pathname.split("/");
+      // ['', 'storage', 'v1', 'object', 'public', '<bucket>', ...rest]
+      return parts.slice(6).join("/");
+    } catch {
+      return null;
+    }
   }
 }

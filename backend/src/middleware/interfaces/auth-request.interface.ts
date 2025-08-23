@@ -16,4 +16,8 @@ export interface AuthRequest extends Request {
   supabase: SupabaseClient<Database>;
   user: User;
   userRoles: ViewUserRolesWithDetails[];
+  activeRoleContext?: {
+    organizationId?: string;
+    roleName?: string;
+  };
 }

@@ -160,9 +160,9 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
               // -------- translate title / message ---------------------------------
               const tpl = // Translation template for this notification type
                 (
-                  t.notifications as Record<
+                  t.notification as Record<
                     string,
-                    (typeof t.notifications)[keyof typeof t.notifications]
+                    (typeof t.notification)[keyof typeof t.notification]
                   >
                 )[n.type] ?? null;
 

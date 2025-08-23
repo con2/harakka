@@ -12,8 +12,8 @@ import { Info, MapPin } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectCurrentUserOrganizations } from "@/store/slices/rolesSlice";
 import {
-  fetchLocationsByOrgId,
-  selectCurrentOrgLocations,
+  fetchAllOrgLocations,
+  selectOrgLocations,
   selectOrgLocationsLoading,
 } from "@/store/slices/organizationLocationsSlice";
 import { useEffect } from "react";
@@ -29,7 +29,7 @@ function OrgStep() {
   const { lang } = useLanguage();
   const orgs = useAppSelector(selectCurrentUserOrganizations);
   const locationLoading = useAppSelector(selectOrgLocationsLoading);
-  const orgLocations = useAppSelector(selectCurrentOrgLocations);
+  const orgLocations = useAppSelector(selectOrgLocations);
   const {
     org: selectedOrg,
     location: selectedLoc,
@@ -42,7 +42,9 @@ function OrgStep() {
     const newOrg = orgs.find((org) => org.organization_id === org_id);
     if (!newOrg) return dispatch(selectOrg(undefined));
     void dispatch(selectOrgLocation(undefined));
-    void dispatch(fetchLocationsByOrgId(newOrg.organization_id));
+    void dispatch(
+      fetchAllOrgLocations({ orgId: newOrg.organization_id, pageSize: 20 }),
+    );
     void dispatch(
       selectOrg({
         id: newOrg.organization_id,
@@ -57,8 +59,8 @@ function OrgStep() {
       dispatch(
         selectOrgLocation({
           id: newOrg.storage_location_id,
-          name: newOrg.storage_locations.name,
-          address: newOrg.storage_locations.address,
+          name: newOrg.storage_locations?.name,
+          address: newOrg.storage_locations?.address,
         }),
       );
     }
@@ -66,7 +68,9 @@ function OrgStep() {
 
   useEffect(() => {
     if (selectedOrg && orgLocations.length < 1)
-      void dispatch(fetchLocationsByOrgId(selectedOrg?.id));
+      void dispatch(
+        fetchAllOrgLocations({ orgId: selectedOrg?.id, pageSize: 20 }),
+      );
   }, [dispatch, orgLocations, selectedOrg]);
 
   /*---------------------render--------------------------------------------------*/
@@ -80,8 +84,7 @@ function OrgStep() {
           <div className="flex align-center gap-3 p-4 border rounded justify-center">
             <Info color="#3d3d3d" className="self-center" />
             <p className="text-sm font-medium leading-[1.1rem]">
-              You have unfinished items. Upload or remove these to change
-              organization
+              {t.addItemForm.paragraphs.unfinishedItems[lang]}
             </p>
           </div>
         )}
@@ -146,9 +149,9 @@ function OrgStep() {
                         onClick={() =>
                           dispatch(
                             selectOrgLocation({
-                              id: loc.storage_location_id,
-                              name: loc.storage_locations.name,
-                              address: loc.storage_locations.address,
+                              id: loc?.storage_location_id,
+                              name: loc?.storage_locations?.name,
+                              address: loc?.storage_locations?.address,
                             }),
                           )
                         }

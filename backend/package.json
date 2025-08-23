@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "build": "nest build",
+    "postbuild": "echo \"✅ Backend build completed successfully!\" && echo \"📁 Backend dist contents:\" && ls -la dist/backend || ls -la dist",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node -r tsconfig-paths/register dist/backend/src/main.js",
     "start:watch": "nest start --watch -r tsconfig-paths/register",
@@ -81,8 +82,8 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.34.0"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.37.0"
   },
   "jest": {
     "moduleFileExtensions": [

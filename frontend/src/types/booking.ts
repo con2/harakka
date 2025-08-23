@@ -10,23 +10,11 @@ import { StripNull } from "@common/helper.types";
 export type BookingStatus =
   | "pending"
   | "confirmed"
-  | "paid"
   | "completed"
   | "cancelled"
   | "cancelled by user"
   | "rejected"
-  | "refunded"
   | "all";
-
-/**
- * Payment status values
- */
-export type PaymentStatus =
-  | "invoice-sent"
-  | "paid"
-  | "payment-rejected"
-  | "overdue"
-  | null;
 
 /**
  * Order entity representing a booking in the system
@@ -35,10 +23,6 @@ export interface BookingType extends BaseEntity {
   user_id: string;
   booking_number: string;
   status: BookingStatus;
-  total_amount?: number | null;
-  discount_amount?: number | null;
-  final_amount?: number | null;
-  payment_status?: PaymentStatus;
   booking_items: BookingItem[];
   user_profile?: {
     name?: string;
@@ -85,6 +69,21 @@ export interface CreateBookingDto {
   }[];
 }
 
+/**
+ * Response from creating a booking - includes full booking details
+ */
+export interface CreateBookingResponse {
+  message: string;
+  booking: BookingWithDetails;
+  warning?: string;
+}
+
+/**
+ * Booking details from view_bookings_with_details database view
+ */
+export type BookingDetailsView =
+  Database["public"]["Views"]["view_bookings_with_details"]["Row"];
+
 export type BookingsTable = Database["public"]["Tables"]["bookings"];
 export type BookingsRow = BookingsTable["Row"];
 
@@ -95,9 +94,7 @@ export type BookingsRow = BookingsTable["Row"];
 export type ValidBookingOrder =
   | "created_at"
   | "booking_number"
-  | "payment_status"
   | "status"
-  | "total"
   | "full_name";
 
 export type BookingUserView =
@@ -109,6 +106,7 @@ export type BookingPreview = StripNull<BookingUserViewRow>;
 
 export type BookingWithDetails = BookingPreview & {
   booking_items: BookingItemWithDetails[] | null;
+  notes?: string | null; // Add notes property
 };
 
 export type BookingItemWithDetails = BookingItem & {
