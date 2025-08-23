@@ -81,7 +81,11 @@ export const getBookingByID = createAsyncThunk(
       const orgId = isElevated
         ? undefined
         : selectActiveOrganizationId(state) || undefined;
-      return await bookingsApi.getBookingByID(booking_id, orgId);
+      if (orgId) {
+        return await bookingsApi.getBookingByID(booking_id, orgId);
+      } else {
+        return await bookingsApi.getBookingByID(booking_id, "");
+      }
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch user bookings"),
@@ -327,6 +331,59 @@ export const rejectBookingForOrg = createAsyncThunk<
   }
 });
 
+// Update a single booking item status for the active organization
+// Confirm selected items for active org (or all if none provided)
+export const confirmItemsForOrg = createAsyncThunk<
+  { message: string; bookingId: string; updatedIds?: string[] },
+  { bookingId: string; itemIds?: string[] },
+  { rejectValue: string }
+>(
+  "bookings/confirmItemsForOrg",
+  async ({ bookingId, itemIds }, { rejectWithValue, getState }) => {
+    try {
+      const state = getState() as RootState;
+      const orgId = selectActiveOrganizationId(state);
+      if (!orgId) throw new Error("No active organization selected");
+      const response = await bookingsApi.confirmItemsForOrg(
+        bookingId,
+        orgId,
+        itemIds,
+      );
+      return { ...response, bookingId, updatedIds: itemIds };
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to confirm items for org"),
+      );
+    }
+  },
+);
+
+// Reject selected items for active org (or all if none provided)
+export const rejectItemsForOrg = createAsyncThunk<
+  { message: string; bookingId: string; updatedIds?: string[] },
+  { bookingId: string; itemIds?: string[] },
+  { rejectValue: string }
+>(
+  "bookings/rejectItemsForOrg",
+  async ({ bookingId, itemIds }, { rejectWithValue, getState }) => {
+    try {
+      const state = getState() as RootState;
+      const orgId = selectActiveOrganizationId(state);
+      if (!orgId) throw new Error("No active organization selected");
+      const response = await bookingsApi.rejectItemsForOrg(
+        bookingId,
+        orgId,
+        itemIds,
+      );
+      return { ...response, bookingId, updatedIds: itemIds };
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to reject items for org"),
+      );
+    }
+  },
+);
+
 // Return items thunk
 export const returnItems = createAsyncThunk<
   { bookingId: string },
@@ -405,6 +462,86 @@ export const bookingsSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "fetch";
         state.loading = false;
+      })
+      // Confirm items for org (all or selected)
+      .addCase(confirmItemsForOrg.fulfilled, (state, action) => {
+        if (!state.currentBooking || !state.currentBooking.booking_items)
+          return;
+        const updatedIds = action.payload.updatedIds || [];
+        state.currentBooking.booking_items =
+          state.currentBooking.booking_items.map((bi) =>
+            updatedIds.length === 0 || updatedIds.includes(bi.id)
+              ? { ...bi, status: "confirmed" }
+              : bi,
+          );
+        // Roll-up with new rule
+        const allCancelled =
+          state.currentBooking.booking_items.length > 0 &&
+          state.currentBooking.booking_items.every(
+            (bi) => bi.status === "cancelled",
+          );
+        const noPending =
+          state.currentBooking.booking_items.length > 0 &&
+          state.currentBooking.booking_items.every(
+            (bi) => bi.status !== "pending",
+          );
+        let rolledUpStatus: BookingStatus = "pending";
+        if (allCancelled) rolledUpStatus = "rejected";
+        else if (noPending) rolledUpStatus = "confirmed";
+        state.currentBooking.status = rolledUpStatus;
+        const currentId = state.currentBooking.id;
+        if (currentId) {
+          state.bookings.forEach((b) => {
+            if (b.id === currentId) b.status = rolledUpStatus;
+          });
+          state.userBookings.forEach((b) => {
+            if (b.id === currentId) b.status = rolledUpStatus;
+          });
+        }
+      })
+      .addCase(confirmItemsForOrg.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "update";
+      })
+      // Reject items for org (all or selected)
+      .addCase(rejectItemsForOrg.fulfilled, (state, action) => {
+        if (!state.currentBooking || !state.currentBooking.booking_items)
+          return;
+        const updatedIds = action.payload.updatedIds || [];
+        state.currentBooking.booking_items =
+          state.currentBooking.booking_items.map((bi) =>
+            updatedIds.length === 0 || updatedIds.includes(bi.id)
+              ? { ...bi, status: "cancelled" }
+              : bi,
+          );
+        // Roll-up with new rule
+        const allCancelled =
+          state.currentBooking.booking_items.length > 0 &&
+          state.currentBooking.booking_items.every(
+            (bi) => bi.status === "cancelled",
+          );
+        const noPending =
+          state.currentBooking.booking_items.length > 0 &&
+          state.currentBooking.booking_items.every(
+            (bi) => bi.status !== "pending",
+          );
+        let rolledUpStatus: BookingStatus = "pending";
+        if (allCancelled) rolledUpStatus = "rejected";
+        else if (noPending) rolledUpStatus = "confirmed";
+        state.currentBooking.status = rolledUpStatus;
+        const currentId = state.currentBooking.id;
+        if (currentId) {
+          state.bookings.forEach((b) => {
+            if (b.id === currentId) b.status = rolledUpStatus;
+          });
+          state.userBookings.forEach((b) => {
+            if (b.id === currentId) b.status = rolledUpStatus;
+          });
+        }
+      })
+      .addCase(rejectItemsForOrg.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "update";
       })
       // Get booking by ID
       .addCase(getBookingByID.pending, (state) => {
@@ -585,15 +722,10 @@ export const bookingsSlice = createSlice({
         state.error = null;
         state.errorContext = null;
       })
-      .addCase(rejectBookingForOrg.fulfilled, (state, action) => {
+      .addCase(rejectBookingForOrg.fulfilled, (state, _action) => {
+        // With new roll-up rules, don't force total status to 'rejected' here.
+        // Item-level reducers (confirm/rejectItemsForOrg) manage roll-up locally.
         state.loading = false;
-        const bookingId = action.payload.bookingId;
-        state.bookings.forEach((booking) => {
-          if (booking.id === bookingId) booking.status = "rejected";
-        });
-        state.userBookings.forEach((booking) => {
-          if (booking.id === bookingId) booking.status = "rejected";
-        });
       })
       .addCase(rejectBookingForOrg.rejected, (state, action) => {
         state.loading = false;

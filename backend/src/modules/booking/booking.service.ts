@@ -39,7 +39,6 @@ import { ApiResponse, ApiSingleResponse } from "@common/response.types";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { BookingPreview } from "@common/bookings/booking.types";
 import { BookingItemsService } from "../booking_items/booking-items.service";
-import { BookingItem } from "@common/bookings/booking-items.types";
 import { StorageItemRow } from "../storage-items/interfaces/storage-item.interface";
 dayjs.extend(utc);
 @Injectable()
@@ -394,13 +393,14 @@ export class BookingService {
     bookingId: string,
     providerOrgId: string,
     req: AuthRequest,
+    itemIds?: string[],
   ) {
     const supabase = req.supabase;
 
     // Permission: must be admin in that organization (or global admin)
     const isAdminOfOrg = this.roleService.hasAnyRole(
       req,
-      ["super_admin", "tenant_admin", "superVera", "storage_manager"],
+      ["tenant_admin", "storage_manager"],
       providerOrgId,
     );
     if (!isAdminOfOrg) {
@@ -409,18 +409,22 @@ export class BookingService {
       );
     }
 
-    // Confirm (confirm) the items belonging to providerOrg for this booking (only pending ones)
-    const { error: updateErr } = await supabase
+    // Confirm items: either a selected subset (itemIds) or all items for the org; only pending can be confirmed
+    let updateQuery = supabase
       .from("booking_items")
       .update({ status: "confirmed" })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", providerOrgId)
       .eq("status", "pending");
+    if (itemIds && itemIds.length > 0) {
+      updateQuery = updateQuery.in("id", itemIds);
+    }
+    const { error: updateErr } = await updateQuery;
     if (updateErr) {
       throw new BadRequestException("Failed to confirm booking items");
     }
 
-    // Check if all items for this booking are now confirmed
+    // Check booking roll-up based on all items after update
     const { data: items, error: itemsErr } = await supabase
       .from("booking_items")
       .select("status")
@@ -429,22 +433,36 @@ export class BookingService {
       throw new BadRequestException("Failed to fetch booking items");
     }
 
-    const allConfirmed = items.every((it) => it.status === "confirmed");
-    if (allConfirmed) {
+    const allCancelled =
+      items.length > 0 && items.every((it) => it.status === "cancelled");
+    const noPending =
+      items.length > 0 && items.every((it) => it.status !== "pending");
+
+    if (allCancelled) {
+      const { error: bookingUpdateErr } = await supabase
+        .from("bookings")
+        .update({ status: "rejected" })
+        .eq("id", bookingId);
+      if (bookingUpdateErr) {
+        throw new BadRequestException(
+          "Failed to reject booking after all items cancelled",
+        );
+      }
+    } else if (noPending) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
         .update({ status: "confirmed" })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException(
-          "Failed to confirm booking after all items confirmed",
+          "Failed to confirm booking after all items resolved",
         );
       }
     }
 
     return {
-      message: allConfirmed
-        ? "Items confirmed and booking confirmed"
+      message: noPending
+        ? "Items confirmed and booking status updated"
         : "Items confirmed for organization",
     };
   }
@@ -457,12 +475,13 @@ export class BookingService {
     bookingId: string,
     providerOrgId: string,
     req: AuthRequest,
+    itemIds?: string[],
   ) {
     const supabase = req.supabase;
 
     const isAdminOfOrg = this.roleService.hasAnyRole(
       req,
-      ["super_admin", "tenant_admin", "superVera", "storage_manager"],
+      ["tenant_admin", "storage_manager"],
       providerOrgId,
     );
     if (!isAdminOfOrg) {
@@ -471,26 +490,66 @@ export class BookingService {
       );
     }
 
-    const { error: updateErr } = await supabase
+    // Cancel items: either a selected subset (itemIds) or all items for the org; can cancel pending or confirmed
+    let cancelQuery = supabase
       .from("booking_items")
       .update({ status: "cancelled" })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", providerOrgId)
       .in("status", ["pending", "confirmed"]);
+    if (itemIds && itemIds.length > 0) {
+      cancelQuery = cancelQuery.in("id", itemIds);
+    }
+    const { error: updateErr } = await cancelQuery;
     if (updateErr) {
       throw new BadRequestException("Failed to reject booking items");
     }
 
-    const { error: bookingUpdateErr } = await supabase
-      .from("bookings")
-      .update({ status: "rejected" })
-      .eq("id", bookingId);
-    if (bookingUpdateErr) {
-      throw new BadRequestException("Failed to reject booking");
+    // Roll-up booking status based on all items
+    const { data: items, error: itemsErr } = await supabase
+      .from("booking_items")
+      .select("status")
+      .eq("booking_id", bookingId);
+    if (itemsErr || !items) {
+      throw new BadRequestException("Failed to fetch booking items");
     }
 
-    return { message: "Items rejected and booking set to rejected" };
+    const allCancelled =
+      items.length > 0 && items.every((it) => it.status === "cancelled");
+    const noPending =
+      items.length > 0 && items.every((it) => it.status !== "pending");
+
+    if (allCancelled) {
+      const { error: bookingUpdateErr } = await supabase
+        .from("bookings")
+        .update({ status: "rejected" })
+        .eq("id", bookingId);
+      if (bookingUpdateErr) {
+        throw new BadRequestException("Failed to set booking to rejected");
+      }
+    } else if (noPending) {
+      const { error: bookingUpdateErr } = await supabase
+        .from("bookings")
+        .update({ status: "confirmed" })
+        .eq("id", bookingId);
+      if (bookingUpdateErr) {
+        throw new BadRequestException("Failed to set booking to confirmed");
+      }
+    }
+
+    return { message: "Items rejected and booking status updated" };
   }
+
+  /**
+   * Bulk update selected booking_items to a given status for a provider org.
+   * - status 'confirmed': only pending items are updated
+   * - status 'cancelled': pending and confirmed items are updated
+   * After the update, rolls up the parent booking status:
+   *   - If any item is 'cancelled' => booking 'rejected'
+   *   - Else if all items are 'confirmed' => booking 'confirmed'
+   *   - Else booking remains 'pending'
+   */
+  // updateBookingItemsStatusForOrg removed; use confirm/reject methods with optional itemIds instead
 
   // 5. update a Booking (Admin/SuperVera OR Owner)
   async updateBooking(
@@ -1183,7 +1242,6 @@ export class BookingService {
         });
       }
     }
-
     const { error, count } = result;
     if (error) handleSupabaseError(error);
 
@@ -1205,8 +1263,15 @@ export class BookingService {
     booking_id: string,
     page: number,
     limit: number,
+    providerOrgId: string,
   ): Promise<
-    ApiSingleResponse<BookingPreview & { booking_items: BookingItemRow[] }>
+    ApiSingleResponse<
+      BookingPreview & {
+        booking_items: (import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
+          storage_items: Partial<StorageItemRow>;
+        })[];
+      }
+    >
   > {
     const result: PostgrestSingleResponse<BookingPreview> = await supabase
       .from("view_bookings_with_user_info")
@@ -1217,7 +1282,7 @@ export class BookingService {
     if (result.error) handleSupabaseError(result.error);
 
     const booking_items_result: ApiResponse<
-      BookingItem & {
+      import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
         storage_items: Partial<StorageItemRow>;
       }
     > = await this.bookingItemsService.getBookingItems(
@@ -1225,6 +1290,8 @@ export class BookingService {
       booking_id,
       page,
       limit,
+      "translations",
+      providerOrgId,
     );
 
     if (booking_items_result.error)

@@ -144,28 +144,46 @@ export class BookingController {
     return this.bookingService.rejectBooking(id, userId, req);
   }
 
-  // Confirm all booking items for the active organization (from x-org-id)
+  // Confirm booking items for the active organization; supports all or a selected subset via item_ids
   @Put(":id/confirm-for-org")
   async confirmForOrg(
     @Param("id") id: string,
     @Req() req: AuthRequest,
     @Query("org_id") org_id?: string,
+    @Body()
+    body?: {
+      item_ids?: string[];
+    },
   ) {
     const orgId = org_id || "";
     if (!orgId) throw new BadRequestException("org_id query param is required");
-    return this.bookingService.confirmBookingItemsForOrg(id, orgId, req);
+    return this.bookingService.confirmBookingItemsForOrg(
+      id,
+      orgId,
+      req,
+      body?.item_ids,
+    );
   }
 
-  // reject all booking items for the active organization (from x-org-id)
+  // Reject booking items for the active organization; supports all or a selected subset via item_ids
   @Put(":id/reject-for-org")
   async rejectForOrg(
     @Param("id") id: string,
     @Req() req: AuthRequest,
     @Query("org_id") org_id?: string,
+    @Body()
+    body?: {
+      item_ids?: string[];
+    },
   ) {
     const orgId = org_id || "";
     if (!orgId) throw new BadRequestException("org_id query param is required");
-    return this.bookingService.rejectBookingItemsForOrg(id, orgId, req);
+    return this.bookingService.rejectBookingItemsForOrg(
+      id,
+      orgId,
+      req,
+      body?.item_ids,
+    );
   }
 
   // cancels own booking by user or admin cancels any booking
@@ -213,39 +231,20 @@ export class BookingController {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const is_ascending = ascending.toLowerCase() === "true";
-    // Elevated roles can see all bookings regardless of org; drop org_id for them
-    const isElevated = this.roleService.hasAnyRole(req, [
-      "super_admin",
-      "superVera",
-    ]);
-    // For non-elevated roles, require scoping to an organization:
-    // - If org_id is missing and the user has exactly one org, fallback to it
-    // - Otherwise require org_id explicitly and validate membership
-    let effectiveOrgId = isElevated ? org_id || undefined : org_id;
-    if (!isElevated) {
-      let requestedOrg = (org_id ?? "").trim();
-      if (!requestedOrg) {
-        const userOrgs = this.roleService.getUserOrganizations(req);
-        if (userOrgs.length === 1) {
-          requestedOrg = userOrgs[0].organization_id;
-        }
-      }
-      if (!requestedOrg) {
-        throw new BadRequestException(
-          "org_id query param is required for this role",
-        );
-      }
-      const isMember = this.roleService.hasAnyRole(
-        req,
-        ["tenant_admin", "storage_manager"],
-        requestedOrg,
+    // Require scoping to an organization and validate membership
+    const requestedOrg = (org_id ?? "").trim();
+    if (!requestedOrg) {
+      throw new BadRequestException("org_id query param is required");
+    }
+    const isMember = this.roleService.hasAnyRole(
+      req,
+      ["tenant_admin", "storage_manager"],
+      requestedOrg,
+    );
+    if (!isMember) {
+      throw new ForbiddenException(
+        "You don't have access to this organization's bookings",
       );
-      if (!isMember) {
-        throw new ForbiddenException(
-          "You don't have access to this organization's bookings",
-        );
-      }
-      effectiveOrgId = requestedOrg;
     }
     return this.bookingService.getOrderedBookings(
       supabase,
@@ -255,26 +254,30 @@ export class BookingController {
       ordered_by,
       searchquery,
       status_filter,
-      effectiveOrgId,
+      requestedOrg,
     );
   }
 
   @Get("id/:id")
-  @Roles(["tenant_admin", "super_admin"])
+  @Roles(["tenant_admin", "storage_manager"])
   async getBookingByID(
     @Req() req: AuthRequest,
     @Param("id") booking_id: string,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
+    @Query("org_id") org_id?: string,
   ) {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const supabase = req.supabase;
+    if (!org_id)
+      throw new BadRequestException("org_id query param is required");
     return this.bookingService.getBookingByID(
       supabase,
       booking_id,
       pageNum,
       limitNum,
+      org_id,
     );
   }
 }

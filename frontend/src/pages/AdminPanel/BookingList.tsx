@@ -8,7 +8,7 @@ import {
   selectCurrentBooking,
   selectBookingItemsPagination,
   selectCurrentBookingLoading,
-  getBookingItems,
+  getBookingByID,
   selectBooking,
   selectBookingPagination,
 } from "@/store/slices/bookingsSlice";
@@ -41,6 +41,11 @@ import Spinner from "@/components/Spinner";
 import { DataTable } from "@/components/ui/data-table";
 import { BookingPreview } from "@common/bookings/booking.types";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  confirmItemsForOrg,
+  rejectItemsForOrg,
+} from "@/store/slices/bookingsSlice";
 
 const BookingList = () => {
   const dispatch = useAppDispatch();
@@ -67,6 +72,7 @@ const BookingList = () => {
   const [currentItemPage, setCurrentItemPage] = useState(1);
   const currentBookingLoading = useAppSelector(selectCurrentBookingLoading);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
 
   // Compute org-specific gating for actions in the details modal
   const ownedItemsForOrg = (
@@ -120,7 +126,7 @@ const BookingList = () => {
   /*----------------------handlers----------------------------------*/
   const handleViewDetails = (booking: BookingUserViewRow) => {
     dispatch(selectBooking(booking));
-    void dispatch(getBookingItems(booking.id!));
+    void dispatch(getBookingByID(booking.id!));
     setShowDetailsModal(true);
   };
 
@@ -212,12 +218,15 @@ const BookingList = () => {
         const isConfirmed = booking.status === "confirmed";
         const isDeleted = booking.status === "deleted";
         // Org-specific flags may be attached by backend when org_id is provided
-        const orgFlags = (row.original as unknown as {
+        type OrgFlags = {
           is_org_confirmed?: boolean;
           is_org_has_items?: boolean;
-        }) || { is_org_confirmed: undefined, is_org_has_items: undefined };
-        const canOrgAct =
-          !!orgFlags.is_org_has_items && !orgFlags.is_org_confirmed;
+        };
+        const flags: Partial<OrgFlags> =
+          (row.original as unknown as OrgFlags) || {};
+        const orgConfirmedFlag = flags?.is_org_confirmed;
+        const orgHasItemsFlag = flags?.is_org_has_items;
+        const canOrgAct = !!orgHasItemsFlag && !orgConfirmedFlag;
 
         return (
           <div className="flex space-x-1">
@@ -272,6 +281,31 @@ const BookingList = () => {
       provider_org?: { name?: string } | null;
     }
   >[] = [
+    {
+      id: "select",
+      header: () => null,
+      cell: ({ row }) => {
+        const item = row.original;
+        const isOwned = item.provider_organization_id === activeOrgId;
+        const isSelectable = isOwned && item.status === "pending";
+        return (
+          <Checkbox
+            checked={selectedItemIds.includes(String(item.id))}
+            onCheckedChange={(checked) => {
+              if (!isSelectable) return;
+              setSelectedItemIds((prev) =>
+                checked
+                  ? [...new Set([...prev, String(item.id)])]
+                  : prev.filter((id) => id !== String(item.id)),
+              );
+            }}
+            disabled={!isSelectable}
+            aria-label="Select item"
+          />
+        );
+      },
+      size: 32,
+    },
     {
       accessorKey: "item_name",
       header: t.bookingList.modal.bookingItems.columns.item[lang],
@@ -514,6 +548,74 @@ const BookingList = () => {
                     />
                   ) : null}
                 </div>
+
+                {/* Bulk actions for selected items */}
+                {selectedBooking.status === "pending" &&
+                  selectedItemIds.length > 0 && (
+                    <div className="flex items-center gap-2 p-2 rounded-md bg-slate-50 border border-slate-200">
+                      <span className="text-sm text-slate-700">
+                        {selectedItemIds.length} selected
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={async () => {
+                          await dispatch(
+                            confirmItemsForOrg({
+                              bookingId: selectedBooking.id as string,
+                              itemIds: selectedItemIds,
+                            }),
+                          );
+                          setSelectedItemIds([]);
+                          // Refetch bookings list to update roll-up status
+                          void dispatch(
+                            getOrderedBookings({
+                              ordered_by: ORDER_BY,
+                              ascending: ASCENDING,
+                              page: currentPage,
+                              limit: 10,
+                              searchquery: debouncedSearchQuery,
+                              status_filter:
+                                statusFilter !== "all"
+                                  ? statusFilter
+                                  : undefined,
+                            }),
+                          );
+                        }}
+                      >
+                        Confirm selected
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={async () => {
+                          await dispatch(
+                            rejectItemsForOrg({
+                              bookingId: selectedBooking.id as string,
+                              itemIds: selectedItemIds,
+                            }),
+                          );
+                          setSelectedItemIds([]);
+                          // Refetch bookings list to update roll-up status
+                          void dispatch(
+                            getOrderedBookings({
+                              ordered_by: ORDER_BY,
+                              ascending: ASCENDING,
+                              page: currentPage,
+                              limit: 10,
+                              searchquery: debouncedSearchQuery,
+                              status_filter:
+                                statusFilter !== "all"
+                                  ? statusFilter
+                                  : undefined,
+                            }),
+                          );
+                        }}
+                      >
+                        Reject selected
+                      </Button>
+                    </div>
+                  )}
 
                 {/* booking Modal Actions */}
                 <div className="flex flex-col justify-center space-x-4">

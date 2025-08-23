@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { XCircle } from "lucide-react";
-import { rejectBookingForOrg } from "@/store/slices/bookingsSlice";
+import { rejectItemsForOrg } from "@/store/slices/bookingsSlice";
 import { toastConfirm } from "../../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
@@ -29,7 +29,7 @@ const BookingRejectButton = ({
       confirmText: t.bookingReject.confirmDialog.confirmText[lang],
       cancelText: t.bookingReject.confirmDialog.cancelText[lang],
       onConfirm: () => {
-        toast.promise(dispatch(rejectBookingForOrg(id)).unwrap(), {
+        toast.promise(dispatch(rejectItemsForOrg({ bookingId: id })).unwrap(), {
           loading: t.bookingReject.toast.loading[lang],
           success: t.bookingReject.toast.success[lang],
           error: t.bookingReject.toast.error[lang],

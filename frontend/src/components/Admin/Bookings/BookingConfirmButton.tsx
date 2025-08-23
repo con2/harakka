@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
-import { confirmBookingForOrg } from "@/store/slices/bookingsSlice";
+import { confirmItemsForOrg } from "@/store/slices/bookingsSlice";
 import { CheckCircle } from "lucide-react";
 import { toastConfirm } from "../../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
@@ -29,11 +29,14 @@ const BookingConfirmButton = ({
       confirmText: t.bookingConfirm.confirmDialog.confirmText[lang],
       cancelText: t.bookingConfirm.confirmDialog.cancelText[lang],
       onConfirm: () => {
-        toast.promise(dispatch(confirmBookingForOrg(id)).unwrap(), {
-          loading: t.bookingConfirm.toast.loading[lang],
-          success: t.bookingConfirm.toast.success[lang],
-          error: t.bookingConfirm.toast.error[lang],
-        });
+        toast.promise(
+          dispatch(confirmItemsForOrg({ bookingId: id })).unwrap(),
+          {
+            loading: t.bookingConfirm.toast.loading[lang],
+            success: t.bookingConfirm.toast.success[lang],
+            error: t.bookingConfirm.toast.error[lang],
+          },
+        );
         closeModal();
       },
     });

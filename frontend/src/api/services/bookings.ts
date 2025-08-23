@@ -54,12 +54,10 @@ export const bookingsApi = {
    */
   getBookingByID: async (
     booking_id: string,
-    orgId?: string,
+    orgId: string,
   ): Promise<ApiSingleResponse<BookingPreview>> => {
     return api.get(
-      orgId
-        ? `/booking-items/${booking_id}?org_id=${encodeURIComponent(orgId)}`
-        : `/booking-items/${booking_id}`,
+      `/bookings/id/${booking_id}?org_id=${encodeURIComponent(orgId)}`,
     );
   },
 
@@ -101,14 +99,18 @@ export const bookingsApi = {
   },
 
   /**
-   * Confirm booking items for the active organization (uses x-org-id header)
+   * Confirm booking items for the active organization
    */
   confirmBookingForOrg: async (
     bookingId: string,
     orgId: string,
+    itemIds?: string[],
   ): Promise<{ message: string }> => {
     return api.put(
-      `/bookings/${bookingId}/confirm-for-org?org_id=${encodeURIComponent(orgId)}`,
+      `/bookings/${bookingId}/confirm-for-org?org_id=${encodeURIComponent(
+        orgId,
+      )}`,
+      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
     );
   },
 
@@ -140,9 +142,45 @@ export const bookingsApi = {
   rejectBookingForOrg: async (
     bookingId: string,
     orgId: string,
+    itemIds?: string[],
   ): Promise<{ message: string }> => {
     return api.put(
-      `/bookings/${bookingId}/reject-for-org?org_id=${encodeURIComponent(orgId)}`,
+      `/bookings/${bookingId}/reject-for-org?org_id=${encodeURIComponent(
+        orgId,
+      )}`,
+      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
+    );
+  },
+
+  /**
+   * Confirm booking items for an org; if itemIds provided, only those are confirmed.
+   */
+  confirmItemsForOrg: async (
+    bookingId: string,
+    orgId: string,
+    itemIds?: string[],
+  ): Promise<{ message: string }> => {
+    return api.put(
+      `/bookings/${bookingId}/confirm-for-org?org_id=${encodeURIComponent(
+        orgId,
+      )}`,
+      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
+    );
+  },
+
+  /**
+   * Reject booking items for an org; if itemIds provided, only those are rejected.
+   */
+  rejectItemsForOrg: async (
+    bookingId: string,
+    orgId: string,
+    itemIds?: string[],
+  ): Promise<{ message: string }> => {
+    return api.put(
+      `/bookings/${bookingId}/reject-for-org?org_id=${encodeURIComponent(
+        orgId,
+      )}`,
+      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
     );
   },
 
