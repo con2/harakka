@@ -42,10 +42,6 @@ import { DataTable } from "@/components/ui/data-table";
 import { BookingPreview } from "@common/bookings/booking.types";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  confirmItemsForOrg,
-  rejectItemsForOrg,
-} from "@/store/slices/bookingsSlice";
 
 const BookingList = () => {
   const dispatch = useAppDispatch();
@@ -74,7 +70,7 @@ const BookingList = () => {
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
 
-  // Compute org-specific gating for actions in the details modal
+  // Only show org-owned items in details modal and table
   const ownedItemsForOrg = (
     (selectedBooking as BookingWithDetails)?.booking_items || []
   ).filter((it) => it.provider_organization_id === activeOrgId);
@@ -82,46 +78,6 @@ const BookingList = () => {
   const hasPendingForOrgInSelected = ownedItemsForOrg.some(
     (it) => it.status === "pending",
   );
-
-  // Compute org status for details view: prefer backend flags, fallback to local computation
-  const isOrgConfirmedFlag = (
-    selectedBooking as unknown as {
-      is_org_confirmed?: boolean;
-    }
-  )?.is_org_confirmed;
-  const isOrgHasItemsFlag = (
-    selectedBooking as unknown as {
-      is_org_has_items?: boolean;
-    }
-  )?.is_org_has_items;
-  const orgHasItems =
-    typeof isOrgHasItemsFlag === "boolean"
-      ? isOrgHasItemsFlag
-      : hasAnyForOrgInSelected;
-  const orgConfirmed =
-    typeof isOrgConfirmedFlag === "boolean"
-      ? isOrgConfirmedFlag
-      : orgHasItems &&
-        ownedItemsForOrg.every((it) => it.status === "confirmed");
-  const orgStatusForDetails: BookingStatus | null = orgHasItems
-    ? orgConfirmed
-      ? "confirmed"
-      : "pending"
-    : null;
-
-  // Helper: sort items so that org-owned items are shown first
-  const sortItemsOwnedFirst = <
-    T extends { provider_organization_id?: string | null },
-  >(
-    items: T[],
-  ): T[] =>
-    items
-      ? [...items].sort((a, b) => {
-          const aOwned = a.provider_organization_id === activeOrgId ? 1 : 0;
-          const bOwned = b.provider_organization_id === activeOrgId ? 1 : 0;
-          return bOwned - aOwned;
-        })
-      : items;
 
   /*----------------------handlers----------------------------------*/
   const handleViewDetails = (booking: BookingUserViewRow) => {
@@ -185,7 +141,7 @@ const BookingList = () => {
     },
     {
       id: "org_status",
-      header: `${t.bookingList.columns.status[lang]} (Org)`,
+      header: t.bookingList.columns.status[lang],
       enableSorting: false,
       cell: ({ row }) => {
         const orgConfirmed = (
@@ -196,12 +152,6 @@ const BookingList = () => {
         const orgStatus: BookingStatus = orgConfirmed ? "confirmed" : "pending";
         return <StatusBadge status={orgStatus} />;
       },
-    },
-    {
-      accessorKey: "status",
-      header: `${t.bookingList.columns.status[lang]} (Total)`,
-      enableSorting: true,
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "created_at",
@@ -320,15 +270,6 @@ const BookingList = () => {
       },
     },
     {
-      id: "provider_org",
-      header: "Organization",
-      cell: ({ row }) => {
-        const isOwned = row.original.provider_organization_id === activeOrgId;
-        const name = row.original.provider_org?.name ?? "-";
-        return <span className={isOwned ? "" : "opacity-50"}>{name}</span>;
-      },
-    },
-    {
       accessorKey: "quantity",
       header: t.bookingList.modal.bookingItems.columns.quantity[lang],
       cell: ({ row }) => {
@@ -362,6 +303,15 @@ const BookingList = () => {
           "d MMM yyyy",
         );
         return <span className={isOwned ? "" : "opacity-50"}>{text}</span>;
+      },
+    },
+    {
+      accessorKey: "status",
+      header:
+        t.bookingList.modal.bookingItems.columns.status?.[lang] || "Status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        return <StatusBadge status={status} />;
       },
     },
   ];
@@ -499,18 +449,6 @@ const BookingList = () => {
                     <h3 className="font-normal">
                       {t.bookingList.modal.bookingInfo[lang]}
                     </h3>
-                    <p className="text-sm mb-0">
-                      {t.bookingList.modal.status[lang]}{" "}
-                      <StatusBadge status={selectedBooking.status} />
-                    </p>
-                    <p className="text-sm mb-0">
-                      {t.bookingList.columns.status[lang]} (Org){" "}
-                      {orgStatusForDetails ? (
-                        <StatusBadge status={orgStatusForDetails} />
-                      ) : (
-                        <span className="text-gray-500">—</span>
-                      )}
-                    </p>
                     <p className="text-sm">
                       {t.bookingList.modal.date[lang]}{" "}
                       {formatDate(
@@ -527,95 +465,59 @@ const BookingList = () => {
                     <Spinner containerClasses="py-10" />
                   )}
 
+                  {/* Select All button */}
+                  {!currentBookingLoading && ownedItemsForOrg.length > 0 && (
+                    <div className="flex items-center mb-2 gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          if (
+                            selectedItemIds.length === ownedItemsForOrg.length
+                          ) {
+                            setSelectedItemIds([]);
+                          } else {
+                            setSelectedItemIds(
+                              ownedItemsForOrg.map((i) => i.id),
+                            );
+                          }
+                        }}
+                        className={
+                          selectedItemIds.length === 0 &&
+                          ownedItemsForOrg.length === 0
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }
+                      >
+                        {selectedItemIds.length === ownedItemsForOrg.length
+                          ? t.bookingList.modal.buttons.deselectAll?.[lang] ||
+                            "Deselect All"
+                          : t.bookingList.modal.buttons.selectAll?.[lang] ||
+                            "Select All"}
+                      </Button>
+                      <span className="text-xs text-gray-600">
+                        {selectedItemIds.length}{" "}
+                        {t.bookingList.modal.buttons.selectedCount?.[lang] ||
+                          "selected"}
+                      </span>
+                    </div>
+                  )}
+
                   {!currentBookingLoading && itemPages > 1 ? (
                     <PaginatedDataTable
                       pageCount={itemPages}
                       onPageChange={handleItemPageChange}
                       pageIndex={currentItemPage - 1}
                       columns={bookingItemsColumns}
-                      data={sortItemsOwnedFirst(
-                        (selectedBooking as BookingWithDetails).booking_items ||
-                          [],
-                      )}
+                      data={ownedItemsForOrg}
                     />
                   ) : !currentBookingLoading && itemPages === 1 ? (
                     <DataTable
                       columns={bookingItemsColumns}
-                      data={sortItemsOwnedFirst(
-                        (selectedBooking as BookingWithDetails).booking_items ||
-                          [],
-                      )}
+                      data={ownedItemsForOrg}
                     />
                   ) : null}
                 </div>
-
-                {/* Bulk actions for selected items */}
-                {selectedBooking.status === "pending" &&
-                  selectedItemIds.length > 0 && (
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-slate-50 border border-slate-200">
-                      <span className="text-sm text-slate-700">
-                        {selectedItemIds.length} selected
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={async () => {
-                          await dispatch(
-                            confirmItemsForOrg({
-                              bookingId: selectedBooking.id as string,
-                              itemIds: selectedItemIds,
-                            }),
-                          );
-                          setSelectedItemIds([]);
-                          // Refetch bookings list to update roll-up status
-                          void dispatch(
-                            getOrderedBookings({
-                              ordered_by: ORDER_BY,
-                              ascending: ASCENDING,
-                              page: currentPage,
-                              limit: 10,
-                              searchquery: debouncedSearchQuery,
-                              status_filter:
-                                statusFilter !== "all"
-                                  ? statusFilter
-                                  : undefined,
-                            }),
-                          );
-                        }}
-                      >
-                        Confirm selected
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={async () => {
-                          await dispatch(
-                            rejectItemsForOrg({
-                              bookingId: selectedBooking.id as string,
-                              itemIds: selectedItemIds,
-                            }),
-                          );
-                          setSelectedItemIds([]);
-                          // Refetch bookings list to update roll-up status
-                          void dispatch(
-                            getOrderedBookings({
-                              ordered_by: ORDER_BY,
-                              ascending: ASCENDING,
-                              page: currentPage,
-                              limit: 10,
-                              searchquery: debouncedSearchQuery,
-                              status_filter:
-                                statusFilter !== "all"
-                                  ? statusFilter
-                                  : undefined,
-                            }),
-                          );
-                        }}
-                      >
-                        Reject selected
-                      </Button>
-                    </div>
-                  )}
 
                 {/* booking Modal Actions */}
                 <div className="flex flex-col justify-center space-x-4">
@@ -627,20 +529,52 @@ const BookingList = () => {
                         <>
                           <div className="flex flex-col items-center text-center">
                             <span className="text-xs text-slate-600">
-                              {t.bookingList.modal.buttons.confirm[lang]}
+                              {selectedItemIds.length === 0
+                                ? t.bookingList.modal.buttons.confirmDisabled[
+                                    lang
+                                  ]
+                                : selectedItemIds.length === 1
+                                  ? t.bookingList.modal.buttons.confirmItem[
+                                      lang
+                                    ]
+                                  : selectedItemIds.length ===
+                                      ownedItemsForOrg.length
+                                    ? t.bookingList.modal.buttons.confirmAll[
+                                        lang
+                                      ]
+                                    : t.bookingList.modal.buttons.confirmItems[
+                                        lang
+                                      ]}
                             </span>
                             <BookingConfirmButton
                               id={selectedBooking.id!}
                               closeModal={() => setShowDetailsModal(false)}
+                              selectedItemIds={selectedItemIds}
+                              disabled={selectedItemIds.length === 0}
                             />
                           </div>
                           <div className="flex flex-col items-center text-center">
                             <span className="text-xs text-slate-600">
-                              {t.bookingList.modal.buttons.reject[lang]}
+                              {selectedItemIds.length === 0
+                                ? t.bookingList.modal.buttons.rejectDisabled[
+                                    lang
+                                  ]
+                                : selectedItemIds.length === 1
+                                  ? t.bookingList.modal.buttons.rejectItem[lang]
+                                  : selectedItemIds.length ===
+                                      ownedItemsForOrg.length
+                                    ? t.bookingList.modal.buttons.rejectAll[
+                                        lang
+                                      ]
+                                    : t.bookingList.modal.buttons.rejectItems[
+                                        lang
+                                      ]}
                             </span>
                             <BookingRejectButton
                               id={selectedBooking.id!}
                               closeModal={() => setShowDetailsModal(false)}
+                              selectedItemIds={selectedItemIds}
+                              disabled={selectedItemIds.length === 0}
                             />
                           </div>
                         </>

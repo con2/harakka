@@ -10,15 +10,20 @@ import { t } from "@/translations";
 const BookingRejectButton = ({
   id,
   closeModal,
+  selectedItemIds,
+  disabled,
 }: {
   id: string;
   closeModal: () => void;
+  selectedItemIds?: string[];
+  disabled?: boolean;
 }) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
 
-  const handleRejectBooking = () => {
-    if (!id) {
+  const handleRejectBooking = async () => {
+    await Promise.resolve();
+    if (!id || disabled) {
       toast.error(t.bookingReject.errors.invalidId[lang]);
       return;
     }
@@ -28,8 +33,21 @@ const BookingRejectButton = ({
       description: t.bookingReject.confirmDialog.description[lang],
       confirmText: t.bookingReject.confirmDialog.confirmText[lang],
       cancelText: t.bookingReject.confirmDialog.cancelText[lang],
-      onConfirm: () => {
-        toast.promise(dispatch(rejectItemsForOrg({ bookingId: id })).unwrap(), {
+      onConfirm: async () => {
+        const promise = new Promise((resolve, reject) => {
+          dispatch(
+            rejectItemsForOrg({
+              bookingId: id,
+              itemIds:
+                selectedItemIds && selectedItemIds.length > 0
+                  ? selectedItemIds
+                  : undefined,
+            }),
+          )
+            .then(resolve)
+            .catch(reject);
+        });
+        await toast.promise(promise, {
           loading: t.bookingReject.toast.loading[lang],
           success: t.bookingReject.toast.success[lang],
           error: t.bookingReject.toast.error[lang],
@@ -42,9 +60,10 @@ const BookingRejectButton = ({
   return (
     <Button
       size="sm"
-      onClick={() => handleRejectBooking()}
+      onClick={handleRejectBooking}
       title={t.bookingList.buttons.reject[lang]}
-      className="text-red-600 hover:text-red-800 hover:bg-red-100"
+      className={`text-red-600 hover:text-red-800 hover:bg-red-100${disabled ? " opacity-50 cursor-not-allowed" : ""}`}
+      disabled={disabled}
     >
       <XCircle className="h-4 w-4" />
     </Button>
