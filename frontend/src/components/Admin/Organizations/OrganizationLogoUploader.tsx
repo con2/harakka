@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -297,6 +298,7 @@ const OrganizationLogoUploader: React.FC<OrganizationLogoUploaderProps> = ({
               </Button>
             </div>
           </div>
+          <DialogClose />
         </DialogContent>
       </Dialog>
     </>

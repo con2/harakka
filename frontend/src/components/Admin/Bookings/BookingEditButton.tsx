@@ -227,6 +227,7 @@
 //             Save Changes
 //           </Button>
 //         </div>
+//          <DialogClose />
 //       </DialogContent>
 //     </Dialog>
 //   );

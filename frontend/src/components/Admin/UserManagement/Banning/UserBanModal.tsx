@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -494,6 +495,7 @@ const UserBanModal = ({
               : t.userBanning.actions.ban[lang]}
           </Button>
         </DialogFooter>
+        <DialogClose />
       </DialogContent>
     </Dialog>
   );

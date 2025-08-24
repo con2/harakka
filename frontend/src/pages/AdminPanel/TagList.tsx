@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -414,6 +415,7 @@ const TagList = () => {
                     {t.tagList.editModal.buttons.save[lang]}
                   </Button>
                 </DialogFooter>
+                <DialogClose />
               </DialogContent>
             </Dialog>
           )}

@@ -24,6 +24,7 @@ import {
 } from "@/types";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -472,6 +473,7 @@ const BookingList = () => {
                   </div>
                 </div>
               </div>
+              <DialogClose />
             </DialogContent>
           </Dialog>
         </div>

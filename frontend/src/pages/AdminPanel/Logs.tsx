@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -465,6 +466,7 @@ const Logs: React.FC = () => {
                 </div>
               )}
             </div>
+            <DialogClose />
           </DialogContent>
         </Dialog>
       )}

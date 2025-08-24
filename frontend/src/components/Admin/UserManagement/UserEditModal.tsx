@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -488,6 +489,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
             {t.userEditModal.buttons.save[lang]}
           </Button>
         </DialogFooter>
+        <DialogClose />
       </DialogContent>
     </Dialog>
   );

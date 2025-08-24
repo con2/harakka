@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -168,6 +169,7 @@ export const UserSignupModal: React.FC<UserSignupModalProps> = ({
             </Button>
           </div>
         </form>
+        <DialogClose />
       </DialogContent>
     </Dialog>
   );

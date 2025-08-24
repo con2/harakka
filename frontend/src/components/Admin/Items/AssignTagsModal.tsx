@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -128,6 +129,7 @@ const AssignTagsModal: React.FC<AssignTagsModalProps> = ({
             {t.assignTagsModal.buttons.assign[lang]}
           </Button>
         </div>
+        <DialogClose />
       </DialogContent>
     </Dialog>
   );

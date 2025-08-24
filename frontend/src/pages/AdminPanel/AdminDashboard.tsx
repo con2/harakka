@@ -36,6 +36,7 @@ import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -411,6 +412,7 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
+              <DialogClose />
             </DialogContent>
           </Dialog>
         </div>

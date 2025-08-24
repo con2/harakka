@@ -8,6 +8,7 @@ import {
 } from "@/store/slices/usersSlice";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -281,6 +282,7 @@ const ProfilePictureUploader = () => {
               </Button>
             </div>
           </div>
+          <DialogClose />
         </DialogContent>
       </Dialog>
     </>

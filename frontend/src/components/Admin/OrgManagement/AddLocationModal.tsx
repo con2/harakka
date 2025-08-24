@@ -6,6 +6,7 @@ import {
 } from "@/store/slices/organizationLocationsSlice";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -352,6 +353,7 @@ const AddLocationModal = ({
             </Button>
           </DialogFooter>
         </form>
+        <DialogClose />
       </DialogContent>
     </Dialog>
   );

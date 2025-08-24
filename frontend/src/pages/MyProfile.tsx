@@ -27,6 +27,7 @@ import {
 //import { Avatar } from "../components/ui/avatar";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -695,6 +696,7 @@ const MyProfile = () => {
                         {t.myProfile.newAddress.cancel[lang]}
                       </Button>
                     </DialogFooter>
+                    <DialogClose />
                   </DialogContent>
                 </Dialog>
               )}
