@@ -30,6 +30,8 @@ import { ItemImagesService } from "../item-images/item-images.service";
 import { parse, ParseResult } from "papaparse";
 import { Item, ItemSchema } from "./schema/item-schema";
 import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
+import { ZodError } from "zod";
+import { CSVItem, ProcessedCSV } from "@common/items/csv.types";
 
 @Injectable()
 export class StorageItemsService {
@@ -157,7 +159,7 @@ export class StorageItemsService {
    * @param payload Can be either one item with an array of tagIds or an array of items of the same structure
    * @returns
    */
-  async createItemsFromForm(
+  async createItems(
     req: AuthRequest,
     payload: ItemFormData,
   ): Promise<{ status: number; error: string | null }> {
@@ -545,8 +547,9 @@ export class StorageItemsService {
     };
   }
 
-  parseCSV(csv: Express.Multer.File) {
+  parseCSV(csv: Express.Multer.File): ProcessedCSV {
     // Parse the file into a JSON
+    console.log("csv: ", csv)
     const csvString = csv.buffer.toString("utf8");
     const result: ParseResult<Record<string, unknown>> = parse<
       Record<string, unknown>
@@ -556,7 +559,7 @@ export class StorageItemsService {
       dynamicTyping: false,
     });
 
-    const validItems: Item[] = [];
+    const processedItems: Item[] = [];
     const errors: Array<{ row: number; errors: string[] }> = [];
 
     // Validate each row, add them to validItems/errors arrays.
@@ -564,22 +567,55 @@ export class StorageItemsService {
       const validation = ItemSchema.safeParse(row);
 
       if (validation.success) {
-        validItems.push(validation.data);
+        processedItems.push(validation.data);
       } else {
-        errors.push({
-          row: index + 1,
-          errors: validation.error.issues.map(
-            (issue) => `${issue.path.join(".")}: ${issue.message}`,
-          ),
-        });
+        const { processedRow, error } = this.clearInvalidRowData(
+          row,
+          index,
+          validation.error.issues,
+        );
+
+        processedItems.push(processedRow);
+        errors.push(error);
       }
     });
 
     return {
-      processed: validItems.length,
+      processed: processedItems.length,
       errors: errors,
-      data: validItems,
-      total: result.data.length,
+      data: processedItems,
+    };
+  }
+
+  clearInvalidRowData(row: CSVItem, index: number, issues: ZodError["issues"]) {
+    // shallow copy is enough for your flat CSVItem
+    const processed = { ...row } as Record<string, any>;
+
+    // Walk issues and blank the first path segment (flat structure)
+    issues.forEach((issue) => {
+      const path = issue.path && issue.path.length ? issue.path[0] : undefined;
+
+      if (path === undefined || path === null || path === "") {
+        // whole-row error -> blank all top-level keys
+        Object.keys(processed).forEach((k) => {
+          processed[k] = "";
+        });
+      } else {
+        // ensure key is string (Zod path can contain numbers)
+        const key = String(path);
+        processed[key] = "";
+      }
+    });
+
+    return {
+      processedRow: processed as CSVItem,
+      error: {
+        // using human-friendly 1-based row numbering like earlier code
+        row: index + 1,
+        errors: issues.map(
+          (issue) => `${issue.path.join(".")}: ${issue.message}`,
+        ),
+      },
     };
   }
 }

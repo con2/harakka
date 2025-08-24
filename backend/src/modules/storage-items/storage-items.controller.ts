@@ -23,6 +23,7 @@ import { Public, Roles } from "src/decorators/roles.decorator";
 import { ItemFormData } from "@common/items/form.types";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
+import { ProcessedCSV } from "@common/items/csv.types";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
@@ -132,14 +133,24 @@ export class StorageItemsController {
     @Body()
     formData: ItemFormData,
   ): Promise<{ status: number; error: string | null }> {
-    return await this.storageItemsService.createItemsFromForm(req, formData); // POST /storage-items (new item)
+    return await this.storageItemsService.createItems(req, formData); // POST /storage-items (new item)
   }
-  @Post("csv")
+
+  @Post("upload")
   @UseInterceptors(FileInterceptor("file"))
-  createFromCSV(
+  @Roles(["storage_manager", "tenant_admin"])
+  processCsv(
     @Req() req: AuthRequest,
     @UploadedFile() file: Express.Multer.File,
-  ) {
+  ): ProcessedCSV {
+    console.log("headers.content-type:", req.headers["content-type"]);
+    console.log(
+      "req.is multipart/form-data?",
+      req.is && req.is("multipart/form-data"),
+    );
+    console.log("req.file:", req.file);
+    console.log("@UploadedFile() file:", file);
+    console.log("file: ", file);
     return this.storageItemsService.parseCSV(file);
   }
 

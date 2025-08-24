@@ -21,7 +21,7 @@ import {
 } from "@/store/slices/itemsSlice";
 import { setPrevStep, setStepper } from "@/store/slices/uiSlice";
 import { ItemFormData } from "@common/items/form.types";
-import { ClipboardPen, Loader2Icon, Trash } from "lucide-react";
+import { CircleAlert, ClipboardPen, Loader2Icon, Trash } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { t } from "@/translations";
@@ -97,12 +97,15 @@ function Summary() {
                 </OriginalTableRow>
               </OriginalTableHeader>
               <OriginalTableBody>
-                {items.map((item) => (
+                {items.map((item, index) => (
                   <OriginalTableRow key={item.id}>
                     <OriginalTableCell
                       width="250"
-                      className="font-medium max-w-[250px] text-ellipsis overflow-hidden"
+                      className="font-medium max-w-[250px] text-ellipsis overflow-hidden flex gap-2"
                     >
+                      {form?.errors?.[index]?.errors?.length > 0 && (
+                        <CircleAlert className="w-5 h-5" />
+                      )}
                       {item.translations[lang].item_name}
                     </OriginalTableCell>
                     <OriginalTableCell>

@@ -3,6 +3,7 @@ import { api } from "../axios";
 import { ApiSingleResponse } from "@common/response.types";
 import { ItemFormData } from "@common/items/form.types";
 import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
+import { ProcessedCSV } from "@common/items/csv.types";
 
 /**
  * API service for item-related endpoints
@@ -31,6 +32,20 @@ export const itemsApi = {
     payload: ItemFormData,
   ): Promise<{ status: number; error: string | null }> =>
     api.post("/storage-items", payload),
+
+  /**
+   * ****** BETA ******
+   * Parse items from a CSV file
+   * @param file - File. Must be a .CSV file
+   * @returns Promise with the created items
+   */
+  parseCSV: (file: File): Promise<ProcessedCSV> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post("/storage-items/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 
   /**
    * Update an existing item
