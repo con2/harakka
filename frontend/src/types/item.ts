@@ -30,7 +30,7 @@ interface ItemAugmentedFields {
   average_rating?: number; // make non-nullable for UI
 
   /** Inventory & status (always concrete in UI) */
-  items_number_available?: number;
+  quantity?: number;
   available_quantity: number;
   is_active: boolean;
   is_deleted?: boolean | null;
@@ -93,7 +93,6 @@ export type ManageItemViewRow = {
   compartment_id: string | null;
 
   /* ─ Inventory fields to match Item interface ─ */
-  items_number_available?: number;
   available_quantity: number;
 
   /* ─ Additional fields to match Item interface ─ */
@@ -146,7 +145,6 @@ type ItemCreatable = Omit<
   | "updated_at"
   | "storage_item_tags"
   | "average_rating"
-  | "items_number_available"
   | "available_quantity"
   | "is_deleted"
 >;

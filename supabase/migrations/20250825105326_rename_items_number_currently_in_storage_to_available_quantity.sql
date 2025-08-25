@@ -14,7 +14,7 @@ SELECT
   (s.translations -> 'en'::text) ->> 'item_type'::text AS en_item_type,
   s.translations,
   s.id,
-  s.quantity AS items_number_total,
+  s.quantity,
   s.created_at,
   s.is_active,
   s.location_id,
