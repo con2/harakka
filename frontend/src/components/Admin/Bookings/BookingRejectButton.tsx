@@ -9,14 +9,14 @@ import { t } from "@/translations";
 
 const BookingRejectButton = ({
   id,
-  closeModal,
   selectedItemIds,
   disabled,
+  onSuccess,
 }: {
   id: string;
-  closeModal: () => void;
   selectedItemIds?: string[];
   disabled?: boolean;
+  onSuccess?: () => void;
 }) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
@@ -52,7 +52,7 @@ const BookingRejectButton = ({
           success: t.bookingReject.toast.success[lang],
           error: t.bookingReject.toast.error[lang],
         });
-        closeModal();
+        if (onSuccess) onSuccess();
       },
     });
   };
