@@ -1978,10 +1978,10 @@ export type Database = {
           id: string | null
           is_active: boolean | null
           is_deleted: boolean | null
-          items_number_total: number | null
           location_id: string | null
           location_name: string | null
           organization_id: string | null
+          quantity: number | null
           tag_ids: string[] | null
           tag_translations: Json[] | null
           translations: Json | null
