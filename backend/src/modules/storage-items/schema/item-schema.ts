@@ -11,7 +11,6 @@ export const ItemSchema = z.object({
     .number()
     .int("Value must be a whole number")
     .min(1),
-  price: z.coerce.number().int("Value must be a whole number").min(0),
 });
 
 export type Item = z.infer<typeof ItemSchema>;
