@@ -21,7 +21,7 @@
     "s:diff:linked:f": "npx supabase db diff --schema auth,storage,public --linked -f latest_diff",
     "s:restart": "npx supabase stop && npx supabase start",
     "s:reset": "npx supabase db reset",
-    "s:pull": "npx supabase db pull --schema auth,storage",
+    "s:pull": "npx supabase db pull --schema auth,public,storage",
     "s:push": "npx supabase db push",
     "s:status": "npx supabase status",
     "s:studio": "npx supabase studio",
