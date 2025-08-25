@@ -5,94 +5,46 @@ import {
   selectBookingError,
   selectAllBookings,
   getOrderedBookings,
-  selectCurrentBooking,
-  selectBookingItemsPagination,
-  selectCurrentBookingLoading,
-  getBookingByID,
-  selectBooking,
   selectBookingPagination,
 } from "@/store/slices/bookingsSlice";
 import { Eye, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { BookingUserViewRow, BookingStatus, BookingWithDetails } from "@/types";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import BookingConfirmButton from "@/components/Admin/Bookings/BookingConfirmButton";
-import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton";
-import BookingDeleteButton from "@/components/Admin/Bookings/BookingDeleteButton";
+import { BookingStatus } from "@/types";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
-import { Separator } from "@/components/ui/separator";
-import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
 import { useAuth } from "@/hooks/useAuth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
-import { BookingItem } from "@common/bookings/booking-items.types";
-import { StorageItemRow } from "@common/items/storage-items.types";
-import Spinner from "@/components/Spinner";
-import { DataTable } from "@/components/ui/data-table";
 import { BookingPreview } from "@common/bookings/booking.types";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useNavigate } from "react-router-dom";
 
 const BookingList = () => {
   const dispatch = useAppDispatch();
   const bookings = useAppSelector(selectAllBookings);
   const loading = useAppSelector(selectBookingLoading);
   const error = useAppSelector(selectBookingError);
+  const navigate = useNavigate();
   const { authLoading } = useAuth();
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
   // Always request backend order: created_at desc
   const ORDER_BY = "created_at" as const;
   const ASCENDING = false;
   const { totalPages, page } = useAppSelector(selectBookingPagination);
-  // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const [currentPage, setCurrentPage] = useState(1);
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
-  const selectedBooking = useAppSelector(selectCurrentBooking);
-  const { totalPages: itemPages } = useAppSelector(
-    selectBookingItemsPagination,
-  );
-  const [currentItemPage, setCurrentItemPage] = useState(1);
-  const currentBookingLoading = useAppSelector(selectCurrentBookingLoading);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
-  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
-
-  // Only show org-owned items in details modal and table
-  const ownedItemsForOrg = (
-    (selectedBooking as BookingWithDetails)?.booking_items || []
-  ).filter((it) => it.provider_organization_id === activeOrgId);
-  const hasAnyForOrgInSelected = ownedItemsForOrg.length > 0;
-  const hasPendingForOrgInSelected = ownedItemsForOrg.some(
-    (it) => it.status === "pending",
-  );
 
   /*----------------------handlers----------------------------------*/
-  const handleViewDetails = (booking: BookingUserViewRow) => {
-    dispatch(selectBooking(booking));
-    void dispatch(getBookingByID(booking.id!));
-    setShowDetailsModal(true);
-  };
-
   const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
   };
-
-  const handleItemPageChange = (newPage: number) => setCurrentItemPage(newPage);
-
   const handleSearchQuery = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
@@ -122,6 +74,24 @@ const BookingList = () => {
 
   const columns: ColumnDef<BookingPreview>[] = [
     {
+      id: "actions",
+      size: 5,
+      cell: () => {
+        return (
+          <div className="flex space-x-1">
+            <Button
+              variant={"ghost"}
+              size="sm"
+              title={t.bookingList.buttons.viewDetails[lang]}
+              className="hover:text-slate-900 hover:bg-slate-300"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "booking_number",
       header: t.bookingList.columns.bookingNumber[lang],
       enableSorting: true,
@@ -140,17 +110,19 @@ const BookingList = () => {
       ),
     },
     {
+      accessorKey: "email",
+      header: t.bookingList.columns.customer[lang],
+      cell: ({ row }) => row.original.email,
+    },
+    {
       id: "org_status",
       header: t.bookingList.columns.status[lang],
       enableSorting: false,
       cell: ({ row }) => {
-        const orgConfirmed = (
-          row.original as unknown as {
-            is_org_confirmed?: boolean;
-          }
-        ).is_org_confirmed;
-        const orgStatus: BookingStatus = orgConfirmed ? "confirmed" : "pending";
-        return <StatusBadge status={orgStatus} />;
+        const status = row.original.org_status_for_active_org as
+          | string
+          | undefined;
+        return <StatusBadge status={status ?? "unknown"} />;
       },
     },
     {
@@ -159,160 +131,6 @@ const BookingList = () => {
       enableSorting: true,
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const booking = row.original;
-        const isPending = booking.status === "pending";
-        const isConfirmed = booking.status === "confirmed";
-        const isDeleted = booking.status === "deleted";
-        // Org-specific flags may be attached by backend when org_id is provided
-        type OrgFlags = {
-          is_org_confirmed?: boolean;
-          is_org_has_items?: boolean;
-        };
-        const flags: Partial<OrgFlags> =
-          (row.original as unknown as OrgFlags) || {};
-        const orgConfirmedFlag = flags?.is_org_confirmed;
-        const orgHasItemsFlag = flags?.is_org_has_items;
-        const canOrgAct = !!orgHasItemsFlag && !orgConfirmedFlag;
-
-        return (
-          <div className="flex space-x-1">
-            <Button
-              variant={"ghost"}
-              size="sm"
-              onClick={() => {
-                handleViewDetails(booking);
-              }}
-              title={t.bookingList.buttons.viewDetails[lang]}
-              className="hover:text-slate-900 hover:bg-slate-300"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-
-            {isPending && canOrgAct && (
-              <>
-                <BookingConfirmButton
-                  id={booking.id}
-                  closeModal={() => setShowDetailsModal(false)}
-                />
-                <BookingRejectButton
-                  id={booking.id}
-                  closeModal={() => setShowDetailsModal(false)}
-                />
-              </>
-            )}
-
-            {isConfirmed && (
-              <BookingReturnButton
-                id={booking.id}
-                closeModal={() => setShowDetailsModal(false)}
-              />
-            )}
-
-            {isConfirmed && <BookingPickupButton />}
-            {!isDeleted && (
-              <BookingDeleteButton
-                id={booking.id}
-                closeModal={() => setShowDetailsModal(false)}
-              />
-            )}
-          </div>
-        );
-      },
-    },
-  ];
-
-  const bookingItemsColumns: ColumnDef<
-    BookingItem & {
-      storage_items: Partial<StorageItemRow>;
-      provider_org?: { name?: string } | null;
-    }
-  >[] = [
-    {
-      id: "select",
-      header: () => null,
-      cell: ({ row }) => {
-        const item = row.original;
-        const isOwned = item.provider_organization_id === activeOrgId;
-        const isSelectable = isOwned && item.status === "pending";
-        return (
-          <Checkbox
-            checked={selectedItemIds.includes(String(item.id))}
-            onCheckedChange={(checked) => {
-              if (!isSelectable) return;
-              setSelectedItemIds((prev) =>
-                checked
-                  ? [...new Set([...prev, String(item.id)])]
-                  : prev.filter((id) => id !== String(item.id)),
-              );
-            }}
-            disabled={!isSelectable}
-            aria-label="Select item"
-          />
-        );
-      },
-      size: 32,
-    },
-    {
-      accessorKey: "item_name",
-      header: t.bookingList.modal.bookingItems.columns.item[lang],
-      cell: ({ row }) => {
-        const isOwned = row.original.provider_organization_id === activeOrgId;
-        const itemName =
-          row.original.storage_items.translations![lang].item_name;
-        const label = itemName
-          ? itemName.charAt(0).toUpperCase() + itemName.slice(1)
-          : "";
-        return <span className={isOwned ? "" : "opacity-50"}>{label}</span>;
-      },
-    },
-    {
-      accessorKey: "quantity",
-      header: t.bookingList.modal.bookingItems.columns.quantity[lang],
-      cell: ({ row }) => {
-        const isOwned = row.original.provider_organization_id === activeOrgId;
-        return (
-          <span className={isOwned ? "" : "opacity-50"}>
-            {row.original.quantity}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: "start_date",
-      header: t.bookingList.modal.bookingItems.columns.startDate[lang],
-      cell: ({ row }) => {
-        const isOwned = row.original.provider_organization_id === activeOrgId;
-        const text = formatDate(
-          new Date(row.original.start_date || ""),
-          "d MMM yyyy",
-        );
-        return <span className={isOwned ? "" : "opacity-50"}>{text}</span>;
-      },
-    },
-    {
-      accessorKey: "end_date",
-      header: t.bookingList.modal.bookingItems.columns.endDate[lang],
-      cell: ({ row }) => {
-        const isOwned = row.original.provider_organization_id === activeOrgId;
-        const text = formatDate(
-          new Date(row.original.end_date || ""),
-          "d MMM yyyy",
-        );
-        return <span className={isOwned ? "" : "opacity-50"}>{text}</span>;
-      },
-    },
-    {
-      accessorKey: "status",
-      header:
-        t.bookingList.modal.bookingItems.columns.status?.[lang] || "Status",
-      cell: ({ row }) => {
-        const status = row.original.status;
-        return <StatusBadge status={status} />;
-      },
     },
   ];
 
@@ -334,7 +152,6 @@ const BookingList = () => {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h1 className="text-xl">{t.bookingList.title[lang]}</h1>
-
           <Button
             onClick={() =>
               dispatch(
@@ -354,6 +171,7 @@ const BookingList = () => {
             {t.bookingList.buttons.refresh[lang]}
           </Button>
         </div>
+        {/* Search and Filters */}
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex gap-4 items-center">
             <input
@@ -408,213 +226,19 @@ const BookingList = () => {
             )}
           </div>
         </div>
+        {/* Table of Bookings */}
         <PaginatedDataTable
           columns={columns}
           data={bookings}
           pageIndex={currentPage - 1}
           pageCount={totalPages}
           onPageChange={(page) => handlePageChange(page + 1)}
+          rowProps={(row) => ({
+            style: { cursor: "pointer" },
+            onClick: () => navigate(`/admin/bookings/${row.original.id}`),
+          })}
         />
       </div>
-
-      {/* Booking Details Modal */}
-      {selectedBooking && (
-        <div className="min-w-[320px]">
-          <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-            <DialogContent className="max-w-5xl">
-              <DialogHeader>
-                <DialogTitle className="text-left">
-                  {t.bookingList.columns.bookingNumber[lang]}{" "}
-                  {selectedBooking.booking_number}
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                {/* Booking Info */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h3 className="font-normal">
-                      {t.bookingList.modal.customer[lang]}
-                    </h3>
-                    <p className="text-sm mb-0">
-                      {(selectedBooking as BookingWithDetails).full_name ||
-                        t.bookingList.status.unknown[lang]}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {(selectedBooking as BookingWithDetails).email}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h3 className="font-normal">
-                      {t.bookingList.modal.bookingInfo[lang]}
-                    </h3>
-                    <p className="text-sm">
-                      {t.bookingList.modal.date[lang]}{" "}
-                      {formatDate(
-                        new Date(selectedBooking.created_at || ""),
-                        "d MMM yyyy",
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {/* booking Items */}
-                <div>
-                  {currentBookingLoading && (
-                    <Spinner containerClasses="py-10" />
-                  )}
-
-                  {/* Select All button */}
-                  {!currentBookingLoading && ownedItemsForOrg.length > 0 && (
-                    <div className="flex items-center mb-2 gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          if (
-                            selectedItemIds.length === ownedItemsForOrg.length
-                          ) {
-                            setSelectedItemIds([]);
-                          } else {
-                            setSelectedItemIds(
-                              ownedItemsForOrg.map((i) => i.id),
-                            );
-                          }
-                        }}
-                        className={
-                          selectedItemIds.length === 0 &&
-                          ownedItemsForOrg.length === 0
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }
-                      >
-                        {selectedItemIds.length === ownedItemsForOrg.length
-                          ? t.bookingList.modal.buttons.deselectAll?.[lang] ||
-                            "Deselect All"
-                          : t.bookingList.modal.buttons.selectAll?.[lang] ||
-                            "Select All"}
-                      </Button>
-                      <span className="text-xs text-gray-600">
-                        {selectedItemIds.length}{" "}
-                        {t.bookingList.modal.buttons.selectedCount?.[lang] ||
-                          "selected"}
-                      </span>
-                    </div>
-                  )}
-
-                  {!currentBookingLoading && itemPages > 1 ? (
-                    <PaginatedDataTable
-                      pageCount={itemPages}
-                      onPageChange={handleItemPageChange}
-                      pageIndex={currentItemPage - 1}
-                      columns={bookingItemsColumns}
-                      data={ownedItemsForOrg}
-                    />
-                  ) : !currentBookingLoading && itemPages === 1 ? (
-                    <DataTable
-                      columns={bookingItemsColumns}
-                      data={ownedItemsForOrg}
-                    />
-                  ) : null}
-                </div>
-
-                {/* booking Modal Actions */}
-                <div className="flex flex-col justify-center space-x-4">
-                  <Separator />
-                  <div className="flex flex-row items-center gap-4 mt-4 justify-center">
-                    {selectedBooking.status === "pending" &&
-                      hasAnyForOrgInSelected &&
-                      hasPendingForOrgInSelected && (
-                        <>
-                          <div className="flex flex-col items-center text-center">
-                            <span className="text-xs text-slate-600">
-                              {selectedItemIds.length === 0
-                                ? t.bookingList.modal.buttons.confirmDisabled[
-                                    lang
-                                  ]
-                                : selectedItemIds.length === 1
-                                  ? t.bookingList.modal.buttons.confirmItem[
-                                      lang
-                                    ]
-                                  : selectedItemIds.length ===
-                                      ownedItemsForOrg.length
-                                    ? t.bookingList.modal.buttons.confirmAll[
-                                        lang
-                                      ]
-                                    : t.bookingList.modal.buttons.confirmItems[
-                                        lang
-                                      ]}
-                            </span>
-                            <BookingConfirmButton
-                              id={selectedBooking.id!}
-                              closeModal={() => setShowDetailsModal(false)}
-                              selectedItemIds={selectedItemIds}
-                              disabled={selectedItemIds.length === 0}
-                            />
-                          </div>
-                          <div className="flex flex-col items-center text-center">
-                            <span className="text-xs text-slate-600">
-                              {selectedItemIds.length === 0
-                                ? t.bookingList.modal.buttons.rejectDisabled[
-                                    lang
-                                  ]
-                                : selectedItemIds.length === 1
-                                  ? t.bookingList.modal.buttons.rejectItem[lang]
-                                  : selectedItemIds.length ===
-                                      ownedItemsForOrg.length
-                                    ? t.bookingList.modal.buttons.rejectAll[
-                                        lang
-                                      ]
-                                    : t.bookingList.modal.buttons.rejectItems[
-                                        lang
-                                      ]}
-                            </span>
-                            <BookingRejectButton
-                              id={selectedBooking.id!}
-                              closeModal={() => setShowDetailsModal(false)}
-                              selectedItemIds={selectedItemIds}
-                              disabled={selectedItemIds.length === 0}
-                            />
-                          </div>
-                        </>
-                      )}
-
-                    {selectedBooking.status === "confirmed" && (
-                      <>
-                        <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">
-                            {t.bookingList.modal.buttons.return[lang]}
-                          </span>
-                          <BookingReturnButton
-                            id={selectedBooking.id!}
-                            closeModal={() => setShowDetailsModal(false)}
-                          />
-                        </div>
-                        <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">
-                            {t.bookingList.modal.buttons.pickedUp[lang]}
-                          </span>
-                          <BookingPickupButton />
-                        </div>
-                      </>
-                    )}
-                    <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">
-                        {t.bookingList.modal.buttons.delete[lang]}
-                      </span>
-                      <BookingDeleteButton
-                        id={selectedBooking.id!}
-                        closeModal={() => setShowDetailsModal(false)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
     </>
   );
 };
