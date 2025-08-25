@@ -30,7 +30,7 @@ export async function calculateAvailableQuantity(
   // get items total quantity
   const { data: item, error: itemError } = await supabase
     .from("storage_items")
-    .select("items_number_total")
+    .select("quantity")
     .eq("id", itemId)
     .single();
 
@@ -38,7 +38,7 @@ export async function calculateAvailableQuantity(
     throw new Error("Error when retrieving/ calling item.total");
   }
 
-  const availableQuantity = item.items_number_total - alreadyBookedQuantity;
+  const availableQuantity = item.quantity - alreadyBookedQuantity;
 
   return {
     item_id: itemId,
