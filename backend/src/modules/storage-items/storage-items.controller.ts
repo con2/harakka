@@ -143,14 +143,6 @@ export class StorageItemsController {
     @Req() req: AuthRequest,
     @UploadedFile() file: Express.Multer.File,
   ): ProcessedCSV {
-    console.log("headers.content-type:", req.headers["content-type"]);
-    console.log(
-      "req.is multipart/form-data?",
-      req.is && req.is("multipart/form-data"),
-    );
-    console.log("req.file:", req.file);
-    console.log("@UploadedFile() file:", file);
-    console.log("file: ", file);
     return this.storageItemsService.parseCSV(file);
   }
 
