@@ -433,19 +433,19 @@ export class BookingService {
       throw new BadRequestException("Failed to fetch booking items");
     }
 
-    const allCancelled =
-      items.length > 0 && items.every((it) => it.status === "cancelled");
+    const allRejected =
+      items.length > 0 && items.every((it) => it.status === "rejected");
     const noPending =
       items.length > 0 && items.every((it) => it.status !== "pending");
 
-    if (allCancelled) {
+    if (allRejected) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
         .update({ status: "rejected" })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException(
-          "Failed to reject booking after all items cancelled",
+          "Failed to reject booking after all items rejected",
         );
       }
     } else if (noPending) {
@@ -493,7 +493,7 @@ export class BookingService {
     // Cancel items: either a selected subset (itemIds) or all items for the org; can cancel pending or confirmed
     let cancelQuery = supabase
       .from("booking_items")
-      .update({ status: "cancelled" })
+      .update({ status: "rejected" })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", providerOrgId)
       .in("status", ["pending", "confirmed"]);
@@ -514,12 +514,12 @@ export class BookingService {
       throw new BadRequestException("Failed to fetch booking items");
     }
 
-    const allCancelled =
-      items.length > 0 && items.every((it) => it.status === "cancelled");
+    const allRejected =
+      items.length > 0 && items.every((it) => it.status === "rejected");
     const noPending =
       items.length > 0 && items.every((it) => it.status !== "pending");
 
-    if (allCancelled) {
+    if (allRejected) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
         .update({ status: "rejected" })
