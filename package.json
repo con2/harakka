@@ -31,6 +31,8 @@
     "s:functions:serve": "npx supabase functions serve",
     "s:functions:deploy": "npx supabase functions deploy",
     "s:seed": "env-cmd -f .env.local npx supabase db dump --data-only -f supabase/seed.sql",
+    "staging:link": "env-cmd -f .env.staging npx supabase link --project-ref cwguucpncwbqgmjqapsz",
+    "staging:push": "env-cmd -f .env.staging npx supabase db push",
     "dev:local": "env-cmd -f supabase-local.env concurrently \"npm run s:start\" \"npm run frontend\" \"npm run backend\"",
     "dev:live": "env-cmd -f .env.local concurrently \"npm run frontend\" \"npm run backend\"",
     "frontend:local": "env-cmd -f supabase-local.env npm --prefix frontend run dev",
