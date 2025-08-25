@@ -394,22 +394,28 @@ export const itemsSlice = createSlice({
         state.error = null;
       })
       .addCase(updateItem.fulfilled, (state, action) => {
-        const { item: updatedItem, prev_id } = action.payload as {
-          item: Partial<Item> & { id?: string };
-          prev_id?: string;
+        const { item: updatedItem } = action.payload as {
+          item: Partial<Item> & {
+            id?: string;
+          };
         };
-        const targetId = prev_id ?? updatedItem.id;
+        const targetId = updatedItem.id;
         if (!targetId) return;
 
         const idx = state.items.findIndex((i) => i.id === targetId);
         if (idx !== -1) {
           const existing = state.items[idx] as Item;
           // Shallow-merge to preserve view-only fields (e.g., location_name) that may be omitted in the update response
+          const { location_details } = updatedItem;
           const merged = {
             ...existing,
             ...updatedItem,
           } as Item;
-          state.items[idx] = merged;
+          state.items[idx] = {
+            ...merged,
+            location_id: location_details?.id ?? "",
+            location_name: location_details?.name,
+          };
           // If a details view is open for this item, keep it in sync too
           if (state.selectedItem && state.selectedItem.id === targetId) {
             state.selectedItem = {

@@ -12,7 +12,6 @@ import {
 const initialState: OrgLocationsState = {
   orgLocations: [],
   currentOrgLocation: null,
-  currentOrgLocations: [],
   loading: false,
   error: null,
   totalPages: 0,
@@ -41,7 +40,6 @@ export const fetchAllOrgLocations = createAsyncThunk(
     return response;
   },
 );
-
 /**
  * Async thunk to fetch a specific org location by ID
  */
@@ -50,15 +48,6 @@ export const fetchOrgLocationById = createAsyncThunk(
   async (id: string) => {
     const response = await orgLocationsApi.getOrgLocById(id);
     return response;
-  },
-);
-/**
- * Async thunk to fetch a locations of specific org ID
- */
-export const fetchLocationsByOrgId = createAsyncThunk(
-  "orgLocations/fetchLocationsByOrgId",
-  async (id: string) => {
-    return await orgLocationsApi.getOrgLocsByOrgId(id);
   },
 );
 
@@ -142,7 +131,6 @@ const orgLocationsSlice = createSlice({
       state.currentOrgLocation = null;
     },
     clearOrgLocations: (state) => {
-      state.currentOrgLocations = [];
       state.orgLocations = [];
       state.currentOrgLocation = null;
       state.error = null;
@@ -178,20 +166,6 @@ const orgLocationsSlice = createSlice({
       .addCase(fetchOrgLocationById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to fetch org location";
-      })
-
-      // Fetch org location by ID
-      .addCase(fetchLocationsByOrgId.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchLocationsByOrgId.fulfilled, (state, action) => {
-        state.loading = false;
-        state.currentOrgLocations = action.payload.data ?? [];
-      })
-      .addCase(fetchLocationsByOrgId.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || "Failed to fetch org locations";
       })
 
       // Create org location
@@ -325,8 +299,6 @@ export const selectOrgLocationsError = (state: RootState) =>
   state.orgLocations.error;
 export const selectCurrentOrgLocation = (state: RootState) =>
   state.orgLocations.currentOrgLocation;
-export const selectCurrentOrgLocations = (state: RootState) =>
-  state.orgLocations.currentOrgLocations;
 export const selectOrgLocationsTotalPages = (state: RootState) =>
   state.orgLocations.totalPages;
 export const selectOrgLocationsCurrentPage = (state: RootState) =>
