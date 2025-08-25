@@ -119,9 +119,7 @@ const BookingList = () => {
       header: t.bookingList.columns.status[lang],
       enableSorting: false,
       cell: ({ row }) => {
-        const status = row.original.org_status_for_active_org as
-          | string
-          | undefined;
+        const status = row.original.status as string | undefined; // TODO: this should be org_status_for_active_org, add that to BookingPreview
         return <StatusBadge status={status ?? "unknown"} />;
       },
     },
