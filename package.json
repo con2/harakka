@@ -18,7 +18,7 @@
     "s:link": "env-cmd -f supabase-local.env npx supabase link",
     "s:restart": "npx supabase stop && npx supabase start",
     "s:reset": "npx supabase db reset",
-    "s:pull": "npx supabase db pull",
+    "s:pull": "npx supabase db pull --schema auth,storage",
     "s:push": "npx supabase db push",
     "s:status": "npx supabase status",
     "s:studio": "npx supabase studio",
