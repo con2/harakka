@@ -40,6 +40,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
   addToItemCreation,
+  clearLocalItemError,
   clearSelectedItem,
   selectIsEditing,
   selectItemCreation,
@@ -104,13 +105,13 @@ function AddItemForm() {
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
     form.reset();
+    if (isEditing) return handleUpdateItem(values);
     void dispatch(addToItemCreation(values));
     dispatch(setNextStep());
   };
 
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
     const getFirstErrorMessage = (obj: any): string | null => {
-      console.log(obj);
       for (const value of Object.values(obj)) {
         if (value && typeof value === "object") {
           if ("message" in value && typeof value.message === "string") {
@@ -167,8 +168,9 @@ function AddItemForm() {
 
   const handleUpdateItem = (item: CreateItemType) => {
     dispatch(clearSelectedItem());
-    dispatch(toggleIsEditing(false));
+    dispatch(clearLocalItemError(item.id));
     dispatch(updateLocalItem({ item }));
+    dispatch(toggleIsEditing(false));
     dispatch(setNextStep());
   };
 
@@ -198,6 +200,11 @@ function AddItemForm() {
     if (org && orgLocations.length < 1)
       void dispatch(fetchAllOrgLocations({ orgId: org.id, pageSize: 20 }));
   }, []);
+
+  useEffect(() => {
+    const newValue = form.getValues("items_number_total");
+    form.setValue("items_number_currently_in_storage", newValue);
+  }, [form.getValues("items_number_total")]);
 
   useEffect(() => {
     if (!storage) return;
@@ -510,9 +517,11 @@ function AddItemForm() {
             </Button>
             <Button
               variant="outline"
-              type={isEditing ? "button" : "submit"}
+              type="submit"
               onClick={
-                !isEditing ? () => {} : () => handleUpdateItem(form.getValues())
+                !isEditing
+                  ? () => {}
+                  : () => form.handleSubmit(onValidSubmit, onInvalidSubmit)
               }
             >
               {isEditing

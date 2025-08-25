@@ -549,7 +549,6 @@ export class StorageItemsService {
 
   parseCSV(csv: Express.Multer.File): ProcessedCSV {
     // Parse the file into a JSON
-    console.log("csv: ", csv)
     const csvString = csv.buffer.toString("utf8");
     const result: ParseResult<Record<string, unknown>> = parse<
       Record<string, unknown>

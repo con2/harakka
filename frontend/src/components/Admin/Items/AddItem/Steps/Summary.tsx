@@ -26,6 +26,11 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { t } from "@/translations";
 import { clearOrgLocations } from "@/store/slices/organizationLocationsSlice";
+import {
+  TooltipContent,
+  TooltipTrigger,
+  Tooltip,
+} from "@/components/ui/tooltip";
 
 function Summary() {
   const form = useAppSelector(selectItemCreation);
@@ -97,16 +102,25 @@ function Summary() {
                 </OriginalTableRow>
               </OriginalTableHeader>
               <OriginalTableBody>
-                {items.map((item, index) => (
+                {items.map((item) => (
                   <OriginalTableRow key={item.id}>
                     <OriginalTableCell
                       width="250"
-                      className="font-medium max-w-[250px] text-ellipsis overflow-hidden flex gap-2"
+                      className="font-medium max-w-[250px] text-ellipsis overflow-hidden min-h-[49px] gap-2 flex items-center"
                     >
-                      {form?.errors?.[index]?.errors?.length > 0 && (
-                        <CircleAlert className="w-5 h-5" />
+                      {form.errors?.[item.id] && (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <CircleAlert className="w-5 h-5 text-[var(--destructive)]" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{form.errors?.[item.id]}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       )}
-                      {item.translations[lang].item_name}
+                      <span className="h-fit leading-[1]">
+                        {item.translations[lang].item_name}
+                      </span>
                     </OriginalTableCell>
                     <OriginalTableCell>
                       {item.items_number_total}
@@ -160,7 +174,7 @@ function Summary() {
               ) : (
                 <Button
                   variant="outline"
-                  disabled={loading}
+                  disabled={loading || Object.entries(form.errors).length > 0}
                   onClick={handleSubmit}
                 >
                   {t.itemSummary.buttons.uploadItems[lang]}

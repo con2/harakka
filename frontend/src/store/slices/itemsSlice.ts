@@ -13,7 +13,7 @@ import { ApiResponse } from "@common/response.types";
 import { AxiosResponse } from "axios";
 import { ItemFormData } from "@common/items/form.types";
 import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
-import { formatParsedItems } from "../utils/helper.utils";
+import { formatErrors, formatParsedItems } from "../utils/helper.utils";
 
 /**
  * Initial state for items slice
@@ -35,7 +35,7 @@ const initialState: ItemState = {
     org: null,
     location: undefined,
     items: [],
-    errors: [],
+    errors: {},
   },
   isEditingItem: false,
 };
@@ -293,6 +293,7 @@ export const itemsSlice = createSlice({
       state.itemCreation.items = state.itemCreation.items.filter(
         (item) => item.id !== id,
       );
+      delete state.itemCreation.errors[id];
       localStorage.setItem(
         "itemsInProgress",
         JSON.stringify(state.itemCreation),
@@ -314,6 +315,14 @@ export const itemsSlice = createSlice({
       const { item } = action.payload;
       const index = state.itemCreation.items.findIndex((i) => i.id === item.id);
       state.itemCreation.items[index] = item;
+      localStorage.setItem(
+        "itemsInProgress",
+        JSON.stringify(state.itemCreation),
+      );
+    },
+    clearLocalItemError: (state, action) => {
+      const itemId = action.payload;
+      delete state.itemCreation.errors[itemId];
     },
   },
 
@@ -383,7 +392,7 @@ export const itemsSlice = createSlice({
           org: null,
           location: undefined,
           items: [],
-          errors: [],
+          errors: {},
         };
         localStorage.removeItem("itemsInProgress");
       })
@@ -469,18 +478,25 @@ export const itemsSlice = createSlice({
 
         // Transform the uploaded items to the correct type
         const formattedItems = formatParsedItems(parsedItems, location);
-
-        // Map the errors to adjust to the new indexes
-        state.itemCreation.errors = errors.map((err) => ({
-          ...err,
-          row: err.row + state.itemCreation.items.length,
-        }));
+        const itemIds = new Set(formattedItems.map((item) => item.id));
+        console.log("item ids: ", itemIds);
+        const formattedErrors = formatErrors(errors, itemIds);
+        state.itemCreation.errors = {
+          ...state.itemCreation.errors,
+          ...formattedErrors,
+        };
 
         // Push the items with any current items
         state.itemCreation.items = [
           ...state.itemCreation.items,
           ...formattedItems,
         ];
+
+        localStorage.setItem(
+          "itemsInProgress",
+          JSON.stringify(state.itemCreation),
+        );
+
         state.loading = false;
       })
       .addCase(uploadCSV.rejected, (state, action) => {
@@ -525,6 +541,7 @@ export const {
   editLocalItem,
   toggleIsEditing,
   updateLocalItem,
+  clearLocalItemError,
 } = itemsSlice.actions;
 
 export default itemsSlice.reducer;
