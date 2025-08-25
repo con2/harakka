@@ -10,6 +10,7 @@ import {
   Req,
 } from "@nestjs/common";
 import { BookingItemsService } from "./booking-items.service";
+import { RoleService } from "../role/role.service";
 import {
   BookingItemsInsert,
   BookingItemsUpdate,
@@ -19,7 +20,10 @@ import { Public } from "src/decorators/roles.decorator";
 
 @Controller("booking-items")
 export class BookingItemsController {
-  constructor(private readonly bookingItemsService: BookingItemsService) {}
+  constructor(
+    private readonly bookingItemsService: BookingItemsService,
+    private readonly roleService: RoleService,
+  ) {}
 
   /**
    * Get all booked items from the backend
@@ -63,13 +67,13 @@ export class BookingItemsController {
     const supabase = req.supabase;
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
-
     return await this.bookingItemsService.getBookingItems(
       supabase,
       booking_id,
       pageNumber,
       limitNumber,
       storage_item_columns,
+      undefined,
     );
   }
 
