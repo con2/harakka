@@ -105,9 +105,7 @@ function Summary() {
                     >
                       {item.translations[lang].item_name}
                     </OriginalTableCell>
-                    <OriginalTableCell>
-                      {item.items_number_total}
-                    </OriginalTableCell>
+                    <OriginalTableCell>{item.quantity}</OriginalTableCell>
                     <OriginalTableCell>{item.location.name}</OriginalTableCell>
                     <OriginalTableCell className="text-right">
                       <Button
