@@ -117,7 +117,7 @@ export const addItemForm = {
         en: "Location is required",
         fi: "Sijainti on pakollinen",
       },
-      items_number_total: {
+      quantity: {
         en: "Quantity is required",
         fi: "Määrä on pakollinen",
       },
