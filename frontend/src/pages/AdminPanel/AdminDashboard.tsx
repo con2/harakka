@@ -40,12 +40,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
-import { Separator } from "../../components/ui/separator";
-import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
-import BookingConfirmButton from "@/components/Admin/Bookings/BookingConfirmButton";
-import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton";
-import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
-import BookingDeleteButton from "@/components/Admin/Bookings/BookingDeleteButton";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BookingItem } from "@common/bookings/booking-items.types";
 import { StorageItemRow } from "@common/items/storage-items.types";
@@ -138,8 +132,6 @@ const AdminDashboard = () => {
       id: "actions",
       cell: ({ row }) => {
         const booking = row.original;
-        const isPending = booking.status === "pending";
-        const isConfirmed = booking.status === "confirmed";
 
         return (
           <div className="flex space-x-1">
@@ -152,33 +144,6 @@ const AdminDashboard = () => {
             >
               <Eye className="h-4 w-4" />
             </Button>
-
-            {isPending && (
-              <>
-                <BookingConfirmButton
-                  id={booking.id}
-                  closeModal={() => setShowDetailsModal(false)}
-                />
-                <BookingRejectButton
-                  id={booking.id}
-                  closeModal={() => setShowDetailsModal(false)}
-                />
-              </>
-            )}
-
-            {isConfirmed && (
-              <BookingReturnButton
-                id={booking.id}
-                closeModal={() => setShowDetailsModal(false)}
-              />
-            )}
-
-            {isConfirmed && <BookingPickupButton />}
-
-            <BookingDeleteButton
-              id={booking.id}
-              closeModal={() => setShowDetailsModal(false)}
-            />
           </div>
         );
       },
@@ -351,64 +316,6 @@ const AdminDashboard = () => {
                       data={selectedBooking.booking_items || []}
                     />
                   ) : null}
-                </div>
-
-                {/* booking Modal Actions */}
-                <div className="flex flex-col justify-center space-x-4">
-                  <Separator />
-                  <div className="flex flex-row items-center gap-4 mt-4 justify-center">
-                    {selectedBooking.status === "pending" && (
-                      <>
-                        <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">
-                            {t.bookingList.modal.buttons.confirm[lang]}
-                          </span>
-                          <BookingConfirmButton
-                            id={selectedBooking.id!}
-                            closeModal={() => setShowDetailsModal(false)}
-                          />
-                        </div>
-                        <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">
-                            {t.bookingList.modal.buttons.reject[lang]}
-                          </span>
-                          <BookingRejectButton
-                            id={selectedBooking.id!}
-                            closeModal={() => setShowDetailsModal(false)}
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    {selectedBooking.status === "confirmed" && (
-                      <div className="flex flex-col items-center text-center">
-                        <span className="text-xs text-slate-600">
-                          {t.bookingList.modal.buttons.return[lang]}
-                        </span>
-                        <BookingReturnButton
-                          id={selectedBooking.id!}
-                          closeModal={() => setShowDetailsModal(false)}
-                        />
-                      </div>
-                    )}
-                    {selectedBooking.status === "confirmed" && (
-                      <div className="flex flex-col items-center text-center">
-                        <span className="text-xs text-slate-600">
-                          {t.bookingList.modal.buttons.pickedUp[lang]}
-                        </span>
-                        <BookingPickupButton />
-                      </div>
-                    )}
-                    <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">
-                        {t.bookingList.modal.buttons.delete[lang]}
-                      </span>
-                      <BookingDeleteButton
-                        id={selectedBooking.id!}
-                        closeModal={() => setShowDetailsModal(false)}
-                      />
-                    </div>
-                  </div>
                 </div>
               </div>
             </DialogContent>
