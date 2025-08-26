@@ -155,7 +155,7 @@ const AdminDashboard = () => {
   >[] = [
     {
       accessorKey: "item_name",
-      header: t.bookingList.modal.bookingItems.columns.item[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.item[lang],
       cell: (i) => {
         const itemName = i.getValue();
         return (
@@ -165,17 +165,17 @@ const AdminDashboard = () => {
     },
     {
       accessorKey: "quantity",
-      header: t.bookingList.modal.bookingItems.columns.quantity[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.quantity[lang],
     },
     {
       accessorKey: "start_date",
-      header: t.bookingList.modal.bookingItems.columns.startDate[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.startDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.start_date || ""), "d MMM yyyy"),
     },
     {
       accessorKey: "end_date",
-      header: t.bookingList.modal.bookingItems.columns.endDate[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.endDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
     },

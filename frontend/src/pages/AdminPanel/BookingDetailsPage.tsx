@@ -14,7 +14,7 @@ import BookingConfirmButton from "@/components/Admin/Bookings/BookingConfirmButt
 import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Clipboard } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
@@ -32,6 +32,19 @@ const BookingDetailsPage = () => {
   const loading = useAppSelector(selectCurrentBookingLoading);
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
+
+  // state for copy-to-clipboard feedback
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const copyEmailToClipboard = async (email?: string) => {
+    if (!email) return;
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopiedEmail(true);
+      window.setTimeout(() => setCopiedEmail(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy email", err);
+    }
+  };
 
   // Track selected item IDs for bulk actions
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
@@ -142,30 +155,30 @@ const BookingDetailsPage = () => {
     },
     {
       accessorKey: "item_name",
-      header: t.bookingList.modal.bookingItems.columns.item[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.item[lang],
       cell: ({ row }) =>
         row.original.storage_items.translations?.[lang]?.item_name ?? "",
     },
     {
       accessorKey: "quantity",
-      header: t.bookingList.modal.bookingItems.columns.quantity[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.quantity[lang],
       cell: ({ row }) => row.original.quantity,
     },
     {
       accessorKey: "start_date",
-      header: t.bookingList.modal.bookingItems.columns.startDate[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.startDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.start_date || ""), "d MMM yyyy"),
     },
     {
       accessorKey: "end_date",
-      header: t.bookingList.modal.bookingItems.columns.endDate[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.endDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
     },
     {
       accessorKey: "status",
-      header: t.bookingList.modal.bookingItems.columns.status[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.status[lang],
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
   ];
@@ -188,29 +201,65 @@ const BookingDetailsPage = () => {
           onClick={() => navigate(-1)}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
         >
-          <ChevronLeft /> {t.itemDetails?.buttons?.back?.[lang] || "Back"}
+          <ChevronLeft /> {t.bookingDetailsPage.buttons.back[lang]}
         </Button>
       </div>
       {/* Booking Info Section */}
       <div className="space-y-2 mt-4">
-        <div className="flex flex-row items-start gap-4">
-          <div className="flex flex-col space-y-2">
-            <h3 className="font-normal">
-              {t.bookingList.modal.customer[lang]}
-            </h3>
-            <p className="text-sm mb-0">
-              {booking.full_name || t.bookingList.status.unknown[lang]}
-            </p>
-            <p className="text-sm text-gray-500">{booking.email}</p>
-            <p className="text-sm">
-              {t.bookingList.modal.date[lang]}{" "}
-              {formatDate(new Date(booking.created_at || ""), "d MMM yyyy")}
-            </p>
-            <h3 className="font-normal mt-2">
-              {t.bookingList.columns.status[lang]}{" "}
-              <StatusBadge status={booking.status ?? "unknown"} />
-            </h3>
+        <div className="flex flex-col space-y-2">
+          <h3 className="text-lg font-normal">
+            {t.bookingDetailsPage.modal.customer[lang]}
+          </h3>
+          <p className="text-lg mb-0">
+            {booking.full_name || t.bookingList.status.unknown[lang]}
+          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-lg text-gray-500 mb-0">{booking.email}</p>
+            <button
+              type="button"
+              onClick={() => copyEmailToClipboard(booking.email ?? "")}
+              title={t.bookingDetailsPage.copy.title[lang]}
+              aria-label={t.bookingDetailsPage.copy.title[lang]}
+              className="p-1 rounded hover:bg-gray-200"
+            >
+              <Clipboard className="h-4 w-4 text-gray-600" />
+            </button>
+            {copiedEmail && (
+              <span className="text-xs text-green-600">
+                {t.bookingDetailsPage.copy.copied[lang]}
+              </span>
+            )}
           </div>
+          <p className="text-lg">
+            {t.bookingDetailsPage.modal.date[lang]}{" "}
+            {formatDate(new Date(booking.created_at || ""), "d MMM yyyy")}
+          </p>
+        </div>
+        <div className="flex flex-col space-y-2">
+          <h3 className="font-normal mt-2">
+            {t.bookingDetailsPage.status[lang]}{" "}
+            <StatusBadge status={booking.status ?? "unknown"} />
+          </h3>
+          <p className="text-lg">
+            {t.bookingDetailsPage.info[lang]}{" "}
+            {booking.booking_items?.length ?? 0}
+          </p>
+          <p className="text-lg text-gray-500">
+            {booking.booking_items && booking.booking_items.length > 0
+              ? formatDate(
+                  new Date(booking.booking_items[0].start_date || ""),
+                  "d MMM yyyy",
+                )
+              : ""}
+          </p>
+          <p className="text-lg text-gray-500">
+            {booking.booking_items && booking.booking_items.length > 0
+              ? formatDate(
+                  new Date(booking.booking_items[0].end_date || ""),
+                  "d MMM yyyy",
+                )
+              : ""}
+          </p>
         </div>
       </div>
       {/* Booking Details + Select All/Deselect All */}
@@ -223,7 +272,9 @@ const BookingDetailsPage = () => {
               onClick={handleSelectAllToggle}
               className="rounded-2xl border-secondary text-secondary"
             >
-              {allSelected ? "Deselect All" : "Select All"}
+              {allSelected
+                ? t.bookingDetailsPage.modal.buttons.confirmAll[lang]
+                : t.bookingDetailsPage.modal.buttons.confirmItems[lang]}
             </Button>
           )}
         </div>
@@ -240,12 +291,12 @@ const BookingDetailsPage = () => {
             <div className="flex flex-col items-center text-center">
               <span className="text-xs text-slate-600">
                 {selectedItemIds.length === 0
-                  ? t.bookingList.modal.buttons.confirmDisabled[lang]
+                  ? t.bookingDetailsPage.modal.buttons.confirmDisabled[lang]
                   : selectedItemIds.length === 1
-                    ? t.bookingList.modal.buttons.confirmItem[lang]
+                    ? t.bookingDetailsPage.modal.buttons.confirmItem[lang]
                     : selectedItemIds.length === ownedItemsForOrg.length
-                      ? t.bookingList.modal.buttons.confirmAll[lang]
-                      : t.bookingList.modal.buttons.confirmItems[lang]}
+                      ? t.bookingDetailsPage.modal.buttons.confirmAll[lang]
+                      : t.bookingDetailsPage.modal.buttons.confirmItems[lang]}
               </span>
               <BookingConfirmButton
                 id={booking.id}
@@ -257,12 +308,12 @@ const BookingDetailsPage = () => {
             <div className="flex flex-col items-center text-center">
               <span className="text-xs text-slate-600">
                 {selectedItemIds.length === 0
-                  ? t.bookingList.modal.buttons.rejectDisabled[lang]
+                  ? t.bookingDetailsPage.modal.buttons.rejectDisabled[lang]
                   : selectedItemIds.length === 1
-                    ? t.bookingList.modal.buttons.rejectItem[lang]
+                    ? t.bookingDetailsPage.modal.buttons.rejectItem[lang]
                     : selectedItemIds.length === ownedItemsForOrg.length
-                      ? t.bookingList.modal.buttons.rejectAll[lang]
-                      : t.bookingList.modal.buttons.rejectItems[lang]}
+                      ? t.bookingDetailsPage.modal.buttons.rejectAll[lang]
+                      : t.bookingDetailsPage.modal.buttons.rejectItems[lang]}
               </span>
               <BookingRejectButton
                 id={booking.id}

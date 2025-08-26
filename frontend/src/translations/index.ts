@@ -9,6 +9,7 @@ import { bookingCancel } from "./modules/bookingCancel";
 import { bookingConfirm } from "./modules/bookingConfirm";
 import { bookingDelete } from "./modules/bookingDelete";
 import { bookingDetailsButton } from "./modules/bookingDetailsButton";
+import { bookingDetailsPage } from "./modules/bookingDetailsPage";
 import { bookingEditButton } from "./modules/bookingEdit";
 import { bookingReject } from "./modules/bookingReject";
 import { bookingReturn } from "./modules/bookingReturn";
@@ -90,6 +91,7 @@ export const t = {
   bookingConfirm,
   bookingDelete,
   bookingDetailsButton,
+  bookingDetailsPage,
   bookingEditButton,
   bookingReject,
   bookingReturn,
