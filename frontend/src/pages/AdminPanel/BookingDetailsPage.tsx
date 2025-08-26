@@ -23,19 +23,6 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { makeSelectItemImages } from "@/store/slices/itemImagesSlice";
 
 const BookingDetailsPage = () => {
-  // Refetch booking details after confirm/reject actions
-  const refetchBooking = async () => {
-    if (id) {
-      await dispatch(getBookingByID(id));
-      // After refetch, filter selectedItemIds to only those still pending
-      setSelectedItemIds((prev) => {
-        const stillPendingIds = (booking?.booking_items || [])
-          .filter((item) => item.status === "pending")
-          .map((item) => String(item.id));
-        return prev.filter((id) => stillPendingIds.includes(id));
-      });
-    }
-  };
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -45,8 +32,24 @@ const BookingDetailsPage = () => {
   const loading = useAppSelector(selectCurrentBookingLoading);
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
+
   // Track selected item IDs for bulk actions
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  // When booking changes, clear out any selected IDs that are no longer pending
+  useEffect(() => {
+    if (!booking) return;
+    const stillPendingIds = (booking.booking_items || [])
+      .filter((bi) => bi.status === "pending")
+      .map((bi) => String(bi.id));
+    setSelectedItemIds((prev) =>
+      prev.filter((id) => stillPendingIds.includes(id)),
+    );
+  }, [booking]);
+  // Refetch booking details (after confirm/reject)
+  const refetchBooking = () => {
+    if (!id) return;
+    void dispatch(getBookingByID(id));
+  };
   // Only show org-owned items for selection
   const activeOrgId = booking?.booking_items?.[0]?.provider_organization_id;
   const ownedItemsForOrg = useMemo(
