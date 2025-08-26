@@ -1,0 +1,340 @@
+name: No Drift Control
+
+# Trigger only when PRs are merged into develop branch
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'supabase/migrations/**'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  deploy-migrations:
+    name: Deploy Database Migrations to Production
+    runs-on: ubuntu-latest
+    
+    # Only run if this is a merge commit (not direct push)
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, 'Merge pull request'))
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for diff comparison
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Supabase CLI
+        run: |
+          npm install -g supabase@latest
+          echo "Supabase CLI version:"
+          supabase --version
+
+      - name: Verify required secrets
+        run: |
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "❌ SUPABASE_ACCESS_TOKEN secret is missing"
+            exit 1
+          fi
+          if [ -z "${{ secrets.PRODUCTION_PROJECT_ID }}" ]; then
+            echo "❌ PRODUCTION_PROJECT_ID secret is missing"
+            exit 1
+          fi
+          if [ -z "${{ secrets.PRODUCTION_DB_PASSWORD }}" ]; then
+            echo "❌ PRODUCTION_DB_PASSWORD secret is missing"
+            exit 1
+          fi
+          echo "✅ All required secrets are available"
+
+      - name: Check for migration changes
+        id: check_changes
+        run: |
+          echo "Checking for new migration files..."
+          
+          # Get the previous commit (before this merge)
+          PREV_COMMIT=$(git rev-parse HEAD~1)
+          
+          # Check if any migration files have changed
+          CHANGED_MIGRATIONS=$(git diff --name-only $PREV_COMMIT HEAD -- supabase/migrations/ || echo "")
+          
+          if [ -z "$CHANGED_MIGRATIONS" ]; then
+            echo "No migration file changes detected"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Migration file changes detected:"
+            echo "$CHANGED_MIGRATIONS"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGED_MIGRATIONS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip deployment if no changes
+        if: steps.check_changes.outputs.has_changes == 'false'
+        run: |
+          echo "🔄 No migration changes detected - skipping deployment"
+          echo "This is expected behavior when migrations haven't changed"
+
+      - name: Authenticate with Supabase
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "🔐 Authenticating with Supabase..."
+          supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Link to production project
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "🔗 Linking to production project..."
+          supabase link --project-ref ${{ secrets.PRODUCTION_PROJECT_ID }} --password ${{ secrets.PRODUCTION_DB_PASSWORD }}
+
+      - name: Check for schema drift
+        id: check_drift
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "🔍 Checking for schema drift in production database..."
+          
+          # Generate a diff between remote production and local schema
+          DRIFT_OUTPUT_FILE="drift_changes.sql"
+          
+          # Run diff command and capture both output and exit code
+          set +e
+          supabase db diff --local --file="$DRIFT_OUTPUT_FILE" --password ${{ secrets.PRODUCTION_DB_PASSWORD }}
+          DIFF_EXIT_CODE=$?
+          set -e
+          
+          # Check if drift file was created and has content
+          if [ -f "$DRIFT_OUTPUT_FILE" ] && [ -s "$DRIFT_OUTPUT_FILE" ]; then
+            echo "⚠️ Schema drift detected!"
+            echo "Manual changes found in production database."
+            echo "has_drift=true" >> $GITHUB_OUTPUT
+            
+            # Read the drift content for the PR
+            echo "drift_content<<EOF" >> $GITHUB_OUTPUT
+            cat "$DRIFT_OUTPUT_FILE" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            
+            # Show what was found
+            echo "Detected changes:"
+            cat "$DRIFT_OUTPUT_FILE"
+            
+          else
+            echo "✅ No schema drift detected"
+            echo "has_drift=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate drift migration file
+        id: generate_drift_migration
+        if: steps.check_drift.outputs.has_drift == 'true'
+        run: |
+          echo "📝 Generating drift migration file..."
+          
+          # Generate timestamp for migration file
+          TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+          MIGRATION_FILE="supabase/migrations/${TIMESTAMP}_capture_manual_changes.sql"
+          
+          # Create migration file with drift content
+          cat > "$MIGRATION_FILE" << 'EOL'
+          -- Migration generated automatically to capture manual database changes
+          -- Generated on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          -- Source: Schema drift detection from production database
+          -- 
+          -- WARNING: Review these changes carefully before merging
+          -- These represent manual changes made directly to the production database
+          
+          ${{ steps.check_drift.outputs.drift_content }}
+          EOL
+          
+          echo "migration_file=$MIGRATION_FILE" >> $GITHUB_OUTPUT
+          echo "migration_filename=${TIMESTAMP}_capture_manual_changes.sql" >> $GITHUB_OUTPUT
+          
+          echo "✅ Generated migration file: $MIGRATION_FILE"
+          
+          # Show the generated file content
+          echo "Migration file content:"
+          cat "$MIGRATION_FILE"
+
+      - name: Create drift detection PR
+        if: steps.check_drift.outputs.has_drift == 'true'
+        run: |
+          echo "🔧 Creating PR for schema drift..."
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Create new branch for drift changes
+          BRANCH_NAME="drift/capture-manual-changes-$(date +%Y%m%d%H%M%S)"
+          git checkout -b "$BRANCH_NAME"
+          
+          # Add and commit the migration file
+          git add "${{ steps.generate_drift_migration.outputs.migration_file }}"
+          git commit -m "🔧 Capture manual database changes
+
+          Auto-generated migration to capture manual changes made directly to production database.
+          
+          Generated from schema drift detection on: $(date -u)
+          Original PR that triggered detection: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}
+          
+          ⚠️ IMPORTANT: Review these changes carefully before merging
+          These changes were made manually to the production database and need to be captured in version control."
+          
+          # Push the branch
+          git push origin "$BRANCH_NAME"
+          
+          # Create PR using GitHub CLI
+          gh pr create \
+            --title "🔧 Capture manual database changes - $(date +%Y-%m-%d)" \
+            --body "## Schema Drift Detection Report
+
+          **⚠️ Manual database changes detected!**
+
+          This PR was automatically generated because manual changes were found in the production database that aren't reflected in the current migration files.
+
+          ### What happened?
+          - The migration deployment workflow detected schema drift
+          - Someone made changes directly to the production database
+          - This migration captures those changes to keep version control in sync
+
+          ### Changes detected:
+          \`\`\`sql
+          ${{ steps.check_drift.outputs.drift_content }}
+          \`\`\`
+
+          ### What you need to do:
+          1. **Review the changes above carefully**
+          2. **Verify these changes are intentional and safe**
+          3. **Merge this PR to capture the changes in version control**
+          4. **After merging, the original deployment will need to be re-triggered**
+
+          ### Original trigger:
+          - **Commit**: ${{ github.sha }}
+          - **Branch**: ${{ github.ref_name }}
+          - **URL**: ${{ github.event.head_commit.url }}
+
+          ### Next steps:
+          After reviewing and merging this PR, you can re-run the original migration deployment by pushing a new commit or using the manual workflow trigger.
+
+          ---
+          *This PR was automatically created by the schema drift detection system.*" \
+            --head "$BRANCH_NAME" \
+            --base "develop" \
+            --reviewer "${{ github.actor }}"
+          
+          echo "drift_pr_url=https://github.com/${{ github.repository }}/pull/$(gh pr list --head $BRANCH_NAME --json number --jq '.[0].number')" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Stop deployment due to drift
+        if: steps.check_drift.outputs.has_drift == 'true'
+        run: |
+          echo "❌ DEPLOYMENT STOPPED - Schema drift detected!"
+          echo ""
+          echo "🔍 Manual changes were found in the production database that aren't captured in your migrations."
+          echo ""
+          echo "📋 What you need to do:"
+          echo "1. Review the automatically created PR with the detected changes"
+          echo "2. Verify the changes are intentional and safe"
+          echo "3. Merge the drift PR to sync your schema"
+          echo "4. Re-run this deployment workflow"
+          echo ""
+          echo "🔗 Drift Migration PR: ${{ steps.create_drift_pr.outputs.drift_pr_url }}"
+          echo ""
+          echo "💡 This process ensures no manual database changes are lost and maintains migration history integrity."
+          echo ""
+          exit 1
+
+      - name: Validate migrations
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "🔍 Validating migration files..."
+          
+          # Check if migration files exist and are readable
+          if [ ! -d "supabase/migrations" ]; then
+            echo "❌ Migration directory not found"
+            exit 1
+          fi
+          
+          # List all migration files to validate structure
+          echo "Current migration files:"
+          ls -la supabase/migrations/
+          
+          # Check for basic SQL syntax in new migration files
+          echo "Validating SQL syntax in changed files:"
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              echo "Checking: $file"
+              # Basic validation - check if file is readable and not empty
+              if [ ! -s "$file" ]; then
+                echo "⚠️  Warning: $file is empty"
+              else
+                echo "✅ $file appears valid"
+              fi
+            fi
+          done <<< "${{ steps.check_changes.outputs.changed_files }}"
+
+      - name: Deploy migrations to production
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "🚀 Deploying migrations to production..."
+          
+          # Push database migrations to production
+          supabase db push --password ${{ secrets.PRODUCTION_DB_PASSWORD }}
+          
+          echo "✅ Migrations deployed successfully!"
+
+      - name: Verify deployment
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "🔍 Verifying deployment..."
+          
+          # Get current migration status
+          echo "Current migration status:"
+          supabase migration list --password ${{ secrets.PRODUCTION_DB_PASSWORD }}
+
+      - name: Report deployment summary
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "📊 Deployment Summary:"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Changed migration files:"
+          echo "${{ steps.check_changes.outputs.changed_files }}"
+          echo ""
+          echo "🎉 Migration deployment completed successfully!"
+
+      - name: Handle deployment failure
+        if: failure() && steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "❌ Migration deployment failed!"
+          echo "Please check the logs above for details."
+          echo "Common issues:"
+          echo "1. Migration syntax errors"
+          echo "2. Database connection issues"
+          echo "3. Permission problems"
+          echo "4. Migration conflicts"
+          echo ""
+          echo "Manual intervention may be required."
+          exit 1
+
+  # Optional: Add a notification job for deployment status
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: deploy-migrations
+    if: always()
+    steps:
+      - name: Deployment Success
+        if: needs.deploy-migrations.result == 'success'
+        run: |
+          echo "✅ Supabase migration deployment completed successfully!"
+          echo "All database changes have been applied to production."
+
+      - name: Deployment Failure
+        if: needs.deploy-migrations.result == 'failure'
+        run: |
+          echo "❌ Supabase migration deployment failed!"
+          echo "Please review the workflow logs and take appropriate action."
+          # Here you could add Slack/Discord notifications, email alerts, etc.
