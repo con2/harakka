@@ -515,15 +515,7 @@ function AddItemForm() {
             >
               {t.addItemForm.buttons.goToSummary[appLang]}
             </Button>
-            <Button
-              variant="outline"
-              type="submit"
-              onClick={
-                !isEditing
-                  ? () => {}
-                  : () => form.handleSubmit(onValidSubmit, onInvalidSubmit)
-              }
-            >
+            <Button variant="outline" type="submit">
               {isEditing
                 ? t.addItemForm.buttons.updateItem[appLang]
                 : t.addItemForm.buttons.addItem[appLang]}
