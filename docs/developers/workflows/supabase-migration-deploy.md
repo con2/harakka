@@ -8,9 +8,11 @@ The `supabase-migration-deploy.yml` workflow automatically:
 
 1. **Triggers only on completed merges** to the `develop` branch
 2. **Detects migration changes** by comparing files in `supabase/migrations/`
-3. **Validates migrations** before deploying to production
-4. **Deploys migrations safely** using Supabase CLI
-5. **Provides comprehensive logging** and error handling
+3. **Checks for schema drift** between production database and local schema
+4. **Creates automatic PRs** when manual database changes are detected
+5. **Validates migrations** before deploying to production
+6. **Deploys migrations safely** using Supabase CLI
+7. **Provides comprehensive logging** and error handling
 
 ## Workflow Triggers
 
@@ -74,6 +76,99 @@ supabase link --project-ref ${{ secrets.PRODUCTION_PROJECT_ID }}
 supabase db push --password ${{ secrets.PRODUCTION_DB_PASSWORD }}
 ```
 
+## Schema Drift Detection
+
+### What is Schema Drift?
+
+Schema drift occurs when manual changes are made directly to the production database that aren't captured in your migration files. This can happen when:
+
+- Team members make hotfix changes directly in production
+- Emergency database updates are applied manually
+- Database changes are made through admin panels or SQL editors
+- Configuration changes are applied outside the migration system
+
+### How Drift Detection Works
+
+The workflow automatically detects schema drift by:
+
+1. **Comparing schemas**: Uses `supabase db diff --local` to compare production database with local schema
+2. **Detecting differences**: Identifies any changes in tables, columns, functions, policies, triggers, etc.
+3. **Generating migration**: Creates a timestamped migration file to capture the differences
+4. **Creating PR**: Automatically creates a pull request with the captured changes
+5. **Stopping deployment**: Halts the current deployment until drift is resolved
+
+### When Drift is Detected
+
+If manual changes are found in production:
+
+```text
+⚠️ Schema drift detected!
+Manual changes found in production database.
+
+❌ DEPLOYMENT STOPPED - Schema drift detected!
+
+🔍 Manual changes were found in the production database that aren't captured in your migrations.
+
+📋 What you need to do:
+1. Review the automatically created PR with the detected changes
+2. Verify the changes are intentional and safe
+3. Merge the drift PR to sync your schema
+4. Re-run this deployment workflow
+
+🔗 Drift Migration PR: https://github.com/your-repo/pull/123
+```
+
+### Automatic PR Creation
+
+When drift is detected, the workflow automatically:
+
+- **Creates a new branch**: `drift/capture-manual-changes-TIMESTAMP`
+- **Generates migration file**: `TIMESTAMP_capture_manual_changes.sql`
+- **Creates detailed PR**: With complete description of detected changes
+- **Assigns reviewer**: Tags the original PR author for review
+- **Links context**: References the original commit that triggered detection
+
+### Handling Drift PRs
+
+#### Review Process
+
+1. **Check the PR description**: Shows exactly what manual changes were detected
+2. **Review the migration file**: Verify the SQL changes are intended and safe
+3. **Investigate the source**: Determine who made the manual changes and why
+4. **Validate the changes**: Ensure they don't conflict with your planned migrations
+
+#### Example Drift PR Content
+
+```sql
+-- Migration generated automatically to capture manual database changes
+-- Generated on: 2025-01-26 10:30:00 UTC
+-- Source: Schema drift detection from production database
+-- 
+-- WARNING: Review these changes carefully before merging
+-- These represent manual changes made directly to the production database
+
+CREATE TABLE emergency_maintenance (
+    id SERIAL PRIMARY KEY,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+ALTER TABLE users ADD COLUMN emergency_contact VARCHAR(255);
+```
+
+#### Resolution Options
+
+**Option 1: Merge the Drift PR (Recommended)**
+- Review and approve the captured changes
+- Merge the PR to sync your schema
+- Re-run the original deployment
+
+**Option 2: Reject and Rollback**
+- If changes are unauthorized or incorrect
+- Manually rollback the production changes
+- Update the migration files as needed
+- Re-run the deployment
+
 ## Workflow Steps Breakdown
 
 | Step | Purpose | Conditions |
@@ -86,10 +181,14 @@ supabase db push --password ${{ secrets.PRODUCTION_DB_PASSWORD }}
 | **Skip if No Changes** | Exit early if no migrations changed | When no changes detected |
 | **Authenticate** | Login to Supabase | Only with changes |
 | **Link Project** | Connect to production project | Only with changes |
-| **Validate Migrations** | Check migration file integrity | Only with changes |
-| **Deploy Migrations** | Apply changes to production | Only with changes |
-| **Verify Deployment** | Confirm migrations applied | Only with changes |
-| **Report Summary** | Log deployment details | Only with changes |
+| **Check Schema Drift** | Compare production vs local schema | Only with changes |
+| **Generate Drift Migration** | Create migration file for manual changes | Only when drift detected |
+| **Create Drift PR** | Automatically create PR for review | Only when drift detected |
+| **Stop on Drift** | Halt deployment until drift resolved | Only when drift detected |
+| **Validate Migrations** | Check migration file integrity | Only with changes, no drift |
+| **Deploy Migrations** | Apply changes to production | Only with changes, no drift |
+| **Verify Deployment** | Confirm migrations applied | Only with changes, no drift |
+| **Report Summary** | Log deployment details | Only with changes, no drift |
 
 ## Expected Behavior
 
