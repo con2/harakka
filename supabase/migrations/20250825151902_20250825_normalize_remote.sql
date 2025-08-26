@@ -46,12 +46,10 @@ alter table "public"."user_ban_history" add constraint "user_ban_history_ban_typ
 
 alter table "public"."user_ban_history" validate constraint "user_ban_history_ban_type_check";
 
-drop policy "Admin Delete Item Images 6eeiel_0" on "storage"."objects";
+drop policy if exists "Admin Delete Item Images 6eeiel_0" on "storage"."objects";
 
-drop policy "TEMP: Allow access 6eeiel_0" on "storage"."objects";
+drop policy if exists "TEMP: Allow access 6eeiel_0" on "storage"."objects";
 
-drop policy "TEMP: Allow access 6eeiel_1" on "storage"."objects";
+drop policy if exists "TEMP: Allow access 6eeiel_1" on "storage"."objects";
 
-drop policy "TEMP: Allow access 6eeiel_2" on "storage"."objects";
-
-
+drop policy if exists "TEMP: Allow access 6eeiel_2" on "storage"."objects";
