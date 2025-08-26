@@ -132,8 +132,6 @@ function Summary() {
                                 );
                               } else if (errors.length === 1) {
                                 const [field, code] = errors[0].split(":");
-                                console.log("field: ", field);
-                                console.log("code: ", code);
                                 return (
                                   <p>
                                     {code === "invalid_type"
