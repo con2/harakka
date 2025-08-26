@@ -50,7 +50,7 @@ export interface ItemFormData
   };
 
   // Ensure both fields are defined
-  items_number_currently_in_storage: number;
+  available_quantity: number;
   location_details: {
     name: string;
     address: string;

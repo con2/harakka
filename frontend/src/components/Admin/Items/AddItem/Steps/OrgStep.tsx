@@ -1,16 +1,9 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Info, MapPin } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { selectCurrentUserOrganizations } from "@/store/slices/rolesSlice";
+import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import {
   fetchAllOrgLocations,
   selectOrgLocations,
@@ -27,7 +20,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function OrgStep() {
   const { lang } = useLanguage();
-  const orgs = useAppSelector(selectCurrentUserOrganizations);
+  const { organizationId: orgId, organizationName: orgName } = useAppSelector(
+    selectActiveRoleContext,
+  );
   const locationLoading = useAppSelector(selectOrgLocationsLoading);
   const orgLocations = useAppSelector(selectOrgLocations);
   const {
@@ -37,41 +32,12 @@ function OrgStep() {
   } = useAppSelector(selectItemCreation);
   const dispatch = useAppDispatch();
 
-  /*---------------------handlers------------------------------------------------*/
-  const handleOrgChange = (org_id: string) => {
-    const newOrg = orgs.find((org) => org.organization_id === org_id);
-    if (!newOrg) return dispatch(selectOrg(undefined));
-    void dispatch(selectOrgLocation(undefined));
-    void dispatch(
-      fetchAllOrgLocations({ orgId: newOrg.organization_id, pageSize: 20 }),
-    );
-    void dispatch(
-      selectOrg({
-        id: newOrg.organization_id,
-        name: newOrg.organization_name,
-      }),
-    );
-  };
   /*---------------------side effects--------------------------------------------*/
-  useEffect(() => {
-    if (orgLocations?.length === 1) {
-      const newOrg = orgLocations[0];
-      dispatch(
-        selectOrgLocation({
-          id: newOrg.storage_location_id,
-          name: newOrg.storage_locations?.name,
-          address: newOrg.storage_locations?.address,
-        }),
-      );
-    }
-  }, [orgLocations, dispatch]);
 
   useEffect(() => {
-    if (selectedOrg && orgLocations.length < 1)
-      void dispatch(
-        fetchAllOrgLocations({ orgId: selectedOrg?.id, pageSize: 20 }),
-      );
-  }, [dispatch, orgLocations, selectedOrg]);
+    dispatch(selectOrg({ id: orgId, name: orgName }));
+    void dispatch(fetchAllOrgLocations({ orgId: orgId!, pageSize: 20 }));
+  }, [dispatch, orgId, orgName]);
 
   /*---------------------render--------------------------------------------------*/
   return (
@@ -90,39 +56,6 @@ function OrgStep() {
         )}
         {items.length < 1 && (
           <>
-            <div>
-              {/* Select Organization */}
-
-              <Select
-                value={selectedOrg?.name ?? ""}
-                onValueChange={handleOrgChange}
-                required
-                name="organization"
-                disabled={items.length > 0}
-              >
-                <SelectTrigger
-                  disabled={orgs.length === 1}
-                  className="min-w-[250px] border shadow-none border-grey w-[300px]"
-                >
-                  <SelectValue
-                    placeholder={t.orgStep.placeholders.selectOrg[lang]}
-                  >
-                    {selectedOrg?.name ?? ""}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {orgs.map((org) => (
-                    <SelectItem
-                      key={org.organization_id}
-                      value={org.organization_id}
-                    >
-                      {org.organization_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Location Selection */}
             <div className="flex justify-between items-center">
               <div className="flex flex-wrap gap-2">

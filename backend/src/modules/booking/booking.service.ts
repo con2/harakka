@@ -207,7 +207,7 @@ export class BookingService {
       // 3.2. Check physical stock (currently in storage)
       const { data: storageItem, error: itemError } = await supabase
         .from("storage_items")
-        .select("items_number_currently_in_storage")
+        .select("available_quantity")
         .eq("id", item_id)
         .single();
 
@@ -215,7 +215,7 @@ export class BookingService {
         throw new BadRequestException("Storage item data not found");
       }
 
-      const currentStock = storageItem.items_number_currently_in_storage ?? 0;
+      const currentStock = storageItem.available_quantity ?? 0;
       if (quantity > currentStock) {
         throw new BadRequestException(
           `Not enough physical stock in storage for item ${item_id}`,
@@ -341,7 +341,7 @@ export class BookingService {
       // get availability of item
       const { data: storageItem, error: storageItemError } = await supabase
         .from("storage_items")
-        .select("items_number_currently_in_storage")
+        .select("available_quantity")
         .eq("id", item.item_id)
         .single();
 
@@ -350,7 +350,7 @@ export class BookingService {
       }
 
       // check if stock is enough
-      if (storageItem.items_number_currently_in_storage < item.quantity) {
+      if (storageItem.available_quantity < item.quantity) {
         throw new BadRequestException(
           `Not enough available quantity for item ${item.item_id}`,
         );
@@ -636,7 +636,7 @@ export class BookingService {
       // Check physical stock (currently in storage)
       const { data: storageCountRow, error: itemError } = await supabase
         .from("storage_items")
-        .select("items_number_currently_in_storage")
+        .select("available_quantity")
         .eq("id", item_id)
         .single();
 
@@ -644,8 +644,7 @@ export class BookingService {
         throw new BadRequestException("Storage item data not found");
       }
 
-      const currentStock =
-        storageCountRow.items_number_currently_in_storage ?? 0;
+      const currentStock = storageCountRow.available_quantity ?? 0;
       if (quantity > currentStock) {
         throw new BadRequestException(
           `Not enough physical stock in storage for item ${item_id}`,
@@ -986,7 +985,7 @@ export class BookingService {
     for (const item of items) {
       const { data: storageItem, error } = await supabase
         .from("storage_items")
-        .select("items_number_currently_in_storage")
+        .select("available_quantity")
         .eq("id", item.item_id)
         .single<StorageItemsRow>();
 
@@ -995,12 +994,11 @@ export class BookingService {
       }
 
       const updatedCount =
-        (storageItem.items_number_currently_in_storage || 0) +
-        (item.quantity ?? 0);
+        (storageItem.available_quantity || 0) + (item.quantity ?? 0);
 
       const { error: updateItemsError } = await supabase
         .from("storage_items")
-        .update({ items_number_currently_in_storage: updatedCount })
+        .update({ available_quantity: updatedCount })
         .eq("id", item.item_id);
 
       if (updateItemsError) {
@@ -1054,7 +1052,7 @@ export class BookingService {
       // 10.2. Get associated storage item
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
-        .select("items_number_currently_in_storage")
+        .select("available_quantity")
         .eq("id", item.item_id)
         .single();
 
@@ -1066,8 +1064,7 @@ export class BookingService {
 
       // 10.3. Decrement physical stock when items are picked up
       const newCount =
-        (storageItem.items_number_currently_in_storage || 0) -
-        (item.quantity || 0);
+        (storageItem.available_quantity || 0) - (item.quantity || 0);
 
       if (newCount < 0) {
         throw new BadRequestException("Not enough stock to confirm pickup");
@@ -1076,7 +1073,7 @@ export class BookingService {
       // Update storage stock
       const { error: updateStockError } = await supabase
         .from("storage_items")
-        .update({ items_number_currently_in_storage: newCount })
+        .update({ available_quantity: newCount })
         .eq("id", item.item_id);
 
       if (updateStockError) {

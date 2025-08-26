@@ -111,7 +111,7 @@ const UpdateItemModal = ({
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
-      availableQuantity: formData?.items_number_total || 0,
+      availableQuantity: formData?.quantity || 0,
       isChecking: false,
       error: null,
     });
@@ -422,14 +422,14 @@ const UpdateItemModal = ({
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="items_number_total">
+                      <Label htmlFor="quantity">
                         {t.updateItemModal.labels.totalQuantity[lang]}
                       </Label>
                       <Input
-                        id="items_number_total"
-                        name="items_number_total"
+                        id="quantity"
+                        name="quantity"
                         type="number"
-                        value={formData.items_number_total}
+                        value={formData.quantity}
                         onChange={handleChange}
                         placeholder={
                           t.updateItemModal.placeholders.totalQuantity[lang]
@@ -439,16 +439,16 @@ const UpdateItemModal = ({
                     </div>
 
                     <div>
-                      <Label htmlFor="items_number_currently_in_storage">
+                      <Label htmlFor="available_quantity">
                         {t.updateItemModal.labels.currentlyInStorage[lang]}
                       </Label>
                       <Input
-                        id="items_number_currently_in_storage"
-                        name="items_number_currently_in_storage"
+                        id="available_quantity"
+                        name="available_quantity"
                         type="number"
-                        max={formData.items_number_total}
+                        max={formData.quantity}
                         min="0"
-                        value={formData.items_number_currently_in_storage || 0}
+                        value={formData.available_quantity || 0}
                         onChange={handleChange}
                         placeholder={
                           t.updateItemModal.placeholders.currentlyInStorage[
