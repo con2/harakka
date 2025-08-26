@@ -40,7 +40,7 @@ export function formatParsedItems(
         main: null,
         details: [],
       },
-      items_number_currently_in_storage: rest.items_number_total,
+      available_quantity: rest.quantity,
       is_active: true,
       tags: [],
       location: location,
