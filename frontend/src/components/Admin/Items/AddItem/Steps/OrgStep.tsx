@@ -35,12 +35,12 @@ function OrgStep() {
   const { location: selectedLoc, items } = useAppSelector(selectItemCreation);
   const dispatch = useAppDispatch();
 
-  const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = e.target.files?.[0];
       if (!file) throw new Error("No file selected");
       validateFile(file);
-      void dispatch(uploadCSV(file)).unwrap();
+      await dispatch(uploadCSV(file)).unwrap();
       dispatch(setStepper(3));
     } catch (error) {
       console.error(error);
