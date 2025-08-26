@@ -49,7 +49,7 @@ const ItemsDetails: React.FC = () => {
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
-      availableQuantity: item?.items_number_total ?? 0,
+      availableQuantity: item?.quantity ?? 0,
       isChecking: false,
       error: null,
     });
@@ -133,7 +133,7 @@ const ItemsDetails: React.FC = () => {
         .catch((error) => {
           console.error("Error checking availability:", error);
           setAvailabilityInfo({
-            availableQuantity: item.items_number_currently_in_storage,
+            availableQuantity: item.available_quantity,
             isChecking: false,
             error: "Failed to check availability",
           });
@@ -413,7 +413,7 @@ const ItemsDetails: React.FC = () => {
                       ? availabilityInfo.availableQuantity > 0
                         ? `${t.itemDetails.available[lang]}: ${availabilityInfo.availableQuantity}`
                         : `${t.itemDetails.notAvailable[lang]}`
-                      : `${t.itemDetails.totalUnits[lang]}: ${item.items_number_currently_in_storage}`}
+                      : `${t.itemDetails.totalUnits[lang]}: ${item.available_quantity}`}
                   </p>
                 )}
               </div>

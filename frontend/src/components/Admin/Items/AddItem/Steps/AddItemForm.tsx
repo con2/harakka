@@ -80,8 +80,8 @@ function AddItemForm() {
         name: storage?.name ?? "",
         address: storage?.address ?? "",
       },
-      items_number_total: 1,
-      items_number_currently_in_storage: 1,
+      quantity: 1,
+      available_quantity: 1,
       is_active: true,
       tags: [],
       translations: {
@@ -306,7 +306,7 @@ function AddItemForm() {
             {/* Location | Total Quantity | Is active */}
             <div className="gap-4 flex w-full">
               <FormField
-                name="items_number_total"
+                name="quantity"
                 control={form.control}
                 render={({ field }) => (
                   <div className="w-full">
@@ -331,7 +331,7 @@ function AddItemForm() {
                       </FormControl>
                       <ErrorMessage
                         errors={form.formState.errors}
-                        name="items_number_total"
+                        name="quantity"
                         render={({ message }) => (
                           <p className="text-[0.8rem] font-medium text-destructive">
                             {

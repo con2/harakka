@@ -18,8 +18,8 @@ export type CreateItemType = {
     name: string;
     address: string;
   };
-  items_number_total: number;
-  items_number_currently_in_storage: number;
+  quantity: number;
+  available_quantity: number;
   is_active: boolean;
   translations: {
     fi: {

@@ -17,7 +17,7 @@ export const getItemColumns = (
   {
     header: "Quantity",
     id: "quantity",
-    cell: ({ row }) => row.original.items_number_total,
+    cell: ({ row }) => row.original.quantity,
   },
   {
     header: "Storage",

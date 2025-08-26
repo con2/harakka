@@ -60,7 +60,7 @@ const AdminPanel = () => {
             />
           )}
 
-          {hasAnyRole(["superVera", "tenant_admin"]) && (
+          {hasAnyRole(["storage_manager", "tenant_admin"]) && (
             <SidebarLink
               to="/admin/bookings"
               icon={<ShoppingBag className="w-5 h-5" />}

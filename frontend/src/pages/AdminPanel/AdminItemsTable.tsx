@@ -219,10 +219,10 @@ const AdminItemsTable = () => {
     {
       header: t.adminItemsTable.columns.quantity[lang],
       size: 30,
-      id: "items_number_total",
-      accessorFn: (row) => row.items_number_total,
+      id: "quantity",
+      accessorFn: (row) => row.quantity,
       cell: ({ row }) =>
-        `${row.original.items_number_total} ${t.adminItemsTable.messages.units[lang]}`,
+        `${row.original.quantity} ${t.adminItemsTable.messages.units[lang]}`,
     },
     {
       id: "is_active",
@@ -472,7 +472,7 @@ const AdminItemsTable = () => {
         handleOrder={handleBooking}
         order={order}
         ascending={ascending}
-        originalSorting="items_number_total"
+        originalSorting="quantity"
       />
 
       {/* Show UpdateItemModal when showModal is true */}
