@@ -66,8 +66,7 @@ function OrgStep() {
     <div className="bg-white flex flex-col flex-wrap rounded border mt-4 max-w-[900px] p-10 gap-8">
       <div className="flex flex-col gap-2 flex-3">
         <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-2">
-          {/* {t.orgStep.heading.org[lang]} */}
-          Choose Location
+          {t.orgStep.heading[lang]}
         </p>
         <>
           {/* Location Selection */}
@@ -138,7 +137,9 @@ function OrgStep() {
         </p>
         <div className="gap-4 flex items-end items-start">
           <div className="flex flex-col flex-1">
-            <p className="font-semibold pb-1 text-lg">Fill out our form</p>
+            <p className="font-semibold pb-1 text-lg">
+              {t.orgStep.subheadings.fillForm[lang]}
+            </p>
             <Button
               disabled={selectedLoc === undefined}
               variant="outline"
@@ -146,12 +147,12 @@ function OrgStep() {
               onClick={() => dispatch(setNextStep())}
             >
               <ClipboardPenLine className="size-6" />
-              Manually Create Items
+              {t.orgStep.buttons.fillForm[lang]}
             </Button>
           </div>
           <div className="flex flex-col flex-1">
             <p className="font-semibold pb-1 text-lg">
-              Upload CSV file{" "}
+              {t.orgStep.subheadings.uploadCSV[lang]}{" "}
               <span className="align-top text-sm ml-0.5">(beta)</span>
             </p>
             <Button
@@ -165,16 +166,16 @@ function OrgStep() {
               }}
             >
               <FileUp className="size-6" />
-              Upload CSV file
+              {t.orgStep.buttons.uploadCSV[lang]}
             </Button>
             <p className="text-sm text-end py-1">
-              Download our template{" "}
+              {t.orgStep.buttons.downloadTemplate[lang]}{" "}
               <a
                 className="underline underline-offset-2"
                 href="/item-template.xlsx"
                 download
               >
-                here
+                {t.orgStep.buttons.downloadTemplateHere[lang]}
               </a>
             </p>
 
@@ -211,11 +212,11 @@ function OrgStep() {
           <div className="flex gap-3 items-center">
             <Info color="#3d3d3d" className="self-center" />
             <p className="text-sm font-medium leading-[1.1rem]">
-              You have unfinished items
+              {t.orgStep.info.unfinishedItems[lang]}
             </p>
           </div>
           <Button variant="outline" onClick={() => dispatch(setStepper(3))}>
-            Review Items
+            {t.orgStep.buttons.reviewItems[lang]}
           </Button>
         </div>
       )}

@@ -77,7 +77,10 @@ function Summary() {
         {form.org && items.length > 0 && (
           <div>
             <p className="text-sm leading-none font-medium mb-4">
-              {t.itemSummary.paragraphs.addingItems[lang]} {form.org?.name}
+              {t.itemSummary.paragraphs.addingItems[lang].replace(
+                "{org}",
+                form.org?.name,
+              )}
             </p>
           </div>
         )}
@@ -106,7 +109,7 @@ function Summary() {
                   <OriginalTableRow key={item.id}>
                     <OriginalTableCell
                       width="250"
-                      className="font-medium max-w-[250px] text-ellipsis overflow-hidden min-h-[49px] gap-2 flex items-center"
+                      className="font-medium max-w-[250px] truncate min-h-[49px] gap-2 flex items-center"
                     >
                       {form.errors?.[item.id] && (
                         <Tooltip>
@@ -114,7 +117,39 @@ function Summary() {
                             <CircleAlert className="w-5 h-5 text-[var(--destructive)]" />
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>{form.errors?.[item.id]}</p>
+                            {(() => {
+                              const errors = form.errors[item.id];
+                              if (errors.length > 1) {
+                                return (
+                                  <p>
+                                    {t.itemSummary.errorCodes.multipleErrors[
+                                      lang
+                                    ].replace(
+                                      "{amount}",
+                                      errors.length.toString(),
+                                    )}
+                                  </p>
+                                );
+                              } else if (errors.length === 1) {
+                                const [field, code] = errors[0].split(":");
+                                console.log("field: ", field);
+                                console.log("code: ", code);
+                                return (
+                                  <p>
+                                    {code === "invalid_type"
+                                      ? t.itemSummary.errorCodes.invalid_type[
+                                          lang
+                                        ].replace("{field}", field)
+                                      : (
+                                          t.itemSummary.errorCodes as Record<
+                                            string,
+                                            any //eslint-disable-line
+                                          >
+                                        )[field]?.[code]?.[lang]}
+                                  </p>
+                                );
+                              }
+                            })()}
                           </TooltipContent>
                         </Tooltip>
                       )}

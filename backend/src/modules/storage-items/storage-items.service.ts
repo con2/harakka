@@ -573,7 +573,6 @@ export class StorageItemsService {
           index,
           validation.error.issues,
         );
-
         processedItems.push(processedRow);
         errors.push(error);
       }
@@ -600,7 +599,6 @@ export class StorageItemsService {
           processed[k] = "";
         });
       } else {
-        // ensure key is string (Zod path can contain numbers)
         const key = String(path);
         processed[key] = "";
       }
@@ -609,11 +607,8 @@ export class StorageItemsService {
     return {
       processedRow: processed as CSVItem,
       error: {
-        // using human-friendly 1-based row numbering like earlier code
         row: index + 1,
-        errors: issues.map(
-          (issue) => `${issue.path.join(".")}: ${issue.message}`,
-        ),
+        errors: issues.map((issue) => `${issue.path.join(",")}:${issue.code}`),
       },
     };
   }

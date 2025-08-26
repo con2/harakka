@@ -479,7 +479,7 @@ export const itemsSlice = createSlice({
         // Transform the uploaded items to the correct type
         const formattedItems = formatParsedItems(parsedItems, location);
         const itemIds = new Set(formattedItems.map((item) => item.id));
-        console.log("item ids: ", itemIds);
+
         const formattedErrors = formatErrors(errors, itemIds);
         state.itemCreation.errors = {
           ...state.itemCreation.errors,

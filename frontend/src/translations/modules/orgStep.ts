@@ -1,15 +1,7 @@
 export const orgStep = {
   heading: {
-    org: {
-      en: "Organization",
-      fi: "Organisaatio",
-    },
-  },
-  placeholders: {
-    selectOrg: {
-      en: "Select organization",
-      fi: "Valitse organisaatio",
-    },
+    en: "Choose location",
+    fi: "Valitse sijainti",
   },
   buttons: {
     chooseLocation: {
@@ -19,6 +11,42 @@ export const orgStep = {
     next: {
       en: "Next",
       fi: "Seuraava",
+    },
+    reviewItems: {
+      en: "Review items",
+      fi: "Tarkista tuotteet",
+    },
+    fillForm: {
+      en: "Manually create items",
+      fi: "Luo tuotteet manuaalisesti",
+    },
+    uploadCSV: {
+      en: "Upload CSV file",
+      fi: "Lataa CSV-tiedosto",
+    },
+    downloadTemplate: {
+      en: "Download our template",
+      fi: "Lataa mallipohjamme",
+    },
+    downloadTemplateHere: {
+      en: "here",
+      fi: "tästä",
+    },
+  },
+  info: {
+    unfinishedItems: {
+      en: "You have unfinished items",
+      fi: "Sinulla on keskeneräisiä tuotteita",
+    },
+  },
+  subheadings: {
+    fillForm: {
+      en: "Fill out our form",
+      fi: "Täytä lomakkeemme",
+    },
+    uploadCSV: {
+      en: "Upload CSV file",
+      fi: "Lataa CSV-tiedosto",
     },
   },
 };
