@@ -5,12 +5,12 @@ on:
   pull_request:
     branches: [develop]
     paths:
-      - 'supabase-prod/supabase/migrations/**'
+      - 'supabase/migrations/**'
   # Auto-deploy only on merge/pushes to develop (after PR merge)
   push:
     branches: [develop]
     paths:
-      - 'supabase-prod/supabase/migrations/**'
+      - 'supabase/migrations/**'
   # Allow manual runs with toggles
   workflow_dispatch:
     inputs:
@@ -37,8 +37,8 @@ permissions:
   issues: write         # comment if needed
 
 env:
-  # Canonical migrations live under supabase-prod/
-  WORKDIR: supabase-prod
+  # Canonical migrations live under supabase/
+  WORKDIR: supabase
   # Default to PROD secrets; staging can be selected via workflow_dispatch input
   SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
   PROD_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
@@ -111,7 +111,7 @@ jobs:
             PREV="HEAD~1"
           fi
           echo "Diffing migrations between $PREV and HEAD..."
-          CHANGED=$(git diff --name-only "$PREV" HEAD -- "$WORKDIR/supabase/migrations" || true)
+          CHANGED=$(git diff --name-only "$PREV" HEAD -- "$WORKDIR/migrations" || true)
           if [[ -z "$CHANGED" ]]; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "ℹ️ No migration file changes in this run"
@@ -151,8 +151,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           BRANCH="drift/$(date +%Y%m%d%H%M%S)"
           git checkout -b "$BRANCH"
-          cp "$WORKDIR/drift_changes.sql" "$WORKDIR/supabase/migrations/$(date +%Y%m%d%H%M%S)_capture_manual_changes.sql"
-          git add "$WORKDIR/supabase/migrations"/*.sql
+          cp "$WORKDIR/drift_changes.sql" "$WORKDIR/migrations/$(date +%Y%m%d%H%M%S)_capture_manual_changes.sql"
+          git add "$WORKDIR/migrations"/*.sql
           git commit -m "chore(db): capture manual changes (drift)"
           git push -u origin "$BRANCH"
           gh pr create --title "DB Drift: capture manual changes" \
