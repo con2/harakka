@@ -202,9 +202,9 @@ function AddItemForm() {
   }, []);
 
   useEffect(() => {
-    const newValue = form.getValues("items_number_total");
-    form.setValue("items_number_currently_in_storage", newValue);
-  }, [form.getValues("items_number_total")]);
+    const newValue = form.getValues("quantity");
+    form.setValue("available_quantity", newValue);
+  }, [form.getValues("quantity")]);
 
   useEffect(() => {
     if (!storage) return;

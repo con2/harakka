@@ -120,7 +120,7 @@ export const itemSummary = {
         fi: "Tuotekuvauksen arvo (fi) oli liian pitkä",
       },
     },
-    items_number_total: {
+    quantity: {
       too_small: {
         en: "The value for quantity must be at least 1",
         fi: "Määrän arvon on oltava vähintään 1",

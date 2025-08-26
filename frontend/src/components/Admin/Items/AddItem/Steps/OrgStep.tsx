@@ -196,7 +196,7 @@ function OrgStep() {
       )}
 
       {items.length > 0 && (
-        <div className="flex align-center gap-3 p-4 border rounded justify-between items-center">
+        <div className="flex align-center gap-3 p-10 justify-between items-center">
           <div className="flex gap-3 items-center">
             <Info color="#3d3d3d" className="self-center" />
             <p className="text-sm font-medium leading-[1.1rem]">
@@ -208,28 +208,6 @@ function OrgStep() {
           </Button>
         </div>
       )}
-
-      {/* Info and Next Button */}
-      {/* <div className="flex flex-2 justify-end gap-3">
-        {items.length > 0 && (
-          <Button
-            variant="default"
-            className="w-fit self-end"
-            disabled={selectedLoc === undefined}
-            onClick={() => dispatch(setStepper(3))}
-          >
-            {t.addItemForm.buttons.goToSummary[lang]}
-          </Button>
-        )}
-        <Button
-          variant="outline"
-          className="w-fit px-10 self-end"
-          disabled={selectedLoc === undefined}
-          onClick={() => dispatch(setNextStep())}
-        >
-          {t.orgStep.buttons.next[lang]}
-        </Button>
-      </div> */}
     </div>
   );
 }
