@@ -3,7 +3,7 @@ name: No Drift Control
 # Trigger only when PRs are merged into develop branch
 on:
   push:
-    branches: [develop]
+    branches: [CON2-209-Create-supabase-workflow-to-push-changes-on-merge]
     paths:
       - 'supabase/migrations/**'
   workflow_dispatch: # Allow manual triggering
