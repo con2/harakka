@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Spinner from "@/components/Spinner";
+import { Separator } from "@/components/ui/separator";
 
 function OrgStep() {
   const { lang } = useLanguage();
@@ -53,8 +54,6 @@ function OrgStep() {
     }
   }, []);
 
-  const downloadTemplate = () => {};
-
   /*---------------------side effects--------------------------------------------*/
   useEffect(() => {
     dispatch(selectOrg({ id: orgId, name: orgName }));
@@ -63,10 +62,10 @@ function OrgStep() {
 
   /*---------------------render--------------------------------------------------*/
   return (
-    <div className="bg-white flex flex-col flex-wrap rounded border mt-4 max-w-[900px] p-10 gap-8">
-      <div className="flex flex-col gap-2 flex-3">
-        <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-2">
-          {t.orgStep.heading[lang]}
+    <div className="bg-white flex flex-col flex-wrap rounded border mt-4 max-w-[900px]">
+      <div className="flex flex-col gap-2 flex-3  p-10">
+        <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-4">
+          {t.orgStep.heading.location[lang]}
         </p>
         <>
           {/* Location Selection */}
@@ -130,16 +129,15 @@ function OrgStep() {
         </>
       </div>
 
+      <Separator />
+
       {/* Item Creations Choices: Manual or CSV Upload */}
-      <div>
-        <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-2">
-          {/* {t.orgStep.heading.org[lang]} */}
+      <div className="p-10">
+        <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-4">
+          {t.orgStep.heading.method[lang]}
         </p>
         <div className="gap-4 flex items-end items-start">
           <div className="flex flex-col flex-1">
-            <p className="font-semibold pb-1 text-lg">
-              {t.orgStep.subheadings.fillForm[lang]}
-            </p>
             <Button
               disabled={selectedLoc === undefined}
               variant="outline"
@@ -151,10 +149,6 @@ function OrgStep() {
             </Button>
           </div>
           <div className="flex flex-col flex-1">
-            <p className="font-semibold pb-1 text-lg">
-              {t.orgStep.subheadings.uploadCSV[lang]}{" "}
-              <span className="align-top text-sm ml-0.5">(beta)</span>
-            </p>
             <Button
               variant="outline"
               className="gap-2 py-8 px-8"
@@ -167,12 +161,13 @@ function OrgStep() {
             >
               <FileUp className="size-6" />
               {t.orgStep.buttons.uploadCSV[lang]}
+              <span className="align-top text-sm">(beta)</span>
             </Button>
             <p className="text-sm text-end py-1">
               {t.orgStep.buttons.downloadTemplate[lang]}{" "}
               <a
                 className="underline underline-offset-2"
-                href="/item-template.xlsx"
+                href="/con2-item-template.xlsx"
                 download
               >
                 {t.orgStep.buttons.downloadTemplateHere[lang]}
@@ -185,13 +180,6 @@ function OrgStep() {
               accept="text/csv"
               className="hidden"
               onChange={handleCSV}
-            />
-            <input
-              id="csv-downloader"
-              type="file"
-              accept="text/csv"
-              className="hidden"
-              onChange={downloadTemplate}
             />
           </div>
         </div>

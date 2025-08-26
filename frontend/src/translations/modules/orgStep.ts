@@ -1,7 +1,13 @@
 export const orgStep = {
   heading: {
-    en: "Choose location",
-    fi: "Valitse sijainti",
+    location: {
+      en: "Choose location",
+      fi: "Valitse sijainti",
+    },
+    method: {
+      en: "Choose method",
+      fi: "Valitse tapa",
+    },
   },
   buttons: {
     chooseLocation: {
@@ -17,8 +23,8 @@ export const orgStep = {
       fi: "Tarkista tuotteet",
     },
     fillForm: {
-      en: "Manually create items",
-      fi: "Luo tuotteet manuaalisesti",
+      en: "Fill out our form",
+      fi: "Täytä lomakkeemme",
     },
     uploadCSV: {
       en: "Upload CSV file",
@@ -37,16 +43,6 @@ export const orgStep = {
     unfinishedItems: {
       en: "You have unfinished items",
       fi: "Sinulla on keskeneräisiä tuotteita",
-    },
-  },
-  subheadings: {
-    fillForm: {
-      en: "Fill out our form",
-      fi: "Täytä lomakkeemme",
-    },
-    uploadCSV: {
-      en: "Upload CSV file",
-      fi: "Lataa CSV-tiedosto",
     },
   },
 };
