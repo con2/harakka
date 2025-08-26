@@ -6,7 +6,6 @@ import { History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -185,7 +184,6 @@ const UserBanHistoryModal = ({
             </Table>
           )}
         </div>
-        <DialogClose />
       </DialogContent>
     </Dialog>
   );

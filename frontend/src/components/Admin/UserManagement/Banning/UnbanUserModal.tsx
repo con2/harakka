@@ -12,7 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -487,7 +486,6 @@ const UnbanUserModal = ({
             {loading ? "Unbanning..." : "Unban User"}
           </Button>
         </DialogFooter>
-        <DialogClose />
       </DialogContent>
     </Dialog>
   );

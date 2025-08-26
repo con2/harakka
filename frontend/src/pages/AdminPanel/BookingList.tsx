@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { BookingUserViewRow, BookingStatus, BookingWithDetails } from "@/types";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -612,7 +611,6 @@ const BookingList = () => {
                   </div>
                 </div>
               </div>
-              <DialogClose />
             </DialogContent>
           </Dialog>
         </div>

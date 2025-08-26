@@ -34,7 +34,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogClose,
 } from "./ui/dialog";
 import BookingDetailsButton from "@/components/Admin/Bookings/BookingDetailsButton";
 import BookingCancelButton from "@/components/BookingCancelButton";
@@ -748,7 +747,6 @@ const MyBookings = () => {
                 </div>
               </div>
             )}
-            <DialogClose />
           </DialogContent>
         </Dialog>
       )}

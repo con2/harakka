@@ -6,7 +6,6 @@ import {
 } from "@/store/slices/organizationLocationsSlice";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -357,7 +356,6 @@ const EditLocationModal = ({
             </Button>
           </DialogFooter>
         </form>
-        <DialogClose />
       </DialogContent>
     </Dialog>
   );

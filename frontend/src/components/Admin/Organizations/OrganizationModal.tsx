@@ -1,6 +1,5 @@
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -134,7 +133,6 @@ export default function OrganizationModal({
               {t.organizations.modal.buttons.close[lang]}
             </Button>
           </DialogFooter>
-          <DialogClose />
         </DialogContent>
       </Dialog>
     );
@@ -244,7 +242,6 @@ export default function OrganizationModal({
             </DialogFooter>
           </form>
         </Form>
-        <DialogClose />
       </DialogContent>
     </Dialog>
   );
