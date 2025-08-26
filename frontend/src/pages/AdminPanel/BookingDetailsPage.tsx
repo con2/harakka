@@ -205,61 +205,66 @@ const BookingDetailsPage = () => {
         </Button>
       </div>
       {/* Booking Info Section */}
-      <div className="space-y-2 mt-4">
-        <div className="flex flex-col space-y-2">
-          <h3 className="text-lg font-normal">
-            {t.bookingDetailsPage.modal.customer[lang]}
-          </h3>
-          <p className="text-lg mb-0">
-            {booking.full_name || t.bookingList.status.unknown[lang]}
-          </p>
-          <div className="flex items-center gap-2">
-            <p className="text-lg text-gray-500 mb-0">{booking.email}</p>
-            <button
-              type="button"
-              onClick={() => copyEmailToClipboard(booking.email ?? "")}
-              title={t.bookingDetailsPage.copy.title[lang]}
-              aria-label={t.bookingDetailsPage.copy.title[lang]}
-              className="p-1 rounded hover:bg-gray-200"
-            >
-              <Clipboard className="h-4 w-4 text-gray-600" />
-            </button>
-            {copiedEmail && (
-              <span className="text-xs text-green-600">
-                {t.bookingDetailsPage.copy.copied[lang]}
-              </span>
-            )}
+      <div>
+        <h3 className="text-xl font-normal text-center">
+          {t.bookingDetailsPage.modal.bookingDetails[lang]}{" "}
+          {booking.booking_number}
+        </h3>
+        <div className="space-y-2 mt-4 grid grid-cols-2 gap-4">
+          <div className="flex flex-col space-y-2">
+            <p className="text-lg">
+              {booking.full_name || t.bookingList.status.unknown[lang]}
+            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-lg mb-0">{booking.email}</p>
+              <button
+                type="button"
+                onClick={() => copyEmailToClipboard(booking.email ?? "")}
+                title={t.bookingDetailsPage.copy.title[lang]}
+                aria-label={t.bookingDetailsPage.copy.title[lang]}
+                className="p-1 rounded hover:bg-gray-200"
+              >
+                <Clipboard className="h-4 w-4 text-gray-600" />
+              </button>
+              {copiedEmail && (
+                <span className="text-xs text-green-600">
+                  {t.bookingDetailsPage.copy.copied[lang]}
+                </span>
+              )}
+            </div>
+            <p className="text-lg">
+              {t.bookingDetailsPage.modal.date[lang]}{" "}
+              {formatDate(new Date(booking.created_at || ""), "d MMM yyyy")}
+            </p>
           </div>
-          <p className="text-lg">
-            {t.bookingDetailsPage.modal.date[lang]}{" "}
-            {formatDate(new Date(booking.created_at || ""), "d MMM yyyy")}
-          </p>
-        </div>
-        <div className="flex flex-col space-y-2">
-          <h3 className="font-normal mt-2">
-            {t.bookingDetailsPage.status[lang]}{" "}
-            <StatusBadge status={booking.status ?? "unknown"} />
-          </h3>
-          <p className="text-lg">
-            {t.bookingDetailsPage.info[lang]}{" "}
-            {booking.booking_items?.length ?? 0}
-          </p>
-          <p className="text-lg text-gray-500">
-            {booking.booking_items && booking.booking_items.length > 0
-              ? formatDate(
-                  new Date(booking.booking_items[0].start_date || ""),
-                  "d MMM yyyy",
-                )
-              : ""}
-          </p>
-          <p className="text-lg text-gray-500">
-            {booking.booking_items && booking.booking_items.length > 0
-              ? formatDate(
-                  new Date(booking.booking_items[0].end_date || ""),
-                  "d MMM yyyy",
-                )
-              : ""}
-          </p>
+          <div className="flex flex-col space-y-2">
+            <h3 className="font-normal">
+              {t.bookingDetailsPage.status[lang]}{" "}
+              <StatusBadge status={booking.status ?? "unknown"} />
+            </h3>
+            <p className="text-lg">
+              {t.bookingDetailsPage.info[lang]}{" "}
+              {booking.booking_items?.length ?? 0}
+            </p>
+            <div className="flex flex-row text-lg gap-2">
+              {t.bookingDetailsPage.dateRange[lang]}{" "}
+              <p className="text-lg">
+                {booking.booking_items && booking.booking_items.length > 0
+                  ? formatDate(
+                      new Date(booking.booking_items[0].start_date || ""),
+                      "d MMM yyyy",
+                    )
+                  : ""}{" "}
+                -{" "}
+                {booking.booking_items && booking.booking_items.length > 0
+                  ? formatDate(
+                      new Date(booking.booking_items[0].end_date || ""),
+                      "d MMM yyyy",
+                    )
+                  : ""}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
       {/* Booking Details + Select All/Deselect All */}
@@ -273,8 +278,8 @@ const BookingDetailsPage = () => {
               className="rounded-2xl border-secondary text-secondary"
             >
               {allSelected
-                ? t.bookingDetailsPage.modal.buttons.confirmAll[lang]
-                : t.bookingDetailsPage.modal.buttons.confirmItems[lang]}
+                ? t.bookingDetailsPage.modal.buttons.deselectAll[lang]
+                : t.bookingDetailsPage.modal.buttons.selectAll[lang]}
             </Button>
           )}
         </div>

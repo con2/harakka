@@ -17,6 +17,10 @@ export const bookingDetailsPage = {
     fi: "Varauksessa olevien kohteiden kokonaismäärä:",
     en: "Total number of items in booking:",
   },
+  dateRange: {
+    fi: "Vuokra-aika:",
+    en: "Rental period:",
+  },
   copy: {
     title: {
       fi: "Kopioi sähköposti",
@@ -28,9 +32,9 @@ export const bookingDetailsPage = {
     },
   },
   modal: {
-    customer: {
-      fi: "Asiakas",
-      en: "Customer",
+    bookingDetails: {
+      fi: "Varauksen tiedot",
+      en: "Booking Details for",
     },
     date: {
       fi: "Päivämäärä",
