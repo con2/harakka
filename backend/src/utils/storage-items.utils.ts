@@ -90,14 +90,14 @@ export type FilterableQuery = {
 };
 
 // Build a PostgREST OR expression for availability range that supports a
-// graceful fallback: use items_number_currently_in_storage when it's present,
+// graceful fallback: use available_quantity when it's present,
 // otherwise allow items where that column is null and we compare against
-// items_number_total instead.
+// quantity instead.
 //
 // The final expression has the shape:
 //   or(
 //     and(current.gte.min,current.lte.max),
-//     and(items_number_currently_in_storage.is.null,total.gte.min,total.lte.max)
+//     and(available_quantity.is.null,total.gte.min,total.lte.max)
 //   )
 // Where min/max are included only if provided.
 export function buildAvailabilityOrExpr(
@@ -113,19 +113,16 @@ export function buildAvailabilityOrExpr(
   const currentConds: string[] = [];
   const totalConds: string[] = [];
   if (min !== undefined) {
-    currentConds.push(`items_number_currently_in_storage.gte.${min}`);
-    totalConds.push(`items_number_total.gte.${min}`);
+    currentConds.push(`available_quantity.gte.${min}`);
+    totalConds.push(`quantity.gte.${min}`);
   }
   if (max !== undefined) {
-    currentConds.push(`items_number_currently_in_storage.lte.${max}`);
-    totalConds.push(`items_number_total.lte.${max}`);
+    currentConds.push(`available_quantity.lte.${max}`);
+    totalConds.push(`quantity.lte.${max}`);
   }
   const group1 =
     currentConds.length > 0 ? `and(${currentConds.join(",")})` : "";
-  const group2Parts = [
-    "items_number_currently_in_storage.is.null",
-    ...totalConds,
-  ];
+  const group2Parts = ["available_quantity.is.null", ...totalConds];
   const group2 = `and(${group2Parts.join(",")})`;
   return group1 ? `${group1},${group2}` : group2;
 }
