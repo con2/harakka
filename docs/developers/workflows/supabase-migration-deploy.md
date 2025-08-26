@@ -158,12 +158,14 @@ ALTER TABLE users ADD COLUMN emergency_contact VARCHAR(255);
 
 #### Resolution Options
 
-**Option 1: Merge the Drift PR (Recommended)**
+##### Option 1: Merge the Drift PR (Recommended)
+
 - Review and approve the captured changes
 - Merge the PR to sync your schema
 - Re-run the original deployment
 
-**Option 2: Reject and Rollback**
+##### Option 2: Reject and Rollback
+
 - If changes are unauthorized or incorrect
 - Manually rollback the production changes
 - Update the migration files as needed
