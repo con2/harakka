@@ -104,10 +104,13 @@ jobs:
         id: drift
         run: |
           set -Eeuo pipefail
-          # create a drift file comparing remote to our local migration state
-          DRIFT_FILE="supabase/drift_changes.sql"
+          # Write drift into the migrations folder so the CLI uses the same location it would on dev machines
+          TS=$(date +%Y%m%d%H%M%S)
+          DRIFT_BASENAME="${TS}_drift.sql"
+          DRIFT_FILE="supabase/migrations/${DRIFT_BASENAME}"
           rm -f "$DRIFT_FILE"
-          cd supabase && supabase db diff --linked --schema $SCHEMAS -f "drift_changes.sql" || true
+          # Generate diff directly into migrations, using the same schemas you diff locally
+          supabase db diff --linked --schema $SCHEMAS -f "$DRIFT_BASENAME" --workdir supabase || true
           if [[ -s "$DRIFT_FILE" ]]; then
             echo "has_drift=true" >> $GITHUB_OUTPUT
             echo "drift_file=$DRIFT_FILE" >> $GITHUB_OUTPUT
@@ -122,7 +125,7 @@ jobs:
         if: steps.drift.outputs.has_drift == 'true'
         run: |
           echo "--- BEGIN DRIFT PREVIEW ---"
-          sed -n '1,200p' "supabase/drift_changes.sql" || true
+          sed -n '1,200p' "${{ steps.drift.outputs.drift_file }}" || true
           echo "--- END DRIFT PREVIEW ---"
 
       - name: Create a drift PR (if any)
@@ -135,8 +138,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           BRANCH="drift/$(date +%Y%m%d%H%M%S)"
           git checkout -b "$BRANCH"
-          cp "supabase/drift_changes.sql" "supabase/migrations/$(date +%Y%m%d%H%M%S)_capture_manual_changes.sql"
-          git add "supabase/migrations"/*.sql
+          git add "${{ steps.drift.outputs.drift_file }}"
           git commit -m "chore(db): capture manual changes (drift)"
           git push -u origin "$BRANCH"
           gh pr create --title "DB Drift: capture manual changes" \
