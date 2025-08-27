@@ -104,7 +104,6 @@ export class UserController {
    * @param req - Authenticated request object
    * @returns User profile
    */
-  //TODO: tenant_admin should get user in their org only
   @Get(":id")
   @Roles(["super_admin", "tenant_admin"], {
     match: "any",
@@ -114,12 +113,7 @@ export class UserController {
     @Param("id") id: string,
     @Req() req: AuthRequest,
   ): Promise<UserProfile> {
-    const user = await this.userService.getUserById(id, req);
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-    return user;
+    return this.userService.getUserById(id, req);
   }
 
   /**
