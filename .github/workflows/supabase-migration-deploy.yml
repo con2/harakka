@@ -114,7 +114,7 @@ jobs:
           
           # Reset database to ensure shadow database is synced with migrations (like local setup)
           echo "🔄 Resetting database to sync shadow database with migrations..."
-          supabase db reset --linked || true
+          supabase db reset || true
           
           # Use simple filename like local setup to avoid path complexity
           echo "🔧 Running: supabase db diff --linked --schema $SCHEMAS -f \"latest_diff\""
@@ -176,9 +176,23 @@ jobs:
           git add "${{ steps.drift.outputs.drift_file }}"
           git commit -m "chore(db): capture manual changes (drift)"
           git push -u origin "$BRANCH"
-          gh pr create --title "DB Drift: capture manual changes" \
+          
+          # Debug: Check gh CLI status and create PR with better error handling
+          echo "🔍 Checking gh CLI authentication..."
+          gh auth status || echo "Warning: gh auth issue detected"
+          
+          echo "🔧 Creating PR from branch $BRANCH to develop..."
+          if gh pr create --title "DB Drift: capture manual changes" \
             --body "Automatic drift detection created this PR. Review and merge to reconcile schema." \
-            --base develop --head "$BRANCH"
+            --base develop --head "$BRANCH" --repo "${{ github.repository }}"; then
+            echo "✅ PR created successfully"
+          else
+            echo "❌ PR creation failed. Attempting with different approach..."
+            # Fallback: try without explicit repo
+            gh pr create --title "DB Drift: capture manual changes" \
+              --body "Automatic drift detection created this PR. Review and merge to reconcile schema." \
+              --base develop --head "$BRANCH" || echo "❌ PR creation failed completely"
+          fi
 
       - name: Decide whether to deploy
         id: deploy_gate
