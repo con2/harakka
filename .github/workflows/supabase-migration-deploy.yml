@@ -120,7 +120,10 @@ jobs:
           echo "🔧 Running: supabase db diff --linked --schema $SCHEMAS -f \"latest_diff\""
           supabase db diff --linked --schema $SCHEMAS -f "latest_diff" || true
 
-          # Run local diff
+          supabase db diff --linked --schema $SCHEMAS -f "latest_diff_remote" || true
+
+          # Create a new file for local diff
+          echo "🔧 Running: supabase db diff --schema $SCHEMAS -f \"latest_diff_local\""
           supabase db diff --schema $SCHEMAS -f "latest_diff_local" || true
 
           # Debug: Show current directory after to see what was created
