@@ -99,13 +99,13 @@ export class UserController {
 
   /**
    * Get a user by their ID.
-   * Accessible by super admins and tenant admins (within their organization).
+   * Accessible by super admins (any user) or storage managers and tenant admins (within their organization).
    * @param id - User ID
    * @param req - Authenticated request object
    * @returns User profile
    */
   @Get(":id")
-  @Roles(["super_admin", "tenant_admin"], {
+  @Roles(["tenant_admin", "storage_manager", "super_admin"], {
     match: "any",
     sameOrg: true,
   })
