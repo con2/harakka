@@ -10,7 +10,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@common/*": ["../common/*"]
-    }
+    },
+    "types": ["vite-plugin-svgr/client"],
   },
     /*  NEW — guard-rail for the whole workspace  */
   "exclude": [
