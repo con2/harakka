@@ -240,7 +240,9 @@ const BookingDetailsPage = () => {
           <div className="flex flex-col space-y-2">
             <h3 className="font-normal">
               {t.bookingDetailsPage.status[lang]}{" "}
-              <StatusBadge status={booking.status ?? "unknown"} />
+              <StatusBadge
+                status={booking.org_status_for_active_org ?? "unknown"}
+              />
             </h3>
             <p className="text-lg">
               {t.bookingDetailsPage.info[lang]}{" "}

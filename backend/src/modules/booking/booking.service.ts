@@ -30,8 +30,10 @@ import {
   StorageItemsRow,
   BookingRow,
   ValidBookingOrder,
+  BookingStatus,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
+import { deriveOrgStatus } from "src/utils/booking.utils";
 import { StorageLocationsService } from "../storage-locations/storage-locations.service";
 import { RoleService } from "../role/role.service";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
@@ -40,6 +42,8 @@ import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { BookingPreview } from "@common/bookings/booking.types";
 import { BookingItemsService } from "../booking_items/booking-items.service";
 import { StorageItemRow } from "../storage-items/interfaces/storage-item.interface";
+import { BookingWithOrgStatus } from "./types/booking.interface";
+
 dayjs.extend(utc);
 @Injectable()
 export class BookingService {
@@ -229,7 +233,7 @@ export class BookingService {
       .from("bookings")
       .insert({
         user_id: userId,
-        status: "pending",
+        status: BookingStatus.pending,
         booking_number: generateBookingNumber(),
       })
       .select()
@@ -270,7 +274,7 @@ export class BookingService {
         start_date: item.start_date,
         end_date: item.end_date,
         total_days: totalDays,
-        status: "pending",
+        status: BookingStatus.pending,
       };
 
       // Use BookingItemsService instead of direct insert
@@ -412,10 +416,10 @@ export class BookingService {
     // Confirm items: either a selected subset (itemIds) or all items for the org; only pending can be confirmed
     let updateQuery = supabase
       .from("booking_items")
-      .update({ status: "confirmed" })
+      .update({ status: BookingStatus.confirmed })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", providerOrgId)
-      .eq("status", "pending");
+      .eq("status", BookingStatus.pending);
     if (itemIds && itemIds.length > 0) {
       updateQuery = updateQuery.in("id", itemIds);
     }
@@ -434,14 +438,16 @@ export class BookingService {
     }
 
     const allRejected =
-      items.length > 0 && items.every((it) => it.status === "rejected");
+      items.length > 0 &&
+      items.every((it) => it.status === BookingStatus.rejected);
     const noPending =
-      items.length > 0 && items.every((it) => it.status !== "pending");
+      items.length > 0 &&
+      items.every((it) => it.status !== BookingStatus.pending);
 
     if (allRejected) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: "rejected" })
+        .update({ status: BookingStatus.rejected })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException(
@@ -451,7 +457,7 @@ export class BookingService {
     } else if (noPending) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: "confirmed" })
+        .update({ status: BookingStatus.confirmed })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException(
@@ -495,16 +501,16 @@ export class BookingService {
     // Only update status to 'rejected' for selected items (pending/confirmed)
     let updateQuery = supabase
       .from("booking_items")
-      .update({ status: "rejected" })
+      .update({ status: BookingStatus.rejected })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", providerOrgId)
-      .in("status", ["pending", "confirmed"]);
+      .in("status", [BookingStatus.pending]);
     if (itemIds && itemIds.length > 0) {
       updateQuery = updateQuery.in("id", itemIds);
     }
     const { error: updateErr } = await updateQuery;
     if (updateErr) {
-      throw new BadRequestException("Failed to reject booking items");
+      handleSupabaseError(updateErr);
     }
 
     // Roll-up booking status based on all items
@@ -512,19 +518,24 @@ export class BookingService {
       .from("booking_items")
       .select("status")
       .eq("booking_id", bookingId);
-    if (itemsErr || !items) {
+    if (itemsErr) {
+      handleSupabaseError(itemsErr);
+    }
+    if (!items) {
       throw new BadRequestException("Failed to fetch booking items");
     }
 
     const allRejected =
-      items.length > 0 && items.every((it) => it.status === "rejected");
+      items.length > 0 &&
+      items.every((it) => it.status === BookingStatus.rejected);
     const noPending =
-      items.length > 0 && items.every((it) => it.status !== "pending");
+      items.length > 0 &&
+      items.every((it) => it.status !== BookingStatus.pending);
 
     if (allRejected) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: "rejected" })
+        .update({ status: BookingStatus.rejected })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException("Failed to set booking to rejected");
@@ -532,7 +543,7 @@ export class BookingService {
     } else if (noPending) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: "confirmed" })
+        .update({ status: BookingStatus.confirmed })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException("Failed to set booking to confirmed");
@@ -1225,32 +1236,11 @@ export class BookingService {
         });
 
         // Attach org_status_for_active_org to each booking row
-        type BookingWithOrgStatus = BookingPreview & {
-          org_status_for_active_org: string;
-        };
         (result.data as BookingPreview[]).forEach((b) => {
           const bid = b.id;
           const statuses = statusMap.get(bid) || [];
-          if (statuses.length === 0) {
-            (b as BookingWithOrgStatus).org_status_for_active_org = "unknown";
-            return;
-          }
-          const allRejected = statuses.every((s) => s === "rejected");
-          if (allRejected) {
-            (b as BookingWithOrgStatus).org_status_for_active_org = "rejected";
-            return;
-          }
-          const anyPending = statuses.some((s) => s === "pending");
-          if (anyPending) {
-            (b as BookingWithOrgStatus).org_status_for_active_org = "pending";
-            return;
-          }
-          const anyConfirmed = statuses.some((s) => s === "confirmed");
-          if (anyConfirmed) {
-            (b as BookingWithOrgStatus).org_status_for_active_org = "confirmed";
-            return;
-          }
-          (b as BookingWithOrgStatus).org_status_for_active_org = "pending";
+          (b as BookingWithOrgStatus).org_status_for_active_org =
+            deriveOrgStatus(statuses);
         });
       }
     }
@@ -1309,9 +1299,35 @@ export class BookingService {
     if (booking_items_result.error)
       handleSupabaseError(booking_items_result.error);
 
+    // Attach org_status_for_active_org if providerOrgId is present
+    let org_status_for_active_org: string | undefined = undefined;
+    if (providerOrgId && result.data) {
+      const itemsRes = await supabase
+        .from("booking_items")
+        .select("status")
+        .eq("booking_id", booking_id)
+        .eq("provider_organization_id", providerOrgId);
+      if (!itemsRes.error && Array.isArray(itemsRes.data)) {
+        const statuses = itemsRes.data.map((row) => row.status);
+        org_status_for_active_org = deriveOrgStatus(statuses);
+      }
+    }
+    // Spread result.data and allow extra property
+    const bookingData: BookingPreview & {
+      booking_items: (import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
+        storage_items: Partial<StorageItemRow>;
+      })[];
+      org_status_for_active_org?: string;
+    } = {
+      ...result.data,
+      booking_items: booking_items_result.data,
+    };
+    if (org_status_for_active_org !== undefined) {
+      bookingData.org_status_for_active_org = org_status_for_active_org;
+    }
     return {
       ...result,
-      data: { ...result.data, booking_items: booking_items_result.data },
+      data: bookingData,
       metadata: booking_items_result.metadata,
     };
   }
