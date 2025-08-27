@@ -14,7 +14,7 @@ import {
   Warehouse,
 } from "lucide-react";
 import {
-  getBookingItems,
+  getBookingByID,
   getBookingsCount,
   getOrderedBookings,
   selectAllBookings,
@@ -98,7 +98,7 @@ const AdminDashboard = () => {
 
   const handleViewDetails = (booking: BookingPreview) => {
     dispatch(selectBooking(booking));
-    void dispatch(getBookingItems(booking.id));
+    void dispatch(getBookingByID(booking.id));
     setShowDetailsModal(true);
   };
 

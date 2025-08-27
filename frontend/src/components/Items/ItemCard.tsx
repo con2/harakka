@@ -44,7 +44,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
-      availableQuantity: item.items_number_total || 0,
+      availableQuantity: item.quantity || 0,
       isChecking: false,
       error: null,
     });
@@ -166,24 +166,19 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       // Backend filtering ensures only available items are shown
       // Use the item's currently available quantity as the available quantity
       setAvailabilityInfo({
-        availableQuantity: item.items_number_currently_in_storage || 0,
+        availableQuantity: item.available_quantity || 0,
         isChecking: false,
         error: null,
       });
     } else {
       // When no dates selected, show total quantity
       setAvailabilityInfo({
-        availableQuantity: item.items_number_total || 0,
+        availableQuantity: item.quantity || 0,
         isChecking: false,
         error: null,
       });
     }
-  }, [
-    startDate,
-    endDate,
-    item.items_number_currently_in_storage,
-    item.items_number_total,
-  ]);
+  }, [startDate, endDate, item.available_quantity, item.quantity]);
 
   const isItemAvailableForTimeframe = availabilityInfo.availableQuantity > 0;
 
@@ -347,7 +342,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                   ? availabilityInfo.availableQuantity > 0
                     ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
                     : `${t.itemCard.notAvailable[lang]}`
-                  : `${t.itemCard.totalUnits[lang]}: ${item.items_number_total}`}
+                  : `${t.itemCard.totalUnits[lang]}: ${item.quantity}`}
               </p>
             )}
           </div>

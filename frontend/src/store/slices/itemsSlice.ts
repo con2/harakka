@@ -13,6 +13,7 @@ import { ApiResponse } from "@common/response.types";
 import { AxiosResponse } from "axios";
 import { ItemFormData } from "@common/items/form.types";
 import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
+import { formatErrors, formatParsedItems } from "../utils/helper.utils";
 
 /**
  * Initial state for items slice
@@ -32,8 +33,9 @@ const initialState: ItemState = {
   itemCount: 0,
   itemCreation: {
     org: null,
-    location: null,
+    location: undefined,
     items: [],
+    errors: {},
   },
   isEditingItem: false,
 };
@@ -225,6 +227,21 @@ export const getItemsByTag = createAsyncThunk<Item[], string>(
   },
 );
 
+/**
+ * Parse storage items from a CSV
+ */
+export const uploadCSV = createAsyncThunk(
+  "items/parseCSV",
+  async (file: File, { rejectWithValue }) => {
+    try {
+      return await itemsApi.parseCSV(file);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(extractErrorMessage(error, "Failed to parse CSV"));
+    }
+  },
+);
+
 export const itemsSlice = createSlice({
   name: "items",
   initialState,
@@ -276,6 +293,7 @@ export const itemsSlice = createSlice({
       state.itemCreation.items = state.itemCreation.items.filter(
         (item) => item.id !== id,
       );
+      delete state.itemCreation.errors[id];
       localStorage.setItem(
         "itemsInProgress",
         JSON.stringify(state.itemCreation),
@@ -297,6 +315,14 @@ export const itemsSlice = createSlice({
       const { item } = action.payload;
       const index = state.itemCreation.items.findIndex((i) => i.id === item.id);
       state.itemCreation.items[index] = item;
+      localStorage.setItem(
+        "itemsInProgress",
+        JSON.stringify(state.itemCreation),
+      );
+    },
+    clearLocalItemError: (state, action) => {
+      const itemId = action.payload;
+      delete state.itemCreation.errors[itemId];
     },
   },
 
@@ -366,6 +392,7 @@ export const itemsSlice = createSlice({
           org: null,
           location: undefined,
           items: [],
+          errors: {},
         };
         localStorage.removeItem("itemsInProgress");
       })
@@ -441,6 +468,41 @@ export const itemsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";
+      })
+      .addCase(uploadCSV.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(uploadCSV.fulfilled, (state, action) => {
+        const { data: parsedItems, errors } = action.payload;
+        const location = state.itemCreation.location!;
+
+        // Transform the uploaded items to the correct type
+        const formattedItems = formatParsedItems(parsedItems, location);
+        const itemIds = new Set(formattedItems.map((item) => item.id));
+
+        const formattedErrors = formatErrors(errors, itemIds);
+        state.itemCreation.errors = {
+          ...state.itemCreation.errors,
+          ...formattedErrors,
+        };
+
+        // Push the items with any current items
+        state.itemCreation.items = [
+          ...state.itemCreation.items,
+          ...formattedItems,
+        ];
+
+        localStorage.setItem(
+          "itemsInProgress",
+          JSON.stringify(state.itemCreation),
+        );
+
+        state.loading = false;
+      })
+      .addCase(uploadCSV.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "create";
+        state.loading = false;
       });
   },
 });
@@ -479,6 +541,7 @@ export const {
   editLocalItem,
   toggleIsEditing,
   updateLocalItem,
+  clearLocalItemError,
 } = itemsSlice.actions;
 
 export default itemsSlice.reducer;

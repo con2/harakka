@@ -40,6 +40,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
   addToItemCreation,
+  clearLocalItemError,
   clearSelectedItem,
   selectIsEditing,
   selectItemCreation,
@@ -79,8 +80,8 @@ function AddItemForm() {
         name: storage?.name ?? "",
         address: storage?.address ?? "",
       },
-      items_number_total: 1,
-      items_number_currently_in_storage: 1,
+      quantity: 1,
+      available_quantity: 1,
       is_active: true,
       tags: [],
       translations: {
@@ -104,13 +105,13 @@ function AddItemForm() {
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
     form.reset();
+    if (isEditing) return handleUpdateItem(values);
     void dispatch(addToItemCreation(values));
     dispatch(setNextStep());
   };
 
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
     const getFirstErrorMessage = (obj: any): string | null => {
-      console.log(obj);
       for (const value of Object.values(obj)) {
         if (value && typeof value === "object") {
           if ("message" in value && typeof value.message === "string") {
@@ -167,8 +168,9 @@ function AddItemForm() {
 
   const handleUpdateItem = (item: CreateItemType) => {
     dispatch(clearSelectedItem());
-    dispatch(toggleIsEditing(false));
+    dispatch(clearLocalItemError(item.id));
     dispatch(updateLocalItem({ item }));
+    dispatch(toggleIsEditing(false));
     dispatch(setNextStep());
   };
 
@@ -198,6 +200,11 @@ function AddItemForm() {
     if (org && orgLocations.length < 1)
       void dispatch(fetchAllOrgLocations({ orgId: org.id, pageSize: 20 }));
   }, []);
+
+  useEffect(() => {
+    const newValue = form.getValues("quantity");
+    form.setValue("available_quantity", newValue);
+  }, [form.getValues("quantity")]);
 
   useEffect(() => {
     if (!storage) return;
@@ -299,7 +306,7 @@ function AddItemForm() {
             {/* Location | Total Quantity | Is active */}
             <div className="gap-4 flex w-full">
               <FormField
-                name="items_number_total"
+                name="quantity"
                 control={form.control}
                 render={({ field }) => (
                   <div className="w-full">
@@ -324,7 +331,7 @@ function AddItemForm() {
                       </FormControl>
                       <ErrorMessage
                         errors={form.formState.errors}
-                        name="items_number_total"
+                        name="quantity"
                         render={({ message }) => (
                           <p className="text-[0.8rem] font-medium text-destructive">
                             {
@@ -508,13 +515,7 @@ function AddItemForm() {
             >
               {t.addItemForm.buttons.goToSummary[appLang]}
             </Button>
-            <Button
-              variant="outline"
-              type={isEditing ? "button" : "submit"}
-              onClick={
-                !isEditing ? () => {} : () => handleUpdateItem(form.getValues())
-              }
-            >
+            <Button variant="outline" type="submit">
               {isEditing
                 ? t.addItemForm.buttons.updateItem[appLang]
                 : t.addItemForm.buttons.addItem[appLang]}

@@ -30,8 +30,8 @@ interface ItemAugmentedFields {
   average_rating?: number; // make non-nullable for UI
 
   /** Inventory & status (always concrete in UI) */
-  items_number_available?: number;
-  items_number_currently_in_storage: number;
+  quantity?: number;
+  available_quantity: number;
   is_active: boolean;
   is_deleted?: boolean | null;
 
@@ -81,7 +81,7 @@ export type ManageItemViewRow = {
 
   /* ─ Core item fields ─ */
   id: string;
-  items_number_total: number;
+  quantity: number;
   created_at: string; // ISO‑8601
   is_active: boolean;
   updated_at?: string | null;
@@ -93,8 +93,7 @@ export type ManageItemViewRow = {
   compartment_id: string | null;
 
   /* ─ Inventory fields to match Item interface ─ */
-  items_number_available?: number;
-  items_number_currently_in_storage: number;
+  available_quantity: number;
 
   /* ─ Additional fields to match Item interface ─ */
   average_rating?: number;
@@ -135,6 +134,7 @@ export interface ItemState {
     org: SelectedOrg | null;
     location: SelectedStorage | null | undefined;
     items: CreateItemType[];
+    errors: Record<string, string[]>;
   };
   isEditingItem: boolean;
 }
@@ -146,8 +146,7 @@ type ItemCreatable = Omit<
   | "updated_at"
   | "storage_item_tags"
   | "average_rating"
-  | "items_number_available"
-  | "items_number_currently_in_storage"
+  | "available_quantity"
   | "is_deleted"
 >;
 
@@ -155,7 +154,7 @@ type ItemCreatable = Omit<
 export type CreateItemDto = Partial<ItemCreatable> & {
   /** always required */
   location_id: string;
-  items_number_total: number;
+  quantity: number;
   /** tag IDs selected in the form */
   tagIds?: string[];
   average_rating?: number | null; // not used anywhere yet
@@ -177,7 +176,7 @@ export type ValidItemOrder =
   | "fi_item_name"
   | "fi_item_type"
   | "location_name"
-  | "items_number_total"
+  | "quantity"
   | "is_active"
   | "created_at";
 

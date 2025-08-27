@@ -80,7 +80,6 @@ const Cart: React.FC = () => {
       itemsApi
         .checkAvailability(itemId, startDate, endDate)
         .then((response) => {
-          console.log("Availability check response:", response);
           setAvailabilityMap((prev) => ({
             ...prev,
             [itemId]: {

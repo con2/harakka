@@ -134,6 +134,10 @@ export const bookingList = {
           fi: "Loppupäivä",
           en: "End Date",
         },
+        status: {
+          fi: "Tila",
+          en: "Status",
+        },
       },
     },
     buttons: {
@@ -141,9 +145,53 @@ export const bookingList = {
         fi: common.confirm.fi,
         en: common.confirm.en,
       },
+      confirmItem: {
+        fi: "Vahvista tuote",
+        en: "Confirm Item",
+      },
+      confirmItems: {
+        fi: "Vahvista tuotteet",
+        en: "Confirm Items",
+      },
+      confirmAll: {
+        fi: "Vahvista kaikki",
+        en: "Confirm All",
+      },
+      confirmDisabled: {
+        fi: "Vahvista",
+        en: "Confirm",
+      },
       reject: {
         fi: "Hylkää",
         en: "Reject",
+      },
+      rejectItem: {
+        fi: "Hylkää tuote",
+        en: "Reject Item",
+      },
+      rejectItems: {
+        fi: "Hylkää tuotteet",
+        en: "Reject Items",
+      },
+      rejectAll: {
+        fi: "Hylkää kaikki",
+        en: "Reject All",
+      },
+      rejectDisabled: {
+        fi: "Hylkää",
+        en: "Reject",
+      },
+      selectAll: {
+        fi: "Valitse kaikki",
+        en: "Select All",
+      },
+      allSelected: {
+        fi: "Kaikki valittu",
+        en: "All Selected",
+      },
+      deselectAll: {
+        fi: "Poista valinnat",
+        en: "Deselect All",
       },
       return: {
         fi: "Palautaa",
@@ -156,6 +204,10 @@ export const bookingList = {
       pickedUp: {
         fi: "Noudettu",
         en: "Picked Up",
+      },
+      selectedCount: {
+        fi: "valittu",
+        en: "selected",
       },
     },
   },
