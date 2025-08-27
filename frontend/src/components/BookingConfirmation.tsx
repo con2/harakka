@@ -17,6 +17,7 @@ import { t } from "@/translations";
 import { BookingWithDetails } from "@/types";
 import { BookingItemWithDetails } from "@/types/booking";
 import CalendarSend from "@/assets/calendar-send-icon.svg?react";
+import { formatDate } from "date-fns";
 
 interface BookingItemDisplayProps {
   item: BookingItemWithDetails;
@@ -78,12 +79,6 @@ const BookingConfirmation: React.FC = () => {
 
   // Add language support
   const { lang } = useLanguage();
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(
-      lang === "fi" ? "fi-FI" : "en-US",
-    );
-  };
 
   function groupBookingItemsByOrg(
     booking: BookingWithDetails | null,
@@ -196,8 +191,15 @@ const BookingConfirmation: React.FC = () => {
                       </p>
                       {booking.booking_items && (
                         <p className="font-medium text-sm">
-                          {formatDate(booking.booking_items[0].start_date)}-
-                          {formatDate(booking.booking_items[0].end_date)}
+                          {formatDate(
+                            booking.booking_items[0].start_date,
+                            "d MMM yyyy",
+                          )}
+                          -
+                          {formatDate(
+                            booking.booking_items[0].end_date,
+                            "d MMM yyyy",
+                          )}
                         </p>
                       )}
                     </div>

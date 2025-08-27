@@ -24,8 +24,8 @@ export const bookingConfirmation = {
     en: "Status",
   },
   bookingDates: {
-    fi: "Varauspäivämäärät",
-    en: "Booking dates",
+    fi: "Pyydetyt päivämäärät",
+    en: "Requested dates",
   },
   bookedBy: {
     fi: "Tilaaja",
