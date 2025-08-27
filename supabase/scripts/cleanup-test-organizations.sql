@@ -2,7 +2,8 @@
 -- Compatible with Supabase SQL Editor
 -- 
 -- This script removes 20 test organizations and all their dependencies
--- Copy and paste this entire script into your Supabase SQL Editor
+
+-- Copy and paste this entire script into  Supabase SQL Editor to remove test orgs
 
 BEGIN;
 
