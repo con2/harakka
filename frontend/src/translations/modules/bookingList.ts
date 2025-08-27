@@ -117,98 +117,15 @@ export const bookingList = {
       en: "Date:",
     },
     bookingItems: {
+      // moved detailed booking item and modal button texts to bookingDetailsPage
       columns: {
-        item: {
-          fi: "Tuote",
-          en: "Item",
-        },
-        quantity: {
-          fi: "Määrä",
-          en: "Quantity",
-        },
-        startDate: {
-          fi: "Alkupäivä",
-          en: "Start Date",
-        },
-        endDate: {
-          fi: "Loppupäivä",
-          en: "End Date",
-        },
-        status: {
-          fi: "Tila",
-          en: "Status",
-        },
+        item: { fi: "", en: "" },
+        quantity: { fi: "", en: "" },
+        startDate: { fi: "", en: "" },
+        endDate: { fi: "", en: "" },
+        status: { fi: "", en: "" },
       },
-    },
-    buttons: {
-      confirm: {
-        fi: common.confirm.fi,
-        en: common.confirm.en,
-      },
-      confirmItem: {
-        fi: "Vahvista tuote",
-        en: "Confirm Item",
-      },
-      confirmItems: {
-        fi: "Vahvista tuotteet",
-        en: "Confirm Items",
-      },
-      confirmAll: {
-        fi: "Vahvista kaikki",
-        en: "Confirm All",
-      },
-      confirmDisabled: {
-        fi: "Vahvista",
-        en: "Confirm",
-      },
-      reject: {
-        fi: "Hylkää",
-        en: "Reject",
-      },
-      rejectItem: {
-        fi: "Hylkää tuote",
-        en: "Reject Item",
-      },
-      rejectItems: {
-        fi: "Hylkää tuotteet",
-        en: "Reject Items",
-      },
-      rejectAll: {
-        fi: "Hylkää kaikki",
-        en: "Reject All",
-      },
-      rejectDisabled: {
-        fi: "Hylkää",
-        en: "Reject",
-      },
-      selectAll: {
-        fi: "Valitse kaikki",
-        en: "Select All",
-      },
-      allSelected: {
-        fi: "Kaikki valittu",
-        en: "All Selected",
-      },
-      deselectAll: {
-        fi: "Poista valinnat",
-        en: "Deselect All",
-      },
-      return: {
-        fi: "Palautaa",
-        en: "Return",
-      },
-      delete: {
-        fi: "Poistaa",
-        en: "Delete",
-      },
-      pickedUp: {
-        fi: "Noudettu",
-        en: "Picked Up",
-      },
-      selectedCount: {
-        fi: "valittu",
-        en: "selected",
-      },
+      buttons: {},
     },
   },
   loading: {

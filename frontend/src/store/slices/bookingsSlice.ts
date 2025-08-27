@@ -475,10 +475,10 @@ export const bookingsSlice = createSlice({
               : bi,
           );
         // Roll-up with new rule
-        const allCancelled =
+        const allRejected =
           state.currentBooking.booking_items.length > 0 &&
           state.currentBooking.booking_items.every(
-            (bi) => bi.status === "cancelled",
+            (bi) => bi.status === "rejected",
           );
         const noPending =
           state.currentBooking.booking_items.length > 0 &&
@@ -486,7 +486,7 @@ export const bookingsSlice = createSlice({
             (bi) => bi.status !== "pending",
           );
         let rolledUpStatus: BookingStatus = "pending";
-        if (allCancelled) rolledUpStatus = "rejected";
+        if (allRejected) rolledUpStatus = "rejected";
         else if (noPending) rolledUpStatus = "confirmed";
         state.currentBooking.status = rolledUpStatus;
         const currentId = state.currentBooking.id;
@@ -511,14 +511,14 @@ export const bookingsSlice = createSlice({
         state.currentBooking.booking_items =
           state.currentBooking.booking_items.map((bi) =>
             updatedIds.length === 0 || updatedIds.includes(bi.id)
-              ? { ...bi, status: "cancelled" }
+              ? { ...bi, status: "rejected" }
               : bi,
           );
         // Roll-up with new rule
-        const allCancelled =
+        const allRejected =
           state.currentBooking.booking_items.length > 0 &&
           state.currentBooking.booking_items.every(
-            (bi) => bi.status === "cancelled",
+            (bi) => bi.status === "rejected",
           );
         const noPending =
           state.currentBooking.booking_items.length > 0 &&
@@ -526,7 +526,7 @@ export const bookingsSlice = createSlice({
             (bi) => bi.status !== "pending",
           );
         let rolledUpStatus: BookingStatus = "pending";
-        if (allCancelled) rolledUpStatus = "rejected";
+        if (allRejected) rolledUpStatus = "rejected";
         else if (noPending) rolledUpStatus = "confirmed";
         state.currentBooking.status = rolledUpStatus;
         const currentId = state.currentBooking.id;
@@ -723,8 +723,6 @@ export const bookingsSlice = createSlice({
         state.errorContext = null;
       })
       .addCase(rejectBookingForOrg.fulfilled, (state, _action) => {
-        // With new roll-up rules, don't force total status to 'rejected' here.
-        // Item-level reducers (confirm/rejectItemsForOrg) manage roll-up locally.
         state.loading = false;
       })
       .addCase(rejectBookingForOrg.rejected, (state, action) => {
@@ -747,7 +745,7 @@ export const bookingsSlice = createSlice({
         // Also update in the user bookings array
         state.userBookings.forEach((booking) => {
           if (booking.id === bookingId) {
-            booking.status = "cancelled by user";
+            booking.status = "cancelled";
           }
         });
       })
@@ -785,12 +783,12 @@ export const bookingsSlice = createSlice({
 
         state.bookings.forEach((booking) => {
           if (booking.id === bookingId) {
-            booking.status = "completed";
+            booking.status = "confirmed";
           }
         });
         state.userBookings.forEach((booking) => {
           if (booking.id === bookingId) {
-            booking.status = "completed";
+            booking.status = "confirmed";
           }
         });
       })
