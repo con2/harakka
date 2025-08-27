@@ -21,11 +21,16 @@ import {
 } from "@/store/slices/itemsSlice";
 import { setPrevStep, setStepper } from "@/store/slices/uiSlice";
 import { ItemFormData } from "@common/items/form.types";
-import { ClipboardPen, Loader2Icon, Trash } from "lucide-react";
+import { CircleAlert, ClipboardPen, Loader2Icon, Trash } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { t } from "@/translations";
 import { clearOrgLocations } from "@/store/slices/organizationLocationsSlice";
+import {
+  TooltipContent,
+  TooltipTrigger,
+  Tooltip,
+} from "@/components/ui/tooltip";
 
 function Summary() {
   const form = useAppSelector(selectItemCreation);
@@ -72,7 +77,10 @@ function Summary() {
         {form.org && items.length > 0 && (
           <div>
             <p className="text-sm leading-none font-medium mb-4">
-              {t.itemSummary.paragraphs.addingItems[lang]} {form.org?.name}
+              {t.itemSummary.paragraphs.addingItems[lang].replace(
+                "{org}",
+                form.org?.name,
+              )}
             </p>
           </div>
         )}
@@ -101,9 +109,51 @@ function Summary() {
                   <OriginalTableRow key={item.id}>
                     <OriginalTableCell
                       width="250"
-                      className="font-medium max-w-[250px] text-ellipsis overflow-hidden"
+                      className="font-medium max-w-[250px] truncate min-h-[49px] gap-2 flex items-center"
                     >
-                      {item.translations[lang].item_name}
+                      {form.errors?.[item.id] && (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <CircleAlert className="w-5 h-5 text-[var(--destructive)]" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {(() => {
+                              const errors = form.errors[item.id];
+                              if (errors.length > 1) {
+                                return (
+                                  <p>
+                                    {t.itemSummary.errorCodes.multipleErrors[
+                                      lang
+                                    ].replace(
+                                      "{amount}",
+                                      errors.length.toString(),
+                                    )}
+                                  </p>
+                                );
+                              } else if (errors.length === 1) {
+                                const [field, code] = errors[0].split(":");
+                                return (
+                                  <p>
+                                    {code === "invalid_type"
+                                      ? t.itemSummary.errorCodes.invalid_type[
+                                          lang
+                                        ].replace("{field}", field)
+                                      : (
+                                          t.itemSummary.errorCodes as Record<
+                                            string,
+                                            any //eslint-disable-line
+                                          >
+                                        )[field]?.[code]?.[lang]}
+                                  </p>
+                                );
+                              }
+                            })()}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      <span className="h-fit leading-[1]">
+                        {item.translations[lang].item_name}
+                      </span>
                     </OriginalTableCell>
                     <OriginalTableCell>{item.quantity}</OriginalTableCell>
                     <OriginalTableCell>{item.location.name}</OriginalTableCell>
@@ -155,7 +205,7 @@ function Summary() {
               ) : (
                 <Button
                   variant="outline"
-                  disabled={loading}
+                  disabled={loading || Object.entries(form.errors).length > 0}
                   onClick={handleSubmit}
                 >
                   {t.itemSummary.buttons.uploadItems[lang]}
