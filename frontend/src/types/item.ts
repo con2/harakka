@@ -134,6 +134,7 @@ export interface ItemState {
     org: SelectedOrg | null;
     location: SelectedStorage | null | undefined;
     items: CreateItemType[];
+    errors: Record<string, string[]>;
   };
   isEditingItem: boolean;
 }

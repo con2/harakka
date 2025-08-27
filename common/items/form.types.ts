@@ -8,6 +8,9 @@ export type SelectedStorage = {
   address: string;
 };
 
+/**
+ * Type Used For Item Creation (Form)
+ */
 export type CreateItemType = {
   id: string;
   location: {
