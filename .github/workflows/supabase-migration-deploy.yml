@@ -32,7 +32,7 @@ permissions:
 
 env:
   # Working with supabase/ folder directly
-  SCHEMAS: public,auth
+  SCHEMAS: public
   # Using production secrets
   SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
   PRODUCTION_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
@@ -67,11 +67,12 @@ jobs:
       - name: Install Supabase CLI (official action)
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: latest v2.39.2
 
       - name: Authenticate & link project
         run: |
           set -Eeuo pipefail
+          supabase --version
           supabase login --token "$SUPABASE_ACCESS_TOKEN"
           supabase link --project-ref "${{ steps.select.outputs.project_ref }}" --password "${{ steps.select.outputs.db_password }}"
 
@@ -112,9 +113,11 @@ jobs:
           echo "📁 Current directory before drift check:"
           ls -la . | head -10
           
+          supabase migrations list
+           echo "Starting Supabase DB"
           # Start Supabase DB
           supabase db start
-          
+
           # Reset database to ensure shadow database is synced with migrations (like local setup)
           echo "🔄 Resetting database to sync shadow database with migrations..."
 
