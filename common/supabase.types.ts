@@ -58,7 +58,7 @@ export type Database = {
           provider_organization_id: string | null
           quantity: number
           start_date: string
-          status: string
+          status: Database["public"]["Enums"]["booking_status"]
           total_days: number
         }
         Insert: {
@@ -71,7 +71,7 @@ export type Database = {
           provider_organization_id?: string | null
           quantity?: number
           start_date: string
-          status: string
+          status: Database["public"]["Enums"]["booking_status"]
           total_days: number
         }
         Update: {
@@ -84,7 +84,7 @@ export type Database = {
           provider_organization_id?: string | null
           quantity?: number
           start_date?: string
-          status?: string
+          status?: Database["public"]["Enums"]["booking_status"]
           total_days?: number
         }
         Relationships: [
@@ -159,7 +159,7 @@ export type Database = {
           created_at: string | null
           id: string
           notes: string | null
-          status: string
+          status: Database["public"]["Enums"]["booking_status"]
           updated_at: string | null
           user_id: string
         }
@@ -168,7 +168,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           notes?: string | null
-          status: string
+          status: Database["public"]["Enums"]["booking_status"]
           updated_at?: string | null
           user_id: string
         }
@@ -177,7 +177,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           notes?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string | null
           user_id?: string
         }
@@ -1173,7 +1173,7 @@ export type Database = {
           created_at: string | null
           id: string | null
           notes: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
           updated_at: string | null
           user_id: string | null
         }
@@ -1187,7 +1187,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
           user_id: string | null
           visible_name: string | null
         }
@@ -1426,6 +1426,7 @@ export type Database = {
       }
     }
     Enums: {
+      booking_status: "pending" | "confirmed" | "rejected" | "cancelled"
       notification_channel: "in_app" | "web_push" | "email"
       notification_severity: "info" | "warning" | "critical"
       notification_type:
@@ -1582,6 +1583,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      booking_status: ["pending", "confirmed", "rejected", "cancelled"],
       notification_channel: ["in_app", "web_push", "email"],
       notification_severity: ["info", "warning", "critical"],
       notification_type: [
