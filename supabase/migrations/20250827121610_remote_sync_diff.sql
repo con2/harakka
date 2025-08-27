@@ -1,64 +1,14 @@
 create type "public"."booking_status" as enum ('pending', 'confirmed', 'rejected', 'cancelled');
 
-revoke delete on table "public"."workflow_test" from "anon";
-
-revoke insert on table "public"."workflow_test" from "anon";
-
-revoke references on table "public"."workflow_test" from "anon";
-
-revoke select on table "public"."workflow_test" from "anon";
-
-revoke trigger on table "public"."workflow_test" from "anon";
-
-revoke truncate on table "public"."workflow_test" from "anon";
-
-revoke update on table "public"."workflow_test" from "anon";
-
-revoke delete on table "public"."workflow_test" from "authenticated";
-
-revoke insert on table "public"."workflow_test" from "authenticated";
-
-revoke references on table "public"."workflow_test" from "authenticated";
-
-revoke select on table "public"."workflow_test" from "authenticated";
-
-revoke trigger on table "public"."workflow_test" from "authenticated";
-
-revoke truncate on table "public"."workflow_test" from "authenticated";
-
-revoke update on table "public"."workflow_test" from "authenticated";
-
-revoke delete on table "public"."workflow_test" from "service_role";
-
-revoke insert on table "public"."workflow_test" from "service_role";
-
-revoke references on table "public"."workflow_test" from "service_role";
-
-revoke select on table "public"."workflow_test" from "service_role";
-
-revoke trigger on table "public"."workflow_test" from "service_role";
-
-revoke truncate on table "public"."workflow_test" from "service_role";
-
-revoke update on table "public"."workflow_test" from "service_role";
-
 alter table "public"."booking_items" drop constraint "order_items_status_check";
 
 drop view if exists "public"."view_bookings_with_details";
 
 drop view if exists "public"."view_bookings_with_user_info";
 
-alter table "public"."workflow_test" drop constraint "workflow_test_pkey";
-
-drop index if exists "public"."workflow_test_pkey";
-
-drop table "public"."workflow_test";
-
 alter table "public"."booking_items" alter column "status" set data type booking_status using "status"::booking_status;
 
 alter table "public"."bookings" alter column "status" set data type booking_status using "status"::booking_status;
-
-drop sequence if exists "public"."workflow_test_id_seq";
 
 alter table "public"."booking_items" add constraint "order_items_status_check" CHECK ((status = ANY (ARRAY['pending'::booking_status, 'confirmed'::booking_status, 'cancelled'::booking_status, 'rejected'::booking_status]))) not valid;
 
