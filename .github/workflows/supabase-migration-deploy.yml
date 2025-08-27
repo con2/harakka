@@ -108,14 +108,32 @@ jobs:
           TS=$(date +%Y%m%d%H%M%S)
           DRIFT_BASENAME="${TS}_drift.sql"
           DRIFT_FILE="supabase/migrations/${DRIFT_BASENAME}"
+          
+          # Debug: Show migrations folder contents before
+          echo "📁 Migrations folder before drift check:"
+          ls -la supabase/migrations/ || echo "migrations folder not found"
+          
           rm -f "$DRIFT_FILE"
           # Generate diff directly into migrations folder by running from supabase dir
           cd supabase && supabase db diff --linked --schema $SCHEMAS -f "migrations/${DRIFT_BASENAME}" || true
+          
+          # Debug: Show migrations folder contents after
+          echo "📁 Migrations folder after drift check:"
+          ls -la migrations/ || echo "migrations folder not found"
+          echo "🔍 Checking for drift file: $DRIFT_FILE"
+          
           if [[ -s "$DRIFT_FILE" ]]; then
+            echo "✅ Drift file exists and has content"
+            echo "📄 Drift file size: $(wc -c < "$DRIFT_FILE") bytes"
             echo "has_drift=true" >> $GITHUB_OUTPUT
             echo "drift_file=$DRIFT_FILE" >> $GITHUB_OUTPUT
             echo "⚠️ Drift detected; file at $DRIFT_FILE"
           else
+            if [[ -f "$DRIFT_FILE" ]]; then
+              echo "❌ Drift file exists but is empty"
+            else
+              echo "❌ Drift file does not exist"
+            fi
             echo "has_drift=false" >> $GITHUB_OUTPUT
             echo "✅ No schema drift detected"
           fi
