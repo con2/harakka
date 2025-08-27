@@ -30,8 +30,10 @@ import {
   StorageItemsRow,
   BookingRow,
   ValidBookingOrder,
+  BookingStatus,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
+import { deriveOrgStatus } from "src/utils/booking.utils";
 import { StorageLocationsService } from "../storage-locations/storage-locations.service";
 import { RoleService } from "../role/role.service";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
@@ -40,6 +42,8 @@ import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { BookingPreview } from "@common/bookings/booking.types";
 import { BookingItemsService } from "../booking_items/booking-items.service";
 import { StorageItemRow } from "../storage-items/interfaces/storage-item.interface";
+import { BookingWithOrgStatus } from "./types/booking.interface";
+
 dayjs.extend(utc);
 @Injectable()
 export class BookingService {
@@ -229,7 +233,7 @@ export class BookingService {
       .from("bookings")
       .insert({
         user_id: userId,
-        status: "pending",
+        status: BookingStatus.pending,
         booking_number: generateBookingNumber(),
       })
       .select()
@@ -270,7 +274,7 @@ export class BookingService {
         start_date: item.start_date,
         end_date: item.end_date,
         total_days: totalDays,
-        status: "pending",
+        status: BookingStatus.pending,
       };
 
       // Use BookingItemsService instead of direct insert
@@ -306,7 +310,7 @@ export class BookingService {
       : { message: "Booking created", booking: createdBooking };
   }
 
-  // 4. confirm a Booking
+  // 4. confirm a Booking - no longer in use; replaced by confirmBookingItemsForOrg
   async confirmBooking(
     bookingId: string,
     userId: string,
@@ -412,10 +416,10 @@ export class BookingService {
     // Confirm items: either a selected subset (itemIds) or all items for the org; only pending can be confirmed
     let updateQuery = supabase
       .from("booking_items")
-      .update({ status: "confirmed" })
+      .update({ status: BookingStatus.confirmed })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", providerOrgId)
-      .eq("status", "pending");
+      .eq("status", BookingStatus.pending);
     if (itemIds && itemIds.length > 0) {
       updateQuery = updateQuery.in("id", itemIds);
     }
@@ -434,14 +438,16 @@ export class BookingService {
     }
 
     const allRejected =
-      items.length > 0 && items.every((it) => it.status === "rejected");
+      items.length > 0 &&
+      items.every((it) => it.status === BookingStatus.rejected);
     const noPending =
-      items.length > 0 && items.every((it) => it.status !== "pending");
+      items.length > 0 &&
+      items.every((it) => it.status !== BookingStatus.pending);
 
     if (allRejected) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: "rejected" })
+        .update({ status: BookingStatus.rejected })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException(
@@ -451,7 +457,7 @@ export class BookingService {
     } else if (noPending) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: "confirmed" })
+        .update({ status: BookingStatus.confirmed })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException(
@@ -468,8 +474,10 @@ export class BookingService {
   }
 
   /**
-   * Reject all booking_items owned by a provider organization for a given booking.
-   * If any organization rejects, the parent booking is set to rejected.
+   * Reject booking_items owned by a provider organization for a given booking.
+   * The parent booking is set to 'rejected' only when ALL booking items in the
+   * parent booking have status 'rejected'. Otherwise the booking status is
+   * rolled up to 'confirmed' if there are no pending items, or left unchanged.
    */
   async rejectBookingItemsForOrg(
     bookingId: string,
@@ -490,19 +498,19 @@ export class BookingService {
       );
     }
 
-    // Cancel items: either a selected subset (itemIds) or all items for the org; can cancel pending or confirmed
-    let cancelQuery = supabase
+    // Only update status to 'rejected' for selected items (pending/confirmed)
+    let updateQuery = supabase
       .from("booking_items")
-      .update({ status: "rejected" })
+      .update({ status: BookingStatus.rejected })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", providerOrgId)
-      .in("status", ["pending", "confirmed"]);
+      .in("status", [BookingStatus.pending]);
     if (itemIds && itemIds.length > 0) {
-      cancelQuery = cancelQuery.in("id", itemIds);
+      updateQuery = updateQuery.in("id", itemIds);
     }
-    const { error: updateErr } = await cancelQuery;
+    const { error: updateErr } = await updateQuery;
     if (updateErr) {
-      throw new BadRequestException("Failed to reject booking items");
+      handleSupabaseError(updateErr);
     }
 
     // Roll-up booking status based on all items
@@ -510,19 +518,24 @@ export class BookingService {
       .from("booking_items")
       .select("status")
       .eq("booking_id", bookingId);
-    if (itemsErr || !items) {
+    if (itemsErr) {
+      handleSupabaseError(itemsErr);
+    }
+    if (!items) {
       throw new BadRequestException("Failed to fetch booking items");
     }
 
     const allRejected =
-      items.length > 0 && items.every((it) => it.status === "rejected");
+      items.length > 0 &&
+      items.every((it) => it.status === BookingStatus.rejected);
     const noPending =
-      items.length > 0 && items.every((it) => it.status !== "pending");
+      items.length > 0 &&
+      items.every((it) => it.status !== BookingStatus.pending);
 
     if (allRejected) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: "rejected" })
+        .update({ status: BookingStatus.rejected })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException("Failed to set booking to rejected");
@@ -530,14 +543,16 @@ export class BookingService {
     } else if (noPending) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: "confirmed" })
+        .update({ status: BookingStatus.confirmed })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException("Failed to set booking to confirmed");
       }
     }
 
-    return { message: "Items rejected and booking status updated" };
+    return {
+      message: "Items rejected; booking status rolled up where applicable",
+    };
   }
 
   /**
@@ -551,7 +566,7 @@ export class BookingService {
    */
   // updateBookingItemsStatusForOrg removed; use confirm/reject methods with optional itemIds instead
 
-  // 5. update a Booking (Admin/SuperVera OR Owner)
+  // 5. update a Booking (tenant_admin/storage_manager OR Owner)
   async updateBooking(
     booking_id: string,
     userId: string,
@@ -573,9 +588,7 @@ export class BookingService {
 
     // 5.2. check permissions using RoleService
     const isElevated = this.roleService.hasAnyRole(req, [
-      "super_admin",
       "tenant_admin",
-      "superVera",
       "storage_manager",
     ]);
 
@@ -701,7 +714,7 @@ export class BookingService {
       : { message: "Booking updated", booking: updatedBooking };
   }
 
-  // 6. reject a Booking (Admin/SuperVera only)
+  // 6. reject a Booking - no longer in use; replaced by rejectBookingItemsForOrg
   async rejectBooking(bookingId: string, userId: string, req: AuthRequest) {
     const supabase = req.supabase;
     // check if already rejected
@@ -775,7 +788,7 @@ export class BookingService {
     return { message: "Booking rejected" };
   }
 
-  // 7. cancel a Booking (User if not confirmed, Admins/SuperVera always)
+  // 7. cancel a Booking (User if not confirmed, Admins always)
   async cancelBooking(
     bookingId: string,
     userId: string,
@@ -790,20 +803,18 @@ export class BookingService {
       .single();
     if (!booking) throw new BadRequestException("Booking not found");
 
-    // prevent re-cancellation
-    const finalStates = new Set(["cancelled by user", "cancelled by admin"]);
+    // prevent re-cancellation: booking already in final 'cancelled' state
+    const finalStates = new Set(["cancelled"]);
 
     if (finalStates.has(booking.status)) {
       throw new BadRequestException(
-        `Booking has already been ${booking.status}`,
+        "Booking has already been " + booking.status,
       );
     }
 
     // 7.2 permissions check using RoleService
     const isAdmin = this.roleService.hasAnyRole(req, [
-      "super_admin",
       "tenant_admin",
-      "superVera",
       "storage_manager",
     ]);
     const isOwner = booking.user_id === userId;
@@ -832,12 +843,17 @@ export class BookingService {
     }
 
     // 7.4 update booking_items
-    const { error } = await supabase
+    const { error: bookingUpdateError } = await supabase
       .from("bookings")
-      .update({ status: isAdmin ? "cancelled by admin" : "cancelled by user" })
+      .update({ status: "cancelled" })
       .eq("id", bookingId);
 
-    if (error) {
+    if (bookingUpdateError) {
+      // Log supabase error details to help debugging (RLS/policy/constraint issues)
+      console.error("Failed to cancel booking", {
+        bookingId,
+        error: bookingUpdateError,
+      });
       throw new BadRequestException("Could not cancel the booking");
     }
 
@@ -888,15 +904,13 @@ export class BookingService {
       throw new BadRequestException("Booking not found");
 
     // prevent re-deletion
-    if (booking.status === "deleted") {
-      throw new BadRequestException("Booking is already deleted");
-    }
+    //if (booking.status === "deleted") {
+    //  throw new BadRequestException("Booking is already deleted");
+    //}
 
     // 8.2 check user role using RoleService
     const isAdmin = this.roleService.hasAnyRole(req, [
-      "super_admin",
       "tenant_admin",
-      "superVera",
       "storage_manager",
     ]);
 
@@ -931,7 +945,7 @@ export class BookingService {
     const { error: deleteError } = await supabase
       .from("bookings")
       .update({
-        status: "deleted",
+        status: "cancelled",
       })
       .eq("id", bookingId);
 
@@ -966,11 +980,11 @@ export class BookingService {
       throw new BadRequestException("No items found for return");
     }
 
-    for (const item of items) {
-      if (item.status === "returned") {
-        throw new BadRequestException("Items are already returned");
-      }
-    }
+    //for (const item of items) {
+    //if (item.status === "returned") {
+    //  throw new BadRequestException("Items are already returned");
+    // }
+    //}
 
     // set booking status to completed
     const { error: updateError } = await supabase
@@ -1031,8 +1045,8 @@ export class BookingService {
     }
 
     for (const item of items) {
-      if (item.status === "picked_up")
-        throw new BadRequestException("Items are already picked_up");
+      //if (item.status === "picked_up")
+      //throw new BadRequestException("Items are already picked_up");
 
       if (item.status !== "confirmed") {
         throw new BadRequestException(
@@ -1064,6 +1078,7 @@ export class BookingService {
         );
       }
 
+      // 10.3. Decrement physical stock when items are picked up
       const newCount =
         (storageItem.available_quantity || 0) - (item.quantity || 0);
 
@@ -1071,7 +1086,7 @@ export class BookingService {
         throw new BadRequestException("Not enough stock to confirm pickup");
       }
 
-      // 10.3. Update storage stock
+      // Update storage stock
       const { error: updateStockError } = await supabase
         .from("storage_items")
         .update({ available_quantity: newCount })
@@ -1211,31 +1226,21 @@ export class BookingService {
           .eq("provider_organization_id", orgId);
         if (itemsRes.error) handleSupabaseError(itemsRes.error);
 
-        const counts = new Map<string, { total: number; confirmed: number }>();
+        // Map booking_id to array of statuses for this org
+        const statusMap = new Map<string, string[]>();
         (itemsRes.data || []).forEach((row) => {
           const r = row as { booking_id: string; status: string };
-          const bid = r.booking_id;
-          const status = r.status;
-          const cur = counts.get(bid) || { total: 0, confirmed: 0 };
-          cur.total += 1;
-          if (status === "confirmed") cur.confirmed += 1;
-          counts.set(bid, cur);
+          const arr = statusMap.get(r.booking_id) || [];
+          arr.push(r.status);
+          statusMap.set(r.booking_id, arr);
         });
 
-        // Attach flags to each booking row
-        (
-          result.data as Array<
-            BookingPreview & {
-              is_org_confirmed?: boolean;
-              is_org_has_items?: boolean;
-            }
-          >
-        ).forEach((b) => {
+        // Attach org_status_for_active_org to each booking row
+        (result.data as BookingPreview[]).forEach((b) => {
           const bid = b.id;
-          const c = counts.get(bid);
-          const has = c ? c.total > 0 : false;
-          b.is_org_has_items = has;
-          b.is_org_confirmed = has ? c!.total === c!.confirmed : false;
+          const statuses = statusMap.get(bid) || [];
+          (b as BookingWithOrgStatus).org_status_for_active_org =
+            deriveOrgStatus(statuses);
         });
       }
     }
@@ -1294,9 +1299,35 @@ export class BookingService {
     if (booking_items_result.error)
       handleSupabaseError(booking_items_result.error);
 
+    // Attach org_status_for_active_org if providerOrgId is present
+    let org_status_for_active_org: string | undefined = undefined;
+    if (providerOrgId && result.data) {
+      const itemsRes = await supabase
+        .from("booking_items")
+        .select("status")
+        .eq("booking_id", booking_id)
+        .eq("provider_organization_id", providerOrgId);
+      if (!itemsRes.error && Array.isArray(itemsRes.data)) {
+        const statuses = itemsRes.data.map((row) => row.status);
+        org_status_for_active_org = deriveOrgStatus(statuses);
+      }
+    }
+    // Spread result.data and allow extra property
+    const bookingData: BookingPreview & {
+      booking_items: (import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
+        storage_items: Partial<StorageItemRow>;
+      })[];
+      org_status_for_active_org?: string;
+    } = {
+      ...result.data,
+      booking_items: booking_items_result.data,
+    };
+    if (org_status_for_active_org !== undefined) {
+      bookingData.org_status_for_active_org = org_status_for_active_org;
+    }
     return {
       ...result,
-      data: { ...result.data, booking_items: booking_items_result.data },
+      data: bookingData,
       metadata: booking_items_result.metadata,
     };
   }
