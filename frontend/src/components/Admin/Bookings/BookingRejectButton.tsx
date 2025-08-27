@@ -9,14 +9,14 @@ import { t } from "@/translations";
 
 const BookingRejectButton = ({
   id,
-  closeModal,
   selectedItemIds,
   disabled,
+  onSuccess,
 }: {
   id: string;
-  closeModal: () => void;
   selectedItemIds?: string[];
   disabled?: boolean;
+  onSuccess?: () => void;
 }) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
@@ -33,7 +33,7 @@ const BookingRejectButton = ({
       description: t.bookingReject.confirmDialog.description[lang],
       confirmText: t.bookingReject.confirmDialog.confirmText[lang],
       cancelText: t.bookingReject.confirmDialog.cancelText[lang],
-      onConfirm: async () => {
+      onConfirm: () => {
         const promise = new Promise((resolve, reject) => {
           dispatch(
             rejectItemsForOrg({
@@ -47,12 +47,12 @@ const BookingRejectButton = ({
             .then(resolve)
             .catch(reject);
         });
-        await toast.promise(promise, {
+        toast.promise(promise, {
           loading: t.bookingReject.toast.loading[lang],
           success: t.bookingReject.toast.success[lang],
           error: t.bookingReject.toast.error[lang],
         });
-        closeModal();
+        if (onSuccess) onSuccess();
       },
     });
   };

@@ -19,6 +19,10 @@ export const bookingCancel = {
       en: common.cancel.en,
     },
   },
+  cancel: {
+    fi: "Peruuta varaus",
+    en: "Cancel Booking",
+  },
   toast: {
     loading: {
       fi: "Peruutetaan varausta...",
