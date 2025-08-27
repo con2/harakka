@@ -113,13 +113,13 @@ jobs:
           echo "📁 Migrations folder before drift check:"
           ls -la supabase/migrations/ || echo "migrations folder not found"
           
-          rm -f "$DRIFT_FILE"
-          # Generate diff directly into migrations folder by running from supabase dir
-          cd supabase && supabase db diff --linked --schema $SCHEMAS -f "migrations/${DRIFT_BASENAME}" || true
+          # Run from project root like local setup - provide full path to drift file
+          echo "🔧 Running: supabase db diff --linked --schema $SCHEMAS -f \"$DRIFT_FILE\""
+          supabase db diff --linked --schema $SCHEMAS -f "$DRIFT_FILE" || true
           
           # Debug: Show migrations folder contents after
           echo "📁 Migrations folder after drift check:"
-          ls -la migrations/ || echo "migrations folder not found"
+          ls -la supabase/migrations/ || echo "migrations folder not found"
           echo "🔍 Checking for drift file: $DRIFT_FILE"
           
           if [[ -s "$DRIFT_FILE" ]]; then
