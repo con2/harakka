@@ -1,16 +1,16 @@
-name: Deploy Supabase Migrations (Drift‑aware)
+name: Deploy Supabase Migrations (Drift-aware)
 
 on:
   # Run on PRs to develop so we can test safely (no deploy in PRs)
   pull_request:
     branches: [develop]
     paths:
-      - 'supabase-prod/supabase/migrations/**'
+      - 'supabase/migrations/**'
   # Auto-deploy only on merge/pushes to develop (after PR merge)
   push:
     branches: [develop]
     paths:
-      - 'supabase-prod/supabase/migrations/**'
+      - 'supabase/migrations/**'
   # Allow manual runs with toggles
   workflow_dispatch:
     inputs:
@@ -38,7 +38,8 @@ permissions:
 
 env:
   # Canonical migrations live under supabase-prod/
-  WORKDIR: supabase-prod
+  WORKDIR: supabase
+  SCHEMAS: public,auth
   # Default to PROD secrets; staging can be selected via workflow_dispatch input
   SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
   PROD_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
@@ -111,7 +112,7 @@ jobs:
             PREV="HEAD~1"
           fi
           echo "Diffing migrations between $PREV and HEAD..."
-          CHANGED=$(git diff --name-only "$PREV" HEAD -- "$WORKDIR/supabase/migrations" || true)
+          CHANGED=$(git diff --name-only "$PREV" HEAD -- "$WORKDIR/migrations" || true)
           if [[ -z "$CHANGED" ]]; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "ℹ️ No migration file changes in this run"
@@ -130,7 +131,7 @@ jobs:
           # create a drift file comparing remote to our local migration state
           DRIFT_FILE="$WORKDIR/drift_changes.sql"
           rm -f "$DRIFT_FILE"
-          supabase db diff --linked --schema public,auth,storage -f "$DRIFT_FILE" --workdir "$WORKDIR" || true
+          supabase db diff --linked --schema $SCHEMAS -f "$DRIFT_FILE" --workdir "$WORKDIR" || true
           if [[ -s "$DRIFT_FILE" ]]; then
             echo "has_drift=true" >> $GITHUB_OUTPUT
             echo "drift_file=$DRIFT_FILE" >> $GITHUB_OUTPUT
@@ -140,6 +141,13 @@ jobs:
             echo "✅ No schema drift detected"
           fi
         shell: bash
+
+      - name: Show drift (first 200 lines)
+        if: steps.drift.outputs.has_drift == 'true'
+        run: |
+          echo "--- BEGIN DRIFT PREVIEW ---"
+          sed -n '1,200p' "$WORKDIR/drift_changes.sql" || true
+          echo "--- END DRIFT PREVIEW ---"
 
       - name: Create a drift PR (if any)
         if: steps.drift.outputs.has_drift == 'true'
@@ -151,8 +159,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           BRANCH="drift/$(date +%Y%m%d%H%M%S)"
           git checkout -b "$BRANCH"
-          cp "$WORKDIR/drift_changes.sql" "$WORKDIR/supabase/migrations/$(date +%Y%m%d%H%M%S)_capture_manual_changes.sql"
-          git add "$WORKDIR/supabase/migrations"/*.sql
+          cp "$WORKDIR/drift_changes.sql" "$WORKDIR/migrations/$(date +%Y%m%d%H%M%S)_capture_manual_changes.sql"
+          git add "$WORKDIR/migrations"/*.sql
           git commit -m "chore(db): capture manual changes (drift)"
           git push -u origin "$BRANCH"
           gh pr create --title "DB Drift: capture manual changes" \
@@ -185,7 +193,7 @@ jobs:
           echo "Target: ${{ steps.select.outputs.target }}"
           echo "Migrations changed: ${{ steps.changes.outputs.has_changes }}"
           echo "Drift: ${{ steps.drift.outputs.has_drift }}"
-          echo "Will deploy: ${{ steps.deploy_gate.outputs.deploy }}"
+          echo "Schemas: $SCHEMAS"
 
       - name: Deploy migrations
         if: steps.deploy_gate.outputs.deploy == 'true' && steps.changes.outputs.has_changes == 'true'
