@@ -76,6 +76,31 @@ jobs:
           supabase login --token "$SUPABASE_ACCESS_TOKEN"
           supabase link --project-ref "${{ steps.select.outputs.project_ref }}" --password "${{ steps.select.outputs.db_password }}"
 
+      - name: Sync missing remote migrations
+        run: |
+          set -Eeuo pipefail
+          echo "📊 Migration status before sync:"
+          supabase migrations list
+          
+          echo "🔄 Pulling missing remote migrations..."
+          # Use 'yes' to automatically answer prompts about adding migrations
+          yes | supabase db pull --linked || true
+
+          echo "📊 Migration status after sync:"
+          supabase migrations list
+          
+          # Check if any new migration files were pulled
+          NEW_MIGRATIONS=$(git status --porcelain supabase/migrations/ | grep "^??" | wc -l || echo "0")
+          if [[ "$NEW_MIGRATIONS" -gt 0 ]]; then
+            echo "✅ Found $NEW_MIGRATIONS new migrations, committing them..."
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add supabase/migrations/
+            git commit -m "feat: sync remote migrations from production" || true
+          else
+            echo "ℹ️ No new migrations to sync"
+          fi
+
       - name: Check for migration changes in this commit range
         id: changes
         run: |
