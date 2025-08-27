@@ -224,13 +224,23 @@ export class BookingService {
     }
 
     // 3.4. Create the booking
+    // generate a unique booking number (check collisions in DB)
+    let bookingNumber: string;
+    try {
+      bookingNumber = await generateBookingNumber(supabase);
+    } catch (err) {
+      console.error("Booking number generation error:", err);
+      throw new BadRequestException(
+        "Could not generate a unique booking number, please try again",
+      );
+    }
 
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
       .insert({
         user_id: userId,
         status: "pending",
-        booking_number: generateBookingNumber(),
+        booking_number: bookingNumber,
       })
       .select()
       .single<BookingRow>();
