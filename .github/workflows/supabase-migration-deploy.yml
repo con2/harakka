@@ -109,10 +109,9 @@ jobs:
           echo "📁 Migrations folder before drift check:"
           ls -la supabase/migrations/ || echo "migrations folder not found"
           
-          # Debug: Show current directory before
-          echo "📁 Current directory before drift check:"
-          ls -la . | head -10
-          
+          supabase db start 
+          supabase migrations list
+
           # Reset database to ensure shadow database is synced with migrations (like local setup)
           echo "🔄 Resetting database to sync shadow database with migrations..."
           supabase db reset || true
