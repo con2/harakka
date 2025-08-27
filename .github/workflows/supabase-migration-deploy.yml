@@ -112,8 +112,12 @@ jobs:
           echo "📁 Current directory before drift check:"
           ls -la . | head -10
           
+          # Start Supabase DB
+          supabase db start
+          
           # Reset database to ensure shadow database is synced with migrations (like local setup)
           echo "🔄 Resetting database to sync shadow database with migrations..."
+
           supabase db reset || true
           
           # Use simple filename like local setup to avoid path complexity
