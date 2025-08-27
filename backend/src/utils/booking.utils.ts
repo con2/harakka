@@ -82,8 +82,38 @@ export function calculateDuration(start: Date, end: Date): number {
   return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export function generateBookingNumber() {
+// internal helper to create a random booking number candidate
+function makeCandidate(): string {
   return `ORD-${Math.floor(Math.random() * 10000)
     .toString()
     .padStart(4, "0")}`;
+}
+
+/**
+ * Generate a booking number and ensure it's not already present in the bookings table.
+ * Retries up to `maxAttempts` times before throwing.
+ */
+export async function generateBookingNumber(
+  supabase: SupabaseClient<Database>,
+  maxAttempts = 5,
+): Promise<string> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const candidate = makeCandidate();
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("id")
+      .eq("booking_number", candidate)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error("Error while checking booking number uniqueness");
+    }
+    // if no existing row, candidate is unique
+    if (!data) return candidate;
+    // otherwise loop and try again
+  }
+  throw new Error(
+    "Could not generate a unique booking number after multiple attempts.",
+  );
 }
