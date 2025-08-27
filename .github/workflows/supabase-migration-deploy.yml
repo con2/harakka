@@ -120,8 +120,8 @@ jobs:
           echo "📁 Current directory after drift check:"
           ls -la . | head -10
           
-          # Look for any files created matching latest_diff pattern
-          DRIFT_FILES=$(find . -maxdepth 1 -name "latest_diff*" -type f 2>/dev/null || true)
+          # Look for any files created matching latest_diff pattern in migrations folder
+          DRIFT_FILES=$(find supabase/migrations/ -name "*latest_diff*" -type f 2>/dev/null || true)
           
           if [[ -n "$DRIFT_FILES" ]]; then
             # Find the newest file (in case multiple exist)
@@ -130,18 +130,11 @@ jobs:
             
             # Check if it has content
             if [[ -s "$LATEST_DRIFT" ]]; then
-              # Generate timestamped name for migrations folder
-              TS=$(date +%Y%m%d%H%M%S)
-              DRIFT_FILE="supabase/migrations/${TS}_drift.sql"
-              
-              # Move to migrations folder
-              mv "$LATEST_DRIFT" "$DRIFT_FILE"
-              
-              echo "✅ Drift file moved to: $DRIFT_FILE"
-              echo "📄 Drift file size: $(wc -c < "$DRIFT_FILE") bytes"
+              echo "✅ Drift file already in correct location: $LATEST_DRIFT"
+              echo "📄 Drift file size: $(wc -c < "$LATEST_DRIFT") bytes"
               echo "has_drift=true" >> $GITHUB_OUTPUT
-              echo "drift_file=$DRIFT_FILE" >> $GITHUB_OUTPUT
-              echo "⚠️ Drift detected; file at $DRIFT_FILE"
+              echo "drift_file=$LATEST_DRIFT" >> $GITHUB_OUTPUT
+              echo "⚠️ Drift detected; file at $LATEST_DRIFT"
             else
               echo "❌ Drift file exists but is empty"
               rm -f "$LATEST_DRIFT" # Clean up empty file
@@ -149,7 +142,7 @@ jobs:
               echo "✅ No schema drift detected"
             fi
           else
-            echo "❌ No drift files found"
+            echo "❌ No drift files found in migrations folder"
             echo "has_drift=false" >> $GITHUB_OUTPUT
             echo "✅ No schema drift detected"
           fi
