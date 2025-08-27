@@ -42,9 +42,15 @@
     "check-translation:relaxed": "cd frontend && npx tsx src/scripts/check-translations.ts",
     "check-translation:unused": "cd frontend && npx tsx src/scripts/clean-unused-translations.ts",
     "check-translation:clean": "cd frontend && npx tsx src/scripts/clean-unused-translations.ts --confirm",
-    "check-translation:create": "cd frontend && npx tsx src/scripts/create-missing-translation-modules"
+    "check-translation:create": "cd frontend && npx tsx src/scripts/create-missing-translation-modules",
+    "sql:check": "npx postgrestools check supabase/migrations/ scripts/",
+    "sql:check:migrations": "npx postgrestools check supabase/migrations/",
+    "sql:check:scripts": "npx postgrestools check supabase/scripts",
+    "sql:check:verbose": "npx postgrestools check supabase/migrations/ scripts/ --verbose",
+    "sql:check:all": "npx postgrestools check **/*.sql"
   },
   "devDependencies": {
+    "@postgrestools/postgrestools": "^0.11.0",
     "@supabase/supabase-js": "^2.53.0",
     "concurrently": "^9.1.2",
     "env-cmd": "^10.1.0",
