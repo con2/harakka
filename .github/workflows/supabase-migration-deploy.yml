@@ -110,7 +110,7 @@ jobs:
           DRIFT_FILE="supabase/migrations/${DRIFT_BASENAME}"
           rm -f "$DRIFT_FILE"
           # Generate diff directly into migrations, using the same schemas you diff locally
-          supabase db diff --linked --schema $SCHEMAS -f "$DRIFT_BASENAME" --workdir supabase || true
+          supabase db diff --linked --schema $SCHEMAS -f "$DRIFT_BASENAME" || true
           if [[ -s "$DRIFT_FILE" ]]; then
             echo "has_drift=true" >> $GITHUB_OUTPUT
             echo "drift_file=$DRIFT_FILE" >> $GITHUB_OUTPUT
