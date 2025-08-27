@@ -104,39 +104,59 @@ jobs:
         id: drift
         run: |
           set -Eeuo pipefail
-          # Write drift into the migrations folder so the CLI uses the same location it would on dev machines
-          TS=$(date +%Y%m%d%H%M%S)
-          DRIFT_BASENAME="${TS}_drift.sql"
-          DRIFT_FILE="supabase/migrations/${DRIFT_BASENAME}"
-          
           # Debug: Show migrations folder contents before
           echo "📁 Migrations folder before drift check:"
           ls -la supabase/migrations/ || echo "migrations folder not found"
           
-          # Run from project root like local setup - provide full path to drift file
-          echo "🔧 Running: supabase db diff --linked --schema $SCHEMAS -f \"$DRIFT_FILE\""
-          supabase db diff --linked --schema $SCHEMAS -f "$DRIFT_FILE" || true
+          # Debug: Show current directory before
+          echo "📁 Current directory before drift check:"
+          ls -la . | head -10
           
-          # Debug: Show migrations folder contents after
-          echo "📁 Migrations folder after drift check:"
-          ls -la supabase/migrations/ || echo "migrations folder not found"
-          echo "🔍 Checking for drift file: $DRIFT_FILE"
+          # Use simple filename like local setup to avoid path complexity
+          echo "🔧 Running: supabase db diff --linked --schema $SCHEMAS -f \"latest_diff\""
+          supabase db diff --linked --schema $SCHEMAS -f "latest_diff" || true
           
-          if [[ -s "$DRIFT_FILE" ]]; then
-            echo "✅ Drift file exists and has content"
-            echo "📄 Drift file size: $(wc -c < "$DRIFT_FILE") bytes"
-            echo "has_drift=true" >> $GITHUB_OUTPUT
-            echo "drift_file=$DRIFT_FILE" >> $GITHUB_OUTPUT
-            echo "⚠️ Drift detected; file at $DRIFT_FILE"
-          else
-            if [[ -f "$DRIFT_FILE" ]]; then
-              echo "❌ Drift file exists but is empty"
+          # Debug: Show current directory after to see what was created
+          echo "📁 Current directory after drift check:"
+          ls -la . | head -10
+          
+          # Look for any files created matching latest_diff pattern
+          DRIFT_FILES=$(find . -maxdepth 1 -name "latest_diff*" -type f 2>/dev/null || true)
+          
+          if [[ -n "$DRIFT_FILES" ]]; then
+            # Find the newest file (in case multiple exist)
+            LATEST_DRIFT=$(echo "$DRIFT_FILES" | head -n 1)
+            echo "🔍 Found drift file: $LATEST_DRIFT"
+            
+            # Check if it has content
+            if [[ -s "$LATEST_DRIFT" ]]; then
+              # Generate timestamped name for migrations folder
+              TS=$(date +%Y%m%d%H%M%S)
+              DRIFT_FILE="supabase/migrations/${TS}_drift.sql"
+              
+              # Move to migrations folder
+              mv "$LATEST_DRIFT" "$DRIFT_FILE"
+              
+              echo "✅ Drift file moved to: $DRIFT_FILE"
+              echo "📄 Drift file size: $(wc -c < "$DRIFT_FILE") bytes"
+              echo "has_drift=true" >> $GITHUB_OUTPUT
+              echo "drift_file=$DRIFT_FILE" >> $GITHUB_OUTPUT
+              echo "⚠️ Drift detected; file at $DRIFT_FILE"
             else
-              echo "❌ Drift file does not exist"
+              echo "❌ Drift file exists but is empty"
+              rm -f "$LATEST_DRIFT" # Clean up empty file
+              echo "has_drift=false" >> $GITHUB_OUTPUT
+              echo "✅ No schema drift detected"
             fi
+          else
+            echo "❌ No drift files found"
             echo "has_drift=false" >> $GITHUB_OUTPUT
             echo "✅ No schema drift detected"
           fi
+          
+          # Debug: Show migrations folder after processing
+          echo "📁 Migrations folder after processing:"
+          ls -la supabase/migrations/ || echo "migrations folder not found"
         shell: bash
 
       - name: Show drift (first 200 lines)
