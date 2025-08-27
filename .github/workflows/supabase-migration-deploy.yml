@@ -67,7 +67,7 @@ jobs:
       - name: Install Supabase CLI (official action)
         uses: supabase/setup-cli@v1
         with:
-          version: latest v2.39.2
+          version: v2.39.2
 
       - name: Authenticate & link project
         run: |
