@@ -434,7 +434,7 @@ export class BookingService {
     }
 
     const allRejected =
-      items.length > 0 && items.every((it) => it.status === "cancelled");
+      items.length > 0 && items.every((it) => it.status === "rejected");
     const noPending =
       items.length > 0 && items.every((it) => it.status !== "pending");
 
@@ -470,7 +470,7 @@ export class BookingService {
   /**
    * Reject booking_items owned by a provider organization for a given booking.
    * The parent booking is set to 'rejected' only when ALL booking items in the
-   * parent booking have status 'cancelled'. Otherwise the booking status is
+   * parent booking have status 'rejected'. Otherwise the booking status is
    * rolled up to 'confirmed' if there are no pending items, or left unchanged.
    */
   async rejectBookingItemsForOrg(
@@ -492,10 +492,10 @@ export class BookingService {
       );
     }
 
-    // Only update status to 'cancelled' for selected items (pending/confirmed)
+    // Only update status to 'rejected' for selected items (pending/confirmed)
     let updateQuery = supabase
       .from("booking_items")
-      .update({ status: "cancelled" })
+      .update({ status: "rejected" })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", providerOrgId)
       .in("status", ["pending", "confirmed"]);
@@ -517,7 +517,7 @@ export class BookingService {
     }
 
     const allRejected =
-      items.length > 0 && items.every((it) => it.status === "cancelled");
+      items.length > 0 && items.every((it) => it.status === "rejected");
     const noPending =
       items.length > 0 && items.every((it) => it.status !== "pending");
 
@@ -540,7 +540,7 @@ export class BookingService {
     }
 
     return {
-      message: "Items cancelled; booking status rolled up where applicable",
+      message: "Items rejected; booking status rolled up where applicable",
     };
   }
 
@@ -703,7 +703,7 @@ export class BookingService {
       : { message: "Booking updated", booking: updatedBooking };
   }
 
-  // 6. reject a Booking (Admin/SuperVera only) - no longer in use; replaced by rejectBookingItemsForOrg
+  // 6. reject a Booking - no longer in use; replaced by rejectBookingItemsForOrg
   async rejectBooking(bookingId: string, userId: string, req: AuthRequest) {
     const supabase = req.supabase;
     // check if already rejected
@@ -792,12 +792,12 @@ export class BookingService {
       .single();
     if (!booking) throw new BadRequestException("Booking not found");
 
-    // prevent re-cancellation
-    const finalStates = new Set(["cancelled by user", "cancelled by admin"]);
+    // prevent re-cancellation: booking already in final 'cancelled' state
+    const finalStates = new Set(["cancelled"]);
 
     if (finalStates.has(booking.status)) {
       throw new BadRequestException(
-        `Booking has already been ${booking.status}`,
+        "Booking has already been " + booking.status,
       );
     }
 
@@ -832,12 +832,17 @@ export class BookingService {
     }
 
     // 7.4 update booking_items
-    const { error } = await supabase
+    const { error: bookingUpdateError } = await supabase
       .from("bookings")
-      .update({ status: isAdmin ? "cancelled by admin" : "cancelled by user" })
+      .update({ status: "cancelled" })
       .eq("id", bookingId);
 
-    if (error) {
+    if (bookingUpdateError) {
+      // Log supabase error details to help debugging (RLS/policy/constraint issues)
+      console.error("Failed to cancel booking", {
+        bookingId,
+        error: bookingUpdateError,
+      });
       throw new BadRequestException("Could not cancel the booking");
     }
 
@@ -888,9 +893,9 @@ export class BookingService {
       throw new BadRequestException("Booking not found");
 
     // prevent re-deletion
-    if (booking.status === "deleted") {
-      throw new BadRequestException("Booking is already deleted");
-    }
+    //if (booking.status === "deleted") {
+    //  throw new BadRequestException("Booking is already deleted");
+    //}
 
     // 8.2 check user role using RoleService
     const isAdmin = this.roleService.hasAnyRole(req, [
@@ -929,7 +934,7 @@ export class BookingService {
     const { error: deleteError } = await supabase
       .from("bookings")
       .update({
-        status: "deleted",
+        status: "cancelled",
       })
       .eq("id", bookingId);
 
@@ -964,11 +969,11 @@ export class BookingService {
       throw new BadRequestException("No items found for return");
     }
 
-    for (const item of items) {
-      if (item.status === "returned") {
-        throw new BadRequestException("Items are already returned");
-      }
-    }
+    //for (const item of items) {
+    //if (item.status === "returned") {
+    //  throw new BadRequestException("Items are already returned");
+    // }
+    //}
 
     // set booking status to completed
     const { error: updateError } = await supabase
@@ -1029,8 +1034,8 @@ export class BookingService {
     }
 
     for (const item of items) {
-      if (item.status === "picked_up")
-        throw new BadRequestException("Items are already picked_up");
+      //if (item.status === "picked_up")
+      //throw new BadRequestException("Items are already picked_up");
 
       if (item.status !== "confirmed") {
         throw new BadRequestException(
@@ -1230,7 +1235,7 @@ export class BookingService {
             (b as BookingWithOrgStatus).org_status_for_active_org = "unknown";
             return;
           }
-          const allRejected = statuses.every((s) => s === "cancelled");
+          const allRejected = statuses.every((s) => s === "rejected");
           if (allRejected) {
             (b as BookingWithOrgStatus).org_status_for_active_org = "rejected";
             return;
