@@ -72,9 +72,17 @@ jobs:
       - name: Authenticate & link project
         run: |
           set -Eeuo pipefail
+          echo "🔍 Supabase CLI version:"
           supabase --version
+          
+          echo "🔗 Linking to project:"
+          echo "  Project Ref: ${{ steps.select.outputs.project_ref }}"
+          echo "  DB Password: ${PRODUCTION_DB_PASSWORD:0:3}...${PRODUCTION_DB_PASSWORD: -3}"
+          
           supabase login --token "$SUPABASE_ACCESS_TOKEN"
           supabase link --project-ref "${{ steps.select.outputs.project_ref }}" --password "${{ steps.select.outputs.db_password }}"
+          
+          echo "✅ Successfully linked to project ${{ steps.select.outputs.project_ref }}"
 
       - name: Sync missing remote migrations
         run: |
