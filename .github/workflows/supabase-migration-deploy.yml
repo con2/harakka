@@ -67,7 +67,7 @@ jobs:
       - name: Install Supabase CLI (official action)
         uses: supabase/setup-cli@v1
         with:
-          version: v2.39.2
+          version: latest
 
       - name: Authenticate & link project
         run: |
@@ -113,14 +113,8 @@ jobs:
           echo "📁 Current directory before drift check:"
           ls -la . | head -10
           
-          supabase migrations list
-           echo "Starting Supabase DB"
-          # Start Supabase DB
-          supabase db start
-
           # Reset database to ensure shadow database is synced with migrations (like local setup)
           echo "🔄 Resetting database to sync shadow database with migrations..."
-
           supabase db reset || true
           
           # Use simple filename like local setup to avoid path complexity
