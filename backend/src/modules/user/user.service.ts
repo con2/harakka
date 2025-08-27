@@ -375,11 +375,10 @@ export class UserService {
   async handleProfilePictureUpload(
     fileBuffer: Buffer,
     fileName: string,
-    userId: string,
     req: AuthRequest,
   ): Promise<string> {
-    // get current user to delete old picture if exists
-    const currentUser = await this.getUserById(userId, req);
+    // get the current user directly from the request context to delete old picture if exists
+    const currentUser = await this.getCurrentUser(req);
 
     if (currentUser?.profile_picture_url) {
       const oldPath = this.extractStoragePath(currentUser.profile_picture_url);
@@ -398,12 +397,12 @@ export class UserService {
     const url = await this.uploadProfilePicture(
       fileBuffer,
       fileName,
-      userId,
+      currentUser.id,
       req,
     );
 
     // update user profile
-    await this.updateUser(userId, { profile_picture_url: url }, req);
+    await this.updateUser(currentUser.id, { profile_picture_url: url }, req);
 
     return url;
   }
