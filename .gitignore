@@ -1,3 +1,6 @@
+#Supabase project
+supabase-project/volumes/db
+
 # compiled output
 /dist
 /node_modules
