@@ -10,6 +10,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@common/*": [
+        "../common/*"
       ]
     },
 
@@ -22,11 +25,18 @@
     "jsx": "react-jsx",
 
     /* Linting */
+    "strictNullChecks": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "../backend/src/email-tamplates"]
+  "include": ["src", "../backend/src/email-tamplates", "../common/response.types.ts"],
+    "exclude": [
+    "node_modules",
+    "dist", "build",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+  ]
 }

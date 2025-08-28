@@ -7,11 +7,11 @@ import {
   Text,
   Section,
 } from "@react-email/components";
-import { PickUpEmail } from "../interfaces/mail.interface";
+import { PickUpEmail } from "src/modules/mail/interfaces/mail.interface";
 
 const ItemsPickedUpMail = ({
   name,
-  pickupDate,
+  // pickupDate,
   location,
   items,
 }: PickUpEmail) => (
@@ -118,7 +118,7 @@ const ItemsPickedUpMail = ({
 
         <Section style={{ textAlign: "center", marginTop: "30px" }}>
           <a
-            href="http://localhost:5180/profile?tab=orders" // TODO: replace with actual link
+            href="http://localhost:5180/profile?tab=bookings" // TODO: replace with actual link
             style={{
               backgroundColor: "#9537C7",
               color: "#ffffff",

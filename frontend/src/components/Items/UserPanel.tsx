@@ -15,6 +15,11 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { FilterValue } from "@/types";
+import {
+  fetchAllOrganizations,
+  selectOrganizations,
+} from "@/store/slices/organizationSlice";
+import type { OrganizationDetails } from "@/types/organization";
 
 const UserPanel = () => {
   const tags = useAppSelector(selectAllTags);
@@ -23,10 +28,15 @@ const UserPanel = () => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
+  const organizations = useAppSelector(selectOrganizations);
 
   useEffect(() => {
-    dispatch(fetchAllTags());
-    dispatch(fetchAllLocations());
+    if (tags.length < 1) void dispatch(fetchAllTags({ page: 1, limit: 10 }));
+    if (locations.length < 1)
+      void dispatch(fetchAllLocations({ page: 1, limit: 10 }));
+    if (organizations.length < 1)
+      void dispatch(fetchAllOrganizations({ page: 1, limit: 50 }));
+    // eslint-disable-next-line
   }, [dispatch]);
 
   // Unique item_type values from items
@@ -44,10 +54,24 @@ const UserPanel = () => {
         .sort((a, b) => a.localeCompare(b)),
     ),
   );
-  const [showAllItemTypes, setShowAllItemTypes] = useState(false);
-  const visibleItemTypes = showAllItemTypes
-    ? uniqueItemTypes
-    : uniqueItemTypes.slice(0, 5);
+  // Shared expand/collapse state per filter list (max 5 visible by default)
+  type ExpandableSection = "itemTypes" | "organizations" | "locations" | "tags";
+  const MAX_VISIBLE = 5;
+  const [expanded, setExpanded] = useState<Record<ExpandableSection, boolean>>({
+    itemTypes: false,
+    organizations: false,
+    locations: false,
+    tags: false,
+  });
+  const toggleExpanded = (key: ExpandableSection) =>
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
+    expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
+
+  const visibleItemTypes = getVisible(uniqueItemTypes, "itemTypes");
+  const visibleOrganizations = getVisible(organizations, "organizations");
+  const visibleLocations = getVisible(locations, "locations");
+  const visibleTags = getVisible(tags, "tags");
 
   // filter states
   const [filters, setFilters] = useState<{
@@ -57,6 +81,7 @@ const UserPanel = () => {
     itemTypes: string[];
     tagIds: string[];
     locationIds: string[];
+    orgIds?: string[];
   }>({
     isActive: true, // Is item active or not filter
     averageRating: [],
@@ -64,7 +89,18 @@ const UserPanel = () => {
     itemTypes: [],
     tagIds: [],
     locationIds: [],
+    orgIds: [],
   });
+
+  // --- slider thumb state so the handle moves smoothly without refetching ---
+  const [tempAvailableRange, setTempAvailableRange] = useState<
+    [number, number]
+  >(filters.itemsNumberAvailable);
+
+  // keep local thumb state in sync when filters reset externally
+  useEffect(() => {
+    setTempAvailableRange(filters.itemsNumberAvailable);
+  }, [filters.itemsNumberAvailable]);
 
   // Handle filter change
   const handleFilterChange = (filterKey: string, value: FilterValue) => {
@@ -75,19 +111,20 @@ const UserPanel = () => {
   };
 
   const countActiveFilters = () => {
-  let count = 0;
-  if (
-    filters.itemsNumberAvailable[0] !== 0 ||
-    filters.itemsNumberAvailable[1] !== 100
-  ) {
-    count++;
-  }
-  count += filters.averageRating.length;
-  count += filters.itemTypes.length;
-  count += filters.tagIds.length;
-  count += filters.locationIds.length;
-  return count;
-};
+    let count = 0;
+    if (
+      filters.itemsNumberAvailable[0] !== 0 ||
+      filters.itemsNumberAvailable[1] !== 100
+    ) {
+      count++;
+    }
+    count += filters.averageRating.length;
+    count += filters.itemTypes.length;
+    count += filters.tagIds.length;
+    count += filters.locationIds.length;
+    count += filters.orgIds?.length ?? 0;
+    return count;
+  };
 
   // Mobile filter toggle visibility state
   const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -102,22 +139,24 @@ const UserPanel = () => {
     <div className="flex min-h-screen w-full overflow-y-auto md:px-10">
       {/* Sidebar: Filters Panel */}
       <aside
-  ref={filterRef}
-  className={`${
-    isFilterVisible ? "block" : "hidden"
-  } md:flex md:flex-col md:min-h-[calc(100vh-60px)] w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
-  style={{
-    top: "60px",
-    backgroundColor: "#fff",
-  }}
->
+        ref={filterRef}
+        className={`${
+          isFilterVisible ? "block" : "hidden"
+        } md:flex md:flex-col md:min-h-[calc(100vh-60px)] w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
+        style={{
+          top: "60px",
+          backgroundColor: "#fff",
+        }}
+      >
         {/* Filter Section */}
         <nav className="flex flex-col space-y-4 border-1 p-4 rounded-md">
           <div>
             <div className="flex items-center justify-between my-2">
-              <h3 className="text-secondary font-bold mb-0">Filters</h3>
+              <h3 className="text-secondary font-bold mb-0">
+                {t.userPanel.filters.title[lang]}
+              </h3>
               <div className="flex items-center gap-2">
-                 {/* Clear filters button */}
+                {/* Clear filters button */}
                 {countActiveFilters() > 0 && (
                   <div className="flex justify-start">
                     <Button
@@ -132,10 +171,11 @@ const UserPanel = () => {
                           itemTypes: [],
                           tagIds: [],
                           locationIds: [],
+                          orgIds: [],
                         })
                       }
                     >
-                      Clear Filters
+                      {t.userPanel.filters.clearFilters[lang]}
                     </Button>
                   </div>
                 )}
@@ -146,7 +186,7 @@ const UserPanel = () => {
                 <Button
                   onClick={() => setIsFilterVisible(false)}
                   className="md:hidden p-1 rounded hover:bg-slate-100 transition-colors"
-                  aria-label="Close Filters"
+                  aria-label={t.userPanel.filters.closeFilters[lang]}
                 >
                   <SlidersIcon className="w-5 h-5 text-highlight2" />
                 </Button>
@@ -177,17 +217,18 @@ const UserPanel = () => {
                       handleFilterChange("itemTypes", updated);
                     }}
                   >
-                    {typeName.charAt(0).toUpperCase() + typeName.slice(1)} <ChevronRight className="w-4 h-4 inline" />
+                    {typeName.charAt(0).toUpperCase() + typeName.slice(1)}{" "}
+                    <ChevronRight className="w-4 h-4 inline" />
                   </span>
                 );
               })}
-              {uniqueItemTypes.length > 5 && (
+              {uniqueItemTypes.length > MAX_VISIBLE && (
                 <Button
                   variant="ghost"
                   className="text-left text-sm text-secondary"
-                  onClick={() => setShowAllItemTypes((prev) => !prev)}
+                  onClick={() => toggleExpanded("itemTypes")}
                 >
-                  {showAllItemTypes
+                  {expanded.itemTypes
                     ? t.userPanel.categories.showLess[lang]
                     : t.userPanel.categories.seeAll[lang]}
                 </Button>
@@ -204,28 +245,33 @@ const UserPanel = () => {
               </label>
               <Slider
                 min={0}
-                max={100} // edit upper limit
-                value={filters.itemsNumberAvailable}
+                max={100}
+                value={tempAvailableRange}
+                // update thumb position instantly
                 onValueChange={([min, max]) =>
-                  handleFilterChange("itemsNumberAvailable", [min, max])
+                  setTempAvailableRange([min, max])
                 }
+                // commit filter (and trigger API refetch) only on release
+                onValueCommit={([min, max]) => {
+                  setTempAvailableRange([min, max]);
+                  handleFilterChange("itemsNumberAvailable", [min, max]);
+                }}
                 className="w-full"
               />
               <div className="mt-2 text-secondary text-center">
-                {filters.itemsNumberAvailable[0]} -{" "}
-                {filters.itemsNumberAvailable[1]}{" "}
+                {tempAvailableRange[0]} - {tempAvailableRange[1]}{" "}
                 {t.userPanel.availability.items[lang]}
               </div>
             </div>
             <Separator className="my-4" />
 
             {/* Locations filter section */}
-            <div className="my-4">
+            <div className="my-4 flex flex-col">
               <label className="text-primary font-medium block mb-2">
                 {t.userPanel.locations.title[lang]}
               </label>
               <div className="flex flex-col gap-2">
-                {locations.map((location) => {
+                {visibleLocations.map((location) => {
                   const isSelected = filters.locationIds?.includes(location.id);
                   return (
                     <label
@@ -256,17 +302,28 @@ const UserPanel = () => {
                   );
                 })}
               </div>
+              {locations.length > MAX_VISIBLE && (
+                <Button
+                  variant="ghost"
+                  className="text-left text-sm text-secondary"
+                  onClick={() => toggleExpanded("locations")}
+                >
+                  {expanded.locations
+                    ? t.userPanel.categories.showLess[lang]
+                    : t.userPanel.categories.seeAll[lang]}
+                </Button>
+              )}
             </div>
 
             <Separator className="my-4" />
             {/* Tags */}
-            <div className="my-4">
+            <div className="my-4 flex flex-col">
               <label className="text-primary block mb-4">
                 {" "}
                 {t.userPanel.tags.title[lang]}
               </label>
               <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => {
+                {visibleTags.map((tag) => {
                   const tagName =
                     tag.translations?.[lang]?.name ||
                     tag.translations?.[lang === "fi" ? "en" : "fi"]?.name ||
@@ -293,8 +350,76 @@ const UserPanel = () => {
                   );
                 })}
               </div>
+              {tags.length > MAX_VISIBLE && (
+                <Button
+                  variant="ghost"
+                  className="text-left text-sm text-secondary mt-2"
+                  onClick={() => toggleExpanded("tags")}
+                >
+                  {expanded.tags
+                    ? t.userPanel.categories.showLess[lang]
+                    : t.userPanel.categories.seeAll[lang]}
+                </Button>
+              )}
             </div>
             <Separator className="my-4" />
+
+            {/* Organizations */}
+            {organizations && organizations.length > 0 && (
+              <div className="flex flex-col gap-2 mb-4">
+                <label className="text-primary text-md block mb-0">
+                  {t.userPanel.organizations.title[lang]}
+                </label>
+                <div className="flex flex-col gap-2">
+                  {visibleOrganizations.map((org: OrganizationDetails) => {
+                    const selected = filters.orgIds || [];
+                    const isSelected = selected.includes(org.id);
+                    return (
+                      <label
+                        key={org.id}
+                        className="flex items-center gap-2 text-sm cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          className="accent-secondary"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            const next = new Set(selected);
+                            if (e.target.checked) next.add(org.id);
+                            else next.delete(org.id);
+                            handleFilterChange(
+                              "orgIds",
+                              Array.from(next) as unknown as FilterValue,
+                            );
+                          }}
+                        />
+                        <span
+                          className={
+                            isSelected
+                              ? "text-secondary font-medium"
+                              : "text-slate-600"
+                          }
+                        >
+                          {org.name}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {organizations.length > MAX_VISIBLE && (
+                  <Button
+                    variant="ghost"
+                    className="text-left text-sm text-secondary"
+                    onClick={() => toggleExpanded("organizations")}
+                  >
+                    {expanded.organizations
+                      ? t.userPanel.categories.showLess[lang]
+                      : t.userPanel.categories.seeAll[lang]}
+                  </Button>
+                )}
+                <Separator className="my-2" />
+              </div>
+            )}
 
             {/* Rating filter */}
             <div className="my-4">
@@ -350,6 +475,7 @@ const UserPanel = () => {
                         itemTypes: [],
                         tagIds: [],
                         locationIds: [],
+                        orgIds: [],
                       })
                     }
                   >

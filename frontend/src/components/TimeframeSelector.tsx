@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setTimeframe, clearTimeframe } from "../store/slices/timeframeSlice";
 import { Calendar } from "./ui/calendar";
@@ -20,6 +20,7 @@ const TimeframeSelector: React.FC = () => {
   );
   const startDate = startDateStr ? new Date(startDateStr) : undefined;
   const endDate = endDateStr ? new Date(endDateStr) : undefined;
+  const endDatePopoverRef = useRef<HTMLButtonElement>(null);
 
   const cartItems = useAppSelector(selectCartItems);
 
@@ -40,6 +41,10 @@ const TimeframeSelector: React.FC = () => {
           endDate: endDateStr,
         }),
       );
+      // auto open the end date popover after selecting a start date
+      setTimeout(() => {
+        endDatePopoverRef.current?.click(); // trigger popover
+      }, 150);
     } else {
       dispatch(
         setTimeframe({
@@ -47,6 +52,10 @@ const TimeframeSelector: React.FC = () => {
           endDate: date ? date.toISOString() : undefined,
         }),
       );
+      // auto-close after selecting end date
+      setTimeout(() => {
+        endDatePopoverRef.current?.click();
+      }, 100);
     }
   };
 
@@ -87,7 +96,8 @@ const TimeframeSelector: React.FC = () => {
             <Popover>
               <PopoverTrigger asChild>
                 <DatePickerButton
-                  value={startDate ? formatDate(startDate, "d MMM yyyy") : null}
+                  data-cy="timeframe-start-btn"
+                  value={startDate ? formatDate(startDate, "d MMM yyyy") : ""}
                   placeholder={t.timeframeSelector.startDate.placeholder[lang]}
                 />
               </PopoverTrigger>
@@ -115,7 +125,9 @@ const TimeframeSelector: React.FC = () => {
             <Popover>
               <PopoverTrigger asChild>
                 <DatePickerButton
-                  value={endDate ? formatDate(endDate, "d MMM yyyy") : null}
+                  ref={endDatePopoverRef}
+                  data-cy="timeframe-end-btn"
+                  value={endDate ? formatDate(endDate, "d MMM yyyy") : ""}
                   placeholder={t.timeframeSelector.endDate.placeholder[lang]}
                 />
               </PopoverTrigger>
@@ -125,6 +137,7 @@ const TimeframeSelector: React.FC = () => {
                   selected={endDate || undefined}
                   onSelect={(date) => handleDateChange("end", date)}
                   initialFocus
+                  month={startDate}
                   disabled={(date) => {
                     // Always return a boolean value:
                     const isBeforeToday =
@@ -134,9 +147,12 @@ const TimeframeSelector: React.FC = () => {
                       : false;
                     // prevent dates more than 14 days from start
                     const isTooFarFromStart = startDate
-                      ? date.getTime() > new Date(startDate.getTime() + 14 * 86400000).getTime()
+                      ? date.getTime() >
+                        new Date(startDate.getTime() + 14 * 86400000).getTime()
                       : false;
-                    return isBeforeToday || isBeforeStartDate || isTooFarFromStart;
+                    return (
+                      isBeforeToday || isBeforeStartDate || isTooFarFromStart
+                    );
                   }}
                 />
               </PopoverContent>

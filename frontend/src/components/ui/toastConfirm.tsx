@@ -20,16 +20,34 @@ export const toastConfirm = ({
   onCancel,
 }: ToastConfirmOptions) => {
   toast.custom((t) => (
-    <div onMouseDown={(e) => e.stopPropagation()}>
-      <Card className="w-[360px] shadow-lg border">
+    <div onMouseDown={(e) => e.stopPropagation()} data-cy="toast-confirm-root">
+      <Card className="w-[360px] shadow-lg border" data-cy="toast-confirm-card">
         <CardHeader>
-          <CardTitle className="text-lg" style={{ zIndex: 9999, pointerEvents: "auto" }}>{title}</CardTitle>
+          <CardTitle
+            className="text-lg"
+            style={{ zIndex: 9999, pointerEvents: "auto" }}
+            data-cy="toast-confirm-title"
+          >
+            {title}
+          </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          <p className="text-sm text-muted-foreground">{description}</p>
-          <div className="flex justify-between gap-2 mt-2">
+        <CardContent
+          className="flex flex-col gap-2"
+          data-cy="toast-confirm-content"
+        >
+          <p
+            className="text-sm text-muted-foreground"
+            data-cy="toast-confirm-description"
+          >
+            {description}
+          </p>
+          <div
+            className="flex justify-between gap-2 mt-2"
+            data-cy="toast-confirm-actions"
+          >
             <Button
               variant="outline"
+              data-cy="toast-cancel-btn"
               onClick={() => {
                 toast.dismiss(t);
                 onCancel?.();
@@ -39,11 +57,12 @@ export const toastConfirm = ({
             </Button>
             <Button
               variant="destructive"
+              data-cy="toast-confirm-btn"
               onClick={async () => {
                 toast.dismiss(t);
                 try {
                   await onConfirm();
-                } catch (err) {
+                } catch {
                   toast.error("Action failed.");
                 }
               }}

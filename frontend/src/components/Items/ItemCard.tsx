@@ -1,33 +1,32 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
-import { Clock } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { getItemById } from "@/store/slices/itemsSlice";
-import { Item } from "../../types/item";
-import { useFormattedDate } from "@/hooks/useFormattedDate";
-import { Input } from "../ui/input";
-import { addToCart } from "@/store/slices/cartSlice";
-import { toast } from "sonner";
+import imagePlaceholder from "@/assets/defaultImage.jpg";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useLanguage } from "@/context/LanguageContext";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { addToCart } from "@/store/slices/cartSlice";
+import { getItemById } from "@/store/slices/itemsSlice";
+import { t } from "@/translations";
+import { ItemTranslation } from "@/types";
+import { ItemImageAvailabilityInfo } from "@/types/storage";
+import { Clock, MapPin } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
 import {
   getItemImages,
   selectItemImages,
 } from "../../store/slices/itemImagesSlice";
-import imagePlaceholder from "@/assets/defaultImage.jpg";
-import { ordersApi } from "@/api/services/orders";
-import { ItemImageAvailabilityInfo } from "@/types/storage";
-import { MapPin } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
-import { t } from "@/translations";
-import { useLanguage } from "@/context/LanguageContext";
-import { ItemTranslation } from "@/types";
+import { Item } from "../../types/item";
+import { Input } from "../ui/input";
+import { itemsApi } from "@/api/services/items";
 
 interface ItemsCardProps {
   item: Item;
@@ -46,7 +45,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
-      availableQuantity: item.items_number_available,
+      availableQuantity: item.quantity || 0,
       isChecking: false,
       error: null,
     });
@@ -140,32 +139,14 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
-    dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
-    navigate(`/items/${itemId}`);
+    void dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
+    void navigate(`/storage/items/${itemId}`);
   };
-
-  // Handle item deletion
-  // const handleDelete = async () => {
-  //   if (!window.confirm("Are you sure you want to delete this item?")) return;
-  //   try {
-  //     await dispatch(deleteItem(item.id)).unwrap(); // Delete item via Redux action
-  //     toast.success("Item deleted successfully");
-  //   } catch (error) {
-  //     console.error("Error deleting item:", error);
-  //     toast.error("Failed to delete item");
-  //   }
-  // };
-
-  // // Handle item update (for admin only)
-  // const handleUpdate = () => {
-  //   // Navigate to the update form or trigger a modal to edit the item
-  //   navigate(`/admin/items/${item.id}/edit`);
-  // };
 
   // Handle adding item to cart
   const handleAddToCart = () => {
     if (item) {
-      dispatch(
+      void dispatch(
         addToCart({
           item: item,
           quantity: quantity,
@@ -179,18 +160,16 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
     }
   };
 
-  // Check if the item is available for the selected timeframe
+  // Update availability info based on dates selection
   useEffect(() => {
-    // Only check availability if dates are selected
     if (startDate && endDate) {
       setAvailabilityInfo((prev) => ({
         ...prev,
         isChecking: true,
         error: null,
       }));
-
-      ordersApi
-        .checkAvailability(item.id, startDate, endDate)
+      void itemsApi
+        .checkAvailability(item.id, new Date(startDate), new Date(endDate))
         .then((response) => {
           setAvailabilityInfo({
             availableQuantity: response.availableQuantity,
@@ -201,13 +180,20 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         .catch((error) => {
           console.error("Error checking availability:", error);
           setAvailabilityInfo({
-            availableQuantity: item.items_number_available,
+            availableQuantity: item.available_quantity || 0,
             isChecking: false,
             error: "Failed to check availability",
           });
         });
+    } else {
+      // When no dates selected, show total quantity
+      setAvailabilityInfo({
+        availableQuantity: item.quantity || 0,
+        isChecking: false,
+        error: null,
+      });
     }
-  }, [item.id, startDate, endDate]);
+  }, [startDate, endDate, item.id, item.available_quantity, item.quantity]);
 
   const isItemAvailableForTimeframe = availabilityInfo.availableQuantity > 0;
 
@@ -225,7 +211,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       className="w-full max-w-[350px] flex flex-col justify-between p-4"
     >
       {/* Image Section */}
-      <div className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden">
+      <div
+        className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden"
+        data-cy="item-image-section"
+      >
         {isImageLoading && !loadFailed && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
             <div className="w-8 h-8 border-4 border-gray-300 border-t-secondary rounded-full animate-spin"></div>
@@ -269,15 +258,21 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       </div>
 
       {/* Item Details */}
-      <div>
-        <h2 className="text-lg text-primary font-normal text-center mb-1">
+      <div data-cy="item-details">
+        <h2
+          className="text-lg text-primary font-normal text-center mb-1"
+          data-cy="item-name"
+        >
           {itemContent?.item_name
             ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
             : "Tuote"}
         </h2>
         {/* Display location name */}
         {item.location_details && (
-          <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          <div
+            className="flex items-center justify-center gap-1 text-xs text-muted-foreground"
+            data-cy="item-location"
+          >
             <MapPin className="h-3.5 w-3.5" />
             <span>{item.location_details.name}</span>
           </div>
@@ -286,7 +281,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
       {/* Display selected booking timeframe if it exists */}
       {startDate && endDate && (
-        <div className="bg-slate-100 p-2 rounded-md mb-1 flex flex-col items-center">
+        <div
+          className="bg-slate-100 p-2 rounded-md mb-1 flex flex-col items-center"
+          data-cy="item-timeframe"
+        >
           <div className="flex items-center text-sm text-slate-400">
             <Clock className="h-4 w-4 mr-1" />
             <span className="font-medium text-xs">
@@ -301,7 +299,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       )}
 
       {/* Quantity Input */}
-      <div>
+      <div data-cy="item-quantity-section">
         <div className="flex flex-col flex-wrap items-center space-y-2 justify-between">
           <div className="flex items-center">
             <Button
@@ -332,11 +330,11 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
+              onClick={() => {
                 setQuantity(
                   Math.min(availabilityInfo.availableQuantity, quantity + 1),
-                )
-              }
+                );
+              }}
               className="h-8 w-8 p-0"
               disabled={quantity >= availabilityInfo.availableQuantity}
             >
@@ -344,26 +342,26 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             </Button>
           </div>
 
-        <div className="flex items-center justify-end mb-3 mt-1">
-          {availabilityInfo.isChecking ? (
-            <p className="text-xs text-slate-400 italic m-0">
-              {t.itemCard.checkingAvailability[lang]}
-            </p>
-          ) : availabilityInfo.error ? (
-            <p className="text-xs text-red-500 italic m-0">
-              {t.itemCard.availabilityError[lang]}
-            </p>
-          ) : (
-            <p className="text-xs text-slate-400 italic m-0">
-              {startDate && endDate
-                ? availabilityInfo.availableQuantity > 0
-                  ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
-                  : `${t.itemCard.notAvailable[lang]}`
-                : `${t.itemCard.totalUnits[lang]}: ${item.items_number_available}`}
-            </p>
-          )}
+          <div className="flex items-center justify-end mb-3 mt-1">
+            {availabilityInfo.isChecking ? (
+              <p className="text-xs text-slate-400 italic m-0">
+                {t.itemCard.checkingAvailability[lang]}
+              </p>
+            ) : availabilityInfo.error ? (
+              <p className="text-xs text-red-500 italic m-0">
+                {t.itemCard.availabilityError[lang]}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 italic m-0">
+                {startDate && endDate
+                  ? availabilityInfo.availableQuantity > 0
+                    ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
+                    : `${t.itemCard.notAvailable[lang]}`
+                  : `${t.itemCard.totalUnits[lang]}: ${item.quantity}`}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
 
         {/* Add to Cart Button with Tooltip */}
         <TooltipProvider>
@@ -384,6 +382,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                   style={{
                     pointerEvents: isAddToCartDisabled ? "none" : "auto",
                   }}
+                  data-cy="item-add-to-cart-btn"
                 >
                   {t.itemDetails.items.addToCart[lang]}
                 </Button>
@@ -406,6 +405,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       <Button
         onClick={() => handleItemClick(item.id)}
         className="w-full bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
+        data-cy="item-view-details-btn"
       >
         {t.itemCard.viewDetails ? t.itemCard.viewDetails[lang] : "Katso tiedot"}
       </Button>

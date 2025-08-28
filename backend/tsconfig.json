@@ -10,6 +10,10 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "@common/*": ["../common/*"],
+      "@src/*": ["./src/*"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
@@ -19,6 +23,6 @@
     "noFallthroughCasesInSwitch": false,
     "jsx": "react"
   },
-  "include": ["src/**/*"],
-  "exclude": ["../frontend", "node_modules", "dist"]
+  "include": ["src/**/*", "config.mts", "../common/**/*.ts", "test"],
+  "exclude": ["../frontend", "node_modules", "dist", "src/types/supabase.types.ts"]
 }

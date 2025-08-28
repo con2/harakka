@@ -1,7 +1,13 @@
+# Supabase files
+/supabase   
+.vscode     
+#Supabase project
+supabase-project/volumes/db
 # compiled output
 /dist
 /node_modules
 /build
+/.vscode
 
 # Logs
 logs

@@ -1,17 +1,20 @@
 {
-  "cSpell.words": ["plpgsql", "SUPABASE", "superadmin", "varchar"],
-  "cSpell.customDictionaries": {
-    "custom-dictionary-workspace": {
-      "name": "custom-dictionary-workspace",
-      "path": "${workspaceFolder:FullStack_Storage_and_Booking_App}/.cspell/custom-dictionary-workspace.txt",
-      "addWords": true,
-      "scope": "workspace"
-    }
-  },
-  "github.copilot.enable": {
-    "*": true,
-    "plaintext": true,
-    "markdown": true,
-    "scminput": true
-  }
+  "deno.enable": true,
+  "deno.enablePaths": ["supabase/functions"],
+  "deno.lint": true,
+  "deno.unstable": [
+    "bare-node-builtins",
+    "byonm",
+    "sloppy-imports",
+    "unsafe-proto",
+    "webgpu",
+    "broadcast-channel",
+    "worker-options",
+    "cron",
+    "kv",
+    "ffi",
+    "fs",
+    "http",
+    "net"
+  ]
 }
