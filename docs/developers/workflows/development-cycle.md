@@ -44,7 +44,7 @@ When implementing a feature:
 - Break work into logical, atomic commits
 - Use the Conventional Commits format for commit messages:
 
-```
+```text
 feat(component): add item availability check
 
 This adds real-time availability checking for storage items based on the
@@ -211,7 +211,7 @@ For urgent production issues:
    - Write tests to verify the fix
    - Use appropriate commit message format:
 
-     ```
+     ```text
      fix(auth): resolve login session timeout issue
 
      Fixes SCRUM-777

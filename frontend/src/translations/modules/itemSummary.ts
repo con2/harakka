@@ -26,6 +26,10 @@ export const itemSummary = {
       en: "No items added yet",
       fi: "Ei tuotteita lisätty vielä",
     },
+    addingItems: {
+      en: "Adding items to {org}",
+      fi: "Lisätään tuotteita {org}",
+    },
   },
   tableHeaders: {
     item: {
@@ -51,14 +55,80 @@ export const itemSummary = {
       fi: "Tuotteita yhteensä",
     },
   },
-  messages: {
-    uploadFailure: {
-      en: "Items could not be created. Contact support if the error persists.",
-      fi: "Tuotteita ei voitu luoda. Ota yhteyttä tukeen, jos virhe toistuu.",
+  errorCodes: {
+    multipleErrors: {
+      en: "Incorrect values provided for {amount} fields",
+      fi: "Virheellisiä arvoja annettu {amount} kentässä",
     },
-    uploadSuccess: {
-      en: "Your items were created!",
-      fi: "Tuotteesi on luotu!",
+    en_item_name: {
+      too_small: {
+        en: "The value for item name (en) was too short",
+        fi: "Tuotenimen arvo (en) oli liian lyhyt",
+      },
+      too_big: {
+        en: "The value for item name (en) was too long",
+        fi: "Tuotenimen arvo (en) oli liian pitkä",
+      },
+    },
+    en_item_type: {
+      too_small: {
+        en: "The value for item type (en) was too short",
+        fi: "Tuotetyypin arvo (en) oli liian lyhyt",
+      },
+      too_big: {
+        en: "The value for item type (en) was too long",
+        fi: "Tuotetyypin arvo (en) oli liian pitkä",
+      },
+    },
+    en_item_description: {
+      too_small: {
+        en: "The value for item description (en) was too short",
+        fi: "Tuotekuvauksen arvo (en) oli liian lyhyt",
+      },
+      too_big: {
+        en: "The value for item description (en) was too long",
+        fi: "Tuotekuvauksen arvo (en) oli liian lyhyt",
+      },
+    },
+    fi_item_name: {
+      too_small: {
+        en: "The value for item name (en) was too short",
+        fi: "Tuotenimen arvo (fi) oli liian lyhyt",
+      },
+      too_big: {
+        en: "The value for item name (fi) was too long",
+        fi: "Tuotenimen arvo (fi) oli liian pitkä",
+      },
+    },
+    fi_item_type: {
+      too_small: {
+        en: "The value for item type (fi) was too short",
+        fi: "Tuotetyypin arvo (fi) oli liian lyhyt",
+      },
+      too_big: {
+        en: "The value for item type (fi) was too long",
+        fi: "Tuotetyypin arvo (fi) oli liian pitkä",
+      },
+    },
+    fi_item_description: {
+      too_small: {
+        en: "The value for item description (fi) was too short",
+        fi: "Tuotekuvauksen arvo (fi) oli liian lyhyt",
+      },
+      too_big: {
+        en: "The value for item description (fi) was too long",
+        fi: "Tuotekuvauksen arvo (fi) oli liian pitkä",
+      },
+    },
+    quantity: {
+      too_small: {
+        en: "The value for quantity must be at least 1",
+        fi: "Määrän arvon on oltava vähintään 1",
+      },
+    },
+    invalid_type: {
+      en: "An invalid type was provided for {field}",
+      fi: "Virheellinen tyyppi annettu kentälle {field}",
     },
   },
 };

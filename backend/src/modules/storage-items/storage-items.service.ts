@@ -13,24 +13,25 @@ import {
 } from "./interfaces/storage-item.interface";
 import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
-import { TablesUpdate } from "@common/supabase.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
-import {
-  ApiResponse,
-  ApiSingleResponse,
-} from "../../../../common/response.types"; // Import ApiSingleResponse for type safety
+import { applyItemFilters } from "@src/utils/storage-items.utils";
+import { ApiResponse, ApiSingleResponse } from "@common/response.types"; // Import ApiSingleResponse for type safety
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagService } from "../tag/tag.service";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 import { ItemFormData } from "@common/items/form.types";
 import {
   mapItemImages,
-  mapOrgLinks,
   mapStorageItems,
   mapTagLinks,
 } from "@src/utils/storage-items.utils";
 import { ItemImagesService } from "../item-images/item-images.service";
+import { parse, ParseResult } from "papaparse";
+import { Item, ItemSchema } from "./schema/item-schema";
+import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
+import { ZodError } from "zod";
+import { CSVItem, ProcessedCSV } from "@common/items/csv.types";
 
 @Injectable()
 export class StorageItemsService {
@@ -91,7 +92,7 @@ export class StorageItemsService {
     const mappedData = result.data.map(
       (item: StorageItemWithJoin): StorageItem => ({
         ...item,
-        storage_item_tags:
+        tags:
           item.storage_item_tags.map(
             (tagLink) => tagLink.tags, // Flatten out the tags object to just be the tag itself
           ) ?? [], // Fallback to empty array if no tags are available
@@ -141,11 +142,11 @@ export class StorageItemsService {
         .single();
 
     if (error) handleSupabaseError(error);
-
+    const { storage_item_tags, storage_locations, ...item } = data;
     // Flatten the tags to make them easier to work with
     return {
-      ...data,
-      storage_item_tags: data?.storage_item_tags
+      ...item,
+      tags: data?.storage_item_tags
         ? data.storage_item_tags.map((tagLink) => tagLink.tags) // Extract just the tag itself
         : [],
       location_details: data?.storage_locations || null,
@@ -175,15 +176,6 @@ export class StorageItemsService {
         throw new Error(error.message);
       }
 
-      // Insert org data
-      const mappedOrg = mapOrgLinks(payload);
-      const { error: orgError } = await supabase
-        .from("organization_items")
-        .insert(mappedOrg);
-      if (orgError) {
-        throw new Error(orgError.message);
-      }
-
       // Insert item tags
       const mappedTags = mapTagLinks(payload);
       const tagResult = await this.tagService.assignTagsToBulk(req, mappedTags);
@@ -206,7 +198,6 @@ export class StorageItemsService {
       await Promise.allSettled([
         supabase.from("storage_item_images").delete().in("item_id", item_ids),
         supabase.from("storage_item_tags").delete().in("item_id", item_ids),
-        supabase.from("organization_items").delete().in("item_id", item_ids),
         supabase.from("storage_items").delete().in("id", item_ids),
       ]);
 
@@ -217,134 +208,142 @@ export class StorageItemsService {
     }
   }
 
-  // 4 update an item
+  /**
+   * Update an item in the system.
+   * If the item exists within more than one organization, a copy is made, which is updated and returned.
+   * @param req An authenticated request
+   * @param item_id The ID of the item which to update
+   * @param org_id The org the item belongs to
+   * @param item The updated item properties
+   * @returns {UpdateResponse}
+   */
   async updateItem(
-    req: Request,
-    id: string,
-    item: Partial<TablesUpdate<"storage_items">> & {
-      tagIds?: string[];
-      location_details?: LocationRow;
-    },
-  ): Promise<StorageItem> {
-    const supabase = req["supabase"] as SupabaseClient;
+    req: AuthRequest,
+    item_id: string,
+    org_id: string,
+    item: UpdateItem,
+  ): Promise<UpdateResponse> {
+    const supabase = req.supabase;
     // Extract properties that shouldn't be sent to the database
-    const { tagIds, ...itemData } = item;
-    if ("location_details" in item) delete item.location_details;
+    const { tags, location_details, ...itemData } = item;
 
     // Update the main item
     const {
-      data: updatedItemData,
+      data: updatedItem,
       error: updateError,
-    }: PostgrestResponse<StorageItem> = await supabase
-      .from("storage_items")
+    }: PostgrestSingleResponse<
+      StorageItem & { storage_locations: LocationRow }
+    > = await supabase
+      .from(`storage_items`)
       .update(itemData)
-      .eq("id", id)
-      .select();
+      .eq("id", item_id)
+      .eq("org_id", org_id)
+      .select(`*, storage_locations(*)`)
+      .single();
 
     if (updateError) {
       throw new Error(updateError.message);
     }
 
-    const updatedItem = updatedItemData?.[0];
     if (!updatedItem)
       throw new BadRequestException(
         updateError || "Failed to update storage item",
       );
 
     // Update tag relationships
-    if (tagIds) {
-      // Remove all old tags
-      await supabase.from("storage_item_tags").delete().eq("item_id", id);
+    if (tags && tags.length > 0)
+      await this.tagService.assignTagsToItem(req, item_id, tags);
 
-      // Insert new tag relationships
-      if (tagIds.length > 0) {
-        const tagLinks = tagIds.map((tagId) => ({
-          item_id: id,
-          tag_id: tagId,
-        }));
-        const { error: tagError } = await supabase
-          .from("storage_item_tags")
-          .insert(tagLinks);
-        if (tagError) throw new Error(tagError.message);
-      }
-    }
+    const { storage_locations, ...rest } = updatedItem;
+    const formattedItem = { ...rest, location_details: storage_locations };
 
-    return updatedItem;
+    return {
+      success: true,
+      item: formattedItem,
+    };
   }
 
-  // 5. delete an item
+  /**
+   * Delete an organizations item.
+   * This method soft-deletes the item, then relies on a daily CRON job to remove completely inactive and * unreferenced items. (CRON JOB: 'delete_inactive_items')
+   * @param req An Authorized request
+   * @param item_id The ID of the item to soft-delete
+   * @param org_id The organization ID which to soft-delete the item from
+   * @returns
+   */
   async deleteItem(
-    req: Request,
-    id: string,
-    confirm?: string,
+    req: AuthRequest,
+    item_id: string,
+    org_id: string,
   ): Promise<{ success: boolean; id: string }> {
-    const supabase = req["supabase"] as SupabaseClient;
-    if (!id) {
+    const supabase = req.supabase;
+    if (!item_id) {
       throw new Error("No item ID provided for deletion");
     }
 
-    // Safety check: only allow deletion if confirmed
-    const check = await this.canDeleteItem(req, id, confirm);
-    if (!check.success) {
-      throw new Error(
-        check.reason || "Item cannot be deleted due to unknown restrictions",
-      );
-    }
+    try {
+      // Get image paths
+      const {
+        data: images,
+        error: imagesError,
+      }: PostgrestResponse<{ id: string; storage_path: string }> =
+        await supabase
+          .from("storage_item_images")
+          .select("id, storage_path")
+          .eq("item_id", item_id);
 
-    // Step 1: Delete images associated with the item
-    const {
-      data: images,
-      error: imagesError,
-    }: PostgrestResponse<{ id: string; storage_path: string }> = await supabase
-      .from("storage_item_images")
-      .select("id, storage_path")
-      .eq("item_id", id);
+      if (imagesError) {
+        throw new Error(`Failed to get images: ${imagesError.message}`);
+      }
 
-    if (imagesError) {
-      throw new Error(`Failed to get images: ${imagesError.message}`);
-    }
-
-    // Delete any found images
-    if (images && images.length > 0) {
-      const paths = images.map((i) => i.storage_path);
-      await supabase.storage.from("item-images").remove(paths);
-
-      // Then delete the image records
-      const { error: deleteImagesError } = await supabase
-        .from("storage_item_images")
-        .delete()
-        .eq("item_id", id);
-
-      if (deleteImagesError) {
+      // Update the storage_items data
+      // Set is_deleted to true and is_active to false
+      // This way it cannot be booked, and is scheduled to be deleted once
+      // there are no future or ongoing bookings with the item (CRON JOB: 'delete_inactive_items')
+      const { error: itemUpdateError } = await supabase
+        .from("storage_items")
+        .update({ is_deleted: true, is_active: false })
+        .eq("id", item_id)
+        .eq("org_id", org_id);
+      if (itemUpdateError)
         throw new Error(
-          `Failed to delete item images: ${deleteImagesError.message}`,
+          `Failed to update org items: ${itemUpdateError.message}`,
+        );
+
+      // Delete any found images
+      if (images && images.length > 0) {
+        const paths = images.map((i) => i.storage_path);
+        await supabase.storage.from("item-images").remove(paths);
+
+        // Then delete the image records
+        const { error: deleteImagesError } = await supabase
+          .from("storage_item_images")
+          .delete()
+          .eq("item_id", item_id);
+
+        if (deleteImagesError) {
+          throw new Error(
+            `Failed to delete item images: ${deleteImagesError.message}`,
+          );
+        }
+      }
+
+      // Step 2: Delete related tags from the join table
+      const { error: tagDeleteError } = await supabase
+        .from("storage_item_tags")
+        .delete()
+        .eq("item_id", item_id);
+
+      if (tagDeleteError) {
+        throw new Error(
+          `Failed to delete related tags: ${tagDeleteError.message}`,
         );
       }
+    } catch (error) {
+      console.error(error);
+      return { success: false, id: item_id };
     }
-
-    // Step 2: Delete related tags from the join table
-    const { error: tagDeleteError } = await supabase
-      .from("storage_item_tags")
-      .delete()
-      .eq("item_id", id);
-
-    if (tagDeleteError) {
-      throw new Error(
-        `Failed to delete related tags: ${tagDeleteError.message}`,
-      );
-    }
-
-    // Step 3: Delete the item itself - soft delete
-    const { error: softDeleteError } = await supabase
-      .from("storage_items")
-      .update({ is_deleted: true })
-      .eq("id", id);
-
-    if (softDeleteError) {
-      throw new Error(`Failed to soft-delete item: ${softDeleteError.message}`);
-    }
-
-    return { success: true, id };
+    return { success: true, id: item_id };
   }
 
   // 6. get Items by tag
@@ -366,65 +365,6 @@ export class StorageItemsService {
     return data.map((entry) => entry.items); // Extract items from the relation
   }
 
-  // 7. soft-delete item (to keep the data just in case)
-  async softDeleteItem(
-    req: Request,
-    id: string,
-  ): Promise<{ success: boolean; id: string }> {
-    const supabase = req["supabase"] as SupabaseClient;
-    const { error } = await supabase
-      .from("storage_items")
-      .update({ is_deleted: true })
-      .eq("id", id);
-
-    if (error) {
-      throw new Error(`Soft delete failed: ${error.message}`);
-    }
-
-    return { success: true, id };
-  }
-
-  // 8. check if the item can be deleted (if it exists in some bookings)
-  async canDeleteItem(
-    req: Request,
-    id: string,
-    confirm?: string,
-  ): Promise<{ success: boolean; reason?: string; id: string }> {
-    const supabase = req["supabase"] as SupabaseClient;
-    if (!id) {
-      throw new Error("No item ID provided for deletion");
-    }
-
-    // Check if item exists in any bookings
-    const { data, error } = await supabase
-      .from("booking_items")
-      .select("id")
-      .eq("item_id", id)
-      .limit(1);
-
-    if (error) {
-      throw new Error(
-        `Error checking if item can be deleted: ${error.message}`,
-      );
-    }
-
-    const hasBookings = data?.length > 0;
-
-    if (hasBookings && confirm !== "yes") {
-      return {
-        success: false,
-        reason:
-          "This item is linked to existing bookings. Pass confirm='yes' to delete anyway.",
-        id,
-      };
-    }
-
-    return {
-      success: true,
-      id,
-    };
-  }
-
   /**
    * Get ordered and/or filtered items
    * @param page What page number is requested
@@ -443,55 +383,77 @@ export class StorageItemsService {
     order_by?: ValidItemOrder,
     searchquery?: string,
     tags?: string,
-    activity_filter?: "active" | "inactive",
+    isActive?: boolean,
     location_filter?: string,
     category?: string,
     availability_min?: number,
     availability_max?: number,
     from_date?: string,
     to_date?: string,
+    org_filter?: string,
   ) {
     const supabase = this.supabaseClient.getAnonClient();
-    const { from, to } = getPaginationRange(page, limit);
+    // Build a base query without range for counting and apply all filters
+    const base = applyItemFilters(
+      supabase
+        .from("view_manage_storage_items")
+        .select("*", { count: "exact", head: true })
+        .eq("is_deleted", false),
+      {
+        searchquery,
+        isActive,
+        tags,
+        location_filter,
+        category,
+        from_date,
+        to_date,
+        availability_min,
+        availability_max,
+        org_filter,
+      },
+    );
+    const countResult = await base;
+    if (countResult.error) {
+      console.log(countResult.error);
+      throw new Error("Failed to get matching items");
+    }
+    const total = countResult.count ?? 0;
+    const meta = getPaginationMeta(total, page, limit);
 
-    const query = supabase
+    // If requested page is out of range, return empty response instead of querying with invalid range
+    if (meta.total === 0 || page > meta.totalPages) {
+      return {
+        data: [],
+        error: null,
+        status: 200,
+        statusText: "OK",
+        count: total,
+        metadata: meta,
+      };
+    }
+
+    // Now fetch the actual page data with range
+    const { from, to } = getPaginationRange(page, limit);
+    let query = supabase
       .from("view_manage_storage_items")
       .select("*", { count: "exact" })
+      .eq("is_deleted", false)
       .range(from, to);
 
-    if (order_by)
-      query.order(order_by ?? "created_at", {
-        ascending: ascending,
-      });
+    query = applyItemFilters(query, {
+      searchquery,
+      isActive,
+      tags,
+      location_filter,
+      category,
+      from_date,
+      to_date,
+      availability_min,
+      availability_max,
+      org_filter,
+    });
 
-    if (searchquery) {
-      query.or(
-        `fi_item_name.ilike.%${searchquery}%,` +
-          `fi_item_type.ilike.%${searchquery}%,` +
-          `en_item_name.ilike.%${searchquery}%,` +
-          `en_item_type.ilike.%${searchquery}%,` +
-          `location_name.ilike.%${searchquery}%`,
-      );
-    }
-
-    if (activity_filter) query.eq("is_active", activity_filter);
-    if (tags) query.overlaps("tag_ids", tags.split(","));
-    if (location_filter)
-      query.overlaps("location_id", location_filter.split(","));
-
-    if (category) {
-      const categories = category.split(",");
-      query.in("en_item_type", categories);
-    }
-
-    if (from_date) query.gte("created_at", from_date);
-    if (to_date) query.lt("created_at", to_date);
-    // Availability range filter (items currently in storage)
-    if (availability_min !== undefined)
-      query.gte("items_number_currently_in_storage", availability_min);
-
-    if (availability_max !== undefined)
-      query.lte("items_number_currently_in_storage", availability_max);
+    if (order_by) query.order(order_by ?? "created_at", { ascending });
 
     const result = await query;
     const { error, count } = result;
@@ -569,6 +531,7 @@ export class StorageItemsService {
       };
     }
   }
+
   async getItemCount(
     supabase: SupabaseClient,
   ): Promise<ApiSingleResponse<number>> {
@@ -581,6 +544,72 @@ export class StorageItemsService {
     return {
       ...result,
       data: result.count ?? 0,
+    };
+  }
+
+  parseCSV(csv: Express.Multer.File): ProcessedCSV {
+    // Parse the file into a JSON
+    const csvString = csv.buffer.toString("utf8");
+    const result: ParseResult<Record<string, unknown>> = parse<
+      Record<string, unknown>
+    >(csvString, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: false,
+    });
+
+    const processedItems: Item[] = [];
+    const errors: Array<{ row: number; errors: string[] }> = [];
+
+    // Validate each row, add them to validItems/errors arrays.
+    result.data.forEach((row: Item, index: number) => {
+      const validation = ItemSchema.safeParse(row);
+
+      if (validation.success) {
+        processedItems.push(validation.data);
+      } else {
+        const { processedRow, error } = this.clearInvalidRowData(
+          row,
+          index,
+          validation.error.issues,
+        );
+        processedItems.push(processedRow);
+        errors.push(error);
+      }
+    });
+
+    return {
+      processed: processedItems.length,
+      errors: errors,
+      data: processedItems,
+    };
+  }
+
+  clearInvalidRowData(row: CSVItem, index: number, issues: ZodError["issues"]) {
+    // shallow copy is enough for your flat CSVItem
+    const processed = { ...row } as Record<string, any>;
+
+    // Walk issues and blank the first path segment (flat structure)
+    issues.forEach((issue) => {
+      const path = issue.path && issue.path.length ? issue.path[0] : undefined;
+
+      if (path === undefined || path === null || path === "") {
+        // whole-row error -> blank all top-level keys
+        Object.keys(processed).forEach((k) => {
+          processed[k] = "";
+        });
+      } else {
+        const key = String(path);
+        processed[key] = "";
+      }
+    });
+
+    return {
+      processedRow: processed as CSVItem,
+      error: {
+        row: index + 1,
+        errors: issues.map((issue) => `${issue.path.join(",")}:${issue.code}`),
+      },
     };
   }
 }

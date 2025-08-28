@@ -69,14 +69,14 @@ export class OrganizationLocationsController {
 
   // 4. Create
   @Post()
-  @Roles(["super_admin", "main_admin", "storage_manager"], { match: "any" })
+  @Roles(["super_admin", "tenant_admin", "storage_manager"], { match: "any" })
   async createOrgLoc(@Req() req: AuthRequest, @Body() body: OrgLocationInsert) {
     return this.orgLocService.createOrgLoc(req, body);
   }
 
   // 5. Update
   @Put(":id")
-  @Roles(["super_admin", "main_admin", "storage_manager"], { match: "any" })
+  @Roles(["super_admin", "tenant_admin", "storage_manager"], { match: "any" })
   async updateOrgLoc(
     @Req() req: AuthRequest,
     @Param("id") id: string,
@@ -87,14 +87,14 @@ export class OrganizationLocationsController {
 
   // 6. Delete
   @Delete(":id")
-  @Roles(["super_admin", "main_admin", "storage_manager"], { match: "any" })
+  @Roles(["super_admin", "tenant_admin", "storage_manager"], { match: "any" })
   async deleteOrgLoc(@Req() req: AuthRequest, @Param("id") id: string) {
     return this.orgLocService.deleteOrgLoc(req, id);
   }
 
   // 7. Create with storage location
   @Post("with-storage")
-  @Roles(["super_admin", "main_admin", "storage_manager"], { match: "any" })
+  @Roles(["super_admin", "tenant_admin", "storage_manager"], { match: "any" })
   async createOrgLocWithStorage(
     @Req() req: AuthRequest,
     @Body() body: CreateOrgLocationWithStorage,
@@ -104,7 +104,7 @@ export class OrganizationLocationsController {
 
   // 8. Update with storage location
   @Put(":id/with-storage")
-  @Roles(["super_admin", "main_admin", "storage_manager"], { match: "any" })
+  @Roles(["super_admin", "tenant_admin", "storage_manager"], { match: "any" })
   async updateOrgLocWithStorage(
     @Req() req: AuthRequest,
     @Param("id") id: string,
@@ -115,7 +115,7 @@ export class OrganizationLocationsController {
 
   // 9. Delete with storage location
   @Delete(":id/with-storage")
-  @Roles(["super_admin", "main_admin", "storage_manager"], { match: "any" })
+  @Roles(["super_admin", "tenant_admin", "storage_manager"], { match: "any" })
   async deleteOrgLocWithStorage(
     @Req() req: AuthRequest,
     @Param("id") id: string,

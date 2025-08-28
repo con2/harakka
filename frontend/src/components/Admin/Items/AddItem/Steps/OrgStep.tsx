@@ -1,200 +1,213 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { Info, MapPin } from "lucide-react";
+import { ClipboardPenLine, FileUp, Info, MapPin } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { selectCurrentUserOrganizations } from "@/store/slices/rolesSlice";
+import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import {
-  fetchLocationsByOrgId,
-  selectCurrentOrgLocations,
+  fetchAllOrgLocations,
+  selectOrgLocations,
   selectOrgLocationsLoading,
 } from "@/store/slices/organizationLocationsSlice";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import {
   selectItemCreation,
+  selectItemsLoading,
   selectOrg,
   selectOrgLocation,
+  uploadCSV,
 } from "@/store/slices/itemsSlice";
 import { setNextStep, setStepper } from "@/store/slices/uiSlice";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import Spinner from "@/components/Spinner";
+import { Separator } from "@/components/ui/separator";
 
 function OrgStep() {
   const { lang } = useLanguage();
-  const orgs = useAppSelector(selectCurrentUserOrganizations);
+  const { organizationId: orgId, organizationName: orgName } = useAppSelector(
+    selectActiveRoleContext,
+  );
+  const itemsLoading = useAppSelector(selectItemsLoading);
   const locationLoading = useAppSelector(selectOrgLocationsLoading);
-  const orgLocations = useAppSelector(selectCurrentOrgLocations);
-  const {
-    org: selectedOrg,
-    location: selectedLoc,
-    items,
-  } = useAppSelector(selectItemCreation);
+  const orgLocations = useAppSelector(selectOrgLocations);
+  const { location: selectedLoc, items } = useAppSelector(selectItemCreation);
   const dispatch = useAppDispatch();
 
-  /*---------------------handlers------------------------------------------------*/
-  const handleOrgChange = (org_id: string) => {
-    const newOrg = orgs.find((org) => org.organization_id === org_id);
-    if (!newOrg) return dispatch(selectOrg(undefined));
-    void dispatch(selectOrgLocation(undefined));
-    void dispatch(fetchLocationsByOrgId(newOrg.organization_id));
-    void dispatch(
-      selectOrg({
-        id: newOrg.organization_id,
-        name: newOrg.organization_name,
-      }),
-    );
+  const handleCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file) throw new Error("No file selected");
+      validateFile(file);
+      await dispatch(uploadCSV(file)).unwrap();
+      dispatch(setStepper(3));
+    } catch (error) {
+      console.error(error);
+      toast.error(typeof error === "string" ? error : "Failed to process file");
+    }
   };
+
+  const validateFile = useCallback((file: File) => {
+    if (!file.type.startsWith("text/csv")) {
+      throw new Error(`${file.name} is not a CSV file`);
+    }
+  }, []);
+
   /*---------------------side effects--------------------------------------------*/
   useEffect(() => {
-    if (orgLocations?.length === 1) {
-      const newOrg = orgLocations[0];
-      dispatch(
-        selectOrgLocation({
-          id: newOrg.storage_location_id,
-          name: newOrg.storage_locations.name,
-          address: newOrg.storage_locations.address,
-        }),
-      );
-    }
-  }, [orgLocations, dispatch]);
-
-  useEffect(() => {
-    if (selectedOrg && orgLocations.length < 1)
-      void dispatch(fetchLocationsByOrgId(selectedOrg?.id));
-  }, [dispatch, orgLocations, selectedOrg]);
+    dispatch(selectOrg({ id: orgId, name: orgName }));
+    void dispatch(fetchAllOrgLocations({ orgId: orgId!, pageSize: 20 }));
+  }, [dispatch, orgId, orgName]);
 
   /*---------------------render--------------------------------------------------*/
   return (
-    <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px] p-10 gap-4">
-      <div className="flex flex-col gap-2 flex-3">
-        <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
-          {t.orgStep.heading.org[lang]}
+    <div className="bg-white flex flex-col flex-wrap rounded border mt-4 max-w-[900px]">
+      <div className="flex flex-col gap-2 flex-3  p-10">
+        <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-4">
+          {t.orgStep.heading.location[lang]}
         </p>
-        {items.length > 0 && (
-          <div className="flex align-center gap-3 p-4 border rounded justify-center">
+        <>
+          {/* Location Selection */}
+          <div className="flex justify-between items-center">
+            <div className="flex flex-wrap gap-2">
+              {/* Locations of selected org */}
+              {locationLoading
+                ? Array(5)
+                    .fill("")
+                    .map((_, idx) => (
+                      <Skeleton
+                        key={idx}
+                        className={`animate-pulse h-[50px] rounded-[1rem] bg-muted ${idx % 2 === 0 ? "w-16" : "w-20"} mb-2`}
+                      />
+                    ))
+                : orgLocations.map((loc) => (
+                    <Button
+                      key={loc.storage_location_id}
+                      variant={
+                        selectedLoc?.id === loc.storage_location_id
+                          ? "outline"
+                          : "default"
+                      }
+                      className="gap-3 h-fit"
+                      disabled={items.length > 0}
+                      onClick={() =>
+                        dispatch(
+                          selectOrgLocation({
+                            id: loc?.storage_location_id,
+                            name: loc?.storage_locations?.name,
+                            address: loc?.storage_locations?.address,
+                          }),
+                        )
+                      }
+                    >
+                      <MapPin className="size-5" />
+                      <div className="flex flex-col text-start">
+                        <span className="text-base leading-[1.1]">
+                          {loc.storage_locations?.name ||
+                            `Location #${loc.storage_location_id}`}
+                        </span>
+                        <span>{loc.storage_locations?.address}</span>
+                      </div>
+                    </Button>
+                  ))}
+
+              {/* Choose location for each item */}
+              {!locationLoading && orgLocations.length > 1 && (
+                <Button
+                  disabled={items.length > 0}
+                  className="h-auto gap-3"
+                  variant={selectedLoc === null ? "outline" : "default"}
+                  onClick={() => dispatch(selectOrgLocation(null))}
+                >
+                  <MapPin className="size-5" />
+                  {t.orgStep.buttons.chooseLocation[lang]}
+                </Button>
+              )}
+            </div>
+          </div>
+        </>
+      </div>
+
+      <Separator />
+
+      {/* Item Creations Choices: Manual or CSV Upload */}
+      <div className="p-10">
+        <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-4">
+          {t.orgStep.heading.method[lang]}
+        </p>
+        <div className="gap-4 flex items-end items-start">
+          <div className="flex flex-col flex-1">
+            <Button
+              disabled={selectedLoc === undefined}
+              variant="outline"
+              className="gap-2 py-8 px-8"
+              onClick={() => dispatch(setNextStep())}
+            >
+              <ClipboardPenLine className="size-6" />
+              {t.orgStep.buttons.fillForm[lang]}
+            </Button>
+          </div>
+          <div className="flex flex-col flex-1">
+            <Button
+              variant="outline"
+              className="gap-2 py-8 px-8"
+              disabled={selectedLoc === undefined}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!itemsLoading)
+                  document.getElementById("csv-uploader")?.click();
+              }}
+            >
+              <FileUp className="size-6" />
+              {t.orgStep.buttons.uploadCSV[lang]}
+              <span className="align-top text-sm">(beta)</span>
+            </Button>
+            <p className="text-sm text-end py-1">
+              {t.orgStep.buttons.downloadTemplate[lang]}{" "}
+              <a
+                className="underline underline-offset-2"
+                href="/con2-item-template.xlsx"
+                download
+              >
+                {t.orgStep.buttons.downloadTemplateHere[lang]}
+              </a>
+            </p>
+
+            <input
+              id="csv-uploader"
+              type="file"
+              accept="text/csv"
+              className="hidden"
+              onChange={handleCSV}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Modal whilst item upload is loading */}
+      {itemsLoading && (
+        <Dialog open>
+          <DialogContent className="w-fit px-20">
+            <Spinner />
+            <p className="font-semibold">Processing items...</p>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {items.length > 0 && (
+        <div className="flex align-center gap-3 p-10 justify-between items-center">
+          <div className="flex gap-3 items-center">
             <Info color="#3d3d3d" className="self-center" />
             <p className="text-sm font-medium leading-[1.1rem]">
-              You have unfinished items. Upload or remove these to change
-              organization
+              {t.orgStep.info.unfinishedItems[lang]}
             </p>
           </div>
-        )}
-        {items.length < 1 && (
-          <>
-            <div>
-              {/* Select Organization */}
-
-              <Select
-                value={selectedOrg?.name ?? ""}
-                onValueChange={handleOrgChange}
-                required
-                name="organization"
-                disabled={items.length > 0}
-              >
-                <SelectTrigger
-                  disabled={orgs.length === 1}
-                  className="min-w-[250px] border shadow-none border-grey w-[300px]"
-                >
-                  <SelectValue
-                    placeholder={t.orgStep.placeholders.selectOrg[lang]}
-                  >
-                    {selectedOrg?.name ?? ""}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {orgs.map((org) => (
-                    <SelectItem
-                      key={org.organization_id}
-                      value={org.organization_id}
-                    >
-                      {org.organization_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Location Selection */}
-            <div className="flex justify-between items-center">
-              <div className="flex flex-wrap gap-2">
-                {/* Locations of selected org */}
-                {locationLoading
-                  ? Array(5)
-                      .fill("")
-                      .map((_, idx) => (
-                        <Skeleton
-                          key={idx}
-                          className={`animate-pulse h-8 rounded-[1rem] bg-muted ${idx % 2 === 0 ? "w-16" : "w-20"} mb-2`}
-                        />
-                      ))
-                  : orgLocations.map((loc) => (
-                      <Button
-                        key={loc.storage_location_id}
-                        variant={
-                          selectedLoc?.id === loc.storage_location_id
-                            ? "outline"
-                            : "default"
-                        }
-                        className="gap-2"
-                        disabled={items.length > 0}
-                        onClick={() =>
-                          dispatch(
-                            selectOrgLocation({
-                              id: loc.storage_location_id,
-                              name: loc.storage_locations.name,
-                              address: loc.storage_locations.address,
-                            }),
-                          )
-                        }
-                      >
-                        <MapPin />
-                        {loc.storage_locations?.name ||
-                          `Location #${loc.storage_location_id}`}
-                      </Button>
-                    ))}
-
-                {/* Choose location for each item */}
-                {!locationLoading && orgLocations.length > 1 && (
-                  <Button
-                    disabled={items.length > 0}
-                    variant={selectedLoc === null ? "outline" : "default"}
-                    onClick={() => dispatch(selectOrgLocation(null))}
-                  >
-                    {t.orgStep.buttons.chooseLocation[lang]}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-      {/* Info and Next Button */}
-      <div className="flex flex-2 justify-end gap-3">
-        {items.length > 0 && (
-          <Button
-            variant="default"
-            className="w-fit self-end"
-            disabled={!selectedOrg || selectedLoc === undefined}
-            onClick={() => dispatch(setStepper(3))}
-          >
-            {t.addItemForm.buttons.goToSummary[lang]}
+          <Button variant="outline" onClick={() => dispatch(setStepper(3))}>
+            {t.orgStep.buttons.reviewItems[lang]}
           </Button>
-        )}
-        <Button
-          variant="outline"
-          className="w-fit px-10 self-end"
-          disabled={!selectedOrg || selectedLoc === undefined}
-          onClick={() => dispatch(setNextStep())}
-        >
-          {t.orgStep.buttons.next[lang]}
-        </Button>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

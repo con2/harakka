@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const userBanning = {
   button: {
     title: {
@@ -41,10 +43,6 @@ export const userBanning = {
         fi: "Esto-syy",
         en: "Ban Reason",
       },
-      placeholder: {
-        fi: "Syötä syy estolle...",
-        en: "Enter reason for ban...",
-      },
       selectPlaceholder: {
         fi: "Valitse syy...",
         en: "Select a reason...",
@@ -76,8 +74,8 @@ export const userBanning = {
     },
     organization: {
       label: {
-        fi: "Organisaatio",
-        en: "Organization",
+        fi: common.organizations.organization.fi,
+        en: common.organizations.organization.en,
       },
       placeholder: {
         fi: "Valitse organisaatio",
@@ -86,8 +84,8 @@ export const userBanning = {
     },
     role: {
       label: {
-        fi: "Rooli",
-        en: "Role",
+        fi: common.roles.role.fi,
+        en: common.roles.role.en,
       },
       placeholder: {
         fi: "Valitse rooli",
@@ -109,8 +107,8 @@ export const userBanning = {
       en: "View History",
     },
     cancel: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
     openMenu: {
       fi: "Avaa valikko",
@@ -127,12 +125,12 @@ export const userBanning = {
       en: "Unbanned",
     },
     active: {
-      fi: "Aktiivinen",
-      en: "Active",
+      fi: common.active.fi,
+      en: common.active.en,
     },
     status: {
-      fi: "Tila",
-      en: "Status",
+      fi: common.status.fi,
+      en: common.status.en,
     },
     action: {
       fi: "Toiminto",
@@ -164,6 +162,50 @@ export const userBanning = {
       fi: "Ladataan esto-tietoja...",
       en: "Loading ban information...",
     },
+    noPermissionApp: {
+      fi: "Sinulla ei ole oikeutta estää käyttäjiä sovelluksesta",
+      en: "You don't have permission to ban users from the application",
+    },
+    noPermissionOrg: {
+      fi: "Sinulla ei ole oikeutta estää käyttäjiä organisaatioista",
+      en: "You don't have permission to ban users from organizations",
+    },
+    noPermissionRole: {
+      fi: "Sinulla ei ole oikeutta estää käyttäjiä rooleista",
+      en: "You don't have permission to ban users from roles",
+    },
+    onlyAdminUserRoles: {
+      fi: "Voit estää käyttäjiä vain 'admin' tai 'user' rooleista",
+      en: "You can only ban users from 'admin' or 'user' roles",
+    },
+    onlyActiveOrg: {
+      fi: "Voit estää käyttäjiä vain aktiivisesta organisaatiostasi",
+      en: "You can only ban users from your active organization",
+    },
+    provideCustomReason: {
+      fi: "Anna mukautettu esto-syy",
+      en: "Please provide a custom ban reason",
+    },
+    failedLoadBanHistory: {
+      fi: "Esto-historian lataaminen epäonnistui",
+      en: "Failed to load ban history",
+    },
+    noPermissionUnbanApp: {
+      fi: "Sinulla ei ole oikeutta poistaa sovellus-estoja",
+      en: "You don't have permission to unban users from the application",
+    },
+    noPermissionUnbanOrg: {
+      fi: "Sinulla ei ole oikeutta poistaa organisaatio-estoja",
+      en: "You don't have permission to unban users from organizations",
+    },
+    noPermissionUnbanRole: {
+      fi: "Sinulla ei ole oikeutta poistaa rooli-estoja",
+      en: "You don't have permission to unban users from roles",
+    },
+    onlyUnbanActiveOrg: {
+      fi: "Voit poistaa estoja vain aktiivisesta organisaatiostasi",
+      en: "You can only unban users from your active organization",
+    },
   },
   toast: {
     success: {
@@ -177,6 +219,14 @@ export const userBanning = {
     loading: {
       fi: "Estetään käyttäjää...",
       en: "Banning user...",
+    },
+    unbanSuccess: {
+      fi: "Esto poistettu onnistuneesti",
+      en: "User unbanned successfully",
+    },
+    unbanError: {
+      fi: "Virhe eston poistossa",
+      en: "Error unbanning user",
     },
   },
   history: {
@@ -201,25 +251,17 @@ export const userBanning = {
         fi: "Syy",
         en: "Reason",
       },
-      bannedBy: {
-        fi: "Estänyt",
-        en: "Banned By",
-      },
-      bannedAt: {
-        fi: "Estetty",
-        en: "Banned At",
-      },
       isPermanent: {
         fi: "Pysyvä",
         en: "Permanent",
       },
       permanent: {
-        fi: "Kyllä",
-        en: "Yes",
+        fi: common.yes.fi,
+        en: common.yes.en,
       },
       notPermanent: {
-        fi: "Ei",
-        en: "No",
+        fi: common.no.fi,
+        en: common.no.en,
       },
     },
   },
@@ -253,39 +295,17 @@ export const userBanning = {
           en: "Role Ban",
         },
       },
-      organization: {
-        fi: "Organisaatio",
-        en: "Organization",
-      },
       organizationPlaceholder: {
         fi: "Valitse organisaatio, josta esto poistetaan...",
         en: "Select organization to unban from...",
-      },
-      role: {
-        fi: "Rooli",
-        en: "Role",
       },
       rolePlaceholder: {
         fi: "Valitse rooli, josta esto poistetaan...",
         en: "Select role to unban from...",
       },
-      reason: {
-        fi: "Syy",
-        en: "Reason",
-      },
       reasonPlaceholder: {
         fi: "Syy eston poistamiselle...",
         en: "Reason for unbanning...",
-      },
-    },
-    actions: {
-      confirm: {
-        fi: "Poista esto",
-        en: "Unban",
-      },
-      cancel: {
-        fi: "Peruuta",
-        en: "Cancel",
       },
     },
   },

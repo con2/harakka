@@ -20,7 +20,9 @@ export class LogsController {
 
   @Get()
   // Role guarding happens on controller level now.
-  @Roles(["admin", "super_admin", "main_admin", "superVera"], { match: "any" })
+  @Roles(["super_admin", "tenant_admin", "superVera"], {
+    match: "any",
+  })
   async getAllLogs(
     @Req() req: AuthRequest,
     @Query("page") page: string = "1",

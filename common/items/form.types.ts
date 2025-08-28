@@ -8,6 +8,9 @@ export type SelectedStorage = {
   address: string;
 };
 
+/**
+ * Type Used For Item Creation (Form)
+ */
 export type CreateItemType = {
   id: string;
   location: {
@@ -15,9 +18,8 @@ export type CreateItemType = {
     name: string;
     address: string;
   };
-  items_number_total: number;
-  items_number_currently_in_storage: number;
-  price: number;
+  quantity: number;
+  available_quantity: number;
   is_active: boolean;
   translations: {
     fi: {
@@ -62,6 +64,7 @@ export type CreateItemType = {
 
 export type MappedItem = Omit<CreateItemType, "location" | "tags" | "images"> & {
   location_id: string;
+  org_id: string;
 };
 
 export type ItemFormData = {

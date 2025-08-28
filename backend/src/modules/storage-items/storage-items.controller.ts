@@ -5,25 +5,25 @@ import {
   Put,
   Body,
   Param,
-  HttpException,
-  HttpStatus,
   Req,
   Query,
   BadRequestException,
+  UploadedFile,
+  UseInterceptors,
+  Delete,
 } from "@nestjs/common";
 import { Request } from "express";
 import { StorageItemsService } from "./storage-items.service";
 import { SupabaseService } from "../supabase/supabase.service";
-import {
-  LocationRow,
-  ValidItemOrder,
-} from "./interfaces/storage-item.interface";
-import { TablesUpdate } from "@common/supabase.types"; // Import the Database type for type safety
+import { ValidItemOrder } from "./interfaces/storage-item.interface";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { ApiSingleResponse } from "../../../../common/response.types";
 import { StorageItem } from "./interfaces/storage-item.interface";
-import { Public } from "src/decorators/roles.decorator";
+import { Public, Roles } from "src/decorators/roles.decorator";
 import { ItemFormData } from "@common/items/form.types";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
+import { ProcessedCSV } from "@common/items/csv.types";
 // calls the methods of storage-items.service.ts & handles API req and forwards it to the server
 
 @Controller("storage-items") // api path: /storage-items = Base URL     // = HTTP-Controller
@@ -62,11 +62,13 @@ export class StorageItemsController {
     @Query("limit") limit: string = "10",
     @Query("ascending") ascending: string = "true",
     @Query("tags") tags: string,
-    @Query("active") active_filter: "active" | "inactive",
-    @Query("locations") location_filter: string,
+    @Query("active") active_filter: string,
+    @Query("location") location_filter: string,
     @Query("category") category: string,
     @Query("availability_min") availability_min?: string,
     @Query("availability_max") availability_max?: string,
+    // Optional organization filter (comma-separated list of org IDs or single ID)
+    @Query("org") org_filter?: string,
   ) {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
@@ -79,6 +81,13 @@ export class StorageItemsController {
       availability_max !== undefined
         ? parseInt(availability_max, 10)
         : undefined;
+    // Normalize active filter to boolean if provided (supports "true"/"false" and legacy "active"/"inactive")
+    let isActive: boolean | undefined = undefined;
+    if (typeof active_filter === "string") {
+      const v = active_filter.toLowerCase();
+      if (v === "true" || v === "active") isActive = true;
+      else if (v === "false" || v === "inactive") isActive = false;
+    }
 
     return this.storageItemsService.getOrderedStorageItems(
       pageNum,
@@ -87,11 +96,14 @@ export class StorageItemsController {
       ordered_by,
       searchquery,
       tags,
-      active_filter,
+      isActive,
       location_filter,
       category,
       availMinNum,
       availMaxNum,
+      undefined,
+      undefined,
+      org_filter,
     );
   }
 
@@ -121,48 +133,37 @@ export class StorageItemsController {
     @Body()
     formData: ItemFormData,
   ): Promise<{ status: number; error: string | null }> {
-    return this.storageItemsService.createItems(req, formData); // POST /storage-items (new item)
+    return await this.storageItemsService.createItems(req, formData); // POST /storage-items (new item)
   }
 
-  @Put(":id")
+  @Post("upload")
+  @UseInterceptors(FileInterceptor("file"))
+  @Roles(["storage_manager", "tenant_admin"])
+  processCsv(
+    @Req() req: AuthRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ): ProcessedCSV {
+    return this.storageItemsService.parseCSV(file);
+  }
+
+  /**
+   * Update an item of an organization
+   * @param req An authorized request
+   * @param item_id ID of the item to update
+   * @param org_id ID of the org to update item
+   * @body Update item object including tagsIds and location details.
+   * @returns The updated item
+   */
+  @Put(":org_id/:item_id")
+  @Roles(["super_admin", "tenant_admin", "storage_manager", "superVera"])
   async update(
-    @Req() req: Request,
-    @Param("id") id: string,
+    @Req() req: AuthRequest,
+    @Param("org_id") org_id: string,
+    @Param("item_id") item_id: string,
     @Body()
-    item: Partial<TablesUpdate<"storage_items">> & {
-      tagIds?: string[];
-      location_details?: LocationRow;
-    }, // Use the type from your Supabase types
-  ): Promise<StorageItem> {
-    return this.storageItemsService.updateItem(req, id, item); // PUT /storage-items/:id (update item)
-  }
-
-  // soft delete
-  @Post(":id/soft-delete")
-  async softDeleteStorageItem(@Req() req: Request, @Param("id") id: string) {
-    return this.storageItemsService.softDeleteItem(req, id);
-  }
-
-  @Post(":id/can-delete")
-  async canDelete(
-    @Req() req: Request,
-    @Param("id") id: string,
-  ): Promise<{ success: boolean; reason?: string; id: string }> {
-    try {
-      const result = await this.storageItemsService.canDeleteItem(req, id);
-      return result;
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        throw new HttpException(
-          error.message,
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
-      throw new HttpException(
-        "Failed to check if item can be deleted",
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    item: UpdateItem,
+  ): Promise<UpdateResponse> {
+    return this.storageItemsService.updateItem(req, item_id, org_id, item);
   }
 
   // checks availability of items by date range
@@ -192,5 +193,22 @@ export class StorageItemsController {
       endDate,
       supabase,
     );
+  }
+
+  /**
+   * Delete an organizations item.
+   * This method soft-deletes the item, then relies on a daily CRON job to remove completely inactive and * unreferenced items. (CRON JOB: 'delete_inactive_items')
+   * @param req An Authorized request
+   * @param item_id The ID of the item to soft-delete
+   * @param org_id The organization ID which to soft-delete the item from
+   * @returns
+   */
+  @Delete(":org_id/:item_id")
+  async deleteItem(
+    @Req() req: AuthRequest,
+    @Param("org_id") org_id: string,
+    @Param("item_id") item_id: string,
+  ) {
+    return await this.storageItemsService.deleteItem(req, item_id, org_id);
   }
 }

@@ -1,8 +1,11 @@
 # Jons hidden files
 NOTES.md
+.env
 .env.*
+!.env.production.template
+!.env.local.template
 supabase-local.env
-
+supabase-prod
 # Node.js dependencies
 node_modules/*
 .nvmrc
@@ -51,6 +54,8 @@ lerna-debug.log*
 .env.production.local
 .env.local
 .env.supabase.local
+.supabase-local.env
+
 
 # temp directory
 .temp

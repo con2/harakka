@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import {
   fetchAllTags,
-  assignTagToItem,
+  fetchTagsForItem,
   selectAllTags,
   selectSelectedTags,
   selectTagsLoading,
@@ -41,13 +41,16 @@ import { t } from "@/translations";
 import { Textarea } from "../../ui/textarea";
 import { itemsApi } from "@/api/services/items";
 import { LoaderCircle } from "lucide-react";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
+import {
+  fetchAllOrgLocations,
+  selectOrgLocations,
+} from "@/store/slices/organizationLocationsSlice";
 
 type UpdateItemModalProps = {
   onClose: () => void;
   initialData: Item; // Assume initialData is always passed for updating
-  onUpdate?: (
-    item: Omit<Item, "created_at" | "compartment_id" | "test_metadata">,
-  ) => void;
+  onUpdate?: (item: Omit<Item, "created_at" | "compartment_id">) => void;
 };
 
 const UpdateItemModal = ({
@@ -65,6 +68,9 @@ const UpdateItemModal = ({
   const locations = useAppSelector(selectAllLocations);
   const itemsLoading = useAppSelector(selectItemsLoading);
   const tagsLoading = useAppSelector(selectTagsLoading);
+  const orgId = useAppSelector(selectActiveOrganizationId);
+  const orgLocations = useAppSelector(selectOrgLocations);
+  const activeOrgId = useAppSelector(selectActiveOrganizationId);
   // Translation
   const { lang } = useLanguage();
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
@@ -77,7 +83,25 @@ const UpdateItemModal = ({
   useEffect(() => {
     if (!tags || tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
     if (locations.length === 0) void dispatch(fetchAllLocations({ limit: 20 }));
-  }, [dispatch, locations.length, formData.id, tags]);
+    if (orgLocations.length === 0)
+      void dispatch(
+        fetchAllOrgLocations({ orgId: activeOrgId!, pageSize: 100 }),
+      );
+  }, [
+    dispatch,
+    locations.length,
+    formData.id,
+    tags,
+    orgLocations,
+    activeOrgId,
+  ]);
+
+  // Always refresh assigned tags for this item when the modal opens or item changes
+  useEffect(() => {
+    if (initialData?.id) {
+      void dispatch(fetchTagsForItem(initialData.id));
+    }
+  }, [dispatch, initialData?.id]);
 
   useEffect(() => {
     if (selectedTags) {
@@ -87,7 +111,7 @@ const UpdateItemModal = ({
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
-      availableQuantity: formData?.items_number_total || 0,
+      availableQuantity: formData?.quantity || 0,
       isChecking: false,
       error: null,
     });
@@ -162,40 +186,21 @@ const UpdateItemModal = ({
 
     setLoading(true);
     try {
-      // Clean the data by only including the fields that should be sent to the database
-      const {
-        // Remove joined/computed fields that exist on Item type
-        storage_item_tags: _storage_item_tags,
-        tagIds: _tagIds,
-        location_name: _location_name,
-        created_at: _created_at,
-        // Remove any other fields that don't belong in the database update
-        average_rating: _average_rating,
-        ...cleanedData
-      } = formData;
-
-      // Only send the core database fields
-      const updateData = {
-        id: cleanedData.id,
-        location_id: cleanedData.location_id,
-        items_number_total: cleanedData.items_number_total,
-        items_number_currently_in_storage:
-          cleanedData.items_number_currently_in_storage,
-        price: cleanedData.price,
-        is_active: cleanedData.is_active,
-        translations: cleanedData.translations,
-      };
+      if (!orgId)
+        return toast.error(t.updateItemModal.messages.missingOrg[lang]);
       if (onUpdate) {
-        onUpdate(updateData);
+        onUpdate(formData);
         return onClose();
       }
-
       await dispatch(
-        updateItem({ id: formData.id, data: updateData }),
+        updateItem({
+          orgId: orgId,
+          item_id: formData.id,
+          data: { ...formData, tags: localSelectedTags },
+        }),
       ).unwrap();
-      await dispatch(
-        assignTagToItem({ itemId: formData.id, tagIds: localSelectedTags }),
-      ).unwrap();
+      // Ensure tag slice reflects latest assignments for next open
+      await dispatch(fetchTagsForItem(formData.id));
       toast.success(t.updateItemModal.messages.success[lang]);
       onClose();
     } catch (error) {
@@ -363,23 +368,8 @@ const UpdateItemModal = ({
                   </div>
                 </div>
 
-                {/* Price */}
+                {/* Location and Active Status */}
                 <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="flex flex-row items-baseline space-x-2">
-                    <Label htmlFor="price" className="font-medium">
-                      {t.updateItemModal.labels.price[lang]}
-                    </Label>
-                    <Input
-                      id="price"
-                      name="price"
-                      type="number"
-                      value={formData.price}
-                      onChange={handleChange}
-                      placeholder={t.updateItemModal.placeholders.price[lang]}
-                      required
-                      className="w-40"
-                    />
-                  </div>
                   {/* Location */}
                   <div className="flex flex-row items-baseline space-x-2">
                     <Label htmlFor="location_id">
@@ -399,9 +389,12 @@ const UpdateItemModal = ({
                         />
                       </SelectTrigger>
                       <SelectContent>
-                        {locations.map((location) => (
-                          <SelectItem key={location.id} value={location.id}>
-                            {location.name}
+                        {orgLocations.map((location) => (
+                          <SelectItem
+                            key={location.id}
+                            value={location.storage_location_id}
+                          >
+                            {location.storage_locations?.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -429,14 +422,14 @@ const UpdateItemModal = ({
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="items_number_total">
+                      <Label htmlFor="quantity">
                         {t.updateItemModal.labels.totalQuantity[lang]}
                       </Label>
                       <Input
-                        id="items_number_total"
-                        name="items_number_total"
+                        id="quantity"
+                        name="quantity"
                         type="number"
-                        value={formData.items_number_total}
+                        value={formData.quantity}
                         onChange={handleChange}
                         placeholder={
                           t.updateItemModal.placeholders.totalQuantity[lang]
@@ -446,14 +439,16 @@ const UpdateItemModal = ({
                     </div>
 
                     <div>
-                      <Label htmlFor="items_number_currently_in_storage">
+                      <Label htmlFor="available_quantity">
                         {t.updateItemModal.labels.currentlyInStorage[lang]}
                       </Label>
                       <Input
-                        id="items_number_currently_in_storage"
-                        name="items_number_currently_in_storage"
+                        id="available_quantity"
+                        name="available_quantity"
                         type="number"
-                        value={formData.items_number_currently_in_storage || 0}
+                        max={formData.quantity}
+                        min="0"
+                        value={formData.available_quantity || 0}
                         onChange={handleChange}
                         placeholder={
                           t.updateItemModal.placeholders.currentlyInStorage[

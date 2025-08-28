@@ -2,6 +2,14 @@ import { Database } from "@common/database.types";
 
 export type StorageItemRow =
   Database["public"]["Tables"]["storage_items"]["Row"];
+export type StorageItemInsert =
+  Database["public"]["Tables"]["storage_items"]["Insert"];
+export type LocationRow =
+  Database["public"]["Tables"]["storage_locations"]["Row"];
+
+export type TagRow = Database["public"]["Tables"]["tags"]["Row"];
+export type TagUpdate = Database["public"]["Tables"]["tags"]["Update"];
+export type TagInsert = Database["public"]["Tables"]["tags"]["Insert"];
 
 /**
  * TagLink:
@@ -19,4 +27,20 @@ export type OrgItem = {
   storage_location_id: string;
   owned_quantity: number;
   is_active: boolean;
+};
+
+export type UpdateItem = StorageItemInsert & {
+  tags: string[];
+  location_details: LocationRow;
+};
+
+export type StorageItem = StorageItemRow & {
+  /** Tags flattened from the join table */
+  tags: TagRow[];
+  /** Convenience copy of the joined location row */
+  location_details: LocationRow | null;
+};
+export type UpdateResponse = {
+  success: boolean;
+  item: StorageItem & { location_details: LocationRow };
 };

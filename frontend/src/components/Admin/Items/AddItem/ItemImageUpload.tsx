@@ -120,7 +120,11 @@ function ItemImageUpload({
 
         setUploadingStates((prev) => ({ ...prev, main: false }));
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Upload failed");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t.itemImageUpload.messages.uploadFailed[lang],
+        );
         setUploadingStates((prev) => ({ ...prev, main: false }));
       }
     },
@@ -195,7 +199,11 @@ function ItemImageUpload({
           ),
         }));
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Upload failed");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t.itemImageUpload.messages.uploadFailed[lang],
+        );
         // Clear uploading states on error
         setUploadingStates((prev) => ({
           ...prev,
@@ -340,10 +348,10 @@ function ItemImageUpload({
       <div className="mb-8">
         <div>
           <p className="scroll-m-20 text-base font-semibold tracking-tight w-full mb-1">
-            {t.addItemForm.paragraphs.mainImage[lang]}
+            {t.itemImageUpload.paragraphs.mainImage[lang]}
           </p>
           <p className="text-sm leading-none font-medium mb-4">
-            {t.addItemForm.paragraphs.mainImageDescription[lang]}
+            {t.itemImageUpload.paragraphs.mainImageDescription[lang]}
           </p>
         </div>
         <div className="mb-3">
@@ -373,10 +381,10 @@ function ItemImageUpload({
             ) : (
               <>
                 {isMainUploading
-                  ? t.addItemForm.buttons.uploading[lang]
-                  : t.addItemForm.buttons.mainImageUpload[lang]}
+                  ? t.itemImageUpload.buttons.uploading[lang]
+                  : t.itemImageUpload.buttons.mainImageUpload[lang]}
                 <p className="text-xs mt-1 text-muted-foreground">
-                  {t.addItemForm.buttons.uploadSubtext[lang]}
+                  {t.itemImageUpload.buttons.uploadSubtext[lang]}
                 </p>
               </>
             )}
@@ -393,19 +401,21 @@ function ItemImageUpload({
           {formImages?.main?.url && (
             <div className="max-w-[400px]">
               <div className="flex gap-2 w-fit items-center mb-2">
-                <Label className="mb-0">Alt text</Label>
+                <Label className="mb-0">
+                  {t.itemImageUpload.labels.altText[lang]}
+                </Label>
                 <Tooltip>
                   <TooltipTrigger>
                     <Info className="w-4 h-4" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-[300px]">
-                    <p>{t.addItemForm.tooltips.altText[lang]}</p>
+                    <p>{t.itemImageUpload.tooltips.altText[lang]}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
 
               <Input
-                placeholder={t.addItemForm.placeholders.describeImage[lang]}
+                placeholder={t.itemImageUpload.placeholders.describeImage[lang]}
                 className="w-[280px] border shadow-none border-grey"
                 value={formImages.main?.metadata.alt_text || ""}
                 onChange={(e) => updateImageAltText("main", 0, e.target.value)}
@@ -434,10 +444,10 @@ function ItemImageUpload({
       <div>
         <div>
           <p className="scroll-m-20 text-base font-semibold tracking-tight w-full mb-1">
-            {t.addItemForm.paragraphs.detailImage[lang]}
+            {t.itemImageUpload.paragraphs.detailImage[lang]}
           </p>
           <p className="text-sm leading-none font-medium mb-4">
-            {t.addItemForm.paragraphs.detailImageDescription[lang]}
+            {t.itemImageUpload.paragraphs.detailImageDescription[lang]}
           </p>
         </div>
         <div className="mb-6">
@@ -465,16 +475,16 @@ function ItemImageUpload({
             onDrop={(e) => handleDrop(e, "detail")}
           >
             {isDetailUploading ? (
-              t.addItemForm.buttons.uploading[lang]
+              t.itemImageUpload.buttons.uploading[lang]
             ) : dragStates.detail ? (
-              t.addItemForm.buttons.dropImages[lang]
+              t.itemImageUpload.buttons.dropImages[lang]
             ) : formImages.details.length >= MAX_DETAIL_IMAGES ? (
-              t.addItemForm.buttons.maxReached[lang]
+              t.itemImageUpload.buttons.maxReached[lang]
             ) : (
               <>
-                {t.addItemForm.buttons.detailImageUpload[lang]}
+                {t.itemImageUpload.buttons.detailImageUpload[lang]}
                 <p className="text-xs mt-1 text-muted-foreground">
-                  {t.addItemForm.buttons.uploadSubtext[lang]}
+                  {t.itemImageUpload.buttons.uploadSubtext[lang]}
                 </p>
               </>
             )}
@@ -500,13 +510,15 @@ function ItemImageUpload({
                 <div className="flex justify-between w-full">
                   <div>
                     <div className="flex gap-2 w-fit items-center mb-2">
-                      <Label className="mb-0">Alt text</Label>
+                      <Label className="mb-0">
+                        {t.itemImageUpload.labels.altText[lang]}
+                      </Label>
                     </div>
 
                     <Input
                       type="text"
                       placeholder={
-                        t.addItemForm.placeholders.describeImage[lang]
+                        t.itemImageUpload.placeholders.describeImage[lang]
                       }
                       className="w-[250px] border shadow-none border-grey"
                       value={image.metadata.alt_text}

@@ -49,7 +49,7 @@ const ItemsDetails: React.FC = () => {
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
-      availableQuantity: item?.items_number_total ?? 0,
+      availableQuantity: item?.quantity ?? 0,
       isChecking: false,
       error: null,
     });
@@ -133,7 +133,7 @@ const ItemsDetails: React.FC = () => {
         .catch((error) => {
           console.error("Error checking availability:", error);
           setAvailabilityInfo({
-            availableQuantity: item.items_number_currently_in_storage,
+            availableQuantity: item.available_quantity,
             isChecking: false,
             error: "Failed to check availability",
           });
@@ -413,7 +413,7 @@ const ItemsDetails: React.FC = () => {
                       ? availabilityInfo.availableQuantity > 0
                         ? `${t.itemDetails.available[lang]}: ${availabilityInfo.availableQuantity}`
                         : `${t.itemDetails.notAvailable[lang]}`
-                      : `${t.itemDetails.totalUnits[lang]}: ${item.items_number_currently_in_storage}`}
+                      : `${t.itemDetails.totalUnits[lang]}: ${item.available_quantity}`}
                   </p>
                 )}
               </div>
@@ -450,39 +450,6 @@ const ItemsDetails: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* Tabs and Tab Contents */}
-      {/* <div className="mt-10 w-full"> */}
-      {/* <div className="flex gap-4">
-        <Button
-          onClick={() => setSelectedTab("description")}
-          className={`${
-            selectedTab === "description"
-              ? "bg-secondary text-white"
-              : "bg-transparent text-secondary"
-          } hover:bg-secondary hover:text-white`}
-        >
-          Description
-        </Button>
-        <Button
-          onClick={() => setSelectedTab("reviews")}
-          className={`${
-            selectedTab === "reviews"
-              ? "bg-secondary text-white"
-              : "bg-transparent text-secondary"
-          } hover:bg-secondary hover:text-white`}
-        >
-          Reviews
-        </Button>
-      </div> */}
-
-      {/* Tab Content */}
-      {/* <div className="mt-4 bg-slate-50 p-4 rounded-lg">
-        {selectedTab === "description" && (
-          <p>{item.translations.fi.item_description}</p>
-        )}
-        {selectedTab === "reviews" && <p>Reviews will be displayed here</p>}
-      </div> */}
     </div>
     // </div>
   );

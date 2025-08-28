@@ -33,8 +33,6 @@ import { JwtModule } from "../jwt/jwt.module";
 import { RolesGuard } from "src/guards/roles.guard";
 import { OrganizationsModule } from "../organization/organizations.module";
 import { OrganizationsController } from "../organization/organizations.controller";
-import { Org_ItemsModule } from "../org_items/org_items.module";
-import { OrgItemsController } from "../org_items/org_items.controller";
 import { UserBanningModule } from "../user-banning/user-banning.module";
 import { OrganizationLocationsModule } from "../organization-locations/organization_locations.module";
 
@@ -89,7 +87,6 @@ if (!process.env.SUPABASE_URL) {
     RoleModule,
     JwtModule,
     OrganizationsModule,
-    Org_ItemsModule,
     UserBanningModule,
     OrganizationLocationsModule,
   ],
@@ -131,6 +128,14 @@ export class AppModule implements NestModule {
         // Organization_items public endpoints
         { path: "org-items", method: RequestMethod.GET },
         { path: "org-items/*path", method: RequestMethod.GET },
+
+        // Organizations public endpoints
+        { path: "organizations", method: RequestMethod.GET },
+        { path: "organizations/*path", method: RequestMethod.GET },
+
+        // Organization-locations public endpoints
+        { path: "organization-locations", method: RequestMethod.GET },
+        { path: "organization-locations/*path", method: RequestMethod.GET },
       )
       .forRoutes(
         // Protected controllers
@@ -140,7 +145,6 @@ export class AppModule implements NestModule {
         LogsController,
         RoleController,
         OrganizationsController,
-        OrgItemsController,
 
         // Protected HTTP methods (all routes except excluded ones)
         { path: "*", method: RequestMethod.POST },

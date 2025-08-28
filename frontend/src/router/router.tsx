@@ -12,6 +12,7 @@ import AdminDashboard from "@/pages/AdminPanel/AdminDashboard";
 import UsersList from "@/pages/AdminPanel/UsersList";
 import AdminItemsTable from "@/pages/AdminPanel/AdminItemsTable";
 import BookingList from "@/pages/AdminPanel/BookingList";
+import BookingDetailsPage from "@/pages/AdminPanel/BookingDetailsPage";
 import TagList from "@/pages/AdminPanel/TagList";
 import Logs from "@/pages/AdminPanel/Logs";
 import Organizations from "@/pages/AdminPanel/Organizations";
@@ -36,6 +37,8 @@ import App from "../App";
 import LoginPage from "@/pages/LoginPage";
 import { RoleManagement } from "@/components/Admin/Roles/RoleManagement";
 import AddItem from "@/pages/AdminPanel/AddItem";
+import OrganizationPage from "@/pages/OrganizationPage";
+import OrganizationsList from "../components/Organization/OrganizationsList";
 
 export const router = createBrowserRouter([
   {
@@ -58,8 +61,7 @@ export const router = createBrowserRouter([
               "user",
               "storage_manager",
               "requester",
-              "admin",
-              "main_admin",
+              "tenant_admin",
               "super_admin",
               "superVera",
             ]}
@@ -74,8 +76,7 @@ export const router = createBrowserRouter([
           <ProtectedRoute
             allowedRoles={[
               "storage_manager",
-              "admin",
-              "main_admin",
+              "tenant_admin",
               "super_admin",
               "superVera",
             ]}
@@ -89,12 +90,7 @@ export const router = createBrowserRouter([
             path: "users",
             element: (
               <ProtectedRoute
-                allowedRoles={[
-                  "superVera",
-                  "super_admin",
-                  "main_admin",
-                  "admin",
-                ]}
+                allowedRoles={["superVera", "super_admin", "tenant_admin"]}
               >
                 <UsersList />
               </ProtectedRoute>
@@ -104,12 +100,7 @@ export const router = createBrowserRouter([
             path: "items",
             element: (
               <ProtectedRoute
-                allowedRoles={[
-                  "superVera",
-                  "main_admin",
-                  "admin",
-                  "storage_manager",
-                ]}
+                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
               >
                 <AdminItemsTable />
               </ProtectedRoute>
@@ -119,9 +110,19 @@ export const router = createBrowserRouter([
             path: "bookings",
             element: (
               <ProtectedRoute
-                allowedRoles={["superVera", "main_admin", "admin"]}
+                allowedRoles={["storage_manager", "tenant_admin"]}
               >
                 <BookingList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "bookings/:id",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["storage_manager", "tenant_admin"]}
+              >
+                <BookingDetailsPage />
               </ProtectedRoute>
             ),
           },
@@ -129,12 +130,7 @@ export const router = createBrowserRouter([
             path: "tags",
             element: (
               <ProtectedRoute
-                allowedRoles={[
-                  "superVera",
-                  "main_admin",
-                  "admin",
-                  "storage_manager",
-                ]}
+                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
               >
                 <TagList />
               </ProtectedRoute>
@@ -152,7 +148,7 @@ export const router = createBrowserRouter([
             path: "roles",
             element: (
               <ProtectedRoute
-                allowedRoles={["superVera", "super_admin", "main_admin"]}
+                allowedRoles={["superVera", "super_admin", "tenant_admin"]}
               >
                 <RoleManagement />
               </ProtectedRoute>
@@ -170,12 +166,7 @@ export const router = createBrowserRouter([
             path: "items/add",
             element: (
               <ProtectedRoute
-                allowedRoles={[
-                  "superVera",
-                  "main_admin",
-                  "admin",
-                  "storage_manager",
-                ]}
+                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
               >
                 <AddItem />
               </ProtectedRoute>
@@ -185,7 +176,7 @@ export const router = createBrowserRouter([
             path: "locations",
             element: (
               <ProtectedRoute
-                allowedRoles={["superVera", "main_admin", "storage_manager"]}
+                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
               >
                 <OrganizationLocations />
               </ProtectedRoute>
@@ -248,7 +239,14 @@ export const router = createBrowserRouter([
         element: <PasswordResetResult />,
       },
       {
-        // all other routes lead to landing page
+        path: "/organizations",
+        element: <OrganizationsList />,
+      },
+      {
+        path: "/organization/:org_slug",
+        element: <OrganizationPage />,
+      },
+      {
         path: "*",
         element: <Navigate to="/" />,
       },

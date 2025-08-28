@@ -24,8 +24,6 @@ export interface UserFormData {
   email: string;
   phone: string;
   roles: NonNullable<Org_Roles>[]; // Use new role system, exclude null
-  preferences: Record<string, string>;
-  saved_lists?: string[];
 }
 
 /**
@@ -43,11 +41,7 @@ export interface CreateUserFormData extends UserFormData {
 export interface ItemFormData
   extends Omit<
     StorageItemRow,
-    | "created_at"
-    | "updated_at"
-    | "storage_item_tags"
-    | "average_rating"
-    | "test_metadata"
+    "created_at" | "updated_at" | "storage_item_tags" | "average_rating"
   > {
   // Override translations to ensure they always exist with required fields
   translations: {
@@ -56,7 +50,7 @@ export interface ItemFormData
   };
 
   // Ensure both fields are defined
-  items_number_currently_in_storage: number;
+  available_quantity: number;
   location_details: {
     name: string;
     address: string;

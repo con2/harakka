@@ -7,24 +7,6 @@ export const passwordReset = {
     fi: "Päivitetään salasanaasi...",
     en: "Updating your password...",
   },
-  errors: {
-    emptyPassword: {
-      fi: "Salasanakenttä on tyhjä tai sitä ei löydy",
-      en: "Password field not found or empty",
-    },
-    noToken: {
-      fi: "URL:ssa ei ole pääsytunnistetta",
-      en: "No access token found in URL",
-    },
-    updateFailed: {
-      fi: "Virhe salasanan päivityksessä",
-      en: "Error updating password",
-    },
-    unexpected: {
-      fi: "Tapahtui odottamaton virhe",
-      en: "An unexpected error occurred",
-    },
-  },
   // Auth UI translations for update_password view
   auth_ui: {
     password_label: {

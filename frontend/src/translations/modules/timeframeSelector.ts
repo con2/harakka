@@ -36,9 +36,5 @@ export const timeframeSelector = {
       fi: "Päivämäärien muuttaminen tyhjentää ostoskorisi. Viimeistele tai tyhjennä nykyinen varauksesi ensin.",
       en: "Changing dates will clear your cart. Please complete or clear your current booking first.",
     },
-    timeframeExceeded: {
-      fi: "Varaus ei voi ylittää 14 päivää.",
-      en: "Booking cannot exceed 14 days.",
-    },
   },
 };

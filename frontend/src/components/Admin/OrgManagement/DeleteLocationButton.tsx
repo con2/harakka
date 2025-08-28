@@ -37,7 +37,7 @@ const DeleteLocationButton = ({
       confirmText: t.deleteLocationButton.buttons.delete[lang],
       cancelText: t.deleteLocationButton.buttons.cancel[lang],
       onConfirm: async () => {
-        await toast.promise(
+        toast.promise(
           dispatch(deleteOrgLocationWithStorage(locationId)).unwrap(),
           {
             loading: t.deleteLocationButton.messages.loading[lang],

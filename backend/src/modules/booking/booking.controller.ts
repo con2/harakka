@@ -8,25 +8,28 @@ import {
   Post,
   Put,
   Req,
-  Patch,
   UnauthorizedException,
+  ForbiddenException,
   BadRequestException,
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
+import { RoleService } from "../role/role.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
-import { UpdatePaymentStatusDto } from "./dto/update-payment-status.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { BookingStatus, ValidBookingOrder } from "./types/booking.interface";
-import { BookingItem } from "@common/bookings/booking-items.types";
-import { Public, Roles } from "src/decorators/roles.decorator";
+import { ValidBookingOrder } from "./types/booking.interface";
+import { UpdateBookingDto } from "./dto/update-booking.dto";
+import { Roles } from "src/decorators/roles.decorator";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Controller("bookings")
 export class BookingController {
-  constructor(private readonly bookingService: BookingService) {}
+  constructor(
+    private readonly bookingService: BookingService,
+    private readonly roleService: RoleService,
+  ) {}
 
-  // gets all bookings - use case: admin
-  @Public()
+  // gets all bookings - use case: elevated admins only
+  @Roles(["super_admin", "superVera"])
   @Get()
   async getAll(
     @Req() req: AuthRequest,
@@ -93,9 +96,8 @@ export class BookingController {
   // any user creates a booking
   @Post()
   @Roles([
-    "admin",
     "user",
-    "main_admin",
+    "tenant_admin",
     "super_admin",
     "superVera",
     "storage_manager",
@@ -106,13 +108,24 @@ export class BookingController {
       const userId = req.user.id;
       if (!userId)
         throw new BadRequestException("No userId found: user_id is required");
-
+      const supabase = req.supabase;
       // put user-ID to DTO
       const dtoWithUserId = { ...dto, user_id: userId };
-      return this.bookingService.createBooking(dtoWithUserId, req.supabase);
+      return this.bookingService.createBooking(dtoWithUserId, supabase);
     } catch (error) {
       handleSupabaseError(error);
     }
+  }
+
+  // updates a booking
+  @Put(":id/update") // user updates own booking or admin updates booking
+  async updateBooking(
+    @Param("id") id: string,
+    @Body() dto: UpdateBookingDto,
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    return this.bookingService.updateBooking(id, userId, dto, req);
   }
 
   // confirms a booking
@@ -124,22 +137,53 @@ export class BookingController {
     return this.bookingService.confirmBooking(bookingId, userId, supabase);
   }
 
-  // updates a booking
-  @Put(":id/update") // user updates own booking or admin updates booking
-  async updateBooking(
-    @Param("id") id: string,
-    @Body("items") updatedItems: BookingItem[],
-    @Req() req: AuthRequest,
-  ) {
-    const userId = req.user.id;
-    return this.bookingService.updateBooking(id, userId, updatedItems, req);
-  }
-
   // rejects a booking by admin
   @Put(":id/reject")
   async reject(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     return this.bookingService.rejectBooking(id, userId, req);
+  }
+
+  // Confirm booking items for the active organization; supports all or a selected subset via item_ids
+  @Put(":id/confirm-for-org")
+  async confirmForOrg(
+    @Param("id") id: string,
+    @Req() req: AuthRequest,
+    @Query("org_id") org_id?: string,
+    @Body()
+    body?: {
+      item_ids?: string[];
+    },
+  ) {
+    const orgId = org_id || "";
+    if (!orgId) throw new BadRequestException("org_id query param is required");
+    return this.bookingService.confirmBookingItemsForOrg(
+      id,
+      orgId,
+      req,
+      body?.item_ids,
+    );
+  }
+
+  // Reject booking items for the active organization; supports all or a selected subset via item_ids
+  @Put(":id/reject-for-org")
+  async rejectForOrg(
+    @Param("id") id: string,
+    @Req() req: AuthRequest,
+    @Query("org_id") org_id?: string,
+    @Body()
+    body?: {
+      item_ids?: string[];
+    },
+  ) {
+    const orgId = org_id || "";
+    if (!orgId) throw new BadRequestException("org_id query param is required");
+    return this.bookingService.rejectBookingItemsForOrg(
+      id,
+      orgId,
+      req,
+      body?.item_ids,
+    );
   }
 
   // cancels own booking by user or admin cancels any booking
@@ -172,35 +216,36 @@ export class BookingController {
     return this.bookingService.confirmPickup(bookingId, supabase);
   }
 
-  // change payment status
-  @Patch("payment-status")
-  async updatePaymentStatus(
-    @Body() dto: UpdatePaymentStatusDto,
-    @Req() req: AuthRequest,
-  ) {
-    // const userId = req.user.id;
-    const supabase = req.supabase;
-    return this.bookingService.updatePaymentStatus(
-      dto.bookingId,
-      dto.status,
-      supabase,
-    );
-  }
-
   @Get("ordered")
   getOrderedBookings(
     @Req() req: AuthRequest,
     @Query("search") searchquery: string,
-    @Query("order") ordered_by: ValidBookingOrder = "booking_number",
-    @Query("status") status_filter: BookingStatus,
+    @Query("order") ordered_by: ValidBookingOrder = "created_at",
+    @Query("status") status_filter: string,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
-    @Query("ascending") ascending: string = "true",
+    @Query("ascending") ascending: string = "false",
+    @Query("org_id") org_id?: string,
   ) {
     const supabase = req.supabase;
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const is_ascending = ascending.toLowerCase() === "true";
+    // Require scoping to an organization and validate membership
+    const requestedOrg = (org_id ?? "").trim();
+    if (!requestedOrg) {
+      throw new BadRequestException("org_id query param is required");
+    }
+    const isMember = this.roleService.hasAnyRole(
+      req,
+      ["tenant_admin", "storage_manager"],
+      requestedOrg,
+    );
+    if (!isMember) {
+      throw new ForbiddenException(
+        "You don't have access to this organization's bookings",
+      );
+    }
     return this.bookingService.getOrderedBookings(
       supabase,
       pageNum,
@@ -209,25 +254,30 @@ export class BookingController {
       ordered_by,
       searchquery,
       status_filter,
+      requestedOrg,
     );
   }
 
   @Get("id/:id")
-  @Roles(["admin", "main_admin", "super_admin"])
+  @Roles(["tenant_admin", "storage_manager"])
   async getBookingByID(
     @Req() req: AuthRequest,
     @Param("id") booking_id: string,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
+    @Query("org_id") org_id?: string,
   ) {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const supabase = req.supabase;
+    if (!org_id)
+      throw new BadRequestException("org_id query param is required");
     return this.bookingService.getBookingByID(
       supabase,
       booking_id,
       pageNum,
       limitNum,
+      org_id,
     );
   }
 }

@@ -2,6 +2,7 @@ import axios from "axios";
 import { supabase } from "../config/supabase";
 import { store } from "@/store/store";
 import { fetchCurrentUserRoles } from "@/store/slices/rolesSlice";
+import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 
 // Cache the token to avoid unnecessary async calls
 let cachedToken: string | null = null;
@@ -22,8 +23,10 @@ export function clearCachedAuthToken() {
 // Get API URL from runtime config with fallback to development URL
 const apiUrl = import.meta.env.VITE_API_URL as string;
 const baseURL = apiUrl
-  ? // Ensure URL has proper protocol
-    apiUrl.startsWith("http")
+  ? // If it starts with "/" (relative path), use as-is for nginx proxy
+    // If it starts with "http", use as-is
+    // Otherwise, assume it needs https protocol
+    apiUrl.startsWith("/") || apiUrl.startsWith("http")
     ? apiUrl
     : `https://${apiUrl}`
   : "http://localhost:3000";
@@ -47,6 +50,16 @@ api.interceptors.request.use(async (config) => {
   const userId = localStorage.getItem("userId");
   if (userId) {
     config.headers["x-user-id"] = userId;
+  }
+
+  // Send orgId and  roleName from the activeRoleContext as custom headers on each api call
+  const state = store.getState();
+  const context = selectActiveRoleContext(state);
+  if (context.organizationId) {
+    config.headers["x-org-id"] = context.organizationId;
+  }
+  if (context.roleName) {
+    config.headers["x-role-name"] = context.roleName;
   }
 
   return config;

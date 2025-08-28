@@ -46,12 +46,11 @@ export const createItemDto = z.object({
     },
     { message: "location" },
   ),
-  items_number_total: z
-    .number({ invalid_type_error: "items_number_total" })
+  quantity: z
+    .number({ invalid_type_error: "quantity" })
     .int()
-    .min(1, "items_number_total"),
-  items_number_currently_in_storage: z.number().int().min(0),
-  price: z.number({ invalid_type_error: "price" }).min(0),
+    .min(1, "quantity"),
+  available_quantity: z.number().int().min(0),
   is_active: z.boolean(),
   translations: itemTranslationsSchema,
   tags: z.array(z.string()),

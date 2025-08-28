@@ -35,9 +35,8 @@ export const Navigation = () => {
 
   // Check if user has any admin role using hasAnyRole for efficiency
   const isAnyTypeOfAdmin = hasAnyRole([
-    "admin",
     "superVera",
-    "main_admin",
+    "tenant_admin",
     "super_admin",
     "storage_manager",
   ]);
@@ -127,6 +126,19 @@ export const Navigation = () => {
                     data-cy="nav-storage"
                   >
                     {t.navigation.storage[lang]}
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
+              {/* Organizations Link */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to={"/organizations"}
+                    className="flex items-center gap-1 text-secondary font-medium"
+                    data-cy="nav-organizations"
+                  >
+                    {t.navigation.organizations[lang]}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>

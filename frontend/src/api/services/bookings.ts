@@ -1,6 +1,10 @@
 import { ApiResponse, ApiSingleResponse } from "@common/response.types";
 import { api } from "../axios";
-import { CreateBookingDto, ValidBookingOrder } from "@/types";
+import {
+  CreateBookingDto,
+  CreateBookingResponse,
+  ValidBookingOrder,
+} from "@/types";
 import {
   BookingItemWithDetails,
   BookingPreview,
@@ -16,11 +20,11 @@ export const bookingsApi = {
   /**
    * Create a new booking from cart items
    * @param bookingData - Booking data including items
-   * @returns Promise with created booking
+   * @returns Promise with created booking response
    */
   createBooking: async (
     bookingData: CreateBookingDto,
-  ): Promise<BookingPreview> => {
+  ): Promise<CreateBookingResponse> => {
     return api.post("/bookings", bookingData);
   },
 
@@ -50,8 +54,11 @@ export const bookingsApi = {
    */
   getBookingByID: async (
     booking_id: string,
+    orgId: string,
   ): Promise<ApiSingleResponse<BookingPreview>> => {
-    return api.get(`/booking-items/${booking_id}`);
+    return api.get(
+      `/bookings/id/${booking_id}?org_id=${encodeURIComponent(orgId)}`,
+    );
   },
 
   /**
@@ -63,9 +70,11 @@ export const bookingsApi = {
   getBookingItems: async (
     booking_id: string,
     item_details: string[] = ["translations"],
+    orgId?: string,
   ): Promise<ApiResponse<BookingItemWithDetails>> => {
+    const base = `/booking-items/${booking_id}?item-details=${item_details.join(",")}`;
     return api.get(
-      `/booking-items/${booking_id}?item-details=${item_details.join(",")}`,
+      orgId ? `${base}&org_id=${encodeURIComponent(orgId)}` : base,
     );
   },
 
@@ -90,6 +99,22 @@ export const bookingsApi = {
   },
 
   /**
+   * Confirm booking items for the active organization
+   */
+  confirmBookingForOrg: async (
+    bookingId: string,
+    orgId: string,
+    itemIds?: string[],
+  ): Promise<{ message: string }> => {
+    return api.put(
+      `/bookings/${bookingId}/confirm-for-org?org_id=${encodeURIComponent(
+        orgId,
+      )}`,
+      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
+    );
+  },
+
+  /**
    * Update an existing booking
    * @param bookingIdId - booking ID to update
    * @param items - Updated items data
@@ -109,6 +134,54 @@ export const bookingsApi = {
    */
   rejectBooking: async (bookingId: string): Promise<{ message: string }> => {
     return api.put(`/bookings/${bookingId}/reject`);
+  },
+
+  /**
+   * Reject booking items for the active organization (uses x-org-id header)
+   */
+  rejectBookingForOrg: async (
+    bookingId: string,
+    orgId: string,
+    itemIds?: string[],
+  ): Promise<{ message: string }> => {
+    return api.put(
+      `/bookings/${bookingId}/reject-for-org?org_id=${encodeURIComponent(
+        orgId,
+      )}`,
+      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
+    );
+  },
+
+  /**
+   * Confirm booking items for an org; if itemIds provided, only those are confirmed.
+   */
+  confirmItemsForOrg: async (
+    bookingId: string,
+    orgId: string,
+    itemIds?: string[],
+  ): Promise<{ message: string }> => {
+    return api.put(
+      `/bookings/${bookingId}/confirm-for-org?org_id=${encodeURIComponent(
+        orgId,
+      )}`,
+      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
+    );
+  },
+
+  /**
+   * Reject booking items for an org; if itemIds provided, only those are rejected.
+   */
+  rejectItemsForOrg: async (
+    bookingId: string,
+    orgId: string,
+    itemIds?: string[],
+  ): Promise<{ message: string }> => {
+    return api.put(
+      `/bookings/${bookingId}/reject-for-org?org_id=${encodeURIComponent(
+        orgId,
+      )}`,
+      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
+    );
   },
 
   /**
@@ -154,20 +227,6 @@ export const bookingsApi = {
   },
 
   /**
-   * Update payment status of an booking (admin only)
-   * @param bookingId - booking ID to update
-   * @param status - New payment status
-   * @returns Promise with confirmation message
-   */
-  updatePaymentStatus: async (
-    bookingId: string,
-    status: "invoice-sent" | "paid" | "payment-rejected" | "overdue" | null,
-  ): Promise<{ bookingId: string; status: string }> => {
-    await api.patch(`/bookings/payment-status`, { bookingId, status });
-    return { bookingId, status: status ?? "" };
-  },
-
-  /**
    * Get ordered and filtered bookings.
    * @param order_by What column to order the columns by. Default "booking_number"
    * @param ascending If to sort booking smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
@@ -179,15 +238,17 @@ export const bookingsApi = {
    */
   getOrderedBookings: async (
     ordered_by: ValidBookingOrder,
-    ascending: boolean = true,
+    ascending: boolean,
     page: number,
     limit: number,
     searchquery?: string,
     status_filter?: BookingStatus,
+    orgId?: string,
   ): Promise<ApiResponse<BookingPreview>> => {
     let call = `/bookings/ordered?order=${ordered_by}&ascending=${ascending}&page=${page}&limit=${limit}`;
     if (searchquery) call += `&search=${searchquery}`;
     if (status_filter) call += `&status=${status_filter}`;
+    if (orgId) call += `&org_id=${encodeURIComponent(orgId)}`;
     return await api.get(call);
   },
 

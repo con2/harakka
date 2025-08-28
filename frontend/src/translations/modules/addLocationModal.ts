@@ -1,3 +1,5 @@
+import { common } from "./common";
+
 export const addLocationModal = {
   title: {
     en: "Add New Location",
@@ -20,8 +22,8 @@ export const addLocationModal = {
     },
     street: {
       label: {
-        en: "Street Address",
-        fi: "Katuosoite",
+        en: common.personalData.street.en,
+        fi: common.personalData.street.fi,
       },
       placeholder: {
         en: "Enter street address",
@@ -30,8 +32,8 @@ export const addLocationModal = {
     },
     city: {
       label: {
-        en: "City",
-        fi: "Kaupunki",
+        en: common.personalData.city.en,
+        fi: common.personalData.city.fi,
       },
       placeholder: {
         en: "Enter city",
@@ -40,8 +42,8 @@ export const addLocationModal = {
     },
     postcode: {
       label: {
-        en: "Postal Code",
-        fi: "Postinumero",
+        en: common.personalData.postalCode.en,
+        fi: common.personalData.postalCode.fi,
       },
       placeholder: {
         en: "Enter postal code",
@@ -93,28 +95,12 @@ export const addLocationModal = {
         en: "Active Location",
         fi: "Aktiivinen sijainti",
       },
-      description: {
-        en: "Whether this location is currently active",
-        fi: "Onko tämä sijainti tällä hetkellä aktiivinen",
-      },
     },
   },
   labels: {
     address: {
-      en: "Address",
-      fi: "Osoite",
-    },
-    coordinates: {
-      en: "Coordinates",
-      fi: "Koordinaatit",
-    },
-    status: {
-      en: "Status",
-      fi: "Tila",
-    },
-    activeLocation: {
-      en: "Active Location",
-      fi: "Aktiivinen sijainti",
+      en: common.personalData.address.en,
+      fi: common.personalData.address.fi,
     },
   },
   buttons: {
@@ -127,8 +113,8 @@ export const addLocationModal = {
       fi: "Luodaan...",
     },
     cancel: {
-      en: "Cancel",
-      fi: "Peruuta",
+      en: common.cancel.en,
+      fi: common.cancel.fi,
     },
   },
   messages: {

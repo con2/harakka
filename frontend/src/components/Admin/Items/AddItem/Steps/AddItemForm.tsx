@@ -11,8 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchLocationsByOrgId,
-  selectCurrentOrgLocations,
+  fetchAllOrgLocations,
+  selectOrgLocations,
 } from "@/store/slices/organizationLocationsSlice";
 import { createItemDto } from "@/store/utils/validate";
 import { ItemFormTag } from "@/types";
@@ -40,6 +40,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
   addToItemCreation,
+  clearLocalItemError,
   clearSelectedItem,
   selectIsEditing,
   selectItemCreation,
@@ -59,7 +60,7 @@ import { ErrorMessage } from "@hookform/error-message";
 /* eslint-disable react-hooks/exhaustive-deps */
 
 function AddItemForm() {
-  const orgLocations = useAppSelector(selectCurrentOrgLocations);
+  const orgLocations = useAppSelector(selectOrgLocations);
   const editItem = useAppSelector(selectSelectedItem);
   const { lang: appLang } = useLanguage();
   const [tagSearchValue, setTagSearchValue] = useState("");
@@ -79,9 +80,8 @@ function AddItemForm() {
         name: storage?.name ?? "",
         address: storage?.address ?? "",
       },
-      items_number_total: 1,
-      items_number_currently_in_storage: 1,
-      price: 0,
+      quantity: 1,
+      available_quantity: 1,
       is_active: true,
       tags: [],
       translations: {
@@ -105,13 +105,13 @@ function AddItemForm() {
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
     form.reset();
+    if (isEditing) return handleUpdateItem(values);
     void dispatch(addToItemCreation(values));
     dispatch(setNextStep());
   };
 
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
     const getFirstErrorMessage = (obj: any): string | null => {
-      console.log(obj);
       for (const value of Object.values(obj)) {
         if (value && typeof value === "object") {
           if ("message" in value && typeof value.message === "string") {
@@ -168,8 +168,9 @@ function AddItemForm() {
 
   const handleUpdateItem = (item: CreateItemType) => {
     dispatch(clearSelectedItem());
-    dispatch(toggleIsEditing(false));
+    dispatch(clearLocalItemError(item.id));
     dispatch(updateLocalItem({ item }));
+    dispatch(toggleIsEditing(false));
     dispatch(setNextStep());
   };
 
@@ -182,15 +183,13 @@ function AddItemForm() {
     const newLoc = orgLocations?.find(
       (org) => org.storage_location_id === selectedId,
     );
-    if (!newLoc) return toast.error("Loc error");
-    console.log("Location name: ", newLoc.storage_locations.name);
-    console.log("Location address: ", newLoc.storage_locations.address);
+    if (!newLoc) return;
     form.setValue(
       "location",
       {
         id: newLoc.storage_location_id,
-        name: newLoc.storage_locations.name,
-        address: newLoc.storage_locations.address,
+        name: newLoc?.storage_locations?.name ?? "",
+        address: newLoc?.storage_locations?.address ?? "",
       },
       { shouldValidate: true, shouldDirty: true },
     );
@@ -199,8 +198,13 @@ function AddItemForm() {
   /*------------------side effects-------------------------------------------*/
   useEffect(() => {
     if (org && orgLocations.length < 1)
-      void dispatch(fetchLocationsByOrgId(org.id));
+      void dispatch(fetchAllOrgLocations({ orgId: org.id, pageSize: 20 }));
   }, []);
+
+  useEffect(() => {
+    const newValue = form.getValues("quantity");
+    form.setValue("available_quantity", newValue);
+  }, [form.getValues("quantity")]);
 
   useEffect(() => {
     if (!storage) return;
@@ -302,7 +306,7 @@ function AddItemForm() {
             {/* Location | Total Quantity | Is active */}
             <div className="gap-4 flex w-full">
               <FormField
-                name="items_number_total"
+                name="quantity"
                 control={form.control}
                 render={({ field }) => (
                   <div className="w-full">
@@ -327,48 +331,7 @@ function AddItemForm() {
                       </FormControl>
                       <ErrorMessage
                         errors={form.formState.errors}
-                        name="items_number_total"
-                        render={({ message }) => (
-                          <p className="text-[0.8rem] font-medium text-destructive">
-                            {
-                              t.addItemForm.messages.validation[
-                                message as keyof typeof t.addItemForm.messages.validation
-                              ][appLang]
-                            }
-                          </p>
-                        )}
-                      />
-                    </FormItem>
-                  </div>
-                )}
-              />
-              <FormField
-                name="price"
-                control={form.control}
-                render={({ field }) => (
-                  <div className="w-full">
-                    <FormItem>
-                      <FormLabel>
-                        {t.addItemForm.labels.price[appLang]} (€)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder=""
-                          {...field}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            const numValue =
-                              value === "" ? "" : parseInt(value, 10);
-                            field.onChange(numValue);
-                          }}
-                          className="border shadow-none border-grey"
-                        />
-                      </FormControl>
-                      <ErrorMessage
-                        errors={form.formState.errors}
-                        name="price"
+                        name="quantity"
                         render={({ message }) => (
                           <p className="text-[0.8rem] font-medium text-destructive">
                             {
@@ -412,7 +375,7 @@ function AddItemForm() {
                               key={loc.storage_location_id}
                               value={loc.storage_location_id}
                             >
-                              {loc.storage_locations.name}
+                              {loc?.storage_locations?.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -552,13 +515,7 @@ function AddItemForm() {
             >
               {t.addItemForm.buttons.goToSummary[appLang]}
             </Button>
-            <Button
-              variant="outline"
-              type={isEditing ? "button" : "submit"}
-              onClick={
-                !isEditing ? () => {} : () => handleUpdateItem(form.getValues())
-              }
-            >
+            <Button variant="outline" type="submit">
               {isEditing
                 ? t.addItemForm.buttons.updateItem[appLang]
                 : t.addItemForm.buttons.addItem[appLang]}

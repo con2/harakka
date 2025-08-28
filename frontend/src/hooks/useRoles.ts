@@ -18,7 +18,6 @@ import {
   selectAdminError,
   selectAvailableRoles,
   setActiveRoleContext,
-  clearActiveRoleContext,
   selectActiveRoleContext,
 } from "@/store/slices/rolesSlice";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
@@ -56,12 +55,8 @@ export const useRoles = () => {
 
   // Method for setting active role
   const setActiveContext = useCallback(
-    async (
-      organizationId: string,
-      roleName: string,
-      organizationName: string,
-    ) => {
-      await dispatch(
+    (organizationId: string, roleName: string, organizationName: string) => {
+      dispatch(
         setActiveRoleContext({
           organizationId,
           roleName,
@@ -71,11 +66,6 @@ export const useRoles = () => {
     },
     [dispatch],
   );
-
-  // Method for clearing active role context
-  const clearActiveContext = useCallback(() => {
-    dispatch(clearActiveRoleContext());
-  }, [dispatch]);
 
   // Current user roles and organizations
   const currentUserRoles = useAppSelector(selectCurrentUserRoles);
@@ -133,9 +123,8 @@ export const useRoles = () => {
   );
 
   const isAnyTypeOfAdmin = hasAnyRole([
-    "admin",
     "superVera",
-    "main_admin",
+    "tenant_admin",
     "super_admin",
     "storage_manager",
   ]);
@@ -480,6 +469,5 @@ export const useRoles = () => {
     activeContext,
     hasActiveContext, // boolean is it populated or null
     setActiveContext,
-    clearActiveContext,
   };
 };
