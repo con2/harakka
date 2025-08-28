@@ -117,6 +117,7 @@ export async function generateBookingNumber(
   throw new Error(
     "Could not generate a unique booking number after multiple attempts.",
   );
+}
 
 export function deriveOrgStatus(statuses: string[]): BookingStatus {
   if (statuses.length === 0) return "pending";
