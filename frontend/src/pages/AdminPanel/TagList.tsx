@@ -225,6 +225,11 @@ const TagList = () => {
       enableSorting: false,
     },
     {
+      id: "is_popular",
+      header: "Popular",
+      cell: ({ row }) => (row.original.is_popular ? "Yes" : "No"),
+    },
+    {
       id: "actions",
       cell: ({ row }) => {
         const tag = row.original;
