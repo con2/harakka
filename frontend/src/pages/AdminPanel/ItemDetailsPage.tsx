@@ -27,7 +27,6 @@ const ItemDetailsPage = () => {
   const [updateOpen, setUpdateOpen] = useState(false);
   // Form state for inline editing
   const [formData, setFormData] = useState<Item | null>(null);
-  // availability info intentionally unused for now
 
   useEffect(() => {
     const load = async () => {
@@ -122,16 +121,16 @@ const ItemDetailsPage = () => {
             size="sm"
             onClick={() => setUpdateOpen((v) => !v)}
           >
-            <Edit className="h-4 w-4" /> {updateOpen ? "Close" : "Edit"}
+            <Edit className="h-4 w-4 mr-2" /> {updateOpen ? "Close" : "Edit"}
           </Button>
           <Button size="sm" variant="destructive" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4" /> {"Delete"}
+            <Trash2 className="h-4 w-4 mr-2" /> {"Delete"}
           </Button>
         </div>
       </div>
 
       {/* Edit item fields */}
-      <div className="mt-4">
+      <div className="mt-2">
         {formData && (
           <UpdateItemForm
             initialData={formData}

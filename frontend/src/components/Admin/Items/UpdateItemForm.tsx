@@ -36,6 +36,7 @@ import { fetchTagsForItem as fetchTagsForItemAction } from "@/store/slices/tagSl
 import { toast } from "sonner";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
+import { Separator } from "@/components/ui/separator";
 
 type Props = {
   initialData: Item | null;
@@ -93,8 +94,8 @@ const UpdateItemForm: React.FC<Props> = ({
 
   const handleSubmit = async () => {
     if (!formData) return;
-
-    // Prefer org id from the current form data (it may come from the view row),
+    // TODO: UPDATE THIS WHEN BACKEND FILTERING OF ITEMS BY ORG IS READY
+    // Prefer org id from the current form data,
     // fall back to nested location_details.organization_id, and finally the
     // active org id from the store.
     const asRecord = formData as unknown as Record<string, unknown>;
@@ -120,15 +121,12 @@ const UpdateItemForm: React.FC<Props> = ({
 
     try {
       setLoading(true);
-
       // Shape payload to match backend UpdateItem: include tags and location_details
       const payload: Partial<{
-        // keep the DB/row fields plus helper fields — itemsSlice expects Partial<UpdateItem>
         [k: string]: unknown;
       }> = {
         ...formData,
         tags: localSelectedTags,
-        // ensure location_details is explicitly provided when available
         location_details: formData.location_details ?? undefined,
       };
 
@@ -153,9 +151,9 @@ const UpdateItemForm: React.FC<Props> = ({
 
   return (
     <div>
-      <div className="flex border-b mb-2">
+      <div className="flex border-b mb-8">
         <button
-          className={`px-4 py-1 text-sm ${
+          className={`px-4 py-1 ${
             activeTab === "details"
               ? "border-b-2 border-secondary font-medium"
               : "text-gray-500"
@@ -166,7 +164,7 @@ const UpdateItemForm: React.FC<Props> = ({
           {t.updateItemModal.tabs.details[lang]}
         </button>
         <button
-          className={`px-4 py-1 text-sm ${
+          className={`px-4 py-1 ${
             activeTab === "images"
               ? "border-b-2 border-secondary font-medium"
               : "text-gray-500"
@@ -179,7 +177,7 @@ const UpdateItemForm: React.FC<Props> = ({
       </div>
 
       {activeTab === "details" ? (
-        <div className="space-y-4 max-w-6xl">
+        <div className="space-y-6 max-w-6xl">
           {tagsLoading && (
             <div className="flex justify-center p-4">
               <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -330,13 +328,15 @@ const UpdateItemForm: React.FC<Props> = ({
                   }))
                 }
                 disabled={!editable}
+                className="mt-2"
               />
             </div>
           </div>
+          <Separator />
           {/* tags checkboxes */}
           <div>
             <strong>{t.updateItemModal.tags.title[lang] ?? "Tags"}: </strong>
-            <div className="grid grid-cols-5 gap-1 mt-2">
+            <div className="grid grid-cols-5 mt-2">
               {tags.map((tag) => (
                 <label key={tag.id} className="flex items-center space-x-2">
                   <Checkbox
