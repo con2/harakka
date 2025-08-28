@@ -5,7 +5,7 @@ NOTES.md
 !.env.production.template
 !.env.local.template
 supabase-local.env
-
+supabase-prod
 # Node.js dependencies
 node_modules/*
 .nvmrc

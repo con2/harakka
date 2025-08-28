@@ -1,5 +1,6 @@
 import { Database } from "@common/supabase.types";
 import { Translations } from "./translations.types";
+import { BookingPreview } from "@common/bookings/booking.types";
 
 export interface BookingItem {
   item_id: string;
@@ -75,11 +76,14 @@ export type ValidBookingOrder =
   | "final_amount"
   | "full_name";
 
-export type BookingStatus =
-  | "confirmed"
-  | "cancelled by admin"
-  | "deleted"
-  | "rejected"
-  | "completed"
-  | "pending"
-  | "cancelled by user";
+export const BookingStatus = {
+  pending: "pending" as Database["public"]["Enums"]["booking_status"],
+  confirmed: "confirmed" as Database["public"]["Enums"]["booking_status"],
+  rejected: "rejected" as Database["public"]["Enums"]["booking_status"],
+  cancelled: "cancelled" as Database["public"]["Enums"]["booking_status"],
+};
+
+export type BookingWithOrgStatus = BookingPreview & {
+  org_status_for_active_org: BookingStatus;
+};
+export type BookingStatus = keyof typeof BookingStatus;

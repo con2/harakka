@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -809,7 +809,7 @@ export type Database = {
           provider_organization_id: string | null
           quantity: number
           start_date: string
-          status: string
+          status: Database["public"]["Enums"]["booking_status"]
           total_days: number
         }
         Insert: {
@@ -822,7 +822,7 @@ export type Database = {
           provider_organization_id?: string | null
           quantity?: number
           start_date: string
-          status: string
+          status: Database["public"]["Enums"]["booking_status"]
           total_days: number
         }
         Update: {
@@ -835,7 +835,7 @@ export type Database = {
           provider_organization_id?: string | null
           quantity?: number
           start_date?: string
-          status?: string
+          status?: Database["public"]["Enums"]["booking_status"]
           total_days?: number
         }
         Relationships: [
@@ -910,7 +910,7 @@ export type Database = {
           created_at: string | null
           id: string
           notes: string | null
-          status: string
+          status: Database["public"]["Enums"]["booking_status"]
           updated_at: string | null
           user_id: string
         }
@@ -919,7 +919,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           notes?: string | null
-          status: string
+          status: Database["public"]["Enums"]["booking_status"]
           updated_at?: string | null
           user_id: string
         }
@@ -928,7 +928,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           notes?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string | null
           user_id?: string
         }
@@ -1924,7 +1924,7 @@ export type Database = {
           created_at: string | null
           id: string | null
           notes: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
           updated_at: string | null
           user_id: string | null
         }
@@ -1938,7 +1938,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
           user_id: string | null
           visible_name: string | null
         }
@@ -2177,6 +2177,7 @@ export type Database = {
       }
     }
     Enums: {
+      booking_status: "pending" | "confirmed" | "rejected" | "cancelled"
       notification_channel: "in_app" | "web_push" | "email"
       notification_severity: "info" | "warning" | "critical"
       notification_type:
@@ -2658,7 +2659,10 @@ export type Database = {
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<
+  keyof Database,
+  "public"
+>]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
@@ -2680,14 +2684,14 @@ export type Tables<
     ? R
     : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
+      DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] &
+      DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
     : never
+  : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
@@ -2707,12 +2711,12 @@ export type TablesInsert<
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Insert: infer I
+    }
+    ? I
     : never
+  : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
@@ -2732,12 +2736,12 @@ export type TablesUpdate<
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Update: infer U
+    }
+    ? U
     : never
+  : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
@@ -2753,8 +2757,8 @@ export type Enums<
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
@@ -2770,8 +2774,8 @@ export type CompositeTypes<
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
 
 export const Constants = {
   auth: {
@@ -2795,6 +2799,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      booking_status: ["pending", "confirmed", "rejected", "cancelled"],
       notification_channel: ["in_app", "web_push", "email"],
       notification_severity: ["info", "warning", "critical"],
       notification_type: [
