@@ -9,6 +9,7 @@ node_modules/*
 .vscode
 supabase-prod
 supabase-project
+supabase-local.env
 
 # compiled output
 /dist
