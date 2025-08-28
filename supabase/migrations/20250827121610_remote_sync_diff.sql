@@ -1,4 +1,3 @@
-create type "public"."booking_status" as enum ('pending', 'confirmed', 'rejected', 'cancelled');
 
 alter table "public"."booking_items" drop constraint "order_items_status_check";
 

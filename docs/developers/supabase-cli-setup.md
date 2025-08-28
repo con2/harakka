@@ -18,7 +18,7 @@ This guide covers setting up the Supabase CLI for team development, including in
 ### Option 1: Using Homebrew (macOS/Linux - Recommended)
 
 ```bash
-brew install supabase/tap/supabase
+brew install supabase
 ```
 
 ### Option 2: Using npx (Cross-platform)
@@ -287,16 +287,24 @@ npx migration repair --status applied {migration-name}
 
 - `npm run dev` - Start frontend + backend (remote DB)
 - `npm run dev:local` - Start local Supabase + frontend + backend
+- `npm run dev:live` - Start frontend + backend with live environment
 - `npm run frontend` - Start only frontend
 - `npm run backend` - Start only backend
+- `npm run frontend:local` - Start frontend with local Supabase environment
+- `npm run frontend:live` - Start frontend with live environment
+- `npm run backend:local` - Start backend with local Supabase environment
+- `npm run backend:live` - Start backend with live environment
+- `npm run install-all` - Install dependencies for all packages (root, frontend, backend)
 
 ### Supabase Management
 
 - `npm run s:start` - Start local Supabase stack
+- `npm run s:start:local` - Start local Supabase with local environment variables
 - `npm run s:stop` - Stop local Supabase stack
 - `npm run s:restart` - Restart local Supabase stack
 - `npm run s:status` - Show status of local services
 - `npm run s:studio` - Open Supabase Studio
+- `npm run s:link` - Link project to Supabase
 
 ### Database Operations
 
@@ -304,6 +312,26 @@ npx migration repair --status applied {migration-name}
 - `npm run s:pull` - Pull schema changes from remote
 - `npm run s:push` - Push local migrations to remote
 - `npm run s:seed` - Create seed data from remote DB
+- `npm run s:dump` - Dump database schema to file
+
+### Database Diffing & Syncing
+
+- `npm run s:local:diff` - Generate diff of local changes
+- `npm run s:diff:linked` - Generate diff against linked remote database
+- `npm run s:diff:linked:f` - Generate diff against linked remote with filename
+
+> **⚠️ IMPORTANT**: When syncing your local database with the remote database, always use:
+> ```bash
+> supabase db diff --linked -s public,auth -f remote_sync_diff
+> ```
+
+or
+
+```bash
+npx supabase db diff --linked -s public,auth -f remote_sync_diff
+```
+
+> This command ensures proper schema synchronization between your local and remote databases by including both public and auth schemas.
 
 ### Migrations
 
@@ -314,6 +342,28 @@ npx migration repair --status applied {migration-name}
 
 - `npm run s:functions:serve` - Serve functions locally
 - `npm run s:functions:deploy` - Deploy functions to remote
+
+### Type Generation
+
+- `npm run generate:types:local` - Generate TypeScript types from local database
+- `npm run generate:types` - Generate TypeScript types from remote database
+
+### Translation Management
+
+- `npm run check-translation` - Check translation consistency (relaxed mode)
+- `npm run check-translation:strict` - Check translation consistency (strict mode)
+- `npm run check-translation:relaxed` - Check translation consistency (relaxed mode)
+- `npm run check-translation:unused` - Find unused translation keys
+- `npm run check-translation:clean` - Remove unused translation keys (with confirmation)
+- `npm run check-translation:create` - Create missing translation modules
+
+### SQL Quality Assurance
+
+- `npm run sql:check` - Check SQL syntax and safety in migrations and scripts
+- `npm run sql:check:migrations` - Check only migration files
+- `npm run sql:check:scripts` - Check only script files
+- `npm run sql:check:verbose` - Check with verbose output
+- `npm run sql:check:all` - Check all SQL files in the project
 
 ## Troubleshooting
 
