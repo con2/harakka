@@ -1183,7 +1183,6 @@ export class BookingService {
     if (searchquery) {
       query.or(
         `booking_number.ilike.%${searchquery}%,` +
-          `status.ilike.%${searchquery}%,` +
           `full_name.ilike.%${searchquery}%,` +
           `created_at_text.ilike.%${searchquery}%`,
       );
