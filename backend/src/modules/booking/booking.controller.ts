@@ -28,8 +28,11 @@ export class BookingController {
     private readonly roleService: RoleService,
   ) {}
 
-  // gets all bookings - use case: elevated admins only
-  @Roles(["super_admin", "superVera"])
+  /**
+   * Get all bookings.
+   * Accessible only by super admins.
+   */
+  @Roles(["super_admin"])
   @Get()
   async getAll(
     @Req() req: AuthRequest,
@@ -46,8 +49,16 @@ export class BookingController {
     );
   }
 
-  // gets the bookings of the logged-in user
+  /**
+   * Get bookings of the logged-in user.
+   * Accessible by users and requesters.
+   */
+  //TODO: return bookings of my activeContext organization only
   @Get("my")
+  @Roles(["user", "requester"], {
+    match: "any",
+    sameOrg: true,
+  })
   async getOwnBookings(
     @Req() req: AuthRequest,
     @Query("page") page: string = "1",
