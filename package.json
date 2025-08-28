@@ -3,6 +3,13 @@
   "version": "1.1.0",
   "description": "Full-Stack Storage & Booking Application",
   "main": "index.js",
+  "contributors": [
+    {
+      "name": "Athina Kantis",
+      "email": "athina.kantis@gmail.com",
+      "url": "https://github.com/athinakantis"
+    }
+  ],
   "scripts": {
     "start": "echo 'Run frontend and backend separately!'",
     "frontend": "npm --prefix frontend run dev",
