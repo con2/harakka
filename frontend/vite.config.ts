@@ -38,9 +38,8 @@ export default defineConfig(({ mode }) => {
   // Logging with fallback information
   console.log(`Running in ${mode} mode with environment:`, {
     VITE_SUPABASE_URL: env.VITE_SUPABASE_URL ? "✓ Found" : "❌ Missing",
-    VITE_SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY
-      ? "✓ Found"
-      : "❌ Missing",
+    VITE_SUPABASE_ANON_KEY:
+      "Last 8 chars: " + (env.VITE_SUPABASE_ANON_KEY || "").slice(-8),
     VITE_API_URL: env.VITE_API_URL
       ? `✓ ${env.VITE_API_URL}`
       : "❌ Will use http://localhost:3000",
