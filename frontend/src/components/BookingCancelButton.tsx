@@ -51,7 +51,7 @@ const BookingCancelButton = ({ id, closeModal }: BookingCancelButtonProps) => {
       onClick={handleCancelBooking}
       className="text-red-600 hover:text-red-800 hover:bg-red-100"
       size={"sm"}
-      title={t.bookingCancel.confirmDialog.confirmText[lang]}
+      title={t.bookingCancel.cancel[lang]}
     >
       <XCircle size={10} className="mr-1" />
     </Button>

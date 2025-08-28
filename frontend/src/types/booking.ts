@@ -107,6 +107,7 @@ export type BookingPreview = StripNull<BookingUserViewRow>;
 export type BookingWithDetails = BookingPreview & {
   booking_items: BookingItemWithDetails[] | null;
   notes?: string | null; // Add notes property
+  org_status_for_active_org?: string;
 };
 
 export type BookingItemWithDetails = BookingItem & {
