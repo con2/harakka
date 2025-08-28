@@ -90,15 +90,6 @@ function makeCandidate(): string {
     .padStart(4, "0")}`;
 }
 
-export function deriveOrgStatus(statuses: string[]): BookingStatus {
-  if (statuses.length === 0) return "pending";
-  if (statuses.every((s) => s === "rejected")) return "rejected";
-  if (statuses.some((s) => s === "pending")) return "pending";
-  if (statuses.some((s) => s === "confirmed")) return "confirmed";
-  if (statuses.some((s) => s === "cancelled")) return "cancelled";
-  return "pending";
-}
-
 /**
  * Generate a booking number and ensure it's not already present in the bookings table.
  * Retries up to `maxAttempts` times before throwing.
@@ -126,4 +117,12 @@ export async function generateBookingNumber(
   throw new Error(
     "Could not generate a unique booking number after multiple attempts.",
   );
+
+export function deriveOrgStatus(statuses: string[]): BookingStatus {
+  if (statuses.length === 0) return "pending";
+  if (statuses.every((s) => s === "rejected")) return "rejected";
+  if (statuses.some((s) => s === "pending")) return "pending";
+  if (statuses.some((s) => s === "confirmed")) return "confirmed";
+  if (statuses.some((s) => s === "cancelled")) return "cancelled";
+  return "pending";
 }

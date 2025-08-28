@@ -243,8 +243,8 @@ export class BookingService {
       .from("bookings")
       .insert({
         user_id: userId,
-        status: BookingStatus.pending,
         booking_number: bookingNumber,
+        status: BookingStatus.pending,
       })
       .select()
       .single<BookingRow>();
