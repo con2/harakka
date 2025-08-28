@@ -3,6 +3,7 @@ NOTES.md
 # Node.js dependencies
 node_modules/*
 .nvmrc
+.env.*
 # Supabase project files
 /supabase
 .vscode
