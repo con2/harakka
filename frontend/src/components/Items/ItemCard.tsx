@@ -26,6 +26,7 @@ import {
 } from "../../store/slices/itemImagesSlice";
 import { Item } from "../../types/item";
 import { Input } from "../ui/input";
+import { itemsApi } from "@/api/services/items";
 
 interface ItemsCardProps {
   item: Item;
@@ -160,16 +161,30 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   };
 
   // Update availability info based on dates selection
-  // Since backend filtering already handles availability, no need for individual API calls
   useEffect(() => {
     if (startDate && endDate) {
-      // Backend filtering ensures only available items are shown
-      // Use the item's currently available quantity as the available quantity
-      setAvailabilityInfo({
-        availableQuantity: item.available_quantity || 0,
-        isChecking: false,
+      setAvailabilityInfo((prev) => ({
+        ...prev,
+        isChecking: true,
         error: null,
-      });
+      }));
+      void itemsApi
+        .checkAvailability(item.id, new Date(startDate), new Date(endDate))
+        .then((response) => {
+          setAvailabilityInfo({
+            availableQuantity: response.availableQuantity,
+            isChecking: false,
+            error: null,
+          });
+        })
+        .catch((error) => {
+          console.error("Error checking availability:", error);
+          setAvailabilityInfo({
+            availableQuantity: item.available_quantity || 0,
+            isChecking: false,
+            error: "Failed to check availability",
+          });
+        });
     } else {
       // When no dates selected, show total quantity
       setAvailabilityInfo({
@@ -178,7 +193,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         error: null,
       });
     }
-  }, [startDate, endDate, item.available_quantity, item.quantity]);
+  }, [startDate, endDate, item.id, item.available_quantity, item.quantity]);
 
   const isItemAvailableForTimeframe = availabilityInfo.availableQuantity > 0;
 
