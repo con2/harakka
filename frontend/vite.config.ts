@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
   // First, try to get from process.env (set by env-cmd)
   if (process.env.VITE_SUPABASE_URL) {
     env = {
+      ENV: process.env.ENV || mode,
       VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
       VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || "",
       VITE_API_URL: process.env.VITE_API_URL || "",
@@ -37,6 +38,7 @@ export default defineConfig(({ mode }) => {
 
   // Logging with fallback information
   console.log(`Running in ${mode} mode with environment:`, {
+    ENV: env.ENV,
     VITE_SUPABASE_URL: env.VITE_SUPABASE_URL ? "✓ Found" : "❌ Missing",
     VITE_SUPABASE_ANON_KEY:
       "Last 8 chars: " + (env.VITE_SUPABASE_ANON_KEY || "").slice(-8),
