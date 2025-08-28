@@ -1,19 +1,14 @@
 import { BookingItem } from "@common/bookings/booking-items.types";
 import { BaseEntity, ErrorContext, Translatable } from "./common";
 import { ItemTranslation } from "./item";
-import { Database } from "@common/database.types";
+import { Database } from "@common/supabase.types";
 import { StripNull } from "@common/helper.types";
 
 /**
  * Booking status values
  */
 export type BookingStatus =
-  | "pending"
-  | "confirmed"
-  | "completed"
-  | "cancelled"
-  | "cancelled by user"
-  | "rejected"
+  | Database["public"]["Enums"]["booking_status"]
   | "all";
 
 /**
@@ -112,4 +107,5 @@ export type BookingWithDetails = BookingPreview & {
 
 export type BookingItemWithDetails = BookingItem & {
   storage_items: Translatable<ItemTranslation>;
+  org_name: string;
 };
