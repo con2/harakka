@@ -23,14 +23,12 @@ function mockContext({
   isPublic = false,
   meta,
   userRoles = [],
-  orgParam,
-  orgHeader,
+  activeOrgId,
 }: {
   isPublic?: boolean;
   meta?: RolesMeta;
   userRoles?: FakeUserRole[];
-  orgParam?: string;
-  orgHeader?: string;
+  activeOrgId?: string;
 } = {}): ExecutionContext {
   const handler = () => {};
   if (isPublic) Reflect.defineMetadata(IS_PUBLIC_KEY, true, handler);
@@ -38,8 +36,9 @@ function mockContext({
 
   const req = {
     userRoles,
-    params: orgParam ? { organizationId: orgParam } : {},
-    headers: orgHeader ? { "x-org-id": orgHeader } : {},
+    activeRoleContext: activeOrgId
+      ? { organizationId: activeOrgId }
+      : undefined,
   };
 
   return {
@@ -63,16 +62,16 @@ describe("RolesGuard", () => {
   });
 
   it("allows when user has any required role (default match)", () => {
-    const meta: RolesMeta = { roles: ["admin"] };
+    const meta: RolesMeta = { roles: ["tenant_admin"] };
     const ctx = mockContext({
       meta,
-      userRoles: [{ role_name: "admin", organization_id: "org1" }],
+      userRoles: [{ role_name: "tenant_admin", organization_id: "org1" }],
     });
     expect(guard.canActivate(ctx)).toBe(true);
   });
 
   it("blocks when user lacks required role", () => {
-    const meta: RolesMeta = { roles: ["admin"] };
+    const meta: RolesMeta = { roles: ["tenant_admin"] };
     const ctx = mockContext({
       meta,
       userRoles: [{ role_name: "user", organization_id: "org1" }],
@@ -82,13 +81,13 @@ describe("RolesGuard", () => {
 
   it("enforces match:'all'", () => {
     const meta: RolesMeta = {
-      roles: ["admin", "storage_manager"],
+      roles: ["tenant_admin", "storage_manager"],
       match: "all",
     };
     const ctx = mockContext({
       meta,
       userRoles: [
-        { role_name: "admin", organization_id: "org1" },
+        { role_name: "tenant_admin", organization_id: "org1" },
         // missing storage_manager
       ],
     });
@@ -96,24 +95,24 @@ describe("RolesGuard", () => {
   });
 
   it("enforces sameOrg when flag set", () => {
-    const meta: RolesMeta = { roles: ["admin"], sameOrg: true };
+    const meta: RolesMeta = { roles: ["tenant_admin"], sameOrg: true };
     const ctx = mockContext({
       meta,
-      userRoles: [{ role_name: "admin", organization_id: "org1" }],
-      orgParam: "org2", // mismatched org
+      userRoles: [{ role_name: "tenant_admin", organization_id: "org1" }],
+      activeOrgId: "org2", // mismatched org
     });
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
 
     const ctxMatch = mockContext({
       meta,
-      userRoles: [{ role_name: "admin", organization_id: "org1" }],
-      orgParam: "org1",
+      userRoles: [{ role_name: "tenant_admin", organization_id: "org1" }],
+      activeOrgId: "org1",
     });
     expect(guard.canActivate(ctxMatch)).toBe(true);
   });
 
   it("bypasses checks for super_admin", () => {
-    const meta: RolesMeta = { roles: ["admin"] };
+    const meta: RolesMeta = { roles: ["tenant_admin"] };
     const ctx = mockContext({
       meta,
       userRoles: [{ role_name: "super_admin", organization_id: null }],

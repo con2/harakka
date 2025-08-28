@@ -1,26 +1,61 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const AuthRedirect = () => {
-  const { user } = useAuth();
-  const { hasRole, isAdmin, isSuperVera } = useRoles();
+  const { user, authLoading } = useAuth();
+  const {
+    loading: rolesLoading,
+    currentUserRoles,
+    hasRole,
+    hasAnyRole,
+    activeContext,
+  } = useRoles();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTriggered = useRef(false);
 
   useEffect(() => {
-    if (user) {
-      // Check if user has admin privileges (admin role or superVera)
-      if (isAdmin || isSuperVera) {
-        void navigate("/admin"); // redirect to Admin Panel for admin users
-      } else if (hasRole("user")) {
-        void navigate("/"); // redirect to Landing Page for regular users
+    // Only redirect if:
+    // 1. User and roles are loaded
+    // 2. We're on the login page or root page (suggesting fresh login)
+    // 3. Haven't already triggered a redirect
+    const hasRoleData = currentUserRoles && currentUserRoles.length > 0;
+    const dataReady = user && !authLoading && !rolesLoading && hasRoleData;
+    const isEntry = location.pathname === "/login" || location.pathname === "/";
+
+    if (!dataReady || !isEntry || redirectTriggered.current) return;
+
+    // Evaluate admin after roles are ready to avoid early false
+    const isAnyTypeOfAdmin = hasAnyRole([
+      "superVera",
+      "tenant_admin",
+      "super_admin",
+      "storage_manager",
+    ]);
+
+    setTimeout(() => {
+      redirectTriggered.current = true;
+      if (isAnyTypeOfAdmin) {
+        void navigate("/admin");
+      } else if (hasRole("user") || hasRole("requester")) {
+        void navigate("/storage");
       } else {
-        // Fallback: if no specific role found, redirect to landing page
-        void navigate("/");
+        void navigate("/storage");
       }
-    }
-  }, [user, hasRole, isAdmin, isSuperVera, navigate]);
+    }, 50);
+  }, [
+    user,
+    authLoading,
+    rolesLoading,
+    currentUserRoles,
+    hasRole,
+    hasAnyRole,
+    navigate,
+    location.pathname,
+    activeContext,
+  ]);
 
   return null;
 };

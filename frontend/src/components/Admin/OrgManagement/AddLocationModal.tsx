@@ -19,6 +19,8 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { CreateOrgLocationWithStorage } from "@/types/organizationLocation";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 interface AddLocationModalProps {
   organizationId: string;
@@ -44,6 +46,7 @@ const AddLocationModal = ({
   onClose,
 }: AddLocationModalProps) => {
   const dispatch = useAppDispatch();
+  const { lang } = useLanguage();
   const [formData, setFormData] = useState<StorageLocationFormData>({
     name: "",
     street: "",
@@ -66,7 +69,7 @@ const AddLocationModal = ({
       !formData.city.trim() ||
       !formData.postcode.trim()
     ) {
-      toast.error("Name, street, city, and postcode are required");
+      toast.error(t.addLocationModal.validation.requiredFields[lang]);
       return;
     }
 
@@ -100,11 +103,11 @@ const AddLocationModal = ({
         }),
       );
 
-      toast.success("Location created successfully");
+      toast.success(t.addLocationModal.messages.success[lang]);
       resetForm();
       onClose();
     } catch (error) {
-      toast.error("Failed to create location");
+      toast.error(t.addLocationModal.messages.error[lang]);
       console.error("Error creating location:", error);
     } finally {
       setIsSubmitting(false);
@@ -134,9 +137,9 @@ const AddLocationModal = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Location</DialogTitle>
+          <DialogTitle>{t.addLocationModal.title[lang]}</DialogTitle>
           <DialogDescription>
-            Create a new storage location for this organization
+            {t.addLocationModal.description[lang]}
           </DialogDescription>
         </DialogHeader>
 
@@ -145,7 +148,7 @@ const AddLocationModal = ({
             {/* Name */}
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium">
-                Location Name *
+                {t.addLocationModal.fields.name.label[lang]} *
               </Label>
               <Input
                 id="name"
@@ -153,7 +156,7 @@ const AddLocationModal = ({
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
-                placeholder="Enter location name"
+                placeholder={t.addLocationModal.fields.name.placeholder[lang]}
                 required
               />
             </div>
@@ -161,7 +164,7 @@ const AddLocationModal = ({
             {/* Image URL */}
             <div className="space-y-2">
               <Label htmlFor="image_url" className="text-sm font-medium">
-                Image URL
+                {t.addLocationModal.fields.imageUrl.label[lang]}
               </Label>
               <Input
                 id="image_url"
@@ -173,14 +176,18 @@ const AddLocationModal = ({
                     image_url: e.target.value,
                   }))
                 }
-                placeholder="https://example.com/image.jpg"
+                placeholder={
+                  t.addLocationModal.fields.imageUrl.placeholder[lang]
+                }
               />
             </div>
           </div>
 
           {/* Address Fields */}
           <div className="space-y-4">
-            <Label className="text-sm font-medium">Address *</Label>
+            <Label className="text-sm font-medium">
+              {t.addLocationModal.labels.address[lang]} *
+            </Label>
 
             <div className="space-y-3">
               <div className="space-y-2">
@@ -188,7 +195,7 @@ const AddLocationModal = ({
                   htmlFor="street"
                   className="text-sm font-medium text-muted-foreground"
                 >
-                  Street Address
+                  {t.addLocationModal.fields.street.label[lang]}
                 </Label>
                 <Input
                   id="street"
@@ -196,7 +203,9 @@ const AddLocationModal = ({
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, street: e.target.value }))
                   }
-                  placeholder="Enter street address"
+                  placeholder={
+                    t.addLocationModal.fields.street.placeholder[lang]
+                  }
                   required
                 />
               </div>
@@ -207,7 +216,7 @@ const AddLocationModal = ({
                     htmlFor="city"
                     className="text-sm font-medium text-muted-foreground"
                   >
-                    City
+                    {t.addLocationModal.fields.city.label[lang]}
                   </Label>
                   <Input
                     id="city"
@@ -215,7 +224,9 @@ const AddLocationModal = ({
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, city: e.target.value }))
                     }
-                    placeholder="Enter city"
+                    placeholder={
+                      t.addLocationModal.fields.city.placeholder[lang]
+                    }
                     required
                   />
                 </div>
@@ -225,7 +236,7 @@ const AddLocationModal = ({
                     htmlFor="postcode"
                     className="text-sm font-medium text-muted-foreground"
                   >
-                    Postcode
+                    {t.addLocationModal.fields.postcode.label[lang]}
                   </Label>
                   <Input
                     id="postcode"
@@ -236,7 +247,9 @@ const AddLocationModal = ({
                         postcode: e.target.value,
                       }))
                     }
-                    placeholder="Enter postcode"
+                    placeholder={
+                      t.addLocationModal.fields.postcode.placeholder[lang]
+                    }
                     required
                   />
                 </div>
@@ -247,7 +260,7 @@ const AddLocationModal = ({
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description" className="text-sm font-medium">
-              Description
+              {t.addLocationModal.fields.description.label[lang]}
             </Label>
             <Textarea
               id="description"
@@ -258,7 +271,9 @@ const AddLocationModal = ({
                   description: e.target.value,
                 }))
               }
-              placeholder="Enter location description..."
+              placeholder={
+                t.addLocationModal.fields.description.placeholder[lang]
+              }
               rows={3}
             />
           </div>
@@ -267,7 +282,7 @@ const AddLocationModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="latitude" className="text-sm font-medium">
-                Latitude
+                {t.addLocationModal.fields.latitude.label[lang]}
               </Label>
               <Input
                 id="latitude"
@@ -282,13 +297,15 @@ const AddLocationModal = ({
                       : undefined,
                   }))
                 }
-                placeholder="e.g. 60.1699"
+                placeholder={
+                  t.addLocationModal.fields.latitude.placeholder[lang]
+                }
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="longitude" className="text-sm font-medium">
-                Longitude
+                {t.addLocationModal.fields.longitude.label[lang]}
               </Label>
               <Input
                 id="longitude"
@@ -303,7 +320,9 @@ const AddLocationModal = ({
                       : undefined,
                   }))
                 }
-                placeholder="e.g. 24.9384"
+                placeholder={
+                  t.addLocationModal.fields.longitude.placeholder[lang]
+                }
               />
             </div>
           </div>
@@ -318,16 +337,18 @@ const AddLocationModal = ({
               }
             />
             <Label htmlFor="is_active" className="text-sm font-medium">
-              Active Location
+              {t.addLocationModal.fields.isActive.label[lang]}
             </Label>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t.addLocationModal.buttons.cancel[lang]}
             </Button>
             <Button type="submit" disabled={isSubmitting} variant={"secondary"}>
-              {isSubmitting ? "Creating..." : "Create Location"}
+              {isSubmitting
+                ? t.addLocationModal.buttons.creating[lang]
+                : t.addLocationModal.buttons.create[lang]}
             </Button>
           </DialogFooter>
         </form>

@@ -47,6 +47,7 @@ Comprehensive documentation is available in the `docs` directory:
 - [State Management](docs/developers/frontend/state-management.md) - Redux guide
 - [Routing](docs/developers/frontend/routing.md) - Navigation system
 - [Styling Guide](docs/developers/frontend/styling-guide.md) - UI design system
+- [Translation & Localization Guide](docs/developers/frontend/translation.md) - Multi-language support and usage
 
 ### Backend Documentation
 
@@ -59,15 +60,14 @@ Comprehensive documentation is available in the `docs` directory:
 
 - [Development Cycle](docs/developers/workflows/development-cycle.md) - Git workflow
 - [Testing](docs/developers/workflows/testing.md) - Testing practices
-- [Deployment](docs/developers/workflows/deployment.md) - Production deployment
+- [Default Deployment](docs/developers/workflows/default-deployment.md) - Default Production deployment
+- [Docker Deployment](docs/developers/workflows/docker-deployment.md) - Docker Deployment
 - [Contribution Guide](docs/developers/workflows/contribution-guide.md) - How to contribute
 
 ## Prerequisites
 
 - **Node.js**: v18 or higher
-- **npm**: Comes with Node.js
 - **Supabase Account**: Free tier works for development
-- **Azure Account**: For deployment (we use student account)
 
 ## Quick Start
 
@@ -78,32 +78,43 @@ git clone https://github.com/Ermegilius/FullStack_Storage_and_Booking_App.git
 cd FullStack_Storage_and_Booking_App
 ```
 
-2. **Install dependencies:**
+1. **Set up environment variables:**
+
+```sh
+./scripts/setup.sh
+# Choose option 2 for Local Development
+```
+
+1. **Install dependencies:**
 
 ```sh
 npm run install-all
 ```
 
-3. **Set up environment variables:**
+1. **Run the application:**
 
 ```sh
-cp .env.local
-# Edit .env.local with your credentials
+# Terminal 1: Start backend
+cd backend && npm run start:dev
+
+# Terminal 2: Start frontend  
+cd frontend && npm run dev
 ```
 
-4. **Run the application:**
+1. **Access the application:**
+   - Frontend: <http://localhost:5180>
+   - Backend API: <http://localhost:3000>
 
-```sh
-npm run dev
-```
+## Deployment
 
-5. **Access the application:**
-   - Frontend: http://localhost:5180
-   - Backend API: http://localhost:3000
+For production deployment options, see:
+
+- [Docker Deployment Guide](docs/developers/workflows/docker-deployment.md) - Containerized deployment
+- [Default Deployment Guide](docs/developers/workflows/default-deployment.md) - Traditional deployment
 
 ## Project Structure
 
-```
+```sh
 FullStack_Storage_and_Booking_App/
 ├── backend/                # NestJS application
 │   ├── src/                # Source code
@@ -137,4 +148,4 @@ This project is licensed under the **FullStack Storage and Booking App Non-Comme
 See the [LICENSE](./LICENSE) file for details.
 
 Commercial use is prohibited without a separate agreement.  
-To request permission for commercial use or to contact the team, please open an issue or reach out via our GitHub organization page: 404internsfound@gmail.com
+To request permission for commercial use or to contact the team, please open an issue or reach out via our GitHub organization page: <404internsfound@gmail.com>

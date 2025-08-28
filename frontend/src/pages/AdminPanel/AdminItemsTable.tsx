@@ -41,18 +41,28 @@ import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import AddItemModal from "@/components/Admin/Items/AddItemModal";
 import AssignTagsModal from "@/components/Admin/Items/AssignTagsModal";
 import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
+import { useLocation, useNavigate } from "react-router-dom";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
+  const redirectState = useLocation().state;
   const items = useAppSelector(selectAllItems);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const [showModal, setShowModal] = useState(false);
-  const { isAdmin, isSuperVera } = useRoles();
+  const deletableItems = useAppSelector((state) => state.items.deletableItems);
+  const org_id = useAppSelector(selectActiveOrganizationId);
+
+  const { hasAnyRole, hasRole } = useRoles();
+  const isAdmin = hasAnyRole(
+    ["tenant_admin", "tenant_admin", "super_admin", "storage_manager"],
+    org_id || undefined,
+  );
+  const isSuperVera = hasRole("superVera");
   // Translation
   const { lang } = useLanguage();
   const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
@@ -60,19 +70,27 @@ const AdminItemsTable = () => {
   // filtering states:
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
-  >("all");
-  const [tagFilter, setTagFilter] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  >(redirectState?.statusFilter ?? "all");
+  const [tagFilter, setTagFilter] = useState<string[]>(
+    redirectState?.tagFilter ?? [],
+  );
+  const [searchTerm, setSearchTerm] = useState(redirectState?.searchTerm ?? "");
   const debouncedSearchQuery = useDebouncedValue(searchTerm);
+  const navigate = useNavigate();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [order, setOrder] = useState<ValidItemOrder>("created_at");
-  const [ascending, setAscending] = useState<boolean | null>(null);
+  const [order, setOrder] = useState<ValidItemOrder>(
+    redirectState?.order ?? "created_at",
+  );
+  const [ascending, setAscending] = useState<boolean | null>(
+    redirectState?.ascending ?? null,
+  );
   const selectedItem = useAppSelector(selectSelectedItem);
   const { page, totalPages } = useAppSelector(selectItemsPagination);
   const loading = useAppSelector(selectItemsLoading);
   const ITEMS_PER_PAGE = 10;
+  const activeOrganizationId = useAppSelector(selectActiveOrganizationId);
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
@@ -85,7 +103,10 @@ const AdminItemsTable = () => {
     setShowModal(true); // Show the modal
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (item_id: string) => {
+    // Currently reference the org_id of the item since we display items of all orgs
+    // Later this needs to be refactored to use the org_id which is currently selected (selectActiveOrganizationId)
+    if (!org_id) return toast.error("No organization selected");
     toastConfirm({
       title: t.adminItemsTable.messages.deletion.title[lang],
       description: t.adminItemsTable.messages.deletion.description[lang],
@@ -93,11 +114,14 @@ const AdminItemsTable = () => {
       cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
       onConfirm: () => {
         try {
-          void toast.promise(dispatch(deleteItem(id)).unwrap(), {
-            loading: t.adminItemsTable.messages.toast.deleting[lang],
-            success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
-            error: t.adminItemsTable.messages.toast.deleteFail[lang],
-          });
+          void toast.promise(
+            dispatch(deleteItem({ org_id, item_id })).unwrap(),
+            {
+              loading: t.adminItemsTable.messages.toast.deleting[lang],
+              success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
+              error: t.adminItemsTable.messages.toast.deleteFail[lang],
+            },
+          );
         } catch {
           toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
         }
@@ -135,6 +159,7 @@ const AdminItemsTable = () => {
         location_filter: [],
         categories: [],
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
+        org_ids: isSuperVera ? undefined : (activeOrganizationId ?? undefined),
       }),
     );
   }, [
@@ -147,6 +172,8 @@ const AdminItemsTable = () => {
     page,
     tagFilter,
     statusFilter,
+    activeOrganizationId,
+    isSuperVera,
   ]);
 
   //fetch tags list
@@ -154,31 +181,27 @@ const AdminItemsTable = () => {
     if (tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
   }, [dispatch, tags.length, items.length]);
 
-  const deletableItems = useAppSelector((state) => state.items.deletableItems);
-
   /* ————————————————————————— Item Columns ———————————————————————— */
   const itemsColumns: ColumnDef<Item>[] = [
     {
-      header: t.adminItemsTable.columns.namefi[lang],
+      header: t.adminItemsTable.columns.name[lang],
       size: 120,
-      id: "fi_item_name",
-      accessorFn: (row) => row.translations.fi.item_name,
+      id: `item_name`,
+      accessorFn: (row) => row.translations[lang].item_name || "",
       sortingFn: "alphanumeric",
-      enableSorting: true,
       cell: ({ row }) => {
-        const name = row.original.translations.fi.item_name || "";
+        const name = row.original.translations[lang].item_name || "";
         return name.charAt(0).toUpperCase() + name.slice(1);
       },
     },
     {
-      header: t.adminItemsTable.columns.typefi[lang],
+      header: t.adminItemsTable.columns.type[lang],
       size: 120,
-      id: "fi_item_type",
-      accessorFn: (row) => row.translations.en.item_type,
+      id: `item_type`,
+      accessorFn: (row) => row.translations[lang].item_type || "",
       sortingFn: "alphanumeric",
-      enableSorting: true,
       cell: ({ row }) => {
-        const type = row.original.translations.en.item_type || "";
+        const type = row.original.translations[lang].item_type || "";
         return type.charAt(0).toUpperCase() + type.slice(1);
       },
     },
@@ -186,8 +209,7 @@ const AdminItemsTable = () => {
       header: t.adminItemsTable.columns.location[lang],
       size: 70,
       id: "location_name",
-      accessorFn: (row) => row.location_name || "N/A", // For sorting
-      enableSorting: true,
+      accessorFn: (row) => row.location_name || "N/A",
       cell: ({ row }) => (
         <div className="flex items-center gap-1 text-sm">
           {row.original.location_name || "N/A"}
@@ -195,18 +217,12 @@ const AdminItemsTable = () => {
       ),
     },
     {
-      header: t.adminItemsTable.columns.price[lang],
-      accessorKey: "price",
+      header: t.adminItemsTable.columns.quantity[lang],
       size: 30,
-      cell: ({ row }) => `€${row.original.price.toLocaleString()}`,
-    },
-    {
-      header: t.adminItemsTable.columns.quantity[lang], // TODO: add corr. header items total
-      size: 30,
-      id: "items_number_total",
-      accessorFn: (row) => row.items_number_total,
+      id: "quantity",
+      accessorFn: (row) => row.quantity,
       cell: ({ row }) =>
-        `${row.original.items_number_total} ${t.adminItemsTable.messages.units[lang]}`,
+        `${row.original.quantity} ${t.adminItemsTable.messages.units[lang]}`,
     },
     {
       id: "is_active",
@@ -217,9 +233,11 @@ const AdminItemsTable = () => {
 
         const handleToggle = async (checked: boolean) => {
           try {
+            if (!org_id) return toast.error("No organization selected");
             await dispatch(
               updateItem({
-                id: item.id,
+                orgId: org_id,
+                item_id: item.id,
                 data: {
                   is_active: checked,
                 },
@@ -245,7 +263,6 @@ const AdminItemsTable = () => {
     {
       id: "actions",
       size: 30,
-      enableSorting: false,
       enableColumnFilter: false,
       cell: ({ row }) => {
         const item = row.original;
@@ -435,17 +452,19 @@ const AdminItemsTable = () => {
         </div>
         {/* Add New Item button */}
         <div className="flex gap-4 justify-end">
-          <AddItemModal>
-            <Button className="addBtn" size={"sm"}>
-              {t.adminItemsTable.buttons.addNew[lang]}
-            </Button>
-          </AddItemModal>
+          <Button
+            className="addBtn"
+            onClick={() => navigate("/admin/items/add")}
+            size={"sm"}
+          >
+            {t.adminItemsTable.buttons.addNew[lang]}
+          </Button>
         </div>
       </div>
 
       <PaginatedDataTable
         columns={itemsColumns}
-        data={items}
+        data={items as Item[]}
         pageIndex={currentPage - 1}
         pageCount={totalPages}
         onPageChange={(page) => handlePageChange(page + 1)}
@@ -453,14 +472,14 @@ const AdminItemsTable = () => {
         handleOrder={handleBooking}
         order={order}
         ascending={ascending}
-        originalSorting="items_number_total"
+        originalSorting="quantity"
       />
 
       {/* Show UpdateItemModal when showModal is true */}
       {showModal && selectedItem && (
         <UpdateItemModal
           onClose={handleCloseModal}
-          initialData={selectedItem} // Pass the selected item data to the modal
+          initialData={selectedItem as Item}
         />
       )}
       {assignTagsModalOpen && currentItemId && (

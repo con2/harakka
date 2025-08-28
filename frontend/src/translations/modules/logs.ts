@@ -50,14 +50,6 @@ export const logs = {
     },
   },
   filters: {
-    type: {
-      fi: "Lokityyppi",
-      en: "Log Type",
-    },
-    level: {
-      fi: "Vakavuustaso",
-      en: "Severity Level",
-    },
     all: {
       fi: "Kaikki tyypit",
       en: "All Types",
@@ -94,10 +86,6 @@ export const logs = {
       fi: "Debug",
       en: "Debug",
     },
-    search: {
-      fi: "Haku",
-      en: "Search",
-    },
     searchPlaceholder: {
       fi: "Etsi viestistä tai lähteestä...",
       en: "Search in message or source...",
@@ -106,17 +94,23 @@ export const logs = {
       fi: "Nollaa suodattimet",
       en: "Reset Filters",
     },
-    showing: {
-      fi: "Näytetään",
-      en: "Showing",
+  },
+  levelDisplay: {
+    error: {
+      fi: "Virhe",
+      en: "Error",
     },
-    of: {
-      fi: "/",
-      en: "of",
+    warning: {
+      fi: "Varoitus",
+      en: "Warning",
     },
-    entries: {
-      fi: "lokit",
-      en: "logs",
+    info: {
+      fi: "Tieto",
+      en: "Info",
+    },
+    debug: {
+      fi: "Debug",
+      en: "Debug",
     },
   },
   details: {

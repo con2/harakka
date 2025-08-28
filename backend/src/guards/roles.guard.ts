@@ -71,10 +71,29 @@ export class RolesGuard implements CanActivate {
     // Optional super_admin bypass
     if (userRoles.some((r) => r.role_name === "super_admin")) return true;
 
+    //Allow "user" role to access/modify their own user resource
+    if (
+      userRoles.some((r) => r.role_name === "user") &&
+      req.user &&
+      req.params &&
+      req.params.id &&
+      req.user.id === req.params.id
+    ) {
+      // Only allow if the required role is "user"
+      if (required.includes("user")) {
+        return true;
+      }
+    }
+
     // Determine organisation context when sameOrg flag is set
-    const orgCtx =
-      sameOrg &&
-      (req.params?.organizationId ?? req.headers?.["x-org-id"] ?? null);
+    const orgCtx = sameOrg ? req.activeRoleContext?.organizationId : undefined;
+    const roleCtx = sameOrg ? req.activeRoleContext?.roleName : undefined;
+    // If sameOrg is required, but orgId or roleName is missing — forbid access
+    if (sameOrg && (!orgCtx || !roleCtx)) {
+      throw new ForbiddenException(
+        "Organization context or role is missing (check request headers (Postman) or activeRoleContext (frontend)",
+      );
+    }
 
     // Evaluate role matches
     const matches = userRoles.filter(

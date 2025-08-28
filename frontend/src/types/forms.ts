@@ -1,7 +1,9 @@
 import { Tag } from "./tag";
-import { Item, ItemTranslation } from "./item";
-import { TagTranslations } from "./databaseGenerated";
+import { ItemTranslation } from "./item";
+import { TagTranslations } from "./manualOverride";
 import { Org_Roles } from "@common/role.types";
+import { StorageItemRow } from "@common/items/storage-items.types";
+import { SelectedStorage } from "@common/items/form.types";
 
 /**
  * Base form state for all forms in the application
@@ -22,8 +24,6 @@ export interface UserFormData {
   email: string;
   phone: string;
   roles: NonNullable<Org_Roles>[]; // Use new role system, exclude null
-  preferences: Record<string, string>;
-  saved_lists?: string[];
 }
 
 /**
@@ -40,24 +40,22 @@ export interface CreateUserFormData extends UserFormData {
  */
 export interface ItemFormData
   extends Omit<
-    Item,
-    | "id"
-    | "created_at"
-    | "updated_at"
-    | "storage_item_tags"
-    | "tagIds"
-    | "average_rating"
+    StorageItemRow,
+    "created_at" | "updated_at" | "storage_item_tags" | "average_rating"
   > {
   // Override translations to ensure they always exist with required fields
   translations: {
     fi: ItemTranslation;
     en: ItemTranslation;
   };
-  // Add tagIds as a separate field for form handling
-  tagIds: string[];
 
   // Ensure both fields are defined
-  items_number_currently_in_storage: number;
+  available_quantity: number;
+  location_details: {
+    name: string;
+    address: string;
+  };
+  tagIds?: string[];
 }
 
 /**
@@ -105,3 +103,9 @@ export type TagSelectionHandler = (tag: Tag, selected: boolean) => void;
 export interface TagAssignFormProps {
   itemId: string;
 }
+
+export type AddItemProps = {
+  storage: SelectedStorage;
+  tags: Tag[];
+  handleAdd: (item: ItemFormData) => void;
+};

@@ -4,9 +4,7 @@ export interface BookingItem {
   quantity: number;
   start_date: string;
   end_date: string;
-  unit_price?: number;
   total_days?: number;
-  subtotal?: number;
   status?: "pending" | "confirmed" | "cancelled";
   location_id?: string;
   item_name?: string;

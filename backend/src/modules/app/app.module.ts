@@ -33,15 +33,31 @@ import { JwtModule } from "../jwt/jwt.module";
 import { RolesGuard } from "src/guards/roles.guard";
 import { OrganizationsModule } from "../organization/organizations.module";
 import { OrganizationsController } from "../organization/organizations.controller";
-import { Org_ItemsModule } from "../org_items/org_items.module";
-import { OrgItemsController } from "../org_items/org_items.controller";
 import { UserBanningModule } from "../user-banning/user-banning.module";
 import { OrganizationLocationsModule } from "../organization-locations/organization_locations.module";
 
 // Load and expand environment variables before NestJS modules initialize
-const envFile = path.resolve(process.cwd(), "../.env.local"); //TODO: check if this will work for deployment
-const env = dotenv.config({ path: envFile });
-dotenvExpand.expand(env);
+// Only load env files if SUPABASE_URL is not already set (meaning env-cmd hasn't run)
+if (!process.env.SUPABASE_URL) {
+  console.log("SUPABASE_URL not found in environment, loading env files...");
+
+  // Load .env first (base configuration)
+  const baseEnvFile = path.resolve(process.cwd(), "../.env");
+  const baseEnv = dotenv.config({ path: baseEnvFile });
+  dotenvExpand.expand(baseEnv);
+
+  // Load .env.local second (overrides base configuration)
+  const localEnvFile = path.resolve(process.cwd(), "../.env.local");
+  const localEnv = dotenv.config({ path: localEnvFile });
+  dotenvExpand.expand(localEnv);
+  console.log(
+    "Loaded env files manually:",
+    localEnv.parsed ? "SUCCESS" : "FAILED",
+  );
+} else {
+  console.log("Using environment variables from env-cmd or external source");
+  console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
+}
 
 @Module({
   imports: [
@@ -71,7 +87,6 @@ dotenvExpand.expand(env);
     RoleModule,
     JwtModule,
     OrganizationsModule,
-    Org_ItemsModule,
     UserBanningModule,
     OrganizationLocationsModule,
   ],
@@ -113,6 +128,14 @@ export class AppModule implements NestModule {
         // Organization_items public endpoints
         { path: "org-items", method: RequestMethod.GET },
         { path: "org-items/*path", method: RequestMethod.GET },
+
+        // Organizations public endpoints
+        { path: "organizations", method: RequestMethod.GET },
+        { path: "organizations/*path", method: RequestMethod.GET },
+
+        // Organization-locations public endpoints
+        { path: "organization-locations", method: RequestMethod.GET },
+        { path: "organization-locations/*path", method: RequestMethod.GET },
       )
       .forRoutes(
         // Protected controllers
@@ -122,7 +145,6 @@ export class AppModule implements NestModule {
         LogsController,
         RoleController,
         OrganizationsController,
-        OrgItemsController,
 
         // Protected HTTP methods (all routes except excluded ones)
         { path: "*", method: RequestMethod.POST },

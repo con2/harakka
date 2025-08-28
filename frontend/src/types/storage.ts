@@ -18,7 +18,7 @@ export type AllowedMimeType =
  * Image file upload size and type constraints
  */
 export const FILE_CONSTRAINTS = {
-  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  MAX_FILE_SIZE: 2 * 1024 * 1024, // 2MB
   ALLOWED_FILE_TYPES: [
     "image/jpeg",
     "image/png",
@@ -47,7 +47,29 @@ export interface UploadItemImageDto {
   image_type: ImageType;
   display_order: number;
   alt_text?: string;
+  is_active: boolean;
 }
+
+export type FileWithMetadata = {
+  file: File;
+  metadata: UploadItemImageDto;
+};
+
+export type MainImageData = {
+  image: {
+    file: File | null;
+    metadata: UploadItemImageDto;
+    id: string;
+  };
+  preview: string | null;
+  loading: boolean;
+};
+
+export type DetailImageData = {
+  images: (FileWithMetadata & { path: string; id: string })[];
+  previews: string[];
+  loading: boolean;
+};
 
 /**
  * Image availability info for client-side display

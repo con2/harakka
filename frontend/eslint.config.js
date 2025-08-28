@@ -45,6 +45,7 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-function-type": "off",
       "@typescript-eslint/no-unsafe-type-assertion": "off",
+      "@typescript-eslint/no-redundant-type-constituents": "error",
 
       // -------- Promise‑related safety nets --------
       "@typescript-eslint/no-misused-promises": "off",
@@ -62,6 +63,7 @@ export default tseslint.config(
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
           destructuredArrayIgnorePattern: "^_",
+          ignoreRestSiblings: true, // Allow unused vars when destructuring irrelevant properties.
         },
       ],
 

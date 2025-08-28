@@ -3,6 +3,7 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  Row,
 } from "@tanstack/react-table";
 
 import {
@@ -18,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -30,6 +30,7 @@ interface DataTableProps<TData, TValue> {
   handleAscending?: (asc: boolean | null) => void;
   handleOrder?: (order: string) => void;
   originalSorting?: string;
+  rowProps?: (row: Row<TData>) => React.HTMLAttributes<HTMLTableRowElement>;
 }
 
 /**
@@ -49,6 +50,7 @@ export function PaginatedDataTable<TData, TValue>({
   handleAscending,
   handleOrder,
   originalSorting,
+  rowProps,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -142,6 +144,7 @@ export function PaginatedDataTable<TData, TValue>({
                   key={row.id}
                   className="h-10"
                   data-state={row.getIsSelected() && "selected"}
+                  {...(rowProps?.(row) ?? {})}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="truncate">
@@ -159,7 +162,7 @@ export function PaginatedDataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {t.uiComponents.dataTable.noResults[lang]}
                 </TableCell>
               </TableRow>
             )}

@@ -40,7 +40,6 @@ export const fetchAllOrgLocations = createAsyncThunk(
     return response;
   },
 );
-
 /**
  * Async thunk to fetch a specific org location by ID
  */
@@ -130,6 +129,11 @@ const orgLocationsSlice = createSlice({
     },
     clearCurrentOrgLocation: (state) => {
       state.currentOrgLocation = null;
+    },
+    clearOrgLocations: (state) => {
+      state.orgLocations = [];
+      state.currentOrgLocation = null;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -279,8 +283,12 @@ const orgLocationsSlice = createSlice({
   },
 });
 
-export const { clearError, setCurrentPage, clearCurrentOrgLocation } =
-  orgLocationsSlice.actions;
+export const {
+  clearError,
+  setCurrentPage,
+  clearCurrentOrgLocation,
+  clearOrgLocations,
+} = orgLocationsSlice.actions;
 
 // Selectors
 export const selectOrgLocations = (state: RootState) =>

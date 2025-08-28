@@ -1,15 +1,21 @@
-import { addItemModal } from "./modules/addItemModal";
+import { addLocationModal } from "./modules/addLocationModal";
 import { addTagModal } from "./modules/addTagModal";
-import { addUserModal } from "./modules/addUserModal";
 import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
 import { adminPanel } from "./modules/adminPanel";
 import { assignTagsModal } from "./modules/assignTagsModal";
+import { authCallback } from "./modules/authCallback";
+import { bookingCancel } from "./modules/bookingCancel";
+import { bookingConfirm } from "./modules/bookingConfirm";
+import { bookingDelete } from "./modules/bookingDelete";
+import { bookingDetailsButton } from "./modules/bookingDetailsButton";
+import { bookingDetailsPage } from "./modules/bookingDetailsPage";
+import { bookingEditButton } from "./modules/bookingEdit";
+import { bookingReject } from "./modules/bookingReject";
+import { bookingReturn } from "./modules/bookingReturn";
 import { cart } from "./modules/cart";
 import { contactForm } from "./modules/contactForm";
-import { countries } from "./modules/countries";
 import { footer } from "./modules/footer";
-import { general } from "./modules/general";
 import { itemCard } from "./modules/itemCard";
 import { itemDetails } from "./modules/itemDetails";
 import { itemImageManager } from "./modules/itemImageManager";
@@ -29,7 +35,6 @@ import { tagAssignForm } from "./modules/tagAssignForm";
 import { tagDelete } from "./modules/tagDelete";
 import { tagDetail } from "./modules/tagDetail";
 import { tagList } from "./modules/tagList";
-import { teamList } from "./modules/teamList";
 import { timeframeSelector } from "./modules/timeframeSelector";
 import { unauthorized } from "./modules/unauthorized";
 import { updateItemModal } from "./modules/updateItemModal";
@@ -38,27 +43,62 @@ import { userBanning } from "./modules/userBanning";
 import { userEditModal } from "./modules/userEditModal";
 import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
+import { userSignupModal } from "./modules/userSignupModal";
 import { usersList } from "./modules/usersList";
 import { currentUserRoles } from "./modules/currentUserRoles";
+import { privacyPolicy } from "./modules/privacyPolicy";
+import { termsOfUse } from "./modules/termsOfUse";
 import {
   organizationDelete,
   organizationList,
 } from "./modules/organizationsList";
+import { orgLocationManagement } from "./modules/orgLocationManagement";
+import { deleteLocationButton } from "./modules/deleteLocationButton";
+import { editLocationModal } from "./modules/editLocationModal";
+import { organizationLocations } from "./modules/organizationLocations";
+import { roleManagement } from "./modules/roleManagement";
+import { statusBadge } from "./modules/statusBadge";
+import { orgStep } from "./modules/orgStep";
+import { addItemForm } from "./modules/addItemForm";
+import { itemSummary } from "./modules/itemSummary";
+import { stepper } from "./modules/stepper";
+import { notification } from "./modules/notification";
+import { uiComponents } from "./modules/uiComponents";
+import { profilePicUploader } from "./modules/profilePicUploader";
+import { itemImageUpload } from "./modules/itemImageUpload";
+import { roleContextSwitcher } from "./modules/roleContextSwitcher";
+import { rolesList } from "./modules/rolesList";
+import { organizationPage } from "./modules/organizationPage";
+import { locationsList } from "./modules/locationsList";
+import { organizations } from "./modules/organizations";
+import { organizationLogoUploader } from "./modules/organizationLogoUploader";
+import { common } from "./modules/common";
 
 export const t = {
-  addItemModal,
+  rolesList,
+  roleContextSwitcher,
+  itemImageUpload,
+  stepper,
+  addItemForm,
+  itemSummary,
   addTagModal,
-  addUserModal,
   adminDashboard,
   adminItemsTable,
   adminPanel,
   assignTagsModal,
+  authCallback,
+  bookingCancel,
+  bookingConfirm,
+  bookingDelete,
+  bookingDetailsButton,
+  bookingDetailsPage,
+  bookingEditButton,
+  bookingReject,
+  bookingReturn,
   cart,
-  common: general.common, // Shorthand for general.common
+  common,
   contactForm,
-  countries,
   footer,
-  general,
   itemCard,
   itemDetails,
   itemImageManager,
@@ -71,6 +111,7 @@ export const t = {
   navigation,
   bookingConfirmation,
   bookingList,
+  orgStep,
   pagination,
   passwordReset,
   passwordResetResult,
@@ -78,7 +119,6 @@ export const t = {
   tagDelete,
   tagDetail,
   tagList,
-  teamList,
   timeframeSelector,
   unauthorized,
   updateItemModal,
@@ -87,8 +127,25 @@ export const t = {
   userEditModal,
   userGuide,
   userPanel,
+  userSignupModal,
   usersList,
   currentUserRoles,
   organizationList,
   organizationDelete,
+  orgLocationManagement,
+  addLocationModal,
+  deleteLocationButton,
+  editLocationModal,
+  organizationLocations,
+  roleManagement,
+  statusBadge,
+  privacyPolicy,
+  termsOfUse,
+  notification,
+  uiComponents,
+  profilePicUploader,
+  organizationPage,
+  locationsList,
+  organizations,
+  organizationLogoUploader,
 };

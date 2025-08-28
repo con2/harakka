@@ -1,3 +1,5 @@
+import { OrgLocationWithNames } from "./organizationLocation";
+
 export interface OrganizationDetails {
   id: string;
   name: string;
@@ -8,11 +10,14 @@ export interface OrganizationDetails {
   updated_at?: string;
   created_by?: string;
   updated_by?: string;
+  logo_picture_url?: string | null;
 }
 
 export interface OrganizationState {
   organizations: OrganizationDetails[];
-  selectedOrganization: OrganizationDetails | null;
+  selectedOrganization:
+    | (OrganizationDetails & { locations?: OrgLocationWithNames })
+    | null;
   loading: boolean;
   error: string | null;
   page: number;

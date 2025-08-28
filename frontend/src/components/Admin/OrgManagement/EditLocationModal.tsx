@@ -22,6 +22,8 @@ import {
   UpdateOrgLocationWithStorage,
 } from "@/types/organizationLocation";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 interface EditLocationModalProps {
   location: OrgLocationWithNames | null;
@@ -93,6 +95,7 @@ const EditLocationModal = ({
   onClose,
 }: EditLocationModalProps) => {
   const dispatch = useAppDispatch();
+  const { lang } = useLanguage();
   const [formData, setFormData] = useState<FormData>({
     name: "",
     street: "",
@@ -153,7 +156,7 @@ const EditLocationModal = ({
       !formData.city.trim() ||
       !formData.postcode.trim()
     ) {
-      toast.error("Name, street, city, and postcode are required");
+      toast.error(t.editLocationModal.validation.requiredFields[lang]);
       return;
     }
 
@@ -193,10 +196,10 @@ const EditLocationModal = ({
         }),
       );
 
-      toast.success("Location updated successfully");
+      toast.success(t.editLocationModal.messages.success[lang]);
       onClose();
     } catch (error) {
-      toast.error("Failed to update location");
+      toast.error(t.editLocationModal.messages.error[lang]);
       console.error("Error updating location:", error);
     } finally {
       setIsSubmitting(false);
@@ -228,49 +231,57 @@ const EditLocationModal = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Location</DialogTitle>
+          <DialogTitle>{t.editLocationModal.title[lang]}</DialogTitle>
           <DialogDescription>
-            Update the organization location settings
+            {t.editLocationModal.description[lang]}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <FormField
             id="name"
-            label="Location Name"
+            label={t.editLocationModal.fields.name.label[lang]}
             value={formData.name}
             onChange={updateField("name")}
-            placeholder="Enter location name"
+            placeholder={t.editLocationModal.fields.name.placeholder[lang]}
             required
           />
 
           {/* Address Fields */}
           <div className="space-y-4">
-            <Label className="text-sm font-medium">Address *</Label>
+            <Label className="text-sm font-medium">
+              {t.editLocationModal.labels.address[lang]} *
+            </Label>
             <div className="space-y-3">
               <FormField
                 id="street"
-                label="Street Address"
+                label={t.editLocationModal.fields.street.label[lang]}
                 value={formData.street}
                 onChange={updateField("street")}
-                placeholder="Enter street address"
+                placeholder={
+                  t.editLocationModal.fields.street.placeholder[lang]
+                }
                 required
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   id="city"
-                  label="City"
+                  label={t.editLocationModal.fields.city.label[lang]}
                   value={formData.city}
                   onChange={updateField("city")}
-                  placeholder="Enter city"
+                  placeholder={
+                    t.editLocationModal.fields.city.placeholder[lang]
+                  }
                   required
                 />
                 <FormField
                   id="postcode"
-                  label="Postcode"
+                  label={t.editLocationModal.fields.postcode.label[lang]}
                   value={formData.postcode}
                   onChange={updateField("postcode")}
-                  placeholder="Enter postcode"
+                  placeholder={
+                    t.editLocationModal.fields.postcode.placeholder[lang]
+                  }
                   required
                 />
               </div>
@@ -279,10 +290,12 @@ const EditLocationModal = ({
 
           <FormField
             id="description"
-            label="Description"
+            label={t.editLocationModal.fields.description.label[lang]}
             value={formData.description}
             onChange={updateField("description")}
-            placeholder="Enter location description"
+            placeholder={
+              t.editLocationModal.fields.description.placeholder[lang]
+            }
             rows={3}
           />
 
@@ -290,28 +303,32 @@ const EditLocationModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               id="latitude"
-              label="Latitude"
+              label={t.editLocationModal.fields.latitude.label[lang]}
               value={formData.latitude}
               onChange={updateField("latitude")}
-              placeholder="Enter latitude"
+              placeholder={
+                t.editLocationModal.fields.latitude.placeholder[lang]
+              }
               type="number"
             />
             <FormField
               id="longitude"
-              label="Longitude"
+              label={t.editLocationModal.fields.longitude.label[lang]}
               value={formData.longitude}
               onChange={updateField("longitude")}
-              placeholder="Enter longitude"
+              placeholder={
+                t.editLocationModal.fields.longitude.placeholder[lang]
+              }
               type="number"
             />
           </div>
 
           <FormField
             id="image_url"
-            label="Image URL"
+            label={t.editLocationModal.fields.imageUrl.label[lang]}
             value={formData.image_url}
             onChange={updateField("image_url")}
-            placeholder="Enter image URL"
+            placeholder={t.editLocationModal.fields.imageUrl.placeholder[lang]}
           />
 
           {/* Active Status */}
@@ -324,16 +341,18 @@ const EditLocationModal = ({
               }
             />
             <Label htmlFor="is_active" className="text-sm font-medium">
-              Active Location
+              {t.editLocationModal.labels.activeLocation[lang]}
             </Label>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t.editLocationModal.buttons.cancel[lang]}
             </Button>
             <Button type="submit" disabled={isSubmitting} variant="secondary">
-              {isSubmitting ? "Updating..." : "Update Location"}
+              {isSubmitting
+                ? t.editLocationModal.buttons.saving[lang]
+                : t.editLocationModal.buttons.save[lang]}
             </Button>
           </DialogFooter>
         </form>

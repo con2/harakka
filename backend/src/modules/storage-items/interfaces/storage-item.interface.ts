@@ -1,15 +1,17 @@
+import { Database } from "@common/database.types";
 import type { TagRow } from "../../tag/interfaces/tag.interface";
-import { Database } from "@common/supabase.types";
 
 /* ── Supabase base rows ──────────────────────────────────────────────── */
 export type StorageItemRow =
   Database["public"]["Tables"]["storage_items"]["Row"];
+export type StorageItemInsert =
+  Database["public"]["Tables"]["storage_items"]["Insert"];
 export type LocationRow =
   Database["public"]["Tables"]["storage_locations"]["Row"];
 
 export type StorageItem = StorageItemRow & {
   /** Tags flattened from the join table */
-  storage_item_tags: TagRow[];
+  tags: TagRow[];
   /** Convenience copy of the joined location row */
   location_details: LocationRow | null;
 };
@@ -28,7 +30,6 @@ export type ValidItemOrder =
   | "fi_item_type"
   | "item_type"
   | "location_name"
-  | "price"
-  | "items_number_total"
+  | "quantity"
   | "is_active"
   | "created_at";

@@ -31,6 +31,7 @@ import { UserProfile } from "@common/user.types";
 import { BanType, SimpleBanHistoryItem } from "@/types/userBanning";
 import { useRoles } from "@/hooks/useRoles";
 import { userBanningApi } from "@/api/services/userBanning";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 interface TargetUserOrganization {
   organization_id: string;
@@ -51,8 +52,17 @@ const UnbanUserModal = ({
   const dispatch = useAppDispatch();
   const loading = useAppSelector(selectUserBanningLoading);
   const banningError = useAppSelector(selectUserBanningError);
+  const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const { lang } = useLanguage();
-  const { allUserRoles, refreshAllUserRoles } = useRoles();
+  const { allUserRoles, refreshAllUserRoles, hasAnyRole, hasRole } = useRoles();
+
+  // Permission checks for different unban types (same as ban permissions)
+  const isSuper = hasAnyRole(["super_admin", "superVera"]);
+  const isTenantAdmin = hasRole("tenant_admin");
+
+  const canUnbanFromApp = isSuper; // Only super admins can unban from application
+  const canUnbanFromOrg = isSuper || isTenantAdmin; // Super admins and tenant admins can unban from org
+  const canUnbanFromRole = isSuper || isTenantAdmin; // Super admins and tenant admins can unban from role
 
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [banType, setBanType] = useState<BanType>("role");
@@ -191,7 +201,7 @@ const UnbanUserModal = ({
           setActiveBans(bans);
         } catch (error) {
           console.error("Failed to load user ban history:", error);
-          toast.error("Failed to load ban history");
+          toast.error(t.userBanning.messages.failedLoadBanHistory[lang]);
         } finally {
           setBansLoading(false);
         }
@@ -201,7 +211,7 @@ const UnbanUserModal = ({
         void refreshAllUserRoles();
       }
     }
-  }, [isOpen, user.id, allUserRoles, refreshAllUserRoles]);
+  }, [isOpen, user.id, allUserRoles, refreshAllUserRoles, lang]);
 
   // Reset role when organization changes
   useEffect(() => {
@@ -234,6 +244,20 @@ const UnbanUserModal = ({
       return;
     }
 
+    // Check permissions for the selected unban type
+    if (banType === "application" && !canUnbanFromApp) {
+      toast.error(t.userBanning.messages.noPermissionUnbanApp[lang]);
+      return;
+    }
+    if (banType === "organization" && !canUnbanFromOrg) {
+      toast.error(t.userBanning.messages.noPermissionUnbanOrg[lang]);
+      return;
+    }
+    if (banType === "role" && !canUnbanFromRole) {
+      toast.error(t.userBanning.messages.noPermissionUnbanRole[lang]);
+      return;
+    }
+
     // Validate required fields based on ban type
     if (banType === "role" && (!organizationId || !roleId)) {
       toast.error(t.userBanning.messages.missingFields[lang]);
@@ -243,6 +267,18 @@ const UnbanUserModal = ({
     if (banType === "organization" && !organizationId) {
       toast.error(t.userBanning.messages.missingFields[lang]);
       return;
+    }
+
+    // Organization validation for tenant_admin: they can only unban from their active org
+    if (
+      (banType === "organization" || banType === "role") &&
+      isTenantAdmin &&
+      !isSuper
+    ) {
+      if (activeOrgId && organizationId !== activeOrgId) {
+        toast.error(t.userBanning.messages.onlyUnbanActiveOrg[lang]);
+        return;
+      }
     }
 
     try {
@@ -257,13 +293,13 @@ const UnbanUserModal = ({
       ).unwrap();
 
       if (result.success) {
-        toast.success("User unbanned successfully");
+        toast.success(t.userBanning.toast.unbanSuccess[lang]);
         handleClose();
       } else {
-        toast.error(result.message || "Error unbanning user");
+        toast.error(result.message || t.userBanning.toast.unbanError[lang]);
       }
     } catch {
-      toast.error(banningError || "Error unbanning user");
+      toast.error(banningError || t.userBanning.toast.unbanError[lang]);
     }
   };
 
@@ -286,7 +322,7 @@ const UnbanUserModal = ({
             variant="outline"
             size="sm"
             className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
-            title="Unban User"
+            title={t.userBanning.unban.modal.title[lang]}
           >
             <UserCheck className="h-4 w-4" />
           </Button>
@@ -294,8 +330,10 @@ const UnbanUserModal = ({
       )}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Unban User</DialogTitle>
-          <p className="text-sm text-muted-foreground">Remove ban for user</p>
+          <DialogTitle>{t.userBanning.unban.modal.title[lang]}</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            {t.userBanning.unban.modal.subtitle[lang]}
+          </p>
           <p className="text-sm font-medium">
             {user.full_name} ({user.email})
           </p>
@@ -303,14 +341,16 @@ const UnbanUserModal = ({
         <div className="space-y-4">
           {bansLoading ? (
             <div className="text-center py-4 text-muted-foreground">
-              Loading ban information...
+              {t.userBanning.messages.loadingBanInfo[lang]}
             </div>
           ) : activeBans.some(
               (ban) => !ban.unbanned_at && ban.action === "banned",
             ) ? (
             <>
               <div className="space-y-2">
-                <Label htmlFor="banType">Ban Type to Remove</Label>
+                <Label htmlFor="banType">
+                  {t.userBanning.unban.fields.banTypeToRemove[lang]}
+                </Label>
                 <Select
                   value={banType}
                   onValueChange={(value: BanType) => setBanType(value)}
@@ -319,18 +359,28 @@ const UnbanUserModal = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {hasActiveApplicationBan() && (
+                    {hasActiveApplicationBan() && canUnbanFromApp && (
                       <SelectItem value="application">
-                        Application Ban
+                        {
+                          t.userBanning.unban.fields.selectTypes.application[
+                            lang
+                          ]
+                        }
                       </SelectItem>
                     )}
-                    {hasActiveOrganizationBans() && (
+                    {hasActiveOrganizationBans() && canUnbanFromOrg && (
                       <SelectItem value="organization">
-                        Organization Ban
+                        {
+                          t.userBanning.unban.fields.selectTypes.organization[
+                            lang
+                          ]
+                        }
                       </SelectItem>
                     )}
-                    {hasActiveRoleBans() && (
-                      <SelectItem value="role">Role Ban</SelectItem>
+                    {hasActiveRoleBans() && canUnbanFromRole && (
+                      <SelectItem value="role">
+                        {t.userBanning.unban.fields.selectTypes.role[lang]}
+                      </SelectItem>
                     )}
                   </SelectContent>
                 </Select>
@@ -338,13 +388,21 @@ const UnbanUserModal = ({
 
               {(banType === "organization" || banType === "role") && (
                 <div className="space-y-2">
-                  <Label htmlFor="organization">Organization</Label>
+                  <Label htmlFor="organization">
+                    {t.userBanning.fields.organization.label[lang]}
+                  </Label>
                   <Select
                     value={organizationId}
                     onValueChange={setOrganizationId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select organization to unban from..." />
+                      <SelectValue
+                        placeholder={
+                          t.userBanning.unban.fields.organizationPlaceholder[
+                            lang
+                          ]
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {getOrganizationsWithActiveBans().map(
@@ -364,10 +422,16 @@ const UnbanUserModal = ({
 
               {banType === "role" && organizationId && (
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
+                  <Label htmlFor="role">
+                    {t.userBanning.fields.role.label[lang]}
+                  </Label>
                   <Select value={roleId} onValueChange={setRoleId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select role to unban from..." />
+                      <SelectValue
+                        placeholder={
+                          t.userBanning.unban.fields.rolePlaceholder[lang]
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {getRolesWithActiveBansForOrg(organizationId).map(
@@ -383,26 +447,30 @@ const UnbanUserModal = ({
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Notes (optional)</Label>
+                <Label htmlFor="notes">
+                  {t.userBanning.fields.notes.label[lang]}
+                </Label>
                 <Textarea
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Reason for unbanning..."
+                  placeholder={
+                    t.userBanning.unban.fields.reasonPlaceholder[lang]
+                  }
                   rows={2}
                 />
               </div>
             </>
           ) : (
             <div className="text-center py-4 text-muted-foreground">
-              This user has no active bans to remove.
+              {t.userBanning.messages.noActiveBans[lang]}
             </div>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
-            Cancel
+            {t.userBanning.actions.cancel[lang]}
           </Button>
           <Button
             onClick={handleSubmit}

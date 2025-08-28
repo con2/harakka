@@ -1,6 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSelector } from "@reduxjs/toolkit";
 import { itemImagesApi } from "@/api/services/itemImages";
-import { ItemImage, UploadItemImageDto } from "@/types/storage";
+import {
+  FileWithMetadata,
+  ItemImage,
+  UploadItemImageDto,
+} from "@/types/storage";
 import { RootState } from "../store";
 import { ErrorContext } from "@/types/common";
 import { extractErrorMessage } from "../utils/errorHandlers";
@@ -12,6 +17,12 @@ interface ItemImagesState {
   error: string | null;
   currentItemId: string | null;
   errorContext: ErrorContext;
+  uploadedImages: {
+    imageType?: string;
+    urls: string[];
+    full_paths: string[];
+    paths: string[];
+  };
 }
 
 const initialState: ItemImagesState = {
@@ -21,6 +32,11 @@ const initialState: ItemImagesState = {
   error: null,
   currentItemId: null,
   errorContext: null,
+  uploadedImages: {
+    full_paths: [],
+    paths: [],
+    urls: [],
+  },
 };
 
 export const getItemImages = createAsyncThunk(
@@ -44,8 +60,54 @@ export const getItemImages = createAsyncThunk(
   },
 );
 
-export const uploadItemImage = createAsyncThunk(
-  "itemImages/uploadItemImage",
+export const uploadToBucket = createAsyncThunk(
+  "itemImages/uploadToBucket",
+  async (
+    {
+      files,
+      bucket,
+      path,
+    }: {
+      files: File[];
+      bucket: string;
+      path?: string;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await itemImagesApi.uploadToBucket(files, bucket, path);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to upload image"),
+      );
+    }
+  },
+);
+
+export const removeFromBucket = createAsyncThunk(
+  "itemImages/removeFromBucket",
+  async (
+    {
+      bucket,
+      paths,
+    }: {
+      bucket: string;
+      paths: string[];
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await itemImagesApi.removeFromBucket(bucket, paths);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to upload image"),
+      );
+    }
+  },
+);
+
+export const uploadItemImageModal = createAsyncThunk(
+  "itemImages/uploadItemImageModal",
   async (
     {
       itemId,
@@ -55,7 +117,23 @@ export const uploadItemImage = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      return await itemImagesApi.uploadItemImage(itemId, file, metadata);
+      return await itemImagesApi.uploadItemImageModal(itemId, file, metadata);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to upload image"),
+      );
+    }
+  },
+);
+
+export const uploadItemImages = createAsyncThunk(
+  "itemImages/uploadItemImage",
+  async (
+    { itemId, files }: { itemId: string; files: FileWithMetadata[] },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await itemImagesApi.uploadItemImages(itemId, files);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to upload image"),
@@ -89,6 +167,9 @@ const itemImagesSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.currentItemId = null;
+    },
+    setUploadImageType: (state, action) => {
+      state.uploadedImages.imageType = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -124,20 +205,51 @@ const itemImagesSlice = createSlice({
       })
 
       // Upload Item Image - Fix this to update the correct item's images
-      .addCase(uploadItemImage.pending, (state) => {
+      .addCase(uploadItemImageModal.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(uploadItemImage.fulfilled, (state, action) => {
+      .addCase(uploadItemImageModal.fulfilled, (state, action) => {
         state.loading = false;
         state.images.push(action.payload);
-
         // Make sure we track this item
         if (!state.itemsWithLoadedImages.includes(action.payload.item_id)) {
           state.itemsWithLoadedImages.push(action.payload.item_id);
         }
       })
-      .addCase(uploadItemImage.rejected, (state, action) => {
+      .addCase(uploadItemImageModal.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Upload to bucket
+      .addCase(uploadToBucket.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadToBucket.fulfilled, (state, action) => {
+        state.loading = false;
+        state.uploadedImages = {
+          ...state.uploadedImages,
+          urls: action.payload.urls,
+          full_paths: action.payload.full_paths,
+          paths: action.payload.paths,
+        };
+      })
+      .addCase(uploadToBucket.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Remove from bucket
+      .addCase(removeFromBucket.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(removeFromBucket.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(removeFromBucket.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
@@ -160,7 +272,7 @@ const itemImagesSlice = createSlice({
   },
 });
 
-export const { resetItemImages } = itemImagesSlice.actions;
+export const { resetItemImages, setUploadImageType } = itemImagesSlice.actions;
 
 // Selector to get images for a specific item
 export const selectItemImagesById = (state: RootState, itemId: string) =>
@@ -174,5 +286,20 @@ export const selectItemImagesError = (state: RootState) =>
   state.itemImages.error;
 export const selectCurrentItemId = (state: RootState) =>
   state.itemImages.currentItemId;
+export const selectUploadUrls = (state: RootState) =>
+  state.itemImages.uploadedImages;
+export const selectItemsWithLoadedImages = (state: RootState) =>
+  state.itemImages.itemsWithLoadedImages;
+
+// Memoized selector factory for item images
+const selectImagesEntities = (state: RootState) => state.itemImages.images;
+export const makeSelectItemImages = () =>
+  createSelector(
+    [selectImagesEntities, (_state: RootState, itemId: string) => itemId],
+    (images, itemId) => {
+      if (!itemId) return [];
+      return images.filter((img) => img.item_id === itemId);
+    },
+  );
 
 export default itemImagesSlice.reducer;

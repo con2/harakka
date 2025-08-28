@@ -14,7 +14,7 @@ import {
   Warehouse,
 } from "lucide-react";
 import {
-  getBookingItems,
+  getBookingByID,
   getBookingsCount,
   getOrderedBookings,
   selectAllBookings,
@@ -24,9 +24,7 @@ import {
   selectCurrentBooking,
   selectCurrentBookingLoading,
   selectTotalBookingsCount,
-  updatePaymentStatus,
 } from "@/store/slices/bookingsSlice";
-import { BookingWithDetails, PaymentStatus } from "@/types";
 import {
   fetchAllItems,
   getItemCount,
@@ -42,19 +40,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
-import { Separator } from "../../components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../components/ui/select";
-import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
-import BookingConfirmButton from "@/components/Admin/Bookings/BookingConfirmButton";
-import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton";
-import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
-import BookingDeleteButton from "@/components/Admin/Bookings/BookingDeleteButton";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BookingItem } from "@common/bookings/booking-items.types";
 import { StorageItemRow } from "@common/items/storage-items.types";
@@ -107,7 +92,7 @@ const AdminDashboard = () => {
 
   const handleViewDetails = (booking: BookingPreview) => {
     dispatch(selectBooking(booking));
-    void dispatch(getBookingItems(booking.id));
+    void dispatch(getBookingByID(booking.id));
     setShowDetailsModal(true);
   };
 
@@ -144,75 +129,9 @@ const AdminDashboard = () => {
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
     },
     {
-      accessorKey: "final_amount",
-      header: t.bookingList.columns.total[lang],
-      cell: ({ row }) => `€${row.original.final_amount?.toFixed(2) || "0.00"}`,
-    },
-    {
-      accessorKey: "invoice_status",
-      header: t.bookingList.columns.invoice[lang],
-      cell: ({ row }) => {
-        const paymentStatus = row.original.payment_status ?? "N/A";
-
-        const handleStatusChange = (
-          newStatus:
-            | "invoice-sent"
-            | "paid"
-            | "payment-rejected"
-            | "overdue"
-            | "N/A",
-        ) => {
-          void dispatch(
-            updatePaymentStatus({
-              bookingId: row.original.id,
-              status: newStatus === "N/A" ? null : (newStatus as PaymentStatus),
-            }),
-          );
-        };
-
-        return (
-          <Select onValueChange={handleStatusChange} value={paymentStatus}>
-            <SelectTrigger className="w-[120px] text-xs">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {[
-                "invoice-sent",
-                "paid",
-                "payment-rejected",
-                "overdue",
-                "N/A",
-              ].map((status) => {
-                const statusKeyMap: Record<
-                  string,
-                  keyof typeof t.bookingList.columns.invoice.invoiceStatus
-                > = {
-                  "invoice-sent": "sent",
-                  paid: "paid",
-                  "payment-rejected": "rejected",
-                  overdue: "overdue",
-                  "N/A": "NA",
-                };
-                const statusKey = statusKeyMap[status];
-                return (
-                  <SelectItem className="text-xs" key={status} value={status}>
-                    {t.bookingList.columns.invoice.invoiceStatus?.[statusKey]?.[
-                      lang
-                    ] || status}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        );
-      },
-    },
-    {
       id: "actions",
       cell: ({ row }) => {
         const booking = row.original;
-        const isPending = booking.status === "pending";
-        const isConfirmed = booking.status === "confirmed";
 
         return (
           <div className="flex space-x-1">
@@ -225,33 +144,6 @@ const AdminDashboard = () => {
             >
               <Eye className="h-4 w-4" />
             </Button>
-
-            {isPending && (
-              <>
-                <BookingConfirmButton
-                  id={booking.id}
-                  closeModal={() => setShowDetailsModal(false)}
-                />
-                <BookingRejectButton
-                  id={booking.id}
-                  closeModal={() => setShowDetailsModal(false)}
-                />
-              </>
-            )}
-
-            {isConfirmed && (
-              <BookingReturnButton
-                id={booking.id}
-                closeModal={() => setShowDetailsModal(false)}
-              />
-            )}
-
-            {isConfirmed && <BookingPickupButton />}
-
-            <BookingDeleteButton
-              id={booking.id}
-              closeModal={() => setShowDetailsModal(false)}
-            />
           </div>
         );
       },
@@ -263,7 +155,7 @@ const AdminDashboard = () => {
   >[] = [
     {
       accessorKey: "item_name",
-      header: t.bookingList.modal.bookingItems.columns.item[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.item[lang],
       cell: (i) => {
         const itemName = i.getValue();
         return (
@@ -273,24 +165,19 @@ const AdminDashboard = () => {
     },
     {
       accessorKey: "quantity",
-      header: t.bookingList.modal.bookingItems.columns.quantity[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.quantity[lang],
     },
     {
       accessorKey: "start_date",
-      header: t.bookingList.modal.bookingItems.columns.startDate[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.startDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.start_date || ""), "d MMM yyyy"),
     },
     {
       accessorKey: "end_date",
-      header: t.bookingList.modal.bookingItems.columns.endDate[lang],
+      header: t.bookingDetailsPage.modal.bookingItems.columns.endDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
-    },
-    {
-      accessorKey: "subtotal",
-      header: t.bookingList.modal.bookingItems.columns.subtotal[lang],
-      cell: ({ row }) => `€${row.original.subtotal?.toFixed(2) || "0.00"}`,
     },
   ];
 
@@ -386,11 +273,11 @@ const AdminDashboard = () => {
                       {t.bookingList.modal.customer[lang]}
                     </h3>
                     <p className="text-sm mb-0">
-                      {(selectedBooking as BookingWithDetails).full_name ||
+                      {selectedBooking.full_name ||
                         t.bookingList.status.unknown[lang]}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {(selectedBooking as BookingWithDetails).email}
+                      {selectedBooking.email}
                     </p>
                   </div>
 
@@ -421,78 +308,14 @@ const AdminDashboard = () => {
                       onPageChange={handleItemPageChange}
                       pageIndex={currentItemPage - 1}
                       columns={bookingItemsColumns}
-                      data={
-                        (selectedBooking as BookingWithDetails).booking_items ||
-                        []
-                      }
+                      data={selectedBooking.booking_items || []}
                     />
                   ) : !itemsLoading && itemTotalPages === 1 ? (
                     <DataTable
                       columns={bookingItemsColumns}
-                      data={
-                        (selectedBooking as BookingWithDetails).booking_items ||
-                        []
-                      }
+                      data={selectedBooking.booking_items || []}
                     />
                   ) : null}
-                </div>
-
-                {/* booking Modal Actions */}
-                <div className="flex flex-col justify-center space-x-4">
-                  <Separator />
-                  <div className="flex flex-row items-center gap-4 mt-4 justify-center">
-                    {selectedBooking.status === "pending" && (
-                      <>
-                        <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">
-                            {t.bookingList.modal.buttons.confirm[lang]}
-                          </span>
-                          <BookingConfirmButton
-                            id={selectedBooking.id!}
-                            closeModal={() => setShowDetailsModal(false)}
-                          />
-                        </div>
-                        <div className="flex flex-col items-center text-center">
-                          <span className="text-xs text-slate-600">
-                            {t.bookingList.modal.buttons.reject[lang]}
-                          </span>
-                          <BookingRejectButton
-                            id={selectedBooking.id!}
-                            closeModal={() => setShowDetailsModal(false)}
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    {selectedBooking.status === "confirmed" && (
-                      <div className="flex flex-col items-center text-center">
-                        <span className="text-xs text-slate-600">
-                          {t.bookingList.modal.buttons.return[lang]}
-                        </span>
-                        <BookingReturnButton
-                          id={selectedBooking.id!}
-                          closeModal={() => setShowDetailsModal(false)}
-                        />
-                      </div>
-                    )}
-                    {selectedBooking.status === "confirmed" && (
-                      <div className="flex flex-col items-center text-center">
-                        <span className="text-xs text-slate-600">
-                          {t.bookingList.modal.buttons.pickedUp[lang]}
-                        </span>
-                        <BookingPickupButton />
-                      </div>
-                    )}
-                    <div className="flex flex-col items-center text-center">
-                      <span className="text-xs text-slate-600">
-                        {t.bookingList.modal.buttons.delete[lang]}
-                      </span>
-                      <BookingDeleteButton
-                        id={selectedBooking.id!}
-                        closeModal={() => setShowDetailsModal(false)}
-                      />
-                    </div>
-                  </div>
                 </div>
               </div>
             </DialogContent>
