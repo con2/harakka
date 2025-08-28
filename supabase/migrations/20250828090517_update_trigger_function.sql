@@ -1,11 +1,18 @@
-drop function if exists update_item_availability;
+DROP TRIGGER IF EXISTS update_item_availability_trigger
+ON booking_items;
+
+-- Drop function if it exists
+DROP FUNCTION IF EXISTS update_item_availability();
+
+-- Create the trigger function
+CREATE OR REPLACE FUNCTION update_item_availability()
+RETURNS TRIGGER AS $$
 BEGIN
-  RAISE WARNING 'Trigger fired. Operation: % with function update_item_availability', TG_OP;
+  RAISE WARNING 'Trigger fired function: update_item_availability. Operation: %', TG_OP;
 
   IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
     RAISE WARNING 'NEW.status: %, OLD.status: %', NEW.status, OLD.status;
 
-    -- Wenn Bestellung bestätigt wird
     IF NEW.status = 'picked_up' AND (OLD.status IS DISTINCT FROM 'picked_up') THEN
       RAISE WARNING 'Confirmed item. Subtracting quantity % from item_id %', NEW.quantity, NEW.item_id;
 
@@ -18,7 +25,6 @@ BEGIN
       END IF;
     END IF;
 
-    -- Wenn Bestellung auf 'cancelled' wechselt und vorher NICHT 'cancelled' war
     IF NEW.status = 'returned' AND (OLD.status IS DISTINCT FROM 'returned') THEN
       RAISE WARNING 'Cancelled item. Adding quantity % back to item_id %', NEW.quantity, NEW.item_id;
 
@@ -42,3 +48,10 @@ EXCEPTION
     RAISE WARNING 'Trigger error: %', SQLERRM;
     RETURN NULL;
 END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_item_availability_trigger
+AFTER INSERT OR UPDATE OR DELETE
+ON booking_items
+FOR EACH ROW
+EXECUTE FUNCTION update_item_availability();
