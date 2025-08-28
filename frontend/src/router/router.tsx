@@ -12,6 +12,7 @@ import AdminDashboard from "@/pages/AdminPanel/AdminDashboard";
 import UsersList from "@/pages/AdminPanel/UsersList";
 import AdminItemsTable from "@/pages/AdminPanel/AdminItemsTable";
 import BookingList from "@/pages/AdminPanel/BookingList";
+import BookingDetailsPage from "@/pages/AdminPanel/BookingDetailsPage";
 import TagList from "@/pages/AdminPanel/TagList";
 import Logs from "@/pages/AdminPanel/Logs";
 import Organizations from "@/pages/AdminPanel/Organizations";
@@ -108,8 +109,20 @@ export const router = createBrowserRouter([
           {
             path: "bookings",
             element: (
-              <ProtectedRoute allowedRoles={["superVera", "tenant_admin"]}>
+              <ProtectedRoute
+                allowedRoles={["storage_manager", "tenant_admin"]}
+              >
                 <BookingList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "bookings/:id",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["storage_manager", "tenant_admin"]}
+              >
+                <BookingDetailsPage />
               </ProtectedRoute>
             ),
           },

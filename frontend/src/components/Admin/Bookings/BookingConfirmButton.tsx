@@ -9,14 +9,14 @@ import { t } from "@/translations";
 
 const BookingConfirmButton = ({
   id,
-  closeModal,
   selectedItemIds,
   disabled,
+  onSuccess,
 }: {
   id: string;
-  closeModal: () => void;
   selectedItemIds?: string[];
   disabled?: boolean;
+  onSuccess?: () => void;
 }) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
@@ -52,7 +52,8 @@ const BookingConfirmButton = ({
           success: t.bookingConfirm.toast.success[lang],
           error: t.bookingConfirm.toast.error[lang],
         });
-        closeModal();
+
+        if (onSuccess) onSuccess();
       },
     });
   };
