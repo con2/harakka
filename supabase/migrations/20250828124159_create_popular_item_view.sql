@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW public.view_most_booked_items AS
+CREATE OR REPLACE VIEW public.view_most_popular_items AS
 SELECT bi.item_id, COUNT(*) AS times_booked, si.translations->'en'->>'item_name' as name
 FROM booking_items bi
 JOIN storage_items si ON bi.item_id = si.id
