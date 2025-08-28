@@ -1,0 +1,80 @@
+import { common } from "./common";
+
+export const usersList = {
+  titleSuper: {
+    fi: "Hallinnoi käyttäjiä",
+    en: "Manage Users",
+  },
+  titleOrg: {
+    en: "Manage Users of {org}",
+    fi: "Hallinnoi organisaation {org} käyttäjiä",
+  },
+  filters: {
+    search: {
+      fi: "Hae nimellä tai sähköpostilla",
+      en: "Search by name or email",
+    },
+    roles: {
+      all: {
+        fi: "Kaikki roolit",
+        en: "All Roles",
+      },
+    },
+    clear: {
+      fi: "Tyhjennä suodattimet",
+      en: "Clear Filters",
+    },
+  },
+  columns: {
+    name: {
+      fi: common.personalData.name.fi,
+      en: common.personalData.name.en,
+    },
+    phone: {
+      fi: common.personalData.phone.fi,
+      en: common.personalData.phone.en,
+    },
+    email: {
+      fi: common.personalData.email.fi,
+      en: common.personalData.email.en,
+    },
+    userSince: {
+      fi: "Käyttäjä alkaen",
+      en: "User Since",
+    },
+    role: {
+      fi: common.roles.role.fi,
+      en: common.roles.role.en,
+    },
+    organization: {
+      fi: common.organizations.organization.fi,
+      en: common.organizations.organization.en,
+    },
+    active: {
+      fi: common.status.fi,
+      en: common.status.en,
+    },
+  },
+  status: {
+    unverified: {
+      fi: "Vahvistamaton",
+      en: "Unverified",
+    },
+    na: {
+      fi: "Ei saatavilla",
+      en: "N/A",
+    },
+    active: {
+      fi: common.active.fi,
+      en: common.active.en,
+    },
+    banned: {
+      fi: "Estetty",
+      en: "Banned",
+    },
+  },
+  loading: {
+    fi: "Ladataan käyttäjiä...",
+    en: "Loading users...",
+  },
+};

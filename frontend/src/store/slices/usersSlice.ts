@@ -1,34 +1,59 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { usersApi } from "../../api/services/users";
-import { UserState, UserProfile, CreateUserDto } from "../../types/user";
 import { RootState } from "../store";
 import { supabase } from "../../config/supabase";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { Address } from "@/types/address";
+import { UserState, OrderedUsersParams } from "@/types/user";
+import { CreateUserDto, UpdateUserDto, UserProfile } from "@common/user.types";
+import { ApiResponse } from "@/types/api";
 
 const initialState: UserState = {
-  users: [],
+  users: { data: [], metadata: { total: 0, page: 0, totalPages: 1 } },
   loading: false,
   error: null,
   errorContext: null,
   selectedUser: null,
   selectedUserLoading: false,
   selectedUserAddresses: [],
+  userCount: 0,
 };
 
-// fetch all users
-export const fetchAllUsers = createAsyncThunk(
-  "users/fetchAllUsers",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await usersApi.getAllUsers();
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch users"),
-      );
-    }
-  },
-);
+/**
+ * Fetch all users (super_admin/superVera, no pagination/filtering)
+ */
+export const fetchAllUsers = createAsyncThunk<
+  UserProfile[],
+  void,
+  { rejectValue: string }
+>("users/fetchAllUsers", async (_, { rejectWithValue }) => {
+  try {
+    const users = await usersApi.getAllUsers();
+    // Return users as-is since preferences column was removed
+    return users;
+  } catch (error: unknown) {
+    return rejectWithValue(extractErrorMessage(error, "Failed to fetch users"));
+  }
+});
+
+/**
+ * Fetch all users for admin/tenant_admin with backend filtering/pagination
+ * @param params - Query params for filtering, pagination, etc.
+ */
+export const fetchAllOrderedUsers = createAsyncThunk<
+  ApiResponse<UserProfile[]>,
+  OrderedUsersParams,
+  { rejectValue: string }
+>("users/fetchAllOrderedUsers", async (params, thunkAPI) => {
+  try {
+    const response = await usersApi.getAllOrderedUsers(params);
+    return response;
+  } catch (error: unknown) {
+    return thunkAPI.rejectWithValue(
+      extractErrorMessage(error, "Failed to fetch users"),
+    );
+  }
+});
 
 // Create user thunk
 export const createUser = createAsyncThunk(
@@ -64,6 +89,29 @@ export const getUserById = createAsyncThunk(
   },
 );
 
+// Get current user thunk (for authenticated user's own profile)
+export const getCurrentUser = createAsyncThunk(
+  "users/getCurrentUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await usersApi.getCurrentUser();
+    } catch (error: unknown) {
+      // If we get a 404 or 403 on current user, the session might be invalid
+      const axiosError = error as { response?: { status?: number } };
+      if (
+        axiosError.response?.status === 404 ||
+        axiosError.response?.status === 403
+      ) {
+        // Clear the auth session
+        await supabase.auth.signOut();
+      }
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch current user"),
+      );
+    }
+  },
+);
+
 // Delete user thunk
 export const deleteUser = createAsyncThunk(
   "users/deleteUser",
@@ -83,7 +131,7 @@ export const deleteUser = createAsyncThunk(
 export const updateUser = createAsyncThunk(
   "users/updateUser",
   async (
-    { id, data }: { id: string; data: Partial<UserProfile> },
+    { id, data }: { id: string; data: UpdateUserDto },
     { rejectWithValue },
   ) => {
     try {
@@ -104,56 +152,95 @@ export const getUserAddresses = createAsyncThunk(
       return await usersApi.getAddresses(id);
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch user addresses")
+        extractErrorMessage(error, "Failed to fetch user addresses"),
       );
     }
-  }
+  },
 );
 
 // Create new address thunk
 export const addAddress = createAsyncThunk(
   "users/addAddress",
-  async ({ id, address }: { id: string; address: Address }, { rejectWithValue }) => {
+  async (
+    { id, address }: { id: string; address: Address },
+    { rejectWithValue },
+  ) => {
     try {
       return await usersApi.addAddress(id, address);
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to add address")
+        extractErrorMessage(error, "Failed to add address"),
       );
     }
-  }
+  },
 );
 
 // Update address thunk
 export const updateAddress = createAsyncThunk(
   "users/updateAddress",
   async (
-    { id, addressId, address }: { id: string; addressId: string; address: Address },
-    { rejectWithValue }
+    {
+      id,
+      addressId,
+      address,
+    }: { id: string; addressId: string; address: Address },
+    { rejectWithValue },
   ) => {
     try {
       return await usersApi.updateAddress(id, addressId, address);
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to update address")
+        extractErrorMessage(error, "Failed to update address"),
       );
     }
-  }
+  },
 );
 
 // Delete address thunk
 export const deleteAddress = createAsyncThunk(
   "users/deleteAddress",
-  async ({ id, addressId }: { id: string; addressId: string }, { rejectWithValue }) => {
+  async (
+    { id, addressId }: { id: string; addressId: string },
+    { rejectWithValue },
+  ) => {
     try {
       await usersApi.deleteAddress(id, addressId);
       return addressId; // Return the address ID to remove from state
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to delete address")
+        extractErrorMessage(error, "Failed to delete address"),
       );
     }
-  }
+  },
+);
+
+// get users count (all users, active and inactive)
+export const getUserCount = createAsyncThunk(
+  "users/getUserCount",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await usersApi.getUserCount();
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch bookings count"),
+      );
+    }
+  },
+);
+
+// upload a profile picture of the current user
+export const uploadProfilePicture = createAsyncThunk(
+  "/users/upload-picture",
+  async (file: File, { rejectWithValue }) => {
+    try {
+      const url = await usersApi.uploadProfilePicture(file);
+      return url;
+    } catch (error) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to upload profile picture"),
+      );
+    }
+  },
 );
 
 export const usersSlice = createSlice({
@@ -165,7 +252,7 @@ export const usersSlice = createSlice({
       state.error = null;
       state.errorContext = null;
     },
-    selectUser: (state, action: PayloadAction<UserProfile>) => {
+    selectUser: (state, action) => {
       state.selectedUser = action.payload;
     },
     clearAddresses: (state) => {
@@ -176,6 +263,13 @@ export const usersSlice = createSlice({
   // handle API call (async thunk) lifecycle actions
   extraReducers: (builder) => {
     builder
+      .addCase(getUserCount.fulfilled, (state, action) => {
+        state.userCount = action.payload.data;
+      })
+      .addCase(getUserCount.rejected, (state) => {
+        state.error = null;
+        state.errorContext = "fetch";
+      })
       // fetch All Users
       .addCase(fetchAllUsers.pending, (state) => {
         state.loading = true;
@@ -184,9 +278,27 @@ export const usersSlice = createSlice({
       })
       .addCase(fetchAllUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload;
+        state.users = {
+          data: action.payload,
+          metadata: { total: action.payload.length, page: 0, totalPages: 1 },
+        };
       })
       .addCase(fetchAllUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
+      // fetchAllOrderedUsers
+      .addCase(fetchAllOrderedUsers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(fetchAllOrderedUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = action.payload;
+      })
+      .addCase(fetchAllOrderedUsers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";
@@ -208,6 +320,22 @@ export const usersSlice = createSlice({
         state.errorContext = "fetch";
       })
 
+      // fetch current user
+      .addCase(getCurrentUser.pending, (state) => {
+        state.selectedUserLoading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(getCurrentUser.fulfilled, (state, action) => {
+        state.selectedUserLoading = false;
+        state.selectedUser = action.payload;
+      })
+      .addCase(getCurrentUser.rejected, (state, action) => {
+        state.selectedUserLoading = false;
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
+
       // create User
       .addCase(createUser.pending, (state) => {
         state.loading = true;
@@ -216,7 +344,7 @@ export const usersSlice = createSlice({
       })
       .addCase(createUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users.push(action.payload);
+        state.users.data.push(action.payload);
       })
       .addCase(createUser.rejected, (state, action) => {
         state.loading = false;
@@ -232,7 +360,9 @@ export const usersSlice = createSlice({
       })
       .addCase(deleteUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = state.users.filter((user) => user.id !== action.payload);
+        state.users.data = state.users.data.filter(
+          (user: UserProfile) => user.id !== action.payload,
+        );
       })
       .addCase(deleteUser.rejected, (state, action) => {
         state.loading = false;
@@ -248,7 +378,7 @@ export const usersSlice = createSlice({
       })
       .addCase(updateUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = state.users.map((user) =>
+        state.users.data = state.users.data.map((user: UserProfile) =>
           user.id === action.payload.id ? action.payload : user,
         );
       })
@@ -266,11 +396,11 @@ export const usersSlice = createSlice({
       })
       .addCase(getUserAddresses.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedUserAddresses = action.payload; 
+        state.selectedUserAddresses = action.payload;
       })
       .addCase(getUserAddresses.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string; 
+        state.error = action.payload as string;
         state.errorContext = "fetch";
       })
 
@@ -282,7 +412,10 @@ export const usersSlice = createSlice({
       })
       .addCase(addAddress.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedUserAddresses = [...(state.selectedUserAddresses || []), action.payload];
+        state.selectedUserAddresses = [
+          ...(state.selectedUserAddresses || []),
+          action.payload,
+        ];
       })
       .addCase(addAddress.rejected, (state, action) => {
         state.loading = false;
@@ -298,8 +431,9 @@ export const usersSlice = createSlice({
       })
       .addCase(updateAddress.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedUserAddresses = (state.selectedUserAddresses || []).map((address) =>
-          address.id === action.payload.id ? action.payload : address
+        state.selectedUserAddresses = (state.selectedUserAddresses || []).map(
+          (address) =>
+            address.id === action.payload.id ? action.payload : address,
         );
       })
       .addCase(updateAddress.rejected, (state, action) => {
@@ -316,14 +450,29 @@ export const usersSlice = createSlice({
       })
       .addCase(deleteAddress.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedUserAddresses = (state.selectedUserAddresses ?? []).filter(
-          (address) => address.id !== action.payload
-        );
+        state.selectedUserAddresses = (
+          state.selectedUserAddresses ?? []
+        ).filter((address) => address.id !== action.payload);
       })
       .addCase(deleteAddress.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "delete";
+      })
+      // upload profile picture
+      .addCase(uploadProfilePicture.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadProfilePicture.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.selectedUser) {
+          state.selectedUser.profile_picture_url = action.payload.url;
+        }
+      })
+      .addCase(uploadProfilePicture.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
@@ -340,21 +489,18 @@ export const selectErrorWithContext = (state: RootState) => ({
 });
 export const selectSelectedUser = (state: RootState) =>
   state.users.selectedUser;
-export const selectUserRole = (state: RootState) =>
-  state.users.selectedUser?.role || null;
-export const selectIsAdmin = (state: RootState) =>
-  state.users.selectedUser?.role === "admin";
-export const selectIsSuperVera = (state: RootState) =>
-  state.users.selectedUser?.role === "superVera";
-export const selectIsUser = (state: RootState) =>
-  state.users.selectedUser?.role === "user";
 export const selectSelectedUserLoading = (state: RootState) =>
   state.users.selectedUserLoading;
 
-export const selectUserAddresses = (state: RootState) => state.users.selectedUserAddresses;
+export const selectUserAddresses = (state: RootState) =>
+  state.users.selectedUserAddresses;
+
+export const selectTotalUsersCount = (state: RootState) =>
+  state.users.userCount;
 
 // export actions from the slice
-export const { clearSelectedUser, selectUser, clearAddresses } = usersSlice.actions;
+export const { clearSelectedUser, selectUser, clearAddresses } =
+  usersSlice.actions;
 
 // export the reducer to be used in the store
 export default usersSlice.reducer;

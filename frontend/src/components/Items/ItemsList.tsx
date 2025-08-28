@@ -1,106 +1,105 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
-  fetchAllItems,
   selectAllItems,
   selectItemsLoading,
   selectItemsError,
+  fetchOrderedItems,
+  selectItemsPagination,
 } from "../../store/slices/itemsSlice";
 import ItemCard from "./ItemCard";
 import { Input } from "../ui/input";
 import { useOutletContext } from "react-router-dom";
 import TimeframeSelector from "../TimeframeSelector";
-import { LoaderCircle, Search } from "lucide-react";
+import { LoaderCircle, Search, X } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import { FiltersState } from "@/types";
+import { FiltersState, Item } from "@/types";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { Button } from "../ui/button";
 
 // Access the filters via useOutletContext
 const ItemsList: React.FC = () => {
   const filters = useOutletContext<FiltersState>(); // Get filters from context
-  const dispatch = useAppDispatch();
-
-  // Redux state selectors
+  const dispatch = useAppDispatch(); // Redux state selectors
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
-
+  const pagination = useAppSelector(selectItemsPagination);
+  const ITEMS_PER_PAGE = 10;
+  const [page, setPage] = useState(1);
   // Translation
   const { lang } = useLanguage();
 
+  // Get all filters from the UserPanel
+  const { isActive, itemTypes, tagIds, locationIds, orgIds } = filters;
+
   //state for search query
   const [searchQuery, setSearchQuery] = useState("");
+  const userQuery = searchQuery.toLowerCase().trim();
+  const debouncedSearchQuery = useDebouncedValue(userQuery);
+  const availMin = filters.itemsNumberAvailable[0];
+  const availMax = filters.itemsNumberAvailable[1];
+
+  // Consolidated request parameters to simplify dependencies -memoized object with all fetch inputs
+  const requestParams = useMemo(
+    () => ({
+      ordered_by: "created_at" as const,
+      ascending: true,
+      page,
+      limit: ITEMS_PER_PAGE,
+      searchquery: debouncedSearchQuery,
+      tag_filters: tagIds,
+      activity_filter: isActive ? ("active" as const) : ("inactive" as const),
+      categories: itemTypes,
+      location_filter: locationIds,
+      availability_min: availMin,
+      availability_max: availMax,
+      org_ids: orgIds && orgIds.length > 0 ? orgIds : undefined,
+    }),
+    [
+      page,
+      ITEMS_PER_PAGE,
+      debouncedSearchQuery,
+      tagIds,
+      isActive,
+      itemTypes,
+      locationIds,
+      availMin,
+      availMax,
+      orgIds,
+    ],
+  );
+  // Signature for the current request - used to track changes and reset pagination
+  // Used as the useEffect dependency to refetch when anything changes
+  const requestSig = useMemo(
+    () => JSON.stringify(requestParams),
+    [requestParams],
+  );
+  // Signature excluding page; used to reset to page 1 when filters/search change
+  const baseSig = useMemo(() => {
+    const { page: _p, ...rest } = requestParams;
+    return JSON.stringify(rest);
+  }, [requestParams]);
+  // State to track the last settled request signature
+  // last request that actually finished (success or error). It’s set when the thunk resolves.
+  const [lastSettledSig, setLastSettledSig] = useState<string>("");
 
   // Fetch all items when the component mounts
   useEffect(() => {
-    dispatch(fetchAllItems());
-  }, [dispatch]);
+    const dispatchedSig = requestSig;
+    const promise = dispatch(fetchOrderedItems(requestParams));
+    void promise
+      .unwrap()
+      .then(() => setLastSettledSig(dispatchedSig))
+      .catch(() => setLastSettledSig(dispatchedSig));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, requestSig]);
 
-  const userQuery = searchQuery.toLowerCase().trim();
-
-  // Apply filters to the items
-  const filteredItems = items.filter((item) => {
-    // Filter by active status
-    const isActive = filters.isActive ? item.is_active : true;
-    const isWithinAvailabilityRange =
-      item.items_number_available >= filters.itemsNumberAvailable[0] &&
-      item.items_number_available <= filters.itemsNumberAvailable[1];
-
-    // filter by average rating
-    const matchesRating =
-      filters.averageRating.length === 0 ||
-      filters.averageRating.includes(Math.floor(item.average_rating ?? 0));
-
-    const matchesSearch =
-      item.translations.fi.item_name.toLowerCase().includes(userQuery) ||
-      item.translations.fi.item_type?.toLowerCase().includes(userQuery) ||
-      item.translations.fi.item_description
-        ?.toLowerCase()
-        .includes(userQuery) ||
-      item.translations.en.item_name.toLowerCase().includes(userQuery) ||
-      item.translations.en.item_type?.toLowerCase().includes(userQuery) ||
-      item.translations.en.item_description?.toLowerCase().includes(userQuery);
-    // Filter by item types
-    const itemType =
-      item.translations?.[lang]?.item_type ||
-      item.translations?.[lang === "fi" ? "en" : "fi"]?.item_type;
-
-    const matchesItemTypes =
-      !filters.itemTypes?.length || filters.itemTypes.includes(itemType?.toLowerCase());
-
-    // Filter by tags
-    const matchesTags =
-      !filters.tagIds?.length ||
-      (item.storage_item_tags || []).some((tag) =>
-        filters.tagIds.includes(tag.id),
-      );
-    // add tags filter here
-    // right now the english tags are not found
-
-    // Filter by location
-    const matchesLocation =
-      !filters.locationIds?.length ||
-      filters.locationIds.includes(item.location_id);
-
-    return (
-      isActive &&
-      isWithinAvailabilityRange &&
-      matchesRating &&
-      matchesSearch &&
-      matchesItemTypes &&
-      matchesTags &&
-      matchesLocation
-    );
-  });
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center">
-        <LoaderCircle className="animate-spin w-10 h-10 text-secondary" />{" "}
-      </div>
-    );
-  }
+  // Reset pagination to first page when filters or search change
+  useEffect(() => {
+    setPage(1);
+  }, [baseSig]);
 
   // Error handling
   if (error) {
@@ -122,22 +121,69 @@ const ItemsList: React.FC = () => {
             placeholder={t.itemsList.searchPlaceholder[lang]}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
+            onKeyDown={(e) => {
+              if (e.key === "Escape" && searchQuery) {
+                setSearchQuery("");
+              }
+            }}
+            className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Global Timeframe Selector */}
       <TimeframeSelector />
 
-      {/* Render the list of filtered items */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 mb-4">
-        {filteredItems.length === 0 ? (
-          <p>{t.itemsList.noItemsFound[lang]}</p> // Message when no items exist
+      {/* Render the list of items */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 mb-4 min-h-24">
+        {loading ? (
+          <div className="col-span-full flex justify-center items-center py-6">
+            <LoaderCircle className="animate-spin w-8 h-8 text-secondary" />
+          </div>
+        ) : items.length === 0 ? (
+          // Show empty state only when the latest settled request matches the current inputs
+          lastSettledSig === requestSig ? (
+            <p className="col-span-full">{t.itemsList.noItemsFound[lang]}</p>
+          ) : null
         ) : (
-          filteredItems.map((item) => <ItemCard key={item.id} item={item} />)
+          items.map((item) => <ItemCard key={item.id} item={item as Item} />)
         )}
       </div>
+      {/* Pagination controls */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-center gap-4 my-6">
+          <Button
+            variant="outline" // or "secondary" or "ghost"
+            size="sm"
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Prev
+          </Button>
+          <span className="self-center">
+            {page} / {pagination.totalPages}
+          </span>
+          <Button
+            variant="outline" // or "secondary" or "ghost"
+            size="sm"
+            disabled={page >= pagination.totalPages}
+            onClick={() =>
+              setPage((p) => Math.min(pagination.totalPages, p + 1))
+            }
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

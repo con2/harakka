@@ -21,9 +21,9 @@ import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { useTranslation } from "@/hooks/useTranslation";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
-import { ItemImageAvailabilityInfo, ItemTranslation } from "@/types";
-import { ordersApi } from "@/api/services/orders";
+import { Item, ItemImageAvailabilityInfo, ItemTranslation } from "@/types";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { itemsApi } from "@/api/services/items";
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -49,7 +49,7 @@ const ItemsDetails: React.FC = () => {
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
-      availableQuantity: item?.items_number_available ?? 0,
+      availableQuantity: item?.quantity ?? 0,
       isChecking: false,
       error: null,
     });
@@ -101,7 +101,7 @@ const ItemsDetails: React.FC = () => {
     if (item) {
       dispatch(
         addToCart({
-          item: item,
+          item: item as Item,
           quantity: quantity,
           startDate: startDate,
           endDate: endDate,
@@ -121,8 +121,8 @@ const ItemsDetails: React.FC = () => {
         error: null,
       }));
 
-      ordersApi
-        .checkAvailability(item.id, startDate, endDate)
+      itemsApi
+        .checkAvailability(item.id, new Date(startDate), new Date(endDate))
         .then((response) => {
           setAvailabilityInfo({
             availableQuantity: response.availableQuantity,
@@ -133,7 +133,7 @@ const ItemsDetails: React.FC = () => {
         .catch((error) => {
           console.error("Error checking availability:", error);
           setAvailabilityInfo({
-            availableQuantity: item.items_number_available,
+            availableQuantity: item.available_quantity,
             isChecking: false,
             error: "Failed to check availability",
           });
@@ -152,7 +152,7 @@ const ItemsDetails: React.FC = () => {
   // Fetch item and images
   useEffect(() => {
     if (id) {
-      dispatch(getItemById(id));
+      void dispatch(getItemById(id));
 
       // Fetch images for this item
       dispatch(getItemImages(id))
@@ -175,33 +175,42 @@ const ItemsDetails: React.FC = () => {
   if (error) {
     return (
       <div className="container mx-auto p-12 text-center text-red-500">
-        Error: {error}
+        {t.itemDetails.error[lang]}: {error}
       </div>
     );
   }
 
   if (!item) {
     return (
-      <div className="container mx-auto p-12 text-center">Item not found</div>
+      <div
+        className="container mx-auto p-12 text-center"
+        data-cy="item-details-notfound"
+      >
+        {t.itemDetails.notFound[lang]}
+      </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="container mx-auto px-4" data-cy="item-details-root">
       {/* Back Button */}
       <div className="mb-3 mt-4 md:mt-0">
         <Button
           onClick={() => navigate(-1)}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+          data-cy="item-details-back-btn"
         >
           <ChevronLeft /> {t.itemDetails.buttons.back[lang]}
         </Button>
       </div>
       <div className="flex flex-col md:flex-row gap-8">
         {/* Item Images - Positioned Left */}
-        <div className="md:w-1/3 w-full">
+        <div className="md:w-1/3 w-full" data-cy="item-details-images">
           {/* Main Image */}
-          <div className="relative mb-4 h-[300px] group w-full max-w-md mx-auto md:max-w-none aspect-[4/3]">
+          <div
+            className="relative mb-4 h-[300px] group w-full max-w-md mx-auto md:max-w-none aspect-[4/3]"
+            data-cy="item-details-main-image"
+          >
             {/* Main Image Container */}
             <div className="border rounded-md bg-slate-50 overflow-hidden h-full w-full">
               <img
@@ -232,7 +241,10 @@ const ItemsDetails: React.FC = () => {
 
           {/* Detail Images Gallery */}
           {detailImages.length > 0 && (
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            <div
+              className="grid grid-cols-3 gap-2 mt-2"
+              data-cy="item-details-gallery"
+            >
               {detailImages.map((img) => (
                 <div
                   key={img.id}
@@ -256,47 +268,55 @@ const ItemsDetails: React.FC = () => {
         </div>
 
         {/* Right Side - Item Details */}
-        <div className="md:w-2/3 w-full space-y-4 order-1 md:order-2">
-          <h2 className="text-2xl font-normal text-left mb-0">
+        <div
+          className="md:w-2/3 w-full space-y-4 order-1 md:order-2"
+          data-cy="item-details-info"
+        >
+          <h2
+            className="text-2xl font-normal text-left mb-0"
+            data-cy="item-details-name"
+          >
             {itemContent?.item_name
               ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
               : "Tuote"}
           </h2>
-          
+
           {/* Rating Component */}
-          {item.average_rating ? (
-            <div className="flex items-center justify-start mt-1">
-              <Rating rating={item.average_rating ?? 0} readOnly />
+          {(item as Item).average_rating ? (
+            <div
+              className="flex items-center justify-start mt-1"
+              data-cy="item-details-rating"
+            >
+              <Rating rating={(item as Item).average_rating ?? 0} readOnly />
             </div>
           ) : (
             ""
           )}
 
           {/* Location Details Section */}
-          {item.location_details && (
-            <div className="text-sm mt-2">
-              {item.location_details.name && (
+          {(item as Item).location_details && (
+            <div className="text-sm mt-2" data-cy="item-details-location">
+              {(item as Item).location_details?.name && (
                 <div className="flex items-start">
-                  <span>
-                    {t.itemDetails.locations.location[lang]}:
+                  <span>{t.itemDetails.locations.location[lang]}:</span>
+                  <span className="ml-1">
+                    {(item as Item).location_details?.name}
                   </span>
-                  <span className="ml-1">{item.location_details.name}</span>
                 </div>
               )}
 
-              {item.location_details.address && (
+              {(item as Item).location_details?.address && (
                 <div className="flex items-start">
-                  <span>
-                    {" "}
-                    {t.itemDetails.locations.address[lang]}:
+                  <span> {t.itemDetails.locations.address[lang]}:</span>
+                  <span className="ml-1">
+                    {(item as Item).location_details?.address}
                   </span>
-                  <span className="ml-1">{item.location_details.address}</span>
                 </div>
               )}
             </div>
           )}
 
-          <p>
+          <p data-cy="item-details-description">
             {itemContent?.item_description
               ? `${itemContent.item_description
                   .toLowerCase()
@@ -306,7 +326,10 @@ const ItemsDetails: React.FC = () => {
 
           {/* Display selected booking timeframe if it exists */}
           {startDate && endDate ? (
-            <div className="flex flex-col justify-center items-start mt-4">
+            <div
+              className="flex flex-col justify-center items-start mt-4"
+              data-cy="item-details-timeframe"
+            >
               <div className="bg-slate-100 max-w-[250px] rounded-md p-2">
                 <div className="flex items-center text-sm text-slate-400">
                   <Clock className="h-4 w-4 mr-1" />
@@ -316,13 +339,15 @@ const ItemsDetails: React.FC = () => {
                 </div>
                 <p className="text-xs font-medium m-0">
                   {formatDate(startDate, "d MMM yyyy")}
-                    <span> -</span>{" "}
-                    {formatDate(endDate, "d MMM yyyy")}
+                  <span> -</span> {formatDate(endDate, "d MMM yyyy")}
                 </p>
               </div>
 
               {/* Booking Section */}
-              <div className="flex flex-row justify-center items-center mt-3">
+              <div
+                className="flex flex-row justify-center items-center mt-3"
+                data-cy="item-details-quantity-controls"
+              >
                 {/* <span className="text-sm mr-4">
                   {t.itemDetails.items.quantity[lang]}
                 </span> */}
@@ -354,9 +379,12 @@ const ItemsDetails: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                      onClick={() =>
+                  onClick={() =>
                     setQuantity(
-                      Math.min(availabilityInfo.availableQuantity, quantity + 1),
+                      Math.min(
+                        availabilityInfo.availableQuantity,
+                        quantity + 1,
+                      ),
                     )
                   }
                   disabled={quantity >= availabilityInfo.availableQuantity}
@@ -366,23 +394,26 @@ const ItemsDetails: React.FC = () => {
                 </Button>
               </div>
               {/* Availability Info */}
-              <div className="flex items-center justify-end mt-1">
+              <div
+                className="flex items-center justify-end mt-1"
+                data-cy="item-details-availability"
+              >
                 {availabilityInfo.isChecking ? (
                   <p className="text-xs text-slate-400 italic m-0">
                     <LoaderCircle className="animate-spin h-4 w-4 mr-1" />
-                    {t.itemCard.checkingAvailability[lang]}
+                    {t.itemDetails.checkingAvailability[lang]}
                   </p>
                 ) : availabilityInfo.error ? (
                   <p className="text-xs text-red-500 italic m-0">
-                    {t.itemCard.availabilityError[lang]}
+                    {t.itemDetails.availabilityError[lang]}
                   </p>
                 ) : (
                   <p className="text-xs text-slate-400 italic m-0">
                     {startDate && endDate
                       ? availabilityInfo.availableQuantity > 0
-                        ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
-                        : `${t.itemCard.notAvailable[lang]}`
-                      : `${t.itemCard.totalUnits[lang]}: ${item.items_number_available}`}
+                        ? `${t.itemDetails.available[lang]}: ${availabilityInfo.availableQuantity}`
+                        : `${t.itemDetails.notAvailable[lang]}`
+                      : `${t.itemDetails.totalUnits[lang]}: ${item.available_quantity}`}
                   </p>
                 )}
               </div>
@@ -394,16 +425,24 @@ const ItemsDetails: React.FC = () => {
                   `}
                   onClick={handleAddToCart}
                   disabled={!isItemAvailableForTimeframe}
+                  data-cy="item-details-add-to-cart-btn"
                 >
                   {t.itemDetails.items.addToCart[lang]}
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="flex flex-row items-center">
+            <div
+              className="flex flex-row items-center"
+              data-cy="item-details-no-dates"
+            >
               <Info className="mr-1 text-secondary size-4" />{" "}
               {t.itemDetails.info.noDates[lang]}
-              <Link to="/storage" className="ml-1 text-secondary underline">
+              <Link
+                to="/storage"
+                className="ml-1 text-secondary underline"
+                data-cy="item-details-here-link"
+              >
                 {t.itemDetails.info.here[lang]}
               </Link>
               .
@@ -411,39 +450,6 @@ const ItemsDetails: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* Tabs and Tab Contents */}
-      {/* <div className="mt-10 w-full"> */}
-      {/* <div className="flex gap-4">
-        <Button
-          onClick={() => setSelectedTab("description")}
-          className={`${
-            selectedTab === "description"
-              ? "bg-secondary text-white"
-              : "bg-transparent text-secondary"
-          } hover:bg-secondary hover:text-white`}
-        >
-          Description
-        </Button>
-        <Button
-          onClick={() => setSelectedTab("reviews")}
-          className={`${
-            selectedTab === "reviews"
-              ? "bg-secondary text-white"
-              : "bg-transparent text-secondary"
-          } hover:bg-secondary hover:text-white`}
-        >
-          Reviews
-        </Button>
-      </div> */}
-
-      {/* Tab Content */}
-      {/* <div className="mt-4 bg-slate-50 p-4 rounded-lg">
-        {selectedTab === "description" && (
-          <p>{item.translations.fi.item_description}</p>
-        )}
-        {selectedTab === "reviews" && <p>Reviews will be displayed here</p>}
-      </div> */}
     </div>
     // </div>
   );

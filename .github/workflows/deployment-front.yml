@@ -19,6 +19,10 @@ jobs:
         with:
           submodules: true
           lfs: false
+      - name: Install common dependencies (common types folder)
+        run: |
+          cd common
+          npm ci
       - name: Create environment file
         run: |
           cd frontend

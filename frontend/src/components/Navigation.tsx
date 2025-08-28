@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { useAppSelector } from "@/store/hooks";
-import { selectIsAdmin, selectIsSuperVera, selectSelectedUser } from "@/store/slices/usersSlice";
+import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,24 +11,40 @@ import {
 } from "@/components/ui/navigation-menu";
 import logo from "../assets/logoNav.png";
 import { LogInIcon, LogOutIcon, ShoppingCart, UserIcon } from "lucide-react";
+import { Notifications } from "@/components/Notification";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
 import { toast } from "sonner";
 import { toastConfirm } from "./ui/toastConfirm";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useRoles } from "@/hooks/useRoles";
+import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
 
 export const Navigation = () => {
-  const { signOut } = useAuth();
-  const isAdmin = useAppSelector(selectIsAdmin);
-  const isSuperVera = useAppSelector(selectIsSuperVera);
+  // Get auth state directly from Auth context
+  const { signOut, user, authLoading } = useAuth();
+  // Get user profile data from Redux
   const selectedUser = useAppSelector(selectSelectedUser);
+  // Get user role information from the hook
+  const { hasAnyRole } = useRoles();
+
+  // Use auth context to determine login status
+  const isLoggedIn = !!user;
+
+  // Check if user has any admin role using hasAnyRole for efficiency
+  const isAnyTypeOfAdmin = hasAnyRole([
+    "superVera",
+    "tenant_admin",
+    "super_admin",
+    "storage_manager",
+  ]);
+
   const cartItemsCount = useAppSelector(selectCartItemsCount);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const admin = isAdmin || isSuperVera;
-  const isLoggedIn = !!selectedUser;
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
     ? "absolute top-0 left-0 w-full z-50 bg-white/80 text-white px-2 md:px-10 py-2 md:py-3"
@@ -42,7 +57,7 @@ export const Navigation = () => {
       confirmText: t.navigation.toast.confirmText[lang],
       cancelText: t.navigation.toast.cancelText[lang],
       onConfirm: () => {
-        signOut();
+        void signOut();
       },
       onCancel: () => {
         toast.success(t.navigation.toast.success[lang]);
@@ -56,8 +71,9 @@ export const Navigation = () => {
   return (
     <nav className={navClasses}>
       <div className="container md:mx-auto mx-0 flex items-center justify-between">
+        {/* Left side: Logo + navigation links */}
         <div className="flex items-center gap-1">
-          <Link to="/">
+          <Link to="/" data-cy="nav-home">
             <img
               src={logo}
               alt="Logo"
@@ -71,28 +87,30 @@ export const Navigation = () => {
           </Link>
           <NavigationMenu>
             <NavigationMenuList>
-              {/* <NavigationMenuItem className="hidden md:flex">
-                <NavigationMenuLink asChild>
-                  <Link to="/"> {t.navigation.home[lang]} </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem> */}
-
               {/* Show My orders link only for logged in users */}
               {isLoggedIn && (
                 <NavigationMenuItem className="hidden md:flex">
                   <NavigationMenuLink asChild>
-                    <Link to="/profile" className="flex items-center gap-1 text-secondary font-medium">
+                    <Link
+                      to="/profile"
+                      className="flex items-center gap-1 text-secondary font-medium"
+                      data-cy="nav-profile"
+                    >
                       {t.navigation.myProfile[lang]}
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
               )}
 
-              {/* Show Admin Panel link only for admins/superVera */}
-              {admin && (
+              {/* Show Admin Panel link only for admins in current context*/}
+              {isAnyTypeOfAdmin && (
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link to="/admin" className="flex items-center gap-1 text-secondary font-medium">
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-1 text-secondary font-medium"
+                      data-cy="nav-admin"
+                    >
                       {t.navigation.admin[lang]}
                     </Link>
                   </NavigationMenuLink>
@@ -102,45 +120,78 @@ export const Navigation = () => {
               {/* Always show Storage */}
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
-                  <Link to="/storage" className="flex items-center gap-1 text-secondary font-medium">
+                  <Link
+                    to="/storage"
+                    className="flex items-center gap-1 text-secondary font-medium"
+                    data-cy="nav-storage"
+                  >
                     {t.navigation.storage[lang]}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
-              {/* User GuideLines in Nav only for regular users */}
-              {!admin && (
+              {/* Organizations Link */}
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
-                  <Link to="/howItWorks" className="flex items-center gap-1 text-secondary font-medium">
-                    {t.navigation.guides[lang]}
+                  <Link
+                    to={"/organizations"}
+                    className="flex items-center gap-1 text-secondary font-medium"
+                    data-cy="nav-organizations"
+                  >
+                    {t.navigation.organizations[lang]}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
+
+              {/* User GuideLines in Nav only for regular users */}
+              {!isAnyTypeOfAdmin && (
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link
+                      to="/howItWorks"
+                      className="flex items-center gap-1 text-secondary font-medium"
+                      data-cy="nav-guide"
+                    >
+                      {t.navigation.guides[lang]}
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
               )}
 
               {/* Contact Form Only in Desktop view for non admins*/}
-              {!admin && (
-              <NavigationMenuItem className="hidden md:flex">
-                <NavigationMenuLink asChild>
-                  <Link to="/contact-us" className="flex items-center gap-1 text-secondary font-medium">
-                    {t.navigation.contactUs[lang]}
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
+              {!isAnyTypeOfAdmin && (
+                <NavigationMenuItem className="hidden md:flex">
+                  <NavigationMenuLink asChild>
+                    <Link
+                      to="/contact-us"
+                      className="flex items-center gap-1 text-secondary font-medium"
+                      data-cy="nav-contact"
+                    >
+                      {t.navigation.contactUs[lang]}
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
               )}
             </NavigationMenuList>
           </NavigationMenu>
         </div>
 
-        {/* Always show Cart */}
+        {/* Right side: Cart, notifications, language, auth */}
         <div className="flex items-center gap-2">
+          {/* Active role context switcher if user is logged in and has roles */}
+          {isLoggedIn && (
+            <div className="hidden md:flex mr-2">
+              <RoleContextSwitcher />
+            </div>
+          )}
+
           <div className="flex items-center md:mr-6">
             <LanguageSwitcher />
           </div>
           <Link
             to="/cart"
             className="flex items-center gap-1 text-secondary font-medium hover:text-secondary"
+            data-cy="nav-cart"
           >
             <ShoppingCart className="h-5 w-5" />
             {cartItemsCount > 0 && (
@@ -149,33 +200,45 @@ export const Navigation = () => {
               </span>
             )}
           </Link>
+          {selectedUser && <Notifications userId={selectedUser.id} />}
 
-          {selectedUser ? (
-            <div className="flex items-center">
-              <Button
-                variant={"ghost"}
-                className="p-o m-0"
-                size={"sm"}
-                onClick={() => {
-                  navigate("/profile");
-                }}
-              >
-                {/* Show name on desktop, icon on mobile */}
-                <UserIcon className="inline sm:hidden h-5 w-5" />
-                <span className="hidden sm:inline">
-                  {selectedUser.full_name}
-                </span>
-              </Button>
-              <Button variant={"ghost"} size={"sm"} onClick={handleSignOut}>
-                <LogOutIcon className="h-5 w-5" />
-              </Button>
-            </div>
-          ) : (
-            <Button variant={"ghost"} asChild>
-              <Link to="/login">
-                {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
-              </Link>
-            </Button>
+          {!authLoading && (
+            <>
+              {isLoggedIn ? (
+                <div className="flex items-center" key={user?.id}>
+                  <Button
+                    variant={"ghost"}
+                    className="p-o m-0"
+                    size={"sm"}
+                    onClick={() => void navigate("/profile")}
+                    data-cy="nav-profile-btn"
+                  >
+                    {/* Show name on desktop, icon on mobile */}
+                    <UserIcon className="inline sm:hidden h-5 w-5" />
+                    <span className="hidden sm:inline">
+                      {/* Display full_name if available, fall back to email */}
+                      {selectedUser?.full_name
+                        ? selectedUser?.full_name
+                        : user?.email}
+                    </span>
+                  </Button>
+                  <Button
+                    variant={"ghost"}
+                    size={"sm"}
+                    onClick={handleSignOut}
+                    data-cy="nav-signout-btn"
+                  >
+                    <LogOutIcon className="h-5 w-5" />
+                  </Button>
+                </div>
+              ) : (
+                <Button variant={"ghost"} data-cy="nav-login-btn" asChild>
+                  <Link to="/login">
+                    {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
+                  </Link>
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -1,0 +1,123 @@
+name: Lint & Type Check
+
+on:
+  pull_request:
+    branches: [develop, deployment]
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  frontend-checks:
+    name: Frontend Linting & Type Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install common dependencies
+        working-directory: ./common
+        run: npm ci
+
+      # - name: Install dependencies
+      #   working-directory: ./frontend
+      #   run: npm ci
+
+      # Workaround for Rollup optional dependencies issue
+      - name: Fix Rollup optional dependencies
+        working-directory: ./frontend
+        run: npm install --no-optional && npm install
+
+      - name: Format Code
+        working-directory: ./frontend
+        run: npm run format
+        continue-on-error: true
+
+      - name: Run linting
+        working-directory: ./frontend
+        run: npm run lint
+        continue-on-error: true
+
+      - name: TypeScript compilation check
+        working-directory: ./frontend
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+  backend-checks:
+    name: Backend Linting & Type Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "backend/package-lock.json"
+
+      - name: Install common dependencies
+        working-directory: ./common
+        run: npm ci
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Format Code
+        working-directory: ./backend
+        run: npm run format
+        continue-on-error: true
+
+      - name: Run linting
+        working-directory: ./backend
+        run: npm run lint
+
+      - name: Run tests (optional)
+        working-directory: ./backend
+        run: npm run test
+        continue-on-error: true
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install common dependencies
+        working-directory: ./common
+        run: npm ci
+
+      - name: Audit frontend dependencies
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm install --no-optional && npm install
+          echo "Running frontend security audit..."
+          npm audit --audit-level=high || echo "Frontend audit found vulnerabilities but continuing..."
+        continue-on-error: true
+
+      - name: Audit backend dependencies
+        working-directory: ./backend
+        run: |
+          npm ci
+          echo "Running backend security audit..."
+          npm audit --audit-level=high || echo "Backend audit found vulnerabilities but continuing..."
+        continue-on-error: true

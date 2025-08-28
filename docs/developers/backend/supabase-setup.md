@@ -55,7 +55,7 @@ VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
 
 ## Database Configuration
 
-### Setting up Database Schema
+### Setup of Database Schema
 
 1. **Access the SQL Editor**:
 
@@ -131,11 +131,12 @@ Supabase provides built-in authentication functionality:
    - Configure additional providers if needed (e.g., Google, GitHub)
 
 3. **Set up URL Configuration**:
+
    - Go to Authentication > URL Configuration
-   - Set Site URL to your frontend URL (e.g., http://localhost:5180 for development)
+   - Set Site URL to your frontend URL (e.g., <http://localhost:5180> for development)
    - Set Redirect URLs to include your authorized redirect paths:
-     - http://localhost:5180/auth/callback
-     - https://your-production-domain.com/auth/callback (for production)
+     - <http://localhost:5180/auth/callback>
+     - <https://your-production-domain.com/auth/callback> (for production)
 
 ### Email Confirmation
 
@@ -144,10 +145,6 @@ For email verification:
 1. Go to Authentication > Providers
 2. Under Email, toggle "Enable email confirmations"
 3. Configure "Confirm email template"
-
-## Storage Configuration
-
-Supabase Storage is used for file uploads (like item images and invoices):
 
 ### Create Storage Buckets
 
@@ -213,7 +210,7 @@ Configure API settings for secure access:
 
 1. Go to Project Settings > API
 2. Under API Settings, configure CORS:
-   - Add your frontend URL to "Allow origins" (e.g., http://localhost:5180)
+   - Add your frontend URL to "Allow origins" (e.g., <http://localhost:5180>)
    - Enable "Allow credentials"
 
 ### API Authorization
@@ -257,46 +254,53 @@ S3_BUCKET=item-images
 
 ### Using Supabase CLI
 
-1. **Install the Supabase CLI**:
+The project now includes a complete Supabase CLI setup for local development. See the [Supabase CLI Setup Guide](../supabase-cli-setup.md) for detailed instructions.
 
-```bash
-npm install -g supabase
-```
+**Quick Start:**
 
-2. **Login to Supabase CLI**:
+1. **Install dependencies and login**:
 
-```bash
-supabase login
-```
+   ```bash
+   npm run install-all
+   supabase login
+   ```
 
-3. **Link your project**:
+2. **Start local development environment**:
 
-```bash
-supabase link --project-ref your-project-id --password your-db-password
-```
+   ```bash
+   npm run dev:local  # Starts local Supabase + frontend + backend
+   ```
 
-4. **Pull database schema locally**:
-
-```bash
-supabase db pull
-```
-
-5. **Run database migrations**:
-
-```bash
-supabase db push
-```
+3. **Access local services**:
+   - **Supabase Studio**: <http://localhost:54323>
+   - **API Endpoint**: <http://localhost:54321>
+   - **Email Testing**: <http://localhost:54324>
 
 ### Local Development Workflow
 
-1. **Local API testing**:
+1. **Full local stack** (recommended for development):
 
-   - Start your backend: `npm run start` from the backend directory
-   - Use the Supabase client in your code to connect to your remote project
+   ```bash
+   npm run dev:local
+   ```
 
-2. **Viewing logs**:
-   - Access Supabase logs from the Dashboard
-   - Review function logs, auth logs, and database logs
+   This runs everything locally with seeded data and offline capability.
+
+2. **Remote development** (original workflow):
+
+   ```bash
+   npm run dev  # Uses remote Supabase instance
+   ```
+
+3. **Database operations**:
+
+   ```bash
+   npm run s:reset    # Reset local DB with latest schema
+   npm run s:pull     # Pull schema changes from remote
+   npm run generate:types    # Update TypeScript types
+   ```
+
+For complete CLI documentation, see [Supabase CLI Setup Guide](../supabase-cli-setup.md).
 
 ## Database Extensions
 

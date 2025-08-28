@@ -7,6 +7,10 @@ interface UiState {
     currentStep: "details" | "images";
     createdItemId: string | null;
   };
+  stepperState: {
+    currentStep: number;
+  };
+  redirectUrl: string;
 }
 
 const initialState: UiState = {
@@ -15,6 +19,10 @@ const initialState: UiState = {
     currentStep: "details",
     createdItemId: null,
   },
+  stepperState: {
+    currentStep: 1,
+  },
+  redirectUrl: "",
 };
 
 export const uiSlice = createSlice({
@@ -37,6 +45,18 @@ export const uiSlice = createSlice({
     setCreatedItemId: (state, action: PayloadAction<string>) => {
       state.itemModalState.createdItemId = action.payload;
     },
+    setStepper: (state, action) => {
+      state.stepperState.currentStep = action.payload;
+    },
+    setNextStep: (state) => {
+      state.stepperState.currentStep = state.stepperState.currentStep + 1;
+    },
+    setPrevStep: (state) => {
+      state.stepperState.currentStep = state.stepperState.currentStep - 1;
+    },
+    setRedirectUrl: (state, action) => {
+      state.redirectUrl = action.payload;
+    },
   },
 });
 
@@ -45,9 +65,16 @@ export const {
   closeItemModal,
   setItemModalStep,
   setCreatedItemId,
+  setStepper,
+  setNextStep,
+  setPrevStep,
+  setRedirectUrl,
 } = uiSlice.actions;
 
 export const selectItemModalState = (state: RootState) =>
   state.ui.itemModalState;
+export const stepperCurrentNum = (state: RootState) =>
+  state.ui.stepperState.currentStep;
+export const redirectUrl = (state: RootState) => state.ui.redirectUrl;
 
 export default uiSlice.reducer;

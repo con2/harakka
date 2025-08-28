@@ -170,7 +170,7 @@ refactor(storage): simplify booking validation logic
 
 - We have two sub-teams: Frontend and Backend. Each sub-team will review code accordingly.
 - The timeframe for code review should be 24 hours.
-- After code is reviewed and approved, the author merges it into the develop branch.
+- The reviewer is responsible for merging the pull request once approved.
 - Pull requests from develop to main are created once the develop branch reaches a stable state with all features for the sprint.
 - The team decides to merge pull requests to main during the sprint review meeting.
 

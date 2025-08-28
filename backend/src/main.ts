@@ -1,10 +1,11 @@
 import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module";
+import { AppModule } from "./modules/app/app.module";
 import { ConfigService } from "@nestjs/config";
 import { Logger } from "@nestjs/common";
-import { SupabaseService } from "./services/supabase.service";
+import { Response } from "express";
+import { SupabaseService } from "./modules/supabase/supabase.service";
 import { AllExceptionsFilter } from "./filters/all-exceptions.filter";
-import { LogsService } from "./services/logs.service";
+import { LogsService } from "./modules/logs_module/logs.service";
 
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
@@ -32,10 +33,15 @@ async function bootstrap() {
       origin: origins,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "x-user-id",
+        "x-org-id",
+        "x-role-name",
+      ],
     });
-
-    app.getHttpAdapter().get("/health", async (req, res) => {
+    app.getHttpAdapter().get("/health", async (req, res: Response) => {
       try {
         // Test Supabase connection
         const supabase = app.get(SupabaseService).getServiceClient();

@@ -1,7 +1,10 @@
+// Added this to avoid refactoring 50+ files
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext } from "react";
 
 // Define available languages
 export type Language = "fi" | "en";
+export const validLanguages = ["fi", "en"] as const;
 
 // Language context type
 type LanguageContextType = {

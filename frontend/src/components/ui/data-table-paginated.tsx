@@ -3,9 +3,7 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-  getPaginationRowModel,
-  getSortedRowModel,
-  SortingState,
+  Row,
 } from "@tanstack/react-table";
 
 import {
@@ -18,41 +16,90 @@ import {
 } from "@/components/ui/table";
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  pageIndex: number;
+  pageCount: number;
+  onPageChange: (pageIndex: number) => void;
+  ascending?: boolean | null;
+  order?: string;
+  handleAscending?: (asc: boolean | null) => void;
+  handleOrder?: (order: string) => void;
+  originalSorting?: string;
+  rowProps?: (row: Row<TData>) => React.HTMLAttributes<HTMLTableRowElement>;
 }
 
+/**
+ * If data table has manual sorting:
+ * a value for ascending, order, handleAscending and handleOrder must be provided.
+ * These should update the state of the parents component, leading to a new API call.
+ * If for some reason the original order is not the first column of the table, originalSorting must be provided
+ */
 export function PaginatedDataTable<TData, TValue>({
   columns,
   data,
+  pageIndex,
+  pageCount,
+  onPageChange,
+  ascending,
+  order,
+  handleAscending,
+  handleOrder,
+  originalSorting,
+  rowProps,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
   const table = useReactTable({
     data,
     columns,
+    pageCount,
+    manualPagination: true,
+    manualSorting: true,
     state: {
-      sorting,
-    },
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
       pagination: {
+        pageIndex,
         pageSize: 10,
-        pageIndex: 0,
       },
     },
-    getRowId: (row) => (row as { id?: string | number })?.id?.toString() ?? JSON.stringify(row),
+    onPaginationChange: (updater) => {
+      const newState =
+        typeof updater === "function"
+          ? updater({ pageIndex, pageSize: 10 })
+          : updater;
+      onPageChange(newState.pageIndex);
+    },
+    getCoreRowModel: getCoreRowModel(),
   });
   // Translation
   const { lang } = useLanguage();
+
+  /**
+   * Mimic original sorting behaviour
+   * @param id The ID of which to sort by. If ascending is null it will return to original sorting.
+   */
+  const handleClick = (id: string) => {
+    if (id !== order) {
+      handleOrder?.(id);
+      handleAscending?.(true);
+      return;
+    }
+
+    if (ascending !== null) {
+      handleOrder?.(id);
+    }
+
+    if (ascending === true) {
+      handleAscending?.(false);
+    } else if (ascending === null) {
+      handleAscending?.(true);
+    } else {
+      handleAscending?.(null);
+      handleOrder?.(originalSorting ?? table.getHeaderGroups()[0].id);
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -62,10 +109,12 @@ export function PaginatedDataTable<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const isSorted = header.column.getIsSorted();
+                  const isOrder = header.id === order;
                   return (
                     <TableHead
-                      onClick={header.column.getToggleSortingHandler()}
+                      onClick={
+                        handleOrder ? () => handleClick(header.id) : () => {}
+                      }
                       className="cursor-pointer select-none hover:text-highlight2 transition-colors items-center gap-1"
                       key={header.id}
                     >
@@ -76,9 +125,9 @@ export function PaginatedDataTable<TData, TValue>({
                             header.getContext(),
                           )}
                         </span>
-                        {isSorted === "asc" ? (
+                        {isOrder && ascending === false ? (
                           <ArrowUp className="w-3 h-3 text-muted-foreground" />
-                        ) : isSorted === "desc" ? (
+                        ) : isOrder && ascending ? (
                           <ArrowDown className="w-3 h-3 text-muted-foreground" />
                         ) : null}
                       </div>
@@ -95,6 +144,7 @@ export function PaginatedDataTable<TData, TValue>({
                   key={row.id}
                   className="h-10"
                   data-state={row.getIsSelected() && "selected"}
+                  {...(rowProps?.(row) ?? {})}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="truncate">
@@ -112,7 +162,7 @@ export function PaginatedDataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {t.uiComponents.dataTable.noResults[lang]}
                 </TableCell>
               </TableRow>
             )}
@@ -121,24 +171,21 @@ export function PaginatedDataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-center mt-5 space-x-2">
         <Button
-          className="px-2 py-1 bg-background border-1 border-secondary text-secondary hover:bg-secondary hover:text-white"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
+          variant={"secondary"}
+          onClick={() => onPageChange(pageIndex - 1)}
+          disabled={pageIndex === 0}
         >
           {t.pagination.previous[lang]}
         </Button>
         <span className="text-sm text-slate-500">
           {t.pagination.pageInfo[lang]
-            .replace(
-              "{page}",
-              String(table.getState().pagination.pageIndex + 1),
-            )
-            .replace("{total}", String(table.getPageCount()))}
+            .replace("{page}", String(pageIndex + 1))
+            .replace("{total}", String(pageCount))}
         </span>
         <Button
-          className="px-2 py-1 bg-background border-1 border-secondary text-secondary hover:bg-secondary hover:text-white"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
+          variant={"secondary"}
+          onClick={() => onPageChange(pageIndex + 1)}
+          disabled={pageIndex + 1 >= pageCount}
         >
           {t.pagination.next[lang]}
         </Button>

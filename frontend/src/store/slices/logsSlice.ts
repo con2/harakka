@@ -7,22 +7,51 @@ import { extractErrorMessage } from "../utils/errorHandlers";
 // Define the state interface
 interface LogsState {
   logs: LogMessage[];
+  total: number;
+  totalPages: number;
+  page: number;
   loading: boolean;
   error: string | null;
+  filters: {
+    level?: string;
+    logType?: "audit" | "system";
+    search?: string;
+  };
 }
 
 const initialState: LogsState = {
   logs: [],
+  total: 0,
+  totalPages: 0,
+  page: 1,
   loading: false,
   error: null,
+  filters: {},
 };
 
 // Async thunk to fetch all logs
-export const getAllLogs = createAsyncThunk<LogMessage[], string>(
+export const getAllLogs = createAsyncThunk<
+  {
+    data: LogMessage[];
+    total: number;
+    page: number;
+    totalPages: number;
+  },
+  {
+    page?: number;
+    limit?: number;
+    level?: string;
+    logType?: "audit" | "system";
+    search?: string;
+  }
+>(
   "logs/fetchAllLogs",
-  async (userId, { rejectWithValue }) => {
+  async (
+    { page = 1, limit = 10, level, logType, search },
+    { rejectWithValue },
+  ) => {
     try {
-      return await logsApi.getAllLogs(userId);
+      return await logsApi.getAllLogs(page, limit, level, logType, search);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch all logs"),
@@ -44,7 +73,15 @@ const logsSlice = createSlice({
       })
       .addCase(getAllLogs.fulfilled, (state, action) => {
         state.loading = false;
-        state.logs = action.payload;
+        state.logs = action.payload.data;
+        state.total = action.payload.total;
+        state.totalPages = action.payload.totalPages;
+        state.page = action.payload.page;
+        state.filters = {
+          level: action.meta.arg.level,
+          logType: action.meta.arg.logType,
+          search: action.meta.arg.search,
+        };
       })
       .addCase(getAllLogs.rejected, (state, action) => {
         state.loading = false;
@@ -55,7 +92,13 @@ const logsSlice = createSlice({
 
 // Selectors
 export const selectAllLogs = (state: RootState) => state.logs.logs;
+export const selectLogsPagination = (state: RootState) => ({
+  page: state.logs.page,
+  total: state.logs.total,
+  totalPages: state.logs.totalPages,
+});
 export const selectLogsLoading = (state: RootState) => state.logs.loading;
 export const selectLogsError = (state: RootState) => state.logs.error;
+export const selectLogsTotalCount = (state: RootState) => state.logs.total;
 
 export default logsSlice.reducer;
