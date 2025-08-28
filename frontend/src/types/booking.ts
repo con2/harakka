@@ -112,4 +112,5 @@ export type BookingWithDetails = BookingPreview & {
 
 export type BookingItemWithDetails = BookingItem & {
   storage_items: Translatable<ItemTranslation>;
+  org_name: string;
 };
