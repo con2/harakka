@@ -1,15 +1,13 @@
+import { common } from "./common";
+
 export const navigation = {
-  home: {
-    fi: "Etusivu",
-    en: "Home",
-  },
   myProfile: {
     fi: "Profiilini",
     en: "My Profile",
   },
   admin: {
-    fi: "Ylläpitäjä",
-    en: "Admin",
+    fi: common.roles.admin.fi,
+    en: common.roles.admin.en,
   },
   storage: {
     fi: "Varasto",
@@ -22,6 +20,10 @@ export const navigation = {
   contactUs: {
     fi: "Ota yhteyttä",
     en: "Contact Us",
+  },
+  organizations: {
+    en: common.organizations.organization.en,
+    fi: common.organizations.organization.fi,
   },
   toast: {
     title: {
@@ -37,12 +39,18 @@ export const navigation = {
       en: "Log Out",
     },
     cancelText: {
-      fi: "Peruuta",
-      en: "Cancel",
+      fi: common.cancel.fi,
+      en: common.cancel.en,
     },
     success: {
       fi: "Uloskirjautuminen peruttu.",
       en: "Logout canceled.",
     },
+  },
+  notifications: {
+    label: { en: "Notifications", fi: "Ilmoitukset" },
+    none: { en: "Nothing new yet.", fi: "Ei uusia ilmoituksia" },
+    markAllRead: { en: "Mark all as read", fi: "Merkitse kaikki luetuiksi" },
+    srOpen: { en: "Open notifications", fi: "Avaa ilmoitukset" },
   },
 };

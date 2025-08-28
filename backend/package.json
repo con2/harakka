@@ -1,10 +1,11 @@
 {
   "name": "backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
   "private": true,
   "scripts": {
     "build": "nest build",
+    "postbuild": "echo \"✅ Backend build completed successfully!\" && echo \"📁 Backend dist contents:\" && ls -la dist/backend || ls -la dist",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node -r tsconfig-paths/register dist/backend/src/main.js",
     "start:watch": "nest start --watch -r tsconfig-paths/register",
@@ -32,6 +33,7 @@
     "@supabase/supabase-js": "^2.49.4",
     "@types/multer": "^2.0.0",
     "@types/nodemailer": "^6.4.17",
+    "@types/papaparse": "^5.3.16",
     "bwip-js": "^4.6.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
@@ -41,12 +43,15 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.2",
+    "papaparse": "^5.5.3",
     "pdfkit": "^0.17.1",
     "react-email": "^4.0.13",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "supabase": "^2.31.8",
     "type-fest": "^4.41.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "zod": "^4.0.15"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -77,8 +82,8 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.34.0"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.37.0"
   },
   "jest": {
     "moduleFileExtensions": [

@@ -2,9 +2,12 @@ import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabase";
+import { useLanguage } from "../../context/LanguageContext";
+import { t } from "../../translations";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
 
   useEffect(() => {
     // Check for authentication session
@@ -12,7 +15,6 @@ const AuthCallback = () => {
       try {
         const url = new URL(window.location.href);
         const hashParams = new URLSearchParams(url.hash.replace("#", ""));
-        console.log("url in auth callback: ", url);
 
         // Check if this is a recovery flow FIRST before any other auth handling
         const isRecovery =
@@ -63,7 +65,7 @@ const AuthCallback = () => {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <p className="ml-2 text-lg">Processing authentication...</p>
+      <p className="ml-2 text-lg">{t.authCallback.processing[lang]}</p>
     </div>
   );
 };

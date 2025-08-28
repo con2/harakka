@@ -2,10 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getItemImages,
-  uploadItemImage,
   deleteItemImage,
   selectItemImagesById,
   selectItemImagesLoading,
+  uploadItemImageModal,
 } from "@/store/slices/itemImagesSlice";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,14 +44,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
-import {
-  ImageType,
-  ItemImage,
-  FILE_CONSTRAINTS,
-  AllowedMimeType,
-} from "@/types/storage";
+import { ImageType, ItemImage } from "@/types/storage";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { validateImage } from "@/utils/imageUtils";
 
 interface ItemImageManagerProps {
   itemId: string;
@@ -101,14 +97,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
 
   useEffect(() => {
     if (itemId) {
-      console.log("Fetching images for item:", itemId);
-
       try {
         dispatch(getItemImages(itemId))
           .unwrap()
-          .then((response) => {
-            console.log("Images fetched successfully:", response);
-          })
           .catch((error) => {
             console.error("Error fetching images:", error);
             toast.error(t.itemImageManager.messages.toast.loadError[lang]);
@@ -151,45 +142,23 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
     }
   }, [loading, uploadProgress]);
 
-  const validateFile = (file: File): boolean => {
-    // Check file type
-    if (
-      !FILE_CONSTRAINTS.ALLOWED_FILE_TYPES.includes(
-        file.type as AllowedMimeType,
-      )
-    ) {
-      toast.error(t.itemImageManager.messages.validation.fileType[lang]);
-      return false;
-    }
-
-    // Check file size
-    if (file.size > FILE_CONSTRAINTS.MAX_FILE_SIZE) {
-      toast.error(
-        t.itemImageManager.messages.validation.fileSize[lang].replace(
-          "{size}",
-          String(FILE_CONSTRAINTS.MAX_FILE_SIZE / (1024 * 1024)),
-        ),
-      );
-      return false;
-    }
-
-    return true;
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (validateFile(file)) {
-        setSelectedFile(file);
-
-        // Auto-generate alt text from filename
-        const nameWithoutExt = file.name.split(".").slice(0, -1).join(".");
-        const formattedName = nameWithoutExt
-          .replace(/[-_]/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
-
-        setAltText(formattedName);
+      const result = validateImage().safeParse(file);
+      if (!result.success) {
+        toast.error(result.error.errors[0]?.message ?? "Invalid file");
+        return;
       }
+      setSelectedFile(file);
+
+      // Auto-generate alt text from filename
+      const nameWithoutExt = file.name.split(".").slice(0, -1).join(".");
+      const formattedName = nameWithoutExt
+        .replace(/[-_]/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+
+      setAltText(formattedName);
     }
   };
 
@@ -208,17 +177,20 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      if (validateFile(file)) {
-        setSelectedFile(file);
-
-        // Auto-generate alt text from filename
-        const nameWithoutExt = file.name.split(".").slice(0, -1).join(".");
-        const formattedName = nameWithoutExt
-          .replace(/[-_]/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
-
-        setAltText(formattedName);
+      const result = validateImage().safeParse(file);
+      if (!result.success) {
+        toast.error(result.error.errors[0]?.message ?? "Invalid file");
+        return;
       }
+      setSelectedFile(file);
+
+      // Auto-generate alt text from filename
+      const nameWithoutExt = file.name.split(".").slice(0, -1).join(".");
+      const formattedName = nameWithoutExt
+        .replace(/[-_]/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+
+      setAltText(formattedName);
     }
   };
 
@@ -229,7 +201,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (!selectedFile) {
       toast.error(t.itemImageManager.messages.validation.noFile[lang]);
       return;
@@ -244,14 +216,15 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
       image_type: imageType,
       display_order: highestOrder + 1,
       alt_text: altText,
+      is_active: true,
     };
 
     setUploadProgress(10); // Start progress
 
     try {
-      await toast.promise(
+      toast.promise(
         dispatch(
-          uploadItemImage({ itemId, file: selectedFile, metadata }),
+          uploadItemImageModal({ itemId, file: selectedFile, metadata }),
         ).unwrap(),
         {
           loading: t.itemImageManager.messages.toast.upload.loading[lang],
@@ -272,11 +245,11 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
     setDeleteConfirmOpen(true);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!imageToDelete) return;
 
     try {
-      await toast.promise(dispatch(deleteItemImage(imageToDelete)).unwrap(), {
+      toast.promise(dispatch(deleteItemImage(imageToDelete)).unwrap(), {
         loading: t.itemImageManager.messages.toast.delete.loading[lang],
         success: t.itemImageManager.messages.toast.delete.success[lang],
         error: t.itemImageManager.messages.toast.delete.error[lang],
@@ -361,7 +334,9 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue
+                    placeholder={t.itemImageManager.options.select[lang]}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="main">

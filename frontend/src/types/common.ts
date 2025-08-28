@@ -83,4 +83,5 @@ export interface FiltersState {
   itemTypes: string[];
   tagIds: string[];
   locationIds: string[];
+  orgIds?: string[];
 }

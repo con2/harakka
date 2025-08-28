@@ -1,8 +1,4 @@
 export const myBookings = {
-  title: {
-    fi: "Tilaukseni",
-    en: "My Bookings",
-  },
   loading: {
     fi: "Ladataan tilauksiasi...",
     en: "Loading your bookings...",
@@ -32,10 +28,6 @@ export const myBookings = {
     },
   },
   status: {
-    unknown: {
-      fi: "Tuntematon",
-      en: "Unknown",
-    },
     pending: {
       fi: "Odottaa",
       en: "Pending",
@@ -47,10 +39,6 @@ export const myBookings = {
     cancelled: {
       fi: "Peruutettu",
       en: "Cancelled",
-    },
-    cancelledByUser: {
-      fi: "Käyttäjän peruuttama",
-      en: "Cancelled by user",
     },
     cancelledByAdmin: {
       fi: "Ylläpitäjän peruuttama",
@@ -82,10 +70,6 @@ export const myBookings = {
       fi: "Päivämäärä",
       en: "Date",
     },
-    total: {
-      fi: "Yhteensä",
-      en: "Total",
-    },
     item: {
       fi: "Tuote",
       en: "Item",
@@ -101,10 +85,6 @@ export const myBookings = {
     endDate: {
       fi: "Loppupäivä",
       en: "End Date",
-    },
-    subtotal: {
-      fi: "Välisumma",
-      en: "Subtotal",
     },
   },
   emptyState: {
@@ -122,6 +102,10 @@ export const myBookings = {
       fi: "Tilauksen tiedot #",
       en: "Booking Details #",
     },
+    description: {
+      fi: "Katso yksityiskohtaiset tiedot tästä tilauksesta mukaan lukien tuotteet, päivämäärät ja tila.",
+      en: "View detailed information about this booking including items, dates, and status.",
+    },
     customerInfo: {
       fi: "Asiakkaan tiedot",
       en: "Customer Information",
@@ -134,19 +118,11 @@ export const myBookings = {
       fi: "Tuotteet",
       en: "Items",
     },
-    total: {
-      fi: "Yhteensä:",
-      en: "Total:",
-    },
   },
   mobile: {
     status: {
       fi: "Tila:",
       en: "Status:",
-    },
-    total: {
-      fi: "Yhteensä:",
-      en: "Total:",
     },
     item: {
       fi: "Tuote:",
@@ -164,10 +140,6 @@ export const myBookings = {
       fi: "Loppu:",
       en: "End:",
     },
-    subtotal: {
-      fi: "Välisumma:",
-      en: "Subtotal:",
-    },
   },
   filter: {
     searchPlaceholder: {
@@ -184,21 +156,9 @@ export const myBookings = {
       fi: "Muokkaa tilausta #",
       en: "Edit Booking #",
     },
-    startDate: {
-      fi: "Alkupäivä",
-      en: "Start",
-    },
-    endDate: {
-      fi: "Loppupäivä",
-      en: "End",
-    },
-    selectStartDate: {
-      fi: "Valitse alkupäivä",
-      en: "Select start date",
-    },
-    selectEndDate: {
-      fi: "Valitse loppupäivä",
-      en: "Select end date",
+    description: {
+      fi: "Muokkaa määriä, päivämääriä tai peruuta tuotteita tässä tilauksessa.",
+      en: "Modify quantities, dates, or cancel items in this booking.",
     },
     item: {
       fi: "Tuote",
@@ -207,10 +167,6 @@ export const myBookings = {
     quantity: {
       fi: "Määrä",
       en: "Qty",
-    },
-    unnamedItem: {
-      fi: "Nimeämätön tuote",
-      en: "Unnamed Item",
     },
     buttons: {
       cancel: {
@@ -238,42 +194,6 @@ export const myBookings = {
       cancelFailed: {
         fi: "Tilauksen peruuttaminen epäonnistui",
         en: "Failed to cancel booking",
-      },
-    },
-  },
-  cancel: {
-    title: {
-      fi: "Vahvista peruutus",
-      en: "Confirm Cancellation",
-    },
-    description: {
-      fi: "Haluatko varmasti peruuttaa tämän tilauksen?",
-      en: "Are you sure you want to cancel this booking?",
-    },
-    confirmText: {
-      fi: "Peruuta tilaus",
-      en: "Cancel Booking",
-    },
-    cancelText: {
-      fi: "Säilytä tilaus",
-      en: "Keep Booking",
-    },
-    toast: {
-      loading: {
-        fi: "Peruutetaan tilausta...",
-        en: "Cancelling booking...",
-      },
-      success: {
-        fi: "Tilaus peruutettu onnistuneesti",
-        en: "Booking cancelled successfully",
-      },
-      error: {
-        fi: "Tilauksen peruuttaminen epäonnistui",
-        en: "Failed to cancel booking",
-      },
-      invalidId: {
-        fi: "Virheellinen tilausnumero.",
-        en: "Invalid booking ID.",
       },
     },
   },

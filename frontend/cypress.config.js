@@ -27,6 +27,10 @@ const envVars = [
   "PORT",
   "NODE_ENV",
   "ALLOWED_ORIGINS",
+  "CYPRESS_REGULAR_USER_EMAIL",
+  "CYPRESS_REGULAR_USER_PASSWORD",
+  "CYPRESS_SUPERVERA_USER_EMAIL",
+  "CYPRESS_SUPERVERA_USER_PASSWORD",
 ];
 
 const cypressEnv = {};
@@ -41,7 +45,7 @@ export default defineConfig({
   e2e: {
     baseUrl: "http://localhost:5180",
     env: cypressEnv,
-    video: true, // Enable video recording
+    video: false, // enable/disable video recording
     videoCompression: 0, // No compression for highest quality in demos
     videosFolder: "cypress/videos", // Where videos are saved
     viewportWidth: 1280, // Wider viewport for demos

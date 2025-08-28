@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { toastConfirm } from "../../ui/toastConfirm";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 interface DeleteLocationButtonProps {
   locationId: string;
@@ -20,20 +22,27 @@ const DeleteLocationButton = ({
   organizationId,
 }: DeleteLocationButtonProps) => {
   const dispatch = useAppDispatch();
+  const { lang } = useLanguage();
 
   const handleDelete = () => {
+    const locationInfo = t.deleteLocationButton.locationInfo[lang].replace(
+      "{name}",
+      locationName,
+    );
+    const description = `${locationInfo}\n\n${t.deleteLocationButton.description[lang]}`;
+
     toastConfirm({
-      title: "Remove Organization Location",
-      description: `Are you sure you want to remove "${locationName}" from this organization? The storage location data will be preserved in the system for potential future use.`,
-      confirmText: "Remove",
-      cancelText: "Cancel",
+      title: t.deleteLocationButton.title[lang],
+      description: description,
+      confirmText: t.deleteLocationButton.buttons.delete[lang],
+      cancelText: t.deleteLocationButton.buttons.cancel[lang],
       onConfirm: async () => {
-        await toast.promise(
+        toast.promise(
           dispatch(deleteOrgLocationWithStorage(locationId)).unwrap(),
           {
-            loading: "Removing location from organization...",
-            success: "Location removed from organization successfully",
-            error: "Failed to remove location",
+            loading: t.deleteLocationButton.messages.loading[lang],
+            success: t.deleteLocationButton.messages.success[lang],
+            error: t.deleteLocationButton.messages.error[lang],
           },
         );
 
@@ -52,7 +61,7 @@ const DeleteLocationButton = ({
   return (
     <Button variant="outline" size="sm" onClick={handleDelete}>
       <Trash2 className="h-3 w-3 mr-1" />
-      Delete
+      {t.deleteLocationButton.buttons.delete[lang]}
     </Button>
   );
 };

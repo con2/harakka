@@ -61,4 +61,14 @@ export const contactForm = {
       en: "Something went wrong.",
     },
   },
+  emailTemplate: {
+    from: {
+      fi: "Lähettäjä:",
+      en: "From:",
+    },
+    subject: {
+      fi: "Aihe:",
+      en: "Subject:",
+    },
+  },
 };

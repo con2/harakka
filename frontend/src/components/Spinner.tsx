@@ -5,6 +5,7 @@ type SpinnerProps = {
   padding?: string;
   containerClasses?: string;
   loaderClasses?: string;
+  text?: string;
 };
 
 function Spinner({
@@ -12,6 +13,7 @@ function Spinner({
   padding = "p-2",
   containerClasses,
   loaderClasses,
+  text,
 }: SpinnerProps) {
   const CONTAINER_CLASSES = `flex justify-center items-center ${height} ${padding} ${containerClasses}`;
   const LOADER_CLASSES = `animate-spin w-6 h-6 ${loaderClasses}`;
@@ -19,6 +21,7 @@ function Spinner({
   return (
     <div className={CONTAINER_CLASSES}>
       <LoaderCircle className={LOADER_CLASSES} />
+      {text && <span>{text}</span>}
     </div>
   );
 }

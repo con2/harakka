@@ -24,17 +24,9 @@ export const adminPanel = {
       fi: "Käyttäjät",
       en: "Users",
     },
-    team: {
-      fi: "Tiimi",
-      en: "Team",
-    },
     settings: {
       fi: "Asetukset",
       en: "Settings",
-    },
-    orgs: {
-      fi: "Yhdistys",
-      en: "Organization",
     },
     logs: {
       fi: "Lokit",
@@ -47,6 +39,10 @@ export const adminPanel = {
     organizations: {
       fi: "Organisaatiot",
       en: "Organizations",
+    },
+    locations: {
+      fi: "Sijainti",
+      en: "Locations",
     },
   },
 };

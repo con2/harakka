@@ -6,6 +6,7 @@ import { TagRow, TagUpdate } from "./interfaces/tag.interface";
 import { Database } from "../../../../common/database.types";
 import { ApiResponse } from "../../../../common/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
+import { TagLink } from "@common/items/storage-items.types";
 
 @Injectable()
 export class TagService {
@@ -187,6 +188,18 @@ export class TagService {
     if (insertError) throw new Error(insertError.message);
   }
 
+  async assignTagsToBulk(req: AuthRequest, payload: TagLink[]) {
+    try {
+      const supabase = req.supabase;
+      const { error } = await supabase
+        .from("storage_item_tags")
+        .insert(payload);
+      if (error) throw error;
+    } catch (error) {
+      return error;
+    }
+  }
+
   async updateTag(
     req: AuthRequest,
     id: string,
@@ -200,8 +213,6 @@ export class TagService {
       .select()
       .single();
     if (error) throw new Error(error.message);
-    console.log("Updated tag:", data);
-    console.log("error:", error);
     return data;
   }
 

@@ -11,7 +11,10 @@ import {
   Req,
   BadRequestException,
   Patch,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { OrganizationsService } from "./organizations.service";
 import { Roles } from "src/decorators/roles.decorator";
 import { CreateOrganizationDto } from "./dto/create-organization.dto";
@@ -125,5 +128,28 @@ export class OrganizationsController {
     const newIsActive = !org.is_active;
 
     return this.organizationService.toggleActivation(req, id, newIsActive);
+  }
+
+  // 9. upload org logo picture
+  @Post(":organizationId/logo")
+  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins and superVera are permitted
+  @UseInterceptors(FileInterceptor("file"))
+  async uploadOrganizationLogo(
+    @Req() req: AuthRequest,
+    @Param("organizationId") organizationId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{ url: string }> {
+    if (!file) {
+      throw new BadRequestException("No file uploaded");
+    }
+
+    const url = await this.organizationService.handleOrganizationLogoUpload(
+      file.buffer,
+      file.originalname,
+      organizationId,
+      req,
+    );
+
+    return { url };
   }
 }

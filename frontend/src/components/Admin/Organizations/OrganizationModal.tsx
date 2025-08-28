@@ -22,6 +22,14 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { OrganizationDetails } from "@/types/organization";
 import { useEffect } from "react";
+import OrganizationLogoUploader from "./OrganizationLogoUploader";
+
+// Define the form values type for organization
+export type OrganizationFormValues = {
+  name: string;
+  description?: string;
+  slug?: string;
+};
 
 type Props = {
   open: boolean;
@@ -31,14 +39,6 @@ type Props = {
   organization?: OrganizationDetails | null;
   isLoading?: boolean;
 };
-
-const schema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  slug: z.string().optional(),
-});
-
-export type OrganizationFormValues = z.infer<typeof schema>;
 
 export default function OrganizationModal({
   open,
@@ -50,6 +50,12 @@ export default function OrganizationModal({
   const { lang } = useLanguage();
 
   const isViewMode = mode === "view";
+
+  const schema = z.object({
+    name: z.string().min(1, t.organizations.validation.nameRequired[lang]),
+    description: z.string().optional(),
+    slug: z.string().optional(),
+  });
 
   // schema for organization form
   const form = useForm<OrganizationFormValues>({
@@ -77,51 +83,54 @@ export default function OrganizationModal({
           <DialogHeader>
             <DialogTitle>{organization?.name}</DialogTitle>
           </DialogHeader>
+
+          {/* Add logo uploader */}
+          <div className="flex flex-col items-center mb-4">
+            <OrganizationLogoUploader
+              currentImage={organization?.logo_picture_url}
+              organizationId={organization?.id || ""}
+            />
+          </div>
+
           <div className="space-y-2 text-sm">
             <p>
-              <strong>Beschreibung:</strong> {organization?.description || "—"}
+              <strong>{t.organizations.modal.labels.description[lang]}:</strong>{" "}
+              {organization?.description || "—"}
             </p>
             <p>
-              <strong>Slug:</strong> {organization?.slug || "—"}
+              <strong>{t.organizations.modal.labels.slug[lang]}:</strong>{" "}
+              {organization?.slug || "—"}
             </p>
             <p>
-              <strong>Active:</strong>{" "}
+              <strong>{t.organizations.modal.labels.active[lang]}:</strong>{" "}
               {organization?.is_active
-                ? t.organizationList.values.isActive.yes[lang]
-                : t.organizationList.values.isActive.no[lang]}
+                ? t.organizations.values.isActive.yes[lang]
+                : t.organizations.values.isActive.no[lang]}
             </p>
             <p>
-              <strong>
-                {t.organizationList.modal.labels.createdAt[lang]}:
-              </strong>{" "}
+              <strong>{t.organizations.modal.labels.createdAt[lang]}:</strong>{" "}
               {organization?.created_at
                 ? new Date(organization.created_at).toLocaleString()
                 : "—"}
             </p>
             <p>
-              <strong>
-                {t.organizationList.modal.labels.createdBy[lang]}:
-              </strong>{" "}
+              <strong>{t.organizations.modal.labels.createdBy[lang]}:</strong>{" "}
               {organization?.created_by || "—"}
             </p>
             <p>
-              <strong>
-                {t.organizationList.modal.labels.updatedAt[lang]}:
-              </strong>{" "}
+              <strong>{t.organizations.modal.labels.updatedAt[lang]}:</strong>{" "}
               {organization?.updated_at
                 ? new Date(organization.updated_at).toLocaleString()
                 : "—"}
             </p>
             <p>
-              <strong>
-                {t.organizationList.modal.labels.updatedBy[lang]}:
-              </strong>{" "}
+              <strong>{t.organizations.modal.labels.updatedBy[lang]}:</strong>{" "}
               {organization?.updated_by || "—"}
             </p>
           </div>
           <DialogFooter className="flex justify-end">
             <Button onClick={() => onOpenChange(false)}>
-              <strong>{t.organizationList.modal.buttons.close[lang]}:</strong>
+              {t.organizations.modal.buttons.close[lang]}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -134,8 +143,18 @@ export default function OrganizationModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t.organizationList.modal.title[lang]}</DialogTitle>
+          <DialogTitle>{t.organizations.modal.title[lang]}</DialogTitle>
         </DialogHeader>
+
+        {/* Add logo uploader for edit mode only */}
+        {mode === "edit" && organization?.id && (
+          <div className="flex flex-col items-center mb-4">
+            <OrganizationLogoUploader
+              currentImage={organization?.logo_picture_url}
+              organizationId={organization.id}
+            />
+          </div>
+        )}
 
         <Form {...form} key={organization?.id ?? "new"}>
           <form
@@ -152,12 +171,12 @@ export default function OrganizationModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t.organizationList.modal.labels.name[lang]}
+                    {t.organizations.modal.labels.name[lang]}
                   </FormLabel>
                   <FormControl>
                     <Input
                       placeholder={
-                        t.organizationList.modal.placeholders.name[lang]
+                        t.organizations.modal.placeholders.name[lang]
                       }
                       {...field}
                     />
@@ -174,12 +193,12 @@ export default function OrganizationModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t.organizationList.modal.labels.description[lang]}
+                    {t.organizations.modal.labels.description[lang]}
                   </FormLabel>
                   <FormControl>
                     <Input
                       placeholder={
-                        t.organizationList.modal.placeholders.description[lang]
+                        t.organizations.modal.placeholders.description[lang]
                       }
                       {...field}
                     />
@@ -197,7 +216,7 @@ export default function OrganizationModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      {t.organizationList.modal.labels.slug[lang]}
+                      {t.organizations.modal.labels.slug[lang]}
                     </FormLabel>
                     <FormControl>
                       <Input placeholder="my-org-slug" {...field} />
@@ -215,9 +234,11 @@ export default function OrganizationModal({
                 variant="secondary"
                 onClick={() => onOpenChange(false)}
               >
-                {t.common.cancel[lang]}
+                {t.organizations.modal.buttons.cancel[lang]}
               </Button>
-              <Button type="submit">{t.common.save[lang]}</Button>
+              <Button type="submit">
+                {t.organizations.modal.buttons.save[lang]}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

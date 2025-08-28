@@ -99,7 +99,7 @@ const UserBanHistoryModal = ({
         <div className="max-h-96 overflow-y-auto">
           {loading ? (
             <div className="flex justify-center py-4">
-              <span>Loading...</span>
+              <span>{t.userBanning.status.loading[lang]}</span>
             </div>
           ) : banHistory.length === 0 ? (
             <div className="text-center py-4 text-muted-foreground">
@@ -109,8 +109,8 @@ const UserBanHistoryModal = ({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t.userBanning.status.action[lang]}</TableHead>
+                  <TableHead>{t.userBanning.status.status[lang]}</TableHead>
                   <TableHead>
                     {t.userBanning.history.columns.banType[lang]}
                   </TableHead>
@@ -120,7 +120,7 @@ const UserBanHistoryModal = ({
                   <TableHead>
                     {t.userBanning.history.columns.reason[lang]}
                   </TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>{t.userBanning.status.date[lang]}</TableHead>
                   <TableHead>
                     {t.userBanning.history.columns.isPermanent[lang]}
                   </TableHead>
@@ -137,7 +137,9 @@ const UserBanHistoryModal = ({
                             : "text-green-600 font-medium"
                         }
                       >
-                        {ban.action === "banned" ? "Banned" : "Unbanned"}
+                        {ban.action === "banned"
+                          ? t.userBanning.status.banned[lang]
+                          : t.userBanning.status.unbanned[lang]}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -171,7 +173,11 @@ const UserBanHistoryModal = ({
                           ? new Date(ban.unbanned_at).toLocaleDateString()
                           : "-"}
                     </TableCell>
-                    <TableCell>{ban.is_permanent ? "Yes" : "No"}</TableCell>
+                    <TableCell>
+                      {ban.is_permanent
+                        ? t.userBanning.history.columns.permanent[lang]
+                        : t.userBanning.history.columns.notPermanent[lang]}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

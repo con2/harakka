@@ -1,6 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "@common/database.types";
+import { Database } from "@common/supabase.types";
 import { UserBooking } from "src/modules/booking/types/booking.interface";
+import { BookingStatus } from "../modules/booking//types/booking.interface";
 
 export async function calculateAvailableQuantity(
   supabase: SupabaseClient<Database>,
@@ -30,7 +31,7 @@ export async function calculateAvailableQuantity(
   // get items total quantity
   const { data: item, error: itemError } = await supabase
     .from("storage_items")
-    .select("items_number_total")
+    .select("quantity")
     .eq("id", itemId)
     .single();
 
@@ -38,7 +39,7 @@ export async function calculateAvailableQuantity(
     throw new Error("Error when retrieving/ calling item.total");
   }
 
-  const availableQuantity = item.items_number_total - alreadyBookedQuantity;
+  const availableQuantity = item.quantity - alreadyBookedQuantity;
 
   return {
     item_id: itemId,
@@ -82,8 +83,47 @@ export function calculateDuration(start: Date, end: Date): number {
   return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export function generateBookingNumber() {
+// internal helper to create a random booking number candidate
+function makeCandidate(): string {
   return `ORD-${Math.floor(Math.random() * 10000)
     .toString()
     .padStart(4, "0")}`;
+}
+
+/**
+ * Generate a booking number and ensure it's not already present in the bookings table.
+ * Retries up to `maxAttempts` times before throwing.
+ */
+export async function generateBookingNumber(
+  supabase: SupabaseClient<Database>,
+  maxAttempts = 5,
+): Promise<string> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const candidate = makeCandidate();
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("id")
+      .eq("booking_number", candidate)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error("Error while checking booking number uniqueness");
+    }
+    // if no existing row, candidate is unique
+    if (!data) return candidate;
+    // otherwise loop and try again
+  }
+  throw new Error(
+    "Could not generate a unique booking number after multiple attempts.",
+  );
+}
+
+export function deriveOrgStatus(statuses: string[]): BookingStatus {
+  if (statuses.length === 0) return "pending";
+  if (statuses.every((s) => s === "rejected")) return "rejected";
+  if (statuses.some((s) => s === "pending")) return "pending";
+  if (statuses.some((s) => s === "confirmed")) return "confirmed";
+  if (statuses.some((s) => s === "cancelled")) return "cancelled";
+  return "pending";
 }
