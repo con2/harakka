@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
 import { GetOrderedUsersDto } from "./dto/get-ordered-users.dto";
@@ -48,71 +48,39 @@ export class UserService {
     dto: GetOrderedUsersDto,
   ): Promise<ApiResponse<UserProfile[]>> {
     const supabase = req.supabase;
+    const activeRole = req.headers["x-role-name"] as string;
+    const activeOrgId = req.headers["x-org-id"] as string;
 
-    // First, get the user IDs that match organization criteria
-    let userIds: string[] = [];
+    // Build the main user query
+    let query = supabase.from("user_profiles").select("*", { count: "exact" });
 
-    if (dto.org_filter) {
-      // Query 1: Users from the specified organization (including banned users)
-      // Include users who have ANY role assignment in this org, active or inactive
+    // Apply organization filtering for all roles except super_admin
+    if (activeRole !== "super_admin") {
       const { data: orgUsers, error: orgError } = await supabase
         .from("user_organization_roles")
-        .select(
-          `
-          user_id,
-          organizations!inner(id, name),
-          roles!inner(role)
-        `,
-        )
-        .eq("organization_id", dto.org_filter);
+        .select("user_id")
+        .eq("organization_id", activeOrgId);
 
       if (orgError) {
         handleSupabaseError(orgError);
       }
 
-      // Query 2: Users from Global org with "user" role (only active ones)
-      // Keep the active filter for Global users to avoid showing unrelated users
-      const { data: globalUsers, error: globalError } = await supabase
-        .from("user_organization_roles")
-        .select(
-          `
-          user_id,
-          organizations!inner(id, name),
-          roles!inner(role)
-        `,
-        )
-        .eq("is_active", true)
-        .eq("organizations.name", "Global")
-        .eq("roles.role", "user");
-
-      if (globalError) {
-        handleSupabaseError(globalError);
-      }
-
-      // Combine and deduplicate user IDs
-      const orgUserIds =
+      const userIds =
         orgUsers?.map((r: { user_id: string }) => r.user_id) || [];
-      const globalUserIds =
-        globalUsers?.map((r: { user_id: string }) => r.user_id) || [];
-      userIds = [...new Set([...orgUserIds, ...globalUserIds])];
-    }
 
-    // Build the main user query
-    let query = supabase.from("user_profiles").select("*", { count: "exact" });
-
-    // Apply organization filtering if specified
-    if (dto.org_filter && userIds.length > 0) {
-      query = query.in("id", userIds);
-    } else if (dto.org_filter && userIds.length === 0) {
-      // No users match the criteria, return empty response
-      return {
-        data: [],
-        error: null,
-        count: 0,
-        status: 200,
-        statusText: "OK",
-        metadata: getPaginationMeta(0, dto.page || 1, dto.limit || 10),
-      };
+      if (userIds.length > 0) {
+        query = query.in("id", userIds);
+      } else {
+        // No users match the criteria, return empty response
+        return {
+          data: [],
+          error: null,
+          count: 0,
+          status: 200,
+          statusText: "OK",
+          metadata: getPaginationMeta(0, dto.page || 1, dto.limit || 10),
+        };
+      }
     }
 
     // Apply search query if provided
@@ -149,7 +117,26 @@ export class UserService {
 
   async getUserById(id: string, req: AuthRequest): Promise<UserProfile> {
     const supabase = req.supabase;
+    const activeRole = req.headers["x-role-name"] as string;
+    const activeOrgId = req.headers["x-org-id"] as string;
 
+    // Apply organization check for all roles except super_admin
+    if (activeRole !== "super_admin" && activeOrgId) {
+      const { data: userOrg, error: orgError } = await supabase
+        .from("user_organization_roles")
+        .select("organization_id")
+        .eq("user_id", id)
+        .eq("organization_id", activeOrgId)
+        .single();
+
+      if (orgError || !userOrg) {
+        throw new NotFoundException(
+          `User with ID ${id} does not belong to your organization.`,
+        );
+      }
+    }
+
+    // Retrieve the user profile
     const { data, error }: PostgrestSingleResponse<UserProfile> = await supabase
       .from("user_profiles")
       .select("*")
@@ -161,6 +148,7 @@ export class UserService {
     }
     return data;
   }
+
   async getCurrentUser(req: AuthRequest): Promise<UserProfile> {
     const supabase = req.supabase;
     const userId = req.user?.id;
@@ -375,11 +363,10 @@ export class UserService {
   async handleProfilePictureUpload(
     fileBuffer: Buffer,
     fileName: string,
-    userId: string,
     req: AuthRequest,
   ): Promise<string> {
-    // get current user to delete old picture if exists
-    const currentUser = await this.getUserById(userId, req);
+    // get the current user directly from the request context to delete old picture if exists
+    const currentUser = await this.getCurrentUser(req);
 
     if (currentUser?.profile_picture_url) {
       const oldPath = this.extractStoragePath(currentUser.profile_picture_url);
@@ -398,12 +385,12 @@ export class UserService {
     const url = await this.uploadProfilePicture(
       fileBuffer,
       fileName,
-      userId,
+      currentUser.id,
       req,
     );
 
     // update user profile
-    await this.updateUser(userId, { profile_picture_url: url }, req);
+    await this.updateUser(currentUser.id, { profile_picture_url: url }, req);
 
     return url;
   }
