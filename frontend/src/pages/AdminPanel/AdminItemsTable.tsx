@@ -8,21 +8,14 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  deleteItem,
   fetchOrderedItems,
-  getItemById,
   selectAllItems,
   selectItemsError,
   selectItemsPagination,
   selectItemsLoading,
   updateItem,
-  selectSelectedItem,
 } from "@/store/slices/itemsSlice";
-import {
-  fetchAllTags,
-  fetchTagsForItem,
-  selectAllTags,
-} from "@/store/slices/tagSlice";
+import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
 import { Item, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
@@ -37,12 +30,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useRoles } from "@/hooks/useRoles";
-import { toastConfirm } from "@/components/ui/toastConfirm";
+// toastConfirm is used in ItemDetailsPage; not needed here
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import AssignTagsModal from "@/components/Admin/Items/AssignTagsModal";
-import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
+// Details and editing moved to ItemDetailsPage
 import { useLocation, useNavigate } from "react-router-dom";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
@@ -53,20 +45,17 @@ const AdminItemsTable = () => {
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
-  const [showModal, setShowModal] = useState(false);
   const deletableItems = useAppSelector((state) => state.items.deletableItems);
   const org_id = useAppSelector(selectActiveOrganizationId);
 
-  const { hasAnyRole, hasRole } = useRoles();
+  const { hasAnyRole } = useRoles();
   const isAdmin = hasAnyRole(
-    ["tenant_admin", "tenant_admin", "super_admin", "storage_manager"],
+    ["tenant_admin", "storage_manager"],
     org_id || undefined,
   );
-  const isSuperVera = hasRole("superVera");
   // Translation
   const { lang } = useLanguage();
-  const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
-  const [currentItemId, setCurrentItemId] = useState<string | null>(null);
+  // assign-tags UI moved to ItemDetailsPage
   // filtering states:
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
@@ -86,65 +75,29 @@ const AdminItemsTable = () => {
   const [ascending, setAscending] = useState<boolean | null>(
     redirectState?.ascending ?? null,
   );
-  const selectedItem = useAppSelector(selectSelectedItem);
+  // table does not need selectedItem; details page handles item state
   const { page, totalPages } = useAppSelector(selectItemsPagination);
   const loading = useAppSelector(selectItemsLoading);
   const ITEMS_PER_PAGE = 10;
-  const activeOrganizationId = useAppSelector(selectActiveOrganizationId);
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
 
-  const handleEdit = (id: string) => {
-    if (!selectedItem || id !== selectedItem.id) {
-      void dispatch(getItemById(id));
-      void dispatch(fetchTagsForItem(id));
-    }
-    setShowModal(true); // Show the modal
+  // Navigation: open item details page on row click
+  const handleRowClick = (id: string) => {
+    void navigate(`/admin/items/${id}`);
   };
 
-  const handleDelete = (item_id: string) => {
-    // Currently reference the org_id of the item since we display items of all orgs
-    // Later this needs to be refactored to use the org_id which is currently selected (selectActiveOrganizationId)
-    if (!org_id) return toast.error("No organization selected");
-    toastConfirm({
-      title: t.adminItemsTable.messages.deletion.title[lang],
-      description: t.adminItemsTable.messages.deletion.description[lang],
-      confirmText: t.adminItemsTable.messages.deletion.confirm[lang],
-      cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
-      onConfirm: () => {
-        try {
-          void toast.promise(
-            dispatch(deleteItem({ org_id, item_id })).unwrap(),
-            {
-              loading: t.adminItemsTable.messages.toast.deleting[lang],
-              success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
-              error: t.adminItemsTable.messages.toast.deleteFail[lang],
-            },
-          );
-        } catch {
-          toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
-        }
-      },
-      onCancel: () => {
-        // Optional: handle cancel if needed
-      },
-    });
-  };
+  // Deletion handled on ItemDetailsPage
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
+  // Modals moved to ItemDetailsPage; no local modal state
 
   const handleBooking = (order: string) =>
     setOrder(order.toLowerCase() as ValidItemOrder);
   const handleAscending = (ascending: boolean | null) =>
     setAscending(ascending);
 
-  const handleCloseAssignTagsModal = () => {
-    setAssignTagsModalOpen(false);
-    setCurrentItemId(null);
-  };
+  // assign-tags handled in ItemDetailsPage
 
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
@@ -159,7 +112,8 @@ const AdminItemsTable = () => {
         location_filter: [],
         categories: [],
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        org_ids: isSuperVera ? undefined : (activeOrganizationId ?? undefined),
+        // scope to the active organization so admins only see their org's items
+        org_ids: org_id ? org_id : undefined,
       }),
     );
   }, [
@@ -172,8 +126,7 @@ const AdminItemsTable = () => {
     page,
     tagFilter,
     statusFilter,
-    activeOrganizationId,
-    isSuperVera,
+    org_id,
   ]);
 
   //fetch tags list
@@ -266,21 +219,22 @@ const AdminItemsTable = () => {
       enableColumnFilter: false,
       cell: ({ row }) => {
         const item = row.original;
-        const canEdit = isSuperVera || isAdmin;
-        const canDelete = isSuperVera || isAdmin;
         const isDeletable = deletableItems[item.id] !== false;
         return (
           <div className="flex gap-2">
-            {canEdit && (
+            {isAdmin && (
               <Button
                 size="sm"
-                onClick={() => handleEdit(item.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void navigate(`/admin/items/${item.id}`);
+                }}
                 className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
               >
                 <Edit className="h-4 w-4" />
               </Button>
             )}
-            {canDelete && (
+            {isAdmin && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -289,7 +243,11 @@ const AdminItemsTable = () => {
                         size="sm"
                         variant="ghost"
                         className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                        onClick={() => handleDelete(item.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Redirect to details page where delete can be performed
+                          void navigate(`/admin/items/${item.id}`);
+                        }}
                         disabled={!isDeletable}
                         aria-label={`Delete ${item.translations.fi.item_name}`}
                       >
@@ -473,22 +431,14 @@ const AdminItemsTable = () => {
         order={order}
         ascending={ascending}
         originalSorting="quantity"
+        rowProps={(row) => ({
+          onClick: () =>
+            handleRowClick(String((row.original as unknown as Item).id)),
+          className: "cursor-pointer",
+        })}
       />
 
-      {/* Show UpdateItemModal when showModal is true */}
-      {showModal && selectedItem && (
-        <UpdateItemModal
-          onClose={handleCloseModal}
-          initialData={selectedItem as Item}
-        />
-      )}
-      {assignTagsModalOpen && currentItemId && (
-        <AssignTagsModal
-          open={assignTagsModalOpen}
-          itemId={currentItemId}
-          onClose={handleCloseAssignTagsModal}
-        />
-      )}
+      {/* Item editing / tagging moved to ItemDetailsPage */}
     </div>
   );
 };
