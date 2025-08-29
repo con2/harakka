@@ -7,7 +7,7 @@ NOTES.md
 supabase-local.env
 supabase-prod
 # Volumes that get created when running supabase instance
-volumes/db
+supabase-project/volumes/db
 # Node.js dependencies
 node_modules/*
 .nvmrc
