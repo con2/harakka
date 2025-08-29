@@ -55,7 +55,7 @@ export class BookingService {
     private readonly bookingItemsService: BookingItemsService,
   ) {}
 
-  // 1. get all bookings
+  // 1. get all bookings (super_admin only)
   async getAllBookings(
     supabase: SupabaseClient<Database>,
     page: number,
@@ -141,27 +141,76 @@ export class BookingService {
     };
   }
 
+  // 2. Get user bookings (User or Requester)
   async getUserBookings(
-    userId: string,
+    req: AuthRequest,
     supabase: SupabaseClient<Database>,
     page: number,
     limit: number,
   ) {
     const { from, to } = getPaginationRange(page, limit);
 
-    if (!userId || userId === "undefined") {
+    // Extract user ID and role from the request
+    const userId = req.user?.id;
+    const activeRole = req.headers["x-role-name"] as string;
+    const activeOrgId = req.headers["x-org-id"] as string;
+
+    if (!userId) {
       throw new BadRequestException("Valid user ID is required");
     }
 
-    const result = await supabase
-      .from("view_bookings_with_user_info")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .range(from, to);
+    // Restrict User to only their own bookings
+    if (activeRole === "user") {
+      const result = await supabase
+        .from("view_bookings_with_user_info")
+        .select("*", { count: "exact" })
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
-    const pagination = getPaginationMeta(result.count, page, limit);
-    return { ...result, metadata: pagination };
+      const pagination = getPaginationMeta(result.count, page, limit);
+      return { ...result, metadata: pagination };
+    }
+
+    // Restrict Requester to bookings for their organization
+    if (activeRole === "requester") {
+      if (!activeOrgId) {
+        throw new ForbiddenException(
+          "Organization context is required for this action",
+        );
+      }
+
+      // Filter bookings by organization using booking_items
+      const bookingIdsResult = await supabase
+        .from("booking_items")
+        .select("booking_id")
+        .eq("provider_organization_id", activeOrgId);
+
+      if (bookingIdsResult.error) {
+        throw new BadRequestException(
+          "Could not fetch bookings for the organization",
+        );
+      }
+
+      const bookingIds = bookingIdsResult.data.map((item) => item.booking_id);
+      if (bookingIds.length > 0) {
+        supabase
+          .from("view_bookings_with_user_info")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(from, to)
+          .in("id", bookingIds);
+      } else {
+        return {
+          data: [],
+          count: 0,
+          error: null,
+          status: 200,
+          statusText: "OK",
+          metadata: getPaginationMeta(0, page, limit),
+        };
+      }
+    }
   }
 
   // 3. create a Booking

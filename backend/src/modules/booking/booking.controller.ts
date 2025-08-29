@@ -74,10 +74,9 @@ export class BookingController {
   ) {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
-    const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.getUserBookings(
-      userId,
+      req,
       supabase,
       pageNumber,
       limitNumber,
@@ -163,7 +162,7 @@ export class BookingController {
     }
     const supabase = req.supabase;
     return this.bookingService.getUserBookings(
-      userId,
+      req,
       supabase,
       pageNumber,
       limitNumber,

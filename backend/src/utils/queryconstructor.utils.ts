@@ -100,7 +100,7 @@ export function applySearchAcrossColumns<
   Row extends Record<string, unknown> = any,
   Result = Row,
 >(
-  query: PostgrestFilterBuilder<S, Row, Result>,
+  query: PostgrestFilterBuilder<any, S, Row, Result>,
   filters: Filter[],
   search: string,
 ) {
