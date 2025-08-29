@@ -30,14 +30,14 @@ export class TagService {
     // Get tags that are assigned to an item
     const { data: usageData, error: usageError } = await supabase
       .from("storage_item_tags")
-      .select("tag_id, count:tag_id", { count: "exact", head: false });
+      .select("tag_id");
 
     if (usageError) throw new Error(usageError.message);
 
-    // map for usage count
+    // Count occurrences manually
     const usageMap: Record<string, number> = {};
-    usageData?.forEach((u) => {
-      usageMap[u.tag_id] = Number(u.count);
+    usageData?.forEach((item) => {
+      usageMap[item.tag_id] = (usageMap[item.tag_id] || 0) + 1;
     });
 
     // base query for tags
@@ -86,7 +86,7 @@ export class TagService {
     // tags plus usageCount
     const tagsWithUsage = (result.data || []).map((tag: TagRow) => ({
       ...tag,
-      usageCount: usageMap[tag.id] ?? 0,
+      usageCount: usageMap[tag.id] || 0,
     }));
 
     return {

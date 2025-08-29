@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import { Tag, TagAssignmentFilter } from "@/types";
+import { Tag, TagAssignmentFilter, TagWithUsage } from "@/types";
 import {
   fetchFilteredTags,
   selectAllTags,
@@ -185,8 +185,8 @@ const TagList = () => {
       header: t.tagList.columns.assigned[lang],
       id: "assigned",
       cell: ({ row }) => {
-        const tag = row.original;
-        const isUsed = tag.usageCount > 0; // need to put usage count to type!!!
+        const tag = row.original as TagWithUsage;
+        const isUsed = tag.usageCount > 0;
         return isUsed ? (
           <span className="text-highlight2 font-medium">
             {t.tagList.assignment.yes[lang]}
@@ -202,9 +202,9 @@ const TagList = () => {
     {
       header: t.tagList.columns.assignedTo[lang],
       id: "assignedTo",
-      accessorFn: (row) => row.usageCount,
+      accessorFn: (row) => (row as TagWithUsage).usageCount ?? 0,
       cell: ({ row }) => {
-        const count = row.original.usageCount;
+        const count = (row.original as TagWithUsage).usageCount ?? 0;
         return (
           <span className="text-sm">
             {t.tagList.assignment.count[lang].replace(
@@ -216,7 +216,6 @@ const TagList = () => {
       },
       enableSorting: false,
     },
-
     {
       id: "actions",
       cell: ({ row }) => {
