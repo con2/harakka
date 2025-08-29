@@ -4,16 +4,20 @@
   "description": "Full-Stack Storage & Booking Application",
   "main": "index.js",
   "scripts": {
+    "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend",
+    
     "start": "echo 'Run frontend and backend separately!'",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
+    "deploy": "echo 'Add deployment scripts here'",
+    
     "frontend": "npm --prefix frontend run dev",
     "backend": "npm --prefix backend run start:watch",
-    "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
-    "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend",
-    "deploy": "echo 'Add deployment scripts here'",
+    
     "generate:types:local": "npx supabase gen types typescript --local > common/supabase.types.ts",
     "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > common/supabase.types.ts",
-    "s:start": "npx supabase start",
-    "s:start:local": "env-cmd -f .env.local npx supabase start",
+    
+    "s:start": "env-cmd -f .env.local npx supabase start",
+    
     "s:stop": "npx supabase stop",
     "s:link": "env-cmd -f .env.local npx supabase link",
     "s:local:diff": "npx supabase db diff --schema auth,storage,public",
