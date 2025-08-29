@@ -16,7 +16,7 @@
     "generate:types:local": "npx supabase gen types typescript --local > common/supabase.types.ts",
     "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > common/supabase.types.ts",
     
-    "s:start": "env-cmd -f .env.local npx supabase start",
+    "s:start": "env-cmd -f supabase-local.env npx supabase start",
     
     "s:stop": "npx supabase stop",
     "s:link": "env-cmd -f .env.local npx supabase link",
@@ -34,7 +34,7 @@
     "s:migration:up": "npx supabase migration up",
     "s:functions:serve": "npx supabase functions serve",
     "s:functions:deploy": "npx supabase functions deploy",
-    "s:seed": "env-cmd -f .env.local npx supabase db dump --data-only -f supabase/seed.sql",
+    "s:seed": "env-cmd -f supabase-local.env npx supabase db dump --data-only -f supabase/seed.sql",
     "dev:local": "env-cmd -f supabase-local.env concurrently \"npm run s:start\" \"npm run frontend\" \"npm run backend\"",
     "dev:live": "env-cmd -f .env.local concurrently \"npm run frontend\" \"npm run backend\"",
     
