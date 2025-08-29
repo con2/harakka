@@ -29,6 +29,7 @@ import { t } from "@/translations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import TagDelete from "@/components/Admin/Items/TagDelete";
 import AddTagModal from "@/components/Admin/Items/AddTagModal";
+import { Badge } from "@/components/ui/badge";
 
 const TagList = () => {
   const dispatch = useAppDispatch();
@@ -159,7 +160,6 @@ const TagList = () => {
           assignmentFilter,
           sortBy,
           sortOrder,
-          popular,
         }),
       );
       setEditTag(null);
@@ -170,15 +170,9 @@ const TagList = () => {
 
   const columns: ColumnDef<Tag>[] = [
     {
-      header: t.tagList.columns.nameFi[lang],
-      accessorFn: (row) => row.translations?.fi?.name ?? "—",
-      cell: ({ row }) => row.original.translations?.fi?.name ?? "—",
-      enableSorting: false,
-    },
-    {
-      header: t.tagList.columns.nameEn[lang],
-      accessorFn: (row) => row.translations?.en?.name ?? "—",
-      cell: ({ row }) => row.original.translations?.en?.name ?? "—",
+      header: t.tagList.columns.name[lang],
+      accessorFn: (row) => row.translations?.[lang]?.name ?? "—",
+      cell: ({ row }) => row.original.translations?.[lang].name ?? "—",
       enableSorting: false,
     },
     {
@@ -192,44 +186,32 @@ const TagList = () => {
       enableSorting: true,
     },
     {
-      header: t.tagList.columns.assigned[lang],
-      id: "assigned",
-      cell: ({ row }) => {
-        const tag = row.original;
-        const isUsed = !!tagUsage[tag.id];
-        return isUsed ? (
-          <span className="text-highlight2 font-medium">
-            {t.tagList.assignment.yes[lang]}
-          </span>
-        ) : (
-          <span className="text-red-400 font-medium">
-            {t.tagList.assignment.no[lang]}
-          </span>
-        );
-      },
-      enableSorting: false,
-    },
-    {
       header: t.tagList.columns.assignedTo[lang],
-      id: "assignedTo",
-      accessorFn: (row) => tagUsage[row.id] || 0,
+      id: "assigned_to",
       cell: ({ row }) => {
-        const count = tagUsage[row.original.id] || 0;
+        const count = row.original.assigned_to;
         return (
           <span className="text-sm">
-            {t.tagList.assignment.count[lang].replace(
-              "{count}",
-              count.toString(),
-            )}
+            {t.tagList.assignment.count[lang].replace("{count}", count)}
           </span>
         );
       },
       enableSorting: false,
     },
     {
-      id: "is_popular",
-      header: "Popular",
-      cell: ({ row }) => (row.original.is_popular ? "Yes" : "No"),
+      id: "popularity_rank",
+      header: "Popularity",
+      cell: ({ row }) => {
+        const rank = row.original.popularity_rank;
+        return rank ? (
+          <Badge
+            variant="outline"
+            className={`bg-green-${rank === "very popular" ? "100" : "50"} text-green-800 border-green-300`}
+          >
+            {rank}
+          </Badge>
+        ) : null;
+      },
       enableSorting: false,
     },
     {

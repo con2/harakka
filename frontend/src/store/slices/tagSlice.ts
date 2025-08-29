@@ -89,7 +89,7 @@ export const fetchFilteredTags = createAsyncThunk(
       search?: string;
       assignmentFilter?: string;
       sortBy?: string;
-      sortOrder?: string;
+      sortOrder?: "desc" | "asc";
       popular?: boolean;
     },
     { rejectWithValue },

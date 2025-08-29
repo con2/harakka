@@ -75,7 +75,7 @@ export type Database = {
           id: string
           item_id: string
           location_id: string
-          provider_organization_id: string | null
+          provider_organization_id: string
           quantity: number
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -88,7 +88,7 @@ export type Database = {
           id?: string
           item_id: string
           location_id: string
-          provider_organization_id?: string | null
+          provider_organization_id: string
           quantity?: number
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -101,7 +101,7 @@ export type Database = {
           id?: string
           item_id?: string
           location_id?: string
-          provider_organization_id?: string | null
+          provider_organization_id?: string
           quantity?: number
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -710,6 +710,13 @@ export type Database = {
             referencedRelation: "tags"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "storage_item_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "view_tag_popularity"
+            referencedColumns: ["tag_id"]
+          },
         ]
       }
       storage_items: {
@@ -847,19 +854,16 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          is_popular: boolean
           translations: Json | null
         }
         Insert: {
           created_at?: string | null
           id?: string
-          is_popular?: boolean
           translations?: Json | null
         }
         Update: {
           created_at?: string | null
           id?: string
-          is_popular?: boolean
           translations?: Json | null
         }
         Relationships: []
@@ -1267,6 +1271,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      view_most_popular_items: {
+        Row: {
+          item_id: string | null
+          name: string | null
+          times_booked: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "storage_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_item_location_summary"
+            referencedColumns: ["storage_item_id"]
+          },
+          {
+            foreignKeyName: "booking_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_item_ownership_summary"
+            referencedColumns: ["storage_item_id"]
+          },
+          {
+            foreignKeyName: "booking_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "view_manage_storage_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      view_tag_popularity: {
+        Row: {
+          assigned_to: number | null
+          created_at: string | null
+          tag_id: string | null
+          tag_name: string | null
+          total_bookings: number | null
+          translations: Json | null
+        }
+        Relationships: []
       }
       view_user_ban_status: {
         Row: {
