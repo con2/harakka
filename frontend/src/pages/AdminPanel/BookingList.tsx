@@ -203,8 +203,8 @@ const BookingList = () => {
               <option value="rejected">
                 {t.bookingList.filters.status.rejected[lang]}
               </option>
-              <option value="deleted">
-                {t.bookingList.filters.status.deleted[lang]}
+              <option value="cancelled">
+                {t.bookingList.filters.status.cancelled[lang]}
               </option>
             </select>
             {(searchQuery || statusFilter !== "all") && (
