@@ -220,7 +220,14 @@ function AddItemForm() {
         fetchFilteredTags({ page: 1, limit: 20, search: tagSearch }),
       );
     else if (tags.length < 1)
-      void dispatch(fetchFilteredTags({ page: 1, limit: 20, popular: true }));
+      void dispatch(
+        fetchFilteredTags({
+          page: 1,
+          limit: 20,
+          sortBy: "assigned_to",
+          sortOrder: "desc",
+        }),
+      );
   }, [tagSearch, dispatch]);
 
   useEffect(() => {
@@ -355,7 +362,7 @@ function AddItemForm() {
                         {t.addItemForm.labels.location[appLang]}
                       </FormLabel>
                       <Select
-                        defaultValue={field.value.id ?? ""}
+                        defaultValue={field?.value?.id ?? ""}
                         onValueChange={handleLocationChange}
                         disabled={storage === null ? false : true}
                       >
@@ -364,7 +371,7 @@ function AddItemForm() {
                             className="border shadow-none border-grey"
                             placeholder={""}
                           >
-                            {field.value.name ?? ""}
+                            {field?.value?.name ?? ""}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -400,7 +407,7 @@ function AddItemForm() {
                   </div>
                   <FormControl>
                     <Switch
-                      checked={field.value}
+                      checked={field?.value}
                       onCheckedChange={field.onChange}
                       aria-readonly
                     />
