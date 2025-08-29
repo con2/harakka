@@ -263,7 +263,10 @@ export const tagSlice = createSlice({
       })
       .addCase(createTag.fulfilled, (state, action) => {
         state.loading = false;
-        state.tags.push(action.payload);
+        state.tags.push({
+          ...action.payload,
+          usageCount: 0,
+        });
       })
       .addCase(createTag.rejected, (state, action) => {
         state.loading = false;
@@ -276,9 +279,11 @@ export const tagSlice = createSlice({
         state.errorContext = null;
       })
       .addCase(updateTag.fulfilled, (state, action) => {
-        state.tags = state.tags.map((tag) =>
-          tag.id === action.payload.id ? action.payload : tag,
-        );
+        if (state.selectedTags) {
+          state.selectedTags = state.selectedTags.map((tag) =>
+            tag.id === action.payload.id ? action.payload : tag,
+          );
+        }
         state.loading = false;
       })
       .addCase(updateTag.rejected, (state, action) => {
