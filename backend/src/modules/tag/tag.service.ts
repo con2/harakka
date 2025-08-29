@@ -2,9 +2,9 @@ import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { TagRow, TagUpdate } from "./interfaces/tag.interface";
-import { Database } from "../../../../common/database.types";
-import { ApiResponse } from "../../../../common/response.types";
+import { ExtendedTag, TagRow, TagUpdate } from "./interfaces/tag.interface";
+import { Database } from "@common/database.types";
+import { ApiResponse } from "@common/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { TagLink } from "@common/items/storage-items.types";
 
@@ -24,8 +24,7 @@ export class TagService {
     assignmentFilter?: string,
     sortBy?: string,
     sortOrder?: string,
-    popular?: boolean,
-  ): Promise<ApiResponse<TagRow>> {
+  ): Promise<ApiResponse<ExtendedTag>> {
     const supabase = this._supabase;
     let tagIds: string[] = [];
     let shouldFilterByIds = false;
@@ -69,8 +68,9 @@ export class TagService {
     }
 
     // Build the base query
-    let query = supabase.from("tags").select("*", { count: "exact" });
-    if (popular) query.eq("is_popular", popular);
+    let query = supabase
+      .from("view_tag_popularity")
+      .select("*", { count: "exact" });
 
     // Apply assignment filter
     if (shouldFilterByIds) {
@@ -102,7 +102,13 @@ export class TagService {
     }
 
     // Apply sorting
-    const validSortFields = ["created_at", "updated_at", "is_popular"];
+    const validSortFields = [
+      "created_at",
+      "updated_at",
+      "assigned_to",
+      "total_bookings",
+      "popularity_rank",
+    ];
     const validSortOrders = ["asc", "desc"];
 
     const field = validSortFields.includes(sortBy || "")
@@ -117,7 +123,7 @@ export class TagService {
     });
 
     // Get count
-    const { count, error: countError } = await query;
+    const { count, data, error: countError } = await query;
 
     if (countError) throw new Error(countError.message);
 
@@ -130,7 +136,7 @@ export class TagService {
     const meta = getPaginationMeta(count ?? 0, page, limit);
 
     return {
-      data: result.data as TagRow[],
+      data: data,
       error: result.error,
       count: result.count,
       status: result.status,

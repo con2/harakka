@@ -10,7 +10,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { TagService } from "./tag.service";
-import { TagRow, TagUpdate } from "./interfaces/tag.interface";
+import { ExtendedTag, TagRow, TagUpdate } from "./interfaces/tag.interface";
 import { ApiResponse } from "../../../../common/response.types";
 import { Public } from "src/decorators/roles.decorator";
 
@@ -26,11 +26,9 @@ export class TagController {
     @Query("assignmentFilter") assignmentFilter: string = "all",
     @Query("sortBy") sortBy: string = "created_at",
     @Query("sortOrder") sortOrder: string = "desc",
-    @Query("popular") popular: string,
-  ): Promise<ApiResponse<TagRow>> {
+  ): Promise<ApiResponse<ExtendedTag>> {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
-    const is_popular = popular === "true";
 
     return this.tagService.getAllTags(
       pageNumber,
@@ -39,7 +37,6 @@ export class TagController {
       assignmentFilter,
       sortBy,
       sortOrder,
-      is_popular,
     );
   }
 
