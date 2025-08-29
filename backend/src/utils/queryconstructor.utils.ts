@@ -99,8 +99,9 @@ export function applySearchAcrossColumns<
   S extends GenericSchema = any,
   Row extends Record<string, unknown> = any,
   Result = Row,
+  RelationName = unknown,
 >(
-  query: PostgrestFilterBuilder<any, S, Row, Result>,
+  query: PostgrestFilterBuilder<any, S, Row, Result, RelationName>,
   filters: Filter[],
   search: string,
 ) {

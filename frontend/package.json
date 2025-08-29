@@ -2,6 +2,33 @@
   "name": "frontend",
   "private": true,
   "version": "1.1.0",
+  "authors": [
+    {
+      "name": "Athina Kantis",
+      "email": "athina.kantis@gmail.com",
+      "url": "https://github.com/athinakantis"
+    },
+    {
+      "name": "Vladimir Beliakov",
+      "email": "ermegilius@gmail.com",
+      "url": "https://github.com/ermegilius"
+    },
+    {
+      "name": "Stefanie Jana",
+      "email": "garschtubald@gmail.com",
+      "url": "https://github.com/stabjana"
+    },
+    {
+      "name": "Maria Aluko",
+      "email": "maria.alukoo@gmail.com",
+      "url": "https://github.com/maria-aluko"
+    },
+    {
+      "name": "Jonathan Gian",
+      "email": "jongian90@gmail.com",
+      "url": "https://github.com/JonathanGian"
+    }
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -94,6 +121,7 @@
     "tailwindcss": "^4.1.4",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.35.1",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vite-plugin-svgr": "^4.5.0"
   }
 }

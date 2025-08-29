@@ -1,7 +1,7 @@
 export const bookingConfirmation = {
   title: {
-    fi: "Tilaus luotu!",
-    en: "Booking Created!",
+    fi: "Pyynnöt lähetetty",
+    en: "Request Sent",
   },
   message: {
     fi: "Tilauksesi on onnistuneesti vastaanotettu. Saat vahvistusviestin sähköpostiisi pian.",
@@ -23,9 +23,9 @@ export const bookingConfirmation = {
     fi: "Tila",
     en: "Status",
   },
-  created: {
-    fi: "Luotu",
-    en: "Created",
+  bookingDates: {
+    fi: "Pyydetyt päivämäärät",
+    en: "Requested dates",
   },
   bookedBy: {
     fi: "Tilaaja",

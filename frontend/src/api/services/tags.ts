@@ -1,4 +1,4 @@
-import { Tag, CreateTagDto, UpdateTagDto } from "@/types/tag";
+import { Tag, CreateTagDto, UpdateTagDto, TagWithUsage } from "@/types/tag";
 import { api } from "../axios";
 import { ApiResponse } from "@/types/api";
 
@@ -17,9 +17,9 @@ export const tagsApi = {
     assignmentFilter: string = "all",
     sortBy: string = "created_at",
     sortOrder: string = "desc",
-  ): Promise<ApiResponse<Tag[]>> => {
+  ): Promise<ApiResponse<TagWithUsage[]>> => {
     // Fetch paginated tags from the backend
-    const response: ApiResponse<Tag[]> = await api.get(
+    const response: ApiResponse<TagWithUsage[]> = await api.get(
       `/tags?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&assignmentFilter=${assignmentFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
     );
 

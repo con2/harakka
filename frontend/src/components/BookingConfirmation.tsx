@@ -11,11 +11,13 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, LoaderCircle, Calendar, Package } from "lucide-react";
+import { LoaderCircle, Calendar, Package } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { BookingWithDetails } from "@/types";
 import { BookingItemWithDetails } from "@/types/booking";
+import CalendarSend from "@/assets/calendar-send-icon.svg?react";
+import { formatDate } from "date-fns";
 
 interface BookingItemDisplayProps {
   item: BookingItemWithDetails;
@@ -78,11 +80,29 @@ const BookingConfirmation: React.FC = () => {
   // Add language support
   const { lang } = useLanguage();
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(
-      lang === "fi" ? "fi-FI" : "en-US",
+  function groupBookingItemsByOrg(
+    booking: BookingWithDetails | null,
+  ): BookingItemWithDetails[][] {
+    const items: BookingItemWithDetails[] = [...(booking?.booking_items ?? [])];
+
+    const groups = items.reduce<Map<string, BookingItemWithDetails[]>>(
+      (map, item) => {
+        const key = (item?.org_name ?? "").toString();
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(item);
+        return map;
+      },
+      new Map(),
     );
-  };
+
+    return [...groups.entries()]
+      .sort(([aName], [bName]) => aName.localeCompare(bName, undefined))
+      .map(([, itemsForOrg]) => itemsForOrg);
+  }
+
+  // Usage
+  const groupedItems: BookingItemWithDetails[][] =
+    groupBookingItemsByOrg(booking);
 
   // Function to get translated status
   const getTranslatedStatus = (status: string) => {
@@ -103,8 +123,8 @@ const BookingConfirmation: React.FC = () => {
     <div className="container mx-auto p-8 max-w-2xl">
       <Card className="overflow-hidden">
         <CardHeader className="text-center space-y-2">
-          <div className="flex justify-center">
-            <CheckCircle className="h-16 w-16 text-green-500" />
+          <div className="flex items-center gap-4 justify-center">
+            <CalendarSend className="w-30 h-30 *:stroke-blue-400" />
           </div>
           <CardTitle className="text-2xl">
             {t.bookingConfirmation.title[lang]}
@@ -165,15 +185,23 @@ const BookingConfirmation: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-gray-500" />
                     <div>
-                      {/* Created Date */}
+                      {/* Booking Dates */}
                       <p className="text-sm text-gray-600">
-                        {t.bookingConfirmation.created[lang]}
+                        {t.bookingConfirmation.bookingDates[lang]}
                       </p>
-                      <p className="font-medium">
-                        {booking.created_at
-                          ? formatDate(booking.created_at)
-                          : "N/A"}
-                      </p>
+                      {booking.booking_items && (
+                        <p className="font-medium text-sm">
+                          {formatDate(
+                            booking.booking_items[0].start_date,
+                            "d MMM yyyy",
+                          )}
+                          -
+                          {formatDate(
+                            booking.booking_items[0].end_date,
+                            "d MMM yyyy",
+                          )}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -190,13 +218,16 @@ const BookingConfirmation: React.FC = () => {
                       {booking.booking_items.length})
                     </h3>
                   </div>
-                  <div className="space-y-2">
-                    {booking.booking_items.map(
-                      (item: BookingItemWithDetails, index: number) => (
-                        <BookingItemDisplay key={index} item={item} />
-                      ),
-                    )}
-                  </div>
+                  {groupedItems.map((org) => {
+                    return (
+                      <div className="space-y-2 mb-4">
+                        <p>{org[0]?.org_name}</p>
+                        {org?.map((item) => (
+                          <BookingItemDisplay key={item.id} item={item} />
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
