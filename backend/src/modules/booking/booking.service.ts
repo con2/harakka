@@ -23,7 +23,6 @@ import {
   SupabaseClient,
 } from "@supabase/supabase-js";
 import { Database } from "@common/supabase.types";
-import { Translations } from "./types/translations.types";
 import {
   CancelBookingResponse,
   BookingItemRow,
@@ -55,93 +54,127 @@ export class BookingService {
     private readonly bookingItemsService: BookingItemsService,
   ) {}
 
-  // 1. get all bookings (super_admin only)
-  async getAllBookings(
-    supabase: SupabaseClient<Database>,
+  /**
+   * Get bookings in an ordered list
+   * Accessible by storage_manager, tenant_admin
+   * @param supabase The Supabase client provided by the request.
+   * @param org_id The organization ID to filter bookings by.
+   * @param page The page number requested for pagination.
+   * @param limit The number of rows to retrieve per page.
+   * @param ascending Whether to sort bookings in ascending order (default: true).
+   * @param order_by The column to order the bookings by (default: "booking_number").
+   * @param searchquery (Optional) A string to filter bookings by.
+   * @param status_filter (Optional) A filter for the booking status.
+   *
+   * @returns Matching bookings with pagination metadata.
+   *
+   */
+  async getOrderedBookings(
+    supabase: SupabaseClient,
+    org_id: string,
     page: number,
     limit: number,
-  ) {
+    ascending: boolean,
+    order_by: ValidBookingOrder,
+    searchquery?: string,
+    status_filter?: string,
+  ): Promise<ApiResponse<BookingPreview>> {
     const { from, to } = getPaginationRange(page, limit);
 
-    const result = await supabase
-      .from("bookings")
-      .select(
-        `
-      *,
-      booking_items (
-        *,
-        storage_items (
-          translations,
-          storage_locations (
-            name
-          )
-        )
-      )
-    `,
-        { count: "exact" },
-      )
-      .range(from, to);
+    const query = supabase
+      .from("view_bookings_with_user_info")
+      .select("*", { count: "exact" })
+      .range(from, to)
+      .order(order_by ?? "booking_number", { ascending: ascending });
 
-    const { data: bookings, error, count } = result;
-    const metadata = getPaginationMeta(count, page, limit);
+    if (status_filter) query.eq("status", status_filter);
 
-    if (error) {
-      console.error("Supabase error in getAllBookings():", error);
-      throw new BadRequestException("Could not load bookings");
-    }
-    if (!bookings || bookings.length === 0) {
-      throw new BadRequestException("No bookings found");
+    // Match any field if there is a searchquery
+    if (searchquery) {
+      query.or(
+        `booking_number.ilike.%${searchquery}%,` +
+          `full_name.ilike.%${searchquery}%,` +
+          `created_at_text.ilike.%${searchquery}%`,
+      );
     }
 
-    // get corresponding user profile for each booking (via user_id)
-    const bookingsWithUserProfiles = await Promise.all(
-      bookings.map(async (booking) => {
-        let user: { name: string; email: string } | null = null;
+    // Filter bookings by organization ID
+    const itemsRes = await supabase
+      .from("booking_items")
+      .select("booking_id")
+      .eq("provider_organization_id", org_id);
+    if (itemsRes.error) handleSupabaseError(itemsRes.error);
 
-        if (booking.user_id) {
-          const { data: userData } = await supabase
-            .from("user_profiles")
-            .select("full_name, email")
-            .eq("id", booking.user_id)
-            .maybeSingle();
-
-          if (userData) {
-            user = {
-              name: userData.full_name ?? "unknown",
-              email: userData.email ?? "unknown@incognito.fi",
-            };
-          }
-        }
-
-        const itemWithNamesAndLocation =
-          booking.booking_items?.map((item) => {
-            const translations = item.storage_items
-              ?.translations as Translations | null;
-
-            return {
-              ...item,
-              item_name: translations?.en?.item_name ?? "Unknown",
-              location_name:
-                item.storage_items?.storage_locations?.name ?? "Unknown",
-            };
-          }) ?? [];
-
-        return {
-          ...booking,
-          user_profile: user,
-          booking_items: itemWithNamesAndLocation,
-        };
-      }),
+    const bookingIds = Array.from(
+      new Set(
+        ((itemsRes.data || []) as BookingItemRow[]).map((r) => r.booking_id),
+      ),
     );
+    if (bookingIds.length > 0) {
+      query.in("id", bookingIds);
+    } else {
+      // Force empty results if no matching bookings
+      query.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
 
+    const result = await query;
+
+    // Attach derived organization status for each booking indicating whether all items for this org are confirmed
+    if (result.data && result.data.length > 0) {
+      const bookingIds = result.data
+        .map((b) => b.id)
+        .filter(Boolean) as string[];
+
+      if (bookingIds.length > 0) {
+        const itemsRes = await supabase
+          .from("booking_items")
+          .select("booking_id,status")
+          .in("booking_id", bookingIds)
+          .eq("provider_organization_id", org_id);
+        if (itemsRes.error) handleSupabaseError(itemsRes.error);
+
+        // Map booking_id to array of statuses for this org
+        const statusMap = new Map<string, string[]>();
+        (itemsRes.data || []).forEach((row) => {
+          const r = row as { booking_id: string; status: string };
+          const arr = statusMap.get(r.booking_id) || [];
+          arr.push(r.status);
+          statusMap.set(r.booking_id, arr);
+        });
+
+        // Attach org_status_for_active_org to each booking row
+        (result.data as BookingPreview[]).forEach((b) => {
+          const bid = b.id;
+          const statuses = statusMap.get(bid) || [];
+          (b as BookingWithOrgStatus).org_status_for_active_org =
+            deriveOrgStatus(statuses);
+        });
+      }
+    }
+    const { error, count } = result;
+    if (error) handleSupabaseError(error);
+
+    const metadata = getPaginationMeta(count, page, limit);
     return {
       ...result,
-      data: bookingsWithUserProfiles,
       metadata,
     };
   }
 
-  // 2. Get user bookings (User or Requester)
+  /**
+   * Retrieve bookings for the authenticated user or their organization.
+   *
+   * This method fetches bookings based on the user's role and organization context:
+   * - **User Role**: Retrieves only the bookings created by the user.
+   * - **Requester Role**: Retrieves bookings associated with the user's organization.
+   *
+   * @param req The authenticated request object containing user and role details.
+   * @param supabase The Supabase client instance for database operations.
+   * @param page The page number for pagination (default: 1).
+   * @param limit The number of items per page for pagination (default: 10).
+   *
+   * @returns A paginated list of bookings with metadata.
+   */
   async getUserBookings(
     req: AuthRequest,
     supabase: SupabaseClient<Database>,
@@ -174,13 +207,13 @@ export class BookingService {
 
     // Restrict Requester to bookings for their organization
     if (activeRole === "requester") {
+      // Requesters can only see bookings for their organization
       if (!activeOrgId) {
         throw new ForbiddenException(
           "Organization context is required for this action",
         );
       }
 
-      // Filter bookings by organization using booking_items
       const bookingIdsResult = await supabase
         .from("booking_items")
         .select("booking_id")
@@ -194,12 +227,15 @@ export class BookingService {
 
       const bookingIds = bookingIdsResult.data.map((item) => item.booking_id);
       if (bookingIds.length > 0) {
-        supabase
+        const result = await supabase
           .from("view_bookings_with_user_info")
-          .select("*")
+          .select("*", { count: "exact" })
+          .in("id", bookingIds)
           .order("created_at", { ascending: false })
-          .range(from, to)
-          .in("id", bookingIds);
+          .range(from, to);
+
+        const pagination = getPaginationMeta(result.count, page, limit);
+        return { ...result, metadata: pagination };
       } else {
         return {
           data: [],
@@ -211,6 +247,106 @@ export class BookingService {
         };
       }
     }
+  }
+
+  /**
+   * Retrieve a specific booking by its ID.
+   *
+   * Accessible by roles: `tenant_admin`, `storage_manager`.
+   *
+   * @param supabase The Supabase client instance for database operations.
+   * @param booking_id The unique ID of the booking to retrieve.
+   * @param page The page number for pagination of booking items (default: 1).
+   * @param limit The number of items per page for pagination (default: 10).
+   * @param providerOrgId The organization ID to filter booking items by (optional).
+   *
+   * @returns A detailed booking object, including its items and metadata.
+   */
+  async getBookingByID(
+    supabase: SupabaseClient,
+    booking_id: string,
+    page: number,
+    limit: number,
+    providerOrgId: string,
+  ): Promise<
+    ApiSingleResponse<
+      BookingPreview & {
+        booking_items: (import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
+          storage_items: Partial<StorageItemRow>;
+        })[];
+      }
+    >
+  > {
+    const result: PostgrestSingleResponse<BookingPreview> = await supabase
+      .from("view_bookings_with_user_info")
+      .select(`*`)
+      .eq("id", booking_id)
+      .single();
+
+    if (result.error) handleSupabaseError(result.error);
+
+    const booking_items_result: ApiResponse<
+      import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
+        storage_items: Partial<StorageItemRow>;
+      }
+    > = await this.bookingItemsService.getBookingItems(
+      supabase,
+      booking_id,
+      page,
+      limit,
+      "translations",
+      providerOrgId,
+    );
+
+    if (booking_items_result.error)
+      handleSupabaseError(booking_items_result.error);
+
+    // Attach org_status_for_active_org if providerOrgId is present
+    let org_status_for_active_org: string | undefined = undefined;
+    if (providerOrgId && result.data) {
+      const itemsRes = await supabase
+        .from("booking_items")
+        .select("status")
+        .eq("booking_id", booking_id)
+        .eq("provider_organization_id", providerOrgId);
+      if (!itemsRes.error && Array.isArray(itemsRes.data)) {
+        const statuses = itemsRes.data.map((row) => row.status);
+        org_status_for_active_org = deriveOrgStatus(statuses);
+      }
+    }
+    // Spread result.data and allow extra property
+    const bookingData: BookingPreview & {
+      booking_items: (import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
+        storage_items: Partial<StorageItemRow>;
+      })[];
+      org_status_for_active_org?: string;
+    } = {
+      ...result.data,
+      booking_items: booking_items_result.data,
+    };
+    if (org_status_for_active_org !== undefined) {
+      bookingData.org_status_for_active_org = org_status_for_active_org;
+    }
+    return {
+      ...result,
+      data: bookingData,
+      metadata: booking_items_result.metadata,
+    };
+  }
+
+  async getBookingsCount(
+    supabase: SupabaseClient,
+  ): Promise<ApiSingleResponse<number>> {
+    const result: PostgrestResponse<undefined> = await supabase
+      .from("bookings")
+      .select(undefined, { count: "exact" });
+
+    if (result.error) handleSupabaseError(result.error);
+
+    return {
+      ...result,
+      data: result.count ?? 0,
+    };
   }
 
   // 3. create a Booking
@@ -1206,202 +1342,5 @@ export class BookingService {
     );
 
     return num_available ?? 0;
-  }
-
-  /**
-   * Get bookings in an ordered list
-   * @param supabase The supabase client provided by request
-   * @param page What page number is requested
-   * @param limit How many rows to retrieve
-   * @param ascending If to sort booking smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
-   * @param filter What to filter the bookings by
-   * @param order_by What column to order the columns by. Default "booking_number"
-   * @param searchquery Optional. Filter bookings by a string
-   * @returns Matching bookings
-   */
-  async getOrderedBookings(
-    supabase: SupabaseClient,
-    page: number,
-    limit: number,
-    ascending: boolean,
-    order_by: ValidBookingOrder,
-    searchquery?: string,
-    status_filter?: string,
-    orgId?: string,
-  ) {
-    const { from, to } = getPaginationRange(page, limit);
-
-    const query = supabase
-      .from("view_bookings_with_user_info")
-      .select("*", { count: "exact" })
-      .range(from, to)
-      .order(order_by ?? "booking_number", { ascending: ascending });
-
-    if (status_filter) query.eq("status", status_filter);
-    // Match any field if there is a searchquery
-    if (searchquery) {
-      query.or(
-        `booking_number.ilike.%${searchquery}%,` +
-          `full_name.ilike.%${searchquery}%,` +
-          `created_at_text.ilike.%${searchquery}%`,
-      );
-    }
-
-    // If orgId is provided, filter bookings to only those having items from that provider org
-    if (orgId) {
-      type BookingItemRow = { booking_id: string };
-      const itemsRes = await supabase
-        .from("booking_items")
-        .select("booking_id")
-        .eq("provider_organization_id", orgId);
-      if (itemsRes.error) handleSupabaseError(itemsRes.error);
-      const bookingIds = Array.from(
-        new Set(
-          ((itemsRes.data || []) as BookingItemRow[]).map((r) => r.booking_id),
-        ),
-      );
-      if (bookingIds.length > 0) {
-        query.in("id", bookingIds);
-      } else {
-        // Force empty results if no matching bookings
-        query.eq("id", "00000000-0000-0000-0000-000000000000");
-      }
-    }
-
-    const result = await query;
-
-    // When scoped by org, include a derived flag indicating whether all items for this org are confirmed
-    if (orgId && Array.isArray(result.data) && result.data.length > 0) {
-      const bookingIds = result.data
-        .map((b) => b.id)
-        .filter(Boolean) as string[];
-
-      if (bookingIds.length > 0) {
-        const itemsRes = await supabase
-          .from("booking_items")
-          .select("booking_id,status")
-          .in("booking_id", bookingIds)
-          .eq("provider_organization_id", orgId);
-        if (itemsRes.error) handleSupabaseError(itemsRes.error);
-
-        // Map booking_id to array of statuses for this org
-        const statusMap = new Map<string, string[]>();
-        (itemsRes.data || []).forEach((row) => {
-          const r = row as { booking_id: string; status: string };
-          const arr = statusMap.get(r.booking_id) || [];
-          arr.push(r.status);
-          statusMap.set(r.booking_id, arr);
-        });
-
-        // Attach org_status_for_active_org to each booking row
-        (result.data as BookingPreview[]).forEach((b) => {
-          const bid = b.id;
-          const statuses = statusMap.get(bid) || [];
-          (b as BookingWithOrgStatus).org_status_for_active_org =
-            deriveOrgStatus(statuses);
-        });
-      }
-    }
-    const { error, count } = result;
-    if (error) handleSupabaseError(error);
-
-    const pagination_meta = getPaginationMeta(count, page, limit);
-    return {
-      ...result,
-      metadata: pagination_meta,
-    };
-  }
-
-  /**
-   * Get full booking details with paginated booking-items and item details
-   * @param supabase The users supabase client
-   * @param booking_id ID of the booking to retrieve
-   * @returns
-   */
-  async getBookingByID(
-    supabase: SupabaseClient,
-    booking_id: string,
-    page: number,
-    limit: number,
-    providerOrgId: string,
-  ): Promise<
-    ApiSingleResponse<
-      BookingPreview & {
-        booking_items: (import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
-          storage_items: Partial<StorageItemRow>;
-        })[];
-      }
-    >
-  > {
-    const result: PostgrestSingleResponse<BookingPreview> = await supabase
-      .from("view_bookings_with_user_info")
-      .select(`*`)
-      .eq("id", booking_id)
-      .single();
-
-    if (result.error) handleSupabaseError(result.error);
-
-    const booking_items_result: ApiResponse<
-      import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
-        storage_items: Partial<StorageItemRow>;
-      }
-    > = await this.bookingItemsService.getBookingItems(
-      supabase,
-      booking_id,
-      page,
-      limit,
-      "translations",
-      providerOrgId,
-    );
-
-    if (booking_items_result.error)
-      handleSupabaseError(booking_items_result.error);
-
-    // Attach org_status_for_active_org if providerOrgId is present
-    let org_status_for_active_org: string | undefined = undefined;
-    if (providerOrgId && result.data) {
-      const itemsRes = await supabase
-        .from("booking_items")
-        .select("status")
-        .eq("booking_id", booking_id)
-        .eq("provider_organization_id", providerOrgId);
-      if (!itemsRes.error && Array.isArray(itemsRes.data)) {
-        const statuses = itemsRes.data.map((row) => row.status);
-        org_status_for_active_org = deriveOrgStatus(statuses);
-      }
-    }
-    // Spread result.data and allow extra property
-    const bookingData: BookingPreview & {
-      booking_items: (import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
-        storage_items: Partial<StorageItemRow>;
-      })[];
-      org_status_for_active_org?: string;
-    } = {
-      ...result.data,
-      booking_items: booking_items_result.data,
-    };
-    if (org_status_for_active_org !== undefined) {
-      bookingData.org_status_for_active_org = org_status_for_active_org;
-    }
-    return {
-      ...result,
-      data: bookingData,
-      metadata: booking_items_result.metadata,
-    };
-  }
-
-  async getBookingsCount(
-    supabase: SupabaseClient,
-  ): Promise<ApiSingleResponse<number>> {
-    const result: PostgrestResponse<undefined> = await supabase
-      .from("bookings")
-      .select(undefined, { count: "exact" });
-
-    if (result.error) handleSupabaseError(result.error);
-
-    return {
-      ...result,
-      data: result.count ?? 0,
-    };
   }
 }

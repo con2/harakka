@@ -9,7 +9,6 @@ import {
   Put,
   Req,
   UnauthorizedException,
-  ForbiddenException,
   BadRequestException,
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
@@ -29,27 +28,51 @@ export class BookingController {
   ) {}
 
   /**
-   * Get all bookings in the system.
-   * Accessible only by super admins.
-   * @param req - Authenticated request object
+   * Get ordered bookings with optional filters.
+   * Publicly accessible.
+   * @param req - Request object
+   * @param searchquery - Search query for filtering bookings
+   * @param ordered_by - Column to order by (default: created_at)
+   * @param status_filter - Filter by booking status
    * @param page - Page number for pagination (default: 1)
    * @param limit - Number of items per page (default: 10)
-   * @returns Paginated list of all bookings
+   * @param ascending - Whether to sort in ascending order (default: false)
+   * @param org_id - Organization ID for scoping (required)
+   * @returns Paginated and filtered list of bookings
    */
-  @Get()
-  @Roles(["super_admin"])
-  async getAll(
+  @Get("ordered")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
+  @Public()
+  getOrderedBookings(
     @Req() req: AuthRequest,
+    @Query("search") searchquery: string,
+    @Query("order") ordered_by: ValidBookingOrder = "created_at",
+    @Query("status") status_filter: string,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
+    @Query("ascending") ascending: string = "false",
   ) {
-    const pageNumber = parseInt(page, 10);
-    const limitNumber = parseInt(limit, 10);
+    const org_id = req.headers["x-org-id"] as string;
+    if (!org_id) {
+      throw new BadRequestException("Organization context is required");
+    }
     const supabase = req.supabase;
-    return this.bookingService.getAllBookings(
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const is_ascending = ascending.toLowerCase() === "true";
+
+    return this.bookingService.getOrderedBookings(
       supabase,
-      pageNumber,
-      limitNumber,
+      org_id,
+      pageNum,
+      limitNum,
+      is_ascending,
+      ordered_by,
+      searchquery,
+      status_filter,
     );
   }
 
@@ -61,7 +84,6 @@ export class BookingController {
    * @param limit - Number of items per page (default: 10)
    * @returns Paginated list of the user's bookings
    */
-  //TODO: limit to activeContext organization
   @Get("my")
   @Roles(["user", "requester"], {
     match: "any",
@@ -101,11 +123,11 @@ export class BookingController {
     @Param("id") booking_id: string,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
-    @Query("org_id") org_id?: string,
   ) {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const supabase = req.supabase;
+    const org_id = req.headers["x-org-id"] as string;
     if (!org_id)
       throw new BadRequestException("org_id query param is required");
     return this.bookingService.getBookingByID(
@@ -123,7 +145,7 @@ export class BookingController {
    * @param req - Authenticated request object
    * @returns Total bookings count
    */
-  //TODO: limit to activeContext organization for nonsuper_admins
+  //TODO: limit to activeContext organization
   @Get("count")
   @Roles(["storage_manager", "tenant_admin", "super_admin"], {
     match: "any",
@@ -143,7 +165,7 @@ export class BookingController {
    * @param limit - Number of items per page (default: 10)
    * @returns Paginated list of the user's bookings
    */
-  //TODO: limit to activeContext organization for nonsuper_admins
+  //TODO: limit to activeContext organization
   @Get("user/:userId")
   @Roles(["storage_manager", "tenant_admin", "super_admin"], {
     match: "any",
@@ -369,62 +391,5 @@ export class BookingController {
     // const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.confirmPickup(bookingId, supabase);
-  }
-
-  /**
-   * Get ordered bookings with optional filters.
-   * Publicly accessible.
-   * @param req - Request object
-   * @param searchquery - Search query for filtering bookings
-   * @param ordered_by - Column to order by (default: created_at)
-   * @param status_filter - Filter by booking status
-   * @param page - Page number for pagination (default: 1)
-   * @param limit - Number of items per page (default: 10)
-   * @param ascending - Whether to sort in ascending order (default: false)
-   * @param org_id - Organization ID for scoping (required)
-   * @returns Paginated and filtered list of bookings
-   */
-  //TODO: check if we still need this endpoint, looks like it's deprecated
-  @Get("ordered")
-  @Public()
-  getOrderedBookings(
-    @Req() req: AuthRequest,
-    @Query("search") searchquery: string,
-    @Query("order") ordered_by: ValidBookingOrder = "created_at",
-    @Query("status") status_filter: string,
-    @Query("page") page: string = "1",
-    @Query("limit") limit: string = "10",
-    @Query("ascending") ascending: string = "false",
-    @Query("org_id") org_id?: string,
-  ) {
-    const supabase = req.supabase;
-    const pageNum = parseInt(page, 10);
-    const limitNum = parseInt(limit, 10);
-    const is_ascending = ascending.toLowerCase() === "true";
-    // Require scoping to an organization and validate membership
-    const requestedOrg = (org_id ?? "").trim();
-    if (!requestedOrg) {
-      throw new BadRequestException("org_id query param is required");
-    }
-    const isMember = this.roleService.hasAnyRole(
-      req,
-      ["tenant_admin", "storage_manager"],
-      requestedOrg,
-    );
-    if (!isMember) {
-      throw new ForbiddenException(
-        "You don't have access to this organization's bookings",
-      );
-    }
-    return this.bookingService.getOrderedBookings(
-      supabase,
-      pageNum,
-      limitNum,
-      is_ascending,
-      ordered_by,
-      searchquery,
-      status_filter,
-      requestedOrg,
-    );
   }
 }
