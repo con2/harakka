@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "description": "Full-Stack Storage & Booking Application",
   "main": "index.js",
-  "contributors": [
+  "authors": [
     {
       "name": "Athina Kantis",
       "email": "athina.kantis@gmail.com",
@@ -17,12 +17,17 @@
     {
       "name": "Stefanie Jana",
       "email": "garschtubald@gmail.com",
-      "url": "https://https://github.com/stabjana"
+      "url": "https://github.com/stabjana"
     },
     {
       "name": "Maria Aluko",
       "email": "maria.alukoo@gmail.com",
       "url": "https://github.com/maria-aluko"
+    },
+    {
+      "name": "Jonathan Gian",
+      "email": "jongian90@gmail.com",
+      "url": "https://github.com/JonathanGian"
     }
   ],
   "scripts": {
