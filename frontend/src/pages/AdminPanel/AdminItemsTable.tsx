@@ -20,6 +20,7 @@ import {
 } from "@/store/slices/itemsSlice";
 import {
   fetchAllTags,
+  fetchFilteredTags,
   fetchTagsForItem,
   selectAllTags,
 } from "@/store/slices/tagSlice";
@@ -178,7 +179,8 @@ const AdminItemsTable = () => {
 
   //fetch tags list
   useEffect(() => {
-    if (tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
+    if (tags.length === 0)
+      void dispatch(fetchFilteredTags({ limit: 20, popular: true }));
   }, [dispatch, tags.length, items.length]);
 
   /* ————————————————————————— Item Columns ———————————————————————— */

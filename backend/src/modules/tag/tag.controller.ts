@@ -26,9 +26,11 @@ export class TagController {
     @Query("assignmentFilter") assignmentFilter: string = "all",
     @Query("sortBy") sortBy: string = "created_at",
     @Query("sortOrder") sortOrder: string = "desc",
+    @Query("popular") popular: string,
   ): Promise<ApiResponse<TagRow>> {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
+    const is_popular = popular === "true";
 
     return this.tagService.getAllTags(
       pageNumber,
@@ -37,6 +39,7 @@ export class TagController {
       assignmentFilter,
       sortBy,
       sortOrder,
+      is_popular,
     );
   }
 

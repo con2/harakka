@@ -82,6 +82,7 @@ export const fetchFilteredTags = createAsyncThunk(
       assignmentFilter = "all",
       sortBy = "created_at",
       sortOrder = "desc",
+      popular,
     }: {
       page?: number;
       limit?: number;
@@ -89,6 +90,7 @@ export const fetchFilteredTags = createAsyncThunk(
       assignmentFilter?: string;
       sortBy?: string;
       sortOrder?: string;
+      popular?: boolean;
     },
     { rejectWithValue },
   ) => {
@@ -101,6 +103,7 @@ export const fetchFilteredTags = createAsyncThunk(
         assignmentFilter,
         sortBy,
         sortOrder,
+        popular,
       );
     } catch (error: unknown) {
       return rejectWithValue(

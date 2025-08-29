@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
+import {
+  fetchAllTags,
+  fetchFilteredTags,
+  selectAllTags,
+} from "@/store/slices/tagSlice";
 import { selectAllItems } from "@/store/slices/itemsSlice";
 import { Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -31,7 +35,8 @@ const UserPanel = () => {
   const organizations = useAppSelector(selectOrganizations);
 
   useEffect(() => {
-    if (tags.length < 1) void dispatch(fetchAllTags({ page: 1, limit: 10 }));
+    if (tags.length < 1)
+      void dispatch(fetchFilteredTags({ page: 1, limit: 10, popular: true }));
     if (locations.length < 1)
       void dispatch(fetchAllLocations({ page: 1, limit: 10 }));
     if (organizations.length < 1)

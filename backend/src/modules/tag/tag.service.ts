@@ -24,6 +24,7 @@ export class TagService {
     assignmentFilter?: string,
     sortBy?: string,
     sortOrder?: string,
+    popular?: boolean,
   ): Promise<ApiResponse<TagRow>> {
     const supabase = this._supabase;
     let tagIds: string[] = [];
@@ -69,6 +70,7 @@ export class TagService {
 
     // Build the base query
     let query = supabase.from("tags").select("*", { count: "exact" });
+    if (popular) query.eq("is_popular", popular);
 
     // Apply assignment filter
     if (shouldFilterByIds) {
@@ -100,7 +102,7 @@ export class TagService {
     }
 
     // Apply sorting
-    const validSortFields = ["created_at", "updated_at"];
+    const validSortFields = ["created_at", "updated_at", "is_popular"];
     const validSortOrders = ["asc", "desc"];
 
     const field = validSortFields.includes(sortBy || "")

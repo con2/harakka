@@ -30,7 +30,6 @@ import { t } from "@/translations";
 import React, { useEffect, useState } from "react";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
-  fetchAllTags,
   fetchFilteredTags,
   selectAllTags,
   selectTagsLoading,
@@ -221,7 +220,7 @@ function AddItemForm() {
         fetchFilteredTags({ page: 1, limit: 20, search: tagSearch }),
       );
     else if (tags.length < 1)
-      void dispatch(fetchAllTags({ page: 1, limit: 20 }));
+      void dispatch(fetchFilteredTags({ page: 1, limit: 20, popular: true }));
   }, [tagSearch, dispatch]);
 
   useEffect(() => {

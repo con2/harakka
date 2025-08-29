@@ -49,6 +49,7 @@ const TagList = () => {
   // State for sorting (UI table)
   const [order, setOrder] = useState("created_at");
   const [ascending, setAscending] = useState<boolean | null>(false);
+  const [popular, setPopular] = useState<boolean | null>(null);
   // Debounced search term
   const debouncedSearchTerm = useDebouncedValue(searchTerm);
   // Translation
@@ -158,6 +159,7 @@ const TagList = () => {
           assignmentFilter,
           sortBy,
           sortOrder,
+          popular,
         }),
       );
       setEditTag(null);
@@ -228,6 +230,7 @@ const TagList = () => {
       id: "is_popular",
       header: "Popular",
       cell: ({ row }) => (row.original.is_popular ? "Yes" : "No"),
+      enableSorting: false,
     },
     {
       id: "actions",
