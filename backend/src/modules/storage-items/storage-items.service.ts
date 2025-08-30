@@ -162,7 +162,7 @@ export class StorageItemsService {
   async createItems(
     req: AuthRequest,
     payload: ItemFormData,
-  ): Promise<{ status: number; error: string | null }> {
+  ): Promise<{ status: number; error: string | null; item?: StorageItem }> {
     const supabase = req.supabase;
     const mappedItems = mapStorageItems(payload);
     const mappedImageData = mapItemImages(payload);
@@ -191,7 +191,22 @@ export class StorageItemsService {
         throw new Error(imageError.message);
       }
 
-      return { status: 201, error: null };
+      // get the full item data
+      const { data: item, error: selectError } = await supabase
+        .from("storage_items")
+        .select(
+          `
+        *,
+        storage_locations(*),
+        storage_item_tags(tags(*))
+      `,
+        )
+        .eq("id", mappedItems[0].id)
+        .single();
+
+      if (selectError) throw new Error(selectError.message);
+
+      return { status: 201, error: null, item };
     } catch (error) {
       console.log(error);
       // Rollback: Clean up any partially inserted data
