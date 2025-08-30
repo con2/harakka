@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { Tag, TagAssignmentFilter } from "@/types";
+import { ExtendedTag } from "@common/items/tag.types";
 import {
   fetchFilteredTags,
   selectAllTags,
@@ -50,7 +51,6 @@ const TagList = () => {
   // State for sorting (UI table)
   const [order, setOrder] = useState("created_at");
   const [ascending, setAscending] = useState<boolean | null>(false);
-  const [popular, setPopular] = useState<boolean | null>(null);
   // Debounced search term
   const debouncedSearchTerm = useDebouncedValue(searchTerm);
   // Translation
@@ -160,7 +160,7 @@ const TagList = () => {
     }
   };
 
-  const columns: ColumnDef<Tag>[] = [
+  const columns: ColumnDef<ExtendedTag>[] = [
     {
       header: t.tagList.columns.name[lang],
       accessorFn: (row) => row.translations?.[lang]?.name ?? "—",
@@ -184,7 +184,10 @@ const TagList = () => {
         const count = row.original.assigned_to;
         return (
           <span className="text-sm">
-            {t.tagList.assignment.count[lang].replace("{count}", count)}
+            {t.tagList.assignment.count[lang].replace(
+              "{count}",
+              count.toString(),
+            )}
           </span>
         );
       },

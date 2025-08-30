@@ -1313,6 +1313,8 @@ export type Database = {
         Row: {
           assigned_to: number | null
           created_at: string | null
+          popularity_rank: string | null
+          rank_percentile: number | null
           tag_id: string | null
           tag_name: string | null
           total_bookings: number | null

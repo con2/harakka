@@ -10,7 +10,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { TagService } from "./tag.service";
-import { ExtendedTag, TagRow, TagUpdate } from "./interfaces/tag.interface";
+import { ExtendedTag, TagRow, TagUpdate } from "@common/items/tag.types";
 import { ApiResponse } from "../../../../common/response.types";
 import { Public } from "src/decorators/roles.decorator";
 

@@ -1,8 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
-import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
+import {
+  PostgrestResponse,
+  PostgrestSingleResponse,
+  SupabaseClient,
+} from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { ExtendedTag, TagRow, TagUpdate } from "./interfaces/tag.interface";
+import { ExtendedTag, TagRow, TagUpdate } from "@common/items/tag.types";
 import { Database } from "@common/database.types";
 import { ApiResponse } from "@common/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
@@ -136,7 +140,7 @@ export class TagService {
     const meta = getPaginationMeta(count ?? 0, page, limit);
 
     return {
-      data: data,
+      data: data as unknown as ExtendedTag[],
       error: result.error,
       count: result.count,
       status: result.status,
