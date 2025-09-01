@@ -15,17 +15,16 @@ import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
-import { applyItemFilters } from "@src/utils/storage-items.utils";
+import {
+  applyItemFilters,
+  payloadToStorageItem,
+} from "@src/utils/storage-items.utils";
 import { ApiResponse, ApiSingleResponse } from "@common/response.types"; // Import ApiSingleResponse for type safety
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagService } from "../tag/tag.service";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 import { ItemFormData } from "@common/items/form.types";
-import {
-  mapItemImages,
-  mapStorageItems,
-  mapTagLinks,
-} from "@src/utils/storage-items.utils";
+import { mapItemImages, mapTagLinks } from "@src/utils/storage-items.utils";
 import { ItemImagesService } from "../item-images/item-images.service";
 import { parse, ParseResult } from "papaparse";
 import { Item, ItemSchema } from "./schema/item-schema";
@@ -162,16 +161,16 @@ export class StorageItemsService {
   async createItems(
     req: AuthRequest,
     payload: ItemFormData,
-  ): Promise<{ status: number; error: string | null }> {
+  ): Promise<{ status: number; error: string | null; items?: StorageItem[] }> {
     const supabase = req.supabase;
-    const mappedItems = mapStorageItems(payload);
+    const itemsToInsert = payloadToStorageItem(payload);
     const mappedImageData = mapItemImages(payload);
-    const item_ids = mappedItems.map((i) => i.id);
+    const item_ids = itemsToInsert.map((i) => i.id);
 
     try {
       // Insert item data
       const { error }: PostgrestMaybeSingleResponse<StorageItem> =
-        await supabase.from("storage_items").insert(mappedItems);
+        await supabase.from("storage_items").insert(itemsToInsert);
       if (error) {
         throw new Error(error.message);
       }
@@ -191,7 +190,8 @@ export class StorageItemsService {
         throw new Error(imageError.message);
       }
 
-      return { status: 201, error: null };
+      // return status and item details
+      return { status: 201, error: null, items: itemsToInsert };
     } catch (error) {
       console.log(error);
       // Rollback: Clean up any partially inserted data
