@@ -43,6 +43,7 @@ type Props = {
   editable: boolean;
   onSaved?: () => void;
   onCancel?: () => void;
+  onActiveTabChange?: (tab: "details" | "images") => void;
 };
 
 const UpdateItemForm: React.FC<Props> = ({
@@ -50,6 +51,7 @@ const UpdateItemForm: React.FC<Props> = ({
   editable,
   onSaved,
   onCancel,
+  onActiveTabChange,
 }) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
@@ -90,14 +92,27 @@ const UpdateItemForm: React.FC<Props> = ({
     if (selectedTags) setLocalSelectedTags(selectedTags.map((t) => t.id));
   }, [selectedTags]);
 
+  // Notify parent when active tab changes so parent can enable/disable Edit button
+  useEffect(() => {
+    onActiveTabChange?.(activeTab);
+  }, [activeTab, onActiveTabChange]);
+
   if (!formData) return null;
 
   const handleSubmit = async () => {
     if (!formData) return;
+    // If user is editing but still on the details tab, force them to go to images
+    // to confirm images before allowing save.
+    if (editable && activeTab === "details") {
+      // Switch to images tab and inform the user
+      setActiveTab("images");
+      toast(
+        "Please switch to the Images tab and confirm image changes before saving.",
+      );
+      return;
+    }
     // TODO: UPDATE THIS WHEN BACKEND FILTERING OF ITEMS BY ORG IS READY
     // Prefer org id from the current form data,
-    // fall back to nested location_details.organization_id, and finally the
-    // active org id from the store.
     const asRecord = formData as unknown as Record<string, unknown>;
     const candidateOrg =
       typeof asRecord.organization_id === "string"
@@ -360,23 +375,44 @@ const UpdateItemForm: React.FC<Props> = ({
           </div>
 
           {editable && (
-            <div className="flex justify-end space-x-2 mt-4">
-              <Button variant="secondary" onClick={() => onCancel?.()}>
-                {t.adminItemsTable.messages.deletion.cancel[lang] ?? "Cancel"}
-              </Button>
-              <Button variant={"outline"} onClick={() => void handleSubmit()}>
-                {loading ? (
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                ) : (
-                  t.updateItemModal.buttons.update[lang]
-                )}
+            <div className="flex justify-end mt-4">
+              <Button
+                variant="secondary"
+                onClick={() => setActiveTab("images")}
+              >
+                {t.updateItemModal.buttons.goToImages?.[lang] ??
+                  "Proceed to Images"}
               </Button>
             </div>
           )}
         </div>
       ) : (
         <div>
-          {formData && <ItemImageManager itemId={String(formData.id)} />}
+          {formData && (
+            <>
+              <ItemImageManager itemId={String(formData.id)} />
+
+              {editable && (
+                <div className="flex justify-end space-x-2 mt-4">
+                  <Button variant="secondary" onClick={() => onCancel?.()}>
+                    {t.adminItemsTable.messages.deletion.cancel[lang] ??
+                      "Cancel"}
+                  </Button>
+                  <Button
+                    variant={"outline"}
+                    onClick={() => void handleSubmit()}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    ) : (
+                      t.updateItemModal.buttons.update[lang]
+                    )}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>

@@ -1,10 +1,4 @@
 import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -19,7 +13,7 @@ import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
 import { Item, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, LoaderCircle, Trash2 } from "lucide-react";
+import { Eye, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -29,12 +23,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useRoles } from "@/hooks/useRoles";
-// toastConfirm is used in ItemDetailsPage; not needed here
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-// Details and editing moved to ItemDetailsPage
 import { useLocation, useNavigate } from "react-router-dom";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
@@ -45,17 +36,10 @@ const AdminItemsTable = () => {
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
-  const deletableItems = useAppSelector((state) => state.items.deletableItems);
   const org_id = useAppSelector(selectActiveOrganizationId);
 
-  const { hasAnyRole } = useRoles();
-  const isAdmin = hasAnyRole(
-    ["tenant_admin", "storage_manager"],
-    org_id || undefined,
-  );
   // Translation
   const { lang } = useLanguage();
-  // assign-tags UI moved to ItemDetailsPage
   // filtering states:
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
@@ -75,7 +59,6 @@ const AdminItemsTable = () => {
   const [ascending, setAscending] = useState<boolean | null>(
     redirectState?.ascending ?? null,
   );
-  // table does not need selectedItem; details page handles item state
   const { page, totalPages } = useAppSelector(selectItemsPagination);
   const loading = useAppSelector(selectItemsLoading);
   const ITEMS_PER_PAGE = 10;
@@ -88,16 +71,10 @@ const AdminItemsTable = () => {
     void navigate(`/admin/items/${id}`);
   };
 
-  // Deletion handled on ItemDetailsPage
-
-  // Modals moved to ItemDetailsPage; no local modal state
-
   const handleBooking = (order: string) =>
     setOrder(order.toLowerCase() as ValidItemOrder);
   const handleAscending = (ascending: boolean | null) =>
     setAscending(ascending);
-
-  // assign-tags handled in ItemDetailsPage
 
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
@@ -136,6 +113,24 @@ const AdminItemsTable = () => {
 
   /* ————————————————————————— Item Columns ———————————————————————— */
   const itemsColumns: ColumnDef<Item>[] = [
+    {
+      id: "view",
+      size: 5,
+      cell: () => {
+        return (
+          <div className="flex space-x-1">
+            <Button
+              variant={"ghost"}
+              size="sm"
+              title={t.adminItemsTable.columns.viewDetails[lang]}
+              className="hover:text-slate-900 hover:bg-slate-300"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
     {
       header: t.adminItemsTable.columns.name[lang],
       size: 120,
@@ -210,63 +205,6 @@ const AdminItemsTable = () => {
 
         return (
           <Switch checked={item.is_active} onCheckedChange={handleToggle} />
-        );
-      },
-    },
-    {
-      id: "actions",
-      size: 30,
-      enableColumnFilter: false,
-      cell: ({ row }) => {
-        const item = row.original;
-        const isDeletable = deletableItems[item.id] !== false;
-        return (
-          <div className="flex gap-2">
-            {isAdmin && (
-              <Button
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  void navigate(`/admin/items/${item.id}`);
-                }}
-                className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
-            {isAdmin && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Redirect to details page where delete can be performed
-                          void navigate(`/admin/items/${item.id}`);
-                        }}
-                        disabled={!isDeletable}
-                        aria-label={`Delete ${item.translations.fi.item_name}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  {!isDeletable && (
-                    <TooltipContent
-                      side="top"
-                      className="90 text-white border-0 p-2"
-                    >
-                      <p>{t.adminItemsTable.tooltips.cantDelete[lang]}</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
         );
       },
     },

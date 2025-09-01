@@ -25,6 +25,9 @@ const ItemDetailsPage = () => {
   const selectedItem = useAppSelector(selectSelectedItem);
   const [loading, setLoading] = useState(true);
   const [updateOpen, setUpdateOpen] = useState(false);
+  const [childActiveTab, setChildActiveTab] = useState<"details" | "images">(
+    "details",
+  );
   // Form state for inline editing
   const [formData, setFormData] = useState<Item | null>(null);
 
@@ -50,8 +53,6 @@ const ItemDetailsPage = () => {
     setFormData(selectedItem as Item);
   }, [selectedItem]);
 
-  // auxiliary form data (tags/locations) handled inside UpdateItemForm
-
   const handleDelete = () => {
     if (!selectedItem) return;
     // read runtime fields which aren't part of the Item type via a safe unknown cast
@@ -60,12 +61,13 @@ const ItemDetailsPage = () => {
       typeof runtime.organization_id === "string"
         ? runtime.organization_id
         : undefined;
-    if (!orgId) return toast.error("No organization selected");
+    if (!orgId)
+      return toast.error(t.itemDetailsPage.messages.toast.noOrg[lang]);
     toastConfirm({
-      title: t.adminItemsTable.messages.deletion.title[lang],
-      description: t.adminItemsTable.messages.deletion.description[lang],
-      confirmText: t.adminItemsTable.messages.deletion.confirm[lang],
-      cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
+      title: t.itemDetailsPage.messages.deletion.title[lang],
+      description: t.itemDetailsPage.messages.deletion.description[lang],
+      confirmText: t.itemDetailsPage.messages.deletion.confirm[lang],
+      cancelText: t.itemDetailsPage.messages.deletion.cancel[lang],
       onConfirm: async () => {
         try {
           // ensure we have an item id from either the loaded item or the route
@@ -77,18 +79,18 @@ const ItemDetailsPage = () => {
             rawId === undefined ||
             (typeof rawId !== "string" && typeof rawId !== "number")
           ) {
-            toast.error("No item id");
+            toast.error(t.itemDetailsPage.messages.toast.noItem[lang]);
             return;
           }
           const itemId = String(rawId);
           await dispatch(
             deleteItem({ org_id: orgId, item_id: itemId }),
           ).unwrap();
-          toast.success(t.adminItemsTable.messages.toast.deleteSuccess[lang]);
+          toast.success(t.itemDetailsPage.messages.toast.deleteSuccess[lang]);
           void navigate(-1);
         } catch (err) {
           console.error(err);
-          toast.error(t.adminItemsTable.messages.toast.deleteFail[lang]);
+          toast.error(t.itemDetailsPage.messages.toast.deleteFail[lang]);
         }
       },
     });
@@ -103,10 +105,12 @@ const ItemDetailsPage = () => {
       <div className="mb-4">
         {/*/ Back button */}
         <Button
-          onClick={() => void navigate(-1)}
+          onClick={() => {
+            window.location.href = "/admin/items";
+          }}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
         >
-          <ChevronLeft /> {t.itemDetails.buttons.back[lang]}
+          <ChevronLeft /> {t.itemDetailsPage.buttons.back[lang]}
         </Button>
       </div>
       {/*/ Title and Delete button */}
@@ -120,11 +124,21 @@ const ItemDetailsPage = () => {
             variant={"outline"}
             size="sm"
             onClick={() => setUpdateOpen((v) => !v)}
+            disabled={updateOpen && childActiveTab !== "images"}
+            title={
+              updateOpen && childActiveTab !== "images"
+                ? "Open Images tab to finalize edits"
+                : undefined
+            }
           >
-            <Edit className="h-4 w-4 mr-2" /> {updateOpen ? "Close" : "Edit"}
+            <Edit className="h-4 w-4 mr-2" />{" "}
+            {updateOpen
+              ? t.itemDetailsPage.buttons.close[lang]
+              : t.itemDetailsPage.buttons.edit[lang]}
           </Button>
           <Button size="sm" variant="destructive" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4 mr-2" /> {"Delete"}
+            <Trash2 className="h-4 w-4 mr-2" /> {""}
+            {t.itemDetailsPage.buttons.delete[lang]}
           </Button>
         </div>
       </div>
@@ -135,6 +149,7 @@ const ItemDetailsPage = () => {
           <UpdateItemForm
             initialData={formData}
             editable={updateOpen}
+            onActiveTabChange={(tab) => setChildActiveTab(tab)}
             onSaved={() => {
               void dispatch(getItemById(String(formData?.id ?? id)));
               void dispatch(fetchTagsForItem(String(formData?.id ?? id)));
