@@ -24,11 +24,7 @@ import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagService } from "../tag/tag.service";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 import { ItemFormData } from "@common/items/form.types";
-import {
-  mapItemImages,
-  mapStorageItems,
-  mapTagLinks,
-} from "@src/utils/storage-items.utils";
+import { mapItemImages, mapTagLinks } from "@src/utils/storage-items.utils";
 import { ItemImagesService } from "../item-images/item-images.service";
 import { parse, ParseResult } from "papaparse";
 import { Item, ItemSchema } from "./schema/item-schema";
@@ -168,7 +164,6 @@ export class StorageItemsService {
   ): Promise<{ status: number; error: string | null; items?: StorageItem[] }> {
     const supabase = req.supabase;
     const itemsToInsert = payloadToStorageItem(payload);
-    const mappedItems = mapStorageItems(payload);
     const mappedImageData = mapItemImages(payload);
     const item_ids = itemsToInsert.map((i) => i.id);
 
