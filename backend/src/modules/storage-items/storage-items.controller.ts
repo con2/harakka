@@ -132,7 +132,7 @@ export class StorageItemsController {
     @Req() req: AuthRequest,
     @Body()
     formData: ItemFormData,
-  ): Promise<{ status: number; error: string | null }> {
+  ): Promise<{ status: number; error: string | null; items?: StorageItem[] }> {
     return await this.storageItemsService.createItems(req, formData); // POST /storage-items (new item)
   }
 

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import { Tag, TagAssignmentFilter } from "@/types";
+import { Tag, TagAssignmentFilter, TagWithUsage } from "@/types";
 import {
   fetchFilteredTags,
   selectAllTags,
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
+// import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -33,7 +33,7 @@ import AddTagModal from "@/components/Admin/Items/AddTagModal";
 const TagList = () => {
   const dispatch = useAppDispatch();
   const tags = useAppSelector(selectAllTags);
-  const items = useAppSelector(selectAllItems);
+  // const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectTagsLoading);
   const error = useAppSelector(selectError);
   const page = useAppSelector(selectTagsPage);
@@ -58,14 +58,6 @@ const TagList = () => {
   const [editTag, setEditTag] = useState<Tag | null>(null);
   const [editNameFi, setEditNameFi] = useState("");
   const [editNameEn, setEditNameEn] = useState("");
-
-  // Calculate tag usage for display
-  const tagUsage: Record<string, number> = {};
-  items.forEach((item) => {
-    (item.storage_item_tags || []).forEach((tag) => {
-      tagUsage[tag.id] = (tagUsage[tag.id] || 0) + 1;
-    });
-  });
 
   // Fetch tags when search term or assignment filter changes
   useEffect(() => {
@@ -99,11 +91,11 @@ const TagList = () => {
   }, [page]);
 
   // Fetch items once
-  useEffect(() => {
+  /*   useEffect(() => {
     if (items.length === 0) {
       void dispatch(fetchAllItems({ page: 1, limit: 10 }));
     }
-  }, [dispatch, items.length]);
+  }, [dispatch, items.length]); */
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
@@ -193,8 +185,8 @@ const TagList = () => {
       header: t.tagList.columns.assigned[lang],
       id: "assigned",
       cell: ({ row }) => {
-        const tag = row.original;
-        const isUsed = !!tagUsage[tag.id];
+        const tag = row.original as TagWithUsage;
+        const isUsed = tag.usageCount > 0;
         return isUsed ? (
           <span className="text-highlight2 font-medium">
             {t.tagList.assignment.yes[lang]}
@@ -210,9 +202,9 @@ const TagList = () => {
     {
       header: t.tagList.columns.assignedTo[lang],
       id: "assignedTo",
-      accessorFn: (row) => tagUsage[row.id] || 0,
+      accessorFn: (row) => (row as TagWithUsage).usageCount ?? 0,
       cell: ({ row }) => {
-        const count = tagUsage[row.original.id] || 0;
+        const count = (row.original as TagWithUsage).usageCount ?? 0;
         return (
           <span className="text-sm">
             {t.tagList.assignment.count[lang].replace(
