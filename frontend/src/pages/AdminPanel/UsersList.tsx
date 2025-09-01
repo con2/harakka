@@ -1,3 +1,4 @@
+// Delete button moved to user details page
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
@@ -20,13 +21,13 @@ import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { useBanPermissions } from "@/hooks/useBanPermissions";
 import { selectAllUserRoles } from "@/store/slices/rolesSlice";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
 import UserEditModal from "@/components/Admin/UserManagement/UserEditModal";
 import UserBanActionsDropdown from "@/components/Admin/UserManagement/Banning/UserBanActionsDropdown";
 import UserBanModal from "@/components/Admin/UserManagement/Banning/UserBanModal";
@@ -42,6 +43,7 @@ import { formatRoleName } from "@/utils/format";
 const UsersList = () => {
   // ————————————— Hooks & Selectors —————————————
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { authLoading } = useAuth();
   const users = useAppSelector(selectAllUsers);
   const loading = useAppSelector(selectLoading);
@@ -55,7 +57,7 @@ const UsersList = () => {
   const { canBanUser, isUserBanned } = useBanPermissions();
 
   // ————————————— State —————————————
-  const [isModalOpen, setIsModalOpen] = useState(true);
+  // modal state removed; list no longer controls modals for details
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   // Modal state management
@@ -64,7 +66,7 @@ const UsersList = () => {
     "ban" | "unban" | "history" | null
   >(null);
 
-  const closeModal = () => setIsModalOpen(false);
+  // modal state kept for backward compatibility; details page handles delete
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 500);
@@ -230,7 +232,7 @@ const UsersList = () => {
 
   // Fetch users when key dependencies change
   useEffect(() => {
-    if (!authLoading && isAuthorized && isModalOpen) {
+    if (!authLoading && isAuthorized) {
       void dispatch(
         fetchAllOrderedUsers({
           org_filter: getOrgFilter(),
@@ -245,7 +247,6 @@ const UsersList = () => {
   }, [
     authLoading,
     isAuthorized,
-    isModalOpen,
     dispatch,
     activeOrgId,
     activeRoleName,
@@ -259,13 +260,6 @@ const UsersList = () => {
   const resetModalState = () => {
     setActiveUser(null);
     setActiveModal(null);
-  };
-
-  // Helper function to get user's roles from the new role system
-  const getUserRoles = (userId: string) => {
-    return allUserRoles
-      .filter((role) => role.user_id === userId && role.is_active)
-      .map((role) => role.role_name);
   };
 
   // Helper: derive the organization name for a given user for this view
@@ -396,11 +390,8 @@ const UsersList = () => {
       enableColumnFilter: false,
       cell: ({ row }) => {
         const targetUser = row.original;
-        const targetUserRoles = getUserRoles(targetUser.id);
 
         const canEdit = isAuthorized;
-        const canDelete =
-          isSuper || (isAuthorized && targetUserRoles.includes("user"));
 
         // Banning permission logic based on hierarchy and org:
         // - super_admin/superVera: Can ban anyone from anywhere
@@ -426,9 +417,6 @@ const UsersList = () => {
         return (
           <div className="flex gap-2">
             {canEdit && <UserEditModal user={targetUser} />}
-            {canDelete && (
-              <DeleteUserButton id={targetUser.id} closeModal={closeModal} />
-            )}
             {canBan && (
               <div onClick={(e) => e.stopPropagation()}>
                 <UserBanActionsDropdown
@@ -536,6 +524,10 @@ const UsersList = () => {
             }),
           )
         }
+        rowProps={(row) => ({
+          onClick: () => navigate(`/admin/users/${row.original.id}`),
+          className: "cursor-pointer",
+        })}
       />
 
       {/* Ban-related modals - only render the active modal */}
