@@ -42,6 +42,10 @@ export const usersDetailsPage = {
       fi: "Näkyvä nimi",
       en: "Visible name",
     },
+    created: {
+      fi: "Luotu",
+      en: "Created",
+    },
   },
   placeholders: {
     fullName: {
@@ -67,6 +71,16 @@ export const usersDetailsPage = {
     selectOrganization: {
       fi: "Valitse organisaatio",
       en: "Select Organization",
+    },
+  },
+  copy: {
+    title: {
+      fi: "Kopioi sähköposti",
+      en: "Copy email",
+    },
+    copied: {
+      fi: "Kopioitu",
+      en: "Copied",
     },
   },
   status: {

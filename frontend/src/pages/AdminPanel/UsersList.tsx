@@ -1,4 +1,3 @@
-// Delete button moved to user details page
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
@@ -504,6 +503,10 @@ const UsersList = () => {
               {t.usersList.filters.clear[lang]}
             </Button>
           )}
+        </div>
+        {/* TODO: update this button to add a new member to an org (Global User) */}
+        <div>
+          <Button variant={"outline"}>Add New User</Button>
         </div>
       </div>
 
