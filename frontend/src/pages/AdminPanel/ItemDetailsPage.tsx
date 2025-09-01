@@ -16,6 +16,7 @@ import { toastConfirm } from "@/components/ui/toastConfirm";
 import { Item } from "@/types/item";
 import UpdateItemForm from "@/components/Admin/Items/UpdateItemForm";
 import { fetchTagsForItem } from "@/store/slices/tagSlice";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 const ItemDetailsPage = () => {
   const { id } = useParams();
@@ -23,6 +24,7 @@ const ItemDetailsPage = () => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
   const selectedItem = useAppSelector(selectSelectedItem);
+  const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const [loading, setLoading] = useState(true);
   const [updateOpen, setUpdateOpen] = useState(false);
   const [childActiveTab, setChildActiveTab] = useState<"details" | "images">(
@@ -55,12 +57,7 @@ const ItemDetailsPage = () => {
 
   const handleDelete = () => {
     if (!selectedItem) return;
-    // read runtime fields which aren't part of the Item type via a safe unknown cast
-    const runtime = selectedItem as unknown as Record<string, unknown>;
-    const orgId =
-      typeof runtime.organization_id === "string"
-        ? runtime.organization_id
-        : undefined;
+    const orgId = activeOrgId;
     if (!orgId)
       return toast.error(t.itemDetailsPage.messages.toast.noOrg[lang]);
     toastConfirm({
