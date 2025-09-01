@@ -60,7 +60,7 @@ const UpdateItemForm: React.FC<Props> = ({
   const tagsLoading = useAppSelector(selectTagsLoading);
   const locations = useAppSelector(selectAllLocations);
   const orgLocations = useAppSelector(selectOrgLocations);
-  const orgIdFromStore = useAppSelector(selectActiveOrganizationId);
+  const orgId = useAppSelector(selectActiveOrganizationId);
 
   const [formData, setFormData] = useState<Item | null>(initialData);
   const [localSelectedTags, setLocalSelectedTags] = useState<string[]>([]);
@@ -75,17 +75,15 @@ const UpdateItemForm: React.FC<Props> = ({
     if (!initialData) return;
     if (tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
     if (locations.length === 0) void dispatch(fetchAllLocations({ limit: 20 }));
-    if (orgLocations.length === 0 && orgIdFromStore)
-      void dispatch(
-        fetchAllOrgLocations({ orgId: orgIdFromStore, pageSize: 100 }),
-      );
+    if (orgLocations.length === 0 && orgId)
+      void dispatch(fetchAllOrgLocations({ orgId: orgId, pageSize: 100 }));
   }, [
     dispatch,
     initialData,
     tags.length,
     locations.length,
     orgLocations.length,
-    orgIdFromStore,
+    orgId,
   ]);
 
   useEffect(() => {
@@ -111,28 +109,8 @@ const UpdateItemForm: React.FC<Props> = ({
       );
       return;
     }
-    // TODO: UPDATE THIS WHEN BACKEND FILTERING OF ITEMS BY ORG IS READY
-    // Prefer org id from the current form data,
-    const asRecord = formData as unknown as Record<string, unknown>;
-    const candidateOrg =
-      typeof asRecord.organization_id === "string"
-        ? asRecord.organization_id
-        : undefined;
-
-    const nestedOrg =
-      formData.location_details &&
-      (formData.location_details as unknown as Record<string, unknown>)
-        .organization_id
-        ? String(
-            (formData.location_details as unknown as Record<string, unknown>)
-              .organization_id,
-          )
-        : undefined;
-
-    const runtimeOrg = candidateOrg || nestedOrg || orgIdFromStore;
-
-    if (!runtimeOrg)
-      return toast.error(t.updateItemModal.messages.missingOrg[lang]);
+    if (!orgId) return toast.error(t.updateItemForm.messages.missingOrg[lang]);
+    if (!orgId) return toast.error(t.updateItemForm.messages.missingOrg[lang]);
 
     try {
       setLoading(true);
@@ -147,18 +125,20 @@ const UpdateItemForm: React.FC<Props> = ({
 
       await dispatch(
         updateItem({
-          orgId: runtimeOrg,
+          orgId: orgId,
           item_id: String(formData.id),
           data: payload,
         }),
       ).unwrap();
 
       await dispatch(fetchTagsForItemAction(String(formData.id))).unwrap();
-      toast.success(t.updateItemModal.messages.success[lang]);
+      toast.success(t.updateItemForm.messages.success[lang]);
+      toast.success(t.updateItemForm.messages.success[lang]);
       onSaved?.();
     } catch (err) {
       console.error(err);
-      toast.error(t.updateItemModal.messages.error[lang]);
+      toast.error(t.updateItemForm.messages.error[lang]);
+      toast.error(t.updateItemForm.messages.error[lang]);
     } finally {
       setLoading(false);
     }
@@ -176,7 +156,7 @@ const UpdateItemForm: React.FC<Props> = ({
           onClick={() => setActiveTab("details")}
           type="button"
         >
-          {t.updateItemModal.tabs.details[lang]}
+          {t.updateItemForm.tabs.details[lang]}
         </button>
         <button
           className={`px-4 py-1 ${
@@ -187,7 +167,7 @@ const UpdateItemForm: React.FC<Props> = ({
           onClick={() => setActiveTab("images")}
           type="button"
         >
-          {t.updateItemModal.tabs.images[lang]}
+          {t.updateItemForm.tabs.images[lang]}
         </button>
       </div>
 
@@ -201,7 +181,7 @@ const UpdateItemForm: React.FC<Props> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>{t.updateItemModal.labels.itemNameFi[lang]}</Label>
+              <Label>{t.updateItemForm.labels.itemNameFi[lang]}</Label>
               <Input
                 value={formData.translations.fi.item_name}
                 onChange={(e) =>
@@ -220,7 +200,7 @@ const UpdateItemForm: React.FC<Props> = ({
               />
             </div>
             <div>
-              <Label>{t.updateItemModal.labels.itemNameEn[lang]}</Label>
+              <Label>{t.updateItemForm.labels.itemNameEn[lang]}</Label>
               <Input
                 value={formData.translations.en.item_name}
                 onChange={(e) =>
@@ -242,7 +222,7 @@ const UpdateItemForm: React.FC<Props> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>{t.updateItemModal.labels.itemDescFi[lang]}</Label>
+              <Label>{t.updateItemForm.labels.itemDescFi[lang]}</Label>
               <Textarea
                 value={formData.translations.fi.item_description}
                 onChange={(e) =>
@@ -262,7 +242,7 @@ const UpdateItemForm: React.FC<Props> = ({
               />
             </div>
             <div>
-              <Label>{t.updateItemModal.labels.itemDescEn[lang]}</Label>
+              <Label>{t.updateItemForm.labels.itemDescEn[lang]}</Label>
               <Textarea
                 value={formData.translations.en.item_description}
                 onChange={(e) =>
@@ -285,7 +265,7 @@ const UpdateItemForm: React.FC<Props> = ({
 
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div>
-              <Label>{t.updateItemModal.labels.location[lang]}</Label>
+              <Label>{t.updateItemForm.labels.location[lang]}</Label>
               <Select
                 value={formData.location_id || ""}
                 onValueChange={(value) =>
@@ -299,7 +279,7 @@ const UpdateItemForm: React.FC<Props> = ({
                 <SelectTrigger className="w-60 bg-white">
                   <SelectValue
                     placeholder={
-                      t.updateItemModal.placeholders.selectLocation[lang]
+                      t.updateItemForm.placeholders.selectLocation[lang]
                     }
                   />
                 </SelectTrigger>
@@ -350,7 +330,7 @@ const UpdateItemForm: React.FC<Props> = ({
           <Separator />
           {/* tags checkboxes */}
           <div>
-            <strong>{t.updateItemModal.tags.title[lang] ?? "Tags"}: </strong>
+            <strong>{t.updateItemForm.tags.title[lang] ?? "Tags"}: </strong>
             <div className="grid grid-cols-5 mt-2">
               {tags.map((tag) => (
                 <label key={tag.id} className="flex items-center space-x-2">
@@ -380,7 +360,7 @@ const UpdateItemForm: React.FC<Props> = ({
                 variant="secondary"
                 onClick={() => setActiveTab("images")}
               >
-                {t.updateItemModal.buttons.goToImages?.[lang] ??
+                {t.updateItemForm.buttons.goToImages?.[lang] ??
                   "Proceed to Images"}
               </Button>
             </div>
@@ -404,9 +384,12 @@ const UpdateItemForm: React.FC<Props> = ({
                     disabled={loading}
                   >
                     {loading ? (
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                      <>
+                        {t.updateItemForm.buttons.update[lang]}
+                        <LoaderCircle className="h-4 w-4 animate-spin ml-2" />
+                      </>
                     ) : (
-                      t.updateItemModal.buttons.update[lang]
+                      t.updateItemForm.buttons.update[lang]
                     )}
                   </Button>
                 </div>
