@@ -72,7 +72,7 @@
     "branch:reset": "env-cmd -f .env.branch npx supabase db reset --db-url $DB_URL",
     "branch:diff": "env-cmd -f .env.branch npx supabase db diff --db-url $DB_URL --schema public -f branch_changes",
     "branch:status": "supabase branches get",
-    "branch:studio": "echo 'Open https://kffoqormzcaftuypriia.supabase.co in your browser'",
+    "branch:studio": "echo 'Open https://feykwlzjxtnykwkrfnav.supabase.co in your browser'",
     
     "dev:branch": "env-cmd -f .env.branch concurrently \"npm run frontend:branch\" \"npm run backend:branch\"",
     "frontend:branch": "env-cmd -f .env.branch npm --prefix frontend run dev",
@@ -97,7 +97,11 @@
     "sql:check:migrations": "npx postgrestools check supabase/migrations/",
     "sql:check:scripts": "npx postgrestools check supabase/scripts",
     "sql:check:verbose": "npx postgrestools check supabase/migrations/ scripts/ --verbose",
-    "sql:check:all": "npx postgrestools check **/*.sql"
+    "sql:check:all": "npx postgrestools check **/*.sql",
+    
+    "test:db:local": "node scripts/test-db-connection.js local",
+    "test:db:production": "node scripts/test-db-connection.js production", 
+    "test:db:branch": "node scripts/test-db-connection.js branch"
   },
   "devDependencies": {
     "@postgrestools/postgrestools": "^0.11.0",

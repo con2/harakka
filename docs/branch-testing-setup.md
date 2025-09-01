@@ -69,6 +69,54 @@ All other URLs will automatically populate using these variables:
 - `DB_URL=postgresql://postgres:${DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres`
 - `VITE_SUPABASE_URL=https://${SUPABASE_PROJECT_ID}.supabase.co`
 
+### Step 4: Test Connection
+
+```bash
+# Test database connection with automatic fallback
+npm run test:db:branch
+```
+
+This will try multiple connection methods:
+
+1. **Direct connection** (port 5432) - Best for persistent connections
+2. **Pooled connection** (port 6543) - Better for IPv4 compatibility  
+3. **URL-encoded** - For special characters in passwords
+
+## 🔧 Connection Troubleshooting
+
+### IPv4 Compatibility Issues
+
+If you see "Not IPv4 compatible" warnings or connection failures:
+
+1. **Use Session Pooler**: Your `.env.branch` includes a pooled connection option
+2. **Check network**: Some networks block certain ports
+3. **Try different connection strings**:
+
+   ```bash
+   # Test different connection methods
+   npm run test:db:branch
+   ```
+
+### Password Issues
+
+If your password contains special characters:
+
+- The script automatically tries URL-encoded versions
+- Check the password doesn't have conflicting characters like `@`, `:`, or `/`
+- Use the test script to validate: `npm run test:db:branch`
+
+### Connection Methods Available
+
+Your `.env.branch` file includes multiple connection options:
+
+```dotenv
+# Direct connection (primary)
+DB_URL=postgresql://postgres:${DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres
+
+# Session pooler (IPv4 compatible)  
+DB_URL_POOLED=postgresql://postgres:${DB_PASSWORD}@aws-0-eu-north-1.pooler.supabase.com:6543/postgres
+```
+
 ```dotenv
 SUPABASE_ANON_KEY=your_branch_anon_key_here
 SUPABASE_SERVICE_ROLE_KEY=your_branch_service_role_key_here
