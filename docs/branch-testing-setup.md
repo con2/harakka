@@ -1,34 +1,73 @@
 # Branch Testing Environment Setup
 
 ## Overview
+
 You now have a complete setup for testing with Supabase preview branches locally.
 
 ## Environment Files
+
 - **`.env.local`** - Production database (rcbddkhvysexkvgqpcud)
-- **`.env.branch`** - Preview branch database (kffoqormzcaftuypriia)
+- **`.env.branch`** - Preview branch database (created from template)
+- **`.env.branch.template`** - Template file for setting up branch environment
 - **`supabase-local.env`** - Local Supabase instance
 
-## 🔧 Setup Required
+## 🔧 Quick Setup
 
-### 1. Get Supabase API Keys for Branch
-You need to add these keys to `.env.branch`:
+### 1. Create Branch Environment File
 
-1. Go to: https://supabase.com/dashboard/project/${SUPABASE_PROJECT_ID}/settings/api
-2. Copy the `anon` and `service_role` keys
-3. Add them to `.env.branch`:
-
-```dotenv
-SUPABASE_ANON_KEY=your_branch_anon_key_here
-SUPABASE_SERVICE_ROLE_KEY=your_branch_service_role_key_here
-VITE_SUPABASE_ANON_KEY=your_branch_anon_key_here
+```bash
+# Copy the template
+cp .env.branch.template .env.branch
 ```
 
-### 2. Update Branch Credentials (when needed)
-When you get a new branch, you only need to update these two values in `.env.branch`:
-- `SUPABASE_PROJECT_ID` - The new branch project ID
-- `DB_PASSWORD` - The new branch database password
+### 2. Get Branch Credentials
 
-All other URLs will automatically update using variable substitution.
+```bash
+# Get your branch details
+supabase branches get
+```
+
+### 3. Fill in Branch Details
+
+Edit `.env.branch` and update these 4 required values:
+
+1. **SUPABASE_PROJECT_ID** - Copy the PROJECT_REF from `supabase branches get`
+2. **DB_PASSWORD** - Copy the PASSWORD from `supabase branches get`
+3. **SUPABASE_ANON_KEY** - Get from Supabase dashboard → Settings → API
+4. **SUPABASE_SERVICE_ROLE_KEY** - Get from Supabase dashboard → Settings → API
+
+### 4. Test Connection
+
+```bash
+npm run branch:status
+```
+
+## 📋 Detailed Setup Steps
+
+### Step 1: Get Branch Information
+
+```bash
+supabase branches get
+```
+
+This will show you:
+
+- `PROJECT_REF` → use for `SUPABASE_PROJECT_ID`
+- `PASSWORD` → use for `DB_PASSWORD`
+
+### Step 2: Get API Keys
+
+1. Go to Supabase Dashboard → Project → Settings → API
+2. Copy `anon` key → use for `SUPABASE_ANON_KEY`
+3. Copy `service_role` key → use for `SUPABASE_SERVICE_ROLE_KEY`
+
+### Step 3: Variable Substitution
+
+All other URLs will automatically populate using these variables:
+
+- `SUPABASE_URL=https://${SUPABASE_PROJECT_ID}.supabase.co`
+- `DB_URL=postgresql://postgres:${DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres`
+- `VITE_SUPABASE_URL=https://${SUPABASE_PROJECT_ID}.supabase.co`
 
 ```dotenv
 SUPABASE_ANON_KEY=your_branch_anon_key_here
@@ -39,6 +78,7 @@ VITE_SUPABASE_ANON_KEY=your_branch_anon_key_here
 ## 🚀 Available Scripts
 
 ### Branch Database Operations
+
 ```bash
 npm run branch:pull      # Pull schema from preview branch (public only)
 npm run branch:push      # Push migrations to preview branch
@@ -49,6 +89,7 @@ npm run branch:studio    # Get link to branch Supabase Studio
 ```
 
 ### Development with Branch
+
 ```bash
 npm run dev:branch       # Run frontend + backend with branch database
 npm run frontend:branch  # Run only frontend with branch database
@@ -56,6 +97,7 @@ npm run backend:branch   # Run only backend with branch database
 ```
 
 ### Existing Production Scripts
+
 ```bash
 npm run dev:live         # Run with production database (.env.local)
 npm run dev:local        # Run with local Supabase instance
@@ -64,6 +106,7 @@ npm run dev:local        # Run with local Supabase instance
 ## 🧪 Testing Workflow
 
 ### 1. **Safe Database Testing**
+
 ```bash
 # Test schema changes safely
 npm run branch:diff      # See what changes you want to make
@@ -72,6 +115,7 @@ npm run branch:pull      # Pull updated schema
 ```
 
 ### 2. **Full Application Testing**
+
 ```bash
 # Run your app against the branch database
 npm run dev:branch
@@ -82,6 +126,7 @@ npm run dev:branch
 ```
 
 ### 3. **Database Operations**
+
 ```bash
 # Reset branch database to clean state
 npm run branch:reset
