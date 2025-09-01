@@ -45,7 +45,6 @@ export class BookingController {
     match: "any",
     sameOrg: true,
   })
-  @Public()
   getOrderedBookings(
     @Req() req: AuthRequest,
     @Query("search") searchquery: string,
