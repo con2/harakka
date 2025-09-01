@@ -17,7 +17,7 @@ import { CreateBookingDto } from "./dto/create-booking.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { ValidBookingOrder } from "./types/booking.interface";
 import { UpdateBookingDto } from "./dto/update-booking.dto";
-import { Public, Roles } from "src/decorators/roles.decorator";
+import { Roles } from "src/decorators/roles.decorator";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Controller("bookings")
@@ -166,7 +166,7 @@ export class BookingController {
    */
   //TODO: limit to activeContext organization
   @Get("user/:userId")
-  @Roles(["storage_manager", "tenant_admin", "super_admin"], {
+  @Roles(["storage_manager", "tenant_admin"], {
     match: "any",
     sameOrg: true,
   })
@@ -269,6 +269,10 @@ export class BookingController {
    */
   //TODO: limit to activeContext organization
   @Put(":id/reject")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async reject(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     return this.bookingService.rejectBooking(id, userId, req);
