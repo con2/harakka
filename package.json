@@ -28,6 +28,8 @@
     "s:reset": "npx supabase db reset",
     "s:pull": "npx supabase db pull --schema auth,public,storage",
     "s:push": "npx supabase db push",
+    "s:push:production": "npx supabase db push --db-url $SUPABASE_DB_URL",
+    "s:push:branch": "npx supabase db push --db-url $BRANCH_DB_URL",
     "s:status": "npx supabase status",
     "s:studio": "npx supabase studio",
     "s:migration:new": "npx supabase migration new",
