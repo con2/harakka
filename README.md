@@ -109,7 +109,7 @@ cd frontend && npm run dev
 
 For production deployment options, see:
 
-- [Docker Deployment Guide](docs/developers/workflows/docker-deployment.md) - Containerized deployment
+- [Docker Deployment Guide](docs/developers/workflows/docker-deployment.md) -  Containerized deployment
 - [Default Deployment Guide](docs/developers/workflows/default-deployment.md) - Traditional deployment
 
 ## Project Structure
