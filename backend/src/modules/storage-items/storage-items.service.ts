@@ -190,6 +190,7 @@ export class StorageItemsService {
         throw new Error(imageError.message);
       }
 
+      // return status and item details
       return { status: 201, error: null, items: itemsToInsert };
     } catch (error) {
       console.log(error);
