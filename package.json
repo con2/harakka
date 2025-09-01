@@ -71,7 +71,7 @@
     "branch:push": "env-cmd -f .env.branch npx supabase db push --db-url $DB_URL",
     "branch:reset": "env-cmd -f .env.branch npx supabase db reset --db-url $DB_URL",
     "branch:diff": "env-cmd -f .env.branch npx supabase db diff --db-url $DB_URL --schema public -f branch_changes",
-    "branch:status": "env-cmd -f .env.branch supabase branches get",
+    "branch:status": "supabase branches get",
     "branch:studio": "echo 'Open https://kffoqormzcaftuypriia.supabase.co in your browser'",
     
     "dev:branch": "env-cmd -f .env.branch concurrently \"npm run frontend:branch\" \"npm run backend:branch\"",
