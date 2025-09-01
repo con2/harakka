@@ -1,5 +1,5 @@
 import { ItemFormData, MappedItem } from "@common/items/form.types";
-import { TagLink } from "@common/items/storage-items.types";
+import { StorageItem, TagLink } from "@common/items/storage-items.types";
 import { ItemImageInsert } from "@src/modules/item-images/types/item-image.types";
 
 export function mapStorageItems(payload: ItemFormData): MappedItem[] {
@@ -12,6 +12,25 @@ export function mapStorageItems(payload: ItemFormData): MappedItem[] {
       org_id: org.id,
     };
     return newItem;
+  });
+}
+
+export function payloadToStorageItem(payload: ItemFormData): StorageItem[] {
+  const org = payload.org;
+
+  return payload.items.map((item) => {
+    return {
+      id: item.id,
+      org_id: org.id,
+      location_id: item.location.id,
+      quantity: item.quantity,
+      available_quantity: item.available_quantity,
+      is_active: item.is_active,
+      is_deleted: false,
+      compartment_id: null,
+      average_rating: null,
+      translations: item.translations,
+    } as StorageItem;
   });
 }
 

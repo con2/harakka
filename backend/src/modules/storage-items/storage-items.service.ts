@@ -15,7 +15,10 @@ import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
-import { applyItemFilters } from "@src/utils/storage-items.utils";
+import {
+  applyItemFilters,
+  payloadToStorageItem,
+} from "@src/utils/storage-items.utils";
 import { ApiResponse, ApiSingleResponse } from "@common/response.types"; // Import ApiSingleResponse for type safety
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagService } from "../tag/tag.service";
@@ -162,16 +165,17 @@ export class StorageItemsService {
   async createItems(
     req: AuthRequest,
     payload: ItemFormData,
-  ): Promise<{ status: number; error: string | null; item?: StorageItem }> {
+  ): Promise<{ status: number; error: string | null; items?: StorageItem[] }> {
     const supabase = req.supabase;
+    const itemsToInsert = payloadToStorageItem(payload);
     const mappedItems = mapStorageItems(payload);
     const mappedImageData = mapItemImages(payload);
-    const item_ids = mappedItems.map((i) => i.id);
+    const item_ids = itemsToInsert.map((i) => i.id);
 
     try {
       // Insert item data
       const { error }: PostgrestMaybeSingleResponse<StorageItem> =
-        await supabase.from("storage_items").insert(mappedItems);
+        await supabase.from("storage_items").insert(itemsToInsert);
       if (error) {
         throw new Error(error.message);
       }
@@ -191,22 +195,7 @@ export class StorageItemsService {
         throw new Error(imageError.message);
       }
 
-      // get the full item data
-      const { data: item, error: selectError } = await supabase
-        .from("storage_items")
-        .select(
-          `
-        *,
-        storage_locations(*),
-        storage_item_tags(tags(*))
-      `,
-        )
-        .eq("id", mappedItems[0].id)
-        .single();
-
-      if (selectError) throw new Error(selectError.message);
-
-      return { status: 201, error: null, item };
+      return { status: 201, error: null, items: itemsToInsert };
     } catch (error) {
       console.log(error);
       // Rollback: Clean up any partially inserted data
