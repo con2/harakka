@@ -7,7 +7,6 @@ import {
   selectItemsError,
   selectItemsPagination,
   selectItemsLoading,
-  updateItem,
 } from "@/store/slices/itemsSlice";
 import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
@@ -15,7 +14,6 @@ import { Item, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
 import { Eye, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import {
@@ -178,34 +176,7 @@ const AdminItemsTable = () => {
       size: 30,
       cell: ({ row }) => {
         const item = row.original;
-
-        const handleToggle = async (checked: boolean) => {
-          try {
-            if (!org_id) return toast.error("No organization selected");
-            await dispatch(
-              updateItem({
-                orgId: org_id,
-                item_id: item.id,
-                data: {
-                  is_active: checked,
-                },
-              }),
-            ).unwrap();
-            toast.success(
-              checked
-                ? t.adminItemsTable.messages.toast.activateSuccess[lang]
-                : t.adminItemsTable.messages.toast.deactivateSuccess[lang],
-            );
-          } catch {
-            toast.error(
-              t.adminItemsTable.messages.toast.statusUpdateFail[lang],
-            );
-          }
-        };
-
-        return (
-          <Switch checked={item.is_active} onCheckedChange={handleToggle} />
-        );
+        return <Switch checked={item.is_active} />;
       },
     },
   ];
