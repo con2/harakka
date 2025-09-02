@@ -70,11 +70,13 @@ export class TagService {
           .map((tag) => tag.id) || [];
       shouldFilterByIds = true;
     }
+    const { from, to } = getPaginationRange(page, limit);
 
     // Build the base query
     let query = supabase
       .from("view_tag_popularity")
-      .select("*", { count: "exact" });
+      .select("*", { count: "exact" })
+      .range(from, to);
 
     // Apply assignment filter
     if (shouldFilterByIds) {
@@ -127,15 +129,9 @@ export class TagService {
     });
 
     // Get count
-    const { count, data, error: countError } = await query;
-
+    const result = await query;
+    const { error: countError, count, data } = result;
     if (countError) throw new Error(countError.message);
-
-    // Fetch paginated data
-    const { from, to } = getPaginationRange(page, limit);
-    const result = await query.range(from, to);
-
-    if (result.error) throw new Error(result.error.message);
 
     const meta = getPaginationMeta(count ?? 0, page, limit);
 
