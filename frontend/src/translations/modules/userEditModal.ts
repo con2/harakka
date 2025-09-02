@@ -1,6 +1,10 @@
 import { common } from "./common";
 
 export const userEditModal = {
+  description: {
+    fi: "Muokkaa käyttäjän tietoja ja rooleja",
+    en: "Edit user profile and role assignments",
+  },
   title: {
     fi: "Muokkaa käyttäjää",
     en: "Edit User",
