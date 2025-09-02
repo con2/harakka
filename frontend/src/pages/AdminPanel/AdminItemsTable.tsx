@@ -107,7 +107,7 @@ const AdminItemsTable = () => {
   //fetch tags list
   useEffect(() => {
     if (tags.length === 0)
-      void dispatch(fetchFilteredTags({ limit: 20, popular: true }));
+      void dispatch(fetchFilteredTags({ limit: 20, sortBy: "assigned_to" }));
   }, [dispatch, tags.length, items.length]);
 
   /* ————————————————————————— Item Columns ———————————————————————— */
