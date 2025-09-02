@@ -1,7 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./modules/app/app.module";
 import { ConfigService } from "@nestjs/config";
-import { Logger } from "@nestjs/common";
+import { Logger, ValidationPipe } from "@nestjs/common";
 import { Response } from "express";
 import { SupabaseService } from "./modules/supabase/supabase.service";
 import { AllExceptionsFilter } from "./filters/all-exceptions.filter";
@@ -18,6 +18,14 @@ async function bootstrap() {
 
     // Add the global exception filter
     app.useGlobalFilters(new AllExceptionsFilter(logsService));
+
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
 
     const port = process.env.PORT || configService.get<number>("PORT", 3000);
     logger.log(

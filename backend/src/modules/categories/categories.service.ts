@@ -25,8 +25,9 @@ export class CategoriesService {
 
     const result = await supabase
       .from("categories")
-      .select("*")
+      .select("*", { count: "exact" })
       .range(from, to);
+
     return result;
   }
 
@@ -38,7 +39,11 @@ export class CategoriesService {
   async createCategory(params: CreateParamsDto) {
     const { supabase, newCategory } = params;
 
-    const result = await supabase.from("categories").insert(newCategory);
+    const result = await supabase
+      .from("categories")
+      .insert(newCategory)
+      .select()
+      .single();
     if (result.error) handleSupabaseError(result.error);
 
     return result;
@@ -55,7 +60,9 @@ export class CategoriesService {
     const result = await supabase
       .from("categories")
       .update(updateCategory)
-      .eq("id", id);
+      .eq("id", id)
+      .select()
+      .single();
     if (result.error) handleSupabaseError(result.error);
 
     return result;
