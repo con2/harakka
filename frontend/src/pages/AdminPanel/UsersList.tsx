@@ -24,14 +24,8 @@ import { useNavigate } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
-import { useBanPermissions } from "@/hooks/useBanPermissions";
 import { selectAllUserRoles } from "@/store/slices/rolesSlice";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import {
-  selectUserBanStatuses,
-  fetchAllUserBanStatuses,
-  checkUserBanStatus,
-} from "@/store/slices/userBanningSlice";
 import { formatRoleName } from "@/utils/format";
 
 const UsersList = () => {
@@ -46,9 +40,7 @@ const UsersList = () => {
   const { organizationId: activeOrgId, organizationName: activeOrgName } =
     useAppSelector(selectActiveRoleContext);
   const activeRoleName = useAppSelector(selectActiveRoleName);
-  const userBanStatuses = useAppSelector(selectUserBanStatuses);
   const { refreshAllUserRoles, hasAnyRole } = useRoles();
-  const { isUserBanned } = useBanPermissions();
 
   // ————————————— State —————————————
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,9 +58,7 @@ const UsersList = () => {
   }, [isSuper]);
 
   // Determine if we should fetch all users (no org filter)
-  // This happens when:
-  // 1. User has super_admin or superVera role AND no org/role is selected (activeOrgId is null/undefined)
-  // 2. User has selected a super_admin or superVera role from the navbar selector
+  // This happens when: User has selected a super_admin or superVera role from the navbar selector
   const isActiveRoleSuper =
     activeRoleName === "super_admin" || activeRoleName === "superVera";
   const shouldFetchAllUsers = isSuper && (!activeOrgId || isActiveRoleSuper);
@@ -120,9 +110,6 @@ const UsersList = () => {
             org: role.organization_name,
           }));
       }
-
-      // Check if user is banned to adjust role display strategy
-      // const isBanned = isUserBanned(userId); // Not needed with current logic
 
       let filteredRoles;
       if (activeOrgId) {
@@ -184,24 +171,6 @@ const UsersList = () => {
     refreshAllUserRoles,
     dispatch,
   ]);
-
-  // Load ban statuses when authorized
-  useEffect(() => {
-    if (!authLoading && isAuthorized) {
-      void dispatch(fetchAllUserBanStatuses());
-    }
-  }, [authLoading, isAuthorized, dispatch]);
-
-  // Check individual user ban statuses when users are loaded
-  useEffect(() => {
-    if (users.data && users.data.length > 0) {
-      users.data.forEach((user) => {
-        if (!userBanStatuses[user.id]) {
-          void dispatch(checkUserBanStatus(user.id));
-        }
-      });
-    }
-  }, [users.data, userBanStatuses, dispatch]);
 
   // Reset role filter when active organization changes
   useEffect(() => {
@@ -326,42 +295,31 @@ const UsersList = () => {
         isSuper ? getUserOrgName(row.original.id) : undefined,
     },
     {
-      id: "active",
-      header: t.usersList.columns.active[lang],
-      size: 80,
-      cell: ({ row }) => {
-        const banned = isUserBanned(row.original.id);
-        return (
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
-              banned ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
-            }`}
-          >
-            {banned
-              ? t.usersList.status.banned[lang]
-              : t.usersList.status.active[lang]}
-          </span>
-        );
-      },
-    },
-    {
       id: "roles",
       header: t.usersList.columns.role[lang],
       size: 150,
       enableSorting: true,
       enableColumnFilter: true,
       cell: ({ row }) => {
-        // Show only a single role for the active organization context
-        const roles = getUserRolesForDisplay(row.original.id);
-        const activeOrgRole = roles.find((r) => r.org === activeOrgName);
-        const displayRole =
-          activeOrgRole ?? roles.find((r) => r.org === "Global") ?? roles[0];
-        return displayRole ? (
-          <span
-            className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
-            title={`${displayRole.role} in ${displayRole.org}`}
-          >
-            {formatRoleName(displayRole.role as string)}
+        // Simplified: show the user's role in the active org (backend should provide this),
+        // otherwise show their Global role if available, otherwise show first role.
+        const userId = row.original.id;
+        const userRoles = allUserRoles.filter(
+          (r) => r.user_id === userId && r.role_name,
+        );
+        const orgRole = activeOrgId
+          ? userRoles.find(
+              (r) => r.organization_id === activeOrgId && r.is_active,
+            )
+          : undefined;
+        const globalRole = userRoles.find(
+          (r) => r.organization_name === "Global" && r.is_active,
+        );
+        const roleToShow = orgRole ?? globalRole ?? userRoles[0];
+
+        return roleToShow ? (
+          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+            {formatRoleName(roleToShow.role_name as string)}
           </span>
         ) : (
           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
@@ -469,8 +427,6 @@ const UsersList = () => {
           className: "cursor-pointer",
         })}
       />
-
-      {/* Banning handled in user details page now */}
     </div>
   );
 };

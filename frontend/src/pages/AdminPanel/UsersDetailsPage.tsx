@@ -17,14 +17,12 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Clipboard } from "lucide-react";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
-// Ban flows are now handled inline on this page (no modals)
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-// Ban history handled by the UserBanHistory component
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
@@ -85,13 +83,10 @@ const UsersDetailsPage = () => {
     org_name: string;
     isNewRole: boolean;
   };
-
   const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
-  // Banning state
   const [activeTab, setActiveTab] = useState<"history" | "ban" | "unban">(
     "history",
   );
-
   const lastRoleEntry = roleAssignments[roleAssignments.length - 1];
   const isAssigningRole =
     roleAssignments.length > 0 &&
@@ -194,7 +189,8 @@ const UsersDetailsPage = () => {
   };
 
   const addRoleAssignment = () => {
-    if (!canManageRoles) return;
+    // Only super users can add new role assignments; tenant_admins can only edit existing roles
+    if (!isSuper) return;
     setRoleAssignments((prev) => [
       ...prev,
       {
@@ -298,8 +294,6 @@ const UsersDetailsPage = () => {
       dispatch(clearSelectedUser());
     };
   }, [id, dispatch]);
-
-  // Ban history is loaded by the UserBanHistory component when it's mounted.
 
   if (loading || !user) {
     return <Spinner containerClasses="py-10" />;
@@ -496,16 +490,18 @@ const UsersDetailsPage = () => {
           )}
 
           <div className="flex justify-between items-center mt-4">
-            <Button
-              variant="default"
-              className="border-1-grey"
-              type="button"
-              size="sm"
-              onClick={addRoleAssignment}
-              disabled={isAssigningRole}
-            >
-              {t.usersDetailsPage.buttons.addRole[lang]}
-            </Button>
+            {isSuper && (
+              <Button
+                variant="default"
+                className="border-1-grey"
+                type="button"
+                size="sm"
+                onClick={addRoleAssignment}
+                disabled={isAssigningRole}
+              >
+                {t.usersDetailsPage.buttons.addRole[lang]}
+              </Button>
+            )}
 
             <div className="flex items-center gap-4">
               <DeleteUserButton id={user.id} closeModal={() => navigate(-1)} />
