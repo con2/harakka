@@ -105,35 +105,6 @@ cd frontend && npm run dev
    - Frontend: <http://localhost:5180>
    - Backend API: <http://localhost:3000>
 
-## Branch Testing with Supabase Preview
-
-For safe database testing using Supabase preview branches:
-
-1. **Set up branch environment:**
-
-```sh
-# Copy the branch template
-cp .env.branch.template .env.branch
-
-# Get your branch credentials
-supabase branches get
-
-# Fill in the required values in .env.branch
-```
-
-1. **Test with preview branch:**
-
-```sh
-# Run app with branch database
-npm run dev:branch
-
-# Test database changes safely
-npm run branch:push    # Apply changes to branch
-npm run branch:reset   # Reset branch database
-```
-
-See the [Branch Testing Setup Guide](docs/branch-testing-setup.md) for detailed instructions.
-
 ## Deployment
 
 For production deployment options, see:
