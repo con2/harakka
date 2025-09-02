@@ -82,7 +82,6 @@ export const fetchFilteredTags = createAsyncThunk(
       assignmentFilter = "all",
       sortBy = "created_at",
       sortOrder = "desc",
-      popular,
     }: {
       page?: number;
       limit?: number;
@@ -90,7 +89,6 @@ export const fetchFilteredTags = createAsyncThunk(
       assignmentFilter?: string;
       sortBy?: string;
       sortOrder?: "desc" | "asc";
-      popular?: boolean;
     },
     { rejectWithValue },
   ) => {
@@ -103,7 +101,6 @@ export const fetchFilteredTags = createAsyncThunk(
         assignmentFilter,
         sortBy,
         sortOrder,
-        popular,
       );
     } catch (error: unknown) {
       return rejectWithValue(
@@ -263,10 +260,7 @@ export const tagSlice = createSlice({
       })
       .addCase(createTag.fulfilled, (state, action) => {
         state.loading = false;
-        state.tags.push({
-          ...action.payload,
-          usageCount: 0,
-        });
+        state.tags.push(action.payload);
       })
       .addCase(createTag.rejected, (state, action) => {
         state.loading = false;
@@ -279,9 +273,10 @@ export const tagSlice = createSlice({
         state.errorContext = null;
       })
       .addCase(updateTag.fulfilled, (state, action) => {
+        const updatedTag = action.payload;
         if (state.selectedTags) {
           state.selectedTags = state.selectedTags.map((tag) =>
-            tag.id === action.payload.id ? action.payload : tag,
+            tag.id === updatedTag.id ? updatedTag : tag,
           );
         }
         state.loading = false;
@@ -317,7 +312,7 @@ export const tagSlice = createSlice({
       .addCase(assignTagToItem.fulfilled, (state, action) => {
         const { tagIds } = action.payload;
         state.selectedTags = state.tags.filter((tag) =>
-          tagIds.includes(tag.id),
+          tagIds.includes(tag.id as string),
         );
         state.loading = false;
       })

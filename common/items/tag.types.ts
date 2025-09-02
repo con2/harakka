@@ -6,6 +6,17 @@ export type TagRow = Database["public"]["Tables"]["tags"]["Row"];
 export type TagUpdate = Database["public"]["Tables"]["tags"]["Update"];
 export type TagInsert = Database["public"]["Tables"]["tags"]["Insert"];
 
-export type ExtendedTag = StripNull<
+export type NonNullableTag = StripNull<
   Database["public"]["Views"]["view_tag_popularity"]["Row"]
 >;
+
+export type ExtendedTag = Omit<NonNullableTag, "translations"> & {
+  translations: {
+    en: {
+      name: string;
+    };
+    fi: {
+      name: string;
+    };
+  };
+};

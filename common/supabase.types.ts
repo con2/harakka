@@ -715,7 +715,7 @@ export type Database = {
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "view_tag_popularity"
-            referencedColumns: ["tag_id"]
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1272,50 +1272,13 @@ export type Database = {
           },
         ]
       }
-      view_most_popular_items: {
-        Row: {
-          item_id: string | null
-          name: string | null
-          times_booked: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "booking_items_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "storage_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_items_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_item_location_summary"
-            referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "booking_items_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_item_ownership_summary"
-            referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "booking_items_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_manage_storage_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       view_tag_popularity: {
         Row: {
           assigned_to: number | null
           created_at: string | null
+          id: string | null
           popularity_rank: string | null
           rank_percentile: number | null
-          tag_id: string | null
           tag_name: string | null
           total_bookings: number | null
           translations: Json | null
