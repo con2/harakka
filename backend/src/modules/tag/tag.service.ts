@@ -1,10 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
-import {
-  PostgrestResponse,
-  PostgrestSingleResponse,
-  SupabaseClient,
-} from "@supabase/supabase-js";
+import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { ExtendedTag, TagRow, TagUpdate } from "@common/items/tag.types";
 import { Database } from "@common/database.types";
@@ -18,7 +14,7 @@ export class TagService {
 
   constructor(private supabaseService: SupabaseService) {
     this._supabase =
-      this.supabaseService.getServiceClient() as SupabaseClient<Database>;
+      this.supabaseService.getAnonClient() as SupabaseClient<Database>;
   }
   // Fetch all tags
   async getAllTags(
@@ -30,46 +26,8 @@ export class TagService {
     sortOrder?: string,
   ): Promise<ApiResponse<ExtendedTag>> {
     const supabase = this._supabase;
-    let tagIds: string[] = [];
-    let shouldFilterByIds = false;
 
     // Get tag IDs based on assignment filter
-    if (assignmentFilter === "assigned") {
-      // Get tags that are assigned to at least one item
-      const { data: assignedTagsData, error: assignedError } = await supabase
-        .from("storage_item_tags")
-        .select("tag_id")
-        .not("tag_id", "is", null);
-
-      if (assignedError) throw new Error(assignedError.message);
-
-      tagIds = [...new Set(assignedTagsData?.map((item) => item.tag_id) || [])];
-      shouldFilterByIds = true;
-    } else if (assignmentFilter === "unassigned") {
-      // Get all tag IDs first
-      const { data: allTagsData, error: allTagsError } = await supabase
-        .from("tags")
-        .select("id");
-
-      if (allTagsError) throw new Error(allTagsError.message);
-
-      // Get assigned tag IDs
-      const { data: assignedTagsData, error: assignedError } = await supabase
-        .from("storage_item_tags")
-        .select("tag_id")
-        .not("tag_id", "is", null);
-
-      if (assignedError) throw new Error(assignedError.message);
-
-      const assignedTagIds = new Set(
-        assignedTagsData?.map((item) => item.tag_id) || [],
-      );
-      tagIds =
-        allTagsData
-          ?.filter((tag) => !assignedTagIds.has(tag.id))
-          .map((tag) => tag.id) || [];
-      shouldFilterByIds = true;
-    }
     const { from, to } = getPaginationRange(page, limit);
 
     // Build the base query
@@ -77,27 +35,6 @@ export class TagService {
       .from("view_tag_popularity")
       .select("*", { count: "exact" })
       .range(from, to);
-
-    // Apply assignment filter
-    if (shouldFilterByIds) {
-      if (tagIds.length === 0) {
-        // No tags match the filter, return empty result
-        return {
-          data: [],
-          error: null,
-          count: 0,
-          status: 200,
-          statusText: "OK",
-          metadata: {
-            total: 0,
-            page,
-            totalPages: 0,
-            limit,
-          },
-        };
-      }
-      query = query.in("id", tagIds);
-    }
 
     // Apply search filter if searchTerm exists
     if (searchTerm && searchTerm.trim() !== "") {
