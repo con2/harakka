@@ -153,7 +153,8 @@ BEGIN
       'in_app'::notification_channel,
       'info'::notification_severity,
       jsonb_build_object('new_user_id', NEW.id,
-                         'email', NEW.email),
+                         'email', NEW.email,
+                         'auth_table', true),
       format('user.created:%s:%s', NEW.id, admin_id)
     );
   END LOOP;
@@ -161,10 +162,10 @@ BEGIN
 END;
 $$;
 
--- Ensure the trigger exists on public.user_profiles (not auth.users)
+-- Ensure the trigger exists on auth.users (not public.user_profiles)
 DROP TRIGGER IF EXISTS user_after_insert ON auth.users;
 DROP TRIGGER IF EXISTS user_profiles_after_insert ON public.user_profiles;
-CREATE TRIGGER user_profiles_after_insert
-  AFTER INSERT ON public.user_profiles
+CREATE TRIGGER user_after_insert
+  AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.trg_user_after_insert();
