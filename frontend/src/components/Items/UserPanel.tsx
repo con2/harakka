@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
-import { selectAllItems } from "@/store/slices/itemsSlice";
 import { Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -24,10 +23,10 @@ import {
   fetchAllCategories,
   selectCategories,
 } from "@/store/slices/categoriesSlice";
+import { buildCategoryTree } from "@/store/utils/format";
 
 const UserPanel = () => {
   const tags = useAppSelector(selectAllTags);
-  const items = useAppSelector(selectAllItems);
   const categories = useAppSelector(selectCategories);
   const locations = useAppSelector(selectAllLocations);
   const dispatch = useAppDispatch();
@@ -37,7 +36,7 @@ const UserPanel = () => {
 
   useEffect(() => {
     if (categories.length < 1)
-      void dispatch(fetchAllCategories({ page: 1, limit: 10 }));
+      void dispatch(fetchAllCategories({ page: 1, limit: 50 }));
     if (tags.length < 1) void dispatch(fetchAllTags({ page: 1, limit: 10 }));
     if (locations.length < 1)
       void dispatch(fetchAllLocations({ page: 1, limit: 10 }));
@@ -46,21 +45,6 @@ const UserPanel = () => {
     // eslint-disable-next-line
   }, []);
 
-  // Unique item_type values from items
-  const uniqueItemTypes = Array.from(
-    new Set(
-      items
-        .map((item) => {
-          const itemType =
-            item.translations?.[lang]?.item_type ||
-            item.translations?.[lang === "fi" ? "en" : "fi"]?.item_type;
-          return itemType;
-        })
-        .filter(Boolean)
-        .map((type) => type)
-        .sort((a, b) => a.localeCompare(b)),
-    ),
-  );
   // Shared expand/collapse state per filter list (max 5 visible by default)
   type ExpandableSection = "itemTypes" | "organizations" | "locations" | "tags";
   const MAX_VISIBLE = 5;
@@ -75,7 +59,7 @@ const UserPanel = () => {
   const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
     expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
 
-  const visibleItemTypes = getVisible(uniqueItemTypes, "itemTypes");
+  const mappedCategories = buildCategoryTree(categories);
   const visibleOrganizations = getVisible(organizations, "organizations");
   const visibleLocations = getVisible(locations, "locations");
   const visibleTags = getVisible(tags, "tags");
@@ -169,7 +153,7 @@ const UserPanel = () => {
                     <Button
                       variant="ghost"
                       size={"sm"}
-                      className="text-xs px-1 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white"
+                      className="text-xs px-1 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white h-fit"
                       onClick={() =>
                         setFilters({
                           isActive: true,
@@ -207,8 +191,37 @@ const UserPanel = () => {
                 {" "}
                 {t.userPanel.filters.categories[lang]}
               </label>
-              {categories.map((cat) => {
-                return <Button key={cat.id}>{cat.name}</Button>;
+              {mappedCategories.map((cat) => {
+                const isSelected = filters.categories.includes(cat.id);
+
+                return (
+                  <>
+                    <Button
+                      className="font-semibold justify-between h-fit px-0"
+                      key={cat.id}
+                      onClick={() => {
+                        const newCategories = isSelected
+                          ? filters.categories.filter((c) => c !== cat.id)
+                          : [...filters.categories, cat.id];
+                        handleFilterChange("categories", newCategories);
+                      }}
+                    >
+                      {cat.name}
+                      <ChevronRight
+                        className={`transition-transform ${isSelected ? "transform-[rotate(90deg)]" : "transform-[rotate(0deg)]"}`}
+                      />
+                    </Button>
+                    {isSelected &&
+                      cat.subcategories?.map((subcat) => (
+                        <Button
+                          className="justify-start pl-6 h-fit"
+                          key={subcat.id}
+                        >
+                          {subcat.name}
+                        </Button>
+                      ))}
+                  </>
+                );
               })}
             </div>
 
