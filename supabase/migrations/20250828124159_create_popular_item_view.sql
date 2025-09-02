@@ -1,14 +1,7 @@
-CREATE OR REPLACE VIEW public.view_most_popular_items AS
-SELECT bi.item_id, COUNT(*) AS times_booked, si.translations->'en'->>'item_name' as name
-FROM booking_items bi
-JOIN storage_items si ON bi.item_id = si.id
-GROUP BY bi.item_id, si.translations
-ORDER BY times_booked DESC;
-
 CREATE OR REPLACE VIEW public.view_tag_popularity AS
 WITH ranked_tags AS (
     SELECT
-        t.id AS tag_id,
+        t.id,
         t.translations->'en'->>'name' AS tag_name,
         t.translations,
         t.created_at,

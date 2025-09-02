@@ -128,6 +128,13 @@ export class TagService {
       ascending: order === "asc",
     });
 
+    // assignment filter
+    if (assignmentFilter === "assigned") {
+      query = query.gte("assigned_to", 1);
+    } else if (assignmentFilter === "unassigned") {
+      query = query.lt("assigned_to", 1);
+    }
+
     // Get count
     const result = await query;
     const { error: countError, count, data } = result;
