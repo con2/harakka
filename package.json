@@ -50,7 +50,7 @@
     "s:diff:linked:f": "npx supabase db diff --schema public --linked -f latest_diff",
     "s:dump": "npx supabase db dump -f supabase/schema.sql",
     "s:restart": "env-cmd -f supabase-local.env npx supabase stop && env-cmd -f supabase-local.env npx supabase start",
-    "s:reset": "npx supabase db reset",
+    "s:reset": "env-cmd -f supabase-local.env npx supabase db reset",
     "s:pull": "npx supabase db pull --schema public",
     "s:push": "npx supabase db push",
     "s:status": "npx supabase status",

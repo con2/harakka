@@ -42,6 +42,8 @@ export function subscribeToNotifications(
   userId: string,
   onNew: (n: NotificationRow) => void,
 ): () => void {
+  console.log("🔔 [DEBUG] Setting up notifications for user:", userId);
+
   // -------- initial unread fetch
   supabase
     .from("notifications")
@@ -49,9 +51,29 @@ export function subscribeToNotifications(
     .eq("user_id", userId)
     .is("read_at", null)
     .order("created_at", { ascending: false })
-    .then(({ data }) => data?.forEach(onNew));
+    .then(({ data, error }) => {
+      console.log("🔔 [DEBUG] Initial fetch result:", {
+        data,
+        error,
+        count: data?.length || 0,
+      });
+      if (error) {
+        console.error("🔔 [DEBUG] Initial fetch error:", error);
+      } else {
+        console.log(
+          "🔔 [DEBUG] Found",
+          data?.length || 0,
+          "unread notifications",
+        );
+        data?.forEach((notification, index) => {
+          console.log(`🔔 [DEBUG] Notification ${index + 1}:`, notification);
+          onNew(notification);
+        });
+      }
+    });
 
   // -------- live inserts via Realtime
+  console.log("🔔 [DEBUG] Setting up Realtime subscription...");
   const channel = supabase
     .channel("user:notifications")
     .on(
@@ -62,13 +84,18 @@ export function subscribeToNotifications(
         table: "notifications",
         filter: `user_id=eq.${userId}`,
       },
-      (payload: RealtimePostgresInsertPayload<NotificationRow>) =>
-        onNew(payload.new),
+      (payload: RealtimePostgresInsertPayload<NotificationRow>) => {
+        console.log("🔔 [DEBUG] Realtime notification received:", payload);
+        onNew(payload.new);
+      },
     )
-    .subscribe();
+    .subscribe((status) => {
+      console.log("🔔 [DEBUG] Realtime subscription status:", status);
+    });
 
   // -------- caller's cleanup
   return () => {
+    console.log("🔔 [DEBUG] Cleaning up notification subscription");
     void supabase.removeChannel(channel);
   };
 }

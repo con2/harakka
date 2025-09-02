@@ -47,7 +47,51 @@ type NotificationRow = DBTables<"notifications">;
 
 export const Notifications: React.FC<Props> = ({ userId }) => {
   const [feed, setFeed] = React.useState<NotificationRow[]>([]);
+  console.log("🔔 [COMPONENT] User ID:", userId);
+  console.log("🔔 [COMPONENT] Feed length:", feed.length);
 
+  // Debug: Manual check for notifications
+  React.useEffect(() => {
+    const checkNotifications = async () => {
+      if (!userId) return;
+
+      console.log("🔔 [COMPONENT] Manually checking notifications in DB...");
+
+      // Check auth user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      console.log("🔔 [COMPONENT] Auth user ID:", user?.id);
+      console.log("🔔 [COMPONENT] Selected user ID:", userId);
+      console.log("🔔 [COMPONENT] IDs match:", user?.id === userId);
+
+      // Try with both user IDs
+      const queries = [
+        { label: "Selected User ID", id: userId },
+        { label: "Auth User ID", id: user?.id },
+      ];
+
+      for (const { label, id } of queries) {
+        if (!id) continue;
+
+        const { data, error, count } = await supabase
+          .from("notifications")
+          .select("*", { count: "exact" })
+          .eq("user_id", id)
+          .order("created_at", { ascending: false });
+
+        console.log(`🔔 [COMPONENT] ${label} check result:`, {
+          id,
+          count,
+          data: data?.slice(0, 2), // Show first 2
+          error,
+          totalFound: data?.length,
+        });
+      }
+    };
+
+    checkNotifications();
+  }, [userId]);
   const feedUniq = React.useMemo(
     () => Array.from(new Map(feed.map((n) => [n.id, n])).values()),
     [feed],
@@ -70,9 +114,29 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
 
   // live subscription — mount / unmount
   React.useEffect(() => {
-    const unsubscribe = subscribeToNotifications(userId, (n: NotificationRow) =>
-      setFeed((prev) => upsert(prev, n)),
+    console.log(
+      "🔔 [COMPONENT] Setting up notification subscription for userId:",
+      userId,
     );
+    if (!userId) {
+      console.error("🔔 [COMPONENT] No userId provided, skipping subscription");
+      return;
+    }
+
+    const unsubscribe = subscribeToNotifications(
+      userId,
+      (n: NotificationRow) => {
+        console.log("🔔 [COMPONENT] Received notification callback:", n);
+        setFeed((prev) => {
+          console.log("🔔 [COMPONENT] Previous feed length:", prev.length);
+          const newFeed = upsert(prev, n);
+          console.log("🔔 [COMPONENT] New feed length:", newFeed.length);
+          return newFeed;
+        });
+      },
+    );
+
+    console.log("🔔 [COMPONENT] Subscription setup complete");
     return unsubscribe;
   }, [userId, upsert]);
 
@@ -198,7 +262,8 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                     if (n.type === "user.created") {
                       void navigate("/admin/users");
                     } else if (
-                      (n.type === "booking.status_approved" ||
+                      (n.type === "booking.created" ||
+                        n.type === "booking.status_approved" ||
                         n.type === "booking.status_rejected") &&
                       "booking_id" in n.metadata
                     ) {
