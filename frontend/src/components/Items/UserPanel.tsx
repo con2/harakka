@@ -195,10 +195,9 @@ const UserPanel = () => {
                 const isSelected = filters.categories.includes(cat.id);
 
                 return (
-                  <>
+                  <div key={cat.id} className="flex flex-col gap-2">
                     <Button
                       className="justify-between h-fit px-0"
-                      key={cat.id}
                       onClick={() => {
                         const newCategories = isSelected
                           ? filters.categories.filter((c) => c !== cat.id)
@@ -207,7 +206,7 @@ const UserPanel = () => {
                       }}
                     >
                       {cat.name}
-                      {cat.subcategories.length > 0 && (
+                      {cat.subcategories!.length > 0 && (
                         <ChevronRight
                           className={`transition-transform ${isSelected ? "transform-[rotate(90deg)]" : "transform-[rotate(0deg)]"}`}
                         />
@@ -222,7 +221,7 @@ const UserPanel = () => {
                           {subcat.name}
                         </Button>
                       ))}
-                  </>
+                  </div>
                 );
               })}
             </div>

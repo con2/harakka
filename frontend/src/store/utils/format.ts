@@ -2,7 +2,7 @@ type Category = {
   id: string;
   parent_id: string | null;
   name: string;
-  subcategories: Category[];
+  subcategories?: Category[];
 };
 
 export function buildCategoryTree(categories: Category[]): Category[] {
@@ -20,7 +20,7 @@ export function buildCategoryTree(categories: Category[]): Category[] {
       // find parent and push into its subcategories
       const parent = map.get(cat.parent_id);
       if (parent) {
-        parent.subcategories.push(map.get(cat.id)!);
+        parent.subcategories!.push(map.get(cat.id)!);
       }
     } else {
       // root category

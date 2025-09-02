@@ -202,7 +202,6 @@ export class StorageItemsService {
     });
 
     if (order_by) query.order(order_by ?? "created_at", { ascending });
-
     const result = await query;
 
     if (result.error) {

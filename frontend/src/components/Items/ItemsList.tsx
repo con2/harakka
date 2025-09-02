@@ -32,7 +32,7 @@ const ItemsList: React.FC = () => {
   const { lang } = useLanguage();
 
   // Get all filters from the UserPanel
-  const { isActive, itemTypes, tagIds, locationIds, orgIds } = filters;
+  const { isActive, categories, tagIds, locationIds, orgIds } = filters;
 
   //state for search query
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,7 +51,7 @@ const ItemsList: React.FC = () => {
       searchquery: debouncedSearchQuery,
       tag_filters: tagIds,
       activity_filter: isActive ? ("active" as const) : ("inactive" as const),
-      categories: itemTypes,
+      categories: categories,
       location_filter: locationIds,
       availability_min: availMin,
       availability_max: availMax,
@@ -63,7 +63,7 @@ const ItemsList: React.FC = () => {
       debouncedSearchQuery,
       tagIds,
       isActive,
-      itemTypes,
+      categories,
       locationIds,
       availMin,
       availMax,

@@ -99,7 +99,7 @@ export function mapImageData(
 // We only declare the methods we actually use so this stays compatible with
 // both head/count queries and data queries.
 export type FilterableQuery = {
-  or(expr: string): unknown;
+  or(expr: string, { referencedTable }: { referencedTable?: string }): unknown;
   eq(column: string, value: unknown): unknown;
   overlaps(column: string, value: string[]): unknown;
   in(column: string, values: string[]): unknown;
@@ -193,11 +193,11 @@ export function applyItemFilters<T extends FilterableQuery>(
         `en_item_name.ilike.%${searchquery}%,` +
         `en_item_type.ilike.%${searchquery}%,` +
         `location_name.ilike.%${searchquery}%`,
+      {},
     );
   }
 
   if (typeof isActive === "boolean") query.eq("is_active", isActive);
-
   if (tags) query.overlaps("tag_ids", tags.split(","));
 
   if (location_filter) {
@@ -210,8 +210,10 @@ export function applyItemFilters<T extends FilterableQuery>(
 
   if (org_filter) query.in("organization_id", org_filter.split(","));
 
-  if (category) query.in("en_item_type", category.split(","));
-
+  if (category) {
+    const categoryIds = category.split(",");
+    query.in("category_id", categoryIds);
+  }
   if (from_date) query.gte("created_at", from_date);
   if (to_date) query.lt("created_at", to_date);
 
@@ -219,7 +221,7 @@ export function applyItemFilters<T extends FilterableQuery>(
   if (availExpr) {
     // Wrap the availability checks using or(and(...), and(...)) to handle
     // both the current-in-storage path and the total fallback path.
-    query.or(availExpr);
+    query.or(availExpr, {});
   }
 
   return query;

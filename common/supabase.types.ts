@@ -742,6 +742,7 @@ export type Database = {
         Row: {
           available_quantity: number | null
           average_rating: number | null
+          category_id: string | null
           compartment_id: string | null
           created_at: string | null
           id: string
@@ -755,6 +756,7 @@ export type Database = {
         Insert: {
           available_quantity?: number | null
           average_rating?: number | null
+          category_id?: string | null
           compartment_id?: string | null
           created_at?: string | null
           id?: string
@@ -768,6 +770,7 @@ export type Database = {
         Update: {
           available_quantity?: number | null
           average_rating?: number | null
+          category_id?: string | null
           compartment_id?: string | null
           created_at?: string | null
           id?: string
@@ -779,6 +782,13 @@ export type Database = {
           translations?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "storage_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "storage_items_compartment_id_fkey"
             columns: ["compartment_id"]
