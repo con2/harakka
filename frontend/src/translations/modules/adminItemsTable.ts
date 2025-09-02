@@ -49,6 +49,10 @@ export const adminItemsTable = {
     },
   },
   columns: {
+    viewDetails: {
+      fi: "Näytä tiedot",
+      en: "View Details",
+    },
     name: {
       fi: "Tuotteen nimi",
       en: "Item Name",

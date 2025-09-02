@@ -73,6 +73,8 @@ import { locationsList } from "./modules/locationsList";
 import { organizations } from "./modules/organizations";
 import { organizationLogoUploader } from "./modules/organizationLogoUploader";
 import { common } from "./modules/common";
+import { itemDetailsPage } from "./modules/itemDetailsPage";
+import { updateItemForm } from "./modules/updateItemForm";
 
 export const t = {
   rolesList,
@@ -122,6 +124,7 @@ export const t = {
   timeframeSelector,
   unauthorized,
   updateItemModal,
+  updateItemForm,
   userDelete,
   userBanning,
   userEditModal,
@@ -148,4 +151,5 @@ export const t = {
   locationsList,
   organizations,
   organizationLogoUploader,
+  itemDetailsPage,
 };

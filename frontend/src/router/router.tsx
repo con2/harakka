@@ -39,6 +39,7 @@ import { RoleManagement } from "@/components/Admin/Roles/RoleManagement";
 import AddItem from "@/pages/AdminPanel/AddItem";
 import OrganizationPage from "@/pages/OrganizationPage";
 import OrganizationsList from "../components/Organization/OrganizationsList";
+import ItemDetailsPage from "@/pages/AdminPanel/ItemDetailsPage";
 
 export const router = createBrowserRouter([
   {
@@ -103,6 +104,16 @@ export const router = createBrowserRouter([
                 allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
               >
                 <AdminItemsTable />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "items/:id",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["storage_manager", "tenant_admin"]}
+              >
+                <ItemDetailsPage />
               </ProtectedRoute>
             ),
           },
