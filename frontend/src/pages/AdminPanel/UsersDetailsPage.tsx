@@ -17,6 +17,15 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Clipboard } from "lucide-react";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
+// Ban flows are now handled inline on this page (no modals)
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+// Ban history handled by the UserBanHistory component
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useRoles } from "@/hooks/useRoles";
@@ -32,6 +41,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import UserBanHistory from "@/components/Admin/UserManagement/Banning/UserBanHistory";
+import UserBan from "@/components/Admin/UserManagement/Banning/UserBan";
+import UnbanUser from "@/components/Admin/UserManagement/Banning/UnbanUser";
 
 const UsersDetailsPage = () => {
   const { id } = useParams();
@@ -75,6 +87,11 @@ const UsersDetailsPage = () => {
   };
 
   const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
+  // Banning state
+  const [activeTab, setActiveTab] = useState<"history" | "ban" | "unban">(
+    "history",
+  );
+
   const lastRoleEntry = roleAssignments[roleAssignments.length - 1];
   const isAssigningRole =
     roleAssignments.length > 0 &&
@@ -282,6 +299,8 @@ const UsersDetailsPage = () => {
     };
   }, [id, dispatch]);
 
+  // Ban history is loaded by the UserBanHistory component when it's mounted.
+
   if (loading || !user) {
     return <Spinner containerClasses="py-10" />;
   }
@@ -297,7 +316,7 @@ const UsersDetailsPage = () => {
         </Button>
       </div>
 
-      <div className="mt-6 max-w-3xl">
+      <div className="mt-6 max-w-5xl">
         <h2 className="text-xl font-semibold mb-4">{user.full_name}</h2>
         {/* User details section */}
         <div className="grid grid-cols-2 gap-3">
@@ -495,6 +514,64 @@ const UsersDetailsPage = () => {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Banning section - lazy load ban history inside accordion */}
+        <div className="mt-6">
+          <Accordion type="single" collapsible>
+            <AccordionItem value="banning">
+              <AccordionTrigger className="text-lg">
+                {t.userBanning.history.title[lang]}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4">
+                  <Tabs
+                    value={activeTab}
+                    onValueChange={(v) =>
+                      setActiveTab(v as "history" | "ban" | "unban")
+                    }
+                  >
+                    <TabsList className="w-full">
+                      <TabsTrigger value="history" className="w-1/3">
+                        {t.userBanning.tabs.history[lang]}
+                      </TabsTrigger>
+                      <TabsTrigger value="ban" className="w-1/3">
+                        {t.userBanning.tabs.ban[lang]}
+                      </TabsTrigger>
+                      <TabsTrigger value="unban" className="w-1/3">
+                        {t.userBanning.tabs.unban[lang]}
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="history">
+                      <div className="max-h-64 overflow-y-auto">
+                        {/* Render ban history component only when this tab is active */}
+                        <UserBanHistory user={user} />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="ban">
+                      <div className="pt-2">
+                        <UserBan
+                          user={user}
+                          onSuccess={() => setActiveTab("history")}
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="unban">
+                      <div className="pt-2">
+                        <UnbanUser
+                          user={user}
+                          onSuccess={() => setActiveTab("history")}
+                        />
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </div>
     </div>

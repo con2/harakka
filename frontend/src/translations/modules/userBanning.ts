@@ -231,8 +231,8 @@ export const userBanning = {
   },
   history: {
     title: {
-      fi: "Käyttäjän estohistoria",
-      en: "User Ban History",
+      fi: "Käyttäjän estot",
+      en: "User Banning",
     },
     noBans: {
       fi: "Ei estoja",
@@ -307,6 +307,20 @@ export const userBanning = {
         fi: "Syy eston poistamiselle...",
         en: "Reason for unbanning...",
       },
+    },
+  },
+  tabs: {
+    history: {
+      fi: "Historia",
+      en: "History",
+    },
+    ban: {
+      fi: "Estä",
+      en: "Ban",
+    },
+    unban: {
+      fi: "Poista esto",
+      en: "Unban",
     },
   },
 };

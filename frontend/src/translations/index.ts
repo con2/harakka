@@ -40,6 +40,7 @@ import { unauthorized } from "./modules/unauthorized";
 import { updateItemModal } from "./modules/updateItemModal";
 import { userDelete } from "./modules/userDelete";
 import { userBanning } from "./modules/userBanning";
+import { userBan } from "./modules/userBan";
 import { userEditModal } from "./modules/userEditModal";
 import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
@@ -125,6 +126,7 @@ export const t = {
   updateItemModal,
   userDelete,
   userBanning,
+  userBan,
   userEditModal,
   userGuide,
   userPanel,
