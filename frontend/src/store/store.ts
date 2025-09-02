@@ -13,6 +13,7 @@ import rolesReducer from "./slices/rolesSlice";
 import userBanningReducer from "./slices/userBanningSlice";
 import organizationReducer from "./slices/organizationSlice";
 import organizationLocationsReducer from "./slices/organizationLocationsSlice";
+import categoriesReducer from "./slices/categoriesSlice";
 
 // add slices in the reducer object
 export const store = configureStore({
@@ -31,6 +32,7 @@ export const store = configureStore({
     userBanning: userBanningReducer,
     organizations: organizationReducer,
     orgLocations: organizationLocationsReducer,
+    categories: categoriesReducer,
   },
 });
 

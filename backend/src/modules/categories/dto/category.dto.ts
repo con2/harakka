@@ -2,7 +2,7 @@ import { IsNotEmpty, IsOptional } from "class-validator";
 
 export class CreateCategoryDto {
   @IsOptional()
-  parent_name: string;
+  parent_id: string;
   @IsNotEmpty()
   name: string;
 }

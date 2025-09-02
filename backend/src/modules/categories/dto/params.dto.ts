@@ -13,12 +13,12 @@ export class GetParamsDto {
   @Type(() => Number)
   @IsNumber()
   @IsOptional()
-  page: number = 1;
+  page: number;
 
   @Type(() => Number)
   @IsNumber()
   @IsOptional()
-  limit: number = 10;
+  limit: number;
 }
 
 export class CreateParamsDto {
