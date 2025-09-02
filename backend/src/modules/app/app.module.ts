@@ -107,10 +107,17 @@ export class AppModule implements NestModule {
         { path: "health", method: RequestMethod.GET },
         { path: "", method: RequestMethod.GET }, // Root endpoint
 
-        // Public storage and item endpoints (for front page)
-        { path: "storage", method: RequestMethod.GET },
+        // Public storage-items routes
         { path: "storage-items", method: RequestMethod.GET },
-        { path: "storage-items/*path", method: RequestMethod.GET }, // For specific item endpoints
+        { path: "storage-items/ordered", method: RequestMethod.GET },
+        { path: "storage-items/count", method: RequestMethod.GET },
+        { path: "storage-items/:id", method: RequestMethod.GET },
+        { path: "storage-items/by-tag/:tagId", method: RequestMethod.GET },
+        {
+          path: "storage-items/availability/:itemId",
+          method: RequestMethod.GET,
+        },
+
         { path: "api/storage-locations", method: RequestMethod.GET },
         { path: "storage-locations", method: RequestMethod.GET },
         { path: "storage-locations/*path", method: RequestMethod.GET },
@@ -147,11 +154,7 @@ export class AppModule implements NestModule {
         OrganizationsController,
 
         // Protected HTTP methods (all routes except excluded ones)
-        { path: "*", method: RequestMethod.POST },
-        { path: "*", method: RequestMethod.PUT },
-        { path: "*", method: RequestMethod.PATCH },
-        { path: "*", method: RequestMethod.DELETE },
-        { path: "*", method: RequestMethod.GET }, // Protect GET routes too, except excluded ones
+        { path: "*", method: RequestMethod.ALL },
       );
   }
 }

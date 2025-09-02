@@ -69,7 +69,7 @@ export class RolesGuard implements CanActivate {
     const userRoles = req.user?.app_metadata?.roles ?? [];
 
     // Optional super_admin bypass
-    if (userRoles.some((r) => r.role_name === "super_admin")) return true;
+    //if (userRoles.some((r) => r.role_name === "super_admin")) return true;
 
     //Allow "user" role to access/modify their own user resource
     if (

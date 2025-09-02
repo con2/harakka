@@ -11,21 +11,19 @@ import {
   StorageItemWithJoin,
   ValidItemOrder,
 } from "./interfaces/storage-item.interface";
-import { Request } from "express";
 import { SupabaseService } from "../supabase/supabase.service";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
-import { applyItemFilters } from "@src/utils/storage-items.utils";
+import {
+  applyItemFilters,
+  payloadToStorageItem,
+} from "@src/utils/storage-items.utils";
 import { ApiResponse, ApiSingleResponse } from "@common/response.types"; // Import ApiSingleResponse for type safety
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { TagService } from "../tag/tag.service";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 import { ItemFormData } from "@common/items/form.types";
-import {
-  mapItemImages,
-  mapStorageItems,
-  mapTagLinks,
-} from "@src/utils/storage-items.utils";
+import { mapItemImages, mapTagLinks } from "@src/utils/storage-items.utils";
 import { ItemImagesService } from "../item-images/item-images.service";
 import { parse, ParseResult } from "papaparse";
 import { Item, ItemSchema } from "./schema/item-schema";
@@ -36,7 +34,7 @@ import { CSVItem, ProcessedCSV } from "@common/items/csv.types";
 @Injectable()
 export class StorageItemsService {
   constructor(
-    private readonly supabaseClient: SupabaseService, // Supabase client for database queries
+    private readonly supabaseClient: SupabaseService,
     private readonly tagService: TagService,
     private readonly imageService: ItemImagesService,
   ) {}
@@ -49,13 +47,12 @@ export class StorageItemsService {
    * @returns
    */
   async getAllItems(
+    supabase: SupabaseClient,
     page: number,
     limit: number,
     active?: boolean,
   ): Promise<ApiResponse<StorageItem>> {
-    const supabase = this.supabaseClient.getServiceClient();
     const { from, to } = getPaginationRange(page, limit);
-
     const query = supabase
       .from("storage_items")
       .select(
@@ -109,10 +106,146 @@ export class StorageItemsService {
     };
   }
 
-  // 2. get one item
-  async getItemById(id: string): Promise<StorageItem | null> {
-    const supabase = this.supabaseClient.getServiceClient();
+  /**
+   * Get ordered and/or filtered items
+   * @param supabase The Supabase client instance used for querying.
+   * @param page The page number to retrieve (1-based index).
+   * @param limit The number of items per page.
+   * @param ascending Whether to sort in ascending order (true) or descending order (false). Default is true.
+   * @param order_by The column to order the results by. Default is "created_at".
+   * @param searchquery Optional. A search string to filter items by name, type, or location.
+   * @param tags Optional. A comma-separated list of tag IDs to filter items by.
+   * @param isActive Optional. Filter items by their active status (true for active, false for inactive).
+   * @param location_filter Optional. Filter items by location.
+   * @param category Optional. Filter items by category.
+   * @param availability_min Optional. The minimum availability threshold to filter items.
+   * @param availability_max Optional. The maximum availability threshold to filter items.
+   * @param from_date Optional. The start date for filtering items by availability.
+   * @param to_date Optional. The end date for filtering items by availability.
+   * @param org_filter Optional. Filter items by organization.
+   * @returns An object containing the filtered and ordered storage items, along with pagination metadata.
+   */
+  async getOrderedStorageItems(
+    supabase: SupabaseClient,
+    page: number,
+    limit: number,
+    ascending: boolean,
+    order_by?: ValidItemOrder,
+    searchquery?: string,
+    tags?: string,
+    isActive?: boolean,
+    location_filter?: string,
+    category?: string,
+    availability_min?: number,
+    availability_max?: number,
+    from_date?: string,
+    to_date?: string,
+    org_filter?: string,
+  ) {
+    // Build a base query without range for counting and apply all filters
+    const base = applyItemFilters(
+      supabase
+        .from("view_manage_storage_items")
+        .select("*", { count: "exact", head: true })
+        .eq("is_deleted", false),
+      {
+        searchquery,
+        isActive,
+        tags,
+        location_filter,
+        category,
+        from_date,
+        to_date,
+        availability_min,
+        availability_max,
+        org_filter,
+      },
+    );
+    const countResult = await base;
+    if (countResult.error) {
+      handleSupabaseError(countResult.error);
+    }
+    const total = countResult.count ?? 0;
+    const meta = getPaginationMeta(total, page, limit);
 
+    // If requested page is out of range, return empty response instead of querying with invalid range
+    if (meta.total === 0 || page > meta.totalPages) {
+      return {
+        data: [],
+        error: null,
+        status: 200,
+        statusText: "OK",
+        count: total,
+        metadata: meta,
+      };
+    }
+
+    // Now fetch the actual page data with range
+    const { from, to } = getPaginationRange(page, limit);
+    let query = supabase
+      .from("view_manage_storage_items")
+      .select("*", { count: "exact" })
+      .eq("is_deleted", false)
+      .range(from, to);
+
+    query = applyItemFilters(query, {
+      searchquery,
+      isActive,
+      tags,
+      location_filter,
+      category,
+      from_date,
+      to_date,
+      availability_min,
+      availability_max,
+      org_filter,
+    });
+
+    if (order_by) query.order(order_by ?? "created_at", { ascending });
+
+    const result = await query;
+
+    if (result.error) {
+      handleSupabaseError(result.error);
+    }
+
+    const pagination_meta = getPaginationMeta(result.count, page, limit);
+    return {
+      ...result,
+      metadata: pagination_meta,
+    };
+  }
+
+  /**
+   * Get the total count of storage items.
+   *
+   * @param req The authenticated request object, which includes the Supabase client instance.
+   * @returns An object containing the total count of storage items.
+   */
+  async getItemCount(req: AuthRequest, role: string, orgId: string) {
+    const supabase = req.supabase;
+    const result = await supabase
+      .from("storage_items")
+      .select(undefined, { count: "exact" })
+      .eq("org_id", orgId);
+    if (result.error) handleSupabaseError(result.error);
+
+    return {
+      ...result,
+      data: result.count ?? 0,
+    };
+  }
+
+  /**
+   * Get a storage item by its ID.
+   * @param supabase The Supabase client instance.
+   * @param id The ID of the storage item.
+   * @returns The storage item, or null if not found.
+   */
+  async getItemById(
+    supabase: SupabaseClient,
+    id: string,
+  ): Promise<StorageItem | null> {
     // Query to select item along with its tags
     const { data, error }: PostgrestSingleResponse<StorageItemWithJoin> =
       await supabase
@@ -154,6 +287,97 @@ export class StorageItemsService {
   }
 
   /**
+   * Get storage items by tag.
+   * @param supabase The Supabase client instance.
+   * @param tagId The ID of the tag.
+   * @returns A list of storage items associated with the tag.
+   */
+  async getItemsByTag(supabase: SupabaseClient, tagId: string) {
+    const {
+      data,
+      error,
+    }: PostgrestResponse<{ item_id: string; items: StorageItem[] }> =
+      await supabase
+        .from("storage_item_tags")
+        .select("item_id, items(*)") // Select foreign table 'items' if it's a relation
+        .eq("tag_id", tagId);
+
+    if (error) handleSupabaseError(error);
+
+    // The data will now have the related 'items' fetched in the same query
+    return data.map((entry) => entry.items); // Extract items from the relation
+  }
+
+  /**
+   * Check the availability of a storage item within a date range.
+   * @param supabase The Supabase client instance.
+   * @param itemId The ID of the storage item.
+   * @param startDate The start date of the availability check.
+   * @param endDate The end date of the availability check.
+   * @returns The availability details of the storage item.
+   */
+  async checkAvailability(
+    supabase: SupabaseClient,
+    itemId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<
+    ApiSingleResponse<{
+      item_id: string;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }>
+  > {
+    try {
+      const { item_id, availableQuantity, alreadyBookedQuantity } =
+        await calculateAvailableQuantity(supabase, itemId, startDate, endDate);
+
+      return {
+        data: {
+          item_id,
+          alreadyBookedQuantity,
+          availableQuantity,
+        },
+        error: null,
+        status: 200,
+        statusText: "OK",
+        count: null,
+      };
+    } catch (err) {
+      if (err instanceof Error) {
+        return {
+          data: null,
+          error: {
+            message: err.message,
+            code: "availability-check_error",
+            details: "",
+            hint: "",
+            name: "availability-check_error",
+          },
+          status: 400,
+          statusText: "Error",
+          count: null,
+        };
+      }
+
+      // Fallback
+      return {
+        data: null,
+        error: {
+          message: "Unknown error",
+          code: "availability-check_error",
+          details: "",
+          hint: "",
+          name: "availability-check_error",
+        },
+        status: 400,
+        statusText: "Error",
+        count: null,
+      };
+    }
+  }
+
+  /**
    * Insert items with org data, image data, tags
    * @param req An authorized request
    * @param payload Can be either one item with an array of tagIds or an array of items of the same structure
@@ -162,16 +386,16 @@ export class StorageItemsService {
   async createItems(
     req: AuthRequest,
     payload: ItemFormData,
-  ): Promise<{ status: number; error: string | null }> {
+  ): Promise<{ status: number; error: string | null; items?: StorageItem[] }> {
     const supabase = req.supabase;
-    const mappedItems = mapStorageItems(payload);
+    const itemsToInsert = payloadToStorageItem(payload);
     const mappedImageData = mapItemImages(payload);
-    const item_ids = mappedItems.map((i) => i.id);
+    const item_ids = itemsToInsert.map((i) => i.id);
 
     try {
       // Insert item data
       const { error }: PostgrestMaybeSingleResponse<StorageItem> =
-        await supabase.from("storage_items").insert(mappedItems);
+        await supabase.from("storage_items").insert(itemsToInsert);
       if (error) {
         throw new Error(error.message);
       }
@@ -191,7 +415,8 @@ export class StorageItemsService {
         throw new Error(imageError.message);
       }
 
-      return { status: 201, error: null };
+      // return status and item details
+      return { status: 201, error: null, items: itemsToInsert };
     } catch (error) {
       console.log(error);
       // Rollback: Clean up any partially inserted data
@@ -344,207 +569,6 @@ export class StorageItemsService {
       return { success: false, id: item_id };
     }
     return { success: true, id: item_id };
-  }
-
-  // 6. get Items by tag
-  // TODO: needs to be fixed and updated
-  async getItemsByTag(req: Request, tagId: string) {
-    const supabase = req["supabase"] as SupabaseClient;
-    const {
-      data,
-      error,
-    }: PostgrestResponse<{ item_id: string; items: StorageItem[] }> =
-      await supabase
-        .from("storage_item_tags")
-        .select("item_id, items(*)") // Select foreign table 'items' if it's a relation
-        .eq("tag_id", tagId);
-
-    if (error) throw new Error(error.message);
-
-    // The data will now have the related 'items' fetched in the same query
-    return data.map((entry) => entry.items); // Extract items from the relation
-  }
-
-  /**
-   * Get ordered and/or filtered items
-   * @param page What page number is requested
-   * @param limit How many rows to retrieve
-   * @param ascending If to sort order smallest-largest (e.g a-z) or descending (z-a). Default true / ascending.
-   * @param order_by What column to order the columns by. Default "created_at". See {Valid}
-   * @param searchquery Optional. Filter items by a string. Currently supports search by item name, item type and location name
-   * @param tags Optional. Filter by tag IDs
-   * @param activity_filter Optional. Filter by active/inactive status
-   * @returns Matching items
-   */
-  async getOrderedStorageItems(
-    page: number,
-    limit: number,
-    ascending: boolean,
-    order_by?: ValidItemOrder,
-    searchquery?: string,
-    tags?: string,
-    isActive?: boolean,
-    location_filter?: string,
-    category?: string,
-    availability_min?: number,
-    availability_max?: number,
-    from_date?: string,
-    to_date?: string,
-    org_filter?: string,
-  ) {
-    const supabase = this.supabaseClient.getAnonClient();
-    // Build a base query without range for counting and apply all filters
-    const base = applyItemFilters(
-      supabase
-        .from("view_manage_storage_items")
-        .select("*", { count: "exact", head: true })
-        .eq("is_deleted", false),
-      {
-        searchquery,
-        isActive,
-        tags,
-        location_filter,
-        category,
-        from_date,
-        to_date,
-        availability_min,
-        availability_max,
-        org_filter,
-      },
-    );
-    const countResult = await base;
-    if (countResult.error) {
-      console.log(countResult.error);
-      throw new Error("Failed to get matching items");
-    }
-    const total = countResult.count ?? 0;
-    const meta = getPaginationMeta(total, page, limit);
-
-    // If requested page is out of range, return empty response instead of querying with invalid range
-    if (meta.total === 0 || page > meta.totalPages) {
-      return {
-        data: [],
-        error: null,
-        status: 200,
-        statusText: "OK",
-        count: total,
-        metadata: meta,
-      };
-    }
-
-    // Now fetch the actual page data with range
-    const { from, to } = getPaginationRange(page, limit);
-    let query = supabase
-      .from("view_manage_storage_items")
-      .select("*", { count: "exact" })
-      .eq("is_deleted", false)
-      .range(from, to);
-
-    query = applyItemFilters(query, {
-      searchquery,
-      isActive,
-      tags,
-      location_filter,
-      category,
-      from_date,
-      to_date,
-      availability_min,
-      availability_max,
-      org_filter,
-    });
-
-    if (order_by) query.order(order_by ?? "created_at", { ascending });
-
-    const result = await query;
-    const { error, count } = result;
-
-    if (error) {
-      console.log(error);
-      throw new Error("Failed to get matching items");
-    }
-
-    const pagination_meta = getPaginationMeta(count, page, limit);
-    return {
-      ...result,
-      metadata: pagination_meta,
-    };
-  }
-
-  // 9. check availability of item by date range - calculateAvailableQuantity
-  async checkAvailability(
-    itemId: string,
-    startDate: string,
-    endDate: string,
-    supabase: SupabaseClient,
-  ): Promise<
-    ApiSingleResponse<{
-      item_id: string;
-      alreadyBookedQuantity: number;
-      availableQuantity: number;
-    }>
-  > {
-    try {
-      const { item_id, availableQuantity, alreadyBookedQuantity } =
-        await calculateAvailableQuantity(supabase, itemId, startDate, endDate);
-
-      return {
-        data: {
-          item_id,
-          alreadyBookedQuantity,
-          availableQuantity,
-        },
-        error: null,
-        status: 200,
-        statusText: "OK",
-        count: null,
-      };
-    } catch (err) {
-      if (err instanceof Error) {
-        return {
-          data: null,
-          error: {
-            message: err.message,
-            code: "availability-check_error",
-            details: "",
-            hint: "",
-            name: "availability-check_error",
-          },
-          status: 400,
-          statusText: "Error",
-          count: null,
-        };
-      }
-
-      // Fallback
-      return {
-        data: null,
-        error: {
-          message: "Unknown error",
-          code: "availability-check_error",
-          details: "",
-          hint: "",
-          name: "availability-check_error",
-        },
-        status: 400,
-        statusText: "Error",
-        count: null,
-      };
-    }
-  }
-
-  async getItemCount(
-    supabase: SupabaseClient,
-  ): Promise<ApiSingleResponse<number>> {
-    const result: PostgrestResponse<undefined> = await supabase
-      .from("storage_items")
-      .select(undefined, { count: "exact" });
-
-    if (result.error) handleSupabaseError(result.error);
-
-    return {
-      ...result,
-      data: result.count ?? 0,
-    };
   }
 
   parseCSV(csv: Express.Multer.File): ProcessedCSV {
