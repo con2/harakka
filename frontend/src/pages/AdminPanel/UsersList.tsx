@@ -18,7 +18,7 @@ import {
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle } from "lucide-react";
+import { Eye, LoaderCircle } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigate } from "react-router-dom";
@@ -27,7 +27,6 @@ import { useRoles } from "@/hooks/useRoles";
 import { useBanPermissions } from "@/hooks/useBanPermissions";
 import { selectAllUserRoles } from "@/store/slices/rolesSlice";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import UserEditModal from "@/components/Admin/UserManagement/UserEditModal";
 import UserBanActionsDropdown from "@/components/Admin/UserManagement/Banning/UserBanActionsDropdown";
 import UserBanModal from "@/components/Admin/UserManagement/Banning/UserBanModal";
 import UserBanHistoryModal from "@/components/Admin/UserManagement/Banning/UserBanHistoryModal";
@@ -298,6 +297,24 @@ const UsersList = () => {
   // ————————————— Columns —————————————
   const columns: ColumnDef<UserProfile>[] = [
     {
+      id: "view",
+      size: 5,
+      cell: () => {
+        return (
+          <div className="flex space-x-1">
+            <Button
+              variant={"ghost"}
+              size="sm"
+              title={t.bookingList.buttons.viewDetails[lang]}
+              className="hover:text-slate-900 hover:bg-slate-300"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "full_name",
       header: t.usersList.columns.name[lang],
       size: 100,
@@ -390,8 +407,6 @@ const UsersList = () => {
       cell: ({ row }) => {
         const targetUser = row.original;
 
-        const canEdit = isAuthorized;
-
         // Banning permission logic based on hierarchy and org:
         // - super_admin/superVera: Can ban anyone from anywhere
         // - tenant_admin: Can only ban users whose role is below their own within their active org
@@ -415,7 +430,6 @@ const UsersList = () => {
 
         return (
           <div className="flex gap-2">
-            {canEdit && <UserEditModal user={targetUser} />}
             {canBan && (
               <div onClick={(e) => e.stopPropagation()}>
                 <UserBanActionsDropdown
