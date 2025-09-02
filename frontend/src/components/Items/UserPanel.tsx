@@ -197,7 +197,7 @@ const UserPanel = () => {
                 return (
                   <>
                     <Button
-                      className="font-semibold justify-between h-fit px-0"
+                      className="justify-between h-fit px-0"
                       key={cat.id}
                       onClick={() => {
                         const newCategories = isSelected
@@ -207,9 +207,11 @@ const UserPanel = () => {
                       }}
                     >
                       {cat.name}
-                      <ChevronRight
-                        className={`transition-transform ${isSelected ? "transform-[rotate(90deg)]" : "transform-[rotate(0deg)]"}`}
-                      />
+                      {cat.subcategories.length > 0 && (
+                        <ChevronRight
+                          className={`transition-transform ${isSelected ? "transform-[rotate(90deg)]" : "transform-[rotate(0deg)]"}`}
+                        />
+                      )}
                     </Button>
                     {isSelected &&
                       cat.subcategories?.map((subcat) => (
