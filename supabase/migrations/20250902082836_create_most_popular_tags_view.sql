@@ -1,7 +1,7 @@
 CREATE OR REPLACE VIEW public.view_tag_popularity AS
 WITH ranked_tags AS (
     SELECT
-        t.id,
+        t.id AS tag_id,
         t.translations->'en'->>'name' AS tag_name,
         t.translations,
         t.created_at,
