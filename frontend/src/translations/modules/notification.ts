@@ -1,4 +1,11 @@
 export const notification = {
+  "booking.created": {
+    title: { en: "New booking created", fi: "Uusi varaus luotu" },
+    message: {
+      en: "Booking {num} has been created and is awaiting approval.",
+      fi: "Varaus {num} on luotu ja odottaa hyväksyntää.",
+    },
+  },
   "booking.status_approved": {
     title: { en: "Booking confirmed", fi: "Varaus vahvistettu" },
     message: {
