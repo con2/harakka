@@ -70,9 +70,15 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
 
   // live subscription — mount / unmount
   React.useEffect(() => {
-    const unsubscribe = subscribeToNotifications(userId, (n: NotificationRow) =>
-      setFeed((prev) => upsert(prev, n)),
+    if (!userId) return;
+
+    const unsubscribe = subscribeToNotifications(
+      userId,
+      (n: NotificationRow) => {
+        setFeed((prev) => upsert(prev, n));
+      },
     );
+
     return unsubscribe;
   }, [userId, upsert]);
 
@@ -198,11 +204,14 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                     if (n.type === "user.created") {
                       void navigate("/admin/users");
                     } else if (
-                      (n.type === "booking.status_approved" ||
+                      (n.type === "booking.created" ||
+                        n.type === "booking.status_approved" ||
                         n.type === "booking.status_rejected") &&
                       "booking_id" in n.metadata
                     ) {
-                      void navigate(`/profile?tab=bookings`);
+                      // Navigate to the detailed booking view
+                      const bookingId = safe(n.metadata.booking_id);
+                      void navigate(`/admin/bookings/${bookingId}`);
                     }
                   }}
                   className="flex flex-col gap-0.5 py-2 cursor-pointer"

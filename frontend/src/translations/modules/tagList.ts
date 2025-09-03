@@ -28,13 +28,9 @@ export const tagList = {
     },
   },
   columns: {
-    nameFi: {
-      fi: "Tagin nimi (FI)",
-      en: "Tag Name (FI)",
-    },
-    nameEn: {
-      fi: "Tagin nimi (EN)",
-      en: "Tag Name (EN)",
+    name: {
+      fi: "Tagin nimi",
+      en: "Tag Name",
     },
     createdAt: {
       fi: "Luotu",

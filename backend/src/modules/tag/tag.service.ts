@@ -2,9 +2,9 @@ import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { PostgrestSingleResponse, SupabaseClient } from "@supabase/supabase-js";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { TagRow, TagUpdate } from "./interfaces/tag.interface";
-import { Database } from "../../../../common/database.types";
-import { ApiResponse } from "../../../../common/response.types";
+import { ExtendedTag, TagRow, TagUpdate } from "@common/items/tag.types";
+import { Database } from "@common/database.types";
+import { ApiResponse } from "@common/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { TagLink } from "@common/items/storage-items.types";
 
@@ -14,7 +14,7 @@ export class TagService {
 
   constructor(private supabaseService: SupabaseService) {
     this._supabase =
-      this.supabaseService.getServiceClient() as SupabaseClient<Database>;
+      this.supabaseService.getAnonClient() as SupabaseClient<Database>;
   }
   // Fetch all tags
   async getAllTags(
@@ -24,26 +24,19 @@ export class TagService {
     assignmentFilter?: string,
     sortBy?: string,
     sortOrder?: string,
-  ): Promise<ApiResponse<TagRow & { usageCount: number }>> {
+  ): Promise<ApiResponse<ExtendedTag>> {
     const supabase = this._supabase;
 
-    // Get tags that are assigned to an item
-    const { data: usageData, error: usageError } = await supabase
-      .from("storage_item_tags")
-      .select("tag_id");
+    // Get tag IDs based on assignment filter
+    const { from, to } = getPaginationRange(page, limit);
 
-    if (usageError) throw new Error(usageError.message);
+    // Build the base query
+    let query = supabase
+      .from("view_tag_popularity")
+      .select("*", { count: "exact" })
+      .range(from, to);
 
-    // Count occurrences manually
-    const usageMap: Record<string, number> = {};
-    usageData?.forEach((item) => {
-      usageMap[item.tag_id] = (usageMap[item.tag_id] || 0) + 1;
-    });
-
-    // base query for tags
-    let query = supabase.from("tags").select("*", { count: "exact" });
-
-    // Apply search
+    // Apply search filter if searchTerm exists
     if (searchTerm && searchTerm.trim() !== "") {
       const term = `%${searchTerm.toLowerCase()}%`;
       query = query.or(
@@ -51,46 +44,43 @@ export class TagService {
       );
     }
 
-    // assignment filter
-    if (assignmentFilter === "assigned") {
-      query = query.in("id", Object.keys(usageMap));
-    } else if (assignmentFilter === "unassigned") {
-      query = query.not("id", "in", `(${Object.keys(usageMap).join(",")})`);
-    }
-
-    // sorting
-    const validSortFields = ["created_at", "updated_at"];
+    // Apply sorting
+    const validSortFields = [
+      "created_at",
+      "updated_at",
+      "assigned_to",
+      "total_bookings",
+      "popularity_rank",
+    ];
     const validSortOrders = ["asc", "desc"];
+
     const field = validSortFields.includes(sortBy || "")
-      ? sortBy!
+      ? sortBy
       : "created_at";
     const order = validSortOrders.includes(sortOrder || "")
-      ? sortOrder!
+      ? sortOrder
       : "desc";
 
     query = query.order(field as "created_at" | "updated_at", {
       ascending: order === "asc",
     });
 
-    // count & pagination
-    const { count, error: countError } = await query;
+    // assignment filter
+    if (assignmentFilter === "assigned") {
+      query = query.gte("assigned_to", 1);
+    } else if (assignmentFilter === "unassigned") {
+      query = query.lt("assigned_to", 1);
+    }
+
+    // Get count
+    const result = await query;
+    const { error: countError, count, data } = result;
     if (countError) throw new Error(countError.message);
-
-    const { from, to } = getPaginationRange(page, limit);
-    const result = await query.range(from, to);
-
-    if (result.error) throw new Error(result.error.message);
 
     const meta = getPaginationMeta(count ?? 0, page, limit);
 
-    // tags plus usageCount
-    const tagsWithUsage = (result.data || []).map((tag: TagRow) => ({
-      ...tag,
-      usageCount: usageMap[tag.id] || 0,
-    }));
-
     return {
-      data: tagsWithUsage,
+      data: data as unknown as ExtendedTag[],
       error: result.error,
       count: result.count,
       status: result.status,
