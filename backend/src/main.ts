@@ -81,7 +81,20 @@ async function bootstrap() {
     });
 
     await app.listen(port, "0.0.0.0");
+
+    // Logging after server started
     logger.log(`Backend is running on port ${port}`);
+
+    if ((process.env.NODE_ENV || "development") === "development") {
+      logger.log("Current environment variables:", {
+        ENVIRONMENT: process.env.ENV,
+        NODE_ENV: process.env.NODE_ENV,
+        SUPABASE_URL: process.env.SUPABASE_URL,
+        SUPABASE_PROJECT_ID: process.env.SUPABASE_PROJECT_ID,
+        SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+      });
+      logger.log(`Backend is running on port ${port}`);
+    }
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";

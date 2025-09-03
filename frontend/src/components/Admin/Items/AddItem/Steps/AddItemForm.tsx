@@ -500,8 +500,8 @@ function AddItemForm() {
             </div>
 
             <ItemImageUpload
-              item_id={form.watch("id")}
-              formImages={form.watch("images")}
+              item_id={form.watch("id") || ""}
+              formImages={form.watch("images") || { main: null, details: [] }}
               updateForm={form.setValue}
             />
           </div>
