@@ -3,13 +3,8 @@ import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import {
-  updateUser,
-  getUserById,
-  selectSelectedUser,
-  selectSelectedUserLoading,
-  clearSelectedUser,
-} from "@/store/slices/usersSlice";
+import { usersApi } from "@/api/services/users";
+import { UserProfile } from "@common/user.types";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { formatRoleName } from "@/utils/format";
 import Spinner from "@/components/Spinner";
@@ -42,13 +37,17 @@ import { Switch } from "@/components/ui/switch";
 import UserBanHistory from "@/components/Admin/UserManagement/Banning/UserBanHistory";
 import UserBan from "@/components/Admin/UserManagement/Banning/UserBan";
 import UnbanUser from "@/components/Admin/UserManagement/Banning/UnbanUser";
+import { toastConfirm } from "@/components/ui/toastConfirm";
 
 const UsersDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const user = useAppSelector(selectSelectedUser);
-  const loading = useAppSelector(selectSelectedUserLoading);
+  // local state for the user being inspected so we don't overwrite the
+  // global `selectedUser` used elsewhere in the app (e.g. nav/profile).
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
   const { formatDate } = useFormattedDate();
   const { lang } = useLanguage();
   // copy-to-clipboard state for email
@@ -84,6 +83,7 @@ const UsersDetailsPage = () => {
     isNewRole: boolean;
   };
   const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
+
   const [activeTab, setActiveTab] = useState<"history" | "ban" | "unban">(
     "history",
   );
@@ -215,20 +215,61 @@ const UsersDetailsPage = () => {
 
   const removeRoleAssignment = (index: number) => {
     if (!canManageRoles) return;
-    setRoleAssignments((prev) => prev.filter((_, i) => i !== index));
+    const ra = roleAssignments[index];
+    const roleLabel = ra?.role_name ? formatRoleName(ra.role_name) : "role";
+    const orgLabel = ra?.org_name ?? ra?.org_id ?? "organization";
+
+    toastConfirm({
+      title: `Remove ${roleLabel}`,
+      description: `Do you want to remove ${roleLabel} from ${user?.full_name ?? "this user"} in ${orgLabel}?`,
+      confirmText: "Remove",
+      cancelText: "Cancel",
+      onConfirm: () => {
+        setRoleAssignments((prev) => prev.filter((_, i) => i !== index));
+        toast.success(
+          "" + roleLabel + " removed locally. Click Save to persist changes.",
+        );
+      },
+      onCancel: () => {},
+    });
   };
+
+  // compute whether there are unsaved role changes (creates/deletes/active toggles)
+  const hasRoleChanges = useMemo(() => {
+    if (!user) return false;
+    const originalRoles = allUserRoles.filter((r) => r.user_id === user.id);
+
+    const created = roleAssignments.some(
+      (ra) =>
+        ra.org_id &&
+        ra.role_name &&
+        !originalRoles.some(
+          (or) =>
+            or.organization_id === ra.org_id && or.role_name === ra.role_name,
+        ),
+    );
+
+    const deleted = originalRoles.some(
+      (or) =>
+        !roleAssignments.some(
+          (ra) =>
+            ra.org_id === or.organization_id && ra.role_name === or.role_name,
+        ),
+    );
+
+    const updated = roleAssignments.some((ra) => {
+      if (!ra.id) return false;
+      const orig = originalRoles.find((or) => or.id === ra.id);
+      if (!orig) return false;
+      return Boolean(orig.is_active) !== Boolean(ra.is_active);
+    });
+
+    return created || deleted || updated;
+  }, [roleAssignments, allUserRoles, user]);
 
   const handleSave = async () => {
     if (!user) return;
     try {
-      await dispatch(
-        updateUser({
-          id: user.id,
-          data: { id: user.id, full_name: user.full_name },
-        }),
-      ).unwrap();
-      toast.success(t.usersDetailsPage.messages.success[lang]);
-
       const originalRoles = allUserRoles.filter((r) => r.user_id === user.id);
 
       // compute diffs: roles to create and to delete
@@ -278,22 +319,47 @@ const UsersDetailsPage = () => {
       for (const rd of toDelete) {
         if (rd.id) {
           await permanentDeleteRole(rd.id);
+          try {
+            toast.success(
+              "Removed role " +
+                (rd.role_name ?? "") +
+                " from " +
+                (rd.organization_name ?? rd.organization_id),
+            );
+          } catch (e) {
+            console.error("Failed to show removal toast", e);
+          }
         }
       }
-    } catch {
+
+      toast.success(t.usersDetailsPage.messages.success[lang]);
+    } catch (err) {
+      console.error("Failed saving roles", err);
       toast.error(t.usersDetailsPage.messages.error[lang]);
     }
   };
 
   useEffect(() => {
-    if (id) {
-      void dispatch(getUserById(id));
-    }
+    if (!id) return;
+    let mounted = true;
+    setLoading(true);
+    usersApi
+      .getUserById(id)
+      .then((u) => {
+        if (!mounted) return;
+        setUser(u);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch user", err);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
     return () => {
-      // clear selected user when leaving the page
-      dispatch(clearSelectedUser());
+      mounted = false;
     };
-  }, [id, dispatch]);
+  }, [id]);
 
   if (loading || !user) {
     return <Spinner containerClasses="py-10" />;
@@ -354,9 +420,32 @@ const UsersDetailsPage = () => {
 
         {/* Roles management section */}
         <div className="mt-6">
-          <Label className="text-lg">
-            {t.usersDetailsPage.labels.roles[lang]}
-          </Label>
+          <div className="flex justify-between items-start">
+            <Label className="text-lg">
+              {t.usersDetailsPage.labels.roles[lang]}
+            </Label>
+
+            <div className="flex items-center gap-2">
+              {isSuper && (
+                <Button
+                  variant="outline"
+                  className="border-1-grey"
+                  type="button"
+                  size="sm"
+                  onClick={addRoleAssignment}
+                  disabled={isAssigningRole}
+                >
+                  {t.usersDetailsPage.buttons.addRole[lang]}
+                </Button>
+              )}
+
+              {canManageRoles && hasRoleChanges && (
+                <Button variant="outline" onClick={handleSave} size={"sm"}>
+                  {t.usersDetailsPage.buttons.save[lang]}
+                </Button>
+              )}
+            </div>
+          </div>
 
           {canManageRoles ? (
             <>
@@ -488,82 +577,81 @@ const UsersDetailsPage = () => {
               )}
             </div>
           )}
-
-          <div className="flex justify-between items-center mt-4">
-            {isSuper && (
-              <Button
-                variant="default"
-                className="border-1-grey"
-                type="button"
-                size="sm"
-                onClick={addRoleAssignment}
-                disabled={isAssigningRole}
-              >
-                {t.usersDetailsPage.buttons.addRole[lang]}
-              </Button>
-            )}
-
-            <div className="flex items-center gap-4">
-              <DeleteUserButton id={user.id} closeModal={() => navigate(-1)} />
-              <Button variant="outline" onClick={handleSave} size={"sm"}>
-                {t.usersDetailsPage.buttons.save[lang]}
-              </Button>
-            </div>
-          </div>
         </div>
 
-        {/* Banning section - lazy load ban history inside accordion */}
+        {/* Danger zone: banning and delete actions */}
         <div className="mt-6">
           <Accordion type="single" collapsible>
-            <AccordionItem value="banning">
-              <AccordionTrigger className="text-lg">
-                {t.userBanning.history.title[lang]}
+            <AccordionItem value="danger-zone">
+              <AccordionTrigger className="text-lg text-red-600">
+                Danger zone
               </AccordionTrigger>
               <AccordionContent>
-                <div className="space-y-4">
-                  <Tabs
-                    value={activeTab}
-                    onValueChange={(v) =>
-                      setActiveTab(v as "history" | "ban" | "unban")
-                    }
-                  >
-                    <TabsList className="w-full">
-                      <TabsTrigger value="history" className="w-1/3">
-                        {t.userBanning.tabs.history[lang]}
-                      </TabsTrigger>
-                      <TabsTrigger value="ban" className="w-1/3">
-                        {t.userBanning.tabs.ban[lang]}
-                      </TabsTrigger>
-                      <TabsTrigger value="unban" className="w-1/3">
-                        {t.userBanning.tabs.unban[lang]}
-                      </TabsTrigger>
-                    </TabsList>
+                <div className="space-y-6">
+                  {/* Banning sub-section */}
+                  <div>
+                    <h3 className="font-semibold mb-2">
+                      {t.userBanning.history.title[lang]}
+                    </h3>
+                    <div className="space-y-4">
+                      <Tabs
+                        value={activeTab}
+                        onValueChange={(v) =>
+                          setActiveTab(v as "history" | "ban" | "unban")
+                        }
+                      >
+                        <TabsList className="w-full">
+                          <TabsTrigger value="history" className="w-1/3">
+                            {t.userBanning.tabs.history[lang]}
+                          </TabsTrigger>
+                          <TabsTrigger value="ban" className="w-1/3">
+                            {t.userBanning.tabs.ban[lang]}
+                          </TabsTrigger>
+                          <TabsTrigger value="unban" className="w-1/3">
+                            {t.userBanning.tabs.unban[lang]}
+                          </TabsTrigger>
+                        </TabsList>
 
-                    <TabsContent value="history">
-                      <div className="max-h-64 overflow-y-auto">
-                        {/* Render ban history component only when this tab is active */}
-                        <UserBanHistory user={user} />
-                      </div>
-                    </TabsContent>
+                        <TabsContent value="history">
+                          <div className="max-h-64 overflow-y-auto">
+                            <UserBanHistory user={user} />
+                          </div>
+                        </TabsContent>
 
-                    <TabsContent value="ban">
-                      <div className="pt-2">
-                        <UserBan
-                          user={user}
-                          onSuccess={() => setActiveTab("history")}
-                        />
-                      </div>
-                    </TabsContent>
+                        <TabsContent value="ban">
+                          <div className="pt-2">
+                            <UserBan
+                              user={user}
+                              onSuccess={() => setActiveTab("history")}
+                            />
+                          </div>
+                        </TabsContent>
 
-                    <TabsContent value="unban">
-                      <div className="pt-2">
-                        <UnbanUser
-                          user={user}
-                          onSuccess={() => setActiveTab("history")}
-                        />
-                      </div>
-                    </TabsContent>
-                  </Tabs>
+                        <TabsContent value="unban">
+                          <div className="pt-2">
+                            <UnbanUser
+                              user={user}
+                              onSuccess={() => setActiveTab("history")}
+                            />
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </div>
+                  </div>
+
+                  {/* Delete user sub-section */}
+                  <div className="border-t pt-4">
+                    <h4 className="font-semibold text-red-600">Delete user</h4>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      This action cannot be undone.
+                    </p>
+                    <div className="mt-4">
+                      <DeleteUserButton
+                        id={user.id}
+                        closeModal={() => navigate(-1)}
+                      />
+                    </div>
+                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>
