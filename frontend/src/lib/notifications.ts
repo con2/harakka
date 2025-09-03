@@ -49,7 +49,15 @@ export function subscribeToNotifications(
     .eq("user_id", userId)
     .is("read_at", null)
     .order("created_at", { ascending: false })
-    .then(({ data }) => data?.forEach(onNew));
+    .then(({ data, error }) => {
+      if (error) {
+        console.error("Failed to fetch initial notifications:", error);
+      } else {
+        data?.forEach((notification) => {
+          onNew(notification);
+        });
+      }
+    });
 
   // -------- live inserts via Realtime
   const channel = supabase
@@ -62,8 +70,9 @@ export function subscribeToNotifications(
         table: "notifications",
         filter: `user_id=eq.${userId}`,
       },
-      (payload: RealtimePostgresInsertPayload<NotificationRow>) =>
-        onNew(payload.new),
+      (payload: RealtimePostgresInsertPayload<NotificationRow>) => {
+        onNew(payload.new);
+      },
     )
     .subscribe();
 
