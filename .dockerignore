@@ -128,3 +128,8 @@ frontend/public/web.config
 
 # Backend specific
 backend/test/
+
+.env*
+.flaskenv*
+!.env.project
+!.env.vault
