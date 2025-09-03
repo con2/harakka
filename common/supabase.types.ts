@@ -17,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json
           operationName?: string
           query?: string
           variables?: Json
+          extensions?: Json
         }
         Returns: Json
       }
@@ -202,6 +202,32 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      categories: {
+        Row: {
+          id: string
+          name: string
+          parent_id: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          parent_id?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          parent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -715,7 +741,7 @@ export type Database = {
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "view_tag_popularity"
-            referencedColumns: ["id"]
+            referencedColumns: ["tag_id"]
           },
         ]
       }
@@ -868,23 +894,9 @@ export type Database = {
         }
         Relationships: []
       }
-      test: {
-        Row: {
-          created_at: string
-          id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
-        }
-        Relationships: []
-      }
       test_features: {
         Row: {
+          athina: string | null
           created_at: string | null
           description: string | null
           feature_name: string
@@ -894,6 +906,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          athina?: string | null
           created_at?: string | null
           description?: string | null
           feature_name: string
@@ -903,6 +916,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          athina?: string | null
           created_at?: string | null
           description?: string | null
           feature_name?: string
@@ -1276,9 +1290,9 @@ export type Database = {
         Row: {
           assigned_to: number | null
           created_at: string | null
-          id: string | null
           popularity_rank: string | null
           rank_percentile: number | null
+          tag_id: string | null
           tag_name: string | null
           total_bookings: number | null
           translations: Json | null
@@ -1353,14 +1367,14 @@ export type Database = {
       }
       create_notification: {
         Args: {
-          p_channel?: Database["public"]["Enums"]["notification_channel"]
-          p_idempotency_key?: string
-          p_message?: string
-          p_metadata?: Json
-          p_severity?: Database["public"]["Enums"]["notification_severity"]
-          p_title: string
-          p_type: Database["public"]["Enums"]["notification_type"]
           p_user_id: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_title: string
+          p_message?: string
+          p_channel?: Database["public"]["Enums"]["notification_channel"]
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_metadata?: Json
+          p_idempotency_key?: string
         }
         Returns: undefined
       }
@@ -1369,11 +1383,11 @@ export type Database = {
         Returns: string
       }
       get_all_full_bookings: {
-        Args: { in_limit: number; in_offset: number }
+        Args: { in_offset: number; in_limit: number }
         Returns: Json
       }
       get_all_full_orders: {
-        Args: { in_limit?: number; in_offset?: number }
+        Args: { in_offset?: number; in_limit?: number }
         Returns: Json
       }
       get_full_booking: {
@@ -1385,26 +1399,26 @@ export type Database = {
         Returns: Json
       }
       get_full_user_booking: {
-        Args: { in_limit: number; in_offset: number; in_user_id: string }
+        Args: { in_user_id: string; in_offset: number; in_limit: number }
         Returns: Json
       }
       get_full_user_order: {
-        Args: { in_limit?: number; in_offset?: number; in_user_id: string }
+        Args: { in_user_id: string; in_offset?: number; in_limit?: number }
         Returns: Json
       }
       get_latest_ban_record: {
         Args: { check_user_id: string }
         Returns: {
+          id: string
+          ban_type: string
           action: string
           ban_reason: string
-          ban_type: string
-          banned_at: string
-          banned_by: string
-          id: string
           is_permanent: boolean
+          banned_by: string
+          banned_at: string
+          unbanned_at: string
           organization_id: string
           role_assignment_id: string
-          unbanned_at: string
         }[]
       }
       get_request_user_id: {
@@ -1421,19 +1435,19 @@ export type Database = {
       get_user_roles: {
         Args: { user_uuid: string }
         Returns: {
-          created_at: string
           id: string
-          is_active: boolean
+          user_id: string
           organization_id: string
+          role_id: string
+          is_active: boolean
+          created_at: string
+          role_name: string
           organization_name: string
           organization_slug: string
-          role_id: string
-          role_name: string
-          user_id: string
         }[]
       }
       is_admin: {
-        Args: { p_org_id?: string; p_user_id: string }
+        Args: { p_user_id: string; p_org_id?: string }
         Returns: boolean
       }
       is_user_banned_for_app: {
@@ -1441,26 +1455,26 @@ export type Database = {
         Returns: boolean
       }
       is_user_banned_for_org: {
-        Args: { check_org_id: string; check_user_id: string }
+        Args: { check_user_id: string; check_org_id: string }
         Returns: boolean
       }
       is_user_banned_for_role: {
         Args: {
+          check_user_id: string
           check_org_id: string
           check_role_id: string
-          check_user_id: string
         }
         Returns: boolean
       }
       notify: {
         Args: {
-          p_channel?: Database["public"]["Enums"]["notification_channel"]
-          p_message?: string
-          p_metadata?: Json
-          p_severity?: Database["public"]["Enums"]["notification_severity"]
-          p_title?: string
-          p_type_txt: string
           p_user_id: string
+          p_type_txt: string
+          p_title?: string
+          p_message?: string
+          p_channel?: Database["public"]["Enums"]["notification_channel"]
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_metadata?: Json
         }
         Returns: undefined
       }
