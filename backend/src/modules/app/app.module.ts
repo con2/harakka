@@ -35,6 +35,7 @@ import { OrganizationsModule } from "../organization/organizations.module";
 import { OrganizationsController } from "../organization/organizations.controller";
 import { UserBanningModule } from "../user-banning/user-banning.module";
 import { OrganizationLocationsModule } from "../organization-locations/organization_locations.module";
+import { CategoriesModule } from "../categories/categories.module";
 
 // Load and expand environment variables before NestJS modules initialize
 // Only load env files if SUPABASE_URL is not already set (meaning env-cmd hasn't run)
@@ -75,6 +76,7 @@ if (!process.env.SUPABASE_URL) {
     }),
     AuthModule,
     BookingModule,
+    CategoriesModule,
     ItemImagesModule,
     LogsModule,
     MailModule,
@@ -143,6 +145,9 @@ export class AppModule implements NestModule {
         // Organization-locations public endpoints
         { path: "organization-locations", method: RequestMethod.GET },
         { path: "organization-locations/*path", method: RequestMethod.GET },
+
+        // Public Category Endpoint
+        { path: "categories", method: RequestMethod.GET },
       )
       .forRoutes(
         // Protected controllers
