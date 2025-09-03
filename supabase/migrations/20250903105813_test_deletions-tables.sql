@@ -1,2 +1,2 @@
-drop if exists table pippi;
-drop if exists table pippi2pippi;
+DROP TABLE IF EXISTS pippi;
+DROP TABLE IF EXISTS pippi2pippi;
