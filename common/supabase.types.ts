@@ -203,6 +203,32 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          id: string
+          name: string
+          parent_id: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          parent_id?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          parent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           channel: Database["public"]["Enums"]["notification_channel"]
@@ -351,6 +377,24 @@ export type Database = {
           slug?: string
           updated_at?: string | null
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      pippi: {
+        Row: {
+          created_at: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          name?: string
         }
         Relationships: []
       }
@@ -715,7 +759,7 @@ export type Database = {
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "view_tag_popularity"
-            referencedColumns: ["id"]
+            referencedColumns: ["tag_id"]
           },
         ]
       }
@@ -865,21 +909,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           translations?: Json | null
-        }
-        Relationships: []
-      }
-      test: {
-        Row: {
-          created_at: string
-          id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
         }
         Relationships: []
       }
@@ -1276,9 +1305,9 @@ export type Database = {
         Row: {
           assigned_to: number | null
           created_at: string | null
-          id: string | null
           popularity_rank: string | null
           rank_percentile: number | null
+          tag_id: string | null
           tag_name: string | null
           total_bookings: number | null
           translations: Json | null

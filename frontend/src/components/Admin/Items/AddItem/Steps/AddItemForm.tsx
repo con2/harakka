@@ -154,7 +154,7 @@ function AddItemForm() {
       if (newTag)
         setSelectedTags([
           ...selectedTags,
-          { tag_id: id, translations: newTag.translations! },
+          { tag_id: id, translations: newTag.translations },
         ]);
     }
 
@@ -238,7 +238,7 @@ function AddItemForm() {
       setSelectedTags(
         activeTags.map((t) => ({
           tag_id: t.id,
-          translations: t.translations!,
+          translations: t.translations,
         })),
       );
     }
