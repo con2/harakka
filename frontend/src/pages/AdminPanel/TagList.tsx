@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import { Tag, TagAssignmentFilter, TagWithUsage } from "@/types";
+import { Tag, TagAssignmentFilter } from "@/types";
+import { ExtendedTag } from "@common/items/tag.types";
 import {
   fetchFilteredTags,
   selectAllTags,
@@ -29,6 +30,7 @@ import { t } from "@/translations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import TagDelete from "@/components/Admin/Items/TagDelete";
 import AddTagModal from "@/components/Admin/Items/AddTagModal";
+import { Badge } from "@/components/ui/badge";
 
 const TagList = () => {
   const dispatch = useAppDispatch();
@@ -158,17 +160,11 @@ const TagList = () => {
     }
   };
 
-  const columns: ColumnDef<Tag>[] = [
+  const columns: ColumnDef<ExtendedTag>[] = [
     {
-      header: t.tagList.columns.nameFi[lang],
-      accessorFn: (row) => row.translations?.fi?.name ?? "—",
-      cell: ({ row }) => row.original.translations?.fi?.name ?? "—",
-      enableSorting: false,
-    },
-    {
-      header: t.tagList.columns.nameEn[lang],
-      accessorFn: (row) => row.translations?.en?.name ?? "—",
-      cell: ({ row }) => row.original.translations?.en?.name ?? "—",
+      header: t.tagList.columns.name[lang],
+      accessorFn: (row) => row.translations?.[lang]?.name ?? "—",
+      cell: ({ row }) => row.original.translations?.[lang].name ?? "—",
       enableSorting: false,
     },
     {
@@ -182,29 +178,10 @@ const TagList = () => {
       enableSorting: true,
     },
     {
-      header: t.tagList.columns.assigned[lang],
-      id: "assigned",
-      cell: ({ row }) => {
-        const tag = row.original as TagWithUsage;
-        const isUsed = tag.usageCount > 0;
-        return isUsed ? (
-          <span className="text-highlight2 font-medium">
-            {t.tagList.assignment.yes[lang]}
-          </span>
-        ) : (
-          <span className="text-red-400 font-medium">
-            {t.tagList.assignment.no[lang]}
-          </span>
-        );
-      },
-      enableSorting: false,
-    },
-    {
       header: t.tagList.columns.assignedTo[lang],
-      id: "assignedTo",
-      accessorFn: (row) => (row as TagWithUsage).usageCount ?? 0,
+      id: "assigned_to",
       cell: ({ row }) => {
-        const count = (row.original as TagWithUsage).usageCount ?? 0;
+        const count = row.original.assigned_to;
         return (
           <span className="text-sm">
             {t.tagList.assignment.count[lang].replace(
@@ -213,6 +190,22 @@ const TagList = () => {
             )}
           </span>
         );
+      },
+      enableSorting: false,
+    },
+    {
+      id: "popularity_rank",
+      header: "Popularity",
+      cell: ({ row }) => {
+        const rank = row.original.popularity_rank;
+        return rank ? (
+          <Badge
+            variant="outline"
+            className={`bg-green-${rank === "very popular" ? "100" : "50"} text-green-800 border-green-300`}
+          >
+            {rank}
+          </Badge>
+        ) : null;
       },
       enableSorting: false,
     },

@@ -611,7 +611,7 @@ export class StorageItemsService {
 
   clearInvalidRowData(row: CSVItem, index: number, issues: ZodError["issues"]) {
     // shallow copy is enough for your flat CSVItem
-    const processed = { ...row } as Record<string, any>;
+    const processed = { ...row } as Record<string, any>; //eslint-disable-line
 
     // Walk issues and blank the first path segment (flat structure)
     issues.forEach((issue) => {

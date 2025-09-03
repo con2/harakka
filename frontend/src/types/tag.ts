@@ -1,7 +1,6 @@
+import { ExtendedTag } from "@common/items/tag.types";
 import { ErrorContext } from "./common";
-import { Override } from "./db-helpers";
 import { Database, TagTranslations } from "./manualOverride";
-import { Tag as BaseTag } from "./tag";
 
 /** Runtime row shape for the `tags` table with typed `translations`. */
 export type Tag = Database["public"]["Tables"]["tags"]["Row"];
@@ -23,11 +22,11 @@ export type TagTranslation = TagTranslations["en"];
  * with loading/error flags and pagination metadata.
  */
 export interface TagState {
-  tags: TagWithUsage[];
+  tags: ExtendedTag[];
   loading: boolean;
   error: string | null;
   errorContext: ErrorContext;
-  selectedTags: Tag[] | null;
+  selectedTags: ExtendedTag[] | null;
   page: number;
   limit: number;
   total: number;
@@ -44,10 +43,3 @@ export type ItemFormTag = { tag_id: string; translations: TagTranslations };
 
 /** UI filter values for tag‑assignment status. */
 export type TagAssignmentFilter = "all" | "assigned" | "unassigned";
-
-/** Extra field for counting usage */
-interface TagAugmentedFields {
-  usageCount: number;
-}
-/** Final row type */
-export type TagWithUsage = Override<BaseTag, TagAugmentedFields>;

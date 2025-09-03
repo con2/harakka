@@ -455,10 +455,10 @@ function ItemImageUpload({
             type="button"
             className={`flex flex-1 border-1 border-dashed w-full min-h-[200px] flex-col transition-colors ${
               dragStates.detail ? "border-primary bg-primary/5" : ""
-            } ${isDetailUploading || formImages.details.length >= MAX_DETAIL_IMAGES ? "opacity-50 cursor-not-allowed" : ""}`}
+            } ${isDetailUploading || formImages?.details?.length >= MAX_DETAIL_IMAGES ? "opacity-50 cursor-not-allowed" : ""}`}
             disabled={
               isDetailUploading ||
-              formImages.details.length >= MAX_DETAIL_IMAGES
+              formImages?.details?.length >= MAX_DETAIL_IMAGES
             }
             onClick={(e) => {
               e.preventDefault();
@@ -478,7 +478,7 @@ function ItemImageUpload({
               t.itemImageUpload.buttons.uploading[lang]
             ) : dragStates.detail ? (
               t.itemImageUpload.buttons.dropImages[lang]
-            ) : formImages.details.length >= MAX_DETAIL_IMAGES ? (
+            ) : formImages?.details?.length >= MAX_DETAIL_IMAGES ? (
               t.itemImageUpload.buttons.maxReached[lang]
             ) : (
               <>

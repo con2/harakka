@@ -10,7 +10,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { TagService } from "./tag.service";
-import { TagRow, TagUpdate } from "./interfaces/tag.interface";
+import { ExtendedTag, TagRow, TagUpdate } from "@common/items/tag.types";
 import { ApiResponse } from "../../../../common/response.types";
 import { Public } from "src/decorators/roles.decorator";
 
@@ -26,7 +26,7 @@ export class TagController {
     @Query("assignmentFilter") assignmentFilter: string = "all",
     @Query("sortBy") sortBy: string = "created_at",
     @Query("sortOrder") sortOrder: string = "desc",
-  ): Promise<ApiResponse<TagRow>> {
+  ): Promise<ApiResponse<ExtendedTag>> {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
 
