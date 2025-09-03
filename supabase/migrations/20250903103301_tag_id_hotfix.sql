@@ -1,3 +1,4 @@
+drop view view_tag_popularity;
 CREATE OR REPLACE VIEW public.view_tag_popularity AS
 WITH ranked_tags AS (
     SELECT
