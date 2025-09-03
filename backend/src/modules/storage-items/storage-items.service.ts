@@ -216,17 +216,123 @@ export class StorageItemsService {
   }
 
   /**
+   * Get all storage items for an admin's organization.
+   * This method retrieves storage items based on filters, sorting, and pagination, scoped to the admin's organization.
+   *
+   * @param req The authenticated request object, which includes the Supabase client instance.
+   * @param searchquery Optional. A search string to filter items by name, type, or location.
+   * @param ordered_by The column to order the results by. Default is "created_at".
+   * @param page The page number to retrieve (1-based index).
+   * @param limit The number of items per page.
+   * @param ascending Whether to sort in ascending order (true) or descending order (false). Default is true.
+   * @param tags Optional. A comma-separated list of tag IDs to filter items by.
+   * @param active_filter Optional. Filter items by their active status (true for active, false for inactive).
+   * @param location_filter Optional. Filter items by location.
+   * @param category Optional. Filter items by category.
+   * @param activeOrgId The organization ID of the authenticated user.
+   * @returns An object containing the filtered and ordered storage items, along with pagination metadata.
+   */
+  async getAllAdminItems(
+    req: AuthRequest,
+    activeOrgId: string,
+    page: number,
+    limit: number,
+    ascending: boolean,
+    searchquery?: string,
+    order_by?: ValidItemOrder,
+    tags?: string,
+    isActive?: boolean,
+    location_filter?: string,
+    category?: string,
+  ) {
+    const supabase = req.supabase;
+    if (!supabase) {
+      throw new BadRequestException("Supabase client is not initialized.");
+    }
+
+    // Build a base query with organization filtering
+    const base = applyItemFilters(
+      supabase
+        .from("view_manage_storage_items")
+        .select("*", { count: "exact", head: true })
+        .eq("is_deleted", false)
+        .eq("organization_id", activeOrgId), // Prefilter by organization
+      {
+        searchquery,
+        isActive,
+        tags,
+        location_filter,
+        category,
+      },
+    );
+    const countResult = await base;
+    if (countResult.error) {
+      handleSupabaseError(countResult.error);
+    }
+    const total = countResult.count ?? 0;
+    const meta = getPaginationMeta(total, page, limit);
+
+    // If requested page is out of range, return an empty response
+    if (meta.total === 0 || page > meta.totalPages) {
+      return {
+        data: [],
+        error: null,
+        status: 200,
+        statusText: "OK",
+        count: total,
+        metadata: meta,
+      };
+    }
+
+    // Now fetch the actual page data with range
+    const { from, to } = getPaginationRange(page, limit);
+    let query = supabase
+      .from("view_manage_storage_items")
+      .select("*", { count: "exact" })
+      .eq("is_deleted", false)
+      .eq("organization_id", activeOrgId) // Prefilter by organization
+      .range(from, to);
+
+    query = applyItemFilters(query, {
+      searchquery,
+      isActive,
+      tags,
+      location_filter,
+      category,
+    });
+
+    if (order_by) query.order(order_by ?? "created_at", { ascending });
+
+    const result = await query;
+
+    if (result.error) {
+      handleSupabaseError(result.error);
+    }
+
+    const pagination_meta = getPaginationMeta(result.count, page, limit);
+
+    return {
+      ...result,
+      metadata: pagination_meta,
+    };
+  }
+  /**
    * Get the total count of storage items.
    *
    * @param req The authenticated request object, which includes the Supabase client instance.
    * @returns An object containing the total count of storage items.
    */
   async getItemCount(req: AuthRequest, role: string, orgId: string) {
+    console.log("Request path:", req.path);
+    console.log("Headers:", req.headers);
+    console.log("ActiveRoleContext:", req.activeRoleContext);
+
     const supabase = req.supabase;
     const result = await supabase
       .from("storage_items")
       .select(undefined, { count: "exact" })
-      .eq("org_id", orgId);
+      .eq("org_id", orgId)
+      .eq("is_deleted", false);
     if (result.error) handleSupabaseError(result.error);
 
     return {
@@ -610,7 +716,7 @@ export class StorageItemsService {
 
   clearInvalidRowData(row: CSVItem, index: number, issues: ZodError["issues"]) {
     // shallow copy is enough for your flat CSVItem
-    const processed = { ...row } as Record<string, any>;
+    const processed = { ...row } as Record<string, any>; //eslint-disable-line
 
     // Walk issues and blank the first path segment (flat structure)
     issues.forEach((issue) => {

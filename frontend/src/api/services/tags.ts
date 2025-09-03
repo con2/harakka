@@ -1,6 +1,7 @@
-import { Tag, CreateTagDto, UpdateTagDto, TagWithUsage } from "@/types/tag";
+import { Tag, CreateTagDto, UpdateTagDto } from "@/types/tag";
 import { api } from "../axios";
 import { ApiResponse } from "@/types/api";
+import { ExtendedTag } from "@common/items/tag.types";
 
 /**
  * API service for tag-related endpoints
@@ -17,9 +18,9 @@ export const tagsApi = {
     assignmentFilter: string = "all",
     sortBy: string = "created_at",
     sortOrder: string = "desc",
-  ): Promise<ApiResponse<TagWithUsage[]>> => {
+  ): Promise<ApiResponse<ExtendedTag[]>> => {
     // Fetch paginated tags from the backend
-    const response: ApiResponse<TagWithUsage[]> = await api.get(
+    const response: ApiResponse<ExtendedTag[]> = await api.get(
       `/tags?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&assignmentFilter=${assignmentFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
     );
 
@@ -45,7 +46,7 @@ export const tagsApi = {
    * @param itemId - Item ID
    * @returns Array of tags assigned to the item
    */
-  getTagsByItem: (itemId: string): Promise<Tag[]> =>
+  getTagsByItem: (itemId: string): Promise<ExtendedTag[]> =>
     api.get(`/tags/item/${itemId}`),
 
   /**
@@ -53,7 +54,8 @@ export const tagsApi = {
    * @param tag - Tag data to create
    * @returns Created tag
    */
-  createTag: (tag: CreateTagDto): Promise<Tag> => api.post("/tags", tag),
+  createTag: (tag: CreateTagDto): Promise<ExtendedTag> =>
+    api.post("/tags", tag),
 
   /**
    * Update an existing tag
@@ -61,7 +63,7 @@ export const tagsApi = {
    * @param tagData - Updated tag data
    * @returns Updated tag
    */
-  updateTag: (id: string, tagData: UpdateTagDto): Promise<Tag> =>
+  updateTag: (id: string, tagData: UpdateTagDto): Promise<ExtendedTag> =>
     api.put(`/tags/${id}`, tagData),
 
   /**

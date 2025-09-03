@@ -21,7 +21,8 @@ export const itemsApi = {
    * @param id - Item ID to fetch
    * @returns Promise with the requested item
    */
-  getItemById: (id: string): Promise<Item> => api.get(`/storage-items/${id}`),
+  getItemById: (id: string): Promise<Item> =>
+    api.get(`/storage-items/id/${id}`),
 
   /**
    * Create a new item or multiple items

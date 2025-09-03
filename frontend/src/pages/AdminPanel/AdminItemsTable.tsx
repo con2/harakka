@@ -8,7 +8,7 @@ import {
   selectItemsPagination,
   selectItemsLoading,
 } from "@/store/slices/itemsSlice";
-import { fetchAllTags, selectAllTags } from "@/store/slices/tagSlice";
+import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
 import { Item, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
@@ -106,7 +106,8 @@ const AdminItemsTable = () => {
 
   //fetch tags list
   useEffect(() => {
-    if (tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
+    if (tags.length === 0)
+      void dispatch(fetchFilteredTags({ limit: 20, sortBy: "assigned_to" }));
   }, [dispatch, tags.length, items.length]);
 
   /* ————————————————————————— Item Columns ———————————————————————— */

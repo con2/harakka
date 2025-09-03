@@ -124,6 +124,69 @@ export class StorageItemsController {
   }
 
   /**
+   * Get ordered and/or filtered storage items for administrators.
+   *
+   * @param req The authenticated request object containing user and organization context.
+   * @param searchquery Optional search query to filter items by name or type.
+   * @param ordered_by Column to order the items by (default: "created_at").
+   * @param page The page number to retrieve (default: 1).
+   * @param limit The number of items per page (default: 10).
+   * @param ascending Whether to sort the results in ascending order (default: true).
+   * @param tags Optional tag IDs to filter items.
+   * @param active_filter Filter by active/inactive status (supports "true"/"false" and "active"/"inactive").
+   * @param location_filter Filter by location.
+   * @param category Filter by category.
+   *
+   * @returns A paginated list of matching storage items for the administrator.
+   */
+  @Get("ordered-admin-items")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
+  getOrdereAdmindItems(
+    @Req() req: AuthRequest,
+    @Query("search") searchquery: string,
+    @Query("order") ordered_by: ValidItemOrder,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+    @Query("ascending") ascending: string = "true",
+    @Query("tags") tags: string,
+    @Query("active") active_filter: string,
+    @Query("location") location_filter: string,
+    @Query("category") category: string,
+  ) {
+    const activeOrgId = req.headers["x-org-id"] as string;
+    if (!activeOrgId) {
+      throw new BadRequestException("Organization context is required");
+    }
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const is_ascending = ascending.toLowerCase() === "true";
+    let isActive: boolean | undefined = undefined;
+    if (typeof active_filter === "string") {
+      const v = active_filter.toLowerCase();
+      if (v === "true" || v === "active") isActive = true;
+      else if (v === "false" || v === "inactive") isActive = false;
+    }
+
+    return this.storageItemsService.getAllAdminItems(
+      req,
+      activeOrgId,
+      pageNum,
+      limitNum,
+      is_ascending,
+      searchquery,
+      ordered_by,
+      tags,
+      isActive,
+      location_filter,
+      category,
+    );
+  }
+
+  /**
    * Get the total count of storage items.
    * Restricted to users with the "storage_manager" or "tenant_admin" roles in the same organization.
    * @param req The authenticated request object.
@@ -148,7 +211,7 @@ export class StorageItemsController {
    * @returns The storage item, or null if not found.
    */
   @Public()
-  @Get(":id")
+  @Get("id/:id")
   async getById(@Param("id") id: string): Promise<StorageItem | null> {
     const supabase = this.supabaseService.getAnonClient();
     return this.storageItemsService.getItemById(supabase, id);
