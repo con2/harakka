@@ -741,7 +741,7 @@ export type Database = {
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "view_tag_popularity"
-            referencedColumns: ["tag_id"]
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -896,7 +896,6 @@ export type Database = {
       }
       test_features: {
         Row: {
-          athina: string | null
           created_at: string | null
           description: string | null
           feature_name: string
@@ -906,7 +905,6 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          athina?: string | null
           created_at?: string | null
           description?: string | null
           feature_name: string
@@ -916,7 +914,6 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          athina?: string | null
           created_at?: string | null
           description?: string | null
           feature_name?: string
@@ -1290,9 +1287,9 @@ export type Database = {
         Row: {
           assigned_to: number | null
           created_at: string | null
+          id: string | null
           popularity_rank: string | null
           rank_percentile: number | null
-          tag_id: string | null
           tag_name: string | null
           total_bookings: number | null
           translations: Json | null
