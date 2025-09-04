@@ -79,7 +79,7 @@ export const fetchOrderedItems = createAsyncThunk<
     tag_filters: string[];
     activity_filter?: "active" | "inactive";
     location_filter: string[];
-    categories: string[];
+    category: string;
     availability_min?: number;
     availability_max?: number;
     org_ids?: string[] | string;
@@ -96,7 +96,7 @@ export const fetchOrderedItems = createAsyncThunk<
       tag_filters,
       activity_filter,
       location_filter,
-      categories,
+      category,
       availability_min,
       availability_max,
       org_ids,
@@ -109,7 +109,7 @@ export const fetchOrderedItems = createAsyncThunk<
       tag_filters?: string[];
       activity_filter?: "active" | "inactive";
       location_filter: string[];
-      categories?: string[];
+      category?: string;
       availability_min?: number;
       availability_max?: number;
       org_ids?: string[] | string;
@@ -126,7 +126,7 @@ export const fetchOrderedItems = createAsyncThunk<
         tag_filters,
         activity_filter,
         location_filter,
-        categories,
+        category,
         availability_min,
         availability_max,
         org_ids,

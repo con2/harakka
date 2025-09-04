@@ -79,3 +79,33 @@ group by
   s.available_quantity,
   s.is_deleted,
   s.org_id;
+
+-- Tools
+UPDATE storage_items
+SET category_id = (SELECT id FROM categories WHERE name = 'Tools')
+WHERE id = '13e94e49-72a4-4521-b9c8-2ec57d44d159';
+
+-- First Aid
+UPDATE storage_items
+SET category_id = (SELECT id FROM categories WHERE name = 'First Aid')
+WHERE id = '22f82e0c-5f66-4678-b12d-324af534f785';
+
+-- Fire Safety
+UPDATE storage_items
+SET category_id = (SELECT id FROM categories WHERE name = 'Fire Safety')
+WHERE id = 'b7fbc4b8-f9e5-43ae-9965-1c70a4189301';
+
+-- Containers
+UPDATE storage_items
+SET category_id = (SELECT id FROM categories WHERE name = 'Containers')
+WHERE id = 'b2d72337-8594-45d5-9e0b-a764a6fac7f9';
+
+-- Technology → Computers (for consoles)
+UPDATE storage_items
+SET category_id = (
+  SELECT id FROM categories WHERE name = 'Computers'
+)
+WHERE id IN (
+  '90c2b991-0b0b-4f56-8d42-f250ebabbb10',
+  'e22019a0-a28f-4081-8af7-2d816101f43c'
+);

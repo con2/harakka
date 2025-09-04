@@ -143,6 +143,13 @@ export class StorageItemsService {
     org_filter?: string,
   ) {
     // Build a base query without range for counting and apply all filters
+    const { data: categories } = await supabase.rpc(
+      "get_items_in_category_tree",
+      {
+        category_uuid: category,
+      },
+    );
+    console.log("matching categories: ", categories);
     const base = applyItemFilters(
       supabase
         .from("view_manage_storage_items")
@@ -153,7 +160,7 @@ export class StorageItemsService {
         isActive,
         tags,
         location_filter,
-        category,
+        categories,
         from_date,
         to_date,
         availability_min,
@@ -193,7 +200,7 @@ export class StorageItemsService {
       isActive,
       tags,
       location_filter,
-      category,
+      categories,
       from_date,
       to_date,
       availability_min,
@@ -249,7 +256,10 @@ export class StorageItemsService {
     if (!supabase) {
       throw new BadRequestException("Supabase client is not initialized.");
     }
-
+    const { data: categories } = await supabase.rpc(
+      "get_category_descendants",
+      { category_uuid: category ?? "" },
+    );
     // Build a base query with organization filtering
     const base = applyItemFilters(
       supabase
@@ -262,7 +272,7 @@ export class StorageItemsService {
         isActive,
         tags,
         location_filter,
-        category,
+        categories: categories?.map((c) => c.id),
       },
     );
     const countResult = await base;
@@ -298,7 +308,7 @@ export class StorageItemsService {
       isActive,
       tags,
       location_filter,
-      category,
+      categories: categories?.map((c) => c.id),
     });
 
     if (order_by) query.order(order_by ?? "created_at", { ascending });
@@ -323,10 +333,6 @@ export class StorageItemsService {
    * @returns An object containing the total count of storage items.
    */
   async getItemCount(req: AuthRequest, role: string, orgId: string) {
-    console.log("Request path:", req.path);
-    console.log("Headers:", req.headers);
-    console.log("ActiveRoleContext:", req.activeRoleContext);
-
     const supabase = req.supabase;
     const result = await supabase
       .from("storage_items")

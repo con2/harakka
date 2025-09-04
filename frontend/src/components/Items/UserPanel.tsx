@@ -76,7 +76,7 @@ const UserPanel = () => {
     isActive: boolean;
     averageRating: number[];
     itemsNumberAvailable: [number, number];
-    categories: string[];
+    category: string;
     tagIds: string[];
     locationIds: string[];
     orgIds?: string[];
@@ -84,7 +84,7 @@ const UserPanel = () => {
     isActive: true, // Is item active or not filter
     averageRating: [],
     itemsNumberAvailable: [0, 100], // add a range for number of items
-    categories: [],
+    category: "",
     tagIds: [],
     locationIds: [],
     orgIds: [],
@@ -117,7 +117,7 @@ const UserPanel = () => {
       count++;
     }
     count += filters.averageRating.length;
-    count += filters.categories.length;
+    count += filters.category ? 1 : 0;
     count += filters.tagIds.length;
     count += filters.locationIds.length;
     count += filters.orgIds?.length ?? 0;
@@ -166,7 +166,7 @@ const UserPanel = () => {
                           isActive: true,
                           averageRating: [],
                           itemsNumberAvailable: [0, 100],
-                          categories: [],
+                          category: "",
                           tagIds: [],
                           locationIds: [],
                           orgIds: [],
@@ -199,17 +199,15 @@ const UserPanel = () => {
                 {t.userPanel.filters.categories[lang]}
               </label>
               {mappedCategories.map((cat) => {
-                const isSelected = filters.categories.includes(cat.id);
+                const isSelected = filters.category === cat.id;
 
                 return (
                   <div key={cat.id} className="flex flex-col gap-2">
                     <Button
                       className="justify-between h-fit px-0"
                       onClick={() => {
-                        const newCategories = isSelected
-                          ? filters.categories.filter((c) => c !== cat.id)
-                          : [...filters.categories, cat.id];
-                        handleFilterChange("categories", newCategories);
+                        const newValue = isSelected ? "" : cat.id;
+                        handleFilterChange("category", newValue);
                       }}
                     >
                       {cat.name}
@@ -470,7 +468,7 @@ const UserPanel = () => {
                         isActive: true,
                         averageRating: [],
                         itemsNumberAvailable: [0, 100],
-                        categories: [],
+                        category: "",
                         tagIds: [],
                         locationIds: [],
                         orgIds: [],

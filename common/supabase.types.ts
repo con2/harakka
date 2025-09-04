@@ -17,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
+          extensions?: Json
           operationName?: string
           query?: string
           variables?: Json
-          extensions?: Json
         }
         Returns: Json
       }
@@ -1267,6 +1267,7 @@ export type Database = {
       view_manage_storage_items: {
         Row: {
           available_quantity: number | null
+          category_id: string | null
           created_at: string | null
           en_item_name: string | null
           en_item_type: string | null
@@ -1284,6 +1285,13 @@ export type Database = {
           translations: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "storage_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "storage_items_location_id_fkey"
             columns: ["location_id"]
@@ -1374,14 +1382,14 @@ export type Database = {
       }
       create_notification: {
         Args: {
-          p_user_id: string
-          p_type: Database["public"]["Enums"]["notification_type"]
-          p_title: string
-          p_message?: string
           p_channel?: Database["public"]["Enums"]["notification_channel"]
-          p_severity?: Database["public"]["Enums"]["notification_severity"]
-          p_metadata?: Json
           p_idempotency_key?: string
+          p_message?: string
+          p_metadata?: Json
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_title: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_user_id: string
         }
         Returns: undefined
       }
@@ -1390,12 +1398,18 @@ export type Database = {
         Returns: string
       }
       get_all_full_bookings: {
-        Args: { in_offset: number; in_limit: number }
+        Args: { in_limit: number; in_offset: number }
         Returns: Json
       }
       get_all_full_orders: {
-        Args: { in_offset?: number; in_limit?: number }
+        Args: { in_limit?: number; in_offset?: number }
         Returns: Json
+      }
+      get_category_descendants: {
+        Args: { category_uuid: string }
+        Returns: {
+          id: string
+        }[]
       }
       get_full_booking: {
         Args: { booking_id: string }
@@ -1406,26 +1420,26 @@ export type Database = {
         Returns: Json
       }
       get_full_user_booking: {
-        Args: { in_user_id: string; in_offset: number; in_limit: number }
+        Args: { in_limit: number; in_offset: number; in_user_id: string }
         Returns: Json
       }
       get_full_user_order: {
-        Args: { in_user_id: string; in_offset?: number; in_limit?: number }
+        Args: { in_limit?: number; in_offset?: number; in_user_id: string }
         Returns: Json
       }
       get_latest_ban_record: {
         Args: { check_user_id: string }
         Returns: {
-          id: string
-          ban_type: string
           action: string
           ban_reason: string
-          is_permanent: boolean
-          banned_by: string
+          ban_type: string
           banned_at: string
-          unbanned_at: string
+          banned_by: string
+          id: string
+          is_permanent: boolean
           organization_id: string
           role_assignment_id: string
+          unbanned_at: string
         }[]
       }
       get_request_user_id: {
@@ -1442,19 +1456,19 @@ export type Database = {
       get_user_roles: {
         Args: { user_uuid: string }
         Returns: {
-          id: string
-          user_id: string
-          organization_id: string
-          role_id: string
-          is_active: boolean
           created_at: string
-          role_name: string
+          id: string
+          is_active: boolean
+          organization_id: string
           organization_name: string
           organization_slug: string
+          role_id: string
+          role_name: string
+          user_id: string
         }[]
       }
       is_admin: {
-        Args: { p_user_id: string; p_org_id?: string }
+        Args: { p_org_id?: string; p_user_id: string }
         Returns: boolean
       }
       is_user_banned_for_app: {
@@ -1462,26 +1476,26 @@ export type Database = {
         Returns: boolean
       }
       is_user_banned_for_org: {
-        Args: { check_user_id: string; check_org_id: string }
+        Args: { check_org_id: string; check_user_id: string }
         Returns: boolean
       }
       is_user_banned_for_role: {
         Args: {
-          check_user_id: string
           check_org_id: string
           check_role_id: string
+          check_user_id: string
         }
         Returns: boolean
       }
       notify: {
         Args: {
-          p_user_id: string
-          p_type_txt: string
-          p_title?: string
-          p_message?: string
           p_channel?: Database["public"]["Enums"]["notification_channel"]
-          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_message?: string
           p_metadata?: Json
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_title?: string
+          p_type_txt: string
+          p_user_id: string
         }
         Returns: undefined
       }
