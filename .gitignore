@@ -5,6 +5,7 @@ NOTES.md
 !.env.production.template
 !.env.local.template
 supabase-local.env
+supabase-project
 supabase-prod
 # Volumes that get created when running supabase instance
 supabase-project/volumes/db

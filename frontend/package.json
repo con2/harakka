@@ -90,7 +90,7 @@
     "react-easy-crop": "^5.5.0",
     "react-hook-form": "^7.56.3",
     "react-redux": "^9.2.0",
-    "react-router-dom": "^7.4.1",
+    "react-router-dom": "^7.6.3",
     "react-star-ratings": "^2.3.0",
     "sonner": "^2.0.3",
     "supabase": "^2.30.4",
