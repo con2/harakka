@@ -36,6 +36,7 @@ import { OrganizationsController } from "../organization/organizations.controlle
 import { UserBanningModule } from "../user-banning/user-banning.module";
 import { OrganizationLocationsModule } from "../organization-locations/organization_locations.module";
 import { CategoriesModule } from "../categories/categories.module";
+import { StorageItemsController } from "../storage-items/storage-items.controller";
 
 // Load and expand environment variables before NestJS modules initialize
 // Only load env files if SUPABASE_URL is not already set (meaning env-cmd hasn't run)
@@ -110,16 +111,13 @@ export class AppModule implements NestModule {
         { path: "", method: RequestMethod.GET }, // Root endpoint
 
         // Public storage-items routes
-        { path: "storage-items", method: RequestMethod.GET },
         { path: "storage-items/ordered", method: RequestMethod.GET },
-        { path: "storage-items/count", method: RequestMethod.GET },
-        { path: "storage-items/:id", method: RequestMethod.GET },
         { path: "storage-items/by-tag/:tagId", method: RequestMethod.GET },
         {
           path: "storage-items/availability/:itemId",
           method: RequestMethod.GET,
         },
-
+        { path: "storage-items/id/:id", method: RequestMethod.GET },
         { path: "api/storage-locations", method: RequestMethod.GET },
         { path: "storage-locations", method: RequestMethod.GET },
         { path: "storage-locations/*path", method: RequestMethod.GET },
@@ -157,8 +155,8 @@ export class AppModule implements NestModule {
         LogsController,
         RoleController,
         OrganizationsController,
+        StorageItemsController,
 
-        // Protected HTTP methods (all routes except excluded ones)
         { path: "*", method: RequestMethod.ALL },
       );
   }
