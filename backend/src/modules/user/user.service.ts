@@ -42,6 +42,65 @@ export class UserService {
     return data;
   }
 
+  /**
+   * Get a list of users with only name and email.
+   * Accessible by both super_admin and tenant_admin.
+   * @param req - Authenticated request object
+   * @param dto - Query parameters for pagination and filtering
+   * @returns List of users with name and email
+   */
+  async getAllOrderedUsersList(req: AuthRequest, dto: GetOrderedUsersDto) {
+    const supabase = req.supabase;
+
+    // Build the main user query
+    let query = supabase.from("user_profiles").select("id, full_name, email");
+
+    // Apply search query if provided
+    if (dto.searchquery) {
+      query = query.or(
+        `email.ilike.%${dto.searchquery}%,full_name.ilike.%${dto.searchquery}%`,
+      );
+    }
+
+    // Apply ordering
+    const orderColumn = dto.ordered_by || "created_at";
+    const ascending = dto.ascending === true;
+    query = query.order(orderColumn, { ascending });
+
+    // Apply pagination
+    const page = Number(dto.page) || 1;
+    const limit = Number(dto.limit) || 10;
+    const offset = (page - 1) * limit;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error } = await query;
+
+    if (error) {
+      handleSupabaseError(error);
+    }
+
+    if (!data) {
+      return {
+        data: [],
+        metadata: getPaginationMeta(0, page, limit),
+      };
+    }
+
+    // Ensure the data matches the expected type
+    const result: Pick<UserProfile, "id" | "full_name" | "email">[] = data.map(
+      (user) => ({
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+      }),
+    );
+
+    return {
+      result,
+      metadata: getPaginationMeta(data.length, page, limit),
+    };
+  }
+
   // Paginated, filtered, org-aware (org_filter + Global)
   async getAllOrderedUsers(
     req: AuthRequest,
