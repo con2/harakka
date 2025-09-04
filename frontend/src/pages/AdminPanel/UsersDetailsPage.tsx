@@ -11,7 +11,6 @@ import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Clipboard } from "lucide-react";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
-import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
 import {
   Accordion,
   AccordionItem,
@@ -38,6 +37,8 @@ import UserBanHistory from "@/components/Admin/UserManagement/Banning/UserBanHis
 import UserBan from "@/components/Admin/UserManagement/Banning/UserBan";
 import UnbanUser from "@/components/Admin/UserManagement/Banning/UnbanUser";
 import { toastConfirm } from "@/components/ui/toastConfirm";
+import { Separator } from "@/components/ui/separator";
+import { Address } from "@/types/address";
 
 const UsersDetailsPage = () => {
   const { id } = useParams();
@@ -47,7 +48,8 @@ const UsersDetailsPage = () => {
   // global `selectedUser` used elsewhere in the app (e.g. nav/profile).
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
   const { formatDate } = useFormattedDate();
   const { lang } = useLanguage();
   // copy-to-clipboard state for email
@@ -237,7 +239,13 @@ const UsersDetailsPage = () => {
   // compute whether there are unsaved role changes (creates/deletes/active toggles)
   const hasRoleChanges = useMemo(() => {
     if (!user) return false;
-    const originalRoles = allUserRoles.filter((r) => r.user_id === user.id);
+    const originalRoles = allUserRoles.filter(
+      (r) =>
+        r.user_id === user.id &&
+        r.organization_id &&
+        r.role_name &&
+        (isSuper || r.organization_id === activeOrgId),
+    );
 
     const created = roleAssignments.some(
       (ra) =>
@@ -261,11 +269,15 @@ const UsersDetailsPage = () => {
       if (!ra.id) return false;
       const orig = originalRoles.find((or) => or.id === ra.id);
       if (!orig) return false;
-      return Boolean(orig.is_active) !== Boolean(ra.is_active);
+      // consider active flag changes or role_name changes as updates
+      return (
+        Boolean(orig.is_active) !== Boolean(ra.is_active) ||
+        (orig.role_name ?? null) !== (ra.role_name ?? null)
+      );
     });
 
     return created || deleted || updated;
-  }, [roleAssignments, allUserRoles, user]);
+  }, [roleAssignments, allUserRoles, user, activeOrgId, isSuper]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -348,6 +360,18 @@ const UsersDetailsPage = () => {
       .then((u) => {
         if (!mounted) return;
         setUser(u);
+        // fetch addresses for this user
+        setAddressesLoading(true);
+        usersApi
+          .getAddresses(u.id)
+          .then((addrs) => {
+            if (!mounted) return;
+            setAddresses(addrs ?? []);
+          })
+          .catch((err) => console.error("Failed fetching addresses", err))
+          .finally(() => {
+            if (mounted) setAddressesLoading(false);
+          });
       })
       .catch((err) => {
         console.error("Failed to fetch user", err);
@@ -415,6 +439,29 @@ const UsersDetailsPage = () => {
             {user.created_at
               ? formatDate(new Date(user.created_at), "d MMM yyyy")
               : "-"}
+          </div>
+          {/* Addresses */}
+          <div>
+            <Label className="text-lg">
+              {t.usersDetailsPage.labels.addresses[lang] ?? "Addresses"}
+            </Label>
+            {addressesLoading ? (
+              <div className="text-sm">Loading...</div>
+            ) : addresses.length === 0 ? (
+              <div className="text-md text-slate-500">
+                {t.usersDetailsPage.labels.noAddresses[lang]}
+              </div>
+            ) : (
+              <div className="space-y-2 mt-2">
+                {addresses.map((a) => (
+                  <div key={a.id} className="text-md">
+                    <div>
+                      {a.street_address}, {a.city}, {a.postal_code}, {a.country}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -578,79 +625,62 @@ const UsersDetailsPage = () => {
             </div>
           )}
         </div>
+        <Separator className="mt-40" />
 
-        {/* Danger zone: banning and delete actions */}
+        {/* Danger zone: banning actions */}
         <div className="mt-6">
           <Accordion type="single" collapsible>
             <AccordionItem value="danger-zone">
-              <AccordionTrigger className="text-lg text-red-600">
-                Danger zone
+              <AccordionTrigger className="text-red-300">
+                {t.usersDetailsPage.buttons.dangerZone[lang]} -{" "}
+                {t.usersDetailsPage.userBanning.history.title[lang]}
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-6">
                   {/* Banning sub-section */}
-                  <div>
-                    <h3 className="font-semibold mb-2">
-                      {t.userBanning.history.title[lang]}
-                    </h3>
-                    <div className="space-y-4">
-                      <Tabs
-                        value={activeTab}
-                        onValueChange={(v) =>
-                          setActiveTab(v as "history" | "ban" | "unban")
-                        }
-                      >
-                        <TabsList className="w-full">
-                          <TabsTrigger value="history" className="w-1/3">
-                            {t.userBanning.tabs.history[lang]}
-                          </TabsTrigger>
-                          <TabsTrigger value="ban" className="w-1/3">
-                            {t.userBanning.tabs.ban[lang]}
-                          </TabsTrigger>
-                          <TabsTrigger value="unban" className="w-1/3">
-                            {t.userBanning.tabs.unban[lang]}
-                          </TabsTrigger>
-                        </TabsList>
+                  <div className="space-y-4">
+                    <Tabs
+                      value={activeTab}
+                      onValueChange={(v) =>
+                        setActiveTab(v as "history" | "ban" | "unban")
+                      }
+                    >
+                      <TabsList className="w-full">
+                        <TabsTrigger value="history" className="w-1/3">
+                          {t.usersDetailsPage.userBanning.tabs.history[lang]}
+                        </TabsTrigger>
+                        <TabsTrigger value="ban" className="w-1/3">
+                          {t.usersDetailsPage.userBanning.tabs.ban[lang]}
+                        </TabsTrigger>
+                        <TabsTrigger value="unban" className="w-1/3">
+                          {t.usersDetailsPage.userBanning.tabs.unban[lang]}
+                        </TabsTrigger>
+                      </TabsList>
 
-                        <TabsContent value="history">
-                          <div className="max-h-64 overflow-y-auto">
-                            <UserBanHistory user={user} />
-                          </div>
-                        </TabsContent>
+                      <TabsContent value="history">
+                        <div className="max-h-64 overflow-y-auto">
+                          <UserBanHistory user={user} />
+                        </div>
+                      </TabsContent>
 
-                        <TabsContent value="ban">
-                          <div className="pt-2">
-                            <UserBan
-                              user={user}
-                              onSuccess={() => setActiveTab("history")}
-                            />
-                          </div>
-                        </TabsContent>
+                      <TabsContent value="ban">
+                        <div className="pt-2">
+                          <UserBan
+                            user={user}
+                            onSuccess={() => setActiveTab("history")}
+                          />
+                        </div>
+                      </TabsContent>
 
-                        <TabsContent value="unban">
-                          <div className="pt-2">
-                            <UnbanUser
-                              user={user}
-                              onSuccess={() => setActiveTab("history")}
-                            />
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                    </div>
-                  </div>
-
-                  {/* Delete user sub-section */}
-                  <div className="border-t pt-4">
-                    <h4 className="font-semibold text-red-600">Delete user</h4>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      This action cannot be undone.
-                    </p>
-                    <div className="mt-4">
-                      <DeleteUserButton
-                        id={user.id}
-                        closeModal={() => navigate(-1)}
-                      />
-                    </div>
+                      <TabsContent value="unban">
+                        <div className="pt-2">
+                          <UnbanUser
+                            user={user}
+                            onSuccess={() => setActiveTab("history")}
+                          />
+                        </div>
+                      </TabsContent>
+                    </Tabs>
                   </div>
                 </div>
               </AccordionContent>

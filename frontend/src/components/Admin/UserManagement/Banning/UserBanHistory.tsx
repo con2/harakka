@@ -49,7 +49,7 @@ const UserBanHistory = ({ user }: Props) => {
   if (loading) {
     return (
       <div className="flex justify-center py-4">
-        {t.userBan.status.loading[lang]}
+        {t.userBanHistory.status.loading[lang]}
       </div>
     );
   }
@@ -57,7 +57,7 @@ const UserBanHistory = ({ user }: Props) => {
   if (!banHistory || banHistory.length === 0) {
     return (
       <div className="text-center py-4 text-muted-foreground">
-        {t.userBan.history.noBans[lang]}
+        {t.userBanHistory.noBans[lang]}
       </div>
     );
   }
@@ -66,13 +66,13 @@ const UserBanHistory = ({ user }: Props) => {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>{t.userBan.status.action[lang]}</TableHead>
-          <TableHead>{t.userBan.status.status[lang]}</TableHead>
-          <TableHead>{t.userBan.history.columns.banType[lang]}</TableHead>
-          <TableHead>{t.userBan.history.columns.orgName[lang]}</TableHead>
-          <TableHead>{t.userBan.history.columns.reason[lang]}</TableHead>
-          <TableHead>{t.userBan.status.date[lang]}</TableHead>
-          <TableHead>{t.userBan.history.columns.isPermanent[lang]}</TableHead>
+          <TableHead>{t.userBanHistory.status.action[lang]}</TableHead>
+          <TableHead>{t.userBanHistory.status.status[lang]}</TableHead>
+          <TableHead>{t.userBanHistory.columns.banType[lang]}</TableHead>
+          <TableHead>{t.userBanHistory.columns.orgName[lang]}</TableHead>
+          <TableHead>{t.userBanHistory.columns.reason[lang]}</TableHead>
+          <TableHead>{t.userBanHistory.status.date[lang]}</TableHead>
+          <TableHead>{t.userBanHistory.columns.isPermanent[lang]}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -87,8 +87,8 @@ const UserBanHistory = ({ user }: Props) => {
                 }
               >
                 {ban.action === "banned"
-                  ? t.userBan.status.banned[lang]
-                  : t.userBan.status.unbanned[lang]}
+                  ? t.userBanHistory.status.banned[lang]
+                  : t.userBanHistory.status.unbanned[lang]}
               </span>
             </TableCell>
             <TableCell>
@@ -122,8 +122,8 @@ const UserBanHistory = ({ user }: Props) => {
             </TableCell>
             <TableCell>
               {ban.is_permanent
-                ? t.userBan.history.columns.permanent[lang]
-                : t.userBan.history.columns.notPermanent[lang]}
+                ? t.userBanHistory.columns.permanent[lang]
+                : t.userBanHistory.columns.notPermanent[lang]}
             </TableCell>
           </TableRow>
         ))}

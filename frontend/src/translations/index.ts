@@ -39,8 +39,9 @@ import { timeframeSelector } from "./modules/timeframeSelector";
 import { unauthorized } from "./modules/unauthorized";
 import { updateItemModal } from "./modules/updateItemModal";
 import { userDelete } from "./modules/userDelete";
-import { userBanning } from "./modules/userBanning";
 import { userBan } from "./modules/userBan";
+import { userBanHistory } from "./modules/userBanHistory";
+import { unbanUser } from "./modules/unbanUser";
 import { userEditModal } from "./modules/userEditModal";
 import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
@@ -128,8 +129,9 @@ export const t = {
   updateItemModal,
   updateItemForm,
   userDelete,
-  userBanning,
   userBan,
+  userBanHistory,
+  unbanUser,
   userEditModal,
   userGuide,
   userPanel,

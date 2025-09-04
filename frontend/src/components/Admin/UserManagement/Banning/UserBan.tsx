@@ -139,7 +139,7 @@ const UserBan = ({ user, onSuccess }: Props) => {
           selectedRole.role_name || "",
         )
       ) {
-        toast.error(t.userBanning.messages.onlyAdminUserRoles[lang]);
+        toast.error(t.userBan.messages.onlyAdminUserRoles[lang]);
         return;
       }
     }
@@ -150,13 +150,13 @@ const UserBan = ({ user, onSuccess }: Props) => {
       !isSuper
     ) {
       if (activeOrgId && organizationId !== activeOrgId) {
-        toast.error(t.userBanning.messages.onlyActiveOrg[lang]);
+        toast.error(t.userBan.messages.onlyActiveOrg[lang]);
         return;
       }
     }
 
     if (!banReason.trim()) {
-      toast.error(t.userBanning.messages.missingFields[lang]);
+      toast.error(t.userBan.messages.missingFields[lang]);
       return;
     }
 
@@ -227,7 +227,7 @@ const UserBan = ({ user, onSuccess }: Props) => {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label>{t.userBanning.fields.banType.label[lang]}</Label>
+        <Label>{t.userBan.fields.banType.label[lang]}</Label>
         <Select
           value={banType}
           onValueChange={(value: BanType) => setBanType(value)}
@@ -332,6 +332,7 @@ const UserBan = ({ user, onSuccess }: Props) => {
         <Textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
+          placeholder={t.userBan.fields.notes.placeholder[lang]}
           rows={2}
         />
       </div>
@@ -350,6 +351,7 @@ const UserBan = ({ user, onSuccess }: Props) => {
       <div className="flex gap-2">
         <Button
           onClick={handleSubmit}
+          variant={"secondary"}
           disabled={
             loading ||
             !banReason.trim() ||

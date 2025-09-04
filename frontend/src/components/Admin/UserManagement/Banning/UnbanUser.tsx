@@ -162,7 +162,7 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
         setActiveBans(bans);
       } catch (error) {
         console.error("Failed to load user ban history:", error);
-        toast.error(t.userBanning.messages.failedLoadBanHistory[lang]);
+        toast.error(t.unbanUser.messages.failedLoadBanHistory[lang]);
       } finally {
         setBansLoading(false);
       }
@@ -198,25 +198,25 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
     if (!user.id) return;
 
     if (banType === "application" && !canUnbanFromApp) {
-      toast.error(t.userBanning.messages.noPermissionUnbanApp[lang]);
+      toast.error(t.unbanUser.messages.noPermissionUnbanApp[lang]);
       return;
     }
     if (banType === "organization" && !canUnbanFromOrg) {
-      toast.error(t.userBanning.messages.noPermissionUnbanOrg[lang]);
+      toast.error(t.unbanUser.messages.noPermissionUnbanOrg[lang]);
       return;
     }
     if (banType === "role" && !canUnbanFromRole) {
-      toast.error(t.userBanning.messages.noPermissionUnbanRole[lang]);
+      toast.error(t.unbanUser.messages.noPermissionUnbanRole[lang]);
       return;
     }
 
     if (banType === "role" && (!organizationId || !roleId)) {
-      toast.error(t.userBanning.messages.missingFields[lang]);
+      toast.error(t.unbanUser.messages.missingFields[lang]);
       return;
     }
 
     if (banType === "organization" && !organizationId) {
-      toast.error(t.userBanning.messages.missingFields[lang]);
+      toast.error(t.unbanUser.messages.missingFields[lang]);
       return;
     }
 
@@ -226,7 +226,7 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
       !isSuper
     ) {
       if (activeOrgId && organizationId !== activeOrgId) {
-        toast.error(t.userBanning.messages.onlyUnbanActiveOrg[lang]);
+        toast.error(t.unbanUser.messages.onlyUnbanActiveOrg[lang]);
         return;
       }
     }
@@ -243,13 +243,13 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
       ).unwrap();
 
       if (result.success) {
-        toast.success(t.userBanning.toast.unbanSuccess[lang]);
+        toast.success(t.unbanUser.toast.unbanSuccess[lang]);
         if (onSuccess) onSuccess();
       } else {
-        toast.error(result.message || t.userBanning.toast.unbanError[lang]);
+        toast.error(result.message || t.unbanUser.toast.unbanError[lang]);
       }
     } catch {
-      toast.error(t.userBanning.toast.unbanError[lang]);
+      toast.error(t.unbanUser.toast.unbanError[lang]);
     }
   };
 
@@ -257,14 +257,14 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
     <div className="space-y-3">
       {bansLoading ? (
         <div className="text-center py-4 text-muted-foreground">
-          {t.userBanning.messages.loadingBanInfo[lang]}
+          {t.unbanUser.messages.loadingBanInfo[lang]}
         </div>
       ) : activeBans.some(
           (ban) => !ban.unbanned_at && ban.action === "banned",
         ) ? (
         <>
           <div className="space-y-2">
-            <Label>{t.userBanning.unban.fields.banTypeToRemove[lang]}</Label>
+            <Label>{t.unbanUser.unban.fields.banTypeToRemove[lang]}</Label>
             <Select
               value={banType}
               onValueChange={(value: BanType) => setBanType(value)}
@@ -275,17 +275,17 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
               <SelectContent>
                 {hasActiveApplicationBan() && canUnbanFromApp && (
                   <SelectItem value="application">
-                    {t.userBanning.unban.fields.selectTypes.application[lang]}
+                    {t.unbanUser.unban.fields.selectTypes.application[lang]}
                   </SelectItem>
                 )}
                 {hasActiveOrganizationBans() && canUnbanFromOrg && (
                   <SelectItem value="organization">
-                    {t.userBanning.unban.fields.selectTypes.organization[lang]}
+                    {t.unbanUser.unban.fields.selectTypes.organization[lang]}
                   </SelectItem>
                 )}
                 {hasActiveRoleBans() && canUnbanFromRole && (
                   <SelectItem value="role">
-                    {t.userBanning.unban.fields.selectTypes.role[lang]}
+                    {t.unbanUser.unban.fields.selectTypes.role[lang]}
                   </SelectItem>
                 )}
               </SelectContent>
@@ -294,12 +294,12 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
 
           {(banType === "organization" || banType === "role") && (
             <div className="space-y-2">
-              <Label>{t.userBanning.fields.organization.label[lang]}</Label>
+              <Label>{t.unbanUser.fields.organization.label[lang]}</Label>
               <Select value={organizationId} onValueChange={setOrganizationId}>
                 <SelectTrigger>
                   <SelectValue
                     placeholder={
-                      t.userBanning.unban.fields.organizationPlaceholder[lang]
+                      t.unbanUser.unban.fields.organizationPlaceholder[lang]
                     }
                   />
                 </SelectTrigger>
@@ -319,13 +319,11 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
 
           {banType === "role" && organizationId && (
             <div className="space-y-2">
-              <Label>{t.userBanning.fields.role.label[lang]}</Label>
+              <Label>{t.unbanUser.fields.role.label[lang]}</Label>
               <Select value={roleId} onValueChange={setRoleId}>
                 <SelectTrigger>
                   <SelectValue
-                    placeholder={
-                      t.userBanning.unban.fields.rolePlaceholder[lang]
-                    }
+                    placeholder={t.unbanUser.unban.fields.rolePlaceholder[lang]}
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -340,12 +338,12 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
           )}
 
           <div className="space-y-2">
-            <Label>{t.userBanning.fields.notes.label[lang]}</Label>
+            <Label>{t.unbanUser.fields.notes.label[lang]}</Label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              placeholder={t.userBanning.unban.fields.reasonPlaceholder[lang]}
+              placeholder={t.unbanUser.unban.fields.reasonPlaceholder[lang]}
             />
           </div>
 
@@ -361,14 +359,14 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
               }
             >
               {loading
-                ? t.userBanning.toast.loading[lang]
-                : t.userBanning.actions.unban[lang]}
+                ? t.unbanUser.toast.loading[lang]
+                : t.unbanUser.actions.unban[lang]}
             </Button>
           </div>
         </>
       ) : (
         <div className="text-center py-4 text-muted-foreground">
-          {t.userBanning.messages.noActiveBans[lang]}
+          {t.unbanUser.messages.noActiveBans[lang]}
         </div>
       )}
     </div>

@@ -16,6 +16,10 @@ export const usersDetailsPage = {
       fi: "Lisää rooli",
       en: "Add Role",
     },
+    dangerZone: {
+      fi: "Vaaravyöhyke",
+      en: "Danger Zone",
+    },
   },
   title: {
     fi: "Muokkaa käyttäjää",
@@ -45,6 +49,14 @@ export const usersDetailsPage = {
     created: {
       fi: "Luotu",
       en: "Created",
+    },
+    addresses: {
+      fi: "Osoitteet",
+      en: "Addresses",
+    },
+    noAddresses: {
+      fi: "Ei osoitteita tallennettuna profiiliin",
+      en: "No addresses saved to profile",
     },
   },
   placeholders: {
@@ -115,6 +127,28 @@ export const usersDetailsPage = {
     active: {
       fi: "Aktiivinen",
       en: "Active",
+    },
+  },
+  userBanning: {
+    history: {
+      title: {
+        fi: "Käyttäjän estot",
+        en: "User Banning",
+      },
+    },
+    tabs: {
+      history: {
+        fi: "Historia",
+        en: "History",
+      },
+      ban: {
+        fi: "Estä",
+        en: "Ban",
+      },
+      unban: {
+        fi: "Poista esto",
+        en: "Unban",
+      },
     },
   },
 };
