@@ -36,7 +36,11 @@ import { fetchTagsForItem as fetchTagsForItemAction } from "@/store/slices/tagSl
 import { toast } from "sonner";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
-import { createItemDto } from "@/store/utils/validate";
+import "@/store/utils/validate";
+import {
+  buildCandidateFrom as buildCandidateFromHelper,
+  validateCandidateWithMessages,
+} from "@/utils/updateItemHelpers";
 import { Separator } from "@/components/ui/separator";
 
 type Props = {
@@ -89,7 +93,6 @@ const UpdateItemForm: React.FC<Props> = ({
     if (selectedTags) setLocalSelectedTags(selectedTags.map((t) => t.id));
   }, [selectedTags]);
 
-  // Notify parent when active tab changes so parent can enable/disable Edit button
   useEffect(() => {
     onActiveTabChange?.(activeTab);
   }, [activeTab, onActiveTabChange]);
@@ -115,39 +118,14 @@ const UpdateItemForm: React.FC<Props> = ({
     }
     if (!orgId) return toast.error(t.updateItemForm.messages.missingOrg[lang]);
 
-    // Validate using shared candidate builder
-    try {
-      const candidate = buildCandidateFrom(formData);
-      const validation = createItemDto.safeParse(candidate);
-      if (!validation.success) {
-        const first = validation.error.issues[0];
-        const key = first?.message as string | undefined;
+    // Validate using centralized helper
+    const candidate = buildCandidateFromHelper(
+      formData,
+      localSelectedTags,
+      orgLocations,
+    );
 
-        const validationMessages =
-          (t.addItemForm?.messages?.validation as
-            | Record<string, Record<string, string>>
-            | undefined) ?? undefined;
-
-        if (key && validationMessages?.[key]) {
-          const mapping = validationMessages[key];
-          toast.error(mapping[lang] ?? "Invalid input");
-        } else {
-          toast.error(
-            t.addItemForm?.messages?.error?.fallbackFormError?.[lang] ??
-              "Invalid input",
-          );
-        }
-
-        return;
-      }
-    } catch (err) {
-      console.error("Validation error:", err);
-      toast.error(
-        t.addItemForm?.messages?.error?.fallbackFormError?.[lang] ??
-          "Invalid input",
-      );
-      return;
-    }
+    if (!validateCandidateWithMessages(candidate, lang)) return;
 
     try {
       setLoading(true);
@@ -178,69 +156,17 @@ const UpdateItemForm: React.FC<Props> = ({
     }
   };
 
-  // Build the candidate payload from a given Item-like object.
-  const buildCandidateFrom = (fd: Item) => {
-    const loc = orgLocations.find(
-      (l) => l.storage_location_id === fd.location_id,
-    );
-
-    return {
-      id: String(fd.id),
-      location: loc
-        ? {
-            id: loc.storage_location_id,
-            name: loc.storage_locations?.name ?? "",
-            address: loc.storage_locations?.address ?? "",
-          }
-        : {
-            id: fd.location_id ?? "",
-            name: fd.location_details?.name ?? "",
-            address: fd.location_details?.address ?? "",
-          },
-      quantity: Number(fd.quantity ?? 0),
-      available_quantity: Number(fd.available_quantity ?? fd.quantity ?? 0),
-      is_active: Boolean(fd.is_active),
-      translations: fd.translations,
-      tags: localSelectedTags,
-      images: (
-        fd as unknown as {
-          images?: { main: unknown; details: unknown[] };
-        }
-      ).images ?? { main: null, details: [] },
-    } as const;
-  };
-
   const validateBeforeImages = (): boolean => {
     if (!formData) return false;
 
-    const candidate = buildCandidateFrom(formData);
-    const validation = createItemDto.safeParse(candidate);
-    if (!validation.success) {
-      const first = validation.error.issues[0];
-      const key = first?.message as string | undefined;
+    const candidate = buildCandidateFromHelper(
+      formData,
+      localSelectedTags,
+      orgLocations,
+    );
 
-      const validationMessages =
-        (t.addItemForm?.messages?.validation as
-          | Record<string, Record<string, string>>
-          | undefined) ?? undefined;
-
-      if (key && validationMessages?.[key]) {
-        const mapping = validationMessages[key];
-        toast.error(mapping[lang] ?? "Invalid input");
-      } else {
-        toast.error(
-          t.addItemForm?.messages?.error?.fallbackFormError?.[lang] ??
-            "Invalid input",
-        );
-      }
-
-      return false;
-    }
-
-    return true;
+    return validateCandidateWithMessages(candidate, lang);
   };
-
-  // ...local helpers
 
   return (
     <div>
