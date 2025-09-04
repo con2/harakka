@@ -1,12 +1,17 @@
 # Supabase Local Development Guide
+This guide covers setting up the Supabase CLI for team development, including installation and local development workflow.
 
 ## Table of contents
 
 1. [Sources](#sources)
 1. [Prerequisites](#prerequisites)
-1. [Guide](#guide)
-1. [Generate Local Types](#generate-local-types)
-1. [Making Local Changes](#making-local-changes)
+1. Installation
+   - [Docker](#docker-installation)
+   - [Supabase CLI](#cli-installation)
+1. [Commands](#commands)
+1. [Project setup](#project-setup)
+1. [Local Development](#local-development)
+1. [Available npm Scripts](#available-npm-scripts)
 
 ## Sources
 
