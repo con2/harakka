@@ -52,6 +52,8 @@ const UserPanel = () => {
     // eslint-disable-next-line
   }, []);
 
+
+
   // Shared expand/collapse state per filter list (max 5 visible by default)
   type ExpandableSection = "itemTypes" | "organizations" | "locations" | "tags";
   const MAX_VISIBLE = 5;
@@ -199,7 +201,9 @@ const UserPanel = () => {
                 {t.userPanel.filters.categories[lang]}
               </label>
               {mappedCategories.map((cat) => {
+                const subcatIds = cat.subcategories?.flatMap((c) => c.id);
                 const isSelected = filters.category === cat.id;
+                const hasChildSelected = subcatIds?.includes(filters.category);
 
                 return (
                   <div key={cat.id} className="flex flex-col gap-2">
@@ -213,19 +217,26 @@ const UserPanel = () => {
                       {cat.name}
                       {cat.subcategories!.length > 0 && (
                         <ChevronRight
-                          className={`transition-transform ${isSelected ? "transform-[rotate(90deg)]" : "transform-[rotate(0deg)]"}`}
+                          className={`transition-transform ${isSelected || hasChildSelected ? "transform-[rotate(90deg)]" : "transform-[rotate(0deg)]"}`}
                         />
                       )}
                     </Button>
-                    {isSelected &&
-                      cat.subcategories?.map((subcat) => (
-                        <Button
-                          className="justify-start pl-6 h-fit"
-                          key={subcat.id}
-                        >
-                          {subcat.name}
-                        </Button>
-                      ))}
+                    {(isSelected || hasChildSelected) &&
+                      cat.subcategories?.map((subcat) => {
+                        const subcatSelected = filters.category === subcat.id;
+                        return (
+                          <Button
+                            className="justify-start pl-6 h-fit"
+                            key={subcat.id}
+                            onClick={() => {
+                              const newValue = subcatSelected ? "" : subcat.id;
+                              handleFilterChange("category", newValue);
+                            }}
+                          >
+                            {subcat.name}
+                          </Button>
+                        );
+                      })}
                   </div>
                 );
               })}

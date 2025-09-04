@@ -143,13 +143,20 @@ export class StorageItemsService {
     org_filter?: string,
   ) {
     // Build a base query without range for counting and apply all filters
-    const { data: categories } = await supabase.rpc(
-      "get_items_in_category_tree",
-      {
-        category_uuid: category,
-      },
-    );
-    console.log("matching categories: ", categories);
+
+    // Get nested categories of X category ID.
+    const matchingCategories: string[] = [];
+    if (category) {
+      const { data: categories } = await supabase.rpc(
+        "get_category_descendants",
+        {
+          category_uuid: category,
+        },
+      );
+      matchingCategories.push(
+        ...(categories as { id: string }[]).map((c) => c.id),
+      );
+    }
     const base = applyItemFilters(
       supabase
         .from("view_manage_storage_items")
@@ -160,7 +167,7 @@ export class StorageItemsService {
         isActive,
         tags,
         location_filter,
-        categories,
+        categories: matchingCategories,
         from_date,
         to_date,
         availability_min,
@@ -200,7 +207,7 @@ export class StorageItemsService {
       isActive,
       tags,
       location_filter,
-      categories,
+      categories: matchingCategories,
       from_date,
       to_date,
       availability_min,
@@ -256,10 +263,19 @@ export class StorageItemsService {
     if (!supabase) {
       throw new BadRequestException("Supabase client is not initialized.");
     }
-    const { data: categories } = await supabase.rpc(
-      "get_category_descendants",
-      { category_uuid: category ?? "" },
-    );
+    // Get nested categories of X category ID.
+    const matchingCategories: string[] = [];
+    if (category) {
+      const { data: categories } = await supabase.rpc(
+        "get_category_descendants",
+        {
+          category_uuid: category,
+        },
+      );
+      matchingCategories.push(
+        ...(categories as { id: string }[]).map((c) => c.id),
+      );
+    }
     // Build a base query with organization filtering
     const base = applyItemFilters(
       supabase
@@ -272,7 +288,7 @@ export class StorageItemsService {
         isActive,
         tags,
         location_filter,
-        categories: categories?.map((c) => c.id),
+        categories: matchingCategories,
       },
     );
     const countResult = await base;
@@ -308,7 +324,7 @@ export class StorageItemsService {
       isActive,
       tags,
       location_filter,
-      categories: categories?.map((c) => c.id),
+      categories: matchingCategories,
     });
 
     if (order_by) query.order(order_by ?? "created_at", { ascending });

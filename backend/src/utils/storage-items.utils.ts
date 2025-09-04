@@ -209,9 +209,8 @@ export function applyItemFilters<T extends FilterableQuery>(
 
   if (org_filter) query.in("organization_id", org_filter.split(","));
 
-  if (categories) {
-    query.in("category_id", categories);
-  }
+  if (categories && categories.length > 0) query.in("category_id", categories);
+
   if (from_date) query.gte("created_at", from_date);
   if (to_date) query.lt("created_at", to_date);
 
