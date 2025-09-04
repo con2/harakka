@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { Tag, TagAssignmentFilter } from "@/types";
+import { ExtendedTag } from "@common/items/tag.types";
 import {
   fetchFilteredTags,
   selectAllTags,
@@ -23,17 +24,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
+// import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import TagDelete from "@/components/Admin/Items/TagDelete";
 import AddTagModal from "@/components/Admin/Items/AddTagModal";
+import { Badge } from "@/components/ui/badge";
 
 const TagList = () => {
   const dispatch = useAppDispatch();
   const tags = useAppSelector(selectAllTags);
-  const items = useAppSelector(selectAllItems);
+  // const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectTagsLoading);
   const error = useAppSelector(selectError);
   const page = useAppSelector(selectTagsPage);
@@ -58,14 +60,6 @@ const TagList = () => {
   const [editTag, setEditTag] = useState<Tag | null>(null);
   const [editNameFi, setEditNameFi] = useState("");
   const [editNameEn, setEditNameEn] = useState("");
-
-  // Calculate tag usage for display
-  const tagUsage: Record<string, number> = {};
-  items.forEach((item) => {
-    (item.storage_item_tags || []).forEach((tag) => {
-      tagUsage[tag.id] = (tagUsage[tag.id] || 0) + 1;
-    });
-  });
 
   // Fetch tags when search term or assignment filter changes
   useEffect(() => {
@@ -99,11 +93,11 @@ const TagList = () => {
   }, [page]);
 
   // Fetch items once
-  useEffect(() => {
+  /*   useEffect(() => {
     if (items.length === 0) {
       void dispatch(fetchAllItems({ page: 1, limit: 10 }));
     }
-  }, [dispatch, items.length]);
+  }, [dispatch, items.length]); */
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
@@ -166,17 +160,11 @@ const TagList = () => {
     }
   };
 
-  const columns: ColumnDef<Tag>[] = [
+  const columns: ColumnDef<ExtendedTag>[] = [
     {
-      header: t.tagList.columns.nameFi[lang],
-      accessorFn: (row) => row.translations?.fi?.name ?? "—",
-      cell: ({ row }) => row.original.translations?.fi?.name ?? "—",
-      enableSorting: false,
-    },
-    {
-      header: t.tagList.columns.nameEn[lang],
-      accessorFn: (row) => row.translations?.en?.name ?? "—",
-      cell: ({ row }) => row.original.translations?.en?.name ?? "—",
+      header: t.tagList.columns.name[lang],
+      accessorFn: (row) => row.translations?.[lang]?.name ?? "—",
+      cell: ({ row }) => row.original.translations?.[lang].name ?? "—",
       enableSorting: false,
     },
     {
@@ -190,29 +178,10 @@ const TagList = () => {
       enableSorting: true,
     },
     {
-      header: t.tagList.columns.assigned[lang],
-      id: "assigned",
-      cell: ({ row }) => {
-        const tag = row.original;
-        const isUsed = !!tagUsage[tag.id];
-        return isUsed ? (
-          <span className="text-highlight2 font-medium">
-            {t.tagList.assignment.yes[lang]}
-          </span>
-        ) : (
-          <span className="text-red-400 font-medium">
-            {t.tagList.assignment.no[lang]}
-          </span>
-        );
-      },
-      enableSorting: false,
-    },
-    {
       header: t.tagList.columns.assignedTo[lang],
-      id: "assignedTo",
-      accessorFn: (row) => tagUsage[row.id] || 0,
+      id: "assigned_to",
       cell: ({ row }) => {
-        const count = tagUsage[row.original.id] || 0;
+        const count = row.original.assigned_to;
         return (
           <span className="text-sm">
             {t.tagList.assignment.count[lang].replace(
@@ -221,6 +190,22 @@ const TagList = () => {
             )}
           </span>
         );
+      },
+      enableSorting: false,
+    },
+    {
+      id: "popularity_rank",
+      header: "Popularity",
+      cell: ({ row }) => {
+        const rank = row.original.popularity_rank;
+        return rank ? (
+          <Badge
+            variant="outline"
+            className={`bg-green-${rank === "very popular" ? "100" : "50"} text-green-800 border-green-300`}
+          >
+            {rank}
+          </Badge>
+        ) : null;
       },
       enableSorting: false,
     },

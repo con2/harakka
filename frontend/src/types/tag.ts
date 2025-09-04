@@ -1,3 +1,4 @@
+import { ExtendedTag } from "@common/items/tag.types";
 import { ErrorContext } from "./common";
 import { Database, TagTranslations } from "./manualOverride";
 
@@ -21,11 +22,11 @@ export type TagTranslation = TagTranslations["en"];
  * with loading/error flags and pagination metadata.
  */
 export interface TagState {
-  tags: Tag[];
+  tags: ExtendedTag[];
   loading: boolean;
   error: string | null;
   errorContext: ErrorContext;
-  selectedTags: Tag[] | null;
+  selectedTags: ExtendedTag[] | null;
   page: number;
   limit: number;
   total: number;

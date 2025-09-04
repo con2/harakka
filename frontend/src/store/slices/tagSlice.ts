@@ -88,7 +88,7 @@ export const fetchFilteredTags = createAsyncThunk(
       search?: string;
       assignmentFilter?: string;
       sortBy?: string;
-      sortOrder?: string;
+      sortOrder?: "desc" | "asc";
     },
     { rejectWithValue },
   ) => {
@@ -273,9 +273,12 @@ export const tagSlice = createSlice({
         state.errorContext = null;
       })
       .addCase(updateTag.fulfilled, (state, action) => {
-        state.tags = state.tags.map((tag) =>
-          tag.id === action.payload.id ? action.payload : tag,
-        );
+        const updatedTag = action.payload;
+        if (state.selectedTags) {
+          state.selectedTags = state.selectedTags.map((tag) =>
+            tag.id === updatedTag.id ? updatedTag : tag,
+          );
+        }
         state.loading = false;
       })
       .addCase(updateTag.rejected, (state, action) => {
@@ -309,7 +312,7 @@ export const tagSlice = createSlice({
       .addCase(assignTagToItem.fulfilled, (state, action) => {
         const { tagIds } = action.payload;
         state.selectedTags = state.tags.filter((tag) =>
-          tagIds.includes(tag.id),
+          tagIds.includes(tag.id as string),
         );
         state.loading = false;
       })

@@ -63,6 +63,7 @@ const MyBookings = () => {
   const bookings = useAppSelector(selectUserBookings);
   const loading = useAppSelector(selectBookingLoading);
   const error = useAppSelector(selectBookingError);
+  const [hasFetchedBookings, setHasFetchedBookings] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -153,9 +154,13 @@ const MyBookings = () => {
       return;
     }
 
-    if (user && bookings.length === 0)
-      void dispatch(getUserBookings({ user_id: user.id, page: 1, limit: 10 }));
-  }, [dispatch, navigate, user, lang, bookings]); // Apply filters to bookings
+    if (user && !hasFetchedBookings) {
+      void dispatch(getUserBookings({ user_id: user.id, page: 1, limit: 10 }))
+        .unwrap()
+        .then(() => setHasFetchedBookings(true)) // Mark as fetched on success
+        .catch(() => setHasFetchedBookings(true)); // Mark as fetched even on error
+    }
+  }, [dispatch, navigate, user, lang, hasFetchedBookings]); // Apply filters to bookings
 
   // Reset to first page when filters change
   useEffect(() => {

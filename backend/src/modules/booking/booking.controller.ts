@@ -9,7 +9,6 @@ import {
   Put,
   Req,
   UnauthorizedException,
-  ForbiddenException,
   BadRequestException,
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
@@ -28,26 +27,67 @@ export class BookingController {
     private readonly roleService: RoleService,
   ) {}
 
-  // gets all bookings - use case: elevated admins only
-  @Roles(["super_admin", "superVera"])
-  @Get()
-  async getAll(
+  /**
+   * Get ordered bookings with optional filters.
+   * Publicly accessible.
+   * @param req - Request object
+   * @param searchquery - Search query for filtering bookings
+   * @param ordered_by - Column to order by (default: created_at)
+   * @param status_filter - Filter by booking status
+   * @param page - Page number for pagination (default: 1)
+   * @param limit - Number of items per page (default: 10)
+   * @param ascending - Whether to sort in ascending order (default: false)
+   * @param org_id - Organization ID for scoping (required)
+   * @returns Paginated and filtered list of bookings
+   */
+  @Get("ordered")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
+  getOrderedBookings(
     @Req() req: AuthRequest,
+    @Query("search") searchquery: string,
+    @Query("order") ordered_by: ValidBookingOrder = "created_at",
+    @Query("status") status_filter: string,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
+    @Query("ascending") ascending: string = "false",
   ) {
-    const pageNumber = parseInt(page, 10);
-    const limitNumber = parseInt(limit, 10);
+    const org_id = req.headers["x-org-id"] as string;
+    if (!org_id) {
+      throw new BadRequestException("Organization context is required");
+    }
     const supabase = req.supabase;
-    return this.bookingService.getAllBookings(
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const is_ascending = ascending.toLowerCase() === "true";
+
+    return this.bookingService.getOrderedBookings(
       supabase,
-      pageNumber,
-      limitNumber,
+      org_id,
+      pageNum,
+      limitNum,
+      is_ascending,
+      ordered_by,
+      searchquery,
+      status_filter,
     );
   }
 
-  // gets the bookings of the logged-in user
+  /**
+   * Get bookings of the current authenticated user.
+   * Accessible by users and requesters within their organization.
+   * @param req - Authenticated request object
+   * @param page - Page number for pagination (default: 1)
+   * @param limit - Number of items per page (default: 10)
+   * @returns Paginated list of the user's bookings
+   */
   @Get("my")
+  @Roles(["user", "requester"], {
+    match: "any",
+    sameOrg: true,
+  })
   async getOwnBookings(
     @Req() req: AuthRequest,
     @Query("page") page: string = "1",
@@ -55,24 +95,81 @@ export class BookingController {
   ) {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
-    const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.getUserBookings(
-      userId,
+      req,
       supabase,
       pageNumber,
       limitNumber,
     );
   }
 
+  /**
+   * Get a specific booking by its ID.
+   * Accessible by tenant admins and storage managers within their organization.
+   * @param req - Authenticated request object
+   * @param booking_id - ID of the booking to retrieve
+   * @param page - Page number for pagination (default: 1)
+   * @param limit - Number of items per page (default: 10)
+   * @param org_id - Organization ID for scoping (required)
+   * @returns Booking details
+   */
+  //TODO: limit to activeContext organization
+  @Get("id/:id")
+  @Roles(["tenant_admin", "storage_manager"])
+  async getBookingByID(
+    @Req() req: AuthRequest,
+    @Param("id") booking_id: string,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const supabase = req.supabase;
+    const org_id = req.headers["x-org-id"] as string;
+    if (!org_id)
+      throw new BadRequestException("org_id query param is required");
+    return this.bookingService.getBookingByID(
+      supabase,
+      booking_id,
+      pageNum,
+      limitNum,
+      org_id,
+    );
+  }
+
+  /**
+   * Get the total count of bookings in the system.
+   * Tenant admins can only see the count of bookings in their organization.
+   * @param req - Authenticated request object
+   * @returns Total bookings count
+   */
+  //TODO: limit to activeContext organization
   @Get("count")
+  @Roles(["storage_manager", "tenant_admin", "super_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async getBookingsCount(@Req() req: AuthRequest) {
     const supabase = req.supabase;
     return this.bookingService.getBookingsCount(supabase);
   }
 
-  // gets the bookings of a specific user
+  /**
+   * Get bookings of a specific user by their ID.
+   * Accessible by tenant admins and super admins within their organization.
+   * @param userId - ID of the user whose bookings to retrieve
+   * @param req - Authenticated request object
+   * @param page - Page number for pagination (default: 1)
+   * @param limit - Number of items per page (default: 10)
+   * @returns Paginated list of the user's bookings
+   */
+  //TODO: limit to activeContext organization
   @Get("user/:userId")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async getUserBookings(
     @Param("userId") userId: string,
     @Req() req: AuthRequest,
@@ -86,23 +183,26 @@ export class BookingController {
     }
     const supabase = req.supabase;
     return this.bookingService.getUserBookings(
-      userId,
+      req,
       supabase,
       pageNumber,
       limitNumber,
     );
   }
 
-  // any user creates a booking
+  /**
+   * Create a new booking.
+   * Accessible by users and requesters within their organization.
+   * @param dto - Booking data
+   * @param req - Authenticated request object
+   * @returns Created booking
+   */
+  //TODO: attach activeRole to the booking
   @Post()
-  @Roles([
-    "user",
-    "tenant_admin",
-    "super_admin",
-    "superVera",
-    "storage_manager",
-    "requester",
-  ])
+  @Roles(["user", "requester"], {
+    match: "any",
+    sameOrg: true,
+  })
   async createBooking(@Body() dto: CreateBookingDto, @Req() req: AuthRequest) {
     try {
       const userId = req.user.id;
@@ -117,8 +217,20 @@ export class BookingController {
     }
   }
 
-  // updates a booking
-  @Put(":id/update") // user updates own booking or admin updates booking
+  /**
+   * Update an existing booking.
+   * Users can update their own bookings, while storage managers and tenant admins can update bookings within their organization.
+   * @param id - ID of the booking to update
+   * @param dto - Updated booking data
+   * @param req - Authenticated request object
+   * @returns Updated booking
+   */
+  //TODO: limit to activeContext organization, check own bookings handling
+  @Put(":id/update")
+  @Roles(["user", "storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async updateBooking(
     @Param("id") id: string,
     @Body() dto: UpdateBookingDto,
@@ -128,8 +240,19 @@ export class BookingController {
     return this.bookingService.updateBooking(id, userId, dto, req);
   }
 
-  // confirms a booking
-  @Put(":id/confirm") // admin confirms booking
+  /**
+   * Confirm a booking.
+   * Accessible by storage managers and tenant admins within their organization.
+   * @param bookingId - ID of the booking to confirm
+   * @param req - Authenticated request object
+   * @returns Confirmation result
+   */
+  //TODO: limit to activeContext organization
+  @Put(":id/confirm")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async confirm(@Param("id") bookingId: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     const supabase = req.supabase;
@@ -137,13 +260,25 @@ export class BookingController {
     return this.bookingService.confirmBooking(bookingId, userId, supabase);
   }
 
-  // rejects a booking by admin
+  /**
+   * Reject a booking.
+   * Accessible by storage managers and tenant admins within their organization.
+   * @param id - ID of the booking to reject
+   * @param req - Authenticated request object
+   * @returns Rejection result
+   */
+  //TODO: limit to activeContext organization
   @Put(":id/reject")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async reject(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     return this.bookingService.rejectBooking(id, userId, req);
   }
 
+  //TODO: remove and replace by id/confirm, it already contain activeRole
   // Confirm booking items for the active organization; supports all or a selected subset via item_ids
   @Put(":id/confirm-for-org")
   async confirmForOrg(
@@ -165,6 +300,7 @@ export class BookingController {
     );
   }
 
+  //TODO: remove and replace by id/reject, it already contain activeRole
   // Reject booking items for the active organization; supports all or a selected subset via item_ids
   @Put(":id/reject-for-org")
   async rejectForOrg(
@@ -186,99 +322,77 @@ export class BookingController {
     );
   }
 
-  // cancels own booking by user or admin cancels any booking
+  /**
+   * Cancel a booking.
+   * Users can cancel their own bookings, while storage managers and tenant admins can cancel bookings within their organization.
+   * @param id - ID of the booking to cancel
+   * @param req - Authenticated request object
+   * @returns Cancellation result
+   */
+  //TODO: limit to activeContext
   @Delete(":id/cancel")
+  @Roles(["user", "storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async cancel(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     return this.bookingService.cancelBooking(id, userId, req);
   }
 
-  // admin deletes booking
+  /**
+   * Delete a booking.
+   * Accessible only by tenant admins within their organization.
+   * @param id - ID of the booking to delete
+   * @param req - Authenticated request object
+   * @returns Deletion result
+   */
+  //TODO: update or remove completely depending on the customer feedback, do we really delete any orders? If yes, limit by activeContext
   @Delete(":id/delete")
+  @Roles(["tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async delete(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     return this.bookingService.deleteBooking(id, userId, req);
   }
 
-  // admin returns items
+  /**
+   * Mark a booking as "returned."
+   * Accessible by storage managers and tenant admins within their organization.
+   * @param id - ID of the booking to mark as returned
+   * @param req - Authenticated request object
+   * @returns Return result
+   */
+  //TODO: limit to activeContext
   @Post(":id/return")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async returnItems(@Param("id") id: string, @Req() req: AuthRequest) {
     const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.returnItems(id, userId, supabase);
   }
 
-  // admin marks items as picked up
+  /**
+   * Mark a booking as "picked up."
+   * Accessible by storage managers and tenant admins within their organization.
+   * @param bookingId - ID of the booking to mark as picked up
+   * @param req - Authenticated request object
+   * @returns Pickup confirmation result
+   */
+  //TODO: limit to activeContext
   @Post(":bookingId/pickup")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async pickup(@Param("bookingId") bookingId: string, @Req() req: AuthRequest) {
     // const userId = req.user.id;
     const supabase = req.supabase;
     return this.bookingService.confirmPickup(bookingId, supabase);
   }
-
-  @Get("ordered")
-  getOrderedBookings(
-    @Req() req: AuthRequest,
-    @Query("search") searchquery: string,
-    @Query("order") ordered_by: ValidBookingOrder = "created_at",
-    @Query("status") status_filter: string,
-    @Query("page") page: string = "1",
-    @Query("limit") limit: string = "10",
-    @Query("ascending") ascending: string = "false",
-    @Query("org_id") org_id?: string,
-  ) {
-    const supabase = req.supabase;
-    const pageNum = parseInt(page, 10);
-    const limitNum = parseInt(limit, 10);
-    const is_ascending = ascending.toLowerCase() === "true";
-    // Require scoping to an organization and validate membership
-    const requestedOrg = (org_id ?? "").trim();
-    if (!requestedOrg) {
-      throw new BadRequestException("org_id query param is required");
-    }
-    const isMember = this.roleService.hasAnyRole(
-      req,
-      ["tenant_admin", "storage_manager"],
-      requestedOrg,
-    );
-    if (!isMember) {
-      throw new ForbiddenException(
-        "You don't have access to this organization's bookings",
-      );
-    }
-    return this.bookingService.getOrderedBookings(
-      supabase,
-      pageNum,
-      limitNum,
-      is_ascending,
-      ordered_by,
-      searchquery,
-      status_filter,
-      requestedOrg,
-    );
-  }
-
-  @Get("id/:id")
-  @Roles(["tenant_admin", "storage_manager"])
-  async getBookingByID(
-    @Req() req: AuthRequest,
-    @Param("id") booking_id: string,
-    @Query("page") page: string = "1",
-    @Query("limit") limit: string = "10",
-    @Query("org_id") org_id?: string,
-  ) {
-    const pageNum = parseInt(page, 10);
-    const limitNum = parseInt(limit, 10);
-    const supabase = req.supabase;
-    if (!org_id)
-      throw new BadRequestException("org_id query param is required");
-    return this.bookingService.getBookingByID(
-      supabase,
-      booking_id,
-      pageNum,
-      limitNum,
-      org_id,
-    );
-  }
 }
-// handles the booking process, including creating, confirming, rejecting, and canceling bookings.

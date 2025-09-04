@@ -1,34 +1,19 @@
 import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  deleteItem,
   fetchOrderedItems,
-  getItemById,
   selectAllItems,
   selectItemsError,
   selectItemsPagination,
   selectItemsLoading,
-  updateItem,
-  selectSelectedItem,
 } from "@/store/slices/itemsSlice";
-import {
-  fetchAllTags,
-  fetchTagsForItem,
-  selectAllTags,
-} from "@/store/slices/tagSlice";
+import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
 import { Item, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, LoaderCircle, Trash2 } from "lucide-react";
+import { Eye, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import {
@@ -36,13 +21,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useRoles } from "@/hooks/useRoles";
-import { toastConfirm } from "@/components/ui/toastConfirm";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import AssignTagsModal from "@/components/Admin/Items/AssignTagsModal";
-import UpdateItemModal from "@/components/Admin/Items/UpdateItemModal";
 import { useLocation, useNavigate } from "react-router-dom";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
@@ -53,20 +34,10 @@ const AdminItemsTable = () => {
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
-  const [showModal, setShowModal] = useState(false);
-  const deletableItems = useAppSelector((state) => state.items.deletableItems);
   const org_id = useAppSelector(selectActiveOrganizationId);
 
-  const { hasAnyRole, hasRole } = useRoles();
-  const isAdmin = hasAnyRole(
-    ["tenant_admin", "tenant_admin", "super_admin", "storage_manager"],
-    org_id || undefined,
-  );
-  const isSuperVera = hasRole("superVera");
   // Translation
   const { lang } = useLanguage();
-  const [assignTagsModalOpen, setAssignTagsModalOpen] = useState(false);
-  const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   // filtering states:
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
@@ -86,65 +57,22 @@ const AdminItemsTable = () => {
   const [ascending, setAscending] = useState<boolean | null>(
     redirectState?.ascending ?? null,
   );
-  const selectedItem = useAppSelector(selectSelectedItem);
   const { page, totalPages } = useAppSelector(selectItemsPagination);
   const loading = useAppSelector(selectItemsLoading);
   const ITEMS_PER_PAGE = 10;
-  const activeOrganizationId = useAppSelector(selectActiveOrganizationId);
 
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
 
-  const handleEdit = (id: string) => {
-    if (!selectedItem || id !== selectedItem.id) {
-      void dispatch(getItemById(id));
-      void dispatch(fetchTagsForItem(id));
-    }
-    setShowModal(true); // Show the modal
-  };
-
-  const handleDelete = (item_id: string) => {
-    // Currently reference the org_id of the item since we display items of all orgs
-    // Later this needs to be refactored to use the org_id which is currently selected (selectActiveOrganizationId)
-    if (!org_id) return toast.error("No organization selected");
-    toastConfirm({
-      title: t.adminItemsTable.messages.deletion.title[lang],
-      description: t.adminItemsTable.messages.deletion.description[lang],
-      confirmText: t.adminItemsTable.messages.deletion.confirm[lang],
-      cancelText: t.adminItemsTable.messages.deletion.cancel[lang],
-      onConfirm: () => {
-        try {
-          void toast.promise(
-            dispatch(deleteItem({ org_id, item_id })).unwrap(),
-            {
-              loading: t.adminItemsTable.messages.toast.deleting[lang],
-              success: t.adminItemsTable.messages.toast.deleteSuccess[lang],
-              error: t.adminItemsTable.messages.toast.deleteFail[lang],
-            },
-          );
-        } catch {
-          toast.error(t.adminItemsTable.messages.toast.deleteError[lang]);
-        }
-      },
-      onCancel: () => {
-        // Optional: handle cancel if needed
-      },
-    });
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
+  // Navigation: open item details page on row click
+  const handleRowClick = (id: string) => {
+    void navigate(`/admin/items/${id}`);
   };
 
   const handleBooking = (order: string) =>
     setOrder(order.toLowerCase() as ValidItemOrder);
   const handleAscending = (ascending: boolean | null) =>
     setAscending(ascending);
-
-  const handleCloseAssignTagsModal = () => {
-    setAssignTagsModalOpen(false);
-    setCurrentItemId(null);
-  };
 
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
@@ -159,7 +87,8 @@ const AdminItemsTable = () => {
         location_filter: [],
         categories: [],
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        org_ids: isSuperVera ? undefined : (activeOrganizationId ?? undefined),
+        // scope to the active organization so admins only see their org's items
+        org_ids: org_id ? org_id : undefined,
       }),
     );
   }, [
@@ -172,17 +101,35 @@ const AdminItemsTable = () => {
     page,
     tagFilter,
     statusFilter,
-    activeOrganizationId,
-    isSuperVera,
+    org_id,
   ]);
 
   //fetch tags list
   useEffect(() => {
-    if (tags.length === 0) void dispatch(fetchAllTags({ limit: 20 }));
+    if (tags.length === 0)
+      void dispatch(fetchFilteredTags({ limit: 20, sortBy: "assigned_to" }));
   }, [dispatch, tags.length, items.length]);
 
   /* ————————————————————————— Item Columns ———————————————————————— */
   const itemsColumns: ColumnDef<Item>[] = [
+    {
+      id: "view",
+      size: 5,
+      cell: () => {
+        return (
+          <div className="flex space-x-1">
+            <Button
+              variant={"ghost"}
+              size="sm"
+              title={t.adminItemsTable.columns.viewDetails[lang]}
+              className="hover:text-slate-900 hover:bg-slate-300"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
     {
       header: t.adminItemsTable.columns.name[lang],
       size: 120,
@@ -230,86 +177,7 @@ const AdminItemsTable = () => {
       size: 30,
       cell: ({ row }) => {
         const item = row.original;
-
-        const handleToggle = async (checked: boolean) => {
-          try {
-            if (!org_id) return toast.error("No organization selected");
-            await dispatch(
-              updateItem({
-                orgId: org_id,
-                item_id: item.id,
-                data: {
-                  is_active: checked,
-                },
-              }),
-            ).unwrap();
-            toast.success(
-              checked
-                ? t.adminItemsTable.messages.toast.activateSuccess[lang]
-                : t.adminItemsTable.messages.toast.deactivateSuccess[lang],
-            );
-          } catch {
-            toast.error(
-              t.adminItemsTable.messages.toast.statusUpdateFail[lang],
-            );
-          }
-        };
-
-        return (
-          <Switch checked={item.is_active} onCheckedChange={handleToggle} />
-        );
-      },
-    },
-    {
-      id: "actions",
-      size: 30,
-      enableColumnFilter: false,
-      cell: ({ row }) => {
-        const item = row.original;
-        const canEdit = isSuperVera || isAdmin;
-        const canDelete = isSuperVera || isAdmin;
-        const isDeletable = deletableItems[item.id] !== false;
-        return (
-          <div className="flex gap-2">
-            {canEdit && (
-              <Button
-                size="sm"
-                onClick={() => handleEdit(item.id)}
-                className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
-            {canDelete && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                        onClick={() => handleDelete(item.id)}
-                        disabled={!isDeletable}
-                        aria-label={`Delete ${item.translations.fi.item_name}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  {!isDeletable && (
-                    <TooltipContent
-                      side="top"
-                      className="90 text-white border-0 p-2"
-                    >
-                      <p>{t.adminItemsTable.tooltips.cantDelete[lang]}</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
-        );
+        return <Switch checked={item.is_active} />;
       },
     },
   ];
@@ -473,22 +341,14 @@ const AdminItemsTable = () => {
         order={order}
         ascending={ascending}
         originalSorting="quantity"
+        rowProps={(row) => ({
+          onClick: () =>
+            handleRowClick(String((row.original as unknown as Item).id)),
+          className: "cursor-pointer",
+        })}
       />
 
-      {/* Show UpdateItemModal when showModal is true */}
-      {showModal && selectedItem && (
-        <UpdateItemModal
-          onClose={handleCloseModal}
-          initialData={selectedItem as Item}
-        />
-      )}
-      {assignTagsModalOpen && currentItemId && (
-        <AssignTagsModal
-          open={assignTagsModalOpen}
-          itemId={currentItemId}
-          onClose={handleCloseAssignTagsModal}
-        />
-      )}
+      {/* Item editing / tagging moved to ItemDetailsPage */}
     </div>
   );
 };

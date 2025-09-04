@@ -1,24 +1,66 @@
 {
   "name": "backend",
   "version": "1.1.0",
-  "description": "",
+  "authors": [
+    {
+      "name": "Jonathan Gian",
+      "email": "jongian90@gmail.com"
+    },
+    {
+      "name": "Next person",
+      "email": "your.email@example.com"
+    }
+  ],
+  "description": "A Storage and Booking Backend run with NestJS and Supabase",
   "private": true,
+  "authors": [
+    {
+      "name": "Athina Kantis",
+      "email": "athina.kantis@gmail.com",
+      "url": "https://github.com/athinakantis"
+    },
+    {
+      "name": "Vladimir Beliakov",
+      "email": "ermegilius@gmail.com",
+      "url": "https://github.com/ermegilius"
+    },
+    {
+      "name": "Stefanie Jana",
+      "email": "garschtubald@gmail.com",
+      "url": "https://github.com/stabjana"
+    },
+    {
+      "name": "Maria Aluko",
+      "email": "maria.alukoo@gmail.com",
+      "url": "https://github.com/maria-aluko"
+    },
+    {
+      "name": "Jonathan Gian",
+      "email": "jongian90@gmail.com",
+      "url": "https://github.com/JonathanGian"
+    }
+  ],
   "scripts": {
     "build": "nest build",
     "postbuild": "echo \"✅ Backend build completed successfully!\" && echo \"📁 Backend dist contents:\" && ls -la dist/backend || ls -la dist",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    
     "start": "node -r tsconfig-paths/register dist/backend/src/main.js",
     "start:watch": "nest start --watch -r tsconfig-paths/register",
     "start:dev": "nodemon --watch src --ext ts --exec \"ts-node -r tsconfig-paths/register src/main.ts\"",
+    "start:local": "env-cmd -f ../supabase-local.env npm run start:watch",
     "start:debug": "nest start --debug --watch -r tsconfig-paths/register",
     "start:prod": "node -r tsconfig-paths/register dist/backend/src/main.js",
+
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" ",
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    
     "email:dev": "email dev -p 3001",
     "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > src/types/supabase.types.ts"
   },
@@ -30,7 +72,6 @@
     "@nestjs/throttler": "^6.4.0",
     "@react-email/components": "^0.3.1",
     "@react-email/render": "^1.1.2",
-    "@supabase/supabase-js": "^2.49.4",
     "@types/multer": "^2.0.0",
     "@types/nodemailer": "^6.4.17",
     "@types/papaparse": "^5.3.16",
@@ -51,7 +92,7 @@
     "supabase": "^2.31.8",
     "type-fest": "^4.41.0",
     "uuid": "^11.1.0",
-    "zod": "^4.0.15"
+    "zod": "^4.1.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -60,6 +101,7 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
+    "@supabase/supabase-js": "^2.56.0",
     "@swc/cli": "^0.7.7",
     "@swc/core": "^1.10.7",
     "@types/express": "^5.0.0",

@@ -1,7 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./modules/app/app.module";
 import { ConfigService } from "@nestjs/config";
-import { Logger } from "@nestjs/common";
+import { Logger, ValidationPipe } from "@nestjs/common";
 import { Response } from "express";
 import { SupabaseService } from "./modules/supabase/supabase.service";
 import { AllExceptionsFilter } from "./filters/all-exceptions.filter";
@@ -18,6 +18,14 @@ async function bootstrap() {
 
     // Add the global exception filter
     app.useGlobalFilters(new AllExceptionsFilter(logsService));
+
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
 
     const port = process.env.PORT || configService.get<number>("PORT", 3000);
     logger.log(
@@ -73,7 +81,20 @@ async function bootstrap() {
     });
 
     await app.listen(port, "0.0.0.0");
+
+    // Logging after server started
     logger.log(`Backend is running on port ${port}`);
+
+    if ((process.env.NODE_ENV || "development") === "development") {
+      logger.log("Current environment variables:", {
+        ENVIRONMENT: process.env.ENV,
+        NODE_ENV: process.env.NODE_ENV,
+        SUPABASE_URL: process.env.SUPABASE_URL,
+        SUPABASE_PROJECT_ID: process.env.SUPABASE_PROJECT_ID,
+        SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+      });
+      logger.log(`Backend is running on port ${port}`);
+    }
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";

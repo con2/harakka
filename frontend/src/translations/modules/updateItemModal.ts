@@ -108,6 +108,10 @@ export const updateItemModal = {
     },
   },
   buttons: {
+    goToImages: {
+      fi: "Siirry kuviin",
+      en: "Proceed to Images",
+    },
     update: {
       fi: "Päivitä tuote",
       en: "Update Item",

@@ -1,4 +1,9 @@
+-- Auth Functions Migration (Production Only)
+-- This file contains auth schema changes that cannot be applied to preview branches
+-- Apply this migration directly to production environment only
+
 set check_function_bodies = off;
+
 CREATE OR REPLACE FUNCTION auth.custom_access_token2(evt jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -40,6 +45,7 @@ begin
          );
 end;
 $function$;
+
 CREATE OR REPLACE FUNCTION auth.new_custom_access_token(evt jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -82,7 +88,7 @@ begin
 
   roles := coalesce(roles, '[]'::jsonb);
 
-  /* Choose a “primary” role for quick front-end checks ----------------------- */
+  /* Choose a "primary" role for quick front-end checks ----------------------- */
   select coalesce(
            (select 'superVera' from jsonb_array_elements(roles) e
              where e->>'role_name' = 'superVera' limit 1),
@@ -92,7 +98,7 @@ begin
          )
     into primary_role;
 
-  /* Extend—don’t overwrite—existing app_metadata ----------------------------- */
+  /* Extend—don't overwrite—existing app_metadata ----------------------------- */
   meta := coalesce(evt -> 'app_metadata', '{}'::jsonb);
 
   meta := meta
@@ -110,6 +116,7 @@ begin
   return evt || jsonb_build_object('app_metadata', meta);
 end;
 $function$;
+
 CREATE OR REPLACE FUNCTION auth.new_custom_access_token_v2(evt jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -172,6 +179,7 @@ begin
   return jsonb_build_object('claims', new_claims);
 end;
 $function$;
+
 CREATE OR REPLACE FUNCTION auth.new_custom_access_token_v3(evt jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -219,6 +227,7 @@ begin
   return jsonb_build_object('claims', meta);
 end;
 $function$;
+
 CREATE OR REPLACE FUNCTION auth.new_custom_access_token_v4(evt jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -277,6 +286,7 @@ begin
   return jsonb_build_object('claims', claims);
 end;
 $function$;
+
 CREATE OR REPLACE FUNCTION auth.test_hook(evt jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -288,147 +298,6 @@ begin
   return evt;
 end;
 $function$;
+
+-- Auth trigger
 CREATE TRIGGER user_after_insert AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION trg_user_after_insert();
-revoke select on table "storage"."iceberg_namespaces" from "anon";
-revoke select on table "storage"."iceberg_namespaces" from "authenticated";
-revoke delete on table "storage"."iceberg_namespaces" from "service_role";
-revoke insert on table "storage"."iceberg_namespaces" from "service_role";
-revoke references on table "storage"."iceberg_namespaces" from "service_role";
-revoke select on table "storage"."iceberg_namespaces" from "service_role";
-revoke trigger on table "storage"."iceberg_namespaces" from "service_role";
-revoke truncate on table "storage"."iceberg_namespaces" from "service_role";
-revoke update on table "storage"."iceberg_namespaces" from "service_role";
-revoke select on table "storage"."iceberg_tables" from "anon";
-revoke select on table "storage"."iceberg_tables" from "authenticated";
-revoke delete on table "storage"."iceberg_tables" from "service_role";
-revoke insert on table "storage"."iceberg_tables" from "service_role";
-revoke references on table "storage"."iceberg_tables" from "service_role";
-revoke select on table "storage"."iceberg_tables" from "service_role";
-revoke trigger on table "storage"."iceberg_tables" from "service_role";
-revoke truncate on table "storage"."iceberg_tables" from "service_role";
-revoke update on table "storage"."iceberg_tables" from "service_role";
-alter table "storage"."iceberg_namespaces" drop constraint "iceberg_namespaces_bucket_id_fkey";
-alter table "storage"."iceberg_tables" drop constraint "iceberg_tables_bucket_id_fkey";
-alter table "storage"."iceberg_tables" drop constraint "iceberg_tables_namespace_id_fkey";
-alter table "storage"."iceberg_namespaces" drop constraint "iceberg_namespaces_pkey";
-alter table "storage"."iceberg_tables" drop constraint "iceberg_tables_pkey";
-drop index if exists "storage"."iceberg_namespaces_pkey";
-drop index if exists "storage"."iceberg_tables_pkey";
-drop index if exists "storage"."idx_iceberg_namespaces_bucket_id";
-drop index if exists "storage"."idx_iceberg_tables_namespace_id";
-drop table "storage"."iceberg_namespaces";
-drop table "storage"."iceberg_tables";
-create policy "Admin Delete Item Images 6eeiel_0"
-  on "storage"."objects"
-  as permissive
-  for delete
-  to public
-using ((bucket_id = 'item-images-drafts'::text));
-create policy "Admin Delete Item Images"
-  on "storage"."objects"
-  as permissive
-  for delete
-  to public
-using (((bucket_id = 'item-images'::text) AND (auth.role() = 'authenticated'::text)));
-create policy "Admin Insert Item Images"
-  on "storage"."objects"
-  as permissive
-  for insert
-  to public
-with check (((bucket_id = 'item-images'::text) AND (auth.role() = 'authenticated'::text)));
-create policy "Admin can delete 6eeiel_0 6eeiel_0"
-  on "storage"."objects"
-  as permissive
-  for delete
-  to public
-using (((bucket_id = 'item-images'::text) AND (auth.role() = 'authenticated'::text)));
-create policy "Admin can delete 6eeiel_0"
-  on "storage"."objects"
-  as permissive
-  for delete
-  to public
-using (((bucket_id = 'item-images'::text) AND (auth.role() = 'authenticated'::text)));
-create policy "Give users access to own folder 1skn4k9_0"
-  on "storage"."objects"
-  as permissive
-  for select
-  to public
-using (((bucket_id = 'profile-pictures'::text) AND (( SELECT (auth.uid())::text AS uid) = (storage.foldername(name))[1])));
-create policy "Give users access to own folder 1skn4k9_1"
-  on "storage"."objects"
-  as permissive
-  for insert
-  to public
-with check (((bucket_id = 'profile-pictures'::text) AND (( SELECT (auth.uid())::text AS uid) = (storage.foldername(name))[1])));
-create policy "Give users access to own folder 1skn4k9_2"
-  on "storage"."objects"
-  as permissive
-  for update
-  to public
-using (((bucket_id = 'profile-pictures'::text) AND (( SELECT (auth.uid())::text AS uid) = (storage.foldername(name))[1])));
-create policy "Give users access to own folder 1skn4k9_3"
-  on "storage"."objects"
-  as permissive
-  for delete
-  to public
-using (((bucket_id = 'profile-pictures'::text) AND (( SELECT (auth.uid())::text AS uid) = (storage.foldername(name))[1])));
-create policy "Public Access to Item Images 6eeiel_0"
-  on "storage"."objects"
-  as permissive
-  for select
-  to public
-using (true);
-create policy "Public Access to Item Images"
-  on "storage"."objects"
-  as permissive
-  for select
-  to public
-using ((bucket_id = 'item-images'::text));
-create policy "Public Read Access"
-  on "storage"."objects"
-  as permissive
-  for select
-  to public
-using ((bucket_id = 'item-images'::text));
-create policy "TEMP: Allow access 6eeiel_0"
-  on "storage"."objects"
-  as permissive
-  for insert
-  to public
-with check ((bucket_id = 'item-images-drafts'::text));
-create policy "TEMP: Allow access 6eeiel_1"
-  on "storage"."objects"
-  as permissive
-  for update
-  to public
-using ((bucket_id = 'item-images-drafts'::text));
-create policy "TEMP: Allow access 6eeiel_2"
-  on "storage"."objects"
-  as permissive
-  for select
-  to public
-using ((bucket_id = 'item-images-drafts'::text));
-create policy "anyone can do anything 1jxj86u_0"
-  on "storage"."objects"
-  as permissive
-  for select
-  to public
-using ((bucket_id = 'organization-logo-picture'::text));
-create policy "anyone can do anything 1jxj86u_1"
-  on "storage"."objects"
-  as permissive
-  for insert
-  to public
-with check ((bucket_id = 'organization-logo-picture'::text));
-create policy "anyone can do anything 1jxj86u_2"
-  on "storage"."objects"
-  as permissive
-  for update
-  to public
-using ((bucket_id = 'organization-logo-picture'::text));
-create policy "anyone can do anything 1jxj86u_3"
-  on "storage"."objects"
-  as permissive
-  for delete
-  to public
-using ((bucket_id = 'organization-logo-picture'::text));

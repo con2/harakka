@@ -35,6 +35,8 @@ import { OrganizationsModule } from "../organization/organizations.module";
 import { OrganizationsController } from "../organization/organizations.controller";
 import { UserBanningModule } from "../user-banning/user-banning.module";
 import { OrganizationLocationsModule } from "../organization-locations/organization_locations.module";
+import { CategoriesModule } from "../categories/categories.module";
+import { StorageItemsController } from "../storage-items/storage-items.controller";
 
 // Load and expand environment variables before NestJS modules initialize
 // Only load env files if SUPABASE_URL is not already set (meaning env-cmd hasn't run)
@@ -75,6 +77,7 @@ if (!process.env.SUPABASE_URL) {
     }),
     AuthModule,
     BookingModule,
+    CategoriesModule,
     ItemImagesModule,
     LogsModule,
     MailModule,
@@ -107,10 +110,14 @@ export class AppModule implements NestModule {
         { path: "health", method: RequestMethod.GET },
         { path: "", method: RequestMethod.GET }, // Root endpoint
 
-        // Public storage and item endpoints (for front page)
-        { path: "storage", method: RequestMethod.GET },
-        { path: "storage-items", method: RequestMethod.GET },
-        { path: "storage-items/*path", method: RequestMethod.GET }, // For specific item endpoints
+        // Public storage-items routes
+        { path: "storage-items/ordered", method: RequestMethod.GET },
+        { path: "storage-items/by-tag/:tagId", method: RequestMethod.GET },
+        {
+          path: "storage-items/availability/:itemId",
+          method: RequestMethod.GET,
+        },
+        { path: "storage-items/id/:id", method: RequestMethod.GET },
         { path: "api/storage-locations", method: RequestMethod.GET },
         { path: "storage-locations", method: RequestMethod.GET },
         { path: "storage-locations/*path", method: RequestMethod.GET },
@@ -136,6 +143,9 @@ export class AppModule implements NestModule {
         // Organization-locations public endpoints
         { path: "organization-locations", method: RequestMethod.GET },
         { path: "organization-locations/*path", method: RequestMethod.GET },
+
+        // Public Category Endpoint
+        { path: "categories", method: RequestMethod.GET },
       )
       .forRoutes(
         // Protected controllers
@@ -145,13 +155,9 @@ export class AppModule implements NestModule {
         LogsController,
         RoleController,
         OrganizationsController,
+        StorageItemsController,
 
-        // Protected HTTP methods (all routes except excluded ones)
-        { path: "*", method: RequestMethod.POST },
-        { path: "*", method: RequestMethod.PUT },
-        { path: "*", method: RequestMethod.PATCH },
-        { path: "*", method: RequestMethod.DELETE },
-        { path: "*", method: RequestMethod.GET }, // Protect GET routes too, except excluded ones
+        { path: "*", method: RequestMethod.ALL },
       );
   }
 }

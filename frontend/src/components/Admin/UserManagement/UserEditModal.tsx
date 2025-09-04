@@ -3,6 +3,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -269,6 +270,10 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
           <DialogTitle className="text-start text-2xl">
             {t.userEditModal.title[lang]}
           </DialogTitle>
+          <DialogDescription>
+            {t.userEditModal.description?.[lang] ||
+              "Edit user profile and role assignments"}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 gap-y-4 flex flex-wrap ">
