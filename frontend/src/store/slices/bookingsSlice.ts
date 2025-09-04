@@ -70,6 +70,41 @@ export const getUserBookings = createAsyncThunk(
   },
 );
 
+// Get my bookings thunk
+export const getOwnBookings = createAsyncThunk(
+  "bookings/getOwnBookings",
+  async (
+    {
+      page = 1,
+      limit = 10,
+      activeOrgId,
+      activeRole,
+      userId,
+    }: {
+      page?: number;
+      limit?: number;
+      activeOrgId: string;
+      activeRole: string;
+      userId: string;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await bookingsApi.getOwnBookings(
+        activeOrgId,
+        activeRole,
+        userId,
+        page,
+        limit,
+      );
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch own bookings"),
+      );
+    }
+  },
+);
+
 // get booking by ID
 export const getBookingByID = createAsyncThunk(
   "bookings/getBookingByID",
@@ -414,6 +449,11 @@ export const bookingsSlice = createSlice({
       state.error = null;
       state.errorContext = null;
     },
+    clearUserBookings: (state) => {
+      state.userBookings = [];
+      state.error = null;
+      state.errorContext = null;
+    },
     selectBooking: (state, action) => {
       state.currentBooking = action.payload;
       if (state.currentBooking && "booking_items" in state.currentBooking)
@@ -459,6 +499,26 @@ export const bookingsSlice = createSlice({
         state.loading = false;
       })
       .addCase(getUserBookings.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+        state.loading = false;
+      })
+      // Get own bookings
+      .addCase(getOwnBookings.pending, (state) => {
+        state.loading = true; // Set loading to true while fetching
+        state.error = null; // Clear any previous errors
+        state.errorContext = null;
+      })
+      .addCase(getOwnBookings.fulfilled, (state, action) => {
+        if (action.payload) {
+          state.userBookings = action.payload.data as BookingPreview[];
+          state.bookings_pagination = action.payload.metadata;
+        } else {
+          state.userBookings = [];
+        }
+        state.loading = false;
+      })
+      .addCase(getOwnBookings.rejected, (state, action) => {
         state.error = action.payload as string;
         state.errorContext = "fetch";
         state.loading = false;
@@ -801,8 +861,12 @@ export const bookingsSlice = createSlice({
 });
 
 // Export actions
-export const { clearCurrentBooking, selectBooking, clearCurrentBookingItems } =
-  bookingsSlice.actions;
+export const {
+  clearCurrentBooking,
+  selectBooking,
+  clearCurrentBookingItems,
+  clearUserBookings,
+} = bookingsSlice.actions;
 
 // // Export selectors
 export const selectAllBookings = (state: RootState) => state.bookings.bookings;
