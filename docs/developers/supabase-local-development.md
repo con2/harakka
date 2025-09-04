@@ -11,7 +11,6 @@ This guide covers setting up the Supabase CLI for team development, including in
 1. [Commands](#commands)
 1. [Project setup](#project-setup)
 1. [Local Development](#local-development)
-1. [Available npm Scripts](#available-npm-scripts)
 
 ## Sources
 
@@ -67,10 +66,46 @@ supabase --version
 ## Commands
 
 To get a full list of commands you can run `supabase`. If **"supabase is not found"**, prefix it as such: `npx supabase`.  
-
 To find out more about **any command** run `npx supabase [command] --help` and the terminal will provide more information.
 
-There are also [npm scripts](#available-npm-scripts) that can be run from the root of the project.
+### Available npm scripts
+#### Core Development
+
+- `npm run dev` - Start frontend + backend (remote DB)
+- `npm run dev:local` - Start local Supabase + frontend + backend
+- `npm run dev:live` - Start frontend + backend with live environment
+- `npm run frontend` - Start only frontend
+- `npm run backend` - Start only backend
+- `npm run frontend:local` - Start frontend with local Supabase environment
+- `npm run frontend:live` - Start frontend with live environment
+- `npm run backend:local` - Start backend with local Supabase environment
+- `npm run backend:live` - Start backend with live environment
+- `npm run install-all` - Install dependencies for all packages (root, frontend, backend)
+
+#### Supabase Management
+
+- `npm run s:start` - Start local Supabase stack
+- `npm run s:start:local` - Start local Supabase with local environment variables
+- `npm run s:stop` - Stop local Supabase stack
+- `npm run s:restart` - Restart local Supabase stack
+- `npm run s:status` - Show status of local services
+- `npm run s:studio` - Open Supabase Studio
+- `npm run s:link` - Link project to Supabase
+
+#### Database Operations
+
+- `npm run s:reset` - Reset local DB and apply all migrations
+- `npm run s:pull` - Pull schema changes from remote
+- `npm run s:push` - Push local migrations to remote
+- `npm run s:seed` - Create seed data from remote DB
+- `npm run s:dump` - Dump database schema to file
+
+#### Database Diffing & Syncing
+
+- `npm run s:local:diff` - Generate diff of local changes
+- `npm run s:diff:linked` - Generate diff against linked remote database
+- `npm run s:diff:linked:f` - Generate diff against linked remote with filename
+
 
 ## Project Setup
 
@@ -130,44 +165,3 @@ npx supabase gen types typescript --local > common/supabase.types.ts
 
 ### 5. Apply migrations to remote
 After you have finished working on your local changes, make a pull request. This will automatically create a "pull request" with the database changes to the live database.
-
-
-
-## Available npm Scripts
-
-### Core Development
-
-- `npm run dev` - Start frontend + backend (remote DB)
-- `npm run dev:local` - Start local Supabase + frontend + backend
-- `npm run dev:live` - Start frontend + backend with live environment
-- `npm run frontend` - Start only frontend
-- `npm run backend` - Start only backend
-- `npm run frontend:local` - Start frontend with local Supabase environment
-- `npm run frontend:live` - Start frontend with live environment
-- `npm run backend:local` - Start backend with local Supabase environment
-- `npm run backend:live` - Start backend with live environment
-- `npm run install-all` - Install dependencies for all packages (root, frontend, backend)
-
-### Supabase Management
-
-- `npm run s:start` - Start local Supabase stack
-- `npm run s:start:local` - Start local Supabase with local environment variables
-- `npm run s:stop` - Stop local Supabase stack
-- `npm run s:restart` - Restart local Supabase stack
-- `npm run s:status` - Show status of local services
-- `npm run s:studio` - Open Supabase Studio
-- `npm run s:link` - Link project to Supabase
-
-### Database Operations
-
-- `npm run s:reset` - Reset local DB and apply all migrations
-- `npm run s:pull` - Pull schema changes from remote
-- `npm run s:push` - Push local migrations to remote
-- `npm run s:seed` - Create seed data from remote DB
-- `npm run s:dump` - Dump database schema to file
-
-### Database Diffing & Syncing
-
-- `npm run s:local:diff` - Generate diff of local changes
-- `npm run s:diff:linked` - Generate diff against linked remote database
-- `npm run s:diff:linked:f` - Generate diff against linked remote with filename
