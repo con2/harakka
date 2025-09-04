@@ -12,7 +12,8 @@ import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
 import { Item, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye, LoaderCircle } from "lucide-react";
+import { Eye, LoaderCircle, Search, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
@@ -36,9 +37,7 @@ const AdminItemsTable = () => {
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const org_id = useAppSelector(selectActiveOrganizationId);
 
-  // Translation
   const { lang } = useLanguage();
-  // filtering states:
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
   >(redirectState?.statusFilter ?? "all");
@@ -87,7 +86,6 @@ const AdminItemsTable = () => {
         ascending: ascending === false ? false : true,
         tag_filters: tagFilter,
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        // org_id is provided via the axios interceptor header; not needed here
       }),
     );
   }, [
@@ -200,14 +198,27 @@ const AdminItemsTable = () => {
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
         <div className="flex gap-4 items-center">
           {/* Search by item name/type */}
-          <input
-            type="text"
-            size={50}
-            className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-            placeholder={t.adminItemsTable.filters.searchPlaceholder[lang]}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <div className="relative w-full sm:max-w-md bg-white rounded-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+            <Input
+              placeholder={t.adminItemsTable.filters.searchPlaceholder[lang]}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape" && searchTerm) setSearchTerm("");
+              }}
+              className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
 
           {/* Filter by active status */}
           <select
