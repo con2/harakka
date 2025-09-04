@@ -17,6 +17,73 @@ export const itemsApi = {
     api.get(`/storage-items?page=${page}&limit=${limit}`),
 
   /**
+   * Get ordered and filtered items
+   */
+  getOrderedItems: (
+    ordered_by: ValidItemOrder = "created_at",
+    ascending: boolean = true,
+    page: number,
+    limit: number,
+    searchquery?: string,
+    tag_filters?: string[],
+    activity_filter?: "active" | "inactive",
+    location_filter?: string[],
+    categories?: string[],
+    availability_min?: number,
+    availability_max?: number,
+    org_ids?: string[] | string,
+  ) => {
+    const activity = activity_filter === "active" ? true : false;
+    let call = `/storage-items/ordered?order=${ordered_by}&page=${page}&limit=${limit}&ascending=${ascending}`;
+    if (searchquery) call += `&search=${searchquery}`;
+    if (tag_filters && tag_filters.length > 0)
+      call += `&tags=${tag_filters.join(",")}`;
+    if (activity_filter) call += `&active=${activity}`;
+    if (location_filter && location_filter.length > 0)
+      call += `&location=${location_filter.join(",")}`;
+    if (categories && categories.length > 0)
+      call += `&category=${categories.join(",")}`;
+    if (availability_min !== undefined)
+      call += `&availability_min=${availability_min}`;
+    if (availability_max !== undefined)
+      call += `&availability_max=${availability_max}`;
+    if (org_ids && (Array.isArray(org_ids) ? org_ids.length > 0 : true)) {
+      const orgParam = Array.isArray(org_ids) ? org_ids.join(",") : org_ids;
+      call += `&org=${orgParam}`;
+    }
+    return api.get(call);
+  },
+
+  /**
+   * Get all items belonging to a specific organization
+   */
+  getAllAdminItems: (
+    org_id: string,
+    page: number,
+    limit: number,
+    ascending: boolean,
+    ordered_by: ValidItemOrder = "created_at",
+    searchquery?: string,
+    tag_filters?: string[],
+    activity_filter?: "active" | "inactive",
+    location_filter?: string[],
+    categories?: string[],
+  ) => {
+    const activity = activity_filter === "active" ? true : false;
+    let call = `/storage-items/admin/${org_id}?order=${ordered_by}&page=${page}&limit=${limit}&ascending=${ascending}`;
+    if (searchquery) call += `&search=${encodeURIComponent(searchquery)}`;
+    if (tag_filters && tag_filters.length > 0)
+      call += `&tags=${tag_filters.join(",")}`;
+    if (activity_filter) call += `&active=${activity}`;
+    if (location_filter && location_filter.length > 0)
+      call += `&location=${location_filter.join(",")}`;
+    if (categories && categories.length > 0)
+      call += `&category=${categories.join(",")}`;
+
+    return api.get(call);
+  },
+
+  /**
    * Get a specific item by ID
    * @param id - Item ID to fetch
    * @returns Promise with the requested item
@@ -103,41 +170,6 @@ export const itemsApi = {
     return api
       .get(`/storage-items/availability/${itemId}?${params.toString()}`)
       .then((res) => res.data);
-  },
-
-  getOrderedItems: (
-    ordered_by: ValidItemOrder = "created_at",
-    ascending: boolean = true,
-    page: number,
-    limit: number,
-    searchquery?: string,
-    tag_filters?: string[],
-    activity_filter?: "active" | "inactive",
-    location_filter?: string[],
-    categories?: string[],
-    availability_min?: number,
-    availability_max?: number,
-    org_ids?: string[] | string,
-  ) => {
-    const activity = activity_filter === "active" ? true : false;
-    let call = `/storage-items/ordered?order=${ordered_by}&page=${page}&limit=${limit}&ascending=${ascending}`;
-    if (searchquery) call += `&search=${searchquery}`;
-    if (tag_filters && tag_filters.length > 0)
-      call += `&tags=${tag_filters.join(",")}`;
-    if (activity_filter) call += `&active=${activity}`;
-    if (location_filter && location_filter.length > 0)
-      call += `&location=${location_filter.join(",")}`;
-    if (categories && categories.length > 0)
-      call += `&category=${categories.join(",")}`;
-    if (availability_min !== undefined)
-      call += `&availability_min=${availability_min}`;
-    if (availability_max !== undefined)
-      call += `&availability_max=${availability_max}`;
-    if (org_ids && (Array.isArray(org_ids) ? org_ids.length > 0 : true)) {
-      const orgParam = Array.isArray(org_ids) ? org_ids.join(",") : org_ids;
-      call += `&org=${orgParam}`;
-    }
-    return api.get(call);
   },
 
   /**
