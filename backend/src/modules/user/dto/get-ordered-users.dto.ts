@@ -6,20 +6,24 @@ import {
   Max,
   IsBoolean,
 } from "class-validator";
+import { Transform, Type } from "class-transformer";
 
 export class GetOrderedUsersDto {
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   page?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
   limit?: number;
 
   @IsOptional()
+  @Transform(({ value }) => value === "true")
   @IsBoolean()
   ascending?: boolean;
 
