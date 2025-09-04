@@ -128,7 +128,9 @@ To find out more about **any command** run `npx supabase [command] --help` and t
    ![](https://supabase.com/docs/img/guides/cli/local-studio.png)
 
 ## Local Development
-Local changes are done using migration files. They contain SQL which is applied to your local supabase instance.  **Important!** When running local supabase, make sure you use the local development environment.
+Local changes are done using migration files. They contain SQL which is applied to your local supabase instance.    
+
+**Important!** When running local supabase, make sure you use the local development environment.
 ```bash
 ## Run the frontend locally
 npm run frontend:local
