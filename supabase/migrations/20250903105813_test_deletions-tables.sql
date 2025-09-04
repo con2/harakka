@@ -1,2 +1,2 @@
-DROP TABLE IF EXISTS pippi;
-DROP TABLE IF EXISTS pippi2pippi;
+DROP TABLE IF EXISTS public.pippi;
+DROP TABLE IF EXISTS public.pippi2pippi;
