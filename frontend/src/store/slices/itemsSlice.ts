@@ -144,7 +144,6 @@ export const fetchOrderedItems = createAsyncThunk<
 export const fetchAllAdminItems = createAsyncThunk<
   ApiResponse<ManageItemViewRow>,
   {
-    org_id: string;
     ordered_by?: ValidItemOrder;
     ascending?: boolean;
     page: number;
@@ -159,7 +158,6 @@ export const fetchAllAdminItems = createAsyncThunk<
   "items/fetchAllAdminItems",
   async (
     {
-      org_id,
       ordered_by = "created_at",
       ascending = true,
       page = 1,
@@ -170,7 +168,6 @@ export const fetchAllAdminItems = createAsyncThunk<
       location_filter,
       categories,
     }: {
-      org_id: string;
       ordered_by?: ValidItemOrder;
       ascending?: boolean;
       page: number;
@@ -185,7 +182,6 @@ export const fetchAllAdminItems = createAsyncThunk<
   ) => {
     try {
       const response = await itemsApi.getAllAdminItems(
-        org_id,
         page,
         limit,
         ascending ?? true,

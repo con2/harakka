@@ -2,11 +2,11 @@ import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchOrderedItems,
   selectAllItems,
   selectItemsError,
   selectItemsPagination,
   selectItemsLoading,
+  fetchAllAdminItems,
 } from "@/store/slices/itemsSlice";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
@@ -57,7 +57,7 @@ const AdminItemsTable = () => {
   const [ascending, setAscending] = useState<boolean | null>(
     redirectState?.ascending ?? null,
   );
-  const { page, totalPages } = useAppSelector(selectItemsPagination);
+  const { totalPages } = useAppSelector(selectItemsPagination);
   const loading = useAppSelector(selectItemsLoading);
   const ITEMS_PER_PAGE = 10;
 
@@ -76,19 +76,18 @@ const AdminItemsTable = () => {
 
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
+    if (!org_id) return;
+
     void dispatch(
-      fetchOrderedItems({
+      fetchAllAdminItems({
         ordered_by: order,
         page: currentPage,
         limit: ITEMS_PER_PAGE,
         searchquery: debouncedSearchQuery,
         ascending: ascending === false ? false : true,
         tag_filters: tagFilter,
-        location_filter: [],
-        categories: [],
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        // scope to the active organization so admins only see their org's items
-        org_ids: org_id ? org_id : undefined,
+        // org_id is provided via the axios interceptor header; not needed here
       }),
     );
   }, [
@@ -97,8 +96,6 @@ const AdminItemsTable = () => {
     order,
     debouncedSearchQuery,
     currentPage,
-    ITEMS_PER_PAGE,
-    page,
     tagFilter,
     statusFilter,
     org_id,

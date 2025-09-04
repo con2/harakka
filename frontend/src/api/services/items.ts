@@ -58,7 +58,6 @@ export const itemsApi = {
    * Get all items belonging to a specific organization
    */
   getAllAdminItems: (
-    org_id: string,
     page: number,
     limit: number,
     ascending: boolean,
@@ -70,7 +69,9 @@ export const itemsApi = {
     categories?: string[],
   ) => {
     const activity = activity_filter === "active" ? true : false;
-    let call = `/storage-items/admin/${org_id}?order=${ordered_by}&page=${page}&limit=${limit}&ascending=${ascending}`;
+    // Backend exposes a protected admin endpoint at /storage-items/ordered-admin-items
+    // Organization context is sent via the `x-org-id` header by the axios interceptor.
+    let call = `/storage-items/ordered-admin-items?order=${ordered_by}&page=${page}&limit=${limit}&ascending=${ascending}`;
     if (searchquery) call += `&search=${encodeURIComponent(searchquery)}`;
     if (tag_filters && tag_filters.length > 0)
       call += `&tags=${tag_filters.join(",")}`;
