@@ -136,5 +136,147 @@ export const cart = {
       fi: "Virhe: ",
       en: "Error: ",
     },
+    profileUpdateSuccess: {
+      fi: "Profiili päivitetty onnistuneesti! Voit nyt yrittää varausta uudelleen.",
+      en: "Profile updated successfully! Please try booking again.",
+    },
+    profileUpdateError: {
+      fi: "Profiilin päivittäminen epäonnistui. Yritä uudelleen.",
+      en: "Failed to update profile. Please try again.",
+    },
+  },
+  profileCompletion: {
+    title: {
+      fi: "Täydennä profiilisi",
+      en: "Complete Your Profile",
+    },
+    description: {
+      fi: "Anna tietosi jatkaaksesi varaustasi.",
+      en: "Please provide your details to continue with your booking.",
+    },
+    fields: {
+      fullName: {
+        label: {
+          fi: "Koko nimi",
+          en: "Full Name",
+        },
+        placeholder: {
+          fi: "Syötä koko nimesi",
+          en: "Enter your full name",
+        },
+        required: {
+          fi: "Koko nimi vaaditaan",
+          en: "Full name is required",
+        },
+      },
+      phone: {
+        label: {
+          fi: "Puhelinnumero",
+          en: "Phone Number",
+        },
+        placeholder: {
+          fi: "+358 12 345 6789",
+          en: "+358 12 345 6789",
+        },
+        recommended: {
+          fi: "(suositeltu)",
+          en: "(recommended)",
+        },
+        description: {
+          fi: "Puhelinnumeron lisääminen helpottaa varaustesi yhteydenpitoa.",
+          en: "Adding a phone number helps us communicate about your bookings more easily.",
+        },
+      },
+      address: {
+        label: {
+          fi: "Osoite",
+          en: "Address",
+        },
+        optional: {
+          fi: "(valinnainen)",
+          en: "(optional)",
+        },
+        description: {
+          fi: "Osoitteen lisääminen auttaa tuotteiden toimitus- ja noutojärjestelyissä.",
+          en: "Adding your address helps with item delivery and pickup coordination.",
+        },
+        streetAddress: {
+          label: {
+            fi: "Katuosoite",
+            en: "Street Address",
+          },
+          placeholder: {
+            fi: "Katukatu 123",
+            en: "123 Main Street",
+          },
+          required: {
+            fi: "Katuosoite vaaditaan",
+            en: "Street address is required",
+          },
+        },
+        city: {
+          label: {
+            fi: "Kaupunki",
+            en: "City",
+          },
+          placeholder: {
+            fi: "Helsinki",
+            en: "Helsinki",
+          },
+          required: {
+            fi: "Kaupunki vaaditaan",
+            en: "City is required",
+          },
+        },
+        postalCode: {
+          label: {
+            fi: "Postinumero",
+            en: "Postal Code",
+          },
+          placeholder: {
+            fi: "00100",
+            en: "00100",
+          },
+          required: {
+            fi: "Postinumero vaaditaan",
+            en: "Postal code is required",
+          },
+        },
+        country: {
+          label: {
+            fi: "Maa",
+            en: "Country",
+          },
+          placeholder: {
+            fi: "Suomi",
+            en: "Finland",
+          },
+          required: {
+            fi: "Maa vaaditaan",
+            en: "Country is required",
+          },
+        },
+      },
+    },
+    buttons: {
+      cancel: {
+        fi: "Peruuta",
+        en: "Cancel",
+      },
+      complete: {
+        fi: "Täydennä profiili",
+        en: "Complete Profile",
+      },
+      updating: {
+        fi: "Päivitetään...",
+        en: "Updating...",
+      },
+    },
+    errors: {
+      updateFailed: {
+        fi: "Profiilin päivittäminen epäonnistui.",
+        en: "An error occurred while updating your profile.",
+      },
+    },
   },
 };

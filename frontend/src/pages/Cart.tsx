@@ -1,7 +1,12 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { useTranslation } from "@/hooks/useTranslation";
-import { selectSelectedUser } from "@/store/slices/usersSlice";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import {
+  selectSelectedUser,
+  getCurrentUser,
+  getUserAddresses,
+} from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
 import { Calendar, ChevronLeft, LoaderCircle, Trash2 } from "lucide-react";
@@ -11,6 +16,7 @@ import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { toastConfirm } from "../components/ui/toastConfirm";
+import { ProfileCompletionModal } from "../components/Profile/ProfileCompletionModal";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   clearCart,
@@ -37,6 +43,9 @@ const Cart: React.FC = () => {
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
 
+  // Profile completion hook
+  const { updateProfile } = useProfileCompletion();
+
   const [availabilityMap, setAvailabilityMap] = useState<{
     [itemId: string]: {
       availableQuantity: number;
@@ -44,6 +53,7 @@ const Cart: React.FC = () => {
       error: string | null;
     };
   }>({});
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Get start and end dates from the timeframe Redux slice
   const { startDate: startDateStr, endDate: endDateStr } = useAppSelector(
@@ -175,13 +185,16 @@ const Cart: React.FC = () => {
         end_date: endDate.toISOString(),
       })),
     };
+
     try {
-      await toast.promise(dispatch(createBooking(bookingData)).unwrap(), {
-        loading: t.cart.toast.creatingBooking[lang],
-        success: t.cart.toast.bookingCreated[lang],
-        error: (err) =>
-          `${t.cart.toast.bookingError[lang]}${err || t.cart.toast.bookingError[lang]}`,
-      });
+      // Show loading toast
+      const loadingToast = toast.loading(t.cart.toast.creatingBooking[lang]);
+
+      // Attempt to create booking
+      await dispatch(createBooking(bookingData)).unwrap();
+
+      // If successful, show success toast and proceed
+      toast.success(t.cart.toast.bookingCreated[lang], { id: loadingToast });
 
       // Clear cart after successful booking
       dispatch(clearCart());
@@ -191,6 +204,48 @@ const Cart: React.FC = () => {
     } catch (error: unknown) {
       console.error("Checkout error:", error);
       console.error("Booking data that failed:", bookingData);
+
+      // Dismiss any existing toasts first
+      toast.dismiss();
+
+      // Check if it's a profile incomplete error - could be structured error object or string
+      let isProfileIncompleteError = false;
+
+      console.log("Error object:", error);
+      console.log("Error type:", typeof error);
+
+      if (typeof error === "object" && error !== null) {
+        const errorObj = error as { errorCode?: string; message?: string };
+        console.log("Error object details:", errorObj);
+        if (errorObj.errorCode === "PROFILE_INCOMPLETE") {
+          console.log("Found PROFILE_INCOMPLETE errorCode");
+          isProfileIncompleteError = true;
+        }
+      }
+
+      if (!isProfileIncompleteError) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        console.log("Checking error message:", errorMessage);
+        if (
+          errorMessage.includes("PROFILE_INCOMPLETE") ||
+          errorMessage.includes("Profile incomplete") ||
+          errorMessage.includes("Full name is required")
+        ) {
+          console.log("Found profile incomplete in error message");
+          isProfileIncompleteError = true;
+        }
+      }
+
+      console.log("Final isProfileIncompleteError:", isProfileIncompleteError);
+
+      if (isProfileIncompleteError) {
+        console.log("Opening profile modal");
+        // Show the profile completion modal instead of toast error
+        setIsProfileModalOpen(true);
+        return;
+      }
+
       toast.error(
         `Checkout error: ${
           error instanceof Error
@@ -460,6 +515,47 @@ const Cart: React.FC = () => {
           {t.cart.buttons.clearCart[lang]}
         </Button>
       </div>
+
+      {/* Profile Completion Modal */}
+      <ProfileCompletionModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        onComplete={async (data) => {
+          const success = await updateProfile(data);
+          if (success) {
+            // Refresh current user data to ensure profile is up to date
+            try {
+              await dispatch(getCurrentUser()).unwrap();
+              const id =
+                userProfile?.id ??
+                (localStorage.getItem("userId") || undefined);
+              if (id) {
+                try {
+                  await dispatch(getUserAddresses(id)).unwrap();
+                } catch (e) {
+                  if (process.env.NODE_ENV !== "production") {
+                    console.error("Failed to refresh user addresses:", e);
+                  }
+                }
+              }
+            } catch (error) {
+              console.warn("Failed to refresh user data:", error);
+            }
+
+            setIsProfileModalOpen(false);
+
+            // Show success toast with a slight delay to avoid overlap
+            setTimeout(() => {
+              toast.success(t.cart.toast.profileUpdateSuccess[lang]);
+            }, 100);
+
+            return true;
+          } else {
+            toast.error(t.cart.toast.profileUpdateError[lang]);
+            return false;
+          }
+        }}
+      />
     </div>
   );
 };

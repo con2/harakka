@@ -84,6 +84,8 @@ const MyProfile = () => {
         void dispatch(getUserAddresses(selectedUser.id));
     }
   }, [selectedUser, dispatch, addresses.length]);
+  console.log("userAddresses", userAddresses);
+  console.log("Addresses", addresses);
 
   useEffect(() => {
     setAddresses(userAddresses || []);
@@ -98,7 +100,7 @@ const MyProfile = () => {
     country: "",
     is_default: false,
   });
-
+  console.log("newAddress", newAddress);
   // Handle tab change with URL update
   const handleTabChange = (value: string) => {
     void navigate(`/profile?tab=${value}`);
@@ -121,17 +123,27 @@ const MyProfile = () => {
 
         // Loop through addresses and update or add them
         for (const addr of addresses) {
+          // Convert AddressForm to CreateAddressInput by excluding user_id and id
+          const addressInput = {
+            address_type: addr.address_type,
+            street_address: addr.street_address,
+            city: addr.city,
+            postal_code: addr.postal_code,
+            country: addr.country,
+            is_default: addr.is_default,
+          };
+
           if (addr.id) {
             void dispatch(
               updateAddress({
                 id: selectedUser.id,
                 addressId: addr.id,
-                address: addr,
+                address: addressInput,
               }),
             ).unwrap();
           } else {
             void dispatch(
-              addAddress({ id: selectedUser.id, address: addr }),
+              addAddress({ id: selectedUser.id, address: addressInput }),
             ).unwrap();
           }
         }
@@ -175,7 +187,8 @@ const MyProfile = () => {
               }),
             ).unwrap();
           }
-
+          // keep store in sync for subsequent visits/refreshes
+          await dispatch(getUserAddresses(selectedUser!.id)).unwrap();
           toast.success(t.myProfile.toast.addressRemoved[lang]);
         } catch {
           toast.error(t.myProfile.toast.addressRemovalError[lang]);
@@ -652,10 +665,20 @@ const MyProfile = () => {
                             return;
                           }
 
+                          // Convert AddressForm to CreateAddressInput by excluding user_id
+                          const addressInput = {
+                            address_type: newAddress.address_type,
+                            street_address: newAddress.street_address,
+                            city: newAddress.city,
+                            postal_code: newAddress.postal_code,
+                            country: newAddress.country,
+                            is_default: newAddress.is_default,
+                          };
+
                           dispatch(
                             addAddress({
                               id: selectedUser?.id || "",
-                              address: newAddress,
+                              address: addressInput,
                             }),
                           )
                             .unwrap()

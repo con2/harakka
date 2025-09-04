@@ -47,6 +47,22 @@ export const createBooking = createAsyncThunk<
   try {
     return await bookingsApi.createBooking(bookingData);
   } catch (error: unknown) {
+    // For profile incomplete errors, preserve the full error structure
+    const apiError = error as {
+      response?: {
+        data?: {
+          errorCode?: string;
+          message?: string;
+          missingFields?: string[];
+          hasPhone?: boolean;
+        };
+      };
+    };
+    if (apiError?.response?.data?.errorCode === "PROFILE_INCOMPLETE") {
+      return rejectWithValue(apiError.response.data);
+    }
+
+    // For other errors, use the standard error message extraction
     return rejectWithValue(
       extractErrorMessage(error, "Failed to create booking"),
     );
