@@ -14,6 +14,7 @@ import {
   fetchAllOrderedUsersList,
   selectUsersList,
 } from "@/store/slices/usersSlice";
+import { clearUsersList } from "@/store/slices/usersSlice";
 import {
   fetchAvailableRoles,
   selectActiveRoleContext,
@@ -282,6 +283,8 @@ const UsersList = () => {
       } catch {
         // Ignore re-fetch errors;
       }
+      // Clear lightweight add-user search results so reopening the panel doesn't show stale data
+      void dispatch(clearUsersList());
       setShowAddUser(false);
       setAddSearchInput("");
       setSelectedAddUserId(null);
@@ -289,6 +292,16 @@ const UsersList = () => {
       // error is handled by roles slice state;
     }
   };
+
+  // clear previous search results when opening the panel
+  const toggleAddUser = useCallback(() => {
+    if (!showAddUser) {
+      void dispatch(clearUsersList());
+      setAddSearchInput("");
+      setSelectedAddUserId(null);
+    }
+    setShowAddUser((s) => !s);
+  }, [dispatch, showAddUser]);
 
   // ————————————— Helper Functions —————————————
   // Helper: derive the organization name for a given user for this view
@@ -489,7 +502,7 @@ const UsersList = () => {
         </div>
         {/* Add a new member to an org section */}
         <div className="relative">
-          <Button variant={"outline"} onClick={() => setShowAddUser((s) => !s)}>
+          <Button variant={"outline"} onClick={toggleAddUser}>
             {t.usersList.addUser.title[lang]}
           </Button>
 
@@ -501,6 +514,12 @@ const UsersList = () => {
                   placeholder={t.usersList.filters.search[lang]}
                   value={addSearchInput}
                   onChange={(e) => setAddSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void handleAddSearch();
+                    }
+                  }}
                   className="flex-1 text-sm p-2 bg-white rounded-md border"
                 />
                 <Button variant={"outline"} size="sm" onClick={handleAddSearch}>
@@ -567,7 +586,13 @@ const UsersList = () => {
                 <Button
                   size="sm"
                   variant="destructive"
-                  onClick={() => setShowAddUser(false)}
+                  onClick={() => {
+                    // hide the panel and clear previous search results
+                    setShowAddUser(false);
+                    setAddSearchInput("");
+                    setSelectedAddUserId(null);
+                    void dispatch(clearUsersList());
+                  }}
                 >
                   {"Close"}
                 </Button>
