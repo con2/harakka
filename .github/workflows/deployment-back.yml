@@ -24,22 +24,10 @@ jobs:
           cd common
           npm ci
 
-      - name: Ensure package-lock.json exists
-        run: |
-          cd backend
-          if [ ! -f "package-lock.json" ]; then
-            echo "package-lock.json not found, generating it..."
-            npm install
-            if [ ! -f "package-lock.json" ]; then
-              echo "Failed to generate package-lock.json"
-              exit 1
-            fi
-          fi
-
       - name: Install dependencies
         run: |
           cd backend
-          npm ci
+          npm install
 
       - name: Build
         run: |
