@@ -22,13 +22,13 @@ jobs:
       - name: Install common dependencies (common types folder)
         run: |
           cd common
+          npm ci
 
       - name: Ensure package-lock.json exists
         run: |
           cd backend
           if [ ! -f "package-lock.json" ]; then
             echo "package-lock.json not found, generating it..."
-            cd backend
             npm install
             if [ ! -f "package-lock.json" ]; then
               echo "Failed to generate package-lock.json"
