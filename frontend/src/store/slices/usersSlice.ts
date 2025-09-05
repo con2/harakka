@@ -270,6 +270,9 @@ export const usersSlice = createSlice({
       state.error = null;
       state.errorContext = null;
     },
+    clearUsersList: (state: UserState) => {
+      state.usersList = undefined;
+    },
     selectUser: (state, action) => {
       state.selectedUser = action.payload;
     },
@@ -532,7 +535,7 @@ export const selectTotalUsersCount = (state: RootState) =>
   state.users.userCount;
 
 // export actions from the slice
-export const { clearSelectedUser, selectUser, clearAddresses } =
+export const { clearSelectedUser, selectUser, clearAddresses, clearUsersList } =
   usersSlice.actions;
 
 // export the reducer to be used in the store
