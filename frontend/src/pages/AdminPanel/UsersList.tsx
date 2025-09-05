@@ -11,10 +11,17 @@ import {
   selectLoading,
 } from "@/store/slices/usersSlice";
 import {
+  fetchAllOrderedUsersList,
+  selectUsersList,
+} from "@/store/slices/usersSlice";
+import {
   fetchAvailableRoles,
   selectActiveRoleContext,
   selectActiveRoleName,
+  selectAvailableRoles,
 } from "@/store/slices/rolesSlice";
+import { createUserRole } from "@/store/slices/rolesSlice";
+import { CreateUserRoleDto } from "@/types/roles";
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
@@ -41,10 +48,21 @@ const UsersList = () => {
     useAppSelector(selectActiveRoleContext);
   const activeRoleName = useAppSelector(selectActiveRoleName);
   const { refreshAllUserRoles, hasAnyRole } = useRoles();
+  const rolesCatalog = useAppSelector(selectAvailableRoles);
 
   // ————————————— State —————————————
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  // Add-user flow state
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [addSearchInput, setAddSearchInput] = useState("");
+  const [addSearchLoading, setAddSearchLoading] = useState(false);
+  const addUsersList = useAppSelector(selectUsersList);
+  const [selectedAddUserId, setSelectedAddUserId] = useState<string | null>(
+    null,
+  );
+  const [selectedAddUserRole, setSelectedAddUserRole] =
+    useState<string>("user");
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 500);
@@ -201,6 +219,63 @@ const UsersList = () => {
     isSuper,
     getOrgFilter,
   ]);
+
+  // Handlers for add-new-user search and assign
+  const handleAddSearch = async () => {
+    if (!addSearchInput || addSearchInput.trim().length === 0) return;
+    setAddSearchLoading(true);
+    try {
+      await dispatch(
+        fetchAllOrderedUsersList({
+          searchquery: addSearchInput.trim(),
+          org_filter: getOrgFilter(),
+          page: 1,
+          limit: 10,
+        }),
+      ).unwrap();
+    } catch {
+      // Error handling is managed elsewhere (comment so linter doesn't complain)
+    } finally {
+      setAddSearchLoading(false);
+    }
+  };
+
+  const handleAssignRole = async () => {
+    if (!selectedAddUserId) return;
+    if (!activeOrgId) {
+      // We require an active organization to assign org-specific roles
+      // In case of Global assignment this flow would differ
+      alert("Please select an active organization before assigning a role.");
+      return;
+    }
+    // Resolve role_id from available roles (roles table) because backend expects role_id
+    const roleRow = rolesCatalog.find((r) => r.role === selectedAddUserRole);
+    if (!roleRow) {
+      alert(
+        "Selected role not available on the server. Please refresh available roles and try again.",
+      );
+      return;
+    }
+
+    const payload: CreateUserRoleDto = {
+      user_id: selectedAddUserId,
+      organization_id: activeOrgId,
+      role_id: roleRow.id,
+      is_active: true,
+    } as unknown as CreateUserRoleDto;
+
+    try {
+      await dispatch(createUserRole(payload)).unwrap();
+      // refresh roles in UI (hook useRoles has refreshAllUserRoles)
+      await refreshAllUserRoles();
+      // reset UI
+      setShowAddUser(false);
+      setAddSearchInput("");
+      setSelectedAddUserId(null);
+    } catch {
+      // error is handled by roles slice state;
+    }
+  };
 
   // ————————————— Helper Functions —————————————
   // Helper: derive the organization name for a given user for this view
@@ -399,9 +474,93 @@ const UsersList = () => {
             </Button>
           )}
         </div>
-        {/* TODO: update this button to add a new member to an org (Global User) */}
-        <div>
-          <Button variant={"outline"}>Add New User</Button>
+        {/* Add a new member to an org section */}
+        <div className="relative">
+          <Button variant={"outline"} onClick={() => setShowAddUser((s) => !s)}>
+            {t.usersList.addUser.title[lang]}
+          </Button>
+
+          {showAddUser && (
+            <div className="absolute right-0 mt-2 p-4 w-96 bg-white border rounded shadow-lg z-50">
+              <div className="flex gap-2 items-center mb-2">
+                <input
+                  type="text"
+                  placeholder={t.usersList.filters.search[lang]}
+                  value={addSearchInput}
+                  onChange={(e) => setAddSearchInput(e.target.value)}
+                  className="flex-1 text-sm p-2 bg-white rounded-md border"
+                />
+                <Button variant={"outline"} size="sm" onClick={handleAddSearch}>
+                  {addSearchLoading ? (
+                    <LoaderCircle className="animate-spin h-4 w-4" />
+                  ) : (
+                    t.usersList.addUser.searchButton[lang]
+                  )}
+                </Button>
+              </div>
+
+              <div className="max-h-40 overflow-auto mb-2">
+                {addUsersList?.data?.length ? (
+                  addUsersList.data.map((u) => (
+                    <label
+                      key={u.id}
+                      className="flex items-center gap-2 p-1 hover:bg-slate-50 rounded"
+                    >
+                      <input
+                        type="radio"
+                        name="selectedAddUser"
+                        checked={selectedAddUserId === u.id}
+                        onChange={() => setSelectedAddUserId(u.id)}
+                      />
+                      <div className="text-sm">
+                        <div className="font-medium">{u.full_name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {u.email}
+                        </div>
+                      </div>
+                    </label>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    {t.usersList.addUser.noResults[lang]}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2 items-center justify-between">
+                <select
+                  value={selectedAddUserRole}
+                  onChange={(e) => setSelectedAddUserRole(e.target.value)}
+                  className="select bg-white text-sm p-2 rounded-md"
+                >
+                  <option value="user">
+                    {t.usersList.addUser.roles.user[lang]}
+                  </option>
+                  <option value="storage_manager">
+                    {t.usersList.addUser.roles.storageManager[lang]}
+                  </option>
+                  <option value="requester">
+                    {t.usersList.addUser.roles.requester[lang]}
+                  </option>
+                </select>
+                <Button
+                  size="sm"
+                  variant={"secondary"}
+                  onClick={handleAssignRole}
+                  disabled={!selectedAddUserId}
+                >
+                  {"Assign"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setShowAddUser(false)}
+                >
+                  {"Close"}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

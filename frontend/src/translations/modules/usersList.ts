@@ -25,6 +25,52 @@ export const usersList = {
       en: "Clear Filters",
     },
   },
+  addUser: {
+    title: {
+      fi: "Lisää käyttäjä",
+      en: "Add New User",
+    },
+    search: {
+      fi: "Hae nimellä tai sähköpostilla",
+      en: "Search by name or email",
+    },
+    searchButton: {
+      fi: "Hae",
+      en: "Search",
+    },
+    addButton: {
+      fi: "Lisää käyttäjä",
+      en: "Add User",
+    },
+    noResults: {
+      fi: "Ei tuloksia",
+      en: "No results",
+    },
+    roles: {
+      user: {
+        fi: common.roles.user.fi,
+        en: common.roles.user.en,
+      },
+      storageManager: {
+        fi: common.roles.storageManager.fi,
+        en: common.roles.storageManager.en,
+      },
+      requester: {
+        fi: common.roles.requester.fi,
+        en: common.roles.requester.en,
+      },
+    },
+    buttons: {
+      assign: {
+        fi: "Määritä",
+        en: "Assign",
+      },
+      close: {
+        fi: common.close.fi,
+        en: common.close.en,
+      },
+    },
+  },
   columns: {
     name: {
       fi: common.personalData.name.fi,
