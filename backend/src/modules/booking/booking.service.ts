@@ -177,20 +177,14 @@ export class BookingService {
    */
   async getUserBookings(
     req: AuthRequest,
-    supabase: SupabaseClient<Database>,
     page: number,
     limit: number,
+    activeOrgId?: string,
+    activeRole?: string,
+    userId?,
   ) {
     const { from, to } = getPaginationRange(page, limit);
-
-    // Extract user ID and role from the request
-    const userId = req.user?.id;
-    const activeRole = req.headers["x-role-name"] as string;
-    const activeOrgId = req.headers["x-org-id"] as string;
-
-    if (!userId) {
-      throw new BadRequestException("Valid user ID is required");
-    }
+    const supabase = req.supabase;
 
     // Restrict User to only their own bookings
     if (activeRole === "user") {
