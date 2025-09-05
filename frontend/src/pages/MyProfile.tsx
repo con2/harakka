@@ -84,8 +84,6 @@ const MyProfile = () => {
         void dispatch(getUserAddresses(selectedUser.id));
     }
   }, [selectedUser, dispatch, addresses.length]);
-  console.log("userAddresses", userAddresses);
-  console.log("Addresses", addresses);
 
   useEffect(() => {
     setAddresses(userAddresses || []);
@@ -100,7 +98,6 @@ const MyProfile = () => {
     country: "",
     is_default: false,
   });
-  console.log("newAddress", newAddress);
   // Handle tab change with URL update
   const handleTabChange = (value: string) => {
     void navigate(`/profile?tab=${value}`);

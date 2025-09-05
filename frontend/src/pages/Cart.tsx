@@ -211,14 +211,9 @@ const Cart: React.FC = () => {
       // Check if it's a profile incomplete error - could be structured error object or string
       let isProfileIncompleteError = false;
 
-      console.log("Error object:", error);
-      console.log("Error type:", typeof error);
-
       if (typeof error === "object" && error !== null) {
         const errorObj = error as { errorCode?: string; message?: string };
-        console.log("Error object details:", errorObj);
         if (errorObj.errorCode === "PROFILE_INCOMPLETE") {
-          console.log("Found PROFILE_INCOMPLETE errorCode");
           isProfileIncompleteError = true;
         }
       }
@@ -226,21 +221,16 @@ const Cart: React.FC = () => {
       if (!isProfileIncompleteError) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        console.log("Checking error message:", errorMessage);
         if (
           errorMessage.includes("PROFILE_INCOMPLETE") ||
           errorMessage.includes("Profile incomplete") ||
           errorMessage.includes("Full name is required")
         ) {
-          console.log("Found profile incomplete in error message");
           isProfileIncompleteError = true;
         }
       }
 
-      console.log("Final isProfileIncompleteError:", isProfileIncompleteError);
-
       if (isProfileIncompleteError) {
-        console.log("Opening profile modal");
         // Show the profile completion modal instead of toast error
         setIsProfileModalOpen(true);
         return;
