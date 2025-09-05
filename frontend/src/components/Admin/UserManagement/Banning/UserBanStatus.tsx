@@ -33,14 +33,14 @@ const UserBanStatus = ({ userId }: UserBanStatusProps) => {
   if (!banStatus || !banStatus.isBanned) {
     return (
       <Badge variant="secondary" className="text-xs">
-        {t.userBanning.status.active[lang]}
+        {t.userBanHistory.status.active[lang]}
       </Badge>
     );
   }
 
   return (
     <Badge variant="destructive" className="text-xs">
-      {t.userBanning.status.banned[lang]}
+      {t.userBanHistory.status.banned[lang]}
     </Badge>
   );
 };
