@@ -17,6 +17,7 @@ import { Item } from "@/types/item";
 import UpdateItemForm from "@/components/Admin/Items/UpdateItemForm";
 import { fetchTagsForItem } from "@/store/slices/tagSlice";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
+import { Separator } from "@/components/ui/separator";
 
 const ItemDetailsPage = () => {
   const { id } = useParams();
@@ -27,9 +28,6 @@ const ItemDetailsPage = () => {
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const [loading, setLoading] = useState(true);
   const [updateOpen, setUpdateOpen] = useState(false);
-  const [childActiveTab, setChildActiveTab] = useState<"details" | "images">(
-    "details",
-  );
   // Form state for inline editing
   const [formData, setFormData] = useState<Item | null>(null);
 
@@ -110,7 +108,7 @@ const ItemDetailsPage = () => {
           <ChevronLeft /> {t.itemDetailsPage.buttons.back[lang]}
         </Button>
       </div>
-      {/*/ Title and Delete button */}
+      {/*/ Title */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl">
           {formData?.translations[lang]?.item_name ||
@@ -120,22 +118,20 @@ const ItemDetailsPage = () => {
           <Button
             variant={"outline"}
             size="sm"
-            onClick={() => setUpdateOpen((v) => !v)}
-            disabled={updateOpen && childActiveTab !== "images"}
-            title={
-              updateOpen && childActiveTab !== "images"
-                ? "Open Images tab to finalize edits"
-                : undefined
-            }
+            onClick={() => {
+              if (updateOpen) {
+                // Cancel: revert parent-local form state and close edit mode
+                setFormData(selectedItem as Item);
+                setUpdateOpen(false);
+              } else {
+                setUpdateOpen(true);
+              }
+            }}
           >
             <Edit className="h-4 w-4 mr-2" />{" "}
             {updateOpen
-              ? t.itemDetailsPage.buttons.close[lang]
+              ? t.itemDetailsPage.messages.deletion.cancel[lang]
               : t.itemDetailsPage.buttons.edit[lang]}
-          </Button>
-          <Button size="sm" variant="destructive" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4 mr-2" /> {""}
-            {t.itemDetailsPage.buttons.delete[lang]}
           </Button>
         </div>
       </div>
@@ -146,19 +142,21 @@ const ItemDetailsPage = () => {
           <UpdateItemForm
             initialData={formData}
             editable={updateOpen}
-            onActiveTabChange={(tab) => setChildActiveTab(tab)}
+            onActiveTabChange={() => {}}
             onSaved={() => {
               void dispatch(getItemById(String(formData?.id ?? id)));
               void dispatch(fetchTagsForItem(String(formData?.id ?? id)));
               setUpdateOpen(false);
             }}
-            onCancel={() => {
-              setFormData(selectedItem as Item);
-              setUpdateOpen(false);
-            }}
           />
         )}
       </div>
+      <Separator className="my-2 mt-10" />
+      {/* Delete item */}
+      <Button size="sm" variant="destructive" onClick={handleDelete}>
+        <Trash2 className="h-4 w-4 mr-2" /> {""}
+        {t.itemDetailsPage.buttons.delete[lang]}
+      </Button>
     </div>
   );
 };

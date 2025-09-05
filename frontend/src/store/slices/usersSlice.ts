@@ -3,7 +3,8 @@ import { usersApi } from "../../api/services/users";
 import { RootState } from "../store";
 import { supabase } from "../../config/supabase";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
-import { Address } from "@/types/address";
+// Address is used for return types and state, CreateAddressInput for API calls
+import { CreateAddressInput } from "@/types/address";
 import { UserState, OrderedUsersParams } from "@/types/user";
 import { CreateUserDto, UpdateUserDto, UserProfile } from "@common/user.types";
 import { ApiResponse } from "@/types/api";
@@ -162,7 +163,7 @@ export const getUserAddresses = createAsyncThunk(
 export const addAddress = createAsyncThunk(
   "users/addAddress",
   async (
-    { id, address }: { id: string; address: Address },
+    { id, address }: { id: string; address: CreateAddressInput },
     { rejectWithValue },
   ) => {
     try {
@@ -183,7 +184,7 @@ export const updateAddress = createAsyncThunk(
       id,
       addressId,
       address,
-    }: { id: string; addressId: string; address: Address },
+    }: { id: string; addressId: string; address: CreateAddressInput },
     { rejectWithValue },
   ) => {
     try {
