@@ -55,6 +55,24 @@ export const fetchAllOrderedUsers = createAsyncThunk<
   }
 });
 
+/**
+ * Fetch lightweight users list (id, full_name, email) for selects/autocomplete
+ */
+export const fetchAllOrderedUsersList = createAsyncThunk<
+  ApiResponse<Pick<UserProfile, "id" | "full_name" | "email">[]>,
+  OrderedUsersParams,
+  { rejectValue: string }
+>("users/fetchAllOrderedUsersList", async (params, thunkAPI) => {
+  try {
+    const response = await usersApi.getAllOrderedUsersList(params);
+    return response;
+  } catch (error: unknown) {
+    return thunkAPI.rejectWithValue(
+      extractErrorMessage(error, "Failed to fetch users list"),
+    );
+  }
+});
+
 // Create user thunk
 export const createUser = createAsyncThunk(
   "users/createUser",
@@ -304,6 +322,20 @@ export const usersSlice = createSlice({
         state.errorContext = "fetch";
       })
 
+      // fetchAllOrderedUsersList (lightweight list for selects)
+      .addCase(fetchAllOrderedUsersList.pending, (state) => {
+        // keep global loading unchanged; use separate place for lists
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(fetchAllOrderedUsersList.fulfilled, (state, action) => {
+        state.usersList = action.payload;
+      })
+      .addCase(fetchAllOrderedUsersList.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
+
       // fetch user by ID
       .addCase(getUserById.pending, (state) => {
         state.selectedUserLoading = true;
@@ -479,6 +511,7 @@ export const usersSlice = createSlice({
 
 // selectors for accessing state
 export const selectAllUsers = (state: RootState) => state.users.users;
+export const selectUsersList = (state: RootState) => state.users.usersList;
 export const selectLoading = (state: RootState) => state.users.loading;
 export const selectError = (state: RootState) => state.users.error;
 export const selectErrorContext = (state: RootState) =>
