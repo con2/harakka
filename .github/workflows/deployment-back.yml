@@ -29,6 +29,10 @@ jobs:
           if [ ! -f "package-lock.json" ]; then
             echo "package-lock.json not found, generating it..."
             npm install
+            if [ ! -f "package-lock.json" ]; then
+              echo "Failed to generate package-lock.json"
+              exit 1
+            fi
           fi
 
       - name: Install dependencies
