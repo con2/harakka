@@ -113,6 +113,11 @@ export type ManageItemViewRow = {
   tag_translations: TagTranslation[];
   storage_item_tags?: Tag[];
   tagIds?: string[];
+
+  /* ─ Category Names & details ─ */
+  category_id: string | null;
+  category_en_name: string | null;
+  category_fi_name: string | null;
 };
 /**
  * Item state in Redux store

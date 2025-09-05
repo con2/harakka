@@ -10,7 +10,7 @@ import {
 } from "@/store/slices/itemsSlice";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
-import { Item, ValidItemOrder } from "@/types/item";
+import { Item, ManageItemViewRow, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
 import { Eye, LoaderCircle, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -115,7 +115,7 @@ const AdminItemsTable = () => {
   }, [dispatch, tags.length, items.length, categories.length]);
 
   /* ————————————————————————— Item Columns ———————————————————————— */
-  const itemsColumns: ColumnDef<Item>[] = [
+  const itemsColumns: ColumnDef<ManageItemViewRow>[] = [
     {
       id: "view",
       size: 5,
@@ -152,14 +152,12 @@ const AdminItemsTable = () => {
       accessorFn: (row) => row.category_id || "",
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
-        const type = categories.find(
-          (cat) => cat.id === row.original.category_id,
-        );
+        const type =
+          lang === "fi"
+            ? row.original.category_fi_name
+            : row.original.category_en_name;
         if (!type) return "";
-        return (
-          type.translations[lang].charAt(0).toUpperCase() +
-          type.translations[lang].slice(1)
-        );
+        return type;
       },
     },
     {
@@ -355,7 +353,7 @@ const AdminItemsTable = () => {
 
       <PaginatedDataTable
         columns={itemsColumns}
-        data={items as Item[]}
+        data={items as ManageItemViewRow[]}
         pageIndex={currentPage - 1}
         pageCount={totalPages}
         onPageChange={(page) => handlePageChange(page + 1)}

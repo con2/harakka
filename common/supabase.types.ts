@@ -1309,6 +1309,8 @@ export type Database = {
       view_manage_storage_items: {
         Row: {
           available_quantity: number | null
+          category_en_name: string | null
+          category_fi_name: string | null
           category_id: string | null
           created_at: string | null
           en_item_name: string | null
