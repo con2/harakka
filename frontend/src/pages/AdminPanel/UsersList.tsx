@@ -111,6 +111,7 @@ const UsersList = () => {
         }
       }
     });
+
     return Array.from(uniqueRoles).map((role) => ({ id: role, role }));
   }, [allUserRoles, activeOrgId, isActiveRoleSuper]);
 
@@ -266,9 +267,21 @@ const UsersList = () => {
 
     try {
       await dispatch(createUserRole(payload)).unwrap();
-      // refresh roles in UI (hook useRoles has refreshAllUserRoles)
       await refreshAllUserRoles();
-      // reset UI
+      try {
+        await dispatch(
+          fetchAllOrderedUsers({
+            org_filter: getOrgFilter(),
+            page: 1,
+            limit: 10,
+            ascending: true,
+            ordered_by: "created_at",
+            searchquery: debouncedSearchQuery || undefined,
+          }),
+        ).unwrap();
+      } catch {
+        // Ignore re-fetch errors;
+      }
       setShowAddUser(false);
       setAddSearchInput("");
       setSelectedAddUserId(null);
