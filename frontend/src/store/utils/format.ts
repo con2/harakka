@@ -1,7 +1,10 @@
 type Category = {
   id: string;
   parent_id: string | null;
-  name: string;
+  translations: {
+    fi: string;
+    en: string;
+  };
   subcategories?: Category[];
 };
 

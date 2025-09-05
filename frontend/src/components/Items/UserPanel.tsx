@@ -212,7 +212,7 @@ const UserPanel = () => {
                         handleFilterChange("category", newValue);
                       }}
                     >
-                      {cat.name}
+                      {cat.translations[lang]}
                       {cat.subcategories!.length > 0 && (
                         <ChevronRight
                           className={`transition-transform ${isSelected || hasChildSelected ? "transform-[rotate(90deg)]" : "transform-[rotate(0deg)]"}`}
@@ -231,7 +231,7 @@ const UserPanel = () => {
                               handleFilterChange("category", newValue);
                             }}
                           >
-                            {subcat.name}
+                            {subcat.translations[lang]}
                           </Button>
                         );
                       })}
