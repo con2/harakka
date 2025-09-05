@@ -95,12 +95,22 @@ export class BookingController {
   ) {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
-    const supabase = req.supabase;
+    const activeOrgId = req.headers["x-org-id"] as string;
+    const activeRole = req.headers["x-role-name"] as string;
+    const userId = req.user?.id;
+    if (!activeOrgId || !activeRole) {
+      throw new BadRequestException("Organization context is required");
+    }
+    if (!userId) {
+      throw new BadRequestException("Valid user ID is required");
+    }
     return this.bookingService.getUserBookings(
       req,
-      supabase,
       pageNumber,
       limitNumber,
+      activeOrgId,
+      activeRole,
+      userId,
     );
   }
 
@@ -164,7 +174,6 @@ export class BookingController {
    * @param limit - Number of items per page (default: 10)
    * @returns Paginated list of the user's bookings
    */
-  //TODO: limit to activeContext organization
   @Get("user/:userId")
   @Roles(["storage_manager", "tenant_admin"], {
     match: "any",
@@ -178,15 +187,22 @@ export class BookingController {
   ) {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
+    const activeOrgId = req.headers["x-org-id"] as string;
+    const activeRole = req.headers["x-role-name"] as string;
+    if (!activeOrgId || !activeRole) {
+      throw new BadRequestException("Organization context is required");
+    }
     if (!userId) {
       throw new UnauthorizedException("User ID is required");
     }
-    const supabase = req.supabase;
+
     return this.bookingService.getUserBookings(
       req,
-      supabase,
       pageNumber,
       limitNumber,
+      activeOrgId,
+      activeRole,
+      userId,
     );
   }
 
