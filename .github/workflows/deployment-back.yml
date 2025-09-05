@@ -67,6 +67,7 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           GMAIL_APP_PASSWORD_NEW: ${{ secrets.GMAIL_APP_PASSWORD_NEW }}
           NODE_ENV: "production"
+          ENV: "production"
 
       - name: Post-deployment verification
         if: success()
