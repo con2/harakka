@@ -45,6 +45,7 @@
     "s:start": "env-cmd -f supabase-local.env npx supabase start",
     "s:stop": "env-cmd -f supabase-local.env npx supabase stop",
     "s:link": "env-cmd -f supabase-local.env npx supabase link",
+    "s:link:dev": "env-cmd -f .env.local npx supabase link --project-ref kpqrzaisoyxqillzpbms -p $SUPABASE_DB_PASSWORD",
     "s:local:diff": "env-cmd -f supabase-local.env npx supabase db diff --schema public",
     "s:diff:linked": "env-cmd -f supabase-local.env npx supabase db diff --schema public --linked",
     "s:diff:linked:f": "npx supabase db diff --schema public --linked -f latest_diff",
