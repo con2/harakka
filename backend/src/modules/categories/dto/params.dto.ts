@@ -1,8 +1,10 @@
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 import {
+  IsBoolean,
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsString,
   IsUUID,
   ValidateNested,
 } from "class-validator";
@@ -19,6 +21,19 @@ export class GetParamsDto {
   @IsNumber()
   @IsOptional()
   limit: number;
+
+  @IsOptional()
+  @IsString()
+  search: string;
+
+  @IsOptional()
+  @IsString()
+  order: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === "asc")
+  asc: boolean;
 }
 
 export class CreateParamsDto {

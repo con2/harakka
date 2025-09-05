@@ -205,19 +205,22 @@ export type Database = {
       }
       categories: {
         Row: {
+          created_at: string
           id: string
-          name: string
           parent_id: string | null
+          translations: Json
         }
         Insert: {
+          created_at?: string
           id?: string
-          name: string
           parent_id?: string | null
+          translations: Json
         }
         Update: {
+          created_at?: string
           id?: string
-          name?: string
           parent_id?: string | null
+          translations?: Json
         }
         Relationships: [
           {
@@ -225,6 +228,13 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "view_category_details"
             referencedColumns: ["id"]
           },
         ]
@@ -797,6 +807,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "storage_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "view_category_details"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "storage_items_compartment_id_fkey"
             columns: ["compartment_id"]
             isOneToOne: false
@@ -1241,6 +1258,31 @@ export type Database = {
         }
         Relationships: []
       }
+      view_category_details: {
+        Row: {
+          assigned_to: number | null
+          created_at: string | null
+          id: string | null
+          parent_id: string | null
+          translations: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "view_category_details"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       view_item_location_summary: {
         Row: {
           item_name: string | null
@@ -1290,6 +1332,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storage_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "view_category_details"
             referencedColumns: ["id"]
           },
           {

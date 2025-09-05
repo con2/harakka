@@ -69,7 +69,7 @@ const AdminItemsTable = () => {
     void navigate(`/admin/items/${id}`);
   };
 
-  const handleBooking = (order: string) =>
+  const handleSortOrder = (order: string) =>
     setOrder(order.toLowerCase() as ValidItemOrder);
   const handleAscending = (ascending: boolean | null) =>
     setAscending(ascending);
@@ -85,7 +85,7 @@ const AdminItemsTable = () => {
         ascending: ascending === false ? false : true,
         tag_filters: tagFilter,
         location_filter: [],
-        categories: [],
+        category: "",
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
         // scope to the active organization so admins only see their org's items
         org_ids: org_id ? org_id : undefined,
@@ -337,7 +337,7 @@ const AdminItemsTable = () => {
         pageCount={totalPages}
         onPageChange={(page) => handlePageChange(page + 1)}
         handleAscending={handleAscending}
-        handleOrder={handleBooking}
+        handleOrder={handleSortOrder}
         order={order}
         ascending={ascending}
         originalSorting="quantity"

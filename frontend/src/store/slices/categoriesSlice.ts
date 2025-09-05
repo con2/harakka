@@ -9,20 +9,44 @@ import { RootState } from "../store";
 
 const initialState: CategoriesState = {
   categories: [],
+  selectedCategory: null,
   loading: false,
   error: null,
   errorContext: null,
+  pagination: {
+    totalPages: 1,
+    page: 1,
+    total: 0,
+  },
 };
 
 /*-----------------ASYNC THUNKS----------------------------------------------*/
 export const fetchAllCategories = createAsyncThunk(
   "categories/fetchAllCategories",
   async (
-    { page = 1, limit = 10 }: { page?: number; limit?: number } = {},
+    {
+      page = 1,
+      limit = 10,
+      search,
+      order,
+      ascending,
+    }: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      order?: string;
+      ascending?: string;
+    },
     { rejectWithValue },
   ) => {
     try {
-      return await categoriesApi.getAllCategories(page, limit);
+      return await categoriesApi.getAllCategories({
+        page,
+        limit,
+        order,
+        asc: ascending,
+        search,
+      });
     } catch (error) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch categories"),
@@ -78,14 +102,25 @@ export const deleteCategory = createAsyncThunk(
 const categoriesSlice = createSlice({
   name: "categories",
   initialState,
-  reducers: {},
+  reducers: {
+    setSelectedCategory: (state, action) => {
+      state.selectedCategory = action.payload;
+    },
+    clearSelectedCategory: (state) => {
+      state.selectedCategory = null;
+    },
+  },
   extraReducers: (builder) => {
     // Get Categories
     builder.addCase(fetchAllCategories.pending, (state) => {
+      state.errorContext = null;
+      state.error = null;
       state.loading = true;
     });
     builder.addCase(fetchAllCategories.fulfilled, (state, action) => {
-      state.categories = action.payload.data;
+      const { data, metadata } = action.payload;
+      state.categories = data || [];
+      state.pagination = metadata;
       state.loading = false;
     });
     builder.addCase(fetchAllCategories.rejected, (state, action) => {
@@ -99,9 +134,13 @@ const categoriesSlice = createSlice({
 
     // Create Category
     builder.addCase(createCategory.pending, (state) => {
+      state.errorContext = null;
+      state.error = null;
       state.loading = true;
     });
-    builder.addCase(createCategory.fulfilled, (state) => {
+    builder.addCase(createCategory.fulfilled, (state, action) => {
+      const newCategory = action.payload.data;
+      state.categories = newCategory ? [newCategory] : [];
       state.loading = false;
     });
     builder.addCase(createCategory.rejected, (state, action) => {
@@ -116,8 +155,14 @@ const categoriesSlice = createSlice({
     // Update Category
     builder.addCase(updateCategory.pending, (state) => {
       state.loading = true;
+      state.errorContext = null;
+      state.error = null;
     });
-    builder.addCase(updateCategory.fulfilled, (state) => {
+    builder.addCase(updateCategory.fulfilled, (state, action) => {
+      const updatedCategory = action.payload.data;
+      state.categories.map((cat) =>
+        cat.id === updatedCategory!.id ? updatedCategory : cat,
+      );
       state.loading = false;
     });
     builder.addCase(updateCategory.rejected, (state, action) => {
@@ -131,6 +176,8 @@ const categoriesSlice = createSlice({
 
     // Delete Category
     builder.addCase(deleteCategory.pending, (state) => {
+      state.errorContext = null;
+      state.error = null;
       state.loading = true;
     });
     builder.addCase(deleteCategory.fulfilled, (state) => {
@@ -151,9 +198,16 @@ const categoriesSlice = createSlice({
 
 export const selectCategories = (state: RootState) =>
   state.categories.categories;
+export const selectCategory = (state: RootState) =>
+  state.categories.selectedCategory;
 export const selectCategoriesLoading = (state: RootState) =>
   state.categories.loading;
 export const selectCategoriesError = (state: RootState) =>
   state.categories.error;
+export const selectCategoriesPagination = (state: RootState) =>
+  state.categories.pagination;
+
+export const { setSelectedCategory, clearSelectedCategory } =
+  categoriesSlice.actions;
 
 export default categoriesSlice.reducer;

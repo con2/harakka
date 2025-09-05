@@ -52,8 +52,6 @@ const UserPanel = () => {
     // eslint-disable-next-line
   }, []);
 
-
-
   // Shared expand/collapse state per filter list (max 5 visible by default)
   type ExpandableSection = "itemTypes" | "organizations" | "locations" | "tags";
   const MAX_VISIBLE = 5;
