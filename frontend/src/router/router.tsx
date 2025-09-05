@@ -10,6 +10,7 @@ import ProtectedRoute from "../components/Auth/ProtectedRoute";
 import AdminPanel from "../components/Admin/AdminPanel";
 import AdminDashboard from "@/pages/AdminPanel/AdminDashboard";
 import UsersList from "@/pages/AdminPanel/UsersList";
+import UsersDetailsPage from "@/pages/AdminPanel/UsersDetailsPage";
 import AdminItemsTable from "@/pages/AdminPanel/AdminItemsTable";
 import BookingList from "@/pages/AdminPanel/BookingList";
 import BookingDetailsPage from "@/pages/AdminPanel/BookingDetailsPage";
@@ -96,6 +97,16 @@ export const router = createBrowserRouter([
                 allowedRoles={["superVera", "super_admin", "tenant_admin"]}
               >
                 <UsersList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "users/:id",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["superVera", "super_admin", "tenant_admin"]}
+              >
+                <UsersDetailsPage />
               </ProtectedRoute>
             ),
           },

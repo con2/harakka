@@ -39,7 +39,9 @@ import { timeframeSelector } from "./modules/timeframeSelector";
 import { unauthorized } from "./modules/unauthorized";
 import { updateItemModal } from "./modules/updateItemModal";
 import { userDelete } from "./modules/userDelete";
-import { userBanning } from "./modules/userBanning";
+import { userBan } from "./modules/userBan";
+import { userBanHistory } from "./modules/userBanHistory";
+import { unbanUser } from "./modules/unbanUser";
 import { userEditModal } from "./modules/userEditModal";
 import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
@@ -77,6 +79,7 @@ import { itemDetailsPage } from "./modules/itemDetailsPage";
 import { updateItemForm } from "./modules/updateItemForm";
 import { categories } from "./modules/categories";
 import { addCategory } from "./modules/addCategory";
+import { usersDetailsPage } from "./modules/usersDetailsPage";
 
 export const t = {
   addCategory,
@@ -130,7 +133,9 @@ export const t = {
   updateItemModal,
   updateItemForm,
   userDelete,
-  userBanning,
+  userBan,
+  userBanHistory,
+  unbanUser,
   userEditModal,
   userGuide,
   userPanel,
@@ -156,4 +161,5 @@ export const t = {
   organizations,
   organizationLogoUploader,
   itemDetailsPage,
+  usersDetailsPage,
 };
