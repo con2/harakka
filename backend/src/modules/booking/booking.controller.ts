@@ -208,14 +208,14 @@ export class BookingController {
 
   /**
    * Create a new booking.
-   * Accessible by users and requesters within their organization.
+   * Accessible by users, requesters, storage managers, and tenant admins within their organization.
    * @param dto - Booking data
    * @param req - Authenticated request object
    * @returns Created booking
    */
   //TODO: attach activeRole to the booking
   @Post()
-  @Roles(["user", "requester"], {
+  @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
     match: "any",
     sameOrg: true,
   })
