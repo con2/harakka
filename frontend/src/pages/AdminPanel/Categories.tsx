@@ -121,10 +121,21 @@ function Categories() {
 
   return (
     <>
-      <div className="flex justify-between">
-        <h1 className="text-xl mb-4">
-          {t.categories.headings.manageCategories[lang]}
-        </h1>
+      <h1 className="text-xl mb-4">
+        {t.categories.headings.manageCategories[lang]}
+      </h1>
+
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex gap-4 items-center">
+          <input
+            type="text"
+            size={50}
+            className="w-full sm:max-w-sm text-sm p-2 bg-white rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            placeholder={t.categories.placeholders.search[lang]}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
         <Button
           variant="outline"
           className="gap-2"
@@ -133,19 +144,6 @@ function Categories() {
           <Plus />
           {t.categories.buttons.addNew[lang]}
         </Button>
-      </div>
-
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex gap-4 items-center">
-          <input
-            type="text"
-            size={50}
-            className="w-full sm:max-w-sm text-sm p-2 bg-white rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-            placeholder={t.categories.placeholders.search[lang]} // translate placeholder
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
       </div>
 
       <PaginatedDataTable
