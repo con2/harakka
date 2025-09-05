@@ -18,30 +18,20 @@ import {
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle } from "lucide-react";
+import { Eye, LoaderCircle } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
-import { useBanPermissions } from "@/hooks/useBanPermissions";
 import { selectAllUserRoles } from "@/store/slices/rolesSlice";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import DeleteUserButton from "@/components/Admin/UserManagement/UserDeleteButton";
-import UserEditModal from "@/components/Admin/UserManagement/UserEditModal";
-import UserBanActionsDropdown from "@/components/Admin/UserManagement/Banning/UserBanActionsDropdown";
-import UserBanModal from "@/components/Admin/UserManagement/Banning/UserBanModal";
-import UserBanHistoryModal from "@/components/Admin/UserManagement/Banning/UserBanHistoryModal";
-import UnbanUserModal from "@/components/Admin/UserManagement/Banning/UnbanUserModal";
-import {
-  selectUserBanStatuses,
-  fetchAllUserBanStatuses,
-  checkUserBanStatus,
-} from "@/store/slices/userBanningSlice";
 import { formatRoleName } from "@/utils/format";
 
 const UsersList = () => {
   // ————————————— Hooks & Selectors —————————————
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { authLoading } = useAuth();
   const users = useAppSelector(selectAllUsers);
   const loading = useAppSelector(selectLoading);
@@ -50,27 +40,16 @@ const UsersList = () => {
   const { organizationId: activeOrgId, organizationName: activeOrgName } =
     useAppSelector(selectActiveRoleContext);
   const activeRoleName = useAppSelector(selectActiveRoleName);
-  const userBanStatuses = useAppSelector(selectUserBanStatuses);
   const { refreshAllUserRoles, hasAnyRole } = useRoles();
-  const { canBanUser, isUserBanned } = useBanPermissions();
 
   // ————————————— State —————————————
-  const [isModalOpen, setIsModalOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-  // Modal state management
-  const [activeUser, setActiveUser] = useState<UserProfile | null>(null);
-  const [activeModal, setActiveModal] = useState<
-    "ban" | "unban" | "history" | null
-  >(null);
-
-  const closeModal = () => setIsModalOpen(false);
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 500);
 
   // ————————————— Derived Values —————————————
-  // Authorization helpers based on new role system
   const isAuthorized = hasAnyRole(["superVera", "tenant_admin", "super_admin"]);
   const isSuper = hasAnyRole(["super_admin", "superVera"]);
 
@@ -79,9 +58,7 @@ const UsersList = () => {
   }, [isSuper]);
 
   // Determine if we should fetch all users (no org filter)
-  // This happens when:
-  // 1. User has super_admin or superVera role AND no org/role is selected (activeOrgId is null/undefined)
-  // 2. User has selected a super_admin or superVera role from the navbar selector
+  // This happens when: User has selected a super_admin or superVera role from the navbar selector
   const isActiveRoleSuper =
     activeRoleName === "super_admin" || activeRoleName === "superVera";
   const shouldFetchAllUsers = isSuper && (!activeOrgId || isActiveRoleSuper);
@@ -134,9 +111,6 @@ const UsersList = () => {
           }));
       }
 
-      // Check if user is banned to adjust role display strategy
-      // const isBanned = isUserBanned(userId); // Not needed with current logic
-
       let filteredRoles;
       if (activeOrgId) {
         // When viewing a specific org context
@@ -184,13 +158,6 @@ const UsersList = () => {
   }, [users.data, roleFilter, getUserRolesForDisplay]);
 
   // ————————————— Side Effects —————————————
-  // Reset modal state when activeUser changes
-  useEffect(() => {
-    if (!activeUser) {
-      setActiveModal(null);
-    }
-  }, [activeUser]);
-
   // Load user roles once when authorized (separate from user data)
   useEffect(() => {
     if (!authLoading && isAuthorized && !allUserRoles.length) {
@@ -205,24 +172,6 @@ const UsersList = () => {
     dispatch,
   ]);
 
-  // Load ban statuses when authorized
-  useEffect(() => {
-    if (!authLoading && isAuthorized) {
-      void dispatch(fetchAllUserBanStatuses());
-    }
-  }, [authLoading, isAuthorized, dispatch]);
-
-  // Check individual user ban statuses when users are loaded
-  useEffect(() => {
-    if (users.data && users.data.length > 0) {
-      users.data.forEach((user) => {
-        if (!userBanStatuses[user.id]) {
-          void dispatch(checkUserBanStatus(user.id));
-        }
-      });
-    }
-  }, [users.data, userBanStatuses, dispatch]);
-
   // Reset role filter when active organization changes
   useEffect(() => {
     setRoleFilter("all");
@@ -230,7 +179,7 @@ const UsersList = () => {
 
   // Fetch users when key dependencies change
   useEffect(() => {
-    if (!authLoading && isAuthorized && isModalOpen) {
+    if (!authLoading && isAuthorized) {
       void dispatch(
         fetchAllOrderedUsers({
           org_filter: getOrgFilter(),
@@ -245,7 +194,6 @@ const UsersList = () => {
   }, [
     authLoading,
     isAuthorized,
-    isModalOpen,
     dispatch,
     activeOrgId,
     activeRoleName,
@@ -255,31 +203,16 @@ const UsersList = () => {
   ]);
 
   // ————————————— Helper Functions —————————————
-  // Reset modal state
-  const resetModalState = () => {
-    setActiveUser(null);
-    setActiveModal(null);
-  };
-
-  // Helper function to get user's roles from the new role system
-  const getUserRoles = (userId: string) => {
-    return allUserRoles
-      .filter((role) => role.user_id === userId && role.is_active)
-      .map((role) => role.role_name);
-  };
-
   // Helper: derive the organization name for a given user for this view
   const getUserOrgName = (userId: string) => {
     // Get all user roles (active and inactive)
     const allRoles = allUserRoles.filter((r) => r.user_id === userId);
-
     // If we're viewing in the context of a specific organization
     if (activeOrgId) {
       // First, try to find a role in the active organization
       const activeOrgRole = allRoles.find(
         (r) => r.organization_id === activeOrgId,
       );
-
       if (activeOrgRole?.organization_name) {
         return activeOrgRole.organization_name;
       }
@@ -304,6 +237,24 @@ const UsersList = () => {
 
   // ————————————— Columns —————————————
   const columns: ColumnDef<UserProfile>[] = [
+    {
+      id: "view",
+      size: 5,
+      cell: () => {
+        return (
+          <div className="flex space-x-1">
+            <Button
+              variant={"ghost"}
+              size="sm"
+              title={t.bookingList.buttons.viewDetails[lang]}
+              className="hover:text-slate-900 hover:bg-slate-300"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
     {
       accessorKey: "full_name",
       header: t.usersList.columns.name[lang],
@@ -344,105 +295,36 @@ const UsersList = () => {
         isSuper ? getUserOrgName(row.original.id) : undefined,
     },
     {
-      id: "active",
-      header: t.usersList.columns.active[lang],
-      size: 80,
-      cell: ({ row }) => {
-        const banned = isUserBanned(row.original.id);
-        return (
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
-              banned ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
-            }`}
-          >
-            {banned
-              ? t.usersList.status.banned[lang]
-              : t.usersList.status.active[lang]}
-          </span>
-        );
-      },
-    },
-    {
       id: "roles",
       header: t.usersList.columns.role[lang],
       size: 150,
       enableSorting: true,
       enableColumnFilter: true,
       cell: ({ row }) => {
-        const userRoles = getUserRolesForDisplay(row.original.id);
-        return userRoles.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {userRoles.map((roleInfo, index) => (
-              <span
-                key={index}
-                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
-                title={`${roleInfo.role} in ${roleInfo.org}`}
-              >
-                {formatRoleName(roleInfo.role as string)}
-              </span>
-            ))}
-          </div>
+        // Simplified: show the user's role in the active org (backend should provide this),
+        // otherwise show their Global role if available, otherwise show first role.
+        const userId = row.original.id;
+        const userRoles = allUserRoles.filter(
+          (r) => r.user_id === userId && r.role_name,
+        );
+        const orgRole = activeOrgId
+          ? userRoles.find(
+              (r) => r.organization_id === activeOrgId && r.is_active,
+            )
+          : undefined;
+        const globalRole = userRoles.find(
+          (r) => r.organization_name === "Global" && r.is_active,
+        );
+        const roleToShow = orgRole ?? globalRole ?? userRoles[0];
+
+        return roleToShow ? (
+          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+            {formatRoleName(roleToShow.role_name as string)}
+          </span>
         ) : (
           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
             User
           </span>
-        );
-      },
-    },
-    {
-      id: "actions",
-      size: 30,
-      enableSorting: false,
-      enableColumnFilter: false,
-      cell: ({ row }) => {
-        const targetUser = row.original;
-        const targetUserRoles = getUserRoles(targetUser.id);
-
-        const canEdit = isAuthorized;
-        const canDelete =
-          isSuper || (isAuthorized && targetUserRoles.includes("user"));
-
-        // Banning permission logic based on hierarchy and org:
-        // - super_admin/superVera: Can ban anyone from anywhere
-        // - tenant_admin: Can only ban users whose role is below their own within their active org
-        // - Others: Cannot ban
-        const canBan = canBanUser(targetUser.id);
-
-        const handleBanClick = () => {
-          setActiveUser(targetUser);
-          setActiveModal("ban");
-        };
-
-        const handleUnbanClick = () => {
-          setActiveUser(targetUser);
-          setActiveModal("unban");
-        };
-
-        const handleHistoryClick = () => {
-          setActiveUser(targetUser);
-          setActiveModal("history");
-        };
-
-        return (
-          <div className="flex gap-2">
-            {canEdit && <UserEditModal user={targetUser} />}
-            {canDelete && (
-              <DeleteUserButton id={targetUser.id} closeModal={closeModal} />
-            )}
-            {canBan && (
-              <div onClick={(e) => e.stopPropagation()}>
-                <UserBanActionsDropdown
-                  user={targetUser}
-                  canBan={canBan}
-                  isSuper={isSuper}
-                  isAuthorized={isAuthorized}
-                  onBanClick={handleBanClick}
-                  onUnbanClick={handleUnbanClick}
-                  onHistoryClick={handleHistoryClick}
-                />
-              </div>
-            )}
-          </div>
         );
       },
     },
@@ -517,6 +399,10 @@ const UsersList = () => {
             </Button>
           )}
         </div>
+        {/* TODO: update this button to add a new member to an org (Global User) */}
+        <div>
+          <Button variant={"outline"}>Add New User</Button>
+        </div>
       </div>
 
       <PaginatedDataTable
@@ -536,33 +422,11 @@ const UsersList = () => {
             }),
           )
         }
+        rowProps={(row) => ({
+          onClick: () => navigate(`/admin/users/${row.original.id}`),
+          className: "cursor-pointer",
+        })}
       />
-
-      {/* Ban-related modals - only render the active modal */}
-      {activeUser && activeModal === "ban" && (
-        <UserBanModal
-          key={`ban-${activeUser.id}`}
-          user={activeUser}
-          initialOpen={true}
-          onClose={resetModalState}
-        />
-      )}
-      {activeUser && activeModal === "unban" && (
-        <UnbanUserModal
-          key={`unban-${activeUser.id}`}
-          user={activeUser}
-          initialOpen={true}
-          onClose={resetModalState}
-        />
-      )}
-      {activeUser && activeModal === "history" && (
-        <UserBanHistoryModal
-          key={`history-${activeUser.id}`}
-          user={activeUser}
-          initialOpen={true}
-          onClose={resetModalState}
-        />
-      )}
     </div>
   );
 };
