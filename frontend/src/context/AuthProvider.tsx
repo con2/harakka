@@ -231,7 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // No user, so mark roles as "loaded" (empty)
       setRolesLoaded(true);
     }
-  }, [user, authLoading, setupInProgress, dispatch]);
+  }, [user, authLoading, setupInProgress, dispatch, rolesLoaded]);
 
   useEffect(() => {
     const isRecoveryFlow =
