@@ -46,6 +46,7 @@ import { toastConfirm } from "../components/ui/toastConfirm";
 import MyBookings from "@/components/MyBookings";
 import { CurrentUserRoles } from "@/components/Admin/Roles/CurrentUserRoles";
 import ProfilePictureUploader from "@/components/ProfilePictureUploader";
+import { useRoles } from "@/hooks/useRoles";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();
@@ -71,7 +72,8 @@ const MyProfile = () => {
     userAddresses || [],
   );
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
-  // const profileImage = profilePlaceholder;
+
+  const { activeContext } = useRoles();
 
   useEffect(() => {
     if (selectedUser) {
@@ -218,7 +220,9 @@ const MyProfile = () => {
             {t.myProfile.tabs.userDetails[lang]}
           </TabsTrigger>
           <TabsTrigger value="bookings">
-            {t.myProfile.tabs.bookings[lang]}
+            {activeContext.roleName === "user"
+              ? t.myProfile.tabs.bookings.myBookings[lang]
+              : t.myProfile.tabs.bookings.orgBookings[lang]}
           </TabsTrigger>
         </TabsList>
 

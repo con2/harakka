@@ -7,8 +7,14 @@ export const myProfile = {
       en: "My Profile",
     },
     bookings: {
-      fi: "Tilaukseni",
-      en: "My Bookings",
+      myBookings: {
+        fi: "Tilaukseni",
+        en: "My Bookings",
+      },
+      orgBookings: {
+        en: "My Organization Bookings",
+        fi: "Organisaation varaukset",
+      },
     },
   },
   personalDetails: {
