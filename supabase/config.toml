@@ -351,38 +351,10 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # Declare the 'develop' branch as persistent so configs/seed/functions can deploy in PRs.
 [remotes.develop]
 project_id = "kpqrzaisoyxqillzpbms"
-# Database password for develop branch
-db_password = "env(SUPABASE_DB_PASSWORD_DEV)"
-# API URL for develop branch
-api_url = "https://kpqrzaisoyxqillzpbms.supabase.co"
-# GraphQL URL for develop branch  
-graphql_url = "https://kpqrzaisoyxqillzpbms.supabase.co/graphql/v1"
-# Inbucket URL for email testing in develop
-inbucket_url = "https://kpqrzaisoyxqillzpbms.supabase.co/inbucket"
-# JWT secret for develop branch
-jwt_secret = "env(SUPABASE_JWT_SECRET_DEV)"
-# Anon key for develop branch
-anon_key = "env(SUPABASE_ANON_KEY_DEV)"
-# Service role key for develop branch
-service_role_key = "env(SUPABASE_SERVICE_ROLE_KEY_DEV)"
 
 # Declare the 'main' branch for production
 [remotes.main]
 project_id = "rcbddkhvysexkvgqpcud"
-# Database password for production
-db_password = "env(SUPABASE_DB_PASSWORD)"
-# API URL for production
-api_url = "https://rcbddkhvysexkvgqpcud.supabase.co"
-# GraphQL URL for production
-graphql_url = "https://rcbddkhvysexkvgqpcud.supabase.co/graphql/v1"
-# Inbucket URL for email testing in production
-inbucket_url = "https://rcbddkhvysexkvgqpcud.supabase.co/inbucket"
-# JWT secret for production
-jwt_secret = "env(SUPABASE_JWT_SECRET)"
-# Anon key for production
-anon_key = "env(SUPABASE_ANON_KEY)"
-# Service role key for production
-service_role_key = "env(SUPABASE_SERVICE_ROLE_KEY)"
 
 
 # (Optional) To auto-deploy Edge Functions from this repo, declare them explicitly.
