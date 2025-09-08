@@ -497,21 +497,24 @@ export class BookingService {
     }
 
     // attach role info to the response
-    const bookingWithRole = {
+    /*  const bookingWithRole = {
       ...createdBooking,
       user_role_id: createdBooking.user_role_id,
       role_id: createdBooking.role_id,
       role_name: createdBooking.role_name, // "user" | "requester"
       requester_org_id: createdBooking.requester_org_id, // if requester
-    };
+    }; */
 
     return warningMessage
       ? {
           message: "Booking created",
-          booking: bookingWithRole,
+          booking: /* bookingWithRole */ createdBooking,
           warning: warningMessage,
         }
-      : { message: "Booking created", booking: bookingWithRole };
+      : {
+          message: "Booking created",
+          booking: /* bookingWithRole */ createdBooking,
+        };
   }
 
   // 4. confirm a Booking - no longer in use; replaced by confirmBookingItemsForOrg
