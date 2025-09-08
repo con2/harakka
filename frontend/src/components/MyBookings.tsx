@@ -14,6 +14,8 @@ import {
   selectCurrentBookingLoading,
   getBookingItems,
   clearCurrentBookingItems,
+  clearUserBookings,
+  getOwnBookings,
 } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
 import {
@@ -55,6 +57,7 @@ import { StatusBadge } from "./StatusBadge";
 import InlineTimeframePicker from "./InlineTimeframeSelector";
 import { itemsApi } from "@/api/services/items";
 import Spinner from "./Spinner";
+import { useRoles } from "../hooks/useRoles";
 
 const MyBookings = () => {
   const dispatch = useAppDispatch();
@@ -98,6 +101,8 @@ const MyBookings = () => {
   const { lang } = useLanguage();
   const { formatDate: formatDateLocalized } = useFormattedDate();
 
+  const { activeContext } = useRoles();
+
   const handleEditBooking = async (booking: BookingPreview) => {
     setLoadingAvailability(true);
     setShowEditModal(true);
@@ -107,6 +112,15 @@ const MyBookings = () => {
     dispatch(clearCurrentBookingItems());
     await dispatch(getBookingItems(booking.id));
   };
+
+  useEffect(() => {
+    if (
+      activeContext.roleName !== "user" &&
+      activeContext.roleName !== "requester"
+    ) {
+      dispatch(clearUserBookings());
+    }
+  }, [activeContext.roleName, dispatch]);
 
   useEffect(() => {
     if (
@@ -154,13 +168,43 @@ const MyBookings = () => {
       return;
     }
 
-    if (user && !hasFetchedBookings) {
-      void dispatch(getUserBookings({ user_id: user.id, page: 1, limit: 10 }))
+    const { roleName } = activeContext;
+    if (roleName === "super_admin" || roleName === null) {
+      return;
+    }
+
+    if (!hasFetchedBookings || activeContext) {
+      const { organizationId } = activeContext;
+      const userId = user.id;
+
+      // Ensure organizationId is valid
+      if (!organizationId) {
+        toast.error(t.myBookings.error.invalidContext[lang]);
+        return;
+      }
+
+      void dispatch(
+        getOwnBookings({
+          page: currentPage + 1,
+          limit: 10,
+          activeOrgId: organizationId,
+          activeRole: roleName,
+          userId,
+        }),
+      )
         .unwrap()
         .then(() => setHasFetchedBookings(true)) // Mark as fetched on success
         .catch(() => setHasFetchedBookings(true)); // Mark as fetched even on error
     }
-  }, [dispatch, navigate, user, lang, hasFetchedBookings]); // Apply filters to bookings
+  }, [
+    dispatch,
+    navigate,
+    user,
+    lang,
+    hasFetchedBookings,
+    currentPage,
+    activeContext,
+  ]);
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -508,21 +552,32 @@ const MyBookings = () => {
         </div>
 
         {/* BookingPreview table or empty state */}
-        {bookings.length === 0 && (
+        {activeContext.roleName === "super_admin" ? (
           <div className="text-center py-8 bg-slate-50 rounded-lg">
             <p className="text-lg mb-2">
-              {t.myBookings.emptyState.title[lang]}
+              {t.myBookings.error.insufficientRole[lang]}
             </p>
             <p className="text-muted-foreground mb-4">
-              {t.myBookings.emptyState.description[lang]}
+              {t.myBookings.error.insufficientRoleDescription[lang]}
             </p>
-            <Button
-              onClick={() => navigate("/storage")}
-              className="bg-background text-secondary border-secondary border hover:bg-secondary hover:text-white"
-            >
-              {t.myBookings.buttons.browseItems[lang]}
-            </Button>
           </div>
+        ) : (
+          bookings.length === 0 && (
+            <div className="text-center py-8 bg-slate-50 rounded-lg">
+              <p className="text-lg mb-2">
+                {t.myBookings.emptyState.title[lang]}
+              </p>
+              <p className="text-muted-foreground mb-4">
+                {t.myBookings.emptyState.description[lang]}
+              </p>
+              <Button
+                onClick={() => navigate("/storage")}
+                className="bg-background text-secondary border-secondary border hover:bg-secondary hover:text-white"
+              >
+                {t.myBookings.buttons.browseItems[lang]}
+              </Button>
+            </div>
+          )
         )}
         {isMobile && (
           <Accordion type="multiple" className="w-full space-y-2">

@@ -140,6 +140,67 @@ export const fetchOrderedItems = createAsyncThunk<
   },
 );
 
+// Fetch all ordered organization items (admin)
+export const fetchAllAdminItems = createAsyncThunk<
+  ApiResponse<ManageItemViewRow>,
+  {
+    ordered_by?: ValidItemOrder;
+    ascending?: boolean;
+    page: number;
+    limit: number;
+    searchquery?: string;
+    tag_filters?: string[];
+    activity_filter?: "active" | "inactive";
+    location_filter?: string[];
+    categories?: string[];
+  }
+>(
+  "items/fetchAllAdminItems",
+  async (
+    {
+      ordered_by = "created_at",
+      ascending = true,
+      page = 1,
+      limit = 10,
+      searchquery,
+      tag_filters,
+      activity_filter,
+      location_filter,
+      categories,
+    }: {
+      ordered_by?: ValidItemOrder;
+      ascending?: boolean;
+      page: number;
+      limit: number;
+      searchquery?: string;
+      tag_filters?: string[];
+      activity_filter?: "active" | "inactive";
+      location_filter?: string[];
+      categories?: string[];
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      const response = await itemsApi.getAllAdminItems(
+        page,
+        limit,
+        ascending ?? true,
+        ordered_by ?? "created_at",
+        searchquery,
+        tag_filters,
+        activity_filter,
+        location_filter,
+        categories,
+      );
+      return response as AxiosResponse["data"];
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch admin items"),
+      );
+    }
+  },
+);
+
 // get items count (all items, active and inactive)
 export const getItemCount = createAsyncThunk(
   "items/getItemCount",
@@ -365,6 +426,21 @@ export const itemsSlice = createSlice({
         state.item_pagination = action.payload.metadata;
       })
       .addCase(fetchOrderedItems.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
+      .addCase(fetchAllAdminItems.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(fetchAllAdminItems.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload.data ?? [];
+        state.item_pagination = action.payload.metadata;
+      })
+      .addCase(fetchAllAdminItems.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";
