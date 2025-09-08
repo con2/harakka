@@ -21,7 +21,7 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
-supabase-local.env
+.env.supabase.local
 
 # IDE files
 .vscode/
