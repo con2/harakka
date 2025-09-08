@@ -29,7 +29,7 @@ export class BookingController {
 
   /**
    * Get ordered bookings with optional filters.
-   * Publicly accessible.
+   * Accessible by all admins within their organization.
    * @param req - Request object
    * @param searchquery - Search query for filtering bookings
    * @param ordered_by - Column to order by (default: created_at)
@@ -41,7 +41,7 @@ export class BookingController {
    * @returns Paginated and filtered list of bookings
    */
   @Get("ordered")
-  @Roles(["storage_manager", "tenant_admin"], {
+  @Roles(["requester", "storage_manager", "tenant_admin"], {
     match: "any",
     sameOrg: true,
   })
@@ -77,14 +77,14 @@ export class BookingController {
 
   /**
    * Get bookings of the current authenticated user.
-   * Accessible by users and requesters within their organization.
+   * Accessible by users and all admins within their organization.
    * @param req - Authenticated request object
    * @param page - Page number for pagination (default: 1)
    * @param limit - Number of items per page (default: 10)
    * @returns Paginated list of the user's bookings
    */
   @Get("my")
-  @Roles(["user", "requester"], {
+  @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
     match: "any",
     sameOrg: true,
   })
