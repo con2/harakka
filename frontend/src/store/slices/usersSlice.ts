@@ -21,7 +21,7 @@ const initialState: UserState = {
 };
 
 /**
- * Fetch all users (super_admin/superVera, no pagination/filtering)
+ * Fetch all users (super_admin, no pagination/filtering)
  */
 export const fetchAllUsers = createAsyncThunk<
   UserProfile[],

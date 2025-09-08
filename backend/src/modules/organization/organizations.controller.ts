@@ -91,7 +91,7 @@ export class OrganizationsController {
   /*
   // 6. delete --- does not work atm
   @Delete(":organizationId")
-  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
   async deleteOrganization(
     @Req() req: AuthRequest,
     @Param("organizationId") id: string,

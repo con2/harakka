@@ -40,7 +40,7 @@ const UsersList = () => {
   const { organizationId: activeOrgId, organizationName: activeOrgName } =
     useAppSelector(selectActiveRoleContext);
   const activeRoleName = useAppSelector(selectActiveRoleName);
-  const { refreshAllUserRoles, hasAnyRole } = useRoles();
+  const { refreshAllUserRoles, hasRole, hasAnyRole } = useRoles();
 
   // ————————————— State —————————————
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,17 +50,16 @@ const UsersList = () => {
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 500);
 
   // ————————————— Derived Values —————————————
-  const isAuthorized = hasAnyRole(["superVera", "tenant_admin", "super_admin"]);
-  const isSuper = hasAnyRole(["super_admin", "superVera"]);
+  const isAuthorized = hasAnyRole(["tenant_admin", "super_admin"]);
+  const isSuper = hasRole("super_admin");
 
   useEffect(() => {
     if (isSuper) fetchAllUsers();
   }, [isSuper]);
 
   // Determine if we should fetch all users (no org filter)
-  // This happens when: User has selected a super_admin or superVera role from the navbar selector
-  const isActiveRoleSuper =
-    activeRoleName === "super_admin" || activeRoleName === "superVera";
+  // This happens when: User has selected a super_admin role from the navbar selector
+  const isActiveRoleSuper = activeRoleName === "super_admin";
   const shouldFetchAllUsers = isSuper && (!activeOrgId || isActiveRoleSuper);
 
   // Get the org_filter value based on super user logic
@@ -101,7 +100,7 @@ const UsersList = () => {
     (userId: string) => {
       const userRoles = allUserRoles.filter((role) => role.user_id === userId);
 
-      // If the current user is super_admin/superVera and no org is selected, show all active roles
+      // If the current user is super_admin and no org is selected, show all active roles
       if (isActiveRoleSuper && !activeOrgId) {
         return userRoles
           .filter((role) => role.is_active)
