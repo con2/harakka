@@ -9,10 +9,14 @@ import { t } from "@/translations";
 
 const BookingReturnButton = ({
   id,
-  closeModal,
+  disabled = false,
+  itemIds,
+  onSuccess,
 }: {
   id: string;
-  closeModal: () => void;
+  disabled?: boolean;
+  itemIds?: string[];
+  onSuccess?: () => void;
 }) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
@@ -29,12 +33,20 @@ const BookingReturnButton = ({
       confirmText: t.bookingReturn.confirmDialog.confirmText[lang],
       cancelText: t.bookingReturn.confirmDialog.cancelText[lang],
       onConfirm: () => {
-        toast.promise(dispatch(returnItems(id)).unwrap(), {
-          loading: t.bookingReturn.toast.loading[lang],
-          success: t.bookingReturn.toast.success[lang],
-          error: t.bookingReturn.toast.error[lang],
-        });
-        closeModal();
+        toast.promise(
+          dispatch(
+            returnItems({
+              bookingId: id,
+              itemIds: itemIds,
+            }),
+          ).unwrap(),
+          {
+            loading: t.bookingReturn.toast.loading[lang],
+            success: t.bookingReturn.toast.success[lang],
+            error: t.bookingReturn.toast.error[lang],
+          },
+        );
+        if (onSuccess) onSuccess();
       },
     });
   };
@@ -43,7 +55,8 @@ const BookingReturnButton = ({
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => handleReturnItems()}
+      disabled={disabled}
+      onClick={handleReturnItems}
       title={t.bookingList.buttons.return[lang]}
       className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
     >

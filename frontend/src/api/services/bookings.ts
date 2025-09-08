@@ -223,31 +223,34 @@ export const bookingsApi = {
    * @returns Promise with the deleted booking ID
    */
   deleteBooking: async (bookingId: string): Promise<string> => {
-    const userId = localStorage.getItem("userId");
-    await api.delete(`/bookings/${bookingId}/delete`, {
-      headers: {
-        "x-user-id": userId || "",
-      },
-    });
+    await api.delete(`/bookings/${bookingId}/delete`);
     return bookingId; // Return the ID for state management
   },
 
   /**
    * Process item returns (admin only)
    * @param bookingId - booking ID to process returns for
+   * @param itemIds - Optional. Item IDs to mark as returned. If omitted, all picked up items are marked as "returned".
    * @returns Promise with updated booking
    */
-  returnItems: async (bookingId: string): Promise<Booking> => {
-    const userId = localStorage.getItem("userId");
-    return api.post(
-      `/bookings/${bookingId}/return`,
-      {},
-      {
-        headers: {
-          "x-user-id": userId || "",
-        },
-      },
-    );
+  returnItems: async (
+    bookingId: string,
+    itemIds?: string[],
+  ): Promise<Booking> => {
+    return api.patch(`/bookings/${bookingId}/return`, itemIds);
+  },
+
+  /**
+   * Process item returns (admin only)
+   * @param bookingId - booking ID to process returns for
+   * @param itemIds - Optional. Item IDs to mark as picked up. If omitted, all picked up items are marked as "picked_up".
+   * @returns Promise with updated booking
+   */
+  pickUpItems: async (
+    bookingId: string,
+    itemIds?: string[],
+  ): Promise<Booking> => {
+    return api.patch(`/bookings/${bookingId}/pickup`, itemIds);
   },
 
   /**
