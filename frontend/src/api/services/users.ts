@@ -1,6 +1,6 @@
 import { CreateUserDto, UserProfile } from "@common/user.types";
 import { api } from "../axios";
-import { Address } from "@/types/address";
+import { Address, CreateAddressInput } from "@/types/address";
 import { store } from "@/store/store";
 import { ApiResponse, PaginationMeta } from "@/types/api";
 import { OrderedUsersParams } from "@/types/user";
@@ -115,23 +115,23 @@ export const usersApi = {
   /**
    * Add a new address for a user
    * @param id - User ID to add the address to
-   * @param address - Address data to add
+   * @param address - Address data to add (without user_id as it's in the URL)
    * @returns Promise with the newly added address
    */
-  addAddress: (id: string, address: Address): Promise<Address> =>
+  addAddress: (id: string, address: CreateAddressInput): Promise<Address> =>
     api.post(`/users/${id}/addresses`, address),
 
   /**
    * Update an existing address for a user
    * @param id - User ID to update the address for
    * @param addressId - Address ID to update
-   * @param address - Updated address data
+   * @param address - Updated address data (without user_id as it's in the URL)
    * @returns Promise with the updated address
    */
   updateAddress: (
     id: string,
     addressId: string,
-    address: Address,
+    address: CreateAddressInput,
   ): Promise<Address> =>
     api.put(`/users/${id}/addresses/${addressId}`, address),
 

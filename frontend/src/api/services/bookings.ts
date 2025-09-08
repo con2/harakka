@@ -47,6 +47,30 @@ export const bookingsApi = {
   },
 
   /**
+   * Get bookings for the current authenticated user
+   * @param activeOrgId - Active organization ID
+   * @param activeRole - Active role of the user
+   * @param userId - User ID to fetch bookings for
+   * @param page - Page number for pagination (default: 1)
+   * @param limit - Number of items per page (default: 10)
+   * @returns Promise with the user's bookings
+   */
+  getOwnBookings: async (
+    activeOrgId: string,
+    activeRole: string,
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<ApiResponse<BookingPreview>> => {
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    return api.get(
+      `/bookings/my?activeOrgId=${activeOrgId}&activeRole=${activeRole}&userId=${userId}&${params.toString()}`,
+    );
+  },
+
+  /**
    * Get bookings for a specific user
    * @param user_id - User ID of booking
    * @param booking_id ID of the booking to fetch
