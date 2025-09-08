@@ -40,13 +40,13 @@ export class UserController {
 
   /**
    * Get a list of users with only name and email.
-   * Accessible by tenant admins and super admins.
+   * Accessible by tenant admins, storage managers, and super admins.
    * @param req - Authenticated request object
    * @param query - Query parameters for pagination and filtering
    * @returns List of users with name and email
    */
   @Get("ordered-list")
-  @Roles(["super_admin", "tenant_admin"], {
+  @Roles(["super_admin", "tenant_admin", "storage_manager"], {
     match: "any",
     sameOrg: true,
   })

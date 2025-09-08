@@ -44,22 +44,33 @@ export class UserService {
 
   /**
    * Get a list of users with only name and email.
-   * Accessible by both super_admin and tenant_admin.
+   * Accessible by super_admin, tenant_admin, and storage_manager.
    * @param req - Authenticated request object
    * @param dto - Query parameters for pagination and filtering
    * @returns List of users with name and email
    */
   async getAllOrderedUsersList(req: AuthRequest, dto: GetOrderedUsersDto) {
     const supabase = req.supabase;
+    const activeRole = req.headers["x-role-name"] as string;
+
+    // Always select all needed columns, filter in result mapping based on role
+    const columns = "id, visible_name, full_name, email";
 
     // Build the main user query
-    let query = supabase.from("user_profiles").select("id, full_name, email");
+    let query = supabase.from("user_profiles").select(columns);
 
     // Apply search query if provided
     if (dto.searchquery) {
-      query = query.or(
-        `email.ilike.%${dto.searchquery}%,full_name.ilike.%${dto.searchquery}%`,
-      );
+      const searchPattern = `%${dto.searchquery}%`;
+      if (activeRole === "storage_manager" || activeRole === "tenant_admin") {
+        query = query.or(
+          `email.ilike.${searchPattern},visible_name.ilike.${searchPattern},full_name.ilike.${searchPattern}`,
+        );
+      } else {
+        query = query.or(
+          `email.ilike.${searchPattern},full_name.ilike.${searchPattern}`,
+        );
+      }
     }
 
     // Apply ordering
@@ -86,14 +97,20 @@ export class UserService {
       };
     }
 
-    // Ensure the data matches the expected type
-    const result: Pick<UserProfile, "id" | "full_name" | "email">[] = data.map(
-      (user) => ({
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-      }),
-    );
+    // Ensure the data matches the expected type with conditional visible_name
+    const result: Pick<
+      UserProfile,
+      "id" | "full_name" | "email" | "visible_name"
+    >[] = data.map((user: Record<string, string | null>) => ({
+      id: user.id as string,
+      email: user.email,
+      full_name: user.full_name || null,
+      // Include visible_name for storage managers and tenant admins, null for others
+      visible_name:
+        activeRole === "storage_manager" || activeRole === "tenant_admin"
+          ? user.visible_name || null
+          : null,
+    }));
 
     return {
       result,
