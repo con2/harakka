@@ -23,12 +23,12 @@ set search_path = public
 as $$
   select exists (
     select 1
-    from user_organization_roles uor
-    join roles r on r.id = uor.role_id
-    where uor.user_id = auth.uid()
-      and uor.organization_id = p_org_id
-      and uor.is_active = true
-      and r.role = p_role
+    from public.user_organization_roles
+    join public.roles on public.roles.id = public.user_organization_roles.role_id
+    where public.user_organization_roles.user_id = auth.uid()
+      and public.user_organization_roles.organization_id = p_org_id
+      and public.user_organization_roles.is_active = true
+      and public.roles.role = p_role
   );
 $$;
 
@@ -41,12 +41,12 @@ set search_path = public
 as $$
   select exists (
     select 1
-    from user_organization_roles uor
-    join roles r on r.id = uor.role_id
-    where uor.user_id = auth.uid()
-      and uor.organization_id = p_org_id
-      and uor.is_active = true
-      and r.role = any (p_roles)
+    from public.user_organization_roles
+    join public.roles on public.roles.id = public.user_organization_roles.role_id
+    where public.user_organization_roles.user_id = auth.uid()
+      and public.user_organization_roles.organization_id = p_org_id
+      and public.user_organization_roles.is_active = true
+      and public.roles.role = any (p_roles)
   );
 $$;
 
@@ -73,12 +73,12 @@ set search_path = public
 as $$
   select exists (
     select 1
-    from user_organization_roles uor
-    join roles r on r.id = uor.role_id
-    where uor.user_id = p_user_id
-      and uor.organization_id = p_org_id
-      and uor.is_active = true
-      and r.role = any (p_roles)
+    from public.user_organization_roles
+    join public.roles on public.roles.id = public.user_organization_roles.role_id
+    where public.user_organization_roles.user_id = p_user_id
+      and public.user_organization_roles.organization_id = p_org_id
+      and public.user_organization_roles.is_active = true
+      and public.roles.role = any (p_roles)
   );
 $$;
 
@@ -91,10 +91,10 @@ set search_path = public
 as $$
   select exists (
     select 1
-    from user_organization_roles uor
-    where uor.user_id = auth.uid()
-      and uor.organization_id = p_org_id
-      and uor.is_active = true
+    from public.user_organization_roles
+    where public.user_organization_roles.user_id = auth.uid()
+      and public.user_organization_roles.organization_id = p_org_id
+      and public.user_organization_roles.is_active = true
   );
 $$;
 
@@ -108,19 +108,19 @@ as $$
   with
   by_user_roles as (
     select exists (
-      select 1 from user_roles ur
-      where ur.profile_id = auth.uid()
-        and ur.role = 'admin'::public.role_type
+      select 1 from public.user_roles
+      where public.user_roles.profile_id = auth.uid()
+        and public.user_roles.role = 'admin'::public.role_type
     )
   ),
   by_org_roles as (
     select exists (
       select 1
-      from user_organization_roles uor
-      join roles r on r.id = uor.role_id
-      where uor.user_id = auth.uid()
-        and uor.is_active = true
-        and r.role in ('super_admin'::public.roles_type, 'admin'::public.roles_type, 'superVera'::public.roles_type)
+      from public.user_organization_roles
+      join public.roles on public.roles.id = public.user_organization_roles.role_id
+      where public.user_organization_roles.user_id = auth.uid()
+        and public.user_organization_roles.is_active = true
+        and public.roles.role in ('super_admin'::public.roles_type, 'admin'::public.roles_type, 'superVera'::public.roles_type)
     )
   )
   select (select * from by_user_roles)
@@ -136,11 +136,11 @@ set search_path = public
 as $$
   select exists (
     select 1
-    from user_organization_roles uor
-    join roles r on r.id = uor.role_id
-    where uor.user_id = auth.uid()
-      and uor.is_active = true
-      and r.role = p_role
+    from public.user_organization_roles
+    join public.roles on public.roles.id = public.user_organization_roles.role_id
+    where public.user_organization_roles.user_id = auth.uid()
+      and public.user_organization_roles.is_active = true
+      and public.roles.role = p_role
   );
 $$;
 
