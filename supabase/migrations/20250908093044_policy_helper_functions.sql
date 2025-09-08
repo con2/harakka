@@ -114,11 +114,8 @@ set search_path = public
 as $$
   select app.me_has_any_role(
     p_org_id,
-    (select array_agg(role_cast.role_enum)
-       from (
-         select unnest(p_role_slugs)::public.roles_type as role_enum
-       ) as role_cast
-    )
+    (select array_agg(role_slug::public.roles_type) 
+     from unnest(p_role_slugs::text[]) as role_slug)
   );
 $$;
 
