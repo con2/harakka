@@ -123,7 +123,10 @@ export function deriveOrgStatus(statuses: string[]): BookingStatus {
   if (statuses.length === 0) return "pending";
   if (statuses.every((s) => s === "rejected")) return "rejected";
   if (statuses.some((s) => s === "pending")) return "pending";
+  if (statuses.some((s) => s === "picked_up")) return "picked_up";
   if (statuses.some((s) => s === "confirmed")) return "confirmed";
   if (statuses.some((s) => s === "cancelled")) return "cancelled";
+  if (statuses.some((s) => s !== "confirmed" && s !== "pending"))
+    return "completed";
   return "pending";
 }

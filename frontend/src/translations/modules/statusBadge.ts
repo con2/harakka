@@ -36,5 +36,9 @@ export const statusBadge = {
       fi: "Noudettu",
       en: "Picked Up",
     },
+    returned: {
+      en: "Returned",
+      fi: "Palautettu",
+    },
   },
 };
