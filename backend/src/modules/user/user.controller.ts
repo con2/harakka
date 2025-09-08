@@ -39,6 +39,25 @@ export class UserController {
   }
 
   /**
+   * Get a list of users with only name and email.
+   * Accessible by tenant admins and super admins.
+   * @param req - Authenticated request object
+   * @param query - Query parameters for pagination and filtering
+   * @returns List of users with name and email
+   */
+  @Get("ordered-list")
+  @Roles(["super_admin", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
+  async getAllOrderedUsersList(
+    @Req() req: AuthRequest,
+    @Query() query: GetOrderedUsersDto,
+  ) {
+    return this.userService.getAllOrderedUsersList(req, query);
+  }
+
+  /**
    * Get all users (paginated and filtered).
    * Accessible by super admins and tenant admins (within their organization).
    * @param req - Authenticated request object

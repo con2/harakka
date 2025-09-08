@@ -177,20 +177,14 @@ export class BookingService {
    */
   async getUserBookings(
     req: AuthRequest,
-    supabase: SupabaseClient<Database>,
     page: number,
     limit: number,
+    activeOrgId?: string,
+    activeRole?: string,
+    userId?,
   ) {
     const { from, to } = getPaginationRange(page, limit);
-
-    // Extract user ID and role from the request
-    const userId = req.user?.id;
-    const activeRole = req.headers["x-role-name"] as string;
-    const activeOrgId = req.headers["x-org-id"] as string;
-
-    if (!userId) {
-      throw new BadRequestException("Valid user ID is required");
-    }
+    const supabase = req.supabase;
 
     // Restrict User to only their own bookings
     if (activeRole === "user") {
@@ -360,7 +354,35 @@ export class BookingService {
       throw new BadRequestException("No userId found: user_id is required");
     }
 
+    // 3.0. Check if user has completed required profile information
+    const { data: userProfile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("full_name, phone")
+      .eq("id", userId)
+      .single();
+
+    if (profileError || !userProfile) {
+      throw new BadRequestException("User profile not found");
+    }
+
+    // Require full name for booking (phone is optional but recommended)
+    if (!userProfile.full_name || userProfile.full_name.trim() === "") {
+      // Use a specific error code that frontend can catch to show the modal
+      const error = new BadRequestException({
+        message: "Profile incomplete: Full name is required to create bookings",
+        errorCode: "PROFILE_INCOMPLETE",
+        missingFields: ["full_name"],
+        hasPhone: !!(userProfile.phone && userProfile.phone.trim()),
+      });
+      throw error;
+    }
+
+    // Check for phone number and prepare warning message
     let warningMessage: string | null = null;
+    if (!userProfile.phone || userProfile.phone.trim() === "") {
+      warningMessage =
+        "We recommend adding a phone number to your profile for easier communication about your bookings.";
+    }
 
     for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
@@ -375,8 +397,15 @@ export class BookingService {
 
       // Warn for short notice (< 24h). dayDiffFromToday returns 0 for same-day future times.
       if (diffDays < 1) {
-        warningMessage =
+        const shortNoticeWarning =
           "Heads up: bookings made less than 24 hours in advance might not be approved in time.";
+
+        // Combine warnings if both exist
+        if (warningMessage) {
+          warningMessage = `${warningMessage} ${shortNoticeWarning}`;
+        } else {
+          warningMessage = shortNoticeWarning;
+        }
       }
 
       // 3.1. Check availability for requested date range
