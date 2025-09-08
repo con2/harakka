@@ -190,12 +190,12 @@ export const Navigation = () => {
           </div>
           <Link
             to="/cart"
-            className="flex items-center gap-1 text-secondary font-medium hover:text-secondary"
+            className="flex items-center gap-1 text-secondary font-medium hover:text-secondary relative mr-2"
             data-cy="nav-cart"
           >
             <ShoppingCart className="h-5 w-5" />
             {cartItemsCount > 0 && (
-              <span className="ml-1 rounded-full bg-secondary text-white px-2 py-1 text-xs">
+              <span className="ml-1 rounded-full bg-secondary text-white absolute -right-[15px] w-[20px] h-[20px] flex items-center justify-center -top-[14px] text-[12px] font-['Lato'] font-semibold">
                 {cartItemsCount}
               </span>
             )}
