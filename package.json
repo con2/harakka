@@ -31,51 +31,60 @@
     }
   ],
   "scripts": {
+    "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend",
     "start": "echo 'Run frontend and backend separately!'",
     "frontend": "npm --prefix frontend run dev",
     "backend": "npm --prefix backend run start:watch",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
-    "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend",
     "deploy": "echo 'Add deployment scripts here'",
+
     "generate:types:local": "npx supabase gen types typescript --local > common/supabase.types.ts",
     "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > common/supabase.types.ts",
+    
+    "s:link": "env-cmd -f supabase-local.env npx supabase link",
+    "s:link:prod": "npx @dotenvx/dotenvx run -f supabase/.env.production -- npx supabase link --project-ref rcbddkhvysexkvgqpcud",
+    "s:link:dev": "npx @dotenvx/dotenvx run -f supabase/.env.preview -- npx supabase link --project-ref kpqrzaisoyxqillzpbms",
+    
     "s:start": "env-cmd -f supabase-local.env npx supabase start",
     "s:stop": "env-cmd -f supabase-local.env npx supabase stop",
-    "s:link": "env-cmd -f supabase-local.env npx supabase link",
-    "s:link:dev": "npx @dotenvx/dotenvx run -f supabase/.env.preview -- npx supabase link --project-ref kpqrzaisoyxqillzpbms",
-    "s:link:prod": "npx @dotenvx/dotenvx run -f supabase/.env.production -- npx supabase link --project-ref rcbddkhvysexkvgqpcud",
-    "s:local:diff": "env-cmd -f supabase-local.env npx supabase db diff --schema public",
-    "s:diff:linked": "env-cmd -f supabase-local.env npx supabase db diff --schema public --linked",
-    "s:diff:linked:f": "npx supabase db diff --schema public --linked -f latest_diff",
-    "s:dump": "npx supabase db dump -f supabase/schema.sql",
     "s:restart": "env-cmd -f supabase-local.env npx supabase stop && env-cmd -f supabase-local.env npx supabase start",
+    "s:seed": "env-cmd -f .env.local npx supabase db dump --data-only -f supabase/seed.sql",
+
+    "s:dump": "npx supabase db dump -f supabase/schema.sql",
     "s:reset": "env-cmd -f supabase-local.env npx supabase db reset",
     "s:pull": "npx supabase db pull --schema public",
-    "s:push": "npx supabase db push",
-    "s:db:push:prod": "npx @dotenvx/dotenvx run -f supabase/.env.production -- npx supabase db push",
+    
     "s:config:push:prod": "npx @dotenvx/dotenvx run -f supabase/.env.production -- npx supabase config push",
+    "s:db:push:prod": "npx @dotenvx/dotenvx run -f supabase/.env.production -- npx supabase db push",
     "s:db:push:preview": "npx @dotenvx/dotenvx run -f supabase/.env.preview -- npx supabase db push",
     "s:config:push:preview": "npx @dotenvx/dotenvx run -f supabase/.env.preview -- npx supabase config push",
+    
     "s:secrets:upload": "npx supabase secrets set --env-file supabase/.env.keys",
     "s:status": "npx supabase status",
     "s:studio": "npx supabase studio",
+    
     "s:migration:new": "npx supabase migration new",
     "s:migration:up": "npx supabase migration up",
+    
     "s:functions:serve": "npx supabase functions serve",
     "s:functions:deploy": "npx supabase functions deploy",
-    "s:seed": "env-cmd -f .env.local npx supabase db dump --data-only -f supabase/seed.sql",
+    
     "dev:local": "env-cmd -f supabase-local.env concurrently \"npm run s:start\" \"npm run frontend\" \"npm run backend\"",
     "dev:live": "env-cmd -f .env.local concurrently \"npm run frontend\" \"npm run backend\"",
+    
     "frontend:local": "env-cmd -f supabase-local.env npm --prefix frontend run dev",
     "frontend:live": "env-cmd -f .env.local npm --prefix frontend run dev",
+    
     "backend:local": "env-cmd -f supabase-local.env npm --prefix backend run start:watch",
     "backend:live": "env-cmd -f .env.local npm --prefix backend run start:watch",
+    
     "check-translation": "cd frontend && npx tsx src/scripts/check-translations.ts",
     "check-translation:strict": "cd frontend && npx tsx src/scripts/check-translations.ts strict",
     "check-translation:relaxed": "cd frontend && npx tsx src/scripts/check-translations.ts",
     "check-translation:unused": "cd frontend && npx tsx src/scripts/clean-unused-translations.ts",
     "check-translation:clean": "cd frontend && npx tsx src/scripts/clean-unused-translations.ts --confirm",
     "check-translation:create": "cd frontend && npx tsx src/scripts/create-missing-translation-modules",
+    
     "sql:check": "npx postgrestools check supabase/migrations/ scripts/",
     "sql:check:migrations": "npx postgrestools check supabase/migrations/",
     "sql:check:scripts": "npx postgrestools check supabase/scripts",
