@@ -124,7 +124,13 @@ const BookingDetailsPage = () => {
   >[] = [
     {
       id: "select",
-      header: () => null,
+      header: () => (
+        <Checkbox
+          checked={allSelected}
+          onCheckedChange={handleSelectAllToggle}
+          disabled={booking?.status === "confirmed"}
+        />
+      ),
       cell: ({ row }) => {
         const item = row.original;
         const isOwned = item.provider_organization_id === activeOrgId;
@@ -271,20 +277,6 @@ const BookingDetailsPage = () => {
       </div>
       {/* Booking Details + Select All/Deselect All */}
       <div className="flex flex-col">
-        <div className="flex justify-start mb-2">
-          {allSelectableIds.length > 0 && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleSelectAllToggle}
-              className="rounded-2xl border-secondary text-secondary"
-            >
-              {allSelected
-                ? t.bookingDetailsPage.modal.buttons.deselectAll[lang]
-                : t.bookingDetailsPage.modal.buttons.selectAll[lang]}
-            </Button>
-          )}
-        </div>
         <DataTable
           columns={bookingItemsColumns}
           data={booking.booking_items || []}
