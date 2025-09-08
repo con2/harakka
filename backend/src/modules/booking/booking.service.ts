@@ -199,8 +199,12 @@ export class BookingService {
       return { ...result, metadata: pagination };
     }
 
-    // Restrict Requester to bookings for their organization
-    if (activeRole === "requester") {
+    // Restrict admins to bookings for their organization
+    if (
+      activeRole === "requester" ||
+      activeRole === "storage_manager" ||
+      activeRole === "tenant_admin"
+    ) {
       // Requesters can only see bookings for their organization
       if (!activeOrgId) {
         throw new ForbiddenException(
