@@ -65,7 +65,7 @@ export const itemsApi = {
     tag_filters?: string[],
     activity_filter?: "active" | "inactive",
     location_filter?: string[],
-    categories?: string[],
+    category?: string,
   ) => {
     const activity = activity_filter === "active" ? true : false;
     // Backend exposes a protected admin endpoint at /storage-items/ordered-admin-items
@@ -77,8 +77,7 @@ export const itemsApi = {
     if (activity_filter) call += `&active=${activity}`;
     if (location_filter && location_filter.length > 0)
       call += `&location=${location_filter.join(",")}`;
-    if (categories && categories.length > 0)
-      call += `&category=${categories.join(",")}`;
+    if (category) call += `&category=${category}`;
 
     return api.get(call);
   },
