@@ -366,6 +366,7 @@ client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
 secret    = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 
 
+
 # (Optional) To auto-deploy Edge Functions from this repo, declare them explicitly.
 # Replace <your-function-slug> with the folder name under supabase/functions/
 # [functions.<your-function-slug>]
