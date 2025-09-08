@@ -99,13 +99,9 @@ CREATE POLICY "tenant_admin_update_org_user_profiles" ON user_profiles
 -- =======================
 -- DELETE policies
 -- =======================
+-- None for now
 
--- Super Admin: Can delete any user profile
-CREATE POLICY "super_admin_delete_user_profiles" ON user_profiles
-  FOR DELETE TO authenticated
-  USING (app.me_is_super_admin());
-
--- Note: Generally, user profiles should not be deleted directly but rather 
+-- Note: User profiles should not be deleted directly but rather 
 -- marked as inactive or handled through auth.users deletion
 
 -- =======================
