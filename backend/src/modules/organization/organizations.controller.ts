@@ -69,7 +69,7 @@ export class OrganizationsController {
 
   // 4. create
   @Post()
-  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin"])
   async createOrganization(
     @Req() req: AuthRequest,
     @Body() org: CreateOrganizationDto,
@@ -79,7 +79,7 @@ export class OrganizationsController {
 
   // 5. update
   @Put(":organizationId")
-  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin"])
   async updateOrganization(
     @Req() req: AuthRequest,
     @Param("organizationId") id: string,
@@ -104,7 +104,7 @@ export class OrganizationsController {
 
   // 7. soft-delete org
   @Patch(":organizationId/soft-delete")
-  @Roles(["super_admin", "superVera"], { match: "any" })
+  @Roles(["super_admin"])
   async softDeleteOrganization(
     @Req() req: AuthRequest,
     @Param("organizationId") id: string,
@@ -115,7 +115,7 @@ export class OrganizationsController {
 
   // 8. activate or deactivate orgs
   @Put(":organizationId/activation")
-  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins are permitted
+  @Roles(["super_admin"])
   async toggleOrganizationActivation(
     @Req() req: AuthRequest,
     @Param("organizationId") id: string,
@@ -132,7 +132,10 @@ export class OrganizationsController {
 
   // 9. upload org logo picture
   @Post(":organizationId/logo")
-  @Roles(["super_admin", "superVera"], { match: "any" }) // only superAdmins and superVera are permitted
+  @Roles(["tenant_admin", "super_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   @UseInterceptors(FileInterceptor("file"))
   async uploadOrganizationLogo(
     @Req() req: AuthRequest,
