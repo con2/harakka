@@ -509,11 +509,6 @@ export class BookingService {
       );
     }
 
-    //debuugg
-    console.log("Booking just inserted:", booking);
-
-    //debuugg
-
     // 3.6 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Creation, {
       bookingId: booking.id,
@@ -546,7 +541,6 @@ export class BookingService {
       role_name: createdBooking.role_name, // "user" | "requester"
       requester_org_id: createdBooking.requester_org_id, // if requester
     };
-    console.log(bookingWithRole);
 
     return warningMessage
       ? {
