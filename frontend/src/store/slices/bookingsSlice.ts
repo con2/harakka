@@ -881,12 +881,12 @@ export const bookingsSlice = createSlice({
 
         state.bookings.forEach((booking) => {
           if (booking.id === bookingId) {
-            booking.status = "confirmed";
+            booking.status = "completed";
           }
         });
         state.userBookings.forEach((booking) => {
           if (booking.id === bookingId) {
-            booking.status = "confirmed";
+            booking.status = "completed";
           }
         });
       })
@@ -895,6 +895,7 @@ export const bookingsSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "return";
       })
+      // Pick up items
       .addCase(pickUpItems.pending, (state) => {
         state.loading = true;
         state.error = null;
