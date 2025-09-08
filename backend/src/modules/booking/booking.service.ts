@@ -347,6 +347,7 @@ export class BookingService {
   async createBooking(
     dto: CreateBookingDto,
     supabase: SupabaseClient<Database>,
+    activeRole: { roleId: string; roleName: string; orgId: string },
   ) {
     const userId = dto.user_id;
 
@@ -508,6 +509,11 @@ export class BookingService {
       );
     }
 
+    //debuugg
+    console.log("Booking just inserted:", booking);
+
+    //debuugg
+
     // 3.6 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Creation, {
       bookingId: booking.id,
@@ -515,34 +521,42 @@ export class BookingService {
     });
 
     // 3.7 Fetch the complete booking with items and translations using the view
-    const { data: createdBooking, error: fetchError } = await supabase
+    const { data: createdBookings, error: fetchError } = await supabase
       .from("view_bookings_with_details")
       .select("*")
-      .eq("id", booking.id)
-      .single();
+      .eq("id", booking.id);
 
-    if (fetchError || !createdBooking) {
+    if (fetchError || !createdBookings || createdBookings.length === 0) {
       throw new BadRequestException("Could not fetch created booking details");
     }
 
+    // filtering to get active role
+    const createdBooking =
+      createdBookings.find(
+        (b) =>
+          b.role_name === activeRole.roleName &&
+          b.requester_org_id === activeRole.orgId,
+      ) || createdBookings[0];
+
     // attach role info to the response
-    /*  const bookingWithRole = {
+    const bookingWithRole = {
       ...createdBooking,
       user_role_id: createdBooking.user_role_id,
       role_id: createdBooking.role_id,
       role_name: createdBooking.role_name, // "user" | "requester"
       requester_org_id: createdBooking.requester_org_id, // if requester
-    }; */
+    };
+    console.log(bookingWithRole);
 
     return warningMessage
       ? {
           message: "Booking created",
-          booking: /* bookingWithRole */ createdBooking,
+          booking: bookingWithRole,
           warning: warningMessage,
         }
       : {
           message: "Booking created",
-          booking: /* bookingWithRole */ createdBooking,
+          booking: bookingWithRole,
         };
   }
 

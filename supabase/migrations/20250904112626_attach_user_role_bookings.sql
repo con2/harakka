@@ -1,11 +1,13 @@
-CREATE OR REPLACE VIEW public.view_bookings_with_details AS
+DROP VIEW IF EXISTS public.view_bookings_with_details;
+
+CREATE VIEW public.view_bookings_with_details AS
 SELECT
   b.id,
   b.booking_number,
   b.user_id,
   uor.id AS user_role_id,
   uor.role_id,
-  r.role_name,
+  r.role AS role_name,
   uor.organization_id AS requester_org_id,
   b.status,
   b.notes,
@@ -20,5 +22,5 @@ FROM bookings b
 LEFT JOIN user_organization_roles uor
   ON uor.user_id = b.user_id
   AND uor.is_active = true
-LEFT JOIN roles_type r
+LEFT JOIN roles r
   ON r.id = uor.role_id;

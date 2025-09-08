@@ -225,9 +225,22 @@ export class BookingController {
       if (!userId)
         throw new BadRequestException("No userId found: user_id is required");
       const supabase = req.supabase;
+      const activeOrgId = req.headers["x-org-id"] as string;
+      const activeRoleName = req.headers["x-role-name"] as string;
+      const activeRoleId = req.headers["x-role-id"] as string;
+
+      if (!activeOrgId || !activeRoleName) {
+        throw new BadRequestException(
+          "Organization context and role are required",
+        );
+      }
       // put user-ID to DTO
       const dtoWithUserId = { ...dto, user_id: userId };
-      return this.bookingService.createBooking(dtoWithUserId, supabase);
+      return this.bookingService.createBooking(dtoWithUserId, supabase, {
+        roleId: activeRoleId || "",
+        roleName: activeRoleName,
+        orgId: activeOrgId,
+      });
     } catch (error) {
       handleSupabaseError(error);
     }
@@ -243,7 +256,7 @@ export class BookingController {
    */
   //TODO: limit to activeContext organization, check own bookings handling
   @Put(":id/update")
-  @Roles(["user", "storage_manager", "tenant_admin"], {
+  @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
     match: "any",
     sameOrg: true,
   })
