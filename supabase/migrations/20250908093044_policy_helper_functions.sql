@@ -98,7 +98,7 @@ as $$
   );
 $$;
 
--- Application/Super Admin (tolerant union across your current sources)
+-- Application/Super Admin (avoiding circular dependency with user_profiles RLS)
 create or replace function app.me_is_super_admin()
 returns boolean
 language sql
@@ -106,9 +106,6 @@ stable
 set search_path = public
 as $$
   with
-  by_profile as (
-    select coalesce( (select lower(up.role) = 'admin' from user_profiles up where up.id = auth.uid()), false )
-  ),
   by_user_roles as (
     select exists (
       select 1 from user_roles ur
@@ -123,12 +120,28 @@ as $$
       join roles r on r.id = uor.role_id
       where uor.user_id = auth.uid()
         and uor.is_active = true
-        and r.role = 'admin'::public.roles_type
+        and r.role in ('super_admin'::public.roles_type, 'admin'::public.roles_type, 'superVera'::public.roles_type)
     )
   )
-  select (select * from by_profile)
-      or (select * from by_user_roles)
+  select (select * from by_user_roles)
       or (select * from by_org_roles);
+$$;
+
+-- Check if current user has a specific role in ANY organization  
+create or replace function app.me_has_role_anywhere(p_role public.roles_type)
+returns boolean
+language sql
+stable
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from user_organization_roles uor
+    join roles r on r.id = uor.role_id
+    where uor.user_id = auth.uid()
+      and uor.is_active = true
+      and r.role = p_role
+  );
 $$;
 
 -- Generic helper for tables with an org column
