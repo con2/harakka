@@ -10,6 +10,7 @@ import {
   Req,
   UnauthorizedException,
   BadRequestException,
+  Patch,
 } from "@nestjs/common";
 import { BookingService } from "./booking.service";
 import { RoleService } from "../role/role.service";
@@ -381,16 +382,21 @@ export class BookingController {
    * @param req - Authenticated request object
    * @returns Return result
    */
-  //TODO: limit to activeContext
-  @Post(":id/return")
+  @Patch(":id/return")
   @Roles(["storage_manager", "tenant_admin"], {
     match: "any",
     sameOrg: true,
   })
-  async returnItems(@Param("id") id: string, @Req() req: AuthRequest) {
-    const userId = req.user.id;
+  async returnItems(
+    @Param("id") id: string,
+    @Req() req: AuthRequest,
+    @Body() itemIds?: string[],
+  ) {
+    const orgId = req.headers["x-org-id"] as string;
     const supabase = req.supabase;
-    return this.bookingService.returnItems(id, userId, supabase);
+
+    if (!orgId) throw new Error("Missing org ID");
+    return this.bookingService.returnItems(supabase, id, orgId, itemIds);
   }
 
   /**
@@ -400,15 +406,23 @@ export class BookingController {
    * @param req - Authenticated request object
    * @returns Pickup confirmation result
    */
-  //TODO: limit to activeContext
-  @Post(":bookingId/pickup")
+  @Patch(":bookingId/pickup")
   @Roles(["storage_manager", "tenant_admin"], {
     match: "any",
     sameOrg: true,
   })
-  async pickup(@Param("bookingId") bookingId: string, @Req() req: AuthRequest) {
-    // const userId = req.user.id;
+  async pickup(
+    @Param("bookingId") bookingId: string,
+    @Req() req: AuthRequest,
+    @Body() itemIds: string[],
+  ) {
     const supabase = req.supabase;
-    return this.bookingService.confirmPickup(bookingId, supabase);
+    const orgId = req.headers["x-org-id"] as string;
+    return this.bookingService.confirmPickup(
+      supabase,
+      bookingId,
+      orgId,
+      itemIds,
+    );
   }
 }
