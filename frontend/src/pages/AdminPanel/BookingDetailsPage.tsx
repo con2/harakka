@@ -86,7 +86,7 @@ const BookingDetailsPage = () => {
     return ownedItemsForOrg
       .filter((item) => !END_STATUSES.includes(item.status))
       .map((item) => String(item.id));
-  }, [ownedItemsForOrg]);
+  }, [ownedItemsForOrg]); //eslint-disable-line
 
   // Select All / Deselect All logic
   const allSelected =
@@ -315,7 +315,7 @@ const BookingDetailsPage = () => {
         {hasPendingItems && ownedItemsForOrg.length > 0 && (
           <>
             <div className="flex flex-col items-center text-center">
-              <span className="text-xs text-slate-600">
+              <span className="text-xs text-slate-600 max-w-[110px]">
                 {selectedItemIds.length === 0 ||
                 selectedItemIds.length === ownedItemsForOrg.length
                   ? t.bookingDetailsPage.modal.buttons.confirmAll[lang]
@@ -328,7 +328,7 @@ const BookingDetailsPage = () => {
               />
             </div>
             <div className="flex flex-col items-center text-center">
-              <span className="text-xs text-slate-600">
+              <span className="text-xs text-slate-600 max-w-[110px]">
                 {selectedItemIds.length === 0 ||
                 selectedItemIds.length === ownedItemsForOrg.length
                   ? t.bookingDetailsPage.modal.buttons.rejectAll[lang]
@@ -344,12 +344,14 @@ const BookingDetailsPage = () => {
         )}
         {hasConfirmedItems && !hasPendingItems && (
           <div className="flex flex-col items-center text-center">
-            <span className="text-xs text-slate-600">
-              {selectedItemIds.length === 0
-                ? `Mark all as picked up`
-                : selectedItemIds.length === 1
-                  ? `Mark ${selectedItemIds.length} item as picked up`
-                  : `Mark all as picked up`}
+            <span className="text-xs text-slate-600 max-w-[110px]">
+              {selectedItemIds.length === 0 ||
+              selectedItemIds.length === ownedItemsForOrg.length
+                ? t.bookingDetailsPage.modal.buttons.pickUpAll[lang]
+                : t.bookingDetailsPage.modal.buttons.pickUpSome[lang].replace(
+                    "{amount}",
+                    selectedItemIds.length.toString(),
+                  )}
             </span>
             <BookingPickupButton
               id={booking.id}
@@ -360,11 +362,14 @@ const BookingDetailsPage = () => {
         )}
         {hasPickedUpItems && (
           <div className="flex flex-col items-center text-center">
-            <span className="text-xs text-slate-600">
+            <span className="text-xs text-slate-600 max-w-[110px]">
               {selectedItemIds.length === 0 ||
               selectedItemIds.length === ownedItemsForOrg.length
-                ? `Mark all as returned`
-                : `Mark ${selectedItemIds.length} item as returned`}
+                ? t.bookingDetailsPage.modal.buttons.returnAll[lang]
+                : t.bookingDetailsPage.modal.buttons.returnSome[lang].replace(
+                    "{amount}",
+                    selectedItemIds.length.toString(),
+                  )}
             </span>
             <BookingReturnButton
               id={booking.id}
@@ -375,11 +380,14 @@ const BookingDetailsPage = () => {
         )}
         {hasReviewedBooking && hasConfirmedItems && (
           <div className="flex flex-col items-center text-center">
-            <span className="text-xs text-slate-600">
+            <span className="text-xs text-slate-600 max-w-[110px]">
               {selectedItemIds.length === 0 ||
               selectedItemIds.length === ownedItemsForOrg.length
-                ? `Mark all as cancelled`
-                : `Mark ${selectedItemIds.length} item as cancelled`}
+                ? t.bookingDetailsPage.modal.buttons.cancelAll[lang]
+                : t.bookingDetailsPage.modal.buttons.cancelSome[lang].replace(
+                    "{amount}",
+                    selectedItemIds.length.toString(),
+                  )}
             </span>
             <BookingCancelButton
               id={booking.id}
