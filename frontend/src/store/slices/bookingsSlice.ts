@@ -473,6 +473,25 @@ export const pickUpItems = createAsyncThunk<
   },
 );
 
+// Mark items as picked up
+export const cancelBookingItems = createAsyncThunk<
+  { bookingId: string; itemIds?: string[] },
+  { bookingId: string; itemIds?: string[] },
+  { rejectValue: string }
+>(
+  "bookings/cancelBookingItems",
+  async ({ bookingId, itemIds }, { rejectWithValue }) => {
+    try {
+      await bookingsApi.cancelBookingItems(bookingId, itemIds);
+      return { bookingId };
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to process returns"),
+      );
+    }
+  },
+);
+
 export const bookingsSlice = createSlice({
   name: "bookings",
   initialState,
@@ -901,13 +920,27 @@ export const bookingsSlice = createSlice({
         state.error = null;
         state.errorContext = null;
       })
-      .addCase(pickUpItems.fulfilled, (state, action) => {
+      .addCase(pickUpItems.fulfilled, (state) => {
         state.loading = false;
       })
       .addCase(pickUpItems.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "patch";
+        state.loading = false;
+      })
+      // Cancel booking items
+      .addCase(cancelBookingItems.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(cancelBookingItems.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(cancelBookingItems.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "patch";
+        state.loading = false;
       });
   },
 });

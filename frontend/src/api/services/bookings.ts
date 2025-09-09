@@ -188,7 +188,7 @@ export const bookingsApi = {
       `/bookings/${bookingId}/confirm-for-org?org_id=${encodeURIComponent(
         orgId,
       )}`,
-      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
+      itemIds,
     );
   },
 
@@ -204,7 +204,7 @@ export const bookingsApi = {
       `/bookings/${bookingId}/reject-for-org?org_id=${encodeURIComponent(
         orgId,
       )}`,
-      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
+      itemIds,
     );
   },
 
@@ -251,6 +251,20 @@ export const bookingsApi = {
     itemIds?: string[],
   ): Promise<Booking> => {
     return api.patch(`/bookings/${bookingId}/pickup`, itemIds);
+  },
+
+  /**
+   * Mark items as cancelled from a booking.
+   * Meaning they will not be picked up
+   * @param bookingId ID of booking which to cancel items from
+   * @param itemIds Items which to cancel from the booking
+   */
+  cancelBookingItems: async (
+    bookingId: string,
+    itemIds?: string[],
+  ): Promise<Booking> => {
+    console.log("itemIds: ", itemIds);
+    return api.patch(`/bookings/${bookingId}/cancel`, itemIds);
   },
 
   /**
