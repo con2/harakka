@@ -143,6 +143,20 @@ export class StorageItemsService {
     org_filter?: string,
   ) {
     // Build a base query without range for counting and apply all filters
+
+    // Get nested categories of X category ID.
+    const matchingCategories: string[] = [];
+    if (category) {
+      const { data: categories } = await supabase.rpc(
+        "get_category_descendants",
+        {
+          category_uuid: category,
+        },
+      );
+      matchingCategories.push(
+        ...(categories as { id: string }[]).map((c) => c.id),
+      );
+    }
     const base = applyItemFilters(
       supabase
         .from("view_manage_storage_items")
@@ -153,7 +167,7 @@ export class StorageItemsService {
         isActive,
         tags,
         location_filter,
-        category,
+        categories: matchingCategories,
         from_date,
         to_date,
         availability_min,
@@ -193,7 +207,7 @@ export class StorageItemsService {
       isActive,
       tags,
       location_filter,
-      category,
+      categories: matchingCategories,
       from_date,
       to_date,
       availability_min,
@@ -202,7 +216,6 @@ export class StorageItemsService {
     });
 
     if (order_by) query.order(order_by ?? "created_at", { ascending });
-
     const result = await query;
 
     if (result.error) {
@@ -250,7 +263,19 @@ export class StorageItemsService {
     if (!supabase) {
       throw new BadRequestException("Supabase client is not initialized.");
     }
-
+    // Get nested categories of X category ID.
+    const matchingCategories: string[] = [];
+    if (category) {
+      const { data: categories } = await supabase.rpc(
+        "get_category_descendants",
+        {
+          category_uuid: category,
+        },
+      );
+      matchingCategories.push(
+        ...(categories as { id: string }[]).map((c) => c.id),
+      );
+    }
     // Build a base query with organization filtering
     const base = applyItemFilters(
       supabase
@@ -263,7 +288,7 @@ export class StorageItemsService {
         isActive,
         tags,
         location_filter,
-        category,
+        categories: matchingCategories,
       },
     );
     const countResult = await base;
@@ -299,7 +324,7 @@ export class StorageItemsService {
       isActive,
       tags,
       location_filter,
-      category,
+      categories: matchingCategories,
     });
 
     if (order_by) query.order(order_by ?? "created_at", { ascending });
@@ -324,10 +349,6 @@ export class StorageItemsService {
    * @returns An object containing the total count of storage items.
    */
   async getItemCount(req: AuthRequest, role: string, orgId: string) {
-    console.log("Request path:", req.path);
-    console.log("Headers:", req.headers);
-    console.log("ActiveRoleContext:", req.activeRoleContext);
-
     const supabase = req.supabase;
     const result = await supabase
       .from("storage_items")

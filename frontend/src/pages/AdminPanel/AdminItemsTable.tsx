@@ -10,7 +10,7 @@ import {
 } from "@/store/slices/itemsSlice";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
-import { Item, ValidItemOrder } from "@/types/item";
+import { Item, ManageItemViewRow, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
 import { Eye, LoaderCircle, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation, useNavigate } from "react-router-dom";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
+import {
+  fetchAllCategories,
+  selectCategories,
+} from "@/store/slices/categoriesSlice";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -36,6 +40,7 @@ const AdminItemsTable = () => {
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const org_id = useAppSelector(selectActiveOrganizationId);
+  const categories = useAppSelector(selectCategories);
 
   const { lang } = useLanguage();
   const [statusFilter, setStatusFilter] = useState<
@@ -68,7 +73,7 @@ const AdminItemsTable = () => {
     void navigate(`/admin/items/${id}`);
   };
 
-  const handleBooking = (order: string) =>
+  const handleSortOrder = (order: string) =>
     setOrder(order.toLowerCase() as ValidItemOrder);
   const handleAscending = (ascending: boolean | null) =>
     setAscending(ascending);
@@ -85,6 +90,8 @@ const AdminItemsTable = () => {
         searchquery: debouncedSearchQuery,
         ascending: ascending === false ? false : true,
         tag_filters: tagFilter,
+        location_filter: [],
+        category: "",
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
       }),
     );
@@ -103,10 +110,12 @@ const AdminItemsTable = () => {
   useEffect(() => {
     if (tags.length === 0)
       void dispatch(fetchFilteredTags({ limit: 20, sortBy: "assigned_to" }));
-  }, [dispatch, tags.length, items.length]);
+    if (categories.length === 0)
+      void dispatch(fetchAllCategories({ page: 1, limit: 20 }));
+  }, [dispatch, tags.length, items.length, categories.length]);
 
   /* ————————————————————————— Item Columns ———————————————————————— */
-  const itemsColumns: ColumnDef<Item>[] = [
+  const itemsColumns: ColumnDef<ManageItemViewRow>[] = [
     {
       id: "view",
       size: 5,
@@ -137,14 +146,18 @@ const AdminItemsTable = () => {
       },
     },
     {
-      header: t.adminItemsTable.columns.type[lang],
+      header: t.adminItemsTable.columns.category[lang],
       size: 120,
-      id: `item_type`,
-      accessorFn: (row) => row.translations[lang].item_type || "",
+      id: `category_id`,
+      accessorFn: (row) => row.category_id || "",
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
-        const type = row.original.translations[lang].item_type || "";
-        return type.charAt(0).toUpperCase() + type.slice(1);
+        const type =
+          lang === "fi"
+            ? row.original.category_fi_name
+            : row.original.category_en_name;
+        if (!type) return "";
+        return type;
       },
     },
     {
@@ -340,12 +353,12 @@ const AdminItemsTable = () => {
 
       <PaginatedDataTable
         columns={itemsColumns}
-        data={items as Item[]}
+        data={items as ManageItemViewRow[]}
         pageIndex={currentPage - 1}
         pageCount={totalPages}
         onPageChange={(page) => handlePageChange(page + 1)}
         handleAscending={handleAscending}
-        handleOrder={handleBooking}
+        handleOrder={handleSortOrder}
         order={order}
         ascending={ascending}
         originalSorting="quantity"

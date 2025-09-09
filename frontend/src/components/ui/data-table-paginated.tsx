@@ -119,12 +119,10 @@ export function PaginatedDataTable<TData, TValue>({
                       key={header.id}
                     >
                       <div className="flex items-center gap-1">
-                        <span>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                        </span>
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                         {isOrder && ascending === false ? (
                           <ArrowUp className="w-3 h-3 text-muted-foreground" />
                         ) : isOrder && ascending ? (
