@@ -54,6 +54,7 @@ import { setNextStep } from "@/store/slices/uiSlice";
 import { CreateItemType } from "@common/items/form.types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorMessage } from "@hookform/error-message";
+import { getFirstErrorMessage } from "@/utils/validate";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -110,19 +111,6 @@ function AddItemForm() {
   };
 
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
-    const getFirstErrorMessage = (obj: any): string | null => {
-      for (const value of Object.values(obj)) {
-        if (value && typeof value === "object") {
-          if ("message" in value && typeof value.message === "string") {
-            return value.message;
-          }
-          const nested = getFirstErrorMessage(value);
-          if (nested) return nested;
-        }
-      }
-      return null;
-    };
-
     const firstErrorKey = getFirstErrorMessage(errors);
 
     if (
@@ -154,7 +142,7 @@ function AddItemForm() {
       if (newTag)
         setSelectedTags([
           ...selectedTags,
-          { tag_id: id, translations: newTag.translations! },
+          { tag_id: id, translations: newTag.translations },
         ]);
     }
 
@@ -238,7 +226,7 @@ function AddItemForm() {
       setSelectedTags(
         activeTags.map((t) => ({
           tag_id: t.id,
-          translations: t.translations!,
+          translations: t.translations,
         })),
       );
     }

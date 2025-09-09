@@ -80,7 +80,7 @@ export interface FiltersState {
   isActive: boolean;
   averageRating: number[];
   itemsNumberAvailable: [number, number];
-  itemTypes: string[];
+  category: string;
   tagIds: string[];
   locationIds: string[];
   orgIds?: string[];

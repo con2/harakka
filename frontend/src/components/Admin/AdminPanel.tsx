@@ -16,6 +16,7 @@ import {
   ShieldUser,
   Building2,
   MapPin,
+  LayoutGrid,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -77,6 +78,15 @@ const AdminPanel = () => {
               dataCy="admin-nav-items"
             />
           )}
+          {hasAnyRole(["superVera", "tenant_admin", "storage_manager"]) && (
+            <SidebarLink
+              to="/admin/categories"
+              icon={<LayoutGrid className="w-5 h-5" />}
+              label={t.adminPanel.navigation.categories[lang]}
+              dataCy="admin-nav-tags"
+            />
+          )}
+
           {hasAnyRole(["superVera", "tenant_admin", "storage_manager"]) && (
             <SidebarLink
               to="/admin/tags"
