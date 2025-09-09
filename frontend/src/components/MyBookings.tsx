@@ -169,7 +169,7 @@ const MyBookings = () => {
     }
 
     const { roleName } = activeContext;
-    if (roleName !== "user" && roleName !== "requester") {
+    if (roleName === "super_admin" || roleName === null) {
       return;
     }
 
@@ -552,8 +552,7 @@ const MyBookings = () => {
         </div>
 
         {/* BookingPreview table or empty state */}
-        {activeContext.roleName !== "user" &&
-        activeContext.roleName !== "requester" ? (
+        {activeContext.roleName === "super_admin" ? (
           <div className="text-center py-8 bg-slate-50 rounded-lg">
             <p className="text-lg mb-2">
               {t.myBookings.error.insufficientRole[lang]}
