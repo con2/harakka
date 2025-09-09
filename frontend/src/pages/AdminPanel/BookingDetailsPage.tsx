@@ -23,9 +23,9 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { makeSelectItemImages } from "@/store/slices/itemImagesSlice";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
 import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
-import { formatBookingStatus } from "@/store/utils/format";
 import BookingCancelButton from "@/components/Admin/Bookings/BookingCancelButton";
 import { sortByStatus } from "@/store/utils/helper.utils";
+import { formatBookingStatus } from "@/utils/format";
 
 const BookingDetailsPage = () => {
   const { id } = useParams();

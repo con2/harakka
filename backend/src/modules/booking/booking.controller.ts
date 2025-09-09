@@ -389,10 +389,8 @@ export class BookingController {
     @Body() itemIds?: string[],
   ) {
     const orgId = req.headers["x-org-id"] as string;
-    const supabase = req.supabase;
-
     if (!orgId) throw new Error("Missing org ID");
-    return this.bookingService.returnItems(supabase, id, orgId, itemIds);
+    return this.bookingService.returnItems(req, id, orgId, itemIds);
   }
 
   /**

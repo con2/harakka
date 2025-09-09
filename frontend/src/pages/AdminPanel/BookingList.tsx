@@ -21,7 +21,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { BookingPreview } from "@common/bookings/booking.types";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import { useNavigate } from "react-router-dom";
-import { formatBookingStatus } from "@/store/utils/format";
+import { formatBookingStatus } from "@/utils/format";
 
 const BookingList = () => {
   const dispatch = useAppDispatch();

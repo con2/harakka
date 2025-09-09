@@ -1222,11 +1222,13 @@ export class BookingService {
    * @returns
    */
   async returnItems(
-    supabase: SupabaseClient,
+    req: AuthRequest,
     bookingId: string,
     orgId: string,
     itemIds?: string[],
   ) {
+    const supabase = req.supabase;
+    const userId = req.user.id;
     if (itemIds) {
       const selectQuery = supabase
         .from("booking_items")
@@ -1270,10 +1272,10 @@ export class BookingService {
     }
 
     // notify via centralized mail service
-    // await this.mailService.sendBookingMail(BookingMailType.ItemsReturned, {
-    //   bookingId,
-    //   triggeredBy: userId,
-    // });
+    await this.mailService.sendBookingMail(BookingMailType.ItemsReturned, {
+      bookingId,
+      triggeredBy: userId,
+    });
 
     return { message: "Items returned successfully" };
   }
@@ -1339,10 +1341,10 @@ export class BookingService {
     const triggeredBy = bookingRow?.user_id ?? "system";
 
     // notify via centralized mail service
-    // await this.mailService.sendBookingMail(BookingMailType.ItemsPickedUp, {
-    //   bookingId,
-    //   triggeredBy,
-    // });
+    await this.mailService.sendBookingMail(BookingMailType.ItemsPickedUp, {
+      bookingId,
+      triggeredBy,
+    });
 
     return {
       message: `Pickup confirmed for booking ${bookingId}`,
