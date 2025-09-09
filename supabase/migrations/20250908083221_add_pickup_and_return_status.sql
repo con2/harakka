@@ -17,3 +17,6 @@ ALTER TABLE bookings DROP CONSTRAINT IF EXISTS orders_status_check;
 ALTER TABLE bookings
   ADD CONSTRAINT booking_status_check
   CHECK ( status = ANY ( enum_range(NULL::booking_status) ) );
+
+-- temporarily drop this trigger to prevent notifications from crashing the booking updates
+DROP TRIGGER IF EXISTS booking_after_update ON bookings;
