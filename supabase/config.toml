@@ -262,9 +262,9 @@ max_frequency = "5s"
 # `twitter`, `slack`, `spotify`, `workos`, `zoom`.
 [auth.external.google]
 enabled = true
-client_id = "env(GOOGLE_CLIENT_ID)"
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
 # DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
-secret = "env(GOOGLE_CLIENT_SECRET)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 # Overrides the default auth redirectUrl.
 redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
 # Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
@@ -353,8 +353,8 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 project_id = "kpqrzaisoyxqillzpbms"
 [remotes.develop.auth.external.google]
 enabled   = true
-client_id = "env(GOOGLE_CLIENT_ID)"
-secret    = "env(GOOGLE_CLIENT_SECRET)"
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 
 # Declare the 'main' branch for production
 [remotes.main]
@@ -362,8 +362,9 @@ project_id = "rcbddkhvysexkvgqpcud"
 
 [remotes.main.auth.external.google]
 enabled   = true
-client_id = "env(GOOGLE_CLIENT_ID)"
-secret    = "env(GOOGLE_CLIENT_SECRET)"
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+
 
 
 # (Optional) To auto-deploy Edge Functions from this repo, declare them explicitly.
