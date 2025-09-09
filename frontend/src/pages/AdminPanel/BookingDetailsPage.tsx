@@ -24,6 +24,8 @@ import { makeSelectItemImages } from "@/store/slices/itemImagesSlice";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
 import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
 import { formatBookingStatus } from "@/store/utils/format";
+import BookingCancelButton from "@/components/Admin/Bookings/BookingCancelButton";
+import { sortByStatus } from "@/store/utils/helper.utils";
 
 const BookingDetailsPage = () => {
   const { id } = useParams();
@@ -76,12 +78,15 @@ const BookingDetailsPage = () => {
     [booking, activeOrgId],
   );
 
+  // Statuses which have no further actions
+  const END_STATUSES = ["cancelled", "rejected", "returned"];
+
   // Helper: get all selectable item IDs
   const allSelectableIds = useMemo(() => {
     return ownedItemsForOrg
-      .filter((item) => item.status === booking?.org_status_for_active_org)
+      .filter((item) => !END_STATUSES.includes(item.status))
       .map((item) => String(item.id));
-  }, [ownedItemsForOrg, booking?.org_status_for_active_org]);
+  }, [ownedItemsForOrg]);
 
   // Select All / Deselect All logic
   const allSelected =
@@ -94,11 +99,17 @@ const BookingDetailsPage = () => {
   const hasPickedUpItems = booking?.booking_items?.some(
     (items) => items.status === "picked_up",
   );
-  const isConfirmed = booking?.org_status_for_active_org === "confirmed";
-  const isPickedUp = booking?.org_status_for_active_org === "picked_up";
   const hasPendingItems = booking?.booking_items?.some(
     (item) => item.status === "pending",
   );
+  const hasReviewedBooking = booking?.booking_items?.every(
+    (item) => item.status !== "pending",
+  );
+  const hasConfirmedItems = booking?.booking_items?.some(
+    (item) => item.status === "confirmed",
+  );
+
+  const sortedBookingItems = sortByStatus(booking?.booking_items ?? []);
 
   // Small image component for booking items (fetches from itemImages slice)
   const ItemImage = ({
@@ -138,6 +149,7 @@ const BookingDetailsPage = () => {
       id: "select",
       header: () => (
         <Checkbox
+          disabled={allSelectableIds.length < 1}
           checked={allSelected}
           onCheckedChange={handleSelectAllToggle}
         />
@@ -145,8 +157,7 @@ const BookingDetailsPage = () => {
       cell: ({ row }) => {
         const item = row.original;
         const isOwned = item.provider_organization_id === activeOrgId;
-        const isSelectable =
-          isOwned && item.status === booking?.org_status_for_active_org;
+        const isSelectable = !END_STATUSES.includes(item.status) && isOwned;
         return (
           <Checkbox
             checked={selectedItemIds.includes(String(item.id))}
@@ -230,7 +241,7 @@ const BookingDetailsPage = () => {
           {t.bookingDetailsPage.modal.bookingDetails[lang]}{" "}
           {booking.booking_number}
         </h3>
-        <div className="space-y-2 mt-4 grid grid-cols-2 gap-4">
+        <div className="space-y-2 mt-4 mb-2 grid grid-cols-2 gap-4">
           <div className="flex flex-col text-md">
             <p>{booking.full_name || t.bookingList.status.unknown[lang]}</p>
             <div className="flex items-center gap-2">
@@ -295,7 +306,7 @@ const BookingDetailsPage = () => {
       <div className="flex flex-col">
         <DataTable
           columns={bookingItemsColumns}
-          data={booking.booking_items || []}
+          data={sortedBookingItems || []}
         />
       </div>
       {/* Action buttons */}
@@ -305,50 +316,40 @@ const BookingDetailsPage = () => {
           <>
             <div className="flex flex-col items-center text-center">
               <span className="text-xs text-slate-600">
-                {selectedItemIds.length === 0
-                  ? t.bookingDetailsPage.modal.buttons.confirmDisabled[lang]
-                  : selectedItemIds.length === 1
-                    ? t.bookingDetailsPage.modal.buttons.confirmItem[lang]
-                    : selectedItemIds.length === ownedItemsForOrg.length
-                      ? t.bookingDetailsPage.modal.buttons.confirmAll[lang]
-                      : t.bookingDetailsPage.modal.buttons.confirmItems[lang]}
+                {selectedItemIds.length === 0 ||
+                selectedItemIds.length === ownedItemsForOrg.length
+                  ? t.bookingDetailsPage.modal.buttons.confirmAll[lang]
+                  : t.bookingDetailsPage.modal.buttons.confirmItems[lang]}
               </span>
               <BookingConfirmButton
                 id={booking.id}
                 selectedItemIds={selectedItemIds}
-                disabled={selectedItemIds.length === 0}
                 onSuccess={refetchBooking}
               />
             </div>
             <div className="flex flex-col items-center text-center">
               <span className="text-xs text-slate-600">
-                {selectedItemIds.length === 0
-                  ? t.bookingDetailsPage.modal.buttons.rejectDisabled[lang]
-                  : selectedItemIds.length === 1
-                    ? t.bookingDetailsPage.modal.buttons.rejectItem[lang]
-                    : selectedItemIds.length === ownedItemsForOrg.length
-                      ? t.bookingDetailsPage.modal.buttons.rejectAll[lang]
-                      : t.bookingDetailsPage.modal.buttons.rejectItems[lang]}
+                {selectedItemIds.length === 0 ||
+                selectedItemIds.length === ownedItemsForOrg.length
+                  ? t.bookingDetailsPage.modal.buttons.rejectAll[lang]
+                  : t.bookingDetailsPage.modal.buttons.rejectItems[lang]}
               </span>
               <BookingRejectButton
                 id={booking.id}
                 selectedItemIds={selectedItemIds}
-                disabled={selectedItemIds.length === 0}
                 onSuccess={refetchBooking}
               />
             </div>
           </>
         )}
-        {isConfirmed && !isPickedUp && (
+        {hasConfirmedItems && !hasPendingItems && (
           <div className="flex flex-col items-center text-center">
             <span className="text-xs text-slate-600">
               {selectedItemIds.length === 0
                 ? `Mark all as picked up`
                 : selectedItemIds.length === 1
                   ? `Mark ${selectedItemIds.length} item as picked up`
-                  : selectedItemIds.length === ownedItemsForOrg.length
-                    ? `Mark all as picked up`
-                    : t.bookingDetailsPage.modal.buttons.rejectItems[lang]}
+                  : `Mark all as picked up`}
             </span>
             <BookingPickupButton
               id={booking.id}
@@ -360,15 +361,27 @@ const BookingDetailsPage = () => {
         {hasPickedUpItems && (
           <div className="flex flex-col items-center text-center">
             <span className="text-xs text-slate-600">
-              {selectedItemIds.length === 0
+              {selectedItemIds.length === 0 ||
+              selectedItemIds.length === ownedItemsForOrg.length
                 ? `Mark all as returned`
-                : selectedItemIds.length === 1
-                  ? `Mark ${selectedItemIds.length} item as returned`
-                  : selectedItemIds.length === ownedItemsForOrg.length
-                    ? `Mark all as returned`
-                    : t.bookingDetailsPage.modal.buttons.rejectItems[lang]}
+                : `Mark ${selectedItemIds.length} item as returned`}
             </span>
             <BookingReturnButton
+              id={booking.id}
+              onSuccess={refetchBooking}
+              itemIds={selectedItemIds}
+            />
+          </div>
+        )}
+        {hasReviewedBooking && hasConfirmedItems && (
+          <div className="flex flex-col items-center text-center">
+            <span className="text-xs text-slate-600">
+              {selectedItemIds.length === 0 ||
+              selectedItemIds.length === ownedItemsForOrg.length
+                ? `Mark all as cancelled`
+                : `Mark ${selectedItemIds.length} item as cancelled`}
+            </span>
+            <BookingCancelButton
               id={booking.id}
               onSuccess={refetchBooking}
               itemIds={selectedItemIds}
