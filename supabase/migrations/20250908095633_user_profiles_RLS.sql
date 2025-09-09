@@ -39,14 +39,6 @@ CREATE POLICY "tenant_admin_select_all_user_profiles" ON user_profiles
     app.me_has_role_anywhere('tenant_admin'::public.roles_type)
   );
 
--- ADDITIONAL PERMISSIONS: Storage Manager can read ALL user profiles
--- Note: Application should limit which columns are returned for storage managers
--- Database policy allows full access, but application should only return id, visible_name, full_name, email
-CREATE POLICY "storage_manager_select_all_user_profiles" ON user_profiles
-  FOR SELECT TO authenticated
-  USING (
-    app.me_has_role_anywhere('storage_manager'::public.roles_type)
-  );
 
 -- =======================
 -- INSERT policies
