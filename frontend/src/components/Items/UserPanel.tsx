@@ -35,8 +35,7 @@ const UserPanel = () => {
   const organizations = useAppSelector(selectOrganizations);
 
   useEffect(() => {
-    if (categories.length < 1)
-      void dispatch(fetchAllCategories({ page: 1, limit: 50 }));
+    void dispatch(fetchAllCategories({ page: 1, limit: 50 }));
     void dispatch(
       fetchFilteredTags({
         page: 1,

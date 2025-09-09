@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   clearSelectedCategory,
   createCategory,
+  fetchAllCategories,
   selectCategories,
   selectCategoriesError,
   selectCategory,
@@ -34,6 +35,7 @@ import { Category } from "@common/items/categories";
 import { toast } from "sonner";
 import { getFirstErrorMessage } from "@/utils/validate";
 import { t } from "@/translations";
+import { useEffect } from "react";
 
 function AddCategory() {
   const { lang } = useLanguage();
@@ -42,9 +44,6 @@ function AddCategory() {
   const categories = useAppSelector(selectCategories);
   const error = useAppSelector(selectCategoriesError);
   const selectedCategory = useAppSelector(selectCategory);
-  const categoryParent = categories.find(
-    (cat) => cat.id === selectedCategory?.parent_id,
-  );
 
   const form = useForm<z.infer<typeof createCategoryDto>>({
     resolver: zodResolver(createCategoryDto),
@@ -57,6 +56,9 @@ function AddCategory() {
     void navigate("/admin/categories");
   };
 
+  useEffect(() => {
+    void dispatch(fetchAllCategories({ page: 1, limit: 100 }));
+  }, [dispatch]);
   const onValidSubmit = async (values: z.infer<typeof createCategoryDto>) => {
     if (selectedCategory) {
       await dispatch(
@@ -131,24 +133,38 @@ function AddCategory() {
         </div>
 
         <div>
-          <Label>{t.addCategory.form.parentCategory[lang]}</Label>
-          <Select defaultValue={categoryParent?.id ?? ""} name="translations">
-            <SelectTrigger className="w-[250px]">
-              <SelectValue
-                placeholder={t.addCategory.placeholders.noParent[lang]}
-              >
-                {categoryParent?.translations[lang]}
-              </SelectValue>
-            </SelectTrigger>
+          <FormField
+            control={form.control}
+            name="parent_id"
+            render={({ field }) => (
+              <FormItem>
+                <Label>{t.addCategory.form.parentCategory[lang]}</Label>
+                <Select
+                  name="translations"
+                  onValueChange={field.onChange}
+                  defaultValue={form.getValues("parent_id") ?? ""}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-[250px]">
+                      <SelectValue
+                        placeholder={t.addCategory.placeholders.noParent[lang]}
+                      ></SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
 
-            <SelectContent>
-              {categories?.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id ?? ""}>
-                  {cat.translations[lang]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                  <SelectContent>
+                    {categories
+                      ?.filter((cat) => cat.id !== selectedCategory?.id) // Remove the selected category from options
+                      .map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id ?? ""}>
+                          {cat.translations[lang]}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          ></FormField>
         </div>
 
         <div className="*:w-fit px-8 self-end gap-3 flex">
