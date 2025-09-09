@@ -632,7 +632,7 @@ const UsersList = () => {
                 )}
               </div>
               {addUsersAccum.length > 0 && addSearchPage < addTotalPages && (
-                <div className="flex justify-center mb-2">
+                <div className="flex justify-center my-4">
                   <Button
                     variant={"ghost"}
                     size="sm"
@@ -677,7 +677,6 @@ const UsersList = () => {
                     setShowAddUser(false);
                     setAddSearchInput("");
                     setSelectedAddUserId(null);
-                    // Clear local accumulated search results and pagination
                     setAddUsersAccum([]);
                     setAddSearchPage(0);
                     void dispatch(clearUsersList());
