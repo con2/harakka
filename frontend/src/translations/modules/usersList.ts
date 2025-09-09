@@ -60,6 +60,10 @@ export const usersList = {
         en: common.roles.requester.en,
       },
     },
+    member: {
+      fi: "Jäsen",
+      en: "Member",
+    },
     buttons: {
       assign: {
         fi: "Määritä",

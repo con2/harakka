@@ -303,6 +303,20 @@ const UsersList = () => {
     setShowAddUser((s) => !s);
   }, [dispatch, showAddUser]);
 
+  // Check in add-user search results whether they already have a role in the active org
+  const addUsersChecked = useMemo(() => {
+    const list = addUsersList?.data ?? [];
+    return list.map((u) => {
+      const hasRoleInActiveOrg = Boolean(
+        activeOrgId &&
+          allUserRoles.find(
+            (r) => r.user_id === u.id && r.organization_id === activeOrgId,
+          ),
+      );
+      return { ...u, hasRoleInActiveOrg };
+    });
+  }, [addUsersList, allUserRoles, activeOrgId]);
+
   // ————————————— Helper Functions —————————————
   // Helper: derive the organization name for a given user for this view
   const getUserOrgName = (userId: string) => {
@@ -532,26 +546,41 @@ const UsersList = () => {
               </div>
 
               <div className="max-h-40 overflow-auto mb-2">
-                {addUsersList?.data?.length ? (
-                  addUsersList.data.map((u) => (
-                    <label
-                      key={u.id}
-                      className="flex items-center gap-2 p-1 hover:bg-slate-50 rounded"
-                    >
-                      <input
-                        type="radio"
-                        name="selectedAddUser"
-                        checked={selectedAddUserId === u.id}
-                        onChange={() => setSelectedAddUserId(u.id)}
-                      />
-                      <div className="text-sm">
-                        <div className="font-medium">{u.full_name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {u.email}
+                {addUsersChecked.length ? (
+                  addUsersChecked.map((u) => {
+                    const disabled = u.hasRoleInActiveOrg;
+                    return (
+                      <label
+                        key={u.id}
+                        className={`flex items-center gap-2 p-1 ${
+                          disabled
+                            ? "opacity-60 cursor-not-allowed"
+                            : "hover:bg-slate-50"
+                        } rounded`}
+                      >
+                        <input
+                          type="radio"
+                          name="selectedAddUser"
+                          checked={selectedAddUserId === u.id}
+                          onChange={() => {
+                            if (!disabled) setSelectedAddUserId(u.id);
+                          }}
+                          disabled={disabled}
+                        />
+                        <div className="text-sm">
+                          <div className="font-medium">{u.full_name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {u.email}
+                          </div>
                         </div>
-                      </div>
-                    </label>
-                  ))
+                        {disabled && (
+                          <div className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded ml-auto">
+                            {t.usersList.addUser.member[lang]}
+                          </div>
+                        )}
+                      </label>
+                    );
+                  })
                 ) : (
                   <div className="text-sm text-muted-foreground">
                     {t.usersList.addUser.noResults[lang]}
@@ -581,20 +610,19 @@ const UsersList = () => {
                   onClick={handleAssignRole}
                   disabled={!selectedAddUserId}
                 >
-                  {"Assign"}
+                  {t.usersList.addUser.buttons.assign[lang]}
                 </Button>
                 <Button
                   size="sm"
                   variant="destructive"
                   onClick={() => {
-                    // hide the panel and clear previous search results
                     setShowAddUser(false);
                     setAddSearchInput("");
                     setSelectedAddUserId(null);
                     void dispatch(clearUsersList());
                   }}
                 >
-                  {"Close"}
+                  {t.usersList.addUser.buttons.close[lang]}
                 </Button>
               </div>
             </div>
