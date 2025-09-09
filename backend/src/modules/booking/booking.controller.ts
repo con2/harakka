@@ -427,7 +427,7 @@ export class BookingController {
    * Meaning they will not be picked up
    */
   @Patch(":bookingId/cancel")
-  async cancelItem(
+  async cancelItems(
     @Param("bookingId") bookingId: string,
     @Req() req: AuthRequest,
     @Body() itemIds: string[],
