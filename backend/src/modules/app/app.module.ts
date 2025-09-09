@@ -37,6 +37,7 @@ import { UserBanningModule } from "../user-banning/user-banning.module";
 import { OrganizationLocationsModule } from "../organization-locations/organization_locations.module";
 import { CategoriesModule } from "../categories/categories.module";
 import { StorageItemsController } from "../storage-items/storage-items.controller";
+import { UserSetupController } from "../user/user-setup.controller";
 
 // Load and expand environment variables before NestJS modules initialize
 // Only load env files if SUPABASE_URL is not already set (meaning env-cmd hasn't run)
@@ -151,6 +152,7 @@ export class AppModule implements NestModule {
         // Protected controllers
         BookingController,
         UserController,
+        UserSetupController,
         BookingItemsController,
         LogsController,
         RoleController,

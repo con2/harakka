@@ -83,7 +83,9 @@ export class UserSetupController {
 
       // Security: Users can only check their own status, unless they have admin roles
       const isOwnStatus = body.userId === req.user.id;
-      const isAdmin = req.userRoles.some((role) => role.role_name === "admin");
+      const isAdmin = req.userRoles.some(
+        (role) => role.role_name === "super_admin",
+      );
 
       if (!isOwnStatus && !isAdmin) {
         throw new ForbiddenException(
