@@ -10,10 +10,7 @@ import {
   selectError,
   selectLoading,
 } from "@/store/slices/usersSlice";
-import {
-  fetchAllOrderedUsersList,
-  selectUsersList,
-} from "@/store/slices/usersSlice";
+import { fetchAllOrderedUsersList } from "@/store/slices/usersSlice";
 import { clearUsersList } from "@/store/slices/usersSlice";
 import {
   fetchAvailableRoles,
@@ -54,11 +51,15 @@ const UsersList = () => {
   // ————————————— State —————————————
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-  // Add-user flow state
   const [showAddUser, setShowAddUser] = useState(false);
   const [addSearchInput, setAddSearchInput] = useState("");
   const [addSearchLoading, setAddSearchLoading] = useState(false);
-  const addUsersList = useAppSelector(selectUsersList);
+  const [addLoadMoreLoading, setAddLoadMoreLoading] = useState(false);
+  const [addSearchPage, setAddSearchPage] = useState(0);
+  const [addTotalPages, setAddTotalPages] = useState(1);
+  const [addUsersAccum, setAddUsersAccum] = useState<
+    Pick<UserProfile, "id" | "full_name" | "email">[]
+  >([]);
   const [selectedAddUserId, setSelectedAddUserId] = useState<string | null>(
     null,
   );
@@ -227,7 +228,7 @@ const UsersList = () => {
     if (!addSearchInput || addSearchInput.trim().length === 0) return;
     setAddSearchLoading(true);
     try {
-      await dispatch(
+      const resp = await dispatch(
         fetchAllOrderedUsersList({
           searchquery: addSearchInput.trim(),
           org_filter: getOrgFilter(),
@@ -235,10 +236,46 @@ const UsersList = () => {
           limit: 10,
         }),
       ).unwrap();
+      setAddUsersAccum(resp.data ?? []);
+      setAddSearchPage(1);
+      setAddTotalPages(resp.metadata?.totalPages ?? 1);
     } catch {
-      // Error handling is managed elsewhere (comment so linter doesn't complain)
+      // Error handling is managed elsewhere
     } finally {
       setAddSearchLoading(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    const nextPage = addSearchPage + 1;
+    setAddLoadMoreLoading(true);
+    try {
+      const resp = await dispatch(
+        fetchAllOrderedUsersList({
+          searchquery: addSearchInput.trim(),
+          org_filter: getOrgFilter(),
+          page: nextPage,
+          limit: 10,
+        }),
+      ).unwrap();
+      const incoming = resp.data ?? [];
+      setAddUsersAccum((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        const merged = [...prev];
+        for (const item of incoming) {
+          if (!seen.has(item.id)) {
+            merged.push(item);
+            seen.add(item.id);
+          }
+        }
+        return merged;
+      });
+      setAddSearchPage(nextPage);
+      setAddTotalPages(resp.metadata?.totalPages ?? addTotalPages);
+    } catch {
+      // ignore
+    } finally {
+      setAddLoadMoreLoading(false);
     }
   };
 
@@ -302,20 +339,6 @@ const UsersList = () => {
     }
     setShowAddUser((s) => !s);
   }, [dispatch, showAddUser]);
-
-  // Check in add-user search results whether they already have a role in the active org
-  const addUsersChecked = useMemo(() => {
-    const list = addUsersList?.data ?? [];
-    return list.map((u) => {
-      const hasRoleInActiveOrg = Boolean(
-        activeOrgId &&
-          allUserRoles.find(
-            (r) => r.user_id === u.id && r.organization_id === activeOrgId,
-          ),
-      );
-      return { ...u, hasRoleInActiveOrg };
-    });
-  }, [addUsersList, allUserRoles, activeOrgId]);
 
   // ————————————— Helper Functions —————————————
   // Helper: derive the organization name for a given user for this view
@@ -531,12 +554,24 @@ const UsersList = () => {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      void handleAddSearch();
+                      if (addSearchInput && addSearchInput.trim().length > 0) {
+                        void handleAddSearch();
+                      }
                     }
                   }}
+                  required
+                  aria-required="true"
                   className="flex-1 text-sm p-2 bg-white rounded-md border"
                 />
-                <Button variant={"outline"} size="sm" onClick={handleAddSearch}>
+                <Button
+                  variant={"outline"}
+                  size="sm"
+                  onClick={handleAddSearch}
+                  disabled={
+                    addSearchLoading ||
+                    !(addSearchInput && addSearchInput.trim().length > 0)
+                  }
+                >
                   {addSearchLoading ? (
                     <LoaderCircle className="animate-spin h-4 w-4" />
                   ) : (
@@ -545,10 +580,19 @@ const UsersList = () => {
                 </Button>
               </div>
 
-              <div className="max-h-40 overflow-auto mb-2">
-                {addUsersChecked.length ? (
-                  addUsersChecked.map((u) => {
-                    const disabled = u.hasRoleInActiveOrg;
+              <div className="max-h-80 overflow-auto mb-2">
+                {addUsersAccum.length ? (
+                  addUsersAccum.map((u) => {
+                    // map to annotated info using existing role lookup
+                    const hasRoleInActiveOrg = Boolean(
+                      activeOrgId &&
+                        allUserRoles.find(
+                          (r) =>
+                            r.user_id === u.id &&
+                            r.organization_id === activeOrgId,
+                        ),
+                    );
+                    const disabled = hasRoleInActiveOrg;
                     return (
                       <label
                         key={u.id}
@@ -587,6 +631,20 @@ const UsersList = () => {
                   </div>
                 )}
               </div>
+              {addUsersAccum.length > 0 && addSearchPage < addTotalPages && (
+                <div className="flex justify-center mb-2">
+                  <Button
+                    variant={"ghost"}
+                    size="sm"
+                    onClick={handleLoadMore}
+                    disabled={addLoadMoreLoading}
+                  >
+                    {addLoadMoreLoading
+                      ? t.usersList.addUser.buttons.loading[lang]
+                      : t.usersList.addUser.buttons.loadMore[lang]}
+                  </Button>
+                </div>
+              )}
 
               <div className="flex gap-2 items-center justify-between">
                 <select
@@ -619,6 +677,9 @@ const UsersList = () => {
                     setShowAddUser(false);
                     setAddSearchInput("");
                     setSelectedAddUserId(null);
+                    // Clear local accumulated search results and pagination
+                    setAddUsersAccum([]);
+                    setAddSearchPage(0);
                     void dispatch(clearUsersList());
                   }}
                 >

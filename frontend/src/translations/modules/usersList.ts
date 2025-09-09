@@ -73,6 +73,14 @@ export const usersList = {
         fi: common.close.fi,
         en: common.close.en,
       },
+      loading: {
+        fi: "Ladataan...",
+        en: "Loading...",
+      },
+      loadMore: {
+        fi: "Lataa lisää",
+        en: "Load More",
+      },
     },
   },
   columns: {
