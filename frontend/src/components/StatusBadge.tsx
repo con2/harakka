@@ -29,7 +29,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
       return (
         <Badge
           variant="outline"
-          className="bg-green-100 text-green-800 border-green-300"
+          className="bg-blue-100 text-blue-800 border-blue-300"
         >
           {t.statusBadge.status.confirmed[lang]}
         </Badge>
@@ -56,7 +56,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
       return (
         <Badge
           variant="outline"
-          className="bg-blue-100 text-blue-800 border-blue-300"
+          className="bg-green-100 text-green-800 border-green-300"
         >
           {t.statusBadge.status.completed[lang]}
         </Badge>
@@ -65,7 +65,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
       return (
         <Badge
           variant="outline"
-          className="bg-green-100 text-green-800 border-green-300"
+          className="bg-blue-100 text-blue-800 border-blue-300"
         >
           {t.statusBadge.status.pickedUp[lang]}
         </Badge>
