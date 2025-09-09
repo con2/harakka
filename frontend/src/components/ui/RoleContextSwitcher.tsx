@@ -96,7 +96,6 @@ export const RoleContextSwitcher: React.FC = () => {
       // Get the current path to check if redirection is needed
       const currentPath = location.pathname;
       const ROLES_WITH_ACCESS = [
-        "superVera",
         "tenant_admin",
         "super_admin",
         "storage_manager",

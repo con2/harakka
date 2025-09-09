@@ -67,7 +67,6 @@ export const router = createBrowserRouter([
               "requester",
               "tenant_admin",
               "super_admin",
-              "superVera",
             ]}
           >
             <MyProfile />
@@ -78,12 +77,7 @@ export const router = createBrowserRouter([
         path: "/admin",
         element: (
           <ProtectedRoute
-            allowedRoles={[
-              "storage_manager",
-              "tenant_admin",
-              "super_admin",
-              "superVera",
-            ]}
+            allowedRoles={["storage_manager", "tenant_admin", "super_admin"]}
           >
             <AdminPanel />
           </ProtectedRoute>
@@ -93,9 +87,7 @@ export const router = createBrowserRouter([
           {
             path: "users",
             element: (
-              <ProtectedRoute
-                allowedRoles={["superVera", "super_admin", "tenant_admin"]}
-              >
+              <ProtectedRoute allowedRoles={["super_admin", "tenant_admin"]}>
                 <UsersList />
               </ProtectedRoute>
             ),
@@ -103,9 +95,7 @@ export const router = createBrowserRouter([
           {
             path: "users/:id",
             element: (
-              <ProtectedRoute
-                allowedRoles={["superVera", "super_admin", "tenant_admin"]}
-              >
+              <ProtectedRoute allowedRoles={["super_admin", "tenant_admin"]}>
                 <UsersDetailsPage />
               </ProtectedRoute>
             ),
@@ -114,7 +104,7 @@ export const router = createBrowserRouter([
             path: "items",
             element: (
               <ProtectedRoute
-                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
+                allowedRoles={["tenant_admin", "storage_manager"]}
               >
                 <AdminItemsTable />
               </ProtectedRoute>
@@ -154,7 +144,7 @@ export const router = createBrowserRouter([
             path: "tags",
             element: (
               <ProtectedRoute
-                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
+                allowedRoles={["tenant_admin", "storage_manager"]}
               >
                 <TagList />
               </ProtectedRoute>
@@ -163,7 +153,7 @@ export const router = createBrowserRouter([
           {
             path: "logs",
             element: (
-              <ProtectedRoute allowedRoles={["superVera", "super_admin"]}>
+              <ProtectedRoute allowedRoles={["super_admin"]}>
                 <Logs />
               </ProtectedRoute>
             ),
@@ -171,9 +161,7 @@ export const router = createBrowserRouter([
           {
             path: "roles",
             element: (
-              <ProtectedRoute
-                allowedRoles={["superVera", "super_admin", "tenant_admin"]}
-              >
+              <ProtectedRoute allowedRoles={["super_admin", "tenant_admin"]}>
                 <RoleManagement />
               </ProtectedRoute>
             ),
@@ -181,7 +169,7 @@ export const router = createBrowserRouter([
           {
             path: "organizations",
             element: (
-              <ProtectedRoute allowedRoles={["superVera", "super_admin"]}>
+              <ProtectedRoute allowedRoles={["super_admin"]}>
                 <Organizations />
               </ProtectedRoute>
             ),
@@ -190,7 +178,7 @@ export const router = createBrowserRouter([
             path: "items/add",
             element: (
               <ProtectedRoute
-                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
+                allowedRoles={["tenant_admin", "storage_manager"]}
               >
                 <AddItem />
               </ProtectedRoute>
@@ -200,7 +188,7 @@ export const router = createBrowserRouter([
             path: "locations",
             element: (
               <ProtectedRoute
-                allowedRoles={["superVera", "tenant_admin", "storage_manager"]}
+                allowedRoles={["tenant_admin", "storage_manager"]}
               >
                 <OrganizationLocations />
               </ProtectedRoute>

@@ -14,7 +14,6 @@ export const UserGuide: React.FC = () => {
     "tenant_admin",
     "storage_manager",
     "super_admin",
-    "superVera",
   ]);
   const { lang } = useLanguage();
 

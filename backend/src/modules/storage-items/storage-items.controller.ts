@@ -193,7 +193,7 @@ export class StorageItemsController {
    * @returns The total count of storage items.
    */
   @Get("count")
-  @Roles(["storage_manager", "tenant_admin"], {
+  @Roles(["storage_manager", "tenant_admin", "super_admin"], {
     match: "any",
     sameOrg: true,
   })

@@ -35,7 +35,6 @@ export const Navigation = () => {
 
   // Check if user has any admin role using hasAnyRole for efficiency
   const isAnyTypeOfAdmin = hasAnyRole([
-    "superVera",
     "tenant_admin",
     "super_admin",
     "storage_manager",
