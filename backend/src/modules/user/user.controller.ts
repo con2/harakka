@@ -46,7 +46,7 @@ export class UserController {
    * @returns List of users with name and email
    */
   @Get("ordered-list")
-  @Roles(["super_admin", "tenant_admin", "storage_manager"], {
+  @Roles(["super_admin", "tenant_admin"], {
     match: "any",
     sameOrg: true,
   })
