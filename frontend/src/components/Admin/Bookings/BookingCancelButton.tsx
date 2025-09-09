@@ -1,38 +1,41 @@
 import { Button } from "@/components/ui/button";
-import { BoxIcon } from "lucide-react";
+import { XCircleIcon } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { pickUpItems, selectBookingError } from "@/store/slices/bookingsSlice";
+import {
+  cancelBookingItems,
+  selectBookingError,
+} from "@/store/slices/bookingsSlice";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { toast } from "sonner";
 
-type BookingPickUpProps = {
+type BookingCancelProps = {
   id: string;
-  selectedItemIds?: string[];
+  itemIds?: string[];
   disabled?: boolean;
   onSuccess?: () => void;
 };
 
-const BookingPickupButton = ({
+const BookingCancelButton = ({
   id,
-  selectedItemIds,
+  itemIds,
   onSuccess,
   disabled = false,
-}: BookingPickUpProps) => {
+}: BookingCancelProps) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
   const error = useAppSelector(selectBookingError);
 
-  const handlePickup = () => {
+  const handleCancel = () => {
     toastConfirm({
-      title: t.bookingPickup.confirmDialog.title[lang],
-      description: t.bookingPickup.confirmDialog.description[lang],
-      confirmText: t.bookingPickup.confirmDialog.confirmText[lang],
-      cancelText: t.bookingPickup.confirmDialog.cancelText[lang],
+      title: t.bookingItemsCancel.confirmDialog.title[lang],
+      description: t.bookingItemsCancel.confirmDialog.description[lang],
+      confirmText: t.bookingItemsCancel.confirmDialog.confirmText[lang],
+      cancelText: t.bookingItemsCancel.confirmDialog.cancelText[lang],
       onConfirm: () => {
         const promise = dispatch(
-          pickUpItems({ bookingId: id, itemIds: selectedItemIds }),
+          cancelBookingItems({ bookingId: id, itemIds }),
         ).unwrap();
 
         toast.promise(promise, {
@@ -54,12 +57,12 @@ const BookingPickupButton = ({
       size="sm"
       disabled={disabled}
       title={t.bookingList.buttons.pickedUp[lang]}
-      className="text-green-600 hover:text-green-800 hover:bg-green-100"
-      onClick={handlePickup}
+      className="text-red-600 hover:text-red-800 hover:bg-red-100"
+      onClick={handleCancel}
     >
-      <BoxIcon className="h-4 w-4" />
+      <XCircleIcon className="h-4 w-4" />
     </Button>
   );
 };
 
-export default BookingPickupButton;
+export default BookingCancelButton;

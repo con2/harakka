@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useAppDispatch } from "@/store/hooks";
-import { confirmItemsForOrg } from "@/store/slices/bookingsSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  confirmItemsForOrg,
+  selectBookingError,
+} from "@/store/slices/bookingsSlice";
 import { CheckCircle } from "lucide-react";
 import { toastConfirm } from "../../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
@@ -20,6 +23,7 @@ const BookingConfirmButton = ({
 }) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
+  const error = useAppSelector(selectBookingError);
 
   const handleConfirmBooking = async () => {
     await Promise.resolve();
@@ -33,27 +37,20 @@ const BookingConfirmButton = ({
       description: t.bookingConfirm.confirmDialog.description[lang],
       confirmText: t.bookingConfirm.confirmDialog.confirmText[lang],
       cancelText: t.bookingConfirm.confirmDialog.cancelText[lang],
-      onConfirm: async () => {
-        const promise = new Promise((resolve, reject) => {
-          dispatch(
-            confirmItemsForOrg({
-              bookingId: id,
-              itemIds:
-                selectedItemIds && selectedItemIds.length > 0
-                  ? selectedItemIds
-                  : undefined,
-            }),
-          )
-            .then(resolve)
-            .catch(reject);
-        });
-        await toast.promise(promise, {
-          loading: t.bookingConfirm.toast.loading[lang],
-          success: t.bookingConfirm.toast.success[lang],
-          error: t.bookingConfirm.toast.error[lang],
+      onConfirm: () => {
+        const promise = dispatch(
+          confirmItemsForOrg({ bookingId: id, itemIds: selectedItemIds }),
+        ).unwrap();
+
+        toast.promise(promise, {
+          loading: t.bookingItemsCancel.toast.loading[lang],
+          success: t.bookingItemsCancel.toast.success[lang],
+          error: error ?? t.bookingItemsCancel.toast.error[lang],
         });
 
-        if (onSuccess) onSuccess();
+        void promise.then(() => {
+          if (onSuccess) onSuccess();
+        });
       },
     });
   };

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useAppDispatch } from "@/store/hooks";
-import { returnItems } from "@/store/slices/bookingsSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { returnItems, selectBookingError } from "@/store/slices/bookingsSlice";
 import { RotateCcw } from "lucide-react";
 import { toastConfirm } from "../../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
@@ -20,6 +20,7 @@ const BookingReturnButton = ({
 }) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
+  const error = useAppSelector(selectBookingError);
 
   const handleReturnItems = () => {
     if (!id) {
@@ -33,20 +34,19 @@ const BookingReturnButton = ({
       confirmText: t.bookingReturn.confirmDialog.confirmText[lang],
       cancelText: t.bookingReturn.confirmDialog.cancelText[lang],
       onConfirm: () => {
-        toast.promise(
-          dispatch(
-            returnItems({
-              bookingId: id,
-              itemIds: itemIds,
-            }),
-          ).unwrap(),
-          {
-            loading: t.bookingReturn.toast.loading[lang],
-            success: t.bookingReturn.toast.success[lang],
-            error: t.bookingReturn.toast.error[lang],
-          },
-        );
-        if (onSuccess) onSuccess();
+        const promise = dispatch(
+          returnItems({ bookingId: id, itemIds }),
+        ).unwrap();
+
+        toast.promise(promise, {
+          loading: t.bookingItemsCancel.toast.loading[lang],
+          success: t.bookingItemsCancel.toast.success[lang],
+          error: error ?? t.bookingItemsCancel.toast.error[lang],
+        });
+
+        void promise.then(() => {
+          if (onSuccess) onSuccess();
+        });
       },
     });
   };
