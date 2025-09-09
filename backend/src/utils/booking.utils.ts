@@ -18,7 +18,7 @@ export async function calculateAvailableQuantity(
     .from("booking_items")
     .select("quantity")
     .eq("item_id", itemId)
-    .in("status", ["pending", "confirmed"])
+    .in("status", ["pending", "confirmed", "picked_up"])
     .or(`and(start_date.lte.${endDate},end_date.gte.${startDate})`);
 
   if (error) {
