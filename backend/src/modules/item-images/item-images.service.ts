@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { v4 as uuidv4 } from "uuid";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
@@ -112,6 +112,19 @@ export class ItemImagesService {
     files: Express.Multer.File[],
     path?: string,
   ): Promise<BucketUploadResult> {
+    // Runtime type validation against type confusion through parameter tampering
+    if (
+      !Array.isArray(files) ||
+      files.some(
+        (file) =>
+          typeof file !== "object" ||
+          !file ||
+          typeof file.originalname !== "string" ||
+          typeof file.buffer === "undefined"
+      )
+    ) {
+      throw new BadRequestException("Invalid files parameter: expected array of files.");
+    }
     const supabase = req.supabase;
     const result: BucketUploadResult = {
       paths: [],
