@@ -105,7 +105,7 @@ export class UserController {
    * @returns Total user count
    */
   @Get("count")
-  @Roles(["tenant_admin", "super_admin"], {
+  @Roles(["storage_manager", "tenant_admin", "super_admin"], {
     match: "any",
     sameOrg: true,
   })

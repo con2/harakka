@@ -37,10 +37,10 @@ const UserBan = ({ user, onSuccess }: Props) => {
   const loading = useAppSelector(selectUserBanningLoading);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const { lang } = useLanguage();
-  const { allUserRoles, refreshAllUserRoles, hasAnyRole, hasRole } = useRoles();
+  const { allUserRoles, refreshAllUserRoles, hasRole } = useRoles();
   const { getBanPermissions } = useBanPermissions();
 
-  const isSuper = hasAnyRole(["super_admin", "superVera"]);
+  const isSuper = hasRole("super_admin");
   const isTenantAdmin = hasRole("tenant_admin");
 
   const { canBanFromApp, canBanFromOrg, canBanFromRole } = getBanPermissions(

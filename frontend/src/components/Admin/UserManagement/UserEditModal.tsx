@@ -77,7 +77,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
 
   // Can Manage Roles:
   // Any "Super" role or tenant_admin of current org
-  const SUPER_ROLES = ["super_admin", "superVera"];
+  const SUPER_ROLES = ["super_admin"];
   const isSuper = hasAnyRole(SUPER_ROLES, activeOrgId!);
   const isTenantAdmin = hasRole("tenant_admin", activeOrgId!);
   const canManageRoles = isSuper || isTenantAdmin;

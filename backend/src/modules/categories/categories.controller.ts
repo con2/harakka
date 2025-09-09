@@ -9,7 +9,7 @@ import {
   Query,
   Req,
 } from "@nestjs/common";
-import { Roles } from "@src/decorators/roles.decorator";
+import { Public, Roles } from "@src/decorators/roles.decorator";
 import { CategoriesService } from "./categories.service";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 import { GetParamsDto } from "./dto/params.dto";
@@ -21,6 +21,7 @@ export class CategoriesController {
 
   // Get All Categories
   @Get()
+  @Public()
   async getCategories(@Query() params: GetParamsDto) {
     return await this.categoryService.getCategories(params);
   }

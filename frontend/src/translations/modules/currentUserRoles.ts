@@ -14,10 +14,6 @@ export const currentUserRoles = {
       en: common.roles.user.en,
       fi: common.roles.user.fi,
     },
-    superVera: {
-      en: "SuperVera",
-      fi: "SuperVera",
-    },
     storage_manager: {
       en: common.roles.storageManager.en,
       fi: common.roles.storageManager.fi,

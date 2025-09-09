@@ -963,7 +963,6 @@ export class BookingService {
     const isAdmin = this.roleService.hasAnyRole(req, [
       "super_admin",
       "tenant_admin",
-      "superVera",
       "storage_manager",
     ]);
 

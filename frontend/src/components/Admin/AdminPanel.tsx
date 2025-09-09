@@ -28,7 +28,6 @@ const AdminPanel = () => {
 
   // Check if user has any admin role
   const isAnyTypeOfAdmin = hasAnyRole([
-    "superVera",
     "tenant_admin",
     "super_admin",
     "storage_manager",
@@ -49,7 +48,7 @@ const AdminPanel = () => {
             />
           )}
 
-          {hasAnyRole(["superVera", "super_admin"]) && (
+          {hasAnyRole(["super_admin"]) && (
             <SidebarLink
               to="/admin/organizations"
               icon={<Building2 className="w-5 h-5" />}
@@ -70,7 +69,7 @@ const AdminPanel = () => {
             />
           )}
 
-          {hasAnyRole(["superVera", "tenant_admin", "storage_manager"]) && (
+          {hasAnyRole(["tenant_admin", "storage_manager"]) && (
             <SidebarLink
               to="/admin/items"
               icon={<Warehouse className="w-5 h-5" />}
@@ -78,7 +77,7 @@ const AdminPanel = () => {
               dataCy="admin-nav-items"
             />
           )}
-          {hasAnyRole(["superVera", "tenant_admin", "storage_manager"]) && (
+          {hasAnyRole(["tenant_admin", "storage_manager"]) && (
             <SidebarLink
               to="/admin/categories"
               icon={<LayoutGrid className="w-5 h-5" />}
@@ -96,7 +95,7 @@ const AdminPanel = () => {
             />
           )}
 
-          {hasAnyRole(["superVera", "super_admin", "tenant_admin"]) && (
+          {hasAnyRole(["super_admin", "tenant_admin"]) && (
             <SidebarLink
               to="/admin/users"
               icon={<Users className="w-5 h-5" />}
@@ -105,7 +104,7 @@ const AdminPanel = () => {
             />
           )}
 
-          {hasAnyRole(["superVera", "super_admin"]) && (
+          {hasRole("super_admin") && (
             <SidebarLink
               to="/admin/logs"
               icon={<FileText className="w-5 h-5" />}
@@ -114,7 +113,7 @@ const AdminPanel = () => {
             />
           )}
 
-          {hasAnyRole(["superVera", "super_admin", "tenant_admin"]) && (
+          {hasAnyRole(["super_admin", "tenant_admin"]) && (
             <SidebarLink
               to="/admin/roles"
               icon={<ShieldUser className="w-5 h-5" />}
@@ -123,7 +122,7 @@ const AdminPanel = () => {
             />
           )}
 
-          {hasAnyRole(["superVera", "tenant_admin", "storage_manager"]) && (
+          {hasAnyRole(["tenant_admin", "storage_manager"]) && (
             <SidebarLink
               to="/admin/locations"
               icon={<MapPin className="w-5 h-5" />}
@@ -167,7 +166,7 @@ const AdminPanel = () => {
               />
             )}
 
-            {hasAnyRole(["superVera", "super_admin"]) && (
+            {hasRole("super_admin") && (
               <SidebarLink
                 to="/admin/organizations"
                 icon={<Building2 />}
@@ -177,7 +176,7 @@ const AdminPanel = () => {
               />
             )}
 
-            {hasAnyRole(["superVera", "tenant_admin"]) && (
+            {hasRole("tenant_admin") && (
               <SidebarLink
                 to="/admin/bookings"
                 icon={<ShoppingBag />}
@@ -185,7 +184,7 @@ const AdminPanel = () => {
               />
             )}
 
-            {hasAnyRole(["superVera", "tenant_admin", "storage_manager"]) && (
+            {hasAnyRole(["tenant_admin", "storage_manager"]) && (
               <SidebarLink
                 to="/admin/items"
                 icon={<Warehouse />}
@@ -193,7 +192,7 @@ const AdminPanel = () => {
               />
             )}
 
-            {hasAnyRole(["superVera", "tenant_admin", "storage_manager"]) && (
+            {hasAnyRole(["tenant_admin", "storage_manager"]) && (
               <SidebarLink
                 to="/admin/tags"
                 icon={<PinIcon />}
@@ -201,7 +200,7 @@ const AdminPanel = () => {
               />
             )}
 
-            {hasAnyRole(["superVera", "super_admin", "tenant_admin"]) && (
+            {hasAnyRole(["super_admin", "tenant_admin"]) && (
               <SidebarLink
                 to="/admin/users"
                 icon={<Users />}
@@ -209,7 +208,7 @@ const AdminPanel = () => {
               />
             )}
 
-            {hasAnyRole(["superVera", "super_admin"]) && (
+            {hasRole("super_admin") && (
               <SidebarLink
                 to="/admin/logs"
                 icon={<FileText />}
@@ -217,7 +216,7 @@ const AdminPanel = () => {
               />
             )}
 
-            {hasAnyRole(["superVera", "super_admin", "tenant_admin"]) && (
+            {hasAnyRole(["super_admin", "tenant_admin"]) && (
               <SidebarLink
                 to="/admin/roles"
                 icon={<ShieldUser />}
@@ -225,7 +224,7 @@ const AdminPanel = () => {
               />
             )}
 
-            {hasAnyRole(["superVera", "tenant_admin", "storage_manager"]) && (
+            {hasAnyRole(["tenant_admin", "storage_manager"]) && (
               <SidebarLink
                 to="/admin/locations"
                 icon={<MapPin />}
