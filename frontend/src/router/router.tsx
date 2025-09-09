@@ -18,6 +18,7 @@ import TagList from "@/pages/AdminPanel/TagList";
 import Logs from "@/pages/AdminPanel/Logs";
 import Organizations from "@/pages/AdminPanel/Organizations";
 import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
+import Categories from "@/pages/AdminPanel/Categories";
 
 // General
 import LandingPage from "@/pages/LandingPage";
@@ -41,6 +42,7 @@ import AddItem from "@/pages/AdminPanel/AddItem";
 import OrganizationPage from "@/pages/OrganizationPage";
 import OrganizationsList from "../components/Organization/OrganizationsList";
 import ItemDetailsPage from "@/pages/AdminPanel/ItemDetailsPage";
+import AddCategory from "@/components/Admin/Categories/AddCategory";
 
 export const router = createBrowserRouter([
   {
@@ -189,6 +191,22 @@ export const router = createBrowserRouter([
                 allowedRoles={["tenant_admin", "storage_manager"]}
               >
                 <OrganizationLocations />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "categories",
+            element: (
+              <ProtectedRoute allowedRoles={["tenant_admin"]}>
+                <Categories />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "categories/:id",
+            element: (
+              <ProtectedRoute allowedRoles={["tenant_admin"]}>
+                <AddCategory />
               </ProtectedRoute>
             ),
           },

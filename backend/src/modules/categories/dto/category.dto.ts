@@ -1,13 +1,44 @@
-import { IsNotEmpty, IsOptional } from "class-validator";
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+  ValidateNested,
+  IsString,
+} from "class-validator";
+import { Type } from "class-transformer";
+
+class CategoryTranslationsDto {
+  @IsString()
+  @IsNotEmpty()
+  en: string;
+
+  @IsString()
+  @IsNotEmpty()
+  fi: string;
+}
 
 export class CreateCategoryDto {
+  @IsUUID()
+  id: string;
+
+  @ValidateNested()
+  @Type(() => CategoryTranslationsDto)
+  translations: CategoryTranslationsDto;
+
   @IsOptional()
-  parent_name: string;
-  @IsNotEmpty()
-  name: string;
+  @IsUUID()
+  parent_id?: string | null;
 }
 
 export class UpdateCategoryDto {
-  @IsNotEmpty()
-  name: string;
+  @IsUUID()
+  id: string;
+
+  @ValidateNested()
+  @Type(() => CategoryTranslationsDto)
+  translations: CategoryTranslationsDto;
+
+  @IsOptional()
+  @IsUUID()
+  parent_id?: string | null;
 }
