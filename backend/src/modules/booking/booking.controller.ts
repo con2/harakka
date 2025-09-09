@@ -303,9 +303,7 @@ export class BookingController {
     @Req() req: AuthRequest,
     @Query("org_id") org_id?: string,
     @Body()
-    body?: {
-      item_ids?: string[];
-    },
+    itemIds?: string[],
   ) {
     const orgId = org_id || "";
     if (!orgId) throw new BadRequestException("org_id query param is required");
@@ -313,7 +311,7 @@ export class BookingController {
       id,
       orgId,
       req,
-      body?.item_ids,
+      itemIds,
     );
   }
 
@@ -325,9 +323,7 @@ export class BookingController {
     @Req() req: AuthRequest,
     @Query("org_id") org_id?: string,
     @Body()
-    body?: {
-      item_ids?: string[];
-    },
+    itemIds?: string[],
   ) {
     const orgId = org_id || "";
     if (!orgId) throw new BadRequestException("org_id query param is required");
@@ -335,7 +331,7 @@ export class BookingController {
       id,
       orgId,
       req,
-      body?.item_ids,
+      itemIds,
     );
   }
 
@@ -419,6 +415,26 @@ export class BookingController {
     const supabase = req.supabase;
     const orgId = req.headers["x-org-id"] as string;
     return this.bookingService.confirmPickup(
+      supabase,
+      bookingId,
+      orgId,
+      itemIds,
+    );
+  }
+
+  /**
+   * Mark items as cancelled from a booking.
+   * Meaning they will not be picked up
+   */
+  @Patch(":bookingId/cancel")
+  async cancelItem(
+    @Param("bookingId") bookingId: string,
+    @Req() req: AuthRequest,
+    @Body() itemIds: string[],
+  ) {
+    const supabase = req.supabase;
+    const orgId = req.headers["x-org-id"] as string;
+    return this.bookingService.cancelBookingItem(
       supabase,
       bookingId,
       orgId,
