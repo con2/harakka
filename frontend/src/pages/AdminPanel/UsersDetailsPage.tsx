@@ -96,7 +96,7 @@ const UsersDetailsPage = () => {
 
   const { organizationId: activeOrgId, organizationName: activeOrgName } =
     useAppSelector(selectActiveRoleContext);
-  const SUPER_ROLES = ["super_admin", "superVera"];
+  const SUPER_ROLES = ["super_admin"];
   const isSuper = hasAnyRole(SUPER_ROLES, activeOrgId!);
   const isTenantAdmin = hasRole("tenant_admin", activeOrgId!);
   const canManageRoles = isSuper || isTenantAdmin;

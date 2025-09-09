@@ -15,21 +15,23 @@ import {
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { ItemImagesService } from "./item-images.service";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { Roles } from "@src/decorators/roles.decorator";
+import { Public, Roles } from "@src/decorators/roles.decorator";
 
 @Controller("item-images")
 export class ItemImagesController {
   constructor(private readonly itemImagesService: ItemImagesService) {}
 
   @Get(":itemId")
+  @Public()
   async getImages(@Param("itemId") itemId: string) {
     return this.itemImagesService.getItemImages(itemId);
   }
 
   @Post(":itemId")
-  @Roles(["superVera", "tenant_admin", "storage_manager", "super_admin"], {
+  @Roles(["storage_manager", "tenant_admin"], {
     match: "any",
-  }) // Auth Guard use
+    sameOrg: true,
+  })
   @UseInterceptors(FileInterceptor("image"))
   async uploadImage(
     @Req() req: AuthRequest,
@@ -51,8 +53,9 @@ export class ItemImagesController {
 
   @Post("bucket/:bucket_name")
   @UseInterceptors(FilesInterceptor("image", 5))
-  @Roles(["superVera", "tenant_admin", "storage_manager", "super_admin"], {
+  @Roles(["storage_manager", "tenant_admin"], {
     match: "any",
+    sameOrg: true,
   })
   async uploadToBucket(
     @Req() req: AuthRequest,
@@ -76,8 +79,9 @@ export class ItemImagesController {
    * @returns a success object
    */
   @Delete("bucket/:bucket_name")
-  @Roles(["superVera", "tenant_admin", "storage_manager", "super_admin"], {
+  @Roles(["storage_manager", "tenant_admin"], {
     match: "any",
+    sameOrg: true,
   })
   async removeFromBucket(
     @Req() req: AuthRequest,
@@ -88,8 +92,9 @@ export class ItemImagesController {
   }
 
   @Delete(":imageId")
-  @Roles(["superVera", "tenant_admin", "storage_manager", "super_admin"], {
+  @Roles(["storage_manager", "tenant_admin"], {
     match: "any",
+    sameOrg: true,
   })
   async deleteImage(
     @Req() req: AuthRequest,

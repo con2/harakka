@@ -164,7 +164,7 @@ export function applyItemFilters<T extends FilterableQuery>(
     isActive?: boolean;
     tags?: string;
     location_filter?: string;
-    category?: string;
+    categories?: string[];
     from_date?: string;
     to_date?: string;
     availability_min?: number;
@@ -177,7 +177,7 @@ export function applyItemFilters<T extends FilterableQuery>(
     isActive,
     tags,
     location_filter,
-    category,
+    categories,
     from_date,
     to_date,
     availability_min,
@@ -197,7 +197,6 @@ export function applyItemFilters<T extends FilterableQuery>(
   }
 
   if (typeof isActive === "boolean") query.eq("is_active", isActive);
-
   if (tags) query.overlaps("tag_ids", tags.split(","));
 
   if (location_filter) {
@@ -210,7 +209,7 @@ export function applyItemFilters<T extends FilterableQuery>(
 
   if (org_filter) query.in("organization_id", org_filter.split(","));
 
-  if (category) query.in("en_item_type", category.split(","));
+  if (categories && categories.length > 0) query.in("category_id", categories);
 
   if (from_date) query.gte("created_at", from_date);
   if (to_date) query.lt("created_at", to_date);

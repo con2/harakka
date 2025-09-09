@@ -57,9 +57,9 @@ export const adminItemsTable = {
       fi: "Tuotteen nimi",
       en: "Item Name",
     },
-    type: {
-      fi: "Tuotteen tyyppi",
-      en: "Item Type",
+    category: {
+      fi: "Kategoria",
+      en: "Category",
     },
     location: {
       fi: "Sijainti",

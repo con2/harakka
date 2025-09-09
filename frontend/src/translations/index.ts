@@ -1,3 +1,4 @@
+import { addCategory } from "./modules/addCategory";
 import { addItemForm } from "./modules/addItemForm";
 import { addLocationModal } from "./modules/addLocationModal";
 import { addTagModal } from "./modules/addTagModal";
@@ -19,6 +20,7 @@ import { bookingPickup } from "./modules/bookingPickup";
 import { bookingReject } from "./modules/bookingReject";
 import { bookingReturn } from "./modules/bookingReturn";
 import { cart } from "./modules/cart";
+import { categories } from "./modules/categories";
 import { common } from "./modules/common";
 import { contactForm } from "./modules/contactForm";
 import { currentUserRoles } from "./modules/currentUserRoles";
@@ -82,6 +84,7 @@ import { userSignupModal } from "./modules/userSignupModal";
 import { usersList } from "./modules/usersList";
 
 export const t = {
+  addCategory,
   addItemForm,
   addLocationModal,
   addTagModal,
@@ -103,6 +106,7 @@ export const t = {
   bookingReject,
   bookingReturn,
   cart,
+  categories,
   common,
   contactForm,
   currentUserRoles,

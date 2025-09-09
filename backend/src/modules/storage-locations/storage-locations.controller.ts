@@ -45,6 +45,7 @@ export class StorageLocationsController {
     );
   }
 
+  @Public()
   @Get(":id")
   async getLocationById(@Param("id") id: string): Promise<StorageLocationsRow> {
     const supabase = this.supabaseService.getAnonClient();

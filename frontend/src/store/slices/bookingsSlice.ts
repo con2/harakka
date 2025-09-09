@@ -128,7 +128,7 @@ export const getBookingByID = createAsyncThunk(
     try {
       const state = getState() as RootState;
       const roleName = selectActiveRoleName(state);
-      const isElevated = roleName === "super_admin" || roleName === "superVera";
+      const isElevated = roleName === "super_admin";
       const orgId = isElevated
         ? undefined
         : selectActiveOrganizationId(state) || undefined;
@@ -166,7 +166,7 @@ export const getBookingItems = createAsyncThunk(
     try {
       const state = getState() as RootState;
       const roleName = selectActiveRoleName(state);
-      const isElevated = roleName === "super_admin" || roleName === "superVera";
+      const isElevated = roleName === "super_admin";
       const orgId = isElevated
         ? undefined
         : selectActiveOrganizationId(state) || undefined;
@@ -207,7 +207,7 @@ export const getOrderedBookings = createAsyncThunk(
     try {
       const state = getState() as RootState;
       const roleName = selectActiveRoleName(state);
-      const isElevated = roleName === "super_admin" || roleName === "superVera";
+      const isElevated = roleName === "super_admin";
       const orgId = isElevated
         ? undefined
         : selectActiveOrganizationId(state) || undefined;
