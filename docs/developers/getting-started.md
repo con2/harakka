@@ -45,10 +45,10 @@ npm install -g supabase
 
 ```sh
 # In the root directory, copy the local environment template
-cp supabase-local.env.example supabase-local.env
+cp .env.supabase.local.example .env.supabase.local
 ```
 
-The `supabase-local.env` file contains all the configuration for local Supabase:
+The `.env.supabase.local` file contains all the configuration for local Supabase:
 
 ```env
 # Supabase Local Development Environment Variables
@@ -289,7 +289,7 @@ This application is configured for deployment to Azure:
 - **Authentication issues**: Verify your Supabase keys are correct
 - **Database connection issues**: Check your Supabase URL and keys
 - **Environment variable issues**:
-  - For local development, ensure `supabase-local.env` exists and has correct values
+  - For local development, ensure `.env.supabase.local` exists and has correct values
   - For live development, ensure `.env.local` exists and has correct values
   - Check that you're using the right npm script (`dev:local` vs `dev:live`)
 - **Supabase CLI issues**:

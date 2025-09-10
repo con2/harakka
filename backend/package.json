@@ -37,7 +37,7 @@
     "start": "node -r tsconfig-paths/register dist/backend/src/main.js",
     "start:watch": "nest start --watch -r tsconfig-paths/register",
     "start:dev": "nodemon --watch src --ext ts --exec \"ts-node -r tsconfig-paths/register src/main.ts\"",
-    "start:local": "env-cmd -f ../supabase-local.env npm run start:watch",
+    "start:local": "env-cmd -f ../.env.supabase.local npm run start:watch",
     "start:debug": "nest start --debug --watch -r tsconfig-paths/register",
     "start:prod": "node -r tsconfig-paths/register dist/backend/src/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" ",
