@@ -48,7 +48,7 @@
     "s:start": "env-cmd -f supabase-local.env npx supabase start",
     "s:stop": "env-cmd -f supabase-local.env npx supabase stop",
     "s:restart": "env-cmd -f supabase-local.env npx supabase stop && env-cmd -f supabase-local.env npx supabase start",
-    "s:seed": "env-cmd -f .env.local npx supabase db dump --data-only -f supabase/seed.sql",
+    "s:seed": "env-cmd -f .env.local npx supabase db dump --data-only -s auth,public -f supabase/seed.sql",
 
     "s:dump": "npx supabase db dump -f supabase/schema.sql",
     "s:reset": "env-cmd -f supabase-local.env npx supabase db reset",
