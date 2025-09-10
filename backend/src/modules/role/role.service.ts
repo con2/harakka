@@ -174,6 +174,21 @@ export class RoleService {
       throw new BadRequestException("Failed to create role assignment");
     }
 
+    // Check if user already has ANY role in this organization
+    const { data: existingRole } = await req.supabase
+      .from("user_organization_roles")
+      .select("id, role_id")
+      .eq("user_id", user_id)
+      .eq("organization_id", organization_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (existingRole) {
+      throw new BadRequestException(
+        `User already has a role in this organization (role_id=${existingRole.role_id})`,
+      );
+    }
+
     // Get the complete role details using the view
     const { data: roleDetails, error: viewError } = await req.supabase
       .from("view_user_roles_with_details")
