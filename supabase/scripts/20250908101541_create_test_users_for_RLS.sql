@@ -130,11 +130,6 @@ INSERT INTO user_organization_roles (
     NOW()
 ) ON CONFLICT DO NOTHING;
 
--- Add legacy user_roles entries for super admin (for comprehensive testing)
-INSERT INTO user_roles (profile_id, role) VALUES 
-    ('11111111-1111-1111-1111-111111111111', 'admin')
-ON CONFLICT DO NOTHING;
-
 -- Summary for verification
 DO $$ 
 BEGIN
