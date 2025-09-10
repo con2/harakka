@@ -56,8 +56,10 @@ export class UserService {
     // Always select all needed columns, filter in result mapping based on role
     const columns = "id, visible_name, full_name, email";
 
-    // Build the main user query
-    let query = supabase.from("user_profiles").select(columns);
+    // Build the main user query (ask Supabase for an exact count so metadata is accurate)
+    let query = supabase
+      .from("user_profiles")
+      .select("id, full_name, email", { count: "exact" });
 
     // Apply search query if provided
     if (dto.searchquery) {
@@ -83,38 +85,30 @@ export class UserService {
     const limit = Number(dto.limit) || 10;
     const offset = (page - 1) * limit;
     query = query.range(offset, offset + limit - 1);
-
-    const { data, error } = await query;
-
-    if (error) {
-      handleSupabaseError(error);
+    const result = await query;
+    if (result.error) {
+      handleSupabaseError(result.error);
     }
-
-    if (!data) {
+    const data = (result.data ?? []) as Array<
+      Pick<UserProfile, "id" | "full_name" | "email">
+    >;
+    if (!data || data.length === 0) {
       return {
-        data: [],
+        result: [],
         metadata: getPaginationMeta(0, page, limit),
       };
     }
-
-    // Ensure the data matches the expected type with conditional visible_name
-    const result: Pick<
-      UserProfile,
-      "id" | "full_name" | "email" | "visible_name"
-    >[] = data.map((user: Record<string, string | null>) => ({
-      id: user.id as string,
-      email: user.email,
-      full_name: user.full_name || null,
-      // Include visible_name for storage managers and tenant admins, null for others
-      visible_name:
-        activeRole === "storage_manager" || activeRole === "tenant_admin"
-          ? user.visible_name || null
-          : null,
-    }));
-
+    const rows: Pick<UserProfile, "id" | "full_name" | "email">[] = data.map(
+      (user) => ({
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+      }),
+    );
+    const totalCount = (result.count as number) ?? rows.length;
     return {
-      result,
-      metadata: getPaginationMeta(data.length, page, limit),
+      result: rows,
+      metadata: getPaginationMeta(totalCount, page, limit),
     };
   }
 

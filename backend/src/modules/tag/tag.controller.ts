@@ -12,7 +12,7 @@ import {
 import { TagService } from "./tag.service";
 import { ExtendedTag, TagRow, TagUpdate } from "@common/items/tag.types";
 import { ApiResponse } from "../../../../common/response.types";
-import { Public } from "src/decorators/roles.decorator";
+import { Public, Roles } from "src/decorators/roles.decorator";
 
 @Controller("tags")
 export class TagController {
@@ -40,17 +40,24 @@ export class TagController {
     );
   }
 
+  @Public()
   @Get("item/:itemId")
   async getTagsForItem(@Param("itemId") itemId: string): Promise<TagRow[]> {
     return this.tagService.getTagsForItem(itemId);
   }
 
   @Post()
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+  })
   async createTag(@Req() req, @Body() tagData: TagRow): Promise<TagRow> {
     return this.tagService.createTag(req, tagData);
   }
 
   @Post(":itemId/assign")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+  })
   async assignTagsToItem(
     @Req() req,
     @Param("itemId") itemId: string,
@@ -61,6 +68,9 @@ export class TagController {
   }
 
   @Put(":id")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+  })
   async updateTag(
     @Req() req,
     @Param("id") id: string,
@@ -70,11 +80,17 @@ export class TagController {
   }
 
   @Delete(":id")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+  })
   async deleteTag(@Req() req, @Param("id") id: string): Promise<void> {
     return this.tagService.deleteTag(req, id);
   }
 
   @Delete(":itemId/:tagId")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+  })
   async removeTagFromItem(
     @Req() req,
     @Param("itemId") itemId: string,

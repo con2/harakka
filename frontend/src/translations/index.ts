@@ -77,9 +77,13 @@ import { organizationLogoUploader } from "./modules/organizationLogoUploader";
 import { common } from "./modules/common";
 import { itemDetailsPage } from "./modules/itemDetailsPage";
 import { updateItemForm } from "./modules/updateItemForm";
+import { categories } from "./modules/categories";
+import { addCategory } from "./modules/addCategory";
 import { usersDetailsPage } from "./modules/usersDetailsPage";
 
 export const t = {
+  addCategory,
+  categories,
   rolesList,
   roleContextSwitcher,
   itemImageUpload,

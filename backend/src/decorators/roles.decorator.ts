@@ -9,7 +9,6 @@ export const ROLE_NAMES = [
   "user",
   "tenant_admin",
   "super_admin",
-  "superVera",
   "storage_manager",
   "requester",
 ] as const satisfies readonly Enums<"roles_type">[]; // Cross check with Supabase `roles_type` enum

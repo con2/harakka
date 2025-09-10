@@ -9,7 +9,7 @@ import {
   Query,
   Req,
 } from "@nestjs/common";
-import { Roles } from "@src/decorators/roles.decorator";
+import { Public, Roles } from "@src/decorators/roles.decorator";
 import { CategoriesService } from "./categories.service";
 import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 import { GetParamsDto } from "./dto/params.dto";
@@ -21,13 +21,14 @@ export class CategoriesController {
 
   // Get All Categories
   @Get()
+  @Public()
   async getCategories(@Query() params: GetParamsDto) {
     return await this.categoryService.getCategories(params);
   }
 
   // Create New Category
   @Post()
-  @Roles(["tenant_admin", "storage_manager"])
+  @Roles(["tenant_admin"])
   async createCategory(
     @Req() req: AuthRequest,
     @Body() newCategory: CreateCategoryDto,
@@ -38,7 +39,7 @@ export class CategoriesController {
 
   // Update a Category
   @Patch(":id")
-  @Roles(["tenant_admin", "storage_manager"])
+  @Roles(["tenant_admin"])
   async updateCategory(
     @Req() req: AuthRequest,
     @Param("id") id: string,
@@ -54,7 +55,7 @@ export class CategoriesController {
 
   // Delete a Category
   @Delete(":id")
-  @Roles(["tenant_admin", "storage_manager"])
+  @Roles(["tenant_admin"])
   async deleteCategory(@Req() req: AuthRequest, @Param("id") id: string) {
     const { supabase } = req;
     return await this.categoryService.deleteCategory({ supabase, id });

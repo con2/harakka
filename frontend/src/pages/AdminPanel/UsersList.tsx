@@ -10,11 +10,16 @@ import {
   selectError,
   selectLoading,
 } from "@/store/slices/usersSlice";
+import { fetchAllOrderedUsersList } from "@/store/slices/usersSlice";
+import { clearUsersList } from "@/store/slices/usersSlice";
 import {
   fetchAvailableRoles,
   selectActiveRoleContext,
   selectActiveRoleName,
+  selectAvailableRoles,
 } from "@/store/slices/rolesSlice";
+import { createUserRole } from "@/store/slices/rolesSlice";
+import { CreateUserRoleDto } from "@/types/roles";
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
@@ -40,27 +45,41 @@ const UsersList = () => {
   const { organizationId: activeOrgId, organizationName: activeOrgName } =
     useAppSelector(selectActiveRoleContext);
   const activeRoleName = useAppSelector(selectActiveRoleName);
-  const { refreshAllUserRoles, hasAnyRole } = useRoles();
+  const { refreshAllUserRoles, hasRole, hasAnyRole } = useRoles();
+  const rolesCatalog = useAppSelector(selectAvailableRoles);
 
   // ————————————— State —————————————
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [addSearchInput, setAddSearchInput] = useState("");
+  const [addSearchLoading, setAddSearchLoading] = useState(false);
+  const [addLoadMoreLoading, setAddLoadMoreLoading] = useState(false);
+  const [addSearchPage, setAddSearchPage] = useState(0);
+  const [addTotalPages, setAddTotalPages] = useState(1);
+  const [addUsersAccum, setAddUsersAccum] = useState<
+    Pick<UserProfile, "id" | "full_name" | "email">[]
+  >([]);
+  const [selectedAddUserId, setSelectedAddUserId] = useState<string | null>(
+    null,
+  );
+  const [selectedAddUserRole, setSelectedAddUserRole] =
+    useState<string>("user");
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 500);
 
   // ————————————— Derived Values —————————————
-  const isAuthorized = hasAnyRole(["superVera", "tenant_admin", "super_admin"]);
-  const isSuper = hasAnyRole(["super_admin", "superVera"]);
+  const isAuthorized = hasAnyRole(["tenant_admin", "super_admin"]);
+  const isSuper = hasRole("super_admin");
 
   useEffect(() => {
     if (isSuper) fetchAllUsers();
   }, [isSuper]);
 
   // Determine if we should fetch all users (no org filter)
-  // This happens when: User has selected a super_admin or superVera role from the navbar selector
-  const isActiveRoleSuper =
-    activeRoleName === "super_admin" || activeRoleName === "superVera";
+  // This happens when: User has selected a super_admin role from the navbar selector
+  const isActiveRoleSuper = activeRoleName === "super_admin";
   const shouldFetchAllUsers = isSuper && (!activeOrgId || isActiveRoleSuper);
 
   // Get the org_filter value based on super user logic
@@ -93,6 +112,7 @@ const UsersList = () => {
         }
       }
     });
+
     return Array.from(uniqueRoles).map((role) => ({ id: role, role }));
   }, [allUserRoles, activeOrgId, isActiveRoleSuper]);
 
@@ -101,7 +121,7 @@ const UsersList = () => {
     (userId: string) => {
       const userRoles = allUserRoles.filter((role) => role.user_id === userId);
 
-      // If the current user is super_admin/superVera and no org is selected, show all active roles
+      // If the current user is super_admin and no org is selected, show all active roles
       if (isActiveRoleSuper && !activeOrgId) {
         return userRoles
           .filter((role) => role.is_active)
@@ -201,6 +221,123 @@ const UsersList = () => {
     isSuper,
     getOrgFilter,
   ]);
+
+  // Handlers for add-new-user search and assign
+  const handleAddSearch = async () => {
+    if (!addSearchInput || addSearchInput.trim().length === 0) return;
+    setAddSearchLoading(true);
+    try {
+      const resp = await dispatch(
+        fetchAllOrderedUsersList({
+          searchquery: addSearchInput.trim(),
+          org_filter: getOrgFilter(),
+          page: 1,
+          limit: 10,
+        }),
+      ).unwrap();
+      setAddUsersAccum(resp.data ?? []);
+      setAddSearchPage(1);
+      setAddTotalPages(resp.metadata?.totalPages ?? 1);
+    } catch {
+      // Error handling is managed elsewhere
+    } finally {
+      setAddSearchLoading(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    const nextPage = addSearchPage + 1;
+    setAddLoadMoreLoading(true);
+    try {
+      const resp = await dispatch(
+        fetchAllOrderedUsersList({
+          searchquery: addSearchInput.trim(),
+          org_filter: getOrgFilter(),
+          page: nextPage,
+          limit: 10,
+        }),
+      ).unwrap();
+      const incoming = resp.data ?? [];
+      setAddUsersAccum((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        const merged = [...prev];
+        for (const item of incoming) {
+          if (!seen.has(item.id)) {
+            merged.push(item);
+            seen.add(item.id);
+          }
+        }
+        return merged;
+      });
+      setAddSearchPage(nextPage);
+      setAddTotalPages(resp.metadata?.totalPages ?? addTotalPages);
+    } catch {
+      // ignore
+    } finally {
+      setAddLoadMoreLoading(false);
+    }
+  };
+
+  const handleAssignRole = async () => {
+    if (!selectedAddUserId) return;
+    if (!activeOrgId) {
+      // We require an active organization to assign org-specific roles
+      // In case of Global assignment this flow would differ
+      alert("Please select an active organization before assigning a role.");
+      return;
+    }
+    // Resolve role_id from available roles (roles table) because backend expects role_id
+    const roleRow = rolesCatalog.find((r) => r.role === selectedAddUserRole);
+    if (!roleRow) {
+      alert(
+        "Selected role not available on the server. Please refresh available roles and try again.",
+      );
+      return;
+    }
+
+    const payload: CreateUserRoleDto = {
+      user_id: selectedAddUserId,
+      organization_id: activeOrgId,
+      role_id: roleRow.id,
+      is_active: true,
+    } as unknown as CreateUserRoleDto;
+
+    try {
+      await dispatch(createUserRole(payload)).unwrap();
+      await refreshAllUserRoles();
+      try {
+        await dispatch(
+          fetchAllOrderedUsers({
+            org_filter: getOrgFilter(),
+            page: 1,
+            limit: 10,
+            ascending: true,
+            ordered_by: "created_at",
+            searchquery: debouncedSearchQuery || undefined,
+          }),
+        ).unwrap();
+      } catch {
+        // Ignore re-fetch errors;
+      }
+      // Clear lightweight add-user search results so reopening the panel doesn't show stale data
+      void dispatch(clearUsersList());
+      setShowAddUser(false);
+      setAddSearchInput("");
+      setSelectedAddUserId(null);
+    } catch {
+      // error is handled by roles slice state;
+    }
+  };
+
+  // clear previous search results when opening the panel
+  const toggleAddUser = useCallback(() => {
+    if (!showAddUser) {
+      void dispatch(clearUsersList());
+      setAddSearchInput("");
+      setSelectedAddUserId(null);
+    }
+    setShowAddUser((s) => !s);
+  }, [dispatch, showAddUser]);
 
   // ————————————— Helper Functions —————————————
   // Helper: derive the organization name for a given user for this view
@@ -399,9 +536,156 @@ const UsersList = () => {
             </Button>
           )}
         </div>
-        {/* TODO: update this button to add a new member to an org (Global User) */}
-        <div>
-          <Button variant={"outline"}>Add New User</Button>
+        {/* Add a new member to an org section */}
+        <div className="relative">
+          <Button variant={"outline"} onClick={toggleAddUser}>
+            {t.usersList.addUser.title[lang]}
+          </Button>
+
+          {showAddUser && (
+            <div className="absolute right-0 mt-2 p-4 w-96 bg-white border rounded shadow-lg z-50">
+              <div className="flex gap-2 items-center mb-2">
+                <input
+                  type="text"
+                  placeholder={t.usersList.filters.search[lang]}
+                  value={addSearchInput}
+                  onChange={(e) => setAddSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (addSearchInput && addSearchInput.trim().length > 0) {
+                        void handleAddSearch();
+                      }
+                    }
+                  }}
+                  required
+                  aria-required="true"
+                  className="flex-1 text-sm p-2 bg-white rounded-md border"
+                />
+                <Button
+                  variant={"outline"}
+                  size="sm"
+                  onClick={handleAddSearch}
+                  disabled={
+                    addSearchLoading ||
+                    !(addSearchInput && addSearchInput.trim().length > 0)
+                  }
+                >
+                  {addSearchLoading ? (
+                    <LoaderCircle className="animate-spin h-4 w-4" />
+                  ) : (
+                    t.usersList.addUser.searchButton[lang]
+                  )}
+                </Button>
+              </div>
+
+              <div className="max-h-80 overflow-auto mb-2">
+                {addUsersAccum.length ? (
+                  addUsersAccum.map((u) => {
+                    // map to annotated info using existing role lookup
+                    const hasRoleInActiveOrg = Boolean(
+                      activeOrgId &&
+                        allUserRoles.find(
+                          (r) =>
+                            r.user_id === u.id &&
+                            r.organization_id === activeOrgId,
+                        ),
+                    );
+                    const disabled = hasRoleInActiveOrg;
+                    return (
+                      <label
+                        key={u.id}
+                        className={`flex items-center gap-2 p-1 ${
+                          disabled
+                            ? "opacity-60 cursor-not-allowed"
+                            : "hover:bg-slate-50"
+                        } rounded`}
+                      >
+                        <input
+                          type="radio"
+                          name="selectedAddUser"
+                          checked={selectedAddUserId === u.id}
+                          onChange={() => {
+                            if (!disabled) setSelectedAddUserId(u.id);
+                          }}
+                          disabled={disabled}
+                        />
+                        <div className="text-sm">
+                          <div className="font-medium">{u.full_name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {u.email}
+                          </div>
+                        </div>
+                        {disabled && (
+                          <div className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded ml-auto">
+                            {t.usersList.addUser.member[lang]}
+                          </div>
+                        )}
+                      </label>
+                    );
+                  })
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    {t.usersList.addUser.noResults[lang]}
+                  </div>
+                )}
+              </div>
+              {addUsersAccum.length > 0 && addSearchPage < addTotalPages && (
+                <div className="flex justify-center my-4">
+                  <Button
+                    variant={"ghost"}
+                    size="sm"
+                    onClick={handleLoadMore}
+                    disabled={addLoadMoreLoading}
+                  >
+                    {addLoadMoreLoading
+                      ? t.usersList.addUser.buttons.loading[lang]
+                      : t.usersList.addUser.buttons.loadMore[lang]}
+                  </Button>
+                </div>
+              )}
+
+              <div className="flex gap-2 items-center justify-between">
+                <select
+                  value={selectedAddUserRole}
+                  onChange={(e) => setSelectedAddUserRole(e.target.value)}
+                  className="select bg-white text-sm p-2 rounded-md"
+                >
+                  <option value="user">
+                    {t.usersList.addUser.roles.user[lang]}
+                  </option>
+                  <option value="storage_manager">
+                    {t.usersList.addUser.roles.storageManager[lang]}
+                  </option>
+                  <option value="requester">
+                    {t.usersList.addUser.roles.requester[lang]}
+                  </option>
+                </select>
+                <Button
+                  size="sm"
+                  variant={"secondary"}
+                  onClick={handleAssignRole}
+                  disabled={!selectedAddUserId}
+                >
+                  {t.usersList.addUser.buttons.assign[lang]}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => {
+                    setShowAddUser(false);
+                    setAddSearchInput("");
+                    setSelectedAddUserId(null);
+                    setAddUsersAccum([]);
+                    setAddSearchPage(0);
+                    void dispatch(clearUsersList());
+                  }}
+                >
+                  {t.usersList.addUser.buttons.close[lang]}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
