@@ -1,3 +1,4 @@
+import { BookingWithDetails } from "@/types";
 import { CSVItem } from "@common/items/csv.types";
 import { CreateItemType, SelectedStorage } from "@common/items/form.types";
 
@@ -66,4 +67,32 @@ export function formatErrors(
     }
     return acc;
   }, {});
+}
+
+/**
+ * Sort booking items by status.
+ * Pending -> Confirmed -> Picked_up -> Returned -> Cancelled -> Rejected -> Completed
+ * @param arr
+ * @returns
+ */
+export function sortByStatus(arr: BookingWithDetails["booking_items"]) {
+  if (!arr) return;
+  const order = {
+    pending: 0,
+    confirmed: 1,
+    picked_up: 2,
+    returned: 3,
+    cancelled: 4,
+    rejected: 5,
+    completed: 7,
+  };
+  const defaultIndex = 6;
+  return arr
+    .map((item, idx) => ({ __idx: idx, item }))
+    .sort((a, b) => {
+      const oa = order[a.item.status] ?? defaultIndex;
+      const ob = order[b.item.status] ?? defaultIndex;
+      return oa - ob || a.__idx - b.__idx;
+    })
+    .map((entry) => entry.item);
 }

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useAppDispatch } from "@/store/hooks";
-import { returnItems } from "@/store/slices/bookingsSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { returnItems, selectBookingError } from "@/store/slices/bookingsSlice";
 import { RotateCcw } from "lucide-react";
 import { toastConfirm } from "../../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
@@ -9,13 +9,18 @@ import { t } from "@/translations";
 
 const BookingReturnButton = ({
   id,
-  closeModal,
+  disabled = false,
+  itemIds,
+  onSuccess,
 }: {
   id: string;
-  closeModal: () => void;
+  disabled?: boolean;
+  itemIds?: string[];
+  onSuccess?: () => void;
 }) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
+  const error = useAppSelector(selectBookingError);
 
   const handleReturnItems = () => {
     if (!id) {
@@ -29,12 +34,19 @@ const BookingReturnButton = ({
       confirmText: t.bookingReturn.confirmDialog.confirmText[lang],
       cancelText: t.bookingReturn.confirmDialog.cancelText[lang],
       onConfirm: () => {
-        toast.promise(dispatch(returnItems(id)).unwrap(), {
+        const promise = dispatch(
+          returnItems({ bookingId: id, itemIds }),
+        ).unwrap();
+
+        toast.promise(promise, {
           loading: t.bookingReturn.toast.loading[lang],
           success: t.bookingReturn.toast.success[lang],
-          error: t.bookingReturn.toast.error[lang],
+          error: error ?? t.bookingReturn.toast.error[lang],
         });
-        closeModal();
+
+        void promise.then(() => {
+          if (onSuccess) onSuccess();
+        });
       },
     });
   };
@@ -43,7 +55,8 @@ const BookingReturnButton = ({
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => handleReturnItems()}
+      disabled={disabled}
+      onClick={handleReturnItems}
       title={t.bookingList.buttons.return[lang]}
       className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
     >

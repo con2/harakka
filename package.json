@@ -65,7 +65,10 @@
     "s:migration:up": "npx supabase migration up",
     "s:functions:serve": "npx supabase functions serve",
     "s:functions:deploy": "npx supabase functions deploy",
-    "s:seed": "env-cmd -f .env.local npx supabase db dump --data-only -f supabase/seed.sql",
+
+    "s:seed:main": "npx @dotenvx/dotenvx run -f .env.local -- npx supabase db dump --data-only -s auth,public -f supabase/seed.sql",
+    "s:seed:dev": "npx @dotenvx/dotenvx run -f .env.supabase.local -- npx supabase db dump --data-only -s auth,public -f supabase/seed.sql",
+    
     "infisical:sync:local:env": "infisical export --env=staging --format=dotenv > .env.local.recovered && echo '✅ Local environment synced to .env.local.recovered'",
     "infisical:sync:supabase:local": "infisical export --env=dev --format=dotenv > .env.supabase.local.recovered && echo '✅ Supabase local environment synced to .env.supabase.local.recovered'",
     "infisical:sync:both": "npm run infisical:sync:local:env && npm run infisical:sync:supabase:local && echo '🎉 Both environment files synced! Check .env.local.recovered and .env.supabase.local.recovered'",

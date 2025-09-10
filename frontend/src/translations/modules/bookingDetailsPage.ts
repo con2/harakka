@@ -97,13 +97,29 @@ export const bookingDetailsPage = {
         fi: "Hylkää valitut",
         en: "Reject selected",
       },
-      selectAll: {
-        fi: "Valitse kaikki",
-        en: "Select All",
+      pickUpAll: {
+        en: "Mark all as picked up",
+        fi: "Merkitse kaikki noudetuiksi",
       },
-      deselectAll: {
-        fi: "Poista valinnat",
-        en: "Deselect All",
+      pickUpSome: {
+        en: "Mark {amount} items as picked up",
+        fi: "Merkitse {amount} tuotetta noudetuksi",
+      },
+      returnAll: {
+        en: "Mark all as returned",
+        fi: "Merkitse kaikki palautetuiksi",
+      },
+      returnSome: {
+        en: "Mark {amount} items as returned",
+        fi: "Merkitse {amount} tuotetta palautetuksi",
+      },
+      cancelAll: {
+        en: "Mark all as cancelled",
+        fi: "Merkitse kaikki peruutetuiksi",
+      },
+      cancelSome: {
+        en: "Mark {amount} items as cancelled",
+        fi: "Merkitse {amount} tuotetta perutetuiksi",
       },
     },
   },

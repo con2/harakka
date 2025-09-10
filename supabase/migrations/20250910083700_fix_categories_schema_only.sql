@@ -1,17 +1,32 @@
-CREATE TABLE categories (
+-- Fix categories migration - schema only, no seed data
+-- This replaces 20250902083305_add_categories_table.sql but with only schema changes
+
+CREATE TABLE IF NOT EXISTS categories (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
     parent_id uuid REFERENCES categories (id) ON DELETE SET NULL,
     translations jsonb NOT NULL,
     created_at timestamptz DEFAULT now() NOT NULL
 );
 
-ALTER TABLE storage_items
-ADD COLUMN category_id uuid REFERENCES categories(id);
+-- Add category_id column to storage_items if it doesn't exist
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name='storage_items' 
+        AND column_name='category_id'
+    ) THEN
+        ALTER TABLE storage_items
+        ADD COLUMN category_id uuid REFERENCES categories(id);
+    END IF;
+END $$;
 
-drop view if exists view_manage_storage_items;
+-- Recreate the view with category_id
+DROP VIEW IF EXISTS view_manage_storage_items;
 
-create view public.view_manage_storage_items as
-select
+CREATE VIEW public.view_manage_storage_items AS
+SELECT
   (s.translations -> 'fi'::text) ->> 'item_name'::text as fi_item_name,
   (s.translations -> 'fi'::text) ->> 'item_type'::text as fi_item_type,
   (s.translations -> 'en'::text) ->> 'item_name'::text as en_item_name,
@@ -29,12 +44,12 @@ select
   s.is_deleted,
   s.org_id as organization_id,
   s.category_id
-from
+FROM
   storage_items s
-  join storage_locations l on s.location_id = l.id
-  left join storage_item_tags t on s.id = t.item_id
-  left join tags g on t.tag_id = g.id
-group by
+  JOIN storage_locations l on s.location_id = l.id
+  LEFT JOIN storage_item_tags t on s.id = t.item_id
+  LEFT JOIN tags g on t.tag_id = g.id
+GROUP BY
   s.id,
   s.translations,
   s.quantity,
@@ -44,5 +59,5 @@ group by
   l.name,
   s.available_quantity,
   s.is_deleted,
-  s.org_id;
-
+  s.org_id,
+  s.category_id;

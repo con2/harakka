@@ -1,3 +1,5 @@
+import { BookingStatus } from "@/types";
+
 /**
  * Format snake_case role names into more legible, presentable strings
  * @param roleName e.g. "super_admin", "storage_manager"
@@ -27,4 +29,8 @@ export function getOrgLabel(
   if (orgName === "Global") return userName ?? "User";
   if (roleName === "super_admin") return "Super Admin";
   return `${formatRoleName(roleName)} at ${orgName}`;
+}
+
+export function formatBookingStatus(status: BookingStatus) {
+  return status?.replace("_", " ");
 }
