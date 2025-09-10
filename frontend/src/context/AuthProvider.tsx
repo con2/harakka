@@ -33,32 +33,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         setSetupInProgress(true);
+        console.log("🔍 Starting user authentication flow for:", user.id);
+
+        // Ensure we have a valid session before proceeding
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          console.log("⚠️ No valid session yet, waiting 1.5 seconds...");
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          // Try again to get the session
+          const { data: retrySessionData } = await supabase.auth.getSession();
+          if (!retrySessionData.session) {
+            console.error("❌ Failed to get a valid session after retry");
+            throw new Error("No authenticated session available");
+          }
+          console.log("✅ Got valid session after retry");
+        } else {
+          console.log("✅ Valid session already available");
+        }
 
         // Check if user needs setup
+        console.log("👀 Checking if user needs setup...");
         const setupStatus = await AuthService.checkUserSetupStatus(user.id);
+        console.log("📊 User setup status:", setupStatus);
 
         if (setupStatus.needsSetup) {
+          console.log("🔧 User needs setup, proceeding...");
+
           // Determine signup method based on user metadata
           const isOAuthUser =
             user.app_metadata?.provider !== "email" ||
             !!user.user_metadata?.provider;
           const signupMethod = isOAuthUser ? "oauth" : "email";
+          console.log("📝 Using signup method:", signupMethod);
 
+          // Debug payload before sending
+          const profileData = AuthService.extractUserProfileData(
+            user,
+            signupMethod,
+          );
+          console.log("📦 Will use profile data:", {
+            ...profileData,
+            email: profileData.email
+              ? `${profileData.email.substring(0, 3)}***`
+              : null,
+          });
+
+          // Add a delay before calling setupNewUser to ensure everything is ready
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          console.log("🚀 Calling setupNewUser...");
           const result = await AuthService.setupNewUser(user, signupMethod);
+          console.log("📬 Setup result:", result);
 
           if (result.success) {
+            console.log("✅ User setup successful!");
             // After successful setup, clear cached token and force session refresh
             clearCachedAuthToken();
 
-            // Wait a bit for backend JWT update to propagate
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            // Wait a bit longer for backend JWT update to propagate
+            console.log("⏳ Waiting for JWT update to propagate...");
+            await new Promise((resolve) => setTimeout(resolve, 2000));
 
             // Force a session refresh to get the updated JWT with roles
+            console.log("🔄 Refreshing session...");
             const { data: refreshData, error: refreshError } =
               await supabase.auth.refreshSession();
+
             if (refreshError) {
-              console.warn("Session refresh failed:", refreshError);
+              console.warn("⚠️ Session refresh failed:", refreshError);
             } else {
+              console.log("✅ Session refreshed successfully");
               setSession(refreshData.session);
               setUser(refreshData.user);
             }
@@ -66,12 +110,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Trigger role reload by resetting rolesLoaded
             setRolesLoaded(false);
           } else {
+            console.error("❌ Account setup failed:", result.error);
             toast.error("Account setup failed");
             // Sign out the user if setup fails
             await supabase.auth.signOut();
           }
+        } else {
+          console.log("✅ User already set up, nothing to do");
         }
-      } catch {
+      } catch (error) {
+        console.error("❌ Error in handleUserAuthentication:", error);
         toast.error(
           "There was an issue setting up your account. Please contact support if this persists.",
         );
@@ -92,69 +140,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event: string, session) => {
+    } = supabase.auth.onAuthStateChange((event: string, session) => {
+      console.log(`🎉 AUTH EVENT DETECTED: ${event}`, session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       setAuthLoading(false);
 
-      // Handle user setup for signup and potentially incomplete signin
       if (session?.user) {
-        if (event === "SIGNED_UP") {
-          await handleUserAuthentication(session.user, event);
-        } else if (event === "SIGNED_IN") {
-          // For signed in users, verify they have complete setup
-          // This catches cases where SIGNED_UP didn't trigger or OAuth flows
-          setTimeout(async () => {
-            try {
-              const setupStatus = await AuthService.checkUserSetupStatus(
-                session.user.id,
-              );
+        // Add this debug log to trace the event
+        console.log(`🔄 Auth event ${event} with user:`, {
+          id: session.user.id,
+          email: session.user.email,
+          created_at: new Date(session.user.created_at).toISOString(),
+          last_sign_in_at: session.user.last_sign_in_at
+            ? new Date(session.user.last_sign_in_at).toISOString()
+            : null,
+        });
 
-              if (setupStatus.needsSetup) {
-                setSetupInProgress(true);
+        // Detect if this is a new user (created within the last minute)
+        const userCreatedAt = new Date(session.user.created_at);
+        const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+        const isNewUser = userCreatedAt > oneMinuteAgo;
 
-                const isOAuthUser =
-                  session.user.app_metadata?.provider !== "email" ||
-                  !!session.user.user_metadata?.provider;
-                const signupMethod = isOAuthUser ? "oauth" : "email";
-
-                // Call the backend to complete user setup directly (without modal)
-                const result = await AuthService.setupNewUser(
-                  session.user,
-                  signupMethod,
-                );
-
-                if (result.success) {
-                  // Clear cached token and force session refresh
-                  clearCachedAuthToken();
-
-                  // Wait a bit for backend JWT update to propagate
-                  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-                  // Force a session refresh to get the updated JWT with roles
-                  const { data: refreshData, error: refreshError } =
-                    await supabase.auth.refreshSession();
-                  if (refreshError) {
-                    console.warn("Session refresh failed:", refreshError);
-                  } else {
-                    setSession(refreshData.session);
-                    setUser(refreshData.user);
-                  }
-
-                  setRolesLoaded(false); // Trigger role reload
-                } else {
-                  toast.error("Account setup failed");
-                  await supabase.auth.signOut();
-                }
-
-                setSetupInProgress(false);
-              }
-            } catch (error) {
-              console.error("Error during SIGNED_IN setup check:", error);
-              setSetupInProgress(false);
-            }
-          }, 500); // Reduced delay for faster response
+        // Handle new user signup from any auth event
+        if (isNewUser) {
+          console.log(
+            `🆕 NEW USER DETECTED (created: ${userCreatedAt.toISOString()})`,
+          );
+          void handleUserAuthentication(session.user, event);
+          return;
         }
+
+        setTimeout(async () => {
+          try {
+            // Always check if setup is needed, regardless of event type
+            const setupStatus = await AuthService.checkUserSetupStatus(
+              session.user.id,
+            );
+            console.log("User setup status:", setupStatus);
+
+            if (setupStatus.needsSetup) {
+              console.log("📝 User needs setup, proceeding with onboarding...");
+              await handleUserAuthentication(session.user, event);
+            } else {
+              console.log("✅ User already setup, nothing to do");
+            }
+          } catch (error) {
+            console.error("❌ Error checking user setup:", error);
+            toast.error(
+              "Failed to verify account status. Please try again or contact support.",
+            );
+          }
+        }, 1000);
       }
     });
 

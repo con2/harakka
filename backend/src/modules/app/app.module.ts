@@ -107,6 +107,10 @@ export class AppModule implements NestModule {
         { path: "auth/get-fresh-token", method: RequestMethod.POST },
         { path: "auth/endpoints", method: RequestMethod.GET },
 
+        // User setup flow
+        //{ path: "user-setup/setup", method: RequestMethod.POST },
+        { path: "user-setup/check-status", method: RequestMethod.POST },
+
         // Health checks and public endpoints
         { path: "health", method: RequestMethod.GET },
         { path: "", method: RequestMethod.GET }, // Root endpoint

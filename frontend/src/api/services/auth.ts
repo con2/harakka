@@ -36,111 +36,88 @@ export class AuthService {
     signupMethod: "email" | "oauth" = "email",
     userInput?: { full_name?: string; phone?: string },
   ): Promise<SignUpResult> {
+    console.log("I'm setupNewUser");
     try {
+      console.log(`🔍 SETUP: Starting setup for user ID: ${user.id}`);
+
       // Extract user data based on signup method
       const profileData = this.extractUserProfileData(user, signupMethod);
 
-      // Override with user input if provided
-      if (userInput) {
-        if (userInput.full_name) {
-          profileData.full_name = userInput.full_name;
-          profileData.visible_name = userInput.full_name;
-        }
-        if (userInput.phone) {
-          profileData.phone = userInput.phone;
-        }
-      }
-
-      // Check if user has both profile AND role (complete setup)
+      // First, check if this user actually needs setup
+      console.log(`Checking if user ${user.id} needs setup`);
       const setupStatus = await this.checkUserSetupStatus(user.id);
+      console.log(`Setup status for ${user.id}:`, setupStatus);
 
       if (!setupStatus.needsSetup) {
+        console.log(`User ${user.id} already setup, skipping`);
         return { success: true, user, isNewUser: false };
       }
 
-      // Call backend API to setup user (will handle both profile creation and role assignment)
-      const setupPayload = {
-        email: profileData.email,
-        full_name: profileData.full_name,
-        phone: profileData.phone,
-        visible_name: profileData.visible_name,
-        provider: profileData.provider,
-      };
-
-      // Get the current session for authentication
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      // Get auth token once
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
+      const token = session?.access_token;
 
       if (!session) {
+        console.error("No authenticated session found");
         throw new Error("No authenticated session found");
       }
 
-      // Call backend user setup endpoint
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/user-setup/setup`,
-        {
+      console.log("🔄 Attempting direct fetch to setup endpoint");
+
+      // Call backend API to setup user
+      const setupPayload = {
+        userId: user.id,
+        email: profileData.email,
+        full_name: userInput?.full_name || profileData.full_name,
+        phone: userInput?.phone || profileData.phone,
+        visible_name: profileData.visible_name,
+        provider: profileData.provider,
+      };
+      console.log("📡 Sending setup request with payload:", {
+        ...setupPayload,
+        email: setupPayload.email
+          ? `${setupPayload.email.substring(0, 3)}***`
+          : null,
+      });
+
+      // Use the configured API URL from environment
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      console.log(`🔌 Using API URL: ${apiUrl}`);
+
+      try {
+        const response = await fetch(`${apiUrl}/user-setup/setup`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
+            Authorization: token ? `Bearer ${token}` : "",
           },
           body: JSON.stringify(setupPayload),
-        },
-      );
+        });
 
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "Unknown error" }));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
+        // Test additional response properties
+        console.log("✅ Response status:", response.status);
+        console.log("✅ Response status text:", response.statusText);
+        console.log("✅ Response headers:", [...response.headers.entries()]);
 
-      const result = await response.json();
-
-      if (result.success) {
-        // Force refresh the session to update JWT with new role information
-        try {
-          // Wait a moment for the backend JWT update to propagate
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          // Try multiple refresh attempts
-          let refreshAttempts = 0;
-          const maxRefreshAttempts = 3;
-
-          while (refreshAttempts < maxRefreshAttempts) {
-            refreshAttempts++;
-
-            const { data: refreshData, error: refreshError } =
-              await supabase.auth.refreshSession();
-
-            if (refreshError) {
-              if (refreshAttempts < maxRefreshAttempts) {
-                // Wait before retrying
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-                continue;
-              }
-            } else {
-              // Verify we have a valid session with token
-              if (refreshData?.session?.access_token) {
-                // Token successfully obtained
-              }
-              break;
-            }
-          }
-        } catch {
-          // Silently handle refresh errors
-        }
+        // Parse and return result
+        const result = await response.json();
+        console.log("✅ Direct fetch result:", result);
 
         return {
-          success: true,
+          success: result.success,
           user,
           isNewUser: true,
         };
-      } else {
-        throw new Error(result.error || "User setup failed");
+      } catch (fetchError) {
+        console.error("❌ Direct fetch failed:", fetchError);
+        throw fetchError;
       }
     } catch (error) {
+      console.error(
+        "User setup failed:",
+        error instanceof Error ? error.message : String(error),
+      );
       return {
         success: false,
         error:
@@ -153,11 +130,12 @@ export class AuthService {
   /**
    * Extract user profile data from Supabase user object
    */
-  private static extractUserProfileData(
+  static extractUserProfileData(
     user: User,
     signupMethod: "email" | "oauth",
   ): UserProfileData {
     const { email, user_metadata, app_metadata } = user;
+    console.log("I'm extractUserProfileData");
 
     if (signupMethod === "oauth") {
       // For OAuth providers like Google
@@ -201,13 +179,21 @@ export class AuthService {
    * Check if user needs profile setup using backend API
    */
   static async checkUserSetupStatus(userId: string): Promise<UserSetupStatus> {
+    console.log("I'm checkUserSetupStatus");
     try {
+      console.log(`Checking user setup status for: ${userId}`);
       const response = await api.post<UserSetupStatus>(
         "/user-setup/check-status",
         { userId },
       );
+      console.log("User setup status response:", response.data);
       return response.data;
-    } catch {
+    } catch (error) {
+      console.error(
+        `Failed to check user setup status: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ); // ADD THIS: Log with safe error handling
       return {
         hasProfile: false,
         hasRole: false,

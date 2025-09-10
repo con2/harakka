@@ -14,6 +14,7 @@ import {
   SetupUserRequest,
   SetupUserResponse,
   CreateUserProfileDto,
+  CheckStatusDto,
 } from "./interfaces/user-setup.interface";
 import { AuthRequest } from "../../middleware/interfaces/auth-request.interface";
 
@@ -28,12 +29,43 @@ export class UserSetupController {
     @Body() createUserDto: CreateUserProfileDto,
     @Req() req: AuthRequest,
   ): Promise<SetupUserResponse> {
+    this.logger.log(
+      `⭐ Setup endpoint called with data: ${JSON.stringify({
+        userId: createUserDto.userId || req.user?.id || "none",
+        hasAuthUser: !!req.user,
+        email: createUserDto.email
+          ? `${createUserDto.email.substring(0, 3)}***`
+          : "none",
+      })}`,
+    );
+
     try {
       // Get userId from authenticated request
-      const userId = req.user.id;
+      const userId = createUserDto.userId || req.user?.id;
+
+      if (!userId) {
+        this.logger.error("No userId found in request");
+        throw new BadRequestException("userId is required");
+      }
 
       if (!createUserDto.email) {
         throw new BadRequestException("email is required");
+      }
+      this.logger.log(`✅ User ID validation passed: ${userId}`);
+
+      // Validate user exists (only for unauthenticated requests)
+      if (!req.user) {
+        this.logger.log(`🔍 Validating user existence: ${userId}`);
+        const userExists =
+          await this.userSetupService.validateUserExists(userId);
+        this.logger.log(`👤 User exists check result: ${userExists}`);
+
+        if (!userExists) {
+          this.logger.warn(
+            `⛔ Setup attempted for non-existent user ${userId}`,
+          );
+          throw new BadRequestException("Invalid user ID");
+        }
       }
 
       const setupData: SetupUserRequest = {
@@ -45,7 +77,9 @@ export class UserSetupController {
         provider: createUserDto.provider || "manual",
       };
 
+      this.logger.log(`🚀 Calling setupNewUser with userId: ${userId}`);
       const result = await this.userSetupService.setupNewUser(setupData);
+      this.logger.log(`📋 Setup result: ${JSON.stringify(result)}`);
 
       if (!result.success) {
         throw new InternalServerErrorException(
@@ -55,7 +89,7 @@ export class UserSetupController {
 
       return result;
     } catch (error) {
-      this.logger.error(`User setup failed: ${error.message}`, error.stack);
+      this.logger.error(`❌ User setup failed: ${error.message}`, error.stack);
 
       if (
         error instanceof ForbiddenException ||
@@ -73,32 +107,51 @@ export class UserSetupController {
 
   @Post("check-status")
   async checkUserSetupStatus(
-    @Body() body: { userId: string },
+    @Body() body: CheckStatusDto,
     @Req() req: AuthRequest,
   ) {
+    this.logger.log(
+      `Setup request received for userId: ${body.userId}, auth user: ${req.user?.id || "none"}`,
+    );
     try {
       if (!body.userId) {
         throw new BadRequestException("userId is required");
       }
 
-      // Security: Users can only check their own status, unless they have admin roles
-      const isOwnStatus = body.userId === req.user.id;
-      const isAdmin = req.userRoles.some(
-        (role) => role.role_name === "super_admin",
-      );
-
-      if (!isOwnStatus && !isAdmin) {
-        throw new ForbiddenException(
-          "You can only check your own setup status",
+      // If no authenticated user (req.user is undefined), skip permission check
+      if (!req.user) {
+        this.logger.warn(
+          "No authenticated user found in request, skipping permission check",
         );
       }
+      if (req.user) {
+        // Security: Users can only check their own status, unless they have admin roles
+        const isOwnStatus = body.userId === req.user.id;
+        const isAdmin = req.userRoles?.some(
+          (role) => role.role_name === "super_admin",
+        );
 
+        if (!isOwnStatus && !isAdmin) {
+          throw new ForbiddenException(
+            "You can only check your own setup status",
+          );
+        }
+      }
+
+      // Pass validateAuth: true to verify user exists in auth.users
       const status = await this.userSetupService.checkUserSetupStatus(
         body.userId,
+        true, // Enable user validation
       );
+
+      // Include userExists in response if available
       return {
         success: true,
-        data: status,
+        data: {
+          ...status,
+          // Only expose userExists property if it's false (for security)
+          userExists: status.userExists === false ? false : undefined,
+        },
       };
     } catch (error) {
       this.logger.error(`Check status failed: ${error.message}`, error.stack);
