@@ -300,4 +300,19 @@ export const bookingsApi = {
   getBookingsCount: async (): Promise<ApiSingleResponse<number>> => {
     return await api.get(`/bookings/count`);
   },
+
+  /**
+   * Update the self-pickup status of a booking
+   * Only updates PER org and PER location.
+   */
+  updateSelfPickup: async (
+    bookingId: string,
+    location_id: string,
+    newStatus: boolean,
+  ): Promise<{ message: string }> => {
+    return await api.patch(`bookings/${bookingId}/self-pickup`, {
+      location_id,
+      newStatus,
+    });
+  },
 };
