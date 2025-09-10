@@ -52,8 +52,10 @@ export class UserService {
   async getAllOrderedUsersList(req: AuthRequest, dto: GetOrderedUsersDto) {
     const supabase = req.supabase;
 
-    // Build the main user query
-    let query = supabase.from("user_profiles").select("id, full_name, email");
+    // Build the main user query (ask Supabase for an exact count so metadata is accurate)
+    let query = supabase
+      .from("user_profiles")
+      .select("id, full_name, email", { count: "exact" });
 
     // Apply search query if provided
     if (dto.searchquery) {
@@ -72,32 +74,30 @@ export class UserService {
     const limit = Number(dto.limit) || 10;
     const offset = (page - 1) * limit;
     query = query.range(offset, offset + limit - 1);
-
-    const { data, error } = await query;
-
-    if (error) {
-      handleSupabaseError(error);
+    const result = await query;
+    if (result.error) {
+      handleSupabaseError(result.error);
     }
-
-    if (!data) {
+    const data = (result.data ?? []) as Array<
+      Pick<UserProfile, "id" | "full_name" | "email">
+    >;
+    if (!data || data.length === 0) {
       return {
-        data: [],
+        result: [],
         metadata: getPaginationMeta(0, page, limit),
       };
     }
-
-    // Ensure the data matches the expected type
-    const result: Pick<UserProfile, "id" | "full_name" | "email">[] = data.map(
+    const rows: Pick<UserProfile, "id" | "full_name" | "email">[] = data.map(
       (user) => ({
         id: user.id,
         full_name: user.full_name,
         email: user.email,
       }),
     );
-
+    const totalCount = (result.count as number) ?? rows.length;
     return {
-      result,
-      metadata: getPaginationMeta(data.length, page, limit),
+      result: rows,
+      metadata: getPaginationMeta(totalCount, page, limit),
     };
   }
 

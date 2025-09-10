@@ -4,6 +4,10 @@ NOTES.md
 .env.*
 !.env.production.template
 !.env.local.template
+!supabase/.env.production
+!supabase/.env.preview
+supabase/.env.local
+supabase/.env.keys
 .env.supabase.local
 !.env.supabase.local.template
 supabase-project

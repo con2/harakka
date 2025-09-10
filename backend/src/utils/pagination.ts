@@ -6,6 +6,7 @@ export function getPaginationRange(
   // ensure valid numbers - safer fallback
   const safePage = Number.isFinite(page) && page > 0 ? page : 1; // at least 1
   const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 10; // at least 10
+
   // calculations
   const from = (safePage - 1) * safeLimit;
   const to = from + safeLimit - 1;

@@ -78,10 +78,6 @@ export const common = {
       fi: "Käyttäjä",
       en: "User",
     },
-    superVera: {
-      fi: "Super Vera",
-      en: "Super Vera",
-    },
     storageManager: {
       fi: "Varastonhoitaja",
       en: "Storage Manager",

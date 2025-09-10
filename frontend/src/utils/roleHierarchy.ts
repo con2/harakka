@@ -33,7 +33,7 @@ export const getRoleLevel = (roleName: string): number => {
  * Check if a role is a super admin role
  */
 export const isSuperAdminRole = (roleName: string): boolean => {
-  return roleName === "super_admin" || roleName === "superVera";
+  return roleName === "super_admin";
 };
 
 /**

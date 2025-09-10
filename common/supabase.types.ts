@@ -205,19 +205,22 @@ export type Database = {
       }
       categories: {
         Row: {
+          created_at: string
           id: string
-          name: string
           parent_id: string | null
+          translations: Json
         }
         Insert: {
+          created_at?: string
           id?: string
-          name: string
           parent_id?: string | null
+          translations: Json
         }
         Update: {
+          created_at?: string
           id?: string
-          name?: string
           parent_id?: string | null
+          translations?: Json
         }
         Relationships: [
           {
@@ -225,6 +228,13 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "view_category_details"
             referencedColumns: ["id"]
           },
         ]
@@ -749,6 +759,7 @@ export type Database = {
         Row: {
           available_quantity: number | null
           average_rating: number | null
+          category_id: string | null
           compartment_id: string | null
           created_at: string | null
           id: string
@@ -762,6 +773,7 @@ export type Database = {
         Insert: {
           available_quantity?: number | null
           average_rating?: number | null
+          category_id?: string | null
           compartment_id?: string | null
           created_at?: string | null
           id?: string
@@ -775,6 +787,7 @@ export type Database = {
         Update: {
           available_quantity?: number | null
           average_rating?: number | null
+          category_id?: string | null
           compartment_id?: string | null
           created_at?: string | null
           id?: string
@@ -786,6 +799,20 @@ export type Database = {
           translations?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "storage_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storage_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "view_category_details"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "storage_items_compartment_id_fkey"
             columns: ["compartment_id"]
@@ -1052,6 +1079,13 @@ export type Database = {
             foreignKeyName: "user_ban_history_role_assignment_id_fkey"
             columns: ["role_assignment_id"]
             isOneToOne: false
+            referencedRelation: "view_bookings_with_details"
+            referencedColumns: ["user_role_id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_role_assignment_id_fkey"
+            columns: ["role_assignment_id"]
+            isOneToOne: false
             referencedRelation: "view_user_roles_with_details"
             referencedColumns: ["id"]
           },
@@ -1211,11 +1245,30 @@ export type Database = {
           created_at: string | null
           id: string | null
           notes: string | null
+          requester_org_id: string | null
+          role_id: string | null
+          role_name: Database["public"]["Enums"]["roles_type"] | null
           status: Database["public"]["Enums"]["booking_status"] | null
           updated_at: string | null
           user_id: string | null
+          user_role_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "erm_user_organization_roles_organization_id_fkey"
+            columns: ["requester_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "erm_user_organization_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       view_bookings_with_user_info: {
         Row: {
@@ -1230,6 +1283,31 @@ export type Database = {
           visible_name: string | null
         }
         Relationships: []
+      }
+      view_category_details: {
+        Row: {
+          assigned_to: number | null
+          created_at: string | null
+          id: string | null
+          parent_id: string | null
+          translations: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "view_category_details"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       view_item_location_summary: {
         Row: {
@@ -1257,6 +1335,9 @@ export type Database = {
       view_manage_storage_items: {
         Row: {
           available_quantity: number | null
+          category_en_name: string | null
+          category_fi_name: string | null
+          category_id: string | null
           created_at: string | null
           en_item_name: string | null
           en_item_type: string | null
@@ -1274,6 +1355,20 @@ export type Database = {
           translations: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "storage_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storage_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "view_category_details"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "storage_items_location_id_fkey"
             columns: ["location_id"]
@@ -1386,6 +1481,12 @@ export type Database = {
       get_all_full_orders: {
         Args: { in_limit?: number; in_offset?: number }
         Returns: Json
+      }
+      get_category_descendants: {
+        Args: { category_uuid: string }
+        Returns: {
+          id: string
+        }[]
       }
       get_full_booking: {
         Args: { booking_id: string }

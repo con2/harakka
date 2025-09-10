@@ -6,7 +6,7 @@ export const userPanel = {
       fi: "Suodattimet",
       en: "Filters",
     },
-    itemTypes: {
+    categories: {
       fi: "Tuotetyypit",
       en: "Categories",
     },
