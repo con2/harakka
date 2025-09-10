@@ -8,7 +8,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import illusiaImage from "@/assets/illusiaImage.jpg";
-import { useEffect } from "react";
 
 export const Login = () => {
   const [searchParams] = useSearchParams();
@@ -17,19 +16,6 @@ export const Login = () => {
 
   // Translation
   const { lang } = useLanguage();
-
-  // Auth state listener to detect sign-ups
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      console.log(`🔵 Auth event in Login component: ${event}`);
-    });
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
 
   return (
     <div

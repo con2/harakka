@@ -31,7 +31,6 @@ export class UserSetupService {
    */
   async validateUserExists(userId: string): Promise<boolean> {
     try {
-      this.logger.log(`Validating if user ${userId} exists in auth.users`);
       const supabase = this.supabaseService.getServiceClient();
 
       // Use admin.getUserById to check if the user exists in auth.users
@@ -59,7 +58,6 @@ export class UserSetupService {
    */
   async setupNewUser(setupData: SetupUserRequest): Promise<SetupUserResponse> {
     const supabase = this.supabaseService.getServiceClient();
-    this.logger.log(`Starting setup for user ${setupData.userId}`);
 
     try {
       // First validate that the user exists in auth.users
@@ -76,14 +74,8 @@ export class UserSetupService {
 
       // Check current user setup status
       const setupStatus = await this.checkUserSetupStatus(setupData.userId);
-      this.logger.log(
-        `Setup status: hasProfile=${setupStatus.hasProfile}, hasRole=${setupStatus.hasRole}`,
-      );
 
       if (!setupStatus.needsSetup) {
-        this.logger.log(
-          `User ${setupData.userId} already set up, skipping setup`,
-        );
         return {
           success: true,
           userProfile: setupStatus.profile,
@@ -91,10 +83,6 @@ export class UserSetupService {
       }
 
       // Get default organization and role in parallel for better performance
-      this.logger.log(
-        `Looking up default organization "${this.DEFAULT_ORG_NAME}" and role "${this.DEFAULT_ROLE_NAME}"`,
-      );
-
       const [orgData, roleData] = await Promise.all([
         supabase
           .from("organizations")
@@ -109,28 +97,16 @@ export class UserSetupService {
       ]);
 
       if (orgData.error || !orgData.data) {
-        this.logger.error(
-          `Default organization lookup failed: ${
-            orgData.error?.message || "No data returned"
-          }`,
-        );
         throw new InternalServerErrorException(
           `Default organization '${this.DEFAULT_ORG_NAME}' not found`,
         );
       }
 
       if (roleData.error || !roleData.data) {
-        this.logger.error(
-          `Default role lookup failed: ${roleData.error?.message || "No data returned"}`,
-        );
         throw new InternalServerErrorException(
           `Default role '${this.DEFAULT_ROLE_NAME}' not found`,
         );
       }
-
-      this.logger.log(
-        `Found organization ID: ${orgData.data.id}, role ID: ${roleData.data.id}`,
-      );
 
       let userProfile = setupStatus.profile;
 
@@ -147,14 +123,10 @@ export class UserSetupService {
 
       // Assign role if user doesn't have one
       if (!setupStatus.hasRole) {
-        this.logger.log(`Assigning default role to user ${setupData.userId}`);
         await this.assignDefaultRole(
           setupData.userId,
           orgData.data.id,
           roleData.data.id,
-        );
-        this.logger.log(
-          `Role assigned successfully to user ${setupData.userId}`,
         );
       } else {
         this.logger.log(
@@ -167,8 +139,6 @@ export class UserSetupService {
         userProfile,
       };
     } catch (error) {
-      this.logger.error(`User setup failed for ${setupData.userId}:`, error);
-
       if (error instanceof InternalServerErrorException) {
         throw error;
       }
@@ -199,15 +169,6 @@ export class UserSetupService {
       created_at: new Date().toISOString(),
     };
 
-    this.logger.log(
-      `Creating profile with data: ${JSON.stringify({
-        ...profileData,
-        email: profileData.email
-          ? `${profileData.email.substring(0, 3)}***`
-          : null,
-      })}`,
-    );
-
     const { data: newUserProfile, error: profileError } = await supabase
       .from("user_profiles")
       .insert(profileData)
@@ -215,13 +176,9 @@ export class UserSetupService {
       .single();
 
     if (profileError) {
-      this.logger.error(`Profile creation failed: ${profileError.message}`);
       handleSupabaseError(profileError);
     }
 
-    this.logger.log(
-      `Profile created successfully for user ${setupData.userId}`,
-    );
     return newUserProfile;
   }
 
@@ -235,11 +192,7 @@ export class UserSetupService {
   ): Promise<void> {
     // Existing assignDefaultRole method code unchanged
     try {
-      this.logger.log(
-        `Assigning role ${roleId} in organization ${organizationId} to user ${userId}`,
-      );
       await this.roleService.createUserRoleById(userId, organizationId, roleId);
-      this.logger.log(`Role assigned successfully`);
     } catch (roleError) {
       this.logger.error(
         `Role assignment failed for user ${userId}: ${
@@ -262,10 +215,8 @@ export class UserSetupService {
     validateAuth = false,
   ): Promise<UserSetupStatus> {
     const supabase = this.supabaseService.getServiceClient();
-    this.logger.log(`Checking setup status for user ${userId}`);
 
     try {
-      // Optionally validate that the user exists in auth system
       if (validateAuth) {
         const userExists = await this.validateUserExists(userId);
         if (!userExists) {
@@ -311,10 +262,6 @@ export class UserSetupService {
       const hasProfile = !profileResult.error && !!profileResult.data;
       const hasRole =
         !roleResult.error && roleResult.data && roleResult.data.length > 0;
-
-      this.logger.log(
-        `User ${userId} status: hasProfile=${hasProfile}, hasRole=${hasRole}, needsSetup=${!hasProfile || !hasRole}`,
-      );
 
       return {
         hasProfile,

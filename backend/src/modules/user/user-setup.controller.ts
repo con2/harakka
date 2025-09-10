@@ -29,41 +29,22 @@ export class UserSetupController {
     @Body() createUserDto: CreateUserProfileDto,
     @Req() req: AuthRequest,
   ): Promise<SetupUserResponse> {
-    this.logger.log(
-      `⭐ Setup endpoint called with data: ${JSON.stringify({
-        userId: createUserDto.userId || req.user?.id || "none",
-        hasAuthUser: !!req.user,
-        email: createUserDto.email
-          ? `${createUserDto.email.substring(0, 3)}***`
-          : "none",
-      })}`,
-    );
-
     try {
       // Get userId from authenticated request
       const userId = createUserDto.userId || req.user?.id;
 
       if (!userId) {
-        this.logger.error("No userId found in request");
         throw new BadRequestException("userId is required");
       }
 
       if (!createUserDto.email) {
         throw new BadRequestException("email is required");
       }
-      this.logger.log(`✅ User ID validation passed: ${userId}`);
-
       // Validate user exists (only for unauthenticated requests)
       if (!req.user) {
-        this.logger.log(`🔍 Validating user existence: ${userId}`);
         const userExists =
           await this.userSetupService.validateUserExists(userId);
-        this.logger.log(`👤 User exists check result: ${userExists}`);
-
         if (!userExists) {
-          this.logger.warn(
-            `⛔ Setup attempted for non-existent user ${userId}`,
-          );
           throw new BadRequestException("Invalid user ID");
         }
       }
@@ -77,9 +58,7 @@ export class UserSetupController {
         provider: createUserDto.provider || "manual",
       };
 
-      this.logger.log(`🚀 Calling setupNewUser with userId: ${userId}`);
       const result = await this.userSetupService.setupNewUser(setupData);
-      this.logger.log(`📋 Setup result: ${JSON.stringify(result)}`);
 
       if (!result.success) {
         throw new InternalServerErrorException(
@@ -118,12 +97,6 @@ export class UserSetupController {
         throw new BadRequestException("userId is required");
       }
 
-      // If no authenticated user (req.user is undefined), skip permission check
-      if (!req.user) {
-        this.logger.warn(
-          "No authenticated user found in request, skipping permission check",
-        );
-      }
       if (req.user) {
         // Security: Users can only check their own status, unless they have admin roles
         const isOwnStatus = body.userId === req.user.id;

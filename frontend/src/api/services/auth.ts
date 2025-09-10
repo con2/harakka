@@ -38,19 +38,14 @@ export class AuthService {
     signupMethod: "email" | "oauth" = "email",
     userInput?: { full_name?: string; phone?: string },
   ): Promise<SignUpResult> {
-    console.log("🚀 Starting setupNewUser with integrated session refresh");
     try {
-      console.log(`🔍 Setting up user ID: ${user.id}`);
-
       // Extract user data based on signup method
       const profileData = this.extractUserProfileData(user, signupMethod);
 
       // Check if user needs setup
       const setupStatus = await this.checkUserSetupStatus(user.id);
-      console.log(`📊 Setup status for ${user.id}:`, setupStatus);
 
       if (!setupStatus.needsSetup) {
-        console.log(`✅ User ${user.id} already setup, skipping`);
         return { success: true, user, isNewUser: false };
       }
 
@@ -60,7 +55,6 @@ export class AuthService {
       const token = session?.access_token;
 
       if (!session) {
-        console.error("❌ No authenticated session found");
         throw new Error("No authenticated session found");
       }
 
@@ -78,7 +72,6 @@ export class AuthService {
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
       // Call backend API to setup user
-      console.log("📡 Sending setup request to backend");
       const response = await fetch(`${apiUrl}/user-setup/setup`, {
         method: "POST",
         headers: {
@@ -89,22 +82,18 @@ export class AuthService {
       });
 
       if (!response.ok) {
-        console.error(`❌ Setup failed with status ${response.status}`);
         throw new Error(`Setup failed with status ${response.status}`);
       }
 
       const result = await response.json();
-      console.log("✅ User setup result:", result);
 
       if (!result.success) {
         return { success: false, error: result.error, isNewUser: true };
       }
 
-      // ADDED: Immediate session refresh after successful setup
-      console.log("🔄 Immediately refreshing session to update JWT claims");
+      // Session refresh after successful setup
       clearCachedAuthToken(); // Clear token cache first
-
-      // Azure best practice: Use retry pattern for token refresh
+      // Retry pattern for token refresh
       let attempts = 0;
       const maxAttempts = 3;
       let refreshResult = null;
@@ -114,10 +103,6 @@ export class AuthService {
           refreshResult = await supabase.auth.refreshSession();
 
           if (refreshResult.error) {
-            console.warn(
-              `⚠️ Session refresh attempt ${attempts + 1} failed:`,
-              refreshResult.error,
-            );
             attempts++;
 
             if (attempts >= maxAttempts) {
@@ -125,14 +110,10 @@ export class AuthService {
               break;
             }
 
-            // Azure best practice: Exponential backoff
+            // Exponential backoff
             const backoffMs = Math.pow(2, attempts) * 200;
-            console.log(`⏱️ Retrying in ${backoffMs}ms...`);
             await new Promise((resolve) => setTimeout(resolve, backoffMs));
           } else {
-            console.log(
-              "✅ Session refreshed successfully with new JWT claims",
-            );
             break;
           }
         } catch (refreshError) {
@@ -154,10 +135,6 @@ export class AuthService {
         session: refreshResult?.data?.session || null,
       };
     } catch (error) {
-      console.error(
-        "❌ User setup failed:",
-        error instanceof Error ? error.message : String(error),
-      );
       return {
         success: false,
         error:
@@ -175,7 +152,6 @@ export class AuthService {
     signupMethod: "email" | "oauth",
   ): UserProfileData {
     const { email, user_metadata, app_metadata } = user;
-    console.log("I'm extractUserProfileData");
 
     if (signupMethod === "oauth") {
       // For OAuth providers like Google
@@ -219,21 +195,13 @@ export class AuthService {
    * Check if user needs profile setup using backend API
    */
   static async checkUserSetupStatus(userId: string): Promise<UserSetupStatus> {
-    console.log("I'm checkUserSetupStatus");
     try {
-      console.log(`Checking user setup status for: ${userId}`);
       const response = await api.post<UserSetupStatus>(
         "/user-setup/check-status",
         { userId },
       );
-      console.log("User setup status response:", response.data);
       return response.data;
-    } catch (error) {
-      console.error(
-        `Failed to check user setup status: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      ); // ADD THIS: Log with safe error handling
+    } catch {
       return {
         hasProfile: false,
         hasRole: false,

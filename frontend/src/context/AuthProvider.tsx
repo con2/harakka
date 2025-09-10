@@ -42,76 +42,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Mark this user as being processed
         setProcessedSignups((prev) => new Set([...prev, user.id]));
         setSetupInProgress(true);
-        console.log("🔍 Starting user authentication flow for:", user.id);
 
         // Ensure we have a valid session before proceeding
         const { data: sessionData } = await supabase.auth.getSession();
         if (!sessionData.session) {
-          console.log("⚠️ No valid session yet, waiting 1.5 seconds...");
           await new Promise((resolve) => setTimeout(resolve, 1500));
           // Try again to get the session
           const { data: retrySessionData } = await supabase.auth.getSession();
           if (!retrySessionData.session) {
-            console.error("❌ Failed to get a valid session after retry");
             throw new Error("No authenticated session available");
           }
-          console.log("✅ Got valid session after retry");
-        } else {
-          console.log("✅ Valid session already available");
         }
 
         // Check if user needs setup
-        console.log("👀 Checking if user needs setup...");
         const setupStatus = await AuthService.checkUserSetupStatus(user.id);
-        console.log("📊 User setup status:", setupStatus);
 
         // Add this condition to prevent continued processing if user is already set up
         if (!setupStatus.needsSetup) {
-          console.log("✅ User already set up, nothing to do");
           return; // Exit the function early
         }
-
-        console.log("🔧 User needs setup, proceeding...");
 
         // Determine signup method based on user metadata
         const isOAuthUser =
           user.app_metadata?.provider !== "email" ||
           !!user.user_metadata?.provider;
         const signupMethod = isOAuthUser ? "oauth" : "email";
-        console.log("📝 Using signup method:", signupMethod);
-
-        // Debug payload before sending
-        const profileData = AuthService.extractUserProfileData(
-          user,
-          signupMethod,
-        );
-        console.log("📦 Will use profile data:", {
-          ...profileData,
-          email: profileData.email
-            ? `${profileData.email.substring(0, 3)}***`
-            : null,
-        });
 
         // Add a delay before calling setupNewUser to ensure everything is ready
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        console.log("🚀 Calling setupNewUser...");
         const result = await AuthService.setupNewUser(user, signupMethod);
-        console.log("📬 Setup result:", result);
 
         if (result.success) {
-          console.log("✅ User setup successful!");
-
           // If the session was already refreshed in setupNewUser
           if (result.sessionRefreshed && result.session) {
-            console.log("✅ Using pre-refreshed session from setupNewUser");
             setSession(result.session);
             setUser(result.session.user);
           } else {
             // Fallback to manual refresh if needed
-            console.log(
-              "⚠️ Session not refreshed during setup, doing manual refresh",
-            );
             clearCachedAuthToken();
             const { data: refreshData, error: refreshError } =
               await supabase.auth.refreshSession();
@@ -127,13 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Trigger role reload by resetting rolesLoaded
           setRolesLoaded(false);
         } else {
-          console.error("❌ Account setup failed:", result.error);
-          toast.error("Account setup failed");
           // Sign out the user if setup fails
           await supabase.auth.signOut();
         }
-      } catch (error) {
-        console.error("❌ Error in handleUserAuthentication:", error);
+      } catch {
         toast.error(
           "There was an issue setting up your account. Please contact support if this persists.",
         );
@@ -155,23 +120,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event: string, session) => {
-      console.log(`🎉 AUTH EVENT DETECTED: ${event}`, session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       setAuthLoading(false);
 
       if (session?.user) {
-        // Add this debug log to trace the event
-        console.log(`🔄 Auth event ${event} with user:`, {
-          id: session.user.id,
-          email: session.user.email,
-          created_at: new Date(session.user.created_at).toISOString(),
-          last_sign_in_at: session.user.last_sign_in_at
-            ? new Date(session.user.last_sign_in_at).toISOString()
-            : null,
-        });
-
-        // IMPORTANT: Only process actual signup/signin events, not token refreshes
+        // Only process actual signup/signin events, not token refreshes
         // or initial session events to avoid the loop
         if (
           !initialSetupComplete &&
@@ -186,9 +140,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Handle new user signup from signup/signin events only
           if (isNewUser) {
-            console.log(
-              `🆕 NEW USER DETECTED (created: ${userCreatedAt.toISOString()})`,
-            );
             void handleUserAuthentication(session.user, event);
             return;
           }
@@ -202,22 +153,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const setupStatus = await AuthService.checkUserSetupStatus(
                 session.user.id,
               );
-              console.log("User setup status:", setupStatus);
 
               if (setupStatus.needsSetup) {
-                console.log(
-                  "📝 User needs setup, proceeding with onboarding...",
-                );
                 await handleUserAuthentication(session.user, event);
               } else {
-                console.log("✅ User already setup, nothing to do");
                 // Still mark as processed to prevent future checks
                 setProcessedSignups(
                   (prev) => new Set([...prev, session.user.id]),
                 );
               }
-            } catch (error) {
-              console.error("❌ Error checking user setup:", error);
+            } catch {
               toast.error(
                 "Failed to verify account status. Please try again or contact support.",
               );
@@ -249,7 +194,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (!token) {
             // If no token is available yet, retry after a short delay
-            console.warn("No valid token available, retrying in 1s...");
             setTimeout(verifyTokenAndFetchRoles, 1000);
             return;
           }
@@ -285,12 +229,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 return;
               }
               setRolesLoaded(true);
-              console.error("Failed to load roles:", error);
               // Still try to load user profile even if roles failed
               void dispatch(getCurrentUser());
             });
-        } catch (error) {
-          console.error("Token verification failed:", error);
+        } catch {
           setRolesLoaded(true);
           // Try to load profile even if token verification failed
           void dispatch(getCurrentUser());
