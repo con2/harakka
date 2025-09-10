@@ -28,7 +28,6 @@ export const RoleManagement: React.FC = () => {
 
   // Define admin status solely from new user roles
   const isAnyTypeOfAdmin = hasAnyRole([
-    "superVera",
     "tenant_admin",
     "super_admin",
     "storage_manager",

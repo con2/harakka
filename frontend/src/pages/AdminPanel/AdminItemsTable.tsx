@@ -2,17 +2,18 @@ import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchOrderedItems,
   selectAllItems,
   selectItemsError,
   selectItemsPagination,
   selectItemsLoading,
+  fetchAllAdminItems,
 } from "@/store/slices/itemsSlice";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
-import { Item, ValidItemOrder } from "@/types/item";
+import { Item, ManageItemViewRow, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye, LoaderCircle } from "lucide-react";
+import { Eye, LoaderCircle, Search, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
@@ -26,6 +27,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation, useNavigate } from "react-router-dom";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
+import {
+  fetchAllCategories,
+  selectCategories,
+} from "@/store/slices/categoriesSlice";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -35,10 +40,9 @@ const AdminItemsTable = () => {
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const org_id = useAppSelector(selectActiveOrganizationId);
+  const categories = useAppSelector(selectCategories);
 
-  // Translation
   const { lang } = useLanguage();
-  // filtering states:
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
   >(redirectState?.statusFilter ?? "all");
@@ -57,7 +61,7 @@ const AdminItemsTable = () => {
   const [ascending, setAscending] = useState<boolean | null>(
     redirectState?.ascending ?? null,
   );
-  const { page, totalPages } = useAppSelector(selectItemsPagination);
+  const { totalPages } = useAppSelector(selectItemsPagination);
   const loading = useAppSelector(selectItemsLoading);
   const ITEMS_PER_PAGE = 10;
 
@@ -69,15 +73,17 @@ const AdminItemsTable = () => {
     void navigate(`/admin/items/${id}`);
   };
 
-  const handleBooking = (order: string) =>
+  const handleSortOrder = (order: string) =>
     setOrder(order.toLowerCase() as ValidItemOrder);
   const handleAscending = (ascending: boolean | null) =>
     setAscending(ascending);
 
   /* ————————————————————— Side Effects ———————————————————————————— */
   useEffect(() => {
+    if (!org_id) return;
+
     void dispatch(
-      fetchOrderedItems({
+      fetchAllAdminItems({
         ordered_by: order,
         page: currentPage,
         limit: ITEMS_PER_PAGE,
@@ -85,10 +91,8 @@ const AdminItemsTable = () => {
         ascending: ascending === false ? false : true,
         tag_filters: tagFilter,
         location_filter: [],
-        categories: [],
+        category: "",
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
-        // scope to the active organization so admins only see their org's items
-        org_ids: org_id ? org_id : undefined,
       }),
     );
   }, [
@@ -97,8 +101,6 @@ const AdminItemsTable = () => {
     order,
     debouncedSearchQuery,
     currentPage,
-    ITEMS_PER_PAGE,
-    page,
     tagFilter,
     statusFilter,
     org_id,
@@ -108,10 +110,12 @@ const AdminItemsTable = () => {
   useEffect(() => {
     if (tags.length === 0)
       void dispatch(fetchFilteredTags({ limit: 20, sortBy: "assigned_to" }));
-  }, [dispatch, tags.length, items.length]);
+    if (categories.length === 0)
+      void dispatch(fetchAllCategories({ page: 1, limit: 20 }));
+  }, [dispatch, tags.length, items.length, categories.length]);
 
   /* ————————————————————————— Item Columns ———————————————————————— */
-  const itemsColumns: ColumnDef<Item>[] = [
+  const itemsColumns: ColumnDef<ManageItemViewRow>[] = [
     {
       id: "view",
       size: 5,
@@ -142,14 +146,18 @@ const AdminItemsTable = () => {
       },
     },
     {
-      header: t.adminItemsTable.columns.type[lang],
+      header: t.adminItemsTable.columns.category[lang],
       size: 120,
-      id: `item_type`,
-      accessorFn: (row) => row.translations[lang].item_type || "",
+      id: `category_id`,
+      accessorFn: (row) => row.category_id || "",
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
-        const type = row.original.translations[lang].item_type || "";
-        return type.charAt(0).toUpperCase() + type.slice(1);
+        const type =
+          lang === "fi"
+            ? row.original.category_fi_name
+            : row.original.category_en_name;
+        if (!type) return "";
+        return type;
       },
     },
     {
@@ -203,14 +211,27 @@ const AdminItemsTable = () => {
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
         <div className="flex gap-4 items-center">
           {/* Search by item name/type */}
-          <input
-            type="text"
-            size={50}
-            className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-            placeholder={t.adminItemsTable.filters.searchPlaceholder[lang]}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <div className="relative w-full sm:max-w-md bg-white rounded-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+            <Input
+              placeholder={t.adminItemsTable.filters.searchPlaceholder[lang]}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape" && searchTerm) setSearchTerm("");
+              }}
+              className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
 
           {/* Filter by active status */}
           <select
@@ -332,12 +353,12 @@ const AdminItemsTable = () => {
 
       <PaginatedDataTable
         columns={itemsColumns}
-        data={items as Item[]}
+        data={items as ManageItemViewRow[]}
         pageIndex={currentPage - 1}
         pageCount={totalPages}
         onPageChange={(page) => handlePageChange(page + 1)}
         handleAscending={handleAscending}
-        handleOrder={handleBooking}
+        handleOrder={handleSortOrder}
         order={order}
         ascending={ascending}
         originalSorting="quantity"

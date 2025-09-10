@@ -17,8 +17,8 @@ export const itemDetailsPage = {
       en: "Edit",
     },
     delete: {
-      fi: "Poista",
-      en: "Delete",
+      fi: "Poista tuote",
+      en: "Delete Item",
     },
   },
   messages: {

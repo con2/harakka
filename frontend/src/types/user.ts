@@ -25,4 +25,5 @@ export interface UserState {
   selectedUserLoading?: boolean;
   selectedUserAddresses?: Address[];
   userCount: number;
+  usersList?: ApiResponse<Pick<UserProfile, "id" | "full_name" | "email">[]>;
 }

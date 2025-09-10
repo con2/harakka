@@ -16,6 +16,10 @@ export const adminPanel = {
       fi: "Tuotteet",
       en: "Items",
     },
+    categories: {
+      fi: "Kategoriat",
+      en: "Categories",
+    },
     tags: {
       fi: "Tagit",
       en: "Tags",

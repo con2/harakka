@@ -3,18 +3,6 @@
   "version": "1.1.0",
   "authors": [
     {
-      "name": "Jonathan Gian",
-      "email": "jongian90@gmail.com"
-    },
-    {
-      "name": "Next person",
-      "email": "your.email@example.com"
-    }
-  ],
-  "description": "A Storage and Booking Backend run with NestJS and Supabase",
-  "private": true,
-  "authors": [
-    {
       "name": "Athina Kantis",
       "email": "athina.kantis@gmail.com",
       "url": "https://github.com/athinakantis"
@@ -40,6 +28,8 @@
       "url": "https://github.com/JonathanGian"
     }
   ],
+  "description": "A Storage and Booking Backend run with NestJS and Supabase",
+  "private": true,
   "scripts": {
     "build": "nest build",
     "postbuild": "echo \"✅ Backend build completed successfully!\" && echo \"📁 Backend dist contents:\" && ls -la dist/backend || ls -la dist",
@@ -47,7 +37,7 @@
     "start": "node -r tsconfig-paths/register dist/backend/src/main.js",
     "start:watch": "nest start --watch -r tsconfig-paths/register",
     "start:dev": "nodemon --watch src --ext ts --exec \"ts-node -r tsconfig-paths/register src/main.ts\"",
-    "start:local": "env-cmd -f ../supabase-local.env npm run start:watch",
+    "start:local": "env-cmd -f ../.env.supabase.local npm run start:watch",
     "start:debug": "nest start --debug --watch -r tsconfig-paths/register",
     "start:prod": "node -r tsconfig-paths/register dist/backend/src/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" ",

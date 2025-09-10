@@ -79,7 +79,7 @@ export const fetchOrderedItems = createAsyncThunk<
     tag_filters: string[];
     activity_filter?: "active" | "inactive";
     location_filter: string[];
-    categories: string[];
+    category: string;
     availability_min?: number;
     availability_max?: number;
     org_ids?: string[] | string;
@@ -96,7 +96,7 @@ export const fetchOrderedItems = createAsyncThunk<
       tag_filters,
       activity_filter,
       location_filter,
-      categories,
+      category,
       availability_min,
       availability_max,
       org_ids,
@@ -109,7 +109,7 @@ export const fetchOrderedItems = createAsyncThunk<
       tag_filters?: string[];
       activity_filter?: "active" | "inactive";
       location_filter: string[];
-      categories?: string[];
+      category?: string;
       availability_min?: number;
       availability_max?: number;
       org_ids?: string[] | string;
@@ -126,7 +126,7 @@ export const fetchOrderedItems = createAsyncThunk<
         tag_filters,
         activity_filter,
         location_filter,
-        categories,
+        category,
         availability_min,
         availability_max,
         org_ids,
@@ -135,6 +135,67 @@ export const fetchOrderedItems = createAsyncThunk<
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch items"),
+      );
+    }
+  },
+);
+
+// Fetch all ordered organization items (admin)
+export const fetchAllAdminItems = createAsyncThunk<
+  ApiResponse<ManageItemViewRow>,
+  {
+    ordered_by?: ValidItemOrder;
+    ascending?: boolean;
+    page: number;
+    limit: number;
+    searchquery?: string;
+    tag_filters?: string[];
+    activity_filter?: "active" | "inactive";
+    location_filter?: string[];
+    category?: string;
+  }
+>(
+  "items/fetchAllAdminItems",
+  async (
+    {
+      ordered_by = "created_at",
+      ascending = true,
+      page = 1,
+      limit = 10,
+      searchquery,
+      tag_filters,
+      activity_filter,
+      location_filter,
+      category,
+    }: {
+      ordered_by?: ValidItemOrder;
+      ascending?: boolean;
+      page: number;
+      limit: number;
+      searchquery?: string;
+      tag_filters?: string[];
+      activity_filter?: "active" | "inactive";
+      location_filter?: string[];
+      category?: string;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      const response = await itemsApi.getAllAdminItems(
+        page,
+        limit,
+        ascending ?? true,
+        ordered_by ?? "created_at",
+        searchquery,
+        tag_filters,
+        activity_filter,
+        location_filter,
+        category,
+      );
+      return response as AxiosResponse["data"];
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch admin items"),
       );
     }
   },
@@ -365,6 +426,21 @@ export const itemsSlice = createSlice({
         state.item_pagination = action.payload.metadata;
       })
       .addCase(fetchOrderedItems.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
+      .addCase(fetchAllAdminItems.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(fetchAllAdminItems.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload.data ?? [];
+        state.item_pagination = action.payload.metadata;
+      })
+      .addCase(fetchAllAdminItems.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "fetch";

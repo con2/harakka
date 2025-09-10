@@ -1,8 +1,8 @@
 import { CreateUserDto, UserProfile } from "@common/user.types";
 import { api } from "../axios";
-import { Address } from "@/types/address";
+import { Address, CreateAddressInput } from "@/types/address";
 import { store } from "@/store/store";
-import { ApiResponse } from "@/types/api";
+import { ApiResponse, PaginationMeta } from "@/types/api";
 import { OrderedUsersParams } from "@/types/user";
 
 /**
@@ -22,6 +22,33 @@ export const usersApi = {
       Object.entries(params).filter(([, value]) => value !== undefined),
     );
     return api.get("/users/ordered", { params: cleanParams });
+  },
+
+  /**
+   * Get a lightweight list of users (id, full_name, email) for tenant_admin/super_admin
+   */
+  getAllOrderedUsersList: async (
+    params: OrderedUsersParams,
+  ): Promise<
+    ApiResponse<Pick<UserProfile, "id" | "full_name" | "email">[]>
+  > => {
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).filter(([, value]) => value !== undefined),
+    );
+    // Use unknown and a narrow type assertion to avoid linter complaints about `any`.
+    const resRaw = (await api.get("/users/ordered-list", {
+      params: cleanParams,
+    })) as unknown;
+
+    const res = resRaw as {
+      result: Array<{ id: string; full_name: string; email: string }>;
+      metadata: PaginationMeta;
+    };
+
+    return {
+      data: res.result,
+      metadata: res.metadata,
+    };
   },
 
   /**
@@ -88,23 +115,23 @@ export const usersApi = {
   /**
    * Add a new address for a user
    * @param id - User ID to add the address to
-   * @param address - Address data to add
+   * @param address - Address data to add (without user_id as it's in the URL)
    * @returns Promise with the newly added address
    */
-  addAddress: (id: string, address: Address): Promise<Address> =>
+  addAddress: (id: string, address: CreateAddressInput): Promise<Address> =>
     api.post(`/users/${id}/addresses`, address),
 
   /**
    * Update an existing address for a user
    * @param id - User ID to update the address for
    * @param addressId - Address ID to update
-   * @param address - Updated address data
+   * @param address - Updated address data (without user_id as it's in the URL)
    * @returns Promise with the updated address
    */
   updateAddress: (
     id: string,
     addressId: string,
-    address: Address,
+    address: CreateAddressInput,
   ): Promise<Address> =>
     api.put(`/users/${id}/addresses/${addressId}`, address),
 

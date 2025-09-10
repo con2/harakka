@@ -1,3 +1,5 @@
+import { addCategory } from "./modules/addCategory";
+import { addItemForm } from "./modules/addItemForm";
 import { addLocationModal } from "./modules/addLocationModal";
 import { addTagModal } from "./modules/addTagModal";
 import { adminDashboard } from "./modules/adminDashboard";
@@ -7,82 +9,84 @@ import { assignTagsModal } from "./modules/assignTagsModal";
 import { authCallback } from "./modules/authCallback";
 import { bookingCancel } from "./modules/bookingCancel";
 import { bookingConfirm } from "./modules/bookingConfirm";
+import { bookingConfirmation } from "./modules/bookingConfirmation";
 import { bookingDelete } from "./modules/bookingDelete";
 import { bookingDetailsButton } from "./modules/bookingDetailsButton";
 import { bookingDetailsPage } from "./modules/bookingDetailsPage";
 import { bookingEditButton } from "./modules/bookingEdit";
+import { bookingItemsCancel } from "./modules/bookingItemCancel";
+import { bookingList } from "./modules/bookingList";
+import { bookingPickup } from "./modules/bookingPickup";
 import { bookingReject } from "./modules/bookingReject";
 import { bookingReturn } from "./modules/bookingReturn";
 import { cart } from "./modules/cart";
+import { categories } from "./modules/categories";
+import { common } from "./modules/common";
 import { contactForm } from "./modules/contactForm";
+import { currentUserRoles } from "./modules/currentUserRoles";
+import { deleteLocationButton } from "./modules/deleteLocationButton";
+import { editLocationModal } from "./modules/editLocationModal";
 import { footer } from "./modules/footer";
 import { itemCard } from "./modules/itemCard";
 import { itemDetails } from "./modules/itemDetails";
+import { itemDetailsPage } from "./modules/itemDetailsPage";
 import { itemImageManager } from "./modules/itemImageManager";
+import { itemImageUpload } from "./modules/itemImageUpload";
 import { itemsList } from "./modules/itemsList";
+import { itemSummary } from "./modules/itemSummary";
 import { landingPage } from "./modules/landingPage";
+import { locationsList } from "./modules/locationsList";
 import { login } from "./modules/login";
 import { logs } from "./modules/logs";
 import { myBookings } from "./modules/myBookings";
 import { myProfile } from "./modules/myProfile";
 import { navigation } from "./modules/navigation";
-import { bookingConfirmation } from "./modules/bookingConfirmation";
-import { bookingList } from "./modules/bookingList";
-import { pagination } from "./modules/pagination";
-import { passwordReset } from "./modules/passwordReset";
-import { passwordResetResult } from "./modules/passwordResetResult";
-import { tagAssignForm } from "./modules/tagAssignForm";
-import { tagDelete } from "./modules/tagDelete";
-import { tagDetail } from "./modules/tagDetail";
-import { tagList } from "./modules/tagList";
-import { timeframeSelector } from "./modules/timeframeSelector";
-import { unauthorized } from "./modules/unauthorized";
-import { updateItemModal } from "./modules/updateItemModal";
-import { userDelete } from "./modules/userDelete";
-import { userBanning } from "./modules/userBanning";
-import { userEditModal } from "./modules/userEditModal";
-import { userGuide } from "./modules/userGuide";
-import { userPanel } from "./modules/userPanel";
-import { userSignupModal } from "./modules/userSignupModal";
-import { usersList } from "./modules/usersList";
-import { currentUserRoles } from "./modules/currentUserRoles";
-import { privacyPolicy } from "./modules/privacyPolicy";
-import { termsOfUse } from "./modules/termsOfUse";
+import { notification } from "./modules/notification";
+import { organizationLocations } from "./modules/organizationLocations";
+import { organizationLogoUploader } from "./modules/organizationLogoUploader";
+import { organizationPage } from "./modules/organizationPage";
+import { organizations } from "./modules/organizations";
 import {
   organizationDelete,
   organizationList,
 } from "./modules/organizationsList";
 import { orgLocationManagement } from "./modules/orgLocationManagement";
-import { deleteLocationButton } from "./modules/deleteLocationButton";
-import { editLocationModal } from "./modules/editLocationModal";
-import { organizationLocations } from "./modules/organizationLocations";
-import { roleManagement } from "./modules/roleManagement";
-import { statusBadge } from "./modules/statusBadge";
 import { orgStep } from "./modules/orgStep";
-import { addItemForm } from "./modules/addItemForm";
-import { itemSummary } from "./modules/itemSummary";
-import { stepper } from "./modules/stepper";
-import { notification } from "./modules/notification";
-import { uiComponents } from "./modules/uiComponents";
+import { pagination } from "./modules/pagination";
+import { passwordReset } from "./modules/passwordReset";
+import { passwordResetResult } from "./modules/passwordResetResult";
+import { privacyPolicy } from "./modules/privacyPolicy";
 import { profilePicUploader } from "./modules/profilePicUploader";
-import { itemImageUpload } from "./modules/itemImageUpload";
 import { roleContextSwitcher } from "./modules/roleContextSwitcher";
+import { roleManagement } from "./modules/roleManagement";
 import { rolesList } from "./modules/rolesList";
-import { organizationPage } from "./modules/organizationPage";
-import { locationsList } from "./modules/locationsList";
-import { organizations } from "./modules/organizations";
-import { organizationLogoUploader } from "./modules/organizationLogoUploader";
-import { common } from "./modules/common";
-import { itemDetailsPage } from "./modules/itemDetailsPage";
+import { statusBadge } from "./modules/statusBadge";
+import { stepper } from "./modules/stepper";
+import { tagAssignForm } from "./modules/tagAssignForm";
+import { tagDelete } from "./modules/tagDelete";
+import { tagDetail } from "./modules/tagDetail";
+import { tagList } from "./modules/tagList";
+import { termsOfUse } from "./modules/termsOfUse";
+import { timeframeSelector } from "./modules/timeframeSelector";
+import { uiComponents } from "./modules/uiComponents";
+import { unauthorized } from "./modules/unauthorized";
+import { unbanUser } from "./modules/unbanUser";
 import { updateItemForm } from "./modules/updateItemForm";
+import { updateItemModal } from "./modules/updateItemModal";
+import { userBan } from "./modules/userBan";
+import { userBanHistory } from "./modules/userBanHistory";
+import { userDelete } from "./modules/userDelete";
+import { userEditModal } from "./modules/userEditModal";
+import { userGuide } from "./modules/userGuide";
+import { userPanel } from "./modules/userPanel";
+import { usersDetailsPage } from "./modules/usersDetailsPage";
+import { userSignupModal } from "./modules/userSignupModal";
+import { usersList } from "./modules/usersList";
 
 export const t = {
-  rolesList,
-  roleContextSwitcher,
-  itemImageUpload,
-  stepper,
+  addCategory,
   addItemForm,
-  itemSummary,
+  addLocationModal,
   addTagModal,
   adminDashboard,
   adminItemsTable,
@@ -91,65 +95,75 @@ export const t = {
   authCallback,
   bookingCancel,
   bookingConfirm,
+  bookingConfirmation,
   bookingDelete,
   bookingDetailsButton,
   bookingDetailsPage,
   bookingEditButton,
+  bookingItemsCancel,
+  bookingList,
+  bookingPickup,
   bookingReject,
   bookingReturn,
   cart,
+  categories,
   common,
   contactForm,
+  currentUserRoles,
+  deleteLocationButton,
+  editLocationModal,
   footer,
   itemCard,
   itemDetails,
+  itemDetailsPage,
   itemImageManager,
+  itemImageUpload,
+  itemSummary,
   itemsList,
   landingPage,
+  locationsList,
   login,
   logs,
   myBookings,
   myProfile,
   navigation,
-  bookingConfirmation,
-  bookingList,
+  notification,
+  orgLocationManagement,
   orgStep,
+  organizationDelete,
+  organizationList,
+  organizationLocations,
+  organizationLogoUploader,
+  organizationPage,
+  organizations,
   pagination,
   passwordReset,
   passwordResetResult,
+  privacyPolicy,
+  profilePicUploader,
+  roleContextSwitcher,
+  roleManagement,
+  rolesList,
+  statusBadge,
+  stepper,
   tagAssignForm,
   tagDelete,
   tagDetail,
   tagList,
+  termsOfUse,
   timeframeSelector,
+  uiComponents,
   unauthorized,
-  updateItemModal,
+  unbanUser,
   updateItemForm,
+  updateItemModal,
+  userBan,
+  userBanHistory,
   userDelete,
-  userBanning,
   userEditModal,
   userGuide,
   userPanel,
   userSignupModal,
+  usersDetailsPage,
   usersList,
-  currentUserRoles,
-  organizationList,
-  organizationDelete,
-  orgLocationManagement,
-  addLocationModal,
-  deleteLocationButton,
-  editLocationModal,
-  organizationLocations,
-  roleManagement,
-  statusBadge,
-  privacyPolicy,
-  termsOfUse,
-  notification,
-  uiComponents,
-  profilePicUploader,
-  organizationPage,
-  locationsList,
-  organizations,
-  organizationLogoUploader,
-  itemDetailsPage,
 };

@@ -47,6 +47,22 @@ export const createBooking = createAsyncThunk<
   try {
     return await bookingsApi.createBooking(bookingData);
   } catch (error: unknown) {
+    // For profile incomplete errors, preserve the full error structure
+    const apiError = error as {
+      response?: {
+        data?: {
+          errorCode?: string;
+          message?: string;
+          missingFields?: string[];
+          hasPhone?: boolean;
+        };
+      };
+    };
+    if (apiError?.response?.data?.errorCode === "PROFILE_INCOMPLETE") {
+      return rejectWithValue(apiError.response.data);
+    }
+
+    // For other errors, use the standard error message extraction
     return rejectWithValue(
       extractErrorMessage(error, "Failed to create booking"),
     );
@@ -70,6 +86,41 @@ export const getUserBookings = createAsyncThunk(
   },
 );
 
+// Get my bookings thunk
+export const getOwnBookings = createAsyncThunk(
+  "bookings/getOwnBookings",
+  async (
+    {
+      page = 1,
+      limit = 10,
+      activeOrgId,
+      activeRole,
+      userId,
+    }: {
+      page?: number;
+      limit?: number;
+      activeOrgId: string;
+      activeRole: string;
+      userId: string;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await bookingsApi.getOwnBookings(
+        activeOrgId,
+        activeRole,
+        userId,
+        page,
+        limit,
+      );
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch own bookings"),
+      );
+    }
+  },
+);
+
 // get booking by ID
 export const getBookingByID = createAsyncThunk(
   "bookings/getBookingByID",
@@ -77,7 +128,7 @@ export const getBookingByID = createAsyncThunk(
     try {
       const state = getState() as RootState;
       const roleName = selectActiveRoleName(state);
-      const isElevated = roleName === "super_admin" || roleName === "superVera";
+      const isElevated = roleName === "super_admin";
       const orgId = isElevated
         ? undefined
         : selectActiveOrganizationId(state) || undefined;
@@ -115,7 +166,7 @@ export const getBookingItems = createAsyncThunk(
     try {
       const state = getState() as RootState;
       const roleName = selectActiveRoleName(state);
-      const isElevated = roleName === "super_admin" || roleName === "superVera";
+      const isElevated = roleName === "super_admin";
       const orgId = isElevated
         ? undefined
         : selectActiveOrganizationId(state) || undefined;
@@ -156,7 +207,7 @@ export const getOrderedBookings = createAsyncThunk(
     try {
       const state = getState() as RootState;
       const roleName = selectActiveRoleName(state);
-      const isElevated = roleName === "super_admin" || roleName === "superVera";
+      const isElevated = roleName === "super_admin";
       const orgId = isElevated
         ? undefined
         : selectActiveOrganizationId(state) || undefined;
@@ -386,19 +437,60 @@ export const rejectItemsForOrg = createAsyncThunk<
 
 // Return items thunk
 export const returnItems = createAsyncThunk<
-  { bookingId: string },
-  string,
+  { bookingId: string; itemIds?: string[] },
+  { bookingId: string; itemIds?: string[] },
   { rejectValue: string }
->("bookings/returnItems", async (bookingId, { rejectWithValue }) => {
-  try {
-    await bookingsApi.returnItems(bookingId); // Just fire and forget
-    return { bookingId };
-  } catch (error: unknown) {
-    return rejectWithValue(
-      extractErrorMessage(error, "Failed to process returns"),
-    );
-  }
-});
+>(
+  "bookings/returnItems",
+  async ({ bookingId, itemIds }, { rejectWithValue }) => {
+    try {
+      await bookingsApi.returnItems(bookingId, itemIds);
+      return { bookingId, itemIds };
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to process returns"),
+      );
+    }
+  },
+);
+
+// Mark items as picked up
+export const pickUpItems = createAsyncThunk<
+  { bookingId: string; itemIds?: string[] },
+  { bookingId: string; itemIds?: string[] },
+  { rejectValue: string }
+>(
+  "bookings/pickUpItems",
+  async ({ bookingId, itemIds }, { rejectWithValue }) => {
+    try {
+      await bookingsApi.pickUpItems(bookingId, itemIds);
+      return { bookingId };
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to process returns"),
+      );
+    }
+  },
+);
+
+// Mark items as picked up
+export const cancelBookingItems = createAsyncThunk<
+  { bookingId: string; itemIds?: string[] },
+  { bookingId: string; itemIds?: string[] },
+  { rejectValue: string }
+>(
+  "bookings/cancelBookingItems",
+  async ({ bookingId, itemIds }, { rejectWithValue }) => {
+    try {
+      await bookingsApi.cancelBookingItems(bookingId, itemIds);
+      return { bookingId };
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to process returns"),
+      );
+    }
+  },
+);
 
 export const bookingsSlice = createSlice({
   name: "bookings",
@@ -411,6 +503,11 @@ export const bookingsSlice = createSlice({
     },
     clearCurrentBookingItems: (state) => {
       if (state.currentBooking) state.currentBooking.booking_items = null;
+      state.error = null;
+      state.errorContext = null;
+    },
+    clearUserBookings: (state) => {
+      state.userBookings = [];
       state.error = null;
       state.errorContext = null;
     },
@@ -459,6 +556,26 @@ export const bookingsSlice = createSlice({
         state.loading = false;
       })
       .addCase(getUserBookings.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+        state.loading = false;
+      })
+      // Get own bookings
+      .addCase(getOwnBookings.pending, (state) => {
+        state.loading = true; // Set loading to true while fetching
+        state.error = null; // Clear any previous errors
+        state.errorContext = null;
+      })
+      .addCase(getOwnBookings.fulfilled, (state, action) => {
+        if (action.payload) {
+          state.userBookings = action.payload.data as BookingPreview[];
+          state.bookings_pagination = action.payload.metadata;
+        } else {
+          state.userBookings = [];
+        }
+        state.loading = false;
+      })
+      .addCase(getOwnBookings.rejected, (state, action) => {
         state.error = action.payload as string;
         state.errorContext = "fetch";
         state.loading = false;
@@ -783,12 +900,12 @@ export const bookingsSlice = createSlice({
 
         state.bookings.forEach((booking) => {
           if (booking.id === bookingId) {
-            booking.status = "confirmed";
+            booking.status = "completed";
           }
         });
         state.userBookings.forEach((booking) => {
           if (booking.id === bookingId) {
-            booking.status = "confirmed";
+            booking.status = "completed";
           }
         });
       })
@@ -796,13 +913,45 @@ export const bookingsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "return";
+      })
+      // Pick up items
+      .addCase(pickUpItems.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(pickUpItems.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(pickUpItems.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "patch";
+        state.loading = false;
+      })
+      // Cancel booking items
+      .addCase(cancelBookingItems.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(cancelBookingItems.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(cancelBookingItems.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "patch";
+        state.loading = false;
       });
   },
 });
 
 // Export actions
-export const { clearCurrentBooking, selectBooking, clearCurrentBookingItems } =
-  bookingsSlice.actions;
+export const {
+  clearCurrentBooking,
+  selectBooking,
+  clearCurrentBookingItems,
+  clearUserBookings,
+} = bookingsSlice.actions;
 
 // // Export selectors
 export const selectAllBookings = (state: RootState) => state.bookings.bookings;

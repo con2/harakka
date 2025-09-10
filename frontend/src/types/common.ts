@@ -62,6 +62,7 @@ export type ErrorContext =
   | "reject"
   | "return"
   | "update-payment-status"
+  | "patch"
   | null;
 
 export interface ErrorState {
@@ -80,7 +81,7 @@ export interface FiltersState {
   isActive: boolean;
   averageRating: number[];
   itemsNumberAvailable: [number, number];
-  itemTypes: string[];
+  category: string;
   tagIds: string[];
   locationIds: string[];
   orgIds?: string[];

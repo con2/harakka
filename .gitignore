@@ -4,7 +4,12 @@ NOTES.md
 .env.*
 !.env.production.template
 !.env.local.template
-supabase-local.env
+!supabase/.env.production
+!supabase/.env.preview
+supabase/.env.local
+supabase/.env.keys
+.env.supabase.local
+!.env.supabase.local.template
 supabase-project
 supabase-prod
 # Volumes that get created when running supabase instance
@@ -58,7 +63,6 @@ lerna-debug.log*
 .env.production.local
 .env.local
 .env.supabase.local
-.supabase-local.env
 
 
 # temp directory
@@ -79,3 +83,7 @@ USER_profiles-access-with_ANON-key.md
 RPC-SQL-functions.md
 
 Notes
+.env*
+.flaskenv*
+!.env.project
+!.env.vault

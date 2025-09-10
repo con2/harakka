@@ -12,6 +12,18 @@ export const myBookings = {
       fi: "Kirjaudu sisään nähdäksesi tilauksesi",
       en: "Please log in to view your bookings",
     },
+    invalidContext: {
+      fi: "Virheellinen konteksti. Yritä uudelleen myöhemmin",
+      en: "Invalid context. Please try again later",
+    },
+    insufficientRole: {
+      en: "You do not have permission to view bookings",
+      fi: "Sinulla ei ole oikeuksia nähdä varauksia",
+    },
+    insufficientRoleDescription: {
+      en: "Choose another role to view bookings",
+      fi: "Valitse toinen rooli nähdäksesi varaukset",
+    },
   },
   buttons: {
     tryAgain: {

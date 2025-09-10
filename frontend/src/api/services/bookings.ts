@@ -47,6 +47,30 @@ export const bookingsApi = {
   },
 
   /**
+   * Get bookings for the current authenticated user
+   * @param activeOrgId - Active organization ID
+   * @param activeRole - Active role of the user
+   * @param userId - User ID to fetch bookings for
+   * @param page - Page number for pagination (default: 1)
+   * @param limit - Number of items per page (default: 10)
+   * @returns Promise with the user's bookings
+   */
+  getOwnBookings: async (
+    activeOrgId: string,
+    activeRole: string,
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<ApiResponse<BookingPreview>> => {
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    return api.get(
+      `/bookings/my?activeOrgId=${activeOrgId}&activeRole=${activeRole}&userId=${userId}&${params.toString()}`,
+    );
+  },
+
+  /**
    * Get bookings for a specific user
    * @param user_id - User ID of booking
    * @param booking_id ID of the booking to fetch
@@ -164,7 +188,7 @@ export const bookingsApi = {
       `/bookings/${bookingId}/confirm-for-org?org_id=${encodeURIComponent(
         orgId,
       )}`,
-      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
+      itemIds,
     );
   },
 
@@ -180,7 +204,7 @@ export const bookingsApi = {
       `/bookings/${bookingId}/reject-for-org?org_id=${encodeURIComponent(
         orgId,
       )}`,
-      itemIds && itemIds.length > 0 ? { item_ids: itemIds } : undefined,
+      itemIds,
     );
   },
 
@@ -199,31 +223,48 @@ export const bookingsApi = {
    * @returns Promise with the deleted booking ID
    */
   deleteBooking: async (bookingId: string): Promise<string> => {
-    const userId = localStorage.getItem("userId");
-    await api.delete(`/bookings/${bookingId}/delete`, {
-      headers: {
-        "x-user-id": userId || "",
-      },
-    });
+    await api.delete(`/bookings/${bookingId}/delete`);
     return bookingId; // Return the ID for state management
   },
 
   /**
    * Process item returns (admin only)
    * @param bookingId - booking ID to process returns for
+   * @param itemIds - Optional. Item IDs to mark as returned. If omitted, all picked up items are marked as "returned".
    * @returns Promise with updated booking
    */
-  returnItems: async (bookingId: string): Promise<Booking> => {
-    const userId = localStorage.getItem("userId");
-    return api.post(
-      `/bookings/${bookingId}/return`,
-      {},
-      {
-        headers: {
-          "x-user-id": userId || "",
-        },
-      },
-    );
+  returnItems: async (
+    bookingId: string,
+    itemIds?: string[],
+  ): Promise<Booking> => {
+    return api.patch(`/bookings/${bookingId}/return`, itemIds);
+  },
+
+  /**
+   * Process item returns (admin only)
+   * @param bookingId - booking ID to process returns for
+   * @param itemIds - Optional. Item IDs to mark as picked up. If omitted, all picked up items are marked as "picked_up".
+   * @returns Promise with updated booking
+   */
+  pickUpItems: async (
+    bookingId: string,
+    itemIds?: string[],
+  ): Promise<Booking> => {
+    return api.patch(`/bookings/${bookingId}/pickup`, itemIds);
+  },
+
+  /**
+   * Mark items as cancelled from a booking.
+   * Meaning they will not be picked up
+   * @param bookingId ID of booking which to cancel items from
+   * @param itemIds Items which to cancel from the booking
+   */
+  cancelBookingItems: async (
+    bookingId: string,
+    itemIds?: string[],
+  ): Promise<Booking> => {
+    console.log("itemIds: ", itemIds);
+    return api.patch(`/bookings/${bookingId}/cancel`, itemIds);
   },
 
   /**

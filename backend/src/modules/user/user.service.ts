@@ -42,6 +42,76 @@ export class UserService {
     return data;
   }
 
+  /**
+   * Get a list of users with only name and email.
+   * Accessible by super_admin, tenant_admin, and storage_manager.
+   * @param req - Authenticated request object
+   * @param dto - Query parameters for pagination and filtering
+   * @returns List of users with name and email
+   */
+  async getAllOrderedUsersList(req: AuthRequest, dto: GetOrderedUsersDto) {
+    const supabase = req.supabase;
+    const activeRole = req.headers["x-role-name"] as string;
+
+    // Always select all needed columns, filter in result mapping based on role
+    const columns = "id, visible_name, full_name, email";
+
+    // Build the main user query (ask Supabase for an exact count so metadata is accurate)
+    let query = supabase
+      .from("user_profiles")
+      .select("id, full_name, email", { count: "exact" });
+
+    // Apply search query if provided
+    if (dto.searchquery) {
+      const searchPattern = `%${dto.searchquery}%`;
+      if (activeRole === "storage_manager" || activeRole === "tenant_admin") {
+        query = query.or(
+          `email.ilike.${searchPattern},visible_name.ilike.${searchPattern},full_name.ilike.${searchPattern}`,
+        );
+      } else {
+        query = query.or(
+          `email.ilike.${searchPattern},full_name.ilike.${searchPattern}`,
+        );
+      }
+    }
+
+    // Apply ordering
+    const orderColumn = dto.ordered_by || "created_at";
+    const ascending = dto.ascending === true;
+    query = query.order(orderColumn, { ascending });
+
+    // Apply pagination
+    const page = Number(dto.page) || 1;
+    const limit = Number(dto.limit) || 10;
+    const offset = (page - 1) * limit;
+    query = query.range(offset, offset + limit - 1);
+    const result = await query;
+    if (result.error) {
+      handleSupabaseError(result.error);
+    }
+    const data = (result.data ?? []) as Array<
+      Pick<UserProfile, "id" | "full_name" | "email">
+    >;
+    if (!data || data.length === 0) {
+      return {
+        result: [],
+        metadata: getPaginationMeta(0, page, limit),
+      };
+    }
+    const rows: Pick<UserProfile, "id" | "full_name" | "email">[] = data.map(
+      (user) => ({
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+      }),
+    );
+    const totalCount = (result.count as number) ?? rows.length;
+    return {
+      result: rows,
+      metadata: getPaginationMeta(totalCount, page, limit),
+    };
+  }
+
   // Paginated, filtered, org-aware (org_filter + Global)
   async getAllOrderedUsers(
     req: AuthRequest,

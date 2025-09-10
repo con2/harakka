@@ -3,7 +3,8 @@ import { usersApi } from "../../api/services/users";
 import { RootState } from "../store";
 import { supabase } from "../../config/supabase";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
-import { Address } from "@/types/address";
+// Address is used for return types and state, CreateAddressInput for API calls
+import { CreateAddressInput } from "@/types/address";
 import { UserState, OrderedUsersParams } from "@/types/user";
 import { CreateUserDto, UpdateUserDto, UserProfile } from "@common/user.types";
 import { ApiResponse } from "@/types/api";
@@ -20,7 +21,7 @@ const initialState: UserState = {
 };
 
 /**
- * Fetch all users (super_admin/superVera, no pagination/filtering)
+ * Fetch all users (super_admin, no pagination/filtering)
  */
 export const fetchAllUsers = createAsyncThunk<
   UserProfile[],
@@ -51,6 +52,24 @@ export const fetchAllOrderedUsers = createAsyncThunk<
   } catch (error: unknown) {
     return thunkAPI.rejectWithValue(
       extractErrorMessage(error, "Failed to fetch users"),
+    );
+  }
+});
+
+/**
+ * Fetch lightweight users list (id, full_name, email) for selects/autocomplete
+ */
+export const fetchAllOrderedUsersList = createAsyncThunk<
+  ApiResponse<Pick<UserProfile, "id" | "full_name" | "email">[]>,
+  OrderedUsersParams,
+  { rejectValue: string }
+>("users/fetchAllOrderedUsersList", async (params, thunkAPI) => {
+  try {
+    const response = await usersApi.getAllOrderedUsersList(params);
+    return response;
+  } catch (error: unknown) {
+    return thunkAPI.rejectWithValue(
+      extractErrorMessage(error, "Failed to fetch users list"),
     );
   }
 });
@@ -162,7 +181,7 @@ export const getUserAddresses = createAsyncThunk(
 export const addAddress = createAsyncThunk(
   "users/addAddress",
   async (
-    { id, address }: { id: string; address: Address },
+    { id, address }: { id: string; address: CreateAddressInput },
     { rejectWithValue },
   ) => {
     try {
@@ -183,7 +202,7 @@ export const updateAddress = createAsyncThunk(
       id,
       addressId,
       address,
-    }: { id: string; addressId: string; address: Address },
+    }: { id: string; addressId: string; address: CreateAddressInput },
     { rejectWithValue },
   ) => {
     try {
@@ -252,6 +271,9 @@ export const usersSlice = createSlice({
       state.error = null;
       state.errorContext = null;
     },
+    clearUsersList: (state: UserState) => {
+      state.usersList = undefined;
+    },
     selectUser: (state, action) => {
       state.selectedUser = action.payload;
     },
@@ -300,6 +322,20 @@ export const usersSlice = createSlice({
       })
       .addCase(fetchAllOrderedUsers.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+      })
+
+      // fetchAllOrderedUsersList (lightweight list for selects)
+      .addCase(fetchAllOrderedUsersList.pending, (state) => {
+        // keep global loading unchanged; use separate place for lists
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(fetchAllOrderedUsersList.fulfilled, (state, action) => {
+        state.usersList = action.payload;
+      })
+      .addCase(fetchAllOrderedUsersList.rejected, (state, action) => {
         state.error = action.payload as string;
         state.errorContext = "fetch";
       })
@@ -479,6 +515,7 @@ export const usersSlice = createSlice({
 
 // selectors for accessing state
 export const selectAllUsers = (state: RootState) => state.users.users;
+export const selectUsersList = (state: RootState) => state.users.usersList;
 export const selectLoading = (state: RootState) => state.users.loading;
 export const selectError = (state: RootState) => state.users.error;
 export const selectErrorContext = (state: RootState) =>
@@ -499,7 +536,7 @@ export const selectTotalUsersCount = (state: RootState) =>
   state.users.userCount;
 
 // export actions from the slice
-export const { clearSelectedUser, selectUser, clearAddresses } =
+export const { clearSelectedUser, selectUser, clearAddresses, clearUsersList } =
   usersSlice.actions;
 
 // export the reducer to be used in the store
