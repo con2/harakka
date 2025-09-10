@@ -759,6 +759,7 @@ export class BookingService {
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", providerOrgId)
       .in("status", ["pending"]);
+    if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
 
     const { error: updateErr } = await updateQuery;
     if (updateErr) {
