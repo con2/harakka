@@ -13,24 +13,26 @@ import rolesReducer from "./slices/rolesSlice";
 import userBanningReducer from "./slices/userBanningSlice";
 import organizationReducer from "./slices/organizationSlice";
 import organizationLocationsReducer from "./slices/organizationLocationsSlice";
+import categoriesReducer from "./slices/categoriesSlice";
 
 // add slices in the reducer object
 export const store = configureStore({
   reducer: {
-    users: usersReducer,
-    items: itemsReducer,
     bookings: bookingsReducer,
     cart: cartReducer,
-    timeframe: timeframeReducer,
-    tags: tagsReducer,
+    categories: categoriesReducer,
     itemImages: itemImagesReducer,
-    ui: uiReducer,
+    items: itemsReducer,
     locations: locationsReducer,
     logs: logsReducer,
-    roles: rolesReducer,
-    userBanning: userBanningReducer,
-    organizations: organizationReducer,
     orgLocations: organizationLocationsReducer,
+    organizations: organizationReducer,
+    roles: rolesReducer,
+    tags: tagsReducer,
+    timeframe: timeframeReducer,
+    ui: uiReducer,
+    userBanning: userBanningReducer,
+    users: usersReducer,
   },
 });
 

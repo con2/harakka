@@ -2,7 +2,7 @@ import { CreateUserDto, UserProfile } from "@common/user.types";
 import { api } from "../axios";
 import { Address, CreateAddressInput } from "@/types/address";
 import { store } from "@/store/store";
-import { ApiResponse } from "@/types/api";
+import { ApiResponse, PaginationMeta } from "@/types/api";
 import { OrderedUsersParams } from "@/types/user";
 
 /**
@@ -22,6 +22,33 @@ export const usersApi = {
       Object.entries(params).filter(([, value]) => value !== undefined),
     );
     return api.get("/users/ordered", { params: cleanParams });
+  },
+
+  /**
+   * Get a lightweight list of users (id, full_name, email) for tenant_admin/super_admin
+   */
+  getAllOrderedUsersList: async (
+    params: OrderedUsersParams,
+  ): Promise<
+    ApiResponse<Pick<UserProfile, "id" | "full_name" | "email">[]>
+  > => {
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).filter(([, value]) => value !== undefined),
+    );
+    // Use unknown and a narrow type assertion to avoid linter complaints about `any`.
+    const resRaw = (await api.get("/users/ordered-list", {
+      params: cleanParams,
+    })) as unknown;
+
+    const res = resRaw as {
+      result: Array<{ id: string; full_name: string; email: string }>;
+      metadata: PaginationMeta;
+    };
+
+    return {
+      data: res.result,
+      metadata: res.metadata,
+    };
   },
 
   /**

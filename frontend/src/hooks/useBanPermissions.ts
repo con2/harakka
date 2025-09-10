@@ -35,7 +35,7 @@ export const useBanPermissions = () => {
   /**
    * Check if a user is currently banned (shared logic)
    * For tenant_admin: only show bans relevant to their active organization
-   * For super_admin/superVera: show all bans
+   * For super_admin: show all bans
    */
   const isUserBanned = useCallback(
     (userId: string): boolean => {
@@ -102,7 +102,7 @@ export const useBanPermissions = () => {
    */
   const canBanUser = useCallback(
     (targetUserId: string): boolean => {
-      // super_admin and superVera can ban anyone from anywhere
+      // super_admin can ban anyone from anywhere
       if (isActiveRoleSuper) {
         return true;
       }

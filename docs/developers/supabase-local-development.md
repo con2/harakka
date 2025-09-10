@@ -95,8 +95,6 @@ To find out more about **any command** run `npx supabase [command] --help` and t
 #### Database Operations
 
 - `npm run s:reset` - Reset local DB and apply all migrations
-- `npm run s:pull` - Pull schema changes from remote
-- `npm run s:push` - Push local migrations to remote
 - `npm run s:seed` - Create seed data from remote DB
 - `npm run s:dump` - Dump database schema to file
 

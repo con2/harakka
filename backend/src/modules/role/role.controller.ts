@@ -12,6 +12,7 @@ import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
 import { RoleService } from "./role.service";
 import { ViewUserRolesWithDetails } from "@common/role.types";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
+import { Roles } from "@src/decorators/roles.decorator";
 
 @Controller("roles")
 export class RoleController {
@@ -22,6 +23,12 @@ export class RoleController {
    * Get all roles for the current authenticated user
    */
   @Get("current")
+  @Roles(
+    ["user", "requester", "storage_manager", "tenant_admin", "super_admin"],
+    {
+      match: "any",
+    },
+  )
   getCurrentUserRoles(@Req() req: AuthRequest): ViewUserRolesWithDetails[] {
     return this.roleService.getCurrentUserRoles(req);
   }
@@ -31,6 +38,12 @@ export class RoleController {
    * Check if user has a specific role
    */
   @Get("check/:roleName")
+  @Roles(
+    ["user", "requester", "storage_manager", "tenant_admin", "super_admin"],
+    {
+      match: "any",
+    },
+  )
   hasRole(
     @Param("roleName") roleName: string,
     @Req() req: AuthRequest,
@@ -44,6 +57,12 @@ export class RoleController {
    * Check if user has a specific role in an organization
    */
   @Get("check/:roleName/organization/:orgId")
+  @Roles(
+    ["user", "requester", "storage_manager", "tenant_admin", "super_admin"],
+    {
+      match: "any",
+    },
+  )
   hasRoleInOrganization(
     @Param("roleName") roleName: string,
     @Param("orgId") orgId: string,
@@ -57,6 +76,12 @@ export class RoleController {
    * GET /roles/organizations
    * Get user's organizations and roles
    */
+  @Roles(
+    ["user", "requester", "storage_manager", "tenant_admin", "super_admin"],
+    {
+      match: "any",
+    },
+  )
   @Get("organizations")
   getUserOrganizations(@Req() req: AuthRequest) {
     return this.roleService.getUserOrganizations(req);
@@ -66,6 +91,12 @@ export class RoleController {
    * GET /roles/organization/:orgId
    * Get user's roles in a specific organization
    */
+  @Roles(
+    ["user", "requester", "storage_manager", "tenant_admin", "super_admin"],
+    {
+      match: "any",
+    },
+  )
   @Get("organization/:orgId")
   getCurrentUserRolesInOrganization(
     @Param("orgId") orgId: string,
@@ -76,9 +107,13 @@ export class RoleController {
 
   /**
    * GET /roles/all
-   * Get all user role assignments (admin only)
+   * Get all user role assignments
    */
   @Get("all")
+  @Roles(["tenant_admin", "super_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async getAllUserRoles(
     @Req() req: AuthRequest,
   ): Promise<ViewUserRolesWithDetails[]> {
@@ -90,6 +125,10 @@ export class RoleController {
    * Get all available roles from the roles table
    */
   @Get("list")
+  @Roles(["tenant_admin", "super_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async getAllRoles(@Req() req: AuthRequest) {
     return this.roleService.getAllRoles(req);
   }
@@ -99,6 +138,10 @@ export class RoleController {
    * Create a new user role assignment
    */
   @Post()
+  @Roles(["tenant_admin", "super_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async createUserRole(
     @Body() createRoleDto: CreateUserRoleDto,
     @Req() req: AuthRequest,
@@ -111,6 +154,10 @@ export class RoleController {
    * Update a user role assignment
    */
   @Put(":id")
+  @Roles(["tenant_admin", "super_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async updateUserRole(
     @Param("id") tableKeyId: string,
     @Body() updateRoleDto: UpdateUserRoleDto,
@@ -124,6 +171,10 @@ export class RoleController {
    * Soft delete a user role assignment (deactivate)
    */
   @Delete(":id")
+  @Roles(["tenant_admin", "super_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async deleteUserRole(
     @Param("id") tableKeyId: string,
     @Req() req: AuthRequest,
@@ -136,6 +187,10 @@ export class RoleController {
    * Permanently delete a user role assignment
    */
   @Delete(":id/permanent")
+  @Roles(["super_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async permanentDeleteUserRole(
     @Param("id") tableKeyId: string,
     @Req() req: AuthRequest,

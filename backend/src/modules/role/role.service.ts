@@ -62,15 +62,6 @@ export class RoleService {
     );
   }
 
-  /**
-   * Check if the current user is superVera (global admin)
-   */
-  isSuperVera(req: AuthRequest): boolean {
-    return req.userRoles.some(
-      (role) => role.role_name !== null && role.role_name === "superVera",
-    );
-  }
-
   /* The method is used to extract and organize the user's organizations from the request context.
   It processes the user roles and groups them based on the organization they belong to.
   It returns an array of objects, where each object represents an organization with its ID,
@@ -383,12 +374,7 @@ export class RoleService {
     roles: ViewUserRolesWithDetails[],
     req: AuthRequest,
   ): ViewUserRolesWithDetails[] {
-    // SuperVera can see all roles
-    if (this.isSuperVera(req)) {
-      return roles;
-    }
-
-    // Regular admins can only see roles in their organizations
+    // Admins can only see roles in their organizations
     const userOrgIds = req.userRoles.map((role) => role.organization_id);
     return roles.filter((role) => userOrgIds.includes(role.organization_id));
   }

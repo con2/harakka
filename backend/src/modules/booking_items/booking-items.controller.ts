@@ -16,7 +16,7 @@ import {
   BookingItemsUpdate,
 } from "./interfaces/booking-items.interfaces";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { Public } from "src/decorators/roles.decorator";
+import { Public, Roles } from "src/decorators/roles.decorator";
 
 @Controller("booking-items")
 export class BookingItemsController {
@@ -79,11 +79,16 @@ export class BookingItemsController {
 
   /**
    * Endpoint to create a new booking item
+   * Accessible by users, requesters, storage managers, and tenant admins.
    * @param req
    * @body Item to add to a booking
    * @returns
    */
   @Post()
+  @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async createBookingItem(
     @Req() req: AuthRequest,
     @Body() booking_item: BookingItemsInsert,
@@ -96,6 +101,10 @@ export class BookingItemsController {
   }
 
   @Delete(":booking_id/:booking_item_id")
+  @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async removeBookingItem(
     @Req() req: AuthRequest,
     @Param("booking_id") booking_id: string,
@@ -110,6 +119,10 @@ export class BookingItemsController {
   }
 
   @Patch(":booking_item_id")
+  @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async updateBookingItem(
     @Req() req: AuthRequest,
     @Param("booking_item_id") booking_item_id: string,

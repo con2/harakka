@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
-import { selectAllItems } from "@/store/slices/itemsSlice";
 import { Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -20,10 +19,15 @@ import {
   selectOrganizations,
 } from "@/store/slices/organizationSlice";
 import type { OrganizationDetails } from "@/types/organization";
+import {
+  fetchAllCategories,
+  selectCategories,
+} from "@/store/slices/categoriesSlice";
+import { buildCategoryTree } from "@/store/utils/format";
 
 const UserPanel = () => {
   const tags = useAppSelector(selectAllTags);
-  const items = useAppSelector(selectAllItems);
+  const categories = useAppSelector(selectCategories);
   const locations = useAppSelector(selectAllLocations);
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
@@ -31,6 +35,7 @@ const UserPanel = () => {
   const organizations = useAppSelector(selectOrganizations);
 
   useEffect(() => {
+    void dispatch(fetchAllCategories({ page: 1, limit: 50 }));
     void dispatch(
       fetchFilteredTags({
         page: 1,
@@ -44,23 +49,8 @@ const UserPanel = () => {
     if (organizations.length < 1)
       void dispatch(fetchAllOrganizations({ page: 1, limit: 50 }));
     // eslint-disable-next-line
-  }, [dispatch]);
+  }, []);
 
-  // Unique item_type values from items
-  const uniqueItemTypes = Array.from(
-    new Set(
-      items
-        .map((item) => {
-          const itemType =
-            item.translations?.[lang]?.item_type ||
-            item.translations?.[lang === "fi" ? "en" : "fi"]?.item_type;
-          return itemType;
-        })
-        .filter(Boolean)
-        .map((type) => type)
-        .sort((a, b) => a.localeCompare(b)),
-    ),
-  );
   // Shared expand/collapse state per filter list (max 5 visible by default)
   type ExpandableSection = "itemTypes" | "organizations" | "locations" | "tags";
   const MAX_VISIBLE = 5;
@@ -75,7 +65,7 @@ const UserPanel = () => {
   const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
     expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
 
-  const visibleItemTypes = getVisible(uniqueItemTypes, "itemTypes");
+  const mappedCategories = buildCategoryTree(categories);
   const visibleOrganizations = getVisible(organizations, "organizations");
   const visibleLocations = getVisible(locations, "locations");
   const visibleTags = getVisible(tags, "tags");
@@ -85,7 +75,7 @@ const UserPanel = () => {
     isActive: boolean;
     averageRating: number[];
     itemsNumberAvailable: [number, number];
-    itemTypes: string[];
+    category: string;
     tagIds: string[];
     locationIds: string[];
     orgIds?: string[];
@@ -93,7 +83,7 @@ const UserPanel = () => {
     isActive: true, // Is item active or not filter
     averageRating: [],
     itemsNumberAvailable: [0, 100], // add a range for number of items
-    itemTypes: [],
+    category: "",
     tagIds: [],
     locationIds: [],
     orgIds: [],
@@ -126,7 +116,7 @@ const UserPanel = () => {
       count++;
     }
     count += filters.averageRating.length;
-    count += filters.itemTypes.length;
+    count += filters.category ? 1 : 0;
     count += filters.tagIds.length;
     count += filters.locationIds.length;
     count += filters.orgIds?.length ?? 0;
@@ -169,13 +159,13 @@ const UserPanel = () => {
                     <Button
                       variant="ghost"
                       size={"sm"}
-                      className="text-xs px-1 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white"
+                      className="text-xs px-1 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white h-fit"
                       onClick={() =>
                         setFilters({
                           isActive: true,
                           averageRating: [],
                           itemsNumberAvailable: [0, 100],
-                          itemTypes: [],
+                          category: "",
                           tagIds: [],
                           locationIds: [],
                           orgIds: [],
@@ -205,41 +195,48 @@ const UserPanel = () => {
             <div className="flex flex-col flex-wrap gap-3">
               <label className="text-primary text-md block mb-0">
                 {" "}
-                {t.userPanel.filters.itemTypes[lang]}
+                {t.userPanel.filters.categories[lang]}
               </label>
-              {visibleItemTypes.map((typeName) => {
-                const isSelected = filters.itemTypes?.includes(typeName);
+              {mappedCategories.map((cat) => {
+                const subcatIds = cat.subcategories?.flatMap((c) => c.id);
+                const isSelected = filters.category === cat.id;
+                const hasChildSelected = subcatIds?.includes(filters.category);
+
                 return (
-                  <span
-                    key={typeName}
-                    className={`cursor-pointer text-sm justify-between flex items-center ${
-                      isSelected
-                        ? "text-secondary font-bold"
-                        : "text-slate-500 hover:text-secondary"
-                    }`}
-                    onClick={() => {
-                      const updated = isSelected
-                        ? filters.itemTypes.filter((t) => t !== typeName)
-                        : [...(filters.itemTypes || []), typeName];
-                      handleFilterChange("itemTypes", updated);
-                    }}
-                  >
-                    {typeName.charAt(0).toUpperCase() + typeName.slice(1)}{" "}
-                    <ChevronRight className="w-4 h-4 inline" />
-                  </span>
+                  <div key={cat.id} className="flex flex-col gap-2">
+                    <Button
+                      className="justify-between h-fit px-0"
+                      onClick={() => {
+                        const newValue = isSelected ? "" : cat.id;
+                        handleFilterChange("category", newValue);
+                      }}
+                    >
+                      {cat.translations[lang]}
+                      {cat.subcategories!.length > 0 && (
+                        <ChevronRight
+                          className={`transition-transform ${isSelected || hasChildSelected ? "transform-[rotate(90deg)]" : "transform-[rotate(0deg)]"}`}
+                        />
+                      )}
+                    </Button>
+                    {(isSelected || hasChildSelected) &&
+                      cat.subcategories?.map((subcat) => {
+                        const subcatSelected = filters.category === subcat.id;
+                        return (
+                          <Button
+                            className="justify-start pl-6 h-fit"
+                            key={subcat.id}
+                            onClick={() => {
+                              const newValue = subcatSelected ? "" : subcat.id;
+                              handleFilterChange("category", newValue);
+                            }}
+                          >
+                            {subcat.translations[lang]}
+                          </Button>
+                        );
+                      })}
+                  </div>
                 );
               })}
-              {uniqueItemTypes.length > MAX_VISIBLE && (
-                <Button
-                  variant="ghost"
-                  className="text-left text-sm text-secondary"
-                  onClick={() => toggleExpanded("itemTypes")}
-                >
-                  {expanded.itemTypes
-                    ? t.userPanel.categories.showLess[lang]
-                    : t.userPanel.categories.seeAll[lang]}
-                </Button>
-              )}
             </div>
 
             <Separator className="my-4" />
@@ -479,7 +476,7 @@ const UserPanel = () => {
                         isActive: true,
                         averageRating: [],
                         itemsNumberAvailable: [0, 100],
-                        itemTypes: [],
+                        category: "",
                         tagIds: [],
                         locationIds: [],
                         orgIds: [],
