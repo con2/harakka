@@ -970,11 +970,15 @@ export const bookingsSlice = createSlice({
       .addCase(updateSelfPickup.fulfilled, (state, action) => {
         state.loading = false;
         const { newStatus, location_id } = action.payload;
-        state.currentBooking?.booking_items?.map((item) => {
-          if (item.location_id === location_id)
-            return { ...item, self_pickup: newStatus };
-          else return item;
-        });
+        const items = state.currentBooking?.booking_items ?? [];
+        state.currentBooking = {
+          ...(state.currentBooking ?? {}),
+          booking_items: items.map((item) =>
+            item.location_id === location_id
+              ? { ...item, self_pickup: newStatus }
+              : item,
+          ),
+        };
       })
       .addCase(updateSelfPickup.rejected, (state, action) => {
         state.error = action.payload as string;

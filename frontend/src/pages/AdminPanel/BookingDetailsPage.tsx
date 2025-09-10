@@ -140,8 +140,6 @@ const BookingDetailsPage = () => {
     new Map(mappedPickUp?.map((p) => [p.location_id, p])).values(),
   );
 
-  console.log(pickUpStatuses);
-
   // Small image component for booking items (fetches from itemImages slice)
   const ItemImage = ({
     item,
@@ -357,12 +355,16 @@ const BookingDetailsPage = () => {
                   const isChecked = pickUpStatuses.find(
                     (s) => s.location_id === loc.storage_location_id,
                   )?.self_pickup;
+                  const isDisabled = !["pending", "confirmed"].includes(
+                    booking.org_status_for_active_org ?? "",
+                  );
                   return (
                     <div className="flex gap-2 items-center">
                       <div>{loc.storage_locations?.name}</div>
 
                       <Checkbox
                         checked={isChecked}
+                        disabled={isDisabled}
                         onCheckedChange={(newValue) =>
                           handleSelfPickup(
                             newValue as boolean,
