@@ -108,7 +108,7 @@ export class AppModule implements NestModule {
         { path: "auth/endpoints", method: RequestMethod.GET },
 
         // User setup flow
-        //{ path: "user-setup/setup", method: RequestMethod.POST },
+        { path: "user-setup/setup", method: RequestMethod.POST },
         { path: "user-setup/check-status", method: RequestMethod.POST },
 
         // Health checks and public endpoints

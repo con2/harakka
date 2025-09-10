@@ -1,6 +1,6 @@
 import { supabase } from "@/config/supabase";
-import { User } from "@supabase/supabase-js";
-import { api } from "../axios";
+import { User, Session } from "@supabase/supabase-js";
+import { api, clearCachedAuthToken } from "../axios";
 
 export interface UserProfileData {
   email: string;
@@ -15,6 +15,8 @@ export interface SignUpResult {
   user?: User;
   error?: string;
   isNewUser?: boolean;
+  sessionRefreshed?: boolean;
+  session?: Session | null;
 }
 
 export interface UserSetupStatus {
@@ -36,36 +38,33 @@ export class AuthService {
     signupMethod: "email" | "oauth" = "email",
     userInput?: { full_name?: string; phone?: string },
   ): Promise<SignUpResult> {
-    console.log("I'm setupNewUser");
+    console.log("🚀 Starting setupNewUser with integrated session refresh");
     try {
-      console.log(`🔍 SETUP: Starting setup for user ID: ${user.id}`);
+      console.log(`🔍 Setting up user ID: ${user.id}`);
 
       // Extract user data based on signup method
       const profileData = this.extractUserProfileData(user, signupMethod);
 
-      // First, check if this user actually needs setup
-      console.log(`Checking if user ${user.id} needs setup`);
+      // Check if user needs setup
       const setupStatus = await this.checkUserSetupStatus(user.id);
-      console.log(`Setup status for ${user.id}:`, setupStatus);
+      console.log(`📊 Setup status for ${user.id}:`, setupStatus);
 
       if (!setupStatus.needsSetup) {
-        console.log(`User ${user.id} already setup, skipping`);
+        console.log(`✅ User ${user.id} already setup, skipping`);
         return { success: true, user, isNewUser: false };
       }
 
-      // Get auth token once
+      // Get auth token for setup request
       const { data: sessionData } = await supabase.auth.getSession();
       const session = sessionData.session;
       const token = session?.access_token;
 
       if (!session) {
-        console.error("No authenticated session found");
+        console.error("❌ No authenticated session found");
         throw new Error("No authenticated session found");
       }
 
-      console.log("🔄 Attempting direct fetch to setup endpoint");
-
-      // Call backend API to setup user
+      // Create setup payload
       const setupPayload = {
         userId: user.id,
         email: profileData.email,
@@ -74,48 +73,89 @@ export class AuthService {
         visible_name: profileData.visible_name,
         provider: profileData.provider,
       };
-      console.log("📡 Sending setup request with payload:", {
-        ...setupPayload,
-        email: setupPayload.email
-          ? `${setupPayload.email.substring(0, 3)}***`
-          : null,
-      });
 
       // Use the configured API URL from environment
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-      console.log(`🔌 Using API URL: ${apiUrl}`);
 
-      try {
-        const response = await fetch(`${apiUrl}/user-setup/setup`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify(setupPayload),
-        });
+      // Call backend API to setup user
+      console.log("📡 Sending setup request to backend");
+      const response = await fetch(`${apiUrl}/user-setup/setup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify(setupPayload),
+      });
 
-        // Test additional response properties
-        console.log("✅ Response status:", response.status);
-        console.log("✅ Response status text:", response.statusText);
-        console.log("✅ Response headers:", [...response.headers.entries()]);
-
-        // Parse and return result
-        const result = await response.json();
-        console.log("✅ Direct fetch result:", result);
-
-        return {
-          success: result.success,
-          user,
-          isNewUser: true,
-        };
-      } catch (fetchError) {
-        console.error("❌ Direct fetch failed:", fetchError);
-        throw fetchError;
+      if (!response.ok) {
+        console.error(`❌ Setup failed with status ${response.status}`);
+        throw new Error(`Setup failed with status ${response.status}`);
       }
+
+      const result = await response.json();
+      console.log("✅ User setup result:", result);
+
+      if (!result.success) {
+        return { success: false, error: result.error, isNewUser: true };
+      }
+
+      // ADDED: Immediate session refresh after successful setup
+      console.log("🔄 Immediately refreshing session to update JWT claims");
+      clearCachedAuthToken(); // Clear token cache first
+
+      // Azure best practice: Use retry pattern for token refresh
+      let attempts = 0;
+      const maxAttempts = 3;
+      let refreshResult = null;
+
+      while (attempts < maxAttempts) {
+        try {
+          refreshResult = await supabase.auth.refreshSession();
+
+          if (refreshResult.error) {
+            console.warn(
+              `⚠️ Session refresh attempt ${attempts + 1} failed:`,
+              refreshResult.error,
+            );
+            attempts++;
+
+            if (attempts >= maxAttempts) {
+              console.error("❌ Maximum refresh attempts reached");
+              break;
+            }
+
+            // Azure best practice: Exponential backoff
+            const backoffMs = Math.pow(2, attempts) * 200;
+            console.log(`⏱️ Retrying in ${backoffMs}ms...`);
+            await new Promise((resolve) => setTimeout(resolve, backoffMs));
+          } else {
+            console.log(
+              "✅ Session refreshed successfully with new JWT claims",
+            );
+            break;
+          }
+        } catch (refreshError) {
+          console.error(
+            "❌ Unexpected error during session refresh:",
+            refreshError,
+          );
+          attempts++;
+          if (attempts >= maxAttempts) break;
+          await new Promise((resolve) => setTimeout(resolve, 500 * attempts));
+        }
+      }
+
+      return {
+        success: true,
+        user,
+        isNewUser: true,
+        sessionRefreshed: !!refreshResult && !refreshResult.error,
+        session: refreshResult?.data?.session || null,
+      };
     } catch (error) {
       console.error(
-        "User setup failed:",
+        "❌ User setup failed:",
         error instanceof Error ? error.message : String(error),
       );
       return {
