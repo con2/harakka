@@ -439,4 +439,22 @@ export class BookingController {
       itemIds,
     );
   }
+  /**
+   * Set items to be marked as picked up by user and not admin
+   */
+  @Patch(":bookingId/self-pickup")
+  async updateSelfPickup(
+    @Param("bookingId") bookingId: string,
+    @Req() req: AuthRequest,
+    @Body() body: { location_id: string; newStatus: boolean },
+  ) {
+    const supabase = req.supabase;
+    const orgId = req.headers["x-org-id"] as string;
+    return this.bookingService.updateSelfPickup(
+      supabase,
+      bookingId,
+      orgId,
+      body,
+    );
+  }
 }

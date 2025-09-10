@@ -1415,4 +1415,31 @@ export class BookingService {
 
     return num_available ?? 0;
   }
+
+  /**
+   * Update self_pickup status of a booking portion
+   * self_pickup is PER org and PER location
+   */
+  async updateSelfPickup(
+    supabase: SupabaseClient,
+    bookingId: string,
+    orgId: string,
+    body: {
+      location_id: string;
+      newStatus: boolean;
+    },
+  ) {
+    const { location_id, newStatus } = body;
+    const result = await supabase
+      .from("booking_items")
+      .update({ self_pickup: newStatus })
+      .eq("booking_id", bookingId)
+      .eq("provider_organization_id", orgId)
+      .eq("location_id", location_id);
+
+    if (result.error) handleSupabaseError(result.error);
+    return {
+      message: `Self pickup was successfully ${newStatus === true ? "enabled" : "disabled"}`,
+    };
+  }
 }
