@@ -217,7 +217,6 @@ as $$
         and public.user_organization_roles.is_active = true
         and public.roles.role in (
           'super_admin'::public.roles_type,
-          'admin'::public.roles_type,
           'superVera'::public.roles_type
         )
     )
