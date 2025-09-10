@@ -1621,7 +1621,14 @@ export type Database = {
       }
     }
     Enums: {
-      booking_status: "pending" | "confirmed" | "rejected" | "cancelled"
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "rejected"
+        | "cancelled"
+        | "picked_up"
+        | "returned"
+        | "completed"
       notification_channel: "in_app" | "web_push" | "email"
       notification_severity: "info" | "warning" | "critical"
       notification_type:
@@ -1781,7 +1788,15 @@ export const Constants = {
   },
   public: {
     Enums: {
-      booking_status: ["pending", "confirmed", "rejected", "cancelled"],
+      booking_status: [
+        "pending",
+        "confirmed",
+        "rejected",
+        "cancelled",
+        "picked_up",
+        "returned",
+        "completed",
+      ],
       notification_channel: ["in_app", "web_push", "email"],
       notification_severity: ["info", "warning", "critical"],
       notification_type: [

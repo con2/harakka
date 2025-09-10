@@ -29,7 +29,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
       return (
         <Badge
           variant="outline"
-          className="bg-green-100 text-green-800 border-green-300"
+          className="bg-blue-100 text-blue-800 border-blue-300"
         >
           {t.statusBadge.status.confirmed[lang]}
         </Badge>
@@ -41,24 +41,6 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           className="bg-red-100 text-red-800 border-red-300"
         >
           {t.statusBadge.status.cancelled[lang]}
-        </Badge>
-      );
-    case "cancelled by user": // Backend status value
-      return (
-        <Badge
-          variant="outline"
-          className="bg-red-100 text-red-800 border-red-300"
-        >
-          {t.statusBadge.status.cancelledByUser[lang]}
-        </Badge>
-      );
-    case "cancelled by admin": // Backend status value
-      return (
-        <Badge
-          variant="outline"
-          className="bg-red-100 text-red-800 border-red-300"
-        >
-          {t.statusBadge.status.cancelledByAdmin[lang]}
         </Badge>
       );
     case "rejected": // Backend status value
@@ -74,7 +56,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
       return (
         <Badge
           variant="outline"
-          className="bg-blue-100 text-blue-800 border-blue-300"
+          className="bg-green-100 text-green-800 border-green-300"
         >
           {t.statusBadge.status.completed[lang]}
         </Badge>
@@ -83,9 +65,18 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
       return (
         <Badge
           variant="outline"
-          className="bg-green-100 text-green-800 border-green-300"
+          className="bg-blue-100 text-blue-800 border-blue-300"
         >
           {t.statusBadge.status.pickedUp[lang]}
+        </Badge>
+      );
+    case "returned": // Backend status value
+      return (
+        <Badge
+          variant="outline"
+          className="bg-blue-100 text-blue-800 border-blue-300"
+        >
+          {t.statusBadge.status.returned[lang]}
         </Badge>
       );
     default: {

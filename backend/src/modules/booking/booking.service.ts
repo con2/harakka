@@ -26,10 +26,8 @@ import { Database } from "@common/supabase.types";
 import {
   CancelBookingResponse,
   BookingItemRow,
-  StorageItemsRow,
   BookingRow,
   ValidBookingOrder,
-  BookingStatus,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { deriveOrgStatus } from "src/utils/booking.utils";
@@ -463,7 +461,7 @@ export class BookingService {
       .insert({
         user_id: userId,
         booking_number: bookingNumber,
-        status: BookingStatus.pending,
+        status: "pending",
       })
       .select()
       .single<BookingRow>();
@@ -503,7 +501,7 @@ export class BookingService {
         start_date: item.start_date,
         end_date: item.end_date,
         total_days: totalDays,
-        status: BookingStatus.pending,
+        status: "pending",
       };
 
       // Use BookingItemsService instead of direct insert
@@ -648,6 +646,21 @@ export class BookingService {
     itemIds?: string[],
   ) {
     const supabase = req.supabase;
+    if (itemIds && itemIds.length > 0) {
+      const { data: statusCheck } = await supabase
+        .from("booking_items")
+        .select("status")
+        .eq("booking_id", bookingId)
+        .eq("provider_organization_id", providerOrgId)
+        .in("id", itemIds);
+      const hasNonPending = statusCheck
+        ?.map((i) => i.status)
+        .some((status) => status !== "pending");
+      if (hasNonPending)
+        throw new BadRequestException(
+          "Cannot confirm items which are not pending",
+        );
+    }
 
     // Permission: must be admin in that organization (or global admin)
     const isAdminOfOrg = this.roleService.hasAnyRole(
@@ -662,14 +675,14 @@ export class BookingService {
     }
 
     // Confirm items: either a selected subset (itemIds) or all items for the org; only pending can be confirmed
-    let updateQuery = supabase
+    const updateQuery = supabase
       .from("booking_items")
-      .update({ status: BookingStatus.confirmed })
+      .update({ status: "confirmed" })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", providerOrgId)
-      .eq("status", BookingStatus.pending);
+      .eq("status", "pending");
     if (itemIds && itemIds.length > 0) {
-      updateQuery = updateQuery.in("id", itemIds);
+      updateQuery.in("id", itemIds);
     }
     const { error: updateErr } = await updateQuery;
     if (updateErr) {
@@ -686,16 +699,14 @@ export class BookingService {
     }
 
     const allRejected =
-      items.length > 0 &&
-      items.every((it) => it.status === BookingStatus.rejected);
+      items.length > 0 && items.every((it) => it.status === "rejected");
     const noPending =
-      items.length > 0 &&
-      items.every((it) => it.status !== BookingStatus.pending);
+      items.length > 0 && items.every((it) => it.status !== "pending");
 
     if (allRejected) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: BookingStatus.rejected })
+        .update({ status: "rejected" })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException(
@@ -705,7 +716,7 @@ export class BookingService {
     } else if (noPending) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: BookingStatus.confirmed })
+        .update({ status: "confirmed" })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException(
@@ -734,6 +745,21 @@ export class BookingService {
     itemIds?: string[],
   ) {
     const supabase = req.supabase;
+    if (itemIds && itemIds.length > 0) {
+      const { data: statusCheck } = await supabase
+        .from("booking_items")
+        .select("status")
+        .eq("booking_id", bookingId)
+        .eq("provider_organization_id", providerOrgId)
+        .in("id", itemIds);
+      const hasNonPending = statusCheck
+        ?.map((i) => i.status)
+        .some((status) => status !== "pending");
+      if (hasNonPending)
+        throw new BadRequestException(
+          "Cannot reject items which are not pending",
+        );
+    }
 
     const isAdminOfOrg = this.roleService.hasAnyRole(
       req,
@@ -747,15 +773,14 @@ export class BookingService {
     }
 
     // Only update status to 'rejected' for selected items (pending/confirmed)
-    let updateQuery = supabase
+    const updateQuery = supabase
       .from("booking_items")
-      .update({ status: BookingStatus.rejected })
+      .update({ status: "rejected" })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", providerOrgId)
-      .in("status", [BookingStatus.pending]);
-    if (itemIds && itemIds.length > 0) {
-      updateQuery = updateQuery.in("id", itemIds);
-    }
+      .in("status", ["pending"]);
+    if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
+
     const { error: updateErr } = await updateQuery;
     if (updateErr) {
       handleSupabaseError(updateErr);
@@ -774,16 +799,14 @@ export class BookingService {
     }
 
     const allRejected =
-      items.length > 0 &&
-      items.every((it) => it.status === BookingStatus.rejected);
+      items.length > 0 && items.every((it) => it.status === "rejected");
     const noPending =
-      items.length > 0 &&
-      items.every((it) => it.status !== BookingStatus.pending);
+      items.length > 0 && items.every((it) => it.status !== "pending");
 
     if (allRejected) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: BookingStatus.rejected })
+        .update({ status: "rejected" })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException("Failed to set booking to rejected");
@@ -791,7 +814,7 @@ export class BookingService {
     } else if (noPending) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
-        .update({ status: BookingStatus.confirmed })
+        .update({ status: "confirmed" })
         .eq("id", bookingId);
       if (bookingUpdateErr) {
         throw new BadRequestException("Failed to set booking to confirmed");
@@ -1211,62 +1234,61 @@ export class BookingService {
     };
   }
 
-  // 9. return items (when items are brought back)
+  /**
+   *
+   * @param bookingId
+   * @param orgId
+   * @param supabase
+   * @returns
+   */
   async returnItems(
+    req: AuthRequest,
     bookingId: string,
-    userId: string,
-    supabase: SupabaseClient,
+    orgId: string,
+    itemIds?: string[],
   ) {
-    const { data: items } = await supabase
+    const supabase = req.supabase;
+    const userId = req.user.id;
+    if (itemIds) {
+      const selectQuery = supabase
+        .from("booking_items")
+        .select("status")
+        .eq("booking_id", bookingId)
+        .eq("provider_organization_id", orgId)
+        .in("id", itemIds);
+      const { data: selectData, error } = await selectQuery;
+
+      if (error) handleSupabaseError(error);
+      const unconfirmed = selectData.filter((r) => r.status !== "picked_up");
+      if (unconfirmed.length > 0)
+        throw new BadRequestException(
+          `Cannot return items which are not picked up`,
+        );
+    }
+
+    const updateQuery = supabase
       .from("booking_items")
-      .select("item_id, quantity, status")
+      .update({ status: "returned" })
+      .eq("status", "picked_up")
       .eq("booking_id", bookingId)
-      .overrideTypes<BookingItemRow[]>();
+      .eq("provider_organization_id", orgId);
+    if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
 
-    if (!items || items.length === 0) {
-      throw new BadRequestException("No items found for return");
-    }
+    const { error: updateError } = await updateQuery;
+    if (updateError) handleSupabaseError(updateError);
 
-    //for (const item of items) {
-    //if (item.status === "returned") {
-    //  throw new BadRequestException("Items are already returned");
-    // }
-    //}
+    const { data: bookingStatus } = await supabase
+      .from("booking_items")
+      .select("status")
+      .eq("booking_id", bookingId);
 
-    // set booking status to completed
-    const { error: updateError } = await supabase
-      .from("bookings")
-      .update({ status: "completed" })
-      .eq("id", bookingId);
-
-    if (updateError) {
-      console.error("Failed to complete booking:", updateError);
-      throw new BadRequestException("Could not complete the booking");
-    }
-
-    // update number currently in storage
-    for (const item of items) {
-      const { data: storageItem, error } = await supabase
-        .from("storage_items")
-        .select("available_quantity")
-        .eq("id", item.item_id)
-        .single<StorageItemsRow>();
-
-      if (error || !storageItem) {
-        throw new BadRequestException("Could not find item in storage");
-      }
-
-      const updatedCount =
-        (storageItem.available_quantity || 0) + (item.quantity ?? 0);
-
-      const { error: updateItemsError } = await supabase
-        .from("storage_items")
-        .update({ available_quantity: updatedCount })
-        .eq("id", item.item_id);
-
-      if (updateItemsError) {
-        throw new BadRequestException("Failed to update storage stock");
-      }
+    // Mark parent booking as "completed" if all parts have been acted upon (booking_item.status is either "cancelled", "rejected", "returned")
+    const isNotCompleted = ["confirmed", "pending", "picked_up"];
+    if (bookingStatus?.every((part) => !isNotCompleted.includes(part.status))) {
+      await supabase
+        .from("bookings")
+        .update({ status: "completed" })
+        .eq("id", bookingId);
     }
 
     // notify via centralized mail service
@@ -1278,80 +1300,55 @@ export class BookingService {
     return { message: "Items returned successfully" };
   }
 
-  // 10. confirm pickup of items
-  async confirmPickup(bookingId: string, supabase: SupabaseClient) {
-    // 10.1. Get the booking item
-    const { data: items } = await supabase
-      .from("booking_items")
-      .select("item_id, quantity, status, start_date, end_date")
-      .eq("booking_id", bookingId)
-      .overrideTypes<BookingItemRow[]>();
+  /**
+   * Mark items as picked up
+   * @param supabase An authorized supabase client
+   * @param bookingId ID of booking which to confirm pick-up
+   * @param orgId Org ID of which to confirm booking portion
+   * @param itemIds Optional Item IDs to mark as picked up. If not provided, ALL confirmed items are marked as picked-up from booking.
+   */
+  async confirmPickup(
+    supabase: SupabaseClient,
+    bookingId: string,
+    orgId: string,
+    itemIds?: string[],
+  ) {
+    if (itemIds && itemIds.length > 0) {
+      const selectQuery = supabase
+        .from("booking_items")
+        .select("status")
+        .eq("booking_id", bookingId)
+        .eq("provider_organization_id", orgId)
+        .in("id", itemIds);
+      const { data: selectData, error } = await selectQuery;
 
-    if (!items || items.length === 0) {
-      throw new BadRequestException("No items found for return");
+      if (error) handleSupabaseError(error);
+      const unconfirmed = selectData.filter((r) => r.status !== "confirmed");
+      if (unconfirmed.length > 0)
+        throw new BadRequestException(
+          `Cannot pick-up items which are not confirmed`,
+        );
     }
 
-    for (const item of items) {
-      //if (item.status === "picked_up")
-      //throw new BadRequestException("Items are already picked_up");
+    const updateQuery = supabase
+      .from("booking_items")
+      .update({ status: "picked_up" })
+      .eq("booking_id", bookingId)
+      .eq("provider_organization_id", orgId)
+      .eq("status", "confirmed");
+    if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
+    const { error: itemsUpdateError } = await updateQuery;
+    if (itemsUpdateError) handleSupabaseError(itemsUpdateError);
 
-      if (item.status !== "confirmed") {
-        throw new BadRequestException(
-          "Booking item is not confirmed and can't be picked up",
-        );
-      }
-      /* if (item.start_date > today) { // TODO uncomment this when the booking system is ready!!!!!!!!!!!
-        throw new BadRequestException(
-          "Cannot confirm pickup before the booking start date",
-        );
-      }
+    const { data: bookingDetails } = await supabase
+      .from("booking_items")
+      .select("status")
+      .eq("booking_id", bookingId);
 
-      if (item.end_date < today) {
-        throw new BadRequestException(
-          "Booking period has already ended. Pickup not allowed.",
-        );
-      } */
-
-      // 10.2. Get associated storage item
-      const { data: storageItem, error: storageError } = await supabase
-        .from("storage_items")
-        .select("available_quantity")
-        .eq("id", item.item_id)
-        .single();
-
-      if (storageError || !storageItem) {
-        throw new BadRequestException(
-          "Storage item not found or not confirmed",
-        );
-      }
-
-      // 10.3. Decrement physical stock when items are picked up
-      const newCount =
-        (storageItem.available_quantity || 0) - (item.quantity || 0);
-
-      if (newCount < 0) {
-        throw new BadRequestException("Not enough stock to confirm pickup");
-      }
-
-      // Update storage stock
-      const { error: updateStockError } = await supabase
-        .from("storage_items")
-        .update({ available_quantity: newCount })
-        .eq("id", item.item_id);
-
-      if (updateStockError) {
-        throw new BadRequestException("Failed to update storage stock");
-      }
-
-      // 10.4. Update booking item status to "picked_up"
-      const { error: updateStatusError } = await supabase
-        .from("booking_items")
-        .update({ status: "picked_up" })
-        .eq("id", item.item_id);
-
-      if (updateStatusError) {
-        throw new BadRequestException("Failed to update booking item status");
-      }
+    if (
+      bookingDetails?.every((org_booking) => org_booking.status === "picked_up")
+    ) {
+      await supabase.from("bookings").update({ status: "picked_up" });
     }
 
     // look up the booking owner so we can tag who triggered the mail
@@ -1371,6 +1368,49 @@ export class BookingService {
 
     return {
       message: `Pickup confirmed for booking ${bookingId}`,
+    };
+  }
+
+  /**
+   * Mark items as cancelled from a booking.
+   * Meaning they will not be picked up
+   * @param supabase An authorized supabase client
+   * @param bookingId ID of booking which to cancel items from
+   * @param orgId Org ID of which to cancel items from
+   * @param itemIds item IDs. Optiona. Items which to cancel from the booking. If omitted, ALL booking items are cancelled
+   */
+  async cancelBookingItem(
+    supabase: SupabaseClient,
+    bookingId: string,
+    orgId: string,
+    itemIds?: string[],
+  ) {
+    const selectQuery = supabase
+      .from("booking_items")
+      .select("status")
+      .eq("booking_id", bookingId)
+      .eq("provider_organization_id", orgId);
+    if (itemIds && itemIds.length > 0) selectQuery.in("id", itemIds);
+    const { data: selectData } = await selectQuery;
+
+    // Throw error if any item is already picked up
+    const statuses = selectData?.map((i) => i.status);
+    if (statuses?.includes("picked_up"))
+      throw new BadRequestException("Cannot cancel picked up items");
+
+    const updateQuery = supabase
+      .from("booking_items")
+      .update({ status: "cancelled" })
+      .eq("booking_id", bookingId)
+      .eq("provider_organization_id", orgId)
+      .eq("status", "confirmed");
+
+    if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
+    const { error: itemsUpdateError } = await updateQuery;
+    if (itemsUpdateError) handleSupabaseError(itemsUpdateError);
+
+    return {
+      message: `Items cancelled for booking ${bookingId}`,
     };
   }
 
