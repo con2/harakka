@@ -7,6 +7,7 @@ import {
   getBookingByID,
   selectCurrentBooking,
   selectCurrentBookingLoading,
+  updateSelfPickup,
 } from "@/store/slices/bookingsSlice";
 import { BookingStatus, BookingWithDetails } from "@/types";
 import Spinner from "@/components/Spinner";
@@ -14,11 +15,10 @@ import BookingConfirmButton from "@/components/Admin/Bookings/BookingConfirmButt
 import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, Clipboard } from "lucide-react";
+import { ChevronLeft, Clipboard, Info } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
-import { Separator } from "@/components/ui/separator";
 import { StatusBadge } from "@/components/StatusBadge";
 import { makeSelectItemImages } from "@/store/slices/itemImagesSlice";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
@@ -26,6 +26,17 @@ import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton
 import BookingCancelButton from "@/components/Admin/Bookings/BookingCancelButton";
 import { sortByStatus } from "@/store/utils/helper.utils";
 import { formatBookingStatus } from "@/utils/format";
+import {
+  fetchAllOrgLocations,
+  selectOrgLocations,
+} from "@/store/slices/organizationLocationsSlice";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
 
 const BookingDetailsPage = () => {
   const { id } = useParams();
@@ -37,7 +48,8 @@ const BookingDetailsPage = () => {
   const loading = useAppSelector(selectCurrentBookingLoading);
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
-
+  const orgLocations = useAppSelector(selectOrgLocations);
+  const activeOrgId = useAppSelector(selectActiveOrganizationId);
   // state for copy-to-clipboard feedback
   const [copiedEmail, setCopiedEmail] = useState(false);
   const copyEmailToClipboard = async (email?: string) => {
@@ -51,6 +63,11 @@ const BookingDetailsPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (orgLocations.length === 0)
+      void dispatch(fetchAllOrgLocations({ orgId: activeOrgId! }));
+  }, [orgLocations, activeOrgId, dispatch]);
+
   // Track selected item IDs for bulk actions
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   // When booking changes, clear out any selected IDs that are no longer pending
@@ -63,13 +80,12 @@ const BookingDetailsPage = () => {
       prev.filter((id) => stillPendingIds.includes(id)),
     );
   }, [booking]);
+
   // Refetch booking details (after confirm/reject)
   const refetchBooking = () => {
     if (!id) return;
     void dispatch(getBookingByID(id));
   };
-  // Only show org-owned items for selection
-  const activeOrgId = booking?.booking_items?.[0]?.provider_organization_id;
   const ownedItemsForOrg = useMemo(
     () =>
       (booking?.booking_items || []).filter(
@@ -110,6 +126,21 @@ const BookingDetailsPage = () => {
   );
 
   const sortedBookingItems = sortByStatus(booking?.booking_items ?? []);
+  const LOCATION_IDS = new Set(
+    booking?.booking_items?.map((i) => i.location_id),
+  );
+  const locationsForItems = orgLocations.filter((loc) =>
+    LOCATION_IDS.has(loc.storage_location_id),
+  );
+  const mappedPickUp = booking?.booking_items?.map((item) => ({
+    location_id: item.location_id,
+    self_pickup: item.self_pickup,
+  }));
+  const pickUpStatuses = Array.from(
+    new Map(mappedPickUp?.map((p) => [p.location_id, p])).values(),
+  );
+
+  console.log(pickUpStatuses);
 
   // Small image component for booking items (fetches from itemImages slice)
   const ItemImage = ({
@@ -194,16 +225,14 @@ const BookingDetailsPage = () => {
       cell: ({ row }) => row.original.quantity,
     },
     {
-      accessorKey: "start_date",
-      header: t.bookingDetailsPage.modal.bookingItems.columns.startDate[lang],
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.start_date || ""), "d MMM yyyy"),
-    },
-    {
-      accessorKey: "end_date",
-      header: t.bookingDetailsPage.modal.bookingItems.columns.endDate[lang],
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.end_date || ""), "d MMM yyyy"),
+      accessorKey: "location",
+      header: "Location",
+      cell: ({ row }) => {
+        const loc = orgLocations.find(
+          (l) => l.storage_location_id === row.original.location_id,
+        );
+        return loc?.storage_locations?.name ?? "";
+      },
     },
     {
       accessorKey: "status",
@@ -213,6 +242,12 @@ const BookingDetailsPage = () => {
       ),
     },
   ];
+
+  const handleSelfPickup = (value: boolean, location_id: string) => {
+    void dispatch(
+      updateSelfPickup({ bookingId: id!, location_id, newStatus: value }),
+    );
+  };
 
   useEffect(() => {
     if (id) {
@@ -236,68 +271,109 @@ const BookingDetailsPage = () => {
         </Button>
       </div>
       {/* Booking Info Section */}
-      <div>
-        <h3 className="text-xl font-normal text-center">
-          {t.bookingDetailsPage.modal.bookingDetails[lang]}{" "}
-          {booking.booking_number}
-        </h3>
-        <div className="space-y-2 mt-4 mb-2 grid grid-cols-2 gap-4">
-          <div className="flex flex-col text-md">
-            <p>{booking.full_name || t.bookingList.status.unknown[lang]}</p>
-            <div className="flex items-center gap-2">
-              <p className="mb-0">{booking.email}</p>
-              <button
-                type="button"
-                onClick={() => copyEmailToClipboard(booking.email ?? "")}
-                title={t.bookingDetailsPage.copy.title[lang]}
-                aria-label={t.bookingDetailsPage.copy.title[lang]}
-                className="p-1 rounded hover:bg-gray-200"
-              >
-                <Clipboard className="h-4 w-4 text-gray-600" />
-              </button>
-              {copiedEmail && (
-                <span className="text-xs text-green-600">
-                  {t.bookingDetailsPage.copy.copied[lang]}
-                </span>
-              )}
-            </div>
-            <p>
-              {t.bookingDetailsPage.modal.date[lang]}{" "}
-              {formatDate(new Date(booking.created_at || ""), "d MMM yyyy")}
-            </p>
-          </div>
-          <div className="flex flex-col">
-            <p className="font-normal mb-0 flex gap-2">
-              {t.bookingDetailsPage.status[lang]}{" "}
-              <StatusBadge
-                status={
-                  formatBookingStatus(
-                    booking.org_status_for_active_org as BookingStatus,
-                  ) ?? "unknown"
-                }
-              />
-            </p>
-            <p>
-              {t.bookingDetailsPage.info[lang]}{" "}
-              {booking.booking_items?.length ?? 0}
-            </p>
-            <div className="flex flex-row  gap-2">
-              {t.bookingDetailsPage.dateRange[lang]}{" "}
+
+      <h3 className="text-xl font-normal pt-4">
+        {t.bookingDetailsPage.modal.bookingDetails[lang]}{" "}
+        {booking.booking_number}
+      </h3>
+      <div className="mb-4  border-1 border-(muted-foreground) rounded bg-white">
+        <div>
+          <div className="space-y-2 grid grid-cols-2 gap-4 p-5 pb-2">
+            <div className="flex flex-col text-md">
+              <p>{booking.full_name || t.bookingList.status.unknown[lang]}</p>
+              <div className="flex items-center gap-2">
+                <p className="mb-0">{booking.email}</p>
+                <button
+                  type="button"
+                  onClick={() => copyEmailToClipboard(booking.email ?? "")}
+                  title={t.bookingDetailsPage.copy.title[lang]}
+                  aria-label={t.bookingDetailsPage.copy.title[lang]}
+                  className="p-1 rounded hover:bg-gray-200"
+                >
+                  <Clipboard className="h-4 w-4 text-gray-600" />
+                </button>
+                {copiedEmail && (
+                  <span className="text-xs text-green-600">
+                    {t.bookingDetailsPage.copy.copied[lang]}
+                  </span>
+                )}
+              </div>
               <p>
-                {booking.booking_items && booking.booking_items.length > 0
-                  ? formatDate(
-                      new Date(booking.booking_items[0].start_date || ""),
-                      "d MMM yyyy",
-                    )
-                  : ""}{" "}
-                -{" "}
-                {booking.booking_items && booking.booking_items.length > 0
-                  ? formatDate(
-                      new Date(booking.booking_items[0].end_date || ""),
-                      "d MMM yyyy",
-                    )
-                  : ""}
+                {t.bookingDetailsPage.modal.date[lang]}{" "}
+                {formatDate(new Date(booking.created_at || ""), "d MMM yyyy")}
               </p>
+            </div>
+            <div className="flex flex-col">
+              <p className="font-normal mb-0 flex gap-2">
+                {t.bookingDetailsPage.status[lang]}{" "}
+                <StatusBadge
+                  status={
+                    formatBookingStatus(
+                      booking.org_status_for_active_org as BookingStatus,
+                    ) ?? "unknown"
+                  }
+                />
+              </p>
+              <p>
+                {t.bookingDetailsPage.info[lang]}{" "}
+                {booking.booking_items?.length ?? 0}
+              </p>
+              <div className="flex flex-row  gap-2">
+                {t.bookingDetailsPage.dateRange[lang]}{" "}
+                <p>
+                  {booking.booking_items && booking.booking_items.length > 0
+                    ? formatDate(
+                        new Date(booking.booking_items[0].start_date || ""),
+                        "d MMM yyyy",
+                      )
+                    : ""}{" "}
+                  -{" "}
+                  {booking.booking_items && booking.booking_items.length > 0
+                    ? formatDate(
+                        new Date(booking.booking_items[0].end_date || ""),
+                        "d MMM yyyy",
+                      )
+                    : ""}
+                </p>
+              </div>
+            </div>
+          </div>
+          <Separator />
+          <div className="p-4">
+            <div className="flex gap-2">
+              <p>Self-pickup</p>
+              <Tooltip>
+                <TooltipTrigger className="h-fit">
+                  <Info className="w-[18px] h-fit" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[290px] text-center">
+                  Allow user to pick up items themselves for selected locations.
+                  If enabled, the items are marked as picked up by the user
+                  instead of an admin.
+                </TooltipContent>
+              </Tooltip>
+              <div className="flex gap-4 ml-4">
+                {locationsForItems.map((loc) => {
+                  const isChecked = pickUpStatuses.find(
+                    (s) => s.location_id === loc.storage_location_id,
+                  )?.self_pickup;
+                  return (
+                    <div className="flex gap-2 items-center">
+                      <div>{loc.storage_locations?.name}</div>
+
+                      <Checkbox
+                        checked={isChecked}
+                        onCheckedChange={(newValue) =>
+                          handleSelfPickup(
+                            newValue as boolean,
+                            loc.storage_location_id,
+                          )
+                        }
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -310,7 +386,6 @@ const BookingDetailsPage = () => {
         />
       </div>
       {/* Action buttons */}
-      <Separator />
       <div className="flex flex-row justify-center items-center gap-8 mt-6">
         {hasPendingItems && ownedItemsForOrg.length > 0 && (
           <>
