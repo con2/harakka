@@ -135,3 +135,4 @@ BEGIN
         
     RAISE NOTICE 'Categories table schema fix completed successfully';
 END $main$;
+
