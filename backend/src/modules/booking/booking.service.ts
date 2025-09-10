@@ -351,7 +351,7 @@ export class BookingService {
   async createBooking(
     dto: CreateBookingDto,
     supabase: SupabaseClient<Database>,
-    activeRole: { roleId: string; roleName: string; orgId: string },
+    activeRole: { roleName: string; orgId: string },
   ) {
     const userId = dto.user_id;
 

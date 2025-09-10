@@ -213,7 +213,6 @@ export class BookingController {
    * @param req - Authenticated request object
    * @returns Created booking
    */
-  //TODO: attach activeRole to the booking
   @Post()
   @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
     match: "any",
@@ -227,7 +226,6 @@ export class BookingController {
       const supabase = req.supabase;
       const activeOrgId = req.headers["x-org-id"] as string;
       const activeRoleName = req.headers["x-role-name"] as string;
-      const activeRoleId = req.headers["x-role-id"] as string;
 
       if (!activeOrgId || !activeRoleName) {
         throw new BadRequestException(
@@ -237,7 +235,6 @@ export class BookingController {
       // put user-ID to DTO
       const dtoWithUserId = { ...dto, user_id: userId };
       return this.bookingService.createBooking(dtoWithUserId, supabase, {
-        roleId: activeRoleId || "",
         roleName: activeRoleName,
         orgId: activeOrgId,
       });
