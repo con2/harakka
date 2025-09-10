@@ -43,9 +43,9 @@ const BookingConfirmButton = ({
         ).unwrap();
 
         toast.promise(promise, {
-          loading: t.bookingItemsCancel.toast.loading[lang],
-          success: t.bookingItemsCancel.toast.success[lang],
-          error: error ?? t.bookingItemsCancel.toast.error[lang],
+          loading: t.bookingConfirm.toast.loading[lang],
+          success: t.bookingConfirm.toast.success[lang],
+          error: error ?? t.bookingConfirm.toast.error[lang],
         });
 
         void promise.then(() => {

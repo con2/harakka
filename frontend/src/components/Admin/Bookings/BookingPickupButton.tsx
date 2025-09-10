@@ -36,9 +36,9 @@ const BookingPickupButton = ({
         ).unwrap();
 
         toast.promise(promise, {
-          loading: t.bookingItemsCancel.toast.loading[lang],
-          success: t.bookingItemsCancel.toast.success[lang],
-          error: error ?? t.bookingItemsCancel.toast.error[lang],
+          loading: t.bookingPickup.toast.loading[lang],
+          success: t.bookingPickup.toast.success[lang],
+          error: error ?? t.bookingPickup.toast.error[lang],
         });
 
         void promise.then(() => {
