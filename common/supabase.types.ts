@@ -1079,6 +1079,13 @@ export type Database = {
             foreignKeyName: "user_ban_history_role_assignment_id_fkey"
             columns: ["role_assignment_id"]
             isOneToOne: false
+            referencedRelation: "view_bookings_with_details"
+            referencedColumns: ["user_role_id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_role_assignment_id_fkey"
+            columns: ["role_assignment_id"]
+            isOneToOne: false
             referencedRelation: "view_user_roles_with_details"
             referencedColumns: ["id"]
           },
@@ -1238,11 +1245,30 @@ export type Database = {
           created_at: string | null
           id: string | null
           notes: string | null
+          requester_org_id: string | null
+          role_id: string | null
+          role_name: Database["public"]["Enums"]["roles_type"] | null
           status: Database["public"]["Enums"]["booking_status"] | null
           updated_at: string | null
           user_id: string | null
+          user_role_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "erm_user_organization_roles_organization_id_fkey"
+            columns: ["requester_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "erm_user_organization_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       view_bookings_with_user_info: {
         Row: {
