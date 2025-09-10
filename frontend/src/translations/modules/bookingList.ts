@@ -39,9 +39,9 @@ export const bookingList = {
         fi: "Valmis",
         en: "Completed",
       },
-      deleted: {
-        fi: "Poistettu",
-        en: "Deleted",
+      picked_up: {
+        fi: "Noudettu",
+        en: "Picked up",
       },
     },
     clear: {

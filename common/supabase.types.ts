@@ -77,6 +77,7 @@ export type Database = {
           location_id: string
           provider_organization_id: string
           quantity: number
+          self_pickup: boolean
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
           total_days: number
@@ -90,6 +91,7 @@ export type Database = {
           location_id: string
           provider_organization_id: string
           quantity?: number
+          self_pickup?: boolean
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
           total_days: number
@@ -103,6 +105,7 @@ export type Database = {
           location_id?: string
           provider_organization_id?: string
           quantity?: number
+          self_pickup?: boolean
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
           total_days?: number
