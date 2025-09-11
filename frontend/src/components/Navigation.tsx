@@ -76,7 +76,7 @@ export const Navigation = () => {
             <img
               src={logo}
               alt="Logo"
-              className="h-[60px] w-auto object-contain hidden md:flex"
+              className="h-[60px] w-auto object-contain hidden md:flex min-w-30"
             />
             {/* <img
               src={smallLogo}
