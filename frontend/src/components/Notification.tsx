@@ -124,8 +124,11 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
-          <Bell className="h-5 w-5" />
+        <Button
+          variant="ghost"
+          className="relative hover:bg-(--subtle-grey) hover:text-(--iridiscent-blue) p-2"
+        >
+          <Bell className="!h-4.5 !w-5" />
           {unseen > 0 && (
             <Badge
               variant="destructive"
