@@ -9,7 +9,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import logo from "../assets/logoNav.png";
 import { LogInIcon, LogOutIcon, ShoppingCart, UserIcon } from "lucide-react";
 import { Notifications } from "@/components/Notification";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
@@ -21,6 +20,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
+import logo from "@/assets/full_2.svg";
 
 export const Navigation = () => {
   // Get auth state directly from Auth context
@@ -46,8 +46,8 @@ export const Navigation = () => {
 
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
-    ? "absolute top-0 left-0 w-full z-50 bg-white/80 text-white px-2 md:px-10 py-2 md:py-3"
-    : "relative w-full z-50 bg-white text-primary shadow-sm px-2 md:px-10 py-2 md:py-3";
+    ? "absolute top-0 left-0 w-full z-50 text-white px-2 md:px-10 py-2 md:py-3 bg-white"
+    : "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white";
 
   const handleSignOut = () => {
     toastConfirm({
@@ -71,12 +71,12 @@ export const Navigation = () => {
     <nav className={navClasses}>
       <div className="container md:mx-auto mx-0 flex items-center justify-between">
         {/* Left side: Logo + navigation links */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
           <Link to="/" data-cy="nav-home">
             <img
               src={logo}
               alt="Logo"
-              className="h-[60px] w-auto object-contain hidden md:flex"
+              className="h-[60px] w-auto object-contain hidden md:flex filter drop-shadow-[1px_1px_1px_lightgrey] min-w-30"
             />
             {/* <img
               src={smallLogo}
@@ -107,7 +107,7 @@ export const Navigation = () => {
                   <NavigationMenuLink asChild>
                     <Link
                       to="/admin"
-                      className="flex items-center gap-1 text-secondary font-medium"
+                      className="flex items-center gap-1 text-secondary font-medium p-1"
                       data-cy="nav-admin"
                     >
                       {t.navigation.admin[lang]}
@@ -176,20 +176,15 @@ export const Navigation = () => {
         </div>
 
         {/* Right side: Cart, notifications, language, auth */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Active role context switcher if user is logged in and has roles */}
-          {isLoggedIn && (
-            <div className="hidden md:flex mr-2">
-              <RoleContextSwitcher />
-            </div>
-          )}
+          {isLoggedIn && <RoleContextSwitcher />}
 
-          <div className="flex items-center md:mr-6">
-            <LanguageSwitcher />
-          </div>
-          <Link
-            to="/cart"
-            className="flex items-center gap-1 text-secondary font-medium hover:text-secondary relative mr-2"
+          <LanguageSwitcher />
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/cart")}
+            className="flex items-center gap-1 text-secondary font-medium hover:text-secondary hover:bg-(--subtle-grey) relative p-2"
             data-cy="nav-cart"
           >
             <ShoppingCart className="h-5 w-5" />
@@ -198,16 +193,16 @@ export const Navigation = () => {
                 {cartItemsCount}
               </span>
             )}
-          </Link>
+          </Button>
           {selectedUser && <Notifications userId={selectedUser.id} />}
 
           {!authLoading && (
             <>
               {isLoggedIn ? (
-                <div className="flex items-center" key={user?.id}>
+                <>
                   <Button
                     variant={"ghost"}
-                    className="p-o m-0"
+                    className="p-o m-0 hover:bg-(--subtle-grey) hover:text-(--iridiscent-blue)"
                     size={"sm"}
                     onClick={() => void navigate("/profile")}
                     data-cy="nav-profile-btn"
@@ -226,12 +221,18 @@ export const Navigation = () => {
                     size={"sm"}
                     onClick={handleSignOut}
                     data-cy="nav-signout-btn"
+                    className="hover:bg-(--subtle-grey) hover:text-(--secondary)"
                   >
                     <LogOutIcon className="h-5 w-5" />
                   </Button>
-                </div>
+                </>
               ) : (
-                <Button variant={"ghost"} data-cy="nav-login-btn" asChild>
+                <Button
+                  variant={"ghost"}
+                  className="hover:bg-(--subtle-grey) hover:text-(--secondary)"
+                  data-cy="nav-login-btn"
+                  asChild
+                >
                   <Link to="/login">
                     {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
                   </Link>
