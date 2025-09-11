@@ -21,7 +21,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
 import Logo from "@/assets/full_2.svg?react";
-import LogoDark from "@/assets/dark.svg?react";
 
 export const Navigation = () => {
   // Get auth state directly from Auth context
@@ -47,8 +46,8 @@ export const Navigation = () => {
 
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
-    ? "absolute top-0 left-0 w-full z-50 text-white px-2 md:px-10 py-2 md:py-3 bg-secondary"
-    : "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-secondary";
+    ? "absolute top-0 left-0 w-full z-50 text-white px-2 md:px-10 py-2 md:py-3 bg-white"
+    : "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white";
 
   const handleSignOut = () => {
     toastConfirm({
@@ -74,7 +73,7 @@ export const Navigation = () => {
         {/* Left side: Logo + navigation links */}
         <div className="flex items-center gap-3">
           <Link to="/" data-cy="nav-home">
-            <LogoDark className="h-[60px] w-auto object-contain hidden md:flex filter min-w-30" />
+            <Logo className="h-[60px] w-auto object-contain hidden md:flex filter drop-shadow-[1px_1px_1px_lightgrey] min-w-30" />
 
             {/* <img
               src={smallLogo}
@@ -90,7 +89,7 @@ export const Navigation = () => {
                   <NavigationMenuLink asChild>
                     <Link
                       to="/profile"
-                      className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                      className="flex items-center gap-1 text-secondary font-medium"
                       data-cy="nav-profile"
                     >
                       {t.navigation.myProfile[lang]}
@@ -105,7 +104,7 @@ export const Navigation = () => {
                   <NavigationMenuLink asChild>
                     <Link
                       to="/admin"
-                      className="flex items-center gap-1 text-(--midnight-black) font-medium p-1"
+                      className="flex items-center gap-1 text-secondary font-medium p-1"
                       data-cy="nav-admin"
                     >
                       {t.navigation.admin[lang]}
@@ -119,7 +118,7 @@ export const Navigation = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/storage"
-                    className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                    className="flex items-center gap-1 text-secondary font-medium"
                     data-cy="nav-storage"
                   >
                     {t.navigation.storage[lang]}
@@ -132,7 +131,7 @@ export const Navigation = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to={"/organizations"}
-                    className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                    className="flex items-center gap-1 text-secondary font-medium"
                     data-cy="nav-organizations"
                   >
                     {t.navigation.organizations[lang]}
@@ -146,7 +145,7 @@ export const Navigation = () => {
                   <NavigationMenuLink asChild>
                     <Link
                       to="/howItWorks"
-                      className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                      className="flex items-center gap-1 text-secondary font-medium"
                       data-cy="nav-guide"
                     >
                       {t.navigation.guides[lang]}
@@ -161,7 +160,7 @@ export const Navigation = () => {
                   <NavigationMenuLink asChild>
                     <Link
                       to="/contact-us"
-                      className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                      className="flex items-center gap-1 text-secondary font-medium"
                       data-cy="nav-contact"
                     >
                       {t.navigation.contactUs[lang]}
@@ -182,12 +181,12 @@ export const Navigation = () => {
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
-            className="flex items-center gap-1 text-(--midnight-black) font-medium hover:text-(--midnight-black) hover:bg-(--iridiscent-blue-light) relative p-2"
+            className="flex items-center gap-1 text-secondary font-medium hover:text-secondary hover:bg-(--subtle-grey) relative p-2"
             data-cy="nav-cart"
           >
             <ShoppingCart className="h-5 w-5" />
             {cartItemsCount > 0 && (
-              <span className="ml-1 rounded-full bg-(--midnight-black) text-white absolute -right-[15px] w-[20px] h-[20px] flex items-center justify-center -top-[14px] text-[12px] font-['Lato'] font-semibold">
+              <span className="ml-1 rounded-full bg-secondary text-white absolute -right-[15px] w-[20px] h-[20px] flex items-center justify-center -top-[14px] text-[12px] font-['Lato'] font-semibold">
                 {cartItemsCount}
               </span>
             )}
@@ -200,7 +199,7 @@ export const Navigation = () => {
                 <>
                   <Button
                     variant={"ghost"}
-                    className="p-o m-0 hover:bg-(--iridiscent-blue-light) hover:text-(--midnight-black) text-(--midnight-black)"
+                    className="p-o m-0 hover:bg-(--subtle-grey) hover:text-(--iridiscent-blue)"
                     size={"sm"}
                     onClick={() => void navigate("/profile")}
                     data-cy="nav-profile-btn"
@@ -219,7 +218,7 @@ export const Navigation = () => {
                     size={"sm"}
                     onClick={handleSignOut}
                     data-cy="nav-signout-btn"
-                    className="hover:bg-(--iridiscent-blue-light) hover:text-(--midnight-black) text-(--midnight-black)"
+                    className="hover:bg-(--subtle-grey) hover:text-(--secondary)"
                   >
                     <LogOutIcon className="h-5 w-5" />
                   </Button>
@@ -227,7 +226,7 @@ export const Navigation = () => {
               ) : (
                 <Button
                   variant={"ghost"}
-                  className="hover:bg-(--iridiscent-blue-light) hover:text-(--midnight-black) text-(--midnight-black)"
+                  className="hover:bg-(--subtle-grey) hover:text-(--secondary)"
                   data-cy="nav-login-btn"
                   asChild
                 >
