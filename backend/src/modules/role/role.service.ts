@@ -174,7 +174,7 @@ export class RoleService {
       throw new BadRequestException("Failed to create role assignment");
     }
 
-    // Check if user already has ANY role in this organization
+    // Check if user already has any role in the target organization
     const { data: existingRole } = await req.supabase
       .from("user_organization_roles")
       .select("id, role_id")
