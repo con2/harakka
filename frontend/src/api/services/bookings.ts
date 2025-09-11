@@ -56,18 +56,13 @@ export const bookingsApi = {
    * @returns Promise with the user's bookings
    */
   getOwnBookings: async (
-    activeOrgId: string,
-    activeRole: string,
-    userId: string,
     page: number = 1,
     limit: number = 10,
   ): Promise<ApiResponse<BookingPreview>> => {
     const params = new URLSearchParams();
     params.append("page", page.toString());
     params.append("limit", limit.toString());
-    return api.get(
-      `/bookings/my?activeOrgId=${activeOrgId}&activeRole=${activeRole}&userId=${userId}&${params.toString()}`,
-    );
+    return api.get(`/bookings/my`);
   },
 
   /**
