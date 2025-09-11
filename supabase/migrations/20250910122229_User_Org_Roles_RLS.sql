@@ -232,7 +232,44 @@ create policy "Super admins can update any role assignment"
 -- ===========================================================================
 
 /*
- * No one can delete role assignments for now
- * Hard deletes are disabled - use UPDATE to set is_active=false instead
+ * Users can delete their own role assignments except for 'user' role
+ * This prevents users from removing their basic 'user' role while allowing 
+ * them to remove other roles they may have been assigned
  */
--- No DELETE policies created - all deletes are blocked by default when RLS is enabled
+create policy "Users can delete their own non-user roles"
+  on public.user_organization_roles
+  for delete 
+  to authenticated
+  using (
+    user_id = auth.uid() 
+    and exists (
+      select 1
+      from public.roles r
+      where r.id = role_id
+        and r.role != 'user'::public.roles_type
+    )
+  );
+
+/*
+ * Tenant admins can delete role assignments in their organizations
+ * This allows tenant admins to remove role assignments within their organizations
+ */
+create policy "Tenant admins can delete roles in their organizations"
+  on public.user_organization_roles
+  for delete 
+  to authenticated
+  using (
+    app.me_has_role(organization_id, 'tenant_admin'::public.roles_type)
+  );
+
+/*
+ * Super admins can delete any role assignment
+ * This allows super admins to remove any role assignment in any organization
+ */
+create policy "Super admins can delete any role assignment"
+  on public.user_organization_roles
+  for delete 
+  to authenticated
+  using (
+    app.me_is_super_admin()
+  );
