@@ -1,6 +1,11 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useRoles } from "@/hooks/useRoles";
 import { t } from "@/translations";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { toastConfirm } from "@/components/ui/toastConfirm";
+import { leaveOrg } from "@/store/slices/rolesSlice";
 
 export const CurrentUserRoles: React.FC = () => {
   const { currentUserRoles } = useRoles();
@@ -53,6 +58,38 @@ export const CurrentUserRoles: React.FC = () => {
                 disabled
                 className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
               />
+              {/* Leave button: only for active roles and not the Global 'user' role */}
+              {role.is_active &&
+                !(
+                  role.role_name === "user" &&
+                  role.organization_name === "Global"
+                ) && (
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="ml-2"
+                    onClick={() =>
+                      toastConfirm({
+                        title: "Leave organization?",
+                        description:
+                          "Are you sure you want to leave this organization?",
+                        confirmText: t.common.delete?.[lang] || "Leave",
+                        cancelText: t.common.cancel?.[lang] || "Cancel",
+                        onConfirm: async () => {
+                          try {
+                            await leaveOrg(role.id as string);
+                            toast.success("You have left the organization");
+                          } catch {
+                            toast.error("Failed to leave organization");
+                          }
+                        },
+                      })
+                    }
+                  >
+                    <Trash2 className="mr-1" />
+                    {"Leave"}
+                  </Button>
+                )}
             </div>
           </div>
         ))}

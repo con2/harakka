@@ -184,6 +184,30 @@ export const permanentDeleteUserRole = createAsyncThunk(
   },
 );
 
+export const leaveOrg = createAsyncThunk(
+  "roles/leaveOrg",
+  async (tableKeyId: string, { getState, rejectWithValue, dispatch }) => {
+    try {
+      const state = getState() as RootState;
+      const role = state.roles.allUserRoles.find((r) => r.id === tableKeyId);
+      const currentUserId = state.users.selectedUser?.id;
+
+      await roleApi.leaveOrg(tableKeyId);
+
+      if (role && role.user_id === currentUserId && currentUserId) {
+        await refreshSupabaseSession();
+        void dispatch(fetchCurrentUserRoles());
+      }
+
+      return tableKeyId;
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to leave organization"),
+      );
+    }
+  },
+);
+
 const rolesSlice = createSlice({
   name: "roles",
   initialState,
@@ -389,6 +413,29 @@ const rolesSlice = createSlice({
         if (currentIdx !== -1) {
           state.currentUserRoles[currentIdx].is_active = false;
         }
+      })
+      // Leave Org by deleting a role in it (self hard-delete)
+      .addCase(leaveOrg.pending, (state) => {
+        state.adminLoading = true;
+        state.adminError = null;
+      })
+      .addCase(leaveOrg.fulfilled, (state, action) => {
+        state.adminLoading = false;
+        state.allUserRoles = state.allUserRoles.filter(
+          (role: ViewUserRolesWithDetails) => role.id !== action.payload,
+        );
+        // Also update in current user roles
+        const currentIdx2 = state.currentUserRoles.findIndex(
+          (role) => role.id === action.payload,
+        );
+        if (currentIdx2 !== -1) {
+          state.currentUserRoles[currentIdx2].is_active = false;
+        }
+      })
+      .addCase(leaveOrg.rejected, (state, action) => {
+        state.adminLoading = false;
+        state.adminError = action.payload as string;
+        state.errorContext = "leave-org";
       })
       .addCase(permanentDeleteUserRole.rejected, (state, action) => {
         state.adminLoading = false;
