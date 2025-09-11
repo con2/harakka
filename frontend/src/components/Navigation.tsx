@@ -20,7 +20,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
-import logo from "@/assets/full_2.svg";
+import Logo from "@/assets/full_2.svg?react";
 
 export const Navigation = () => {
   // Get auth state directly from Auth context
@@ -73,11 +73,8 @@ export const Navigation = () => {
         {/* Left side: Logo + navigation links */}
         <div className="flex items-center gap-3">
           <Link to="/" data-cy="nav-home">
-            <img
-              src={logo}
-              alt="Logo"
-              className="h-[60px] w-auto object-contain hidden md:flex filter drop-shadow-[1px_1px_1px_lightgrey] min-w-30"
-            />
+            <Logo className="h-[60px] w-auto object-contain hidden md:flex filter drop-shadow-[1px_1px_1px_lightgrey] min-w-30" />
+
             {/* <img
               src={smallLogo}
               alt="smallLogo"

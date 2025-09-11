@@ -37,7 +37,7 @@ const AdminPanel = () => {
     <div className="flex min-h-screen relative">
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-64 p-4 border-r bg-white shadow-md">
-        <nav className="flex flex-col space-y-4">
+        <nav className="flex flex-col gap-3">
           {isAnyTypeOfAdmin && (
             <SidebarLink
               to="/admin"
@@ -269,7 +269,7 @@ const SidebarLink = ({
     end={end}
     data-cy={dataCy}
     className={({ isActive }: { isActive: boolean }) =>
-      `flex items-center gap-3 p-2 rounded hover:bg-gray-200 ${
+      `flex items-center gap-3 p-2 rounded hover:bg-(--subtle-grey) ${
         isActive ? "text-highlight2" : "text-gray-700"
       }`
     }
