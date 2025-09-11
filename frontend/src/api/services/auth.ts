@@ -1,6 +1,6 @@
 import { supabase } from "@/config/supabase";
-import { User } from "@supabase/supabase-js";
-import { api } from "../axios";
+import { User, Session } from "@supabase/supabase-js";
+import { api, clearCachedAuthToken } from "../axios";
 
 export interface UserProfileData {
   email: string;
@@ -15,6 +15,8 @@ export interface SignUpResult {
   user?: User;
   error?: string;
   isNewUser?: boolean;
+  sessionRefreshed?: boolean;
+  session?: Session | null;
 }
 
 export interface UserSetupStatus {
@@ -40,106 +42,98 @@ export class AuthService {
       // Extract user data based on signup method
       const profileData = this.extractUserProfileData(user, signupMethod);
 
-      // Override with user input if provided
-      if (userInput) {
-        if (userInput.full_name) {
-          profileData.full_name = userInput.full_name;
-          profileData.visible_name = userInput.full_name;
-        }
-        if (userInput.phone) {
-          profileData.phone = userInput.phone;
-        }
-      }
-
-      // Check if user has both profile AND role (complete setup)
+      // Check if user needs setup
       const setupStatus = await this.checkUserSetupStatus(user.id);
 
       if (!setupStatus.needsSetup) {
         return { success: true, user, isNewUser: false };
       }
 
-      // Call backend API to setup user (will handle both profile creation and role assignment)
-      const setupPayload = {
-        email: profileData.email,
-        full_name: profileData.full_name,
-        phone: profileData.phone,
-        visible_name: profileData.visible_name,
-        provider: profileData.provider,
-      };
-
-      // Get the current session for authentication
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      // Get auth token for setup request
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
+      const token = session?.access_token;
 
       if (!session) {
         throw new Error("No authenticated session found");
       }
 
-      // Call backend user setup endpoint
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/user-setup/setup`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify(setupPayload),
+      // Create setup payload
+      const setupPayload = {
+        userId: user.id,
+        email: profileData.email,
+        full_name: userInput?.full_name || profileData.full_name,
+        phone: userInput?.phone || profileData.phone,
+        visible_name: profileData.visible_name,
+        provider: profileData.provider,
+      };
+
+      // Use the configured API URL from environment
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+      // Call backend API to setup user
+      const response = await fetch(`${apiUrl}/user-setup/setup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
         },
-      );
+        body: JSON.stringify(setupPayload),
+      });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "Unknown error" }));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
+        throw new Error(`Setup failed with status ${response.status}`);
       }
 
       const result = await response.json();
 
-      if (result.success) {
-        // Force refresh the session to update JWT with new role information
+      if (!result.success) {
+        return { success: false, error: result.error, isNewUser: true };
+      }
+
+      // Session refresh after successful setup
+      clearCachedAuthToken(); // Clear token cache first
+      // Retry pattern for token refresh
+      let attempts = 0;
+      const maxAttempts = 3;
+      let refreshResult = null;
+
+      while (attempts < maxAttempts) {
         try {
-          // Wait a moment for the backend JWT update to propagate
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          refreshResult = await supabase.auth.refreshSession();
 
-          // Try multiple refresh attempts
-          let refreshAttempts = 0;
-          const maxRefreshAttempts = 3;
+          if (refreshResult.error) {
+            attempts++;
 
-          while (refreshAttempts < maxRefreshAttempts) {
-            refreshAttempts++;
-
-            const { data: refreshData, error: refreshError } =
-              await supabase.auth.refreshSession();
-
-            if (refreshError) {
-              if (refreshAttempts < maxRefreshAttempts) {
-                // Wait before retrying
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-                continue;
-              }
-            } else {
-              // Verify we have a valid session with token
-              if (refreshData?.session?.access_token) {
-                // Token successfully obtained
-              }
+            if (attempts >= maxAttempts) {
+              console.error("❌ Maximum refresh attempts reached");
               break;
             }
-          }
-        } catch {
-          // Silently handle refresh errors
-        }
 
-        return {
-          success: true,
-          user,
-          isNewUser: true,
-        };
-      } else {
-        throw new Error(result.error || "User setup failed");
+            // Exponential backoff
+            const backoffMs = Math.pow(2, attempts) * 200;
+            await new Promise((resolve) => setTimeout(resolve, backoffMs));
+          } else {
+            break;
+          }
+        } catch (refreshError) {
+          console.error(
+            "❌ Unexpected error during session refresh:",
+            refreshError,
+          );
+          attempts++;
+          if (attempts >= maxAttempts) break;
+          await new Promise((resolve) => setTimeout(resolve, 500 * attempts));
+        }
       }
+
+      return {
+        success: true,
+        user,
+        isNewUser: true,
+        sessionRefreshed: !!refreshResult && !refreshResult.error,
+        session: refreshResult?.data?.session || null,
+      };
     } catch (error) {
       return {
         success: false,
@@ -153,7 +147,7 @@ export class AuthService {
   /**
    * Extract user profile data from Supabase user object
    */
-  private static extractUserProfileData(
+  static extractUserProfileData(
     user: User,
     signupMethod: "email" | "oauth",
   ): UserProfileData {
