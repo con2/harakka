@@ -128,7 +128,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
           variant="ghost"
           className="relative hover:bg-(--subtle-grey) hover:text-(--iridiscent-blue) p-2"
         >
-          <Bell className="!h-4.5 !w-5" />
+          <Bell className="!h-4.5 !w-5 text-(--midnight-black)" />
           {unseen > 0 && (
             <Badge
               variant="destructive"
