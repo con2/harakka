@@ -2,6 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@common/supabase.types";
 import { UserBooking } from "src/modules/booking/types/booking.interface";
 import { BookingStatus } from "../modules/booking//types/booking.interface";
+import { handleSupabaseError } from "./handleError.utils";
 
 export async function calculateAvailableQuantity(
   supabase: SupabaseClient<Database>,
@@ -13,20 +14,43 @@ export async function calculateAvailableQuantity(
   alreadyBookedQuantity: number;
   availableQuantity: number;
 }> {
+  console.log(
+    `[calculateAvailableQuantity] Checking availability for item ${itemId}`,
+    {
+      itemId,
+      startDate,
+      endDate,
+    },
+  );
+
   // get overlapping bookings
   const { data: overlapping, error } = await supabase
     .from("booking_items")
     .select("quantity")
     .eq("item_id", itemId)
     .in("status", ["pending", "confirmed", "picked_up"])
-    .or(`and(start_date.lte.${endDate},end_date.gte.${startDate})`);
+    .lte("start_date", endDate)
+    .gte("end_date", startDate);
 
   if (error) {
-    throw new Error("Error checking the bookings");
+    console.error(
+      `[calculateAvailableQuantity] Error checking overlapping bookings for item ${itemId}:`,
+      error,
+    );
+    handleSupabaseError(error);
   }
+
+  console.log(
+    `[calculateAvailableQuantity] Found ${overlapping?.length || 0} overlapping bookings for item ${itemId}:`,
+    overlapping,
+  );
 
   const alreadyBookedQuantity =
     overlapping?.reduce((sum, o) => sum + (o.quantity || 0), 0) ?? 0;
+
+  console.log(
+    `[calculateAvailableQuantity] Already booked quantity for item ${itemId}: ${alreadyBookedQuantity}`,
+  );
 
   // get items total quantity
   const { data: item, error: itemError } = await supabase
@@ -35,11 +59,30 @@ export async function calculateAvailableQuantity(
     .eq("id", itemId)
     .single();
 
-  if (itemError || !item) {
-    throw new Error("Error when retrieving/ calling item.total");
+  if (itemError) {
+    console.error(
+      `[calculateAvailableQuantity] Error retrieving item ${itemId}:`,
+      itemError,
+    );
+    handleSupabaseError(itemError);
   }
 
+  if (!item) {
+    console.error(
+      `[calculateAvailableQuantity] Item ${itemId} not found in storage_items table`,
+    );
+    throw new Error(`Item ${itemId} not found`);
+  }
+
+  console.log(
+    `[calculateAvailableQuantity] Item ${itemId} total quantity: ${item.quantity}`,
+  );
+
   const availableQuantity = item.quantity - alreadyBookedQuantity;
+
+  console.log(
+    `[calculateAvailableQuantity] Available quantity for item ${itemId}: ${availableQuantity}`,
+  );
 
   return {
     item_id: itemId,
@@ -98,8 +141,16 @@ export async function generateBookingNumber(
   supabase: SupabaseClient<Database>,
   maxAttempts = 5,
 ): Promise<string> {
+  console.log(
+    `[generateBookingNumber] Starting booking number generation with ${maxAttempts} max attempts`,
+  );
+
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const candidate = makeCandidate();
+
+    console.log(
+      `[generateBookingNumber] Attempt ${attempt + 1}/${maxAttempts}: checking candidate ${candidate}`,
+    );
 
     const { data, error } = await supabase
       .from("bookings")
@@ -108,12 +159,30 @@ export async function generateBookingNumber(
       .maybeSingle();
 
     if (error) {
-      throw new Error("Error while checking booking number uniqueness");
+      console.error(
+        `[generateBookingNumber] Error checking booking number uniqueness for ${candidate}:`,
+        error,
+      );
+      handleSupabaseError(error);
     }
+
     // if no existing row, candidate is unique
-    if (!data) return candidate;
+    if (!data) {
+      console.log(
+        `[generateBookingNumber] Success! Generated unique booking number: ${candidate}`,
+      );
+      return candidate;
+    }
+
+    console.log(
+      `[generateBookingNumber] Candidate ${candidate} already exists, trying again...`,
+    );
     // otherwise loop and try again
   }
+
+  console.error(
+    `[generateBookingNumber] Failed to generate unique booking number after ${maxAttempts} attempts`,
+  );
   throw new Error(
     "Could not generate a unique booking number after multiple attempts.",
   );
