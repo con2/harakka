@@ -232,21 +232,25 @@ create policy "Super admins can update any role assignment"
 -- ===========================================================================
 
 /*
- * Users can delete their own role assignments except for 'user' role
- * This prevents users from removing their basic 'user' role while allowing 
- * them to remove other roles they may have been assigned
+ * Users can delete their own role assignments except for 'user' role in Global organization
+ * This prevents users from removing their basic 'user' role from the Global organization
+ * while allowing them to remove user roles from other organizations and any other roles
  */
-create policy "Users can delete their own non-user roles"
+create policy "Users can delete their own roles except user role in Global org"
   on public.user_organization_roles
   for delete 
   to authenticated
   using (
     user_id = auth.uid() 
-    and exists (
-      select 1
-      from public.roles r
-      where r.id = role_id
-        and r.role != 'user'::public.roles_type
+    and not (
+      exists (
+        select 1
+        from public.roles r
+        join public.organizations o on o.id = organization_id
+        where r.id = role_id
+          and r.role = 'user'::public.roles_type
+          and o.name = 'Global'
+      )
     )
   );
 
