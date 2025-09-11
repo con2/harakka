@@ -76,7 +76,7 @@ npx supabase secrets set --env-file supabase/.env.keys
 Local development
 -----------------
 
-Add your local plaintext values to `supabase/.env.local` (this file is gitignored), or keep using the existing `supabase-local.env` with the new variable names present.
+Add your local plaintext values to `supabase/.env.local` (this file is gitignored), or keep using the existing `.env.supabase.local` with the new variable names present.
 
 Running deploys via dotenvx (optional but recommended)
 -----------------------------------------------------

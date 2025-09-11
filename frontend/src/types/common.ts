@@ -62,6 +62,7 @@ export type ErrorContext =
   | "reject"
   | "return"
   | "update-payment-status"
+  | "patch"
   | null;
 
 export interface ErrorState {

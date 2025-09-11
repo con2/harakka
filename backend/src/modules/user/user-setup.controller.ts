@@ -14,6 +14,7 @@ import {
   SetupUserRequest,
   SetupUserResponse,
   CreateUserProfileDto,
+  CheckStatusDto,
 } from "./interfaces/user-setup.interface";
 import { AuthRequest } from "../../middleware/interfaces/auth-request.interface";
 
@@ -30,10 +31,22 @@ export class UserSetupController {
   ): Promise<SetupUserResponse> {
     try {
       // Get userId from authenticated request
-      const userId = req.user.id;
+      const userId = createUserDto.userId || req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestException("userId is required");
+      }
 
       if (!createUserDto.email) {
         throw new BadRequestException("email is required");
+      }
+      // Validate user exists (only for unauthenticated requests)
+      if (!req.user) {
+        const userExists =
+          await this.userSetupService.validateUserExists(userId);
+        if (!userExists) {
+          throw new BadRequestException("Invalid user ID");
+        }
       }
 
       const setupData: SetupUserRequest = {
@@ -55,7 +68,7 @@ export class UserSetupController {
 
       return result;
     } catch (error) {
-      this.logger.error(`User setup failed: ${error.message}`, error.stack);
+      this.logger.error(`❌ User setup failed: ${error.message}`, error.stack);
 
       if (
         error instanceof ForbiddenException ||
@@ -73,30 +86,45 @@ export class UserSetupController {
 
   @Post("check-status")
   async checkUserSetupStatus(
-    @Body() body: { userId: string },
+    @Body() body: CheckStatusDto,
     @Req() req: AuthRequest,
   ) {
+    this.logger.log(
+      `Setup request received for userId: ${body.userId}, auth user: ${req.user?.id || "none"}`,
+    );
     try {
       if (!body.userId) {
         throw new BadRequestException("userId is required");
       }
 
-      // Security: Users can only check their own status, unless they have admin roles
-      const isOwnStatus = body.userId === req.user.id;
-      const isAdmin = req.userRoles.some((role) => role.role_name === "admin");
-
-      if (!isOwnStatus && !isAdmin) {
-        throw new ForbiddenException(
-          "You can only check your own setup status",
+      if (req.user) {
+        // Security: Users can only check their own status, unless they have admin roles
+        const isOwnStatus = body.userId === req.user.id;
+        const isAdmin = req.userRoles?.some(
+          (role) => role.role_name === "super_admin",
         );
+
+        if (!isOwnStatus && !isAdmin) {
+          throw new ForbiddenException(
+            "You can only check your own setup status",
+          );
+        }
       }
 
+      // Pass validateAuth: true to verify user exists in auth.users
       const status = await this.userSetupService.checkUserSetupStatus(
         body.userId,
+        true, // Enable user validation
       );
+
+      // Include userExists in response if available
       return {
         success: true,
-        data: status,
+        data: {
+          ...status,
+          // Only expose userExists property if it's false (for security)
+          userExists: status.userExists === false ? false : undefined,
+        },
       };
     } catch (error) {
       this.logger.error(`Check status failed: ${error.message}`, error.stack);

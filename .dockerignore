@@ -21,7 +21,7 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
-supabase-local.env
+.env.supabase.local
 
 # IDE files
 .vscode/
@@ -128,3 +128,8 @@ frontend/public/web.config
 
 # Backend specific
 backend/test/
+
+.env*
+.flaskenv*
+!.env.project
+!.env.vault

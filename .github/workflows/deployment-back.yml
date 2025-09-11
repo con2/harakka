@@ -1,0 +1,77 @@
+name: Deploy Backend to Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+          cache: "npm"
+          cache-dependency-path: "backend/package-lock.json"
+
+      - name: Install common dependencies (common types folder)
+        run: |
+          cd common
+          npm ci
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Build
+        run: |
+          cd backend
+          npm run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Prepare deployment
+        run: |
+          cd backend
+          # Create deployment package without dev dependencies
+          mkdir deployment
+          cp -r dist Procfile package.json package-lock.json assets config.mts deployment/
+          cd deployment
+          npm ci --omit=dev
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: "booking-app-backend"
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: "./backend/deployment"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          ALLOWED_ORIGINS: "https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180"
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_FROM_NEW: ${{ secrets.EMAIL_FROM_NEW }}
+          EMAIL_FROM_2: ${{ secrets.EMAIL_FROM_2 }}
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GMAIL_APP_PASSWORD_NEW: ${{ secrets.GMAIL_APP_PASSWORD_NEW }}
+          NODE_ENV: "production"
+          ENV: "production"
+
+      - name: Post-deployment verification
+        if: success()
+        run: |
+          echo "Deployment completed, waiting for app to start..."
+          sleep 15
+          curl -s "https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net/health" || echo "App may still be starting"

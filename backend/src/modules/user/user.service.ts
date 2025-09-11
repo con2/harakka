@@ -44,13 +44,17 @@ export class UserService {
 
   /**
    * Get a list of users with only name and email.
-   * Accessible by both super_admin and tenant_admin.
+   * Accessible by super_admin, tenant_admin, and storage_manager.
    * @param req - Authenticated request object
    * @param dto - Query parameters for pagination and filtering
    * @returns List of users with name and email
    */
   async getAllOrderedUsersList(req: AuthRequest, dto: GetOrderedUsersDto) {
     const supabase = req.supabase;
+    const activeRole = req.headers["x-role-name"] as string;
+
+    // Always select all needed columns, filter in result mapping based on role
+    const columns = "id, visible_name, full_name, email";
 
     // Build the main user query (ask Supabase for an exact count so metadata is accurate)
     let query = supabase
@@ -59,9 +63,16 @@ export class UserService {
 
     // Apply search query if provided
     if (dto.searchquery) {
-      query = query.or(
-        `email.ilike.%${dto.searchquery}%,full_name.ilike.%${dto.searchquery}%`,
-      );
+      const searchPattern = `%${dto.searchquery}%`;
+      if (activeRole === "storage_manager" || activeRole === "tenant_admin") {
+        query = query.or(
+          `email.ilike.${searchPattern},visible_name.ilike.${searchPattern},full_name.ilike.${searchPattern}`,
+        );
+      } else {
+        query = query.or(
+          `email.ilike.${searchPattern},full_name.ilike.${searchPattern}`,
+        );
+      }
     }
 
     // Apply ordering

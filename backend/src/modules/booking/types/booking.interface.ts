@@ -76,14 +76,7 @@ export type ValidBookingOrder =
   | "final_amount"
   | "full_name";
 
-export const BookingStatus = {
-  pending: "pending" as Database["public"]["Enums"]["booking_status"],
-  confirmed: "confirmed" as Database["public"]["Enums"]["booking_status"],
-  rejected: "rejected" as Database["public"]["Enums"]["booking_status"],
-  cancelled: "cancelled" as Database["public"]["Enums"]["booking_status"],
-};
-
 export type BookingWithOrgStatus = BookingPreview & {
   org_status_for_active_org: BookingStatus;
 };
-export type BookingStatus = keyof typeof BookingStatus;
+export type BookingStatus = Database["public"]["Enums"]["booking_status"];
