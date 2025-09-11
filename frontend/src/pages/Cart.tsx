@@ -116,6 +116,14 @@ const Cart: React.FC = () => {
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return;
+    // validate if quantity exceeds available quantity
+    const availability = availabilityMap[id];
+    if (availability && quantity > availability.availableQuantity) {
+      toast.warning(
+        `${t.cart.toast.itemsExceedQuantity[lang]} ${availability.availableQuantity}.`,
+      );
+      return;
+    }
     dispatch(updateQuantity({ id, quantity }));
   };
 
