@@ -4,20 +4,31 @@ import { store } from "@/store/store";
 import { fetchCurrentUserRoles } from "@/store/slices/rolesSlice";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 
-// Cache the token to avoid unnecessary async calls
-let cachedToken: string | null = null;
+// Cache the token to avoid unnecessary async calls.
+// Important: do NOT cache a null token, so we re-check once a session exists.
+let cachedToken: string | undefined;
 
 // Get token with fallback to cached token
 export async function getAuthToken(): Promise<string | null> {
-  if (cachedToken) return cachedToken;
+  // If we have previously cached a non-null token, return it.
+  if (typeof cachedToken !== "undefined") {
+    return cachedToken ?? null;
+  }
 
   const { data } = await supabase.auth.getSession();
-  cachedToken = data.session?.access_token || null;
-  return cachedToken;
+  const token = data.session?.access_token ?? null;
+
+  // Only cache if the token is non-null; otherwise keep it undefined so we retry later.
+  if (token) {
+    cachedToken = token;
+  } else {
+    cachedToken = undefined;
+  }
+  return token;
 }
 
 export function clearCachedAuthToken() {
-  cachedToken = null;
+  cachedToken = undefined;
 }
 
 // Get API URL from runtime config with fallback to development URL
@@ -83,6 +94,26 @@ api.interceptors.response.use(
 
     // Check if the error is a 403 (Forbidden) and we haven't retried already
     const originalRequest = error.config;
+    // Attempt automatic recovery on 401 Unauthorized by refreshing the Supabase session once.
+    if (error.response?.status === 401 && !originalRequest._retry401) {
+      originalRequest._retry401 = true;
+      try {
+        // Clear any cached token and ask Supabase for a fresh session
+        clearCachedAuthToken();
+        await supabase.auth.refreshSession();
+        const freshToken = await getAuthToken();
+        if (freshToken) {
+          originalRequest.headers = {
+            ...(originalRequest.headers || {}),
+            Authorization: `Bearer ${freshToken}`,
+          };
+        }
+        return api(originalRequest);
+      } catch (refreshErr) {
+        console.error("Token refresh on 401 failed:", refreshErr);
+        // fall through to normal error handling
+      }
+    }
     if (error.response?.status === 403 && !originalRequest._retry) {
       originalRequest._retry = true; // Mark that we've retried
 

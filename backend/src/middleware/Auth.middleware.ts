@@ -55,6 +55,10 @@ export class AuthMiddleware implements NestMiddleware {
   }
 
   async use(req: AuthRequest, _res: Response, next: NextFunction) {
+    // Allow CORS preflight without authentication
+    if (req.method === "OPTIONS") {
+      return next();
+    }
     // Use debug level for routine request logging to reduce noise
     this.logger.debug(`Authenticating request to: ${req.method} ${req.path}`);
 
@@ -67,33 +71,18 @@ export class AuthMiddleware implements NestMiddleware {
         throw new UnauthorizedException("Missing access token");
       }
 
-      // Local signature/expiry verification + decode payload
-      let payload: JWTPayload;
+      // Try local decode for quick claim inspection (no signature verification).
+      // We rely on Supabase auth.getUser below for authoritative verification,
+      // which supports both HS256 and RS256 projects seamlessly.
+      let payload: JWTPayload | null = null;
       try {
-        payload = this.jwtService.verifyToken(token);
-
-        // Validate essential JWT claims
-        if (!payload.sub || !payload.aud || !payload.exp) {
-          throw new UnauthorizedException("Invalid token payload");
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
         }
-
-        // Validate expiration manually (additional safety)
-        if (Date.now() >= payload.exp * 1000) {
-          throw new UnauthorizedException("Token has expired");
-        }
-      } catch (verifyErr) {
-        if (verifyErr instanceof TokenExpiredError) {
-          this.logger.warn(
-            `Authentication failed: Session expired for ${req.method} ${req.path}`,
-          );
-          throw new UnauthorizedException(
-            "Session expired - please log in again",
-          );
-        }
-        this.logger.warn(
-          `Authentication failed: Invalid signature for ${req.method} ${req.path}`,
-        );
-        throw new UnauthorizedException("Invalid or expired token");
+      } catch {
+        // Non-fatal: continue, Supabase will validate the token next
+        payload = null;
       }
 
       // Create a user‑scoped Supabase client (RLS applies)
@@ -121,8 +110,8 @@ export class AuthMiddleware implements NestMiddleware {
         throw new UnauthorizedException("Invalid or expired token");
       }
 
-      // Extract roles from JWT
-      const userRoles = this.jwtService.extractRolesFromToken(token, user.id);
+      // Extract roles directly from verified Supabase user metadata (preferred)
+      const userRoles = (user.app_metadata?.roles ?? []) as ViewUserRolesWithDetails[];
 
       // JWT status log
       if (this.shouldLogAuth(user.id, userRoles)) {

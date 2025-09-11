@@ -23,12 +23,6 @@ export class RoleController {
    * Get all roles for the current authenticated user
    */
   @Get("current")
-  @Roles(
-    ["user", "requester", "storage_manager", "tenant_admin", "super_admin"],
-    {
-      match: "any",
-    },
-  )
   getCurrentUserRoles(@Req() req: AuthRequest): ViewUserRolesWithDetails[] {
     return this.roleService.getCurrentUserRoles(req);
   }
@@ -76,12 +70,6 @@ export class RoleController {
    * GET /roles/organizations
    * Get user's organizations and roles
    */
-  @Roles(
-    ["user", "requester", "storage_manager", "tenant_admin", "super_admin"],
-    {
-      match: "any",
-    },
-  )
   @Get("organizations")
   getUserOrganizations(@Req() req: AuthRequest) {
     return this.roleService.getUserOrganizations(req);
