@@ -27,6 +27,10 @@ jobs:
         run: |
           cd frontend
           npm ci
+      - name: Clean problematic symlinks (circular references)
+        run: |
+          find frontend/node_modules -type l -name "common" -delete
+          find frontend/node_modules -type l -name "full-stack-booking-app" -delete
       - name: Create environment file
         run: |
           cd frontend
