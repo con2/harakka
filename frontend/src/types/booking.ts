@@ -30,7 +30,7 @@ export interface BookingType extends BaseEntity {
  */
 export interface BookingsState {
   bookings: BookingPreview[];
-  userBookings: BookingPreview[];
+  userBookings: ExtendedBookingPreview[];
   loading: boolean;
   error: string | null;
   errorContext: ErrorContext;
@@ -98,6 +98,19 @@ export type BookingUserViewRow = BookingUserView["Row"];
 
 /* Non-nullable type of the BookingUserViewRow */
 export type BookingPreview = StripNull<BookingUserViewRow>;
+export type ExtendedBookingPreview = BookingPreview & {
+  orgs: {
+    name: string;
+    id: string;
+    org_booking_status: BookingStatus;
+    locations: {
+      name: string;
+      id: string;
+      self_pickup: boolean;
+      pickup_status: BookingStatus;
+    }[];
+  }[];
+};
 
 export type BookingWithDetails = BookingPreview & {
   booking_items: BookingItemWithDetails[] | null;

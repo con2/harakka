@@ -46,6 +46,7 @@ import { StorageItemRow } from "@common/items/storage-items.types";
 import Spinner from "@/components/Spinner";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { BookingPreview } from "@common/bookings/booking.types";
+import { formatBookingStatus } from "@/utils/format";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
@@ -70,12 +71,15 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (items.length <= 1) void dispatch(fetchAllItems({ page: 1, limit: 10 }));
   }, [dispatch, items.length]);
-
+  useEffect(() => {
+    if (userCount < 1) void dispatch(getUserCount());
+  }, [userCount]); //eslint-disable-line
   useEffect(() => {
     if (itemCount < 1) void dispatch(getItemCount());
-    if (userCount < 1) void dispatch(getUserCount());
+  }, [itemCount]); //eslint-disable-line
+  useEffect(() => {
     if (bookingsCount < 1) void dispatch(getBookingsCount());
-  }, [dispatch, itemCount, bookingsCount, userCount]);
+  }, [bookingsCount]); //eslint-disable-line
 
   useEffect(() => {
     if (bookings.length <= 1) {
@@ -120,7 +124,9 @@ const AdminDashboard = () => {
     {
       accessorKey: "status",
       header: t.bookingList.columns.status[lang],
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => (
+        <StatusBadge status={formatBookingStatus(row.original.status)} />
+      ),
     },
     {
       accessorKey: "created_at",

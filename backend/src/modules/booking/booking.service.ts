@@ -179,10 +179,10 @@ export class BookingService {
     limit: number,
     activeOrgId?: string,
     activeRole?: string,
-    userId?,
   ) {
     const { from, to } = getPaginationRange(page, limit);
     const supabase = req.supabase;
+    const userId = req.user.id;
 
     // Restrict User to only their own bookings
     if (activeRole === "user") {
@@ -210,29 +210,19 @@ export class BookingService {
         );
       }
 
-      const bookingIdsResult = await supabase
+      const bookingItemsResult = await supabase
         .from("booking_items")
-        .select("booking_id")
+        .select(
+          "booking_id, status, self_pickup, location_id, provider_organization_id, organizations(name), storage_locations (name)",
+        )
         .eq("provider_organization_id", activeOrgId);
 
-      if (bookingIdsResult.error) {
-        throw new BadRequestException(
-          "Could not fetch bookings for the organization",
-        );
-      }
+      if (bookingItemsResult.error)
+        handleSupabaseError(bookingItemsResult.error);
 
-      const bookingIds = bookingIdsResult.data.map((item) => item.booking_id);
-      if (bookingIds.length > 0) {
-        const result = await supabase
-          .from("view_bookings_with_user_info")
-          .select("*", { count: "exact" })
-          .in("id", bookingIds)
-          .order("created_at", { ascending: false })
-          .range(from, to);
-
-        const pagination = getPaginationMeta(result.count, page, limit);
-        return { ...result, metadata: pagination };
-      } else {
+      const bookingIds = bookingItemsResult.data.map((item) => item.booking_id);
+      // If no bookings found, return empty paginated response
+      if (bookingIds.length === 0) {
         return {
           data: [],
           count: 0,
@@ -242,6 +232,72 @@ export class BookingService {
           metadata: getPaginationMeta(0, page, limit),
         };
       }
+
+      // Fetch bookings themselves
+      const result = await supabase
+        .from("view_bookings_with_user_info")
+        .select("*", { count: "exact" })
+        .in("id", bookingIds)
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (result.error) {
+        // propagate or wrap the error as appropriate
+        throw new BadRequestException("Could not fetch bookings");
+      }
+
+      const mappedResult = result.data.map((booking) => {
+        const bi = bookingItemsResult.data.filter(
+          (data) => data.booking_id === booking.id,
+        );
+
+        const org_booking_status = deriveOrgStatus(bi.map((s) => s.status));
+
+        // Group by organization id
+        const orgMap = new Map();
+
+        bi.forEach((item) => {
+          const orgId = item.provider_organization_id;
+          if (!orgMap.has(orgId)) {
+            orgMap.set(orgId, {
+              id: orgId,
+              name: item.organizations.name,
+              org_booking_status,
+              locations: new Map(), // nested map for locations
+            });
+          }
+
+          const orgEntry = orgMap.get(orgId);
+
+          // Deduplicate locations by location_id
+          if (!orgEntry.locations.has(item.location_id)) {
+            orgEntry.locations.set(item.location_id, {
+              id: item.location_id,
+              name: item.storage_locations.name,
+              self_pickup: item.self_pickup,
+              pickup_status: item.status,
+            });
+          }
+        });
+
+        // Convert maps to arrays
+        const orgs = Array.from(orgMap.values()).map((org) => ({
+          ...org,
+          locations: Array.from(org.locations.values()),
+        }));
+
+        return {
+          ...booking,
+          orgs,
+        };
+      });
+
+      const pagination = getPaginationMeta(result.count, page, limit);
+      return {
+        ...result,
+        data: mappedResult,
+        metadata: pagination,
+      };
     }
   }
 
@@ -511,10 +567,10 @@ export class BookingService {
     }
 
     // 3.6 notify user via centralized mail service
-    await this.mailService.sendBookingMail(BookingMailType.Creation, {
-      bookingId: booking.id,
-      triggeredBy: userId,
-    });
+    // await this.mailService.sendBookingMail(BookingMailType.Creation, {
+    //   bookingId: booking.id,
+    //   triggeredBy: userId,
+    // });
 
     // 3.7 Fetch the complete booking with items and translations using the view
     const { data: createdBookings, error: fetchError } = await supabase
@@ -1310,6 +1366,7 @@ export class BookingService {
     supabase: SupabaseClient,
     bookingId: string,
     orgId: string,
+    location_id: string,
     itemIds?: string[],
   ) {
     if (itemIds && itemIds.length > 0) {
@@ -1335,6 +1392,7 @@ export class BookingService {
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", orgId)
       .eq("status", "confirmed");
+    if (location_id) updateQuery.eq("location_id", location_id);
     if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
     const { error: itemsUpdateError } = await updateQuery;
     if (itemsUpdateError) handleSupabaseError(itemsUpdateError);
@@ -1345,7 +1403,10 @@ export class BookingService {
       .eq("booking_id", bookingId);
 
     if (
-      bookingDetails?.every((org_booking) => org_booking.status === "picked_up")
+      bookingDetails?.some(
+        (org_booking) => org_booking.status === "picked_up",
+      ) &&
+      bookingDetails?.every((org_booking) => org_booking.status !== "pending")
     ) {
       const { error: bookingUpdateError } = await supabase
         .from("bookings")
@@ -1365,10 +1426,10 @@ export class BookingService {
     const triggeredBy = bookingRow?.user_id ?? "system";
 
     // notify via centralized mail service
-    await this.mailService.sendBookingMail(BookingMailType.ItemsPickedUp, {
-      bookingId,
-      triggeredBy,
-    });
+    // await this.mailService.sendBookingMail(BookingMailType.ItemsPickedUp, {
+    //   bookingId,
+    //   triggeredBy,
+    // });
 
     return {
       message: `Pickup confirmed for booking ${bookingId}`,

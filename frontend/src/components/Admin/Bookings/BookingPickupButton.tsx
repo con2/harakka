@@ -6,19 +6,26 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { pickUpItems, selectBookingError } from "@/store/slices/bookingsSlice";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { toast } from "sonner";
+import { ReactNode } from "react";
 
 type BookingPickUpProps = {
   id: string;
+  location_id?: string;
   selectedItemIds?: string[];
   disabled?: boolean;
   onSuccess?: () => void;
+  children?: ReactNode;
+  className?: string;
 };
 
 const BookingPickupButton = ({
   id,
+  location_id,
   selectedItemIds,
   onSuccess,
   disabled = false,
+  children,
+  className,
 }: BookingPickUpProps) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
@@ -32,7 +39,11 @@ const BookingPickupButton = ({
       cancelText: t.bookingPickup.confirmDialog.cancelText[lang],
       onConfirm: () => {
         const promise = dispatch(
-          pickUpItems({ bookingId: id, itemIds: selectedItemIds }),
+          pickUpItems({
+            bookingId: id,
+            location_id: location_id,
+            itemIds: selectedItemIds,
+          }),
         ).unwrap();
 
         toast.promise(promise, {
@@ -47,6 +58,7 @@ const BookingPickupButton = ({
       },
     });
   };
+  const base_classes = "text-green-600 hover:text-green-800 hover:bg-green-100";
 
   return (
     <Button
@@ -54,10 +66,11 @@ const BookingPickupButton = ({
       size="sm"
       disabled={disabled}
       title={t.bookingList.buttons.pickedUp[lang]}
-      className="text-green-600 hover:text-green-800 hover:bg-green-100"
+      className={className ? [className, base_classes].join(" ") : base_classes}
       onClick={handlePickup}
     >
       <BoxIcon className="h-4 w-4" />
+      {children}
     </Button>
   );
 };

@@ -243,9 +243,13 @@ export const bookingsApi = {
    */
   pickUpItems: async (
     bookingId: string,
+    location_id?: string,
     itemIds?: string[],
   ): Promise<Booking> => {
-    return api.patch(`/bookings/${bookingId}/pickup`, itemIds);
+    return api.patch(`/bookings/${bookingId}/pickup`, {
+      itemIds,
+      location_id,
+    });
   },
 
   /**

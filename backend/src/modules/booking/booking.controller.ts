@@ -416,14 +416,16 @@ export class BookingController {
   async pickup(
     @Param("bookingId") bookingId: string,
     @Req() req: AuthRequest,
-    @Body() itemIds: string[],
+    @Body() body: { itemIds: string[]; location_id: string },
   ) {
     const supabase = req.supabase;
     const orgId = req.headers["x-org-id"] as string;
+    const { itemIds, location_id } = body;
     return this.bookingService.confirmPickup(
       supabase,
       bookingId,
       orgId,
+      location_id,
       itemIds,
     );
   }

@@ -9,6 +9,7 @@ import {
   BookingPreview,
   BookingWithDetails,
   ValidBookingOrder,
+  ExtendedBookingPreview,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { BookingItemUpdate } from "@common/bookings/booking-items.types";
@@ -93,15 +94,9 @@ export const getOwnBookings = createAsyncThunk(
     {
       page = 1,
       limit = 10,
-      activeOrgId,
-      activeRole,
-      userId,
     }: {
       page?: number;
       limit?: number;
-      activeOrgId: string;
-      activeRole: string;
-      userId: string;
     },
     { rejectWithValue },
   ) => {
@@ -450,15 +445,15 @@ export const returnItems = createAsyncThunk<
 
 // Mark items as picked up
 export const pickUpItems = createAsyncThunk<
-  { bookingId: string; itemIds?: string[] },
-  { bookingId: string; itemIds?: string[] },
+  { bookingId: string; location_id?: string; itemIds?: string[] },
+  { bookingId: string; location_id?: string; itemIds?: string[] },
   { rejectValue: string }
 >(
   "bookings/pickUpItems",
-  async ({ bookingId, itemIds }, { rejectWithValue }) => {
+  async ({ bookingId, location_id, itemIds }, { rejectWithValue }) => {
     try {
-      await bookingsApi.pickUpItems(bookingId, itemIds);
-      return { bookingId };
+      await bookingsApi.pickUpItems(bookingId, location_id, itemIds);
+      return { bookingId, location_id, itemIds };
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to process returns"),
@@ -564,7 +559,8 @@ export const bookingsSlice = createSlice({
         state.errorContext = null;
       })
       .addCase(getUserBookings.fulfilled, (state, action) => {
-        state.userBookings = action.payload.data as unknown as BookingPreview[];
+        state.userBookings = action.payload
+          .data as unknown as ExtendedBookingPreview[];
         state.bookings_pagination = action.payload.metadata;
         state.loading = false;
       })
@@ -581,7 +577,7 @@ export const bookingsSlice = createSlice({
       })
       .addCase(getOwnBookings.fulfilled, (state, action) => {
         if (action.payload) {
-          state.userBookings = action.payload.data as BookingPreview[];
+          state.userBookings = action.payload.data as ExtendedBookingPreview[];
           state.bookings_pagination = action.payload.metadata;
         } else {
           state.userBookings = [];
