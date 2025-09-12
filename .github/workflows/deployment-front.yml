@@ -84,7 +84,6 @@ jobs:
           skip_app_build: true # Set to true to skip building the app - optional
           app_build_command: "echo 'Skipping build'"
           config_file_location: "/frontend"
-          deployment_environment: "production"
           ###### End of Repository/Build Configurations ######
       - name: Verify Environment Variables
         run: |
