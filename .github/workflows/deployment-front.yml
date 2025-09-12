@@ -23,6 +23,10 @@ jobs:
         run: |
           cd common
           npm ci
+      - name: Install front dependencies
+        run: |
+          cd frontend
+          npm ci
       - name: Create environment file
         run: |
           cd frontend
