@@ -16,10 +16,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import profilePlaceholder from "../assets/profilePlaceholder.png";
 import Cropper from "react-easy-crop";
-import { getCroppedImg, validateImage } from "@/utils/imageUtils";
+import { getCroppedImg, useImageValidator } from "@/utils/imageUtils";
 import { Area } from "react-easy-crop";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
+import { FILE_CONSTRAINTS } from "@/types";
 
 const ProfilePictureUploader = () => {
   const dispatch = useAppDispatch();
@@ -50,15 +51,20 @@ const ProfilePictureUploader = () => {
 
   // translation hook
   const { lang } = useLanguage();
+  const { validateFile } = useImageValidator();
 
   const currentImage = selectedUser?.profile_picture_url;
 
   // handle file selection
   const handleSelectedFile = (selected: File) => {
-    const result = validateImage().safeParse(selected);
-    if (!result.success) {
-      toast.error(result.error.errors[0]?.message ?? "Invalid file");
-      return;
+    if (
+      !validateFile(
+        selected,
+        FILE_CONSTRAINTS.MAX_FILE_SIZE,
+        FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
+      )
+    ) {
+      return; // Early return if validation fails
     }
 
     setFile(selected);
@@ -106,6 +112,7 @@ const ProfilePictureUploader = () => {
           1,
           croppedAreaPixels,
           rotation,
+          lang,
         );
         const newPreviewUrl = URL.createObjectURL(blob);
         setLivePreviewUrl(newPreviewUrl);
@@ -113,7 +120,7 @@ const ProfilePictureUploader = () => {
     };
 
     void generatePreview();
-  }, [previewUrl, croppedAreaPixels, crop, zoom, rotation]);
+  }, [previewUrl, croppedAreaPixels, crop, zoom, rotation, lang]);
 
   const handleUpload = async () => {
     if (!file || !selectedUser || !croppedAreaPixels || !previewUrl) return;
@@ -126,13 +133,19 @@ const ProfilePictureUploader = () => {
         1,
         croppedAreaPixels,
         rotation,
+        lang,
       );
 
       await dispatch(uploadProfilePicture(croppedFile)).unwrap();
-      toast.success("Profile picture updated");
+      // Use translations for success message
+      toast.success(t.profilePicUploader.messages.success[lang]);
       setOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error uploading");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t.profilePicUploader.messages.error[lang],
+      );
     }
   };
 

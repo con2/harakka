@@ -148,4 +148,10 @@ export const common = {
       en: "Address",
     },
   },
+  errors: {
+    invalidFile: {
+      en: "Invalid file",
+      fi: "Virheellinen tiedosto",
+    },
+  },
 };

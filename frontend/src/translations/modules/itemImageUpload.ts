@@ -4,6 +4,18 @@ export const itemImageUpload = {
       en: "Upload failed",
       fi: "Lataus epäonnistui",
     },
+    fileTooLarge: {
+      en: "File size must be less than {size}MB",
+      fi: "Tiedoston koko ei saa ylittää {size}MB",
+    },
+    invalidFileType: {
+      en: "Invalid file type. Only images are allowed.",
+      fi: "Virheellinen tiedostotyyppi. Vain kuvat ovat sallittuja.",
+    },
+    emptyFile: {
+      en: "File is empty",
+      fi: "Tiedosto on tyhjä",
+    },
   },
   buttons: {
     uploading: {

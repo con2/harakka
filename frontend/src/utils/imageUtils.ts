@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { AllowedMimeType, FILE_CONSTRAINTS } from "@/types/storage";
+import { t } from "@/translations";
+import { SUPPORTED_LANGUAGES } from "@/translations/SUPPORTED_LANGUAGES";
+import { useLanguage } from "@/context/LanguageContext";
+import { toast } from "sonner";
 
 export const getCroppedImg = async (
   imageSrc: string,
@@ -8,6 +12,7 @@ export const getCroppedImg = async (
   _aspect: number,
   croppedAreaPixels: { width: number; height: number; x: number; y: number },
   rotation: number,
+  lang: (typeof SUPPORTED_LANGUAGES)[number] = "en",
 ): Promise<File> => {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -63,7 +68,9 @@ export const getCroppedImg = async (
         type: "image/jpeg",
       });
 
-      const result = validateImage().safeParse(croppedFile);
+      const result = validateImage(undefined, undefined, lang).safeParse(
+        croppedFile,
+      );
       if (!result.success) {
         reject(new Error(result.error.errors[0]?.message ?? "Invalid file"));
         return;
@@ -89,13 +96,49 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
 export function validateImage(
   maxSize = FILE_CONSTRAINTS.MAX_FILE_SIZE,
   acceptedTypes = FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
+  lang: (typeof SUPPORTED_LANGUAGES)[number] = "en",
 ) {
   return z
     .instanceof(File)
+    .refine((file) => file.size > 0, {
+      message: t.itemImageUpload.messages.emptyFile[lang],
+    })
     .refine((file) => file.size <= maxSize, {
-      message: `File size must be less than ${Math.round(maxSize / (1024 * 1024))}MB`,
+      message: t.itemImageUpload.messages.fileTooLarge[lang].replace(
+        "{size}",
+        `${Math.round(maxSize / (1024 * 1024))}`,
+      ),
     })
     .refine((file) => acceptedTypes.includes(file.type as AllowedMimeType), {
-      message: `Only ${acceptedTypes.map((type) => "." + type.split("/")[1]).join(", ")} formats are supported`,
+      message: t.itemImageUpload.messages.invalidFileType[lang],
     });
+}
+
+export function useImageValidator() {
+  const { lang } = useLanguage();
+
+  return {
+    /**
+     * Validates an image file and shows toast messages for errors
+     * @returns true if valid, false if invalid
+     */
+    validateFile: (
+      file: File,
+      maxSize = FILE_CONSTRAINTS.MAX_FILE_SIZE,
+      acceptedTypes = FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
+    ): boolean => {
+      const result = validateImage(maxSize, acceptedTypes, lang).safeParse(
+        file,
+      );
+
+      if (!result.success) {
+        toast.error(
+          result.error.errors[0]?.message ?? t.common.errors.invalidFile[lang],
+        );
+        return false;
+      }
+
+      return true;
+    },
+  };
 }
