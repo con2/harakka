@@ -412,21 +412,11 @@ export class BookingService {
       }
 
       // 3.1. Check availability for requested date range
-      console.log(
-        `[BookingService.createBooking] Checking availability for item ${item_id}`,
-        { item_id, quantity, start_date, end_date },
-      );
-
       const available = await calculateAvailableQuantity(
         supabase,
         item_id,
         start_date,
         end_date,
-      );
-
-      console.log(
-        `[BookingService.createBooking] Availability check result for item ${item_id}:`,
-        available,
       );
 
       if (quantity > available.availableQuantity) {
@@ -444,10 +434,6 @@ export class BookingService {
       }
 
       // 3.2. Check physical stock (currently in storage)
-      console.log(
-        `[BookingService.createBooking] Checking physical stock for item ${item_id}`,
-      );
-
       const { data: storageItem, error: itemError } = await supabase
         .from("storage_items")
         .select("available_quantity")
@@ -470,11 +456,6 @@ export class BookingService {
       }
 
       const currentStock = storageItem.available_quantity ?? 0;
-      console.log(
-        `[BookingService.createBooking] Physical stock check for item ${item_id}:`,
-        { currentStock, requestedQuantity: quantity },
-      );
-
       if (quantity > currentStock) {
         console.warn(
           `[BookingService.createBooking] Insufficient physical stock for item ${item_id}:`,
