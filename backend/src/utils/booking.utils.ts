@@ -14,15 +14,6 @@ export async function calculateAvailableQuantity(
   alreadyBookedQuantity: number;
   availableQuantity: number;
 }> {
-  console.log(
-    `[calculateAvailableQuantity] Checking availability for item ${itemId}`,
-    {
-      itemId,
-      startDate,
-      endDate,
-    },
-  );
-
   // get overlapping bookings
   const { data: overlapping, error } = await supabase
     .from("booking_items")
@@ -40,17 +31,8 @@ export async function calculateAvailableQuantity(
     handleSupabaseError(error);
   }
 
-  console.log(
-    `[calculateAvailableQuantity] Found ${overlapping?.length || 0} overlapping bookings for item ${itemId}:`,
-    overlapping,
-  );
-
   const alreadyBookedQuantity =
     overlapping?.reduce((sum, o) => sum + (o.quantity || 0), 0) ?? 0;
-
-  console.log(
-    `[calculateAvailableQuantity] Already booked quantity for item ${itemId}: ${alreadyBookedQuantity}`,
-  );
 
   // get items total quantity
   const { data: item, error: itemError } = await supabase
@@ -74,15 +56,7 @@ export async function calculateAvailableQuantity(
     throw new Error(`Item ${itemId} not found`);
   }
 
-  console.log(
-    `[calculateAvailableQuantity] Item ${itemId} total quantity: ${item.quantity}`,
-  );
-
   const availableQuantity = item.quantity - alreadyBookedQuantity;
-
-  console.log(
-    `[calculateAvailableQuantity] Available quantity for item ${itemId}: ${availableQuantity}`,
-  );
 
   return {
     item_id: itemId,
@@ -141,16 +115,8 @@ export async function generateBookingNumber(
   supabase: SupabaseClient<Database>,
   maxAttempts = 5,
 ): Promise<string> {
-  console.log(
-    `[generateBookingNumber] Starting booking number generation with ${maxAttempts} max attempts`,
-  );
-
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const candidate = makeCandidate();
-
-    console.log(
-      `[generateBookingNumber] Attempt ${attempt + 1}/${maxAttempts}: checking candidate ${candidate}`,
-    );
 
     const { data, error } = await supabase
       .from("bookings")
@@ -167,22 +133,8 @@ export async function generateBookingNumber(
     }
 
     // if no existing row, candidate is unique
-    if (!data) {
-      console.log(
-        `[generateBookingNumber] Success! Generated unique booking number: ${candidate}`,
-      );
-      return candidate;
-    }
-
-    console.log(
-      `[generateBookingNumber] Candidate ${candidate} already exists, trying again...`,
-    );
-    // otherwise loop and try again
+    if (!data) return candidate;
   }
-
-  console.error(
-    `[generateBookingNumber] Failed to generate unique booking number after ${maxAttempts} attempts`,
-  );
   throw new Error(
     "Could not generate a unique booking number after multiple attempts.",
   );
