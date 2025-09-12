@@ -1,4 +1,4 @@
-import logo from "@/assets/logo_small.svg";
+import Logo from "@/assets/logo_small.svg?react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/context/LanguageContext";
@@ -154,7 +154,7 @@ const AdminPanel = () => {
         </SheetTrigger>
         <SheetContent side="left" className="w-64">
           <div className="flex items-center pt-2 gap-2">
-            <img src={logo} alt="Logo" className="h-10" />
+            <Logo className="h-10 pl-2" />
             <h2 className="text-lg font-bold">{t.adminPanel.title[lang]}</h2>
           </div>
           <nav className="flex flex-col space-y-4">
