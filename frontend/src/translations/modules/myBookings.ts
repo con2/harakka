@@ -52,10 +52,6 @@ export const myBookings = {
       fi: "Peruutettu",
       en: "Cancelled",
     },
-    cancelledByAdmin: {
-      fi: "Ylläpitäjän peruuttama",
-      en: "Cancelled by admin",
-    },
     completed: {
       fi: "Valmis",
       en: "Completed",
@@ -64,9 +60,13 @@ export const myBookings = {
       fi: "Hylätty",
       en: "Rejected",
     },
-    deleted: {
-      fi: "Poistettu",
-      en: "Deleted",
+    picked_up: {
+      fi: "Hylätty",
+      en: "Picked up",
+    },
+    all: {
+      fi: "Kaikki",
+      en: "All",
     },
   },
   columns: {
@@ -158,7 +158,7 @@ export const myBookings = {
       fi: "Hae tilausnumerolla",
       en: "Search booking #",
     },
-    allStatuses: {
+    all: {
       fi: "Kaikki tilat",
       en: "All statuses",
     },
