@@ -1,4 +1,4 @@
-import logo from "@/assets/logo.png";
+import Logo from "@/assets/logo_small.svg?react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/context/LanguageContext";
@@ -37,7 +37,7 @@ const AdminPanel = () => {
     <div className="flex min-h-screen relative">
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-64 p-4 border-r bg-white shadow-md">
-        <nav className="flex flex-col space-y-4">
+        <nav className="flex flex-col gap-3">
           {isAnyTypeOfAdmin && (
             <SidebarLink
               to="/admin"
@@ -154,7 +154,7 @@ const AdminPanel = () => {
         </SheetTrigger>
         <SheetContent side="left" className="w-64">
           <div className="flex items-center pt-2 gap-2">
-            <img src={logo} alt="Logo" className="h-10" />
+            <Logo className="h-10 pl-2" />
             <h2 className="text-lg font-bold">{t.adminPanel.title[lang]}</h2>
           </div>
           <nav className="flex flex-col space-y-4">
@@ -269,8 +269,10 @@ const SidebarLink = ({
     end={end}
     data-cy={dataCy}
     className={({ isActive }: { isActive: boolean }) =>
-      `flex items-center gap-3 p-2 rounded hover:bg-gray-200 ${
-        isActive ? "text-highlight2" : "text-gray-700"
+      `flex items-center gap-3 p-2 rounded hover:bg-(--subtle-grey) ${
+        isActive
+          ? "text-(--iridiscent-blue) bg-(--subtle-grey)"
+          : "text-gray-700"
       }`
     }
   >

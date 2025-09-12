@@ -236,7 +236,7 @@ export default function OrganizationModal({
               >
                 {t.organizations.modal.buttons.cancel[lang]}
               </Button>
-              <Button type="submit">
+              <Button type="submit" variant="outline">
                 {t.organizations.modal.buttons.save[lang]}
               </Button>
             </DialogFooter>

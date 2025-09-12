@@ -54,6 +54,10 @@ export const addCategory = {
       fi: "Peruuta",
       en: "Cancel",
     },
+    back: {
+      fi: "Peruuta",
+      en: "Back",
+    },
     save: {
       fi: "Tallenna",
       en: "Save",
