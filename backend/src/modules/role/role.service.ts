@@ -228,6 +228,15 @@ export class RoleService {
       throw new NotFoundException("Role assignment not found");
     }
 
+    // if a role is activated, ensure no other active role exists for this user in the same organization
+    if (updateRoleDto.is_active) {
+      await req.supabase
+        .from("user_organization_roles")
+        .update({ is_active: false })
+        .eq("user_id", existing.user_id)
+        .eq("organization_id", existing.organization_id);
+    }
+
     // Update the role assignment
     const { data } = await req.supabase
       .from("user_organization_roles")
