@@ -2,6 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@common/supabase.types";
 import { UserBooking } from "src/modules/booking/types/booking.interface";
 import { BookingStatus } from "../modules/booking//types/booking.interface";
+import { handleSupabaseError } from "./handleError.utils";
 
 export async function calculateAvailableQuantity(
   supabase: SupabaseClient<Database>,
@@ -19,11 +20,10 @@ export async function calculateAvailableQuantity(
     .select("quantity")
     .eq("item_id", itemId)
     .in("status", ["pending", "confirmed", "picked_up"])
-    .or(`and(start_date.lte.${endDate},end_date.gte.${startDate})`);
+    .lte("start_date", endDate)
+    .gte("end_date", startDate);
 
-  if (error) {
-    throw new Error("Error checking the bookings");
-  }
+  if (error) handleSupabaseError(error);
 
   const alreadyBookedQuantity =
     overlapping?.reduce((sum, o) => sum + (o.quantity || 0), 0) ?? 0;
@@ -35,9 +35,9 @@ export async function calculateAvailableQuantity(
     .eq("id", itemId)
     .single();
 
-  if (itemError || !item) {
-    throw new Error("Error when retrieving/ calling item.total");
-  }
+  if (itemError) handleSupabaseError(itemError);
+
+  if (!item) throw new Error(`Item ${itemId} not found`);
 
   const availableQuantity = item.quantity - alreadyBookedQuantity;
 
@@ -107,12 +107,10 @@ export async function generateBookingNumber(
       .eq("booking_number", candidate)
       .maybeSingle();
 
-    if (error) {
-      throw new Error("Error while checking booking number uniqueness");
-    }
+    if (error) handleSupabaseError(error);
+
     // if no existing row, candidate is unique
     if (!data) return candidate;
-    // otherwise loop and try again
   }
   throw new Error(
     "Could not generate a unique booking number after multiple attempts.",

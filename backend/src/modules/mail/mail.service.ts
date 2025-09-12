@@ -52,8 +52,8 @@ interface SendMailOptions {
  * * Provides convenience helpers for booking‑related notifications.
  *
  * **Environment variables**
- * - `EMAIL_FROM_2` ‑ Gmail address used as sender (App‑Password auth).
- * - `GMAIL_APP_PASSWORD` ‑ App password for the sender account.
+ * - `STORAGE_EMAIL` ‑ Gmail address used as sender (App‑Password auth).
+ * - `STORAGE_EMAIL_PASSWORD` ‑ App password for the sender account.
  * - `BOOKING_ADMIN_EMAIL` ‑ Admin copy for booking mails.
  *
  * @example Basic HTML send
@@ -104,15 +104,15 @@ export class MailService {
         port: 465,
         secure: true,
         auth: {
-          user: process.env.EMAIL_FROM_2, // illusia.info.ry@gmail.com
-          pass: process.env.GMAIL_APP_PASSWORD, // ← App Password
+          user: process.env.STORAGE_EMAIL, // harrakka.storage.solutions@gmail.com
+          pass: process.env.STORAGE_EMAIL_PASSWORD, // ← App Password
         },
       });
 
       const finalHtml = await this.generateHtml(template, html);
 
       const mailOptions: Record<string, unknown> = {
-        from: `BookingApp <${process.env.EMAIL_FROM_2}>`,
+        from: `Harrakka Storage Solutions <${process.env.STORAGE_EMAIL}>`,
         to,
         subject,
         html: finalHtml,
@@ -151,8 +151,8 @@ export class MailService {
         port: 465,
         secure: true,
         auth: {
-          user: process.env.EMAIL_FROM_2, // Gmail address used with App Password
-          pass: process.env.GMAIL_APP_PASSWORD, // App Password
+          user: process.env.STORAGE_EMAIL, // Gmail address used with App Password
+          pass: process.env.STORAGE_EMAIL_PASSWORD, // App Password
         },
       });
 
@@ -295,7 +295,7 @@ export class MailService {
 
     await this.sendMail({
       to: formattedPayload.recipient,
-      bcc: process.env.BOOKING_ADMIN_EMAIL ?? process.env.EMAIL_FROM_2, // Send to admin as well
+      bcc: process.env.BOOKING_ADMIN_EMAIL ?? process.env.STORAGE_EMAIL, // Send to admin as well
       subject,
       template: finalTemplate,
     });

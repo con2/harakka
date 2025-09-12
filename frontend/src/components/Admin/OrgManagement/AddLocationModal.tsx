@@ -342,10 +342,10 @@ const AddLocationModal = ({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button type="button" variant="secondary" onClick={handleClose}>
               {t.addLocationModal.buttons.cancel[lang]}
             </Button>
-            <Button type="submit" disabled={isSubmitting} variant={"secondary"}>
+            <Button type="submit" disabled={isSubmitting} variant="outline">
               {isSubmitting
                 ? t.addLocationModal.buttons.creating[lang]
                 : t.addLocationModal.buttons.create[lang]}

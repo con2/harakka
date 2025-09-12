@@ -28,6 +28,10 @@ export const addTagModal = {
       fi: "Luo tagi",
       en: "Create Tag",
     },
+    cancel: {
+      fi: "Peruuta",
+      en: "Cancel",
+    },
     creating: {
       fi: "Luodaan...",
       en: "Creating...",
