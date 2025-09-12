@@ -111,7 +111,6 @@ export class BookingController {
       limitNumber,
       activeOrgId,
       activeRole,
-      userId,
     );
   }
 
@@ -203,7 +202,6 @@ export class BookingController {
       limitNumber,
       activeOrgId,
       activeRole,
-      userId,
     );
   }
 
