@@ -1,4 +1,4 @@
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo_small.svg";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/context/LanguageContext";
@@ -270,7 +270,9 @@ const SidebarLink = ({
     data-cy={dataCy}
     className={({ isActive }: { isActive: boolean }) =>
       `flex items-center gap-3 p-2 rounded hover:bg-(--subtle-grey) ${
-        isActive ? "text-highlight2" : "text-gray-700"
+        isActive
+          ? "text-(--iridiscent-blue) bg-(--subtle-grey)"
+          : "text-gray-700"
       }`
     }
   >

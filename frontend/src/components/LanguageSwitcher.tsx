@@ -15,7 +15,7 @@ export const LanguageSwitcher: React.FC = () => {
       onValueChange={(value) => {
         if (value) setLanguage(value as Language);
       }}
-      className="inline-flex shadow-xs"
+      className="inline-flex filter drop-shadow-[0px_0px_2px_#f0f1f1]"
       aria-label="Language switcher"
     >
       <ToggleGroupItem

@@ -20,7 +20,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
-import Logo from "@/assets/v6.svg?react";
+import Logo from "@/assets/v4.svg?react";
 
 export const Navigation = () => {
   // Get auth state directly from Auth context
@@ -181,7 +181,7 @@ export const Navigation = () => {
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
-            className="flex items-center gap-1 text-(--midnight-black) font-medium hover:text-(--midnight-black) hover:bg-(--iridiscent-blue-light) relative p-2"
+            className="flex items-center gap-1 text-(--midnight-black) font-medium hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2"
             data-cy="nav-cart"
           >
             <ShoppingCart className="h-5 w-5" />
@@ -199,7 +199,7 @@ export const Navigation = () => {
                 <>
                   <Button
                     variant={"ghost"}
-                    className="p-o m-0 hover:bg-(--iridiscent-blue-light) hover:text-(--midnight-black) text-(--midnight-black)"
+                    className="p-o m-0 hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
                     size={"sm"}
                     onClick={() => void navigate("/profile")}
                     data-cy="nav-profile-btn"
@@ -218,7 +218,7 @@ export const Navigation = () => {
                     size={"sm"}
                     onClick={handleSignOut}
                     data-cy="nav-signout-btn"
-                    className="hover:bg-(--iridiscent-blue-light) hover:text-(--midnight-black) text-(--midnight-black)"
+                    className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
                   >
                     <LogOutIcon className="h-5 w-5" />
                   </Button>
@@ -226,7 +226,7 @@ export const Navigation = () => {
               ) : (
                 <Button
                   variant={"ghost"}
-                  className="hover:bg-(--iridiscent-blue-light) hover:text-(--midnight-black) text-(--midnight-black)"
+                  className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
                   data-cy="nav-login-btn"
                   asChild
                 >
