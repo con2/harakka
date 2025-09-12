@@ -43,10 +43,11 @@ export function checkTranslationObjectStructure(
     }
 
     // --- Required checks below ---
-    const typedObj = obj as Record<string, unknown>;
-    const translations = SUPPORTED_LANGUAGES.map(
-      (lang) => typedObj[lang] as string,
-    ).filter((t) => typeof t === "string" && t.length > 0);
+    const translations = SUPPORTED_LANGUAGES.map((lang) => {
+      return (obj as Record<(typeof SUPPORTED_LANGUAGES)[number], unknown>)[
+        lang
+      ] as string;
+    }).filter((t) => typeof t === "string" && t.length > 0);
 
     if (translations.length >= 2) {
       const lengths = translations.map((t) => t.length);
