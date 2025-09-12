@@ -1,0 +1,14 @@
+# Ignore development files
+
+node_modules/
+src/
+.vscode/
+.github/
+_.md
+_.log
+
+# Ignore test files
+
+**/\*.test.js
+**/\*.spec.js
+tests/

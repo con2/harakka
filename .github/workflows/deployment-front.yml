@@ -44,6 +44,12 @@ jobs:
           cd frontend
           npm run build
 
+      - name: Check build file count
+        run: |
+          echo "Counting files in frontend/dist..."
+          find frontend/dist -type f | wc -l
+          echo "If this number is >4000, deployment will likely fail."
+
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
