@@ -109,12 +109,23 @@ const AddTagModal = ({ children, onCreated }: AddTagModalProps) => {
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex justify-end gap-2 pt-2">
           <Button
-            className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary"
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              resetForm();
+              setOpen(false);
+            }}
+            disabled={submitting}
+          >
+            {t.addTagModal.buttons.cancel[lang]}{" "}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
             onClick={handleSubmit}
             disabled={submitting}
-            size={"sm"}
           >
             {submitting
               ? t.addTagModal.buttons.creating[lang]

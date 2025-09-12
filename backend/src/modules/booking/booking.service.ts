@@ -432,9 +432,10 @@ export class BookingService {
         .eq("id", item_id)
         .single();
 
-      if (itemError || !storageItem) {
+      if (itemError) handleSupabaseError(itemError);
+
+      if (!storageItem)
         throw new BadRequestException("Storage item data not found");
-      }
 
       const currentStock = storageItem.available_quantity ?? 0;
       if (quantity > currentStock) {
@@ -467,8 +468,6 @@ export class BookingService {
       .single<BookingRow>();
 
     if (bookingError || !booking) {
-      console.error("Booking insert error:", bookingError);
-      console.error("Booking result:", booking);
       throw new BadRequestException("Could not create booking");
     }
 
@@ -1348,7 +1347,12 @@ export class BookingService {
     if (
       bookingDetails?.every((org_booking) => org_booking.status === "picked_up")
     ) {
-      await supabase.from("bookings").update({ status: "picked_up" });
+      const { error: bookingUpdateError } = await supabase
+        .from("bookings")
+        .update({ status: "picked_up" })
+        .eq("id", bookingId);
+
+      if (bookingUpdateError) handleSupabaseError(bookingUpdateError);
     }
 
     // look up the booking owner so we can tag who triggered the mail

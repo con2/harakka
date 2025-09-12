@@ -168,8 +168,8 @@ function AddCategory() {
         </div>
 
         <div className="*:w-fit px-8 self-end gap-3 flex">
-          <Button variant="default" onClick={cancel} type="button">
-            {t.addCategory.buttons.cancel[lang]}
+          <Button variant="secondary" onClick={cancel} type="button">
+            {t.addCategory.buttons.back[lang]}
           </Button>
           <Button variant="outline" type="submit">
             {t.addCategory.buttons.save[lang]}
