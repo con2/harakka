@@ -1356,18 +1356,9 @@ export class BookingService {
       .select("status")
       .eq("booking_id", bookingId);
 
-    console.log(
-      `[BookingService.confirmPickup] Checking if all items are picked up for booking ${bookingId}:`,
-      bookingDetails?.map((item) => item.status),
-    );
-
     if (
       bookingDetails?.every((org_booking) => org_booking.status === "picked_up")
     ) {
-      console.log(
-        `[BookingService.confirmPickup] All items picked up, updating booking ${bookingId} to picked_up status`,
-      );
-
       const { error: bookingUpdateError } = await supabase
         .from("bookings")
         .update({ status: "picked_up" })
