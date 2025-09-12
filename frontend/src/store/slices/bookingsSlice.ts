@@ -106,13 +106,7 @@ export const getOwnBookings = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      return await bookingsApi.getOwnBookings(
-        activeOrgId,
-        activeRole,
-        userId,
-        page,
-        limit,
-      );
+      return await bookingsApi.getOwnBookings(page, limit);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch own bookings"),
