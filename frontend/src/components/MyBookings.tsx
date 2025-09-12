@@ -29,7 +29,6 @@ import {
   ExtendedBookingPreview,
 } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle } from "lucide-react";
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -529,10 +528,12 @@ const MyBookings = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center p-8">
-        <LoaderCircle className="animate-spin h-8 w-8 mr-2" />
-        <span>{t.myBookings.loading[lang]}</span>
-      </div>
+      <Spinner
+        containerClasses="flex-1 gap-3 text-primary text-sm"
+        loaderClasses="text-secondary w-8 h-8"
+      >
+        Loading Bookings
+      </Spinner>
     );
   }
 
@@ -564,8 +565,8 @@ const MyBookings = () => {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg">
-      <div className="space-y-4">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg min-h-[250px]">
+      <div className="space-y-4 min-h-[250px]">
         {/* Filtering UI */}
         {activeContext.roleName !== "super_admin" && bookings.length > 0 && (
           <div className="flex flex-wrap gap-4 items-center justify-between">
@@ -672,7 +673,7 @@ const MyBookings = () => {
                     {/* booking Items */}
                     {selectedBooking && selectedBooking.booking_items && (
                       <>
-                        <div className="bg-slate-50 rounded-md">
+                        <div className="bg-slate-50 rounded-md ">
                           <p className="text-md font-semibold">
                             {t.myBookings.bookingDetails.items[lang]}:
                           </p>
