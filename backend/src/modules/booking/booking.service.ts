@@ -420,14 +420,6 @@ export class BookingService {
       );
 
       if (quantity > available.availableQuantity) {
-        console.warn(
-          `[BookingService.createBooking] Insufficient virtual stock for item ${item_id}:`,
-          {
-            requested: quantity,
-            available: available.availableQuantity,
-            alreadyBooked: available.alreadyBookedQuantity,
-          },
-        );
         throw new BadRequestException(
           `Not enough virtual stock available for item ${item_id}`,
         );
@@ -457,10 +449,6 @@ export class BookingService {
 
       const currentStock = storageItem.available_quantity ?? 0;
       if (quantity > currentStock) {
-        console.warn(
-          `[BookingService.createBooking] Insufficient physical stock for item ${item_id}:`,
-          { requested: quantity, available: currentStock },
-        );
         throw new BadRequestException(
           `Not enough physical stock in storage for item ${item_id}`,
         );
