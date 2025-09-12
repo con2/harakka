@@ -23,13 +23,7 @@ export async function calculateAvailableQuantity(
     .lte("start_date", endDate)
     .gte("end_date", startDate);
 
-  if (error) {
-    console.error(
-      `[calculateAvailableQuantity] Error checking overlapping bookings for item ${itemId}:`,
-      error,
-    );
-    handleSupabaseError(error);
-  }
+  if (error) handleSupabaseError(error);
 
   const alreadyBookedQuantity =
     overlapping?.reduce((sum, o) => sum + (o.quantity || 0), 0) ?? 0;
@@ -41,20 +35,9 @@ export async function calculateAvailableQuantity(
     .eq("id", itemId)
     .single();
 
-  if (itemError) {
-    console.error(
-      `[calculateAvailableQuantity] Error retrieving item ${itemId}:`,
-      itemError,
-    );
-    handleSupabaseError(itemError);
-  }
+  if (itemError) handleSupabaseError(itemError);
 
-  if (!item) {
-    console.error(
-      `[calculateAvailableQuantity] Item ${itemId} not found in storage_items table`,
-    );
-    throw new Error(`Item ${itemId} not found`);
-  }
+  if (!item) throw new Error(`Item ${itemId} not found`);
 
   const availableQuantity = item.quantity - alreadyBookedQuantity;
 
@@ -124,13 +107,7 @@ export async function generateBookingNumber(
       .eq("booking_number", candidate)
       .maybeSingle();
 
-    if (error) {
-      console.error(
-        `[generateBookingNumber] Error checking booking number uniqueness for ${candidate}:`,
-        error,
-      );
-      handleSupabaseError(error);
-    }
+    if (error) handleSupabaseError(error);
 
     // if no existing row, candidate is unique
     if (!data) return candidate;
