@@ -1,6 +1,28 @@
 -- ===================================
 -- TEST USERS FOR RLS POLICY TESTING
 -- ===================================
+-- Live DB seed data for test users
+-- ===================================
+-- User: user@test.com
+-- id = '6e2686aa-7164-4a10-8852-177c56dd3d5f'
+-- org id = '2a42d333-a550-493f-876e-a2cea3c80d26'
+-- ===================================
+-- Requester: requester@test.com
+-- id = '0efaafbf-29c4-48cd-8dc9-954dd924f553'
+-- org id = '5b96fb05-1a69-4d8b-832a-504eebf13960'
+-- ===================================
+-- Storage Manager: storage_manager@test.com
+-- id = '1e647a27-717f-4aee-a2da-f2c1737349c1'
+-- org id = '5b96fb05-1a69-4d8b-832a-504eebf13960'
+-- ===================================
+-- Super Admin: super_admin@test.com
+-- id = 'b8339c44-8410-49e0-8bb6-b74876120185'
+-- org id = '0360be4f-2ea1-4b89-960d-cff888fb7475'
+-- ===================================
+--  tenant_admin@test.com
+-- id = 'b08ed477-8100-4ee8-8ff8-84e1bcba1550'
+-- org id = '5b96fb05-1a69-4d8b-832a-504eebf13960'
+-- ===================================
 
 -- Im using this for my testing of policies and it should be included in the PR for now.
 -- These users can be used to test RLS policies by impersonating them in Supabase UI
