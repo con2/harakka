@@ -178,7 +178,6 @@ export class BookingService {
     page: number,
     limit: number,
     activeOrgId: string,
-    activeRole?: string,
   ) {
     const { from, to } = getPaginationRange(page, limit);
     const supabase = req.supabase;
