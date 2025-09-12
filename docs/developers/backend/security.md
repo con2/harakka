@@ -460,7 +460,7 @@ async getSignedInvoiceUrl(orderId: string, user: { id: string; role: string }): 
 @UseInterceptors(
   FileInterceptor('image', {
     limits: {
-      fileSize: 2 * 1024 * 1024, // 2MB
+      fileSize: 5 * 1024 * 1024, // 5MB
     },
     fileFilter: (req, file, callback) => {
       if (!file.originalname.match(/\.(jpg|jpeg|png|webp)$/i)) {

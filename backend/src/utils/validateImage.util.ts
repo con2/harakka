@@ -9,7 +9,7 @@ const ALLOWED_IMAGE_TYPES = [
   "image/gif",
 ];
 const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "gif"];
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export interface ImageValidationInput {
   buffer: Buffer;
