@@ -53,17 +53,21 @@ jobs:
       - name: Prepare for deployment
         run: |
           cd frontend
-          # Create a staging directory for a cleaner deployment
-          mkdir -p deploy-staging
-          cp -r dist/* deploy-staging/
-          # Ensure no hidden files are included
-          rm -rf deploy-staging/.*
-          # Replace dist with the clean staging directory
-          rm -rf dist
-          mv deploy-staging dist
-          # Double-check file count
-          echo "Final file count before deployment:"
-          find dist -type f | wc -l
+           # Copy staticwebapp.config.json into dist if it's not already there
+           if [ ! -f dist/staticwebapp.config.json ]; then
+             cp staticwebapp.config.json dist/
+           fi
+           
+           # Clean up the dist folder to ensure minimum files
+           echo "=== Files in dist before cleanup ==="
+           find dist -type f | sort
+           
+           # Double-check file count
+           echo "Final file count before deployment:"
+           find dist -type f | wc -l
+           
+           # Show size of distribution
+           du -sh dist
 
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
@@ -74,9 +78,9 @@ jobs:
           action: "upload"
           ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/frontend" # App source code path
+          app_location: "/frontend/dist" # App source code path
           api_location: "" # Api source code path - optional
-          output_location: "dist" # Built app content directory - optional
+          output_location: "" # Built app content directory - optional
           skip_app_build: true # Set to true to skip building the app - optional
           app_build_command: "echo 'Skipping build'"
           config_file_location: "/frontend"
