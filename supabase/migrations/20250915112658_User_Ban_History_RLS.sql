@@ -35,6 +35,15 @@ create policy "Super admins can read all ban history"
   to authenticated
   using (app.me_is_super_admin());
 
+-- Tenant admins can read all ban history (align with backend endpoints)
+create policy "Tenant admins can read all ban history"
+  on public.user_ban_history
+  for select
+  to authenticated
+  using (
+    app.me_has_role_anywhere('tenant_admin'::public.roles_type)
+  );
+
 -- Users can read their own ban history (transparency)
 create policy "Users can read their own ban history"
   on public.user_ban_history
@@ -94,12 +103,21 @@ create policy "Tenant admins can create org ban records"
     )
   );
 
+-- Super admins can create any ban record (app/org/role)
+create policy "Super admins can create ban records"
+  on public.user_ban_history
+  for insert
+  to authenticated
+  with check (
+    app.me_is_super_admin()
+  );
+
 -- ==========================================================================
 -- UPDATE POLICIES (Modifying ban records - very restricted)
 -- ==========================================================================
 
 -- Only allow updates to notes field by tenant admins (for adding context)
-create policy "Tenant admins can update ban record notes"
+create policy "Tenant admins can update ban records"
   on public.user_ban_history
   for update
   to authenticated
@@ -126,6 +144,18 @@ create policy "Tenant admins can update ban record notes"
       (organization_id is null 
        and app.me_has_role_anywhere('tenant_admin'::public.roles_type))
     )
+  );
+
+-- Super admins can update any ban record
+create policy "Super admins can update ban records"
+  on public.user_ban_history
+  for update
+  to authenticated
+  using (
+    app.me_is_super_admin()
+  )
+  with check (
+    app.me_is_super_admin()
   );
 
 -- ==========================================================================
