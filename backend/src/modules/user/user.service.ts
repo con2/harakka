@@ -2,7 +2,6 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
 import { GetOrderedUsersDto } from "./dto/get-ordered-users.dto";
-
 import {
   PostgrestResponse,
   PostgrestSingleResponse,
@@ -308,7 +307,7 @@ export class UserService {
     // 4. Update JWT
     try {
       // Get fresh roles
-      const { data: freshRoles, error: rolesError } = await serviceClient
+      const { data: freshRoles, error: rolesError } = await supabase
         .from("view_user_roles_with_details")
         .select("*")
         .eq("user_id", id);
@@ -322,26 +321,39 @@ export class UserService {
     }
 
     // 5. Delete the user profile
-    this.logger.debug(`Step 5: Deleting user profile for ${id}`);
-    const { data: userExists, error: profileError } = await serviceClient
+    // 5.1. First, verify the user profile exists before attempting to delete
+    const { data: checkUser, error: checkError } = await supabase
+      .from("user_profiles")
+      .select("id")
+      .eq("id", id);
+
+    if (checkError) {
+      handleSupabaseError(checkError);
+    }
+
+    if (!checkUser || checkUser.length === 0) {
+      this.logger.warn(`User profile ${id} not found before deletion`);
+      throw new NotFoundException(`User profile with ID ${id} not found`);
+    }
+
+    this.logger.debug(
+      `User profile ${id} exists, proceeding with deletion steps`,
+    );
+
+    // 5.2. Delete found user profile
+    this.logger.debug(`Deleting user profile for ${id}`);
+    const { error: profileError } = await supabase
       .from("user_profiles")
       .delete()
       .eq("id", id);
 
     if (profileError) {
       this.logger.error(
-        `Failed to check if user exists: ${profileError.message}`,
+        `Failed to delete user profile: ${profileError.message}`,
       );
       handleSupabaseError(profileError);
     }
-    if (!userExists) {
-      this.logger.warn(
-        `User profile ${id} does not exist, may have been deleted already`,
-      );
-      throw new NotFoundException(
-        `User profile with ID ${id} not found or already deleted`,
-      );
-    }
+    this.logger.log(`Successfully deleted user ${id}`);
   }
 
   // get all addresses for a specific user
