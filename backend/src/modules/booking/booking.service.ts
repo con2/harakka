@@ -1412,10 +1412,10 @@ export class BookingService {
     }
 
     // notify via centralized mail service
-    // await this.mailService.sendBookingMail(BookingMailType.ItemsReturned, {
-    //   bookingId,
-    //   triggeredBy: userId,
-    // });
+    await this.mailService.sendBookingMail(BookingMailType.ItemsReturned, {
+      bookingId,
+      triggeredBy: userId,
+    });
 
     return { message: "Items returned successfully" };
   }
@@ -1491,10 +1491,10 @@ export class BookingService {
     const triggeredBy = bookingRow?.user_id ?? "system";
 
     // notify via centralized mail service
-    // await this.mailService.sendBookingMail(BookingMailType.ItemsPickedUp, {
-    //   bookingId,
-    //   triggeredBy,
-    // });
+    await this.mailService.sendBookingMail(BookingMailType.ItemsPickedUp, {
+      bookingId,
+      triggeredBy,
+    });
 
     return {
       message: `Pickup confirmed for booking ${bookingId}`,
