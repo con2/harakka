@@ -226,22 +226,29 @@
 .custom-toast {
   position: relative;
   overflow: hidden;
+
   border-radius: 0.75rem;
   z-index: 1;
+  overflow: visible !important;
+
+  &:is(:hover, [data-expanded-true])::after {
+    visibility: hidden !important;
+  }
 }
 
 .custom-toast::after {
   content: "";
   position: absolute;
   border-radius: 0.75rem;
-  bottom: 0;
+  bottom: 0 !important;
   left: 0;
-  height: 4px;
+  height: 4px !important;
   width: 0;
   background-color: #4caf50;
   animation: progressBar 3s linear forwards;
   animation-play-state: running;
   z-index: 0;
+  transition: visibility 0s;
 }
 
 /* Use the :hover state to pause animation */
