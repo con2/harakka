@@ -46,8 +46,5 @@ END $$;
 -- ===================================
 -- Notes
 -- ===================================
--- * Deleting profiles is a privileged/destructive action. Ensure FK constraints
---   (e.g., ON DELETE CASCADE/SET NULL/RESTRICT) are set appropriately on tables
---   that reference user_profiles.id before enabling deletes in production.
 -- * If you later need org-scoped deletes (e.g., tenant_admin can delete users
 --   within their org), create a separate policy mirroring your UPDATE logic.
