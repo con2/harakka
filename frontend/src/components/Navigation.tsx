@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
 import Logo from "@/assets/v4.svg?react";
+import { Badge } from "./ui/badge";
 
 export const Navigation = () => {
   // Get auth state directly from Auth context
@@ -186,9 +187,9 @@ export const Navigation = () => {
           >
             <ShoppingCart className="h-5 w-5" />
             {cartItemsCount > 0 && (
-              <span className="ml-1 rounded-full bg-(--midnight-black) text-white absolute -right-[15px] w-[20px] h-[20px] flex items-center justify-center -top-[14px] text-[12px] font-['Lato'] font-semibold">
+              <Badge className="absolute -right-1 -top-1 h-4 min-w-[1rem] px-1 text-[0.625rem] font-sans text-white leading-none !bg-(--emerald-green)">
                 {cartItemsCount}
-              </span>
+              </Badge>
             )}
           </Button>
           {selectedUser && <Notifications userId={selectedUser.id} />}
