@@ -43,6 +43,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   // Only keep quantity as local state
   const [quantity, setQuantity] = useState(0);
 
+  // get cart items from Redux
+  const cartItems = useAppSelector((state) => state.cart.items);
+
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
       availableQuantity: item.quantity || 0,
@@ -145,19 +148,31 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   // Handle adding item to cart
   const handleAddToCart = () => {
-    if (item) {
-      void dispatch(
-        addToCart({
-          item: item,
-          quantity: quantity,
-          startDate: startDate ? startDate : undefined,
-          endDate: endDate ? endDate : undefined,
-        }),
+    if (!item) return;
+
+    const availability = availabilityInfo.availableQuantity;
+
+    const existingCartItem = cartItems.find(
+      (cartItem) => cartItem.item.id === item.id,
+    );
+    const currentQuantity = existingCartItem?.quantity ?? 0;
+
+    if (currentQuantity + quantity > availability) {
+      toast.warning(
+        `${t.cart.toast.itemsExceedQuantity[lang]} ${availability}.`,
       );
-      toast.success(
-        `${itemContent?.item_name} ${t.itemCard.addedToCart[lang]}`,
-      );
+      return;
     }
+    void dispatch(
+      addToCart({
+        item: item,
+        quantity: quantity,
+        startDate: startDate ? startDate : undefined,
+        endDate: endDate ? endDate : undefined,
+      }),
+    );
+
+    toast.success(`${itemContent?.item_name} ${t.itemCard.addedToCart[lang]}`);
   };
 
   // Update availability info based on dates selection
