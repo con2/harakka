@@ -83,7 +83,7 @@ const BookingCancelledEmail = ({
               fontFamily: "'Roboto Slab'",
               fontSize: "24px",
               fontWeight: 400,
-              color: "#9537C7",
+              color: "#2f5D9E",
               textAlign: "center",
               marginBottom: "16px",
             }}
@@ -156,7 +156,7 @@ const BookingCancelledEmail = ({
               <a
                 href="http://localhost:5180/profile?tab=bookings"
                 style={{
-                  backgroundColor: "#9537C7",
+                  backgroundColor: "#2f5D9E",
                   color: "#ffffff",
                   padding: "12px 24px",
                   borderRadius: "4px",
@@ -176,7 +176,7 @@ const BookingCancelledEmail = ({
           >
             If you have any questions, contact us by replying to this email or
             use the{" "}
-            <a href="" style={{ color: "#9537C7" }}>
+            <a href="" style={{ color: "#2f5D9E" }}>
               contact form
             </a>{" "}
             on our website.
