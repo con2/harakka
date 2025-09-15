@@ -1,0 +1,19 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/images/*", "/css/*", "/js/*", "/assets/*", "/*.ico", "/*.png"]
+  },
+  "mimeTypes": {
+    ".json": "text/json"
+  },
+  "platform": {
+    "apiRuntime": "node:16"
+  },
+  "routes": [
+    {
+      "route": "/*",
+      "serve": "/index.html",
+      "statusCode": 200
+    }
+  ]
+}

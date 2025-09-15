@@ -15,14 +15,14 @@ export const LanguageSwitcher: React.FC = () => {
       onValueChange={(value) => {
         if (value) setLanguage(value as Language);
       }}
-      className="inline-flex"
+      className="inline-flex filter drop-shadow-[0px_0px_2px_#f0f1f1]"
       aria-label="Language switcher"
     >
       <ToggleGroupItem
         value="fi"
         aria-label="Finnish"
         size={"sm"}
-        className="px-2 py-1.5 text-xs font-medium transition-colors data-[state=on]:bg-secondary data-[state=on]:text-white data-[state=off]:text-muted-foreground"
+        className="px-2 py-1.5 text-xs font-medium transition-colors bg-white data-[state=on]:bg-(--iridiscent-blue-light) data-[state=on]:text-(--midnight-black) data-[state=off]:text-muted-foreground"
       >
         FI
       </ToggleGroupItem>
@@ -30,7 +30,7 @@ export const LanguageSwitcher: React.FC = () => {
         value="en"
         aria-label="English"
         size={"sm"}
-        className="px-2 py-1.5 text-xs font-medium transition-colors data-[state=on]:bg-secondary data-[state=on]:text-white data-[state=off]:text-muted-foreground"
+        className="px-2 py-1.5 text-xs font-medium transition-colors bg-white data-[state=on]:bg-(--iridiscent-blue-light) data-[state=on]:text-(--midnight-black) data-[state=off]:text-muted-foreground"
       >
         EN
       </ToggleGroupItem>

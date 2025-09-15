@@ -8,7 +8,6 @@ import {
   Post,
   Put,
   Req,
-  UnauthorizedException,
   BadRequestException,
   Patch,
 } from "@nestjs/common";
@@ -98,20 +97,18 @@ export class BookingController {
     const limitNumber = parseInt(limit, 10);
     const activeOrgId = req.headers["x-org-id"] as string;
     const activeRole = req.headers["x-role-name"] as string;
-    const userId = req.user?.id;
+    const userId = req.user.id;
     if (!activeOrgId || !activeRole) {
       throw new BadRequestException("Organization context is required");
     }
-    if (!userId) {
-      throw new BadRequestException("Valid user ID is required");
-    }
-    return this.bookingService.getUserBookings(
+
+    return this.bookingService.getMyBookings(
       req,
       pageNumber,
       limitNumber,
+      userId,
       activeOrgId,
       activeRole,
-      userId,
     );
   }
 
@@ -190,20 +187,17 @@ export class BookingController {
     const limitNumber = parseInt(limit, 10);
     const activeOrgId = req.headers["x-org-id"] as string;
     const activeRole = req.headers["x-role-name"] as string;
+
     if (!activeOrgId || !activeRole) {
       throw new BadRequestException("Organization context is required");
-    }
-    if (!userId) {
-      throw new UnauthorizedException("User ID is required");
     }
 
     return this.bookingService.getUserBookings(
       req,
       pageNumber,
       limitNumber,
-      activeOrgId,
-      activeRole,
       userId,
+      activeOrgId,
     );
   }
 

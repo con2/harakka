@@ -38,7 +38,7 @@ function NavigationMenuList({
     <NavigationMenuPrimitive.List
       data-slot="navigation-menu-list"
       className={cn(
-        "group flex flex-1 list-none items-center justify-center gap-1",
+        "group flex flex-1 list-none items-center justify-center gap-2",
         className,
       )}
       {...props}
@@ -130,9 +130,9 @@ function NavigationMenuLink({
       className={cn(
         // Active state handling
         isActive
-          ? "text-secondary bg-accent/50" // Apply active styles
-          : "hover:text-secondary hover:bg-accent focus:text-secondary focus:bg-accent",
-        "flex flex-col gap-1 rounded-sm p-2 text-sm transition-all outline-none focus-visible:ring-ring/50 focus-visible:outline-1",
+          ? "text-secondary" // Apply active styles
+          : "hover:text-(--midnight-black) hover:bg-accent focus:text-secondary focus:bg-accent",
+        "flex flex-col gap-1 rounded-sm py-1.5 px-2 text-sm transition-all outline-none focus-visible:ring-ring/50 focus-visible:outline-1",
         className,
       )}
       {...props}

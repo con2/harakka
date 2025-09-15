@@ -102,8 +102,8 @@ export const Login = () => {
                   variables: {
                     default: {
                       colors: {
-                        brand: "#9537c7",
-                        brandAccent: "#3ec3ba",
+                        brand: "#2f5D9E",
+                        brandAccent: "#6394d9ff",
                         brandButtonText: "white",
                         defaultButtonBackground: "#f8f9fa",
                         defaultButtonBackgroundHover: "#e9ecef",
@@ -112,15 +112,15 @@ export const Login = () => {
                         dividerBackground: "#e9ecef",
                         inputBackground: "white",
                         inputBorder: "#ced4da",
-                        inputBorderHover: "#9537c7",
-                        inputBorderFocus: "#9537c7",
+                        inputBorderHover: "#2f5D9E",
+                        inputBorderFocus: "#2f5D9E",
                         inputText: "#495057",
                         inputLabelText: "#6c757d",
                         inputPlaceholder: "#adb5bd",
                         messageText: "#495057",
                         messageTextDanger: "#dc3545",
-                        anchorTextColor: "#9537c7",
-                        anchorTextHoverColor: "#3ec3ba",
+                        anchorTextColor: "#2f5D9E",
+                        anchorTextHoverColor: "#6394d9ff",
                       },
                       fonts: {
                         bodyFontFamily: "var(--main-font)",
@@ -129,7 +129,6 @@ export const Login = () => {
                         buttonFontFamily: "var(--main-font)",
                       },
                       borderWidths: {
-                        buttonBorderWidth: "1px",
                         inputBorderWidth: "1px",
                       },
                       radii: {
