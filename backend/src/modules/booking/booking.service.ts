@@ -1361,6 +1361,7 @@ export class BookingService {
     req: AuthRequest,
     bookingId: string,
     orgId: string,
+    location_id?: string,
     itemIds?: string[],
   ) {
     const supabase = req.supabase;
@@ -1372,6 +1373,8 @@ export class BookingService {
         .eq("booking_id", bookingId)
         .eq("provider_organization_id", orgId)
         .in("id", itemIds);
+
+      if (location_id) selectQuery.eq("location_id", location_id);
       const { data: selectData, error } = await selectQuery;
 
       if (error) handleSupabaseError(error);
@@ -1388,6 +1391,7 @@ export class BookingService {
       .eq("status", "picked_up")
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", orgId);
+    if (location_id) updateQuery.eq("location_id", location_id);
     if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
 
     const { error: updateError } = await updateQuery;
@@ -1408,10 +1412,10 @@ export class BookingService {
     }
 
     // notify via centralized mail service
-    await this.mailService.sendBookingMail(BookingMailType.ItemsReturned, {
-      bookingId,
-      triggeredBy: userId,
-    });
+    // await this.mailService.sendBookingMail(BookingMailType.ItemsReturned, {
+    //   bookingId,
+    //   triggeredBy: userId,
+    // });
 
     return { message: "Items returned successfully" };
   }

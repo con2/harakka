@@ -389,11 +389,18 @@ export class BookingController {
   async returnItems(
     @Param("id") id: string,
     @Req() req: AuthRequest,
-    @Body() itemIds?: string[],
+    @Body() body: { itemIds: string[]; location_id: string },
   ) {
     const orgId = req.headers["x-org-id"] as string;
     if (!orgId) throw new Error("Missing org ID");
-    return this.bookingService.returnItems(req, id, orgId, itemIds);
+    const { itemIds, location_id } = body;
+    return this.bookingService.returnItems(
+      req,
+      id,
+      orgId,
+      location_id,
+      itemIds,
+    );
   }
 
   /**
