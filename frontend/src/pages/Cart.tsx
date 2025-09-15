@@ -274,7 +274,7 @@ const Cart: React.FC = () => {
 
   return (
     <div
-      className="w-full max-w-6xl mx-auto px-10 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white"
+      className="w-full max-w-6xl p-4 mt-0 md:mt-10 mx-auto sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white"
       data-cy="cart-root"
     >
       <div className="mb-3 mt-4 md:mt-0">
@@ -300,32 +300,37 @@ const Cart: React.FC = () => {
             data-cy="cart-timeframe-summary"
           >
             {startDate && endDate ? (
-              <div className="flex items-center my-1">
-                <div className="flex items-center gap-2 flex-1/3">
-                  <Calendar className="h-5 w-5 text-secondary" />
-                  <span className="text-md">
-                    {t.cart.booking.timeframe[lang]}
-                  </span>
-                </div>
-                <div className="flex items-center justify-end flex-2/3">
-                  <p
-                    className="text-md font-semibold mr-3"
-                    data-cy="cart-timeframe-dates"
-                  >
-                    {formatDate(startDate, "d MMM yyyy")}
-                    <span className="font-semibold"> -</span>{" "}
-                    {formatDate(endDate, "d MMM yyyy")}
-                  </p>
-                  <p
-                    className="text-xs text-muted-foreground"
-                    data-cy="cart-rental-days"
-                  >
-                    ({rentalDays}{" "}
-                    {rentalDays === 1
-                      ? t.cart.booking.day[lang]
-                      : t.cart.booking.days[lang]}{" "}
-                    {t.cart.booking.total[lang]})
-                  </p>
+              <div>
+                <Calendar className="h-5 w-5 text-secondary shrink-0" />
+                <div className="flex items-center my-1 flex-wrap gap-x-3 gap-y-1 justify-between">
+                  <div className="flex items-center gap-2 w-fit">
+                    <span
+                      className="text-md min-w-[max-content]
+"
+                    >
+                      {t.cart.booking.timeframe[lang]}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-end w-fit">
+                    <p
+                      className="text-md font-semibold mr-3"
+                      data-cy="cart-timeframe-dates"
+                    >
+                      {formatDate(startDate, "d MMM yyyy")}
+                      <span className="font-semibold"> -</span>{" "}
+                      {formatDate(endDate, "d MMM yyyy")}
+                    </p>
+                    <p
+                      className="text-xs text-muted-foreground"
+                      data-cy="cart-rental-days"
+                    >
+                      ({rentalDays}{" "}
+                      {rentalDays === 1
+                        ? t.cart.booking.day[lang]
+                        : t.cart.booking.days[lang]}{" "}
+                      {t.cart.booking.total[lang]})
+                    </p>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -499,7 +504,7 @@ const Cart: React.FC = () => {
       >
         <Button
           onClick={handleClearCart}
-          className="text-primary/50 bg-background rounded-2xl border-1 border-primary/50 hover:bg-primary hover:text-white ml-2"
+          className="text-primary/50 bg-background rounded-2xl border-1 border-primary/50 hover:bg-primary hover:text-white md:ml-2"
           data-cy="cart-clear-btn"
         >
           {t.cart.buttons.clearCart[lang]}
