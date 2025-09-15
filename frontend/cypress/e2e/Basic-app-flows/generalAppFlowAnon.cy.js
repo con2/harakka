@@ -41,7 +41,7 @@ describe("Basic App Flows (Real Data) for anon user", () => {
   it("Anon user can navigate to User Guide and see relevant info", () => {
     cy.visit("/");
     cy.get('[data-cy="nav-guide"]').click();
-    cy.url().should("include", "/howItWorks");
+    cy.url().should("include", "/how-it-works");
     cy.get('[data-cy="guide-heading"]').should("exist");
     cy.get('[data-cy="guide-section"]').should("exist");
     cy.get('[data-cy="guide-accordion"]').should("exist");
