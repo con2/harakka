@@ -35,24 +35,25 @@ import { Sheet, SheetTrigger } from "./ui/sheet";
 import MobileMenu from "./MobileMenu";
 
 export const Navigation = () => {
-  // Get auth state directly from Auth context
+  // Auth State
   const { signOut, user, authLoading } = useAuth();
-  // Get user profile data from Redux
-  const selectedUser = useAppSelector(selectSelectedUser);
-  // Get user role information from the hook
   const { hasAnyRole } = useRoles();
+  const selectedUser = useAppSelector(selectSelectedUser);
+  const { lang } = useLanguage();
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
+
+  // Screen Size State
   const { isMobile, width } = useIsMobile();
   const isTablet = width <= 1210;
-  // Check if user has any admin role using hasAnyRole for efficiency
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const isAnyTypeOfAdmin = hasAnyRole([
     "tenant_admin",
     "super_admin",
     "storage_manager",
   ]);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const cartItemsCount = useAppSelector(selectCartItemsCount);
   const location = useLocation();
@@ -78,9 +79,20 @@ export const Navigation = () => {
     });
   };
 
-  // Translation hook
-  const { lang } = useLanguage();
   const closeMobileMenu = () => setMobileMenuOpen(false);
+
+  const MobileNavigation = () => (
+    <Sheet
+      open={mobileMenuOpen}
+      onOpenChange={setMobileMenuOpen}
+      aria-describedby="Navigate"
+    >
+      <SheetTrigger className="hover:bg-(--subtle-grey) p-2 h-fit rounded-sm self-center">
+        <Menu />
+        {mobileMenuOpen && <MobileMenu closeMenu={closeMobileMenu} />}
+      </SheetTrigger>
+    </Sheet>
+  );
 
   if (isMobile)
     return (
@@ -89,12 +101,7 @@ export const Navigation = () => {
           <Link to="/" data-cy="nav-home">
             <LogoSmall className="w-10" />
           </Link>
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger className="hover:bg-(--subtle-grey) p-2 h-fit rounded-sm self-center">
-              <Menu />
-              {mobileMenuOpen && <MobileMenu closeMenu={closeMobileMenu} />}
-            </SheetTrigger>
-          </Sheet>
+          <MobileNavigation />
         </div>
 
         <div className="flex gap-4">
@@ -123,12 +130,8 @@ export const Navigation = () => {
           <Link to="/" data-cy="nav-home">
             <Logo className="w-35" />
           </Link>
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger className="hover:bg-(--subtle-grey) p-2 h-fit rounded-sm self-center">
-              <Menu />
-              {mobileMenuOpen && <MobileMenu closeMenu={closeMobileMenu} />}
-            </SheetTrigger>
-          </Sheet>
+          <MobileNavigation />
+
           {isAnyTypeOfAdmin && (
             <Link
               to="/admin"
