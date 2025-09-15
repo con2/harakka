@@ -25,7 +25,7 @@ const ItemsPickedUpMail = ({
     <Body
       style={{
         fontFamily: "'Lato', Arial, sans-serif",
-        // backgroundColor: "#9537C7",
+        // backgroundColor: "#2f5D9E",
         backgroundColor: "#d0c1d8",
         margin: 0,
         padding: "40px 20px",
@@ -59,7 +59,7 @@ const ItemsPickedUpMail = ({
             fontFamily: "'Roboto'",
             fontSize: "24px",
             fontWeight: 400,
-            color: "#9537C7",
+            color: "#2f5D9E",
             textAlign: "center",
             marginBottom: "24px",
           }}
@@ -120,7 +120,7 @@ const ItemsPickedUpMail = ({
           <a
             href="http://localhost:5180/profile?tab=bookings" // TODO: replace with actual link
             style={{
-              backgroundColor: "#9537C7",
+              backgroundColor: "#2f5D9E",
               color: "#ffffff",
               padding: "12px 24px",
               borderRadius: "4px",
@@ -138,7 +138,7 @@ const ItemsPickedUpMail = ({
           the{" "}
           <a
             href="http://localhost:5180/contact-us" // TODO: replace with actual link
-            style={{ color: "#9537C7" }}
+            style={{ color: "#2f5D9E" }}
           >
             {" "}
             contact form{" "}
