@@ -33,7 +33,7 @@ export async function calculateAvailableQuantity(
     .from("storage_items")
     .select("quantity")
     .eq("id", itemId)
-    .single();
+    .maybeSingle();
 
   if (itemError) handleSupabaseError(itemError);
 
