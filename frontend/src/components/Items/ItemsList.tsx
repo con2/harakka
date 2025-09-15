@@ -26,7 +26,7 @@ const ItemsList: React.FC = () => {
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
   const pagination = useAppSelector(selectItemsPagination);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 12;
   const [page, setPage] = useState(1);
   // Translation
   const { lang } = useLanguage();
