@@ -44,7 +44,8 @@ export const Navigation = () => {
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
-  const { isMobile, isTablet } = useIsMobile();
+  const { isMobile, width } = useIsMobile();
+  const isTablet = width <= 1210;
   // Check if user has any admin role using hasAnyRole for efficiency
   const isAnyTypeOfAdmin = hasAnyRole([
     "tenant_admin",
@@ -140,6 +141,7 @@ export const Navigation = () => {
         </div>
 
         <div className="flex gap-4">
+          {selectedUser && <Notifications userId={selectedUser.id} />}
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
