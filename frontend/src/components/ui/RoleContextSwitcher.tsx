@@ -125,7 +125,7 @@ export const RoleContextSwitcher: React.FC = () => {
         onValueChange={handleContextChange}
         defaultValue=""
       >
-        <SelectTrigger className="w-[250px]">
+        <SelectTrigger className="w-[250px] text-(--midnight-black) filter drop-shadow-[0px_0px_1px_var(--subtle-grey)]">
           <SelectValue placeholder={t.roleContextSwitcher.placeholders[lang]} />
         </SelectTrigger>
         <SelectContent>

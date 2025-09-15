@@ -5,6 +5,7 @@
   "main": "index.ts",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
+    "full-stack-booking-app": "file:..",
     "type-fest": "^4.41.0"
   },
   "devDependencies": {
