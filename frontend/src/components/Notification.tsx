@@ -130,10 +130,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
         >
           <Bell className="!h-4.5 !w-5 text-(--midnight-black)" />
           {unseen > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -right-1 -top-1 h-4 min-w-[1rem] px-1 text-[0.625rem] font-sans text-white leading-none !bg-(--emerald-green)"
-            >
+            <Badge className="absolute -right-1 -top-1 h-4 min-w-[1rem] px-1 text-[0.625rem] font-sans text-white leading-none !bg-(--emerald-green)">
               {unseen}
             </Badge>
           )}
