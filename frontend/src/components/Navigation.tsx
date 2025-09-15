@@ -90,7 +90,7 @@ export const Navigation = () => {
             <LogoSmall className="w-10" />
           </Link>
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger>
+            <SheetTrigger className="hover:bg-(--subtle-grey) p-2 h-fit rounded-sm self-center">
               <Menu />
               {mobileMenuOpen && <MobileMenu closeMenu={closeMobileMenu} />}
             </SheetTrigger>
@@ -98,6 +98,7 @@ export const Navigation = () => {
         </div>
 
         <div className="flex gap-4">
+          <RoleContextSwitcher />
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
@@ -111,7 +112,6 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
-          <RoleContextSwitcher />
         </div>
       </nav>
     );
@@ -122,9 +122,9 @@ export const Navigation = () => {
         <div className="flex gap-6">
           <Link to="/" data-cy="nav-home">
             <Logo className="w-35" />
-          </Link>{" "}
+          </Link>
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger>
+            <SheetTrigger className="hover:bg-(--subtle-grey) p-2 h-fit rounded-sm self-center">
               <Menu />
               {mobileMenuOpen && <MobileMenu closeMenu={closeMobileMenu} />}
             </SheetTrigger>
@@ -141,6 +141,7 @@ export const Navigation = () => {
         </div>
 
         <div className="flex gap-4">
+          <RoleContextSwitcher />
           {selectedUser && <Notifications userId={selectedUser.id} />}
           <Button
             variant="ghost"
@@ -155,7 +156,6 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
-          <RoleContextSwitcher />
         </div>
       </nav>
     );
