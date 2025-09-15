@@ -1,13 +1,9 @@
-import Logo from "@/assets/logo_small.svg?react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/context/LanguageContext";
 import { useRoles } from "@/hooks/useRoles";
 import { t } from "@/translations";
 import {
   FileText,
   LayoutDashboard,
-  Menu,
   PinIcon,
   Settings,
   ShoppingBag,

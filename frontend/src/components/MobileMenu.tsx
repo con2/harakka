@@ -1,5 +1,4 @@
 import Logo from "@/assets/v4.svg?react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useRoles } from "@/hooks/useRoles";
 import { useNavigate } from "react-router-dom";
 import { SheetContent } from "./ui/sheet";
@@ -17,7 +16,6 @@ type MobileMenuProps = {
 function MobileMenu({ closeMenu }: MobileMenuProps) {
   const activeOrg = useAppSelector(selectActiveOrganizationId);
   const { signOut, user } = useAuth();
-  const { isMobile, isTablet } = useIsMobile();
   const isLoggedIn = !!user;
   const navigate = useNavigate();
   const { hasAnyRole, hasRole } = useRoles();
@@ -39,12 +37,13 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
   return (
     <SheetContent
       side="top"
+      //Style for all child buttons
       className="h-fit p-6 [&_button:not(.languageSwitcher_*)]:justify-start 
-[&_button:not(.languageSwitcher_*)]:px-3 
-[&_button:not(.languageSwitcher_*)]:text-base 
-[&_button:not(.languageSwitcher_*)]:py-2 
-[&_button:not(.languageSwitcher_*)]:h-fit 
-[&_button:not(.languageSwitcher_*):hover]:bg-[var(--subtle-grey)]"
+      [&_button:not(.languageSwitcher_*)]:px-3 
+      [&_button:not(.languageSwitcher_*)]:text-base 
+      [&_button:not(.languageSwitcher_*)]:py-2 
+      [&_button:not(.languageSwitcher_*)]:h-fit 
+      [&_button:not(.languageSwitcher_*):hover]:bg-[var(--subtle-grey)]"
     >
       <div>
         <Logo className="w-40 mb-4" />
