@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { useParams, useNavigate, Navigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -125,7 +125,6 @@ const BookingDetailsPage = () => {
     (item) => item.status === "confirmed",
   );
   const bookingOrg = booking?.booking_items?.[0].provider_organization_id;
-  console.log(bookingOrg);
   const sortedBookingItems = sortByStatus(booking?.booking_items ?? []);
   const LOCATION_IDS = new Set(
     booking?.booking_items?.map((i) => i.location_id),
