@@ -412,11 +412,6 @@ export class BookingService {
       }
 
       // 3.1. Check availability for requested date range
-      console.log(
-        `[BookingService.createBooking] Checking availability for item ${item_id}`,
-        { item_id, quantity, start_date, end_date },
-      );
-
       const available = await calculateAvailableQuantity(
         supabase,
         item_id,
@@ -424,62 +419,26 @@ export class BookingService {
         end_date,
       );
 
-      console.log(
-        `[BookingService.createBooking] Availability check result for item ${item_id}:`,
-        available,
-      );
-
       if (quantity > available.availableQuantity) {
-        console.warn(
-          `[BookingService.createBooking] Insufficient virtual stock for item ${item_id}:`,
-          {
-            requested: quantity,
-            available: available.availableQuantity,
-            alreadyBooked: available.alreadyBookedQuantity,
-          },
-        );
         throw new BadRequestException(
           `Not enough virtual stock available for item ${item_id}`,
         );
       }
 
       // 3.2. Check physical stock (currently in storage)
-      console.log(
-        `[BookingService.createBooking] Checking physical stock for item ${item_id}`,
-      );
-
       const { data: storageItem, error: itemError } = await supabase
         .from("storage_items")
         .select("available_quantity")
         .eq("id", item_id)
         .single();
 
-      if (itemError) {
-        console.error(
-          `[BookingService.createBooking] Error retrieving storage item ${item_id}:`,
-          itemError,
-        );
-        handleSupabaseError(itemError);
-      }
+      if (itemError) handleSupabaseError(itemError);
 
-      if (!storageItem) {
-        console.error(
-          `[BookingService.createBooking] Storage item ${item_id} not found`,
-        );
+      if (!storageItem)
         throw new BadRequestException("Storage item data not found");
-      }
 
       const currentStock = storageItem.available_quantity ?? 0;
-      console.log(
-        `[BookingService.createBooking] Physical stock check for item ${item_id}:`,
-        { currentStock, requestedQuantity: quantity },
-      );
-
       if (quantity > currentStock) {
-        console.warn(
-          `[BookingService.createBooking] Insufficient physical stock for item ${item_id}:`,
-          { requested: quantity, available: currentStock },
-        );
         throw new BadRequestException(
           `Not enough physical stock in storage for item ${item_id}`,
         );
@@ -509,8 +468,6 @@ export class BookingService {
       .single<BookingRow>();
 
     if (bookingError || !booking) {
-      console.error("Booking insert error:", bookingError);
-      console.error("Booking result:", booking);
       throw new BadRequestException("Could not create booking");
     }
 
@@ -1387,30 +1344,15 @@ export class BookingService {
       .select("status")
       .eq("booking_id", bookingId);
 
-    console.log(
-      `[BookingService.confirmPickup] Checking if all items are picked up for booking ${bookingId}:`,
-      bookingDetails?.map((item) => item.status),
-    );
-
     if (
       bookingDetails?.every((org_booking) => org_booking.status === "picked_up")
     ) {
-      console.log(
-        `[BookingService.confirmPickup] All items picked up, updating booking ${bookingId} to picked_up status`,
-      );
-
       const { error: bookingUpdateError } = await supabase
         .from("bookings")
         .update({ status: "picked_up" })
         .eq("id", bookingId);
 
-      if (bookingUpdateError) {
-        console.error(
-          `[BookingService.confirmPickup] Error updating booking ${bookingId} status:`,
-          bookingUpdateError,
-        );
-        handleSupabaseError(bookingUpdateError);
-      }
+      if (bookingUpdateError) handleSupabaseError(bookingUpdateError);
     }
 
     // look up the booking owner so we can tag who triggered the mail
