@@ -22,8 +22,8 @@ export const navigation = {
     en: "Contact Us",
   },
   organizations: {
-    en: common.organizations.organization.en,
-    fi: common.organizations.organization.fi,
+    en: "Organizations",
+    fi: "Organisaatiot",
   },
   toast: {
     title: {
