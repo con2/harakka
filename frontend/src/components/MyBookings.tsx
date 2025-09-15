@@ -67,6 +67,7 @@ import {
   selectCurrentUserRoles,
   setActiveRoleContext,
 } from "@/store/slices/rolesSlice";
+import BookingReturnButton from "./Admin/Bookings/BookingReturnButton";
 
 const MyBookings = () => {
   const dispatch = useAppDispatch();
@@ -134,8 +135,7 @@ const MyBookings = () => {
   const refetchBookings = () => {
     if (user)
       void dispatch(
-        getUserBookings({
-          user_id: user.id,
+        getOwnBookings({
           page: currentPage + 1,
           limit: 10,
         }),
@@ -399,6 +399,9 @@ const MyBookings = () => {
             locations: o.locations?.filter((l) => l.self_pickup === true),
           }));
         const isPending = booking.status === "pending";
+        const picked_up_locations = orgsWithPickup?.flatMap((o) =>
+          o.locations?.filter((l) => l.pickup_status === "picked_up"),
+        );
         console.log("orgswith pickup: ", orgsWithPickup);
         return (
           <div className="flex space-x-2">
@@ -423,16 +426,12 @@ const MyBookings = () => {
               orgsWithPickup?.length > 0 &&
               orgsWithPickup?.flatMap((o) =>
                 o.locations
-                  ?.filter(
-                    (l) =>
-                      l.pickup_status === "confirmed" ||
-                      l.pickup_status !== "picked_up",
-                  )
+                  ?.filter((l) => l.pickup_status === "confirmed")
                   .map((l) => (
                     <BookingPickupButton
                       onSuccess={refetchBookings}
                       location_id={l.id}
-                      key={`${booking.id}-${l.id}`}
+                      key={`pickup-${l.id}`}
                       id={booking.id}
                       className="gap-1"
                     >
@@ -440,6 +439,15 @@ const MyBookings = () => {
                     </BookingPickupButton>
                   )),
               )}
+            {picked_up_locations?.map((l) => (
+              <BookingReturnButton
+                id={booking.id}
+                location_id={l.id}
+                onSuccess={refetchBookings}
+              >
+                {l.name}
+              </BookingReturnButton>
+            ))}
           </div>
         );
       },

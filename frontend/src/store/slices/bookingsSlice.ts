@@ -426,15 +426,15 @@ export const rejectItemsForOrg = createAsyncThunk<
 
 // Return items thunk
 export const returnItems = createAsyncThunk<
-  { bookingId: string; itemIds?: string[] },
-  { bookingId: string; itemIds?: string[] },
+  { bookingId: string; itemIds?: string[]; location_id?: string },
+  { bookingId: string; itemIds?: string[]; location_id?: string },
   { rejectValue: string }
 >(
   "bookings/returnItems",
-  async ({ bookingId, itemIds }, { rejectWithValue }) => {
+  async ({ bookingId, itemIds, location_id }, { rejectWithValue }) => {
     try {
-      await bookingsApi.returnItems(bookingId, itemIds);
-      return { bookingId, itemIds };
+      await bookingsApi.returnItems(bookingId, itemIds, location_id);
+      return { bookingId, itemIds, location_id };
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to process returns"),
