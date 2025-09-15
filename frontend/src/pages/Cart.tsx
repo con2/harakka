@@ -403,12 +403,13 @@ const Cart: React.FC = () => {
                         <Input
                           type="text"
                           value={cartItem.quantity}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const parsed = parseInt(e.target.value, 10);
                             handleQuantityChange(
                               cartItem.item.id,
-                              parseInt(e.target.value),
-                            )
-                          }
+                              isNaN(parsed) ? 0 : parsed,
+                            );
+                          }}
                           className="w-12 mx-2 text-center"
                           max={
                             availabilityMap[cartItem.item.id]?.availableQuantity
