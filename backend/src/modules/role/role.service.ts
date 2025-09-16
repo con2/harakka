@@ -142,7 +142,7 @@ export class RoleService {
     const { user_id, organization_id, role_id }: CreateUserRoleDto =
       createRoleDto;
 
-    // Check if assignment already exists
+    // First check: Does this exact role assignment already exist?
     const { data: existing } = await req.supabase
       .from("user_organization_roles")
       .select("id")
@@ -157,7 +157,22 @@ export class RoleService {
       );
     }
 
-    // Create the role assignment
+    // Second check (before inserting!): Does user have ANY active role in this organization?
+    const { data: existingRole } = await req.supabase
+      .from("user_organization_roles")
+      .select("id, role_id")
+      .eq("user_id", user_id)
+      .eq("organization_id", organization_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (existingRole) {
+      throw new BadRequestException(
+        `User already has a role in this organization (role_id=${existingRole.role_id})`,
+      );
+    }
+
+    // Now create the role assignment since all checks have passed
     const { data, error } = await req.supabase
       .from("user_organization_roles")
       .insert({
@@ -172,21 +187,6 @@ export class RoleService {
     if (error) {
       this.logger.error(`Failed to create user role: ${error.message}`);
       throw new BadRequestException("Failed to create role assignment");
-    }
-
-    // Check if user already has any role in the target organization
-    const { data: existingRole } = await req.supabase
-      .from("user_organization_roles")
-      .select("id, role_id")
-      .eq("user_id", user_id)
-      .eq("organization_id", organization_id)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (existingRole) {
-      throw new BadRequestException(
-        `User already has a role in this organization (role_id=${existingRole.role_id})`,
-      );
     }
 
     // Get the complete role details using the view
@@ -204,7 +204,7 @@ export class RoleService {
     }
 
     // After successful role creation, update JWT
-    await this.updateUserJWT(createRoleDto.user_id, req);
+    await this.updateUserJWTById(createRoleDto.user_id);
 
     return roleDetails;
   }
@@ -286,7 +286,7 @@ export class RoleService {
     }
 
     // After successful role creation, update JWT
-    await this.updateUserJWT(existing.user_id, req);
+    await this.updateUserJWTById(existing.user_id);
 
     return roleDetails;
   }
@@ -321,7 +321,7 @@ export class RoleService {
     }
 
     // After successful role deletion, update JWT
-    await this.updateUserJWT(existing.user_id, req);
+    await this.updateUserJWTById(existing.user_id);
 
     return {
       success: true,
@@ -363,7 +363,7 @@ export class RoleService {
     }
 
     // After successful permanent deletion, update JWT
-    await this.updateUserJWT(existing.user_id, req);
+    await this.updateUserJWTById(existing.user_id);
 
     return {
       success: true,

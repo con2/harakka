@@ -9,7 +9,6 @@ import {
   ShoppingBag,
   Users,
   Warehouse,
-  ShieldUser,
   Building2,
   MapPin,
   LayoutGrid,
@@ -104,15 +103,6 @@ const AdminPanel = () => {
               icon={<FileText className="w-5 h-5" />}
               label={t.adminPanel.navigation.logs[lang] || "Logs"}
               dataCy="admin-nav-logs"
-            />
-          )}
-
-          {hasAnyRole(["super_admin", "tenant_admin"]) && (
-            <SidebarLink
-              to="/admin/roles"
-              icon={<ShieldUser className="w-5 h-5" />}
-              label={t.adminPanel.navigation.roles[lang]}
-              dataCy="admin-nav-roles"
             />
           )}
 

@@ -37,7 +37,6 @@ import ContactForm from "../components/ContactForm";
 // Layout
 import App from "../App";
 import LoginPage from "@/pages/LoginPage";
-import { RoleManagement } from "@/components/Admin/Roles/RoleManagement";
 import AddItem from "@/pages/AdminPanel/AddItem";
 import OrganizationPage from "@/pages/OrganizationPage";
 import OrganizationsList from "../components/Organization/OrganizationsList";
@@ -155,14 +154,6 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute allowedRoles={["super_admin"]}>
                 <Logs />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: "roles",
-            element: (
-              <ProtectedRoute allowedRoles={["super_admin", "tenant_admin"]}>
-                <RoleManagement />
               </ProtectedRoute>
             ),
           },

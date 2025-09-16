@@ -20,6 +20,10 @@ export const usersDetailsPage = {
       fi: "Vaaravyöhyke",
       en: "Danger Zone",
     },
+    refresh: {
+      fi: "Päivitä roolit",
+      en: "Refresh Roles",
+    },
   },
   title: {
     fi: "Muokkaa käyttäjää",

@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/select";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { updateUser } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { UserFormData } from "@/types";
 import { Edit } from "lucide-react";
@@ -34,6 +33,8 @@ import {
 import { useRoles } from "@/hooks/useRoles";
 import { formatRoleName } from "@/utils/format";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
+import { ViewUserRolesWithDetails } from "@common/role.types";
+import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 
 // Role assignments across organizations
 type RoleAssignment = {
@@ -55,6 +56,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     updateRole,
     permanentDeleteRole,
     hasRole,
+    refreshAllUserRoles,
   } = useRoles();
 
   // Translation
@@ -119,10 +121,6 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // useEffect(() => {
-  //   if (roleAssignments[roleAssignments.length - 1].org_name === "High council") setRoleAssignments({})
-  // }, [roleAssignments]);
-
   // Role assignment helpers
   const handleRoleAssignmentChange = (
     index: number,
@@ -180,24 +178,39 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
   };
 
   const handleSave = async () => {
+    if (!user) return;
     try {
-      // Remove "roles" key—the column no longer exists in user_profiles
-      const { roles: _roles, ...profileData } = formData;
-      await dispatch(
-        updateUser({ id: user.id, data: { ...profileData, id: user.id } }),
-      ).unwrap();
-      toast.success(t.userEditModal.messages.success[lang]);
-
-      // --- Sync role assignments with backend ---
       const originalRoles = allUserRoles.filter((r) => r.user_id === user.id);
-      const toCreate = roleAssignments.filter(
-        (ra) =>
-          !originalRoles.some(
-            (or) =>
-              or.organization_id === ra.org_id && or.role_name === ra.role_name,
-          ),
+
+      // Group roles by organization to enforce "one active role per org" rule
+      const userOrgRoles = new Map<string, ViewUserRolesWithDetails[]>();
+      originalRoles.forEach((role) => {
+        if (!role.organization_id) return;
+
+        if (!userOrgRoles.has(role.organization_id)) {
+          userOrgRoles.set(role.organization_id, []);
+        }
+        userOrgRoles.get(role.organization_id)!.push(role);
+      });
+
+      // Find roles to create - but only in orgs where user has no roles yet
+      let toCreate = roleAssignments.filter(
+        (ra) => ra.org_id && !userOrgRoles.has(ra.org_id) && ra.role_name,
       );
-      const toDelete = originalRoles.filter(
+
+      // Find roles to update - where user already has a role in org but it's changed
+      let toUpdate = roleAssignments.filter((ra) => {
+        if (!ra.org_id || !ra.role_name) return false;
+
+        // Get existing roles in this org
+        const orgRoles = userOrgRoles.get(ra.org_id) || [];
+        if (orgRoles.length === 0) return false;
+        // If there's an active role in this org with a different role_name, we should update it
+        const activeOrgRole = orgRoles.find((r) => r.is_active);
+        return activeOrgRole && activeOrgRole.role_name !== ra.role_name;
+      });
+
+      let toDelete = originalRoles.filter(
         (or) =>
           !roleAssignments.some(
             (ra) =>
@@ -205,18 +218,42 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
           ),
       );
 
-      // Detect rows whose active flag changed
-      const toUpdate = roleAssignments.filter((ra) => {
+      // If tenant admin, restrict operations to active org only
+      if (isTenantAdmin && activeOrgId) {
+        toCreate = toCreate.filter((ra) => ra.org_id === activeOrgId);
+        toUpdate = toUpdate.filter((ra) => ra.org_id === activeOrgId);
+        toDelete = toDelete.filter((or) => or.organization_id === activeOrgId);
+      }
+
+      // Process updates for existing role assignments
+      const standardUpdates = roleAssignments.filter((ra) => {
         const orig = originalRoles.find((or) => or.id === ra.id);
         return ra.id && orig && orig.is_active !== ra.is_active;
       });
 
-      for (const ru of toUpdate) {
+      for (const ru of standardUpdates) {
         await updateRole(ru.id as string, { is_active: ru.is_active });
       }
 
+      // Handle role updates - need to find the existing role ID to update
+      for (const ra of toUpdate) {
+        const orgRoles = userOrgRoles.get(ra.org_id!) || [];
+        const existingRole = orgRoles[0]; // Get any existing role
+
+        if (existingRole?.id) {
+          const roleDef = availableRoles.find((ar) => ar.role === ra.role_name);
+          if (roleDef) {
+            await updateRole(existingRole.id, {
+              role_id: roleDef.id,
+              is_active: ra.is_active,
+            });
+          }
+        }
+      }
+
+      // Process new role creations (only for orgs where user has no roles)
       for (const ra of toCreate) {
-        if (!ra.org_id || !ra.role_name) continue; // skip incomplete rows
+        if (!ra.org_id || !ra.role_name) continue;
         const roleDef = availableRoles.find((ar) => ar.role === ra.role_name);
         if (roleDef) {
           await createRole({
@@ -227,32 +264,32 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
         }
       }
 
+      // Process deletions
       for (const rd of toDelete) {
         if (rd.id) {
           await permanentDeleteRole(rd.id);
+          try {
+            toast.success(
+              "Removed role " +
+                (rd.role_name ?? "") +
+                " from " +
+                (rd.organization_name ?? rd.organization_id),
+            );
+          } catch (e) {
+            console.error("Failed to show removal toast", e);
+          }
         }
       }
-    } catch {
-      toast.error(t.userEditModal.messages.error[lang]);
+
+      await refreshSupabaseSession();
+      await refreshAllUserRoles(true);
+
+      toast.success(t.usersDetailsPage.messages.success[lang]);
+    } catch (err) {
+      console.error("Failed saving roles", err);
+      toast.error(t.usersDetailsPage.messages.error[lang]);
     }
   };
-
-  const unassignedOrgs = organizations.filter(
-    (org) => !assignedOrgIds.has(org.id),
-  );
-  const orgChoices = isSuper
-    ? unassignedOrgs
-    : organizations.filter((o) => o.id === activeOrgId);
-  const TENANT_ADMIN_ROLE_CHOICES = [
-    "tenant_admin",
-    "storage_manager",
-    "requester",
-  ];
-  const roleChoices = isSuper
-    ? availableRoles
-    : availableRoles.filter((role) =>
-        TENANT_ADMIN_ROLE_CHOICES.includes(role.role),
-      );
 
   return (
     <Dialog>
@@ -369,7 +406,7 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
-                                {orgChoices.map((org) => (
+                                {organizations.map((org) => (
                                   <SelectItem key={org.id} value={org.id}>
                                     {org.name}
                                   </SelectItem>
@@ -406,12 +443,14 @@ const UserEditModal = ({ user }: { user: UserProfile }) => {
                             </SelectTrigger>
                             <SelectContent>
                               {(ra.org_name === "High council"
-                                ? roleChoices.filter((r) =>
+                                ? availableRoles.filter((r) =>
                                     SUPER_ROLES.includes(r.role),
                                   )
                                 : ra.org_name === "Global"
-                                  ? roleChoices.filter((r) => r.role === "user")
-                                  : roleChoices.filter(
+                                  ? availableRoles.filter(
+                                      (r) => r.role === "user",
+                                    )
+                                  : availableRoles.filter(
                                       (r) =>
                                         r.role !== "user" &&
                                         !SUPER_ROLES.includes(r.role),
