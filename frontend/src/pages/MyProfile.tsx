@@ -24,7 +24,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "../components/ui/accordion";
-//import { Avatar } from "../components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +41,6 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { toastConfirm } from "../components/ui/toastConfirm";
-//import profilePlaceholder from "../assets/profilePlaceholder.png";
 import MyBookings from "@/components/MyBookings";
 import { CurrentUserRoles } from "@/components/Admin/Roles/CurrentUserRoles";
 import ProfilePictureUploader from "@/components/ProfilePictureUploader";
@@ -67,7 +65,6 @@ const MyProfile = () => {
   const [visibleName, setVisibleName] = useState(
     selectedUser?.visible_name || "",
   );
-  // const [preferences, setPreferences] = useState(selectedUser?.preferences || "");
   const [addresses, setAddresses] = useState<AddressForm[]>(
     userAddresses || [],
   );
@@ -81,7 +78,6 @@ const MyProfile = () => {
       setEmail(selectedUser.email || "");
       setPhone(selectedUser.phone || "");
       setVisibleName(selectedUser.visible_name || "");
-      // setPreferences(selectedUser.preferences || "");
       if (addresses.length === 0)
         void dispatch(getUserAddresses(selectedUser.id));
     }
@@ -113,7 +109,6 @@ const MyProfile = () => {
         email,
         phone,
         visible_name: visibleName,
-        // preferences: typeof preferences === "string" ? undefined : preferences
       };
       try {
         void dispatch(
