@@ -38,6 +38,7 @@ import { landingPage } from "./modules/landingPage";
 import { locationsList } from "./modules/locationsList";
 import { login } from "./modules/login";
 import { logs } from "./modules/logs";
+import { mobileMenu } from "./modules/mobileMenu";
 import { myBookings } from "./modules/myBookings";
 import { myProfile } from "./modules/myProfile";
 import { navigation } from "./modules/navigation";
@@ -124,6 +125,7 @@ export const t = {
   locationsList,
   login,
   logs,
+  mobileMenu,
   myBookings,
   myProfile,
   navigation,

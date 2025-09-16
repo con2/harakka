@@ -183,8 +183,8 @@ const AdminDashboard = () => {
 
   return (
     <div>
-      <div className="w-full flex flex-wrap justify-evenly items-center mb-8 gap-4">
-        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
+      <div className="w-full flex flex-wrap justify-center items-center mb-8 gap-4">
+        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1">
           <div className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.users[lang]}
@@ -196,7 +196,7 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
+        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] w-fit max-w-[300px] flex-1">
           <div className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.items[lang]}
@@ -208,7 +208,7 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] min-w-[300px]">
+        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-[30%] w-fit max-w-[300px] flex-1">
           <div className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.bookings[lang]}

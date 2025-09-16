@@ -223,11 +223,11 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   return (
     <Card
       data-cy="items-card"
-      className="w-full max-w-[350px] flex flex-col justify-between p-4"
+      className="w-full flex flex-col justify-between p-4 flex-[1_0_250px]"
     >
       {/* Image Section */}
       <div
-        className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden"
+        className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden border border-1-[var(--subtle-grey)] basis-[250px]"
         data-cy="item-image-section"
       >
         {isImageLoading && !loadFailed && (

@@ -132,7 +132,7 @@ function NavigationMenuLink({
         isActive
           ? "text-secondary" // Apply active styles
           : "hover:text-(--midnight-black) hover:bg-accent focus:text-secondary focus:bg-accent",
-        "flex flex-col gap-1 rounded-sm py-1.5 px-2 text-sm transition-all outline-none focus-visible:ring-ring/50 focus-visible:outline-1",
+        "flex flex-col gap-1 rounded-sm py-1.5 px-2 text-sm transition-all outline-none focus-visible:ring-ring/50 focus-visible:outline-1 min-w-[max-content]",
         className,
       )}
       {...props}

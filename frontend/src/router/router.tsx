@@ -257,7 +257,7 @@ export const router = createBrowserRouter([
         element: <BookingConfirmation />,
       },
       {
-        path: "/howItWorks",
+        path: "/how-it-works",
         element: <UserGuide />,
       },
       {

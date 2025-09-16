@@ -181,8 +181,8 @@ const PasswordReset = () => {
                 variables: {
                   default: {
                     colors: {
-                      brand: "#9537c7",
-                      brandAccent: "#44195b",
+                      brand: "#2f5D9E",
+                      brandAccent: "#267C6F",
                     },
                     fonts: {
                       bodyFontFamily: "var(--main-font)",
