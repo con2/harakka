@@ -120,7 +120,7 @@ const Cart: React.FC = () => {
     const availability = availabilityMap[id];
     if (availability && quantity > availability.availableQuantity) {
       toast.warning(
-        `${t.cart.toast.itemsExceedQuantity[lang]} ${availability.availableQuantity}.`,
+        `${t.cart.toast.itemsExceedQuantityInCart[lang]} ${availability.availableQuantity}.`,
       );
       return;
     }
@@ -179,7 +179,7 @@ const Cart: React.FC = () => {
     });
 
     if (invalidItems.length > 0) {
-      toast.error(t.cart.toast.itemsExceedQuantity[lang]);
+      toast.error(t.cart.toast.itemsExceedQuantityInCart[lang]);
       return;
     }
 
