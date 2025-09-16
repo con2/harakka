@@ -55,6 +55,11 @@ import { CreateItemType } from "@common/items/form.types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorMessage } from "@hookform/error-message";
 import { getFirstErrorMessage } from "@/utils/validate";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  fetchAllCategories,
+  selectCategories,
+} from "@/store/slices/categoriesSlice";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -70,6 +75,7 @@ function AddItemForm() {
   const { location: storage, org } = useAppSelector(selectItemCreation);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector(selectTagsLoading);
+  const categories = useAppSelector(selectCategories);
   const isEditing = useAppSelector(selectIsEditing);
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
@@ -87,15 +93,14 @@ function AddItemForm() {
       translations: {
         fi: {
           item_name: "",
-          item_type: "",
           item_description: "",
         },
         en: {
           item_name: "",
-          item_type: "",
           item_description: "",
         },
       },
+      category_id: "",
       images: {
         main: null,
         details: [],
@@ -189,6 +194,13 @@ function AddItemForm() {
   }, []);
 
   useEffect(() => {
+    if (categories.length === 0)
+      void dispatch(
+        fetchAllCategories({ page: 1, limit: 20, order: "assigned_to" }),
+      );
+  }, []);
+
+  useEffect(() => {
     const newValue = form.getValues("quantity");
     form.setValue("available_quantity", newValue);
   }, [form.getValues("quantity")]);
@@ -233,7 +245,6 @@ function AddItemForm() {
   }, [tags, editItem]);
 
   /*------------------render-------------------------------------------------*/
-
   return (
     <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px]">
       <Form {...form}>
@@ -271,10 +282,17 @@ function AddItemForm() {
                             }
                           </FormLabel>
                           <FormControl>
-                            <Input
-                              {...field}
-                              className="border shadow-none border-grey w-full mb-1"
-                            />
+                            {fieldKey === "item_description" ? (
+                              <Textarea
+                                {...field}
+                                className="border shadow-none border-grey w-full mb-1"
+                              />
+                            ) : (
+                              <Input
+                                {...field}
+                                className="border shadow-none border-grey w-full mb-1"
+                              />
+                            )}
                           </FormControl>
                           <ErrorMessage
                             errors={form.formState.errors}
@@ -336,6 +354,46 @@ function AddItemForm() {
                           </p>
                         )}
                       />
+                    </FormItem>
+                  </div>
+                )}
+              />
+              <FormField
+                name="category_id"
+                control={form.control}
+                render={({ field }) => (
+                  <div className="w-full">
+                    <FormItem>
+                      <FormLabel>
+                        {t.addItemForm.labels.category[appLang]}
+                      </FormLabel>
+                      <Select
+                        defaultValue={field.value || "---"}
+                        onValueChange={(value) =>
+                          form.setValue("category_id", value)
+                        }
+                      >
+                        <SelectTrigger className="border shadow-none border-grey w-full">
+                          <SelectValue
+                            className="border shadow-none border-grey"
+                            placeholder={""}
+                          >
+                            {categories.find((c) => c.id === field.value)
+                              ?.translations[appLang] || "---"}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories?.map((cat) => (
+                            <SelectItem
+                              disabled={storage === undefined}
+                              key={cat.id}
+                              value={cat.id}
+                            >
+                              {cat.translations[appLang]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormItem>
                   </div>
                 )}
