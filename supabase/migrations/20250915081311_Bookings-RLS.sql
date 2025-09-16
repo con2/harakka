@@ -54,19 +54,44 @@ create policy "Users can create their own bookings"
     and user_id = auth.uid()
   );
 
--- UPDATE: only booking owner; super_admin excluded
--- Note: Org members can manage bookings via booking_items operations
-create policy "Users can update their own bookings"
+-- UPDATE: booking owner OR members of provider org (tenant_admin, storage_manager, requester); super_admin excluded
+-- This aligns with backend endpoints that permit requester, storage_manager, and tenant_admin
+-- to update bookings associated with their organization via booking_items.
+create policy "Members can update own or org bookings"
   on public.bookings
   for update
   to authenticated
   using (
     not app.me_is_super_admin()
-    and user_id = auth.uid()
+    and (
+      -- Owner of the booking
+      user_id = auth.uid()
+      -- OR has an allowed role in any provider org linked via booking_items
+      or exists (
+        select 1
+        from public.booking_items bi
+        where bi.booking_id = bookings.id
+          and app.me_has_any_role(
+            bi.provider_organization_id,
+            array['tenant_admin','storage_manager','requester']::public.roles_type[]
+          )
+      )
+    )
   )
   with check (
     not app.me_is_super_admin()
-    and user_id = auth.uid()
+    and (
+      user_id = auth.uid()
+      or exists (
+        select 1
+        from public.booking_items bi
+        where bi.booking_id = bookings.id
+          and app.me_has_any_role(
+            bi.provider_organization_id,
+            array['tenant_admin','storage_manager','requester']::public.roles_type[]
+          )
+      )
+    )
   );
 
 -- DELETE: only booking owner; super_admin excluded
@@ -115,7 +140,7 @@ create policy "Members can read booking_items for own bookings or provider orgs"
   );
 
 -- INSERT: tenant_admin for provider org OR booking owner; super_admin excluded
-create policy "Members can insert booking_items for own bookings or tenant_admin in orgs"
+create policy "Members can insert booking_items for own bookings or admins/requesters in orgs"
   on public.booking_items
   for insert
   to authenticated
@@ -128,12 +153,15 @@ create policy "Members can insert booking_items for own bookings or tenant_admin
         where b.id = booking_items.booking_id
           and b.user_id = auth.uid()
       )
-      or app.me_has_role(provider_organization_id, 'tenant_admin'::public.roles_type)
+      or app.me_has_any_role(
+        provider_organization_id,
+        array['tenant_admin','storage_manager','requester']::public.roles_type[]
+      )
     )
   );
 
 -- UPDATE: tenant_admin for provider org OR booking owner; super_admin excluded
-create policy "Members can update booking_items for own bookings or tenant_admin in orgs"
+create policy "Members can update booking_items for own bookings or admins/requesters in orgs"
   on public.booking_items
   for update
   to authenticated
@@ -146,7 +174,11 @@ create policy "Members can update booking_items for own bookings or tenant_admin
         where b.id = booking_items.booking_id
           and b.user_id = auth.uid()
       )
-      or app.me_has_role(provider_organization_id, 'tenant_admin'::public.roles_type)
+      or app.me_has_any_role(
+        provider_organization_id,
+        array['tenant_admin','storage_manager','requester']::public.roles_type[]
+      )
+      
     )
   )
   with check (
@@ -158,12 +190,15 @@ create policy "Members can update booking_items for own bookings or tenant_admin
         where b.id = booking_items.booking_id
           and b.user_id = auth.uid()
       )
-      or app.me_has_role(provider_organization_id, 'tenant_admin'::public.roles_type)
+      or app.me_has_any_role(
+        provider_organization_id,
+        array['tenant_admin','storage_manager','requester']::public.roles_type[]
+      )
     )
   );
 
 -- DELETE: tenant_admin for provider org OR booking owner; super_admin excluded
-create policy "Members can delete booking_items for own bookings or tenant_admin in orgs"
+create policy "Members can delete booking_items for own bookings or admins/requesters in orgs"
   on public.booking_items
   for delete
   to authenticated
@@ -176,6 +211,9 @@ create policy "Members can delete booking_items for own bookings or tenant_admin
         where b.id = booking_items.booking_id
           and b.user_id = auth.uid()
       )
-      or app.me_has_role(provider_organization_id, 'tenant_admin'::public.roles_type)
+      or app.me_has_any_role(
+        provider_organization_id,
+        array['tenant_admin','storage_manager','requester']::public.roles_type[]
+      )
     )
   );
