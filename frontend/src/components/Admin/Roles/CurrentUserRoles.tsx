@@ -6,10 +6,12 @@ import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { leaveOrg } from "@/store/slices/rolesSlice";
+import { useAppDispatch } from "@/store/hooks";
 
 export const CurrentUserRoles: React.FC = () => {
   const { currentUserRoles } = useRoles();
   const { lang } = useLanguage();
+  const dispatch = useAppDispatch();
 
   // Make role aliases
   const getRoleAlias = (roleName: string) => {
@@ -77,9 +79,12 @@ export const CurrentUserRoles: React.FC = () => {
                         cancelText: t.common.cancel?.[lang] || "Cancel",
                         onConfirm: async () => {
                           try {
-                            await leaveOrg(role.id as string);
+                            await dispatch(
+                              leaveOrg(role.id as string),
+                            ).unwrap();
                             toast.success("You have left the organization");
-                          } catch {
+                          } catch (err) {
+                            console.error("leaveOrg failed:", err);
                             toast.error("Failed to leave organization");
                           }
                         },
