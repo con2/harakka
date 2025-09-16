@@ -64,7 +64,6 @@ import { statusBadge } from "./modules/statusBadge";
 import { stepper } from "./modules/stepper";
 import { tagAssignForm } from "./modules/tagAssignForm";
 import { tagDelete } from "./modules/tagDelete";
-import { tagDetail } from "./modules/tagDetail";
 import { tagDetailsPage } from "./modules/tagDetailsPage";
 import { tagList } from "./modules/tagList";
 import { termsOfUse } from "./modules/termsOfUse";
@@ -149,7 +148,6 @@ export const t = {
   stepper,
   tagAssignForm,
   tagDelete,
-  tagDetail,
   tagDetailsPage,
   tagList,
   termsOfUse,
