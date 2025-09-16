@@ -1,10 +1,6 @@
 import { common } from "./common";
 
 export const navigation = {
-  myProfile: {
-    fi: "Profiilini",
-    en: "My Profile",
-  },
   admin: {
     fi: common.roles.admin.fi,
     en: common.roles.admin.en,
