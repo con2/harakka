@@ -2,7 +2,6 @@ import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   cancelBooking,
-  getUserBookings,
   selectUserBookings,
   selectBookingError,
   selectBookingLoading,
@@ -283,8 +282,7 @@ const MyBookings = () => {
         toast.warning(t.myBookings.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
           void dispatch(
-            getUserBookings({
-              user_id: user.id,
+            getOwnBookings({
               page: currentPage,
               limit: 10,
             }),
@@ -310,8 +308,7 @@ const MyBookings = () => {
       setShowEditModal(false);
       if (user?.id) {
         void dispatch(
-          getUserBookings({
-            user_id: user.id,
+          getOwnBookings({
             page: currentPage,
             limit: 10,
           }),
@@ -557,8 +554,7 @@ const MyBookings = () => {
               return;
             }
             void dispatch(
-              getUserBookings({
-                user_id: user.id,
+              getOwnBookings({
                 page: currentPage,
                 limit: 10,
               }),
