@@ -30,5 +30,9 @@ export const adminDashboard = {
       fi: "Hallitse tilauksia",
       en: "Manage Bookings",
     },
+    manageUsers: {
+      fi: "Hallitse käyttäjiä",
+      en: "Manage Users",
+    },
   },
 };

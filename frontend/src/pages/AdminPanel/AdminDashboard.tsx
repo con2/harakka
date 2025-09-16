@@ -71,22 +71,32 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (activeContext?.roleName === "super_admin") {
-      void dispatch(fetchAllOrderedUsersList({ page: 1, limit: 10 }));
+      void dispatch(
+        fetchAllOrderedUsersList({
+          ascending: false,
+          ordered_by: "created_at",
+          page: 1,
+          limit: 5,
+        }),
+      );
     }
   }, [dispatch, activeContext?.roleName]);
 
   useEffect(() => {
-    if (bookings.length <= 1) {
+    if (
+      activeContext?.organizationId ||
+      activeContext?.roleName === "super_admin"
+    ) {
       void dispatch(
         getOrderedBookings({
           ordered_by: "created_at",
-          ascending: true,
+          ascending: false,
           page: 1,
-          limit: 10,
+          limit: 5,
         }),
       );
     }
-  }, [dispatch, bookings.length]);
+  }, [dispatch, activeContext?.organizationId, activeContext?.roleName]);
 
   // Define columns for the DataTable
   // Bookings table
@@ -208,6 +218,9 @@ const AdminDashboard = () => {
               {t.adminDashboard.sections.recentUsers[lang]}
             </h2>
             <DataTable
+              rowClick={(row) =>
+                navigate(`/admin/users/${String(row.original.id)}`)
+              }
               columns={
                 [
                   { accessorKey: "full_name", header: "Name" },
@@ -223,7 +236,8 @@ const AdminDashboard = () => {
                 className="flex items-center gap-2"
                 onClick={() => navigate("/admin/users")}
               >
-                Manage Users <MoveRight className="inline-block" />
+                {t.adminDashboard.sections.manageUsers[lang]}{" "}
+                <MoveRight className="inline-block" />
               </Button>
             </div>
           </>
@@ -238,6 +252,9 @@ const AdminDashboard = () => {
               </div>
             ) : (
               <DataTable
+                rowClick={(row) =>
+                  navigate(`/admin/bookings/${row.original.id}`)
+                }
                 columns={columns}
                 data={[...bookings]
                   .sort(
