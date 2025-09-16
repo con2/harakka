@@ -1,16 +1,16 @@
-export const addTagModal = {
+export const addTag = {
   title: {
-    fi: "Luo uusi tagi",
-    en: "Create a New Tag",
+    fi: "Lisää uusi tagi",
+    en: "Add a New Tag",
   },
   labels: {
     fiName: {
-      fi: "Suomenkielinen nimi",
-      en: "Finnish Name",
+      fi: "Nimi (fi)",
+      en: "Name (fi)",
     },
     enName: {
-      fi: "Englanninkielinen nimi",
-      en: "English Name",
+      fi: "Nimi (en)",
+      en: "Name (en)",
     },
   },
   placeholders: {
