@@ -348,8 +348,28 @@ export class StorageItemsService {
    * @param req The authenticated request object, which includes the Supabase client instance.
    * @returns An object containing the total count of storage items.
    */
-  async getItemCount(req: AuthRequest, role: string, orgId: string) {
+  async getItemCount(req: AuthRequest, role: string, orgId?: string) {
     const supabase = req.supabase;
+
+    // Super admin should receive global count
+    if (role === "super_admin") {
+      const result = await supabase
+        .from("storage_items")
+        .select(undefined, { count: "exact" })
+        .eq("is_deleted", false);
+      if (result.error) handleSupabaseError(result.error);
+
+      return {
+        ...result,
+        data: result.count ?? 0,
+      };
+    }
+
+    // Tenant admins and storage managers should get org-scoped counts
+    if (!orgId) {
+      throw new BadRequestException("Organization context is required");
+    }
+
     const result = await supabase
       .from("storage_items")
       .select(undefined, { count: "exact" })
