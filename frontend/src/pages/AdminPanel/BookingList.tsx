@@ -111,11 +111,6 @@ const BookingList = () => {
       ),
     },
     {
-      accessorKey: "email",
-      header: t.bookingList.columns.customer[lang],
-      cell: ({ row }) => row.original.email,
-    },
-    {
       id: "org_status",
       header: t.bookingList.columns.status[lang],
       enableSorting: false,

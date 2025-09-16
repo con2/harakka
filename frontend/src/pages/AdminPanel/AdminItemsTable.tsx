@@ -152,12 +152,12 @@ const AdminItemsTable = () => {
       accessorFn: (row) => row.category_id || "",
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
-        const type =
+        const cat =
           lang === "fi"
             ? row.original.category_fi_name
             : row.original.category_en_name;
-        if (!type) return "";
-        return type;
+        if (!cat) return "---";
+        return cat;
       },
     },
     {

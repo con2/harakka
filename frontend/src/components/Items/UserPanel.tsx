@@ -133,13 +133,13 @@ const UserPanel = () => {
   }, [isFilterVisible]);
 
   return (
-    <div className="flex min-h-screen w-full overflow-y-auto md:px-10">
+    <div className="flex min-h-screen w-full overflow-y-auto justify-around pt-4 md:pt-0 gap-4">
       {/* Sidebar: Filters Panel */}
       <aside
         ref={filterRef}
         className={`${
           isFilterVisible ? "block" : "hidden"
-        } md:flex md:flex-col md:min-h-[calc(100vh-60px)] w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
+        } md:flex pr-0 md:flex-col md:min-h-[calc(100vh-60px)] w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
         style={{
           top: "60px",
           backgroundColor: "#fff",
@@ -504,7 +504,7 @@ const UserPanel = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 md:p-4 relative">
+      <div className="flex-1 md:p-4 relative  lg:max-w-[calc(100vw-25%)] px-4 md:px-0">
         {/* Filter Button visible on mobile */}
         <div className="md:hidden absolute top-2 left-2 z-10">
           <Button
