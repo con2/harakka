@@ -1,0 +1,36 @@
+# Ignore development files
+
+node_modules/
+src/
+.vscode/
+.github/
+_.md
+_.log
+
+# Ignore map files to reduce file count
+
+**/\*.map
+**/_.js.map
+\*\*/_.css.map
+
+# Ignore unnecessary assets
+
+**/\*.psd
+**/_.ai
+\*\*/_.sketch
+
+# Ignore test files
+
+**/\*.test.js
+**/\*.spec.js
+tests/
+cypress/
+cypress.config.js
+
+# Ignore build tools configuration
+
+vite.config.js
+postcss.config.js
+tailwind.config.js
+tsconfig.json
+package-lock.json
