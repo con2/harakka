@@ -398,7 +398,12 @@ export class RoleService {
     roles: ViewUserRolesWithDetails[],
     req: AuthRequest,
   ): ViewUserRolesWithDetails[] {
-    // Admins can only see roles in their organizations
+    // Super admins can see all roles regardless of organization
+    if (this.hasRole(req, "super_admin")) {
+      return roles;
+    }
+
+    // Other admins can only see roles in their organizations
     const userOrgIds = req.userRoles.map((role) => role.organization_id);
     return roles.filter((role) => userOrgIds.includes(role.organization_id));
   }

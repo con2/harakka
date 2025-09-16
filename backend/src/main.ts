@@ -48,6 +48,10 @@ async function bootstrap() {
         "x-user-id",
         "x-org-id",
         "x-role-name",
+        "x-role-version",
+      ],
+      exposedHeaders: [
+        "x-role-version", // This allows the browser to read this header
       ],
     });
     app.getHttpAdapter().get("/health", async (req, res: Response) => {
