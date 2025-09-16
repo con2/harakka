@@ -21,7 +21,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import TagDelete from "@/components/Admin/Items/TagDelete";
-import AddTagModal from "@/components/Admin/Items/AddTagModal";
 import { Badge } from "@/components/ui/badge";
 
 const TagList = () => {
@@ -279,27 +278,16 @@ const TagList = () => {
               )}
             </div>
             <div className="flex gap-4">
-              <AddTagModal
-                onCreated={() => {
-                  // When a new tag is created, go to the first page to see it
-                  // (especially important if filters are applied)
-                  setCurrentPage(1);
-                  void dispatch(
-                    fetchFilteredTags({
-                      page: 1,
-                      limit: 10,
-                      search: debouncedSearchTerm,
-                      assignmentFilter,
-                      sortBy,
-                      sortOrder,
-                    }),
-                  );
+              <Button
+                variant="outline"
+                size={"sm"}
+                onClick={() => {
+                  void dispatch(fetchFilteredTags({ page: 1, limit: 10 }));
+                  void navigate("/admin/tags/new");
                 }}
               >
-                <Button variant="outline" size={"sm"}>
-                  {t.tagList.buttons.add[lang]}
-                </Button>
-              </AddTagModal>
+                {t.tagList.buttons.add[lang]}
+              </Button>
             </div>
           </div>
 
