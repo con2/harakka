@@ -96,7 +96,9 @@ const TagDetailsPage = () => {
     return (
       <div>
         <h1 className="text-xl mb-4">{t.tagDetailsPage.title[lang]}</h1>
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">
+          {t.tagDetailsPage.loading[lang]}
+        </p>
         <div className="mt-4">
           <Button variant="secondary" onClick={handleBack}>
             {t.addCategory?.buttons?.back?.[lang] ?? "Back"}

@@ -3,6 +3,10 @@ export const tagDetailsPage = {
     fi: "Päivitä tagi",
     en: "Update Tag",
   },
+  loading: {
+    fi: "Ladataan...",
+    en: "Loading...",
+  },
   labels: {
     fiName: {
       fi: "Nimi (fi)",
