@@ -32,6 +32,7 @@ import {
   selectTotalItemsCount,
 } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
+import { useRoles } from "@/hooks/useRoles";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import {
@@ -66,16 +67,17 @@ const AdminDashboard = () => {
   const itemCount = useAppSelector(selectTotalItemsCount);
   const bookingsCount = useAppSelector(selectTotalBookingsCount);
   const userCount = useAppSelector(selectTotalUsersCount);
+  const { activeContext } = useRoles();
 
   useEffect(() => {
     if (items.length <= 1) void dispatch(fetchAllItems({ page: 1, limit: 10 }));
   }, [dispatch, items.length]);
 
   useEffect(() => {
-    if (itemCount < 1) void dispatch(getItemCount());
-    if (userCount < 1) void dispatch(getUserCount());
-    if (bookingsCount < 1) void dispatch(getBookingsCount());
-  }, [dispatch, itemCount, bookingsCount, userCount]);
+    void dispatch(getItemCount());
+    void dispatch(getUserCount());
+    void dispatch(getBookingsCount());
+  }, [dispatch, activeContext?.organizationId, activeContext?.roleName]);
 
   useEffect(() => {
     if (bookings.length <= 1) {
