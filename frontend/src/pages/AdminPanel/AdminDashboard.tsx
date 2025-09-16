@@ -124,9 +124,14 @@ const AdminDashboard = () => {
     <div>
       <div className="w-full flex flex-wrap justify-center items-center mb-8 gap-4">
         {activeContext?.roleName === "super_admin" && (
-          <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1">
+          <div
+            className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1 cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
+            onClick={() => navigate("/admin/organizations")}
+          >
             <div className="flex justify-center items-center">
-              <p className="text-slate-500">Organizations</p>
+              <p className="text-slate-500">
+                {t.adminDashboard.cards.organizations[lang]}
+              </p>
             </div>
             <div className="flex flex-row items-center gap-2">
               <Building2 className="h-10 w-10 text-(--iridiscent-blue-light) shrink-0" />
@@ -134,7 +139,10 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
-        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1">
+        <div
+          className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1 cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
+          onClick={() => navigate("/admin/users")}
+        >
           <div className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.users[lang]}
@@ -147,7 +155,18 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1">
+        <div
+          className={`flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1 ${
+            activeContext?.roleName === "super_admin"
+              ? ""
+              : "cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
+          }`}
+          onClick={
+            activeContext?.roleName === "super_admin"
+              ? undefined
+              : () => navigate("/admin/items")
+          }
+        >
           <div className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.items[lang]}
@@ -158,7 +177,18 @@ const AdminDashboard = () => {
             <span className="text-4xl font-normal">{itemCount}</span>
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1">
+        <div
+          className={`flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1 ${
+            activeContext?.roleName === "super_admin"
+              ? ""
+              : "cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
+          }`}
+          onClick={
+            activeContext?.roleName === "super_admin"
+              ? undefined
+              : () => navigate("/admin/bookings")
+          }
+        >
           <div className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.bookings[lang]}
@@ -174,7 +204,9 @@ const AdminDashboard = () => {
       <div className="mb-8">
         {activeContext?.roleName === "super_admin" ? (
           <>
-            <h2 className="text-left">Recent Users</h2>
+            <h2 className="text-left">
+              {t.adminDashboard.sections.recentUsers[lang]}
+            </h2>
             <DataTable
               columns={
                 [
