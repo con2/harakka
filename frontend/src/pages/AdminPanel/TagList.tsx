@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, LoaderCircle } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import { Tag, TagAssignmentFilter } from "@/types";
+import { TagAssignmentFilter } from "@/types";
 import { ExtendedTag } from "@common/items/tag.types";
 import {
   fetchFilteredTags,
@@ -13,17 +13,9 @@ import {
   selectTagsLoading,
   selectTagsPage,
   selectTagsTotalPages,
-  updateTag,
+  selectTag,
 } from "@/store/slices/tagSlice";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 // import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
@@ -55,11 +47,9 @@ const TagList = () => {
   const debouncedSearchTerm = useDebouncedValue(searchTerm);
   // Translation
   const { lang } = useLanguage();
+  const navigate = useNavigate();
 
-  // Edit modal state
-  const [editTag, setEditTag] = useState<Tag | null>(null);
-  const [editNameFi, setEditNameFi] = useState("");
-  const [editNameEn, setEditNameEn] = useState("");
+  // (edit state moved to tag detail page)
 
   // Fetch tags when search term or assignment filter changes
   useEffect(() => {
@@ -121,44 +111,9 @@ const TagList = () => {
     }
   };
 
-  const handleEditClick = (tag: Tag) => {
-    setEditTag(tag);
-    setEditNameFi(tag.translations?.fi?.name || "");
-    setEditNameEn(tag.translations?.en?.name || "");
-  };
+  // navigation handled inline in table actions/rowProps
 
-  const handleUpdate = async () => {
-    if (!editTag) return;
-
-    const updatedTag = {
-      ...editTag,
-      translations: {
-        fi: { name: editNameFi },
-        en: { name: editNameEn },
-      },
-    };
-
-    try {
-      await dispatch(
-        updateTag({ id: editTag.id, tagData: updatedTag }),
-      ).unwrap();
-      toast.success(t.tagList.editModal.messages.success[lang]);
-      // Refresh the current page
-      void dispatch(
-        fetchFilteredTags({
-          page: currentPage,
-          limit: 10,
-          search: debouncedSearchTerm,
-          assignmentFilter,
-          sortBy,
-          sortOrder,
-        }),
-      );
-      setEditTag(null);
-    } catch {
-      toast.error(t.tagList.editModal.messages.error[lang]);
-    }
-  };
+  // Update logic moved to Tag details page
 
   const columns: ColumnDef<ExtendedTag>[] = [
     {
@@ -217,7 +172,12 @@ const TagList = () => {
           <div className="flex gap-2">
             <Button
               size="sm"
-              onClick={() => handleEditClick(tag)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void dispatch(selectTag(tag));
+                void navigate(`/admin/tags/${tag.id}`);
+              }}
               title={t.tagList.buttons.edit[lang]}
               className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
             >
@@ -355,53 +315,16 @@ const TagList = () => {
             handleOrder={handleOrder}
             handleAscending={handleAscending}
             originalSorting="created_at"
+            rowProps={(row) => ({
+              style: { cursor: "pointer" },
+              onClick: () => {
+                void dispatch(selectTag(row.original));
+                void navigate(`/admin/tags/${row.original.id}`);
+              },
+            })}
           />
 
-          {/* Edit Modal */}
-          {editTag && (
-            <Dialog open onOpenChange={() => setEditTag(null)}>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>{t.tagList.editModal.title[lang]}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 mt-2">
-                  <div>
-                    <label className="text-sm font-medium">
-                      {t.tagList.editModal.labels.fiName[lang]}
-                    </label>
-                    <Input
-                      value={editNameFi}
-                      onChange={(e) => setEditNameFi(e.target.value)}
-                      placeholder={
-                        t.tagList.editModal.placeholders.fiName[lang]
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">
-                      {t.tagList.editModal.labels.enName[lang]}
-                    </label>
-                    <Input
-                      value={editNameEn}
-                      onChange={(e) => setEditNameEn(e.target.value)}
-                      placeholder={
-                        t.tagList.editModal.placeholders.enName[lang]
-                      }
-                    />
-                  </div>
-                </div>
-                <DialogFooter className="mt-4">
-                  <Button
-                    size={"sm"}
-                    className="px-3 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
-                    onClick={handleUpdate}
-                  >
-                    {t.tagList.editModal.buttons.save[lang]}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
+          {/* Editing moved to dedicated Tag details page */}
         </>
       )}
     </div>
