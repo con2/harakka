@@ -281,7 +281,6 @@ export class UserService {
 
     // 3. Anonymize auth data
     try {
-      // Use the admin API to update user data
       const { error: updateUserError } =
         await serviceClient.auth.admin.updateUserById(id, {
           email: `deleted_user_${id.substring(0, 8)}@example.com`,
@@ -322,23 +321,20 @@ export class UserService {
 
     // 5. Delete the user profile
     // 5.1. First, verify the user profile exists before attempting to delete
-    const { data: checkUser, error: checkError } = await supabase
+    const { data: userProfile, error: checkError } = await supabase
       .from("user_profiles")
       .select("id")
-      .eq("id", id);
+      .eq("id", id)
+      .single();
 
     if (checkError) {
       handleSupabaseError(checkError);
     }
 
-    if (!checkUser || checkUser.length === 0) {
+    if (!userProfile) {
       this.logger.warn(`User profile ${id} not found before deletion`);
       throw new NotFoundException(`User profile with ID ${id} not found`);
     }
-
-    this.logger.debug(
-      `User profile ${id} exists, proceeding with deletion steps`,
-    );
 
     // 5.2. Delete found user profile
     this.logger.debug(`Deleting user profile for ${id}`);
