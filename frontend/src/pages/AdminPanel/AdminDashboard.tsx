@@ -73,10 +73,10 @@ const AdminDashboard = () => {
     if (activeContext?.roleName === "super_admin") {
       void dispatch(
         fetchAllOrderedUsersList({
-          ascending: false,
-          ordered_by: "created_at",
           page: 1,
           limit: 5,
+          ordered_by: "created_at",
+          ascending: false,
         }),
       );
     }
@@ -98,8 +98,6 @@ const AdminDashboard = () => {
     }
   }, [dispatch, activeContext?.organizationId, activeContext?.roleName]);
 
-  // Define columns for the DataTable
-  // Bookings table
   const columns: ColumnDef<BookingPreview>[] = [
     {
       accessorKey: "booking_number",
