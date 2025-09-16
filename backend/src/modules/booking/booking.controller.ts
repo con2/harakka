@@ -460,13 +460,40 @@ export class BookingController {
     @Req() req: AuthRequest,
     @Body() body: { location_id: string; newStatus: boolean },
   ) {
-    const supabase = req.supabase;
-    const orgId = req.headers["x-org-id"] as string;
-    return this.bookingService.updateSelfPickup(
-      supabase,
-      bookingId,
-      orgId,
-      body,
-    );
+    try {
+      const supabase = req.supabase;
+      const orgId = (req.headers["x-org-id"] as string) ?? "";
+
+      if (!orgId) {
+        throw new BadRequestException(
+          "Organization context is required (x-org-id header)",
+        );
+      }
+
+      if (
+        !body ||
+        typeof body.location_id !== "string" ||
+        body.location_id.trim() === ""
+      ) {
+        throw new BadRequestException(
+          "'location_id' (UUID string) is required in body",
+        );
+      }
+
+      if (typeof body.newStatus !== "boolean") {
+        throw new BadRequestException(
+          "'newStatus' (boolean) is required in body",
+        );
+      }
+
+      return this.bookingService.updateSelfPickup(
+        supabase,
+        bookingId,
+        orgId,
+        body,
+      );
+    } catch (error) {
+      handleSupabaseError(error);
+    }
   }
 }
