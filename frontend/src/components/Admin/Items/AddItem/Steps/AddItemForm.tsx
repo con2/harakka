@@ -1,22 +1,14 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
+  Form,
   FormControl,
   FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  Form,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { useLanguage } from "@/context/LanguageContext";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import {
-  fetchAllOrgLocations,
-  selectOrgLocations,
-} from "@/store/slices/organizationLocationsSlice";
-import { createItemDto } from "@/store/utils/validate";
-import { ItemFormTag } from "@/types";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Select,
   SelectContent,
@@ -24,19 +16,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SubmitErrorHandler, useForm } from "react-hook-form";
-import { z } from "zod";
-import { t } from "@/translations";
-import React, { useEffect, useState } from "react";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import {
-  fetchFilteredTags,
-  selectAllTags,
-  selectTagsLoading,
-} from "@/store/slices/tagSlice";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/context/LanguageContext";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  fetchAllCategories,
+  selectCategories,
+} from "@/store/slices/categoriesSlice";
 import {
   addToItemCreation,
   clearLocalItemError,
@@ -47,19 +37,29 @@ import {
   toggleIsEditing,
   updateLocalItem,
 } from "@/store/slices/itemsSlice";
-import { TRANSLATION_FIELDS } from "../add-item.data";
-import { toast } from "sonner";
-import ItemImageUpload from "../ItemImageUpload";
-import { setNextStep } from "@/store/slices/uiSlice";
-import { CreateItemType } from "@common/items/form.types";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorMessage } from "@hookform/error-message";
-import { getFirstErrorMessage } from "@/utils/validate";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  fetchAllCategories,
-  selectCategories,
-} from "@/store/slices/categoriesSlice";
+  fetchAllOrgLocations,
+  selectOrgLocations,
+} from "@/store/slices/organizationLocationsSlice";
+import {
+  fetchFilteredTags,
+  selectAllTags,
+  selectTagsLoading,
+} from "@/store/slices/tagSlice";
+import { setNextStep } from "@/store/slices/uiSlice";
+import { createItemDto } from "@/store/utils/validate";
+import { t } from "@/translations";
+import { ItemFormTag } from "@/types";
+import { getFirstErrorMessage } from "@/utils/validate";
+import { CreateItemType } from "@common/items/form.types";
+import { ErrorMessage } from "@hookform/error-message";
+import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useEffect, useState } from "react";
+import { SubmitErrorHandler, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { TRANSLATION_FIELDS } from "../add-item.data";
+import ItemImageUpload from "../ItemImageUpload";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -143,7 +143,7 @@ function AddItemForm() {
     if (exists) {
       setSelectedTags(selectedTags.filter((t) => t.tag_id !== id));
     } else {
-      const newTag = tags?.find((t) => t.id === id);
+      const newTag = tags?.find((t) => t?.id === id);
       if (newTag)
         setSelectedTags([
           ...selectedTags,
@@ -315,8 +315,44 @@ function AddItemForm() {
               })}
             </div>
 
-            {/* Location | Total Quantity | Is active */}
+            {/* Category | Total Quantity | Location | Is active */}
             <div className="gap-4 flex w-full">
+              <FormField
+                name="category_id"
+                control={form.control}
+                render={({ field }) => (
+                  <div className="w-full">
+                    <FormItem>
+                      <FormLabel>
+                        {t.addItemForm.labels.category[appLang]}
+                      </FormLabel>
+                      <Select
+                        defaultValue={field.value || "---"}
+                        onValueChange={(value) =>
+                          form.setValue("category_id", value)
+                        }
+                      >
+                        <SelectTrigger className="border shadow-none border-grey w-full">
+                          <SelectValue
+                            className="border shadow-none border-grey"
+                            placeholder={""}
+                          >
+                            {categories.find((c) => c.id === field.value)
+                              ?.translations[appLang] || "---"}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories?.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                              {cat.translations[appLang]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  </div>
+                )}
+              />
               <FormField
                 name="quantity"
                 control={form.control}
@@ -354,46 +390,6 @@ function AddItemForm() {
                           </p>
                         )}
                       />
-                    </FormItem>
-                  </div>
-                )}
-              />
-              <FormField
-                name="category_id"
-                control={form.control}
-                render={({ field }) => (
-                  <div className="w-full">
-                    <FormItem>
-                      <FormLabel>
-                        {t.addItemForm.labels.category[appLang]}
-                      </FormLabel>
-                      <Select
-                        defaultValue={field.value || "---"}
-                        onValueChange={(value) =>
-                          form.setValue("category_id", value)
-                        }
-                      >
-                        <SelectTrigger className="border shadow-none border-grey w-full">
-                          <SelectValue
-                            className="border shadow-none border-grey"
-                            placeholder={""}
-                          >
-                            {categories.find((c) => c.id === field.value)
-                              ?.translations[appLang] || "---"}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories?.map((cat) => (
-                            <SelectItem
-                              disabled={storage === undefined}
-                              key={cat.id}
-                              value={cat.id}
-                            >
-                              {cat.translations[appLang]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </FormItem>
                   </div>
                 )}

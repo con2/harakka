@@ -164,7 +164,7 @@ export function applyItemFilters<T extends FilterableQuery>(
     isActive?: boolean;
     tags?: string;
     location_filter?: string;
-    categories?: string[];
+    categories?: string[] | null;
     from_date?: string;
     to_date?: string;
     availability_min?: number;
