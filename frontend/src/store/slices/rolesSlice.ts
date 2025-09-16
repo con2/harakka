@@ -191,13 +191,48 @@ export const leaveOrg = createAsyncThunk(
       const state = getState() as RootState;
       const role = state.roles.allUserRoles.find((r) => r.id === tableKeyId);
       const currentUserId = state.users.selectedUser?.id;
+      const activeOrgId = state.roles.activeRoleContext.organizationId;
 
       await roleApi.leaveOrg(tableKeyId);
 
       if (role && role.user_id === currentUserId && currentUserId) {
         await refreshSupabaseSession();
         try {
-          await dispatch(fetchCurrentUserRoles()).unwrap();
+          // Refresh current user's roles and get the updated list
+          const payload = await dispatch(fetchCurrentUserRoles()).unwrap();
+          const remainingRoles: ViewUserRolesWithDetails[] =
+            payload?.roles ?? [];
+
+          // If the removed role belonged to the currently active organization,
+          // update activeRoleContext to fallback to Global 'user' role
+          if (role.organization_id === activeOrgId) {
+            const globalUserRole = remainingRoles.find((r) => {
+              const orgName = r.organization_name?.toLowerCase?.() ?? "";
+              const roleName = r.role_name?.toLowerCase?.() ?? "";
+              return orgName === "global" && roleName === "user";
+            });
+
+            if (globalUserRole) {
+              const newContext = {
+                organizationId: globalUserRole.organization_id,
+                organizationName: globalUserRole.organization_name,
+                roleName: globalUserRole.role_name,
+              };
+              dispatch(setActiveRoleContext(newContext));
+            } else if (remainingRoles.length > 0) {
+              // Fallback to first remaining role if no Global user role found
+              const firstRole = remainingRoles[0];
+              const newContext = {
+                organizationId: firstRole.organization_id,
+                organizationName: firstRole.organization_name,
+                roleName: firstRole.role_name,
+              };
+              dispatch(setActiveRoleContext(newContext));
+            } else {
+              // No roles left - clear context
+              dispatch(clearActiveRoleContext());
+            }
+          }
         } catch (err) {
           console.error("Failed to refresh roles after leaveOrg:", err);
         }
