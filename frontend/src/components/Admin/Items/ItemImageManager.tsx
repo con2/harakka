@@ -44,10 +44,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
-import { ImageType, ItemImage } from "@/types/storage";
+import { FILE_CONSTRAINTS, ImageType, ItemImage } from "@/types/storage";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import { validateImage } from "@/utils/imageUtils";
+import { useImageValidator } from "@/utils/imageUtils";
 
 interface ItemImageManagerProps {
   itemId: string;
@@ -67,6 +67,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
   const [sortedImages, setSortedImages] = useState<ItemImage[]>([]);
   // Translation
   const { lang } = useLanguage();
+  const { validateFile } = useImageValidator();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [altText, setAltText] = useState("");
@@ -145,11 +146,17 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const result = validateImage().safeParse(file);
-      if (!result.success) {
-        toast.error(result.error.errors[0]?.message ?? "Invalid file");
-        return;
+
+      if (
+        !validateFile(
+          file,
+          FILE_CONSTRAINTS.MAX_FILE_SIZE,
+          FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
+        )
+      ) {
+        return; // Early return if validation fails
       }
+
       setSelectedFile(file);
 
       // Auto-generate alt text from filename
@@ -177,11 +184,17 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      const result = validateImage().safeParse(file);
-      if (!result.success) {
-        toast.error(result.error.errors[0]?.message ?? "Invalid file");
-        return;
+
+      if (
+        !validateFile(
+          file,
+          FILE_CONSTRAINTS.MAX_FILE_SIZE,
+          FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
+        )
+      ) {
+        return; // Early return if validation fails
       }
+
       setSelectedFile(file);
 
       // Auto-generate alt text from filename
