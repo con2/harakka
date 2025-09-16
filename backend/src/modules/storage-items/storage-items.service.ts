@@ -145,7 +145,7 @@ export class StorageItemsService {
     // Build a base query without range for counting and apply all filters
 
     // Get nested categories of X category ID.
-    const matchingCategories: string[] = [];
+    const matchingCategories: string[] | null = category ? [] : null;
     if (category) {
       const { data: categories } = await supabase.rpc(
         "get_category_descendants",
@@ -153,7 +153,7 @@ export class StorageItemsService {
           category_uuid: category,
         },
       );
-      matchingCategories.push(
+      matchingCategories!.push(
         ...(categories as { id: string }[]).map((c) => c.id),
       );
     }
