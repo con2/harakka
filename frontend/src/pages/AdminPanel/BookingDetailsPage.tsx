@@ -37,6 +37,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 
 const BookingDetailsPage = () => {
   const { id } = useParams();
@@ -242,8 +243,17 @@ const BookingDetailsPage = () => {
   ];
 
   const handleSelfPickup = (value: boolean, location_id: string) => {
-    void dispatch(
-      updateSelfPickup({ bookingId: id!, location_id, newStatus: value }),
+    toast.promise(
+      dispatch(
+        updateSelfPickup({ bookingId: id!, location_id, newStatus: value }),
+      ),
+      {
+        loading: t.bookingDetailsPage.toast.selfPickup.loading[lang],
+        success: value
+          ? t.bookingDetailsPage.toast.selfPickup.enabled[lang]
+          : t.bookingDetailsPage.toast.selfPickup.disabled[lang],
+        error: t.bookingDetailsPage.toast.selfPickup.failed[lang],
+      },
     );
   };
 

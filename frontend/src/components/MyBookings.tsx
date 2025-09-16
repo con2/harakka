@@ -105,7 +105,7 @@ const MyBookings = () => {
   const { roleName } = activeContext;
 
   const { totalPages } = useAppSelector(selectBookingPagination);
-  const isMobile = useIsMobile();
+  const { isMobile } = useIsMobile();
   const itemsLoading = useAppSelector(selectCurrentBookingLoading);
 
   // Translation

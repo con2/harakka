@@ -20,7 +20,7 @@ const BookingReturnButton = ({
   disabled?: boolean;
   itemIds?: string[];
   onSuccess?: () => void;
-  location_id: string;
+  location_id?: string;
   children?: ReactNode;
 }) => {
   const dispatch = useAppDispatch();

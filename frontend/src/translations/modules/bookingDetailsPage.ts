@@ -123,4 +123,24 @@ export const bookingDetailsPage = {
       },
     },
   },
+  toast: {
+    selfPickup: {
+      enabled: {
+        en: "Self-pickup was successfully enabled!",
+        fi: "Itsepalautus otettu käyttöön!",
+      },
+      disabled: {
+        en: "Self-pickup was successfully disabled!",
+        fi: "Itsepalautus poistettu käytöstä!",
+      },
+      failed: {
+        en: "Failed to update pickup status.",
+        fi: "Nouto-asetuksen päivitys epäonnistui.",
+      },
+      loading: {
+        en: "Updating pickup status...",
+        fi: "Päivitetään nouto-asetusta...",
+      },
+    },
+  },
 };
