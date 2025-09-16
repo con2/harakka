@@ -196,7 +196,11 @@ export const leaveOrg = createAsyncThunk(
 
       if (role && role.user_id === currentUserId && currentUserId) {
         await refreshSupabaseSession();
-        void dispatch(fetchCurrentUserRoles());
+        try {
+          await dispatch(fetchCurrentUserRoles()).unwrap();
+        } catch (err) {
+          console.error("Failed to refresh roles after leaveOrg:", err);
+        }
       }
 
       return tableKeyId;
@@ -421,16 +425,14 @@ const rolesSlice = createSlice({
       })
       .addCase(leaveOrg.fulfilled, (state, action) => {
         state.adminLoading = false;
+        // Remove from allUserRoles
         state.allUserRoles = state.allUserRoles.filter(
           (role: ViewUserRolesWithDetails) => role.id !== action.payload,
         );
-        // Also update in current user roles
-        const currentIdx2 = state.currentUserRoles.findIndex(
-          (role) => role.id === action.payload,
+        // Also remove from current user roles so UI no longer shows deleted role
+        state.currentUserRoles = state.currentUserRoles.filter(
+          (role) => role.id !== action.payload,
         );
-        if (currentIdx2 !== -1) {
-          state.currentUserRoles[currentIdx2].is_active = false;
-        }
       })
       .addCase(leaveOrg.rejected, (state, action) => {
         state.adminLoading = false;
