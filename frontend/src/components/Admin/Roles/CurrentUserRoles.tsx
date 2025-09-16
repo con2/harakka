@@ -72,20 +72,35 @@ export const CurrentUserRoles: React.FC = () => {
                     className="ml-2"
                     onClick={() =>
                       toastConfirm({
-                        title: "Leave organization?",
+                        title:
+                          t.currentUserRoles.toasts.leaveOrg?.[lang] ||
+                          "Leave organization?",
                         description:
+                          t.currentUserRoles.toasts.leaveOrgDescription?.[
+                            lang
+                          ] ||
                           "Are you sure you want to leave this organization?",
-                        confirmText: t.common.delete?.[lang] || "Leave",
-                        cancelText: t.common.cancel?.[lang] || "Cancel",
+                        confirmText:
+                          t.currentUserRoles.toasts.leaveOrg?.[lang] || "Leave",
+                        cancelText:
+                          t.currentUserRoles.toasts.leaveOrg?.[lang] ||
+                          "Cancel",
                         onConfirm: async () => {
                           try {
                             await dispatch(
                               leaveOrg(role.id as string),
                             ).unwrap();
-                            toast.success("You have left the organization");
+                            toast.success(
+                              t.currentUserRoles.toasts.leaveOrgSuccess?.[
+                                lang
+                              ] || "You have left the organization",
+                            );
                           } catch (err) {
                             console.error("leaveOrg failed:", err);
-                            toast.error("Failed to leave organization");
+                            toast.error(
+                              t.currentUserRoles.toasts.leaveOrgError?.[lang] ||
+                                "Failed to leave organization",
+                            );
                           }
                         },
                       })
