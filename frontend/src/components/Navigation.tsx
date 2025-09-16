@@ -20,7 +20,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
-import Logo from "@/assets/v4.svg?react";
+import Logo from "@/assets/v4.5.svg?react";
 import { Badge } from "./ui/badge";
 
 export const Navigation = () => {
