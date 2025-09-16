@@ -175,6 +175,21 @@ export class RoleService {
       throw new BadRequestException("Failed to create role assignment");
     }
 
+    // Check if user already has any role in the target organization
+    const { data: existingRole } = await req.supabase
+      .from("user_organization_roles")
+      .select("id, role_id")
+      .eq("user_id", user_id)
+      .eq("organization_id", organization_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (existingRole) {
+      throw new BadRequestException(
+        `User already has a role in this organization (role_id=${existingRole.role_id})`,
+      );
+    }
+
     // Get the complete role details using the view
     const { data: roleDetails, error: viewError } = await req.supabase
       .from("view_user_roles_with_details")
@@ -212,6 +227,15 @@ export class RoleService {
 
     if (existingError || !existing) {
       throw new NotFoundException("Role assignment not found");
+    }
+
+    // if a role is activated, ensure no other active role exists for this user in the same organization
+    if (updateRoleDto.is_active) {
+      await req.supabase
+        .from("user_organization_roles")
+        .update({ is_active: false })
+        .eq("user_id", existing.user_id)
+        .eq("organization_id", existing.organization_id);
     }
 
     // Update the role assignment

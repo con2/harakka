@@ -191,7 +191,7 @@ const AdminDashboard = () => {
             </p>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <Users className="h-10 w-10 text-highlight2 shrink-0" />
+            <Users className="h-10 w-10 text-(--iridiscent-blue-light) shrink-0" />
             <span className="text-4xl font-normal">{userCount}</span>
           </div>
         </div>
@@ -203,7 +203,7 @@ const AdminDashboard = () => {
             </p>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <Warehouse className="h-10 w-10 text-highlight2 shrink-0" />
+            <Warehouse className="h-10 w-10 text-(--iridiscent-blue-light) shrink-0" />
             <span className="text-4xl font-normal">{itemCount}</span>
           </div>
         </div>
@@ -215,7 +215,7 @@ const AdminDashboard = () => {
             </p>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <ShoppingBag className="h-10 w-10 text-highlight2 shrink-0" />
+            <ShoppingBag className="h-10 w-10 text-(--iridiscent-blue-light) shrink-0" />
             <span className="text-4xl font-normal">{bookingsCount}</span>
           </div>
         </div>

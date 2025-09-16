@@ -25,6 +25,34 @@ export class UserSetupService {
   ) {}
 
   /**
+   * Validates if a user exists in Supabase Auth
+   * @param userId The user ID to validate
+   * @returns Promise<boolean> True if user exists, false otherwise
+   */
+  async validateUserExists(userId: string): Promise<boolean> {
+    try {
+      const supabase = this.supabaseService.getServiceClient();
+
+      // Use admin.getUserById to check if the user exists in auth.users
+      const { data, error } = await supabase.auth.admin.getUserById(userId);
+
+      if (error) {
+        this.logger.warn(`Error validating user existence: ${error.message}`);
+        return false;
+      }
+
+      const exists = !!data?.user;
+      this.logger.log(`User ${userId} exists in auth.users: ${exists}`);
+      return exists;
+    } catch (error) {
+      this.logger.warn(
+        `Exception validating user existence: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return false;
+    }
+  }
+
+  /**
    * Complete user setup: create profile and assign default role
    * This should be called after Supabase Auth creates a user
    */
@@ -32,6 +60,18 @@ export class UserSetupService {
     const supabase = this.supabaseService.getServiceClient();
 
     try {
+      // First validate that the user exists in auth.users
+      const userExists = await this.validateUserExists(setupData.userId);
+      if (!userExists) {
+        this.logger.error(
+          `User ${setupData.userId} does not exist in auth.users`,
+        );
+        return {
+          success: false,
+          error: `User ID ${setupData.userId} not found in authentication system`,
+        };
+      }
+
       // Check current user setup status
       const setupStatus = await this.checkUserSetupStatus(setupData.userId);
 
@@ -72,7 +112,13 @@ export class UserSetupService {
 
       // Create user profile if it doesn't exist
       if (!setupStatus.hasProfile) {
+        this.logger.log(`Creating user profile for ${setupData.userId}`);
         userProfile = await this.createUserProfile(setupData);
+        this.logger.log(`User profile created with ID: ${userProfile.id}`);
+      } else {
+        this.logger.log(
+          `User ${setupData.userId} already has profile, skipping profile creation`,
+        );
       }
 
       // Assign role if user doesn't have one
@@ -82,6 +128,10 @@ export class UserSetupService {
           orgData.data.id,
           roleData.data.id,
         );
+      } else {
+        this.logger.log(
+          `User ${setupData.userId} already has role, skipping role assignment`,
+        );
       }
 
       return {
@@ -89,8 +139,6 @@ export class UserSetupService {
         userProfile,
       };
     } catch (error) {
-      this.logger.error(`User setup failed for ${setupData.userId}:`, error);
-
       if (error instanceof InternalServerErrorException) {
         throw error;
       }
@@ -109,6 +157,7 @@ export class UserSetupService {
   private async createUserProfile(
     setupData: SetupUserRequest,
   ): Promise<UserProfileInsert> {
+    // Existing createUserProfile method code unchanged
     const supabase = this.supabaseService.getServiceClient();
 
     const profileData: UserProfileInsert = {
@@ -141,6 +190,7 @@ export class UserSetupService {
     organizationId: string,
     roleId: string,
   ): Promise<void> {
+    // Existing assignDefaultRole method code unchanged
     try {
       await this.roleService.createUserRoleById(userId, organizationId, roleId);
     } catch (roleError) {
@@ -148,6 +198,7 @@ export class UserSetupService {
         `Role assignment failed for user ${userId}: ${
           roleError instanceof Error ? roleError.message : "Unknown role error"
         }`,
+        roleError instanceof Error ? roleError.stack : undefined,
       );
       // Don't throw here - profile creation succeeded, role assignment failure shouldn't block user
     }
@@ -155,11 +206,32 @@ export class UserSetupService {
 
   /**
    * Check if user already has a profile and role
+   * @param userId The user ID to check
+   * @param validateAuth Whether to validate if the user exists in auth.users (defaults to false for backward compatibility)
+   * @returns Promise<UserSetupStatus> The user's setup status
    */
-  async checkUserSetupStatus(userId: string): Promise<UserSetupStatus> {
+  async checkUserSetupStatus(
+    userId: string,
+    validateAuth = false,
+  ): Promise<UserSetupStatus> {
     const supabase = this.supabaseService.getServiceClient();
 
     try {
+      if (validateAuth) {
+        const userExists = await this.validateUserExists(userId);
+        if (!userExists) {
+          this.logger.warn(`User ${userId} does not exist in auth.users`);
+          // Return standard "needs setup" response for security reasons
+          // but log the non-existence for monitoring
+          return {
+            hasProfile: false,
+            hasRole: false,
+            needsSetup: true,
+            userExists: false, // Optional property to indicate user doesn't exist
+          };
+        }
+      }
+
       // Check both profile and role in parallel
       const [profileResult, roleResult] = await Promise.all([
         supabase
@@ -175,6 +247,18 @@ export class UserSetupService {
           .limit(1),
       ]);
 
+      if (profileResult.error) {
+        this.logger.warn(
+          `Error checking user profile: ${profileResult.error.message}`,
+        );
+      }
+
+      if (roleResult.error) {
+        this.logger.warn(
+          `Error checking user role: ${roleResult.error.message}`,
+        );
+      }
+
       const hasProfile = !profileResult.error && !!profileResult.data;
       const hasRole =
         !roleResult.error && roleResult.data && roleResult.data.length > 0;
@@ -186,7 +270,9 @@ export class UserSetupService {
         profile: profileResult.data || undefined,
       };
     } catch (error) {
-      this.logger.error(`Error checking user setup status: ${error}`);
+      this.logger.error(
+        `Error checking user setup status: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return {
         hasProfile: false,
         hasRole: false,

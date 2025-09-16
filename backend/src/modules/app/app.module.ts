@@ -37,6 +37,7 @@ import { UserBanningModule } from "../user-banning/user-banning.module";
 import { OrganizationLocationsModule } from "../organization-locations/organization_locations.module";
 import { CategoriesModule } from "../categories/categories.module";
 import { StorageItemsController } from "../storage-items/storage-items.controller";
+import { UserSetupController } from "../user/user-setup.controller";
 
 // Load and expand environment variables before NestJS modules initialize
 // Only load env files if SUPABASE_URL is not already set (meaning env-cmd hasn't run)
@@ -106,6 +107,10 @@ export class AppModule implements NestModule {
         { path: "auth/get-fresh-token", method: RequestMethod.POST },
         { path: "auth/endpoints", method: RequestMethod.GET },
 
+        // User setup flow
+        { path: "user-setup/setup", method: RequestMethod.POST },
+        { path: "user-setup/check-status", method: RequestMethod.POST },
+
         // Health checks and public endpoints
         { path: "health", method: RequestMethod.GET },
         { path: "", method: RequestMethod.GET }, // Root endpoint
@@ -151,6 +156,7 @@ export class AppModule implements NestModule {
         // Protected controllers
         BookingController,
         UserController,
+        UserSetupController,
         BookingItemsController,
         LogsController,
         RoleController,

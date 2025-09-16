@@ -11,21 +11,14 @@ console.log("Supabase configuration check:", {
   mode: import.meta.env.MODE,
 });
 
-// Check if we're on a password reset URL before creating the Supabase client
-const isPasswordResetFlow = () => {
-  return (
-    window.location.href.includes("type=recovery") ||
-    window.location.hash.includes("type=recovery") ||
-    window.location.pathname.includes("/password-reset")
-  );
-};
-
-// Create Supabase client with graceful fallback
+// Always create a stable Supabase client.
+// Password reset flow is handled within the PasswordReset component
+// and should not change global auth client behavior.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    autoRefreshToken: !isPasswordResetFlow(),
-    persistSession: !isPasswordResetFlow(),
-    detectSessionInUrl: !isPasswordResetFlow(),
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
   },
 });
 

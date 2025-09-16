@@ -160,56 +160,107 @@ export class BookingService {
   }
 
   /**
-   * Retrieve bookings for the authenticated user or their organization.
+   * Get bookings for a specific user by their ID, filtered by organization.
    *
-   * This method fetches bookings based on the user's role and organization context:
-   * - **User Role**: Retrieves only the bookings created by the user.
-   * - **Requester Role**: Retrieves bookings associated with the user's organization.
+   * This method is designed to fetch bookings for a specific user within the context of an organization.
+   * It ensures that only bookings associated with the given user ID and organization ID are returned.
    *
-   * @param req The authenticated request object containing user and role details.
-   * @param supabase The Supabase client instance for database operations.
-   * @param page The page number for pagination (default: 1).
-   * @param limit The number of items per page for pagination (default: 10).
+   * @param req - The authenticated request object containing user and role details.
+   * @param page - The page number for pagination (default: 1).
+   * @param limit - The number of items per page for pagination (default: 10).
+   * @param userId - The ID of the user whose bookings are to be retrieved.
+   * @param activeOrgId - The organization ID to filter bookings by.
    *
-   * @returns A paginated list of bookings with metadata.
+   * @returns A paginated list of bookings for the specified user, filtered by organization.
    */
   async getUserBookings(
     req: AuthRequest,
     page: number,
     limit: number,
-    activeOrgId?: string,
-    activeRole?: string,
-    userId?,
+    userId: string,
+    activeOrgId: string,
   ) {
     const { from, to } = getPaginationRange(page, limit);
     const supabase = req.supabase;
 
-    // Restrict User to only their own bookings
-    if (activeRole === "user") {
-      const result = await supabase
-        .from("view_bookings_with_user_info")
-        .select("*", { count: "exact" })
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .range(from, to);
+    // All bookings from the view
+    const query = supabase
+      .from("view_bookings_with_user_info")
+      .select("*", { count: "exact" })
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
-      const pagination = getPaginationMeta(result.count, page, limit);
-      return { ...result, metadata: pagination };
+    const bookingIdsResult = await supabase
+      .from("booking_items")
+      .select("booking_id")
+      .eq("provider_organization_id", activeOrgId);
+
+    if (bookingIdsResult.error) {
+      throw new BadRequestException(
+        "Could not fetch bookings for the organization",
+      );
     }
 
-    // Restrict admins to bookings for their organization
-    if (
+    const bookingIds = bookingIdsResult.data.map((item) => item.booking_id);
+    if (bookingIds.length > 0) {
+      query.in("id", bookingIds);
+    } else {
+      return {
+        data: [],
+        count: 0,
+        error: null,
+        status: 200,
+        statusText: "OK",
+        metadata: getPaginationMeta(0, page, limit),
+      };
+    }
+
+    const result = await query;
+    const pagination = getPaginationMeta(result.count, page, limit);
+    return { ...result, metadata: pagination };
+  }
+
+  /**
+   * Get bookings for the authenticated user or their organization.
+   * **user**: gets only the bookings created by the user.
+   * **requester/storage_manager/tenant_admin**: gets all bookings associated with the user's organization.
+   *
+   * @param req - The authenticated request object containing user and role details.
+   * @param page - The page number for pagination (default: 1).
+   * @param limit - The number of items per page for pagination (default: 10).
+   * @param userId - The ID of the authenticated user.
+   * @param activeOrgId - The organization ID to filter bookings by.
+   * @param activeRole - The role of the authenticated user (e.g., "user", "requester", "storage_manager", "tenant_admin").
+   *
+   * @returns A paginated list of bookings with metadata.
+   */
+  async getMyBookings(
+    req: AuthRequest,
+    page: number,
+    limit: number,
+    userId: string,
+    activeOrgId: string,
+    activeRole: string,
+  ) {
+    const { from, to } = getPaginationRange(page, limit);
+    const supabase = req.supabase;
+
+    const query = supabase
+      .from("view_bookings_with_user_info")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (activeRole === "user") {
+      // Regular users only see their own bookings
+      query.eq("user_id", userId);
+    } else if (
       activeRole === "requester" ||
       activeRole === "storage_manager" ||
       activeRole === "tenant_admin"
     ) {
-      // Requesters can only see bookings for their organization
-      if (!activeOrgId) {
-        throw new ForbiddenException(
-          "Organization context is required for this action",
-        );
-      }
-
+      // Admins see all bookings for their organization
       const bookingIdsResult = await supabase
         .from("booking_items")
         .select("booking_id")
@@ -223,15 +274,7 @@ export class BookingService {
 
       const bookingIds = bookingIdsResult.data.map((item) => item.booking_id);
       if (bookingIds.length > 0) {
-        const result = await supabase
-          .from("view_bookings_with_user_info")
-          .select("*", { count: "exact" })
-          .in("id", bookingIds)
-          .order("created_at", { ascending: false })
-          .range(from, to);
-
-        const pagination = getPaginationMeta(result.count, page, limit);
-        return { ...result, metadata: pagination };
+        query.in("id", bookingIds);
       } else {
         return {
           data: [],
@@ -242,7 +285,13 @@ export class BookingService {
           metadata: getPaginationMeta(0, page, limit),
         };
       }
+    } else {
+      throw new ForbiddenException("You do not have access to view bookings");
     }
+
+    const result = await query;
+    const pagination = getPaginationMeta(result.count, page, limit);
+    return { ...result, metadata: pagination };
   }
 
   /**
@@ -432,9 +481,10 @@ export class BookingService {
         .eq("id", item_id)
         .single();
 
-      if (itemError || !storageItem) {
+      if (itemError) handleSupabaseError(itemError);
+
+      if (!storageItem)
         throw new BadRequestException("Storage item data not found");
-      }
 
       const currentStock = storageItem.available_quantity ?? 0;
       if (quantity > currentStock) {
@@ -467,8 +517,6 @@ export class BookingService {
       .single<BookingRow>();
 
     if (bookingError || !booking) {
-      console.error("Booking insert error:", bookingError);
-      console.error("Booking result:", booking);
       throw new BadRequestException("Could not create booking");
     }
 
@@ -1348,7 +1396,12 @@ export class BookingService {
     if (
       bookingDetails?.every((org_booking) => org_booking.status === "picked_up")
     ) {
-      await supabase.from("bookings").update({ status: "picked_up" });
+      const { error: bookingUpdateError } = await supabase
+        .from("bookings")
+        .update({ status: "picked_up" })
+        .eq("id", bookingId);
+
+      if (bookingUpdateError) handleSupabaseError(bookingUpdateError);
     }
 
     // look up the booking owner so we can tag who triggered the mail

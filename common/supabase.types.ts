@@ -294,6 +294,13 @@ export type Database = {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "v_user_profiles_for_storage_managers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["user_id"]
           },
@@ -1051,6 +1058,13 @@ export type Database = {
             foreignKeyName: "user_ban_history_banned_by_fkey"
             columns: ["banned_by"]
             isOneToOne: false
+            referencedRelation: "v_user_profiles_for_storage_managers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_banned_by_fkey"
+            columns: ["banned_by"]
+            isOneToOne: false
             referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["user_id"]
           },
@@ -1094,6 +1108,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_profiles_for_storage_managers"
             referencedColumns: ["id"]
           },
           {
@@ -1171,7 +1192,6 @@ export type Database = {
           id: string
           phone: string | null
           profile_picture_url: string | null
-          role: string | null
           visible_name: string | null
         }
         Insert: {
@@ -1181,7 +1201,6 @@ export type Database = {
           id: string
           phone?: string | null
           profile_picture_url?: string | null
-          role?: string | null
           visible_name?: string | null
         }
         Update: {
@@ -1191,7 +1210,6 @@ export type Database = {
           id?: string
           phone?: string | null
           profile_picture_url?: string | null
-          role?: string | null
           visible_name?: string | null
         }
         Relationships: []
@@ -1224,6 +1242,13 @@ export type Database = {
             foreignKeyName: "user_roles_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
+            referencedRelation: "v_user_profiles_for_storage_managers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
             referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["user_id"]
           },
@@ -1238,6 +1263,24 @@ export type Database = {
       }
     }
     Views: {
+      v_user_profiles_for_storage_managers: {
+        Row: {
+          email: string | null
+          id: string | null
+          visible_name: string | null
+        }
+        Insert: {
+          email?: string | null
+          id?: string | null
+          visible_name?: string | null
+        }
+        Update: {
+          email?: string | null
+          id?: string | null
+          visible_name?: string | null
+        }
+        Relationships: []
+      }
       view_bookings_with_details: {
         Row: {
           booking_items: Json | null

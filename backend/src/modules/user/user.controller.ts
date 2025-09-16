@@ -40,7 +40,7 @@ export class UserController {
 
   /**
    * Get a list of users with only name and email.
-   * Accessible by tenant admins and super admins.
+   * Accessible by tenant admins, storage managers, and super admins.
    * @param req - Authenticated request object
    * @param query - Query parameters for pagination and filtering
    * @returns List of users with name and email
