@@ -16,6 +16,7 @@ const AddTag = () => {
 
   const [fiName, setFiName] = React.useState("");
   const [enName, setEnName] = React.useState("");
+  const [submitting, setSubmitting] = React.useState(false);
 
   const resetForm = () => {
     setFiName("");
@@ -30,7 +31,7 @@ const AddTag = () => {
   const handleSubmit = async () => {
     if (!fiName && !enName) {
       toast.error(
-        t.addTagModal?.messages?.validationError?.[lang] ?? "Provide a name",
+        t.addTag?.messages?.validationError?.[lang] ?? "Provide a name",
       );
       return;
     }
@@ -42,54 +43,58 @@ const AddTag = () => {
       },
     };
 
+    setSubmitting(true);
     try {
       await dispatch(createTag(payload)).unwrap();
-      toast.success(t.addTagModal?.messages?.success?.[lang] ?? "Tag created");
+      toast.success(t.addTag?.messages?.success?.[lang] ?? "Tag created");
       void navigate("/admin/tags");
     } catch {
-      toast.error(
-        t.addTagModal?.messages?.error?.[lang] ?? "Failed to create tag",
-      );
+      toast.error(t.addTag?.messages?.error?.[lang] ?? "Failed to create tag");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-xl mb-4">
-        {t.addTagModal?.title?.[lang] ?? "Add Tag"}
-      </h1>
+      <h1 className="text-xl mb-4">{t.addTag?.title?.[lang] ?? "Add Tag"}</h1>
 
       <div className="space-y-4">
         <div>
-          <Label>
-            {t.addTagModal?.labels?.fiName?.[lang] ?? "Finnish name"}
-          </Label>
+          <Label>{t.addTag?.labels?.fiName?.[lang] ?? "Finnish name"}</Label>
           <Input
             value={fiName}
             onChange={(e) => setFiName(e.target.value)}
-            placeholder={t.addTagModal?.placeholders?.fiName?.[lang]}
+            placeholder={t.addTag?.placeholders?.fiName?.[lang]}
           />
         </div>
 
         <div>
-          <Label>
-            {t.addTagModal?.labels?.enName?.[lang] ?? "English name"}
-          </Label>
+          <Label>{t.addTag?.labels?.enName?.[lang] ?? "English name"}</Label>
           <Input
             value={enName}
             onChange={(e) => setEnName(e.target.value)}
-            placeholder={t.addTagModal?.placeholders?.enName?.[lang]}
+            placeholder={t.addTag?.placeholders?.enName?.[lang]}
           />
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
-          <Button variant="secondary" onClick={handleCancel}>
-            {t.addTagModal?.buttons?.cancel?.[lang] ?? "Back"}
+          <Button
+            variant="secondary"
+            onClick={handleCancel}
+            disabled={submitting}
+          >
+            {t.addTag?.buttons?.cancel?.[lang] ?? "Back"}
           </Button>
-          <Button variant="outline" onClick={handleSubmit}>
-            {t.addTagModal?.buttons?.creating?.[lang] ??
-              t.addTagModal?.buttons?.create?.[lang] ??
-              "Create"}
+          {/* Button inactive until user makes changes */}
+          <Button
+            variant="outline"
+            onClick={handleSubmit}
+            disabled={submitting || !(fiName.trim() || enName.trim())}
+          >
+            {submitting
+              ? (t.addTag?.buttons?.creating?.[lang] ?? "Creating...")
+              : (t.addTag?.buttons?.create?.[lang] ?? "Create new tag")}
           </Button>
         </div>
       </div>

@@ -31,6 +31,9 @@ const TagDetailsPage = () => {
   );
   const [fiName, setFiName] = useState("");
   const [enName, setEnName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [originalFi, setOriginalFi] = useState("");
+  const [originalEn, setOriginalEn] = useState("");
 
   useEffect(() => {
     if (!tag && id) {
@@ -46,8 +49,12 @@ const TagDetailsPage = () => {
 
   useEffect(() => {
     if (tag) {
-      setFiName(tag.translations?.fi?.name ?? "");
-      setEnName(tag.translations?.en?.name ?? "");
+      const fi = tag.translations?.fi?.name ?? "";
+      const en = tag.translations?.en?.name ?? "";
+      setFiName(fi);
+      setEnName(en);
+      setOriginalFi(fi);
+      setOriginalEn(en);
     }
   }, [tag]);
 
@@ -67,13 +74,16 @@ const TagDetailsPage = () => {
       },
     };
 
+    setSubmitting(true);
     try {
       await dispatch(updateTag({ id: tag.id, tagData: payload })).unwrap();
-      toast.success(t.tagList.editModal.messages.success[lang]);
+      toast.success(t.tagDetailsPage.messages.success[lang]);
       void dispatch(fetchFilteredTags({ page: 1, limit: 10 }));
       void navigate("/admin/tags");
     } catch {
-      toast.error(t.tagList.editModal.messages.error[lang]);
+      toast.error(t.tagDetailsPage.messages.error[lang]);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -85,7 +95,7 @@ const TagDetailsPage = () => {
   if (!tag) {
     return (
       <div>
-        <h1 className="text-xl mb-4">{t.tagList.title[lang]}</h1>
+        <h1 className="text-xl mb-4">{t.tagDetailsPage.title[lang]}</h1>
         <p className="text-muted-foreground">Loading...</p>
         <div className="mt-4">
           <Button variant="secondary" onClick={handleBack}>
@@ -99,34 +109,40 @@ const TagDetailsPage = () => {
   return (
     <div className="max-w-2xl">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl">
-          {t.tagList.columns.name[lang]}: {tag.translations?.[lang]?.name}
-        </h1>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={handleBack}>
-            {t.addCategory?.buttons?.back?.[lang] ?? "Back"}
-          </Button>
-          <TagDelete id={tag.id} onDeleted={handleDeleted} />
-        </div>
+        <h1 className="text-xl">{t.tagDetailsPage.title[lang]}</h1>
+        <TagDelete id={tag.id} onDeleted={handleDeleted} />
       </div>
 
-      <div className="border rounded-md p-4 mt-2 shadow-sm">
+      <div className="mt-2">
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium block mb-1">
-              {t.tagList.editModal.labels.fiName[lang]}
+              {t.tagDetailsPage.labels.fiName[lang]}
             </label>
             <Input value={fiName} onChange={(e) => setFiName(e.target.value)} />
           </div>
           <div>
             <label className="text-sm font-medium block mb-1">
-              {t.tagList.editModal.labels.enName[lang]}
+              {t.tagDetailsPage.labels.enName[lang]}
             </label>
             <Input value={enName} onChange={(e) => setEnName(e.target.value)} />
           </div>
           <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={handleSave}>
-              {t.tagList.editModal.buttons.save[lang]}
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={handleBack}>
+                {t.tagDetailsPage?.buttons?.back?.[lang] ?? "Back"}
+              </Button>
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleSave}
+              disabled={
+                submitting || (fiName === originalFi && enName === originalEn)
+              }
+            >
+              {submitting
+                ? "Saving..."
+                : (t.tagDetailsPage.buttons.save?.[lang] ?? "Save changes")}
             </Button>
           </div>
         </div>

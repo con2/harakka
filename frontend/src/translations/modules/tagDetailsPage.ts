@@ -1,7 +1,7 @@
 export const tagDetailsPage = {
   title: {
-    fi: "Tagin tiedot",
-    en: "Tag Details",
+    fi: "Päivitä tagi",
+    en: "Update Tag",
   },
   labels: {
     fiName: {

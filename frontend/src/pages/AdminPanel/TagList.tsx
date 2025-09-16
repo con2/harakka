@@ -2,7 +2,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, LoaderCircle } from "lucide-react";
+import { LoaderCircle, Plus } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { TagAssignmentFilter } from "@/types";
 import { ExtendedTag } from "@common/items/tag.types";
@@ -16,17 +16,14 @@ import {
   selectTag,
 } from "@/store/slices/tagSlice";
 import { useNavigate } from "react-router-dom";
-// import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import TagDelete from "@/components/Admin/Items/TagDelete";
 import { Badge } from "@/components/ui/badge";
 
 const TagList = () => {
   const dispatch = useAppDispatch();
   const tags = useAppSelector(selectAllTags);
-  // const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectTagsLoading);
   const error = useAppSelector(selectError);
   const page = useAppSelector(selectTagsPage);
@@ -47,8 +44,6 @@ const TagList = () => {
   // Translation
   const { lang } = useLanguage();
   const navigate = useNavigate();
-
-  // (edit state moved to tag detail page)
 
   // Fetch tags when search term or assignment filter changes
   useEffect(() => {
@@ -81,13 +76,6 @@ const TagList = () => {
     setCurrentPage(page);
   }, [page]);
 
-  // Fetch items once
-  /*   useEffect(() => {
-    if (items.length === 0) {
-      void dispatch(fetchAllItems({ page: 1, limit: 10 }));
-    }
-  }, [dispatch, items.length]); */
-
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
@@ -109,10 +97,6 @@ const TagList = () => {
       setSortOrder("desc");
     }
   };
-
-  // navigation handled inline in table actions/rowProps
-
-  // Update logic moved to Tag details page
 
   const columns: ColumnDef<ExtendedTag>[] = [
     {
@@ -136,12 +120,10 @@ const TagList = () => {
       id: "assigned_to",
       cell: ({ row }) => {
         const count = row.original.assigned_to;
+        const countStr = String(count ?? 0);
         return (
           <span className="text-sm">
-            {t.tagList.assignment.count[lang].replace(
-              "{count}",
-              count.toString(),
-            )}
+            {t.tagList.assignment.count[lang].replace("{count}", countStr)}
           </span>
         );
       },
@@ -162,57 +144,6 @@ const TagList = () => {
         ) : null;
       },
       enableSorting: false,
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const tag = row.original;
-        return (
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                void dispatch(selectTag(tag));
-                void navigate(`/admin/tags/${tag.id}`);
-              }}
-              title={t.tagList.buttons.edit[lang]}
-              className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <TagDelete
-              id={tag.id}
-              onDeleted={() => {
-                // Calculate if we need to go to previous page after deletion
-                const isLastItemOnPage = (tags?.length ?? 0) === 1;
-                const shouldGoToPreviousPage =
-                  isLastItemOnPage && currentPage > 1;
-                const targetPage = shouldGoToPreviousPage
-                  ? currentPage - 1
-                  : currentPage;
-
-                // Update the current page if needed
-                if (shouldGoToPreviousPage) {
-                  setCurrentPage(targetPage);
-                }
-
-                void dispatch(
-                  fetchFilteredTags({
-                    page: targetPage,
-                    limit: 10,
-                    search: debouncedSearchTerm,
-                    assignmentFilter,
-                    sortBy,
-                    sortOrder,
-                  }),
-                );
-              }}
-            />
-          </div>
-        );
-      },
     },
   ];
 
@@ -286,6 +217,7 @@ const TagList = () => {
                   void navigate("/admin/tags/new");
                 }}
               >
+                <Plus className="mr-1" />
                 {t.tagList.buttons.add[lang]}
               </Button>
             </div>
@@ -311,8 +243,6 @@ const TagList = () => {
               },
             })}
           />
-
-          {/* Editing moved to dedicated Tag details page */}
         </>
       )}
     </div>
