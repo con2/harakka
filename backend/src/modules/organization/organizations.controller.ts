@@ -48,14 +48,6 @@ export class OrganizationsController {
     );
   }
 
-  // 10. get organizations count (for super_admin dashboard)
-  @Get("count")
-  @Roles(["super_admin"], { match: "any" })
-  async getOrganizationsCount() {
-    const count = await this.organizationService.getOrganizationsCount();
-    return { count };
-  }
-
   // 2. get one by ID
   @Public()
   @Get(":id")
@@ -162,5 +154,13 @@ export class OrganizationsController {
     );
 
     return { url };
+  }
+
+  // 10. get organizations count (for super_admin dashboard)
+  @Get("count")
+  @Roles(["super_admin"], { match: "any" })
+  async getOrganizationsCount() {
+    const count = await this.organizationService.getOrganizationsCount();
+    return { count };
   }
 }

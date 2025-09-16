@@ -69,8 +69,6 @@ const AdminDashboard = () => {
     }
   }, [dispatch, activeContext?.organizationId, activeContext?.roleName]);
 
-  console.log("Organizations Count:", organizationsCount);
-
   useEffect(() => {
     if (activeContext?.roleName === "super_admin") {
       void dispatch(fetchAllOrderedUsersList({ page: 1, limit: 10 }));
@@ -125,12 +123,24 @@ const AdminDashboard = () => {
   return (
     <div>
       <div className="w-full flex flex-wrap justify-center items-center mb-8 gap-4">
+        {activeContext?.roleName === "super_admin" && (
+          <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1">
+            <div className="flex justify-center items-center">
+              <p className="text-slate-500">Organizations</p>
+            </div>
+            <div className="flex flex-row items-center gap-2">
+              <Building2 className="h-10 w-10 text-(--iridiscent-blue-light) shrink-0" />
+              <span className="text-4xl font-normal">{organizationsCount}</span>
+            </div>
+          </div>
+        )}
         <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1">
           <div className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.users[lang]}
             </p>
           </div>
+
           <div className="flex flex-row items-center gap-2">
             <Users className="h-10 w-10 text-(--iridiscent-blue-light) shrink-0" />
             <span className="text-4xl font-normal">{userCount}</span>
@@ -159,18 +169,6 @@ const AdminDashboard = () => {
             <span className="text-4xl font-normal">{bookingsCount}</span>
           </div>
         </div>
-
-        {activeContext?.roleName === "super_admin" && (
-          <div className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1">
-            <div className="flex justify-center items-center">
-              <p className="text-slate-500">Organizations</p>
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <Building2 className="h-10 w-10 text-(--iridiscent-blue-light) shrink-0" />
-              <span className="text-4xl font-normal">{organizationsCount}</span>
-            </div>
-          </div>
-        )}
       </div>
       {/* Recent section - users for super_admin, bookings for others */}
       <div className="mb-8">
