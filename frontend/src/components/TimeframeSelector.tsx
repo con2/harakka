@@ -142,8 +142,9 @@ const TimeframeSelector: React.FC = () => {
                     // Always return a boolean value:
                     const isBeforeToday =
                       date < new Date(new Date().setHours(0, 0, 0, 0));
-                    const isBeforeStartDate = startDate
-                      ? date < startDate
+                    // Prevent same-day bookings - end date must be after start date
+                    const isBeforeOrEqualStartDate = startDate
+                      ? date <= startDate
                       : false;
                     // prevent dates more than 14 days from start
                     const isTooFarFromStart = startDate
@@ -151,7 +152,9 @@ const TimeframeSelector: React.FC = () => {
                         new Date(startDate.getTime() + 14 * 86400000).getTime()
                       : false;
                     return (
-                      isBeforeToday || isBeforeStartDate || isTooFarFromStart
+                      isBeforeToday ||
+                      isBeforeOrEqualStartDate ||
+                      isTooFarFromStart
                     );
                   }}
                 />
