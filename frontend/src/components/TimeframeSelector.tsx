@@ -35,6 +35,23 @@ const TimeframeSelector: React.FC = () => {
     }
 
     if (type === "start") {
+      const newStartDate = date ? date : undefined;
+      const newEndDate = endDateStr ? new Date(endDateStr) : undefined;
+
+      if (newStartDate && newEndDate) {
+        const diffTime = newEndDate.getTime() - newStartDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 1) {
+          toast.error("Booking must be at least 1 day long");
+          return;
+        }
+        if (diffDays > 42) {
+          toast.error("Booking cannot exceed 6 weeks");
+          return;
+        }
+      }
+
       dispatch(
         setTimeframe({
           startDate: date ? date.toISOString() : undefined,

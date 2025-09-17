@@ -564,12 +564,12 @@ export class BookingService {
       const totalDays = calculateDuration(start, end);
 
       // add loan period validation
-      if (totalDays < 3) {
-        throw new BadRequestException("Booking must be at least 3 days long");
+      if (totalDays < 1) {
+        throw new BadRequestException("Booking must be at least 1 day long");
       }
 
-      if (totalDays > 35) {
-        throw new BadRequestException("Booking cannot exceed 35 days");
+      if (totalDays > 42) {
+        throw new BadRequestException("Booking cannot exceed 6 weeks");
       }
 
       // get location_id from storage_items
@@ -996,12 +996,12 @@ export class BookingService {
       );
 
       // add loan period validation if needed
-      if (totalDays < 3) {
-        throw new BadRequestException("Booking must be at least 3 days long");
+      if (totalDays < 1) {
+        throw new BadRequestException("Booking must be at least 1 day long");
       }
 
-      if (totalDays > 35) {
-        throw new BadRequestException("Booking cannot exceed 35 days");
+      if (totalDays > 42) {
+        throw new BadRequestException("Booking cannot exceed 6 weeks");
       }
 
       // 5.5. Check virtual availability for the time range
