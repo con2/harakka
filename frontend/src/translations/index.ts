@@ -1,7 +1,7 @@
 import { addCategory } from "./modules/addCategory";
 import { addItemForm } from "./modules/addItemForm";
 import { addLocationModal } from "./modules/addLocationModal";
-import { addTagModal } from "./modules/addTagModal";
+import { addTag } from "./modules/addTag";
 import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
 import { adminPanel } from "./modules/adminPanel";
@@ -65,7 +65,7 @@ import { statusBadge } from "./modules/statusBadge";
 import { stepper } from "./modules/stepper";
 import { tagAssignForm } from "./modules/tagAssignForm";
 import { tagDelete } from "./modules/tagDelete";
-import { tagDetail } from "./modules/tagDetail";
+import { tagDetailsPage } from "./modules/tagDetailsPage";
 import { tagList } from "./modules/tagList";
 import { termsOfUse } from "./modules/termsOfUse";
 import { timeframeSelector } from "./modules/timeframeSelector";
@@ -87,7 +87,7 @@ export const t = {
   addCategory,
   addItemForm,
   addLocationModal,
-  addTagModal,
+  addTag,
   adminDashboard,
   adminItemsTable,
   adminPanel,
@@ -149,7 +149,7 @@ export const t = {
   stepper,
   tagAssignForm,
   tagDelete,
-  tagDetail,
+  tagDetailsPage,
   tagList,
   termsOfUse,
   timeframeSelector,
