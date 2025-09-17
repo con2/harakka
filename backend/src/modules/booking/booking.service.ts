@@ -259,7 +259,7 @@ export class BookingService {
       .range(from, to);
 
     if (activeRole === "user") {
-      baseQuery.eq("user_id", userId);
+      baseQuery.eq("user_id", userId).is("booked_by_org", null);
     } else if (isRequesterRole) {
       baseQuery.eq("booked_by_org", activeOrgId);
     }
