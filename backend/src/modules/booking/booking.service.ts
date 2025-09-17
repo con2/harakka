@@ -381,7 +381,44 @@ export class BookingService {
 
   async getBookingsCount(
     supabase: SupabaseClient,
+    orgId?: string,
+    activeRole?: string,
   ): Promise<ApiSingleResponse<number>> {
+    // Super admin should always receive global count
+    if (activeRole === "super_admin") {
+      const result: PostgrestResponse<undefined> = await supabase
+        .from("bookings")
+        .select(undefined, { count: "exact" });
+
+      if (result.error) handleSupabaseError(result.error);
+
+      return {
+        ...result,
+        data: result.count ?? 0,
+      };
+    }
+
+    // If orgId provided, count distinct booking_ids that have booking_items for that org
+    if (orgId) {
+      const res = await supabase
+        .from("booking_items")
+        .select("booking_id")
+        .eq("provider_organization_id", orgId);
+
+      if (res.error) handleSupabaseError(res.error);
+
+      const ids = Array.from(
+        new Set((res.data || []).map((r) => r.booking_id)),
+      );
+      return {
+        data: ids.length,
+        count: ids.length,
+        error: null,
+        status: 200,
+        statusText: "OK",
+      } as ApiSingleResponse<number>;
+    }
+
     const result: PostgrestResponse<undefined> = await supabase
       .from("bookings")
       .select(undefined, { count: "exact" });

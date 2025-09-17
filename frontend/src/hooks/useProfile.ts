@@ -1,36 +1,54 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/config/supabase";
 import type { User } from "@supabase/supabase-js";
 
+type Profile = {
+  name: string;
+  email: string;
+  avatarUrl: string;
+};
+
 /**
- * Small helper hook to get basic user data
- * @param user The supabase user object
- * @returns name, email and avatarUrl
+ * Fetches user profile data from `user_profiles` table
+ * @param user The Supabase user object
+ * @returns name, email, avatarUrl
  */
 export function useProfile(user: User | null) {
-  return useMemo(() => {
+  const [profile, setProfile] = useState<Profile>({
+    name: "",
+    email: "",
+    avatarUrl: "",
+  });
+
+  useEffect(() => {
     if (!user) {
-      return {
-        name: "",
-        email: "",
-        avatarUrl: "",
-      };
+      setProfile({ name: "", email: "", avatarUrl: "" });
+      return;
     }
 
-    const name =
-      user.user_metadata?.full_name ||
-      user.user_metadata?.name ||
-      user.app_metadata?.roles?.[0]?.user_full_name ||
-      "";
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from("user_profiles")
+        .select("visible_name, full_name, profile_picture_url, email")
+        .eq("id", user.id)
+        .single();
 
-    const email =
-      user.email ||
-      user.user_metadata?.email ||
-      user.app_metadata?.roles?.[0]?.user_email ||
-      "";
+      if (error) {
+        console.error("Error fetching profile:", error.message);
+        return;
+      }
 
-    const avatarUrl =
-      user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
+      if (data) {
+        setProfile({
+          name: data.visible_name || data.full_name || "",
+          email: data.email || "",
+          avatarUrl: data.profile_picture_url || "",
+        });
+      }
+    };
 
-    return { name, email, avatarUrl };
+    void fetchProfile();
   }, [user]);
+
+  return profile;
 }
