@@ -114,7 +114,6 @@ const BookingList = () => {
       header: t.bookingList.columns.status[lang],
       enableSorting: false,
       cell: ({ row }) => {
-        // backend attaches org_status_for_active_org; prefer that when present
         const maybe = row.original as BookingPreview & {
           org_status_for_active_org?: string;
         };
@@ -204,6 +203,15 @@ const BookingList = () => {
               </option>
               <option value="cancelled">
                 {t.bookingList.filters.status.cancelled[lang]}
+              </option>
+              <option value="picked_up">
+                {t.bookingList.filters.status.picked_up[lang]}
+              </option>
+              <option value="returned">
+                {t.bookingList.filters.status.returned[lang]}
+              </option>
+              <option value="completed">
+                {t.bookingList.filters.status.completed[lang]}
               </option>
             </select>
             {(searchQuery || statusFilter !== "all") && (

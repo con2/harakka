@@ -27,10 +27,6 @@ export const bookingList = {
         fi: "Peruutettu",
         en: "Cancelled",
       },
-      cancelledByAdmin: {
-        fi: "Ylläpitäjän peruuttama",
-        en: "Cancelled by admin",
-      },
       rejected: {
         fi: "Hylätty",
         en: "Rejected",
@@ -42,6 +38,14 @@ export const bookingList = {
       deleted: {
         fi: "Poistettu",
         en: "Deleted",
+      },
+      returned: {
+        fi: "Palautettu",
+        en: "Returned",
+      },
+      picked_up: {
+        fi: "Noudettu",
+        en: "Picked Up",
       },
     },
     clear: {
