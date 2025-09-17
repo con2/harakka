@@ -145,8 +145,8 @@ const AdminDashboard = () => {
     <div>
       <div className="w-full flex flex-wrap justify-center items-center mb-8 gap-4">
         {activeContext?.roleName === "super_admin" && (
-          <div
-            className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1 cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
+          <button
+            className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
             onClick={() => navigate("/admin/organizations")}
           >
             <div className="flex justify-center items-center">
@@ -158,10 +158,10 @@ const AdminDashboard = () => {
               <Building2 className="h-10 w-10 text-(--iridiscent-blue-light) shrink-0" />
               <span className="text-4xl font-normal">{organizationsCount}</span>
             </div>
-          </div>
+          </button>
         )}
-        <div
-          className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1 cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
+        <button
+          className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
           onClick={() => navigate("/admin/users")}
         >
           <div className="flex justify-center items-center">
@@ -174,10 +174,10 @@ const AdminDashboard = () => {
             <Users className="h-10 w-10 text-(--iridiscent-blue-light) shrink-0" />
             <span className="text-4xl font-normal">{userCount}</span>
           </div>
-        </div>
+        </button>
 
-        <div
-          className={`flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1 ${
+        <button
+          className={`flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-default ${
             activeContext?.roleName === "super_admin"
               ? ""
               : "cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
@@ -197,9 +197,9 @@ const AdminDashboard = () => {
             <Warehouse className="h-10 w-10 text-(--iridiscent-blue-light) shrink-0" />
             <span className="text-4xl font-normal">{itemCount}</span>
           </div>
-        </div>
-        <div
-          className={`flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 w-fit max-w-[300px] flex-1 ${
+        </button>
+        <button
+          className={`flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-default ${
             activeContext?.roleName === "super_admin"
               ? ""
               : "cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
@@ -219,7 +219,7 @@ const AdminDashboard = () => {
             <ShoppingBag className="h-10 w-10 text-(--iridiscent-blue-light) shrink-0" />
             <span className="text-4xl font-normal">{bookingsCount}</span>
           </div>
-        </div>
+        </button>
       </div>
       {/* Recent section - users for super_admin, bookings for others */}
       <div className="mb-8">
