@@ -388,18 +388,14 @@ export class BookingController {
    * @returns Return result
    */
   @Patch(":id/return")
-  @Roles(["storage_manager", "tenant_admin"], {
-    match: "any",
-    sameOrg: true,
-  })
   async returnItems(
     @Param("id") id: string,
     @Req() req: AuthRequest,
-    @Body() body: { itemIds: string[]; location_id: string },
+    @Body() body: { itemIds: string[]; location_id: string; org_id: string },
   ) {
-    const orgId = req.headers["x-org-id"] as string;
+    const { itemIds, location_id, org_id } = body;
+    const orgId = org_id ?? req.headers["x-org-id"];
     if (!orgId) throw new Error("Missing org ID");
-    const { itemIds, location_id } = body;
     return this.bookingService.returnItems(
       req,
       id,
@@ -417,18 +413,16 @@ export class BookingController {
    * @returns Pickup confirmation result
    */
   @Patch(":bookingId/pickup")
-  @Roles(["storage_manager", "tenant_admin"], {
-    match: "any",
-    sameOrg: true,
-  })
   async pickup(
     @Param("bookingId") bookingId: string,
     @Req() req: AuthRequest,
-    @Body() body: { itemIds: string[]; location_id: string },
+    @Body() body: { item_ids: string[]; location_id: string; org_id?: string },
   ) {
     const supabase = req.supabase;
-    const orgId = req.headers["x-org-id"] as string;
-    const { itemIds, location_id } = body;
+    const { item_ids: itemIds, location_id, org_id } = body;
+    console.log("body: ", body);
+    // Org ID is either provided in the body (self_pickup) or the headers (admin pickup)
+    const orgId = org_id ?? (req.headers["x-org-id"] as string);
     return this.bookingService.confirmPickup(
       supabase,
       bookingId,

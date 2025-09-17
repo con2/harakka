@@ -232,8 +232,13 @@ export const bookingsApi = {
     bookingId: string,
     itemIds?: string[],
     location_id?: string,
+    org_id?: string,
   ): Promise<Booking> => {
-    return api.patch(`/bookings/${bookingId}/return`, { itemIds, location_id });
+    return api.patch(`/bookings/${bookingId}/return`, {
+      itemIds,
+      location_id,
+      org_id,
+    });
   },
 
   /**
@@ -245,11 +250,13 @@ export const bookingsApi = {
   pickUpItems: async (
     bookingId: string,
     location_id?: string,
+    org_id?: string,
     itemIds?: string[],
   ): Promise<Booking> => {
     return api.patch(`/bookings/${bookingId}/pickup`, {
       itemIds,
       location_id,
+      org_id,
     });
   },
 
@@ -263,7 +270,6 @@ export const bookingsApi = {
     bookingId: string,
     itemIds?: string[],
   ): Promise<Booking> => {
-    console.log("itemIds: ", itemIds);
     return api.patch(`/bookings/${bookingId}/cancel`, itemIds);
   },
 

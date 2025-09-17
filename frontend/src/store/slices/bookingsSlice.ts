@@ -426,14 +426,24 @@ export const rejectItemsForOrg = createAsyncThunk<
 
 // Return items thunk
 export const returnItems = createAsyncThunk<
-  { bookingId: string; itemIds?: string[]; location_id?: string },
-  { bookingId: string; itemIds?: string[]; location_id?: string },
+  {
+    bookingId: string;
+    itemIds?: string[];
+    location_id?: string;
+    org_id?: string;
+  },
+  {
+    bookingId: string;
+    itemIds?: string[];
+    location_id?: string;
+    org_id?: string;
+  },
   { rejectValue: string }
 >(
   "bookings/returnItems",
-  async ({ bookingId, itemIds, location_id }, { rejectWithValue }) => {
+  async ({ bookingId, itemIds, location_id, org_id }, { rejectWithValue }) => {
     try {
-      await bookingsApi.returnItems(bookingId, itemIds, location_id);
+      await bookingsApi.returnItems(bookingId, itemIds, location_id, org_id);
       return { bookingId, itemIds, location_id };
     } catch (error: unknown) {
       return rejectWithValue(
@@ -445,15 +455,25 @@ export const returnItems = createAsyncThunk<
 
 // Mark items as picked up
 export const pickUpItems = createAsyncThunk<
-  { bookingId: string; location_id?: string; itemIds?: string[] },
-  { bookingId: string; location_id?: string; itemIds?: string[] },
+  {
+    bookingId: string;
+    location_id?: string;
+    org_id?: string;
+    itemIds?: string[];
+  },
+  {
+    bookingId: string;
+    location_id?: string;
+    org_id?: string;
+    itemIds?: string[];
+  },
   { rejectValue: string }
 >(
   "bookings/pickUpItems",
-  async ({ bookingId, location_id, itemIds }, { rejectWithValue }) => {
+  async ({ bookingId, location_id, org_id, itemIds }, { rejectWithValue }) => {
     try {
-      await bookingsApi.pickUpItems(bookingId, location_id, itemIds);
-      return { bookingId, location_id, itemIds };
+      await bookingsApi.pickUpItems(bookingId, location_id, org_id, itemIds);
+      return { bookingId, location_id, org_id, itemIds };
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to process returns"),

@@ -396,10 +396,12 @@ const MyBookings = () => {
             locations: o.locations?.filter((l) => l.self_pickup === true),
           }));
         const isPending = booking.status === "pending";
-        const picked_up_locations = orgsWithPickup?.flatMap((o) =>
-          o.locations?.filter((l) => l.pickup_status === "picked_up"),
+        const orgs_with_picked_up_items = orgsWithPickup?.filter(
+          (o) =>
+            o.org_booking_status !== "completed" &&
+            o.locations.some((l) => l.pickup_status === "picked_up"),
         );
-        console.log("orgswith pickup: ", orgsWithPickup);
+        console.log(orgs_with_picked_up_items);
         return (
           <div className="flex space-x-2">
             <BookingDetailsButton
@@ -431,20 +433,25 @@ const MyBookings = () => {
                       key={`pickup-${l.id}`}
                       id={booking.id}
                       className="gap-1"
+                      org_id={o.id}
                     >
                       {l.name}
                     </BookingPickupButton>
                   )),
               )}
-            {picked_up_locations?.map((l) => (
-              <BookingReturnButton
-                id={booking.id}
-                location_id={l.id}
-                onSuccess={refetchBookings}
-              >
-                {l.name}
-              </BookingReturnButton>
-            ))}
+            {orgs_with_picked_up_items.map((o) =>
+              o.locations.map((loc) => (
+                <BookingReturnButton
+                  key={`${o.id}-${loc.id}`}
+                  org_id={o.id}
+                  location_id={loc.id}
+                  id={booking.id}
+                  onSuccess={refetchBookings}
+                >
+                  {loc.name}
+                </BookingReturnButton>
+              )),
+            )}
           </div>
         );
       },
