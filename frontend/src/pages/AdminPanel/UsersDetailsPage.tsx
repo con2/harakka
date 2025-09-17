@@ -100,10 +100,10 @@ const UsersDetailsPage = () => {
     roleAssignments.length > 0 &&
     (!lastRoleEntry?.role_name || !lastRoleEntry?.org_id);
 
-  const { organizationId: activeOrgId, organizationName: activeOrgName } =
-    useAppSelector(selectActiveRoleContext);
+  const { organizationId: activeOrgId } = useAppSelector(
+    selectActiveRoleContext,
+  );
   const isSuperAdmin = hasRole("super_admin");
-  //const isTenantAdmin = hasRole("tenant_admin", activeOrgId!);
   const canManageRoles = hasAnyRole(
     ["tenant_admin", "super_admin"],
     activeOrgId!,
@@ -113,14 +113,31 @@ const UsersDetailsPage = () => {
     [roleAssignments],
   );
 
-  const getSelectableRoles = () => {
+  const getSelectableRoles = (orgId: string | null) => {
     // Only super_admins can assign the super_admin or tenant_admin role
     if (!isSuperAdmin) {
       return availableRoles.filter(
         (role) => role.role !== "super_admin" && role.role !== "tenant_admin",
       );
     }
-    return availableRoles;
+    // No organization selected yet, return all roles
+    if (!orgId) {
+      return availableRoles;
+    }
+
+    // Find the organization by ID to check if it's the High Council
+    const org = organizations.find((o) => o.id === orgId);
+    // Is new role's org High council?
+    const isHighCouncil =
+      org?.name?.toLowerCase() === "high council".toLowerCase();
+
+    // For High Council, only return super_admin role
+    if (isHighCouncil) {
+      return availableRoles.filter((role) => role.role === "super_admin");
+    }
+
+    // For other organizations, return all roles except super_admin
+    return availableRoles.filter((role) => role.role !== "super_admin");
   };
 
   // populate role assignments for the user
@@ -159,6 +176,27 @@ const UsersDetailsPage = () => {
     value: string | null,
   ) => {
     if (!canManageRoles) return;
+
+    if (field === "role_name") {
+      const currentAssignment = roleAssignments[index];
+      const org = organizations.find((o) => o.id === currentAssignment.org_id);
+      const isHighCouncil =
+        org?.name?.toLowerCase() === "high council".toLowerCase();
+
+      // If trying to assign non-super_admin role to High Council, prevent it
+      if (isHighCouncil && value !== "super_admin") {
+        toast.error(t.usersDetailsPage.toasts.highCouncilRestriction[lang]);
+        return;
+      }
+
+      // If trying to assign super_admin role to non-High Council org, prevent it
+      if (!isHighCouncil && value === "super_admin") {
+        toast.error(t.usersDetailsPage.toasts.superAdminRestriction[lang]);
+        return;
+      }
+    }
+
+    // Standard role change
     setRoleAssignments((prev) =>
       prev.map((ra, i) =>
         i === index
@@ -173,6 +211,39 @@ const UsersDetailsPage = () => {
   const handleOrgChange = (index: number, orgId: string) => {
     const org = organizations.find((o) => o.id === orgId);
     if (!org) return;
+
+    // Get the current role assignment
+    const currentAssignment = roleAssignments[index];
+    const isHighCouncil =
+      org.name?.toLowerCase() === "high council".toLowerCase();
+
+    // If switching to High Council but role isn't super_admin, reset role
+    if (isHighCouncil && currentAssignment.role_name !== "super_admin") {
+      setRoleAssignments((prev) =>
+        prev.map((ra, i) =>
+          i === index
+            ? { ...ra, org_id: orgId, org_name: org.name, role_name: null }
+            : ra,
+        ),
+      );
+      toast.info(t.usersDetailsPage.toasts.highCouncilRestriction[lang]);
+      return;
+    }
+
+    // If switching away from High Council and role is super_admin, reset role
+    if (!isHighCouncil && currentAssignment.role_name === "super_admin") {
+      setRoleAssignments((prev) =>
+        prev.map((ra, i) =>
+          i === index
+            ? { ...ra, org_id: orgId, org_name: org.name, role_name: null }
+            : ra,
+        ),
+      );
+      toast.info(t.usersDetailsPage.toasts.superAdminRestriction[lang]);
+      return;
+    }
+
+    // Standard organization change
     setRoleAssignments((prev) =>
       prev.map((ra, i) =>
         i === index ? { ...ra, org_id: orgId, org_name: org.name } : ra,
@@ -181,16 +252,23 @@ const UsersDetailsPage = () => {
   };
 
   const addRoleAssignment = () => {
-    // Only super users can add new role assignments; tenant_admins can only edit existing roles
-    if (!isSuperAdmin) return;
+    if (!canManageRoles) return;
+
+    // Check if there's already an incomplete entry
+    if (isAssigningRole) {
+      toast.warning(t.usersDetailsPage.toasts.completeCurrentRole[lang]);
+      return;
+    }
+
+    // Add a new empty role assignment
     setRoleAssignments((prev) => [
       ...prev,
       {
         id: null,
-        org_id: isSuperAdmin ? null : activeOrgId,
+        org_id: null,
         role_name: null,
         is_active: true,
-        org_name: isSuperAdmin ? "" : activeOrgName || "",
+        org_name: t.usersDetailsPage.placeholders.selectOrganization[lang],
         isNewRole: true,
       },
     ]);
@@ -676,7 +754,7 @@ const UsersDetailsPage = () => {
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {getSelectableRoles().map((r) => (
+                          {getSelectableRoles(ra.org_id).map((r) => (
                             <SelectItem key={r.id} value={r.role}>
                               {formatRoleName(r.role)}
                             </SelectItem>
@@ -705,7 +783,7 @@ const UsersDetailsPage = () => {
                 </div>
               ) : (
                 <p className="text-sm mt-4 text-center mb-2">
-                  User has no current roles
+                  {t.usersDetailsPage.labels.noRoles[lang]}
                 </p>
               )}
             </>

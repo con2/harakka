@@ -62,6 +62,10 @@ export const usersDetailsPage = {
       fi: "Ei osoitteita tallennettuna profiiliin",
       en: "No addresses saved to profile",
     },
+    noRoles: {
+      fi: "Käyttäjällä ei ole tällä hetkellä rooleja",
+      en: "User has no current roles",
+    },
   },
   placeholders: {
     fullName: {
@@ -191,6 +195,18 @@ export const usersDetailsPage = {
     noRolesAssigned: {
       fi: "Käyttäjällä ei ole tällä hetkellä rooleja",
       en: "User has no current roles",
+    },
+    completeCurrentRole: {
+      fi: "Täytä nykyinen roolimääritys ensin",
+      en: "Please complete the current role assignment first",
+    },
+    highCouncilRestriction: {
+      fi: "High Council -organisaatioon voi lisätä vain Super Admin -rooleja",
+      en: "High Council can only have Super Admin role assigned",
+    },
+    superAdminRestriction: {
+      fi: "Super Admin -rooli voidaan lisätä vain High Council -organisaatioon",
+      en: "Super Admin role can only be assigned to High Council",
     },
   },
 };
