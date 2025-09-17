@@ -11,6 +11,7 @@ import { ReactNode } from "react";
 type BookingPickUpProps = {
   id: string;
   location_id?: string;
+  org_id?: string;
   selectedItemIds?: string[];
   disabled?: boolean;
   onSuccess?: () => void;
@@ -21,6 +22,7 @@ type BookingPickUpProps = {
 const BookingPickupButton = ({
   id,
   location_id,
+  org_id,
   selectedItemIds,
   onSuccess,
   disabled = false,
@@ -41,7 +43,8 @@ const BookingPickupButton = ({
         const promise = dispatch(
           pickUpItems({
             bookingId: id,
-            location_id: location_id,
+            location_id,
+            org_id,
             itemIds: selectedItemIds,
           }),
         ).unwrap();

@@ -12,12 +12,14 @@ const BookingReturnButton = ({
   id,
   disabled = false,
   itemIds,
+  org_id,
   onSuccess,
   location_id,
   children,
 }: {
   id: string;
   disabled?: boolean;
+  org_id?: string;
   itemIds?: string[];
   onSuccess?: () => void;
   location_id?: string;
@@ -40,7 +42,7 @@ const BookingReturnButton = ({
       cancelText: t.bookingReturn.confirmDialog.cancelText[lang],
       onConfirm: () => {
         const promise = dispatch(
-          returnItems({ bookingId: id, itemIds, location_id }),
+          returnItems({ bookingId: id, itemIds, location_id, org_id }),
         ).unwrap();
 
         toast.promise(promise, {
