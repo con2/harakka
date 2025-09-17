@@ -44,6 +44,7 @@ export default function InlineTimeframePicker({
             className="z-[60] w-auto p-0"
           >
             <Calendar
+              weekStartsOn={1}
               mode="single"
               selected={startDate ?? undefined}
               onSelect={(date) => {
@@ -77,6 +78,7 @@ export default function InlineTimeframePicker({
             className="z-[60] w-auto p-0"
           >
             <Calendar
+              weekStartsOn={1}
               mode="single"
               selected={endDate ?? undefined}
               onSelect={(date) => {
