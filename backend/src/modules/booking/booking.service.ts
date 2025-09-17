@@ -245,121 +245,91 @@ export class BookingService {
   ) {
     const { from, to } = getPaginationRange(page, limit);
     const supabase = req.supabase;
+    const BOOKED_BY_ORG_ROLES = [
+      "tenant_admin",
+      "storage_manager",
+      "requester",
+    ];
+    const isRequesterRole = BOOKED_BY_ORG_ROLES.includes(activeRole);
 
-    const query = supabase
+    const baseQuery = supabase
       .from("view_bookings_with_user_info")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
 
     if (activeRole === "user") {
-      // Regular users only see their own bookings
-      query.eq("user_id", userId);
-    } else if (
-      activeRole === "requester" ||
-      activeRole === "storage_manager" ||
-      activeRole === "tenant_admin"
-    ) {
-      // Requesters can only see bookings for their organization
-      if (!activeOrgId) {
-        throw new ForbiddenException(
-          "Organization context is required for this action",
-        );
-      }
-
-      const bookingItemsResult = await supabase
-        .from("booking_items")
-        .select(
-          "booking_id, status, self_pickup, location_id, provider_organization_id, organizations(name), storage_locations (name)",
-        )
-        .eq("provider_organization_id", activeOrgId);
-
-      if (bookingItemsResult.error)
-        handleSupabaseError(bookingItemsResult.error);
-
-      const bookingIds = bookingItemsResult.data.map((item) => item.booking_id);
-      // If no bookings found, return empty paginated response
-      if (bookingIds.length === 0) {
-        return {
-          data: [],
-          count: 0,
-          error: null,
-          status: 200,
-          statusText: "OK",
-          metadata: getPaginationMeta(0, page, limit),
-        };
-      }
-
-      // Fetch bookings themselves
-      const result = await supabase
-        .from("view_bookings_with_user_info")
-        .select("*", { count: "exact" })
-        .in("id", bookingIds)
-        .order("created_at", { ascending: false })
-        .range(from, to);
-
-      if (result.error) {
-        // propagate or wrap the error as appropriate
-        throw new BadRequestException("Could not fetch bookings");
-      }
-
-      const mappedResult = result.data.map((booking) => {
-        const bi = bookingItemsResult.data.filter(
-          (data) => data.booking_id === booking.id,
-        );
-
-        const org_booking_status = deriveOrgStatus(bi.map((s) => s.status));
-
-        // Group by organization id
-        const orgMap = new Map();
-
-        bi.forEach((item) => {
-          const orgId = item.provider_organization_id;
-          if (!orgMap.has(orgId)) {
-            orgMap.set(orgId, {
-              id: orgId,
-              name: item.organizations.name,
-              org_booking_status,
-              locations: new Map(), // nested map for locations
-            });
-          }
-
-          const orgEntry = orgMap.get(orgId);
-
-          // Deduplicate locations by location_id
-          if (!orgEntry.locations.has(item.location_id)) {
-            orgEntry.locations.set(item.location_id, {
-              id: item.location_id,
-              name: item.storage_locations.name,
-              self_pickup: item.self_pickup,
-              pickup_status: item.status,
-            });
-          }
-        });
-
-        // Convert maps to arrays
-        const orgs = Array.from(orgMap.values()).map((org) => ({
-          ...org,
-          locations: Array.from(org.locations.values()),
-        }));
-
-        return {
-          ...booking,
-          orgs,
-        };
-      });
-
-      const pagination = getPaginationMeta(result.count, page, limit);
-      return {
-        ...result,
-        data: mappedResult,
-        metadata: pagination,
-      };
+      baseQuery.eq("user_id", userId);
+    } else if (isRequesterRole) {
+      baseQuery.eq("booked_by_org", activeOrgId);
     }
 
-    const result = await query;
+    const bookingItemsQuery = supabase
+      .from("booking_items")
+      .select(
+        "booking_id, status, self_pickup, location_id, provider_organization_id, organizations(name), storage_locations (name)",
+      );
+
+    const bookingItemsResult = await bookingItemsQuery;
+    if (bookingItemsResult.error) handleSupabaseError(bookingItemsResult.error);
+
+    const result = await baseQuery;
+    if (result.error) {
+      // propagate or wrap the error as appropriate
+      throw new BadRequestException("Could not fetch bookings");
+    }
+
+    const mappedResult = result.data.map((booking) => {
+      const bi = bookingItemsResult.data.filter(
+        (data) => data.booking_id === booking.id,
+      );
+
+      const org_booking_status = deriveOrgStatus(bi.map((s) => s.status));
+
+      // Group by organization id
+      const orgMap = new Map();
+      bi.forEach((item) => {
+        const orgId = item.provider_organization_id;
+        if (!orgMap.has(orgId)) {
+          orgMap.set(orgId, {
+            id: orgId,
+            name: item.organizations?.name,
+            org_booking_status,
+            locations: new Map(), // nested map for locations
+          });
+        }
+
+        const orgEntry = orgMap.get(orgId);
+
+        // Deduplicate locations by location_id
+        if (!orgEntry.locations.has(item.location_id)) {
+          orgEntry.locations.set(item.location_id, {
+            id: item.location_id,
+            name: item.storage_locations.name,
+            self_pickup: item.self_pickup,
+            pickup_status: item.status,
+          });
+        }
+      });
+
+      // Convert maps to arrays
+      const orgs = Array.from(orgMap.values()).map((org) => ({
+        ...org,
+        locations: Array.from(org.locations.values()),
+      }));
+
+      return {
+        ...booking,
+        orgs,
+      };
+    });
+
     const pagination = getPaginationMeta(result.count, page, limit);
-    return { ...result, metadata: pagination };
+    return {
+      ...result,
+      data: mappedResult,
+      metadata: pagination,
+    };
   }
 
   /**
@@ -506,7 +476,7 @@ export class BookingService {
     activeRole: { roleName: string; orgId: string },
   ) {
     const userId = dto.user_id;
-
+    const { roleName, orgId } = activeRole;
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
     }
@@ -611,12 +581,18 @@ export class BookingService {
       );
     }
 
+    const BOOKED_BY_ORG_ROLES = [
+      "tenant_admin",
+      "storage_manager",
+      "requester",
+    ];
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
       .insert({
         user_id: userId,
         booking_number: bookingNumber,
         status: "pending",
+        booked_by_org: BOOKED_BY_ORG_ROLES.includes(roleName) ? orgId : null,
       })
       .select()
       .single<BookingRow>();
