@@ -46,7 +46,6 @@ const AdminDashboard = () => {
   const bookings = useAppSelector(selectAllBookings);
   const bookingsLoading = useAppSelector((s) => s.bookings.loading);
   const navigate = useNavigate();
-  // Translation
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const itemCount = useAppSelector(selectTotalItemsCount);
@@ -80,13 +79,10 @@ const AdminDashboard = () => {
         }),
       );
     }
-  }, [dispatch, activeContext?.roleName]);
+  }, [dispatch, activeContext?.roleName, activeContext?.organizationId]);
 
   useEffect(() => {
-    if (
-      activeContext?.organizationId ||
-      activeContext?.roleName === "super_admin"
-    ) {
+    if (activeContext?.roleName !== "super_admin") {
       void dispatch(
         getOrderedBookings({
           ordered_by: "created_at",
