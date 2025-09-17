@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchAllOrderedUsersList,
+  fetchAllOrderedUsers,
   getUserCount,
   selectTotalUsersCount,
 } from "@/store/slices/usersSlice";
@@ -71,7 +71,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (activeContext?.roleName === "super_admin") {
       void dispatch(
-        fetchAllOrderedUsersList({
+        fetchAllOrderedUsers({
           page: 1,
           limit: 5,
           ordered_by: "created_at",
@@ -79,7 +79,7 @@ const AdminDashboard = () => {
         }),
       );
     }
-  }, [dispatch, activeContext?.roleName, activeContext?.organizationId]);
+  }, [dispatch, activeContext?.roleName]);
 
   useEffect(() => {
     if (activeContext?.roleName !== "super_admin") {
@@ -94,7 +94,7 @@ const AdminDashboard = () => {
     }
   }, [dispatch, activeContext?.organizationId, activeContext?.roleName]);
 
-  const columns: ColumnDef<BookingPreview>[] = [
+  const bookingColumns: ColumnDef<BookingPreview>[] = [
     {
       accessorKey: "booking_number",
       header: t.bookingList.columns.bookingNumber[lang],
@@ -121,6 +121,23 @@ const AdminDashboard = () => {
       header: t.bookingList.columns.bookingDate[lang],
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
+    },
+  ];
+
+  const userColumns: ColumnDef<Partial<Record<string, unknown>>>[] = [
+    {
+      accessorKey: "full_name",
+      header: t.adminDashboard.columns.userList.name[lang],
+    },
+    {
+      accessorKey: "email",
+      header: t.adminDashboard.columns.userList.email[lang],
+    },
+    {
+      accessorKey: "created_at",
+      header: t.adminDashboard.columns.userList.joined[lang],
+      cell: ({ row }) =>
+        formatDate(new Date(String(row.original.created_at)), "d MMM yyyy"),
     },
   ];
 
@@ -215,14 +232,12 @@ const AdminDashboard = () => {
               rowClick={(row) =>
                 navigate(`/admin/users/${String(row.original.id)}`)
               }
-              columns={
-                [
-                  { accessorKey: "full_name", header: "Name" },
-                  { accessorKey: "email", header: "Email" },
-                  { accessorKey: "created_at", header: "Joined" },
-                ] as ColumnDef<Partial<Record<string, unknown>>>[]
-              }
-              data={usersList}
+              columns={userColumns}
+              data={[...usersList].sort(
+                (a, b) =>
+                  new Date(b.created_at || "").getTime() -
+                  new Date(a.created_at || "").getTime(),
+              )}
             />
             <div className="flex items-center justify-center mt-4">
               <Button
@@ -249,14 +264,12 @@ const AdminDashboard = () => {
                 rowClick={(row) =>
                   navigate(`/admin/bookings/${row.original.id}`)
                 }
-                columns={columns}
-                data={[...bookings]
-                  .sort(
-                    (a, b) =>
-                      new Date(b.created_at || "").getTime() -
-                      new Date(a.created_at || "").getTime(),
-                  )
-                  .slice(0, 8)}
+                columns={bookingColumns}
+                data={[...bookings].sort(
+                  (a, b) =>
+                    new Date(b.created_at || "").getTime() -
+                    new Date(a.created_at || "").getTime(),
+                )}
               />
             )}
             <div className="flex items-center justify-center mt-4">

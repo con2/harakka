@@ -35,4 +35,20 @@ export const adminDashboard = {
       en: "Manage Users",
     },
   },
+  columns: {
+    userList: {
+      name: {
+        fi: "Nimi",
+        en: "Name",
+      },
+      email: {
+        fi: "Sähköposti",
+        en: "Email",
+      },
+      joined: {
+        fi: "Liittynyt",
+        en: "Joined",
+      },
+    },
+  },
 };
