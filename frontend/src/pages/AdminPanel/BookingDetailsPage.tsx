@@ -352,15 +352,13 @@ const BookingDetailsPage = () => {
           <Separator />
           <div className="p-4">
             <div className="flex gap-2">
-              <p>Self-pickup</p>
+              <p>{t.bookingDetailsPage.selfPickup[lang]}</p>
               <Tooltip>
                 <TooltipTrigger className="h-fit">
                   <Info className="w-[18px] h-fit" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-[290px] text-center">
-                  Allow user to pick up items themselves for selected locations.
-                  If enabled, the items are marked as picked up by the user
-                  instead of an admin.
+                  {t.bookingDetailsPage.tooltip.self_pickup[lang]}
                 </TooltipContent>
               </Tooltip>
               <div className="flex gap-4 ml-4">

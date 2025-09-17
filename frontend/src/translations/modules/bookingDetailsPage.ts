@@ -9,6 +9,16 @@ export const bookingDetailsPage = {
       en: "Back",
     },
   },
+  tooltip: {
+    self_pickup: {
+      en: "Allow user to pick up items themselves for selected locations. If enabled, the items are marked as picked up by the user instead of an admin.",
+      fi: "Salli käyttäjän noutaa tuotteet itse valituista sijainneista. Jos tämä on käytössä, tuotteet merkitään noudetuiksi käyttäjän toimesta hallinnoijan sijaan.",
+    },
+  },
+  selfPickup: {
+    en: "Allow Self-Pickup",
+    fi: "Salli itsepalautus",
+  },
   status: {
     fi: "Tila",
     en: "Status",
