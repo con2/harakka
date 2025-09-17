@@ -36,5 +36,17 @@ export const timeframeSelector = {
       fi: "Päivämäärien muuttaminen tyhjentää ostoskorisi. Viimeistele tai tyhjennä nykyinen varauksesi ensin.",
       en: "Changing dates will clear your cart. Please complete or clear your current booking first.",
     },
+    errorSameDay: {
+      fi: "Varausajan on oltava vähintään 1 päivän mittainen",
+      en: "Booking must be at least 1 day long",
+    },
+    errorTooLong: {
+      fi: "Varaus ei voi ylittää 6 viikkoa",
+      en: "Booking cannot exceed 6 weeks",
+    },
+    errorEndBeforeStart: {
+      fi: "Loppupäivän on oltava alkupäivän jälkeen",
+      en: "End date must be after start date",
+    },
   },
 };
