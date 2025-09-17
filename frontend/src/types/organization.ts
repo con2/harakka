@@ -24,4 +24,5 @@ export interface OrganizationState {
   limit: number;
   total: number;
   totalPages: number;
+  count: number;
 }
