@@ -622,12 +622,20 @@ export class BookingService {
     }
 
     // filtering to get active role
+    // Extend the type to include role_name and requester_org_id
+    type BookingWithRole = (typeof createdBookings)[0] & {
+      role_name?: string;
+      requester_org_id?: string;
+      user_role_id?: string;
+      role_id?: string;
+    };
+
     const createdBooking =
-      createdBookings.find(
-        (b) =>
+      (createdBookings.find(
+        (b: BookingWithRole) =>
           b.role_name === activeRole.roleName &&
           b.requester_org_id === activeRole.orgId,
-      ) || createdBookings[0];
+      ) as BookingWithRole) || (createdBookings[0] as BookingWithRole);
 
     // attach role info to the response
     const bookingWithRole = {

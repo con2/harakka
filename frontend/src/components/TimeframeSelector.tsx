@@ -120,6 +120,7 @@ const TimeframeSelector: React.FC = () => {
               </PopoverTrigger>
               <PopoverContent className="w-auto max-w-xs p-0 break-words">
                 <Calendar
+                  weekStartsOn={1}
                   mode="single"
                   selected={startDate || undefined}
                   onSelect={(date) => handleDateChange("start", date)}
@@ -150,11 +151,12 @@ const TimeframeSelector: React.FC = () => {
               </PopoverTrigger>
               <PopoverContent className="w-auto max-w-xs p-0 break-words">
                 <Calendar
+                  weekStartsOn={1}
                   mode="single"
                   selected={endDate || undefined}
                   onSelect={(date) => handleDateChange("end", date)}
                   initialFocus
-                  month={startDate}
+                  defaultMonth={startDate} // Problem: Currently does not let user change month
                   disabled={(date) => {
                     // Always return a boolean value:
                     const isBeforeToday =
@@ -167,6 +169,7 @@ const TimeframeSelector: React.FC = () => {
                       ? date.getTime() >
                         new Date(startDate.getTime() + 42 * 86400000).getTime()
                       : false;
+
                     return (
                       isBeforeToday || isBeforeStartDate || isTooFarFromStart
                     );

@@ -20,6 +20,10 @@ export const usersDetailsPage = {
       fi: "Vaaravyöhyke",
       en: "Danger Zone",
     },
+    refresh: {
+      fi: "Päivitä roolit",
+      en: "Refresh Roles",
+    },
   },
   title: {
     fi: "Muokkaa käyttäjää",
@@ -57,6 +61,10 @@ export const usersDetailsPage = {
     noAddresses: {
       fi: "Ei osoitteita tallennettuna profiiliin",
       en: "No addresses saved to profile",
+    },
+    noRoles: {
+      fi: "Käyttäjällä ei ole tällä hetkellä rooleja",
+      en: "User has no current roles",
     },
   },
   placeholders: {
@@ -149,6 +157,56 @@ export const usersDetailsPage = {
         fi: "Poista esto",
         en: "Unban",
       },
+    },
+  },
+  toasts: {
+    loading: {
+      fi: "Tallennetaan roolimuutoksia...",
+      en: "Saving role changes...",
+    },
+    roleRefreshSuccess: {
+      fi: "Roolit päivitetty",
+      en: "Roles data refreshed",
+    },
+    roleRefreshError: {
+      fi: "Roolien päivittäminen epäonnistui",
+      en: "Failed to refresh roles data",
+    },
+    savingRoles: {
+      fi: "Tallennetaan roolimuutoksia...",
+      en: "Saving role changes...",
+    },
+    roleChangesSaved: {
+      fi: "Muutokset tallennettu: {created} roolia luotu, {updated} päivitetty, {deleted} poistettu",
+      en: "Changes saved: {created} roles created, {updated} updated, {deleted} deleted",
+    },
+    roleRemoved: {
+      fi: "Poistettu {role} organisaatiosta {org}",
+      en: "Removed {role} from {org}",
+    },
+    roleRemovedLocal: {
+      fi: "Poistettu {role} organisaatiosta {org} (paikallinen muutos)",
+      en: "Removed {role} from {org} (local change)",
+    },
+    roleRemoveError: {
+      fi: "Roolin {role} poisto epäonnistui. Yritä uudelleen.",
+      en: "Failed to remove {role}. Please try again.",
+    },
+    noRolesAssigned: {
+      fi: "Käyttäjällä ei ole tällä hetkellä rooleja",
+      en: "User has no current roles",
+    },
+    completeCurrentRole: {
+      fi: "Täytä nykyinen roolimääritys ensin",
+      en: "Please complete the current role assignment first",
+    },
+    highCouncilRestriction: {
+      fi: "High Council -organisaatioon voi lisätä vain Super Admin -rooleja",
+      en: "High Council can only have Super Admin role assigned",
+    },
+    superAdminRestriction: {
+      fi: "Super Admin -rooli voidaan lisätä vain High Council -organisaatioon",
+      en: "Super Admin role can only be assigned to High Council",
     },
   },
 };

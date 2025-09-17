@@ -1,22 +1,14 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
+  Form,
   FormControl,
   FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  Form,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { useLanguage } from "@/context/LanguageContext";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import {
-  fetchAllOrgLocations,
-  selectOrgLocations,
-} from "@/store/slices/organizationLocationsSlice";
-import { createItemDto } from "@/store/utils/validate";
-import { ItemFormTag } from "@/types";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Select,
   SelectContent,
@@ -24,19 +16,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SubmitErrorHandler, useForm } from "react-hook-form";
-import { z } from "zod";
-import { t } from "@/translations";
-import React, { useEffect, useState } from "react";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import {
-  fetchFilteredTags,
-  selectAllTags,
-  selectTagsLoading,
-} from "@/store/slices/tagSlice";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/context/LanguageContext";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  fetchAllCategories,
+  selectCategories,
+} from "@/store/slices/categoriesSlice";
 import {
   addToItemCreation,
   clearLocalItemError,
@@ -47,14 +37,29 @@ import {
   toggleIsEditing,
   updateLocalItem,
 } from "@/store/slices/itemsSlice";
-import { TRANSLATION_FIELDS } from "../add-item.data";
-import { toast } from "sonner";
-import ItemImageUpload from "../ItemImageUpload";
+import {
+  fetchAllOrgLocations,
+  selectOrgLocations,
+} from "@/store/slices/organizationLocationsSlice";
+import {
+  fetchFilteredTags,
+  selectAllTags,
+  selectTagsLoading,
+} from "@/store/slices/tagSlice";
 import { setNextStep } from "@/store/slices/uiSlice";
-import { CreateItemType } from "@common/items/form.types";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorMessage } from "@hookform/error-message";
+import { createItemDto } from "@/store/utils/validate";
+import { t } from "@/translations";
+import { ItemFormTag } from "@/types";
 import { getFirstErrorMessage } from "@/utils/validate";
+import { CreateItemType } from "@common/items/form.types";
+import { ErrorMessage } from "@hookform/error-message";
+import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useEffect, useState } from "react";
+import { SubmitErrorHandler, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { TRANSLATION_FIELDS } from "../add-item.data";
+import ItemImageUpload from "../ItemImageUpload";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -70,6 +75,7 @@ function AddItemForm() {
   const { location: storage, org } = useAppSelector(selectItemCreation);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector(selectTagsLoading);
+  const categories = useAppSelector(selectCategories);
   const isEditing = useAppSelector(selectIsEditing);
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
@@ -87,15 +93,14 @@ function AddItemForm() {
       translations: {
         fi: {
           item_name: "",
-          item_type: "",
           item_description: "",
         },
         en: {
           item_name: "",
-          item_type: "",
           item_description: "",
         },
       },
+      category_id: "",
       images: {
         main: null,
         details: [],
@@ -138,7 +143,7 @@ function AddItemForm() {
     if (exists) {
       setSelectedTags(selectedTags.filter((t) => t.tag_id !== id));
     } else {
-      const newTag = tags?.find((t) => t.id === id);
+      const newTag = tags?.find((t) => t?.id === id);
       if (newTag)
         setSelectedTags([
           ...selectedTags,
@@ -189,6 +194,13 @@ function AddItemForm() {
   }, []);
 
   useEffect(() => {
+    if (categories.length === 0)
+      void dispatch(
+        fetchAllCategories({ page: 1, limit: 20, order: "assigned_to" }),
+      );
+  }, []);
+
+  useEffect(() => {
     const newValue = form.getValues("quantity");
     form.setValue("available_quantity", newValue);
   }, [form.getValues("quantity")]);
@@ -233,7 +245,6 @@ function AddItemForm() {
   }, [tags, editItem]);
 
   /*------------------render-------------------------------------------------*/
-
   return (
     <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px]">
       <Form {...form}>
@@ -271,10 +282,17 @@ function AddItemForm() {
                             }
                           </FormLabel>
                           <FormControl>
-                            <Input
-                              {...field}
-                              className="border shadow-none border-grey w-full mb-1"
-                            />
+                            {fieldKey === "item_description" ? (
+                              <Textarea
+                                {...field}
+                                className="border shadow-none border-grey w-full mb-1"
+                              />
+                            ) : (
+                              <Input
+                                {...field}
+                                className="border shadow-none border-grey w-full mb-1"
+                              />
+                            )}
                           </FormControl>
                           <ErrorMessage
                             errors={form.formState.errors}
@@ -297,8 +315,44 @@ function AddItemForm() {
               })}
             </div>
 
-            {/* Location | Total Quantity | Is active */}
+            {/* Category | Total Quantity | Location | Is active */}
             <div className="gap-4 flex w-full">
+              <FormField
+                name="category_id"
+                control={form.control}
+                render={({ field }) => (
+                  <div className="w-full">
+                    <FormItem>
+                      <FormLabel>
+                        {t.addItemForm.labels.category[appLang]}
+                      </FormLabel>
+                      <Select
+                        defaultValue={field.value || "---"}
+                        onValueChange={(value) =>
+                          form.setValue("category_id", value)
+                        }
+                      >
+                        <SelectTrigger className="border shadow-none border-grey w-full">
+                          <SelectValue
+                            className="border shadow-none border-grey"
+                            placeholder={""}
+                          >
+                            {categories.find((c) => c.id === field.value)
+                              ?.translations[appLang] || "---"}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories?.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                              {cat.translations[appLang]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  </div>
+                )}
+              />
               <FormField
                 name="quantity"
                 control={form.control}
