@@ -13,18 +13,6 @@ export const TRANSLATION_FIELDS = [
   },
   {
     lang: "fi",
-    fieldKey: "item_type",
-    nameValue: "translations.fi.item_type",
-    translationKey: "itemTypeFi",
-  },
-  {
-    lang: "en",
-    fieldKey: "item_type",
-    nameValue: "translations.en.item_type",
-    translationKey: "itemTypeEn",
-  },
-  {
-    lang: "fi",
     fieldKey: "item_description",
     nameValue: "translations.fi.item_description",
     translationKey: "descriptionFi",

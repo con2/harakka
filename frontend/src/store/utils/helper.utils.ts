@@ -16,25 +16,22 @@ export function formatParsedItems(
     const {
       en_item_name,
       en_item_description,
-      en_item_type,
       fi_item_description,
       fi_item_name,
-      fi_item_type,
       ...rest
     } = item;
     return {
       ...rest,
       id: crypto.randomUUID() as string,
+      category_id: "",
       translations: {
         fi: {
           item_name: fi_item_name,
           item_description: fi_item_description,
-          item_type: fi_item_type,
         },
         en: {
           item_name: en_item_name,
           item_description: en_item_description,
-          item_type: en_item_type,
         },
       },
       images: {

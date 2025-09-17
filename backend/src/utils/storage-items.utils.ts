@@ -22,6 +22,7 @@ export function payloadToStorageItem(payload: ItemFormData): StorageItem[] {
     return {
       id: item.id,
       org_id: org.id,
+      category_id: item.category_id,
       location_id: item.location.id,
       quantity: item.quantity,
       available_quantity: item.available_quantity,
@@ -164,7 +165,7 @@ export function applyItemFilters<T extends FilterableQuery>(
     isActive?: boolean;
     tags?: string;
     location_filter?: string;
-    categories?: string[];
+    categories?: string[] | null;
     from_date?: string;
     to_date?: string;
     availability_min?: number;

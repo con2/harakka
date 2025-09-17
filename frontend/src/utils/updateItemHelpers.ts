@@ -30,6 +30,7 @@ export function buildCandidateFrom(
     available_quantity: Number(fd.available_quantity ?? fd.quantity ?? 0),
     is_active: Boolean(fd.is_active),
     translations: fd.translations,
+    category_id: fd.category_id,
     tags: localSelectedTags,
     images: (
       fd as unknown as {
@@ -44,7 +45,6 @@ export function validateCandidateWithMessages(
   lang: keyof typeof t.addItemForm.messages.validation | (string & {}),
 ) {
   const validation = createItemDto.safeParse(candidate);
-
   if (!validation.success) {
     const first = validation.error.issues[0];
     const key = first?.message as
@@ -61,7 +61,6 @@ export function validateCandidateWithMessages(
 
       toast.error(fallback?.[lang as string] ?? "Invalid input");
     }
-
     return false;
   }
 
