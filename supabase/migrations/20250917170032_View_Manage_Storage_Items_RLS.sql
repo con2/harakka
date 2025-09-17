@@ -1,5 +1,5 @@
 drop view if exists public.view_manage_storage_items;
-
+-- Nothing changed in the view definition; just resetting security_invoker
 create view public.view_manage_storage_items with (security_invoker = on) as
  SELECT (s.translations -> 'fi'::text) ->> 'item_name'::text AS fi_item_name,
     (s.translations -> 'fi'::text) ->> 'item_type'::text AS fi_item_type,
