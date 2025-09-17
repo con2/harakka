@@ -437,34 +437,22 @@ export const useRoles = () => {
     [],
   );
 
-  // Add this to the useRoles hook return value
+  // Sync session and roles after permission changes
   const syncSessionAndRoles = useCallback(async () => {
     try {
       // First refresh the Supabase session to get latest JWT
       await refreshSupabaseSession();
-
       // Then force refresh current user roles (bypassing cache)
       await refreshCurrentUserRoles(true);
-
-      // If user is admin, also refresh all user roles
-      if (isAnyTypeOfAdmin) {
-        await refreshAllUserRoles(true);
-      }
-
+      // Refresh all user roles
+      await refreshAllUserRoles(true);
       // Return success
       return true;
     } catch (error) {
       console.error("Failed to sync session and roles:", error);
       return false;
     }
-  }, [
-    refreshSupabaseSession,
-    refreshCurrentUserRoles,
-    refreshAllUserRoles,
-    isAnyTypeOfAdmin,
-  ]);
-
-  // Add this function to the useRoles hook
+  }, [refreshSupabaseSession, refreshCurrentUserRoles, refreshAllUserRoles]);
 
   const setupPeriodicSessionCheck = useCallback(
     (intervalMinutes = 5) => {
@@ -475,10 +463,9 @@ export const useRoles = () => {
       const interval = setInterval(
         async () => {
           try {
-            // Make a lightweight API call that will return the X-Role-Version header
-            // We use the current user roles endpoint as it's lightweight
+            // Make a lightweight API call that will return the x-role-version header
             await roleApi.getCurrentUserRoles();
-            // The interceptor in axios.ts will handle version comparison and session refresh
+            // The interceptor in axios.ts handles version comparison and session refresh
           } catch (error) {
             console.error("Periodic session check failed:", error);
           }

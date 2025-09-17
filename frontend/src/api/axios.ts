@@ -78,8 +78,6 @@ let rolesRefreshPromise: Promise<unknown> | null = null;
 // Return response.data directly with role refresh handling
 api.interceptors.response.use(
   (response) => {
-    console.log("Response headers:", response.headers["x-role-version"]);
-    console.log ("Active role.header:", response.headers["x-org-name"])
     // Check for role version header
     const roleVersion = response.headers["x-role-version"];
     if (roleVersion) {

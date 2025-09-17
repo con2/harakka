@@ -13,11 +13,18 @@ import {
   MapPin,
   LayoutGrid,
 } from "lucide-react";
+import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
 const AdminPanel = () => {
   const { lang } = useLanguage();
-  const { hasAnyRole, hasRole } = useRoles();
+  const { hasAnyRole, hasRole, setupPeriodicSessionCheck } = useRoles();
+
+  // Set up JWT expirity check every 3 minutes
+  useEffect(() => {
+    const cleanup = setupPeriodicSessionCheck(3);
+    return cleanup;
+  }, [setupPeriodicSessionCheck]);
 
   // Check if user has any admin role
   const isAnyTypeOfAdmin = hasAnyRole([

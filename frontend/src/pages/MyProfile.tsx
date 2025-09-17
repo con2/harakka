@@ -73,13 +73,7 @@ const MyProfile = () => {
   );
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
 
-  const { activeContext, setupPeriodicSessionCheck } = useRoles();
-
-  useEffect(() => {
-    // Set up check every 3 minutes
-    const cleanup = setupPeriodicSessionCheck(3);
-    return cleanup;
-  }, [setupPeriodicSessionCheck]);
+  const { activeContext } = useRoles();
 
   useEffect(() => {
     if (selectedUser) {
