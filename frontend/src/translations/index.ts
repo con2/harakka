@@ -77,7 +77,6 @@ import { updateItemModal } from "./modules/updateItemModal";
 import { userBan } from "./modules/userBan";
 import { userBanHistory } from "./modules/userBanHistory";
 import { userDelete } from "./modules/userDelete";
-import { userEditModal } from "./modules/userEditModal";
 import { userGuide } from "./modules/userGuide";
 import { userPanel } from "./modules/userPanel";
 import { usersDetailsPage } from "./modules/usersDetailsPage";
@@ -162,7 +161,6 @@ export const t = {
   userBan,
   userBanHistory,
   userDelete,
-  userEditModal,
   userGuide,
   userPanel,
   userSignupModal,
