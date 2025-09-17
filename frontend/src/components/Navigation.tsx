@@ -33,20 +33,26 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { Sheet, SheetTrigger } from "./ui/sheet";
 import MobileMenu from "./MobileMenu";
+import { useProfile } from "@/hooks/useProfile";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 export const Navigation = () => {
   // Auth State
   const { signOut, user, authLoading } = useAuth();
-  const { hasAnyRole } = useRoles();
+  const { hasAnyRole, hasRole } = useRoles();
   const selectedUser = useAppSelector(selectSelectedUser);
   const { lang } = useLanguage();
+  const activeOrg = useAppSelector(selectActiveOrganizationId);
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
+  const { avatarUrl, name } = useProfile(user);
+  const isGlobalUser = hasRole("user", activeOrg!);
 
   // Screen Size State
-  const { isMobile, width } = useIsMobile();
-  const isTablet = width <= 1210;
+  const { isMobile: defaultMobileSize, width } = useIsMobile();
+  const isTablet = isGlobalUser ? width <= 1210 : width <= 1130;
+  const isMobile = isGlobalUser ? defaultMobileSize : width <= 877;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAnyTypeOfAdmin = hasAnyRole([
@@ -159,6 +165,28 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
+          {isLoggedIn && (
+            <>
+              <Button
+                variant={"ghost"}
+                className="m-0 hover:bg-(--subtle-grey) gap-2 hover:text-(--midnight-black) text-(--midnight-black)"
+                size={"sm"}
+                onClick={() => void navigate("/profile")}
+                data-cy="nav-profile-btn"
+              >
+                {avatarUrl && avatarUrl.trim() !== "" ? (
+                  <img
+                    src={avatarUrl}
+                    className="inline h-6 w-6 rounded-full"
+                    alt="User avatar"
+                  />
+                ) : (
+                  <UserIcon className="inline h-6 w-6 rounded-full" />
+                )}
+                <span>{name}</span>
+              </Button>
+            </>
+          )}
         </div>
       </nav>
     );
@@ -273,19 +301,21 @@ export const Navigation = () => {
               <>
                 <Button
                   variant={"ghost"}
-                  className="p-o m-0 hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+                  className="m-0 hover:bg-(--subtle-grey) gap-2 hover:text-(--midnight-black) text-(--midnight-black)"
                   size={"sm"}
                   onClick={() => void navigate("/profile")}
                   data-cy="nav-profile-btn"
                 >
-                  {/* Show name on desktop, icon on mobile */}
-                  <UserIcon className="inline sm:hidden h-5 w-5" />
-                  <span className="hidden sm:inline">
-                    {/* Display full_name if available, fall back to email */}
-                    {selectedUser?.full_name
-                      ? selectedUser?.full_name
-                      : user?.email}
-                  </span>
+                  {avatarUrl && avatarUrl.trim() !== "" ? (
+                    <img
+                      src={avatarUrl}
+                      className="inline h-6 w-6 rounded-full"
+                      alt="User avatar"
+                    />
+                  ) : (
+                    <UserIcon className="inline h-6 w-6 rounded-full bg-grey" />
+                  )}
+                  <span className="hidden sm:inline">{name}</span>
                 </Button>
                 <Button
                   variant={"ghost"}
