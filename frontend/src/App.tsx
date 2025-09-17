@@ -9,6 +9,7 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 function App() {
   return (
     <AuthProvider>
+      {/* Added TooltipProvider to App so we only have one provider for tooltips */}
       <TooltipProvider
         delayDuration={200}
         skipDelayDuration={200}

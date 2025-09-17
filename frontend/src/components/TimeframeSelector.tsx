@@ -97,6 +97,7 @@ const TimeframeSelector: React.FC = () => {
         setConfirmClearDates(true);
         toast.warning(t.timeframeSelector.toast.warning[lang], {
           id: "timeframe-toast",
+          duration: 4500,
         });
         // auto-reset the confirm flag after a short window to avoid accidental clears later
         window.setTimeout(() => setConfirmClearDates(false), 4000);
@@ -217,14 +218,19 @@ const TimeframeSelector: React.FC = () => {
         </div>
 
         <div className="flex w-full lg:w-auto items-center justify-center">
+          {/* Clear Dates Button */}
           <Button
             size="sm"
             onClick={handleClearTimeframe}
-            className={`mt-6 bg-white text-highlight2 border border-highlight2 hover:bg-highlight2 hover:text-white ${
-              startDate || endDate ? "visible" : "invisible"
-            }`}
+            className={`mt-6 ${
+              confirmClearDates
+                ? "bg-amber-500 text-white hover:bg-amber-600"
+                : "bg-white text-highlight2 border border-highlight2 hover:bg-highlight2 hover:text-white"
+            } ${startDate || endDate ? "visible" : "invisible"}`}
           >
-            {t.timeframeSelector.clearDates[lang]}
+            {confirmClearDates
+              ? t.timeframeSelector.confirmClear[lang]
+              : t.timeframeSelector.clearDates[lang]}
           </Button>
         </div>
       </div>

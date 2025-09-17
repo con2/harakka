@@ -31,6 +31,10 @@ export const timeframeSelector = {
     fi: "Tyhjennä päivämäärät",
     en: "Clear Dates",
   },
+  confirmClear: {
+    fi: "Vahvista tyhjennys",
+    en: "Click again to clear cart & dates",
+  },
   toast: {
     warning: {
       fi: "Päivämäärien muuttaminen tyhjentää ostoskorisi. Viimeistele tai tyhjennä nykyinen varauksesi ensin.",
