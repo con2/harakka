@@ -160,7 +160,13 @@ export class BookingController {
   })
   async getBookingsCount(@Req() req: AuthRequest) {
     const supabase = req.supabase;
-    return this.bookingService.getBookingsCount(supabase);
+    const activeOrgId = req.headers["x-org-id"] as string | undefined;
+    const activeRole = req.headers["x-role-name"] as string | undefined;
+    return this.bookingService.getBookingsCount(
+      supabase,
+      activeOrgId,
+      activeRole,
+    );
   }
 
   /**

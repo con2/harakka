@@ -49,6 +49,12 @@ export const organizationApi = {
     api.patch(`/organizations/${id}/soft-delete`),
 
   /**
+   * Get organizations count (used on admin dashboard)
+   */
+  getOrganizationsCount: (): Promise<{ count: number }> =>
+    api.get(`/organizations/count`),
+
+  /**
    * Upload new logo picture for the current org
    * @param file - The file to upload
    * @returns Promise with the URL of the uploaded picture

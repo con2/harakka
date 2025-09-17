@@ -449,7 +449,44 @@ export class BookingService {
 
   async getBookingsCount(
     supabase: SupabaseClient,
+    orgId?: string,
+    activeRole?: string,
   ): Promise<ApiSingleResponse<number>> {
+    // Super admin should always receive global count
+    if (activeRole === "super_admin") {
+      const result: PostgrestResponse<undefined> = await supabase
+        .from("bookings")
+        .select(undefined, { count: "exact" });
+
+      if (result.error) handleSupabaseError(result.error);
+
+      return {
+        ...result,
+        data: result.count ?? 0,
+      };
+    }
+
+    // If orgId provided, count distinct booking_ids that have booking_items for that org
+    if (orgId) {
+      const res = await supabase
+        .from("booking_items")
+        .select("booking_id")
+        .eq("provider_organization_id", orgId);
+
+      if (res.error) handleSupabaseError(res.error);
+
+      const ids = Array.from(
+        new Set((res.data || []).map((r) => r.booking_id)),
+      );
+      return {
+        data: ids.length,
+        count: ids.length,
+        error: null,
+        status: 200,
+        statusText: "OK",
+      } as ApiSingleResponse<number>;
+    }
+
     const result: PostgrestResponse<undefined> = await supabase
       .from("bookings")
       .select(undefined, { count: "exact" });
@@ -644,12 +681,20 @@ export class BookingService {
     }
 
     // filtering to get active role
+    // Extend the type to include role_name and requester_org_id
+    type BookingWithRole = (typeof createdBookings)[0] & {
+      role_name?: string;
+      requester_org_id?: string;
+      user_role_id?: string;
+      role_id?: string;
+    };
+
     const createdBooking =
-      createdBookings.find(
-        (b) =>
+      (createdBookings.find(
+        (b: BookingWithRole) =>
           b.role_name === activeRole.roleName &&
           b.requester_org_id === activeRole.orgId,
-      ) || createdBookings[0];
+      ) as BookingWithRole) || (createdBookings[0] as BookingWithRole);
 
     // attach role info to the response
     const bookingWithRole = {
