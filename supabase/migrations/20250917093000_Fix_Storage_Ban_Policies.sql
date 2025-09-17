@@ -8,6 +8,12 @@ drop policy if exists "Ban Enforcement App Storage Items" on public.storage_item
 drop policy if exists "Ban Enforcement Org Storage Items" on public.storage_items;
 drop policy if exists "Ban Enforcement App Storage Items (mutations)" on public.storage_items;
 drop policy if exists "Ban Enforcement Org Storage Items (mutations)" on public.storage_items;
+drop policy if exists "Ban Enforcement App Storage Items (insert)" on public.storage_items;
+drop policy if exists "Ban Enforcement App Storage Items (update)" on public.storage_items;
+drop policy if exists "Ban Enforcement App Storage Items (delete)" on public.storage_items;
+drop policy if exists "Ban Enforcement Org Storage Items (insert)" on public.storage_items;
+drop policy if exists "Ban Enforcement Org Storage Items (update)" on public.storage_items;
+drop policy if exists "Ban Enforcement Org Storage Items (delete)" on public.storage_items;
 
 -- Recreate ban policies only for INSERT/UPDATE/DELETE (not SELECT)
 -- App-level ban: restrict only mutations
@@ -47,6 +53,9 @@ create policy "Ban Enforcement Org Storage Items (delete)" on public.storage_ite
 -- storage_item_images -------------------------------------------------------
 drop policy if exists "Ban Enforcement Org Storage Item Images" on public.storage_item_images;
 drop policy if exists "Ban Enforcement Org Storage Item Images (mutations)" on public.storage_item_images;
+drop policy if exists "Ban Enforcement Org Storage Item Images (insert)" on public.storage_item_images;
+drop policy if exists "Ban Enforcement Org Storage Item Images (update)" on public.storage_item_images;
+drop policy if exists "Ban Enforcement Org Storage Item Images (delete)" on public.storage_item_images;
 
 create policy "Ban Enforcement Org Storage Item Images (insert)" on public.storage_item_images
   as restrictive
@@ -91,6 +100,9 @@ create policy "Ban Enforcement Org Storage Item Images (delete)" on public.stora
 -- storage_item_tags ---------------------------------------------------------
 drop policy if exists "Ban Enforcement Org Storage Item Tags" on public.storage_item_tags;
 drop policy if exists "Ban Enforcement Org Storage Item Tags (mutations)" on public.storage_item_tags;
+drop policy if exists "Ban Enforcement Org Storage Item Tags (insert)" on public.storage_item_tags;
+drop policy if exists "Ban Enforcement Org Storage Item Tags (update)" on public.storage_item_tags;
+drop policy if exists "Ban Enforcement Org Storage Item Tags (delete)" on public.storage_item_tags;
 
 create policy "Ban Enforcement Org Storage Item Tags (insert)" on public.storage_item_tags
   as restrictive
@@ -135,6 +147,9 @@ create policy "Ban Enforcement Org Storage Item Tags (delete)" on public.storage
 -- storage_images ------------------------------------------------------------
 drop policy if exists "Ban Enforcement Org Storage Images" on public.storage_images;
 drop policy if exists "Ban Enforcement Org Storage Images (mutations)" on public.storage_images;
+drop policy if exists "Ban Enforcement Org Storage Images (insert)" on public.storage_images;
+drop policy if exists "Ban Enforcement Org Storage Images (update)" on public.storage_images;
+drop policy if exists "Ban Enforcement Org Storage Images (delete)" on public.storage_images;
 
 create policy "Ban Enforcement Org Storage Images (insert)" on public.storage_images
   as restrictive
@@ -179,6 +194,9 @@ create policy "Ban Enforcement Org Storage Images (delete)" on public.storage_im
 -- storage_locations ---------------------------------------------------------
 drop policy if exists "Ban Enforcement Org Storage Locations" on public.storage_locations;
 drop policy if exists "Ban Enforcement Org Storage Locations (mutations)" on public.storage_locations;
+drop policy if exists "Ban Enforcement Org Storage Locations (insert)" on public.storage_locations;
+drop policy if exists "Ban Enforcement Org Storage Locations (update)" on public.storage_locations;
+drop policy if exists "Ban Enforcement Org Storage Locations (delete)" on public.storage_locations;
 
 create policy "Ban Enforcement Org Storage Locations (insert)" on public.storage_locations
   as restrictive
