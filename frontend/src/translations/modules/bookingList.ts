@@ -52,6 +52,18 @@ export const bookingList = {
       fi: "Tyhjennä suodattimet",
       en: "Clear Filters",
     },
+    filterBy: {
+      fi: "Suodata",
+      en: "Filter by",
+    },
+    recent: {
+      fi: "Viimeisimmät",
+      en: "Latest",
+    },
+    upcoming: {
+      fi: "Lähitulevaisuus",
+      en: "Upcoming",
+    },
   },
   columns: {
     bookingNumber: {
@@ -69,6 +81,10 @@ export const bookingList = {
     bookingDate: {
       fi: "Tilauspäivä",
       en: "Booking Date",
+    },
+    startDate: {
+      fi: "Aloituspäivä",
+      en: "Start Date",
     },
   },
   buttons: {
