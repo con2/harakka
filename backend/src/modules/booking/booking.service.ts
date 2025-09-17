@@ -563,6 +563,15 @@ export class BookingService {
       const end = new Date(item.end_date);
       const totalDays = calculateDuration(start, end);
 
+      // add loan period validation
+      if (totalDays < 1) {
+        throw new BadRequestException("Booking must be at least 1 day long");
+      }
+
+      if (totalDays > 42) {
+        throw new BadRequestException("Booking cannot exceed 6 weeks");
+      }
+
       // get location_id from storage_items
       const { data: storageItem, error: locationError } = await supabase
         .from("storage_items")
@@ -993,6 +1002,15 @@ export class BookingService {
         new Date(start_date),
         new Date(end_date),
       );
+
+      // add loan period validation if needed
+      if (totalDays < 1) {
+        throw new BadRequestException("Booking must be at least 1 day long");
+      }
+
+      if (totalDays > 42) {
+        throw new BadRequestException("Booking cannot exceed 6 weeks");
+      }
 
       // 5.5. Check virtual availability for the time range
       const available = await calculateAvailableQuantity(
