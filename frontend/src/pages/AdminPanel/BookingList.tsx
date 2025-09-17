@@ -33,7 +33,6 @@ const BookingList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
   const [orderBy, setOrderBy] = useState<ValidBookingOrder>("created_at");
-  // For start_date: ascending=true (closest dates first), for created_at: ascending=false (most recent first)
   const getAscending = (order: ValidBookingOrder) => order === "start_date";
   const { totalPages, page } = useAppSelector(selectBookingPagination);
   const { lang } = useLanguage();
