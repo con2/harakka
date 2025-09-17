@@ -326,14 +326,22 @@ const UsersDetailsPage = () => {
       })) {
         // This is a role replacement (different role type in same org)
         const roleDef = availableRoles.find((ar) => ar.role === ra.role_name);
-        if (roleDef && ra.id) {
-          await replaceRole(ra.id, {
-            user_id: user.id,
-            organization_id: ra.org_id,
-            role_id: roleDef.id,
-          });
-          updatedCount++;
-          replacedRoleIds.add(ra.id); // Mark this role as already replaced
+
+        if (roleDef && ra.id && ra.org_id) {
+          try {
+            await replaceRole(ra.id, {
+              user_id: user.id,
+              organization_id: ra.org_id, // TypeScript knows this is non-null now
+              role_id: roleDef.id,
+            });
+            updatedCount++;
+            replacedRoleIds.add(ra.id); // Mark this role as already replaced
+          } catch (err) {
+            console.error("Failed to replace role:", err, {
+              role: ra.role_name,
+              org: ra.org_name,
+            });
+          }
         }
       }
 
@@ -388,9 +396,9 @@ const UsersDetailsPage = () => {
 
       // Update the loading toast with success message
       const translatedMessage = t.usersDetailsPage.toasts.roleChangesSaved[lang]
-        .replace("{created}", createdCount)
-        .replace("{updated}", updatedCount)
-        .replace("{deleted}", deletedCount);
+        .replace("{created}", String(createdCount))
+        .replace("{updated}", String(updatedCount))
+        .replace("{deleted}", String(deletedCount));
       toast.success(translatedMessage, { id: loadingToast });
     } catch (err) {
       console.error("Failed saving roles", err);
