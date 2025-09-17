@@ -292,6 +292,103 @@ export class RoleService {
   }
 
   /**
+   * Replace a user role (delete old role and create new one)
+   */
+  async replaceUserRole(
+    oldRoleId: string,
+    createRoleDto: CreateUserRoleDto,
+    req: AuthRequest,
+  ): Promise<ViewUserRolesWithDetails> {
+    // First check if old role exists
+    const { data: existingRole, error: existingError } = await req.supabase
+      .from("user_organization_roles")
+      .select("id, user_id, organization_id")
+      .eq("id", oldRoleId)
+      .single();
+
+    if (existingError || !existingRole) {
+      throw new NotFoundException("Original role assignment not found");
+    }
+
+    // Verify the new role is for the same user
+    if (existingRole.user_id !== createRoleDto.user_id) {
+      throw new BadRequestException(
+        "User ID mismatch between old and new role",
+      );
+    }
+
+    // Step 1: Delete the old role
+    const { error: deleteError } = await req.supabase
+      .from("user_organization_roles")
+      .delete()
+      .eq("id", oldRoleId);
+
+    if (deleteError) {
+      this.logger.error(`Failed to delete old role: ${deleteError.message}`);
+      throw new BadRequestException("Failed to delete old role assignment");
+    }
+
+    // Step 2: Create the new role
+    // Check if another role already exists in this org (which could happen if roles were modified during this operation)
+    const { data: conflictingRole } = await req.supabase
+      .from("user_organization_roles")
+      .select("id, role_id")
+      .eq("user_id", createRoleDto.user_id)
+      .eq("organization_id", createRoleDto.organization_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (conflictingRole) {
+      this.logger.warn(
+        `User already has another active role in this organization after deleting the old one: ${conflictingRole.id}`,
+      );
+      throw new BadRequestException(
+        `User already has a role in this organization (role_id=${conflictingRole.role_id})`,
+      );
+    }
+
+    // Create the new role assignment
+    const { data: newRole, error: createError } = await req.supabase
+      .from("user_organization_roles")
+      .insert({
+        user_id: createRoleDto.user_id,
+        organization_id: createRoleDto.organization_id,
+        role_id: createRoleDto.role_id,
+        is_active: true,
+      })
+      .select("id")
+      .single();
+
+    if (createError || !newRole) {
+      this.logger.error(`Failed to create new role: ${createError?.message}`);
+      throw new BadRequestException("Failed to create new role assignment");
+    }
+
+    // Get the complete role details using the view
+    const { data: roleDetails, error: viewError } = await req.supabase
+      .from("view_user_roles_with_details")
+      .select("*")
+      .eq("id", newRole.id)
+      .single();
+
+    if (viewError || !roleDetails) {
+      this.logger.error(
+        `Failed to fetch created role details: ${viewError?.message}`,
+      );
+      throw new BadRequestException("Failed to fetch created role details");
+    }
+
+    // After successful role replacement, update JWT
+    await this.updateUserJWTById(createRoleDto.user_id);
+
+    this.logger.log(
+      `Role replaced for user ${createRoleDto.user_id}: ${roleDetails.role_name}@${roleDetails.organization_name}`,
+    );
+
+    return roleDetails;
+  }
+
+  /**
    * Delete a user role assignment (soft delete by setting is_active = false)
    */
   async deleteUserRole(

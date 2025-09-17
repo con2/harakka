@@ -6,6 +6,7 @@ import {
   fetchAvailableRoles,
   createUserRole,
   updateUserRole,
+  replaceUserRole,
   deleteUserRole,
   permanentDeleteUserRole,
   clearRoleErrors,
@@ -379,6 +380,20 @@ export const useRoles = () => {
     [dispatch],
   );
 
+  const replaceRole = useCallback(
+    (oldRoleId: string, newRoleData: CreateUserRoleDto) => {
+      return dispatch(replaceUserRole({ oldRoleId, newRoleData })).then(
+        (result) => {
+          // Invalidate caches as this could affect current user
+          roleCache.allRoles.fetched = false;
+          roleCache.currentRoles.fetched = false;
+          return result;
+        },
+      );
+    },
+    [dispatch],
+  );
+
   const permanentDeleteRole = useCallback(
     (tableKeyId: string) => {
       return dispatch(permanentDeleteUserRole(tableKeyId)).then((result) => {
@@ -507,6 +522,7 @@ export const useRoles = () => {
     clearErrors,
     refreshAll,
     clearRoleCache,
+    replaceRole,
 
     // Active role context values and methods
     activeContext,

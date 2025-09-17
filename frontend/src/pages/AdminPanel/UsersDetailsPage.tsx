@@ -72,10 +72,12 @@ const UsersDetailsPage = () => {
     hasAnyRole,
     createRole,
     updateRole,
+    replaceRole,
     permanentDeleteRole,
     hasRole,
     refreshAllUserRoles,
     refreshAvailableRoles,
+    syncSessionAndRoles,
   } = useRoles();
   const organizations = useAppSelector(selectOrganizations);
 
@@ -101,7 +103,7 @@ const UsersDetailsPage = () => {
   const { organizationId: activeOrgId, organizationName: activeOrgName } =
     useAppSelector(selectActiveRoleContext);
   const isSuperAdmin = hasRole("super_admin");
-  const isTenantAdmin = hasRole("tenant_admin", activeOrgId!);
+  //const isTenantAdmin = hasRole("tenant_admin", activeOrgId!);
   const canManageRoles = hasAnyRole(
     ["tenant_admin", "super_admin"],
     activeOrgId!,
@@ -304,72 +306,57 @@ const UsersDetailsPage = () => {
         userOrgRoles.get(role.organization_id)!.push(role);
       });
 
-      // Find roles to create (only for orgs where user has no roles yet)
-      let toCreate = roleAssignments.filter(
-        (ra) => ra.org_id && !userOrgRoles.has(ra.org_id) && ra.role_name,
+      // Create a loading toast that will be updated with progress
+      const loadingToast = toast.loading(
+        t.usersDetailsPage.toasts.loading[lang],
       );
 
-      // Find roles to update (user already has a role in org but it changed)
-      let toUpdate = roleAssignments.filter((ra) => {
-        if (!ra.org_id || !ra.role_name) return false;
+      // Track operations for reporting
+      let updatedCount = 0;
+      let createdCount = 0;
+      let deletedCount = 0;
+      const replacedRoleIds = new Set<string>();
 
-        // Get existing roles in this org
-        const orgRoles = userOrgRoles.get(ra.org_id) || [];
-        if (orgRoles.length === 0) return false;
+      // Process roles that need to be updated (role type change)
+      for (const ra of roleAssignments.filter((ra) => {
+        if (!ra.org_id || !ra.role_name || !ra.id) return false;
 
-        // Check if there's a role with a different name or active status
-        const existingRole = orgRoles[0];
-        return (
-          existingRole &&
-          (existingRole.role_name !== ra.role_name ||
-            existingRole.is_active !== ra.is_active)
-        );
-      });
-
-      // Standard delete operations
-      let toDelete = originalRoles.filter(
-        (or) =>
-          !roleAssignments.some(
-            (ra) =>
-              ra.org_id === or.organization_id && ra.role_name === or.role_name,
-          ),
-      );
-
-      // If tenant admin, restrict operations to active org only
-      if (isTenantAdmin && activeOrgId) {
-        toCreate = toCreate.filter((ra) => ra.org_id === activeOrgId);
-        toUpdate = toUpdate.filter((ra) => ra.org_id === activeOrgId);
-        toDelete = toDelete.filter((or) => or.organization_id === activeOrgId);
+        const origRole = originalRoles.find((r) => r.id === ra.id);
+        return origRole && origRole.role_name !== ra.role_name;
+      })) {
+        // This is a role replacement (different role type in same org)
+        const roleDef = availableRoles.find((ar) => ar.role === ra.role_name);
+        if (roleDef && ra.id) {
+          await replaceRole(ra.id, {
+            user_id: user.id,
+            organization_id: ra.org_id,
+            role_id: roleDef.id,
+          });
+          updatedCount++;
+          replacedRoleIds.add(ra.id); // Mark this role as already replaced
+        }
       }
 
-      // Process standard updates (is_active toggle)
+      // Process standard updates (is_active toggle only)
       const standardUpdates = roleAssignments.filter((ra) => {
         const orig = originalRoles.find((or) => or.id === ra.id);
-        return ra.id && orig && orig.is_active !== ra.is_active;
+        return (
+          ra.id &&
+          orig &&
+          orig.is_active !== ra.is_active &&
+          orig.role_name === ra.role_name
+        );
       });
 
       for (const ru of standardUpdates) {
         await updateRole(ru.id as string, { is_active: ru.is_active });
-      }
-
-      // Handle role updates - find existing role in org and update it
-      for (const ra of toUpdate) {
-        const orgRoles = userOrgRoles.get(ra.org_id!) || [];
-        const existingRole = orgRoles.find((r) => r.is_active) || orgRoles[0];
-
-        if (existingRole?.id) {
-          const roleDef = availableRoles.find((ar) => ar.role === ra.role_name);
-          if (roleDef) {
-            await updateRole(existingRole.id, {
-              role_id: roleDef.id,
-              is_active: ra.is_active,
-            });
-          }
-        }
+        updatedCount++;
       }
 
       // Process new role creations
-      for (const ra of toCreate) {
+      for (const ra of roleAssignments.filter(
+        (ra) => ra.org_id && !userOrgRoles.has(ra.org_id) && ra.role_name,
+      )) {
         if (!ra.org_id || !ra.role_name) continue;
         const roleDef = availableRoles.find((ar) => ar.role === ra.role_name);
         if (roleDef) {
@@ -378,31 +365,33 @@ const UsersDetailsPage = () => {
             organization_id: ra.org_id,
             role_id: roleDef.id,
           });
+          createdCount++;
         }
       }
 
       // Process deletions
-      for (const rd of toDelete) {
+      for (const rd of originalRoles.filter(
+        (or) =>
+          !roleAssignments.some(
+            (ra) =>
+              ra.org_id === or.organization_id && ra.role_name === or.role_name,
+          ) && !replacedRoleIds.has(or.id!), // Skip roles that were already replaced,
+      )) {
         if (rd.id) {
           await permanentDeleteRole(rd.id);
-          try {
-            toast.success(
-              "Removed role " +
-                (rd.role_name ?? "") +
-                " from " +
-                (rd.organization_name ?? rd.organization_id),
-            );
-          } catch (e) {
-            console.error("Failed to show removal toast", e);
-          }
+          deletedCount++;
         }
       }
 
       // Refresh JWT and force reload roles data
-      await refreshSupabaseSession();
-      await refreshAllUserRoles(true);
+      await syncSessionAndRoles();
 
-      toast.success(t.usersDetailsPage.messages.success[lang]);
+      // Update the loading toast with success message
+      const translatedMessage = t.usersDetailsPage.toasts.roleChangesSaved[lang]
+        .replace("{created}", createdCount)
+        .replace("{updated}", updatedCount)
+        .replace("{deleted}", deletedCount);
+      toast.success(translatedMessage, { id: loadingToast });
     } catch (err) {
       console.error("Failed saving roles", err);
       toast.error(t.usersDetailsPage.messages.error[lang]);
@@ -565,10 +554,14 @@ const UsersDetailsPage = () => {
                   try {
                     await refreshSupabaseSession();
                     await refreshAllUserRoles(true);
-                    toast.success("Roles data refreshed");
+                    toast.success(
+                      t.usersDetailsPage.toasts.roleRefreshSuccess[lang],
+                    );
                   } catch (err) {
                     console.error("Failed to refresh roles:", err);
-                    toast.error("Failed to refresh roles data");
+                    toast.error(
+                      t.usersDetailsPage.toasts.roleRefreshError[lang],
+                    );
                   }
                 }}
               >

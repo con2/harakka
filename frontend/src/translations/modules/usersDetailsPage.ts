@@ -155,4 +155,42 @@ export const usersDetailsPage = {
       },
     },
   },
+  toasts: {
+    loading: {
+      fi: "Tallennetaan roolimuutoksia...",
+      en: "Saving role changes...",
+    },
+    roleRefreshSuccess: {
+      fi: "Roolit päivitetty",
+      en: "Roles data refreshed",
+    },
+    roleRefreshError: {
+      fi: "Roolien päivittäminen epäonnistui",
+      en: "Failed to refresh roles data",
+    },
+    savingRoles: {
+      fi: "Tallennetaan roolimuutoksia...",
+      en: "Saving role changes...",
+    },
+    roleChangesSaved: {
+      fi: "Muutokset tallennettu: {created} roolia luotu, {updated} päivitetty, {deleted} poistettu",
+      en: "Changes saved: {created} roles created, {updated} updated, {deleted} deleted",
+    },
+    roleRemoved: {
+      fi: "Poistettu {role} organisaatiosta {org}",
+      en: "Removed {role} from {org}",
+    },
+    roleRemovedLocal: {
+      fi: "Poistettu {role} organisaatiosta {org} (paikallinen muutos)",
+      en: "Removed {role} from {org} (local change)",
+    },
+    roleRemoveError: {
+      fi: "Roolin {role} poisto epäonnistui. Yritä uudelleen.",
+      en: "Failed to remove {role}. Please try again.",
+    },
+    noRolesAssigned: {
+      fi: "Käyttäjällä ei ole tällä hetkellä rooleja",
+      en: "User has no current roles",
+    },
+  },
 };
