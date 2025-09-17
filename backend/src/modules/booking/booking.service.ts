@@ -119,6 +119,7 @@ export class BookingService {
 
     let bookingsWithOrgStatus: (BookingPreview & {
       org_status_for_active_org?: string;
+      start_date?: string;
     })[] = [];
 
     // Calculate org-specific status for each booking
@@ -130,30 +131,42 @@ export class BookingService {
       if (availableBookingIds.length > 0) {
         const orgItemsRes = await supabase
           .from("booking_items")
-          .select("booking_id,status")
+          .select("booking_id,status,start_date")
           .in("booking_id", availableBookingIds)
           .eq("provider_organization_id", org_id);
         if (orgItemsRes.error) handleSupabaseError(orgItemsRes.error);
 
         // Map booking_id to array of statuses for this org
         const statusMap = new Map<string, string[]>();
+        const startDateMap = new Map<string, string>();
         (orgItemsRes.data || []).forEach((row) => {
-          const r = row as { booking_id: string; status: string };
+          const r = row as {
+            booking_id: string;
+            status: string;
+            start_date: string;
+          };
           const arr = statusMap.get(r.booking_id) || [];
           arr.push(r.status);
           statusMap.set(r.booking_id, arr);
+
+          // Store the start_date (all items in a booking have the same date range)
+          if (!startDateMap.has(r.booking_id)) {
+            startDateMap.set(r.booking_id, r.start_date);
+          }
         });
 
-        // Attach org_status_for_active_org to each booking row
+        // Attach org_status_for_active_org and start_date to each booking row
         bookingsWithOrgStatus = (
           allBookingsResult.data as BookingPreview[]
         ).map((b) => {
           const bid = b.id;
           const statuses = statusMap.get(bid) || [];
           const orgStatus = deriveOrgStatus(statuses);
+          const startDate = startDateMap.get(bid);
           return {
             ...b,
             org_status_for_active_org: orgStatus,
+            start_date: startDate,
           };
         });
       }
@@ -164,6 +177,19 @@ export class BookingService {
       bookingsWithOrgStatus = bookingsWithOrgStatus.filter(
         (booking) => booking.org_status_for_active_org === status_filter,
       );
+    }
+
+    // Filter out past bookings when ordering by start_date (upcoming bookings only)
+    if (order_by === "start_date") {
+      const today = dayjs().utc().startOf("day").toISOString();
+      bookingsWithOrgStatus = bookingsWithOrgStatus.filter((booking) => {
+        if (!booking.start_date) return false;
+        const bookingDate = dayjs(booking.start_date)
+          .utc()
+          .startOf("day")
+          .toISOString();
+        return bookingDate >= today;
+      });
     }
 
     // Sort the filtered results
