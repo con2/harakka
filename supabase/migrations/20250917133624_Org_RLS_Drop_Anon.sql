@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anonymous users cannot access user organization roles" ON public.user_organization_roles;

@@ -29,5 +29,5 @@ for select
 to authenticated
 using (
   app.is_super_admin()
-  or app.is_any_tenant_admin()
+  or app.me_has_role_anywhere('tenant_admin'::public.roles_type)
 );
