@@ -96,7 +96,7 @@ export default function InlineTimeframePicker({
                     ).getTime();
                 return isBeforeMin || isBeforeStart || isTooFar;
               }}
-              month={startDate ?? undefined}
+              defaultMonth={startDate ?? undefined}
             />
           </PopoverContent>
         </Popover>
