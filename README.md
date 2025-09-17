@@ -125,7 +125,7 @@ FullStack_Storage_and_Booking_App/
     └── developers/         # Developer guides
 ```
 
-For a more detailed breakdown, see the [Project Structure](docs/developers/project-structure.md) documentation.
+For a more detailed breakdown, see the [Project Structure](docs/developers/project-structure.md) documentation. 
 
 ## Development Workflow
 
