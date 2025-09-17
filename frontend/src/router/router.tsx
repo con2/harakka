@@ -15,6 +15,8 @@ import AdminItemsTable from "@/pages/AdminPanel/AdminItemsTable";
 import BookingList from "@/pages/AdminPanel/BookingList";
 import BookingDetailsPage from "@/pages/AdminPanel/BookingDetailsPage";
 import TagList from "@/pages/AdminPanel/TagList";
+import TagDetailsPage from "@/pages/AdminPanel/TagDetailsPage";
+import AddTag from "@/pages/AdminPanel/AddTag";
 import Logs from "@/pages/AdminPanel/Logs";
 import Organizations from "@/pages/AdminPanel/Organizations";
 import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
@@ -147,6 +149,26 @@ export const router = createBrowserRouter([
                 allowedRoles={["tenant_admin", "storage_manager"]}
               >
                 <TagList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "tags/new",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
+                <AddTag />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "tags/:id",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
+                <TagDetailsPage />
               </ProtectedRoute>
             ),
           },
