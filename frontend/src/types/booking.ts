@@ -3,6 +3,7 @@ import { BaseEntity, ErrorContext, Translatable } from "./common";
 import { ItemTranslation } from "./item";
 import { Database } from "@common/supabase.types";
 import { StripNull } from "@common/helper.types";
+import { BookingPreviewWithOrgData } from "@common/bookings/booking.types";
 
 /**
  * Booking status values
@@ -29,8 +30,8 @@ export interface BookingType extends BaseEntity {
  * Booking state in Redux store
  */
 export interface BookingsState {
-  bookings: BookingPreview[];
-  userBookings: BookingPreview[];
+  bookings: BookingPreviewWithOrgData[]; // Admin bookings with org-specific data
+  userBookings: BookingPreview[]; // User bookings without org-specific data
   loading: boolean;
   error: string | null;
   errorContext: ErrorContext;
@@ -90,7 +91,8 @@ export type ValidBookingOrder =
   | "created_at"
   | "booking_number"
   | "status"
-  | "full_name";
+  | "full_name"
+  | "start_date";
 
 export type BookingUserView =
   Database["public"]["Views"]["view_bookings_with_user_info"];
