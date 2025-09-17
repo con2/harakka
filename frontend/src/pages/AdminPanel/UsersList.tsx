@@ -9,29 +9,28 @@ import {
   selectAllUsers,
   selectError,
   selectLoading,
+  clearUsersList,
+  fetchAllOrderedUsersList,
 } from "@/store/slices/usersSlice";
-import { fetchAllOrderedUsersList } from "@/store/slices/usersSlice";
-import { clearUsersList } from "@/store/slices/usersSlice";
 import {
   fetchAvailableRoles,
   selectActiveRoleContext,
   selectActiveRoleName,
   selectAvailableRoles,
+  selectAllUserRoles,
 } from "@/store/slices/rolesSlice";
-import { createUserRole } from "@/store/slices/rolesSlice";
-import { CreateUserRoleDto } from "@/types/roles";
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { Eye, LoaderCircle } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Navigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
-import { selectAllUserRoles } from "@/store/slices/rolesSlice";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { formatRoleName } from "@/utils/format";
+import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
+import { toast } from "sonner";
 
 const UsersList = () => {
   // ————————————— Hooks & Selectors —————————————
@@ -45,8 +44,10 @@ const UsersList = () => {
   const { organizationId: activeOrgId, organizationName: activeOrgName } =
     useAppSelector(selectActiveRoleContext);
   const activeRoleName = useAppSelector(selectActiveRoleName);
-  const { refreshAllUserRoles, hasRole, hasAnyRole } = useRoles();
+  const { refreshAllUserRoles, hasRole, hasAnyRole, createRole } = useRoles();
   const rolesCatalog = useAppSelector(selectAvailableRoles);
+  const { lang } = useLanguage();
+  const { formatDate } = useFormattedDate();
 
   // ————————————— State —————————————
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,24 +66,16 @@ const UsersList = () => {
   );
   const [selectedAddUserRole, setSelectedAddUserRole] =
     useState<string>("user");
-  const { lang } = useLanguage();
-  const { formatDate } = useFormattedDate();
+  const [assigningRole, setAssigningRole] = useState(false);
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 500);
 
   // ————————————— Derived Values —————————————
   const isAuthorized = hasAnyRole(["tenant_admin", "super_admin"]);
   const isSuper = hasRole("super_admin");
-
-  useEffect(() => {
-    if (isSuper) fetchAllUsers();
-  }, [isSuper]);
-
-  // Determine if we should fetch all users (no org filter)
-  // This happens when: User has selected a super_admin role from the navbar selector
   const isActiveRoleSuper = activeRoleName === "super_admin";
   const shouldFetchAllUsers = isSuper && (!activeOrgId || isActiveRoleSuper);
 
-  // Get the org_filter value based on super user logic
+  // ————————————— Helper Functions —————————————
   const getOrgFilter = useCallback(() => {
     if (shouldFetchAllUsers) {
       return undefined; // No filter - fetch all users
@@ -165,6 +158,43 @@ const UsersList = () => {
     [allUserRoles, isActiveRoleSuper, activeOrgId],
   );
 
+  // derive the organization name for a given user for this view
+  const getUserOrgName = useCallback(
+    (userId: string) => {
+      // Get all user roles (active and inactive)
+      const allRoles = allUserRoles.filter((r) => r.user_id === userId);
+      // If we're viewing in the context of a specific organization
+      if (activeOrgId) {
+        // First, try to find a role in the active organization
+        const activeOrgRole = allRoles.find(
+          (r) => r.organization_id === activeOrgId,
+        );
+        if (activeOrgRole?.organization_name) {
+          return activeOrgRole.organization_name;
+        }
+      }
+
+      // If no role found in active org, fall back to active roles only
+      const activeRoles = allRoles.filter((r) => r.is_active);
+
+      // If super admin with no org selected, show Global first if present
+      if (isActiveRoleSuper && !activeOrgId) {
+        const global = activeRoles.find(
+          (r) => r.organization_name === "Global",
+        );
+        if (global) return "Global";
+      }
+
+      // Fallback to Global if user has an active Global role
+      const global = activeRoles.find((r) => r.organization_name === "Global");
+      if (global) return "Global";
+
+      // Otherwise, show the first active org name if any
+      return activeRoles[0]?.organization_name ?? "";
+    },
+    [allUserRoles, activeOrgId, isActiveRoleSuper],
+  );
+
   // Filter users based on role filter
   const filteredUsers = useMemo(() => {
     if (!users.data || roleFilter === "all") {
@@ -177,54 +207,25 @@ const UsersList = () => {
     });
   }, [users.data, roleFilter, getUserRolesForDisplay]);
 
-  // ————————————— Side Effects —————————————
-  // Load user roles once when authorized (separate from user data)
-  useEffect(() => {
-    if (!authLoading && isAuthorized && !allUserRoles.length) {
-      void refreshAllUserRoles();
-      void dispatch(fetchAvailableRoles());
-    }
-  }, [
-    authLoading,
-    isAuthorized,
-    allUserRoles.length,
-    refreshAllUserRoles,
-    dispatch,
-  ]);
+  // ————————————— API Actions —————————————
+  const loadUserData = useCallback(() => {
+    if (authLoading || !isAuthorized) return;
 
-  // Reset role filter when active organization changes
-  useEffect(() => {
-    setRoleFilter("all");
-  }, [activeOrgId, activeRoleName]);
+    return dispatch(
+      fetchAllOrderedUsers({
+        org_filter: getOrgFilter(),
+        page: 1,
+        limit: 10,
+        ascending: true,
+        ordered_by: "created_at",
+        searchquery: debouncedSearchQuery || undefined,
+      }),
+    );
+  }, [dispatch, authLoading, isAuthorized, getOrgFilter, debouncedSearchQuery]);
 
-  // Fetch users when key dependencies change
-  useEffect(() => {
-    if (!authLoading && isAuthorized) {
-      void dispatch(
-        fetchAllOrderedUsers({
-          org_filter: getOrgFilter(),
-          page: 1,
-          limit: 10,
-          ascending: true,
-          ordered_by: "created_at",
-          searchquery: debouncedSearchQuery || undefined,
-        }),
-      );
-    }
-  }, [
-    authLoading,
-    isAuthorized,
-    dispatch,
-    activeOrgId,
-    activeRoleName,
-    debouncedSearchQuery,
-    isSuper,
-    getOrgFilter,
-  ]);
-
-  // Handlers for add-new-user search and assign
   const handleAddSearch = async () => {
     if (!addSearchInput || addSearchInput.trim().length === 0) return;
+
     setAddSearchLoading(true);
     try {
       const resp = await dispatch(
@@ -235,11 +236,12 @@ const UsersList = () => {
           limit: 10,
         }),
       ).unwrap();
+
       setAddUsersAccum(resp.data ?? []);
       setAddSearchPage(1);
       setAddTotalPages(resp.metadata?.totalPages ?? 1);
-    } catch {
-      // Error handling is managed elsewhere
+    } catch (err) {
+      console.error("Error searching for users:", err);
     } finally {
       setAddSearchLoading(false);
     }
@@ -248,6 +250,7 @@ const UsersList = () => {
   const handleLoadMore = async () => {
     const nextPage = addSearchPage + 1;
     setAddLoadMoreLoading(true);
+
     try {
       const resp = await dispatch(
         fetchAllOrderedUsersList({
@@ -257,6 +260,7 @@ const UsersList = () => {
           limit: 10,
         }),
       ).unwrap();
+
       const incoming = resp.data ?? [];
       setAddUsersAccum((prev) => {
         const seen = new Set(prev.map((p) => p.id));
@@ -269,10 +273,11 @@ const UsersList = () => {
         }
         return merged;
       });
+
       setAddSearchPage(nextPage);
       setAddTotalPages(resp.metadata?.totalPages ?? addTotalPages);
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Error loading more users:", err);
     } finally {
       setAddLoadMoreLoading(false);
     }
@@ -280,52 +285,53 @@ const UsersList = () => {
 
   const handleAssignRole = async () => {
     if (!selectedAddUserId) return;
+
     if (!activeOrgId) {
-      // We require an active organization to assign org-specific roles
-      // In case of Global assignment this flow would differ
-      alert("Please select an active organization before assigning a role.");
+      toast.error(t.usersList.addUser.noOrgSelected[lang]);
       return;
     }
-    // Resolve role_id from available roles (roles table) because backend expects role_id
+
+    // Find role definition from available roles
     const roleRow = rolesCatalog.find((r) => r.role === selectedAddUserRole);
     if (!roleRow) {
-      alert(
-        "Selected role not available on the server. Please refresh available roles and try again.",
-      );
+      toast.error(t.usersList.addUser.roleNotAvailable[lang]);
       return;
     }
 
-    const payload: CreateUserRoleDto = {
-      user_id: selectedAddUserId,
-      organization_id: activeOrgId,
-      role_id: roleRow.id,
-      is_active: true,
-    } as unknown as CreateUserRoleDto;
-
     try {
-      await dispatch(createUserRole(payload)).unwrap();
-      await refreshAllUserRoles();
-      try {
-        await dispatch(
-          fetchAllOrderedUsers({
-            org_filter: getOrgFilter(),
-            page: 1,
-            limit: 10,
-            ascending: true,
-            ordered_by: "created_at",
-            searchquery: debouncedSearchQuery || undefined,
-          }),
-        ).unwrap();
-      } catch {
-        // Ignore re-fetch errors;
-      }
-      // Clear lightweight add-user search results so reopening the panel doesn't show stale data
-      void dispatch(clearUsersList());
+      setAssigningRole(true);
+
+      // Step 1: Create the role assignment
+      await createRole({
+        user_id: selectedAddUserId,
+        organization_id: activeOrgId,
+        role_id: roleRow.id,
+      });
+
+      // Step 2: Refresh JWT token to update permissions immediately
+      await refreshSupabaseSession();
+
+      // Step 3: Refresh role data with force=true to bypass cache
+      await refreshAllUserRoles(true);
+
+      // Step 4: Refresh user list with latest data
+      await loadUserData();
+
+      // Step 5: Reset UI state
       setShowAddUser(false);
       setAddSearchInput("");
       setSelectedAddUserId(null);
-    } catch {
-      // error is handled by roles slice state;
+      setAddUsersAccum([]);
+      setAddSearchPage(0);
+      void dispatch(clearUsersList());
+
+      // Show success message
+      toast.success(t.usersList.addUser.success[lang]);
+    } catch (error) {
+      console.error("Failed to assign role:", error);
+      toast.error(t.usersList.addUser.error[lang]);
+    } finally {
+      setAssigningRole(false);
     }
   };
 
@@ -335,62 +341,65 @@ const UsersList = () => {
       void dispatch(clearUsersList());
       setAddSearchInput("");
       setSelectedAddUserId(null);
+      setAddUsersAccum([]);
     }
     setShowAddUser((s) => !s);
   }, [dispatch, showAddUser]);
 
-  // ————————————— Helper Functions —————————————
-  // Helper: derive the organization name for a given user for this view
-  const getUserOrgName = (userId: string) => {
-    // Get all user roles (active and inactive)
-    const allRoles = allUserRoles.filter((r) => r.user_id === userId);
-    // If we're viewing in the context of a specific organization
-    if (activeOrgId) {
-      // First, try to find a role in the active organization
-      const activeOrgRole = allRoles.find(
-        (r) => r.organization_id === activeOrgId,
-      );
-      if (activeOrgRole?.organization_name) {
-        return activeOrgRole.organization_name;
+  // ————————————— Side Effects —————————————
+  // Load user roles once when authorized
+  useEffect(() => {
+    if (!authLoading && isAuthorized) {
+      if (!allUserRoles.length) {
+        void refreshAllUserRoles(true);
+      }
+      if (rolesCatalog.length === 0) {
+        void dispatch(fetchAvailableRoles());
       }
     }
+  }, [
+    authLoading,
+    isAuthorized,
+    allUserRoles.length,
+    refreshAllUserRoles,
+    dispatch,
+    rolesCatalog.length,
+  ]);
 
-    // If no role found in active org, fall back to active roles only
-    const activeRoles = allRoles.filter((r) => r.is_active);
-
-    // If super admin with no org selected, show Global first if present
-    if (isActiveRoleSuper && !activeOrgId) {
-      const global = activeRoles.find((r) => r.organization_name === "Global");
-      if (global) return "Global";
+  // Load super admin users
+  useEffect(() => {
+    if (isSuper) {
+      void dispatch(fetchAllUsers());
     }
+  }, [isSuper, dispatch]);
 
-    // Fallback to Global if user has an active Global role
-    const global = activeRoles.find((r) => r.organization_name === "Global");
-    if (global) return "Global";
+  // Reset role filter when active organization changes
+  useEffect(() => {
+    setRoleFilter("all");
+  }, [activeOrgId, activeRoleName]);
 
-    // Otherwise, show the first active org name if any
-    return activeRoles[0]?.organization_name ?? "";
-  };
+  // Fetch users when key dependencies change
+  useEffect(() => {
+    void loadUserData();
+  }, [loadUserData]);
 
   // ————————————— Columns —————————————
   const columns: ColumnDef<UserProfile>[] = [
     {
       id: "view",
       size: 5,
-      cell: () => {
-        return (
-          <div className="flex space-x-1">
-            <Button
-              variant={"ghost"}
-              size="sm"
-              title={t.bookingList.buttons.viewDetails[lang]}
-              className="hover:text-slate-900 hover:bg-slate-300"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-          </div>
-        );
-      },
+      cell: () => (
+        <div className="flex space-x-1">
+          <Button
+            variant={"ghost"}
+            size="sm"
+            title={t.bookingList.buttons.viewDetails[lang]}
+            className="hover:text-slate-900 hover:bg-slate-300"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
     },
     {
       accessorKey: "full_name",
@@ -438,8 +447,6 @@ const UsersList = () => {
       enableSorting: true,
       enableColumnFilter: true,
       cell: ({ row }) => {
-        // Simplified: show the user's role in the active org (backend should provide this),
-        // otherwise show their Global role if available, otherwise show first role.
         const userId = row.original.id;
         const userRoles = allUserRoles.filter(
           (r) => r.user_id === userId && r.role_name,
@@ -493,12 +500,15 @@ const UsersList = () => {
               )}
         </h1>
       </div>
+
       {loading && (
         <p>
           <LoaderCircle className="animate-spin" />
         </p>
       )}
+
       {error && <p className="text-red-500">Error: {error}</p>}
+
       <div className="flex flex-wrap gap-4 items-center justify-between">
         <div className="flex gap-4 items-center">
           <input
@@ -536,6 +546,7 @@ const UsersList = () => {
             </Button>
           )}
         </div>
+
         {/* Add a new member to an org section */}
         <div className="relative">
           <Button variant={"outline"} onClick={toggleAddUser}>
@@ -630,6 +641,7 @@ const UsersList = () => {
                   </div>
                 )}
               </div>
+
               {addUsersAccum.length > 0 && addSearchPage < addTotalPages && (
                 <div className="flex justify-center my-4">
                   <Button
@@ -665,9 +677,13 @@ const UsersList = () => {
                   size="sm"
                   variant={"secondary"}
                   onClick={handleAssignRole}
-                  disabled={!selectedAddUserId}
+                  disabled={!selectedAddUserId || assigningRole}
                 >
-                  {t.usersList.addUser.buttons.assign[lang]}
+                  {assigningRole ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                  ) : (
+                    t.usersList.addUser.buttons.assign[lang]
+                  )}
                 </Button>
                 <Button
                   size="sm"
