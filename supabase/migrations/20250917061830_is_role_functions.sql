@@ -1,5 +1,3 @@
-
-
 -- ==================================================
 -- Helper role-check functions for RLS policies
 -- ==================================================
@@ -41,6 +39,72 @@ as $$
     where uor.user_id = auth.uid()
       and uor.is_active = true
       and r.role = 'super_admin'::public.roles_type
+  );
+$$;
+
+-- ==================================================
+-- Global predicates: is current user <role> anywhere?
+-- ==================================================
+-- Symmetric helpers to avoid needing an org_id.
+
+create or replace function app.is_any_super_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select app.is_super_admin();
+$$;
+
+create or replace function app.is_any_tenant_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1
+    from public.user_organization_roles uor
+    join public.roles r on r.id = uor.role_id
+    where uor.user_id = auth.uid()
+      and uor.is_active = true
+      and r.role = 'tenant_admin'::public.roles_type
+  );
+$$;
+
+create or replace function app.is_any_storage_manager()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1
+    from public.user_organization_roles uor
+    join public.roles r on r.id = uor.role_id
+    where uor.user_id = auth.uid()
+      and uor.is_active = true
+      and r.role = 'storage_manager'::public.roles_type
+  );
+$$;
+
+create or replace function app.is_any_requester()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1
+    from public.user_organization_roles uor
+    join public.roles r on r.id = uor.role_id
+    where uor.user_id = auth.uid()
+      and uor.is_active = true
+      and r.role = 'requester'::public.roles_type
   );
 $$;
 
@@ -118,6 +182,10 @@ revoke all on function app.is_storage_manager(uuid) from public;
 revoke all on function app.is_requester(uuid) from public;
 revoke all on function app.is_user() from public;
 revoke all on function app.is_org_admin_or_super(uuid) from public;
+revoke all on function app.is_any_super_admin() from public;
+revoke all on function app.is_any_tenant_admin() from public;
+revoke all on function app.is_any_storage_manager() from public;
+revoke all on function app.is_any_requester() from public;
 
 grant execute on function app.me_has_role(uuid, public.roles_type)        to anon, authenticated, service_role;
 grant execute on function app.me_has_any_role(uuid, public.roles_type[]) to anon, authenticated, service_role;
@@ -127,3 +195,7 @@ grant execute on function app.is_storage_manager(uuid)                   to anon
 grant execute on function app.is_requester(uuid)                         to anon, authenticated, service_role;
 grant execute on function app.is_user()                                  to anon, authenticated, service_role;
 grant execute on function app.is_org_admin_or_super(uuid)                to anon, authenticated, service_role;
+grant execute on function app.is_any_super_admin()                       to anon, authenticated, service_role;
+grant execute on function app.is_any_tenant_admin()                     to anon, authenticated, service_role;
+grant execute on function app.is_any_storage_manager()                  to anon, authenticated, service_role;
+grant execute on function app.is_any_requester()                        to anon, authenticated, service_role;
