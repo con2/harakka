@@ -33,26 +33,18 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { Sheet, SheetTrigger } from "./ui/sheet";
 import MobileMenu from "./MobileMenu";
-import { useProfile } from "@/hooks/useProfile";
-import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 export const Navigation = () => {
   // Auth State
   const { signOut, user, authLoading } = useAuth();
-  const { hasAnyRole, hasRole } = useRoles();
-  const selectedUser = useAppSelector(selectSelectedUser);
+  const { hasAnyRole } = useRoles();
   const { lang } = useLanguage();
-  const activeOrg = useAppSelector(selectActiveOrganizationId);
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
-  const { avatarUrl, name } = useProfile(user);
-  const isGlobalUser = hasRole("user", activeOrg!);
 
   // Screen Size State
-  const { isMobile: defaultMobileSize, width } = useIsMobile();
-  const isTablet = isGlobalUser ? width <= 1210 : width <= 1130;
-  const isMobile = isGlobalUser ? defaultMobileSize : width <= 877;
+  const { isMobile, isTablet } = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAnyTypeOfAdmin = hasAnyRole([
@@ -74,7 +66,6 @@ export const Navigation = () => {
     toastConfirm({
       title: t.navigation.toast.title[lang],
       description: t.navigation.toast.description[lang],
-      confirmText: t.navigation.toast.confirmText[lang],
       cancelText: t.navigation.toast.cancelText[lang],
       onConfirm: () => {
         void signOut();
@@ -102,7 +93,7 @@ export const Navigation = () => {
 
   if (isMobile)
     return (
-      <nav className="flex p-4 justify-around shadow-sm items-center z-50">
+      <nav className="flex p-4 justify-between shadow-sm items-center z-50">
         <div className="flex gap-4">
           <Link to="/" data-cy="nav-home">
             <LogoSmall className="w-10" />
@@ -110,7 +101,7 @@ export const Navigation = () => {
           <MobileNavigation />
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
@@ -131,7 +122,7 @@ export const Navigation = () => {
 
   if (isTablet)
     return (
-      <nav className="flex p-4 justify-around shadow-sm items-center z-50">
+      <nav className="flex p-4 justify-between shadow-sm items-center z-50">
         <div className="flex gap-6">
           <Link to="/" data-cy="nav-home">
             <Logo className="w-35" />
@@ -149,8 +140,8 @@ export const Navigation = () => {
           )}
         </div>
 
-        <div className="flex gap-4">
-          {selectedUser && <Notifications userId={selectedUser.id} />}
+        <div className="flex gap-4 items-center">
+          {user && <Notifications userId={user.id} />}
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
@@ -268,7 +259,7 @@ export const Navigation = () => {
             </Badge>
           )}
         </Button>
-        {selectedUser && <Notifications userId={selectedUser.id} />}
+        {user && <Notifications userId={user.id} />}
 
         {!authLoading && (
           <>
