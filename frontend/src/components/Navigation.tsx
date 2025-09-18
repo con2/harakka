@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { useAppSelector } from "@/store/hooks";
-import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,23 +8,14 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import {
-  LogInIcon,
-  LogOutIcon,
-  Menu,
-  ShoppingCart,
-  UserIcon,
-} from "lucide-react";
+import { LogInIcon, Menu, ShoppingCart } from "lucide-react";
 import { Notifications } from "@/components/Notification";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
-import { toast } from "sonner";
-import { toastConfirm } from "./ui/toastConfirm";
-import { LanguageSwitcher } from "./LanguageSwitcher";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
-import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
+import { UserMenu } from "./ui/UserMenu";
 import Logo from "@/assets/v4.5.svg?react";
 import LogoSmall from "@/assets/logo_small.svg?react";
 import { Badge } from "./ui/badge";
@@ -36,7 +26,7 @@ import MobileMenu from "./MobileMenu";
 
 export const Navigation = () => {
   // Auth State
-  const { signOut, user, authLoading } = useAuth();
+  const { user, authLoading } = useAuth();
   const { hasAnyRole } = useRoles();
   const { lang } = useLanguage();
 
@@ -61,20 +51,6 @@ export const Navigation = () => {
   const navClasses = isLandingPage
     ? "absolute top-0 left-0 w-full z-50 px-2 md:px-10 py-2 md:py-3 bg-white flex lg:justify-around"
     : "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white lg:justify-around flex justify-between";
-
-  const handleSignOut = () => {
-    toastConfirm({
-      title: t.navigation.toast.title[lang],
-      description: t.navigation.toast.description[lang],
-      cancelText: t.navigation.toast.cancelText[lang],
-      onConfirm: () => {
-        void signOut();
-      },
-      onCancel: () => {
-        toast.success(t.navigation.toast.success[lang]);
-      },
-    });
-  };
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -115,7 +91,7 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
-          <RoleContextSwitcher />
+          <UserMenu />
         </div>
       </nav>
     );
@@ -141,7 +117,7 @@ export const Navigation = () => {
         </div>
 
         <div className="flex gap-4 items-center">
-          {user && <Notifications userId={user.id} />}
+          {isLoggedIn && <Notifications userId={user.id} />}
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
@@ -155,7 +131,7 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
-          <RoleContextSwitcher />
+          <UserMenu />
         </div>
       </nav>
     );
@@ -259,7 +235,7 @@ export const Navigation = () => {
             </Badge>
           )}
         </Button>
-        {user && <Notifications userId={user.id} />}
+        {isLoggedIn && <Notifications userId={user.id} />}
 
         {!authLoading && (
           <>
@@ -277,7 +253,7 @@ export const Navigation = () => {
             )}
           </>
         )}
-        {isLoggedIn && <RoleContextSwitcher />}
+        {isLoggedIn && <UserMenu />}
       </div>
     </nav>
   );

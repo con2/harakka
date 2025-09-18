@@ -1,12 +1,20 @@
 // Added this to avoid refactoring 50+ files
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext } from "react";
-
+import { supportedLanguages } from "@/translations/modules/supportedLanguages";
 // Define available languages
 export type Language = "fi" | "en";
 export const SUPPORTED_LANGUAGES = [
-  { lang: "English", key: "en" },
-  { lang: "Finnish", key: "fi" },
+  {
+    lang: "English",
+    key: "en",
+    translations: supportedLanguages.en,
+  },
+  {
+    lang: "Finnish",
+    key: "fi",
+    translations: supportedLanguages.fi,
+  },
 ];
 
 // Language context type

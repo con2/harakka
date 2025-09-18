@@ -1,24 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { useRoles } from "@/hooks/useRoles";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { t } from "@/translations";
-import {
-  useLanguage,
-  SUPPORTED_LANGUAGES,
   Language,
+  SUPPORTED_LANGUAGES,
+  useLanguage,
 } from "@/context/LanguageContext";
-import { formatRoleName, getOrgLabel } from "@/utils/format";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { setRedirectUrl } from "@/store/slices/uiSlice";
+import { useRoles } from "@/hooks/useRoles";
 import { useAppDispatch } from "@/store/hooks";
+import { setRedirectUrl } from "@/store/slices/uiSlice";
+import { getOrgLabel } from "@/utils/format";
 import {
   ArrowLeft,
   ArrowLeftRight,
@@ -28,16 +19,19 @@ import {
   UserIcon,
   UserRound,
 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuTrigger,
+  NavigationMenuViewport,
 } from "./navigation-menu";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { t } from "@/translations";
 
-export const RoleContextSwitcher: React.FC = () => {
+export const UserMenu: React.FC = () => {
   const {
     currentUserRoles,
     currentUserOrganizations,
@@ -54,23 +48,13 @@ export const RoleContextSwitcher: React.FC = () => {
   >("links");
   const isSelectingRole = selectGroup === "roles";
   const isSelectingLanguage = selectGroup === "languages";
-  // Important: Initialize with empty string instead of undefined to keep component controlled
+
   const {
     organizationId: activeOrgId,
     organizationName: activeOrgName,
     roleName: activeRoleName,
   } = activeContext;
-  const [localValue, setLocalValue] = useState<string>(
-    activeOrgId && activeRoleName ? `${activeOrgId}:${activeRoleName}` : "",
-  );
   const { isTablet, isMobile } = useIsMobile();
-
-  // Keep localValue in sync with activeContext changes
-  useEffect(() => {
-    const v =
-      activeOrgId && activeRoleName ? `${activeOrgId}:${activeRoleName}` : "";
-    setLocalValue(v);
-  }, [activeOrgId, activeRoleName]);
 
   // Filter to only active roles
   const activeRoles = currentUserRoles.filter((role) => role.is_active);
@@ -105,12 +89,11 @@ export const RoleContextSwitcher: React.FC = () => {
         singleRole.organization_name,
       );
     }
-  }, [activeRoles, activeContext, setActiveContext]);
+  }, [activeRoles, activeContext, setActiveContext, activeOrgId]);
 
   // Handler for changing the active context
   const handleContextChange = (value: string) => {
     // Set local value for immediate UI feedback
-    setLocalValue(value);
 
     // Otherwise, we're setting a new context
     const [orgId, roleName] = value.split(":");
@@ -135,9 +118,6 @@ export const RoleContextSwitcher: React.FC = () => {
       setActiveContext(orgId, roleName, org.organization_name);
     }
   };
-
-  // Add a key to force remounting when roles change
-  const componentKey = `role-switcher-${activeRoles.length}`;
 
   // Hide the switcher if there's only one role
   if (activeRoles.length <= 1) {
@@ -165,7 +145,7 @@ export const RoleContextSwitcher: React.FC = () => {
             <p className="text-md">{userName}</p>
           </div>
         </NavigationMenuTrigger>
-        <NavigationMenuContent className={`${(isTablet || isMobile) && ""}`}>
+        <NavigationMenuContent>
           {isSelectingRole && (
             <ul className="flex w-[200px] flex-col">
               <NavigationMenuLink
@@ -173,12 +153,12 @@ export const RoleContextSwitcher: React.FC = () => {
                 onClick={() => setSelectGroup("links")}
               >
                 <ArrowLeft className="w-4 h-4 text-muted-foreground" />
-                Back
+                {t.common.back[lang]}
               </NavigationMenuLink>
               {roleOptions.map((opt) => (
                 <NavigationMenuLink
                   onClick={() =>
-                    setActiveContext(opt.orgId!, opt.roleName!, opt.orgName!)
+                    handleContextChange(`${opt.orgId}:${opt.roleName}`)
                   }
                   className="flex flex-row items-center font-main hover:cursor-pointer gap-2 text-sm p-2"
                 >
@@ -194,15 +174,18 @@ export const RoleContextSwitcher: React.FC = () => {
                 onClick={() => setSelectGroup("links")}
               >
                 <ArrowLeft className="w-4 h-4 text-muted-foreground" />
-                Back
+                {t.common.back[lang]}
               </NavigationMenuLink>
-              {SUPPORTED_LANGUAGES.map((lang) => (
+              {SUPPORTED_LANGUAGES.map((l) => (
                 <NavigationMenuLink
                   asChild
-                  onClick={() => setLanguage(lang.key as Language)}
+                  onClick={() => {
+                    setLanguage(l.key as Language);
+                    setSelectGroup("links");
+                  }}
                 >
                   <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
-                    {lang.lang}
+                    {l.translations[lang]}
                   </div>
                 </NavigationMenuLink>
               ))}
@@ -214,7 +197,7 @@ export const RoleContextSwitcher: React.FC = () => {
                 <Link to="/profile">
                   <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
                     <UserRound className="w-4 h-4 text-muted-foreground" />
-                    My Profile
+                    {t.userMenu.links.myProfile[lang]}
                   </div>
                 </Link>
               </NavigationMenuLink>
@@ -223,8 +206,8 @@ export const RoleContextSwitcher: React.FC = () => {
                   <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
                     <CalendarDays className="w-4 h-4 text-muted-foreground" />
                     {activeRoleName === "user"
-                      ? "My Bookings"
-                      : "Organization Bookings"}
+                      ? t.userMenu.links.myBookings[lang]
+                      : t.userMenu.links.orgBookings[lang]}
                   </div>
                 </Link>
               </NavigationMenuLink>
@@ -234,7 +217,7 @@ export const RoleContextSwitcher: React.FC = () => {
               >
                 <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
                   <ArrowLeftRight className="w-4 h-4 text-muted-foreground " />
-                  Change Organization
+                  {t.userMenu.links.changeOrg[lang]}
                 </div>
               </NavigationMenuLink>
               <NavigationMenuLink
@@ -243,84 +226,25 @@ export const RoleContextSwitcher: React.FC = () => {
               >
                 <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
                   <Globe className="w-4 h-4 text-muted-foreground " />
-                  Change Language
+                  {t.userMenu.links.changeLang[lang]}
                 </div>
               </NavigationMenuLink>
-              <NavigationMenuLink
-                asChild
-                onClick={() => setSelectGroup("languages")}
-              >
+              <NavigationMenuLink asChild>
                 <button
                   onClick={signOut}
                   className="flex flex-row items-center font-main hover:cursor-pointer gap-2"
                 >
                   <LogOut className="w-4 h-4 text-muted-foreground " />
-                  Log out
+                  {t.userMenu.links.logOut[lang]}
                 </button>
               </NavigationMenuLink>
             </ul>
           )}
         </NavigationMenuContent>
       </NavigationMenuItem>
+      <NavigationMenuViewport
+        wrapperClassName={`${(isTablet || isMobile) && "!left-auto !right-0"}`}
+      />
     </NavigationMenu>
-  );
-
-  return (
-    <div className="flex items-center gap-2">
-      <Select
-        key={componentKey}
-        value={localValue}
-        onValueChange={isSelectingRole ? handleContextChange : () => {}}
-        defaultValue=""
-      >
-        <SelectTrigger className="shadow-none">
-          {avatarUrl && avatarUrl.trim() !== "" ? (
-            <img
-              src={avatarUrl}
-              className="inline h-6 w-6 rounded-full"
-              alt="User avatar"
-            />
-          ) : (
-            <UserIcon className="inline h-6 w-6 rounded-full" />
-          )}
-          <div className="flex flex-col text-start font-main flex-col-reverse">
-            <p className="text-xs font-main !font-[var(--main-font)]">
-              {formatRoleName(activeRoleName!)} at {activeOrgName}
-            </p>
-            <p className="text-md">{userName}</p>
-          </div>
-          <SelectValue placeholder={t.roleContextSwitcher.placeholders[lang]} />
-        </SelectTrigger>
-        <SelectContent>
-          {isSelectingRole ? (
-            <>
-              {roleOptions.map((opt) => (
-                <SelectItem value={opt.value}>
-                  {opt.roleName} at {opt.orgName}
-                </SelectItem>
-              ))}
-            </>
-          ) : (
-            <>
-              <SelectItem value="profile">
-                <UserRound />
-                My Profile
-              </SelectItem>
-              <SelectItem value="profile">
-                <CalendarDays />
-                My Bookings
-              </SelectItem>
-              <SelectItem
-                value="profile"
-                onClick={() => setSelectGroup("roles")}
-              >
-                <ArrowLeftRight />
-                Change roles
-              </SelectItem>
-            </>
-          )}
-        </SelectContent>
-      </Select>
-    </div>
   );
 };
