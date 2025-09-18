@@ -120,6 +120,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event: string, session) => {
+      // Check for recovery flow FIRST before processing auth
+      const isRecoveryFlow =
+        window.location.href.includes("type=recovery") ||
+        window.location.hash.includes("type=recovery") ||
+        new URLSearchParams(window.location.hash.replace("#", "")).get(
+          "type",
+        ) === "recovery";
+
+      if (isRecoveryFlow) {
+        console.log(
+          "Password recovery flow detected, preventing automatic login",
+        );
+        // Don't set the session or user for recovery flows
+        setAuthLoading(false);
+        return;
+      }
+
+      // Normal authentication flow
       setSession(session);
       setUser(session?.user ?? null);
       setAuthLoading(false);
@@ -334,6 +352,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         });
       }
+      // 8. Clear signup prosessing
+      setProcessedSignups(new Set());
     } catch {
       clearCachedAuthToken();
       // Even if there's an error, still clear local data and navigate
