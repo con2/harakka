@@ -9,10 +9,7 @@ import {
   BookingItemsRow,
   BookingItemsUpdate,
 } from "./interfaces/booking-items.interfaces";
-import {
-  ApiResponse,
-  ApiSingleResponse,
-} from "../../../../common/response.types";
+import { ApiResponse, ApiSingleResponse } from "@common/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { StorageItemRow } from "../storage-items/interfaces/storage-item.interface";
 
@@ -114,16 +111,15 @@ export class BookingItemsService {
     return { ...result, metadata };
   }
 
-  async createBookingItem(
+  async createBookingItems(
     supabase: SupabaseClient,
-    booking_item: BookingItemsInsert,
-  ): Promise<ApiSingleResponse<BookingItemsRow>> {
-    const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
-      .from("booking_items")
-      .insert(booking_item)
-      .select()
-      .single();
-
+    booking_items: BookingItemsInsert | BookingItemsInsert[],
+  ): Promise<
+    ApiResponse<BookingItemsRow> | ApiSingleResponse<BookingItemsRow>
+  > {
+    const query = supabase.from("booking_items").insert(booking_items).select();
+    if (!Array.isArray(booking_items)) query.single();
+    const result = await query;
     if (result.error)
       throw new BadRequestException("Could not create booking-item");
 

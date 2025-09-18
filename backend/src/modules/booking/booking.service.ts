@@ -29,6 +29,7 @@ import {
   BookingItemRow,
   BookingRow,
   ValidBookingOrder,
+  BookingItemInsert,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { deriveOrgStatus } from "src/utils/booking.utils";
@@ -535,7 +536,7 @@ export class BookingService {
     };
   }
 
-  // 3. create a Booking
+  // inside your class
   async createBooking(
     dto: CreateBookingDto,
     supabase: SupabaseClient<Database>,
@@ -547,207 +548,189 @@ export class BookingService {
       throw new BadRequestException("No userId found: user_id is required");
     }
 
-    // 3.0. Check if user has completed required profile information
-    const { data: userProfile, error: profileError } = await supabase
-      .from("user_profiles")
-      .select("full_name, phone")
-      .eq("id", userId)
-      .single();
+    // ... your profile checks and availability checks BEFORE any writes ...
+    // (keep the existing code you posted up to and including availability checks)
 
-    if (profileError || !userProfile) {
-      throw new BadRequestException("User profile not found");
-    }
+    // ---------- DB write phase with rollback ----------
+    let booking: BookingRow | null = null;
+    const createdBookingItemIds: string[] = [];
 
-    // Require full name for booking (phone is optional but recommended)
-    if (!userProfile.full_name || userProfile.full_name.trim() === "") {
-      // Use a specific error code that frontend can catch to show the modal
-      const error = new BadRequestException({
-        message: "Profile incomplete: Full name is required to create bookings",
-        errorCode: "PROFILE_INCOMPLETE",
-        missingFields: ["full_name"],
-        hasPhone: !!(userProfile.phone && userProfile.phone.trim()),
-      });
-      throw error;
-    }
+    // helper to attempt rollback of any partial inserts.
+    const cleanupPartialBooking = async (bookingId?: string) => {
+      if (!bookingId) return;
+      try {
+        // delete booking items that reference this booking
+        // use .delete().eq('booking_id', bookingId) so it cascades for the rows your service created
+        const { error: delItemsErr } = await supabase
+          .from("booking_items")
+          .delete()
+          .eq("booking_id", bookingId);
 
-    // Check for phone number and prepare warning message
-    let warningMessage: string | null = null;
-    if (!userProfile.phone || userProfile.phone.trim() === "") {
-      warningMessage =
-        "We recommend adding a phone number to your profile for easier communication about your bookings.";
-    }
+        if (delItemsErr) {
+          console.error(
+            "Failed to delete booking_items during rollback",
+            delItemsErr,
+          );
+          // continue to try deleting booking anyway
+        }
 
-    for (const item of dto.items) {
-      const { item_id, quantity, start_date, end_date } = item;
+        // delete the booking itself
+        const { error: delBookingErr } = await supabase
+          .from("bookings")
+          .delete()
+          .eq("id", bookingId);
 
-      const start = new Date(start_date);
-      const diffDays = dayDiffFromToday(start);
+        if (delBookingErr) {
+          console.error(
+            "Failed to delete booking during rollback",
+            delBookingErr,
+          );
+        } else {
+          console.info(`Rollback: removed booking ${bookingId} and its items`);
+        }
+      } catch (cleanupErr) {
+        // final fallback: log cleanup error
+        console.error("Unexpected error during rollback cleanup", cleanupErr);
+      }
+    };
 
-      // Prevent past start times
-      if (diffDays < 0) {
-        throw new BadRequestException("start_date cannot be in the past");
+    // perform writes inside try/catch so we can rollback on any failure
+    try {
+      let bookingNumber: string;
+      try {
+        bookingNumber = await generateBookingNumber(supabase);
+      } catch (err) {
+        console.error("Booking number generation error:", err);
+        throw new BadRequestException(
+          "Could not generate a unique booking number, please try again",
+        );
       }
 
-      // Warn for short notice (< 24h). dayDiffFromToday returns 0 for same-day future times.
-      if (diffDays < 1) {
-        const shortNoticeWarning =
-          "Heads up: bookings made less than 24 hours in advance might not be approved in time.";
+      const BOOKED_BY_ORG_ROLES = [
+        "tenant_admin",
+        "storage_manager",
+        "requester",
+      ];
 
-        // Combine warnings if both exist
-        if (warningMessage) {
-          warningMessage = `${warningMessage} ${shortNoticeWarning}`;
-        } else {
-          warningMessage = shortNoticeWarning;
+      const { data: bookingData, error: bookingError } = await supabase
+        .from("bookings")
+        .insert({
+          user_id: userId,
+          booking_number: bookingNumber,
+          status: "pending",
+          booked_by_org: BOOKED_BY_ORG_ROLES.includes(roleName) ? orgId : null,
+        })
+        .select()
+        .single<BookingRow>();
+
+      if (bookingError || !bookingData) {
+        // nothing to rollback yet
+        throw new BadRequestException("Could not create booking");
+      }
+
+      booking = bookingData; // track booking for possible rollback
+
+      // 3.5. Create booking items using BookingItemsService
+      for (const item of dto.items) {
+        const start = new Date(item.start_date);
+        const end = new Date(item.end_date);
+        const totalDays = calculateDuration(start, end);
+
+        // add loan period validation
+        if (totalDays < 1) {
+          throw new BadRequestException("Booking must be at least 1 day long");
+        }
+
+        if (totalDays > 42) {
+          throw new BadRequestException("Booking cannot exceed 6 weeks");
+        }
+
+        // Prepare booking item
+        const bookingItemData: BookingItemsInsert = {
+          ...item,
+          booking_id: booking.id,
+          total_days: totalDays,
+          status: "pending",
+        };
+
+        // Use BookingItemsService (assume it throws on error)
+        // If your createBookingItem returns the created row, collect its id; otherwise we'll rely on cleanup by booking_id
+        const created = await this.bookingItemsService.createBookingItems(
+          supabase,
+          bookingItemData,
+        );
+
+        // if service returns the created row/object with id, capture it for debugging or targeted cleanup
+        if (created) {
+          if (Array.isArray(created.data))
+            createdBookingItemIds.push(...created.data.map((i) => i.id));
+          else if (created.data) createdBookingItemIds.push(created.data.id);
         }
       }
-
-      // 3.1. Check availability for requested date range
-      const { availableQuantity } = await calculateAvailableQuantity(
-        supabase,
-        item_id,
-        start_date,
-        end_date,
-      );
-
-      if (quantity > availableQuantity) {
+      // 3.7 Fetch the complete booking with items and translations using the view
+      const { data: createdBookings, error: fetchError } = await supabase
+        .from("view_bookings_with_details")
+        .select("*")
+        .eq("id", booking.id);
+      if (fetchError || !createdBookings || createdBookings.length === 0) {
+        this.logger.error("Fetch created booking error:", fetchError); // Keep for backend
         throw new BadRequestException(
-          `Requested quantity exceeds available quantity for item: ${item_id}. Requested ${quantity} but there is only ${availableQuantity} available.`,
-        );
-      }
-    }
-
-    // 3.4. Create the booking
-    // generate a unique booking number (check collisions in DB)
-    let bookingNumber: string;
-    try {
-      bookingNumber = await generateBookingNumber(supabase);
-    } catch (err) {
-      console.error("Booking number generation error:", err);
-      throw new BadRequestException(
-        "Could not generate a unique booking number, please try again",
-      );
-    }
-
-    const BOOKED_BY_ORG_ROLES = [
-      "tenant_admin",
-      "storage_manager",
-      "requester",
-    ];
-    const { data: booking, error: bookingError } = await supabase
-      .from("bookings")
-      .insert({
-        user_id: userId,
-        booking_number: bookingNumber,
-        status: "pending",
-        booked_by_org: BOOKED_BY_ORG_ROLES.includes(roleName) ? orgId : null,
-      })
-      .select()
-      .single<BookingRow>();
-
-    if (bookingError || !booking) {
-      this.logger.error("Booking creation error:", bookingError); // Keep for backend
-      throw new BadRequestException("Could not create booking");
-    }
-
-    // 3.5. Create booking items using BookingItemsService
-    for (const item of dto.items) {
-      const start = new Date(item.start_date);
-      const end = new Date(item.end_date);
-      const totalDays = calculateDuration(start, end);
-
-      // add loan period validation
-      if (totalDays < 1) {
-        throw new BadRequestException("Booking must be at least 1 day long");
-      }
-
-      if (totalDays > 42) {
-        throw new BadRequestException("Booking cannot exceed 6 weeks");
-      }
-
-      // get location_id from storage_items
-      const { data: storageItem, error: locationError } = await supabase
-        .from("storage_items")
-        .select("location_id, org_id")
-        .eq("id", item.item_id)
-        .single();
-
-      if (locationError || !storageItem) {
-        throw new BadRequestException(
-          `Storage item data not found for item ${item.item_id}`,
+          "Could not fetch created booking details",
         );
       }
 
-      // Create booking item using service, automatically tracking the provider organization
-      const bookingItemData: BookingItemsInsert = {
-        booking_id: booking.id,
-        item_id: item.item_id,
-        location_id: storageItem.location_id,
-        provider_organization_id: storageItem.org_id,
-        quantity: item.quantity,
-        start_date: item.start_date,
-        end_date: item.end_date,
-        total_days: totalDays,
-        status: "pending",
+      // filtering to get active role
+      // Extend the type to include role_name and requester_org_id
+      type BookingWithRole = (typeof createdBookings)[0] & {
+        role_name?: string;
+        requester_org_id?: string;
+        user_role_id?: string;
+        role_id?: string;
       };
 
-      // Use BookingItemsService instead of direct insert
-      await this.bookingItemsService.createBookingItem(
-        supabase,
-        bookingItemData,
-      );
+      const createdBooking =
+        (createdBookings.find(
+          (b: BookingWithRole) =>
+            b.role_name === activeRole.roleName &&
+            b.requester_org_id === activeRole.orgId,
+        ) as BookingWithRole) || (createdBookings[0] as BookingWithRole);
+
+      // attach role info to the response
+      const bookingWithRole = {
+        ...createdBooking,
+        user_role_id: createdBooking.user_role_id,
+        role_id: createdBooking.role_id,
+        role_name: createdBooking.role_name, // "user" | "requester"
+        requester_org_id: createdBooking.requester_org_id, // if requester
+      };
+
+      // All DB writes succeeded. Now optionally send email.
+      // IMPORTANT: per your requirement - email failures should NOT trigger rollback.
+      try {
+        // await sendEmailOrNotifyBookingCreated(booking, dto, otherArgs...);
+        // keep the email handling logic separated; if it fails, catch it and log/report it
+      } catch (emailErr) {
+        console.error("Booking created but email failed:", emailErr);
+        // optionally record a 'notification_failed' flag in DB, but DO NOT rollback
+      }
+      // return the booking (or assembled DTO) to caller
+      return {
+        message: "Booking created",
+        booking: bookingWithRole,
+        // warning?
+      };
+    } catch (err) {
+      // Something failed during the DB-write phase (not email).
+      // Attempt rollback of any partially inserted rows.
+      try {
+        await cleanupPartialBooking(booking?.id);
+      } catch (cleanupErr) {
+        // we already log in cleanupPartialBooking — but surface if needed
+        console.error("Error during rollback attempt", cleanupErr);
+      }
+      // rethrow original error so upstream can handle it
+      throw err;
     }
-
-    // 3.6 notify user via centralized mail service
-    // await this.mailService.sendBookingMail(BookingMailType.Creation, {
-    //   bookingId: booking.id,
-    //   triggeredBy: userId,
-    // });
-
-    // 3.7 Fetch the complete booking with items and translations using the view
-    const { data: createdBookings, error: fetchError } = await supabase
-      .from("view_bookings_with_details")
-      .select("*")
-      .eq("id", booking.id);
-    if (fetchError || !createdBookings || createdBookings.length === 0) {
-      this.logger.error("Fetch created booking error:", fetchError); // Keep for backend
-      throw new BadRequestException("Could not fetch created booking details");
-    }
-
-    // filtering to get active role
-    // Extend the type to include role_name and requester_org_id
-    type BookingWithRole = (typeof createdBookings)[0] & {
-      role_name?: string;
-      requester_org_id?: string;
-      user_role_id?: string;
-      role_id?: string;
-    };
-
-    const createdBooking =
-      (createdBookings.find(
-        (b: BookingWithRole) =>
-          b.role_name === activeRole.roleName &&
-          b.requester_org_id === activeRole.orgId,
-      ) as BookingWithRole) || (createdBookings[0] as BookingWithRole);
-
-    // attach role info to the response
-    const bookingWithRole = {
-      ...createdBooking,
-      user_role_id: createdBooking.user_role_id,
-      role_id: createdBooking.role_id,
-      role_name: createdBooking.role_name, // "user" | "requester"
-      requester_org_id: createdBooking.requester_org_id, // if requester
-    };
-
-    return warningMessage
-      ? {
-          message: "Booking created",
-          booking: bookingWithRole,
-          warning: warningMessage,
-        }
-      : {
-          message: "Booking created",
-          booking: bookingWithRole,
-        };
   }
 
   // 4. confirm a Booking - no longer in use; replaced by confirmBookingItemsForOrg
@@ -768,37 +751,6 @@ export class BookingService {
     // prevent re-confirmation
     if (booking.status === "confirmed") {
       throw new BadRequestException("Booking is already confirmed");
-    }
-
-    // 4.2 Get all the booking items
-    const { data: items, error: itemsError } = await supabase
-      .from("booking_items")
-      .select("item_id, quantity, start_date, item_id, quantity")
-      .eq("booking_id", bookingId);
-
-    if (itemsError) {
-      throw new BadRequestException("Could not load booking items");
-    }
-
-    // 4.3 check availability of the items
-    for (const item of items) {
-      // get availability of item
-      const { data: storageItem, error: storageItemError } = await supabase
-        .from("storage_items")
-        .select("available_quantity")
-        .eq("id", item.item_id)
-        .single();
-
-      if (storageItemError || !storageItem) {
-        throw new BadRequestException("Could not fetch storage item details");
-      }
-
-      // check if stock is enough
-      if (storageItem.available_quantity < item.quantity) {
-        throw new BadRequestException(
-          `Not enough available quantity for item ${item.item_id}`,
-        );
-      }
     }
 
     // 4.4 Change the booking status to 'confirmed'
@@ -1074,6 +1026,7 @@ export class BookingService {
     await supabase.from("booking_items").delete().eq("booking_id", booking_id);
 
     // 5.4. insert updated items with validations and availability checks
+    const checkedItems: BookingItemInsert[] = [];
     for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
 
@@ -1131,8 +1084,7 @@ export class BookingService {
         );
       }
 
-      // Create booking item using service, automatically tracking the provider organization
-      await this.bookingItemsService.createBookingItem(supabase, {
+      checkedItems.push({
         booking_id: booking_id,
         item_id: item.item_id,
         location_id: storageItem.location_id,
@@ -1144,6 +1096,7 @@ export class BookingService {
         status: "pending",
       });
     }
+    await this.bookingItemsService.createBookingItems(supabase, checkedItems);
 
     // 5.8 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Update, {

@@ -91,10 +91,10 @@ export class BookingItemsController {
   })
   async createBookingItem(
     @Req() req: AuthRequest,
-    @Body() booking_item: BookingItemsInsert,
+    @Body() booking_item: BookingItemsInsert | BookingItemsInsert[],
   ) {
     const supabase = req.supabase;
-    return await this.bookingItemsService.createBookingItem(
+    return await this.bookingItemsService.createBookingItems(
       supabase,
       booking_item,
     );
