@@ -2,7 +2,6 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateUserDto, UserProfile, UserAddress } from "@common/user.types";
 import { GetOrderedUsersDto } from "./dto/get-ordered-users.dto";
-
 import {
   PostgrestResponse,
   PostgrestSingleResponse,
@@ -17,6 +16,8 @@ import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { getPaginationMeta } from "@src/utils/pagination";
 import { v4 as uuidv4 } from "uuid";
 import { validateImageFile } from "@src/utils/validateImage.util";
+import { RoleService } from "../role/role.service";
+import { JwtService } from "../jwt/jwt.service";
 
 @Injectable()
 export class UserService {
@@ -26,6 +27,8 @@ export class UserService {
     private supabaseService: SupabaseService,
     private readonly mailService: MailService,
     private readonly userEmailAssembler: UserEmailAssembler,
+    private readonly roleService: RoleService,
+    private readonly jwtService: JwtService,
   ) {}
 
   // Return ALL users, no org filtering, no pagination
@@ -52,9 +55,6 @@ export class UserService {
   async getAllOrderedUsersList(req: AuthRequest, dto: GetOrderedUsersDto) {
     const supabase = req.supabase;
     const activeRole = req.headers["x-role-name"] as string;
-
-    // Always select all needed columns, filter in result mapping based on role
-    const columns = "id, visible_name, full_name, email";
 
     // Build the main user query (ask Supabase for an exact count so metadata is accurate)
     let query = supabase
@@ -260,15 +260,96 @@ export class UserService {
 
   async deleteUser(id: string, req: AuthRequest): Promise<void> {
     const supabase = req.supabase;
+    const serviceClient = this.supabaseService.getServiceClient();
 
-    const { error } = await supabase
+    // Delete user's data piece by piece:
+    // 1. Delete user addresses
+    const { error: addressesError } = await supabase
+      .from("user_addresses")
+      .delete()
+      .eq("user_id", id);
+    if (addressesError) {
+      handleSupabaseError(addressesError);
+    }
+
+    // 2. Deactivate user roles
+    const { error: rolesError } = await supabase
+      .from("user_organization_roles")
+      .update({ is_active: false })
+      .eq("user_id", id);
+    if (rolesError) handleSupabaseError(rolesError);
+
+    // 3. Anonymize auth data
+    try {
+      const { error: updateUserError } =
+        await serviceClient.auth.admin.updateUserById(id, {
+          email: `deleted_user_${id.substring(0, 8)}@example.com`,
+          password: undefined,
+          password_hash: undefined,
+          phone: undefined,
+          user_metadata: {
+            deleted: true,
+            deleted_at: new Date().toISOString(),
+          },
+          app_metadata: {
+            deleted: true,
+            deleted_at: new Date().toISOString(),
+          },
+        });
+
+      if (updateUserError) throw updateUserError;
+    } catch (authError) {
+      this.logger.error(`Failed to anonymize user auth data: ${authError}`);
+      handleSupabaseError(authError);
+    }
+
+    // 4. Update JWT
+    try {
+      // Get fresh roles
+      const { data: freshRoles, error: rolesError } = await supabase
+        .from("view_user_roles_with_details")
+        .select("*")
+        .eq("user_id", id);
+      if (rolesError) {
+        throw rolesError;
+      }
+      // Force update JWT with the fresh roles
+      await this.jwtService.forceUpdateJWTWithRoles(id, freshRoles);
+    } catch (jwtError) {
+      handleSupabaseError(jwtError);
+    }
+
+    // 5. Delete the user profile
+    // 5.1. First, verify the user profile exists before attempting to delete
+    const { data: userProfile, error: checkError } = await supabase
+      .from("user_profiles")
+      .select("id")
+      .eq("id", id)
+      .single();
+
+    if (checkError) {
+      handleSupabaseError(checkError);
+    }
+
+    if (!userProfile) {
+      this.logger.warn(`User profile ${id} not found before deletion`);
+      throw new NotFoundException(`User profile with ID ${id} not found`);
+    }
+
+    // 5.2. Delete found user profile
+    this.logger.debug(`Deleting user profile for ${id}`);
+    const { error: profileError } = await supabase
       .from("user_profiles")
       .delete()
       .eq("id", id);
 
-    if (error) {
-      handleSupabaseError(error);
+    if (profileError) {
+      this.logger.error(
+        `Failed to delete user profile: ${profileError.message}`,
+      );
+      handleSupabaseError(profileError);
     }
+    this.logger.log(`Successfully deleted user ${id}`);
   }
 
   // get all addresses for a specific user

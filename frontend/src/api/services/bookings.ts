@@ -56,18 +56,13 @@ export const bookingsApi = {
    * @returns Promise with the user's bookings
    */
   getOwnBookings: async (
-    activeOrgId: string,
-    activeRole: string,
-    userId: string,
     page: number = 1,
     limit: number = 10,
   ): Promise<ApiResponse<BookingPreview>> => {
     const params = new URLSearchParams();
     params.append("page", page.toString());
     params.append("limit", limit.toString());
-    return api.get(
-      `/bookings/my?activeOrgId=${activeOrgId}&activeRole=${activeRole}&userId=${userId}&${params.toString()}`,
-    );
+    return api.get(`/bookings/my`);
   },
 
   /**
@@ -236,8 +231,14 @@ export const bookingsApi = {
   returnItems: async (
     bookingId: string,
     itemIds?: string[],
+    location_id?: string,
+    org_id?: string,
   ): Promise<Booking> => {
-    return api.patch(`/bookings/${bookingId}/return`, itemIds);
+    return api.patch(`/bookings/${bookingId}/return`, {
+      itemIds,
+      location_id,
+      org_id,
+    });
   },
 
   /**
@@ -248,9 +249,15 @@ export const bookingsApi = {
    */
   pickUpItems: async (
     bookingId: string,
+    location_id?: string,
+    org_id?: string,
     itemIds?: string[],
   ): Promise<Booking> => {
-    return api.patch(`/bookings/${bookingId}/pickup`, itemIds);
+    return api.patch(`/bookings/${bookingId}/pickup`, {
+      itemIds,
+      location_id,
+      org_id,
+    });
   },
 
   /**
@@ -263,7 +270,6 @@ export const bookingsApi = {
     bookingId: string,
     itemIds?: string[],
   ): Promise<Booking> => {
-    console.log("itemIds: ", itemIds);
     return api.patch(`/bookings/${bookingId}/cancel`, itemIds);
   },
 
@@ -299,5 +305,20 @@ export const bookingsApi = {
    */
   getBookingsCount: async (): Promise<ApiSingleResponse<number>> => {
     return await api.get(`/bookings/count`);
+  },
+
+  /**
+   * Update the self-pickup status of a booking
+   * Only updates PER org and PER location.
+   */
+  updateSelfPickup: async (
+    bookingId: string,
+    location_id: string,
+    newStatus: boolean,
+  ): Promise<{ message: string }> => {
+    return await api.patch(`bookings/${bookingId}/self-pickup`, {
+      location_id,
+      newStatus,
+    });
   },
 };

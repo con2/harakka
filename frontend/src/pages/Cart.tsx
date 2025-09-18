@@ -228,14 +228,14 @@ const Cart: React.FC = () => {
 
       if (!isProfileIncompleteError) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        if (
-          errorMessage.includes("PROFILE_INCOMPLETE") ||
-          errorMessage.includes("Profile incomplete") ||
-          errorMessage.includes("Full name is required")
-        ) {
-          isProfileIncompleteError = true;
-        }
+          typeof error === "string"
+            ? error
+            : error instanceof Error
+              ? error.message
+              : t.cart.buttons.unknownError[lang];
+
+        toast.error(`Checkout error: ${errorMessage}`);
+        return;
       }
 
       if (isProfileIncompleteError) {

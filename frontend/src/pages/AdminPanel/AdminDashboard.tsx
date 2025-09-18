@@ -39,6 +39,8 @@ import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BookingPreview } from "@common/bookings/booking.types";
+import { formatBookingStatus } from "@/utils/format";
+import { BookingStatus } from "@/types";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
@@ -58,7 +60,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (items.length <= 1) void dispatch(fetchAllItems({ page: 1, limit: 10 }));
   }, [dispatch, items.length]);
-
+  useEffect(() => {
+    if (userCount < 1) void dispatch(getUserCount());
+  }, [userCount]); //eslint-disable-line
   useEffect(() => {
     void dispatch(getItemCount());
     void dispatch(getUserCount());
@@ -114,7 +118,15 @@ const AdminDashboard = () => {
     {
       accessorKey: "status",
       header: t.bookingList.columns.status[lang],
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => {
+        const orgStatus = row.original as BookingPreview & {
+          org_status_for_active_org?: string;
+        };
+        const status = orgStatus.org_status_for_active_org ?? orgStatus.status;
+        return (
+          <StatusBadge status={formatBookingStatus(status as BookingStatus)} />
+        );
+      },
     },
     {
       accessorKey: "created_at",

@@ -27,8 +27,8 @@ export const usersList = {
   },
   addUser: {
     title: {
-      fi: "Lisää käyttäjä",
-      en: "Add New User",
+      fi: "Lisää Orgni käyttäjää",
+      en: "Add My Org User",
     },
     search: {
       fi: "Hae nimellä tai sähköpostilla",
@@ -45,6 +45,14 @@ export const usersList = {
     noResults: {
       fi: "Ei tuloksia",
       en: "No results",
+    },
+    noOrgSelected: {
+      fi: "Valitse organisaatio ensin",
+      en: "Select organization first",
+    },
+    roleNotAvailable: {
+      fi: "Rooli ei ole saatavilla",
+      en: "Role not available",
     },
     roles: {
       user: {
@@ -81,6 +89,14 @@ export const usersList = {
         fi: "Lataa lisää",
         en: "Load More",
       },
+    },
+    success: {
+      fi: "Rooli määritetty onnistuneesti",
+      en: "Role assigned successfully",
+    },
+    error: {
+      fi: "Roolin määrittäminen epäonnistui",
+      en: "Failed to assign role",
     },
   },
   columns: {

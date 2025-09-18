@@ -5,7 +5,7 @@ import { Calendar } from "./ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import DatePickerButton from "./ui/DatePickerButton";
 import { Button } from "./ui/button";
-import { selectCartItems } from "../store/slices/cartSlice";
+import { selectCartItems, clearCart } from "../store/slices/cartSlice";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Info } from "lucide-react";
@@ -28,6 +28,8 @@ const TimeframeSelector: React.FC = () => {
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
 
+  const [confirmClearDates, setConfirmClearDates] = React.useState(false);
+
   const handleDateChange = (type: "start" | "end", date: Date | undefined) => {
     if (cartItems.length > 0) {
       toast.warning(t.timeframeSelector.toast.warning[lang]);
@@ -35,6 +37,24 @@ const TimeframeSelector: React.FC = () => {
     }
 
     if (type === "start") {
+      const newStartDate = date ? date : undefined;
+      const newEndDate = endDateStr ? new Date(endDateStr) : undefined;
+
+      if (newStartDate && newEndDate) {
+        const diffTime = newEndDate.getTime() - newStartDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // These only fire when the user changes start date after both dates are set
+        if (diffDays < 1) {
+          toast.error(t.timeframeSelector.toast.errorSameDay[lang]);
+          return;
+        }
+        if (diffDays > 42) {
+          toast.error(t.timeframeSelector.toast.errorTooLong[lang]);
+          return;
+        }
+      }
+
       dispatch(
         setTimeframe({
           startDate: date ? date.toISOString() : undefined,
@@ -46,6 +66,17 @@ const TimeframeSelector: React.FC = () => {
         endDatePopoverRef.current?.click(); // trigger popover
       }, 150);
     } else {
+      // Guard: end date must be strictly after start date
+      if (date && startDateStr) {
+        const start = new Date(startDateStr);
+        const startDay = new Date(start.setHours(0, 0, 0, 0)).getTime();
+        const endDay = new Date(date.setHours(0, 0, 0, 0)).getTime();
+        if (endDay <= startDay) {
+          toast.error(t.timeframeSelector.toast.errorEndBeforeStart[lang]);
+          return;
+        }
+      }
+
       dispatch(
         setTimeframe({
           startDate: startDateStr,
@@ -60,10 +91,27 @@ const TimeframeSelector: React.FC = () => {
   };
 
   const handleClearTimeframe = () => {
+    // If there are items in the cart, require a confirming second click
     if (cartItems.length > 0) {
-      toast.warning(t.timeframeSelector.toast.warning[lang]);
+      if (!confirmClearDates) {
+        setConfirmClearDates(true);
+        toast.warning(t.timeframeSelector.toast.warning[lang], {
+          id: "timeframe-toast",
+          duration: 4500,
+        });
+        // auto-reset the confirm flag after a short window to avoid accidental clears later
+        window.setTimeout(() => setConfirmClearDates(false), 4000);
+        return;
+      }
+      // Second click within the window: clear cart and timeframe
+      dispatch(clearCart());
+      dispatch(clearTimeframe());
+      setConfirmClearDates(false);
+      toast.success(t.cart.toast.cartCleared[lang], { id: "timeframe-toast" });
       return;
     }
+
+    // No items in cart – just clear dates
     dispatch(clearTimeframe());
   };
 
@@ -142,19 +190,25 @@ const TimeframeSelector: React.FC = () => {
                   defaultMonth={startDate} // Problem: Currently does not let user change month
                   disabled={(date) => {
                     // Always return a boolean value:
-                    const isBeforeToday =
-                      date < new Date(new Date().setHours(0, 0, 0, 0));
-                    const isBeforeStartDate = startDate
-                      ? date < startDate
+                    const todayMidnight = new Date(
+                      new Date().setHours(0, 0, 0, 0),
+                    );
+                    const isBeforeToday = date < todayMidnight;
+
+                    const isBeforeOrSameAsStartDate = startDate
+                      ? date <= new Date(startDate.setHours(0, 0, 0, 0))
                       : false;
-                    // prevent dates more than 14 days from start
+
+                    // prevent dates more than 42 days from start
                     const isTooFarFromStart = startDate
                       ? date.getTime() >
-                        new Date(startDate.getTime() + 35 * 86400000).getTime()
+                        new Date(startDate.getTime() + 42 * 86400000).getTime()
                       : false;
 
                     return (
-                      isBeforeToday || isBeforeStartDate || isTooFarFromStart
+                      isBeforeToday ||
+                      isBeforeOrSameAsStartDate ||
+                      isTooFarFromStart
                     );
                   }}
                 />
@@ -164,14 +218,19 @@ const TimeframeSelector: React.FC = () => {
         </div>
 
         <div className="flex w-full lg:w-auto items-center justify-center">
+          {/* Clear Dates Button */}
           <Button
             size="sm"
             onClick={handleClearTimeframe}
-            className={`mt-6 bg-white text-highlight2 border border-highlight2 hover:bg-highlight2 hover:text-white ${
-              startDate || endDate ? "visible" : "invisible"
-            }`}
+            className={`mt-6 ${
+              confirmClearDates
+                ? "bg-amber-500 text-white hover:bg-amber-600"
+                : "bg-white text-highlight2 border border-highlight2 hover:bg-highlight2 hover:text-white"
+            } ${startDate || endDate ? "visible" : "invisible"}`}
           >
-            {t.timeframeSelector.clearDates[lang]}
+            {confirmClearDates
+              ? t.timeframeSelector.confirmClear[lang]
+              : t.timeframeSelector.clearDates[lang]}
           </Button>
         </div>
       </div>
