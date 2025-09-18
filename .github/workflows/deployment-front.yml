@@ -27,7 +27,7 @@ jobs:
         working-directory: ./frontend
         run: |
           rm -f package-lock.json
-          npm ci
+          npm install
       - name: Clean problematic symlinks (circular references)
         run: |
           find frontend/node_modules -type l -name "common" -delete
