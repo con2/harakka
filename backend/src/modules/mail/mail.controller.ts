@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
   UseGuards,
 } from "@nestjs/common";
+import sanitizeHtml from "sanitize-html";
 import { MailService } from "./mail.service";
 import { SendEmailDto } from "./dto/mail.dto";
 // import { RecaptchaGuard } from "../guards/recaptcha.guard";
@@ -28,10 +29,20 @@ export class MailController {
     if (!to || !subject || !message || !from) {
       throw new BadRequestException("Missing required fields.");
     }
+    const sanitizedMessage = sanitizeHtml(message, {
+      allowedTags: [
+        "b", "i", "em", "strong", "u", "p", "br", "span", "ul", "ol", "li", "a"
+      ],
+      allowedAttributes: {
+        a: ["href", "target", "rel"],
+        span: ["style"]
+      },
+      allowedSchemes: ["http", "https", "mailto"],
+    });
     await this.mailService.sendMail({
       to,
       subject,
-      html: message, // raw HTML from the contact form
+      html: sanitizedMessage,
     });
     return { success: true };
   }
