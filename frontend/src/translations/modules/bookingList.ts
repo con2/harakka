@@ -27,10 +27,6 @@ export const bookingList = {
         fi: "Peruutettu",
         en: "Cancelled",
       },
-      cancelledByAdmin: {
-        fi: "Ylläpitäjän peruuttama",
-        en: "Cancelled by admin",
-      },
       rejected: {
         fi: "Hylätty",
         en: "Rejected",
@@ -43,10 +39,30 @@ export const bookingList = {
         fi: "Noudettu",
         en: "Picked up",
       },
+      returned: {
+        fi: "Palautettu",
+        en: "Returned",
+      },
+      picked_up: {
+        fi: "Noudettu",
+        en: "Picked Up",
+      },
     },
     clear: {
       fi: "Tyhjennä suodattimet",
       en: "Clear Filters",
+    },
+    filterBy: {
+      fi: "Suodata",
+      en: "Filter by",
+    },
+    recent: {
+      fi: "Viimeisimmät",
+      en: "Latest",
+    },
+    upcoming: {
+      fi: "Lähitulevaisuus",
+      en: "Upcoming",
     },
   },
   columns: {
@@ -65,6 +81,10 @@ export const bookingList = {
     bookingDate: {
       fi: "Tilauspäivä",
       en: "Booking Date",
+    },
+    startDate: {
+      fi: "Aloituspäivä",
+      en: "Start Date",
     },
   },
   buttons: {

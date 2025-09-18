@@ -40,6 +40,7 @@ import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BookingPreview } from "@common/bookings/booking.types";
 import { formatBookingStatus } from "@/utils/format";
+import { BookingStatus } from "@/types";
 
 const AdminDashboard = () => {
   const dispatch = useAppDispatch();
@@ -117,9 +118,15 @@ const AdminDashboard = () => {
     {
       accessorKey: "status",
       header: t.bookingList.columns.status[lang],
-      cell: ({ row }) => (
-        <StatusBadge status={formatBookingStatus(row.original.status)} />
-      ),
+      cell: ({ row }) => {
+        const orgStatus = row.original as BookingPreview & {
+          org_status_for_active_org?: string;
+        };
+        const status = orgStatus.org_status_for_active_org ?? orgStatus.status;
+        return (
+          <StatusBadge status={formatBookingStatus(status as BookingStatus)} />
+        );
+      },
     },
     {
       accessorKey: "created_at",

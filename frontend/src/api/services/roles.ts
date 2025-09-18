@@ -81,6 +81,14 @@ export const roleApi = {
     return await api.put(`/roles/${tableKeyId}`, updateRoleDto);
   },
 
+  // Replace a user role (delete old, create new)
+  async replaceUserRole(
+    oldRoleId: string,
+    createRoleDto: CreateUserRoleDto,
+  ): Promise<ViewUserRolesWithDetails> {
+    return await api.put(`/roles/${oldRoleId}/replace`, createRoleDto);
+  },
+
   //Set the role of a user to inactive (is_active=false), this is not a permanent delete
   async deleteUserRole(
     tableKeyId: string,

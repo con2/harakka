@@ -2,7 +2,6 @@ import imagePlaceholder from "@/assets/defaultImage.jpg";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useLanguage } from "@/context/LanguageContext";
@@ -379,41 +378,39 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         </div>
 
         {/* Add to Cart Button with Tooltip */}
-        <TooltipProvider>
-          <Tooltip open={isAddToCartDisabled ? undefined : false}>
-            <TooltipTrigger asChild>
-              <span
-                tabIndex={0}
-                className={
-                  isAddToCartDisabled
-                    ? "inline-block w-full cursor-not-allowed"
-                    : "inline-block w-full"
-                }
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              tabIndex={0}
+              className={
+                isAddToCartDisabled
+                  ? "inline-block w-full cursor-not-allowed"
+                  : "inline-block w-full"
+              }
+            >
+              <Button
+                onClick={handleAddToCart}
+                className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-white hover:bg-secondary"
+                disabled={isAddToCartDisabled}
+                style={{
+                  pointerEvents: isAddToCartDisabled ? "none" : "auto",
+                }}
+                data-cy="item-add-to-cart-btn"
               >
-                <Button
-                  onClick={handleAddToCart}
-                  className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-white hover:bg-secondary"
-                  disabled={isAddToCartDisabled}
-                  style={{
-                    pointerEvents: isAddToCartDisabled ? "none" : "auto",
-                  }}
-                  data-cy="item-add-to-cart-btn"
-                >
-                  {t.itemDetails.items.addToCart[lang]}
-                </Button>
-              </span>
-            </TooltipTrigger>
-            {isAddToCartDisabled && (
-              <TooltipContent>
-                {!startDate || !endDate ? (
-                  <p>{t.itemCard.selectDatesFirst[lang]}</p>
-                ) : (
-                  <p>{t.itemCard.selectValidQuantity[lang]} </p>
-                )}
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+                {t.itemDetails.items.addToCart[lang]}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          {isAddToCartDisabled && (
+            <TooltipContent>
+              {!startDate || !endDate ? (
+                <p>{t.itemCard.selectDatesFirst[lang]}</p>
+              ) : (
+                <p>{t.itemCard.selectValidQuantity[lang]} </p>
+              )}
+            </TooltipContent>
+          )}
+        </Tooltip>
       </div>
 
       {/* View Details Button */}

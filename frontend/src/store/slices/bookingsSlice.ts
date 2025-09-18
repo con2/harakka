@@ -63,6 +63,10 @@ export const createBooking = createAsyncThunk<
       return rejectWithValue(apiError.response.data);
     }
 
+    if (apiError?.response?.data?.message) {
+      return rejectWithValue(apiError.response.data.message);
+    }
+
     // For other errors, use the standard error message extraction
     return rejectWithValue(
       extractErrorMessage(error, "Failed to create booking"),
