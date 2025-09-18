@@ -42,6 +42,10 @@ import {
   validateCandidateWithMessages,
 } from "@/utils/updateItemHelpers";
 import { Separator } from "@/components/ui/separator";
+import {
+  fetchAllCategories,
+  selectCategories,
+} from "@/store/slices/categoriesSlice";
 
 type Props = {
   initialData: Item | null;
@@ -59,6 +63,7 @@ const UpdateItemForm: React.FC<Props> = ({
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
   const tags = useAppSelector(selectAllTags);
+  const categories = useAppSelector(selectCategories);
   const selectedTags = useAppSelector(selectSelectedTags);
   const tagsLoading = useAppSelector(selectTagsLoading);
   const locations = useAppSelector(selectAllLocations);
@@ -87,10 +92,15 @@ const UpdateItemForm: React.FC<Props> = ({
     locations.length,
     orgLocations.length,
     orgId,
+    categories,
   ]);
 
   useEffect(() => {
-    if (selectedTags) setLocalSelectedTags(selectedTags.map((t) => t.id));
+    void dispatch(fetchAllCategories({ limit: 20 }));
+  }, []); // eslint-disable-line
+
+  useEffect(() => {
+    if (selectedTags) setLocalSelectedTags(selectedTags.map((t) => t?.id));
   }, [selectedTags]);
 
   useEffect(() => {
@@ -100,7 +110,7 @@ const UpdateItemForm: React.FC<Props> = ({
   useEffect(() => {
     if (!editable) {
       setFormData(initialData);
-      setLocalSelectedTags((selectedTags || []).map((t) => t.id));
+      setLocalSelectedTags((selectedTags || []).map((t) => t?.id));
       setActiveTab("details");
     }
   }, [editable, initialData, selectedTags]);
@@ -288,6 +298,33 @@ const UpdateItemForm: React.FC<Props> = ({
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-6">
+            <div>
+              <Label>{t.updateItemForm.labels.category[lang]}</Label>
+              <Select
+                value={formData.category_id || ""}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...(prev as Item),
+                    category_id: value,
+                  }))
+                }
+                disabled={!editable}
+              >
+                <SelectTrigger className="w-60 bg-white">
+                  <SelectValue>
+                    {categories.find((c) => c.id === formData.category_id)
+                      ?.translations[lang] || "---"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.translations[lang]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>{t.updateItemForm.labels.location[lang]}</Label>
               <Select

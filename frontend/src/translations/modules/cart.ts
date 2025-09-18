@@ -124,6 +124,10 @@ export const cart = {
       fi: "Jotkin tuotteet ylittävät saatavilla olevan määrän",
       en: "Some items exceed available quantity",
     },
+    itemsExceedQuantityInCart: {
+      fi: "Olet ostoskorissasi tämän tuotteen määrän rajoissa. Saatavilla olevat tuotteet: ",
+      en: "You’re at the limit for this item in your cart. Items available: ",
+    },
     creatingBooking: {
       fi: "Luodaan varaustasi...",
       en: "Creating your booking...",

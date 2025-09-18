@@ -32,7 +32,7 @@ const Footer = () => {
             <h3>{t.footer.sections.about.title[lang]}</h3>
             <ul className="text-left">
               <li>
-                <a href="/howItWorks">
+                <a href="/how-it-works">
                   {t.footer.sections.about.links.userGuides[lang]}
                 </a>
               </li>

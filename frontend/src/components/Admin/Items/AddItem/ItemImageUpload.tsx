@@ -19,9 +19,10 @@ import { UseFormSetValue } from "react-hook-form";
 import { toast } from "sonner";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
+import { useImageValidator } from "@/utils/imageUtils";
+import { FILE_CONSTRAINTS } from "@/types";
 
 const MAX_DETAIL_IMAGES = 5;
-const MAX_FILE_SIZE_MB = 5;
 
 type UUID = `${string}-${string}-${string}-${string}-${string}`;
 
@@ -38,6 +39,7 @@ function ItemImageUpload({
 }: ItemImageUploadProps) {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
+  const { validateFile } = useImageValidator();
 
   // Simplified state - only track uploading status and drag states
   const [uploadingStates, setUploadingStates] = useState({
@@ -47,15 +49,6 @@ function ItemImageUpload({
 
   const [dragStates, setDragStates] = useState({ main: false, detail: false });
   const previewUrls = useRef<Set<string>>(new Set());
-
-  const validateFile = useCallback((file: File) => {
-    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      throw new Error(`${file.name} is too large (max ${MAX_FILE_SIZE_MB}MB)`);
-    }
-    if (!file.type.startsWith("image/")) {
-      throw new Error(`${file.name} is not an image`);
-    }
-  }, []);
 
   const createPreviewUrl = useCallback((file: File): string => {
     const preview = URL.createObjectURL(file);
@@ -79,9 +72,17 @@ function ItemImageUpload({
   // MAIN IMAGE HANDLERS
   const handleMainImageUpload = useCallback(
     async (file: File) => {
-      try {
-        validateFile(file);
+      if (
+        !validateFile(
+          file,
+          FILE_CONSTRAINTS.MAX_FILE_SIZE,
+          FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
+        )
+      ) {
+        return;
+      }
 
+      try {
         const id = crypto.randomUUID();
         const preview = createPreviewUrl(file);
 
@@ -128,7 +129,7 @@ function ItemImageUpload({
         setUploadingStates((prev) => ({ ...prev, main: false }));
       }
     },
-    [validateFile, createPreviewUrl, uploadImage, updateForm, dispatch],
+    [validateFile, createPreviewUrl, uploadImage, updateForm, dispatch, lang],
   );
 
   const handleDetailImagesUpload = useCallback(
@@ -141,9 +142,18 @@ function ItemImageUpload({
         return;
       }
 
-      try {
-        files.forEach(validateFile);
+      // Validate all files before proceeding
+      const allValid = files.every((file) =>
+        validateFile(
+          file,
+          FILE_CONSTRAINTS.MAX_FILE_SIZE,
+          FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
+        ),
+      );
 
+      if (!allValid) return;
+
+      try {
         // Create image data with previews
         const newImageData = files.map((file, idx) => {
           const id = crypto.randomUUID();
@@ -223,6 +233,7 @@ function ItemImageUpload({
       uploadImage,
       updateForm,
       dispatch,
+      lang,
     ],
   );
 

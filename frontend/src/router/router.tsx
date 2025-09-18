@@ -15,6 +15,8 @@ import AdminItemsTable from "@/pages/AdminPanel/AdminItemsTable";
 import BookingList from "@/pages/AdminPanel/BookingList";
 import BookingDetailsPage from "@/pages/AdminPanel/BookingDetailsPage";
 import TagList from "@/pages/AdminPanel/TagList";
+import TagDetailsPage from "@/pages/AdminPanel/TagDetailsPage";
+import AddTag from "@/pages/AdminPanel/AddTag";
 import Logs from "@/pages/AdminPanel/Logs";
 import Organizations from "@/pages/AdminPanel/Organizations";
 import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
@@ -37,7 +39,6 @@ import ContactForm from "../components/ContactForm";
 // Layout
 import App from "../App";
 import LoginPage from "@/pages/LoginPage";
-import { RoleManagement } from "@/components/Admin/Roles/RoleManagement";
 import AddItem from "@/pages/AdminPanel/AddItem";
 import OrganizationPage from "@/pages/OrganizationPage";
 import OrganizationsList from "../components/Organization/OrganizationsList";
@@ -151,18 +152,30 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: "logs",
+            path: "tags/new",
             element: (
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <Logs />
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
+                <AddTag />
               </ProtectedRoute>
             ),
           },
           {
-            path: "roles",
+            path: "tags/:id",
             element: (
-              <ProtectedRoute allowedRoles={["super_admin", "tenant_admin"]}>
-                <RoleManagement />
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
+                <TagDetailsPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "logs",
+            element: (
+              <ProtectedRoute allowedRoles={["super_admin"]}>
+                <Logs />
               </ProtectedRoute>
             ),
           },
@@ -235,7 +248,7 @@ export const router = createBrowserRouter([
         element: <BookingConfirmation />,
       },
       {
-        path: "/howItWorks",
+        path: "/how-it-works",
         element: <UserGuide />,
       },
       {

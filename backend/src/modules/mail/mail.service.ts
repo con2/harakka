@@ -104,7 +104,7 @@ export class MailService {
         port: 465,
         secure: true,
         auth: {
-          user: process.env.STORAGE_EMAIL, // harrakka.storage.solutions@gmail.com
+          user: process.env.STORAGE_EMAIL, // harakka.storage.solutions@gmail.com
           pass: process.env.STORAGE_EMAIL_PASSWORD, // ← App Password
         },
       });
@@ -112,7 +112,7 @@ export class MailService {
       const finalHtml = await this.generateHtml(template, html);
 
       const mailOptions: Record<string, unknown> = {
-        from: `Harrakka Storage Solutions <${process.env.STORAGE_EMAIL}>`,
+        from: `Harakka Storage Solutions <${process.env.STORAGE_EMAIL}>`,
         to,
         subject,
         html: finalHtml,

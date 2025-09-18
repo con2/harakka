@@ -113,7 +113,9 @@ export class UserController {
     @Req() req: AuthRequest,
   ): Promise<ApiSingleResponse<number>> {
     const supabase = req.supabase;
-    return this.userService.getUserCount(supabase);
+    const activeOrgId = req.headers["x-org-id"] as string | undefined;
+    const activeRole = req.headers["x-role-name"] as string | undefined;
+    return this.userService.getUserCount(supabase, activeOrgId, activeRole);
   }
 
   /**

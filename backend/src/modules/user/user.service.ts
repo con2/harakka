@@ -431,7 +431,43 @@ export class UserService {
 
   async getUserCount(
     supabase: SupabaseClient,
+    orgId?: string,
+    activeRole?: string,
   ): Promise<ApiSingleResponse<number>> {
+    // Super admin should always receive global count
+    if (activeRole === "super_admin") {
+      const result: PostgrestResponse<undefined> = await supabase
+        .from("user_profiles")
+        .select(undefined, { count: "exact" });
+
+      if (result.error) handleSupabaseError(result.error);
+
+      return {
+        ...result,
+        data: result.count ?? 0,
+      };
+    }
+
+    // If an orgId is provided, count users in that org; otherwise fall back to global
+    if (orgId) {
+      const res = await supabase
+        .from("user_organization_roles")
+        .select("user_id")
+        .eq("organization_id", orgId)
+        .eq("is_active", true);
+
+      if (res.error) handleSupabaseError(res.error);
+
+      const ids = Array.from(new Set((res.data || []).map((r) => r.user_id)));
+      return {
+        data: ids.length,
+        count: ids.length,
+        error: null,
+        status: 200,
+        statusText: "OK",
+      } as ApiSingleResponse<number>;
+    }
+
     const result: PostgrestResponse<undefined> = await supabase
       .from("user_profiles")
       .select(undefined, { count: "exact" });

@@ -6,11 +6,6 @@ const translationSchema = z.object({
       required_error: "itemName",
     })
     .min(1, "itemName"),
-  item_type: z
-    .string({
-      required_error: "itemType",
-    })
-    .min(1, "itemType"),
   item_description: z
     .string({
       required_error: "itemDescription",
@@ -38,6 +33,7 @@ const imageSchema = z.object({
 
 export const createItemDto = z.object({
   id: z.string().uuid(),
+  category_id: z.nullable(z.string()),
   location: z.object(
     {
       id: z.string().uuid({ message: "location" }),

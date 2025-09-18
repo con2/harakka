@@ -19,8 +19,12 @@ function App() {
           position="top-right"
           duration={3000}
           richColors
+          offset={{ top: 100 }}
+          mobileOffset={{ top: 100 }}
+          closeButton
           toastOptions={{
             classNames: {
+              closeButton: "toast-close",
               toast: "custom-toast",
             },
           }}
