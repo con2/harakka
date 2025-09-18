@@ -11,7 +11,7 @@ import {
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { ApiResponse } from "@common/response.types";
 import { AxiosResponse } from "axios";
-import { ItemFormData } from "@common/items/form.types";
+import { CreateItemType, ItemFormData } from "@common/items/form.types";
 import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 import { formatErrors, formatParsedItems } from "../utils/helper.utils";
 
@@ -264,7 +264,7 @@ export const deleteItem = createAsyncThunk<
 // Update item
 export const updateItem = createAsyncThunk<
   UpdateResponse,
-  { item_id: string; data: Partial<UpdateItem>; orgId: string }
+  { item_id: string; data: CreateItemType; orgId: string }
 >("items/updateItem", async ({ item_id, data, orgId }, { rejectWithValue }) => {
   try {
     const response = await itemsApi.updateItem(item_id, data, orgId);
