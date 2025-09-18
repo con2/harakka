@@ -116,7 +116,7 @@ export class BookingService {
     }
 
     const result = await query;
-
+console.log(result)
     // Attach derived organization status for each booking indicating whether all items for this org are confirmed
     if (result.data && result.data.length > 0) {
       const bookingIds = result.data
