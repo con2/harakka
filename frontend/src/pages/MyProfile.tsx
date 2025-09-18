@@ -24,7 +24,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "../components/ui/accordion";
-//import { Avatar } from "../components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +41,6 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { toastConfirm } from "../components/ui/toastConfirm";
-//import profilePlaceholder from "../assets/profilePlaceholder.png";
 import MyBookings from "@/components/MyBookings";
 import { CurrentUserRoles } from "@/components/Admin/Roles/CurrentUserRoles";
 import ProfilePictureUploader from "@/components/ProfilePictureUploader";
@@ -54,25 +52,18 @@ const MyProfile = () => {
   const userAddresses = useAppSelector(selectUserAddresses);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
-  // Translation
   const { lang } = useLanguage();
-
-  // Get tab from URL query parameter or default to "user-details"
   const activeTab = searchParams.get("tab") || "user-details";
-
   const [name, setName] = useState(selectedUser?.full_name || "");
   const [email, setEmail] = useState(selectedUser?.email || "");
   const [phone, setPhone] = useState(selectedUser?.phone || "");
   const [visibleName, setVisibleName] = useState(
     selectedUser?.visible_name || "",
   );
-  // const [preferences, setPreferences] = useState(selectedUser?.preferences || "");
   const [addresses, setAddresses] = useState<AddressForm[]>(
     userAddresses || [],
   );
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
-
   const { activeContext } = useRoles();
 
   useEffect(() => {
@@ -81,7 +72,6 @@ const MyProfile = () => {
       setEmail(selectedUser.email || "");
       setPhone(selectedUser.phone || "");
       setVisibleName(selectedUser.visible_name || "");
-      // setPreferences(selectedUser.preferences || "");
       if (addresses.length === 0)
         void dispatch(getUserAddresses(selectedUser.id));
     }
@@ -100,7 +90,7 @@ const MyProfile = () => {
     country: "",
     is_default: false,
   });
-  // Handle tab change with URL update
+
   const handleTabChange = (value: string) => {
     void navigate(`/profile?tab=${value}`);
   };
@@ -113,7 +103,6 @@ const MyProfile = () => {
         email,
         phone,
         visible_name: visibleName,
-        // preferences: typeof preferences === "string" ? undefined : preferences
       };
       try {
         void dispatch(
@@ -146,7 +135,6 @@ const MyProfile = () => {
             ).unwrap();
           }
         }
-        // refresh addresses after all updates/adds
         void dispatch(getUserAddresses(selectedUser.id));
         toast.success(t.myProfile.toast.updateSuccess[lang]);
       } catch {
@@ -186,7 +174,6 @@ const MyProfile = () => {
               }),
             ).unwrap();
           }
-          // keep store in sync for subsequent visits/refreshes
           await dispatch(getUserAddresses(selectedUser!.id)).unwrap();
           toast.success(t.myProfile.toast.addressRemoved[lang]);
         } catch {
