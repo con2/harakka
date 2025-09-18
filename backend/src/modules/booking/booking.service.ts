@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
@@ -43,6 +44,7 @@ import { StorageItemRow } from "../storage-items/interfaces/storage-item.interfa
 dayjs.extend(utc);
 @Injectable()
 export class BookingService {
+  private readonly logger = new Logger(BookingService.name);
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly mailService: MailService,
@@ -643,6 +645,7 @@ export class BookingService {
       .single<BookingRow>();
 
     if (bookingError || !booking) {
+      this.logger.error("Booking creation error:", bookingError); // Keep for backend
       throw new BadRequestException("Could not create booking");
     }
 
@@ -705,8 +708,9 @@ export class BookingService {
       .from("view_bookings_with_details")
       .select("*")
       .eq("id", booking.id);
-
+    console.log("createdBookings:", createdBookings);
     if (fetchError || !createdBookings || createdBookings.length === 0) {
+      this.logger.error("Fetch created booking error:", fetchError); // Keep for backend
       throw new BadRequestException("Could not fetch created booking details");
     }
 
