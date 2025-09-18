@@ -102,7 +102,7 @@ export const Navigation = () => {
 
   if (isMobile)
     return (
-      <nav className="flex p-4 justify-between shadow-sm items-center z-50">
+      <nav className="flex p-4 justify-around shadow-sm items-center z-50">
         <div className="flex gap-4">
           <Link to="/" data-cy="nav-home">
             <LogoSmall className="w-10" />
@@ -111,7 +111,6 @@ export const Navigation = () => {
         </div>
 
         <div className="flex gap-4">
-          <RoleContextSwitcher />
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
@@ -125,13 +124,14 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
+          <RoleContextSwitcher />
         </div>
       </nav>
     );
 
   if (isTablet)
     return (
-      <nav className="flex p-4 justify-between shadow-sm items-center z-50">
+      <nav className="flex p-4 justify-around shadow-sm items-center z-50">
         <div className="flex gap-6">
           <Link to="/" data-cy="nav-home">
             <Logo className="w-35" />
@@ -150,7 +150,6 @@ export const Navigation = () => {
         </div>
 
         <div className="flex gap-4">
-          <RoleContextSwitcher />
           {selectedUser && <Notifications userId={selectedUser.id} />}
           <Button
             variant="ghost"
@@ -165,28 +164,7 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
-          {isLoggedIn && (
-            <>
-              <Button
-                variant={"ghost"}
-                className="m-0 hover:bg-(--subtle-grey) gap-2 hover:text-(--midnight-black) text-(--midnight-black)"
-                size={"sm"}
-                onClick={() => void navigate("/profile")}
-                data-cy="nav-profile-btn"
-              >
-                {avatarUrl && avatarUrl.trim() !== "" ? (
-                  <img
-                    src={avatarUrl}
-                    className="inline h-6 w-6 rounded-full"
-                    alt="User avatar"
-                  />
-                ) : (
-                  <UserIcon className="inline h-6 w-6 rounded-full" />
-                )}
-                <span>{name}</span>
-              </Button>
-            </>
-          )}
+          <RoleContextSwitcher />
         </div>
       </nav>
     );
