@@ -600,35 +600,16 @@ export class BookingService {
       }
 
       // 3.1. Check availability for requested date range
-      const available = await calculateAvailableQuantity(
+      const { availableQuantity } = await calculateAvailableQuantity(
         supabase,
         item_id,
         start_date,
         end_date,
       );
 
-      if (quantity > available.availableQuantity) {
+      if (quantity > availableQuantity) {
         throw new BadRequestException(
-          `Not enough virtual stock available for item ${item_id}`,
-        );
-      }
-
-      // 3.2. Check physical stock (currently in storage)
-      const { data: storageItem, error: itemError } = await supabase
-        .from("storage_items")
-        .select("available_quantity")
-        .eq("id", item_id)
-        .single();
-
-      if (itemError) handleSupabaseError(itemError);
-
-      if (!storageItem)
-        throw new BadRequestException("Storage item data not found");
-
-      const currentStock = storageItem.available_quantity ?? 0;
-      if (quantity > currentStock) {
-        throw new BadRequestException(
-          `Not enough physical stock in storage for item ${item_id}`,
+          `Requested quantity exceeds available quantity for item: ${item_id}. Requested ${quantity} but there is only ${availableQuantity} available.`,
         );
       }
     }
