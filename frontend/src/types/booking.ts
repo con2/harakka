@@ -3,7 +3,6 @@ import { BaseEntity, ErrorContext, Translatable } from "./common";
 import { ItemTranslation } from "./item";
 import { Database } from "@common/supabase.types";
 import { StripNull } from "@common/helper.types";
-import { BookingPreviewWithOrgData } from "@common/bookings/booking.types";
 
 /**
  * Booking status values
