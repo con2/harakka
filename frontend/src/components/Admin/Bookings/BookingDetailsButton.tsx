@@ -23,7 +23,7 @@ const BookingDetailsButton = ({
       size="sm"
       title={t.bookingDetailsButton.title[lang]}
     >
-      <Eye size={10} className="mr-1" />
+      <Eye size={10} />
     </Button>
   );
 };

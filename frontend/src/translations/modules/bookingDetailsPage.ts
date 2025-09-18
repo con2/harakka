@@ -9,6 +9,16 @@ export const bookingDetailsPage = {
       en: "Back",
     },
   },
+  tooltip: {
+    self_pickup: {
+      en: "Allow user to pick up items themselves for selected locations. If enabled, the items are marked as picked up by the user instead of an admin.",
+      fi: "Salli käyttäjän noutaa tuotteet itse valituista sijainneista. Jos tämä on käytössä, tuotteet merkitään noudetuiksi käyttäjän toimesta hallinnoijan sijaan.",
+    },
+  },
+  selfPickup: {
+    en: "Allow Self-Pickup",
+    fi: "Salli itsepalautus",
+  },
   status: {
     fi: "Tila",
     en: "Status",
@@ -120,6 +130,26 @@ export const bookingDetailsPage = {
       cancelSome: {
         en: "Mark {amount} items as cancelled",
         fi: "Merkitse {amount} tuotetta perutetuiksi",
+      },
+    },
+  },
+  toast: {
+    selfPickup: {
+      enabled: {
+        en: "Self-pickup was successfully enabled!",
+        fi: "Itsepalautus otettu käyttöön!",
+      },
+      disabled: {
+        en: "Self-pickup was successfully disabled!",
+        fi: "Itsepalautus poistettu käytöstä!",
+      },
+      failed: {
+        en: "Failed to update pickup status.",
+        fi: "Nouto-asetuksen päivitys epäonnistui.",
+      },
+      loading: {
+        en: "Updating pickup status...",
+        fi: "Päivitetään nouto-asetusta...",
       },
     },
   },

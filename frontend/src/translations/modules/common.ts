@@ -12,6 +12,10 @@ export const common = {
     fi: "Peruuta",
     en: "Cancel",
   },
+  back: {
+    fi: "Takaisin",
+    en: "Back",
+  },
   save: {
     fi: "Tallenna",
     en: "Save",

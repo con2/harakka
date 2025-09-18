@@ -78,6 +78,16 @@ const BookingList = () => {
     activeOrgId,
   ]);
 
+  const statusFilterOptions = [
+    "all",
+    "pending",
+    "confirmed",
+    "rejected",
+    "cancelled",
+    "completed",
+    "picked_up",
+  ];
+
   const columns: ColumnDef<BookingPreviewWithOrgData>[] = [
     {
       id: "actions",
@@ -202,30 +212,15 @@ const BookingList = () => {
               onChange={(e) => setStatusFilter(e.target.value as BookingStatus)}
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             >
-              <option value="all">
-                {t.bookingList.filters.status.all[lang]}
-              </option>
-              <option value="pending">
-                {t.bookingList.filters.status.pending[lang]}
-              </option>
-              <option value="confirmed">
-                {t.bookingList.filters.status.confirmed[lang]}
-              </option>
-              <option value="rejected">
-                {t.bookingList.filters.status.rejected[lang]}
-              </option>
-              <option value="cancelled">
-                {t.bookingList.filters.status.cancelled[lang]}
-              </option>
-              <option value="picked_up">
-                {t.bookingList.filters.status.picked_up[lang]}
-              </option>
-              <option value="returned">
-                {t.bookingList.filters.status.returned[lang]}
-              </option>
-              <option value="completed">
-                {t.bookingList.filters.status.completed[lang]}
-              </option>
+              {statusFilterOptions.map((option) => (
+                <option key={`option-${option}`} value={option}>
+                  {
+                    t.bookingList.filters.status[
+                      option as keyof typeof t.bookingList.filters.status
+                    ]?.[lang]
+                  }
+                </option>
+              ))}
             </select>
             {(searchQuery || statusFilter !== "all") && (
               <Button

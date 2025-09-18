@@ -6,17 +6,24 @@ import { RotateCcw } from "lucide-react";
 import { toastConfirm } from "../../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { ReactNode } from "react";
 
 const BookingReturnButton = ({
   id,
   disabled = false,
   itemIds,
+  org_id,
   onSuccess,
+  location_id,
+  children,
 }: {
   id: string;
   disabled?: boolean;
+  org_id?: string;
   itemIds?: string[];
   onSuccess?: () => void;
+  location_id?: string;
+  children?: ReactNode;
 }) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
@@ -35,7 +42,7 @@ const BookingReturnButton = ({
       cancelText: t.bookingReturn.confirmDialog.cancelText[lang],
       onConfirm: () => {
         const promise = dispatch(
-          returnItems({ bookingId: id, itemIds }),
+          returnItems({ bookingId: id, itemIds, location_id, org_id }),
         ).unwrap();
 
         toast.promise(promise, {
@@ -58,9 +65,10 @@ const BookingReturnButton = ({
       disabled={disabled}
       onClick={handleReturnItems}
       title={t.bookingList.buttons.return[lang]}
-      className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+      className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 gap-2"
     >
       <RotateCcw className="h-4 w-4" />
+      {children}
     </Button>
   );
 };

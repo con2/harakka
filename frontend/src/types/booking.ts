@@ -3,7 +3,6 @@ import { BaseEntity, ErrorContext, Translatable } from "./common";
 import { ItemTranslation } from "./item";
 import { Database } from "@common/supabase.types";
 import { StripNull } from "@common/helper.types";
-import { BookingPreviewWithOrgData } from "@common/bookings/booking.types";
 
 /**
  * Booking status values
@@ -30,8 +29,8 @@ export interface BookingType extends BaseEntity {
  * Booking state in Redux store
  */
 export interface BookingsState {
-  bookings: BookingPreviewWithOrgData[]; // Admin bookings with org-specific data
-  userBookings: BookingPreview[]; // User bookings without org-specific data
+  bookings: BookingPreview[];
+  userBookings: ExtendedBookingPreview[];
   loading: boolean;
   error: string | null;
   errorContext: ErrorContext;
@@ -100,6 +99,19 @@ export type BookingUserViewRow = BookingUserView["Row"];
 
 /* Non-nullable type of the BookingUserViewRow */
 export type BookingPreview = StripNull<BookingUserViewRow>;
+export type ExtendedBookingPreview = BookingPreview & {
+  orgs: {
+    name: string;
+    id: string;
+    org_booking_status: BookingStatus;
+    locations: {
+      name: string;
+      id: string;
+      self_pickup: boolean;
+      pickup_status: BookingStatus;
+    }[];
+  }[];
+};
 
 export type BookingWithDetails = BookingPreview & {
   booking_items: BookingItemWithDetails[] | null;

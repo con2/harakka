@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
 import { JwtService } from "../jwt/jwt.service";
@@ -469,6 +470,75 @@ export class RoleService {
   }
 
   /**
+   * Allow the current authenticated user to permanently remove their own role assignment
+   * Performs ownership check and prevents removing the Global 'user' role.
+   */
+  async leaveOrg(
+    tableKeyId: string,
+    req: AuthRequest,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const { data: roleDetails, error: viewError } = await req.supabase
+        .from("view_user_roles_with_details")
+        .select("*")
+        .eq("id", tableKeyId)
+        .single();
+
+      if (viewError || !roleDetails) {
+        this.logger.warn(`leaveOrg: role ${tableKeyId} not found`);
+        throw new NotFoundException("Role assignment not found");
+      }
+
+      if (roleDetails.user_id !== req.user.id) {
+        this.logger.warn(
+          `User ${req.user.id} attempted to remove role ${tableKeyId} owned by ${roleDetails.user_id}`,
+        );
+        throw new BadRequestException("You may only remove your own role");
+      }
+
+      if (
+        roleDetails.role_name === "user" &&
+        roleDetails.organization_name === "Global"
+      ) {
+        this.logger.warn(
+          `User ${req.user.id} attempted to remove Global user role - blocked`,
+        );
+        throw new BadRequestException(
+          "Cannot remove the Global user role for this account",
+        );
+      }
+
+      // Perform the actual delete using the shared helper so admin and user
+      // flows use the same SQL and error handling. Use the request-scoped
+      // supabase client so RLS applies.
+      const { userId } = await this.deleteRoleRecordById(
+        tableKeyId,
+        req.supabase,
+      );
+
+      // Update the user's JWT after the removal
+      await this.updateUserJWT(userId, req);
+
+      return {
+        success: true,
+        message: "Role assignment permanently deleted",
+      };
+    } catch (err) {
+      // Re-throw known exceptions
+      if (
+        err instanceof NotFoundException ||
+        err instanceof BadRequestException
+      ) {
+        throw err;
+      }
+      this.logger.error(
+        `Failed to execute leaveOrg for ${tableKeyId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      throw new BadRequestException("Failed to leave organization");
+    }
+  }
+
+  /**
    * Get all user role assignments (admin only)
    */
   async getAllUserRoles(req: AuthRequest): Promise<ViewUserRolesWithDetails[]> {
@@ -486,6 +556,42 @@ export class RoleService {
     }
 
     return this.filterUserRoles(data, req);
+  }
+
+  /**
+   * Low-level hard delete helper used by both admin and user flows.
+   * Returns the deleted record's user_id so callers can refresh JWT.
+   */
+  private async deleteRoleRecordById(
+    tableKeyId: string,
+    supabaseClient: SupabaseClient,
+  ): Promise<{ userId: string }> {
+    // Check if assignment exists and get user_id
+    const { data: existing, error: existingError } = await supabaseClient
+      .from("user_organization_roles")
+      .select("id, user_id")
+      .eq("id", tableKeyId)
+      .single();
+
+    if (existingError || !existing) {
+      this.logger.warn(`deleteRoleRecordById: role ${tableKeyId} not found`);
+      throw new NotFoundException("Role assignment not found");
+    }
+
+    // Perform hard delete
+    const { error } = await supabaseClient
+      .from("user_organization_roles")
+      .delete()
+      .eq("id", tableKeyId);
+
+    if (error) {
+      this.logger.error(
+        `Failed to delete role record ${tableKeyId}: ${error.message}`,
+      );
+      throw new BadRequestException("Failed to delete role assignment");
+    }
+
+    return { userId: existing.user_id };
   }
 
   /**
