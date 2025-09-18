@@ -202,7 +202,7 @@ export const UserMenu: React.FC = () => {
                 </Link>
               </NavigationMenuLink>
               <NavigationMenuLink asChild>
-                <Link to="/profile?tab=bookings">
+                <Link to="/my-bookings">
                   <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
                     <CalendarDays className="w-4 h-4 text-muted-foreground" />
                     {activeRoleName === "user"

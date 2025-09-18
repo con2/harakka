@@ -253,7 +253,7 @@ const BookingConfirmation: React.FC = () => {
 
           <div className="flex gap-4 justify-center">
             <Button
-              onClick={() => navigate("/profile?tab=bookings")}
+              onClick={() => navigate("/my-bookings")}
               className="flex-1 bg-background text-secondary border-secondary border hover:bg-secondary hover:text-white"
             >
               {t.bookingConfirmation.buttons.viewBookings[lang]}
