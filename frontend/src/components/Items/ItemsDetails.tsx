@@ -13,7 +13,6 @@ import {
 } from "../../store/slices/itemImagesSlice";
 import { Button } from "../../components/ui/button";
 import { ChevronLeft, Clock, Info, LoaderCircle } from "lucide-react";
-import Rating from "../ui/rating";
 import { addToCart } from "../../store/slices/cartSlice";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
@@ -278,18 +277,6 @@ const ItemsDetails: React.FC = () => {
               ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
               : "Tuote"}
           </h2>
-
-          {/* Rating Component */}
-          {(item as Item).average_rating ? (
-            <div
-              className="flex items-center justify-start mt-1"
-              data-cy="item-details-rating"
-            >
-              <Rating rating={(item as Item).average_rating ?? 0} readOnly />
-            </div>
-          ) : (
-            ""
-          )}
 
           {/* Location Details Section */}
           {(item as Item).location_details && (
