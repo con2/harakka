@@ -708,7 +708,6 @@ export class BookingService {
       .from("view_bookings_with_details")
       .select("*")
       .eq("id", booking.id);
-    console.log("createdBookings:", createdBookings);
     if (fetchError || !createdBookings || createdBookings.length === 0) {
       this.logger.error("Fetch created booking error:", fetchError); // Keep for backend
       throw new BadRequestException("Could not fetch created booking details");
@@ -1106,34 +1105,16 @@ export class BookingService {
       }
 
       // 5.5. Check virtual availability for the time range
-      const available = await calculateAvailableQuantity(
+      const { availableQuantity } = await calculateAvailableQuantity(
         supabase,
         item_id,
         start_date,
         end_date,
       );
 
-      if (quantity > available.availableQuantity) {
+      if (quantity > availableQuantity) {
         throw new BadRequestException(
-          `Not enough virtual stock available for item ${item_id}`,
-        );
-      }
-
-      // Check physical stock (currently in storage)
-      const { data: storageCountRow, error: itemError } = await supabase
-        .from("storage_items")
-        .select("available_quantity")
-        .eq("id", item_id)
-        .single();
-
-      if (itemError || !storageCountRow) {
-        throw new BadRequestException("Storage item data not found");
-      }
-
-      const currentStock = storageCountRow.available_quantity ?? 0;
-      if (quantity > currentStock) {
-        throw new BadRequestException(
-          `Not enough physical stock in storage for item ${item_id}`,
+          `Requested quantity exceeds available quantity for item: ${item_id}. Requested quantity: ${quantity}, available: ${availableQuantity}`,
         );
       }
 
