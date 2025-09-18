@@ -33,26 +33,18 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { Sheet, SheetTrigger } from "./ui/sheet";
 import MobileMenu from "./MobileMenu";
-import { useProfile } from "@/hooks/useProfile";
-import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 export const Navigation = () => {
   // Auth State
   const { signOut, user, authLoading } = useAuth();
-  const { hasAnyRole, hasRole } = useRoles();
-  const selectedUser = useAppSelector(selectSelectedUser);
+  const { hasAnyRole } = useRoles();
   const { lang } = useLanguage();
-  const activeOrg = useAppSelector(selectActiveOrganizationId);
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
-  const { avatarUrl, name } = useProfile(user);
-  const isGlobalUser = hasRole("user", activeOrg!);
 
   // Screen Size State
-  const { isMobile: defaultMobileSize, width } = useIsMobile();
-  const isTablet = isGlobalUser ? width <= 1210 : width <= 1130;
-  const isMobile = isGlobalUser ? defaultMobileSize : width <= 877;
+  const { isMobile, isTablet } = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAnyTypeOfAdmin = hasAnyRole([
@@ -67,14 +59,13 @@ export const Navigation = () => {
 
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
-    ? "absolute top-0 left-0 w-full z-50 text-white px-2 md:px-10 py-2 md:py-3 bg-white flex lg:justify-around"
+    ? "absolute top-0 left-0 w-full z-50 px-2 md:px-10 py-2 md:py-3 bg-white flex lg:justify-around"
     : "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white lg:justify-around flex justify-between";
 
   const handleSignOut = () => {
     toastConfirm({
       title: t.navigation.toast.title[lang],
       description: t.navigation.toast.description[lang],
-      confirmText: t.navigation.toast.confirmText[lang],
       cancelText: t.navigation.toast.cancelText[lang],
       onConfirm: () => {
         void signOut();
@@ -110,8 +101,7 @@ export const Navigation = () => {
           <MobileNavigation />
         </div>
 
-        <div className="flex gap-4">
-          <RoleContextSwitcher />
+        <div className="flex gap-4 items-center">
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
@@ -125,6 +115,7 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
+          <RoleContextSwitcher />
         </div>
       </nav>
     );
@@ -149,9 +140,8 @@ export const Navigation = () => {
           )}
         </div>
 
-        <div className="flex gap-4">
-          <RoleContextSwitcher />
-          {selectedUser && <Notifications userId={selectedUser.id} />}
+        <div className="flex gap-4 items-center">
+          {user && <Notifications userId={user.id} />}
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
@@ -165,28 +155,7 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
-          {isLoggedIn && (
-            <>
-              <Button
-                variant={"ghost"}
-                className="m-0 hover:bg-(--subtle-grey) gap-2 hover:text-(--midnight-black) text-(--midnight-black)"
-                size={"sm"}
-                onClick={() => void navigate("/profile")}
-                data-cy="nav-profile-btn"
-              >
-                {avatarUrl && avatarUrl.trim() !== "" ? (
-                  <img
-                    src={avatarUrl}
-                    className="inline h-6 w-6 rounded-full"
-                    alt="User avatar"
-                  />
-                ) : (
-                  <UserIcon className="inline h-6 w-6 rounded-full" />
-                )}
-                <span>{name}</span>
-              </Button>
-            </>
-          )}
+          <RoleContextSwitcher />
         </div>
       </nav>
     );
@@ -277,9 +246,6 @@ export const Navigation = () => {
       {/* Right side: Cart, notifications, language, auth */}
       <div className="flex items-center gap-3">
         {/* Active role context switcher if user is logged in and has roles */}
-        {isLoggedIn && <RoleContextSwitcher />}
-
-        <LanguageSwitcher />
         <Button
           variant="ghost"
           onClick={() => navigate("/cart")}
@@ -293,41 +259,11 @@ export const Navigation = () => {
             </Badge>
           )}
         </Button>
-        {selectedUser && <Notifications userId={selectedUser.id} />}
+        {user && <Notifications userId={user.id} />}
 
         {!authLoading && (
           <>
-            {isLoggedIn ? (
-              <>
-                <Button
-                  variant={"ghost"}
-                  className="m-0 hover:bg-(--subtle-grey) gap-2 hover:text-(--midnight-black) text-(--midnight-black)"
-                  size={"sm"}
-                  onClick={() => void navigate("/profile")}
-                  data-cy="nav-profile-btn"
-                >
-                  {avatarUrl && avatarUrl.trim() !== "" ? (
-                    <img
-                      src={avatarUrl}
-                      className="inline h-6 w-6 rounded-full"
-                      alt="User avatar"
-                    />
-                  ) : (
-                    <UserIcon className="inline h-6 w-6 rounded-full bg-grey" />
-                  )}
-                  <span className="hidden sm:inline">{name}</span>
-                </Button>
-                <Button
-                  variant={"ghost"}
-                  size={"sm"}
-                  onClick={handleSignOut}
-                  data-cy="nav-signout-btn"
-                  className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
-                >
-                  <LogOutIcon className="h-5 w-5" />
-                </Button>
-              </>
-            ) : (
+            {!isLoggedIn && (
               <Button
                 variant={"ghost"}
                 className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
@@ -341,6 +277,7 @@ export const Navigation = () => {
             )}
           </>
         )}
+        {isLoggedIn && <RoleContextSwitcher />}
       </div>
     </nav>
   );

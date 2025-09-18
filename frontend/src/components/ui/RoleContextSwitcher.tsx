@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useRoles } from "@/hooks/useRoles";
 import {
   Select,
@@ -9,12 +9,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { t } from "@/translations";
-import { useLanguage } from "@/context/LanguageContext";
-import { getOrgLabel } from "@/utils/format";
+import {
+  useLanguage,
+  SUPPORTED_LANGUAGES,
+  Language,
+} from "@/context/LanguageContext";
+import { formatRoleName, getOrgLabel } from "@/utils/format";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { setRedirectUrl } from "@/store/slices/uiSlice";
 import { useAppDispatch } from "@/store/hooks";
+import {
+  ArrowLeft,
+  ArrowLeftRight,
+  CalendarDays,
+  Globe,
+  LogOut,
+  UserIcon,
+  UserRound,
+} from "lucide-react";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuTrigger,
+} from "./navigation-menu";
 
 export const RoleContextSwitcher: React.FC = () => {
   const {
@@ -23,27 +43,33 @@ export const RoleContextSwitcher: React.FC = () => {
     activeContext,
     setActiveContext,
   } = useRoles();
-  const { lang } = useLanguage();
+  const { lang, setLanguage } = useLanguage();
   const location = useLocation();
-  const { user } = useAuth();
-  const { name: userName } = useProfile(user);
+  const { user, signOut } = useAuth();
+  const { name: userName, avatarUrl } = useProfile(user);
   const dispatch = useAppDispatch();
-
+  const [selectGroup, setSelectGroup] = useState<
+    "roles" | "links" | "languages"
+  >("links");
+  const isSelectingRole = selectGroup === "roles";
+  const isSelectingLanguage = selectGroup === "languages";
   // Important: Initialize with empty string instead of undefined to keep component controlled
+  const {
+    organizationId: activeOrgId,
+    organizationName: activeOrgName,
+    roleName: activeRoleName,
+  } = activeContext;
   const [localValue, setLocalValue] = useState<string>(
-    activeContext.organizationId && activeContext.roleName
-      ? `${activeContext.organizationId}:${activeContext.roleName}`
-      : "",
+    activeOrgId && activeRoleName ? `${activeOrgId}:${activeRoleName}` : "",
   );
+  const ref = useRef(null);
 
   // Keep localValue in sync with activeContext changes
   useEffect(() => {
     const v =
-      activeContext.organizationId && activeContext.roleName
-        ? `${activeContext.organizationId}:${activeContext.roleName}`
-        : "";
+      activeOrgId && activeRoleName ? `${activeOrgId}:${activeRoleName}` : "";
     setLocalValue(v);
-  }, [activeContext.organizationId, activeContext.roleName]);
+  }, [activeOrgId, activeRoleName]);
 
   // Filter to only active roles
   const activeRoles = currentUserRoles.filter((role) => role.is_active);
@@ -66,7 +92,7 @@ export const RoleContextSwitcher: React.FC = () => {
 
   // Automatically set the only role as active if there's just one role
   useEffect(() => {
-    if (activeRoles.length === 1 && !activeContext.organizationId) {
+    if (activeRoles.length === 1 && !activeOrgId) {
       const singleRole = activeRoles[0] as {
         organization_id: string;
         role_name: string;
@@ -118,22 +144,180 @@ export const RoleContextSwitcher: React.FC = () => {
   }
 
   return (
-    <div className="flex items-center gap-2 text-primary">
+    <NavigationMenu ref={ref}>
+      <NavigationMenuItem className="font-main">
+        <NavigationMenuTrigger className="gap-3 p-1 px-2 h-fit">
+          {avatarUrl && avatarUrl.trim() !== "" ? (
+            <img
+              src={avatarUrl}
+              className="inline h-6 w-6 rounded-full"
+              alt="User avatar"
+            />
+          ) : (
+            <UserIcon className="inline h-6 w-6 rounded-full" />
+          )}
+          <div className="flex flex-col text-start font-main flex-col-reverse">
+            <p className="text-xs font-main !font-[var(--main-font)]">
+              {activeRoleName !== "user" &&
+                getOrgLabel(userName, activeRoleName!, activeOrgName!)}
+            </p>
+            <p className="text-md">{userName}</p>
+          </div>
+        </NavigationMenuTrigger>
+        <NavigationMenuContent>
+          {isSelectingRole && (
+            <ul className="flex w-[200px] flex-col">
+              <NavigationMenuLink
+                className="flex flex-row items-center font-main hover:cursor-pointer gap-2 text-sm p-2"
+                onClick={() => setSelectGroup("links")}
+              >
+                <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+                Back
+              </NavigationMenuLink>
+              {roleOptions.map((opt) => (
+                <NavigationMenuLink
+                  onClick={() =>
+                    setActiveContext(opt.orgId!, opt.roleName!, opt.orgName!)
+                  }
+                  className="flex flex-row items-center font-main hover:cursor-pointer gap-2 text-sm p-2"
+                >
+                  {getOrgLabel(userName, opt.roleName!, opt.orgName!)}
+                </NavigationMenuLink>
+              ))}
+            </ul>
+          )}
+          {isSelectingLanguage && (
+            <ul className="flex w-[200px] flex-col">
+              <NavigationMenuLink
+                className="flex flex-row items-center font-main hover:cursor-pointer gap-2 text-sm p-2"
+                onClick={() => setSelectGroup("links")}
+              >
+                <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+                Back
+              </NavigationMenuLink>
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <NavigationMenuLink
+                  asChild
+                  onClick={() => setLanguage(lang.key as Language)}
+                >
+                  <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
+                    {lang.lang}
+                  </div>
+                </NavigationMenuLink>
+              ))}
+            </ul>
+          )}
+          {!isSelectingLanguage && !isSelectingRole && (
+            <ul className="grid w-[200px] gap-1">
+              <NavigationMenuLink asChild>
+                <Link to="/profile">
+                  <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
+                    <UserRound className="w-4 h-4 text-muted-foreground" />
+                    My Profile
+                  </div>
+                </Link>
+              </NavigationMenuLink>
+              <NavigationMenuLink asChild>
+                <Link to="/profile?tab=bookings">
+                  <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
+                    <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                    {activeRoleName === "user"
+                      ? "My Bookings"
+                      : "Organization Bookings"}
+                  </div>
+                </Link>
+              </NavigationMenuLink>
+              <NavigationMenuLink
+                asChild
+                onClick={() => setSelectGroup("roles")}
+              >
+                <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
+                  <ArrowLeftRight className="w-4 h-4 text-muted-foreground " />
+                  Change Organization
+                </div>
+              </NavigationMenuLink>
+              <NavigationMenuLink
+                asChild
+                onClick={() => setSelectGroup("languages")}
+              >
+                <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
+                  <Globe className="w-4 h-4 text-muted-foreground " />
+                  Change Language
+                </div>
+              </NavigationMenuLink>
+              <NavigationMenuLink
+                asChild
+                onClick={() => setSelectGroup("languages")}
+              >
+                <button
+                  onClick={signOut}
+                  className="flex flex-row items-center font-main hover:cursor-pointer gap-2"
+                >
+                  <LogOut className="w-4 h-4 text-muted-foreground " />
+                  Log out
+                </button>
+              </NavigationMenuLink>
+            </ul>
+          )}
+        </NavigationMenuContent>
+      </NavigationMenuItem>
+    </NavigationMenu>
+  );
+
+  return (
+    <div className="flex items-center gap-2">
       <Select
         key={componentKey}
         value={localValue}
-        onValueChange={handleContextChange}
+        onValueChange={isSelectingRole ? handleContextChange : () => {}}
         defaultValue=""
       >
-        <SelectTrigger className="w-[250px] text-(--midnight-black) filter drop-shadow-[0px_0px_1px_var(--subtle-grey)]">
+        <SelectTrigger className="shadow-none">
+          {avatarUrl && avatarUrl.trim() !== "" ? (
+            <img
+              src={avatarUrl}
+              className="inline h-6 w-6 rounded-full"
+              alt="User avatar"
+            />
+          ) : (
+            <UserIcon className="inline h-6 w-6 rounded-full" />
+          )}
+          <div className="flex flex-col text-start font-main flex-col-reverse">
+            <p className="text-xs font-main !font-[var(--main-font)]">
+              {formatRoleName(activeRoleName!)} at {activeOrgName}
+            </p>
+            <p className="text-md">{userName}</p>
+          </div>
           <SelectValue placeholder={t.roleContextSwitcher.placeholders[lang]} />
         </SelectTrigger>
         <SelectContent>
-          {roleOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
+          {isSelectingRole ? (
+            <>
+              {roleOptions.map((opt) => (
+                <SelectItem value={opt.value}>
+                  {opt.roleName} at {opt.orgName}
+                </SelectItem>
+              ))}
+            </>
+          ) : (
+            <>
+              <SelectItem value="profile">
+                <UserRound />
+                My Profile
+              </SelectItem>
+              <SelectItem value="profile">
+                <CalendarDays />
+                My Bookings
+              </SelectItem>
+              <SelectItem
+                value="profile"
+                onClick={() => setSelectGroup("roles")}
+              >
+                <ArrowLeftRight />
+                Change roles
+              </SelectItem>
+            </>
+          )}
         </SelectContent>
       </Select>
     </div>
