@@ -7,17 +7,15 @@ import {
   deleteItem,
 } from "@/store/slices/itemsSlice";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Edit, Trash2 } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import Spinner from "@/components/Spinner";
 import { toast } from "sonner";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { Item } from "@/types/item";
-import UpdateItemForm from "@/components/Admin/Items/UpdateItemForm";
 import { fetchTagsForItem } from "@/store/slices/tagSlice";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
-import { Separator } from "@/components/ui/separator";
 import AddItemForm from "@/components/Admin/Items/AddItem/Steps/AddItemForm";
 
 const ItemDetailsPage = () => {
@@ -28,7 +26,6 @@ const ItemDetailsPage = () => {
   const selectedItem = useAppSelector(selectSelectedItem);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const [loading, setLoading] = useState(true);
-  const [updateOpen, setUpdateOpen] = useState(false);
   // Form state for inline editing
   const [formData, setFormData] = useState<Item | null>(null);
 
@@ -53,6 +50,8 @@ const ItemDetailsPage = () => {
     if (!selectedItem) return;
     setFormData(selectedItem as Item);
   }, [selectedItem]);
+
+  const updateItem = () => {};
 
   const handleDelete = () => {
     if (!selectedItem) return;
@@ -99,15 +98,20 @@ const ItemDetailsPage = () => {
   return (
     <div>
       {/*/ Back button */}
-      <Button
-        onClick={() => {
-          window.location.href = "/admin/items";
-        }}
-        className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
-      >
-        <ChevronLeft /> {t.itemDetailsPage.buttons.back[lang]}
-      </Button>
-      <AddItemForm onUpdate={() => {}}/>
+      <div className="flex justify-between max-w-[900px]">
+        <Button
+          onClick={() => {
+            window.location.href = "/admin/items";
+          }}
+          className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+        >
+          <ChevronLeft /> {t.itemDetailsPage.buttons.back[lang]}
+        </Button>
+        <Button variant="destructive" onClick={handleDelete}>
+          Delete Item
+        </Button>
+      </div>
+      <AddItemForm onUpdate={updateItem} collapsible />
     </div>
   );
 };
