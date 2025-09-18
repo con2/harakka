@@ -112,39 +112,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // get inital session
   useEffect(() => {
     void supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      const isRecoveryFlow =
+        window.location.href.includes("type=recovery") ||
+        new URLSearchParams(window.location.search).get("type") === "recovery";
+
+      if (!isRecoveryFlow) {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
       setAuthLoading(false);
     });
-    // listen for auth changes
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event: string, session) => {
-      // Check for recovery flow FIRST before processing auth
       const isRecoveryFlow =
         window.location.href.includes("type=recovery") ||
-        window.location.hash.includes("type=recovery") ||
-        new URLSearchParams(window.location.hash.replace("#", "")).get(
-          "type",
-        ) === "recovery";
+        new URLSearchParams(window.location.search).get("type") === "recovery";
 
       if (isRecoveryFlow) {
-        console.log(
-          "Password recovery flow detected, preventing automatic login",
-        );
-        // Don't set the session or user for recovery flows
+        console.log("Recovery flow detected, skipping session setup.");
         setAuthLoading(false);
         return;
       }
 
-      // Normal authentication flow
       setSession(session);
       setUser(session?.user ?? null);
       setAuthLoading(false);
 
       if (session?.user) {
-        // Only process actual signup/signin events, not token refreshes
-        // or initial session events to avoid the loop
+        // Handle signup/signin events
         if (
           !initialSetupComplete &&
           (event === "SIGNED_IN" || event === "SIGNED_UP")
@@ -191,7 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [handleUserAuthentication, processedSignups, initialSetupComplete]);
+  }, []);
 
   // Handle role loading after authentication
   useEffect(() => {
