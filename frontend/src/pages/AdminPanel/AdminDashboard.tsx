@@ -114,7 +114,13 @@ const AdminDashboard = () => {
     {
       accessorKey: "status",
       header: t.bookingList.columns.status[lang],
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => {
+        const orgStatus = row.original as BookingPreview & {
+          org_status_for_active_org?: string;
+        };
+        const status = orgStatus.org_status_for_active_org ?? orgStatus.status;
+        return <StatusBadge status={status} />;
+      },
     },
     {
       accessorKey: "created_at",

@@ -74,7 +74,8 @@ export type ValidBookingOrder =
   | "booking_number"
   | "status"
   | "final_amount"
-  | "full_name";
+  | "full_name"
+  | "start_date";
 
 export type BookingWithOrgStatus = BookingPreview & {
   org_status_for_active_org: BookingStatus;
