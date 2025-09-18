@@ -2,6 +2,10 @@
 -- Migration: 20250918130217_Bookings_Policy_Update.sql
 -- Description: Update policies for bookings table to not exclude super admins in read/create
 -- ===============================================================================
+-- Enable again because I disabled it in the UI of main
+ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE booking_items ENABLE ROW LEVEL SECURITY;
+
 alter policy "Members can read own bookings" on "public"."bookings" to authenticated using (
     auth.uid () = user_id -- Removed NOT is_super_admin() condition
 );
