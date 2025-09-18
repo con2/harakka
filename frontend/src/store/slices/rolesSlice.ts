@@ -134,6 +134,35 @@ export const updateUserRole = createAsyncThunk(
   },
 );
 
+export const replaceUserRole = createAsyncThunk(
+  "roles/replaceUserRole",
+  async (
+    {
+      oldRoleId,
+      newRoleData,
+    }: { oldRoleId: string; newRoleData: CreateUserRoleDto },
+    { getState, rejectWithValue, dispatch },
+  ) => {
+    try {
+      const result = await roleApi.replaceUserRole(oldRoleId, newRoleData);
+
+      // If the affected user is the current user, refresh session
+      const state = getState() as RootState;
+      const currentUserId = state.users.selectedUser?.id;
+      if (newRoleData.user_id === currentUserId && currentUserId) {
+        await refreshSupabaseSession();
+        void dispatch(fetchCurrentUserRoles());
+      }
+
+      return result;
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to replace user role"),
+      );
+    }
+  },
+);
+
 export const deleteUserRole = createAsyncThunk(
   "roles/deleteUserRole",
   async (tableKeyId: string, { getState, rejectWithValue, dispatch }) => {
@@ -406,6 +435,28 @@ const rolesSlice = createSlice({
         state.adminLoading = false;
         state.adminError = action.payload as string;
         state.errorContext = "update-user-role";
+      })
+
+      // Replace old role with new
+      .addCase(replaceUserRole.pending, (state) => {
+        state.adminLoading = true;
+        state.adminError = null;
+      })
+      .addCase(replaceUserRole.fulfilled, (state, action) => {
+        state.adminLoading = false;
+
+        // Remove old role
+        const oldRoleId = action.meta.arg.oldRoleId;
+        state.allUserRoles = state.allUserRoles.filter(
+          (role) => role.id !== oldRoleId,
+        );
+
+        // Add new role
+        state.allUserRoles.push(action.payload);
+      })
+      .addCase(replaceUserRole.rejected, (state, action) => {
+        state.adminLoading = false;
+        state.adminError = action.payload as string;
       })
 
       // Delete user role

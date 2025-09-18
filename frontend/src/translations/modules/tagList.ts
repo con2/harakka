@@ -69,46 +69,4 @@ export const tagList = {
       en: "Edit Tag",
     },
   },
-  editModal: {
-    title: {
-      fi: "Muokkaa tagia",
-      en: "Edit Tag",
-    },
-    labels: {
-      fiName: {
-        fi: "Suomalainen nimi",
-        en: "Finnish Name",
-      },
-      enName: {
-        fi: "Englantilainen nimi",
-        en: "English Name",
-      },
-    },
-    placeholders: {
-      fiName: {
-        fi: "Tagin nimi suomeksi",
-        en: "Tag name in Finnish",
-      },
-      enName: {
-        fi: "Tagin nimi englanniksi",
-        en: "Tag name in English",
-      },
-    },
-    buttons: {
-      save: {
-        fi: "Tallenna muutokset",
-        en: "Save Changes",
-      },
-    },
-    messages: {
-      success: {
-        fi: "Tagi päivitetty onnistuneesti",
-        en: "Tag updated successfully",
-      },
-      error: {
-        fi: "Tagin päivittäminen epäonnistui",
-        en: "Failed to update tag",
-      },
-    },
-  },
 };

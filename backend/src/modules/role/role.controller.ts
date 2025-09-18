@@ -167,6 +167,23 @@ export class RoleController {
   }
 
   /**
+   * PUT /roles/:id/replace
+   * Replace a user role (delete old role and create new one)
+   */
+  @Put(":id/replace")
+  @Roles(["tenant_admin", "super_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
+  async replaceUserRole(
+    @Param("id") oldRoleId: string,
+    @Body() createRoleDto: CreateUserRoleDto,
+    @Req() req: AuthRequest,
+  ): Promise<ViewUserRolesWithDetails> {
+    return this.roleService.replaceUserRole(oldRoleId, createRoleDto, req);
+  }
+
+  /**
    * DELETE /roles/:id
    * Soft delete a user role assignment (deactivate)
    */

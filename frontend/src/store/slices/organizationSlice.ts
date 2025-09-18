@@ -16,6 +16,7 @@ const initialState: OrganizationState = {
   totalPages: 1,
   loading: false,
   error: null,
+  count: 0,
 };
 
 /**
@@ -156,6 +157,14 @@ export const uploadOrganizationLogo = createAsyncThunk<
   },
 );
 
+export const getOrganizationsCount = createAsyncThunk(
+  "organizations/getOrganizationsCount",
+  async () => {
+    const res = await organizationApi.getOrganizationsCount();
+    return res.count;
+  },
+);
+
 //Create a slice for organization state management
 const organizationSlice = createSlice({
   name: "organization",
@@ -206,7 +215,6 @@ const organizationSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
       .addCase(
         updateOrganization.fulfilled,
         (state: OrganizationState, action) => {
@@ -259,6 +267,19 @@ const organizationSlice = createSlice({
       .addCase(uploadOrganizationLogo.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      // get organizations count
+      .addCase(getOrganizationsCount.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getOrganizationsCount.fulfilled, (state, action) => {
+        state.loading = false;
+        state.count = action.payload ?? 0;
+      })
+      .addCase(getOrganizationsCount.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
@@ -272,6 +293,8 @@ export const selectOrganizationError = (state: RootState) =>
   state.organizations.error;
 export const selectedOrganization = (state: RootState) =>
   state.organizations.selectedOrganization;
+export const selectTotalOrganizationsCount = (state: RootState) =>
+  state.organizations.count ?? 0;
 export const { setSelectedOrganization } = organizationSlice.actions;
 
 export default organizationSlice.reducer;

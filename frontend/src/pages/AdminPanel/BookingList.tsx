@@ -32,7 +32,6 @@ const BookingList = () => {
   const { authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
-  // Always request backend order: created_at desc
   const ORDER_BY = "created_at" as const;
   const ASCENDING = false;
   const { totalPages, page } = useAppSelector(selectBookingPagination);
@@ -109,11 +108,6 @@ const BookingList = () => {
           <div className="text-xs text-gray-500">{row.original.email}</div>
         </div>
       ),
-    },
-    {
-      accessorKey: "email",
-      header: t.bookingList.columns.customer[lang],
-      cell: ({ row }) => row.original.email,
     },
     {
       id: "org_status",

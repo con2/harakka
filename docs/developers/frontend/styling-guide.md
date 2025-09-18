@@ -29,7 +29,7 @@ The application uses a defined color palette with variables for different UI ele
   --card-foreground: oklch(0.145 0 0);
   --primary: #2a2a2a;
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: #9537c7;
+  --secondary: #2f5D9E;
   --secondary-foreground: oklch(0.205 0 0);
   --highlight2: #3ec3ba;
   --muted: oklch(0.97 0 0);
@@ -39,14 +39,14 @@ The application uses a defined color palette with variables for different UI ele
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: #9537c7;
+  --ring: #2f5D9E;
 }
 ```
 
 #### Core Colors
 
 - **Primary**: `#2a2a2a` - Used for main UI elements, text, and primary actions
-- **Secondary**: `#9537c7` (Purple) - Used for highlights, important UI elements
+- **Secondary**: `#2f5D9E` (Purple) - Used for highlights, important UI elements
 - **Highlight**: `#3ec3ba` (Teal) - Used for secondary highlights and accents
 - **Destructive**: Used for error states, delete actions
 

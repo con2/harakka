@@ -34,6 +34,10 @@ export const updateItemForm = {
       fi: "Sijainti",
       en: "Location",
     },
+    category: {
+      fi: "Kategoria",
+      en: "Category",
+    },
   },
   placeholders: {
     selectLocation: {

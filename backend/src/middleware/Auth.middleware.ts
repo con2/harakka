@@ -147,6 +147,11 @@ export class AuthMiddleware implements NestMiddleware {
         `ActiveRoleContext: orgId=${req.activeRoleContext.organizationId}, roleName=${req.activeRoleContext.roleName}`,
       );
 
+      // After roles are attached to req, add role version header
+      if (req.user?.app_metadata?.last_role_sync) {
+        _res.setHeader("x-role-version", req.user.app_metadata.last_role_sync);
+      }
+
       return next();
     } catch (err: unknown) {
       const error = err instanceof Error ? err : new Error(String(err));

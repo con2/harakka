@@ -146,7 +146,9 @@ const ItemsDetails: React.FC = () => {
   // Translation
   const { getTranslation } = useTranslation<ItemTranslation>();
   // Get the translated item content
-  const itemContent = getTranslation(item, "fi") as ItemTranslation | undefined;
+  const itemContent = getTranslation(item as Item, "fi") as
+    | ItemTranslation
+    | undefined;
   const { lang } = useLanguage();
 
   // Fetch item and images

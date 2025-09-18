@@ -2,9 +2,9 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, LoaderCircle } from "lucide-react";
+import { LoaderCircle, Plus, Search, X } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import { Tag, TagAssignmentFilter } from "@/types";
+import { TagAssignmentFilter } from "@/types";
 import { ExtendedTag } from "@common/items/tag.types";
 import {
   fetchFilteredTags,
@@ -13,29 +13,18 @@ import {
   selectTagsLoading,
   selectTagsPage,
   selectTagsTotalPages,
-  updateTag,
+  selectTag,
 } from "@/store/slices/tagSlice";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-// import { fetchAllItems, selectAllItems } from "@/store/slices/itemsSlice";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import TagDelete from "@/components/Admin/Items/TagDelete";
-import AddTagModal from "@/components/Admin/Items/AddTagModal";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 const TagList = () => {
   const dispatch = useAppDispatch();
   const tags = useAppSelector(selectAllTags);
-  // const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectTagsLoading);
   const error = useAppSelector(selectError);
   const page = useAppSelector(selectTagsPage);
@@ -55,11 +44,7 @@ const TagList = () => {
   const debouncedSearchTerm = useDebouncedValue(searchTerm);
   // Translation
   const { lang } = useLanguage();
-
-  // Edit modal state
-  const [editTag, setEditTag] = useState<Tag | null>(null);
-  const [editNameFi, setEditNameFi] = useState("");
-  const [editNameEn, setEditNameEn] = useState("");
+  const navigate = useNavigate();
 
   // Fetch tags when search term or assignment filter changes
   useEffect(() => {
@@ -92,13 +77,6 @@ const TagList = () => {
     setCurrentPage(page);
   }, [page]);
 
-  // Fetch items once
-  /*   useEffect(() => {
-    if (items.length === 0) {
-      void dispatch(fetchAllItems({ page: 1, limit: 10 }));
-    }
-  }, [dispatch, items.length]); */
-
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
@@ -118,45 +96,6 @@ const TagList = () => {
       setSortOrder("asc");
     } else {
       setSortOrder("desc");
-    }
-  };
-
-  const handleEditClick = (tag: Tag) => {
-    setEditTag(tag);
-    setEditNameFi(tag.translations?.fi?.name || "");
-    setEditNameEn(tag.translations?.en?.name || "");
-  };
-
-  const handleUpdate = async () => {
-    if (!editTag) return;
-
-    const updatedTag = {
-      ...editTag,
-      translations: {
-        fi: { name: editNameFi },
-        en: { name: editNameEn },
-      },
-    };
-
-    try {
-      await dispatch(
-        updateTag({ id: editTag.id, tagData: updatedTag }),
-      ).unwrap();
-      toast.success(t.tagList.editModal.messages.success[lang]);
-      // Refresh the current page
-      void dispatch(
-        fetchFilteredTags({
-          page: currentPage,
-          limit: 10,
-          search: debouncedSearchTerm,
-          assignmentFilter,
-          sortBy,
-          sortOrder,
-        }),
-      );
-      setEditTag(null);
-    } catch {
-      toast.error(t.tagList.editModal.messages.error[lang]);
     }
   };
 
@@ -182,12 +121,10 @@ const TagList = () => {
       id: "assigned_to",
       cell: ({ row }) => {
         const count = row.original.assigned_to;
+        const countStr = String(count ?? 0);
         return (
           <span className="text-sm">
-            {t.tagList.assignment.count[lang].replace(
-              "{count}",
-              count.toString(),
-            )}
+            {t.tagList.assignment.count[lang].replace("{count}", countStr)}
           </span>
         );
       },
@@ -209,52 +146,6 @@ const TagList = () => {
       },
       enableSorting: false,
     },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const tag = row.original;
-        return (
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={() => handleEditClick(tag)}
-              title={t.tagList.buttons.edit[lang]}
-              className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <TagDelete
-              id={tag.id}
-              onDeleted={() => {
-                // Calculate if we need to go to previous page after deletion
-                const isLastItemOnPage = (tags?.length ?? 0) === 1;
-                const shouldGoToPreviousPage =
-                  isLastItemOnPage && currentPage > 1;
-                const targetPage = shouldGoToPreviousPage
-                  ? currentPage - 1
-                  : currentPage;
-
-                // Update the current page if needed
-                if (shouldGoToPreviousPage) {
-                  setCurrentPage(targetPage);
-                }
-
-                void dispatch(
-                  fetchFilteredTags({
-                    page: targetPage,
-                    limit: 10,
-                    search: debouncedSearchTerm,
-                    assignmentFilter,
-                    sortBy,
-                    sortOrder,
-                  }),
-                );
-              }}
-            />
-          </div>
-        );
-      },
-    },
   ];
 
   if (error) {
@@ -275,71 +166,77 @@ const TagList = () => {
             <h1 className="text-xl">{t.tagList.title[lang]}</h1>
           </div>
 
-          {/* Filters */}
+          {/* Filters  and searc */}
           <div className="flex justify-between items-center mb-4">
-            <div className="flex gap-4 items-center">
-              <input
-                type="text"
-                size={50}
-                className="w-full sm:max-w-sm text-sm p-2 bg-white rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-                placeholder={t.tagList.filters.search[lang]}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-
-              <select
-                value={assignmentFilter}
-                onChange={(e) =>
-                  setAssignmentFilter(e.target.value as TagAssignmentFilter)
-                }
-                className="text-sm p-2 rounded-md border bg-white focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-              >
-                <option value="all">
-                  {t.tagList.filters.assignment.all[lang]}
-                </option>
-                <option value="assigned">
-                  {t.tagList.filters.assignment.assigned[lang]}
-                </option>
-                <option value="unassigned">
-                  {t.tagList.filters.assignment.unassigned[lang]}
-                </option>
-              </select>
-
-              {(searchTerm || assignmentFilter !== "all") && (
-                <Button
-                  size={"sm"}
-                  onClick={() => {
-                    setSearchTerm("");
-                    setAssignmentFilter("all");
+            <div className="flex justify-start w-full gap-4">
+              <div className="relative w-full sm:max-w-md rounded-md bg-white">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                <Input
+                  placeholder={t.tagList.filters.search[lang]}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape" && searchTerm) {
+                      setSearchTerm("");
+                    }
                   }}
-                  className="text-secondary border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+                  className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
+                />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-4 items-center">
+                <select
+                  value={assignmentFilter}
+                  onChange={(e) =>
+                    setAssignmentFilter(e.target.value as TagAssignmentFilter)
+                  }
+                  className="text-sm p-2 rounded-md border bg-white focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
                 >
-                  {t.tagList.filters.clear[lang]}
-                </Button>
-              )}
+                  <option value="all">
+                    {t.tagList.filters.assignment.all[lang]}
+                  </option>
+                  <option value="assigned">
+                    {t.tagList.filters.assignment.assigned[lang]}
+                  </option>
+                  <option value="unassigned">
+                    {t.tagList.filters.assignment.unassigned[lang]}
+                  </option>
+                </select>
+
+                {(searchTerm || assignmentFilter !== "all") && (
+                  <Button
+                    size={"sm"}
+                    onClick={() => {
+                      setSearchTerm("");
+                      setAssignmentFilter("all");
+                    }}
+                    className="text-secondary border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+                  >
+                    {t.tagList.filters.clear[lang]}
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="flex gap-4">
-              <AddTagModal
-                onCreated={() => {
-                  // When a new tag is created, go to the first page to see it
-                  // (especially important if filters are applied)
-                  setCurrentPage(1);
-                  void dispatch(
-                    fetchFilteredTags({
-                      page: 1,
-                      limit: 10,
-                      search: debouncedSearchTerm,
-                      assignmentFilter,
-                      sortBy,
-                      sortOrder,
-                    }),
-                  );
+              <Button
+                variant="outline"
+                size={"sm"}
+                onClick={() => {
+                  void dispatch(fetchFilteredTags({ page: 1, limit: 10 }));
+                  void navigate("/admin/tags/new");
                 }}
               >
-                <Button variant="outline" size={"sm"}>
-                  {t.tagList.buttons.add[lang]}
-                </Button>
-              </AddTagModal>
+                <Plus className="mr-1" />
+                {t.tagList.buttons.add[lang]}
+              </Button>
             </div>
           </div>
 
@@ -355,53 +252,14 @@ const TagList = () => {
             handleOrder={handleOrder}
             handleAscending={handleAscending}
             originalSorting="created_at"
+            rowProps={(row) => ({
+              style: { cursor: "pointer" },
+              onClick: () => {
+                void dispatch(selectTag(row.original));
+                void navigate(`/admin/tags/${row.original.id}`);
+              },
+            })}
           />
-
-          {/* Edit Modal */}
-          {editTag && (
-            <Dialog open onOpenChange={() => setEditTag(null)}>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>{t.tagList.editModal.title[lang]}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 mt-2">
-                  <div>
-                    <label className="text-sm font-medium">
-                      {t.tagList.editModal.labels.fiName[lang]}
-                    </label>
-                    <Input
-                      value={editNameFi}
-                      onChange={(e) => setEditNameFi(e.target.value)}
-                      placeholder={
-                        t.tagList.editModal.placeholders.fiName[lang]
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">
-                      {t.tagList.editModal.labels.enName[lang]}
-                    </label>
-                    <Input
-                      value={editNameEn}
-                      onChange={(e) => setEditNameEn(e.target.value)}
-                      placeholder={
-                        t.tagList.editModal.placeholders.enName[lang]
-                      }
-                    />
-                  </div>
-                </div>
-                <DialogFooter className="mt-4">
-                  <Button
-                    size={"sm"}
-                    className="px-3 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
-                    onClick={handleUpdate}
-                  >
-                    {t.tagList.editModal.buttons.save[lang]}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
         </>
       )}
     </div>

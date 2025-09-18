@@ -1,10 +1,6 @@
 import { common } from "./common";
 
 export const navigation = {
-  myProfile: {
-    fi: "Profiilini",
-    en: "My Profile",
-  },
   admin: {
     fi: common.roles.admin.fi,
     en: common.roles.admin.en,
@@ -22,8 +18,8 @@ export const navigation = {
     en: "Contact Us",
   },
   organizations: {
-    en: common.organizations.organization.en,
-    fi: common.organizations.organization.fi,
+    en: "Organizations",
+    fi: "Organisaatiot",
   },
   toast: {
     title: {

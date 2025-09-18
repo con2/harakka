@@ -45,4 +45,14 @@ export const profilePicUploader = {
     fi: "Raahaa ja pudota kuva tähän tai klikkaa valitaksesi",
     en: "Drag & Drop your image here or click to select",
   },
+  messages: {
+    success: {
+      fi: "Profiilikuva päivitetty onnistuneesti",
+      en: "Profile picture successfully updated",
+    },
+    error: {
+      fi: "Profiilikuvan päivittäminen epäonnistui",
+      en: "Failed to update profile picture",
+    },
+  },
 };

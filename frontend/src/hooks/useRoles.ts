@@ -6,6 +6,7 @@ import {
   fetchAvailableRoles,
   createUserRole,
   updateUserRole,
+  replaceUserRole,
   deleteUserRole,
   permanentDeleteUserRole,
   leaveOrg,
@@ -23,6 +24,8 @@ import {
 } from "@/store/slices/rolesSlice";
 import { CreateUserRoleDto, UpdateUserRoleDto } from "@/types/roles";
 import { useAuth } from "./useAuth";
+import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
+import { roleApi } from "@/api/services/roles";
 
 // Global cache states with proper timestamps
 const roleCache = {
@@ -378,6 +381,20 @@ export const useRoles = () => {
     [dispatch],
   );
 
+  const replaceRole = useCallback(
+    (oldRoleId: string, newRoleData: CreateUserRoleDto) => {
+      return dispatch(replaceUserRole({ oldRoleId, newRoleData })).then(
+        (result) => {
+          // Invalidate caches as this could affect current user
+          roleCache.allRoles.fetched = false;
+          roleCache.currentRoles.fetched = false;
+          return result;
+        },
+      );
+    },
+    [dispatch],
+  );
+
   const leaveRoleInOrg = useCallback(
     (tableKeyId: string) => {
       return dispatch(leaveOrg(tableKeyId)).then((result) => {
@@ -448,6 +465,48 @@ export const useRoles = () => {
     [],
   );
 
+  // Sync session and roles after permission changes
+  const syncSessionAndRoles = useCallback(async () => {
+    try {
+      // First refresh the Supabase session to get latest JWT
+      await refreshSupabaseSession();
+      // Then force refresh current user roles (bypassing cache)
+      await refreshCurrentUserRoles(true);
+      // Refresh all user roles
+      await refreshAllUserRoles(true);
+      // Return success
+      return true;
+    } catch (error) {
+      console.error("Failed to sync session and roles:", error);
+      return false;
+    }
+  }, [refreshSupabaseSession, refreshCurrentUserRoles, refreshAllUserRoles]);
+
+  const setupPeriodicSessionCheck = useCallback(
+    (intervalMinutes = 5) => {
+      // Don't set up checks if not authenticated
+      if (!isAuthenticated) return () => {};
+
+      // Check for role updates every X minutes
+      const interval = setInterval(
+        async () => {
+          try {
+            // Make a lightweight API call that will return the x-role-version header
+            await roleApi.getCurrentUserRoles();
+            // The interceptor in axios.ts handles version comparison and session refresh
+          } catch (error) {
+            console.error("Periodic session check failed:", error);
+          }
+        },
+        intervalMinutes * 60 * 1000,
+      );
+
+      // Return cleanup function
+      return () => clearInterval(interval);
+    },
+    [isAuthenticated],
+  );
+
   return {
     // Data
     currentUserRoles,
@@ -477,10 +536,17 @@ export const useRoles = () => {
     clearErrors,
     refreshAll,
     clearRoleCache,
+    replaceRole,
 
     // Active role context values and methods
     activeContext,
     hasActiveContext, // boolean is it populated or null
     setActiveContext,
+
+    // Sync session and roles
+    syncSessionAndRoles,
+
+    // Periodic session check setup
+    setupPeriodicSessionCheck,
   };
 };

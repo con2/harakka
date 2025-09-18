@@ -3,6 +3,7 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  Row,
 } from "@tanstack/react-table";
 
 import {
@@ -19,11 +20,13 @@ import { t } from "@/translations";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  rowClick?: (row: Row<TData>) => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  rowClick,
 }: DataTableProps<TData, TValue>) {
   const { lang } = useLanguage();
   const table = useReactTable({
@@ -59,6 +62,8 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
+                onClick={rowClick ? () => rowClick(row) : undefined}
+                className={rowClick ? "cursor-pointer hover:bg-gray-50" : ""}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

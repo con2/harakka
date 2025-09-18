@@ -3,6 +3,8 @@ import { supabase } from "../config/supabase";
 import { store } from "@/store/store";
 import { fetchCurrentUserRoles } from "@/store/slices/rolesSlice";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
+import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
+import { toast } from "sonner";
 
 // Cache the token to avoid unnecessary async calls
 let cachedToken: string | null = null;
@@ -76,6 +78,38 @@ let rolesRefreshPromise: Promise<unknown> | null = null;
 // Return response.data directly with role refresh handling
 api.interceptors.response.use(
   (response) => {
+    // Check for role version header
+    const roleVersion = response.headers["x-role-version"];
+    if (roleVersion) {
+      const lastKnownVersion = localStorage.getItem("last-role-version");
+
+      // If we have a new version or first time seeing a version, update local storage
+      if (!lastKnownVersion || roleVersion !== lastKnownVersion) {
+        // Store new version
+        localStorage.setItem("last-role-version", roleVersion);
+
+        // Only notify and refresh if this isn't the first time (to avoid refresh on initial load)
+        if (lastKnownVersion) {
+          console.info(
+            "Your permissions have been updated. Refreshing session...",
+          );
+
+          // Refresh session and roles data
+          refreshSupabaseSession()
+            .then(() => {
+              // Refresh roles in Redux store
+              store.dispatch(fetchCurrentUserRoles());
+
+              // Show notification to user
+              toast.info("Your permissions have been updated.");
+            })
+            .catch((error) => {
+              console.error("Error refreshing session:", error);
+            });
+        }
+      }
+    }
+
     return response.data;
   },
   async (error) => {
