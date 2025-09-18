@@ -18,13 +18,15 @@ export type AllowedMimeType =
  * Image file upload size and type constraints
  */
 export const FILE_CONSTRAINTS = {
-  MAX_FILE_SIZE: 2 * 1024 * 1024, // 2MB
+  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
   ALLOWED_FILE_TYPES: [
     "image/jpeg",
     "image/png",
     "image/webp",
     "image/gif",
   ] as readonly AllowedMimeType[],
+  // Add specific subsets if needed in the future
+  // PRODUCT_TYPES: ["image/jpeg", "image/png"] as const,
 };
 
 /**

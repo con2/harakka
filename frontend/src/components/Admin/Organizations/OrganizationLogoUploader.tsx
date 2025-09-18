@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import Cropper, { Area } from "react-easy-crop";
-import { getCroppedImg, validateImage } from "@/utils/imageUtils";
+import { getCroppedImg, useImageValidator } from "@/utils/imageUtils"; // Changed import
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -19,6 +19,7 @@ import {
   uploadOrganizationLogo,
 } from "@/store/slices/organizationSlice";
 import { Building2 } from "lucide-react";
+import { FILE_CONSTRAINTS } from "@/types";
 
 interface OrganizationLogoUploaderProps {
   organizationId?: string; // optional – fallback to selectedOrganization
@@ -57,13 +58,18 @@ const OrganizationLogoUploader: React.FC<OrganizationLogoUploaderProps> = ({
 
   // translation hook
   const { lang } = useLanguage();
+  const { validateFile } = useImageValidator();
 
   // handle file selection
   const handleSelectedFile = (selected: File) => {
-    const result = validateImage().safeParse(selected);
-    if (!result.success) {
-      toast.error(result.error.errors[0]?.message ?? "Invalid file");
-      return;
+    if (
+      !validateFile(
+        selected,
+        FILE_CONSTRAINTS.MAX_FILE_SIZE,
+        FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
+      )
+    ) {
+      return; // Early return if validation fails
     }
 
     setFile(selected);
@@ -111,6 +117,7 @@ const OrganizationLogoUploader: React.FC<OrganizationLogoUploaderProps> = ({
           1,
           croppedAreaPixels,
           rotation,
+          lang,
         );
         const newPreviewUrl = URL.createObjectURL(blob);
         setLivePreviewUrl(newPreviewUrl);
@@ -118,7 +125,7 @@ const OrganizationLogoUploader: React.FC<OrganizationLogoUploaderProps> = ({
     };
 
     void generatePreview();
-  }, [previewUrl, croppedAreaPixels, crop, zoom, rotation]);
+  }, [previewUrl, croppedAreaPixels, crop, zoom, rotation, lang]);
 
   const handleUpload = async () => {
     if (!file || !effectiveOrgId || !croppedAreaPixels || !previewUrl) return;
@@ -131,6 +138,7 @@ const OrganizationLogoUploader: React.FC<OrganizationLogoUploaderProps> = ({
         1,
         croppedAreaPixels,
         rotation,
+        lang,
       );
       const croppedFile = new File([croppedBlob], file.name || "logo.png", {
         type: file.type || "image/png",
@@ -152,6 +160,7 @@ const OrganizationLogoUploader: React.FC<OrganizationLogoUploaderProps> = ({
       toast.error(t.organizationLogoUploader.messages.error[lang]);
     }
   };
+
   return (
     <>
       <div

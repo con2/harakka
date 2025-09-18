@@ -30,7 +30,7 @@ export interface BookingType extends BaseEntity {
  */
 export interface BookingsState {
   bookings: BookingPreview[];
-  userBookings: BookingPreview[];
+  userBookings: ExtendedBookingPreview[];
   loading: boolean;
   error: string | null;
   errorContext: ErrorContext;
@@ -90,7 +90,8 @@ export type ValidBookingOrder =
   | "created_at"
   | "booking_number"
   | "status"
-  | "full_name";
+  | "full_name"
+  | "start_date";
 
 export type BookingUserView =
   Database["public"]["Views"]["view_bookings_with_user_info"];
@@ -98,6 +99,19 @@ export type BookingUserViewRow = BookingUserView["Row"];
 
 /* Non-nullable type of the BookingUserViewRow */
 export type BookingPreview = StripNull<BookingUserViewRow>;
+export type ExtendedBookingPreview = BookingPreview & {
+  orgs: {
+    name: string;
+    id: string;
+    org_booking_status: BookingStatus;
+    locations: {
+      name: string;
+      id: string;
+      self_pickup: boolean;
+      pickup_status: BookingStatus;
+    }[];
+  }[];
+};
 
 export type BookingWithDetails = BookingPreview & {
   booking_items: BookingItemWithDetails[] | null;

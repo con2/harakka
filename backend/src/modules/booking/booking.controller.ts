@@ -160,7 +160,13 @@ export class BookingController {
   })
   async getBookingsCount(@Req() req: AuthRequest) {
     const supabase = req.supabase;
-    return this.bookingService.getBookingsCount(supabase);
+    const activeOrgId = req.headers["x-org-id"] as string | undefined;
+    const activeRole = req.headers["x-role-name"] as string | undefined;
+    return this.bookingService.getBookingsCount(
+      supabase,
+      activeOrgId,
+      activeRole,
+    );
   }
 
   /**
@@ -196,7 +202,6 @@ export class BookingController {
       req,
       pageNumber,
       limitNumber,
-      userId,
       activeOrgId,
     );
   }
@@ -383,18 +388,21 @@ export class BookingController {
    * @returns Return result
    */
   @Patch(":id/return")
-  @Roles(["storage_manager", "tenant_admin"], {
-    match: "any",
-    sameOrg: true,
-  })
   async returnItems(
     @Param("id") id: string,
     @Req() req: AuthRequest,
-    @Body() itemIds?: string[],
+    @Body() body: { itemIds: string[]; location_id: string; org_id: string },
   ) {
-    const orgId = req.headers["x-org-id"] as string;
+    const { itemIds, location_id, org_id } = body;
+    const orgId = org_id ?? req.headers["x-org-id"];
     if (!orgId) throw new Error("Missing org ID");
-    return this.bookingService.returnItems(req, id, orgId, itemIds);
+    return this.bookingService.returnItems(
+      req,
+      id,
+      orgId,
+      location_id,
+      itemIds,
+    );
   }
 
   /**
@@ -405,21 +413,21 @@ export class BookingController {
    * @returns Pickup confirmation result
    */
   @Patch(":bookingId/pickup")
-  @Roles(["storage_manager", "tenant_admin"], {
-    match: "any",
-    sameOrg: true,
-  })
   async pickup(
     @Param("bookingId") bookingId: string,
     @Req() req: AuthRequest,
-    @Body() itemIds: string[],
+    @Body() body: { item_ids: string[]; location_id: string; org_id?: string },
   ) {
     const supabase = req.supabase;
-    const orgId = req.headers["x-org-id"] as string;
+    const { item_ids: itemIds, location_id, org_id } = body;
+    console.log("body: ", body);
+    // Org ID is either provided in the body (self_pickup) or the headers (admin pickup)
+    const orgId = org_id ?? (req.headers["x-org-id"] as string);
     return this.bookingService.confirmPickup(
       supabase,
       bookingId,
       orgId,
+      location_id,
       itemIds,
     );
   }
@@ -442,5 +450,50 @@ export class BookingController {
       orgId,
       itemIds,
     );
+  }
+  /**
+   * Set items to be marked as picked up by user and not admin
+   */
+  @Patch(":bookingId/self-pickup")
+  async updateSelfPickup(
+    @Param("bookingId") bookingId: string,
+    @Req() req: AuthRequest,
+    @Body() body: { location_id: string; newStatus: boolean },
+  ) {
+    try {
+      const supabase = req.supabase;
+      const orgId = (req.headers["x-org-id"] as string) ?? "";
+
+      if (!orgId) {
+        throw new BadRequestException(
+          "Organization context is required (x-org-id header)",
+        );
+      }
+
+      if (
+        !body ||
+        typeof body.location_id !== "string" ||
+        body.location_id.trim() === ""
+      ) {
+        throw new BadRequestException(
+          "'location_id' (UUID string) is required in body",
+        );
+      }
+
+      if (typeof body.newStatus !== "boolean") {
+        throw new BadRequestException(
+          "'newStatus' (boolean) is required in body",
+        );
+      }
+
+      return this.bookingService.updateSelfPickup(
+        supabase,
+        bookingId,
+        orgId,
+        body,
+      );
+    } catch (error) {
+      handleSupabaseError(error);
+    }
   }
 }

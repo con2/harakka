@@ -7,18 +7,18 @@ import {
   getOrderedBookings,
   selectBookingPagination,
 } from "@/store/slices/bookingsSlice";
-import { Eye, LoaderCircle } from "lucide-react";
+import { Eye, LoaderCircle, Calendar, Clock } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { BookingStatus } from "@/types";
+import { BookingStatus, ValidBookingOrder } from "@/types";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { useAuth } from "@/hooks/useAuth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { BookingPreview } from "@common/bookings/booking.types";
+import { BookingPreviewWithOrgData } from "@common/bookings/booking.types";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import { useNavigate } from "react-router-dom";
 import { formatBookingStatus } from "@/utils/format";
@@ -32,9 +32,8 @@ const BookingList = () => {
   const { authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
-  // Always request backend order: created_at desc
-  const ORDER_BY = "created_at" as const;
-  const ASCENDING = false;
+  const [orderBy, setOrderBy] = useState<ValidBookingOrder>("created_at");
+  const getAscending = (order: ValidBookingOrder) => order === "start_date";
   const { totalPages, page } = useAppSelector(selectBookingPagination);
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
@@ -50,12 +49,19 @@ const BookingList = () => {
     setSearchQuery(e.target.value);
   };
 
+  const handleOrderToggle = (newOrderBy: ValidBookingOrder) => {
+    if (newOrderBy !== orderBy) {
+      setOrderBy(newOrderBy);
+      setCurrentPage(1);
+    }
+  };
+
   /*----------------------side-effects----------------------------------*/
   useEffect(() => {
     void dispatch(
       getOrderedBookings({
-        ordered_by: ORDER_BY,
-        ascending: ASCENDING,
+        ordered_by: orderBy,
+        ascending: getAscending(orderBy),
         page: currentPage,
         limit: 10,
         searchquery: debouncedSearchQuery,
@@ -66,14 +72,23 @@ const BookingList = () => {
     debouncedSearchQuery,
     statusFilter,
     page,
-    ORDER_BY,
+    orderBy,
     dispatch,
     currentPage,
-    ASCENDING,
     activeOrgId,
   ]);
 
-  const columns: ColumnDef<BookingPreview>[] = [
+  const statusFilterOptions = [
+    "all",
+    "pending",
+    "confirmed",
+    "rejected",
+    "cancelled",
+    "completed",
+    "picked_up",
+  ];
+
+  const columns: ColumnDef<BookingPreviewWithOrgData>[] = [
     {
       id: "actions",
       size: 5,
@@ -111,22 +126,23 @@ const BookingList = () => {
       ),
     },
     {
-      accessorKey: "email",
-      header: t.bookingList.columns.customer[lang],
-      cell: ({ row }) => row.original.email,
+      accessorKey: "start_date",
+      header: t.bookingList.columns.startDate[lang],
+      enableSorting: true,
+      cell: ({ row }) => {
+        const startDate = row.original.start_date;
+        if (!startDate) return t.bookingList.status.unknown[lang];
+        return formatDate(new Date(startDate), "d MMM yyyy");
+      },
     },
     {
       id: "org_status",
       header: t.bookingList.columns.status[lang],
       enableSorting: false,
       cell: ({ row }) => {
-        // backend attaches org_status_for_active_org; prefer that when present
-        const maybe = row.original as BookingPreview & {
-          org_status_for_active_org?: string;
-        };
         const status =
-          maybe.org_status_for_active_org ??
-          (maybe.status as string | undefined);
+          row.original.org_status_for_active_org ??
+          (row.original.status as string | undefined);
         return (
           <StatusBadge
             status={formatBookingStatus(status as BookingStatus) ?? "unknown"}
@@ -165,8 +181,8 @@ const BookingList = () => {
             onClick={() =>
               dispatch(
                 getOrderedBookings({
-                  ordered_by: ORDER_BY,
-                  ascending: ASCENDING,
+                  ordered_by: orderBy,
+                  ascending: getAscending(orderBy),
                   page: currentPage,
                   limit: 10,
                   searchquery: debouncedSearchQuery,
@@ -196,21 +212,15 @@ const BookingList = () => {
               onChange={(e) => setStatusFilter(e.target.value as BookingStatus)}
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             >
-              <option value="all">
-                {t.bookingList.filters.status.all[lang]}
-              </option>
-              <option value="pending">
-                {t.bookingList.filters.status.pending[lang]}
-              </option>
-              <option value="confirmed">
-                {t.bookingList.filters.status.confirmed[lang]}
-              </option>
-              <option value="rejected">
-                {t.bookingList.filters.status.rejected[lang]}
-              </option>
-              <option value="cancelled">
-                {t.bookingList.filters.status.cancelled[lang]}
-              </option>
+              {statusFilterOptions.map((option) => (
+                <option key={`option-${option}`} value={option}>
+                  {
+                    t.bookingList.filters.status[
+                      option as keyof typeof t.bookingList.filters.status
+                    ]?.[lang]
+                  }
+                </option>
+              ))}
             </select>
             {(searchQuery || statusFilter !== "all") && (
               <Button
@@ -224,6 +234,41 @@ const BookingList = () => {
                 {t.bookingList.filters.clear[lang]}
               </Button>
             )}
+          </div>
+
+          {/* Ordering Toggle Buttons */}
+          <div className="flex gap-2 items-center">
+            <span className="text-sm italic text-primary/70">
+              {t.bookingList.filters.filterBy[lang]}
+            </span>
+            <Button
+              onClick={() => handleOrderToggle("created_at")}
+              variant={orderBy === "created_at" ? "secondary" : "default"}
+              size="sm"
+              disabled={orderBy === "created_at"}
+              className={`flex items-center gap-2 ${
+                orderBy === "created_at"
+                  ? "cursor-not-allowed opacity-75"
+                  : "cursor-pointer"
+              }`}
+            >
+              <Clock className="h-4 w-4" />
+              {t.bookingList.filters.recent[lang]}
+            </Button>
+            <Button
+              onClick={() => handleOrderToggle("start_date")}
+              variant={orderBy === "start_date" ? "secondary" : "default"}
+              size="sm"
+              disabled={orderBy === "start_date"}
+              className={`flex items-center gap-2 ${
+                orderBy === "start_date"
+                  ? "cursor-not-allowed opacity-75"
+                  : "cursor-pointer"
+              }`}
+            >
+              <Calendar className="h-4 w-4" />
+              {t.bookingList.filters.upcoming[lang]}
+            </Button>
           </div>
         </div>
         {/* Table of Bookings */}

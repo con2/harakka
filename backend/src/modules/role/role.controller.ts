@@ -167,6 +167,23 @@ export class RoleController {
   }
 
   /**
+   * PUT /roles/:id/replace
+   * Replace a user role (delete old role and create new one)
+   */
+  @Put(":id/replace")
+  @Roles(["tenant_admin", "super_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
+  async replaceUserRole(
+    @Param("id") oldRoleId: string,
+    @Body() createRoleDto: CreateUserRoleDto,
+    @Req() req: AuthRequest,
+  ): Promise<ViewUserRolesWithDetails> {
+    return this.roleService.replaceUserRole(oldRoleId, createRoleDto, req);
+  }
+
+  /**
    * DELETE /roles/:id
    * Soft delete a user role assignment (deactivate)
    */
@@ -180,6 +197,23 @@ export class RoleController {
     @Req() req: AuthRequest,
   ): Promise<{ success: boolean; message: string }> {
     return this.roleService.deleteUserRole(tableKeyId, req);
+  }
+
+  /**
+   * DELETE /roles/:id/leave
+   * Allow the current authenticated user to permanently remove their own role assignment (hard delete)
+   * NOTE: This endpoint explicitly prevents deleting the "user" role in the "Global" organization
+   */
+  @Delete(":id/leave")
+  @Roles(
+    ["user", "requester", "storage_manager", "tenant_admin", "super_admin"],
+    { match: "any", sameOrg: true },
+  )
+  async leaveOrg(
+    @Param("id") tableKeyId: string,
+    @Req() req: AuthRequest,
+  ): Promise<{ success: boolean; message: string }> {
+    return this.roleService.leaveOrg(tableKeyId, req);
   }
 
   /**

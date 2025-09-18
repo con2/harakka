@@ -9,6 +9,7 @@ import {
   BookingPreview,
   BookingWithDetails,
   ValidBookingOrder,
+  ExtendedBookingPreview,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { BookingItemUpdate } from "@common/bookings/booking-items.types";
@@ -62,6 +63,10 @@ export const createBooking = createAsyncThunk<
       return rejectWithValue(apiError.response.data);
     }
 
+    if (apiError?.response?.data?.message) {
+      return rejectWithValue(apiError.response.data.message);
+    }
+
     // For other errors, use the standard error message extraction
     return rejectWithValue(
       extractErrorMessage(error, "Failed to create booking"),
@@ -93,26 +98,14 @@ export const getOwnBookings = createAsyncThunk(
     {
       page = 1,
       limit = 10,
-      activeOrgId,
-      activeRole,
-      userId,
     }: {
       page?: number;
       limit?: number;
-      activeOrgId: string;
-      activeRole: string;
-      userId: string;
     },
     { rejectWithValue },
   ) => {
     try {
-      return await bookingsApi.getOwnBookings(
-        activeOrgId,
-        activeRole,
-        userId,
-        page,
-        limit,
-      );
+      return await bookingsApi.getOwnBookings(page, limit);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch own bookings"),
@@ -437,15 +430,25 @@ export const rejectItemsForOrg = createAsyncThunk<
 
 // Return items thunk
 export const returnItems = createAsyncThunk<
-  { bookingId: string; itemIds?: string[] },
-  { bookingId: string; itemIds?: string[] },
+  {
+    bookingId: string;
+    itemIds?: string[];
+    location_id?: string;
+    org_id?: string;
+  },
+  {
+    bookingId: string;
+    itemIds?: string[];
+    location_id?: string;
+    org_id?: string;
+  },
   { rejectValue: string }
 >(
   "bookings/returnItems",
-  async ({ bookingId, itemIds }, { rejectWithValue }) => {
+  async ({ bookingId, itemIds, location_id, org_id }, { rejectWithValue }) => {
     try {
-      await bookingsApi.returnItems(bookingId, itemIds);
-      return { bookingId, itemIds };
+      await bookingsApi.returnItems(bookingId, itemIds, location_id, org_id);
+      return { bookingId, itemIds, location_id };
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to process returns"),
@@ -456,15 +459,25 @@ export const returnItems = createAsyncThunk<
 
 // Mark items as picked up
 export const pickUpItems = createAsyncThunk<
-  { bookingId: string; itemIds?: string[] },
-  { bookingId: string; itemIds?: string[] },
+  {
+    bookingId: string;
+    location_id?: string;
+    org_id?: string;
+    itemIds?: string[];
+  },
+  {
+    bookingId: string;
+    location_id?: string;
+    org_id?: string;
+    itemIds?: string[];
+  },
   { rejectValue: string }
 >(
   "bookings/pickUpItems",
-  async ({ bookingId, itemIds }, { rejectWithValue }) => {
+  async ({ bookingId, location_id, org_id, itemIds }, { rejectWithValue }) => {
     try {
-      await bookingsApi.pickUpItems(bookingId, itemIds);
-      return { bookingId };
+      await bookingsApi.pickUpItems(bookingId, location_id, org_id, itemIds);
+      return { bookingId, location_id, org_id, itemIds };
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to process returns"),
@@ -474,6 +487,25 @@ export const pickUpItems = createAsyncThunk<
 );
 
 // Mark items as picked up
+export const updateSelfPickup = createAsyncThunk<
+  { bookingId: string; location_id: string; newStatus: boolean },
+  { bookingId: string; location_id: string; newStatus: boolean },
+  { rejectValue: string }
+>(
+  "bookings/updateSelfPickup",
+  async ({ bookingId, location_id, newStatus }, { rejectWithValue }) => {
+    try {
+      await bookingsApi.updateSelfPickup(bookingId, location_id, newStatus);
+      return { bookingId, location_id, newStatus };
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to process returns"),
+      );
+    }
+  },
+);
+
+// Mark items as cancelled up
 export const cancelBookingItems = createAsyncThunk<
   { bookingId: string; itemIds?: string[] },
   { bookingId: string; itemIds?: string[] },
@@ -551,7 +583,8 @@ export const bookingsSlice = createSlice({
         state.errorContext = null;
       })
       .addCase(getUserBookings.fulfilled, (state, action) => {
-        state.userBookings = action.payload.data as unknown as BookingPreview[];
+        state.userBookings = action.payload
+          .data as unknown as ExtendedBookingPreview[];
         state.bookings_pagination = action.payload.metadata;
         state.loading = false;
       })
@@ -568,7 +601,7 @@ export const bookingsSlice = createSlice({
       })
       .addCase(getOwnBookings.fulfilled, (state, action) => {
         if (action.payload) {
-          state.userBookings = action.payload.data as BookingPreview[];
+          state.userBookings = action.payload.data as ExtendedBookingPreview[];
           state.bookings_pagination = action.payload.metadata;
         } else {
           state.userBookings = [];
@@ -938,6 +971,30 @@ export const bookingsSlice = createSlice({
         state.loading = false;
       })
       .addCase(cancelBookingItems.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "patch";
+        state.loading = false;
+      })
+      // Update Self-Pickup Status
+      .addCase(updateSelfPickup.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.errorContext = null;
+      })
+      .addCase(updateSelfPickup.fulfilled, (state, action) => {
+        state.loading = false;
+        const { newStatus, location_id } = action.payload;
+        const items = state.currentBooking?.booking_items ?? [];
+        state.currentBooking = {
+          ...(state.currentBooking ?? {}),
+          booking_items: items.map((item) =>
+            item.location_id === location_id
+              ? { ...item, self_pickup: newStatus }
+              : item,
+          ),
+        };
+      })
+      .addCase(updateSelfPickup.rejected, (state, action) => {
         state.error = action.payload as string;
         state.errorContext = "patch";
         state.loading = false;

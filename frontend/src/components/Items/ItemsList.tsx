@@ -26,7 +26,7 @@ const ItemsList: React.FC = () => {
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
   const pagination = useAppSelector(selectItemsPagination);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 12;
   const [page, setPage] = useState(1);
   // Translation
   const { lang } = useLanguage();
@@ -112,10 +112,10 @@ const ItemsList: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="container mx-auto">
       {/* Search Bar */}
       <div className="flex justify-center mb-4 p-4 rounded-md bg-slate-50">
-        <div className="relative w-full sm:max-w-md bg-white">
+        <div className="relative w-full sm:max-w-md bg-white rounded-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
           <Input
             placeholder={t.itemsList.searchPlaceholder[lang]}
@@ -126,7 +126,7 @@ const ItemsList: React.FC = () => {
                 setSearchQuery("");
               }
             }}
-            className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
+            className="pl-10 pr-9 w-full  focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
           />
           {searchQuery && (
             <button
@@ -144,7 +144,7 @@ const ItemsList: React.FC = () => {
       <TimeframeSelector />
 
       {/* Render the list of items */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 mb-4 min-h-24">
+      <div className="flex flex-wrap gap-8 mb-4 min-h-24">
         {loading ? (
           <div className="col-span-full flex justify-center items-center py-6">
             <LoaderCircle className="animate-spin w-8 h-8 text-secondary" />

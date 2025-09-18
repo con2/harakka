@@ -48,7 +48,15 @@ export class OrganizationsController {
     );
   }
 
-  // 2. get one by ID
+  // 2. get organizations count (for super_admin dashboard)
+  @Public()
+  @Get("count")
+  async getOrganizationsCount() {
+    const count = await this.organizationService.getOrganizationsCount();
+    return { count };
+  }
+
+  // 3. get one by ID
   @Public()
   @Get(":id")
   async getOrganizationById(@Param("id") id: string) {
@@ -57,7 +65,7 @@ export class OrganizationsController {
     return org;
   }
 
-  // 3. get Org by slug
+  // 4. get Org by slug
   @Public()
   @Get("slug/:slug")
   async getOrganizationBySlug(@Param("slug") slug: string) {
@@ -67,7 +75,7 @@ export class OrganizationsController {
     return org;
   }
 
-  // 4. create
+  // 5. create
   @Post()
   @Roles(["super_admin"])
   async createOrganization(
@@ -77,7 +85,7 @@ export class OrganizationsController {
     return this.organizationService.createOrganization(req, org);
   }
 
-  // 5. update
+  // 6. update
   @Put(":organizationId")
   @Roles(["super_admin"])
   async updateOrganization(
@@ -89,7 +97,7 @@ export class OrganizationsController {
   }
 
   /*
-  // 6. delete --- does not work atm
+  // 7. delete --- does not work atm
   @Delete(":organizationId")
   @Roles(["super_admin"], { match: "any" }) // only superAdmins are permitted
   async deleteOrganization(
@@ -102,7 +110,7 @@ export class OrganizationsController {
   }
     */
 
-  // 7. soft-delete org
+  // 8. soft-delete org
   @Patch(":organizationId/soft-delete")
   @Roles(["super_admin"])
   async softDeleteOrganization(
@@ -113,7 +121,7 @@ export class OrganizationsController {
     return this.organizationService.softDeleteOrganization(req, id);
   }
 
-  // 8. activate or deactivate orgs
+  // 9. activate or deactivate orgs
   @Put(":organizationId/activation")
   @Roles(["super_admin"])
   async toggleOrganizationActivation(
@@ -130,7 +138,7 @@ export class OrganizationsController {
     return this.organizationService.toggleActivation(req, id, newIsActive);
   }
 
-  // 9. upload org logo picture
+  // 10. upload org logo picture
   @Post(":organizationId/logo")
   @Roles(["tenant_admin", "super_admin"], {
     match: "any",

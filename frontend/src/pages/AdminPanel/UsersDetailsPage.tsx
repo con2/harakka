@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { formatRoleName } from "@/utils/format";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Clipboard } from "lucide-react";
+import { ChevronLeft, Clipboard, RefreshCw } from "lucide-react";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import {
   Accordion,
@@ -39,6 +39,8 @@ import UnbanUser from "@/components/Admin/UserManagement/Banning/UnbanUser";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { Separator } from "@/components/ui/separator";
 import { Address } from "@/types/address";
+import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 
 const UsersDetailsPage = () => {
   const { id } = useParams();
@@ -70,8 +72,12 @@ const UsersDetailsPage = () => {
     hasAnyRole,
     createRole,
     updateRole,
+    replaceRole,
     permanentDeleteRole,
     hasRole,
+    refreshAllUserRoles,
+    refreshAvailableRoles,
+    syncSessionAndRoles,
   } = useRoles();
   const organizations = useAppSelector(selectOrganizations);
 
@@ -94,43 +100,44 @@ const UsersDetailsPage = () => {
     roleAssignments.length > 0 &&
     (!lastRoleEntry?.role_name || !lastRoleEntry?.org_id);
 
-  const { organizationId: activeOrgId, organizationName: activeOrgName } =
-    useAppSelector(selectActiveRoleContext);
-  const SUPER_ROLES = ["super_admin"];
-  const isSuper = hasAnyRole(SUPER_ROLES, activeOrgId!);
-  const isTenantAdmin = hasRole("tenant_admin", activeOrgId!);
-  const canManageRoles = isSuper || isTenantAdmin;
-
+  const { organizationId: activeOrgId } = useAppSelector(
+    selectActiveRoleContext,
+  );
+  const isSuperAdmin = hasRole("super_admin");
+  const canManageRoles = hasAnyRole(
+    ["tenant_admin", "super_admin"],
+    activeOrgId!,
+  );
   const assignedOrgIds = useMemo(
     () => new Set(roleAssignments.map((r) => r.org_id)),
     [roleAssignments],
   );
 
-  const TENANT_ALLOWED_ROLES = ["user", "requester", "storage_manager"];
-
-  const getSelectableRoles = (ra: RoleAssignment, rowIndex: number) => {
-    // Exclude roles already assigned for the same org (except this row)
-    const assignedInOrg = new Set(
-      roleAssignments
-        .filter(
-          (r, i) => r.org_id === ra.org_id && i !== rowIndex && r.role_name,
-        )
-        .map((r) => r.role_name),
-    );
-    if (isTenantAdmin) {
+  const getSelectableRoles = (orgId: string | null) => {
+    // Only super_admins can assign the super_admin or tenant_admin role
+    if (!isSuperAdmin) {
       return availableRoles.filter(
-        (r) =>
-          TENANT_ALLOWED_ROLES.includes(r.role) && !assignedInOrg.has(r.role),
+        (role) => role.role !== "super_admin" && role.role !== "tenant_admin",
       );
     }
+    // No organization selected yet, return all roles
+    if (!orgId) {
+      return availableRoles;
+    }
 
-    if (ra.org_name === "High council")
-      return availableRoles.filter((r) => SUPER_ROLES.includes(r.role));
-    if (ra.org_name === "Global")
-      return availableRoles.filter((r) => r.role === "user");
-    return availableRoles.filter(
-      (r) => r.role !== "user" && !SUPER_ROLES.includes(r.role),
-    );
+    // Find the organization by ID to check if it's the High Council
+    const org = organizations.find((o) => o.id === orgId);
+    // Is new role's org High council?
+    const isHighCouncil =
+      org?.name?.toLowerCase() === "high council".toLowerCase();
+
+    // For High Council, only return super_admin role
+    if (isHighCouncil) {
+      return availableRoles.filter((role) => role.role === "super_admin");
+    }
+
+    // For other organizations, return all roles except super_admin
+    return availableRoles.filter((role) => role.role !== "super_admin");
   };
 
   // populate role assignments for the user
@@ -143,7 +150,7 @@ const UsersDetailsPage = () => {
           r.user_id === user.id &&
           r.organization_id &&
           r.role_name &&
-          (isSuper || r.organization_id === activeOrgId),
+          (isSuperAdmin || r.organization_id === activeOrgId),
       )
       .map((r) => ({
         id: r.id,
@@ -154,7 +161,7 @@ const UsersDetailsPage = () => {
         isNewRole: false,
       }));
     setRoleAssignments(userRoles);
-  }, [allUserRoles, user, isSuper, activeOrgId]);
+  }, [allUserRoles, user, isSuperAdmin, activeOrgId]);
 
   // ensure organizations loaded
   useEffect(() => {
@@ -169,6 +176,27 @@ const UsersDetailsPage = () => {
     value: string | null,
   ) => {
     if (!canManageRoles) return;
+
+    if (field === "role_name") {
+      const currentAssignment = roleAssignments[index];
+      const org = organizations.find((o) => o.id === currentAssignment.org_id);
+      const isHighCouncil =
+        org?.name?.toLowerCase() === "high council".toLowerCase();
+
+      // If trying to assign non-super_admin role to High Council, prevent it
+      if (isHighCouncil && value !== "super_admin") {
+        toast.error(t.usersDetailsPage.toasts.highCouncilRestriction[lang]);
+        return;
+      }
+
+      // If trying to assign super_admin role to non-High Council org, prevent it
+      if (!isHighCouncil && value === "super_admin") {
+        toast.error(t.usersDetailsPage.toasts.superAdminRestriction[lang]);
+        return;
+      }
+    }
+
+    // Standard role change
     setRoleAssignments((prev) =>
       prev.map((ra, i) =>
         i === index
@@ -183,6 +211,39 @@ const UsersDetailsPage = () => {
   const handleOrgChange = (index: number, orgId: string) => {
     const org = organizations.find((o) => o.id === orgId);
     if (!org) return;
+
+    // Get the current role assignment
+    const currentAssignment = roleAssignments[index];
+    const isHighCouncil =
+      org.name?.toLowerCase() === "high council".toLowerCase();
+
+    // If switching to High Council but role isn't super_admin, reset role
+    if (isHighCouncil && currentAssignment.role_name !== "super_admin") {
+      setRoleAssignments((prev) =>
+        prev.map((ra, i) =>
+          i === index
+            ? { ...ra, org_id: orgId, org_name: org.name, role_name: null }
+            : ra,
+        ),
+      );
+      toast.info(t.usersDetailsPage.toasts.highCouncilRestriction[lang]);
+      return;
+    }
+
+    // If switching away from High Council and role is super_admin, reset role
+    if (!isHighCouncil && currentAssignment.role_name === "super_admin") {
+      setRoleAssignments((prev) =>
+        prev.map((ra, i) =>
+          i === index
+            ? { ...ra, org_id: orgId, org_name: org.name, role_name: null }
+            : ra,
+        ),
+      );
+      toast.info(t.usersDetailsPage.toasts.superAdminRestriction[lang]);
+      return;
+    }
+
+    // Standard organization change
     setRoleAssignments((prev) =>
       prev.map((ra, i) =>
         i === index ? { ...ra, org_id: orgId, org_name: org.name } : ra,
@@ -191,16 +252,23 @@ const UsersDetailsPage = () => {
   };
 
   const addRoleAssignment = () => {
-    // Only super users can add new role assignments; tenant_admins can only edit existing roles
-    if (!isSuper) return;
+    if (!canManageRoles) return;
+
+    // Check if there's already an incomplete entry
+    if (isAssigningRole) {
+      toast.warning(t.usersDetailsPage.toasts.completeCurrentRole[lang]);
+      return;
+    }
+
+    // Add a new empty role assignment
     setRoleAssignments((prev) => [
       ...prev,
       {
         id: null,
-        org_id: isSuper ? null : activeOrgId,
+        org_id: null,
         role_name: null,
         is_active: true,
-        org_name: isSuper ? "" : activeOrgName || "",
+        org_name: t.usersDetailsPage.placeholders.selectOrganization[lang],
         isNewRole: true,
       },
     ]);
@@ -226,11 +294,32 @@ const UsersDetailsPage = () => {
       description: `Do you want to remove ${roleLabel} from ${user?.full_name ?? "this user"} in ${orgLabel}?`,
       confirmText: "Remove",
       cancelText: "Cancel",
-      onConfirm: () => {
-        setRoleAssignments((prev) => prev.filter((_, i) => i !== index));
-        toast.success(
-          "" + roleLabel + " removed locally. Click Save to persist changes.",
-        );
+      onConfirm: async () => {
+        try {
+          if (ra.id) {
+            // If the role has an ID, it exists in the database and should be deleted
+            await permanentDeleteRole(ra.id);
+
+            // Refresh JWT and roles data
+            await refreshSupabaseSession();
+            await refreshAllUserRoles(true);
+
+            toast.success(`Removed ${roleLabel} from ${orgLabel}`);
+          } else {
+            // If the role doesn't have an ID, it's only in local state
+            setRoleAssignments((prev) => prev.filter((_, i) => i !== index));
+            toast.success(
+              `Removed ${roleLabel} from ${orgLabel} (local change)`,
+            );
+          }
+
+          // Update the role assignments in the state to reflect the change
+          // This is needed even for database deletes to keep the UI in sync
+          setRoleAssignments((prev) => prev.filter((_, i) => i !== index));
+        } catch (err) {
+          console.error("Failed to remove role:", err);
+          toast.error(`Failed to remove ${roleLabel}. Please try again.`);
+        }
       },
       onCancel: () => {},
     });
@@ -244,7 +333,7 @@ const UsersDetailsPage = () => {
         r.user_id === user.id &&
         r.organization_id &&
         r.role_name &&
-        (isSuper || r.organization_id === activeOrgId),
+        (isSuperAdmin || r.organization_id === activeOrgId),
     );
 
     const created = roleAssignments.some(
@@ -277,46 +366,83 @@ const UsersDetailsPage = () => {
     });
 
     return created || deleted || updated;
-  }, [roleAssignments, allUserRoles, user, activeOrgId, isSuper]);
+  }, [roleAssignments, allUserRoles, user, activeOrgId, isSuperAdmin]);
 
   const handleSave = async () => {
     if (!user) return;
     try {
       const originalRoles = allUserRoles.filter((r) => r.user_id === user.id);
 
-      // compute diffs: roles to create and to delete
-      let toCreate = roleAssignments.filter(
-        (ra) =>
-          !originalRoles.some(
-            (or) =>
-              or.organization_id === ra.org_id && or.role_name === ra.role_name,
-          ),
-      );
+      // Group roles by organization to enforce "one active role per org" rule
+      const userOrgRoles = new Map<string, ViewUserRolesWithDetails[]>();
+      originalRoles.forEach((role) => {
+        if (!role.organization_id) return;
 
-      let toDelete = originalRoles.filter(
-        (or) =>
-          !roleAssignments.some(
-            (ra) =>
-              ra.org_id === or.organization_id && ra.role_name === or.role_name,
-          ),
-      );
-
-      // If tenant admin, restrict create/delete operations to the active organization only
-      if (isTenantAdmin && activeOrgId) {
-        toCreate = toCreate.filter((ra) => ra.org_id === activeOrgId);
-        toDelete = toDelete.filter((or) => or.organization_id === activeOrgId);
-      }
-
-      const toUpdate = roleAssignments.filter((ra) => {
-        const orig = originalRoles.find((or) => or.id === ra.id);
-        return ra.id && orig && orig.is_active !== ra.is_active;
+        if (!userOrgRoles.has(role.organization_id)) {
+          userOrgRoles.set(role.organization_id, []);
+        }
+        userOrgRoles.get(role.organization_id)!.push(role);
       });
 
-      for (const ru of toUpdate) {
-        await updateRole(ru.id as string, { is_active: ru.is_active });
+      // Create a loading toast that will be updated with progress
+      const loadingToast = toast.loading(
+        t.usersDetailsPage.toasts.loading[lang],
+      );
+
+      // Track operations for reporting
+      let updatedCount = 0;
+      let createdCount = 0;
+      let deletedCount = 0;
+      const replacedRoleIds = new Set<string>();
+
+      // Process roles that need to be updated (role type change)
+      for (const ra of roleAssignments.filter((ra) => {
+        if (!ra.org_id || !ra.role_name || !ra.id) return false;
+
+        const origRole = originalRoles.find((r) => r.id === ra.id);
+        return origRole && origRole.role_name !== ra.role_name;
+      })) {
+        // This is a role replacement (different role type in same org)
+        const roleDef = availableRoles.find((ar) => ar.role === ra.role_name);
+
+        if (roleDef && ra.id && ra.org_id) {
+          try {
+            await replaceRole(ra.id, {
+              user_id: user.id,
+              organization_id: ra.org_id, // TypeScript knows this is non-null now
+              role_id: roleDef.id,
+            });
+            updatedCount++;
+            replacedRoleIds.add(ra.id); // Mark this role as already replaced
+          } catch (err) {
+            console.error("Failed to replace role:", err, {
+              role: ra.role_name,
+              org: ra.org_name,
+            });
+          }
+        }
       }
 
-      for (const ra of toCreate) {
+      // Process standard updates (is_active toggle only)
+      const standardUpdates = roleAssignments.filter((ra) => {
+        const orig = originalRoles.find((or) => or.id === ra.id);
+        return (
+          ra.id &&
+          orig &&
+          orig.is_active !== ra.is_active &&
+          orig.role_name === ra.role_name
+        );
+      });
+
+      for (const ru of standardUpdates) {
+        await updateRole(ru.id as string, { is_active: ru.is_active });
+        updatedCount++;
+      }
+
+      // Process new role creations
+      for (const ra of roleAssignments.filter(
+        (ra) => ra.org_id && !userOrgRoles.has(ra.org_id) && ra.role_name,
+      )) {
         if (!ra.org_id || !ra.role_name) continue;
         const roleDef = availableRoles.find((ar) => ar.role === ra.role_name);
         if (roleDef) {
@@ -325,41 +451,74 @@ const UsersDetailsPage = () => {
             organization_id: ra.org_id,
             role_id: roleDef.id,
           });
+          createdCount++;
         }
       }
 
-      for (const rd of toDelete) {
+      // Process deletions
+      for (const rd of originalRoles.filter(
+        (or) =>
+          !roleAssignments.some(
+            (ra) =>
+              ra.org_id === or.organization_id && ra.role_name === or.role_name,
+          ) && !replacedRoleIds.has(or.id!), // Skip roles that were already replaced,
+      )) {
         if (rd.id) {
           await permanentDeleteRole(rd.id);
-          try {
-            toast.success(
-              "Removed role " +
-                (rd.role_name ?? "") +
-                " from " +
-                (rd.organization_name ?? rd.organization_id),
-            );
-          } catch (e) {
-            console.error("Failed to show removal toast", e);
-          }
+          deletedCount++;
         }
       }
 
-      toast.success(t.usersDetailsPage.messages.success[lang]);
+      // Refresh JWT and force reload roles data
+      await syncSessionAndRoles();
+
+      // Update the loading toast with success message
+      const translatedMessage = t.usersDetailsPage.toasts.roleChangesSaved[lang]
+        .replace("{created}", String(createdCount))
+        .replace("{updated}", String(updatedCount))
+        .replace("{deleted}", String(deletedCount));
+      toast.success(translatedMessage, { id: loadingToast });
     } catch (err) {
       console.error("Failed saving roles", err);
       toast.error(t.usersDetailsPage.messages.error[lang]);
     }
   };
 
+  // Split the effects - one for initial roles refresh and one for user data loading
+
+  // First useEffect: One-time roles refresh on mount with a ref to prevent loops
+  const hasRefreshedRoles = useRef(false);
+
   useEffect(() => {
     if (!id) return;
+
+    if (!hasRefreshedRoles.current) {
+      hasRefreshedRoles.current = true;
+
+      if (canManageRoles) {
+        Promise.all([
+          refreshAllUserRoles(true),
+          refreshAvailableRoles(true),
+        ]).catch((err) => {
+          console.error("Failed to refresh role data:", err);
+        });
+      }
+    }
+  }, [id]);
+
+  // Second useEffect: Handle user data loading separately
+  useEffect(() => {
+    if (!id) return;
+
     let mounted = true;
     setLoading(true);
+
     usersApi
       .getUserById(id)
       .then((u) => {
         if (!mounted) return;
         setUser(u);
+
         // fetch addresses for this user
         setAddressesLoading(true);
         usersApi
@@ -383,7 +542,7 @@ const UsersDetailsPage = () => {
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [id, canManageRoles, refreshAllUserRoles]);
 
   if (loading || !user) {
     return <Spinner containerClasses="py-10" />;
@@ -473,7 +632,30 @@ const UsersDetailsPage = () => {
             </Label>
 
             <div className="flex items-center gap-2">
-              {isSuper && (
+              {/* Add refresh button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    await refreshSupabaseSession();
+                    await refreshAllUserRoles(true);
+                    toast.success(
+                      t.usersDetailsPage.toasts.roleRefreshSuccess[lang],
+                    );
+                  } catch (err) {
+                    console.error("Failed to refresh roles:", err);
+                    toast.error(
+                      t.usersDetailsPage.toasts.roleRefreshError[lang],
+                    );
+                  }
+                }}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                {t.usersDetailsPage.buttons.refresh[lang]}
+              </Button>
+
+              {isSuperAdmin && (
                 <Button
                   variant="outline"
                   className="border-1-grey"
@@ -486,6 +668,7 @@ const UsersDetailsPage = () => {
                 </Button>
               )}
 
+              {/* Existing save button */}
               {canManageRoles && hasRoleChanges && (
                 <Button variant="outline" onClick={handleSave} size={"sm"}>
                   {t.usersDetailsPage.buttons.save[lang]}
@@ -517,7 +700,7 @@ const UsersDetailsPage = () => {
                         </span>
                       ) : (
                         <Select
-                          disabled={!isSuper && ra.org_id !== activeOrgId}
+                          disabled={!isSuperAdmin && ra.org_id !== activeOrgId}
                           onValueChange={(value) =>
                             handleOrgChange(index, value)
                           }
@@ -534,7 +717,7 @@ const UsersDetailsPage = () => {
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
-                            {(isSuper
+                            {(isSuperAdmin
                               ? organizations.filter(
                                   (org) => !assignedOrgIds.has(org.id),
                                 )
@@ -555,7 +738,7 @@ const UsersDetailsPage = () => {
                           handleRoleAssignmentChange(index, "role_name", value)
                         }
                         disabled={
-                          (!isSuper && ra.org_id !== activeOrgId) ||
+                          (!isSuperAdmin && ra.org_id !== activeOrgId) ||
                           (ra.org_name === "Global" && Boolean(ra.role_name)) ||
                           (isAssigningRole && !lastRoleEntry.org_id)
                         }
@@ -571,7 +754,7 @@ const UsersDetailsPage = () => {
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {getSelectableRoles(ra, index).map((r) => (
+                          {getSelectableRoles(ra.org_id).map((r) => (
                             <SelectItem key={r.id} value={r.role}>
                               {formatRoleName(r.role)}
                             </SelectItem>
@@ -580,7 +763,7 @@ const UsersDetailsPage = () => {
                       </Select>
 
                       <Switch
-                        disabled={ra.org_id !== activeOrgId && !isSuper}
+                        disabled={ra.org_id !== activeOrgId && !isSuperAdmin}
                         checked={ra.is_active}
                         onCheckedChange={() => toggleRoleActive(index)}
                         className="justify-self-center"
@@ -600,7 +783,7 @@ const UsersDetailsPage = () => {
                 </div>
               ) : (
                 <p className="text-sm mt-4 text-center mb-2">
-                  User has no current roles
+                  {t.usersDetailsPage.labels.noRoles[lang]}
                 </p>
               )}
             </>

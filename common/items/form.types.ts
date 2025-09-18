@@ -13,6 +13,7 @@ export type SelectedStorage = {
  */
 export type CreateItemType = {
   id: string;
+  category_id: string | null;
   location: {
     id: string;
     name: string;
@@ -24,12 +25,10 @@ export type CreateItemType = {
   translations: {
     fi: {
       item_name: string;
-      item_type: string;
       item_description: string;
     };
     en: {
       item_name: string;
-      item_type: string;
       item_description: string;
     };
   };

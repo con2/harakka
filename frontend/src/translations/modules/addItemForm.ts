@@ -34,6 +34,10 @@ export const addItemForm = {
       fi: "Sijainti",
       en: "Location",
     },
+    category: {
+      fi: "Kategoria",
+      en: "Category",
+    },
     active: {
       fi: "Aktiivinen",
       en: "Active",
