@@ -126,7 +126,7 @@ const ItemsList: React.FC = () => {
                 setSearchQuery("");
               }
             }}
-            className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
+            className="pl-10 pr-9 w-full  focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
           />
           {searchQuery && (
             <button
