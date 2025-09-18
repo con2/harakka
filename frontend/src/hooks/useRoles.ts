@@ -9,6 +9,7 @@ import {
   replaceUserRole,
   deleteUserRole,
   permanentDeleteUserRole,
+  leaveOrg,
   clearRoleErrors,
   selectCurrentUserRoles,
   selectCurrentUserOrganizations,
@@ -394,6 +395,18 @@ export const useRoles = () => {
     [dispatch],
   );
 
+  const leaveRoleInOrg = useCallback(
+    (tableKeyId: string) => {
+      return dispatch(leaveOrg(tableKeyId)).then((result) => {
+        // Invalidate both caches
+        roleCache.allRoles.fetched = false;
+        roleCache.currentRoles.fetched = false;
+        return result;
+      });
+    },
+    [dispatch],
+  );
+
   const permanentDeleteRole = useCallback(
     (tableKeyId: string) => {
       return dispatch(permanentDeleteUserRole(tableKeyId)).then((result) => {
@@ -519,6 +532,7 @@ export const useRoles = () => {
     updateRole,
     deleteRole,
     permanentDeleteRole,
+    leaveRoleInOrg,
     clearErrors,
     refreshAll,
     clearRoleCache,

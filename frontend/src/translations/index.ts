@@ -58,7 +58,6 @@ import { passwordReset } from "./modules/passwordReset";
 import { passwordResetResult } from "./modules/passwordResetResult";
 import { privacyPolicy } from "./modules/privacyPolicy";
 import { profilePicUploader } from "./modules/profilePicUploader";
-import { roleContextSwitcher } from "./modules/roleContextSwitcher";
 import { roleManagement } from "./modules/roleManagement";
 import { rolesList } from "./modules/rolesList";
 import { statusBadge } from "./modules/statusBadge";
@@ -77,6 +76,7 @@ import { userBan } from "./modules/userBan";
 import { userBanHistory } from "./modules/userBanHistory";
 import { userDelete } from "./modules/userDelete";
 import { userGuide } from "./modules/userGuide";
+import { userMenu } from "./modules/userMenu";
 import { userPanel } from "./modules/userPanel";
 import { usersDetailsPage } from "./modules/usersDetailsPage";
 import { userSignupModal } from "./modules/userSignupModal";
@@ -141,7 +141,6 @@ export const t = {
   passwordResetResult,
   privacyPolicy,
   profilePicUploader,
-  roleContextSwitcher,
   roleManagement,
   rolesList,
   statusBadge,
@@ -160,6 +159,7 @@ export const t = {
   userBanHistory,
   userDelete,
   userGuide,
+  userMenu,
   userPanel,
   userSignupModal,
   usersDetailsPage,

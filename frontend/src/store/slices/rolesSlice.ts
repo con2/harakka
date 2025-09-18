@@ -213,6 +213,69 @@ export const permanentDeleteUserRole = createAsyncThunk(
   },
 );
 
+export const leaveOrg = createAsyncThunk(
+  "roles/leaveOrg",
+  async (tableKeyId: string, { getState, rejectWithValue, dispatch }) => {
+    try {
+      const state = getState() as RootState;
+      const role = state.roles.allUserRoles.find((r) => r.id === tableKeyId);
+      const currentUserId = state.users.selectedUser?.id;
+      const activeOrgId = state.roles.activeRoleContext.organizationId;
+
+      await roleApi.leaveOrg(tableKeyId);
+
+      if (role && role.user_id === currentUserId && currentUserId) {
+        await refreshSupabaseSession();
+        try {
+          // Refresh current user's roles and get the updated list
+          const payload = await dispatch(fetchCurrentUserRoles()).unwrap();
+          const remainingRoles: ViewUserRolesWithDetails[] =
+            payload?.roles ?? [];
+
+          // If the removed role belonged to the currently active organization,
+          // update activeRoleContext to fallback to Global 'user' role
+          if (role.organization_id === activeOrgId) {
+            const globalUserRole = remainingRoles.find((r) => {
+              const orgName = r.organization_name?.toLowerCase?.() ?? "";
+              const roleName = r.role_name?.toLowerCase?.() ?? "";
+              return orgName === "global" && roleName === "user";
+            });
+
+            if (globalUserRole) {
+              const newContext = {
+                organizationId: globalUserRole.organization_id,
+                organizationName: globalUserRole.organization_name,
+                roleName: globalUserRole.role_name,
+              };
+              dispatch(setActiveRoleContext(newContext));
+            } else if (remainingRoles.length > 0) {
+              // Fallback to first remaining role if no Global user role found
+              const firstRole = remainingRoles[0];
+              const newContext = {
+                organizationId: firstRole.organization_id,
+                organizationName: firstRole.organization_name,
+                roleName: firstRole.role_name,
+              };
+              dispatch(setActiveRoleContext(newContext));
+            } else {
+              // No roles left - clear context
+              dispatch(clearActiveRoleContext());
+            }
+          }
+        } catch (err) {
+          console.error("Failed to refresh roles after leaveOrg:", err);
+        }
+      }
+
+      return tableKeyId;
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to leave organization"),
+      );
+    }
+  },
+);
+
 const rolesSlice = createSlice({
   name: "roles",
   initialState,
@@ -440,6 +503,27 @@ const rolesSlice = createSlice({
         if (currentIdx !== -1) {
           state.currentUserRoles[currentIdx].is_active = false;
         }
+      })
+      // Leave Org by deleting a role in it (self hard-delete)
+      .addCase(leaveOrg.pending, (state) => {
+        state.adminLoading = true;
+        state.adminError = null;
+      })
+      .addCase(leaveOrg.fulfilled, (state, action) => {
+        state.adminLoading = false;
+        // Remove from allUserRoles
+        state.allUserRoles = state.allUserRoles.filter(
+          (role: ViewUserRolesWithDetails) => role.id !== action.payload,
+        );
+        // Also remove from current user roles so UI no longer shows deleted role
+        state.currentUserRoles = state.currentUserRoles.filter(
+          (role) => role.id !== action.payload,
+        );
+      })
+      .addCase(leaveOrg.rejected, (state, action) => {
+        state.adminLoading = false;
+        state.adminError = action.payload as string;
+        state.errorContext = "leave-org";
       })
       .addCase(permanentDeleteUserRole.rejected, (state, action) => {
         state.adminLoading = false;
