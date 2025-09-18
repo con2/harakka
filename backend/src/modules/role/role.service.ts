@@ -434,14 +434,34 @@ export class RoleService {
     tableKeyId: string,
     req: AuthRequest,
   ): Promise<{ success: boolean; message: string }> {
-    // Use shared low-level delete helper so admin and user flows behave the same
-    const { userId } = await this.deleteRoleRecordById(
-      tableKeyId,
-      req.supabase,
-    );
+    // Check if assignment exists
+    const { data: existing, error: existingError } = await req.supabase
+      .from("user_organization_roles")
+      .select("id, user_id")
+      .eq("id", tableKeyId)
+      .single();
+
+    if (existingError || !existing) {
+      throw new NotFoundException("Role assignment not found");
+    }
+
+    // Hard delete
+    const { error } = await req.supabase
+      .from("user_organization_roles")
+      .delete()
+      .eq("id", tableKeyId);
+
+    if (error) {
+      this.logger.error(
+        `Failed to permanently delete user role: ${error.message}`,
+      );
+      throw new BadRequestException(
+        "Failed to permanently delete role assignment",
+      );
+    }
 
     // After successful permanent deletion, update JWT
-    await this.updateUserJWTById(userId);
+    await this.updateUserJWTById(existing.user_id);
 
     return {
       success: true,
