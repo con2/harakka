@@ -25,7 +25,6 @@ function NavigationMenu({
       {...props}
     >
       {children}
-      {viewport && <NavigationMenuViewport />}
     </NavigationMenuPrimitive.Root>
   );
 }
@@ -98,12 +97,16 @@ function NavigationMenuContent({
 
 function NavigationMenuViewport({
   className,
+  wrapperClassName,
   ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Viewport>) {
+}: React.ComponentProps<typeof NavigationMenuPrimitive.Viewport> & {
+  wrapperClassName?: string;
+}) {
   return (
     <div
       className={cn(
-        "absolute top-full left-0 isolate z-50 flex justify-center",
+        "absolute top-full left-0 isolate z-50 flex justify-center bg-white",
+        wrapperClassName,
       )}
     >
       <NavigationMenuPrimitive.Viewport
