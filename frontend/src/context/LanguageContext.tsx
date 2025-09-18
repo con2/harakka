@@ -4,7 +4,10 @@ import React, { createContext, useState, useContext } from "react";
 
 // Define available languages
 export type Language = "fi" | "en";
-export const validLanguages = ["fi", "en"] as const;
+export const SUPPORTED_LANGUAGES = [
+  { lang: "English", key: "en" },
+  { lang: "Finnish", key: "fi" },
+];
 
 // Language context type
 type LanguageContextType = {

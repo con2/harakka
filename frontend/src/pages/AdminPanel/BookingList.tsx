@@ -56,7 +56,7 @@ const BookingList = () => {
         ordered_by: ORDER_BY,
         ascending: ASCENDING,
         page: currentPage,
-        limit: 10,
+        limit: 3,
         searchquery: debouncedSearchQuery,
         status_filter: statusFilter !== "all" ? statusFilter : undefined,
       }),

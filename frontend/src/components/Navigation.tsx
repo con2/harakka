@@ -67,7 +67,7 @@ export const Navigation = () => {
 
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
-    ? "absolute top-0 left-0 w-full z-50 text-white px-2 md:px-10 py-2 md:py-3 bg-white flex lg:justify-around"
+    ? "absolute top-0 left-0 w-full z-50 px-2 md:px-10 py-2 md:py-3 bg-white flex lg:justify-around"
     : "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white lg:justify-around flex justify-between";
 
   const handleSignOut = () => {
@@ -277,9 +277,6 @@ export const Navigation = () => {
       {/* Right side: Cart, notifications, language, auth */}
       <div className="flex items-center gap-3">
         {/* Active role context switcher if user is logged in and has roles */}
-        {isLoggedIn && <RoleContextSwitcher />}
-
-        <LanguageSwitcher />
         <Button
           variant="ghost"
           onClick={() => navigate("/cart")}
@@ -297,37 +294,7 @@ export const Navigation = () => {
 
         {!authLoading && (
           <>
-            {isLoggedIn ? (
-              <>
-                <Button
-                  variant={"ghost"}
-                  className="m-0 hover:bg-(--subtle-grey) gap-2 hover:text-(--midnight-black) text-(--midnight-black)"
-                  size={"sm"}
-                  onClick={() => void navigate("/profile")}
-                  data-cy="nav-profile-btn"
-                >
-                  {avatarUrl && avatarUrl.trim() !== "" ? (
-                    <img
-                      src={avatarUrl}
-                      className="inline h-6 w-6 rounded-full"
-                      alt="User avatar"
-                    />
-                  ) : (
-                    <UserIcon className="inline h-6 w-6 rounded-full bg-grey" />
-                  )}
-                  <span className="hidden sm:inline">{name}</span>
-                </Button>
-                <Button
-                  variant={"ghost"}
-                  size={"sm"}
-                  onClick={handleSignOut}
-                  data-cy="nav-signout-btn"
-                  className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
-                >
-                  <LogOutIcon className="h-5 w-5" />
-                </Button>
-              </>
-            ) : (
+            {!isLoggedIn && (
               <Button
                 variant={"ghost"}
                 className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
@@ -341,6 +308,7 @@ export const Navigation = () => {
             )}
           </>
         )}
+        {isLoggedIn && <RoleContextSwitcher />}
       </div>
     </nav>
   );
