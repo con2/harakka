@@ -259,31 +259,32 @@ const MyBookings = () => {
     if (!selectedBooking || !showEditModal) return;
 
     const updatedItems = editFormItems
-      .map((item) => ({
-        ...item,
-        quantity:
+      .map((item) => {
+        const quantity =
           item.id !== undefined
             ? (itemQuantities[item.id] ?? item.quantity)
-            : item.quantity,
-        start_date: globalStartDate || item.start_date,
-        end_date: globalEndDate || item.end_date,
-      }))
+            : item.quantity;
+        const start = globalStartDate ?? item.start_date;
+        const end = globalEndDate ?? item.end_date;
+
+        return {
+          item_id: item.item_id,
+          quantity: Number(quantity),
+          start_date: new Date(start).toISOString(),
+          end_date: new Date(end).toISOString(),
+        };
+      })
       .filter((item) => item.quantity > 0);
 
     if (updatedItems.length === 0) {
       try {
-        void dispatch(
-          updateBooking({
-            bookingId: selectedBooking.id!,
-            items: updatedItems,
-          }),
-        );
-        void dispatch(cancelBooking(selectedBooking.id!));
+        // No items left -> cancel booking directly. Do NOT call updateBooking with an empty items array
+        await dispatch(cancelBooking(selectedBooking.id!)).unwrap();
         toast.warning(t.myBookings.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
           void dispatch(
             getOwnBookings({
-              page: currentPage,
+              page: currentPage + 1,
               limit: 10,
             }),
           );
@@ -309,7 +310,7 @@ const MyBookings = () => {
       if (user?.id) {
         void dispatch(
           getOwnBookings({
-            page: currentPage,
+            page: currentPage + 1,
             limit: 10,
           }),
         );
@@ -561,7 +562,7 @@ const MyBookings = () => {
             }
             void dispatch(
               getOwnBookings({
-                page: currentPage,
+                page: currentPage + 1,
                 limit: 10,
               }),
             );
