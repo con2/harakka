@@ -318,22 +318,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // 7. For Google OAuth specifically, clear any Google session cookies
       // This helps ensure the next login shows the account picker
-      if (document.cookie.includes("accounts.google.com")) {
-        // Note: This is a best-effort approach for Google session clearing
-        document.cookie.split(";").forEach((c) => {
-          const eqPos = c.indexOf("=");
-          const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
-          if (
-            name.includes("google") ||
-            name.includes("oauth") ||
-            name.includes("_ga")
-          ) {
-            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.google.com`;
-            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.accounts.google.com`;
-            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-          }
-        });
-      }
+      // Note: This is a best-effort approach for Google session clearing
+      // Clear cookies whose names match known Google OAuth session cookie patterns
+      const googleCookieNames = [
+        "G_AUTHUSER",      // Google auth user session
+        "GAPS",            // Google account session
+        "LSID",            // Google session ID
+        "Oauth_Token",     // Google OAuth token
+        "_ga",             // Google Analytics
+        // Add any other cookie names as needed
+      ];
+      document.cookie.split(";").forEach((c) => {
+        const eqPos = c.indexOf("=");
+        const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
+        if (
+          googleCookieNames.some((cookieName) => name.startsWith(cookieName)) ||
+          name.toLowerCase().includes("google") ||
+          name.toLowerCase().includes("oauth")
+        ) {
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.google.com`;
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.accounts.google.com`;
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+        }
+      });
     } catch {
       clearCachedAuthToken();
       // Even if there's an error, still clear local data and navigate
