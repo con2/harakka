@@ -37,14 +37,8 @@ const ItemsDetails: React.FC = () => {
   const error = useAppSelector(selectItemsError);
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
   const itemImages = useAppSelector(selectItemImages);
-
-  // State for selected tab
-  //const [selectedTab, setSelectedTab] = useState("description");
-  // State for cart quantity
   const [quantity, setQuantity] = useState(1);
-  // Image tracking states
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
-  // State for larger image view
   const [isImageVisible, setIsImageVisible] = useState(false);
 
   const [availabilityInfo, setAvailabilityInfo] =
@@ -96,7 +90,6 @@ const ItemsDetails: React.FC = () => {
     );
   }, [itemImagesForCurrentItem, selectedImageUrl]);
 
-  // Handle cart actions
   const handleAddToCart = () => {
     if (item) {
       dispatch(
@@ -143,7 +136,6 @@ const ItemsDetails: React.FC = () => {
 
   const isItemAvailableForTimeframe = availabilityInfo.availableQuantity > 0;
 
-  // Translation
   const { getTranslation } = useTranslation<ItemTranslation>();
   // Get the translated item content
   const itemContent = getTranslation(item as Item, "fi") as
@@ -165,7 +157,6 @@ const ItemsDetails: React.FC = () => {
     }
   }, [id, dispatch]);
 
-  // Loading and error states
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
@@ -227,18 +218,23 @@ const ItemsDetails: React.FC = () => {
               />
             </div>
 
-            {/* Floating Enlarged Preview on Hover */}
-            <div
-              className={`absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 ${isImageVisible ? "scale-100 opacity-100" : "scale-0 opacity-0"} transition-all duration-400 ease-in-out z-50 pointer-events-none`}
-            >
-              <div className="w-[400px] h-[400px] border rounded-lg shadow-lg bg-white flex justify-center items-center enlarged-image">
-                <img
-                  src={mainImage}
-                  alt={itemContent?.item_name || "Tuotteen kuva"}
-                  className="object-contain max-w-full max-h-full"
-                />
+            {/* overlay for enlarged preview (closes on any click) */}
+            {isImageVisible && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-200"
+                onClick={() => setIsImageVisible(false)}
+                role="button"
+                aria-label="Close image preview"
+              >
+                <div className="w-[90%] max-w-[420px] max-h-[80%] h-auto border rounded-lg shadow-lg bg-white flex justify-center items-center p-2">
+                  <img
+                    src={mainImage}
+                    alt={itemContent?.item_name || "Tuotteen kuva"}
+                    className="object-contain w-[400px] h-[400px] max-w-full max-h-full cursor-pointer"
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Detail Images Gallery */}
