@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,10 +71,10 @@ import {
 
 type AddItemFromProps = {
   onUpdate?: () => void;
-  collapsible?: boolean;
+  initialData?: CreateItemType;
 };
 
-function AddItemForm({ onUpdate, collapsible }: AddItemFromProps) {
+function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   const orgLocations = useAppSelector(selectOrgLocations);
   const editItem = useAppSelector(selectSelectedItem);
   const { lang: appLang } = useLanguage();
@@ -90,33 +89,34 @@ function AddItemForm({ onUpdate, collapsible }: AddItemFromProps) {
   const isEditing = useAppSelector(selectIsEditing);
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
-    defaultValues: editItem ?? {
-      id: crypto.randomUUID(),
-      location: {
-        id: storage?.id ?? "",
-        name: storage?.name ?? "",
-        address: storage?.address ?? "",
-      },
-      quantity: 1,
-      available_quantity: 1,
-      is_active: true,
-      tags: [],
-      translations: {
-        fi: {
-          item_name: "",
-          item_description: "",
+    defaultValues: initialData ??
+      editItem ?? {
+        id: crypto.randomUUID(),
+        location: {
+          id: storage?.id ?? "",
+          name: storage?.name ?? "",
+          address: storage?.address ?? "",
         },
-        en: {
-          item_name: "",
-          item_description: "",
+        quantity: 1,
+        available_quantity: 1,
+        is_active: true,
+        tags: [],
+        translations: {
+          fi: {
+            item_name: "",
+            item_description: "",
+          },
+          en: {
+            item_name: "",
+            item_description: "",
+          },
+        },
+        category_id: "",
+        images: {
+          main: null,
+          details: [],
         },
       },
-      category_id: "",
-      images: {
-        main: null,
-        details: [],
-      },
-    },
   });
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
@@ -128,6 +128,7 @@ function AddItemForm({ onUpdate, collapsible }: AddItemFromProps) {
   };
 
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
+    console.log(form.getValues());
     const firstErrorKey = getFirstErrorMessage(errors);
 
     if (
@@ -264,11 +265,17 @@ function AddItemForm({ onUpdate, collapsible }: AddItemFromProps) {
           onSubmit={form.handleSubmit(onValidSubmit, onInvalidSubmit)}
           className="w-full"
         >
-          <Accordion className="w-full" type="multiple">
+          <Accordion
+            defaultValue={
+              onUpdate ? ["details"] : ["details", "tags", "images"]
+            }
+            className="w-full"
+            type="multiple"
+          >
             {/* Item Details */}
             <AccordionItem
               value="details"
-              className="p-10 flex flex-wrap gap-x-6 space-y-8 justify-between"
+              className="p-10 flex flex-wrap gap-x-6 justify-between"
             >
               <AccordionTrigger
                 className="font-main w-full justify-between flex"
@@ -278,7 +285,7 @@ function AddItemForm({ onUpdate, collapsible }: AddItemFromProps) {
                   {t.addItemForm.headings.itemDetails[appLang]}
                 </p>
               </AccordionTrigger>
-              <AccordionContent>
+              <AccordionContent className="mt-10">
                 <div className="flex flex-wrap w-full gap-x-6 space-y-4 justify-between">
                   {TRANSLATION_FIELDS.map((entry) => {
                     const {
@@ -430,9 +437,7 @@ function AddItemForm({ onUpdate, collapsible }: AddItemFromProps) {
                           <Select
                             defaultValue={field?.value?.id ?? ""}
                             onValueChange={handleLocationChange}
-                            disabled={
-                              !onUpdate && storage === null ? false : true
-                            }
+                            disabled={!onUpdate || storage === null}
                           >
                             <SelectTrigger className="border shadow-none border-grey w-full">
                               <SelectValue
@@ -498,7 +503,7 @@ function AddItemForm({ onUpdate, collapsible }: AddItemFromProps) {
                   </p>
                 </div>
               </AccordionTrigger>
-              <AccordionContent>
+              <AccordionContent className="mt-10">
                 <div className="flex flex-col gap-3 mb-8">
                   <Input
                     placeholder={t.addItemForm.placeholders.searchTags[appLang]}
@@ -581,7 +586,7 @@ function AddItemForm({ onUpdate, collapsible }: AddItemFromProps) {
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent>
+              <AccordionContent className="mt-10">
                 <ItemImageUpload
                   item_id={form.watch("id") || ""}
                   formImages={
@@ -594,20 +599,22 @@ function AddItemForm({ onUpdate, collapsible }: AddItemFromProps) {
 
             <div className="p-10 pt-2 flex justify-end gap-4">
               {!onUpdate && (
-                <Button
-                  variant="default"
-                  disabled={isEditing}
-                  onClick={handleNavigateSummary}
-                  type="button"
-                >
-                  {t.addItemForm.buttons.goToSummary[appLang]}
-                </Button>
+                <>
+                  <Button
+                    variant="default"
+                    disabled={isEditing}
+                    onClick={handleNavigateSummary}
+                    type="button"
+                  >
+                    {t.addItemForm.buttons.goToSummary[appLang]}
+                  </Button>
+                  <Button variant="outline" type="submit">
+                    {isEditing || onUpdate
+                      ? t.addItemForm.buttons.updateItem[appLang]
+                      : t.addItemForm.buttons.addItem[appLang]}
+                  </Button>
+                </>
               )}
-              <Button variant="outline" type="submit">
-                {isEditing || onUpdate
-                  ? t.addItemForm.buttons.updateItem[appLang]
-                  : t.addItemForm.buttons.addItem[appLang]}
-              </Button>
             </div>
           </Accordion>
         </form>
