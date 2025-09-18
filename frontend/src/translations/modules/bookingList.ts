@@ -43,10 +43,6 @@ export const bookingList = {
         fi: "Palautettu",
         en: "Returned",
       },
-      picked_up: {
-        fi: "Noudettu",
-        en: "Picked Up",
-      },
     },
     clear: {
       fi: "Tyhjennä suodattimet",
