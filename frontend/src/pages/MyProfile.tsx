@@ -14,7 +14,7 @@ import {
 } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { Address, AddressForm } from "@/types/address";
-import { LoaderCircle, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -45,6 +45,7 @@ import MyBookings from "@/components/MyBookings";
 import { CurrentUserRoles } from "@/components/Admin/Roles/CurrentUserRoles";
 import ProfilePictureUploader from "@/components/ProfilePictureUploader";
 import { useRoles } from "@/hooks/useRoles";
+import Spinner from "@/components/Spinner";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();
@@ -206,11 +207,11 @@ const MyProfile = () => {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white min-h-[250px]">
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
-        className="w-full bg-slate-50 p-4 rounded-lg mb-10"
+        className="w-full bg-slate-50 p-4 rounded-lg mb-10 min-h-[250px]"
       >
         <TabsList className="grid w-full grid-cols-2 mb-8 gap-4">
           <TabsTrigger value="user-details">
@@ -224,7 +225,7 @@ const MyProfile = () => {
         </TabsList>
 
         {/* User Details Tab */}
-        <TabsContent value="user-details">
+        <TabsContent value="user-details" className="flex flex-col">
           {selectedUser ? (
             <div className="flex flex-col md:flex-row items-start">
               {/* Profile Picture Uploader */}
@@ -711,12 +712,15 @@ const MyProfile = () => {
               )}
             </div>
           ) : (
-            <LoaderCircle className="animate-spin text-secondary w-8 h-8" />
+            <Spinner
+              loaderClasses="text-secondary w-8 h-8"
+              containerClasses="flex-1"
+            />
           )}
         </TabsContent>
 
         {/* Bookings Tab */}
-        <TabsContent value="bookings">
+        <TabsContent value="bookings" className="flex flex-col">
           <MyBookings />
         </TabsContent>
       </Tabs>

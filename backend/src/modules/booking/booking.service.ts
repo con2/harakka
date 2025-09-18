@@ -241,11 +241,11 @@ export class BookingService {
     req: AuthRequest,
     page: number,
     limit: number,
-    userId: string,
     activeOrgId: string,
   ) {
     const { from, to } = getPaginationRange(page, limit);
     const supabase = req.supabase;
+    const userId = req.user.id;
 
     // All bookings from the view
     const query = supabase
@@ -309,53 +309,91 @@ export class BookingService {
   ) {
     const { from, to } = getPaginationRange(page, limit);
     const supabase = req.supabase;
+    const BOOKED_BY_ORG_ROLES = [
+      "tenant_admin",
+      "storage_manager",
+      "requester",
+    ];
+    const isRequesterRole = BOOKED_BY_ORG_ROLES.includes(activeRole);
 
-    const query = supabase
+    const baseQuery = supabase
       .from("view_bookings_with_user_info")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
 
     if (activeRole === "user") {
-      // Regular users only see their own bookings
-      query.eq("user_id", userId);
-    } else if (
-      activeRole === "requester" ||
-      activeRole === "storage_manager" ||
-      activeRole === "tenant_admin"
-    ) {
-      // Admins see all bookings for their organization
-      const bookingIdsResult = await supabase
-        .from("booking_items")
-        .select("booking_id")
-        .eq("provider_organization_id", activeOrgId);
-
-      if (bookingIdsResult.error) {
-        throw new BadRequestException(
-          "Could not fetch bookings for the organization",
-        );
-      }
-
-      const bookingIds = bookingIdsResult.data.map((item) => item.booking_id);
-      if (bookingIds.length > 0) {
-        query.in("id", bookingIds);
-      } else {
-        return {
-          data: [],
-          count: 0,
-          error: null,
-          status: 200,
-          statusText: "OK",
-          metadata: getPaginationMeta(0, page, limit),
-        };
-      }
-    } else {
-      throw new ForbiddenException("You do not have access to view bookings");
+      baseQuery.eq("user_id", userId).is("booked_by_org", null);
+    } else if (isRequesterRole) {
+      baseQuery.eq("booked_by_org", activeOrgId);
     }
 
-    const result = await query;
+    const bookingItemsQuery = supabase
+      .from("booking_items")
+      .select(
+        "booking_id, status, self_pickup, location_id, provider_organization_id, organizations(name), storage_locations (name)",
+      );
+
+    const bookingItemsResult = await bookingItemsQuery;
+    if (bookingItemsResult.error) handleSupabaseError(bookingItemsResult.error);
+
+    const result = await baseQuery;
+    if (result.error) {
+      // propagate or wrap the error as appropriate
+      throw new BadRequestException("Could not fetch bookings");
+    }
+
+    const mappedResult = result.data.map((booking) => {
+      const bi = bookingItemsResult.data.filter(
+        (data) => data.booking_id === booking.id,
+      );
+
+      const org_booking_status = deriveOrgStatus(bi.map((s) => s.status));
+
+      // Group by organization id
+      const orgMap = new Map();
+      bi.forEach((item) => {
+        const orgId = item.provider_organization_id;
+        if (!orgMap.has(orgId)) {
+          orgMap.set(orgId, {
+            id: orgId,
+            name: item.organizations?.name,
+            org_booking_status,
+            locations: new Map(), // nested map for locations
+          });
+        }
+
+        const orgEntry = orgMap.get(orgId);
+
+        // Deduplicate locations by location_id
+        if (!orgEntry.locations.has(item.location_id)) {
+          orgEntry.locations.set(item.location_id, {
+            id: item.location_id,
+            name: item.storage_locations.name,
+            self_pickup: item.self_pickup,
+            pickup_status: item.status,
+          });
+        }
+      });
+
+      // Convert maps to arrays
+      const orgs = Array.from(orgMap.values()).map((org) => ({
+        ...org,
+        locations: Array.from(org.locations.values()),
+      }));
+
+      return {
+        ...booking,
+        orgs,
+      };
+    });
+
     const pagination = getPaginationMeta(result.count, page, limit);
-    return { ...result, metadata: pagination };
+    return {
+      ...result,
+      data: mappedResult,
+      metadata: pagination,
+    };
   }
 
   /**
@@ -502,7 +540,7 @@ export class BookingService {
     activeRole: { roleName: string; orgId: string },
   ) {
     const userId = dto.user_id;
-
+    const { roleName, orgId } = activeRole;
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
     }
@@ -607,12 +645,18 @@ export class BookingService {
       );
     }
 
+    const BOOKED_BY_ORG_ROLES = [
+      "tenant_admin",
+      "storage_manager",
+      "requester",
+    ];
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
       .insert({
         user_id: userId,
         booking_number: bookingNumber,
         status: "pending",
+        booked_by_org: BOOKED_BY_ORG_ROLES.includes(roleName) ? orgId : null,
       })
       .select()
       .single<BookingRow>();
@@ -670,10 +714,10 @@ export class BookingService {
     }
 
     // 3.6 notify user via centralized mail service
-    await this.mailService.sendBookingMail(BookingMailType.Creation, {
-      bookingId: booking.id,
-      triggeredBy: userId,
-    });
+    // await this.mailService.sendBookingMail(BookingMailType.Creation, {
+    //   bookingId: booking.id,
+    //   triggeredBy: userId,
+    // });
 
     // 3.7 Fetch the complete booking with items and translations using the view
     const { data: createdBookings, error: fetchError } = await supabase
@@ -1420,6 +1464,7 @@ export class BookingService {
     req: AuthRequest,
     bookingId: string,
     orgId: string,
+    location_id?: string,
     itemIds?: string[],
   ) {
     const supabase = req.supabase;
@@ -1431,6 +1476,8 @@ export class BookingService {
         .eq("booking_id", bookingId)
         .eq("provider_organization_id", orgId)
         .in("id", itemIds);
+
+      if (location_id) selectQuery.eq("location_id", location_id);
       const { data: selectData, error } = await selectQuery;
 
       if (error) handleSupabaseError(error);
@@ -1447,6 +1494,7 @@ export class BookingService {
       .eq("status", "picked_up")
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", orgId);
+    if (location_id) updateQuery.eq("location_id", location_id);
     if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
 
     const { error: updateError } = await updateQuery;
@@ -1486,6 +1534,7 @@ export class BookingService {
     supabase: SupabaseClient,
     bookingId: string,
     orgId: string,
+    location_id: string,
     itemIds?: string[],
   ) {
     if (itemIds && itemIds.length > 0) {
@@ -1511,6 +1560,7 @@ export class BookingService {
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", orgId)
       .eq("status", "confirmed");
+    if (location_id) updateQuery.eq("location_id", location_id);
     if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
     const { error: itemsUpdateError } = await updateQuery;
     if (itemsUpdateError) handleSupabaseError(itemsUpdateError);
@@ -1521,7 +1571,10 @@ export class BookingService {
       .eq("booking_id", bookingId);
 
     if (
-      bookingDetails?.every((org_booking) => org_booking.status === "picked_up")
+      bookingDetails?.some(
+        (org_booking) => org_booking.status === "picked_up",
+      ) &&
+      bookingDetails?.every((org_booking) => org_booking.status !== "pending")
     ) {
       const { error: bookingUpdateError } = await supabase
         .from("bookings")
@@ -1614,5 +1667,32 @@ export class BookingService {
     );
 
     return num_available ?? 0;
+  }
+
+  /**
+   * Update self_pickup status of a booking portion
+   * self_pickup is PER org and PER location
+   */
+  async updateSelfPickup(
+    supabase: SupabaseClient,
+    bookingId: string,
+    orgId: string,
+    body: {
+      location_id: string;
+      newStatus: boolean;
+    },
+  ) {
+    const { location_id, newStatus } = body;
+    const result = await supabase
+      .from("booking_items")
+      .update({ self_pickup: newStatus })
+      .eq("booking_id", bookingId)
+      .eq("provider_organization_id", orgId)
+      .eq("location_id", location_id);
+
+    if (result.error) handleSupabaseError(result.error);
+    return {
+      message: `Self pickup was successfully ${newStatus === true ? "enabled" : "disabled"}`,
+    };
   }
 }
