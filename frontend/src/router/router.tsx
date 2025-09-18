@@ -270,16 +270,10 @@ export const router = createBrowserRouter([
       {
         path: "/auth/callback",
         element: <AuthCallback />,
-        loader: () => {
-          console.log("[DEBUG] Navigating to AuthCallback");
-        },
       },
       {
         path: "/password-reset",
         element: <PasswordReset />,
-        loader: () => {
-          console.log("[DEBUG] Navigating to PasswordReset");
-        },
       },
       {
         path: "/password-reset-success",

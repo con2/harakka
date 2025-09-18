@@ -22,28 +22,15 @@ const AuthCallback = () => {
     // Check for authentication session
     const handleAuthCallback = async () => {
       try {
-        const url = new URL(window.location.href);
-        const hashParams = new URLSearchParams(url.hash.replace("#", ""));
-
         // Normal authentication flow
         const { data, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) throw sessionError;
 
         if (data?.session) {
-          const isEmailPassword =
-            !hashParams.get("provider") &&
-            !url.searchParams.get("provider") &&
-            data.session.user?.app_metadata?.provider === "email";
-
-          console.log(
-            `Auth login type: ${isEmailPassword ? "Email/Password" : "OAuth"}`,
-          );
-
           // For all login types: Try to fetch roles with multiple attempts
           try {
             await dispatch(fetchCurrentUserRoles()).unwrap();
-            console.log("Roles fetched successfully");
           } catch (err) {
             console.warn("Failed to fetch roles in auth callback:", err);
           }
@@ -53,22 +40,17 @@ const AuthCallback = () => {
 
           // If active role is available and it's an admin role, go to admin
           if (activeRoleName && adminRoles.includes(activeRoleName)) {
-            console.log(
-              `Admin role detected (${activeRoleName}), navigating to admin panel`,
-            );
             void navigate("/admin", { replace: true });
             return;
           }
 
           // If no active role yet and we haven't tried too many times
           if (!activeRoleName && attemptCount < 5) {
-            console.log(`No role detected yet, attempt ${attemptCount + 1}/5`);
             setAttemptCount((prev) => prev + 1);
-            return; // This will trigger another effect run
+            return;
           }
 
           // Default: Go to storage for regular users or if roles can't be determined
-          console.log("Navigating to storage as default destination");
           void navigate("/storage", { replace: true });
         } else {
           void navigate("/login");

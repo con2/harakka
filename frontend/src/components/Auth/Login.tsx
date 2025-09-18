@@ -31,14 +31,9 @@ export const Login = () => {
         (event === "SIGNED_IN" || event === "USER_UPDATED") &&
         session?.user?.app_metadata?.provider === "email"
       ) {
-        // For email/password login, ensure roles are loaded before redirecting
-        console.log("Email login detected, loading roles before redirect");
-
         try {
           // Fetch user roles
           await dispatch(fetchCurrentUserRoles()).unwrap();
-          console.log("Roles loaded successfully after email login");
-
           // Now navigate to storage page (or admin page if needed)
           navigate("/storage", { replace: true });
         } catch (error) {

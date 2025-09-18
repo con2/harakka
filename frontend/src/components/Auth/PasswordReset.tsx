@@ -21,8 +21,16 @@ const PasswordReset = () => {
   // Extract token from both URL search params and hash
   useEffect(() => {
     const extractToken = () => {
-      const tokenFromQuery = searchParams.get("token");
-      const type = searchParams.get("type");
+      // Check query parameters first
+      let tokenFromQuery = searchParams.get("token");
+      let type = searchParams.get("type");
+
+      // If not found in query params, check hash fragment
+      if (!tokenFromQuery || !type) {
+        const hashParams = new URLSearchParams(window.location.hash.slice(1)); // Remove the '#' and parse
+        tokenFromQuery = hashParams.get("access_token");
+        type = hashParams.get("type");
+      }
 
       if (!tokenFromQuery || type !== "recovery") {
         setError(

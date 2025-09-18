@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../config/supabase";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
 import { AuthContext } from "./AuthContext";
 import { useAppDispatch } from "@/store/hooks";
@@ -26,7 +26,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useState<boolean>(false);
 
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useAppDispatch();
   /**
    * Handle user authentication for signup events
@@ -109,33 +108,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [setupInProgress, processedSignups],
   );
 
-  // get inital session
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data: { session } }) => {
-      const isRecoveryFlow =
-        window.location.href.includes("type=recovery") ||
-        new URLSearchParams(window.location.search).get("type") === "recovery";
+    const isRecoveryFlow =
+      window.location.href.includes("type=recovery") ||
+      new URLSearchParams(window.location.search).get("type") === "recovery";
 
-      if (!isRecoveryFlow) {
-        setSession(session);
-        setUser(session?.user ?? null);
-      }
+    if (isRecoveryFlow) {
+      setSession(null);
+      setUser(null);
+      setAuthLoading(false);
+
+      // Optionally, redirect to the password reset page
+      //navigate("/password-reset");
+      return;
+    }
+
+    // Fetch the initial session
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
       setAuthLoading(false);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event: string, session) => {
-      const isRecoveryFlow =
-        window.location.href.includes("type=recovery") ||
-        new URLSearchParams(window.location.search).get("type") === "recovery";
-
-      if (isRecoveryFlow) {
-        console.log("Recovery flow detected, skipping session setup.");
-        setAuthLoading(false);
-        return;
-      }
-
       setSession(session);
       setUser(session?.user ?? null);
       setAuthLoading(false);
@@ -188,7 +185,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [
+    navigate,
+    initialSetupComplete,
+    processedSignups,
+    handleUserAuthentication,
+  ]);
 
   // Handle role loading after authentication
   useEffect(() => {
@@ -261,19 +263,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRolesLoaded(true);
     }
   }, [user, authLoading, setupInProgress, dispatch, rolesLoaded]);
-
-  useEffect(() => {
-    const isRecoveryFlow =
-      window.location.href.includes("type=recovery") ||
-      window.location.hash.includes("type=recovery");
-
-    if (isRecoveryFlow) {
-      setSession(null);
-      setUser(null);
-      setAuthLoading(false);
-      return;
-    }
-  }, [user, location.pathname, navigate]);
 
   const signOut = async () => {
     try {
