@@ -92,6 +92,18 @@ export const Navigation = () => {
             )}
           </Button>
           <UserMenu />
+          {!isLoggedIn && (
+            <Button
+              variant={"ghost"}
+              className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+              data-cy="nav-login-btn"
+              asChild
+            >
+              <Link to="/login">
+                {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
+              </Link>
+            </Button>
+          )}
         </div>
       </nav>
     );
@@ -132,6 +144,18 @@ export const Navigation = () => {
             )}
           </Button>
           <UserMenu />
+          {!isLoggedIn && (
+            <Button
+              variant={"ghost"}
+              className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+              data-cy="nav-login-btn"
+              asChild
+            >
+              <Link to="/login">
+                {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
+              </Link>
+            </Button>
+          )}
         </div>
       </nav>
     );
