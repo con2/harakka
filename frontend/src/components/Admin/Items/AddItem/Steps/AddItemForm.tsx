@@ -64,7 +64,12 @@ import ItemImageUpload from "../ItemImageUpload";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 
-function AddItemForm() {
+type AddItemFromProps = {
+  onUpdate?: () => void;
+  expandable?: boolean;
+};
+
+function AddItemForm({ onUpdate }: AddItemFromProps) {
   const orgLocations = useAppSelector(selectOrgLocations);
   const editItem = useAppSelector(selectSelectedItem);
   const { lang: appLang } = useLanguage();
@@ -110,6 +115,7 @@ function AddItemForm() {
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
     form.reset();
+    if (onUpdate) return onUpdate();
     if (isEditing) return handleUpdateItem(values);
     void dispatch(addToItemCreation(values));
     dispatch(setNextStep());
@@ -555,16 +561,18 @@ function AddItemForm() {
           </div>
 
           <div className="p-10 pt-2 flex justify-end gap-4">
-            <Button
-              variant="default"
-              disabled={isEditing}
-              onClick={handleNavigateSummary}
-              type="button"
-            >
-              {t.addItemForm.buttons.goToSummary[appLang]}
-            </Button>
+            {!onUpdate && (
+              <Button
+                variant="default"
+                disabled={isEditing}
+                onClick={handleNavigateSummary}
+                type="button"
+              >
+                {t.addItemForm.buttons.goToSummary[appLang]}
+              </Button>
+            )}
             <Button variant="outline" type="submit">
-              {isEditing
+              {isEditing || onUpdate
                 ? t.addItemForm.buttons.updateItem[appLang]
                 : t.addItemForm.buttons.addItem[appLang]}
             </Button>

@@ -18,6 +18,7 @@ import UpdateItemForm from "@/components/Admin/Items/UpdateItemForm";
 import { fetchTagsForItem } from "@/store/slices/tagSlice";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import { Separator } from "@/components/ui/separator";
+import AddItemForm from "@/components/Admin/Items/AddItem/Steps/AddItemForm";
 
 const ItemDetailsPage = () => {
   const { id } = useParams();
@@ -96,67 +97,17 @@ const ItemDetailsPage = () => {
   }
 
   return (
-    <div className="mx-8 mt-6">
-      <div className="mb-4">
-        {/*/ Back button */}
-        <Button
-          onClick={() => {
-            window.location.href = "/admin/items";
-          }}
-          className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
-        >
-          <ChevronLeft /> {t.itemDetailsPage.buttons.back[lang]}
-        </Button>
-      </div>
-      {/*/ Title */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl">
-          {formData?.translations[lang]?.item_name ||
-            formData?.translations.fi.item_name}
-        </h2>
-        <div className="flex gap-2">
-          <Button
-            variant={"outline"}
-            size="sm"
-            onClick={() => {
-              if (updateOpen) {
-                // Cancel: revert parent-local form state and close edit mode
-                setFormData(selectedItem as Item);
-                setUpdateOpen(false);
-              } else {
-                setUpdateOpen(true);
-              }
-            }}
-          >
-            <Edit className="h-4 w-4 mr-2" />{" "}
-            {updateOpen
-              ? t.itemDetailsPage.messages.deletion.cancel[lang]
-              : t.itemDetailsPage.buttons.edit[lang]}
-          </Button>
-        </div>
-      </div>
-
-      {/* Edit item fields */}
-      <div className="mt-2">
-        {formData && (
-          <UpdateItemForm
-            initialData={formData}
-            editable={updateOpen}
-            onActiveTabChange={() => {}}
-            onSaved={() => {
-              void dispatch(getItemById(String(formData?.id ?? id)));
-              void dispatch(fetchTagsForItem(String(formData?.id ?? id)));
-              setUpdateOpen(false);
-            }}
-          />
-        )}
-      </div>
-      <Separator className="my-2 mt-10" />
-      {/* Delete item */}
-      <Button size="sm" variant="destructive" onClick={handleDelete}>
-        <Trash2 className="h-4 w-4 mr-2" /> {""}
-        {t.itemDetailsPage.buttons.delete[lang]}
+    <div>
+      {/*/ Back button */}
+      <Button
+        onClick={() => {
+          window.location.href = "/admin/items";
+        }}
+        className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+      >
+        <ChevronLeft /> {t.itemDetailsPage.buttons.back[lang]}
       </Button>
+      <AddItemForm onUpdate={() => {}}/>
     </div>
   );
 };
