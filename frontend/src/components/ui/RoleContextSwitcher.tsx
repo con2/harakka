@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useRoles } from "@/hooks/useRoles";
 import {
@@ -35,6 +35,7 @@ import {
   NavigationMenuLink,
   NavigationMenuTrigger,
 } from "./navigation-menu";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const RoleContextSwitcher: React.FC = () => {
   const {
@@ -62,7 +63,7 @@ export const RoleContextSwitcher: React.FC = () => {
   const [localValue, setLocalValue] = useState<string>(
     activeOrgId && activeRoleName ? `${activeOrgId}:${activeRoleName}` : "",
   );
-  const ref = useRef(null);
+  const { isTablet, isMobile } = useIsMobile();
 
   // Keep localValue in sync with activeContext changes
   useEffect(() => {
@@ -144,7 +145,7 @@ export const RoleContextSwitcher: React.FC = () => {
   }
 
   return (
-    <NavigationMenu ref={ref}>
+    <NavigationMenu>
       <NavigationMenuItem className="font-main">
         <NavigationMenuTrigger className="gap-3 p-1 px-2 h-fit">
           {avatarUrl && avatarUrl.trim() !== "" ? (
@@ -164,7 +165,7 @@ export const RoleContextSwitcher: React.FC = () => {
             <p className="text-md">{userName}</p>
           </div>
         </NavigationMenuTrigger>
-        <NavigationMenuContent>
+        <NavigationMenuContent className={`${(isTablet || isMobile) && ""}`}>
           {isSelectingRole && (
             <ul className="flex w-[200px] flex-col">
               <NavigationMenuLink
