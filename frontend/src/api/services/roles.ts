@@ -102,4 +102,11 @@ export const roleApi = {
   ): Promise<{ success: boolean; message: string }> {
     return await api.delete(`/roles/${tableKeyId}/permanent`);
   },
+
+  // Allow the current user to permanently remove their own role (leave organization)
+  async leaveOrg(
+    tableKeyId: string,
+  ): Promise<{ success: boolean; message: string }> {
+    return await api.delete(`/roles/${tableKeyId}/leave`);
+  },
 };

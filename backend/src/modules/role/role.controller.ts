@@ -200,6 +200,23 @@ export class RoleController {
   }
 
   /**
+   * DELETE /roles/:id/leave
+   * Allow the current authenticated user to permanently remove their own role assignment (hard delete)
+   * NOTE: This endpoint explicitly prevents deleting the "user" role in the "Global" organization
+   */
+  @Delete(":id/leave")
+  @Roles(
+    ["user", "requester", "storage_manager", "tenant_admin", "super_admin"],
+    { match: "any", sameOrg: true },
+  )
+  async leaveOrg(
+    @Param("id") tableKeyId: string,
+    @Req() req: AuthRequest,
+  ): Promise<{ success: boolean; message: string }> {
+    return this.roleService.leaveOrg(tableKeyId, req);
+  }
+
+  /**
    * DELETE /roles/:id/permanent
    * Permanently delete a user role assignment
    */
