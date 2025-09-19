@@ -31,8 +31,8 @@ const AuthCallback = () => {
           // For all login types: Try to fetch roles with multiple attempts
           try {
             await dispatch(fetchCurrentUserRoles()).unwrap();
-          } catch (err) {
-            console.warn("Failed to fetch roles in auth callback:", err);
+          } catch {
+            toast.info(t.authCallback.assignedUserRole[lang]);
           }
 
           // Check user's active role name and redirect accordingly
@@ -55,8 +55,8 @@ const AuthCallback = () => {
         } else {
           void navigate("/login");
         }
-      } catch (error) {
-        console.error("Auth callback error:", error);
+      } catch {
+        toast.error(t.authCallback.error[lang]);
         void navigate("/login");
       } finally {
         setIsLoading(false);
@@ -66,7 +66,7 @@ const AuthCallback = () => {
     if (isLoading) {
       void handleAuthCallback();
     }
-  }, [navigate, activeRoleName, dispatch, attemptCount, isLoading]);
+  }, [navigate, activeRoleName, dispatch, attemptCount, isLoading, lang]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">

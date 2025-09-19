@@ -11,6 +11,7 @@ import illusiaImage from "@/assets/illusiaImage.jpg";
 import { useEffect } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchCurrentUserRoles } from "@/store/slices/rolesSlice";
+import { toast } from "sonner";
 
 export const Login = () => {
   const [searchParams] = useSearchParams();
@@ -35,11 +36,9 @@ export const Login = () => {
           // Fetch user roles
           await dispatch(fetchCurrentUserRoles()).unwrap();
           // Now navigate to storage page (or admin page if needed)
-          navigate("/storage", { replace: true });
-        } catch (error) {
-          console.error("Failed to load roles after email login:", error);
-          // Still redirect to prevent getting stuck
-          navigate("/storage", { replace: true });
+          void navigate("/storage", { replace: true });
+        } catch {
+          toast.error(t.login.authError[lang]);
         }
       }
     });
@@ -47,7 +46,7 @@ export const Login = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, lang]);
 
   return (
     <div
