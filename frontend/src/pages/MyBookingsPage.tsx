@@ -214,7 +214,7 @@ const MyBookingsPage = () => {
     try {
       if (updatedItems.length === 0) {
         await dispatch(cancelBooking(booking.id!)).unwrap();
-        toast.success(t.myBookings.edit.toast.emptyCancelled[lang]);
+        toast.success(t.myBookingsPage.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
           void dispatch(
             getOwnBookings({
@@ -235,7 +235,7 @@ const MyBookingsPage = () => {
         await dispatch(
           updateBooking({ bookingId: booking.id!, items: updatedItems }),
         ).unwrap();
-        toast.success(t.myBookings.edit.toast.bookingUpdated[lang]);
+        toast.success(t.myBookingsPage.edit.toast.bookingUpdated[lang]);
         if (user?.id) {
           void dispatch(
             getOwnBookings({
@@ -252,21 +252,23 @@ const MyBookingsPage = () => {
           const e = err as Record<string, unknown>;
           msg = (e.message as string) || JSON.stringify(e);
         } else msg = String(err);
-        toast.error(msg || t.myBookings.edit.toast.updateFailed[lang]);
+        toast.error(msg || t.myBookingsPage.edit.toast.updateFailed[lang]);
         return;
       }
 
       setShowEdit(false);
       void navigate("/my-bookings");
     } catch {
-      toast.error(t.myBookings.edit.toast.updateFailed[lang]);
+      toast.error(t.myBookingsPage.edit.toast.updateFailed[lang]);
     }
   };
 
   if (loading) return <Spinner containerClasses="py-8" />;
 
   if (!booking)
-    return <div className="p-8">{t.myBookings.error.loadingError[lang]}</div>;
+    return (
+      <div className="p-8">{t.myBookingsPage.error.loadingError[lang]}</div>
+    );
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg min-h-[250px] bg-white">
@@ -282,37 +284,47 @@ const MyBookingsPage = () => {
         </div>
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-xl font-normal pt-2">
-            {t.myBookings.bookingDetails.title[lang]} {booking.booking_number}
+            {t.myBookingsPage.bookingDetails.title[lang]}{" "}
+            {booking.booking_number}
           </h3>
           {booking.status === "pending" && !showEdit && (
             <Button
               onClick={() => {
                 toastConfirm({
-                  title: t.myBookings.edit.confirm.cancelBooking.title[lang],
+                  title:
+                    t.myBookingsPage.edit.confirm.cancelBooking.title[lang],
                   description:
-                    t.myBookings.edit.confirm.cancelBooking.description[lang],
+                    t.myBookingsPage.edit.confirm.cancelBooking.description[
+                      lang
+                    ],
                   confirmText:
-                    t.myBookings.edit.confirm.cancelBooking.confirmText[lang],
+                    t.myBookingsPage.edit.confirm.cancelBooking.confirmText[
+                      lang
+                    ],
                   cancelText:
-                    t.myBookings.edit.confirm.cancelBooking.cancelText[lang],
+                    t.myBookingsPage.edit.confirm.cancelBooking.cancelText[
+                      lang
+                    ],
                   onConfirm: async () => {
                     try {
                       if (booking.id) {
                         await dispatch(cancelBooking(booking.id)).unwrap();
                         toast.success(
-                          t.myBookings.edit.toast.emptyCancelled[lang],
+                          t.myBookingsPage.edit.toast.emptyCancelled[lang],
                         );
                         void navigate("/my-bookings");
                       }
                     } catch {
-                      toast.error(t.myBookings.edit.toast.cancelFailed[lang]);
+                      toast.error(
+                        t.myBookingsPage.edit.toast.cancelFailed[lang],
+                      );
                     }
                   },
                 });
               }}
               variant="destructive"
             >
-              {t.myBookings.edit.buttons.cancel[lang]}
+              {t.myBookingsPage.edit.buttons.cancel[lang]}
             </Button>
           )}
         </div>
@@ -327,11 +339,11 @@ const MyBookingsPage = () => {
           </div>
           <div>
             <p className="flex items-center gap-2">
-              <strong>{t.myBookings.columns.status[lang]}</strong>
+              <strong>{t.myBookingsPage.columns.status[lang]}</strong>
               <span className="ml-2">{booking.status}</span>
             </p>
             <p className="text-sm mt-2">
-              {t.myBookings.bookingDetails.items[lang]}:{" "}
+              {t.myBookingsPage.bookingDetails.items[lang]}:{" "}
               {booking.booking_items?.length ?? 0}
             </p>
           </div>
@@ -364,7 +376,7 @@ const MyBookingsPage = () => {
           {/* Items List */}
           <div className="mt-4">
             <h3 className="font-medium">
-              {t.myBookings.bookingDetails.items[lang]}
+              {t.myBookingsPage.bookingDetails.items[lang]}
             </h3>
             <div className="space-y-4 mt-2">
               {Object.entries(itemsGroupedByOrg).map(([orgId, items]) => (
@@ -408,7 +420,7 @@ const MyBookingsPage = () => {
                         <div className="flex flex-col items-end">
                           {!showEdit ? (
                             <div className="text-sm">
-                              {t.myBookings.columns.quantity[lang]}:{" "}
+                              {t.myBookingsPage.columns.quantity[lang]}:{" "}
                               {item.quantity}
                             </div>
                           ) : (
@@ -468,7 +480,7 @@ const MyBookingsPage = () => {
             <div className="flex gap-2 mt-4">
               <Button onClick={() => setShowEdit((s) => !s)} variant="outline">
                 {showEdit
-                  ? t.myBookings.edit.buttons.cancel[lang]
+                  ? t.myBookingsPage.edit.buttons.cancel[lang]
                   : t.myBookingsPage.buttons.edit[lang]}
               </Button>
               {showEdit && (
@@ -477,7 +489,7 @@ const MyBookingsPage = () => {
                   disabled={!isFormValid}
                   variant={"secondary"}
                 >
-                  {t.myBookings.edit.buttons.saveChanges[lang]}
+                  {t.myBookingsPage.edit.buttons.saveChanges[lang]}
                 </Button>
               )}
             </div>
