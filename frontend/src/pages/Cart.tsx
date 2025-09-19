@@ -184,13 +184,25 @@ const Cart: React.FC = () => {
     }
 
     // Format booking data according to backend expectations
-    const bookingData = {
+    const bookingData: {
+      user_id: string;
+      items: {
+        start_date: string;
+        end_date: string;
+        item_id: string;
+        quantity: number;
+        location_id: string;
+        provider_organization_id: string;
+      }[];
+    } = {
       user_id: userProfile.id,
       items: cartItems.map((item) => ({
         item_id: item.item.id,
         quantity: item.quantity,
         start_date: startDate.toISOString(),
         end_date: endDate.toISOString(),
+        location_id: item.item.location_id,
+        provider_organization_id: item.item.org_id ?? item.item.organization_id,
       })),
     };
 
