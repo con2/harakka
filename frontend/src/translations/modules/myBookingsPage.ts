@@ -14,6 +14,10 @@ export const myBookingsPage = {
       en: "Edit Booking",
       fi: "Muokkaa varausta",
     },
+    pickedUp: {
+      en: "Mark as Picked Up",
+      fi: "Merkitse noudetuksi",
+    },
   },
   headings: {
     createdAt: {

@@ -32,7 +32,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
-import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
 
 const MyBookingsPage = () => {
   const { id } = useParams();
@@ -275,25 +274,13 @@ const MyBookingsPage = () => {
                 className="gap-1 h-8 text-xs"
                 org_id={item.provider_organization_id}
               >
-                Pickup
+                {t.myBookingsPage.buttons.pickedUp[lang]}
               </BookingPickupButton>
-            )}
-
-            {/* Show return button if item status is picked_up */}
-            {item.status === "picked_up" && booking?.id && (
-              <BookingReturnButton
-                org_id={item.provider_organization_id}
-                location_id={item.location_id}
-                id={booking.id}
-                onSuccess={refetchBookings}
-              >
-                Return
-              </BookingReturnButton>
             )}
           </div>
         );
       },
-      size: 120,
+      size: 40,
     },
     {
       id: "actions",
