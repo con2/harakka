@@ -9,6 +9,7 @@ import {
   selectActiveRoleName,
   fetchCurrentUserRoles,
 } from "@/store/slices/rolesSlice";
+import { toast } from "sonner";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
