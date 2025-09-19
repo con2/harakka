@@ -16,7 +16,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import Spinner from "@/components/Spinner";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import {
   getItemImages,
@@ -191,7 +191,7 @@ const MyBookingsPage = () => {
                 onClick={() => decrementQuantity(item)}
                 className="h-8 w-8 p-0"
                 disabled={
-                  (itemQuantities[String(item.id)] ?? item.quantity ?? 0) <= 1
+                  (itemQuantities[String(item.id)] ?? item.quantity ?? 0) <= 0
                 }
                 aria-label="decrease quantity"
               >
@@ -232,6 +232,31 @@ const MyBookingsPage = () => {
         );
       },
     },
+    {
+      id: "actions",
+      header: showEdit ? t.myBookingsPage.columns.actions[lang] : "",
+      cell: ({ row }) => {
+        const item = row.original;
+        if (!showEdit) {
+          return null;
+        }
+
+        return (
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => removeItem(item)}
+              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 rounded-md"
+              aria-label="remove item"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+      size: 60,
+    },
   ];
 
   const isFormValid = editFormItems.every((item) => {
@@ -256,7 +281,7 @@ const MyBookingsPage = () => {
   const decrementQuantity = (item: BookingItemWithDetails) => {
     const key = String(item.id);
     const current = itemQuantities[key] ?? item.quantity ?? 0;
-    const next = Math.max(1, current - 1);
+    const next = Math.max(0, current - 1);
     setItemQuantities((prev) => ({ ...prev, [key]: next }));
   };
 
@@ -267,6 +292,29 @@ const MyBookingsPage = () => {
     const max = avail !== undefined ? avail : Infinity;
     const next = Math.min(max, current + 1);
     setItemQuantities((prev) => ({ ...prev, [key]: next }));
+  };
+
+  const removeItem = (item: BookingItemWithDetails) => {
+    toastConfirm({
+      title: t.myBookingsPage.edit.confirm.removeItem.title[lang],
+      description: t.myBookingsPage.edit.confirm.removeItem.description[lang],
+      confirmText: t.myBookingsPage.edit.confirm.removeItem.confirmText[lang],
+      cancelText: t.myBookingsPage.edit.confirm.removeItem.cancelText[lang],
+      onConfirm: () => {
+        setEditFormItems((prevItems) =>
+          prevItems.filter((i) => i.id !== item.id),
+        );
+
+        const key = String(item.id);
+        setItemQuantities((prev) => {
+          const newQuantities = { ...prev };
+          delete newQuantities[key];
+          return newQuantities;
+        });
+
+        toast.success(t.myBookingsPage.edit.toast.itemRemoved[lang]);
+      },
+    });
   };
 
   const handleSubmitEdit = async () => {
@@ -348,7 +396,7 @@ const MyBookingsPage = () => {
     );
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg min-h-[250px] bg-white">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg min-h-[250px] bg-white">
       <div className="w-full bg-slate-50 p-4 rounded-lg mb-10 min-h-[250px]">
         <div className="mb-4">
           <Button

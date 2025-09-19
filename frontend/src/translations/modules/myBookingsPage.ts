@@ -56,6 +56,10 @@ export const myBookingsPage = {
       fi: "Loppupäivä",
       en: "End Date",
     },
+    actions: {
+      fi: "Toiminnot",
+      en: "Actions",
+    },
   },
   bookingDetails: {
     title: {
@@ -105,6 +109,24 @@ export const myBookingsPage = {
           en: "Don't Cancel",
         },
       },
+      removeItem: {
+        title: {
+          fi: "Poista tuote varauksesta?",
+          en: "Remove item from booking?",
+        },
+        description: {
+          fi: "Oletko varma, että haluat poistaa tämän tuotteen varauksesta? Tätä toimintoa ei voi perua.",
+          en: "Are you sure you want to remove this item from the booking? This action cannot be undone.",
+        },
+        confirmText: {
+          fi: "Poista tuote",
+          en: "Remove Item",
+        },
+        cancelText: {
+          fi: "Älä poista",
+          en: "Don't Remove",
+        },
+      },
     },
     toast: {
       bookingUpdated: {
@@ -122,6 +144,10 @@ export const myBookingsPage = {
       cancelFailed: {
         fi: "Tilauksen peruuttaminen epäonnistui",
         en: "Failed to cancel booking",
+      },
+      itemRemoved: {
+        fi: "Tuote poistettu varauksesta",
+        en: "Item removed from booking",
       },
     },
   },
