@@ -44,6 +44,18 @@ export const myBookingsPage = {
       fi: "Määrä",
       en: "Quantity",
     },
+    item: {
+      fi: "Tuote",
+      en: "Item",
+    },
+    startDate: {
+      fi: "Alkupäivä",
+      en: "Start Date",
+    },
+    endDate: {
+      fi: "Loppupäivä",
+      en: "End Date",
+    },
   },
   bookingDetails: {
     title: {
@@ -53,6 +65,14 @@ export const myBookingsPage = {
     items: {
       fi: "Tuotteet",
       en: "Items",
+    },
+    customerInfo: {
+      fi: "Asiakastiedot",
+      en: "Customer Info",
+    },
+    bookingInfo: {
+      fi: "Tilaustiedot",
+      en: "Booking Info",
     },
   },
   edit: {

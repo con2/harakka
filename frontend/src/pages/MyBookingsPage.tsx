@@ -26,6 +26,10 @@ import {
 import { BookingItemWithDetails } from "@/types";
 import InlineTimeframePicker from "@/components/InlineTimeframeSelector";
 import { itemsApi } from "@/api/services/items";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { StatusBadge } from "@/components/StatusBadge";
+import { Input } from "@/components/ui/input";
 
 const MyBookingsPage = () => {
   const { id } = useParams();
@@ -116,18 +120,6 @@ const MyBookingsPage = () => {
     void fetchAvailability();
   }, [globalStartDate, globalEndDate, editFormItems]);
 
-  // Group items by provider organization id for display
-  const itemsGroupedByOrg = useMemo(() => {
-    const grouped: Record<string, BookingItemWithDetails[]> = {};
-    if (!booking?.booking_items) return grouped;
-    booking.booking_items.forEach((it) => {
-      const orgId = it.provider_organization_id ?? "unknown";
-      if (!grouped[orgId]) grouped[orgId] = [];
-      grouped[orgId].push(it);
-    });
-    return grouped;
-  }, [booking]);
-
   // ItemImage selector using itemImagesSlice
   const ItemImage = ({
     itemId,
@@ -141,7 +133,7 @@ const MyBookingsPage = () => {
     const first = images?.[0]?.image_url;
 
     return (
-      <div className="h-10 w-10 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+      <div className="h-8 w-8 rounded-md ring-1 ring-gray-200 overflow-hidden bg-gray-100 flex items-center justify-center">
         {first ? (
           <img
             src={first}
@@ -156,6 +148,91 @@ const MyBookingsPage = () => {
       </div>
     );
   };
+
+  /**
+   * Columns for booking items data table
+   */
+  const bookingColumns: ColumnDef<BookingItemWithDetails>[] = [
+    {
+      accessorKey: "image",
+      header: "",
+      cell: ({ row }) => (
+        <ItemImage
+          itemId={row.original.item_id}
+          itemName={row.original.storage_items.translations[lang]?.item_name}
+        />
+      ),
+      size: 60,
+    },
+    {
+      accessorKey: "item_name",
+      header: t.myBookingsPage.columns.item[lang],
+      cell: ({ row }) => {
+        const itemName =
+          row.original.storage_items.translations[lang].item_name;
+        return itemName.charAt(0).toUpperCase() + itemName.slice(1);
+      },
+    },
+    {
+      accessorKey: "quantity",
+      header: t.myBookingsPage.columns.quantity[lang],
+      cell: ({ row }) => {
+        const item = row.original;
+        if (!showEdit) {
+          return item.quantity;
+        }
+
+        return (
+          <div className="flex flex-col items-center">
+            <div className="flex items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => decrementQuantity(item)}
+                className="h-8 w-8 p-0"
+                disabled={
+                  (itemQuantities[String(item.id)] ?? item.quantity ?? 0) <= 1
+                }
+                aria-label="decrease quantity"
+              >
+                -
+              </Button>
+              <Input
+                value={itemQuantities[String(item.id)] ?? item.quantity}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (!isNaN(val) && val >= 0) {
+                    setItemQuantities({
+                      ...itemQuantities,
+                      [String(item.id)]: val,
+                    });
+                  }
+                }}
+                className="w-[50px] text-center"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => incrementQuantity(item)}
+                className="h-8 w-8 p-0"
+                disabled={
+                  (itemQuantities[String(item.id)] ?? item.quantity ?? 0) >=
+                  (availability[item.item_id] ?? Infinity)
+                }
+                aria-label="increase quantity"
+              >
+                +
+              </Button>
+            </div>{" "}
+            <div className="text-xs text-muted-foreground">
+              {t.myBookingsPage.headings.availability[lang]}{" "}
+              {availability[item.item_id] ?? "-"}
+            </div>
+          </div>
+        );
+      },
+    },
+  ];
 
   const isFormValid = editFormItems.every((item) => {
     const inputQty =
@@ -271,7 +348,7 @@ const MyBookingsPage = () => {
     );
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg min-h-[250px] bg-white">
+    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg min-h-[250px] bg-white">
       <div className="w-full bg-slate-50 p-4 rounded-lg mb-10 min-h-[250px]">
         <div className="mb-4">
           <Button
@@ -282,11 +359,13 @@ const MyBookingsPage = () => {
             {t.myBookingsPage.buttons.back[lang]}
           </Button>
         </div>
+
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-xl font-normal pt-2">
             {t.myBookingsPage.bookingDetails.title[lang]}{" "}
             {booking.booking_number}
           </h3>
+          {/* Cancel booking button */}
           {booking.status === "pending" && !showEdit && (
             <Button
               onClick={() => {
@@ -329,171 +408,99 @@ const MyBookingsPage = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-10">
-          <div>
-            <p className="text-md font-bold">{booking.full_name ?? ""}</p>
-            <p className="text-sm mt-2">
-              {t.myBookingsPage.headings.createdAt[lang]}{" "}
-              {formatDate(booking.created_at, "d MMM yyyy")}
-            </p>
-          </div>
-          <div>
-            <p className="flex items-center gap-2">
-              <strong>{t.myBookingsPage.columns.status[lang]}</strong>
-              <span className="ml-2">{booking.status}</span>
-            </p>
-            <p className="text-sm mt-2">
-              {t.myBookingsPage.bookingDetails.items[lang]}:{" "}
-              {booking.booking_items?.length ?? 0}
-            </p>
-          </div>
-        </div>
-
-        <div>
-          {/* Booking Dates and Date Picker */}
-          <div>
-            <h3 className="font-medium">
-              {t.myBookingsPage.headings.bookingDates[lang] ?? "Timeframe"}{" "}
-            </h3>
+        <div className="space-y-4">
+          {/* Booking details */}
+          <div className="grid grid-cols-2 gap-4 mb-10">
             <div>
-              {showEdit ? (
-                <InlineTimeframePicker
-                  startDate={globalStartDate ? new Date(globalStartDate) : null}
-                  endDate={globalEndDate ? new Date(globalEndDate) : null}
-                  onChange={(type, date) => {
-                    if (type === "start") {
-                      setGlobalStartDate(date ? date.toISOString() : null);
-                      return;
+              <h3 className="font-normal text-sm mb-1">
+                {t.myBookingsPage.bookingDetails.customerInfo[lang]}
+              </h3>
+              <p className="text-xs text-grey-500">{booking.full_name ?? ""}</p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
+            </div>
+
+            <div>
+              <h3 className="font-normal text-sm mb-1">
+                {t.myBookingsPage.bookingDetails.bookingInfo[lang]}
+              </h3>
+              <p className="text-xs">
+                {t.myBookingsPage.columns.status[lang]}:{" "}
+                <StatusBadge status={booking.status} />
+              </p>
+              <p className="text-xs">
+                {t.myBookingsPage.headings.createdAt[lang]}:{" "}
+                {formatDate(booking.created_at, "d MMM yyyy")}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            {/* Booking Dates and Date Picker */}
+            <div className="mb-4">
+              <h3 className="font-normal text-sm mb-2">
+                {t.myBookingsPage.headings.bookingDates[lang]}
+              </h3>
+              <div>
+                {showEdit ? (
+                  <InlineTimeframePicker
+                    startDate={
+                      globalStartDate ? new Date(globalStartDate) : null
                     }
-                    _setGlobalEndDate(date ? date.toISOString() : null);
-                  }}
-                />
-              ) : (
-                <div className="text-sm">{timeframeDisplay}</div>
-              )}
+                    endDate={globalEndDate ? new Date(globalEndDate) : null}
+                    onChange={(type, date) => {
+                      if (type === "start") {
+                        setGlobalStartDate(date ? date.toISOString() : null);
+                        return;
+                      }
+                      _setGlobalEndDate(date ? date.toISOString() : null);
+                    }}
+                  />
+                ) : (
+                  <div className="text-sm">{timeframeDisplay}</div>
+                )}
+              </div>
             </div>
-          </div>
-          {/* Items List */}
-          <div className="mt-4">
-            <h3 className="font-medium">
-              {t.myBookingsPage.bookingDetails.items[lang]}
-            </h3>
-            <div className="space-y-4 mt-2">
-              {Object.entries(itemsGroupedByOrg).map(([orgId, items]) => (
-                <div key={orgId} className="p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-semibold">
-                        {items && items.length > 0
-                          ? (items[0].org_name ?? orgId)
-                          : orgId}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {items && items.length > 0
-                          ? (items[0].location_id ?? "")
-                          : ""}
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    {items?.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-3 p-2"
-                      >
-                        <ItemImage
-                          itemId={item.item_id}
-                          itemName={
-                            item.storage_items.translations[lang]?.item_name
-                          }
-                        />
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">
-                            {item.storage_items.translations[lang]?.item_name}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {item.location_id ?? ""}
-                          </div>
-                        </div>
-                        {/* Quantity controls and availability */}
-                        <div className="flex flex-col items-end">
-                          {!showEdit ? (
-                            <div className="text-sm">
-                              {t.myBookingsPage.columns.quantity[lang]}:{" "}
-                              {item.quantity}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => decrementQuantity(item)}
-                                className="h-8 w-8 p-0"
-                                disabled={
-                                  (itemQuantities[String(item.id)] ??
-                                    item.quantity ??
-                                    0) <= 1
-                                }
-                                aria-label="decrease quantity"
-                              >
-                                -
-                              </Button>
-
-                              <div className="w-12 text-center">
-                                {itemQuantities[String(item.id)] ??
-                                  item.quantity}
-                              </div>
-
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => incrementQuantity(item)}
-                                className="h-8 w-8 p-0"
-                                disabled={
-                                  (itemQuantities[String(item.id)] ??
-                                    item.quantity ??
-                                    0) >=
-                                  (availability[item.item_id] ?? Infinity)
-                                }
-                                aria-label="increase quantity"
-                              >
-                                +
-                              </Button>
-                            </div>
-                          )}
-
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {t.myBookingsPage.headings.availability[lang]}:{" "}
-                            {availability[item.item_id] ?? "-"}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+            {/* Booking Items */}
+            {loading || _loadingAvailability ? (
+              <Spinner containerClasses="py-8" />
+            ) : (
+              <div>
+                <h3 className="font-normal text-sm mb-2">
+                  {t.myBookingsPage.bookingDetails.items[lang]}
+                </h3>
+                <div className="border rounded-md overflow-hidden">
+                  <DataTable
+                    columns={bookingColumns}
+                    data={booking.booking_items || []}
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
-          {/* Edit Buttons */}
-          {booking.status === "pending" && (
-            <div className="flex gap-2 mt-4">
-              <Button onClick={() => setShowEdit((s) => !s)} variant="outline">
-                {showEdit
-                  ? t.myBookingsPage.edit.buttons.cancel[lang]
-                  : t.myBookingsPage.buttons.edit[lang]}
-              </Button>
-              {showEdit && (
+              </div>
+            )}
+
+            {/* Edit Buttons */}
+            {booking.status === "pending" && (
+              <div className="flex gap-2 mt-4">
                 <Button
-                  onClick={handleSubmitEdit}
-                  disabled={!isFormValid}
-                  variant={"secondary"}
+                  onClick={() => setShowEdit((s) => !s)}
+                  variant="outline"
                 >
-                  {t.myBookingsPage.edit.buttons.saveChanges[lang]}
+                  {showEdit
+                    ? t.myBookingsPage.edit.buttons.cancel[lang]
+                    : t.myBookingsPage.buttons.edit[lang]}
                 </Button>
-              )}
-            </div>
-          )}
+                {showEdit && (
+                  <Button
+                    onClick={handleSubmitEdit}
+                    disabled={!isFormValid}
+                    variant={"secondary"}
+                  >
+                    {t.myBookingsPage.edit.buttons.saveChanges[lang]}
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
