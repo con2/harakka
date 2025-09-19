@@ -2,87 +2,60 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "../../config/supabase";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { useEffect, useState, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 
 const PasswordReset = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [initialToken] = useState(location.hash || "");
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const formSubmittedRef = useRef(false);
-  // Add states to manage loading and errors
+  const [searchParams] = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
 
   // Translation
   const { lang } = useLanguage();
 
+  // Extract token from both URL search params and hash
   useEffect(() => {
-    // Ensure we're not authenticated when on password reset page
-    const ensureSignedOut = async () => {
-      try {
-        // Force sign out when on password reset page
-        await supabase.auth.signOut({ scope: "local" });
-      } catch (error) {
-        console.error("Error during forced logout for password reset:", error);
+    const extractToken = () => {
+      // Check query parameters first
+      let tokenFromQuery = searchParams.get("token");
+      let type = searchParams.get("type");
+
+      // If not found in query params, check hash fragment
+      if (!tokenFromQuery || !type) {
+        const hashParams = new URLSearchParams(window.location.hash.slice(1)); // Remove the '#' and parse
+        tokenFromQuery = hashParams.get("access_token");
+        type = hashParams.get("type");
       }
+
+      if (!tokenFromQuery || type !== "recovery") {
+        setError(
+          "Invalid or missing tokens. Please request a new password reset link.",
+        );
+        return;
+      }
+
+      setRecoveryToken(tokenFromQuery);
     };
 
-    void ensureSignedOut();
-  }, []); // Run only once on component mount
+    extractToken();
+  }, [searchParams]);
 
   useEffect(() => {
-    // Set a small delay to ensure component is fully loaded
-    const timer = setTimeout(() => {
-      setHasLoaded(true);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      // Watch for PASSWORD_RECOVERY or USER_UPDATED events
-      if (["PASSWORD_RECOVERY", "USER_UPDATED"].includes(event)) {
-        if (!hasLoaded) {
-          return;
-        }
-
-        // Only redirect after form is submitted and we get confirmation
-        if (formSubmittedRef.current) {
-          // Add a small delay to ensure password update completes
-          setTimeout(() => {
-            void navigate("/password-reset-success", { replace: true });
-          }, 1000);
-        }
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate, location.hash, initialToken, hasLoaded]);
-
-  useEffect(() => {
-    // Form submission handler
     const formSubmitListener = () => {
       const formElement = document.querySelector("form");
       if (formElement) {
         formElement.addEventListener("submit", async (e) => {
-          e.preventDefault(); // Prevent the default Auth UI submission
+          e.preventDefault();
 
-          // Clear previous errors and set submitting state
           setError(null);
           setIsSubmitting(true);
 
           try {
-            // Get the password from the form
             const newPassword = (
               document.querySelector(
                 'input[type="password"]',
@@ -95,46 +68,23 @@ const PasswordReset = () => {
               return;
             }
 
-            // Mark as submitted for our tracking
-            formSubmittedRef.current = true;
+            if (!recoveryToken) {
+              setError(
+                "No valid session found. Please try resetting your password again.",
+              );
+              return;
+            }
 
-            // Get token from hash
-            const hashParams = new URLSearchParams(
-              location.hash.replace("#", ""),
-            );
-            const accessToken = hashParams.get("access_token");
+            const { error } = await supabase.auth.updateUser({
+              password: newPassword,
+            });
 
-            if (!accessToken) {
-              setError("No access token found in URL");
+            if (error) {
+              setError(error.message);
               setIsSubmitting(false);
               return;
             }
 
-            // Use the Supabase REST API directly instead of the JS client for password reset
-            const response = await fetch(
-              `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/user`,
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${accessToken}`,
-                  apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-                },
-                body: JSON.stringify({
-                  password: newPassword,
-                }),
-              },
-            );
-
-            if (!response.ok) {
-              const errorData = await response.json();
-              setError(errorData.message || "Error updating password");
-              setIsSubmitting(false);
-              return;
-            }
-
-            // Success - navigate to success page
-            // Keep isSubmitting true to show loading state until navigation
             void navigate("/password-reset-success", { replace: true });
           } catch (error) {
             console.error("Error during password update:", error);
@@ -145,10 +95,9 @@ const PasswordReset = () => {
       }
     };
 
-    // Set a small delay to ensure the Auth UI has rendered
     const timer = setTimeout(formSubmitListener, 1500);
     return () => clearTimeout(timer);
-  }, [navigate, location.hash]);
+  }, [navigate, recoveryToken]);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">

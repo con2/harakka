@@ -117,4 +117,8 @@ export const login = {
       },
     },
   },
+  authError: {
+    en: "Failed to load roles after email login",
+    fi: "Roolien lataaminen epäonnistui sähköpostikirjautumisen jälkeen",
+  },
 };

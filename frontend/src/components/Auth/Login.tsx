@@ -3,19 +3,50 @@ import { supabase } from "../../config/supabase";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { CheckCircle2, InfoIcon } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import illusiaImage from "@/assets/illusiaImage.jpg";
+import { useEffect } from "react";
+import { useAppDispatch } from "@/store/hooks";
+import { fetchCurrentUserRoles } from "@/store/slices/rolesSlice";
+import { toast } from "sonner";
 
 export const Login = () => {
   const [searchParams] = useSearchParams();
   const reset = searchParams.get("reset");
   const error = searchParams.get("error");
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   // Translation
   const { lang } = useLanguage();
+
+  // Handle authentication state changes to properly process email/password login
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (
+        (event === "SIGNED_IN" || event === "USER_UPDATED") &&
+        session?.user?.app_metadata?.provider === "email"
+      ) {
+        try {
+          // Fetch user roles
+          await dispatch(fetchCurrentUserRoles()).unwrap();
+          // Now navigate to storage page (or admin page if needed)
+          void navigate("/storage", { replace: true });
+        } catch {
+          toast.error(t.login.authError[lang]);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [dispatch, navigate, lang]);
 
   return (
     <div
@@ -149,22 +180,13 @@ export const Login = () => {
                       },
                     },
                   },
-                  className: {
-                    container: "space-y-4",
-                    button: "transition-all duration-200 hover:shadow-md",
-                    input: "transition-all duration-200",
-                    label: "font-medium text-gray-700",
-                    anchor: "font-medium transition-colors duration-200",
-                    divider: "text-gray-400",
-                    message: "text-sm",
-                  },
                 }}
                 providers={["google"]}
                 socialLayout="horizontal"
                 view="sign_in"
                 showLinks={true}
                 magicLink={true}
-                redirectTo={`${window.location.origin}/auth/callback`}
+                onlyThirdPartyProviders={false}
                 localization={{
                   variables: {
                     sign_in: {
