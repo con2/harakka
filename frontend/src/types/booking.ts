@@ -61,6 +61,8 @@ export interface CreateBookingDto {
     quantity: number;
     start_date: string;
     end_date: string;
+    location_id: string;
+    provider_organization_id: string;
   }[];
 }
 

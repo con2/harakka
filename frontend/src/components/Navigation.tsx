@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { useAppSelector } from "@/store/hooks";
-import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,23 +8,14 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import {
-  LogInIcon,
-  LogOutIcon,
-  Menu,
-  ShoppingCart,
-  UserIcon,
-} from "lucide-react";
+import { Menu, ShoppingCart, UserIcon } from "lucide-react";
 import { Notifications } from "@/components/Notification";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
-import { toast } from "sonner";
-import { toastConfirm } from "./ui/toastConfirm";
-import { LanguageSwitcher } from "./LanguageSwitcher";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
-import { RoleContextSwitcher } from "./ui/RoleContextSwitcher";
+import { UserMenu } from "./ui/UserMenu";
 import Logo from "@/assets/v4.5.svg?react";
 import LogoSmall from "@/assets/logo_small.svg?react";
 import { Badge } from "./ui/badge";
@@ -33,26 +23,19 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { Sheet, SheetTrigger } from "./ui/sheet";
 import MobileMenu from "./MobileMenu";
-import { useProfile } from "@/hooks/useProfile";
-import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export const Navigation = () => {
   // Auth State
-  const { signOut, user, authLoading } = useAuth();
-  const { hasAnyRole, hasRole } = useRoles();
-  const selectedUser = useAppSelector(selectSelectedUser);
+  const { user, authLoading } = useAuth();
+  const { hasAnyRole } = useRoles();
   const { lang } = useLanguage();
-  const activeOrg = useAppSelector(selectActiveOrganizationId);
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
-  const { avatarUrl, name } = useProfile(user);
-  const isGlobalUser = hasRole("user", activeOrg!);
 
   // Screen Size State
-  const { isMobile: defaultMobileSize, width } = useIsMobile();
-  const isTablet = isGlobalUser ? width <= 1210 : width <= 1130;
-  const isMobile = isGlobalUser ? defaultMobileSize : width <= 877;
+  const { isMobile, isTablet } = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAnyTypeOfAdmin = hasAnyRole([
@@ -67,23 +50,8 @@ export const Navigation = () => {
 
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
-    ? "absolute top-0 left-0 w-full z-50 text-white px-2 md:px-10 py-2 md:py-3 bg-white flex lg:justify-around"
+    ? "absolute top-0 left-0 w-full z-50 px-2 md:px-10 py-2 md:py-3 bg-white flex lg:justify-around"
     : "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white lg:justify-around flex justify-between";
-
-  const handleSignOut = () => {
-    toastConfirm({
-      title: t.navigation.toast.title[lang],
-      description: t.navigation.toast.description[lang],
-      confirmText: t.navigation.toast.confirmText[lang],
-      cancelText: t.navigation.toast.cancelText[lang],
-      onConfirm: () => {
-        void signOut();
-      },
-      onCancel: () => {
-        toast.success(t.navigation.toast.success[lang]);
-      },
-    });
-  };
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -110,8 +78,7 @@ export const Navigation = () => {
           <MobileNavigation />
         </div>
 
-        <div className="flex gap-4">
-          <RoleContextSwitcher />
+        <div className="flex gap-4 items-center">
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
@@ -125,6 +92,22 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
+          <UserMenu />
+          {!authLoading && !isLoggedIn && (
+            <>
+              <LanguageSwitcher />
+              <Button
+                variant={"ghost"}
+                className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+                data-cy="nav-login-btn"
+                asChild
+              >
+                <Link to="/login">
+                  {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
       </nav>
     );
@@ -149,9 +132,8 @@ export const Navigation = () => {
           )}
         </div>
 
-        <div className="flex gap-4">
-          <RoleContextSwitcher />
-          {selectedUser && <Notifications userId={selectedUser.id} />}
+        <div className="flex gap-4 items-center">
+          {isLoggedIn && <Notifications userId={user.id} />}
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
@@ -165,25 +147,19 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
-          {isLoggedIn && (
+          <UserMenu />
+          {!authLoading && !isLoggedIn && (
             <>
+              <LanguageSwitcher />
               <Button
                 variant={"ghost"}
-                className="m-0 hover:bg-(--subtle-grey) gap-2 hover:text-(--midnight-black) text-(--midnight-black)"
-                size={"sm"}
-                onClick={() => void navigate("/profile")}
-                data-cy="nav-profile-btn"
+                className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+                data-cy="nav-login-btn"
+                asChild
               >
-                {avatarUrl && avatarUrl.trim() !== "" ? (
-                  <img
-                    src={avatarUrl}
-                    className="inline h-6 w-6 rounded-full"
-                    alt="User avatar"
-                  />
-                ) : (
-                  <UserIcon className="inline h-6 w-6 rounded-full" />
-                )}
-                <span>{name}</span>
+                <Link to="/login">
+                  {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
+                </Link>
               </Button>
             </>
           )}
@@ -277,9 +253,6 @@ export const Navigation = () => {
       {/* Right side: Cart, notifications, language, auth */}
       <div className="flex items-center gap-3">
         {/* Active role context switcher if user is logged in and has roles */}
-        {isLoggedIn && <RoleContextSwitcher />}
-
-        <LanguageSwitcher />
         <Button
           variant="ghost"
           onClick={() => navigate("/cart")}
@@ -293,54 +266,24 @@ export const Navigation = () => {
             </Badge>
           )}
         </Button>
-        {selectedUser && <Notifications userId={selectedUser.id} />}
+        {isLoggedIn && <Notifications userId={user.id} />}
 
-        {!authLoading && (
+        {!authLoading && !isLoggedIn && (
           <>
-            {isLoggedIn ? (
-              <>
-                <Button
-                  variant={"ghost"}
-                  className="m-0 hover:bg-(--subtle-grey) gap-2 hover:text-(--midnight-black) text-(--midnight-black)"
-                  size={"sm"}
-                  onClick={() => void navigate("/profile")}
-                  data-cy="nav-profile-btn"
-                >
-                  {avatarUrl && avatarUrl.trim() !== "" ? (
-                    <img
-                      src={avatarUrl}
-                      className="inline h-6 w-6 rounded-full"
-                      alt="User avatar"
-                    />
-                  ) : (
-                    <UserIcon className="inline h-6 w-6 rounded-full bg-grey" />
-                  )}
-                  <span className="hidden sm:inline">{name}</span>
-                </Button>
-                <Button
-                  variant={"ghost"}
-                  size={"sm"}
-                  onClick={handleSignOut}
-                  data-cy="nav-signout-btn"
-                  className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
-                >
-                  <LogOutIcon className="h-5 w-5" />
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant={"ghost"}
-                className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
-                data-cy="nav-login-btn"
-                asChild
-              >
-                <Link to="/login">
-                  {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
-                </Link>
-              </Button>
-            )}
+            <LanguageSwitcher />
+            <Button
+              variant={"ghost"}
+              className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+              data-cy="nav-login-btn"
+              asChild
+            >
+              <Link to="/login">
+                {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
+              </Link>
+            </Button>
           </>
         )}
+        {isLoggedIn && <UserMenu />}
       </div>
     </nav>
   );

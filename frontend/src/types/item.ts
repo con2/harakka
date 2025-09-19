@@ -57,6 +57,8 @@ interface ItemAugmentedFields {
  */
 export type Item = Override<StorageItemRow, ItemAugmentedFields> & {
   location_details: StorageLocationRow;
+  organization_id?: string;
+  org_id?: string;
 };
 
 /**

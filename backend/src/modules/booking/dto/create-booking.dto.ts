@@ -62,6 +62,14 @@ class BookingItemDto {
   )
   @Validate(StartBeforeEndConstraint)
   end_date!: string;
+
+  @IsString()
+  @IsUUID()
+  provider_organization_id: string;
+
+  @IsString()
+  @IsUUID()
+  location_id: string;
 }
 
 export class CreateBookingDto {
