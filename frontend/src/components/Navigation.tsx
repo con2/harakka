@@ -82,7 +82,7 @@ export const Navigation = () => {
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
-            className="relative text-(--midnight-black) font-medium hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2 h-fit"
+            className="relative text-(--midnight-black)  hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2 h-fit"
             data-cy="nav-cart"
           >
             <ShoppingCart className="!w-5 !h-[auto]" />
@@ -124,7 +124,7 @@ export const Navigation = () => {
           {isAnyTypeOfAdmin && (
             <Link
               to="/admin"
-              className="flex items-center gap-1 text-(--midnight-black) font-medium p-1"
+              className="flex items-center gap-1 text-(--midnight-black)  p-1"
               data-cy="nav-admin"
             >
               {t.navigation.admin[lang]}
@@ -137,7 +137,7 @@ export const Navigation = () => {
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
-            className="relative text-(--midnight-black) font-medium hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2 h-fit"
+            className="relative text-(--midnight-black)  hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2 h-fit"
             data-cy="nav-cart"
           >
             <ShoppingCart className="!w-5 !h-[auto]" />
@@ -182,7 +182,7 @@ export const Navigation = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/admin"
-                    className="flex items-center gap-1 text-(--midnight-black) font-medium p-1"
+                    className="flex items-center gap-1 text-(--midnight-black)  p-1"
                     data-cy="nav-admin"
                   >
                     {t.navigation.admin[lang]}
@@ -196,7 +196,7 @@ export const Navigation = () => {
               <NavigationMenuLink asChild>
                 <Link
                   to="/storage"
-                  className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                  className="flex items-center gap-1 text-(--midnight-black) "
                   data-cy="nav-storage"
                 >
                   {t.navigation.storage[lang]}
@@ -209,7 +209,7 @@ export const Navigation = () => {
               <NavigationMenuLink asChild>
                 <Link
                   to={"/organizations"}
-                  className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                  className="flex items-center gap-1 text-(--midnight-black) "
                   data-cy="nav-organizations"
                 >
                   {t.navigation.organizations[lang]}
@@ -223,7 +223,7 @@ export const Navigation = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/how-it-works"
-                    className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                    className="flex items-center gap-1 text-(--midnight-black) "
                     data-cy="nav-guide"
                   >
                     {t.navigation.guides[lang]}
@@ -238,7 +238,7 @@ export const Navigation = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/contact-us"
-                    className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                    className="flex items-center gap-1 text-(--midnight-black) "
                     data-cy="nav-contact"
                   >
                     {t.navigation.contactUs[lang]}
@@ -256,7 +256,7 @@ export const Navigation = () => {
         <Button
           variant="ghost"
           onClick={() => navigate("/cart")}
-          className="flex items-center gap-1 text-(--midnight-black) font-medium hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2"
+          className="flex items-center gap-1 text-(--midnight-black)  hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2"
           data-cy="nav-cart"
         >
           <ShoppingCart className="h-5 w-5" />
