@@ -8,6 +8,8 @@ import {
   cancelBooking,
   updateBooking,
 } from "@/store/slices/bookingsSlice";
+import { getOwnBookings } from "@/store/slices/bookingsSlice";
+import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { Button } from "@/components/ui/button";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
@@ -28,6 +30,7 @@ const MyBookingsPage = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const booking = useAppSelector(selectCurrentBooking);
+  const user = useAppSelector(selectSelectedUser);
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
@@ -211,6 +214,14 @@ const MyBookingsPage = () => {
       if (updatedItems.length === 0) {
         await dispatch(cancelBooking(booking.id!)).unwrap();
         toast.success(t.myBookings.edit.toast.emptyCancelled[lang]);
+        if (user?.id) {
+          void dispatch(
+            getOwnBookings({
+              page: 1,
+              limit: 10,
+            }),
+          );
+        }
         void navigate("/my-bookings");
         return;
       }
@@ -224,12 +235,26 @@ const MyBookingsPage = () => {
           updateBooking({ bookingId: booking.id!, items: updatedItems }),
         ).unwrap();
         toast.success(t.myBookings.edit.toast.bookingUpdated[lang]);
+        if (user?.id) {
+          void dispatch(
+            getOwnBookings({
+              page: 1,
+              limit: 10,
+            }),
+          );
+        }
       } catch (err: unknown) {
         console.error("updateBooking failed", err);
-        const msg = (err as any)?.message || JSON.stringify(err);
+        let msg = "";
+        if (typeof err === "string") msg = err;
+        else if (err && typeof err === "object") {
+          const e = err as Record<string, unknown>;
+          msg = (e.message as string) || JSON.stringify(e);
+        } else msg = String(err);
         toast.error(msg || t.myBookings.edit.toast.updateFailed[lang]);
         return;
       }
+
       setShowEdit(false);
       void navigate("/my-bookings");
     } catch {
