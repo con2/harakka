@@ -45,7 +45,6 @@ export const UserMenu: React.FC = () => {
   const { name: userName, avatarUrl } = useProfile(user);
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
-  const toggleMenu = () => setOpen((prev) => !prev);
   const [selectGroup, setSelectGroup] = useState<
     "roles" | "links" | "languages"
   >("links");
