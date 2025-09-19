@@ -194,6 +194,26 @@ export const myBookings = {
         en: "Save Changes",
       },
     },
+    confirm: {
+      cancelBooking: {
+        title: {
+          fi: "Peruuta varaus?",
+          en: "Cancel Booking?",
+        },
+        description: {
+          fi: "Oletko varma, että haluat peruuttaa tämän varauksen? Tätä toimintoa ei voi perua.",
+          en: "Are you sure you want to cancel this booking? This action cannot be undone.",
+        },
+        confirmText: {
+          fi: "Peruuta varaus",
+          en: "Cancel Booking",
+        },
+        cancelText: {
+          fi: "Älä peruuta",
+          en: "Don't Cancel",
+        },
+      },
+    },
     toast: {
       bookingUpdated: {
         fi: "Tilaus päivitetty!",

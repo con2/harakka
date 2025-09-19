@@ -17,6 +17,7 @@ import { useFormattedDate } from "@/hooks/useFormattedDate";
 import Spinner from "@/components/Spinner";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { toastConfirm } from "@/components/ui/toastConfirm";
 import {
   getItemImages,
   selectItemsWithLoadedImages,
@@ -285,16 +286,29 @@ const MyBookingsPage = () => {
           </h3>
           {booking.status === "pending" && !showEdit && (
             <Button
-              onClick={async () => {
-                try {
-                  if (booking.id) {
-                    await dispatch(cancelBooking(booking.id)).unwrap();
-                    toast.success(t.myBookings.edit.toast.emptyCancelled[lang]);
-                    void navigate("/my-bookings");
-                  }
-                } catch {
-                  toast.error(t.myBookings.edit.toast.cancelFailed[lang]);
-                }
+              onClick={() => {
+                toastConfirm({
+                  title: t.myBookings.edit.confirm.cancelBooking.title[lang],
+                  description:
+                    t.myBookings.edit.confirm.cancelBooking.description[lang],
+                  confirmText:
+                    t.myBookings.edit.confirm.cancelBooking.confirmText[lang],
+                  cancelText:
+                    t.myBookings.edit.confirm.cancelBooking.cancelText[lang],
+                  onConfirm: async () => {
+                    try {
+                      if (booking.id) {
+                        await dispatch(cancelBooking(booking.id)).unwrap();
+                        toast.success(
+                          t.myBookings.edit.toast.emptyCancelled[lang],
+                        );
+                        void navigate("/my-bookings");
+                      }
+                    } catch {
+                      toast.error(t.myBookings.edit.toast.cancelFailed[lang]);
+                    }
+                  },
+                });
               }}
               variant="destructive"
             >
