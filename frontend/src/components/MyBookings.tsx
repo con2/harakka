@@ -401,7 +401,6 @@ const MyBookings = () => {
             o.org_booking_status !== "completed" &&
             o.locations.some((l) => l.pickup_status === "picked_up"),
         );
-        console.log(orgs_with_picked_up_items);
         return (
           <div className="flex space-x-2">
             <BookingDetailsButton

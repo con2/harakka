@@ -8,7 +8,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import { LogInIcon, Menu, ShoppingCart } from "lucide-react";
+import { Menu, ShoppingCart, UserIcon } from "lucide-react";
 import { Notifications } from "@/components/Notification";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
 import { t } from "@/translations";
@@ -23,6 +23,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { Sheet, SheetTrigger } from "./ui/sheet";
 import MobileMenu from "./MobileMenu";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export const Navigation = () => {
   // Auth State
@@ -92,17 +93,20 @@ export const Navigation = () => {
             )}
           </Button>
           <UserMenu />
-          {!isLoggedIn && (
-            <Button
-              variant={"ghost"}
-              className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
-              data-cy="nav-login-btn"
-              asChild
-            >
-              <Link to="/login">
-                {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
-              </Link>
-            </Button>
+          {!authLoading && !isLoggedIn && (
+            <>
+              <LanguageSwitcher />
+              <Button
+                variant={"ghost"}
+                className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+                data-cy="nav-login-btn"
+                asChild
+              >
+                <Link to="/login">
+                  {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
+                </Link>
+              </Button>
+            </>
           )}
         </div>
       </nav>
@@ -144,17 +148,20 @@ export const Navigation = () => {
             )}
           </Button>
           <UserMenu />
-          {!isLoggedIn && (
-            <Button
-              variant={"ghost"}
-              className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
-              data-cy="nav-login-btn"
-              asChild
-            >
-              <Link to="/login">
-                {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
-              </Link>
-            </Button>
+          {!authLoading && !isLoggedIn && (
+            <>
+              <LanguageSwitcher />
+              <Button
+                variant={"ghost"}
+                className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+                data-cy="nav-login-btn"
+                asChild
+              >
+                <Link to="/login">
+                  {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
+                </Link>
+              </Button>
+            </>
           )}
         </div>
       </nav>
@@ -261,20 +268,19 @@ export const Navigation = () => {
         </Button>
         {isLoggedIn && <Notifications userId={user.id} />}
 
-        {!authLoading && (
+        {!authLoading && !isLoggedIn && (
           <>
-            {!isLoggedIn && (
-              <Button
-                variant={"ghost"}
-                className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
-                data-cy="nav-login-btn"
-                asChild
-              >
-                <Link to="/login">
-                  {t.login.login[lang]} <LogInIcon className="ml-1 h-5 w-5" />
-                </Link>
-              </Button>
-            )}
+            <LanguageSwitcher />
+            <Button
+              variant={"ghost"}
+              className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+              data-cy="nav-login-btn"
+              asChild
+            >
+              <Link to="/login">
+                {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
+              </Link>
+            </Button>
           </>
         )}
         {isLoggedIn && <UserMenu />}
