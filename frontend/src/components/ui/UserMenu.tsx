@@ -206,15 +206,17 @@ export const UserMenu: React.FC = () => {
                   </div>
                 </Link>
               </NavigationMenuLink>
-              <NavigationMenuLink
-                asChild
-                onClick={() => setSelectGroup("roles")}
-              >
-                <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
-                  <ArrowLeftRight className="w-4 h-4 text-muted-foreground " />
-                  {t.userMenu.links.changeOrg[lang]}
-                </div>
-              </NavigationMenuLink>
+              {activeRoles.length > 1 && (
+                <NavigationMenuLink
+                  asChild
+                  onClick={() => setSelectGroup("roles")}
+                >
+                  <div className="flex flex-row items-center font-main hover:cursor-pointer gap-2">
+                    <ArrowLeftRight className="w-4 h-4 text-muted-foreground " />
+                    {t.userMenu.links.changeOrg[lang]}
+                  </div>
+                </NavigationMenuLink>
+              )}
               <NavigationMenuLink
                 asChild
                 onClick={() => setSelectGroup("languages")}
