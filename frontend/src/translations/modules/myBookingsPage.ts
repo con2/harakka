@@ -60,6 +60,10 @@ export const myBookingsPage = {
       fi: "Toiminnot",
       en: "Actions",
     },
+    selfPickup: {
+      fi: "Omatoiminosto",
+      en: "Self-Pickup",
+    },
   },
   bookingDetails: {
     title: {

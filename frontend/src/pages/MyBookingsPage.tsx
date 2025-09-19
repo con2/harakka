@@ -7,6 +7,7 @@ import {
   getBookingItems,
   cancelBooking,
   updateBooking,
+  selectUserBookings,
 } from "@/store/slices/bookingsSlice";
 import { getOwnBookings } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
@@ -30,17 +31,26 @@ import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
+import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
+import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
 
 const MyBookingsPage = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const booking = useAppSelector(selectCurrentBooking);
+  const userBookings = useAppSelector(selectUserBookings);
   const user = useAppSelector(selectSelectedUser);
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const [loading, setLoading] = useState(true);
   const itemsWithLoadedImages = useAppSelector(selectItemsWithLoadedImages);
+
+  // Find the extended booking with orgs data from userBookings
+  const extendedBooking = useMemo(() => {
+    if (!booking?.id || !userBookings.length) return null;
+    return userBookings.find((ub) => ub.id === booking.id) || null;
+  }, [booking?.id, userBookings]);
 
   const [showEdit, setShowEdit] = useState(false);
   const [editFormItems, setEditFormItems] = useState<BookingItemWithDetails[]>(
@@ -233,6 +243,59 @@ const MyBookingsPage = () => {
       },
     },
     {
+      id: "self_pickup",
+      header: t.myBookingsPage.columns.selfPickup[lang],
+      cell: ({ row }) => {
+        const item = row.original;
+
+        // Only show pickup options if booking is not pending and item supports self-pickup
+        if (booking?.status === "pending" || !item.self_pickup) {
+          return null;
+        }
+
+        // Find the corresponding organization and location from extendedBooking
+        const org = extendedBooking?.orgs?.find(
+          (o) => o.id === item.provider_organization_id,
+        );
+        const location = org?.locations?.find((l) => l.id === item.location_id);
+
+        // Only show buttons if location has self_pickup enabled and confirmed status
+        if (!location?.self_pickup || location.pickup_status !== "confirmed") {
+          return null;
+        }
+
+        return (
+          <div className="flex gap-1">
+            {/* Show pickup button if item status is confirmed */}
+            {item.status === "confirmed" && booking?.id && (
+              <BookingPickupButton
+                onSuccess={refetchBookings}
+                location_id={item.location_id}
+                id={booking.id}
+                className="gap-1 h-8 text-xs"
+                org_id={item.provider_organization_id}
+              >
+                Pickup
+              </BookingPickupButton>
+            )}
+
+            {/* Show return button if item status is picked_up */}
+            {item.status === "picked_up" && booking?.id && (
+              <BookingReturnButton
+                org_id={item.provider_organization_id}
+                location_id={item.location_id}
+                id={booking.id}
+                onSuccess={refetchBookings}
+              >
+                Return
+              </BookingReturnButton>
+            )}
+          </div>
+        );
+      },
+      size: 120,
+    },
+    {
       id: "actions",
       header: showEdit ? t.myBookingsPage.columns.actions[lang] : "",
       cell: ({ row }) => {
@@ -277,6 +340,13 @@ const MyBookingsPage = () => {
     const eFmt = e ? formatDate(new Date(e), "d MMM yyyy") : "";
     return `${sFmt}${sFmt && eFmt ? " - " : ""}${eFmt}`;
   }, [booking, formatDate]);
+
+  const refetchBookings = () => {
+    if (id) {
+      void dispatch(getBookingByID(id));
+      void dispatch(getBookingItems(id));
+    }
+  };
 
   const decrementQuantity = (item: BookingItemWithDetails) => {
     const key = String(item.id);
