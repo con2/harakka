@@ -16,7 +16,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { UserMenu } from "./ui/UserMenu";
-import Logo from "@/assets/v4.5.svg?react";
+import Logo from "@/assets/v8.5.svg?react";
 import LogoSmall from "@/assets/logo_small.svg?react";
 import { Badge } from "./ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";

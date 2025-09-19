@@ -1,4 +1,4 @@
-import Logo from "@/assets/v4.5.svg?react";
+import Logo from "@/assets/v8.5.svg?react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { useAppSelector } from "@/store/hooks";
