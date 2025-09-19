@@ -119,11 +119,6 @@ export const UserMenu: React.FC = () => {
     }
   };
 
-  // Hide the switcher if there's only one role
-  if (activeRoles.length <= 1) {
-    return null;
-  }
-
   return (
     <NavigationMenu>
       <NavigationMenuItem className="font-main">
