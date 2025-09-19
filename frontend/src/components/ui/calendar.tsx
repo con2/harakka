@@ -4,6 +4,9 @@ import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button.variants";
+import { useLanguage } from "@/context/LanguageContext";
+import type { Locale } from "date-fns";
+import { fi as fiLocale, enUS as enUSLocale } from "date-fns/locale";
 
 function Calendar({
   className,
@@ -11,9 +14,20 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
+  const { lang } = useLanguage();
+
+  const localeMap: Record<string, Locale> = {
+    fi: fiLocale,
+    en: enUSLocale,
+  };
+
+  const localeObj: Locale = localeMap[lang] || enUSLocale;
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      locale={localeObj}
+      formatters={{ ...(props.formatters || {}) }}
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row gap-2",

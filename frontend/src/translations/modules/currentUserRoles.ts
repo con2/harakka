@@ -43,4 +43,30 @@ export const currentUserRoles = {
     en: common.inactive.en,
     fi: common.inactive.fi,
   },
+  toasts: {
+    leaveOrgSuccess: {
+      en: "You have left the organization",
+      fi: "Olet poistunut organisaatiosta",
+    },
+    leaveOrgError: {
+      en: "Failed to leave organization",
+      fi: "Organisaatiosta poistuminen epäonnistui",
+    },
+    leaveOrg: {
+      en: "Leave organization?",
+      fi: "Poistu organisaatiosta?",
+    },
+    leaveOrgDescription: {
+      en: "Are you sure you want to leave this organization?",
+      fi: "Haluatko varmasti poistua tästä organisaatiosta?",
+    },
+    leaveOrgConfirmText: {
+      en: "Leave",
+      fi: "Poistu",
+    },
+    leaveOrgCancelText: {
+      en: common.cancel.en,
+      fi: common.cancel.fi,
+    },
+  },
 };

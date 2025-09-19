@@ -9,8 +9,10 @@ export interface TranslationIssue {
 function isTranslationLeaf(obj: unknown): boolean {
   if (typeof obj !== "object" || obj === null) return false;
   const keys = Object.keys(obj as Record<string, unknown>);
-  // Leaf if at least one supported language is present
-  return keys.some((lang) => SUPPORTED_LANGUAGES.includes(lang));
+  // Explicitly cast `lang` to the union type
+  return keys.some((lang) =>
+    SUPPORTED_LANGUAGES.includes(lang as (typeof SUPPORTED_LANGUAGES)[number]),
+  );
 }
 
 export function checkTranslationObjectStructure(
@@ -43,10 +45,11 @@ export function checkTranslationObjectStructure(
     }
 
     // --- Required checks below ---
-    const typedObj = obj as Record<string, unknown>;
-    const translations = SUPPORTED_LANGUAGES.map(
-      (lang) => typedObj[lang] as string,
-    ).filter((t) => typeof t === "string" && t.length > 0);
+    const translations = SUPPORTED_LANGUAGES.map((lang) => {
+      return (obj as Record<(typeof SUPPORTED_LANGUAGES)[number], unknown>)[
+        lang
+      ] as string;
+    }).filter((t) => typeof t === "string" && t.length > 0);
 
     if (translations.length >= 2) {
       const lengths = translations.map((t) => t.length);

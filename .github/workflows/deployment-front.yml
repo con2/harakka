@@ -1,4 +1,7 @@
 name: Azure Static Web Apps CI/CD
+permissions:
+  contents: read
+  pull-requests: write
 
 on:
   push:
@@ -24,9 +27,10 @@ jobs:
           cd common
           npm ci
       - name: Install front dependencies
+        working-directory: ./frontend
         run: |
-          cd frontend
-          npm ci
+          rm -f package-lock.json
+          npm install
       - name: Clean problematic symlinks (circular references)
         run: |
           find frontend/node_modules -type l -name "common" -delete
@@ -108,3 +112,4 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_GRASS_049DC8010 }}
           action: "close"
+          app_location: "/frontend/dist"

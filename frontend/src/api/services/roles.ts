@@ -81,6 +81,14 @@ export const roleApi = {
     return await api.put(`/roles/${tableKeyId}`, updateRoleDto);
   },
 
+  // Replace a user role (delete old, create new)
+  async replaceUserRole(
+    oldRoleId: string,
+    createRoleDto: CreateUserRoleDto,
+  ): Promise<ViewUserRolesWithDetails> {
+    return await api.put(`/roles/${oldRoleId}/replace`, createRoleDto);
+  },
+
   //Set the role of a user to inactive (is_active=false), this is not a permanent delete
   async deleteUserRole(
     tableKeyId: string,
@@ -93,5 +101,12 @@ export const roleApi = {
     tableKeyId: string,
   ): Promise<{ success: boolean; message: string }> {
     return await api.delete(`/roles/${tableKeyId}/permanent`);
+  },
+
+  // Allow the current user to permanently remove their own role (leave organization)
+  async leaveOrg(
+    tableKeyId: string,
+  ): Promise<{ success: boolean; message: string }> {
+    return await api.delete(`/roles/${tableKeyId}/leave`);
   },
 };

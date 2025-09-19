@@ -1,10 +1,19 @@
+import { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useRoles } from "@/hooks/useRoles";
 import { t } from "@/translations";
+// ...existing code...
+import { Trash2, MoreVertical } from "lucide-react";
+import { toast } from "sonner";
+import { toastConfirm } from "@/components/ui/toastConfirm";
+import { leaveOrg } from "@/store/slices/rolesSlice";
+import { useAppDispatch } from "@/store/hooks";
 
 export const CurrentUserRoles: React.FC = () => {
   const { currentUserRoles } = useRoles();
   const { lang } = useLanguage();
+  const dispatch = useAppDispatch();
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Make role aliases
   const getRoleAlias = (roleName: string) => {
@@ -53,6 +62,95 @@ export const CurrentUserRoles: React.FC = () => {
                 disabled
                 className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
               />
+              {/* Leave menu: only for active roles and not the Global 'user' role */}
+              {role.is_active &&
+                !(
+                  role.role_name === "user" &&
+                  role.organization_name === "Global"
+                ) && (
+                  <div
+                    className="relative ml-2 inline-block"
+                    data-role-id={role.id}
+                  >
+                    <button
+                      type="button"
+                      aria-haspopup="true"
+                      aria-expanded={openMenuId === (role.id as string)}
+                      className="p-1 rounded hover:bg-gray-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuId((prev) =>
+                          prev === (role.id as string)
+                            ? null
+                            : (role.id as string),
+                        );
+                      }}
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+
+                    {openMenuId === (role.id as string) && (
+                      <div
+                        className="absolute right-0 mt-2 w-44 bg-white border rounded-md"
+                        data-role-menu-open
+                      >
+                        <button
+                          type="button"
+                          className="w-full text-left px-3 py-2 hover:bg-red-50 flex items-center gap-2 text-sm text-red-700"
+                          onClick={() => {
+                            // keep menu open while confirming, close after
+                            toastConfirm({
+                              title:
+                                t.currentUserRoles.toasts.leaveOrg?.[lang] ||
+                                "Leave organization?",
+                              description:
+                                t.currentUserRoles.toasts.leaveOrgDescription?.[
+                                  lang
+                                ] ||
+                                "Are you sure you want to leave this organization?",
+                              confirmText:
+                                t.currentUserRoles.toasts.leaveOrgConfirmText?.[
+                                  lang
+                                ] || "Leave",
+                              cancelText:
+                                t.currentUserRoles.toasts.leaveOrgCancelText?.[
+                                  lang
+                                ] || "Cancel",
+                              onConfirm: async () => {
+                                try {
+                                  await dispatch(
+                                    leaveOrg(role.id as string),
+                                  ).unwrap();
+                                  toast.success(
+                                    t.currentUserRoles.toasts.leaveOrgSuccess?.[
+                                      lang
+                                    ] || "You have left the organization",
+                                  );
+                                } catch (err) {
+                                  console.error("leaveOrg failed:", err);
+                                  toast.error(
+                                    t.currentUserRoles.toasts.leaveOrgError?.[
+                                      lang
+                                    ] || "Failed to leave organization",
+                                  );
+                                } finally {
+                                  setOpenMenuId(null);
+                                }
+                              },
+                            });
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>
+                            {t.currentUserRoles.toasts.leaveOrgConfirmText?.[
+                              lang
+                            ] || "Leave"}
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
             </div>
           </div>
         ))}

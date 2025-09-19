@@ -167,7 +167,7 @@ function OrgStep() {
               {t.orgStep.buttons.downloadTemplate[lang]}{" "}
               <a
                 className="underline underline-offset-2"
-                href="/con2-item-template.xlsx"
+                href="/Item-Template.xlsx"
                 download
               >
                 {t.orgStep.buttons.downloadTemplateHere[lang]}

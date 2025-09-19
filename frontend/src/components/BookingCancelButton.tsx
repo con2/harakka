@@ -27,10 +27,10 @@ const BookingCancelButton = ({ id, closeModal }: BookingCancelButtonProps) => {
       description: t.bookingCancel.confirmDialog.description[lang],
       confirmText: t.bookingCancel.confirmDialog.confirmText[lang],
       cancelText: t.bookingCancel.confirmDialog.cancelText[lang],
-      onConfirm: async () => {
+      onConfirm: () => {
         try {
           // Use unwrap() to properly handle the promise and catch errors
-          await toast.promise(dispatch(cancelBooking(id)).unwrap(), {
+          toast.promise(dispatch(cancelBooking(id)).unwrap(), {
             loading: t.bookingCancel.toast.loading[lang],
             success: t.bookingCancel.toast.success[lang],
             error: t.bookingCancel.toast.error[lang],
@@ -53,7 +53,7 @@ const BookingCancelButton = ({ id, closeModal }: BookingCancelButtonProps) => {
       size={"sm"}
       title={t.bookingCancel.cancel[lang]}
     >
-      <XCircle size={10} className="mr-1" />
+      <XCircle size={10} />
     </Button>
   );
 };

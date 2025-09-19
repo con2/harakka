@@ -2,7 +2,6 @@ import imagePlaceholder from "@/assets/defaultImage.jpg";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useLanguage } from "@/context/LanguageContext";
@@ -42,6 +41,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   // Only keep quantity as local state
   const [quantity, setQuantity] = useState(0);
+
+  // get cart items from Redux
+  const cartItems = useAppSelector((state) => state.cart.items);
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
@@ -145,19 +147,31 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
   // Handle adding item to cart
   const handleAddToCart = () => {
-    if (item) {
-      void dispatch(
-        addToCart({
-          item: item,
-          quantity: quantity,
-          startDate: startDate ? startDate : undefined,
-          endDate: endDate ? endDate : undefined,
-        }),
+    if (!item) return;
+
+    const availability = availabilityInfo.availableQuantity;
+
+    const existingCartItem = cartItems.find(
+      (cartItem) => cartItem.item.id === item.id,
+    );
+    const currentQuantity = existingCartItem?.quantity ?? 0;
+
+    if (currentQuantity + quantity > availability) {
+      toast.warning(
+        `${t.cart.toast.itemsExceedQuantity[lang]} ${availability}.`,
       );
-      toast.success(
-        `${itemContent?.item_name} ${t.itemCard.addedToCart[lang]}`,
-      );
+      return;
     }
+    void dispatch(
+      addToCart({
+        item: item,
+        quantity: quantity,
+        startDate: startDate ? startDate : undefined,
+        endDate: endDate ? endDate : undefined,
+      }),
+    );
+
+    toast.success(`${itemContent?.item_name} ${t.itemCard.addedToCart[lang]}`);
   };
 
   // Update availability info based on dates selection
@@ -208,11 +222,11 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   return (
     <Card
       data-cy="items-card"
-      className="w-full max-w-[350px] flex flex-col justify-between p-4"
+      className="w-full flex flex-col justify-between p-4 flex-[1_0_250px]"
     >
       {/* Image Section */}
       <div
-        className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden"
+        className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden border border-1-[var(--subtle-grey)] basis-[250px]"
         data-cy="item-image-section"
       >
         {isImageLoading && !loadFailed && (
@@ -364,41 +378,39 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         </div>
 
         {/* Add to Cart Button with Tooltip */}
-        <TooltipProvider>
-          <Tooltip open={isAddToCartDisabled ? undefined : false}>
-            <TooltipTrigger asChild>
-              <span
-                tabIndex={0}
-                className={
-                  isAddToCartDisabled
-                    ? "inline-block w-full cursor-not-allowed"
-                    : "inline-block w-full"
-                }
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              tabIndex={0}
+              className={
+                isAddToCartDisabled
+                  ? "inline-block w-full cursor-not-allowed"
+                  : "inline-block w-full"
+              }
+            >
+              <Button
+                onClick={handleAddToCart}
+                className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-white hover:bg-secondary"
+                disabled={isAddToCartDisabled}
+                style={{
+                  pointerEvents: isAddToCartDisabled ? "none" : "auto",
+                }}
+                data-cy="item-add-to-cart-btn"
               >
-                <Button
-                  onClick={handleAddToCart}
-                  className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-white hover:bg-secondary"
-                  disabled={isAddToCartDisabled}
-                  style={{
-                    pointerEvents: isAddToCartDisabled ? "none" : "auto",
-                  }}
-                  data-cy="item-add-to-cart-btn"
-                >
-                  {t.itemDetails.items.addToCart[lang]}
-                </Button>
-              </span>
-            </TooltipTrigger>
-            {isAddToCartDisabled && (
-              <TooltipContent>
-                {!startDate || !endDate ? (
-                  <p>{t.itemCard.selectDatesFirst[lang]}</p>
-                ) : (
-                  <p>{t.itemCard.selectValidQuantity[lang]} </p>
-                )}
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+                {t.itemDetails.items.addToCart[lang]}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          {isAddToCartDisabled && (
+            <TooltipContent>
+              {!startDate || !endDate ? (
+                <p>{t.itemCard.selectDatesFirst[lang]}</p>
+              ) : (
+                <p>{t.itemCard.selectValidQuantity[lang]} </p>
+              )}
+            </TooltipContent>
+          )}
+        </Tooltip>
       </div>
 
       {/* View Details Button */}

@@ -12,6 +12,10 @@ export const common = {
     fi: "Peruuta",
     en: "Cancel",
   },
+  back: {
+    fi: "Takaisin",
+    en: "Back",
+  },
   save: {
     fi: "Tallenna",
     en: "Save",
@@ -146,6 +150,12 @@ export const common = {
     address: {
       fi: "Osoite",
       en: "Address",
+    },
+  },
+  errors: {
+    invalidFile: {
+      en: "Invalid file",
+      fi: "Virheellinen tiedosto",
     },
   },
 };

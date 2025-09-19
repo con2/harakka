@@ -320,4 +320,16 @@ export class OrganizationsService {
 
     return { success: true, id, is_active };
   }
+
+  // 9. get organizations count (global)
+  async getOrganizationsCount(): Promise<number> {
+    const supabase = this.supabaseService.getServiceClient();
+    const { count, error } = await supabase
+      .from("organizations")
+      .select(undefined, { count: "exact" });
+
+    if (error) handleSupabaseError(error);
+
+    return count ?? 0;
+  }
 }

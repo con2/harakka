@@ -6,9 +6,9 @@ import { BookingStatus } from "@/types";
  * @returns a formatted string, "Super Admin", "Storage Manager"
  */
 export function formatRoleName(roleName: string = ""): string {
-  let formatted = roleName.replace(/_/g, " ");
-  formatted = formatted.replace(/([a-z])([A-Z])/g, "$1 $2");
-  formatted = formatted.replace(/\b\w/g, (char) => char.toUpperCase());
+  let formatted = roleName?.replace(/_/g, " ");
+  formatted = formatted?.replace(/([a-z])([A-Z])/g, "$1 $2");
+  formatted = formatted?.replace(/\b\w/g, (char) => char.toUpperCase());
 
   return formatted;
 }

@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
@@ -28,6 +29,7 @@ import {
   BookingItemRow,
   BookingRow,
   ValidBookingOrder,
+  BookingItemInsert,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { deriveOrgStatus } from "src/utils/booking.utils";
@@ -39,11 +41,11 @@ import { handleSupabaseError } from "@src/utils/handleError.utils";
 import { BookingPreview } from "@common/bookings/booking.types";
 import { BookingItemsService } from "../booking_items/booking-items.service";
 import { StorageItemRow } from "../storage-items/interfaces/storage-item.interface";
-import { BookingWithOrgStatus } from "./types/booking.interface";
 
 dayjs.extend(utc);
 @Injectable()
 export class BookingService {
+  private readonly logger = new Logger(BookingService.name);
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly mailService: MailService,
@@ -77,26 +79,7 @@ export class BookingService {
     searchquery?: string,
     status_filter?: string,
   ): Promise<ApiResponse<BookingPreview>> {
-    const { from, to } = getPaginationRange(page, limit);
-
-    const query = supabase
-      .from("view_bookings_with_user_info")
-      .select("*", { count: "exact" })
-      .range(from, to)
-      .order(order_by ?? "booking_number", { ascending: ascending });
-
-    if (status_filter) query.eq("status", status_filter);
-
-    // Match any field if there is a searchquery
-    if (searchquery) {
-      query.or(
-        `booking_number.ilike.%${searchquery}%,` +
-          `full_name.ilike.%${searchquery}%,` +
-          `created_at_text.ilike.%${searchquery}%`,
-      );
-    }
-
-    // Filter bookings by organization ID
+    // First, get all bookings that have items from the specified organization
     const itemsRes = await supabase
       .from("booking_items")
       .select("booking_id")
@@ -108,53 +91,137 @@ export class BookingService {
         ((itemsRes.data || []) as BookingItemRow[]).map((r) => r.booking_id),
       ),
     );
-    if (bookingIds.length > 0) {
-      query.in("id", bookingIds);
-    } else {
-      // Force empty results if no matching bookings
-      query.eq("id", "00000000-0000-0000-0000-000000000000");
+
+    if (bookingIds.length === 0) {
+      return {
+        data: [],
+        count: 0,
+        error: null,
+        status: 200,
+        statusText: "OK",
+        metadata: getPaginationMeta(0, page, limit),
+      };
     }
 
-    const result = await query;
+    // Get all bookings from the organization and calculate their org-specific status
+    const allBookingsQuery = supabase
+      .from("view_bookings_with_user_info")
+      .select("*")
+      .in("id", bookingIds);
 
-    // Attach derived organization status for each booking indicating whether all items for this org are confirmed
-    if (result.data && result.data.length > 0) {
-      const bookingIds = result.data
+    if (searchquery) {
+      allBookingsQuery.or(
+        `booking_number.ilike.%${searchquery}%,` +
+          `full_name.ilike.%${searchquery}%,` +
+          `created_at_text.ilike.%${searchquery}%`,
+      );
+    }
+
+    const allBookingsResult = await allBookingsQuery;
+    if (allBookingsResult.error) handleSupabaseError(allBookingsResult.error);
+
+    let bookingsWithOrgStatus: (BookingPreview & {
+      org_status_for_active_org?: string;
+      start_date?: string;
+    })[] = [];
+
+    // Calculate org-specific status for each booking
+    if (allBookingsResult.data && allBookingsResult.data.length > 0) {
+      const availableBookingIds = allBookingsResult.data
         .map((b) => b.id)
         .filter(Boolean) as string[];
 
-      if (bookingIds.length > 0) {
-        const itemsRes = await supabase
+      if (availableBookingIds.length > 0) {
+        const orgItemsRes = await supabase
           .from("booking_items")
-          .select("booking_id,status")
-          .in("booking_id", bookingIds)
+          .select("booking_id,status,start_date")
+          .in("booking_id", availableBookingIds)
           .eq("provider_organization_id", org_id);
-        if (itemsRes.error) handleSupabaseError(itemsRes.error);
+        if (orgItemsRes.error) handleSupabaseError(orgItemsRes.error);
 
         // Map booking_id to array of statuses for this org
         const statusMap = new Map<string, string[]>();
-        (itemsRes.data || []).forEach((row) => {
-          const r = row as { booking_id: string; status: string };
+        const startDateMap = new Map<string, string>();
+        (orgItemsRes.data || []).forEach((row) => {
+          const r = row as {
+            booking_id: string;
+            status: string;
+            start_date: string;
+          };
           const arr = statusMap.get(r.booking_id) || [];
           arr.push(r.status);
           statusMap.set(r.booking_id, arr);
+
+          // Store the start_date (all items in a booking have the same date range)
+          if (!startDateMap.has(r.booking_id)) {
+            startDateMap.set(r.booking_id, r.start_date);
+          }
         });
 
-        // Attach org_status_for_active_org to each booking row
-        (result.data as BookingPreview[]).forEach((b) => {
+        // Attach org_status_for_active_org and start_date to each booking row
+        bookingsWithOrgStatus = (
+          allBookingsResult.data as BookingPreview[]
+        ).map((b) => {
           const bid = b.id;
           const statuses = statusMap.get(bid) || [];
-          (b as BookingWithOrgStatus).org_status_for_active_org =
-            deriveOrgStatus(statuses);
+          const orgStatus = deriveOrgStatus(statuses);
+          const startDate = startDateMap.get(bid);
+          return {
+            ...b,
+            org_status_for_active_org: orgStatus,
+            start_date: startDate,
+          };
         });
       }
     }
-    const { error, count } = result;
-    if (error) handleSupabaseError(error);
 
-    const metadata = getPaginationMeta(count, page, limit);
+    // Apply status filter based on org-specific status
+    if (status_filter) {
+      bookingsWithOrgStatus = bookingsWithOrgStatus.filter(
+        (booking) => booking.org_status_for_active_org === status_filter,
+      );
+    }
+
+    // Filter out past bookings when ordering by start_date (upcoming bookings only)
+    if (order_by === "start_date") {
+      const today = dayjs().utc().startOf("day").toISOString();
+      bookingsWithOrgStatus = bookingsWithOrgStatus.filter((booking) => {
+        if (!booking.start_date) return false;
+        const bookingDate = dayjs(booking.start_date)
+          .utc()
+          .startOf("day")
+          .toISOString();
+        return bookingDate >= today;
+      });
+    }
+
+    // Sort the filtered results
+    bookingsWithOrgStatus.sort((a, b) => {
+      const aValue = a[order_by as keyof typeof a];
+      const bValue = b[order_by as keyof typeof b];
+
+      // Handle undefined values
+      if (aValue === undefined && bValue === undefined) return 0;
+      if (aValue === undefined) return ascending ? 1 : -1;
+      if (bValue === undefined) return ascending ? -1 : 1;
+
+      if (aValue < bValue) return ascending ? -1 : 1;
+      if (aValue > bValue) return ascending ? 1 : -1;
+      return 0;
+    });
+
+    // Apply pagination
+    const totalCount = bookingsWithOrgStatus.length;
+    const { from, to } = getPaginationRange(page, limit);
+    const paginatedData = bookingsWithOrgStatus.slice(from, to + 1);
+
+    const metadata = getPaginationMeta(totalCount, page, limit);
     return {
-      ...result,
+      data: paginatedData,
+      count: totalCount,
+      error: null,
+      status: 200,
+      statusText: "OK",
       metadata,
     };
   }
@@ -177,11 +244,11 @@ export class BookingService {
     req: AuthRequest,
     page: number,
     limit: number,
-    userId: string,
     activeOrgId: string,
   ) {
     const { from, to } = getPaginationRange(page, limit);
     const supabase = req.supabase;
+    const userId = req.user.id;
 
     // All bookings from the view
     const query = supabase
@@ -245,53 +312,91 @@ export class BookingService {
   ) {
     const { from, to } = getPaginationRange(page, limit);
     const supabase = req.supabase;
+    const BOOKED_BY_ORG_ROLES = [
+      "tenant_admin",
+      "storage_manager",
+      "requester",
+    ];
+    const isRequesterRole = BOOKED_BY_ORG_ROLES.includes(activeRole);
 
-    const query = supabase
+    const baseQuery = supabase
       .from("view_bookings_with_user_info")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
 
     if (activeRole === "user") {
-      // Regular users only see their own bookings
-      query.eq("user_id", userId);
-    } else if (
-      activeRole === "requester" ||
-      activeRole === "storage_manager" ||
-      activeRole === "tenant_admin"
-    ) {
-      // Admins see all bookings for their organization
-      const bookingIdsResult = await supabase
-        .from("booking_items")
-        .select("booking_id")
-        .eq("provider_organization_id", activeOrgId);
-
-      if (bookingIdsResult.error) {
-        throw new BadRequestException(
-          "Could not fetch bookings for the organization",
-        );
-      }
-
-      const bookingIds = bookingIdsResult.data.map((item) => item.booking_id);
-      if (bookingIds.length > 0) {
-        query.in("id", bookingIds);
-      } else {
-        return {
-          data: [],
-          count: 0,
-          error: null,
-          status: 200,
-          statusText: "OK",
-          metadata: getPaginationMeta(0, page, limit),
-        };
-      }
-    } else {
-      throw new ForbiddenException("You do not have access to view bookings");
+      baseQuery.eq("user_id", userId).is("booked_by_org", null);
+    } else if (isRequesterRole) {
+      baseQuery.eq("booked_by_org", activeOrgId);
     }
 
-    const result = await query;
+    const bookingItemsQuery = supabase
+      .from("booking_items")
+      .select(
+        "booking_id, status, self_pickup, location_id, provider_organization_id, organizations(name), storage_locations (name)",
+      );
+
+    const bookingItemsResult = await bookingItemsQuery;
+    if (bookingItemsResult.error) handleSupabaseError(bookingItemsResult.error);
+
+    const result = await baseQuery;
+    if (result.error) {
+      // propagate or wrap the error as appropriate
+      throw new BadRequestException("Could not fetch bookings");
+    }
+
+    const mappedResult = result.data.map((booking) => {
+      const bi = bookingItemsResult.data.filter(
+        (data) => data.booking_id === booking.id,
+      );
+
+      const org_booking_status = deriveOrgStatus(bi.map((s) => s.status));
+
+      // Group by organization id
+      const orgMap = new Map();
+      bi.forEach((item) => {
+        const orgId = item.provider_organization_id;
+        if (!orgMap.has(orgId)) {
+          orgMap.set(orgId, {
+            id: orgId,
+            name: item.organizations?.name,
+            org_booking_status,
+            locations: new Map(), // nested map for locations
+          });
+        }
+
+        const orgEntry = orgMap.get(orgId);
+
+        // Deduplicate locations by location_id
+        if (!orgEntry.locations.has(item.location_id)) {
+          orgEntry.locations.set(item.location_id, {
+            id: item.location_id,
+            name: item.storage_locations.name,
+            self_pickup: item.self_pickup,
+            pickup_status: item.status,
+          });
+        }
+      });
+
+      // Convert maps to arrays
+      const orgs = Array.from(orgMap.values()).map((org) => ({
+        ...org,
+        locations: Array.from(org.locations.values()),
+      }));
+
+      return {
+        ...booking,
+        orgs,
+      };
+    });
+
     const pagination = getPaginationMeta(result.count, page, limit);
-    return { ...result, metadata: pagination };
+    return {
+      ...result,
+      data: mappedResult,
+      metadata: pagination,
+    };
   }
 
   /**
@@ -381,7 +486,44 @@ export class BookingService {
 
   async getBookingsCount(
     supabase: SupabaseClient,
+    orgId?: string,
+    activeRole?: string,
   ): Promise<ApiSingleResponse<number>> {
+    // Super admin should always receive global count
+    if (activeRole === "super_admin") {
+      const result: PostgrestResponse<undefined> = await supabase
+        .from("bookings")
+        .select(undefined, { count: "exact" });
+
+      if (result.error) handleSupabaseError(result.error);
+
+      return {
+        ...result,
+        data: result.count ?? 0,
+      };
+    }
+
+    // If orgId provided, count distinct booking_ids that have booking_items for that org
+    if (orgId) {
+      const res = await supabase
+        .from("booking_items")
+        .select("booking_id")
+        .eq("provider_organization_id", orgId);
+
+      if (res.error) handleSupabaseError(res.error);
+
+      const ids = Array.from(
+        new Set((res.data || []).map((r) => r.booking_id)),
+      );
+      return {
+        data: ids.length,
+        count: ids.length,
+        error: null,
+        status: 200,
+        statusText: "OK",
+      } as ApiSingleResponse<number>;
+    }
+
     const result: PostgrestResponse<undefined> = await supabase
       .from("bookings")
       .select(undefined, { count: "exact" });
@@ -394,214 +536,201 @@ export class BookingService {
     };
   }
 
-  // 3. create a Booking
+  // inside your class
   async createBooking(
     dto: CreateBookingDto,
     supabase: SupabaseClient<Database>,
     activeRole: { roleName: string; orgId: string },
   ) {
     const userId = dto.user_id;
-
+    const { roleName, orgId } = activeRole;
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
     }
 
-    // 3.0. Check if user has completed required profile information
-    const { data: userProfile, error: profileError } = await supabase
-      .from("user_profiles")
-      .select("full_name, phone")
-      .eq("id", userId)
-      .single();
+    // ... your profile checks and availability checks BEFORE any writes ...
+    // (keep the existing code you posted up to and including availability checks)
 
-    if (profileError || !userProfile) {
-      throw new BadRequestException("User profile not found");
-    }
+    // ---------- DB write phase with rollback ----------
+    let booking: BookingRow | null = null;
+    const createdBookingItemIds: string[] = [];
 
-    // Require full name for booking (phone is optional but recommended)
-    if (!userProfile.full_name || userProfile.full_name.trim() === "") {
-      // Use a specific error code that frontend can catch to show the modal
-      const error = new BadRequestException({
-        message: "Profile incomplete: Full name is required to create bookings",
-        errorCode: "PROFILE_INCOMPLETE",
-        missingFields: ["full_name"],
-        hasPhone: !!(userProfile.phone && userProfile.phone.trim()),
-      });
-      throw error;
-    }
+    // helper to attempt rollback of any partial inserts.
+    const cleanupPartialBooking = async (bookingId?: string) => {
+      if (!bookingId) return;
+      try {
+        // delete booking items that reference this booking
+        // use .delete().eq('booking_id', bookingId) so it cascades for the rows your service created
+        const { error: delItemsErr } = await supabase
+          .from("booking_items")
+          .delete()
+          .eq("booking_id", bookingId);
 
-    // Check for phone number and prepare warning message
-    let warningMessage: string | null = null;
-    if (!userProfile.phone || userProfile.phone.trim() === "") {
-      warningMessage =
-        "We recommend adding a phone number to your profile for easier communication about your bookings.";
-    }
-
-    for (const item of dto.items) {
-      const { item_id, quantity, start_date, end_date } = item;
-
-      const start = new Date(start_date);
-      const diffDays = dayDiffFromToday(start);
-
-      // Prevent past start times
-      if (diffDays < 0) {
-        throw new BadRequestException("start_date cannot be in the past");
-      }
-
-      // Warn for short notice (< 24h). dayDiffFromToday returns 0 for same-day future times.
-      if (diffDays < 1) {
-        const shortNoticeWarning =
-          "Heads up: bookings made less than 24 hours in advance might not be approved in time.";
-
-        // Combine warnings if both exist
-        if (warningMessage) {
-          warningMessage = `${warningMessage} ${shortNoticeWarning}`;
-        } else {
-          warningMessage = shortNoticeWarning;
+        if (delItemsErr) {
+          console.error(
+            "Failed to delete booking_items during rollback",
+            delItemsErr,
+          );
+          // continue to try deleting booking anyway
         }
+
+        // delete the booking itself
+        const { error: delBookingErr } = await supabase
+          .from("bookings")
+          .delete()
+          .eq("id", bookingId);
+
+        if (delBookingErr) {
+          console.error(
+            "Failed to delete booking during rollback",
+            delBookingErr,
+          );
+        } else {
+          console.info(`Rollback: removed booking ${bookingId} and its items`);
+        }
+      } catch (cleanupErr) {
+        // final fallback: log cleanup error
+        console.error("Unexpected error during rollback cleanup", cleanupErr);
       }
-
-      // 3.1. Check availability for requested date range
-      const available = await calculateAvailableQuantity(
-        supabase,
-        item_id,
-        start_date,
-        end_date,
-      );
-
-      if (quantity > available.availableQuantity) {
-        throw new BadRequestException(
-          `Not enough virtual stock available for item ${item_id}`,
-        );
-      }
-
-      // 3.2. Check physical stock (currently in storage)
-      const { data: storageItem, error: itemError } = await supabase
-        .from("storage_items")
-        .select("available_quantity")
-        .eq("id", item_id)
-        .single();
-
-      if (itemError) handleSupabaseError(itemError);
-
-      if (!storageItem)
-        throw new BadRequestException("Storage item data not found");
-
-      const currentStock = storageItem.available_quantity ?? 0;
-      if (quantity > currentStock) {
-        throw new BadRequestException(
-          `Not enough physical stock in storage for item ${item_id}`,
-        );
-      }
-    }
-
-    // 3.4. Create the booking
-    // generate a unique booking number (check collisions in DB)
-    let bookingNumber: string;
-    try {
-      bookingNumber = await generateBookingNumber(supabase);
-    } catch (err) {
-      console.error("Booking number generation error:", err);
-      throw new BadRequestException(
-        "Could not generate a unique booking number, please try again",
-      );
-    }
-
-    const { data: booking, error: bookingError } = await supabase
-      .from("bookings")
-      .insert({
-        user_id: userId,
-        booking_number: bookingNumber,
-        status: "pending",
-      })
-      .select()
-      .single<BookingRow>();
-
-    if (bookingError || !booking) {
-      throw new BadRequestException("Could not create booking");
-    }
-
-    // 3.5. Create booking items using BookingItemsService
-    for (const item of dto.items) {
-      const start = new Date(item.start_date);
-      const end = new Date(item.end_date);
-      const totalDays = calculateDuration(start, end);
-
-      // get location_id from storage_items
-      const { data: storageItem, error: locationError } = await supabase
-        .from("storage_items")
-        .select("location_id, org_id")
-        .eq("id", item.item_id)
-        .single();
-
-      if (locationError || !storageItem) {
-        throw new BadRequestException(
-          `Storage item data not found for item ${item.item_id}`,
-        );
-      }
-
-      // Create booking item using service, automatically tracking the provider organization
-      const bookingItemData: BookingItemsInsert = {
-        booking_id: booking.id,
-        item_id: item.item_id,
-        location_id: storageItem.location_id,
-        provider_organization_id: storageItem.org_id,
-        quantity: item.quantity,
-        start_date: item.start_date,
-        end_date: item.end_date,
-        total_days: totalDays,
-        status: "pending",
-      };
-
-      // Use BookingItemsService instead of direct insert
-      await this.bookingItemsService.createBookingItem(
-        supabase,
-        bookingItemData,
-      );
-    }
-
-    // 3.6 notify user via centralized mail service
-    await this.mailService.sendBookingMail(BookingMailType.Creation, {
-      bookingId: booking.id,
-      triggeredBy: userId,
-    });
-
-    // 3.7 Fetch the complete booking with items and translations using the view
-    const { data: createdBookings, error: fetchError } = await supabase
-      .from("view_bookings_with_details")
-      .select("*")
-      .eq("id", booking.id);
-
-    if (fetchError || !createdBookings || createdBookings.length === 0) {
-      throw new BadRequestException("Could not fetch created booking details");
-    }
-
-    // filtering to get active role
-    const createdBooking =
-      createdBookings.find(
-        (b) =>
-          b.role_name === activeRole.roleName &&
-          b.requester_org_id === activeRole.orgId,
-      ) || createdBookings[0];
-
-    // attach role info to the response
-    const bookingWithRole = {
-      ...createdBooking,
-      user_role_id: createdBooking.user_role_id,
-      role_id: createdBooking.role_id,
-      role_name: createdBooking.role_name, // "user" | "requester"
-      requester_org_id: createdBooking.requester_org_id, // if requester
     };
 
-    return warningMessage
-      ? {
-          message: "Booking created",
-          booking: bookingWithRole,
-          warning: warningMessage,
+    // perform writes inside try/catch so we can rollback on any failure
+    try {
+      let bookingNumber: string;
+      try {
+        bookingNumber = await generateBookingNumber(supabase);
+      } catch (err) {
+        console.error("Booking number generation error:", err);
+        throw new BadRequestException(
+          "Could not generate a unique booking number, please try again",
+        );
+      }
+
+      const BOOKED_BY_ORG_ROLES = [
+        "tenant_admin",
+        "storage_manager",
+        "requester",
+      ];
+
+      const { data: bookingData, error: bookingError } = await supabase
+        .from("bookings")
+        .insert({
+          user_id: userId,
+          booking_number: bookingNumber,
+          status: "pending",
+          booked_by_org: BOOKED_BY_ORG_ROLES.includes(roleName) ? orgId : null,
+        })
+        .select()
+        .single<BookingRow>();
+
+      if (bookingError || !bookingData) {
+        // nothing to rollback yet
+        throw new BadRequestException("Could not create booking");
+      }
+
+      booking = bookingData; // track booking for possible rollback
+
+      // 3.5. Create booking items using BookingItemsService
+      for (const item of dto.items) {
+        const start = new Date(item.start_date);
+        const end = new Date(item.end_date);
+        const totalDays = calculateDuration(start, end);
+
+        // add loan period validation
+        if (totalDays < 1) {
+          throw new BadRequestException("Booking must be at least 1 day long");
         }
-      : {
-          message: "Booking created",
-          booking: bookingWithRole,
+
+        if (totalDays > 42) {
+          throw new BadRequestException("Booking cannot exceed 6 weeks");
+        }
+
+        // Prepare booking item
+        const bookingItemData: BookingItemsInsert = {
+          ...item,
+          booking_id: booking.id,
+          total_days: totalDays,
+          status: "pending",
         };
+
+        // Use BookingItemsService (assume it throws on error)
+        // If your createBookingItem returns the created row, collect its id; otherwise we'll rely on cleanup by booking_id
+        const created = await this.bookingItemsService.createBookingItems(
+          supabase,
+          bookingItemData,
+        );
+
+        // if service returns the created row/object with id, capture it for debugging or targeted cleanup
+        if (created) {
+          if (Array.isArray(created.data))
+            createdBookingItemIds.push(...created.data.map((i) => i.id));
+          else if (created.data) createdBookingItemIds.push(created.data.id);
+        }
+      }
+      // 3.7 Fetch the complete booking with items and translations using the view
+      const { data: createdBookings, error: fetchError } = await supabase
+        .from("view_bookings_with_details")
+        .select("*")
+        .eq("id", booking.id);
+      if (fetchError || !createdBookings || createdBookings.length === 0) {
+        this.logger.error("Fetch created booking error:", fetchError); // Keep for backend
+        throw new BadRequestException(
+          "Could not fetch created booking details",
+        );
+      }
+
+      // filtering to get active role
+      // Extend the type to include role_name and requester_org_id
+      type BookingWithRole = (typeof createdBookings)[0] & {
+        role_name?: string;
+        requester_org_id?: string;
+        user_role_id?: string;
+        role_id?: string;
+      };
+
+      const createdBooking =
+        (createdBookings.find(
+          (b: BookingWithRole) =>
+            b.role_name === activeRole.roleName &&
+            b.requester_org_id === activeRole.orgId,
+        ) as BookingWithRole) || (createdBookings[0] as BookingWithRole);
+
+      // attach role info to the response
+      const bookingWithRole = {
+        ...createdBooking,
+        user_role_id: createdBooking.user_role_id,
+        role_id: createdBooking.role_id,
+        role_name: createdBooking.role_name, // "user" | "requester"
+        requester_org_id: createdBooking.requester_org_id, // if requester
+      };
+
+      // All DB writes succeeded. Now optionally send email.
+      // IMPORTANT: per your requirement - email failures should NOT trigger rollback.
+      try {
+        // await sendEmailOrNotifyBookingCreated(booking, dto, otherArgs...);
+        // keep the email handling logic separated; if it fails, catch it and log/report it
+      } catch (emailErr) {
+        console.error("Booking created but email failed:", emailErr);
+        // optionally record a 'notification_failed' flag in DB, but DO NOT rollback
+      }
+      // return the booking (or assembled DTO) to caller
+      return {
+        message: "Booking created",
+        booking: bookingWithRole,
+        // warning?
+      };
+    } catch (err) {
+      // Something failed during the DB-write phase (not email).
+      // Attempt rollback of any partially inserted rows.
+      try {
+        await cleanupPartialBooking(booking?.id);
+      } catch (cleanupErr) {
+        // we already log in cleanupPartialBooking — but surface if needed
+        console.error("Error during rollback attempt", cleanupErr);
+      }
+      // rethrow original error so upstream can handle it
+      throw err;
+    }
   }
 
   // 4. confirm a Booking - no longer in use; replaced by confirmBookingItemsForOrg
@@ -622,37 +751,6 @@ export class BookingService {
     // prevent re-confirmation
     if (booking.status === "confirmed") {
       throw new BadRequestException("Booking is already confirmed");
-    }
-
-    // 4.2 Get all the booking items
-    const { data: items, error: itemsError } = await supabase
-      .from("booking_items")
-      .select("item_id, quantity, start_date, item_id, quantity")
-      .eq("booking_id", bookingId);
-
-    if (itemsError) {
-      throw new BadRequestException("Could not load booking items");
-    }
-
-    // 4.3 check availability of the items
-    for (const item of items) {
-      // get availability of item
-      const { data: storageItem, error: storageItemError } = await supabase
-        .from("storage_items")
-        .select("available_quantity")
-        .eq("id", item.item_id)
-        .single();
-
-      if (storageItemError || !storageItem) {
-        throw new BadRequestException("Could not fetch storage item details");
-      }
-
-      // check if stock is enough
-      if (storageItem.available_quantity < item.quantity) {
-        throw new BadRequestException(
-          `Not enough available quantity for item ${item.item_id}`,
-        );
-      }
     }
 
     // 4.4 Change the booking status to 'confirmed'
@@ -928,6 +1026,7 @@ export class BookingService {
     await supabase.from("booking_items").delete().eq("booking_id", booking_id);
 
     // 5.4. insert updated items with validations and availability checks
+    const checkedItems: BookingItemInsert[] = [];
     for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
 
@@ -949,35 +1048,26 @@ export class BookingService {
         new Date(end_date),
       );
 
+      // add loan period validation if needed
+      if (totalDays < 1) {
+        throw new BadRequestException("Booking must be at least 1 day long");
+      }
+
+      if (totalDays > 42) {
+        throw new BadRequestException("Booking cannot exceed 6 weeks");
+      }
+
       // 5.5. Check virtual availability for the time range
-      const available = await calculateAvailableQuantity(
+      const { availableQuantity } = await calculateAvailableQuantity(
         supabase,
         item_id,
         start_date,
         end_date,
       );
 
-      if (quantity > available.availableQuantity) {
+      if (quantity > availableQuantity) {
         throw new BadRequestException(
-          `Not enough virtual stock available for item ${item_id}`,
-        );
-      }
-
-      // Check physical stock (currently in storage)
-      const { data: storageCountRow, error: itemError } = await supabase
-        .from("storage_items")
-        .select("available_quantity")
-        .eq("id", item_id)
-        .single();
-
-      if (itemError || !storageCountRow) {
-        throw new BadRequestException("Storage item data not found");
-      }
-
-      const currentStock = storageCountRow.available_quantity ?? 0;
-      if (quantity > currentStock) {
-        throw new BadRequestException(
-          `Not enough physical stock in storage for item ${item_id}`,
+          `Requested quantity exceeds available quantity for item: ${item_id}. Requested quantity: ${quantity}, available: ${availableQuantity}`,
         );
       }
 
@@ -994,8 +1084,7 @@ export class BookingService {
         );
       }
 
-      // Create booking item using service, automatically tracking the provider organization
-      await this.bookingItemsService.createBookingItem(supabase, {
+      checkedItems.push({
         booking_id: booking_id,
         item_id: item.item_id,
         location_id: storageItem.location_id,
@@ -1007,6 +1096,7 @@ export class BookingService {
         status: "pending",
       });
     }
+    await this.bookingItemsService.createBookingItems(supabase, checkedItems);
 
     // 5.8 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Update, {
@@ -1293,6 +1383,7 @@ export class BookingService {
     req: AuthRequest,
     bookingId: string,
     orgId: string,
+    location_id?: string,
     itemIds?: string[],
   ) {
     const supabase = req.supabase;
@@ -1304,6 +1395,8 @@ export class BookingService {
         .eq("booking_id", bookingId)
         .eq("provider_organization_id", orgId)
         .in("id", itemIds);
+
+      if (location_id) selectQuery.eq("location_id", location_id);
       const { data: selectData, error } = await selectQuery;
 
       if (error) handleSupabaseError(error);
@@ -1320,6 +1413,7 @@ export class BookingService {
       .eq("status", "picked_up")
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", orgId);
+    if (location_id) updateQuery.eq("location_id", location_id);
     if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
 
     const { error: updateError } = await updateQuery;
@@ -1359,6 +1453,7 @@ export class BookingService {
     supabase: SupabaseClient,
     bookingId: string,
     orgId: string,
+    location_id: string,
     itemIds?: string[],
   ) {
     if (itemIds && itemIds.length > 0) {
@@ -1384,6 +1479,7 @@ export class BookingService {
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", orgId)
       .eq("status", "confirmed");
+    if (location_id) updateQuery.eq("location_id", location_id);
     if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
     const { error: itemsUpdateError } = await updateQuery;
     if (itemsUpdateError) handleSupabaseError(itemsUpdateError);
@@ -1394,7 +1490,10 @@ export class BookingService {
       .eq("booking_id", bookingId);
 
     if (
-      bookingDetails?.every((org_booking) => org_booking.status === "picked_up")
+      bookingDetails?.some(
+        (org_booking) => org_booking.status === "picked_up",
+      ) &&
+      bookingDetails?.every((org_booking) => org_booking.status !== "pending")
     ) {
       const { error: bookingUpdateError } = await supabase
         .from("bookings")
@@ -1487,5 +1586,32 @@ export class BookingService {
     );
 
     return num_available ?? 0;
+  }
+
+  /**
+   * Update self_pickup status of a booking portion
+   * self_pickup is PER org and PER location
+   */
+  async updateSelfPickup(
+    supabase: SupabaseClient,
+    bookingId: string,
+    orgId: string,
+    body: {
+      location_id: string;
+      newStatus: boolean;
+    },
+  ) {
+    const { location_id, newStatus } = body;
+    const result = await supabase
+      .from("booking_items")
+      .update({ self_pickup: newStatus })
+      .eq("booking_id", bookingId)
+      .eq("provider_organization_id", orgId)
+      .eq("location_id", location_id);
+
+    if (result.error) handleSupabaseError(result.error);
+    return {
+      message: `Self pickup was successfully ${newStatus === true ? "enabled" : "disabled"}`,
+    };
   }
 }

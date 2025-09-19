@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
 import { JwtService } from "../jwt/jwt.service";
@@ -142,7 +143,7 @@ export class RoleService {
     const { user_id, organization_id, role_id }: CreateUserRoleDto =
       createRoleDto;
 
-    // Check if assignment already exists
+    // First check: Does this exact role assignment already exist?
     const { data: existing } = await req.supabase
       .from("user_organization_roles")
       .select("id")
@@ -157,7 +158,22 @@ export class RoleService {
       );
     }
 
-    // Create the role assignment
+    // Second check (before inserting!): Does user have ANY active role in this organization?
+    const { data: existingRole } = await req.supabase
+      .from("user_organization_roles")
+      .select("id, role_id")
+      .eq("user_id", user_id)
+      .eq("organization_id", organization_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (existingRole) {
+      throw new BadRequestException(
+        `User already has a role in this organization (role_id=${existingRole.role_id})`,
+      );
+    }
+
+    // Now create the role assignment since all checks have passed
     const { data, error } = await req.supabase
       .from("user_organization_roles")
       .insert({
@@ -172,21 +188,6 @@ export class RoleService {
     if (error) {
       this.logger.error(`Failed to create user role: ${error.message}`);
       throw new BadRequestException("Failed to create role assignment");
-    }
-
-    // Check if user already has any role in the target organization
-    const { data: existingRole } = await req.supabase
-      .from("user_organization_roles")
-      .select("id, role_id")
-      .eq("user_id", user_id)
-      .eq("organization_id", organization_id)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (existingRole) {
-      throw new BadRequestException(
-        `User already has a role in this organization (role_id=${existingRole.role_id})`,
-      );
     }
 
     // Get the complete role details using the view
@@ -204,7 +205,7 @@ export class RoleService {
     }
 
     // After successful role creation, update JWT
-    await this.updateUserJWT(createRoleDto.user_id, req);
+    await this.updateUserJWTById(createRoleDto.user_id);
 
     return roleDetails;
   }
@@ -286,7 +287,104 @@ export class RoleService {
     }
 
     // After successful role creation, update JWT
-    await this.updateUserJWT(existing.user_id, req);
+    await this.updateUserJWTById(existing.user_id);
+
+    return roleDetails;
+  }
+
+  /**
+   * Replace a user role (delete old role and create new one)
+   */
+  async replaceUserRole(
+    oldRoleId: string,
+    createRoleDto: CreateUserRoleDto,
+    req: AuthRequest,
+  ): Promise<ViewUserRolesWithDetails> {
+    // First check if old role exists
+    const { data: existingRole, error: existingError } = await req.supabase
+      .from("user_organization_roles")
+      .select("id, user_id, organization_id")
+      .eq("id", oldRoleId)
+      .single();
+
+    if (existingError || !existingRole) {
+      throw new NotFoundException("Original role assignment not found");
+    }
+
+    // Verify the new role is for the same user
+    if (existingRole.user_id !== createRoleDto.user_id) {
+      throw new BadRequestException(
+        "User ID mismatch between old and new role",
+      );
+    }
+
+    // Step 1: Delete the old role
+    const { error: deleteError } = await req.supabase
+      .from("user_organization_roles")
+      .delete()
+      .eq("id", oldRoleId);
+
+    if (deleteError) {
+      this.logger.error(`Failed to delete old role: ${deleteError.message}`);
+      throw new BadRequestException("Failed to delete old role assignment");
+    }
+
+    // Step 2: Create the new role
+    // Check if another role already exists in this org (which could happen if roles were modified during this operation)
+    const { data: conflictingRole } = await req.supabase
+      .from("user_organization_roles")
+      .select("id, role_id")
+      .eq("user_id", createRoleDto.user_id)
+      .eq("organization_id", createRoleDto.organization_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (conflictingRole) {
+      this.logger.warn(
+        `User already has another active role in this organization after deleting the old one: ${conflictingRole.id}`,
+      );
+      throw new BadRequestException(
+        `User already has a role in this organization (role_id=${conflictingRole.role_id})`,
+      );
+    }
+
+    // Create the new role assignment
+    const { data: newRole, error: createError } = await req.supabase
+      .from("user_organization_roles")
+      .insert({
+        user_id: createRoleDto.user_id,
+        organization_id: createRoleDto.organization_id,
+        role_id: createRoleDto.role_id,
+        is_active: true,
+      })
+      .select("id")
+      .single();
+
+    if (createError || !newRole) {
+      this.logger.error(`Failed to create new role: ${createError?.message}`);
+      throw new BadRequestException("Failed to create new role assignment");
+    }
+
+    // Get the complete role details using the view
+    const { data: roleDetails, error: viewError } = await req.supabase
+      .from("view_user_roles_with_details")
+      .select("*")
+      .eq("id", newRole.id)
+      .single();
+
+    if (viewError || !roleDetails) {
+      this.logger.error(
+        `Failed to fetch created role details: ${viewError?.message}`,
+      );
+      throw new BadRequestException("Failed to fetch created role details");
+    }
+
+    // After successful role replacement, update JWT
+    await this.updateUserJWTById(createRoleDto.user_id);
+
+    this.logger.log(
+      `Role replaced for user ${createRoleDto.user_id}: ${roleDetails.role_name}@${roleDetails.organization_name}`,
+    );
 
     return roleDetails;
   }
@@ -321,7 +419,7 @@ export class RoleService {
     }
 
     // After successful role deletion, update JWT
-    await this.updateUserJWT(existing.user_id, req);
+    await this.updateUserJWTById(existing.user_id);
 
     return {
       success: true,
@@ -363,12 +461,81 @@ export class RoleService {
     }
 
     // After successful permanent deletion, update JWT
-    await this.updateUserJWT(existing.user_id, req);
+    await this.updateUserJWTById(existing.user_id);
 
     return {
       success: true,
       message: "Role assignment permanently deleted",
     };
+  }
+
+  /**
+   * Allow the current authenticated user to permanently remove their own role assignment
+   * Performs ownership check and prevents removing the Global 'user' role.
+   */
+  async leaveOrg(
+    tableKeyId: string,
+    req: AuthRequest,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const { data: roleDetails, error: viewError } = await req.supabase
+        .from("view_user_roles_with_details")
+        .select("*")
+        .eq("id", tableKeyId)
+        .single();
+
+      if (viewError || !roleDetails) {
+        this.logger.warn(`leaveOrg: role ${tableKeyId} not found`);
+        throw new NotFoundException("Role assignment not found");
+      }
+
+      if (roleDetails.user_id !== req.user.id) {
+        this.logger.warn(
+          `User ${req.user.id} attempted to remove role ${tableKeyId} owned by ${roleDetails.user_id}`,
+        );
+        throw new BadRequestException("You may only remove your own role");
+      }
+
+      if (
+        roleDetails.role_name === "user" &&
+        roleDetails.organization_name === "Global"
+      ) {
+        this.logger.warn(
+          `User ${req.user.id} attempted to remove Global user role - blocked`,
+        );
+        throw new BadRequestException(
+          "Cannot remove the Global user role for this account",
+        );
+      }
+
+      // Perform the actual delete using the shared helper so admin and user
+      // flows use the same SQL and error handling. Use the request-scoped
+      // supabase client so RLS applies.
+      const { userId } = await this.deleteRoleRecordById(
+        tableKeyId,
+        req.supabase,
+      );
+
+      // Update the user's JWT after the removal
+      await this.updateUserJWT(userId, req);
+
+      return {
+        success: true,
+        message: "Role assignment permanently deleted",
+      };
+    } catch (err) {
+      // Re-throw known exceptions
+      if (
+        err instanceof NotFoundException ||
+        err instanceof BadRequestException
+      ) {
+        throw err;
+      }
+      this.logger.error(
+        `Failed to execute leaveOrg for ${tableKeyId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      throw new BadRequestException("Failed to leave organization");
+    }
   }
 
   /**
@@ -392,13 +559,54 @@ export class RoleService {
   }
 
   /**
+   * Low-level hard delete helper used by both admin and user flows.
+   * Returns the deleted record's user_id so callers can refresh JWT.
+   */
+  private async deleteRoleRecordById(
+    tableKeyId: string,
+    supabaseClient: SupabaseClient,
+  ): Promise<{ userId: string }> {
+    // Check if assignment exists and get user_id
+    const { data: existing, error: existingError } = await supabaseClient
+      .from("user_organization_roles")
+      .select("id, user_id")
+      .eq("id", tableKeyId)
+      .single();
+
+    if (existingError || !existing) {
+      this.logger.warn(`deleteRoleRecordById: role ${tableKeyId} not found`);
+      throw new NotFoundException("Role assignment not found");
+    }
+
+    // Perform hard delete
+    const { error } = await supabaseClient
+      .from("user_organization_roles")
+      .delete()
+      .eq("id", tableKeyId);
+
+    if (error) {
+      this.logger.error(
+        `Failed to delete role record ${tableKeyId}: ${error.message}`,
+      );
+      throw new BadRequestException("Failed to delete role assignment");
+    }
+
+    return { userId: existing.user_id };
+  }
+
+  /**
    * Filter user roles based on permissions
    */
   private filterUserRoles(
     roles: ViewUserRolesWithDetails[],
     req: AuthRequest,
   ): ViewUserRolesWithDetails[] {
-    // Admins can only see roles in their organizations
+    // Super admins can see all roles regardless of organization
+    if (this.hasRole(req, "super_admin")) {
+      return roles;
+    }
+
+    // Other admins can only see roles in their organizations
     const userOrgIds = req.userRoles.map((role) => role.organization_id);
     return roles.filter((role) => userOrgIds.includes(role.organization_id));
   }

@@ -2,7 +2,6 @@ import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   cancelBooking,
-  getUserBookings,
   selectUserBookings,
   selectBookingError,
   selectBookingLoading,
@@ -23,9 +22,12 @@ import {
   selectItemsWithLoadedImages,
   makeSelectItemImages,
 } from "@/store/slices/itemImagesSlice";
-import { BookingPreview, BookingItemWithDetails } from "@/types";
+import {
+  BookingPreview,
+  BookingItemWithDetails,
+  ExtendedBookingPreview,
+} from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle } from "lucide-react";
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -58,6 +60,13 @@ import InlineTimeframePicker from "./InlineTimeframeSelector";
 import { itemsApi } from "@/api/services/items";
 import Spinner from "./Spinner";
 import { useRoles } from "../hooks/useRoles";
+import BookingPickupButton from "./Admin/Bookings/BookingPickupButton";
+import { formatBookingStatus } from "@/utils/format";
+import {
+  selectCurrentUserRoles,
+  setActiveRoleContext,
+} from "@/store/slices/rolesSlice";
+import BookingReturnButton from "./Admin/Bookings/BookingReturnButton";
 
 const MyBookings = () => {
   const dispatch = useAppDispatch();
@@ -83,7 +92,7 @@ const MyBookings = () => {
     [itemId: string]: number;
   }>({});
   const [loadingAvailability, setLoadingAvailability] = useState(false);
-
+  const currentUserRoles = useAppSelector(selectCurrentUserRoles);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const selectedBooking = useAppSelector(selectCurrentBooking);
@@ -92,17 +101,26 @@ const MyBookings = () => {
     selectBookingItemsPagination,
   );
   const [currentItemPage, setCurrentItemPage] = useState(1);
+  const { activeContext } = useRoles();
+  const { roleName } = activeContext;
 
   const { totalPages } = useAppSelector(selectBookingPagination);
-  const isMobile = useIsMobile();
+  const { isMobile } = useIsMobile();
   const itemsLoading = useAppSelector(selectCurrentBookingLoading);
 
   // Translation
   const { lang } = useLanguage();
   const { formatDate: formatDateLocalized } = useFormattedDate();
 
-  const { activeContext } = useRoles();
-
+  const statusFilterOptions = [
+    "all",
+    "pending",
+    "confirmed",
+    "rejected",
+    "completed",
+    "picked_up",
+    "cancelled",
+  ];
   const handleEditBooking = async (booking: BookingPreview) => {
     setLoadingAvailability(true);
     setShowEditModal(true);
@@ -111,6 +129,16 @@ const MyBookings = () => {
     dispatch(selectBooking(booking));
     dispatch(clearCurrentBookingItems());
     await dispatch(getBookingItems(booking.id));
+  };
+
+  const refetchBookings = () => {
+    if (user)
+      void dispatch(
+        getOwnBookings({
+          page: currentPage + 1,
+          limit: 10,
+        }),
+      );
   };
 
   useEffect(() => {
@@ -168,14 +196,12 @@ const MyBookings = () => {
       return;
     }
 
-    const { roleName } = activeContext;
     if (roleName === "super_admin" || roleName === null) {
       return;
     }
 
     if (!hasFetchedBookings || activeContext) {
       const { organizationId } = activeContext;
-      const userId = user.id;
 
       // Ensure organizationId is valid
       if (!organizationId) {
@@ -187,9 +213,6 @@ const MyBookings = () => {
         getOwnBookings({
           page: currentPage + 1,
           limit: 10,
-          activeOrgId: organizationId,
-          activeRole: roleName,
-          userId,
         }),
       )
         .unwrap()
@@ -204,6 +227,7 @@ const MyBookings = () => {
     hasFetchedBookings,
     currentPage,
     activeContext,
+    roleName,
   ]);
 
   // Reset to first page when filters change
@@ -258,8 +282,7 @@ const MyBookings = () => {
         toast.warning(t.myBookings.edit.toast.emptyCancelled[lang]);
         if (user?.id) {
           void dispatch(
-            getUserBookings({
-              user_id: user.id,
+            getOwnBookings({
               page: currentPage,
               limit: 10,
             }),
@@ -285,8 +308,7 @@ const MyBookings = () => {
       setShowEditModal(false);
       if (user?.id) {
         void dispatch(
-          getUserBookings({
-            user_id: user.id,
+          getOwnBookings({
             page: currentPage,
             limit: 10,
           }),
@@ -344,7 +366,8 @@ const MyBookings = () => {
   /**
    * Columns of booking
    */
-  const columns: ColumnDef<BookingPreview>[] = [
+
+  const columns: ColumnDef<ExtendedBookingPreview>[] = [
     {
       accessorKey: "booking_number",
       header: t.myBookings.columns.bookingNumber[lang],
@@ -352,7 +375,9 @@ const MyBookings = () => {
     {
       accessorKey: "status",
       header: t.myBookings.columns.status[lang],
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => (
+        <StatusBadge status={formatBookingStatus(row.original.status)} />
+      ),
     },
     {
       accessorKey: "created_at",
@@ -363,8 +388,19 @@ const MyBookings = () => {
       id: "actions",
       cell: ({ row }) => {
         const booking = row.original;
+        const hasBeenReviewed = booking.status !== "pending";
+        const orgsWithPickup = booking.orgs
+          ?.filter((o) => o.locations.some((l) => l.self_pickup === true))
+          .map((o) => ({
+            ...o,
+            locations: o.locations?.filter((l) => l.self_pickup === true),
+          }));
         const isPending = booking.status === "pending";
-
+        const orgs_with_picked_up_items = orgsWithPickup?.filter(
+          (o) =>
+            o.org_booking_status !== "completed" &&
+            o.locations.some((l) => l.pickup_status === "picked_up"),
+        );
         return (
           <div className="flex space-x-2">
             <BookingDetailsButton
@@ -383,6 +419,37 @@ const MyBookings = () => {
                   closeModal={() => setShowDetailsModal(false)}
                 />
               </>
+            )}
+            {hasBeenReviewed &&
+              orgsWithPickup?.length > 0 &&
+              orgsWithPickup?.flatMap((o) =>
+                o.locations
+                  ?.filter((l) => l.pickup_status === "confirmed")
+                  .map((l) => (
+                    <BookingPickupButton
+                      onSuccess={refetchBookings}
+                      location_id={l.id}
+                      key={`pickup-${l.id}`}
+                      id={booking.id}
+                      className="gap-1"
+                      org_id={o.id}
+                    >
+                      {l.name}
+                    </BookingPickupButton>
+                  )),
+              )}
+            {orgs_with_picked_up_items.map((o) =>
+              o.locations.map((loc) => (
+                <BookingReturnButton
+                  key={`${o.id}-${loc.id}`}
+                  org_id={o.id}
+                  location_id={loc.id}
+                  id={booking.id}
+                  onSuccess={refetchBookings}
+                >
+                  {loc.name}
+                </BookingReturnButton>
+              )),
             )}
           </div>
         );
@@ -457,12 +524,27 @@ const MyBookings = () => {
     },
   ];
 
+  const globalUser = currentUserRoles.find(
+    (r) => r.organization_name === "Global",
+  );
+
+  const viewPersonalBookings = () =>
+    dispatch(
+      setActiveRoleContext({
+        organizationId: globalUser?.organization_id,
+        roleName: globalUser?.role_name,
+        organizationName: globalUser?.organization_name,
+      }),
+    );
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center p-8">
-        <LoaderCircle className="animate-spin h-8 w-8 mr-2" />
-        <span>{t.myBookings.loading[lang]}</span>
-      </div>
+      <Spinner
+        containerClasses="flex-1 gap-3 text-primary text-sm"
+        loaderClasses="text-secondary w-8 h-8"
+      >
+        Loading Bookings
+      </Spinner>
     );
   }
 
@@ -478,8 +560,7 @@ const MyBookings = () => {
               return;
             }
             void dispatch(
-              getUserBookings({
-                user_id: user.id,
+              getOwnBookings({
                 page: currentPage,
                 limit: 10,
               }),
@@ -494,75 +575,70 @@ const MyBookings = () => {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg">
-      <div className="space-y-4">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg min-h-[250px]">
+      <div className="space-y-4 min-h-[250px]">
         {/* Filtering UI */}
-        <div className="flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex gap-4 items-center">
-            <input
-              type="text"
-              placeholder={t.myBookings.filter.searchPlaceholder[lang]}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-            />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-            >
-              <option value="all">
-                {t.myBookings.filter.allStatuses[lang]}
-              </option>
-              <option value="pending">
-                {t.myBookings.status.pending[lang]}
-              </option>
-              <option value="confirmed">
-                {t.myBookings.status.confirmed[lang]}
-              </option>
-              <option value="cancelled">
-                {t.myBookings.status.cancelled[lang]}
-              </option>
-              <option value="rejected">
-                {t.myBookings.status.rejected[lang]}
-              </option>
-              <option value="completed">
-                {t.myBookings.status.completed[lang]}
-              </option>
-              <option value="deleted">
-                {t.myBookings.status.deleted[lang]}
-              </option>
-              <option value="cancelled by admin">
-                {t.myBookings.status.cancelledByAdmin[lang]}
-              </option>
-            </select>
-            {(searchQuery || statusFilter !== "all") && (
-              <Button
-                onClick={() => {
-                  setSearchQuery("");
-                  setStatusFilter("all");
-                }}
-                size={"sm"}
-                className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+        {activeContext.roleName !== "super_admin" && bookings.length > 0 && (
+          <div className="flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex gap-4 items-center">
+              <input
+                type="text"
+                placeholder={t.myBookings.filter.searchPlaceholder[lang]}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+              />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
               >
-                {t.myBookings.buttons.clearFilters[lang]}
-              </Button>
-            )}
+                {statusFilterOptions.map((o) => (
+                  <option key={`option-${o}`} value={o}>
+                    {
+                      t.myBookings.status[
+                        o as keyof typeof t.myBookings.status
+                      ]?.[lang]
+                    }
+                  </option>
+                ))}
+              </select>
+              {(searchQuery || statusFilter !== "all") && (
+                <Button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setStatusFilter("all");
+                  }}
+                  size={"sm"}
+                  className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+                >
+                  {t.myBookings.buttons.clearFilters[lang]}
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* BookingPreview table or empty state */}
         {activeContext.roleName === "super_admin" ? (
           <div className="text-center py-8 bg-slate-50 rounded-lg">
-            <p className="text-lg mb-2">
+            <p className="text-lg mb-1">
               {t.myBookings.error.insufficientRole[lang]}
             </p>
             <p className="text-muted-foreground mb-4">
               {t.myBookings.error.insufficientRoleDescription[lang]}
             </p>
+            <div className="flex gap-2 justify-center">
+              <Button variant="default" onClick={() => navigate(-1)}>
+                Back
+              </Button>
+              <Button variant="outline" onClick={viewPersonalBookings}>
+                View personal bookings
+              </Button>
+            </div>
           </div>
         ) : (
-          bookings.length === 0 && (
+          bookings?.length === 0 && (
             <div className="text-center py-8 bg-slate-50 rounded-lg">
               <p className="text-lg mb-2">
                 {t.myBookings.emptyState.title[lang]}
@@ -607,7 +683,7 @@ const MyBookings = () => {
                     {/* booking Items */}
                     {selectedBooking && selectedBooking.booking_items && (
                       <>
-                        <div className="bg-slate-50 rounded-md">
+                        <div className="bg-slate-50 rounded-md ">
                           <p className="text-md font-semibold">
                             {t.myBookings.bookingDetails.items[lang]}:
                           </p>
@@ -658,17 +734,20 @@ const MyBookings = () => {
             ))}
           </Accordion>
         )}
-
-        {totalPages > 1 ? (
-          <PaginatedDataTable
-            columns={columns}
-            data={bookings}
-            pageIndex={currentPage}
-            pageCount={totalPages}
-            onPageChange={handlePageChange}
-          />
-        ) : (
-          <DataTable data={bookings} columns={columns} />
+        {activeContext.roleName !== "super_admin" && bookings.length > 0 && (
+          <>
+            {totalPages > 1 ? (
+              <PaginatedDataTable
+                columns={columns}
+                data={bookings}
+                pageIndex={currentPage}
+                pageCount={totalPages}
+                onPageChange={handlePageChange}
+              />
+            ) : (
+              <DataTable data={bookings} columns={columns} />
+            )}
+          </>
         )}
       </div>
 
@@ -852,7 +931,7 @@ const MyBookings = () => {
               </div>
 
               {/* Booking Items */}
-              {itemsLoading || loadingAvailability ? (
+              {bookings.length > 0 && (itemsLoading || loadingAvailability) ? (
                 <Spinner containerClasses="py-8" />
               ) : (
                 <div>

@@ -113,7 +113,9 @@ export class UserController {
     @Req() req: AuthRequest,
   ): Promise<ApiSingleResponse<number>> {
     const supabase = req.supabase;
-    return this.userService.getUserCount(supabase);
+    const activeOrgId = req.headers["x-org-id"] as string | undefined;
+    const activeRole = req.headers["x-role-name"] as string | undefined;
+    return this.userService.getUserCount(supabase, activeOrgId, activeRole);
   }
 
   /**
@@ -168,15 +170,26 @@ export class UserController {
    * @param req - Authenticated request object
    * @returns void
    */
-  //TODO: also delete sensitive data from auth table; add delete self
   @Delete(":id")
-  @Roles(["super_admin"], {
-    match: "any",
-  })
+  @Roles(
+    ["user", "requester", "storage_manager", "tenant_admin", "super_admin"],
+    {
+      match: "any",
+    },
+  )
   async deleteUser(
     @Param("id") id: string,
     @Req() req: AuthRequest,
   ): Promise<void> {
+    const userId = req.user?.id;
+    const userRole = req.headers["x-role-name"] as string;
+
+    // Allow users to delete themselves or super_admin to delete anyone
+    if (userRole !== "super_admin" && userId !== id) {
+      throw new BadRequestException(
+        "You are not authorized to delete this user.",
+      );
+    }
     return this.userService.deleteUser(id, req);
   }
 

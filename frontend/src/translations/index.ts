@@ -1,7 +1,7 @@
 import { addCategory } from "./modules/addCategory";
 import { addItemForm } from "./modules/addItemForm";
 import { addLocationModal } from "./modules/addLocationModal";
-import { addTagModal } from "./modules/addTagModal";
+import { addTag } from "./modules/addTag";
 import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
 import { adminPanel } from "./modules/adminPanel";
@@ -38,6 +38,7 @@ import { landingPage } from "./modules/landingPage";
 import { locationsList } from "./modules/locationsList";
 import { login } from "./modules/login";
 import { logs } from "./modules/logs";
+import { mobileMenu } from "./modules/mobileMenu";
 import { myBookings } from "./modules/myBookings";
 import { myProfile } from "./modules/myProfile";
 import { navigation } from "./modules/navigation";
@@ -57,14 +58,13 @@ import { passwordReset } from "./modules/passwordReset";
 import { passwordResetResult } from "./modules/passwordResetResult";
 import { privacyPolicy } from "./modules/privacyPolicy";
 import { profilePicUploader } from "./modules/profilePicUploader";
-import { roleContextSwitcher } from "./modules/roleContextSwitcher";
 import { roleManagement } from "./modules/roleManagement";
 import { rolesList } from "./modules/rolesList";
 import { statusBadge } from "./modules/statusBadge";
 import { stepper } from "./modules/stepper";
 import { tagAssignForm } from "./modules/tagAssignForm";
 import { tagDelete } from "./modules/tagDelete";
-import { tagDetail } from "./modules/tagDetail";
+import { tagDetailsPage } from "./modules/tagDetailsPage";
 import { tagList } from "./modules/tagList";
 import { termsOfUse } from "./modules/termsOfUse";
 import { timeframeSelector } from "./modules/timeframeSelector";
@@ -72,12 +72,11 @@ import { uiComponents } from "./modules/uiComponents";
 import { unauthorized } from "./modules/unauthorized";
 import { unbanUser } from "./modules/unbanUser";
 import { updateItemForm } from "./modules/updateItemForm";
-import { updateItemModal } from "./modules/updateItemModal";
 import { userBan } from "./modules/userBan";
 import { userBanHistory } from "./modules/userBanHistory";
 import { userDelete } from "./modules/userDelete";
-import { userEditModal } from "./modules/userEditModal";
 import { userGuide } from "./modules/userGuide";
+import { userMenu } from "./modules/userMenu";
 import { userPanel } from "./modules/userPanel";
 import { usersDetailsPage } from "./modules/usersDetailsPage";
 import { userSignupModal } from "./modules/userSignupModal";
@@ -87,7 +86,7 @@ export const t = {
   addCategory,
   addItemForm,
   addLocationModal,
-  addTagModal,
+  addTag,
   adminDashboard,
   adminItemsTable,
   adminPanel,
@@ -124,6 +123,7 @@ export const t = {
   locationsList,
   login,
   logs,
+  mobileMenu,
   myBookings,
   myProfile,
   navigation,
@@ -141,14 +141,13 @@ export const t = {
   passwordResetResult,
   privacyPolicy,
   profilePicUploader,
-  roleContextSwitcher,
   roleManagement,
   rolesList,
   statusBadge,
   stepper,
   tagAssignForm,
   tagDelete,
-  tagDetail,
+  tagDetailsPage,
   tagList,
   termsOfUse,
   timeframeSelector,
@@ -156,12 +155,11 @@ export const t = {
   unauthorized,
   unbanUser,
   updateItemForm,
-  updateItemModal,
   userBan,
   userBanHistory,
   userDelete,
-  userEditModal,
   userGuide,
+  userMenu,
   userPanel,
   userSignupModal,
   usersDetailsPage,
