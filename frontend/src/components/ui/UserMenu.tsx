@@ -152,6 +152,7 @@ export const UserMenu: React.FC = () => {
               </NavigationMenuLink>
               {roleOptions.map((opt) => (
                 <NavigationMenuLink
+                  key={`org-opt-${opt.orgName}`}
                   onClick={() =>
                     handleContextChange(`${opt.orgId}:${opt.roleName}`)
                   }
@@ -174,6 +175,7 @@ export const UserMenu: React.FC = () => {
               {SUPPORTED_LANGUAGES.map((l) => (
                 <NavigationMenuLink
                   asChild
+                  key={`lang-opt-${l.key}`}
                   onClick={() => {
                     setLanguage(l.key as Language);
                     setSelectGroup("links");
