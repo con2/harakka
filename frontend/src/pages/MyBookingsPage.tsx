@@ -242,12 +242,22 @@ const MyBookingsPage = () => {
       },
     },
     {
+      accessorKey: "status",
+      header: t.myBookingsPage.columns.status[lang],
+      cell: ({ row }) => {
+        const item = row.original;
+        return <StatusBadge status={item.status} />;
+      },
+    },
+    {
       id: "self_pickup",
-      header: t.myBookingsPage.columns.selfPickup[lang],
+      header:
+        booking?.status === "pending"
+          ? ""
+          : t.myBookingsPage.columns.selfPickup[lang],
       cell: ({ row }) => {
         const item = row.original;
 
-        // Only show pickup options if booking is not pending and item supports self-pickup
         if (booking?.status === "pending" || !item.self_pickup) {
           return null;
         }
@@ -258,7 +268,6 @@ const MyBookingsPage = () => {
         );
         const location = org?.locations?.find((l) => l.id === item.location_id);
 
-        // Only show buttons if location has self_pickup enabled and confirmed status
         if (!location?.self_pickup || location.pickup_status !== "confirmed") {
           return null;
         }
