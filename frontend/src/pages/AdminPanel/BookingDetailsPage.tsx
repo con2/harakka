@@ -624,11 +624,16 @@ const BookingDetailsPage = () => {
           {t.bookingDetailsPage.modal.bookingDetails[lang]}{" "}
           {booking.booking_number}
         </h3>
-        <Button onClick={() => setShowEdit((s) => !s)} variant="outline">
-          {showEdit
-            ? t.bookingDetailsPage.edit.buttons.cancel[lang]
-            : t.bookingDetailsPage.edit.buttons.editBooking[lang]}
-        </Button>
+        {(booking.org_status_for_active_org === "pending" ||
+          booking.org_status_for_active_org === "confirmed") &&
+          (activeRole === "tenant_admin" ||
+            activeRole === "storage_manager") && (
+            <Button onClick={() => setShowEdit((s) => !s)} variant="outline">
+              {showEdit
+                ? t.bookingDetailsPage.edit.buttons.cancel[lang]
+                : t.bookingDetailsPage.edit.buttons.editBooking[lang]}
+            </Button>
+          )}
       </div>
 
       <div className="mb-4  border-1 border-(muted-foreground) rounded bg-white">
