@@ -26,7 +26,6 @@ import {
 } from "@/store/slices/itemImagesSlice";
 import { BookingItemWithDetails } from "@/types";
 import InlineTimeframePicker from "@/components/InlineTimeframeSelector";
-import { itemsApi } from "@/api/services/items";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -36,6 +35,7 @@ import {
   decrementQuantity,
   incrementQuantity,
   updateQuantity,
+  fetchItemsAvailability,
 } from "@/utils/quantityHelpers";
 
 const MyBookingsPage = () => {
@@ -111,27 +111,15 @@ const MyBookingsPage = () => {
 
   // Availability check when timeframe or items change
   useEffect(() => {
-    const fetchAvailability = async () => {
-      if (!globalStartDate || !globalEndDate) return;
-      setLoadingAvailability(true);
-      const promises = editFormItems.map(async (item) => {
-        try {
-          const data = await itemsApi.checkAvailability(
-            item.item_id,
-            new Date(globalStartDate),
-            new Date(globalEndDate),
-          );
-          const corrected = data.availableQuantity + (item.quantity ?? 0);
-          setAvailability((prev) => ({ ...prev, [item.item_id]: corrected }));
-        } catch {
-          /* ignore availability errors */
-        }
-      });
-      await Promise.all(promises);
-      setLoadingAvailability(false);
-    };
+    if (!globalStartDate || !globalEndDate) return;
 
-    void fetchAvailability();
+    void fetchItemsAvailability(
+      editFormItems,
+      globalStartDate,
+      globalEndDate,
+      setAvailability,
+      setLoadingAvailability,
+    );
   }, [globalStartDate, globalEndDate, editFormItems]);
 
   // ItemImage selector using itemImagesSlice

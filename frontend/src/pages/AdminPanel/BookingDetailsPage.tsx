@@ -41,13 +41,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import InlineTimeframePicker from "@/components/InlineTimeframeSelector";
-import { itemsApi } from "@/api/services/items";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { selectActiveRoleName } from "@/store/slices/rolesSlice";
 import {
   decrementQuantity,
   incrementQuantity,
   updateQuantity,
+  fetchItemsAvailability,
 } from "@/utils/quantityHelpers";
 
 const BookingDetailsPage = () => {
@@ -113,27 +113,15 @@ const BookingDetailsPage = () => {
 
   // Availability check when timeframe or items change during edit mode
   useEffect(() => {
-    const fetchAvailability = async () => {
-      if (!globalStartDate || !globalEndDate || !showEdit) return;
-      setLoadingAvailability(true);
-      const promises = editFormItems.map(async (item) => {
-        try {
-          const data = await itemsApi.checkAvailability(
-            item.item_id,
-            new Date(globalStartDate),
-            new Date(globalEndDate),
-          );
-          const corrected = data.availableQuantity + (item.quantity ?? 0);
-          setAvailability((prev) => ({ ...prev, [item.item_id]: corrected }));
-        } catch {
-          /* ignore availability errors */
-        }
-      });
-      await Promise.all(promises);
-      setLoadingAvailability(false);
-    };
+    if (!globalStartDate || !globalEndDate || !showEdit) return;
 
-    void fetchAvailability();
+    void fetchItemsAvailability(
+      editFormItems,
+      globalStartDate,
+      globalEndDate,
+      setAvailability,
+      setLoadingAvailability,
+    );
   }, [globalStartDate, globalEndDate, editFormItems, showEdit]);
 
   // Track selected item IDs for bulk actions

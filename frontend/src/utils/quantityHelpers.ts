@@ -3,6 +3,7 @@
  */
 
 import { Dispatch, SetStateAction } from "react";
+import { itemsApi } from "@/api/services/items";
 
 /**
  * Interface for items that can have their quantity modified
@@ -72,4 +73,60 @@ export const updateQuantity = <T extends QuantityItem>(
   const finalQuantity = Math.min(newQuantity, maxAllowed);
 
   setItemQuantities((prev) => ({ ...prev, [key]: finalQuantity }));
+};
+
+/**
+ * Fetches availability for a list of items within a date range
+ * @param items - Array of items to check availability for
+ * @param startDate - Start date for availability check
+ * @param endDate - End date for availability check
+ * @param setAvailability - State setter for availability data
+ * @param setLoadingAvailability - State setter for loading state
+ */
+export const fetchItemsAvailability = async <T extends QuantityItem>(
+  items: T[],
+  startDate: string,
+  endDate: string,
+  setAvailability: Dispatch<SetStateAction<{ [itemId: string]: number }>>,
+  setLoadingAvailability: Dispatch<SetStateAction<boolean>>,
+) => {
+  if (!startDate || !endDate || items.length === 0) return;
+
+  setLoadingAvailability(true);
+
+  try {
+    const promises = items.map(async (item) => {
+      try {
+        const data = await itemsApi.checkAvailability(
+          item.item_id,
+          new Date(startDate),
+          new Date(endDate),
+        );
+        // Add current item quantity back to available quantity
+        // (since the item is currently "using" that quantity)
+        const corrected = data.availableQuantity + (item.quantity ?? 0);
+        return { itemId: item.item_id, availability: corrected };
+      } catch {
+        // Return null for failed availability checks
+        return { itemId: item.item_id, availability: null };
+      }
+    });
+
+    const results = await Promise.all(promises);
+
+    // Update availability state with results
+    setAvailability((prev) => {
+      const newAvailability = { ...prev };
+      results.forEach(({ itemId, availability }) => {
+        if (availability !== null) {
+          newAvailability[itemId] = availability;
+        }
+      });
+      return newAvailability;
+    });
+  } catch (error) {
+    console.error("Failed to fetch item availability:", error);
+  } finally {
+    setLoadingAvailability(false);
+  }
 };
