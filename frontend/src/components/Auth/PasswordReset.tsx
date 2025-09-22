@@ -7,6 +7,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { toast } from "sonner";
+import hero from "@/assets/illusiaImage.jpg";
 
 const PasswordReset = () => {
   const navigate = useNavigate();
@@ -33,9 +35,7 @@ const PasswordReset = () => {
       }
 
       if (!tokenFromQuery || type !== "recovery") {
-        setError(
-          "Invalid or missing tokens. Please request a new password reset link.",
-        );
+        setError(t.passwordReset.errors.invalidSession[lang]);
         return;
       }
 
@@ -63,15 +63,13 @@ const PasswordReset = () => {
             )?.value;
 
             if (!newPassword) {
-              setError("Password field not found or empty");
+              setError(t.passwordReset.errors.noPassword[lang]);
               setIsSubmitting(false);
               return;
             }
 
             if (!recoveryToken) {
-              setError(
-                "No valid session found. Please try resetting your password again.",
-              );
+              setError(t.passwordReset.errors.invalidSession[lang]);
               return;
             }
 
@@ -85,10 +83,11 @@ const PasswordReset = () => {
               return;
             }
 
-            void navigate("/password-reset-success", { replace: true });
+            toast.success(t.passwordReset.messages.reset.success[lang]);
+            void navigate("/login", { replace: true });
           } catch (error) {
             console.error("Error during password update:", error);
-            setError("An unexpected error occurred");
+            setError(t.passwordReset.errors.unknownError[lang]);
             setIsSubmitting(false);
           }
         });
@@ -100,7 +99,7 @@ const PasswordReset = () => {
   }, [navigate, recoveryToken]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="flex min-h-screen relative items-center justify-center p-4 pb-0">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
           <CardTitle className="text-center text-xl">
@@ -160,6 +159,12 @@ const PasswordReset = () => {
           )}
         </CardContent>
       </Card>
+      <div
+        className="absolute inset-[-8px] bg-cover bg-center -z-10 h-full filter brightness-[0.6] blur-[3px] top-0 scale-[1.01]"
+        style={{
+          backgroundImage: `url(${hero})`,
+        }}
+      />
     </div>
   );
 };
