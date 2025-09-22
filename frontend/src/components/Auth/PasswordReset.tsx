@@ -7,7 +7,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import { toast } from "sonner";
 import hero from "@/assets/illusiaImage.jpg";
 
 const PasswordReset = () => {
@@ -100,7 +99,7 @@ const PasswordReset = () => {
 
     const timer = setTimeout(formSubmitListener, 1500);
     return () => clearTimeout(timer);
-  }, [navigate, recoveryToken]) //eslint-disable-line
+  }, [navigate, recoveryToken]); //eslint-disable-line
 
   return (
     <div className="flex min-h-screen relative items-center justify-center p-4 pb-0">
