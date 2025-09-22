@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ChevronRight, SlidersIcon } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
-import { Star } from "lucide-react";
 import {
   fetchAllLocations,
   selectAllLocations,
@@ -424,45 +423,6 @@ const UserPanel = () => {
                 <Separator className="my-2" />
               </div>
             )}
-
-            {/* Rating filter */}
-            <div className="my-4">
-              <label className="text-primary block mb-4">
-                {" "}
-                {t.userPanel.rating.title[lang]}
-              </label>
-              <div className="flex flex-col gap-3">
-                {[5, 4, 3, 2, 1].map((rating) => {
-                  const isChecked = filters.averageRating.includes(rating);
-                  return (
-                    <label
-                      key={rating}
-                      className="flex items-center gap-2 cursor-pointer text-slate-600 hover:text-secondary hover:cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => {
-                          const updated = isChecked
-                            ? filters.averageRating.filter((r) => r !== rating)
-                            : [...filters.averageRating, rating];
-                          handleFilterChange("averageRating", updated);
-                        }}
-                        className="accent-secondary"
-                      />
-                      <div className="flex items-center">
-                        {Array.from({ length: rating }, (_, i) => (
-                          <Star
-                            key={i}
-                            className="w-4 h-4 fill-secondary text-secondary"
-                          />
-                        ))}
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
 
             {countActiveFilters() > 0 && (
               <div>
