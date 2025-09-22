@@ -56,6 +56,38 @@ const MyBookingsPage = () => {
     return userBookings.find((ub) => ub.id === booking.id) || null;
   }, [booking?.id, userBookings]);
 
+  // Group booking items by organization
+  const groupBookingItemsByOrg = (
+    items: BookingItemWithDetails[],
+  ): {
+    orgName: string;
+    items: BookingItemWithDetails[];
+  }[] => {
+    const groups = items.reduce<Map<string, BookingItemWithDetails[]>>(
+      (map, item) => {
+        const orgName =
+          item?.org_name ||
+          (item as BookingItemWithDetails & { provider_org?: { name: string } })
+            ?.provider_org?.name ||
+          "Unknown Organization";
+        const key = orgName.toString();
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(item);
+        return map;
+      },
+      new Map(),
+    );
+
+    return [...groups.entries()]
+      .sort(([aName], [bName]) => aName.localeCompare(bName, undefined))
+      .map(([orgName, orgItems]) => ({ orgName, items: orgItems }));
+  };
+
+  const groupedBookingItems = useMemo(() => {
+    if (!booking?.booking_items) return [];
+    return groupBookingItemsByOrg(booking.booking_items);
+  }, [booking?.booking_items]);
+
   const [showEdit, setShowEdit] = useState(false);
   const [editFormItems, setEditFormItems] = useState<BookingItemWithDetails[]>(
     [],
@@ -570,15 +602,23 @@ const MyBookingsPage = () => {
               <Spinner containerClasses="py-8" />
             ) : (
               <div>
-                <h3 className="font-normal text-sm mb-2">
-                  {t.myBookingsPage.bookingDetails.items[lang]}
-                </h3>
-                <div className="border rounded-md overflow-hidden">
-                  <DataTable
-                    columns={bookingColumns}
-                    data={booking.booking_items || []}
-                  />
-                </div>
+                {/* Grouped booking items by organization */}
+                {groupedBookingItems.map((orgGroup, index) => (
+                  <div
+                    key={orgGroup.orgName || `org-${index}`}
+                    className="mb-4"
+                  >
+                    <h4 className="text-md font-medium mb-2 text-gray-700 border-b pb-1">
+                      {orgGroup.orgName || "Unknown Organization"}
+                    </h4>
+                    <div className="border rounded-md overflow-hidden">
+                      <DataTable
+                        columns={bookingColumns}
+                        data={orgGroup.items}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
