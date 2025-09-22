@@ -92,7 +92,7 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
-          <UserMenu />
+          {isLoggedIn && <UserMenu />}
           {!authLoading && !isLoggedIn && (
             <>
               <LanguageSwitcher />
@@ -147,7 +147,7 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
-          <UserMenu />
+          {isLoggedIn && <UserMenu />}
           {!authLoading && !isLoggedIn && (
             <>
               <LanguageSwitcher />
@@ -235,10 +235,10 @@ export const Navigation = () => {
             {/* Contact Form Only in Desktop view for non admins*/}
             {!isAnyTypeOfAdmin && (
               <NavigationMenuItem className="hidden md:flex">
-                <NavigationMenuLink asChild className="text-base">
+                <NavigationMenuLink asChild>
                   <Link
                     to="/contact-us"
-                    className="flex items-center gap-1 text-(--midnight-black) text-base"
+                    className="flex items-center gap-1 text-(--midnight-black)"
                     data-cy="nav-contact"
                   >
                     {t.navigation.contactUs[lang]}
@@ -277,7 +277,7 @@ export const Navigation = () => {
               data-cy="nav-login-btn"
               asChild
             >
-              <Link to="/login">
+              <Link to="/login" className="font-main">
                 {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
               </Link>
             </Button>
