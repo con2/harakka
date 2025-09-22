@@ -51,23 +51,30 @@ const UserPanel = () => {
   }, []);
 
   // Shared expand/collapse state per filter list (max 5 visible by default)
-  type ExpandableSection = "itemTypes" | "organizations" | "locations" | "tags";
+  type ExpandableSection =
+    | "itemTypes"
+    | "organizations"
+    | "locations"
+    | "tags"
+    | "categories";
   const MAX_VISIBLE = 5;
   const [expanded, setExpanded] = useState<Record<ExpandableSection, boolean>>({
     itemTypes: false,
     organizations: false,
     locations: false,
     tags: false,
+    categories: false,
   });
   const toggleExpanded = (key: ExpandableSection) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
     expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
 
-  const mappedCategories = buildCategoryTree(categories);
   const visibleOrganizations = getVisible(organizations, "organizations");
   const visibleLocations = getVisible(locations, "locations");
   const visibleTags = getVisible(tags, "tags");
+  const mappedCategories = buildCategoryTree(categories);
+  const visibleCategories = getVisible(mappedCategories, "categories");
 
   // filter states
   const [filters, setFilters] = useState<{
@@ -190,13 +197,13 @@ const UserPanel = () => {
             </div>
             <Separator className="my-4" />
 
-            {/* Categories / item_types*/}
+            {/* Categories/ item_types*/}
             <div className="flex flex-col flex-wrap gap-3">
               <label className="text-primary text-md block mb-0">
                 {" "}
                 {t.userPanel.filters.categories[lang]}
               </label>
-              {mappedCategories.map((cat) => {
+              {visibleCategories.map((cat) => {
                 const subcatIds = cat.subcategories?.flatMap((c) => c.id);
                 const isSelected = filters.category === cat.id;
                 const hasChildSelected = subcatIds?.includes(filters.category);
@@ -236,6 +243,17 @@ const UserPanel = () => {
                   </div>
                 );
               })}
+              {mappedCategories.length > MAX_VISIBLE && (
+                <Button
+                  variant="ghost"
+                  className="text-left text-sm text-secondary"
+                  onClick={() => toggleExpanded("categories")}
+                >
+                  {expanded.categories
+                    ? t.userPanel.categories.showLess[lang]
+                    : t.userPanel.categories.seeAll[lang]}
+                </Button>
+              )}
             </div>
 
             <Separator className="my-4" />
