@@ -5,6 +5,7 @@ import { fetchCurrentUserRoles } from "@/store/slices/rolesSlice";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 import { toast } from "sonner";
+import { t } from "@/translations";
 
 // Cache the token to avoid unnecessary async calls
 let cachedToken: string | null = null;
@@ -81,32 +82,40 @@ api.interceptors.response.use(
     // Check for role version header
     const roleVersion = response.headers["x-role-version"];
     if (roleVersion) {
-      const lastKnownVersion = localStorage.getItem("last-role-version");
+      // Namespace role-version per user to avoid cross-user cache effects
+      const storedUserId = localStorage.getItem("userId");
+      const userKey = storedUserId
+        ? `last-role-version:${storedUserId}`
+        : "last-role-version";
+      const lastKnownVersion = localStorage.getItem(userKey);
 
       // If we have a new version or first time seeing a version, update local storage
       if (!lastKnownVersion || roleVersion !== lastKnownVersion) {
         // Store new version
-        localStorage.setItem("last-role-version", roleVersion);
+        localStorage.setItem(userKey, roleVersion);
 
-        // Only notify and refresh if this isn't the first time (to avoid refresh on initial load)
-        if (lastKnownVersion) {
-          console.info(
-            "Your permissions have been updated. Refreshing session...",
-          );
+        // Always refresh on change to aggressively converge state,
+        // including first-time detection after login.
 
-          // Refresh session and roles data
-          refreshSupabaseSession()
-            .then(() => {
-              // Refresh roles in Redux store
-              store.dispatch(fetchCurrentUserRoles());
-
-              // Show notification to user
-              toast.info("Your permissions have been updated.");
-            })
-            .catch((error) => {
-              console.error("Error refreshing session:", error);
-            });
+        if (import.meta.env.mode === "development") {
+          // Log in dev mode only to avoid spamming logs
+          console.info("Permissions changed. Refreshing session...");
         }
+        refreshSupabaseSession()
+          .then(() => {
+            void store.dispatch(fetchCurrentUserRoles());
+            if (import.meta.env.mode === "development") {
+              const lang = // Cant use hooks here, so read directly from localStorage
+                (localStorage.getItem("language") as "fi" | "en") || "en";
+              toast.info(t.roleManagement.toast.info.permissionsUpdated[lang]);
+            }
+          })
+          .catch((error) => {
+            if (import.meta.env.mode === "development") {
+              // Log in dev mode only to avoid spamming logs
+              console.error("Error refreshing session:", error);
+            }
+          });
       }
     }
 
@@ -121,8 +130,10 @@ api.interceptors.response.use(
       originalRequest._retry = true; // Mark that we've retried
 
       try {
+        if (import.meta.env.mode === "development") {
+          console.error("Permission denied - refreshing roles");
+        }
         // De-dupe concurrent refreshes
-        console.error("Permission denied - refreshing roles");
         if (!rolesRefreshPromise) {
           rolesRefreshPromise = store
             .dispatch(fetchCurrentUserRoles())
@@ -136,7 +147,9 @@ api.interceptors.response.use(
         // Retry the original request with the same configuration
         return api(originalRequest);
       } catch (refreshError) {
-        console.error("Failed to refresh roles:", refreshError);
+        if (import.meta.env.mode === "development") {
+          console.error("Failed to refresh roles:", refreshError);
+        }
         // Continue with the original error if role refresh fails
       }
     }
