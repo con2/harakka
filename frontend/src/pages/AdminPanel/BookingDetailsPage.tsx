@@ -8,8 +8,9 @@ import {
   selectCurrentBooking,
   selectCurrentBookingLoading,
   updateSelfPickup,
-  updateBooking,
-  cancelBooking,
+  updateBookingItem,
+  deleteBookingItem,
+  cancelBookingItem,
 } from "@/store/slices/bookingsSlice";
 import { BookingStatus, BookingWithDetails } from "@/types";
 import Spinner from "@/components/Spinner";
@@ -65,6 +66,13 @@ const BookingDetailsPage = () => {
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRole = useAppSelector(selectActiveRoleName);
 
+  const isAdmin =
+    activeRole === "tenant_admin" || activeRole === "storage_manager";
+  const canEdit =
+    (booking?.org_status_for_active_org === "pending" ||
+      booking?.org_status_for_active_org === "confirmed") &&
+    isAdmin;
+
   // Edit state management
   const [showEdit, setShowEdit] = useState(false);
   const [editFormItems, setEditFormItems] = useState<
@@ -98,19 +106,43 @@ const BookingDetailsPage = () => {
       void dispatch(fetchAllOrgLocations({ orgId: activeOrgId! }));
   }, [orgLocations, activeOrgId, dispatch]);
 
-  // Initialize edit form when booking is loaded
+  // Computed booking item data
+  const orgItems = useMemo(
+    () =>
+      booking?.booking_items?.filter(
+        (item) => item.provider_organization_id === activeOrgId,
+      ) || [],
+    [booking?.booking_items, activeOrgId],
+  );
+
+  const activeOrgItems = useMemo(
+    () => orgItems.filter((item) => item.status !== "cancelled"),
+    [orgItems],
+  );
+
+  // Booking status flags
+  const hasPickedUpItems = orgItems.some((item) => item.status === "picked_up");
+  const hasPendingItems = orgItems.some((item) => item.status === "pending");
+  const hasConfirmedItems = orgItems.some(
+    (item) => item.status === "confirmed",
+  );
+  const hasReviewedBooking = orgItems.every(
+    (item) => item.status !== "pending",
+  );
+
+  // Initialize edit form when booking is loaded (only active items)
   useEffect(() => {
     if (!booking?.booking_items) return;
 
-    setEditFormItems(booking.booking_items);
+    setEditFormItems(activeOrgItems);
     setItemQuantities(
       Object.fromEntries(
-        booking.booking_items.map((it) => [String(it.id), it.quantity]),
+        activeOrgItems.map((it) => [String(it.id), it.quantity]),
       ),
     );
-    setGlobalStartDate(booking.booking_items?.[0]?.start_date ?? null);
-    setGlobalEndDate(booking.booking_items?.[0]?.end_date ?? null);
-  }, [booking]);
+    setGlobalStartDate(activeOrgItems?.[0]?.start_date ?? null);
+    setGlobalEndDate(activeOrgItems?.[0]?.end_date ?? null);
+  }, [booking?.booking_items, activeOrgItems]);
 
   // Availability check when timeframe or items change during edit mode
   useEffect(() => {
@@ -143,24 +175,17 @@ const BookingDetailsPage = () => {
     if (!id) return;
     void dispatch(getBookingByID(id));
   };
-  const ownedItemsForOrg = useMemo(
-    () =>
-      (booking?.booking_items || []).filter(
-        (it) => it.provider_organization_id === activeOrgId,
-      ),
-    [booking, activeOrgId],
-  );
 
   // Statuses which have no further actions
   const END_STATUSES = ["cancelled", "rejected", "returned"];
 
-  // Helper: get all selectable item IDs
+  // Helper: get all selectable item IDs (only from active items)
   const allSelectableIds = useMemo(() => {
     if (showEdit) return []; // No selection allowed in edit mode
-    return ownedItemsForOrg
+    return activeOrgItems
       .filter((item) => !END_STATUSES.includes(item.status))
       .map((item) => String(item.id));
-  }, [ownedItemsForOrg, showEdit]); //eslint-disable-line
+  }, [activeOrgItems, showEdit]); //eslint-disable-line
 
   // Select All / Deselect All logic
   const allSelected =
@@ -170,20 +195,8 @@ const BookingDetailsPage = () => {
     setSelectedItemIds(allSelected ? [] : allSelectableIds);
   };
 
-  const hasPickedUpItems = booking?.booking_items?.some(
-    (items) => items.status === "picked_up",
-  );
-  const hasPendingItems = booking?.booking_items?.some(
-    (item) => item.status === "pending",
-  );
-  const hasReviewedBooking = booking?.booking_items?.every(
-    (item) => item.status !== "pending",
-  );
-  const hasConfirmedItems = booking?.booking_items?.some(
-    (item) => item.status === "confirmed",
-  );
   const bookingOrg = booking?.booking_items?.[0].provider_organization_id;
-  const sortedBookingItems = sortByStatus(booking?.booking_items ?? []);
+  const sortedBookingItems = sortByStatus(orgItems);
   const LOCATION_IDS = new Set(
     booking?.booking_items?.map((i) => i.location_id),
   );
@@ -210,7 +223,8 @@ const BookingDetailsPage = () => {
     );
     const firstImageUrl = images?.length > 0 ? images[0].image_url : undefined;
     const itemName =
-      item.storage_items?.translations?.[lang]?.item_name || "Item";
+      item.storage_items?.translations?.[lang]?.item_name ||
+      t.bookingDetailsPage.items.item[lang];
     return (
       <div className="h-8 w-8 rounded-md ring-1 ring-gray-200 overflow-hidden bg-gray-100 flex items-center justify-center">
         {firstImageUrl ? (
@@ -267,14 +281,23 @@ const BookingDetailsPage = () => {
     {
       accessorKey: "image",
       header: "",
-      cell: ({ row }) => <ItemImage item={row.original} />,
+      cell: ({ row }) => (
+        <div>
+          <ItemImage item={row.original} />
+        </div>
+      ),
       size: 60,
     },
     {
       accessorKey: "item_name",
       header: t.bookingDetailsPage.modal.bookingItems.columns.item[lang],
-      cell: ({ row }) =>
-        row.original.storage_items.translations?.[lang]?.item_name ?? "",
+      cell: ({ row }) => {
+        const item = row.original;
+        const itemName =
+          item.storage_items?.translations?.[lang]?.item_name ??
+          t.bookingDetailsPage.items.unknownItem[lang];
+        return itemName;
+      },
     },
     {
       accessorKey: "quantity",
@@ -334,7 +357,7 @@ const BookingDetailsPage = () => {
     },
     {
       accessorKey: "location",
-      header: "Location",
+      header: t.bookingDetailsPage.modal.bookingItems.columns.location[lang],
       cell: ({ row }) => {
         const loc = orgLocations.find(
           (l) => l.storage_location_id === row.original.location_id,
@@ -354,7 +377,7 @@ const BookingDetailsPage = () => {
       header: showEdit ? t.bookingDetailsPage.edit.columns.actions[lang] : "",
       cell: ({ row }) => {
         const item = row.original;
-        if (!showEdit) {
+        if (!showEdit || item.status === "cancelled") {
           return null;
         }
 
@@ -391,10 +414,17 @@ const BookingDetailsPage = () => {
     );
   };
 
-  // Edit helper functions - using shared utilities
+  // Edit helper functions
   const handleDecrementQuantity = (
     item: NonNullable<BookingWithDetails["booking_items"]>[number],
   ) => {
+    const currentQuantity =
+      itemQuantities[String(item.id)] ?? item.quantity ?? 0;
+
+    if (currentQuantity <= 1) {
+      removeItem(item);
+      return;
+    }
     decrementQuantity(item, itemQuantities, setItemQuantities);
   };
 
@@ -408,181 +438,261 @@ const BookingDetailsPage = () => {
     item: NonNullable<BookingWithDetails["booking_items"]>[number],
     newQuantity: number,
   ) => {
-    // Check if setting quantity to 0 would result in no items with quantity > 0
     if (newQuantity === 0) {
-      const wouldBeEmpty = editFormItems.every((editItem) => {
-        if (editItem.id === item.id) return true; // This item would be 0
-        const qty = itemQuantities[String(editItem.id)] ?? editItem.quantity;
-        return qty <= 0;
-      });
-
-      if (wouldBeEmpty) {
-        // Show confirmation for canceling entire booking
-        toastConfirm({
-          title: t.bookingDetailsPage.edit.confirm.cancelBooking.title[lang],
-          description:
-            t.bookingDetailsPage.edit.confirm.cancelBooking.description[lang],
-          confirmText:
-            t.bookingDetailsPage.edit.confirm.cancelBooking.confirmText[lang],
-          cancelText:
-            t.bookingDetailsPage.edit.confirm.cancelBooking.cancelText[lang],
-          onConfirm: () => {
-            updateQuantity(item, newQuantity, setItemQuantities, availability);
-          },
-        });
-        return;
-      }
+      removeItem(item);
+      return;
     }
 
     updateQuantity(item, newQuantity, setItemQuantities, availability);
   };
 
+  // Reusable confirmation function for item deletions
+  const confirmItemDeletion = (
+    item: NonNullable<BookingWithDetails["booking_items"]>[number],
+    isLastOrgItem: boolean,
+  ) => {
+    const config = isLastOrgItem
+      ? {
+          title: t.bookingDetailsPage.confirmations.removeAllItems.title[lang],
+          description:
+            t.bookingDetailsPage.confirmations.removeAllItems.description[lang],
+          confirmText:
+            t.bookingDetailsPage.confirmations.removeAllItems.confirmText[lang],
+          onSuccess: () => void navigate("/admin/bookings"),
+        }
+      : {
+          title: t.bookingDetailsPage.confirmations.removeItem.title[lang],
+          description:
+            t.bookingDetailsPage.confirmations.removeItem.description[lang],
+          confirmText:
+            t.bookingDetailsPage.confirmations.removeItem.confirmText[lang],
+          onSuccess: () =>
+            toast.success(
+              t.bookingDetailsPage.edit.toast.itemPermanentlyRemoved[lang],
+            ),
+        };
+
+    toastConfirm({
+      title: config.title,
+      description: config.description,
+      confirmText: config.confirmText,
+      cancelText:
+        t.bookingDetailsPage.confirmations.removeItem.cancelText[lang],
+      onConfirm: async () => {
+        try {
+          await dispatch(
+            deleteBookingItem({
+              bookingId: booking!.id,
+              bookingItemId: item.id,
+            }),
+          ).unwrap();
+
+          if (isLastOrgItem) {
+            toast.success(
+              t.bookingDetailsPage.edit.toast.itemRemovedWillNotAppear[lang],
+            );
+            config.onSuccess();
+          } else {
+            config.onSuccess();
+          }
+        } catch {
+          toast.error(t.bookingDetailsPage.edit.toast.failedToRemoveItem[lang]);
+        }
+      },
+    });
+  };
+
   const removeItem = (
     item: NonNullable<BookingWithDetails["booking_items"]>[number],
   ) => {
-    // Check if removing this item would result in no items remaining
-    const wouldBeEmpty =
-      editFormItems.length === 1 && editFormItems[0].id === item.id;
+    if (!booking?.booking_items) return;
 
-    if (wouldBeEmpty) {
-      // Show confirmation for canceling entire booking
-      toastConfirm({
-        title: t.bookingDetailsPage.edit.confirm.cancelBooking.title[lang],
-        description:
-          t.bookingDetailsPage.edit.confirm.cancelBooking.description[lang],
-        confirmText:
-          t.bookingDetailsPage.edit.confirm.cancelBooking.confirmText[lang],
-        cancelText:
-          t.bookingDetailsPage.edit.confirm.cancelBooking.cancelText[lang],
-        onConfirm: () => {
-          setEditFormItems((prevItems) =>
-            prevItems.filter((i) => i.id !== item.id),
-          );
+    const orgItems = booking.booking_items.filter(
+      (bookingItem) =>
+        bookingItem.provider_organization_id === activeOrgId &&
+        bookingItem.status !== "cancelled",
+    );
+    const isLastOrgItem = orgItems.length === 1 && orgItems[0].id === item.id;
 
-          const key = String(item.id);
-          setItemQuantities((prev) => {
-            const newQuantities = { ...prev };
-            delete newQuantities[key];
-            return newQuantities;
-          });
-
-          toast.success(t.bookingDetailsPage.edit.toast.itemRemoved[lang]);
-        },
-      });
-    } else {
-      // Regular item removal when other items remain
-      toastConfirm({
-        title: t.bookingDetailsPage.edit.confirm.removeItem.title[lang],
-        description:
-          t.bookingDetailsPage.edit.confirm.removeItem.description[lang],
-        confirmText:
-          t.bookingDetailsPage.edit.confirm.removeItem.confirmText[lang],
-        cancelText:
-          t.bookingDetailsPage.edit.confirm.removeItem.cancelText[lang],
-        onConfirm: () => {
-          setEditFormItems((prevItems) =>
-            prevItems.filter((i) => i.id !== item.id),
-          );
-
-          const key = String(item.id);
-          setItemQuantities((prev) => {
-            const newQuantities = { ...prev };
-            delete newQuantities[key];
-            return newQuantities;
-          });
-
-          toast.success(t.bookingDetailsPage.edit.toast.itemRemoved[lang]);
-        },
-      });
-    }
+    confirmItemDeletion(item, isLastOrgItem);
   };
 
   const handleSubmitEdit = () => {
-    if (!booking) return;
+    if (!booking?.booking_items) return;
 
-    const updatedItems = editFormItems
-      .map((item) => {
-        const quantity =
-          item.id !== undefined
-            ? (itemQuantities[String(item.id)] ?? item.quantity)
-            : item.quantity;
-        const start = globalStartDate ?? item.start_date;
-        const end = globalEndDate ?? item.end_date;
-        return {
-          item_id: item.item_id,
-          quantity: Number(quantity),
-          start_date: new Date(start).toISOString(),
-          end_date: new Date(end).toISOString(),
-        };
-      })
-      .filter((it) => it.quantity > 0);
+    const originalItems = booking.booking_items.filter(
+      (item) => item.provider_organization_id === activeOrgId,
+    );
 
-    if (updatedItems.length === 0) {
-      // If no items remain, confirm cancellation of the entire booking
+    const itemsToUpdate: Array<{
+      id: string;
+      updates: { quantity?: number; start_date?: string; end_date?: string };
+    }> = [];
+    const itemsToCancel: string[] = [];
+    const itemsToRemove: string[] = [];
+
+    // Analyze what happened to each item
+    originalItems.forEach((originalItem) => {
+      if (!originalItem.id) return;
+
+      const isInEditForm = editFormItems.find(
+        (ei) => ei.id === originalItem.id,
+      );
+      const newQuantity =
+        itemQuantities[originalItem.id] ?? originalItem.quantity;
+
+      if (!isInEditForm) {
+        // Item was removed from form
+        itemsToRemove.push(originalItem.id);
+      } else if (newQuantity === 0) {
+        // Quantity set to 0 - cancel the item
+        itemsToCancel.push(originalItem.id);
+      } else {
+        // Check if anything changed
+        const newStartDate = globalStartDate ?? originalItem.start_date;
+        const newEndDate = globalEndDate ?? originalItem.end_date;
+
+        const quantityChanged = newQuantity !== originalItem.quantity;
+        const startDateChanged = newStartDate !== originalItem.start_date;
+        const endDateChanged = newEndDate !== originalItem.end_date;
+
+        if (quantityChanged || startDateChanged || endDateChanged) {
+          const updates: {
+            quantity?: number;
+            start_date?: string;
+            end_date?: string;
+          } = {};
+
+          if (quantityChanged) updates.quantity = newQuantity;
+          if (startDateChanged)
+            updates.start_date = new Date(newStartDate).toISOString();
+          if (endDateChanged)
+            updates.end_date = new Date(newEndDate).toISOString();
+
+          itemsToUpdate.push({ id: originalItem.id, updates });
+        }
+      }
+    });
+
+    // Check if all org items would be cancelled/removed
+    const orgItemIds = originalItems
+      .map((item) => item.id)
+      .filter((id): id is string => Boolean(id));
+    const wouldAllOrgItemsBeGone = orgItemIds.every(
+      (itemId) =>
+        itemsToCancel.includes(itemId) || itemsToRemove.includes(itemId),
+    );
+
+    if (wouldAllOrgItemsBeGone) {
       toastConfirm({
-        title: t.bookingDetailsPage.edit.confirm.cancelBooking.title[lang],
+        title: t.bookingDetailsPage.confirmations.cancelOrgItems.title[lang],
         description:
-          t.bookingDetailsPage.edit.confirm.cancelBooking.description[lang],
+          t.bookingDetailsPage.confirmations.cancelOrgItems.description[lang],
         confirmText:
-          t.bookingDetailsPage.edit.confirm.cancelBooking.confirmText[lang],
+          t.bookingDetailsPage.confirmations.cancelOrgItems.confirmText[lang],
         cancelText:
-          t.bookingDetailsPage.edit.confirm.cancelBooking.cancelText[lang],
+          t.bookingDetailsPage.confirmations.cancelOrgItems.cancelText[lang],
         onConfirm: async () => {
-          try {
-            await dispatch(cancelBooking(booking.id)).unwrap();
-            toast.success(
-              t.bookingDetailsPage.edit.toast.bookingCancelled[lang],
-            );
-            setShowEdit(false);
-            void navigate("/admin/bookings");
-          } catch (err: unknown) {
-            console.error("cancelBooking failed", err);
-            let msg = "";
-            if (typeof err === "string") msg = err;
-            else if (err && typeof err === "object") {
-              const e = err as Record<string, unknown>;
-              msg = (e.message as string) || JSON.stringify(e);
-            } else msg = String(err);
-            toast.error(
-              msg || t.bookingDetailsPage.edit.toast.cancelFailed[lang],
-            );
-          }
+          await handleOrgCancellation(orgItemIds);
         },
       });
       return;
     }
 
+    const totalChanges =
+      itemsToUpdate.length + itemsToCancel.length + itemsToRemove.length;
+    if (totalChanges === 0) {
+      toast.info(t.bookingDetailsPage.edit.toast.noChanges[lang]);
+      setShowEdit(false);
+      return;
+    }
+
     toastConfirm({
       title: t.bookingDetailsPage.edit.confirm.saveChanges.title[lang],
-      description:
-        t.bookingDetailsPage.edit.confirm.saveChanges.description[lang],
+      description: `Apply ${totalChanges} change${totalChanges > 1 ? "s" : ""} to booking items?`,
       confirmText:
         t.bookingDetailsPage.edit.confirm.saveChanges.confirmText[lang],
       cancelText:
         t.bookingDetailsPage.edit.confirm.saveChanges.cancelText[lang],
       onConfirm: async () => {
-        try {
-          await dispatch(
-            updateBooking({ bookingId: booking.id, items: updatedItems }),
-          ).unwrap();
-
-          toast.success(t.bookingDetailsPage.edit.toast.bookingUpdated[lang]);
-          setShowEdit(false);
-          refetchBooking();
-        } catch (err: unknown) {
-          console.error("updateBooking failed", err);
-          let msg = "";
-          if (typeof err === "string") msg = err;
-          else if (err && typeof err === "object") {
-            const e = err as Record<string, unknown>;
-            msg = (e.message as string) || JSON.stringify(e);
-          } else msg = String(err);
-          toast.error(
-            msg || t.bookingDetailsPage.edit.toast.updateFailed[lang],
-          );
-        }
+        await executeBookingItemChanges(
+          itemsToUpdate,
+          itemsToCancel,
+          itemsToRemove,
+        );
       },
     });
+  };
+
+  const handleOrgCancellation = async (orgItemIds: string[]) => {
+    try {
+      await Promise.all(
+        orgItemIds.map((itemId) =>
+          dispatch(cancelBookingItem({ bookingItemId: itemId })).unwrap(),
+        ),
+      );
+
+      toast.success(t.bookingDetailsPage.edit.toast.orgItemsCancelled[lang]);
+      setShowEdit(false);
+      refetchBooking();
+    } catch (err: unknown) {
+      console.error("Failed to cancel org items", err);
+      toast.error(t.bookingDetailsPage.edit.toast.cancelOrgItemsFailed[lang]);
+    }
+  };
+
+  const executeBookingItemChanges = async (
+    itemsToUpdate: Array<{
+      id: string;
+      updates: { quantity?: number; start_date?: string; end_date?: string };
+    }>,
+    itemsToCancel: string[],
+    itemsToRemove: string[],
+  ) => {
+    try {
+      const promises: Promise<unknown>[] = [];
+
+      // Update items
+      itemsToUpdate.forEach(({ id, updates }) => {
+        promises.push(
+          dispatch(updateBookingItem({ bookingItemId: id, updates })).unwrap(),
+        );
+      });
+
+      // Cancel items (set status to cancelled)
+      itemsToCancel.forEach((itemId) => {
+        promises.push(
+          dispatch(cancelBookingItem({ bookingItemId: itemId })).unwrap(),
+        );
+      });
+
+      // Remove items completely (permanent deletion for admins)
+      itemsToRemove.forEach((itemId) => {
+        promises.push(
+          dispatch(
+            deleteBookingItem({
+              bookingId: booking!.id,
+              bookingItemId: itemId,
+            }),
+          ).unwrap(),
+        );
+      });
+
+      await Promise.all(promises);
+
+      toast.success(t.bookingDetailsPage.edit.toast.bookingUpdated[lang]);
+      setShowEdit(false);
+      refetchBooking();
+    } catch (err: unknown) {
+      console.error("Failed to update booking items", err);
+      let msg = "";
+      if (typeof err === "string") msg = err;
+      else if (err && typeof err === "object") {
+        const e = err as Record<string, unknown>;
+        msg = (e.message as string) || JSON.stringify(e);
+      } else msg = String(err);
+      toast.error(msg || t.bookingDetailsPage.edit.toast.updateFailed[lang]);
+    }
   };
 
   const isFormValid = editFormItems.every((item) => {
@@ -624,16 +734,13 @@ const BookingDetailsPage = () => {
           {t.bookingDetailsPage.modal.bookingDetails[lang]}{" "}
           {booking.booking_number}
         </h3>
-        {(booking.org_status_for_active_org === "pending" ||
-          booking.org_status_for_active_org === "confirmed") &&
-          (activeRole === "tenant_admin" ||
-            activeRole === "storage_manager") && (
-            <Button onClick={() => setShowEdit((s) => !s)} variant="outline">
-              {showEdit
-                ? t.bookingDetailsPage.edit.buttons.cancel[lang]
-                : t.bookingDetailsPage.edit.buttons.editBooking[lang]}
-            </Button>
-          )}
+        {canEdit && (
+          <Button onClick={() => setShowEdit((s) => !s)} variant="outline">
+            {showEdit
+              ? t.bookingDetailsPage.edit.buttons.cancel[lang]
+              : t.bookingDetailsPage.edit.buttons.editBooking[lang]}
+          </Button>
+        )}
       </div>
 
       <div className="mb-4  border-1 border-(muted-foreground) rounded bg-white">
@@ -772,32 +879,30 @@ const BookingDetailsPage = () => {
       </div>
 
       {/* Edit Controls */}
-      {(booking.org_status_for_active_org === "pending" ||
-        booking.org_status_for_active_org === "confirmed") &&
-        (activeRole === "tenant_admin" || activeRole === "storage_manager") && (
-          <div className="flex gap-2 mt-4 justify-center">
-            {showEdit && (
-              <Button
-                onClick={handleSubmitEdit}
-                disabled={!isFormValid || loadingAvailability}
-                variant="secondary"
-              >
-                {loadingAvailability
-                  ? t.bookingDetailsPage.edit.buttons.checkingAvailability[lang]
-                  : t.bookingDetailsPage.edit.buttons.saveChanges[lang]}
-              </Button>
-            )}
-          </div>
-        )}
+      {canEdit && (
+        <div className="flex gap-2 mt-4 justify-center">
+          {showEdit && (
+            <Button
+              onClick={handleSubmitEdit}
+              disabled={!isFormValid || loadingAvailability}
+              variant="secondary"
+            >
+              {loadingAvailability
+                ? t.bookingDetailsPage.edit.buttons.checkingAvailability[lang]
+                : t.bookingDetailsPage.edit.buttons.saveChanges[lang]}
+            </Button>
+          )}
+        </div>
+      )}
       {/* Action buttons */}
       {!showEdit && (
         <div className="flex flex-row justify-center items-center gap-8 mt-6">
-          {hasPendingItems && ownedItemsForOrg.length > 0 && (
+          {hasPendingItems && orgItems.length > 0 && (
             <>
               <div className="flex flex-col items-center text-center">
                 <span className="text-xs text-slate-600 max-w-[110px]">
                   {selectedItemIds.length === 0 ||
-                  selectedItemIds.length === ownedItemsForOrg.length
+                  selectedItemIds.length === orgItems.length
                     ? t.bookingDetailsPage.modal.buttons.confirmAll[lang]
                     : t.bookingDetailsPage.modal.buttons.confirmItems[lang]}
                 </span>
@@ -810,7 +915,7 @@ const BookingDetailsPage = () => {
               <div className="flex flex-col items-center text-center">
                 <span className="text-xs text-slate-600 max-w-[110px]">
                   {selectedItemIds.length === 0 ||
-                  selectedItemIds.length === ownedItemsForOrg.length
+                  selectedItemIds.length === orgItems.length
                     ? t.bookingDetailsPage.modal.buttons.rejectAll[lang]
                     : t.bookingDetailsPage.modal.buttons.rejectItems[lang]}
                 </span>
@@ -826,7 +931,7 @@ const BookingDetailsPage = () => {
             <div className="flex flex-col items-center text-center">
               <span className="text-xs text-slate-600 max-w-[110px]">
                 {selectedItemIds.length === 0 ||
-                selectedItemIds.length === ownedItemsForOrg.length
+                selectedItemIds.length === orgItems.length
                   ? t.bookingDetailsPage.modal.buttons.pickUpAll[lang]
                   : t.bookingDetailsPage.modal.buttons.pickUpSome[lang].replace(
                       "{amount}",
@@ -844,7 +949,7 @@ const BookingDetailsPage = () => {
             <div className="flex flex-col items-center text-center">
               <span className="text-xs text-slate-600 max-w-[110px]">
                 {selectedItemIds.length === 0 ||
-                selectedItemIds.length === ownedItemsForOrg.length
+                selectedItemIds.length === orgItems.length
                   ? t.bookingDetailsPage.modal.buttons.returnAll[lang]
                   : t.bookingDetailsPage.modal.buttons.returnSome[lang].replace(
                       "{amount}",
@@ -862,7 +967,7 @@ const BookingDetailsPage = () => {
             <div className="flex flex-col items-center text-center">
               <span className="text-xs text-slate-600 max-w-[110px]">
                 {selectedItemIds.length === 0 ||
-                selectedItemIds.length === ownedItemsForOrg.length
+                selectedItemIds.length === orgItems.length
                   ? t.bookingDetailsPage.modal.buttons.cancelAll[lang]
                   : t.bookingDetailsPage.modal.buttons.cancelSome[lang].replace(
                       "{amount}",

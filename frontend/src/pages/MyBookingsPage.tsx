@@ -215,6 +215,9 @@ const MyBookingsPage = () => {
         if (!showEdit) {
           return item.quantity;
         }
+        if (item.status === "cancelled") {
+          return item.quantity;
+        }
 
         return (
           <div className="flex flex-col items-center">
@@ -439,10 +442,6 @@ const MyBookingsPage = () => {
         void navigate("/my-bookings");
         return;
       }
-      console.debug("updateBooking payload", {
-        bookingId: booking.id,
-        items: updatedItems,
-      });
 
       try {
         await dispatch(
@@ -458,7 +457,6 @@ const MyBookingsPage = () => {
           );
         }
       } catch (err: unknown) {
-        console.error("updateBooking failed", err);
         let msg = "";
         if (typeof err === "string") msg = err;
         else if (err && typeof err === "object") {
@@ -496,7 +494,7 @@ const MyBookingsPage = () => {
           </Button>
         </div>
 
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-2 flex items-center justify-between">
           <h3 className="text-xl font-normal pt-2">
             {t.myBookingsPage.bookingDetails.title[lang]}{" "}
             {booking.booking_number}
@@ -546,7 +544,7 @@ const MyBookingsPage = () => {
 
         <div className="space-y-4">
           {/* Booking details */}
-          <div className="grid grid-cols-2 gap-4 mb-10">
+          <div className="grid grid-cols-2 gap-4 mb-2">
             <div>
               <h3 className="font-normal text-sm mb-1">
                 {t.myBookingsPage.bookingDetails.customerInfo[lang]}
