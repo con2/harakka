@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ChevronRight, SlidersIcon } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
-import { Star } from "lucide-react";
 import {
   fetchAllLocations,
   selectAllLocations,
@@ -52,35 +51,27 @@ const UserPanel = () => {
   }, []);
 
   // Shared expand/collapse state per filter list (max 5 visible by default)
-  type ExpandableSection =
-    | "itemTypes"
-    | "organizations"
-    | "locations"
-    | "tags"
-    | "categories";
+  type ExpandableSection = "itemTypes" | "organizations" | "locations" | "tags";
   const MAX_VISIBLE = 5;
   const [expanded, setExpanded] = useState<Record<ExpandableSection, boolean>>({
     itemTypes: false,
     organizations: false,
     locations: false,
     tags: false,
-    categories: false,
   });
   const toggleExpanded = (key: ExpandableSection) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
     expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
 
+  const mappedCategories = buildCategoryTree(categories);
   const visibleOrganizations = getVisible(organizations, "organizations");
   const visibleLocations = getVisible(locations, "locations");
   const visibleTags = getVisible(tags, "tags");
-  const mappedCategories = buildCategoryTree(categories);
-  const visibleCategories = getVisible(mappedCategories, "categories");
 
   // filter states
   const [filters, setFilters] = useState<{
     isActive: boolean;
-    averageRating: number[];
     itemsNumberAvailable: [number, number];
     category: string;
     tagIds: string[];
@@ -88,7 +79,6 @@ const UserPanel = () => {
     orgIds?: string[];
   }>({
     isActive: true, // Is item active or not filter
-    averageRating: [],
     itemsNumberAvailable: [0, 100], // add a range for number of items
     category: "",
     tagIds: [],
@@ -122,7 +112,6 @@ const UserPanel = () => {
     ) {
       count++;
     }
-    count += filters.averageRating.length;
     count += filters.category ? 1 : 0;
     count += filters.tagIds.length;
     count += filters.locationIds.length;
@@ -170,7 +159,6 @@ const UserPanel = () => {
                       onClick={() =>
                         setFilters({
                           isActive: true,
-                          averageRating: [],
                           itemsNumberAvailable: [0, 100],
                           category: "",
                           tagIds: [],
@@ -198,13 +186,13 @@ const UserPanel = () => {
             </div>
             <Separator className="my-4" />
 
-            {/* Categories/ item_types*/}
+            {/* Categories / item_types*/}
             <div className="flex flex-col flex-wrap gap-3">
               <label className="text-primary text-md block mb-0">
                 {" "}
                 {t.userPanel.filters.categories[lang]}
               </label>
-              {visibleCategories.map((cat) => {
+              {mappedCategories.map((cat) => {
                 const subcatIds = cat.subcategories?.flatMap((c) => c.id);
                 const isSelected = filters.category === cat.id;
                 const hasChildSelected = subcatIds?.includes(filters.category);
@@ -244,17 +232,6 @@ const UserPanel = () => {
                   </div>
                 );
               })}
-              {mappedCategories.length > MAX_VISIBLE && (
-                <Button
-                  variant="ghost"
-                  className="text-left text-sm text-secondary"
-                  onClick={() => toggleExpanded("categories")}
-                >
-                  {expanded.categories
-                    ? t.userPanel.categories.showLess[lang]
-                    : t.userPanel.categories.seeAll[lang]}
-                </Button>
-              )}
             </div>
 
             <Separator className="my-4" />
@@ -443,45 +420,6 @@ const UserPanel = () => {
               </div>
             )}
 
-            {/* Rating filter */}
-            <div className="my-4">
-              <label className="text-primary block mb-4">
-                {" "}
-                {t.userPanel.rating.title[lang]}
-              </label>
-              <div className="flex flex-col gap-3">
-                {[5, 4, 3, 2, 1].map((rating) => {
-                  const isChecked = filters.averageRating.includes(rating);
-                  return (
-                    <label
-                      key={rating}
-                      className="flex items-center gap-2 cursor-pointer text-slate-600 hover:text-secondary hover:cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => {
-                          const updated = isChecked
-                            ? filters.averageRating.filter((r) => r !== rating)
-                            : [...filters.averageRating, rating];
-                          handleFilterChange("averageRating", updated);
-                        }}
-                        className="accent-secondary"
-                      />
-                      <div className="flex items-center">
-                        {Array.from({ length: rating }, (_, i) => (
-                          <Star
-                            key={i}
-                            className="w-4 h-4 fill-secondary text-secondary"
-                          />
-                        ))}
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-
             {countActiveFilters() > 0 && (
               <div>
                 <Separator className="my-4" />
@@ -492,7 +430,6 @@ const UserPanel = () => {
                     onClick={() =>
                       setFilters({
                         isActive: true,
-                        averageRating: [],
                         itemsNumberAvailable: [0, 100],
                         category: "",
                         tagIds: [],
