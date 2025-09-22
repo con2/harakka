@@ -52,3 +52,26 @@ export interface WelcomeEmailPayload {
   name: string;
   email: string;
 }
+
+// Reminder mail types
+export type ReminderType = "due_day" | "overdue";
+
+export interface ReminderEmailProps {
+  bookingNumber: string;
+  dueDate: string; // formatted DD.MM.YYYY
+  type: ReminderType;
+}
+
+// Simplified result from MailService.sendMail
+export type MailSendResult =
+  | {
+      success: true;
+      accepted: string[];
+      rejected: string[];
+      messageId: string | null;
+      response?: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
