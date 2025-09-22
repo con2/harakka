@@ -76,6 +76,21 @@ export class BookingController {
   }
 
   /**
+   * Overdue bookings for the active organization context (RLS-scoped).
+   */
+  @Get("overdue")
+  @Roles(["storage_manager", "tenant_admin"], { match: "any", sameOrg: true })
+  async getOverdue(
+    @Req() req: AuthRequest,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    return this.bookingService.getOverdueBookings(req, pageNum, limitNum);
+  }
+
+  /**
    * Get bookings of the current authenticated user.
    * Accessible by users and all admins within their organization.
    * @param req - Authenticated request object

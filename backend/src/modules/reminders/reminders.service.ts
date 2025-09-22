@@ -103,6 +103,25 @@ export class RemindersService {
         });
     }
 
+    // 2.5) Preload already-sent map for a hard guard against re-sends
+    type SentLogRow = {
+      booking_id: string;
+      recipient_email: string;
+      type: "due_day" | "overdue";
+    };
+    const { data: sentRows, error: sentErr } = await supabase
+      .from("reminder_logs")
+      .select("booking_id, recipient_email, type")
+      .in("booking_id", allIds)
+      .eq("reminder_date", todayStr)
+      .eq("status", "sent");
+    if (sentErr) throw sentErr;
+    const alreadySent = new Set<string>(
+      (sentRows as SentLogRow[] | null | undefined)?.map(
+        (r) => `${r.booking_id}|${r.recipient_email}|${r.type}`,
+      ) ?? [],
+    );
+
     // 3) Idempotent claim per booking/day/type, then send mail + update log
     const nowIso = dayjs().utc().toISOString();
     let claimed = 0;
@@ -135,6 +154,13 @@ export class RemindersService {
         return;
       }
       const { email, booking_number } = rec;
+
+      // Hard guard: if a sent log exists for this key, skip
+      const sentKey = `${bookingId}|${email}|${type}`;
+      if (alreadySent.has(sentKey)) {
+        skipped++;
+        return;
+      }
 
       const { data } = await supabase
         .from("reminder_logs")
@@ -227,7 +253,7 @@ export class RemindersService {
         sent++;
         await supabase
           .from("reminder_logs")
-          .update({ status: "sent", sent_at: nowIso })
+          .update({ status: "sent", sent_at: dayjs().utc().toISOString() })
           .eq("id", logId);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);

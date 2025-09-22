@@ -12,6 +12,7 @@ import {
   Building2,
   MapPin,
   LayoutGrid,
+  AlertTriangle,
 } from "lucide-react";
 import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -66,6 +67,15 @@ const AdminPanel = () => {
               icon={<ShoppingBag className="w-5 h-5" />}
               label={t.adminPanel.navigation.bookings[lang]}
               dataCy="admin-nav-bookings"
+            />
+          )}
+
+          {hasAnyRole(["storage_manager", "tenant_admin"]) && (
+            <SidebarLink
+              to="/admin/overdue"
+              icon={<AlertTriangle className="w-5 h-5" />}
+              label={t.adminPanel.navigation.overdue?.[lang] || "Overdue"}
+              dataCy="admin-nav-overdue"
             />
           )}
 

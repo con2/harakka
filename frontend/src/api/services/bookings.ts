@@ -308,6 +308,19 @@ export const bookingsApi = {
   },
 
   /**
+   * Get overdue bookings (admin only; scoped by active organization via headers)
+   */
+  getOverdueBookings: async (
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<ApiResponse<OverdueBookingRow>> => {
+    const params = new URLSearchParams();
+    params.append("page", String(page));
+    params.append("limit", String(limit));
+    return api.get(`/bookings/overdue?${params.toString()}`);
+  },
+
+  /**
    * Update the self-pickup status of a booking
    * Only updates PER org and PER location.
    */
@@ -321,4 +334,15 @@ export const bookingsApi = {
       newStatus,
     });
   },
+};
+
+// Types for overdue view rows
+export type OverdueBookingRow = {
+  booking_id: string;
+  booking_number: string;
+  user_id: string;
+  full_name: string | null;
+  user_email: string | null;
+  earliest_due_date: string; // ISO or YYYY-MM-DD
+  days_overdue: number;
 };

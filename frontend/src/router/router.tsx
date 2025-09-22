@@ -14,6 +14,7 @@ import UsersDetailsPage from "@/pages/AdminPanel/UsersDetailsPage";
 import AdminItemsTable from "@/pages/AdminPanel/AdminItemsTable";
 import BookingList from "@/pages/AdminPanel/BookingList";
 import BookingDetailsPage from "@/pages/AdminPanel/BookingDetailsPage";
+import OverdueBookings from "@/pages/AdminPanel/OverdueBookings";
 import TagList from "@/pages/AdminPanel/TagList";
 import TagDetailsPage from "@/pages/AdminPanel/TagDetailsPage";
 import AddTag from "@/pages/AdminPanel/AddTag";
@@ -160,6 +161,16 @@ export const router = createBrowserRouter([
                 allowedRoles={["storage_manager", "tenant_admin"]}
               >
                 <BookingList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "overdue",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["storage_manager", "tenant_admin"]}
+              >
+                <OverdueBookings />
               </ProtectedRoute>
             ),
           },
