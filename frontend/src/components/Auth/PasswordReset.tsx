@@ -83,7 +83,6 @@ const PasswordReset = () => {
               return;
             }
 
-            toast.success(t.passwordReset.messages.reset.success[lang]);
             void navigate("/login", {
               replace: true,
               state: {
