@@ -70,7 +70,7 @@ export const Navigation = () => {
 
   if (isMobile)
     return (
-      <nav className="flex p-4 justify-between shadow-sm items-center z-50">
+      <nav className="flex p-4 justify-between shadow-sm items-center z-50 !font-main">
         <div className="flex gap-4">
           <Link to="/" data-cy="nav-home">
             <LogoSmall className="w-10" />
@@ -114,7 +114,7 @@ export const Navigation = () => {
 
   if (isTablet)
     return (
-      <nav className="flex p-4 justify-between shadow-sm items-center z-50">
+      <nav className="flex p-4 justify-between shadow-sm items-center z-50 !font-main">
         <div className="flex gap-6">
           <Link to="/" data-cy="nav-home">
             <Logo className="w-35" />
@@ -171,8 +171,8 @@ export const Navigation = () => {
     <nav className={navClasses}>
       {/* Left side: Logo + navigation links */}
       <div className="flex items-center gap-3">
-        <Link to="/" data-cy="nav-home">
-          <Logo className="h-[60px] w-auto object-contain hidden md:flex filter min-w-30" />
+        <Link to="/" data-cy="nav-home" className="relative -top-[2px]">
+          <Logo className="h-[60px] w-auto object-contain hidden md:flex filter min-w-30 scale-[0.8]" />
         </Link>
         <NavigationMenu>
           <NavigationMenuList>
@@ -182,7 +182,7 @@ export const Navigation = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/admin"
-                    className="flex items-center gap-1 text-(--midnight-black)  p-1"
+                    className="flex items-center gap-1 text-(--midnight-black) text-base p-1"
                     data-cy="nav-admin"
                   >
                     {t.navigation.admin[lang]}
@@ -196,7 +196,7 @@ export const Navigation = () => {
               <NavigationMenuLink asChild>
                 <Link
                   to="/storage"
-                  className="flex items-center gap-1 text-(--midnight-black) "
+                  className="flex items-center gap-1 text-(--midnight-black) text-base "
                   data-cy="nav-storage"
                 >
                   {t.navigation.storage[lang]}
@@ -209,7 +209,7 @@ export const Navigation = () => {
               <NavigationMenuLink asChild>
                 <Link
                   to={"/organizations"}
-                  className="flex items-center gap-1 text-(--midnight-black) "
+                  className="flex items-center gap-1 text-(--midnight-black) text-base "
                   data-cy="nav-organizations"
                 >
                   {t.navigation.organizations[lang]}
@@ -223,7 +223,7 @@ export const Navigation = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/how-it-works"
-                    className="flex items-center gap-1 text-(--midnight-black) "
+                    className="flex items-center gap-1 text-(--midnight-black) text-base"
                     data-cy="nav-guide"
                   >
                     {t.navigation.guides[lang]}
@@ -235,10 +235,10 @@ export const Navigation = () => {
             {/* Contact Form Only in Desktop view for non admins*/}
             {!isAnyTypeOfAdmin && (
               <NavigationMenuItem className="hidden md:flex">
-                <NavigationMenuLink asChild>
+                <NavigationMenuLink asChild className="text-base">
                   <Link
                     to="/contact-us"
-                    className="flex items-center gap-1 text-(--midnight-black) "
+                    className="flex items-center gap-1 text-(--midnight-black) text-base"
                     data-cy="nav-contact"
                   >
                     {t.navigation.contactUs[lang]}
