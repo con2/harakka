@@ -153,4 +153,90 @@ export const bookingDetailsPage = {
       },
     },
   },
+  edit: {
+    buttons: {
+      editBooking: {
+        en: "Edit Booking",
+        fi: "Muokkaa varausta",
+      },
+      cancel: {
+        en: "Cancel",
+        fi: "Peruuta",
+      },
+      saveChanges: {
+        en: "Save Changes",
+        fi: "Tallenna muutokset",
+      },
+      checkingAvailability: {
+        en: "Checking availability...",
+        fi: "Tarkistetaan saatavuutta...",
+      },
+    },
+    columns: {
+      actions: {
+        en: "Actions",
+        fi: "Toiminnot",
+      },
+      availability: {
+        en: "Available",
+        fi: "Saatavilla",
+      },
+    },
+    confirm: {
+      saveChanges: {
+        title: {
+          en: "Confirm Changes",
+          fi: "Vahvista muutokset",
+        },
+        description: {
+          en: "Are you sure you want to save these changes to the booking? This action cannot be undone.",
+          fi: "Haluatko varmasti tallentaa nämä muutokset varaukseen? Tätä toimintoa ei voi peruuttaa.",
+        },
+        confirmText: {
+          en: "Save Changes",
+          fi: "Tallenna muutokset",
+        },
+        cancelText: {
+          en: "Cancel",
+          fi: "Peruuta",
+        },
+      },
+      removeItem: {
+        title: {
+          en: "Remove Item",
+          fi: "Poista tuote",
+        },
+        description: {
+          en: "Are you sure you want to remove this item from the booking?",
+          fi: "Haluatko varmasti poistaa tämän tuotteen varauksesta?",
+        },
+        confirmText: {
+          en: "Remove",
+          fi: "Poista",
+        },
+        cancelText: {
+          en: "Cancel",
+          fi: "Peruuta",
+        },
+      },
+    },
+    toast: {
+      itemRemoved: {
+        en: "Item removed from booking",
+        fi: "Tuote poistettu varauksesta",
+      },
+      bookingUpdated: {
+        en: "Booking updated successfully",
+        fi: "Varaus päivitetty onnistuneesti",
+      },
+      updateFailed: {
+        en: "Failed to update booking",
+        fi: "Varauksen päivitys epäonnistui",
+      },
+      noItems: {
+        en: "Cannot save booking with no items",
+        fi: "Varausta ei voi tallentaa ilman tuotteita",
+      },
+    },
+  },
 };
