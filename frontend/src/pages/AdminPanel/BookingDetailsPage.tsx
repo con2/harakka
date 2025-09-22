@@ -9,6 +9,7 @@ import {
   selectCurrentBookingLoading,
   updateSelfPickup,
   updateBooking,
+  cancelBooking,
 } from "@/store/slices/bookingsSlice";
 import { BookingStatus, BookingWithDetails } from "@/types";
 import Spinner from "@/components/Spinner";
@@ -407,34 +408,93 @@ const BookingDetailsPage = () => {
     item: NonNullable<BookingWithDetails["booking_items"]>[number],
     newQuantity: number,
   ) => {
+    // Check if setting quantity to 0 would result in no items with quantity > 0
+    if (newQuantity === 0) {
+      const wouldBeEmpty = editFormItems.every((editItem) => {
+        if (editItem.id === item.id) return true; // This item would be 0
+        const qty = itemQuantities[String(editItem.id)] ?? editItem.quantity;
+        return qty <= 0;
+      });
+
+      if (wouldBeEmpty) {
+        // Show confirmation for canceling entire booking
+        toastConfirm({
+          title: t.bookingDetailsPage.edit.confirm.cancelBooking.title[lang],
+          description:
+            t.bookingDetailsPage.edit.confirm.cancelBooking.description[lang],
+          confirmText:
+            t.bookingDetailsPage.edit.confirm.cancelBooking.confirmText[lang],
+          cancelText:
+            t.bookingDetailsPage.edit.confirm.cancelBooking.cancelText[lang],
+          onConfirm: () => {
+            updateQuantity(item, newQuantity, setItemQuantities, availability);
+          },
+        });
+        return;
+      }
+    }
+
     updateQuantity(item, newQuantity, setItemQuantities, availability);
   };
 
   const removeItem = (
     item: NonNullable<BookingWithDetails["booking_items"]>[number],
   ) => {
-    toastConfirm({
-      title: t.bookingDetailsPage.edit.confirm.removeItem.title[lang],
-      description:
-        t.bookingDetailsPage.edit.confirm.removeItem.description[lang],
-      confirmText:
-        t.bookingDetailsPage.edit.confirm.removeItem.confirmText[lang],
-      cancelText: t.bookingDetailsPage.edit.confirm.removeItem.cancelText[lang],
-      onConfirm: () => {
-        setEditFormItems((prevItems) =>
-          prevItems.filter((i) => i.id !== item.id),
-        );
+    // Check if removing this item would result in no items remaining
+    const wouldBeEmpty =
+      editFormItems.length === 1 && editFormItems[0].id === item.id;
 
-        const key = String(item.id);
-        setItemQuantities((prev) => {
-          const newQuantities = { ...prev };
-          delete newQuantities[key];
-          return newQuantities;
-        });
+    if (wouldBeEmpty) {
+      // Show confirmation for canceling entire booking
+      toastConfirm({
+        title: t.bookingDetailsPage.edit.confirm.cancelBooking.title[lang],
+        description:
+          t.bookingDetailsPage.edit.confirm.cancelBooking.description[lang],
+        confirmText:
+          t.bookingDetailsPage.edit.confirm.cancelBooking.confirmText[lang],
+        cancelText:
+          t.bookingDetailsPage.edit.confirm.cancelBooking.cancelText[lang],
+        onConfirm: () => {
+          setEditFormItems((prevItems) =>
+            prevItems.filter((i) => i.id !== item.id),
+          );
 
-        toast.success(t.bookingDetailsPage.edit.toast.itemRemoved[lang]);
-      },
-    });
+          const key = String(item.id);
+          setItemQuantities((prev) => {
+            const newQuantities = { ...prev };
+            delete newQuantities[key];
+            return newQuantities;
+          });
+
+          toast.success(t.bookingDetailsPage.edit.toast.itemRemoved[lang]);
+        },
+      });
+    } else {
+      // Regular item removal when other items remain
+      toastConfirm({
+        title: t.bookingDetailsPage.edit.confirm.removeItem.title[lang],
+        description:
+          t.bookingDetailsPage.edit.confirm.removeItem.description[lang],
+        confirmText:
+          t.bookingDetailsPage.edit.confirm.removeItem.confirmText[lang],
+        cancelText:
+          t.bookingDetailsPage.edit.confirm.removeItem.cancelText[lang],
+        onConfirm: () => {
+          setEditFormItems((prevItems) =>
+            prevItems.filter((i) => i.id !== item.id),
+          );
+
+          const key = String(item.id);
+          setItemQuantities((prev) => {
+            const newQuantities = { ...prev };
+            delete newQuantities[key];
+            return newQuantities;
+          });
+
+          toast.success(t.bookingDetailsPage.edit.toast.itemRemoved[lang]);
+        },
+      });
+    }
   };
 
   const handleSubmitEdit = () => {
@@ -458,7 +518,37 @@ const BookingDetailsPage = () => {
       .filter((it) => it.quantity > 0);
 
     if (updatedItems.length === 0) {
-      toast.error(t.bookingDetailsPage.edit.toast.noItems[lang]);
+      // If no items remain, confirm cancellation of the entire booking
+      toastConfirm({
+        title: t.bookingDetailsPage.edit.confirm.cancelBooking.title[lang],
+        description:
+          t.bookingDetailsPage.edit.confirm.cancelBooking.description[lang],
+        confirmText:
+          t.bookingDetailsPage.edit.confirm.cancelBooking.confirmText[lang],
+        cancelText:
+          t.bookingDetailsPage.edit.confirm.cancelBooking.cancelText[lang],
+        onConfirm: async () => {
+          try {
+            await dispatch(cancelBooking(booking.id)).unwrap();
+            toast.success(
+              t.bookingDetailsPage.edit.toast.bookingCancelled[lang],
+            );
+            setShowEdit(false);
+            void navigate("/admin/bookings");
+          } catch (err: unknown) {
+            console.error("cancelBooking failed", err);
+            let msg = "";
+            if (typeof err === "string") msg = err;
+            else if (err && typeof err === "object") {
+              const e = err as Record<string, unknown>;
+              msg = (e.message as string) || JSON.stringify(e);
+            } else msg = String(err);
+            toast.error(
+              msg || t.bookingDetailsPage.edit.toast.cancelFailed[lang],
+            );
+          }
+        },
+      });
       return;
     }
 

@@ -219,6 +219,24 @@ export const bookingDetailsPage = {
           fi: "Peruuta",
         },
       },
+      cancelBooking: {
+        title: {
+          en: "Cancel Entire Booking",
+          fi: "Peruuta koko varaus",
+        },
+        description: {
+          en: "Removing all items will cancel the entire booking. This action cannot be undone. Are you sure you want to proceed?",
+          fi: "Kaikkien tuotteiden poistaminen peruuttaa koko varauksen. Tätä toimintoa ei voi peruuttaa. Haluatko varmasti jatkaa?",
+        },
+        confirmText: {
+          en: "Cancel Booking",
+          fi: "Peruuta varaus",
+        },
+        cancelText: {
+          en: "Keep Editing",
+          fi: "Jatka muokkausta",
+        },
+      },
     },
     toast: {
       itemRemoved: {
@@ -236,6 +254,14 @@ export const bookingDetailsPage = {
       noItems: {
         en: "Cannot save booking with no items",
         fi: "Varausta ei voi tallentaa ilman tuotteita",
+      },
+      bookingCancelled: {
+        en: "Booking has been cancelled successfully",
+        fi: "Varaus on peruutettu onnistuneesti",
+      },
+      cancelFailed: {
+        en: "Failed to cancel booking",
+        fi: "Varauksen peruuttaminen epäonnistui",
       },
     },
   },
