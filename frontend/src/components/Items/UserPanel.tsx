@@ -198,7 +198,7 @@ const UserPanel = () => {
             </div>
             <Separator className="my-4" />
 
-            {/* Categories / item_types*/}
+            {/* Categories/ item_types*/}
             <div className="flex flex-col flex-wrap gap-3">
               <label className="text-primary text-md block mb-0">
                 {" "}
