@@ -23,7 +23,6 @@ import { t } from "@/translations";
 type ContactFormData = z.infer<typeof contactSchema>;
 
 export const ContactForm = () => {
-  // Translation
   const { lang } = useLanguage();
 
   // 1. define the form
@@ -49,10 +48,9 @@ export const ContactForm = () => {
           <p><strong>${t.contactForm.emailTemplate.subject[lang]}</strong> ${values.subject}</p>
           <p>${values.message}</p>
         `, // The actual message body
-        to: "illusia.rental.service@gmail.com", // Admin email where contact form is sent
+        to: "harakka.storage.solutions@gmail.com", // Admin email where contact form is sent to
       });
 
-      // Handle success or failure
       if (response.data.success) {
         toast.success(t.contactForm.toast.success[lang]);
         form.reset();
