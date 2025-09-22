@@ -1,13 +1,13 @@
 import z from "zod";
 
-export const initialData = {
-  id: crypto.randomUUID() as string,
+export const getInitialData = () => ({
+  id: crypto.randomUUID(),
   translations: {
     fi: "",
     en: "",
   },
   parent_id: null,
-};
+});
 
 export const createCategoryDto = z.object({
   id: z.string().uuid(),
