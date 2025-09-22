@@ -84,7 +84,12 @@ const PasswordReset = () => {
             }
 
             toast.success(t.passwordReset.messages.reset.success[lang]);
-            void navigate("/login", { replace: true });
+            void navigate("/login", {
+              replace: true,
+              state: {
+                message: t.login.resetSuccess,
+              },
+            });
           } catch (error) {
             console.error("Error during password update:", error);
             setError(t.passwordReset.errors.unknownError[lang]);
@@ -96,7 +101,7 @@ const PasswordReset = () => {
 
     const timer = setTimeout(formSubmitListener, 1500);
     return () => clearTimeout(timer);
-  }, [navigate, recoveryToken]);
+  }, [navigate, recoveryToken]) //eslint-disable-line
 
   return (
     <div className="flex min-h-screen relative items-center justify-center p-4 pb-0">
