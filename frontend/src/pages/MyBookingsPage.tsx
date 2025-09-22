@@ -32,6 +32,11 @@ import { ColumnDef } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
+import {
+  decrementQuantity,
+  incrementQuantity,
+  updateQuantity,
+} from "@/utils/quantityHelpers";
 
 const MyBookingsPage = () => {
   const { id } = useParams();
@@ -197,7 +202,7 @@ const MyBookingsPage = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => decrementQuantity(item)}
+                onClick={() => handleDecrementQuantity(item)}
                 className="h-8 w-8 p-0"
                 disabled={
                   (itemQuantities[String(item.id)] ?? item.quantity ?? 0) <= 0
@@ -211,10 +216,7 @@ const MyBookingsPage = () => {
                 onChange={(e) => {
                   const val = Number(e.target.value);
                   if (!isNaN(val) && val >= 0) {
-                    setItemQuantities({
-                      ...itemQuantities,
-                      [String(item.id)]: val,
-                    });
+                    handleUpdateQuantity(item, val);
                   }
                 }}
                 className="w-[50px] text-center"
@@ -222,7 +224,7 @@ const MyBookingsPage = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => incrementQuantity(item)}
+                onClick={() => handleIncrementQuantity(item)}
                 className="h-8 w-8 p-0"
                 disabled={
                   (itemQuantities[String(item.id)] ?? item.quantity ?? 0) >=
@@ -344,20 +346,20 @@ const MyBookingsPage = () => {
     }
   };
 
-  const decrementQuantity = (item: BookingItemWithDetails) => {
-    const key = String(item.id);
-    const current = itemQuantities[key] ?? item.quantity ?? 0;
-    const next = Math.max(0, current - 1);
-    setItemQuantities((prev) => ({ ...prev, [key]: next }));
+  // Edit helper functions - using shared utilities
+  const handleDecrementQuantity = (item: BookingItemWithDetails) => {
+    decrementQuantity(item, itemQuantities, setItemQuantities);
   };
 
-  const incrementQuantity = (item: BookingItemWithDetails) => {
-    const key = String(item.id);
-    const current = itemQuantities[key] ?? item.quantity ?? 0;
-    const avail = availability[item.item_id];
-    const max = avail !== undefined ? avail : Infinity;
-    const next = Math.min(max, current + 1);
-    setItemQuantities((prev) => ({ ...prev, [key]: next }));
+  const handleIncrementQuantity = (item: BookingItemWithDetails) => {
+    incrementQuantity(item, itemQuantities, setItemQuantities, availability);
+  };
+
+  const handleUpdateQuantity = (
+    item: BookingItemWithDetails,
+    newQuantity: number,
+  ) => {
+    updateQuantity(item, newQuantity, setItemQuantities, availability);
   };
 
   const removeItem = (item: BookingItemWithDetails) => {
