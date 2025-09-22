@@ -26,6 +26,7 @@ import Categories from "@/pages/AdminPanel/Categories";
 import LandingPage from "@/pages/LandingPage";
 import Cart from "@/pages/Cart";
 import MyProfile from "@/pages/MyProfile";
+import MyBookingsPage from "@/pages/MyBookingsPage";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import TermsOfUse from "../pages/TermsOfUse";
 import Unauthorized from "../components/Unauthorized";
@@ -44,6 +45,7 @@ import OrganizationPage from "@/pages/OrganizationPage";
 import OrganizationsList from "../components/Organization/OrganizationsList";
 import ItemDetailsPage from "@/pages/AdminPanel/ItemDetailsPage";
 import AddCategory from "@/components/Admin/Categories/AddCategory";
+import MyBookings from "@/pages/MyBookings";
 
 export const router = createBrowserRouter([
   {
@@ -71,6 +73,36 @@ export const router = createBrowserRouter([
             ]}
           >
             <MyProfile />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/my-bookings",
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              "user",
+              "requester",
+              "storage_manager",
+              "tenant_admin",
+            ]}
+          >
+            <MyBookings />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/my-bookings/:id",
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              "user",
+              "requester",
+              "storage_manager",
+              "tenant_admin",
+            ]}
+          >
+            <MyBookingsPage />
           </ProtectedRoute>
         ),
       },

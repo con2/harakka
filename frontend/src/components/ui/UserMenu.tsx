@@ -205,7 +205,7 @@ export const UserMenu: React.FC = () => {
             <DropdownMenuItem asChild>
               <Link
                 onClick={() => setOpen(false)}
-                to="/profile?tab=bookings"
+                to="/my-bookings"
                 className="flex items-center gap-2"
               >
                 <CalendarDays className="w-4 h-4 text-muted-foreground" />

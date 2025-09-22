@@ -76,9 +76,7 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
                   {t.mobileMenu.buttons.guide[lang]}
                   <ChevronRight />
                 </Button>
-                <Button
-                  onClick={() => handleNavigation("/profile?tab=bookings")}
-                >
+                <Button onClick={() => handleNavigation("/my-bookings")}>
                   {t.mobileMenu.buttons.myBookings[lang]}
                   <ChevronRight />
                 </Button>
@@ -153,7 +151,7 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
               </Button>
             )}
             {(isStorageManager || isTenantAdmin) && (
-              <Button onClick={() => handleNavigation("/profile?tab=bookings")}>
+              <Button onClick={() => handleNavigation("/my-bookings")}>
                 {t.mobileMenu.buttons.orgBookings[lang]}
                 <ChevronRight />
               </Button>
