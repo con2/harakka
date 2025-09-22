@@ -70,7 +70,7 @@ export const Navigation = () => {
 
   if (isMobile)
     return (
-      <nav className="flex p-4 justify-between shadow-sm items-center z-50">
+      <nav className="flex p-4 justify-between shadow-sm items-center z-50 bg-white">
         <div className="flex gap-4">
           <Link to="/" data-cy="nav-home">
             <LogoSmall className="w-10" />
@@ -114,7 +114,7 @@ export const Navigation = () => {
 
   if (isTablet)
     return (
-      <nav className="flex p-4 justify-between shadow-sm items-center z-50">
+      <nav className="flex p-4 justify-between shadow-sm items-center z-50 bg-white">
         <div className="flex gap-6">
           <Link to="/" data-cy="nav-home">
             <Logo className="w-35" />
