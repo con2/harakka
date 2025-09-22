@@ -7,6 +7,7 @@ import {
   selectItemsPagination,
   selectItemsLoading,
   fetchAllAdminItems,
+  updateItem,
 } from "@/store/slices/itemsSlice";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
@@ -185,7 +186,23 @@ const AdminItemsTable = () => {
       size: 30,
       cell: ({ row }) => {
         const item = row.original;
-        return <Switch checked={item.is_active} />;
+        return (
+          <Switch
+            checked={item.is_active}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            onCheckedChange={() => {
+              void dispatch(
+                updateItem({
+                  item_id: item.id,
+                  data: { is_active: !item.is_active },
+                  orgId: org_id!,
+                }),
+              );
+            }}
+          />
+        );
       },
     },
   ];
