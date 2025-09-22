@@ -30,7 +30,6 @@ const ItemsDetails: React.FC = () => {
   const navigate = useNavigate();
   const { formatDate } = useFormattedDate();
 
-  // Redux selectors
   const item = useAppSelector(selectSelectedItem);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
@@ -99,13 +98,12 @@ const ItemsDetails: React.FC = () => {
           endDate: endDate,
         }),
       );
-      toast.success(`${itemContent?.item_name || "Item"} added to cart`); //item added to cart
+      toast.success(`${itemContent?.item_name || "Item"} added to cart`);
     }
   };
 
   // Check if the item is available for the selected timeframe
   useEffect(() => {
-    // Only check availability if item and dates are selected
     if (item && startDate && endDate) {
       setAvailabilityInfo((prev) => ({
         ...prev,
@@ -136,7 +134,6 @@ const ItemsDetails: React.FC = () => {
   const isItemAvailableForTimeframe = availabilityInfo.availableQuantity > 0;
 
   const { getTranslation } = useTranslation<ItemTranslation>();
-  // Get the translated item content
   const itemContent = getTranslation(item as Item, "fi") as
     | ItemTranslation
     | undefined;
@@ -289,15 +286,6 @@ const ItemsDetails: React.FC = () => {
                   </span>
                 </div>
               )}
-
-              {(item as Item).location_details?.address && (
-                <div className="flex items-start">
-                  <span> {t.itemDetails.locations.address[lang]}:</span>
-                  <span className="ml-1">
-                    {(item as Item).location_details?.address}
-                  </span>
-                </div>
-              )}
             </div>
           )}
 
@@ -333,9 +321,6 @@ const ItemsDetails: React.FC = () => {
                 className="flex flex-row justify-center items-center mt-3"
                 data-cy="item-details-quantity-controls"
               >
-                {/* <span className="text-sm mr-4">
-                  {t.itemDetails.items.quantity[lang]}
-                </span> */}
                 <Button
                   variant="outline"
                   size="sm"
