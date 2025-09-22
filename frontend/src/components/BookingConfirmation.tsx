@@ -1,11 +1,14 @@
-import React from "react";
-import { useAppSelector } from "../store/hooks";
+import React, { useEffect, useMemo } from "react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   selectCurrentBooking,
   selectBookingLoading,
 } from "../store/slices/bookingsSlice";
 import { selectSelectedUser } from "../store/slices/usersSlice";
-import { selectItemImagesById } from "../store/slices/itemImagesSlice";
+import {
+  getItemImages,
+  makeSelectItemImages,
+} from "../store/slices/itemImagesSlice";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,23 +28,27 @@ interface BookingItemDisplayProps {
 
 const BookingItemDisplay: React.FC<BookingItemDisplayProps> = ({ item }) => {
   const { lang } = useLanguage();
+  const dispatch = useAppDispatch();
 
-  // Get images for this item from the Redux store
+  useEffect(() => {
+    if (item.id) {
+      void dispatch(getItemImages(item.id));
+    }
+  }, [dispatch, item.id]);
+
+  const selectItemImages = useMemo(() => makeSelectItemImages(), []);
   const itemImages = useAppSelector((state) =>
-    selectItemImagesById(state, item.item_id),
+    selectItemImages(state, item.item_id),
   );
-
-  // Get the first image URL, if available
-  const firstImageUrl =
-    itemImages?.length > 0 ? itemImages[0].image_url : undefined;
+  const firstImage = itemImages[0].image_url;
 
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md border">
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 rounded-md ring-1 ring-gray-200 overflow-hidden bg-gray-100 flex items-center justify-center">
-          {firstImageUrl ? (
+          {firstImage ? (
             <img
-              src={firstImageUrl}
+              src={firstImage}
               alt={
                 item.storage_items?.translations?.[lang]?.item_name || "Item"
               }
@@ -220,7 +227,10 @@ const BookingConfirmation: React.FC = () => {
                   </div>
                   {groupedItems.map((org) => {
                     return (
-                      <div className="space-y-2 mb-4">
+                      <div
+                        className="space-y-2 mb-4"
+                        key={`group-${org[0].org_name}`}
+                      >
                         <p>{org[0]?.org_name}</p>
                         {org?.map((item) => (
                           <BookingItemDisplay key={item.id} item={item} />
