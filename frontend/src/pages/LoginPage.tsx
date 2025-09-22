@@ -147,6 +147,7 @@ const LoginPage = () => {
               <Auth
                 supabaseClient={supabase}
                 appearance={{
+                  style: { message: { wordBreak: "break-all" } },
                   theme: ThemeSupa,
                   variables: {
                     default: {
