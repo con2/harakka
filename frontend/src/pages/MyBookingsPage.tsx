@@ -252,7 +252,7 @@ const MyBookingsPage = () => {
     {
       id: "self_pickup",
       header:
-        booking?.status === "pending"
+        booking?.status != "confirmed"
           ? ""
           : t.myBookingsPage.columns.selfPickup[lang],
       cell: ({ row }) => {
