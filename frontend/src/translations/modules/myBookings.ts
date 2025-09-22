@@ -3,6 +3,10 @@ export const myBookings = {
     fi: "Ladataan tilauksiasi...",
     en: "Loading your bookings...",
   },
+  headings: {
+    fi: "Omat varaukset",
+    en: "My Bookings",
+  },
   error: {
     loadingError: {
       fi: "Virhe tilausten lataamisessa",
