@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { t } from "@/translations";
+import { toastConfirm } from "@/components/ui/toastConfirm";
 
 function Categories() {
   const { lang } = useLanguage();
@@ -98,6 +99,7 @@ function Categories() {
       ),
       cell: ({ row }) => {
         const { id } = row.original;
+        const category_name = row.original.translations[lang];
         return (
           <div className="text-right">
             <Button
@@ -106,7 +108,15 @@ function Categories() {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                void handleDelete(id);
+                toastConfirm({
+                  title: t.categories.messages.delete.title[lang].replace(
+                    "{category_name}",
+                    category_name,
+                  ),
+                  confirmText: t.categories.messages.delete.confirmText[lang],
+                  cancelText: t.categories.messages.delete.cancelText[lang],
+                  onConfirm: () => handleDelete(id) as Promise<void>,
+                });
               }}
             >
               <Trash />

@@ -48,6 +48,10 @@ export const addCategory = {
       fi: "Jotain meni pieleen. Yritä uudelleen myöhemmin tai ota yhteyttä tukeen.",
       en: "Something went wrong. Try again later or contact support",
     },
+    loading: {
+      en: "Loading...",
+      fi: "Ladataan...",
+    },
   },
   buttons: {
     cancel: {

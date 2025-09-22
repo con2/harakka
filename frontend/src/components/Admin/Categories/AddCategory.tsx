@@ -1,4 +1,4 @@
-import { createCategoryDto, initialData } from "./category.schema";
+import { createCategoryDto, getInitialData } from "./category.schema";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/context/LanguageContext";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import {
   createCategory,
   fetchAllCategories,
   selectCategories,
-  selectCategoriesError,
   selectCategory,
   updateCategory,
 } from "@/store/slices/categoriesSlice";
@@ -42,40 +41,53 @@ function AddCategory() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const categories = useAppSelector(selectCategories);
-  const error = useAppSelector(selectCategoriesError);
   const selectedCategory = useAppSelector(selectCategory);
 
   const form = useForm<z.infer<typeof createCategoryDto>>({
     resolver: zodResolver(createCategoryDto),
-    defaultValues: selectedCategory ?? initialData,
+    defaultValues: selectedCategory ?? getInitialData(),
   });
 
   /*----------------handlers----------------------------------*/
   const cancel = () => {
     void dispatch(clearSelectedCategory());
+    form.reset();
     void navigate("/admin/categories");
   };
 
   useEffect(() => {
     void dispatch(fetchAllCategories({ page: 1, limit: 100 }));
   }, [dispatch]);
-  const onValidSubmit = async (values: z.infer<typeof createCategoryDto>) => {
-    if (selectedCategory) {
-      await dispatch(
-        updateCategory({ id: selectedCategory.id, updateCategory: values }),
-      );
-      if (error) return toast.error(t.addCategory.messages.update.fail[lang]);
-      toast.success(t.addCategory.messages.update.success[lang]);
-      void navigate("/admin/categories", {
-        state: { search: values.translations[lang] },
-      });
-      return clearSelectedCategory();
-    }
-    await dispatch(createCategory(values));
-    if (error) return toast.error(t.addCategory.messages.create.fail[lang]);
-    toast.success(t.addCategory.messages.create.success[lang]);
-    void navigate("/admin/categories", {
-      state: { search: values.translations[lang] },
+
+  const onValidSubmit = (
+    values: z.infer<typeof createCategoryDto>,
+    e?: React.BaseSyntheticEvent,
+  ) => {
+    const action = selectedCategory
+      ? updateCategory({ id: selectedCategory.id, updateCategory: values })
+      : createCategory(values);
+
+    toast.promise(dispatch(action as any).unwrap(), { //eslint-disable-line
+      loading: t.addCategory.messages.loading[lang],
+      success: () => {
+        if (selectedCategory) {
+          clearSelectedCategory();
+        }
+        void navigate("/admin/categories", {
+          state: { search: values.translations[lang] },
+        });
+        // reset form on success
+        if (e?.target?.reset) {
+          e.target.reset();
+        }
+        return selectedCategory
+          ? t.addCategory.messages.update.success[lang]
+          : t.addCategory.messages.create.success[lang];
+      },
+      error: () =>
+        selectedCategory
+          ? t.addCategory.messages.update.fail[lang]
+          : t.addCategory.messages.create.fail[lang],
     });
   };
 
