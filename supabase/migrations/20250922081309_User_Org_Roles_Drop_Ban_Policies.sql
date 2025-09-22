@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Ban Enforcement App User Organization Roles" ON public.user_organization_roles;
+DROP POLICY IF EXISTS "Ban Enforcement Org User Organization Roles" ON public.user_organization_roles;
