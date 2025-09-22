@@ -79,7 +79,6 @@ const UserPanel = () => {
   // filter states
   const [filters, setFilters] = useState<{
     isActive: boolean;
-    averageRating: number[];
     itemsNumberAvailable: [number, number];
     category: string;
     tagIds: string[];
@@ -87,7 +86,6 @@ const UserPanel = () => {
     orgIds?: string[];
   }>({
     isActive: true, // Is item active or not filter
-    averageRating: [],
     itemsNumberAvailable: [0, 100], // add a range for number of items
     category: "",
     tagIds: [],
@@ -121,7 +119,6 @@ const UserPanel = () => {
     ) {
       count++;
     }
-    count += filters.averageRating.length;
     count += filters.category ? 1 : 0;
     count += filters.tagIds.length;
     count += filters.locationIds.length;
@@ -169,7 +166,6 @@ const UserPanel = () => {
                       onClick={() =>
                         setFilters({
                           isActive: true,
-                          averageRating: [],
                           itemsNumberAvailable: [0, 100],
                           category: "",
                           tagIds: [],
@@ -452,7 +448,6 @@ const UserPanel = () => {
                     onClick={() =>
                       setFilters({
                         isActive: true,
-                        averageRating: [],
                         itemsNumberAvailable: [0, 100],
                         category: "",
                         tagIds: [],
