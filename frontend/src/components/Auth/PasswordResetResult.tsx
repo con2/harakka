@@ -12,6 +12,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import hero from "@/assets/illusiaImage.jpg";
 
 const PasswordResetSuccess = () => {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ const PasswordResetSuccess = () => {
 
   // Original success view
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="flex relative min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-green-500 mb-2" />
@@ -87,13 +88,20 @@ const PasswordResetSuccess = () => {
         </CardContent>
         <CardFooter className="flex justify-center">
           <Button
-            onClick={() => navigate("/")}
-            className="bg-secondary hover:bg-secondary/90"
+            className="mt-4"
+            variant="outline"
+            onClick={() => navigate("/login")}
           >
             {t.passwordResetResult.success.button[lang]}
           </Button>
         </CardFooter>
       </Card>
+      <div
+        className="absolute inset-[-8px] bg-cover bg-center -z-10 h-full filter brightness-[0.6] blur-[3px] top-0 scale-[1.01]"
+        style={{
+          backgroundImage: `url(${hero})`,
+        }}
+      />
     </div>
   );
 };

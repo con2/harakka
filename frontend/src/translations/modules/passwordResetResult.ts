@@ -9,8 +9,8 @@ export const passwordResetResult = {
       en: "Your password has been reset successfully. You can now use your new password to access your account.",
     },
     button: {
-      fi: "Siirry etusivulle",
-      en: "Go to Dashboard",
+      fi: "Siirry sisäänkirjautumiseen",
+      en: "Go to log in",
     },
   },
   error: {

@@ -36,7 +36,7 @@ export const passwordReset = {
       fi: "Salasana ei voi olla tyhjä",
     },
     invalidSession: {
-      en: "There was an error with your session. <a href='/login'>Please request a new password reset link.",
+      en: "There was an error with your session. Please request a new password reset link.",
       fi: "Istunnossasi tapahtui virhe. Pyydä uusi salasanan nollauslinkki.",
     },
     unknownError: {
