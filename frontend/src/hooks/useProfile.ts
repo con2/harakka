@@ -40,7 +40,7 @@ export function useProfile(user: User | null) {
 
       if (data) {
         setProfile({
-          name: data.visible_name || data.full_name || data.email,
+          name: data.visible_name || data.full_name,
           email: data.email || "",
           avatarUrl: data.profile_picture_url || "",
         });
