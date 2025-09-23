@@ -29,8 +29,8 @@ export const orgLocationsApi = {
     ),
 
   /**
-   * Get a specific org location by ID
-   * @param id - Org location ID to fetch
+   * Get a specific org location by location ID
+   * @param id - location ID to fetch
    * @returns Promise with the requested org location
    */
   getOrgLocById: (
@@ -39,6 +39,20 @@ export const orgLocationsApi = {
     limit: number = 10,
   ): Promise<OrgLocationWithNames> =>
     api.get(`/organization-locations/${id}?page=${page}&limit=${limit}`),
+
+  /**
+   * Get a specific org location by org ID
+   * @param id - Org location ID to fetch
+   * @returns Promise with the requested org location
+   */
+  getOrgLocByOrgId: (
+    id: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<OrgLocationWithNames[]> =>
+    api.get(
+      `/organization-locations/organization/${id}?page=${page}&limit=${limit}`,
+    ),
 
   /**
    * Create a new org location

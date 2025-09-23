@@ -385,8 +385,6 @@ const AdminItemsTable = () => {
           className: "cursor-pointer",
         })}
       />
-
-      {/* Item editing / tagging moved to ItemDetailsPage */}
     </div>
   );
 };

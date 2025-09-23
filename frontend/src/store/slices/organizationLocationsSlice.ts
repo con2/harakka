@@ -50,6 +50,16 @@ export const fetchOrgLocationById = createAsyncThunk(
     return response;
   },
 );
+/**
+ * Async thunk to fetch a specific org location by org ID
+ */
+export const fetchOrgLocationByOrgId = createAsyncThunk(
+  "orgLocations/fetchLocByOrgId",
+  async (id: string) => {
+    const response = await orgLocationsApi.getOrgLocByOrgId(id);
+    return response;
+  },
+);
 
 /**
  * Async thunk to create a new org location
@@ -154,7 +164,7 @@ const orgLocationsSlice = createSlice({
         state.error = action.error.message || "Failed to fetch org locations";
       })
 
-      // Fetch org location by ID
+      // Fetch org location by location ID
       .addCase(fetchOrgLocationById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -166,6 +176,19 @@ const orgLocationsSlice = createSlice({
       .addCase(fetchOrgLocationById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to fetch org location";
+      })
+      // Fetch org locations by org ID
+      .addCase(fetchOrgLocationByOrgId.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchOrgLocationByOrgId.fulfilled, (state, action) => {
+        state.loading = false;
+        state.orgLocations = action.payload.data;
+      })
+      .addCase(fetchOrgLocationByOrgId.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch org locations";
       })
 
       // Create org location
