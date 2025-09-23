@@ -1,7 +1,21 @@
 export const login = {
-  title: {
-    fi: "Kirjaudu tilillesi",
-    en: "Login to your account",
+  titles: {
+    sign_in: {
+      fi: "Kirjaudu tilillesi",
+      en: "Login to your account",
+    },
+    forgotten_password: {
+      en: "Reset your password",
+      fi: "Nollaa salasanasi",
+    },
+    sign_up: {
+      en: "Create an account",
+      fi: "Luo tunnus",
+    },
+    magic_link: {
+      en: "Request a magic link",
+      fi: "Pyydä kirjautumislinkki",
+    },
   },
   resetSuccess: {
     fi: "Salasana on päivitetty onnistuneesti. Ole hyvä ja kirjaudu sisään uudella salasanallasi.",
