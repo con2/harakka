@@ -178,6 +178,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          booked_by_org: string | null
           booking_number: string
           created_at: string | null
           id: string
@@ -187,6 +188,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          booked_by_org?: string | null
           booking_number: string
           created_at?: string | null
           id?: string
@@ -196,6 +198,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          booked_by_org?: string | null
           booking_number?: string
           created_at?: string | null
           id?: string
@@ -216,6 +219,7 @@ export type Database = {
           parent_id: string | null
           sort_order: number | null
           translations: Json
+          updated_at: string | null
         }
         Insert: {
           color?: string | null
@@ -226,6 +230,7 @@ export type Database = {
           parent_id?: string | null
           sort_order?: number | null
           translations: Json
+          updated_at?: string | null
         }
         Update: {
           color?: string | null
@@ -236,6 +241,7 @@ export type Database = {
           parent_id?: string | null
           sort_order?: number | null
           translations?: Json
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -460,68 +466,6 @@ export type Database = {
             columns: ["owner_organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reviews: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_verified: boolean | null
-          item_id: string
-          rating: number
-          review_text: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_verified?: boolean | null
-          item_id: string
-          rating: number
-          review_text?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_verified?: boolean | null
-          item_id?: string
-          rating?: number
-          review_text?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "storage_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_item_location_summary"
-            referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_item_ownership_summary"
-            referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_manage_storage_items"
             referencedColumns: ["id"]
           },
         ]
@@ -923,16 +867,19 @@ export type Database = {
           created_at: string | null
           id: string
           translations: Json | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           translations?: Json | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           translations?: Json | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1257,6 +1204,7 @@ export type Database = {
       }
       view_bookings_with_user_info: {
         Row: {
+          booked_by_org: string | null
           booking_number: string | null
           created_at: string | null
           created_at_text: string | null
@@ -1320,6 +1268,8 @@ export type Database = {
       view_manage_storage_items: {
         Row: {
           available_quantity: number | null
+          category_en_name: string | null
+          category_fi_name: string | null
           category_id: string | null
           created_at: string | null
           en_item_name: string | null
