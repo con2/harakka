@@ -151,4 +151,14 @@ export const usersList = {
     fi: "Ladataan käyttäjiä...",
     en: "Loading users...",
   },
+  tooltip: {
+    superAdminHelp: {
+      fi: "Roolin määrittämiseksi valitse käyttäjä alla ja klikkaa Lisää rooli",
+      en: "To assign roles, select a user below, and click Add Role",
+    },
+    tenantAdminHelp: {
+      fi: "Lisätäksesi uuden jäsenen organisaatioosi, klikkaa Lisää Orgni käyttäjää -painiketta",
+      en: "To add a new member to your organization, click the Add My Org User button",
+    },
+  },
 };

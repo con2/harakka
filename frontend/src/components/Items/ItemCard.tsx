@@ -35,14 +35,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const itemImages = useAppSelector(selectItemImages);
-
-  // Get global timeframe from Redux
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
-
-  // Only keep quantity as local state
   const [quantity, setQuantity] = useState(0);
-
-  // get cart items from Redux
   const cartItems = useAppSelector((state) => state.cart.items);
 
   const [availabilityInfo, setAvailabilityInfo] =
@@ -52,7 +46,6 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       error: null,
     });
 
-  // Translation
   const { getTranslation } = useTranslation<ItemTranslation>();
   const itemContent = getTranslation(item, "fi") as ItemTranslation | undefined;
   const { lang } = useLanguage();
@@ -145,7 +138,6 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
     void navigate(`/storage/items/${itemId}`);
   };
 
-  // Handle adding item to cart
   const handleAddToCart = () => {
     if (!item) return;
 
@@ -282,13 +274,15 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             : "Tuote"}
         </h2>
         {/* Display location name */}
-        {item.location_details && (
+        {(item.location_details || item.location_name) && (
           <div
             className="flex items-center justify-center gap-1 text-xs text-muted-foreground"
             data-cy="item-location"
           >
-            <MapPin className="h-3.5 w-3.5" />
-            <span>{item.location_details.name}</span>
+            <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+            <span>
+              {item.location_details?.name || item.location_name || "Unknown"}
+            </span>
           </div>
         )}
       </div>
