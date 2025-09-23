@@ -35,6 +35,18 @@ export const categories = {
         fi: "Kategoria poistettiin",
         en: "Category was deleted",
       },
+      title: {
+        en: "Are you sure you want to delete {category_name} as a category?",
+        fi: "Haluatko varmasti poistaa kategorian {category_name}?",
+      },
+      confirmText: {
+        en: "Yes",
+        fi: "Kyllä",
+      },
+      cancelText: {
+        en: "Cancel",
+        fi: "Peruuta",
+      },
     },
   },
   buttons: {
