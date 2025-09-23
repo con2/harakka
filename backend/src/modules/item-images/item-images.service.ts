@@ -120,10 +120,12 @@ export class ItemImagesService {
           typeof file !== "object" ||
           !file ||
           typeof file.originalname !== "string" ||
-          typeof file.buffer === "undefined"
+          typeof file.buffer === "undefined",
       )
     ) {
-      throw new BadRequestException("Invalid files parameter: expected array of files.");
+      throw new BadRequestException(
+        "Invalid files parameter: expected array of files.",
+      );
     }
     const supabase = req.supabase;
     const result: BucketUploadResult = {
