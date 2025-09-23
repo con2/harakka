@@ -1,8 +1,4 @@
 import AddItemForm from "@/components/Admin/Items/AddItem/Steps/AddItemForm";
-import Spinner from "@/components/Spinner";
-import { Button } from "@/components/ui/button";
-import { toastConfirm } from "@/components/ui/toastConfirm";
-import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getItemImages,
@@ -14,16 +10,22 @@ import {
   selectSelectedItem,
   updateItem,
 } from "@/store/slices/itemsSlice";
-import { fetchOrgLocationByOrgId } from "@/store/slices/organizationLocationsSlice";
+import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/context/LanguageContext";
+import Spinner from "@/components/Spinner";
+import { toast } from "sonner";
+import { toastConfirm } from "@/components/ui/toastConfirm";
+import { Item } from "@/types/item";
+import { fetchTagsForItem } from "@/store/slices/tagSlice";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
-import { fetchTagsForItem, selectSelectedTags } from "@/store/slices/tagSlice";
+import { fetchOrgLocationByOrgId } from "@/store/slices/organizationLocationsSlice";
+import { selectSelectedTags } from "@/store/slices/tagSlice";
+import { createItemDto } from "@/store/utils/validate";
 import { t } from "@/translations";
-import { Item } from "@/types";
-import { CreateItemType } from "@common/items/form.types";
 import { ChevronLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
+import z from "zod";
 
 const ItemDetailsPage = () => {
   const { id } = useParams();
@@ -35,10 +37,16 @@ const ItemDetailsPage = () => {
   const selectedImages = useAppSelector(selectItemImages);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const [loading, setLoading] = useState(true);
-  const mainImg = selectedImages.find((img) => img.image_type === "main");
-  const detailImgs = selectedImages.filter(
-    (img) => img.image_type === "detail",
+
+  // Form state for inline editing
+  const mainImg = selectedImages.find(
+    (img) => img.item_id === selectedItem?.id && img.image_type === "main",
   );
+  const detailImgs = selectedImages.filter(
+    (img) => img.item_id === selectedItem?.id && img.image_type === "detail",
+  );
+
+  // format selected item to fit the item form
   const formattedItem = {
     ...(selectedItem as Item),
     location: {
@@ -46,13 +54,16 @@ const ItemDetailsPage = () => {
       name: (selectedItem as Item)?.location_details.name,
       address: (selectedItem as Item)?.location_details.address,
     },
-    quantity: (selectedItem as Item)?.quantity,
+    quantity: (selectedItem as Item)?.quantity ?? 1,
     category_id: "",
-    tags: selectedTags?.map((tag) => tag.id),
+    tags: (selectedTags ?? []).map((tag) => tag.id),
     images: {
       main: mainImg
         ? {
+            id: mainImg.id,
             url: mainImg.image_url,
+            full_path: mainImg.storage_path,
+            path: mainImg.storage_path?.split("/")[1],
             metadata: {
               image_type: mainImg.image_type,
               display_order: mainImg.display_order,
@@ -60,13 +71,20 @@ const ItemDetailsPage = () => {
               is_active: mainImg.is_active,
             },
           }
-        : {},
-      details: detailImgs.map((img) => {
-        const { image_url, image_type, display_order, is_active, alt_text } =
-          img;
+        : null,
+      details: (detailImgs ?? []).map((img) => {
+        const {
+          image_url,
+          id,
+          image_type,
+          display_order,
+          is_active,
+          alt_text,
+        } = img;
         return {
           url: image_url,
           metadata: {
+            id: id,
             image_type: image_type,
             display_order: display_order,
             alt_text: alt_text,
@@ -95,31 +113,45 @@ const ItemDetailsPage = () => {
     void load();
   }, [dispatch, id]);
 
-  const update = () => {
+  // Initialize form state once selectedItem is loaded
+  useEffect(() => {
     if (!selectedItem) return;
-    toast.promise(
-      dispatch(
-        updateItem({
-          item_id: selectedItem.id,
-          data: {
-            ...selectedItem,
-            location: {
-              id: (selectedItem as Item).location_details.id,
-              name: (selectedItem as Item).location_details.name,
-              address: (selectedItem as Item).location_details.address,
+  }, [selectedItem]);
+
+  const update = (values: z.infer<typeof createItemDto>) => {
+    if (!selectedItem) return;
+    const { location_details, location_id, location, ...rest} = values;
+    try {
+      toast.promise(
+        dispatch(
+          updateItem({
+            data: {
+              ...rest,
+              org_id: activeOrgId!,
+              location_id,
+              location_details,
             },
-          } as CreateItemType,
-          orgId: activeOrgId!,
-        }),
-      ).unwrap(),
-      {
-        loading: "Updating item...",
-        success: "Item was successfully updated!",
-        error: "Failed to update item",
-      },
-    );
+            item_id: selectedItem.id,
+            orgId: activeOrgId!,
+          }),
+        ).unwrap(),
+        {
+          loading: t.itemDetailsPage.messages.toast.update.loading[lang],
+          success: t.itemDetailsPage.messages.toast.update.success[lang],
+          error: t.itemDetailsPage.messages.toast.update.error[lang],
+        },
+      );
+      void navigate("/admin/items");
+    } catch {
+      // Do nothing on error — toast already shows the failure message
+    }
   };
 
+  const handleSubmit = () => {
+    (
+      document.querySelector("#add-item-form") as HTMLFormElement
+    ).requestSubmit();
+  };
   const handleDelete = () => {
     if (!selectedItem) return;
     const orgId = activeOrgId;
@@ -178,7 +210,9 @@ const ItemDetailsPage = () => {
           <Button variant="destructive" onClick={handleDelete}>
             Delete Item
           </Button>
-          <Button variant="outline">Save Changes</Button>
+          <Button variant="outline" onClick={handleSubmit}>
+            Save Changes
+          </Button>
         </div>
       </div>
       <AddItemForm onUpdate={update} initialData={formattedItem} />

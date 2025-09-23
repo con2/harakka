@@ -178,6 +178,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          booked_by_org: string | null
           booking_number: string
           created_at: string | null
           id: string
@@ -187,6 +188,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          booked_by_org?: string | null
           booking_number: string
           created_at?: string | null
           id?: string
@@ -196,6 +198,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          booked_by_org?: string | null
           booking_number?: string
           created_at?: string | null
           id?: string
@@ -216,6 +219,7 @@ export type Database = {
           parent_id: string | null
           sort_order: number | null
           translations: Json
+          updated_at: string | null
         }
         Insert: {
           color?: string | null
@@ -226,6 +230,7 @@ export type Database = {
           parent_id?: string | null
           sort_order?: number | null
           translations: Json
+          updated_at?: string | null
         }
         Update: {
           color?: string | null
@@ -236,6 +241,7 @@ export type Database = {
           parent_id?: string | null
           sort_order?: number | null
           translations?: Json
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -923,16 +929,19 @@ export type Database = {
           created_at: string | null
           id: string
           translations: Json | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           translations?: Json | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           translations?: Json | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1257,6 +1266,7 @@ export type Database = {
       }
       view_bookings_with_user_info: {
         Row: {
+          booked_by_org: string | null
           booking_number: string | null
           created_at: string | null
           created_at_text: string | null
@@ -1320,6 +1330,8 @@ export type Database = {
       view_manage_storage_items: {
         Row: {
           available_quantity: number | null
+          category_en_name: string | null
+          category_fi_name: string | null
           category_id: string | null
           created_at: string | null
           en_item_name: string | null

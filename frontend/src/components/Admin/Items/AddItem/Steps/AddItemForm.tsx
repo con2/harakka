@@ -70,7 +70,7 @@ import {
 /* eslint-disable react-hooks/exhaustive-deps */
 
 type AddItemFromProps = {
-  onUpdate?: () => void;
+  onUpdate?: (values: z.infer<typeof createItemDto>) => void;
   initialData?: CreateItemType;
 };
 
@@ -121,7 +121,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
     form.reset();
-    if (onUpdate) return onUpdate();
+    if (onUpdate) return onUpdate(form.getValues());
     if (isEditing) return handleUpdateItem(values);
     void dispatch(addToItemCreation(values));
     dispatch(setNextStep());
@@ -130,6 +130,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
     console.log(form.getValues());
     const firstErrorKey = getFirstErrorMessage(errors);
+    console.log(errors);
 
     if (
       firstErrorKey &&
@@ -262,6 +263,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
     <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px]">
       <Form {...form}>
         <form
+          id="add-item-form"
           onSubmit={form.handleSubmit(onValidSubmit, onInvalidSubmit)}
           className="w-full"
         >
@@ -345,7 +347,6 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                     );
                   })}
                 </div>
-
                 {/* Category | Total Quantity | Location | Is active */}
                 <div className="gap-4 flex w-full">
                   <FormField

@@ -1,8 +1,8 @@
 import { Item, ValidItemOrder } from "@/types";
 import { api } from "../axios";
 import { ApiSingleResponse } from "@common/response.types";
-import { CreateItemType, ItemFormData } from "@common/items/form.types";
-import { UpdateResponse } from "@common/items/storage-items.types";
+import { ItemFormData } from "@common/items/form.types";
+import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 import { ProcessedCSV } from "@common/items/csv.types";
 
 /**
@@ -123,7 +123,7 @@ export const itemsApi = {
    */
   updateItem: (
     item_id: string,
-    item: CreateItemType,
+    item: UpdateItem,
     org_id: string,
   ): Promise<UpdateResponse> =>
     api.put(`/storage-items/${org_id}/${item_id}`, item),

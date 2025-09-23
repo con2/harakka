@@ -264,7 +264,7 @@ export const deleteItem = createAsyncThunk<
 // Update item
 export const updateItem = createAsyncThunk<
   UpdateResponse,
-  { item_id: string; data: CreateItemType; orgId: string }
+  { item_id: string; data: UpdateItem; orgId: string }
 >("items/updateItem", async ({ item_id, data, orgId }, { rejectWithValue }) => {
   try {
     const response = await itemsApi.updateItem(item_id, data, orgId);
