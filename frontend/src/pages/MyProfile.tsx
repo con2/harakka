@@ -213,76 +213,78 @@ const MyProfile = () => {
 
             {/* user details */}
             <form onSubmit={handleSubmit} className="w-full">
-              <div className="flex flex-col md:flex-1 space-y-6 p-2 w-full">
+              <div className="flex flex-col md:flex-1 p-2 w-full gap-12">
                 {/* Editable Fields for Details */}
-                <h3 className="text-xl font-semibold text-gray-700">
-                  {t.myProfile.personalDetails.title[lang]}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label
-                      htmlFor="name"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      {t.myProfile.personalDetails.fullName.label[lang]}
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                    />
-                  </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-700">
+                    {t.myProfile.personalDetails.title[lang]}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label
+                        htmlFor="name"
+                        className="block text-xs font-medium text-gray-700"
+                      >
+                        {t.myProfile.personalDetails.fullName.label[lang]}
+                      </label>
+                      <input
+                        id="name"
+                        type="text"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                      />
+                    </div>
 
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      {t.myProfile.personalDetails.email.label[lang]}
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                    />
-                  </div>
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="block text-xs font-medium text-gray-700"
+                      >
+                        {t.myProfile.personalDetails.email.label[lang]}
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                      />
+                    </div>
 
-                  <div>
-                    <label
-                      htmlFor="phone"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      {t.myProfile.personalDetails.phone.label[lang]}
-                    </label>
-                    <input
-                      id="phone"
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                    />
-                  </div>
+                    <div>
+                      <label
+                        htmlFor="phone"
+                        className="block text-xs font-medium text-gray-700"
+                      >
+                        {t.myProfile.personalDetails.phone.label[lang]}
+                      </label>
+                      <input
+                        id="phone"
+                        type="text"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                      />
+                    </div>
 
-                  <div>
-                    <label
-                      htmlFor="visibleName"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      {t.myProfile.personalDetails.visibleName.label[lang]}
-                    </label>
-                    <input
-                      id="visibleName"
-                      type="text"
-                      value={visibleName}
-                      onChange={(e) => setVisibleName(e.target.value)}
-                      className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                    />
+                    <div>
+                      <label
+                        htmlFor="visibleName"
+                        className="block text-xs font-medium text-gray-700"
+                      >
+                        {t.myProfile.personalDetails.visibleName.label[lang]}
+                      </label>
+                      <input
+                        id="visibleName"
+                        type="text"
+                        value={visibleName}
+                        onChange={(e) => setVisibleName(e.target.value)}
+                        className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -291,7 +293,7 @@ const MyProfile = () => {
 
                 {/* Addresses */}
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-700 mb-4">
+                  <h3 className="text-xl font-semibold text-gray-700">
                     {t.myProfile.addresses.title[lang]}
                   </h3>
 
@@ -320,7 +322,7 @@ const MyProfile = () => {
                             </label>
                           </div>
 
-                          <div className="space-y-2">
+                          <div>
                             <div>
                               <label className="block text-xs font-medium text-gray-700">
                                 {
