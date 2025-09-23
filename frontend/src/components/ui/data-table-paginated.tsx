@@ -147,7 +147,7 @@ export function PaginatedDataTable<TData, TValue>({
                 return (
                   <TableRow
                     key={row.id}
-                    className={`h-10 ${highlight?.includes(row.index) ? "!bg-green-50" : ""}`}
+                    className={`h-10 hover:cursor-pointer ${highlight?.includes(row.index) ? "bg-green-50" : ""}`}
                     data-state={row.getIsSelected() && "selected"}
                     data-higlighted={highlight?.includes(row.index)}
                     {...(rowProps?.(row) ?? {})}

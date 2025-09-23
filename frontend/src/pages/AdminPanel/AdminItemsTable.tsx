@@ -389,7 +389,6 @@ const AdminItemsTable = () => {
         rowProps={(row) => ({
           onClick: () =>
             handleRowClick(String((row.original as unknown as Item).id)),
-          className: `cursor-pointer`,
         })}
       />
     </div>
