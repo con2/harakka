@@ -38,40 +38,4 @@ export class MailController {
     });
     return { success: true };
   }
-
-  @Post("send-email")
-  async sendMail(@Body() sendMailDto: SendMailDto<unknown>): Promise<string> {
-    try {
-      const { email, subject, type, data } = sendMailDto;
-
-      let templateHtml: React.ReactElement;
-
-      if (type === "bookingConfirmation") {
-        templateHtml = BookingConfirmationEmail(data as EmailProps);
-      } else if (type === "welcome") {
-        templateHtml = WelcomeEmail(data as WelcomeEmailProps);
-      } else {
-        throw new BadRequestException("Unknown email type");
-      }
-
-      await this.mailService.sendMail({
-        to: email,
-        subject: sanitizeSubject(subject),
-        template: templateHtml,
-      });
-
-      return "Email sent successfully";
-    } catch (error) {
-      console.error("Failed to send email:", error);
-
-      // Optional: fall back to NestJS Exception
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException(
-        "This Error: Failed to send email",
-      );
-    }
-  }
 }
