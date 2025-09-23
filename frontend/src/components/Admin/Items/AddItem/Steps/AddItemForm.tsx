@@ -287,7 +287,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                 </p>
               </AccordionTrigger>
               <AccordionContent className="mt-10">
-                <div className="flex flex-wrap w-full gap-x-6 space-y-4 justify-between">
+                <div className="flex flex-wrap w-full gap-x-6 space-y-4 justify-between mb-8">
                   {TRANSLATION_FIELDS.map((entry) => {
                     const {
                       lang: fieldLang,
@@ -347,7 +347,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   })}
                 </div>
                 {/* Category | Total Quantity | Location | Is active */}
-                <div className="gap-4 flex w-full">
+                <div className="gap-4 flex w-full mb-10">
                   <FormField
                     name="category_id"
                     control={form.control}
