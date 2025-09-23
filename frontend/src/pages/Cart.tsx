@@ -43,8 +43,6 @@ const Cart: React.FC = () => {
   const bookingLoading = useAppSelector(selectBookingLoading);
   const userProfile = useAppSelector(selectSelectedUser);
   const user = useAppSelector(selectSelectedUser);
-
-  // Translation
   const { getTranslation } = useTranslation<ItemTranslation>();
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
@@ -176,7 +174,19 @@ const Cart: React.FC = () => {
   };
 
   const handleRemoveItem = (id: string) => {
-    dispatch(removeFromCart(id));
+    toastConfirm({
+      title: t.cart.toast.removeItemTitle[lang],
+      description: t.cart.toast.removeItemDescription[lang],
+      confirmText: t.cart.toast.confirmRemove[lang],
+      cancelText: t.cart.toast.cancelRemove[lang],
+      onConfirm: () => {
+        dispatch(removeFromCart(id));
+        toast.success(t.cart.toast.itemRemoved[lang]);
+      },
+      onCancel: () => {
+        toast.success(t.cart.toast.itemNotRemoved[lang]);
+      },
+    });
   };
 
   const handleClearCart = () => {
@@ -431,7 +441,10 @@ const Cart: React.FC = () => {
                     {locationGroup.locationInfo.name}{" "}
                     <span className="text-blue-600 font-normal">
                       ({locationGroup.items.length}{" "}
-                      {t.cart.locations.itemCount[lang]})
+                      {locationGroup.items.length === 1
+                        ? t.cart.locations.itemCountSingular[lang]
+                        : t.cart.locations.itemCount[lang]}
+                      )
                     </span>
                     {locationGroup.locationInfo.address && (
                       <div className="text-xs text-gray-600 font-normal ml-2">
