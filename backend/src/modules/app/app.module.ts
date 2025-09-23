@@ -151,6 +151,9 @@ export class AppModule implements NestModule {
 
         // Public Category Endpoint
         { path: "categories", method: RequestMethod.GET },
+
+        // Public mail endpoint for contact form
+        { path: "mail/send", method: RequestMethod.POST },
       )
       .forRoutes(
         // Protected controllers
