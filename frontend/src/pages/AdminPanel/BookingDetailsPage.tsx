@@ -23,6 +23,7 @@ import { ChevronLeft, Clipboard, Info, Trash2 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { useOrganizationNames } from "@/hooks/useOrganizationNames";
 import { StatusBadge } from "@/components/StatusBadge";
 import { makeSelectItemImages } from "@/store/slices/itemImagesSlice";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
@@ -65,6 +66,10 @@ const BookingDetailsPage = () => {
   const orgLocations = useAppSelector(selectOrgLocations);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRole = useAppSelector(selectActiveRoleName);
+
+  // Fetch organization name if booking was made on behalf of an organization
+  const organizationIds = booking?.booked_by_org ? [booking.booked_by_org] : [];
+  const { organizationNames } = useOrganizationNames(organizationIds);
 
   const isAdmin =
     activeRole === "tenant_admin" || activeRole === "storage_manager";
@@ -765,6 +770,13 @@ const BookingDetailsPage = () => {
                   </span>
                 )}
               </div>
+              {booking.booked_by_org &&
+                organizationNames[booking.booked_by_org] && (
+                  <p className="text-sm text-blue-600 font-medium mt-2">
+                    {t.bookingDetailsPage.modal.onBehalfOf[lang]}{" "}
+                    {organizationNames[booking.booked_by_org]}
+                  </p>
+                )}
               <p>
                 {t.bookingDetailsPage.modal.date[lang]}{" "}
                 {formatDate(new Date(booking.created_at || ""), "d MMM yyyy")}
