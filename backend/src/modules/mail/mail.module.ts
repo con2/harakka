@@ -3,9 +3,10 @@ import { MailService } from "./mail.service";
 import { BookingEmailAssembler } from "./booking-email-assembler";
 import { SupabaseService } from "../supabase/supabase.service";
 import { UserEmailAssembler } from "./user-email-assembler";
+import { MailController } from "./mail.controller";
 
 @Module({
-  controllers: [],
+  controllers: [MailController],
   providers: [
     MailService,
     BookingEmailAssembler,
