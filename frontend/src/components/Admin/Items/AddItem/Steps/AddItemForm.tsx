@@ -111,7 +111,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             item_description: "",
           },
         },
-        category_id: "",
+        category_id: null,
         images: {
           main: null,
           details: [],
@@ -119,9 +119,13 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
       },
   });
 
+  useEffect(() => {
+    console.log("form update: ", form.getValues());
+  }, [form]);
+
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
     form.reset();
-    if (onUpdate) return onUpdate(form.getValues());
+    if (onUpdate) return onUpdate(values);
     if (isEditing) return handleUpdateItem(values);
     void dispatch(addToItemCreation(values));
     dispatch(setNextStep());
@@ -504,7 +508,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   </p>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="mt-10">
+              <AccordionContent className="mt-5">
                 <div className="flex flex-col gap-3 mb-8">
                   <Input
                     placeholder={t.addItemForm.placeholders.searchTags[appLang]}
@@ -587,7 +591,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="mt-10">
+              <AccordionContent className="mt-5">
                 <ItemImageUpload
                   item_id={form.watch("id") || ""}
                   formImages={

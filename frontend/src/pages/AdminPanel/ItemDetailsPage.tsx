@@ -55,20 +55,20 @@ const ItemDetailsPage = () => {
       address: (selectedItem as Item)?.location_details.address,
     },
     quantity: (selectedItem as Item)?.quantity ?? 1,
-    category_id: "",
+    category_id: selectedItem?.category_id ?? null,
     tags: (selectedTags ?? []).map((tag) => tag.id),
     images: {
       main: mainImg
         ? {
-            id: mainImg.id,
-            url: mainImg.image_url,
-            full_path: mainImg.storage_path,
-            path: mainImg.storage_path?.split("/")[1],
+            id: mainImg.id ?? "",
+            url: mainImg.image_url ?? "",
+            full_path: mainImg.storage_path ?? "",
+            path: mainImg.storage_path?.split("/")[1] ?? "",
             metadata: {
-              image_type: mainImg.image_type,
-              display_order: mainImg.display_order,
-              alt_text: mainImg.alt_text,
-              is_active: mainImg.is_active,
+              image_type: mainImg.image_type ?? "",
+              display_order: mainImg.display_order ?? 0,
+              alt_text: mainImg.alt_text ?? "",
+              is_active: mainImg.is_active ?? true,
             },
           }
         : null,
@@ -79,10 +79,14 @@ const ItemDetailsPage = () => {
           image_type,
           display_order,
           is_active,
+          storage_path,
           alt_text,
         } = img;
         return {
+          id,
           url: image_url,
+          full_path: storage_path ?? "",
+          path: storage_path?.split("/")[1] ?? "",
           metadata: {
             id: id,
             image_type: image_type,
@@ -120,7 +124,8 @@ const ItemDetailsPage = () => {
 
   const update = (values: z.infer<typeof createItemDto>) => {
     if (!selectedItem) return;
-    const { location_details, location_id, location, ...rest} = values;
+    console.log(values);
+    const { location_details, location_id, location, ...rest } = values;
     try {
       toast.promise(
         dispatch(
@@ -141,7 +146,12 @@ const ItemDetailsPage = () => {
           error: t.itemDetailsPage.messages.toast.update.error[lang],
         },
       );
-      void navigate("/admin/items");
+      void navigate("/admin/items", {
+        state: {
+          order: "updated_at",
+          highlight: [0],
+        },
+      });
     } catch {
       // Do nothing on error — toast already shows the failure message
     }
@@ -199,9 +209,7 @@ const ItemDetailsPage = () => {
       {/*/ Back button */}
       <div className="flex justify-between max-w-[900px]">
         <Button
-          onClick={() => {
-            window.location.href = "/admin/items";
-          }}
+          onClick={() => navigate("/admin/items")}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
         >
           <ChevronLeft /> {t.itemDetailsPage.buttons.back[lang]}

@@ -123,7 +123,7 @@ export const itemsApi = {
    */
   updateItem: (
     item_id: string,
-    item: UpdateItem,
+    item: Partial<UpdateItem>,
     org_id: string,
   ): Promise<UpdateResponse> =>
     api.put(`/storage-items/${org_id}/${item_id}`, item),

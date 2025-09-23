@@ -46,7 +46,7 @@ export type UpdateItem = StorageItemInsert & {
   tags: string[];
   location_details: LocationRow;
   images: {
-    main: Image,
+    main: Image | null,
     details: Image[]
   }
 };

@@ -75,7 +75,7 @@ export const Navigation = () => {
 
   if (isMobile)
     return (
-      <nav className="flex p-4 justify-between shadow-sm items-center z-50 bg-white !font-main">
+      <nav className="flex p-4 justify-between shadow-sm items-center z-50 bg-white">
         <div className="flex gap-4">
           <Link to="/" data-cy="nav-home">
             <LogoSmall className="w-10" />
@@ -259,7 +259,6 @@ export const Navigation = () => {
       <div className="flex items-center gap-3">
         {/* Active role context switcher if user is logged in and has roles */}
 
-        <LanguageSwitcher />
         <Button
           variant="ghost"
           onClick={() => navigate("/cart")}
@@ -284,7 +283,7 @@ export const Navigation = () => {
               data-cy="nav-login-btn"
               asChild
             >
-              <Link to="/login" className="font-main">
+              <Link to="/login">
                 {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
               </Link>
             </Button>
