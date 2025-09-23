@@ -11,10 +11,10 @@ import { SendEmailDto } from "./dto/mail.dto";
 import { Throttle, ThrottlerGuard } from "@nestjs/throttler";
 import { EmailProps } from "./interfaces/mail.interface";
 import { SendMailDto } from "./dto/send-mail.dto";
-import BookingConfirmationEmail from "src/emails/BookingConfirmationEmail";
-import WelcomeEmail, { WelcomeEmailProps } from "src/emails/WelcomeEmail";
+import BookingConfirmationEmail from "../../emails/BookingConfirmationEmail";
+import WelcomeEmail, { WelcomeEmailProps } from "../../emails/WelcomeEmail";
 import * as React from "react";
-import { sanitizeEmailHtml, sanitizeSubject } from "@src/utils/sanitize.util";
+import { sanitizeEmailHtml, sanitizeSubject } from "../../utils/sanitize.util";
 
 @Controller("mail")
 @UseGuards(ThrottlerGuard)
