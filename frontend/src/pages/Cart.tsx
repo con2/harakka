@@ -421,46 +421,26 @@ const Cart: React.FC = () => {
               <p className="text-blue-700 text-sm mb-3">
                 {t.cart.locations.pickupInfo[lang]}
               </p>
-              <div className="space-y-3">
+              <ul className="space-y-2">
                 {itemsByLocation.map((locationGroup, index) => (
-                  <div
+                  <li
                     key={locationGroup.locationInfo.id}
-                    className="bg-white p-3 rounded border border-blue-100"
-                    data-cy={`cart-location-group-${index}`}
+                    className="text-blue-800 font-medium"
+                    data-cy={`cart-location-item-${index}`}
                   >
-                    <h5 className="font-medium text-blue-800 mb-1">
-                      {locationGroup.locationInfo.name}
-                    </h5>
+                    {locationGroup.locationInfo.name}{" "}
+                    <span className="text-blue-600 font-normal">
+                      ({locationGroup.items.length}{" "}
+                      {t.cart.locations.itemCount[lang]})
+                    </span>
                     {locationGroup.locationInfo.address && (
-                      <p className="text-xs text-gray-600 mb-2">
+                      <div className="text-xs text-gray-600 font-normal ml-2">
                         {locationGroup.locationInfo.address}
-                      </p>
+                      </div>
                     )}
-                    <div className="text-sm text-gray-700">
-                      <span className="font-medium">
-                        {t.cart.locations.itemsAtLocation[lang]}:
-                      </span>
-                      <ul className="list-disc list-inside mt-1 ml-2">
-                        {locationGroup.items.map((cartItem) => {
-                          const itemContent = getTranslation(
-                            cartItem.item,
-                            lang,
-                          ) as ItemTranslation | undefined;
-                          return (
-                            <li key={cartItem.item.id} className="text-xs">
-                              {itemContent?.item_name
-                                ?.toLowerCase()
-                                .replace(/^./, (c) => c.toUpperCase()) ||
-                                "Unknown Item"}{" "}
-                              (x{cartItem.quantity})
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
 
@@ -474,36 +454,28 @@ const Cart: React.FC = () => {
               return (
                 <div
                   key={cartItem.item.id}
-                  className="flex flex-col border-b pb-4"
+                  className="flex flex-col border-b pb-2"
                   data-cy="cart-item"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="font-medium mb-2" data-cy="cart-item-name">
+                      <h3 className="font-medium mb-1" data-cy="cart-item-name">
                         {itemContent?.item_name
                           .toLowerCase()
                           .replace(/^./, (c) => c.toUpperCase())}
                       </h3>
                       <p
-                        className="text-sm text-gray-500"
-                        data-cy="cart-item-type"
+                        className="text-xs text-slate-500 flex items-center gap-1"
+                        data-cy="cart-item-location"
                       >
-                        {itemContent?.item_type
-                          .toLowerCase()
-                          .replace(/^./, (c) => c.toUpperCase())}
-                      </p>
-                      <p
-                        className="text-xs text-slate-400"
-                        data-cy="cart-item-available"
-                      >
-                        {t.cart.item.available[lang]}{" "}
-                        {availabilityMap[cartItem.item.id]?.availableQuantity ??
-                          "-"}{" "}
-                        {t.cart.item.units[lang]}
+                        <MapPin className="h-3 w-3" />
+                        {cartItem.item.location_details?.name ||
+                          cartItem.item.location_name ||
+                          "Unknown Location"}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-center">
                       <div
                         className="flex items-center"
                         data-cy="cart-item-quantity-section"
@@ -556,6 +528,19 @@ const Cart: React.FC = () => {
                           +
                         </Button>
                       </div>
+                      <div>
+                        <p
+                          className="text-xs text-slate-400"
+                          data-cy="cart-item-available"
+                        >
+                          {t.cart.item.available[lang]}{" "}
+                          {availabilityMap[cartItem.item.id]
+                            ?.availableQuantity ?? "-"}{" "}
+                          {t.cart.item.units[lang]}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="ml-2 mb-4">
                       <Button
                         variant="ghost"
                         size="sm"

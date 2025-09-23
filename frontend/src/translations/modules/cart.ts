@@ -58,6 +58,10 @@ export const cart = {
       fi: "Tuotteet sijainnissa",
       en: "Items at location",
     },
+    itemCount: {
+      fi: "tuotetta",
+      en: "items",
+    },
   },
   item: {
     available: {
