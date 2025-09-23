@@ -125,18 +125,26 @@ export class BookingItemsService {
 
     return result;
   }
-
+  // Soft delete by setting status to cancelled
   async removeBookingItem(
     supabase: SupabaseClient,
     booking_id: string,
     booking_item_id: string,
-  ): Promise<ApiSingleResponse<BookingItemsRow>> {
-    const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
+  ): Promise<
+    ApiSingleResponse<
+      BookingItemsRow & { storage_items: Partial<StorageItemRow> }
+    >
+  > {
+    const result: PostgrestSingleResponse<
+      BookingItemsRow & { storage_items: Partial<StorageItemRow> }
+    > = await supabase
       .from("booking_items")
-      .delete()
-      .eq("booking_id", booking_id) // After renaming table + id column: Update column name
+      .update({ status: "cancelled" })
+      .eq("booking_id", booking_id)
       .eq("id", booking_item_id)
-      .select()
+      .select(
+        "*, storage_items (translations), provider_org:organizations(name)",
+      )
       .single();
 
     if (result.error) {
@@ -146,6 +154,38 @@ export class BookingItemsService {
           "Failed to remove booking item. Either it has already been removed or an incorrect ID has been provided",
         );
       throw new BadRequestException("Failed to remove booking item");
+    }
+    return result;
+  }
+  // Hard delete
+  async deleteBookingItem(
+    supabase: SupabaseClient,
+    booking_id: string,
+    booking_item_id: string,
+  ): Promise<
+    ApiSingleResponse<
+      BookingItemsRow & { storage_items: Partial<StorageItemRow> }
+    >
+  > {
+    const result: PostgrestSingleResponse<
+      BookingItemsRow & { storage_items: Partial<StorageItemRow> }
+    > = await supabase
+      .from("booking_items")
+      .delete()
+      .eq("booking_id", booking_id)
+      .eq("id", booking_item_id)
+      .select(
+        "*, storage_items (translations), provider_org:organizations(name)",
+      )
+      .single();
+
+    if (result.error) {
+      console.error(result.error);
+      if (result.error.code === "PGRST116")
+        throw new BadRequestException(
+          "Failed to delete booking item. Either it has already been deleted or an incorrect ID has been provided",
+        );
+      throw new BadRequestException("Failed to delete booking item");
     }
     return result;
   }
@@ -175,12 +215,20 @@ export class BookingItemsService {
     supabase: SupabaseClient,
     booking_item_id: string,
     updated_booking_item: BookingItemsUpdate,
-  ): Promise<ApiSingleResponse<BookingItemsRow>> {
-    const result: PostgrestSingleResponse<BookingItemsRow> = await supabase
+  ): Promise<
+    ApiSingleResponse<
+      BookingItemsRow & { storage_items: Partial<StorageItemRow> }
+    >
+  > {
+    const result: PostgrestSingleResponse<
+      BookingItemsRow & { storage_items: Partial<StorageItemRow> }
+    > = await supabase
       .from("booking_items")
       .update(updated_booking_item)
       .eq("id", booking_item_id)
-      .select()
+      .select(
+        "*, storage_items (translations), provider_org:organizations(name)",
+      )
       .single();
 
     if (result.error) {
