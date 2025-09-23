@@ -22,7 +22,7 @@ import {
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye, LoaderCircle } from "lucide-react";
+import { Eye, LoaderCircle, Info } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,6 +31,11 @@ import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { formatRoleName } from "@/utils/format";
 import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const UsersList = () => {
   // ————————————— Hooks & Selectors —————————————
@@ -491,14 +496,32 @@ const UsersList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl">
-          {isSuper
-            ? t.usersList.titleSuper[lang]
-            : t.usersList.titleOrg[lang].replace(
-                "{org}",
-                activeOrgName ?? "Organization",
-              )}
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl">
+            {isSuper
+              ? t.usersList.titleSuper[lang]
+              : t.usersList.titleOrg[lang].replace(
+                  "{org}",
+                  activeOrgName ?? "Organization",
+                )}
+          </h1>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="cursor-pointer text-muted-foreground">
+                <Info className="w-4 h-4 text-secondary" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              align="start"
+              className="max-w-sm break-words"
+            >
+              {isSuper
+                ? t.usersList.tooltip.superAdminHelp[lang]
+                : t.usersList.tooltip.tenantAdminHelp[lang]}
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       {loading && (
