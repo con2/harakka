@@ -549,9 +549,13 @@ const UsersList = () => {
 
         {/* Add a new member to an org section */}
         <div className="relative">
-          <Button variant={"outline"} onClick={toggleAddUser}>
-            {t.usersList.addUser.title[lang]}
-          </Button>
+          {!isSuper ? (
+            <Button variant={"outline"} onClick={toggleAddUser}>
+              {t.usersList.addUser.title[lang]}
+            </Button>
+          ) : (
+            ""
+          )}
 
           {showAddUser && (
             <div className="absolute right-0 mt-2 p-4 w-96 bg-white border rounded shadow-lg z-50">
