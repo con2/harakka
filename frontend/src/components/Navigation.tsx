@@ -16,7 +16,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { UserMenu } from "./ui/UserMenu";
-import Logo from "@/assets/v4.5.svg?react";
+import Logo from "@/assets/v8.5.svg?react";
 import LogoSmall from "@/assets/logo_small.svg?react";
 import { Badge } from "./ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -70,7 +70,7 @@ export const Navigation = () => {
 
   if (isMobile)
     return (
-      <nav className="flex p-4 justify-between shadow-sm items-center z-50 bg-white">
+      <nav className="flex p-4 justify-between shadow-sm items-center z-50 bg-white !font-main">
         <div className="flex gap-4">
           <Link to="/" data-cy="nav-home">
             <LogoSmall className="w-10" />
@@ -82,7 +82,7 @@ export const Navigation = () => {
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
-            className="relative text-(--midnight-black) font-medium hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2 h-fit"
+            className="relative text-(--midnight-black)  hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2 h-fit"
             data-cy="nav-cart"
           >
             <ShoppingCart className="!w-5 !h-[auto]" />
@@ -92,7 +92,7 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
-          <UserMenu />
+          {isLoggedIn && <UserMenu />}
           {!authLoading && !isLoggedIn && (
             <>
               <LanguageSwitcher />
@@ -114,7 +114,7 @@ export const Navigation = () => {
 
   if (isTablet)
     return (
-      <nav className="flex p-4 justify-between shadow-sm items-center z-50 bg-white">
+      <nav className="flex p-4 justify-between shadow-sm items-center z-50 bg-white !font-main">
         <div className="flex gap-6">
           <Link to="/" data-cy="nav-home">
             <Logo className="w-35" />
@@ -124,7 +124,7 @@ export const Navigation = () => {
           {isAnyTypeOfAdmin && (
             <Link
               to="/admin"
-              className="flex items-center gap-1 text-(--midnight-black) font-medium p-1"
+              className="flex items-center gap-1 text-(--midnight-black)  p-1"
               data-cy="nav-admin"
             >
               {t.navigation.admin[lang]}
@@ -137,7 +137,7 @@ export const Navigation = () => {
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
-            className="relative text-(--midnight-black) font-medium hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2 h-fit"
+            className="relative text-(--midnight-black)  hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2 h-fit"
             data-cy="nav-cart"
           >
             <ShoppingCart className="!w-5 !h-[auto]" />
@@ -147,7 +147,7 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
-          <UserMenu />
+          {isLoggedIn && <UserMenu />}
           {!authLoading && !isLoggedIn && (
             <>
               <LanguageSwitcher />
@@ -171,8 +171,8 @@ export const Navigation = () => {
     <nav className={navClasses}>
       {/* Left side: Logo + navigation links */}
       <div className="flex items-center gap-3">
-        <Link to="/" data-cy="nav-home">
-          <Logo className="h-[60px] w-auto object-contain hidden md:flex filter min-w-30" />
+        <Link to="/" data-cy="nav-home" className="relative -top-[2px]">
+          <Logo className="h-[60px] w-auto object-contain hidden md:flex filter min-w-30 scale-[0.8]" />
         </Link>
         <NavigationMenu>
           <NavigationMenuList>
@@ -182,7 +182,7 @@ export const Navigation = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/admin"
-                    className="flex items-center gap-1 text-(--midnight-black) font-medium p-1"
+                    className="flex items-center gap-1 text-(--midnight-black) text-base p-1"
                     data-cy="nav-admin"
                   >
                     {t.navigation.admin[lang]}
@@ -196,7 +196,7 @@ export const Navigation = () => {
               <NavigationMenuLink asChild>
                 <Link
                   to="/storage"
-                  className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                  className="flex items-center gap-1 text-(--midnight-black) text-base "
                   data-cy="nav-storage"
                 >
                   {t.navigation.storage[lang]}
@@ -209,7 +209,7 @@ export const Navigation = () => {
               <NavigationMenuLink asChild>
                 <Link
                   to={"/organizations"}
-                  className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                  className="flex items-center gap-1 text-(--midnight-black) text-base "
                   data-cy="nav-organizations"
                 >
                   {t.navigation.organizations[lang]}
@@ -223,7 +223,7 @@ export const Navigation = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/how-it-works"
-                    className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                    className="flex items-center gap-1 text-(--midnight-black) text-base"
                     data-cy="nav-guide"
                   >
                     {t.navigation.guides[lang]}
@@ -238,7 +238,7 @@ export const Navigation = () => {
                 <NavigationMenuLink asChild>
                   <Link
                     to="/contact-us"
-                    className="flex items-center gap-1 text-(--midnight-black) font-medium"
+                    className="flex items-center gap-1 text-(--midnight-black)"
                     data-cy="nav-contact"
                   >
                     {t.navigation.contactUs[lang]}
@@ -256,7 +256,7 @@ export const Navigation = () => {
         <Button
           variant="ghost"
           onClick={() => navigate("/cart")}
-          className="flex items-center gap-1 text-(--midnight-black) font-medium hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2"
+          className="flex items-center gap-1 text-(--midnight-black)  hover:text-(--midnight-black) hover:bg-(--subtle-grey) relative p-2"
           data-cy="nav-cart"
         >
           <ShoppingCart className="h-5 w-5" />
@@ -277,7 +277,7 @@ export const Navigation = () => {
               data-cy="nav-login-btn"
               asChild
             >
-              <Link to="/login">
+              <Link to="/login" className="font-main">
                 {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
               </Link>
             </Button>
