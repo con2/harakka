@@ -156,6 +156,9 @@ export class AppModule implements NestModule {
 
         // Cron/scheduler endpoints (secured by header secret)
         { path: "cron/reminders/run", method: RequestMethod.POST },
+
+        // Public mail endpoint for contact form
+        { path: "mail/send", method: RequestMethod.POST },
       )
       .forRoutes(
         // Protected controllers

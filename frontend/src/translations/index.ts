@@ -56,7 +56,6 @@ import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { orgStep } from "./modules/orgStep";
 import { pagination } from "./modules/pagination";
 import { passwordReset } from "./modules/passwordReset";
-import { passwordResetResult } from "./modules/passwordResetResult";
 import { privacyPolicy } from "./modules/privacyPolicy";
 import { profilePicUploader } from "./modules/profilePicUploader";
 import { roleManagement } from "./modules/roleManagement";
@@ -141,7 +140,6 @@ export const t = {
   organizations,
   pagination,
   passwordReset,
-  passwordResetResult,
   privacyPolicy,
   profilePicUploader,
   roleManagement,

@@ -3,7 +3,6 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 // Auth
 import AuthCallback from "../components/Auth/AuthCallback";
 import PasswordReset from "../components/Auth/PasswordReset";
-import PasswordResetResult from "../components/Auth/PasswordResetResult";
 import ProtectedRoute from "../components/Auth/ProtectedRoute";
 
 // Admin
@@ -317,10 +316,6 @@ export const router = createBrowserRouter([
       {
         path: "/password-reset",
         element: <PasswordReset />,
-      },
-      {
-        path: "/password-reset-success",
-        element: <PasswordResetResult />,
       },
       {
         path: "/organizations",

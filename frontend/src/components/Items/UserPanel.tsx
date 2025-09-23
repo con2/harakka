@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ChevronRight, SlidersIcon } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
-import { Star } from "lucide-react";
 import {
   fetchAllLocations,
   selectAllLocations,
@@ -80,7 +79,6 @@ const UserPanel = () => {
   // filter states
   const [filters, setFilters] = useState<{
     isActive: boolean;
-    averageRating: number[];
     itemsNumberAvailable: [number, number];
     category: string;
     tagIds: string[];
@@ -88,7 +86,6 @@ const UserPanel = () => {
     orgIds?: string[];
   }>({
     isActive: true, // Is item active or not filter
-    averageRating: [],
     itemsNumberAvailable: [0, 100], // add a range for number of items
     category: "",
     tagIds: [],
@@ -122,7 +119,6 @@ const UserPanel = () => {
     ) {
       count++;
     }
-    count += filters.averageRating.length;
     count += filters.category ? 1 : 0;
     count += filters.tagIds.length;
     count += filters.locationIds.length;
@@ -170,7 +166,6 @@ const UserPanel = () => {
                       onClick={() =>
                         setFilters({
                           isActive: true,
-                          averageRating: [],
                           itemsNumberAvailable: [0, 100],
                           category: "",
                           tagIds: [],
@@ -439,48 +434,8 @@ const UserPanel = () => {
                       : t.userPanel.categories.seeAll[lang]}
                   </Button>
                 )}
-                <Separator className="my-2" />
               </div>
             )}
-
-            {/* Rating filter */}
-            <div className="my-4">
-              <label className="text-primary block mb-4">
-                {" "}
-                {t.userPanel.rating.title[lang]}
-              </label>
-              <div className="flex flex-col gap-3">
-                {[5, 4, 3, 2, 1].map((rating) => {
-                  const isChecked = filters.averageRating.includes(rating);
-                  return (
-                    <label
-                      key={rating}
-                      className="flex items-center gap-2 cursor-pointer text-slate-600 hover:text-secondary hover:cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => {
-                          const updated = isChecked
-                            ? filters.averageRating.filter((r) => r !== rating)
-                            : [...filters.averageRating, rating];
-                          handleFilterChange("averageRating", updated);
-                        }}
-                        className="accent-secondary"
-                      />
-                      <div className="flex items-center">
-                        {Array.from({ length: rating }, (_, i) => (
-                          <Star
-                            key={i}
-                            className="w-4 h-4 fill-secondary text-secondary"
-                          />
-                        ))}
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
 
             {countActiveFilters() > 0 && (
               <div>
@@ -492,7 +447,6 @@ const UserPanel = () => {
                     onClick={() =>
                       setFilters({
                         isActive: true,
-                        averageRating: [],
                         itemsNumberAvailable: [0, 100],
                         category: "",
                         tagIds: [],
