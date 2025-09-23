@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
 import { Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ChevronRight, SlidersIcon } from "lucide-react";
+import { SlidersIcon } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
   fetchAllLocations,
@@ -23,6 +23,7 @@ import {
   selectCategories,
 } from "@/store/slices/categoriesSlice";
 import { buildCategoryTree } from "@/store/utils/format";
+import CategoryTree from "@/components/Items/CategoryTree";
 
 const UserPanel = () => {
   const tags = useAppSelector(selectAllTags);
@@ -76,18 +77,63 @@ const UserPanel = () => {
   const mappedCategories = buildCategoryTree(categories);
   const visibleCategories = getVisible(mappedCategories, "categories");
 
+  // Expanded state for category nodes
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(),
+  );
+
+  // Build lookups to support path-exclusive selection (switch within a branch)
+  const parentById = useMemo(() => {
+    const m = new Map<string, string | null>();
+    categories.forEach((c) => m.set(c.id, c.parent_id));
+    return m;
+  }, [categories]);
+  const childrenById = useMemo(() => {
+    const m = new Map<string, string[]>();
+    categories.forEach((c) => {
+      if (c.parent_id) {
+        const arr = m.get(c.parent_id) || [];
+        arr.push(c.id);
+        m.set(c.parent_id, arr);
+      }
+    });
+    return m;
+  }, [categories]);
+  const collectAncestors = (id: string) => {
+    const res: string[] = [];
+    let p = parentById.get(id) || null;
+    const guard = new Set<string>();
+    while (p && !guard.has(p)) {
+      res.push(p);
+      guard.add(p);
+      p = parentById.get(p) || null;
+    }
+    return res;
+  };
+  const collectDescendants = (id: string) => {
+    const res: string[] = [];
+    const stack = [...(childrenById.get(id) || [])];
+    while (stack.length) {
+      const cur = stack.pop() as string;
+      res.push(cur);
+      const kids = childrenById.get(cur);
+      if (kids && kids.length) stack.push(...kids);
+    }
+    return res;
+  };
+
   // filter states
   const [filters, setFilters] = useState<{
     isActive: boolean;
     itemsNumberAvailable: [number, number];
-    category: string;
+    categories: string[];
     tagIds: string[];
     locationIds: string[];
     orgIds?: string[];
   }>({
     isActive: true, // Is item active or not filter
     itemsNumberAvailable: [0, 100], // add a range for number of items
-    category: "",
+    categories: [],
     tagIds: [],
     locationIds: [],
     orgIds: [],
@@ -119,7 +165,7 @@ const UserPanel = () => {
     ) {
       count++;
     }
-    count += filters.category ? 1 : 0;
+    count += filters.categories.length;
     count += filters.tagIds.length;
     count += filters.locationIds.length;
     count += filters.orgIds?.length ?? 0;
@@ -167,7 +213,7 @@ const UserPanel = () => {
                         setFilters({
                           isActive: true,
                           itemsNumberAvailable: [0, 100],
-                          category: "",
+                          categories: [],
                           tagIds: [],
                           locationIds: [],
                           orgIds: [],
@@ -199,46 +245,38 @@ const UserPanel = () => {
                 {" "}
                 {t.userPanel.filters.categories[lang]}
               </label>
-              {visibleCategories.map((cat) => {
-                const subcatIds = cat.subcategories?.flatMap((c) => c.id);
-                const isSelected = filters.category === cat.id;
-                const hasChildSelected = subcatIds?.includes(filters.category);
-
-                return (
-                  <div key={cat.id} className="flex flex-col gap-2">
-                    <Button
-                      className="justify-between h-fit px-0"
-                      onClick={() => {
-                        const newValue = isSelected ? "" : cat.id;
-                        handleFilterChange("category", newValue);
-                      }}
-                    >
-                      {cat.translations[lang]}
-                      {cat.subcategories!.length > 0 && (
-                        <ChevronRight
-                          className={`transition-transform ${isSelected || hasChildSelected ? "transform-[rotate(90deg)]" : "transform-[rotate(0deg)]"}`}
-                        />
-                      )}
-                    </Button>
-                    {(isSelected || hasChildSelected) &&
-                      cat.subcategories?.map((subcat) => {
-                        const subcatSelected = filters.category === subcat.id;
-                        return (
-                          <Button
-                            className="justify-start pl-6 h-fit"
-                            key={subcat.id}
-                            onClick={() => {
-                              const newValue = subcatSelected ? "" : subcat.id;
-                              handleFilterChange("category", newValue);
-                            }}
-                          >
-                            {subcat.translations[lang]}
-                          </Button>
-                        );
-                      })}
-                  </div>
-                );
-              })}
+              <CategoryTree
+                nodes={visibleCategories}
+                lang={lang}
+                selectedIds={new Set(filters.categories)}
+                onToggleSelect={(id) => {
+                  setFilters((prev) => {
+                    const next = new Set(prev.categories);
+                    if (next.has(id)) {
+                      // toggle off
+                      next.delete(id);
+                    } else {
+                      // Switch within branch: deselect ancestors and descendants of id
+                      const toRemove = new Set<string>([
+                        ...collectAncestors(id),
+                        ...collectDescendants(id),
+                      ]);
+                      toRemove.forEach((x) => next.delete(x));
+                      next.add(id);
+                    }
+                    return { ...prev, categories: Array.from(next) };
+                  });
+                }}
+                expandedIds={expandedCategories}
+                onToggleExpand={(id) => {
+                  setExpandedCategories((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(id)) next.delete(id);
+                    else next.add(id);
+                    return next;
+                  });
+                }}
+              />
               {mappedCategories.length > MAX_VISIBLE && (
                 <Button
                   variant="ghost"
@@ -448,7 +486,7 @@ const UserPanel = () => {
                       setFilters({
                         isActive: true,
                         itemsNumberAvailable: [0, 100],
-                        category: "",
+                        categories: [],
                         tagIds: [],
                         locationIds: [],
                         orgIds: [],

@@ -81,7 +81,7 @@ export interface FiltersState {
   isActive: boolean;
   averageRating: number[];
   itemsNumberAvailable: [number, number];
-  category: string;
+  categories: string[];
   tagIds: string[];
   locationIds: string[];
   orgIds?: string[];
