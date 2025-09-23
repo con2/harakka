@@ -118,6 +118,24 @@ export class BookingItemsController {
     );
   }
 
+  @Delete(":booking_id/:booking_item_id/permanent")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
+  async deleteBookingItem(
+    @Req() req: AuthRequest,
+    @Param("booking_id") booking_id: string,
+    @Param("booking_item_id") booking_item_id: string,
+  ) {
+    const supabase = req.supabase;
+    return await this.bookingItemsService.deleteBookingItem(
+      supabase,
+      booking_id,
+      booking_item_id,
+    );
+  }
+
   @Patch(":booking_item_id")
   @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
     match: "any",

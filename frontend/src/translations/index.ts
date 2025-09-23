@@ -40,6 +40,7 @@ import { login } from "./modules/login";
 import { logs } from "./modules/logs";
 import { mobileMenu } from "./modules/mobileMenu";
 import { myBookings } from "./modules/myBookings";
+import { myBookingsPage } from "./modules/myBookingsPage";
 import { myProfile } from "./modules/myProfile";
 import { navigation } from "./modules/navigation";
 import { notification } from "./modules/notification";
@@ -55,7 +56,6 @@ import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { orgStep } from "./modules/orgStep";
 import { pagination } from "./modules/pagination";
 import { passwordReset } from "./modules/passwordReset";
-import { passwordResetResult } from "./modules/passwordResetResult";
 import { privacyPolicy } from "./modules/privacyPolicy";
 import { profilePicUploader } from "./modules/profilePicUploader";
 import { roleManagement } from "./modules/roleManagement";
@@ -125,6 +125,7 @@ export const t = {
   logs,
   mobileMenu,
   myBookings,
+  myBookingsPage,
   myProfile,
   navigation,
   notification,
@@ -138,7 +139,6 @@ export const t = {
   organizations,
   pagination,
   passwordReset,
-  passwordResetResult,
   privacyPolicy,
   profilePicUploader,
   roleManagement,

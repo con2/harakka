@@ -177,24 +177,6 @@ const BookingList = () => {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h1 className="text-xl">{t.bookingList.title[lang]}</h1>
-          <Button
-            onClick={() =>
-              dispatch(
-                getOrderedBookings({
-                  ordered_by: orderBy,
-                  ascending: getAscending(orderBy),
-                  page: currentPage,
-                  limit: 10,
-                  searchquery: debouncedSearchQuery,
-                  status_filter:
-                    statusFilter !== "all" ? statusFilter : undefined,
-                }),
-              )
-            }
-            className="bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
-          >
-            {t.bookingList.buttons.refresh[lang]}
-          </Button>
         </div>
         {/* Search and Filters */}
         <div className="flex flex-wrap gap-4 items-center justify-between">

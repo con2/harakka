@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -16,7 +15,7 @@ import { t } from "@/translations";
 import { Address, AddressForm } from "@/types/address";
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Accordion,
@@ -41,25 +40,16 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { toastConfirm } from "../components/ui/toastConfirm";
-import MyBookings from "@/components/MyBookings";
 import { CurrentUserRoles } from "@/components/Admin/Roles/CurrentUserRoles";
 import ProfilePictureUploader from "@/components/ProfilePictureUploader";
-import { useRoles } from "@/hooks/useRoles";
 import Spinner from "@/components/Spinner";
 
 const MyProfile = () => {
   const dispatch = useAppDispatch();
   const selectedUser = useAppSelector(selectSelectedUser);
   const userAddresses = useAppSelector(selectUserAddresses);
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
-  // Translation
   const { lang } = useLanguage();
-
-  // Get tab from URL query parameter or default to "user-details"
-  const activeTab = searchParams.get("tab") || "user-details";
-
   const [name, setName] = useState(selectedUser?.full_name || "");
   const [email, setEmail] = useState(selectedUser?.email || "");
   const [phone, setPhone] = useState(selectedUser?.phone || "");
@@ -70,8 +60,6 @@ const MyProfile = () => {
     userAddresses || [],
   );
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
-
-  const { activeContext } = useRoles();
 
   useEffect(() => {
     if (selectedUser) {
@@ -97,10 +85,6 @@ const MyProfile = () => {
     country: "",
     is_default: false,
   });
-  // Handle tab change with URL update
-  const handleTabChange = (value: string) => {
-    void navigate(`/profile?tab=${value}`);
-  };
 
   const handleSaveChanges = () => {
     if (selectedUser) {
@@ -142,7 +126,6 @@ const MyProfile = () => {
             ).unwrap();
           }
         }
-        // refresh addresses after all updates/adds
         void dispatch(getUserAddresses(selectedUser.id));
         toast.success(t.myProfile.toast.updateSuccess[lang]);
       } catch {
@@ -182,7 +165,6 @@ const MyProfile = () => {
               }),
             ).unwrap();
           }
-          // keep store in sync for subsequent visits/refreshes
           await dispatch(getUserAddresses(selectedUser!.id)).unwrap();
           toast.success(t.myProfile.toast.addressRemoved[lang]);
         } catch {
@@ -215,523 +197,484 @@ const MyProfile = () => {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white min-h-[250px]">
-      <Tabs
-        value={activeTab}
-        onValueChange={handleTabChange}
-        className="w-full bg-slate-50 p-4 rounded-lg mb-10 min-h-[250px]"
-      >
-        <TabsList className="grid w-full grid-cols-2 mb-8 gap-4">
-          <TabsTrigger value="user-details">
-            {t.myProfile.tabs.userDetails[lang]}
-          </TabsTrigger>
-          <TabsTrigger value="bookings">
-            {activeContext.roleName === "user"
-              ? t.myProfile.tabs.bookings.myBookings[lang]
-              : t.myProfile.tabs.bookings.orgBookings[lang]}
-          </TabsTrigger>
-        </TabsList>
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-2 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg bg-white min-h-[250px]">
+      <div className="w-full bg-slate-50 p-4 rounded-lg mb-10 min-h-[250px]">
+        {selectedUser ? (
+          <div className="flex flex-col md:flex-row items-start">
+            {/* Profile Picture Uploader */}
+            <div className="flex md:w-1/4 justify-center p-2">
+              <ProfilePictureUploader />
+            </div>
 
-        {/* User Details Tab */}
-        <TabsContent value="user-details" className="flex flex-col">
-          {selectedUser ? (
-            <div className="flex flex-col md:flex-row items-start">
-              {/* Profile Picture Uploader */}
-              <div className="flex md:w-1/4 justify-center p-2">
-                <ProfilePictureUploader />
-              </div>
-
-              {/* user details */}
-              <div className="flex flex-col md:flex-1 space-y-6 p-2 w-full">
-                {/* Editable Fields for Details */}
-                <h3 className="text-md font-semibold text-gray-700">
-                  {t.myProfile.personalDetails.title[lang]}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label
-                      htmlFor="name"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      {t.myProfile.personalDetails.fullName.label[lang]}
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      {t.myProfile.personalDetails.email.label[lang]}
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="phone"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      {t.myProfile.personalDetails.phone.label[lang]}
-                    </label>
-                    <input
-                      id="phone"
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="visibleName"
-                      className="block text-xs font-medium text-gray-700"
-                    >
-                      {t.myProfile.personalDetails.visibleName.label[lang]}
-                    </label>
-                    <input
-                      id="visibleName"
-                      type="text"
-                      value={visibleName}
-                      onChange={(e) => setVisibleName(e.target.value)}
-                      className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                    />
-                  </div>
+            {/* user details */}
+            <div className="flex flex-col md:flex-1 space-y-6 p-2 w-full">
+              {/* Editable Fields for Details */}
+              <h3 className="text-md font-semibold text-gray-700">
+                {t.myProfile.personalDetails.title[lang]}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="block text-xs font-medium text-gray-700"
+                  >
+                    {t.myProfile.personalDetails.fullName.label[lang]}
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                  />
                 </div>
 
-                {/* Roles */}
-                <CurrentUserRoles />
-
-                {/* Addresses */}
                 <div>
-                  <h3 className="text-md font-semibold text-gray-700 mb-4">
-                    {t.myProfile.addresses.title[lang]}
-                  </h3>
+                  <label
+                    htmlFor="email"
+                    className="block text-xs font-medium text-gray-700"
+                  >
+                    {t.myProfile.personalDetails.email.label[lang]}
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                  />
+                </div>
 
-                  {userAddresses && userAddresses.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {addresses.map((address, index) => (
-                        <div
-                          key={index}
-                          className="border p-4 rounded-md bg-slate-50"
-                        >
-                          <div className="mb-2">
-                            <label className="flex items-center gap-2 text-sm">
-                              <input
-                                className="accent-secondary"
-                                type="checkbox"
-                                checked={address.is_default}
-                                onChange={(e) =>
-                                  handleAddressChange(
-                                    index,
-                                    "is_default",
-                                    e.target.checked,
-                                  )
-                                }
-                              />
-                              {t.myProfile.addresses.defaultAddress[lang]}
+                <div>
+                  <label
+                    htmlFor="phone"
+                    className="block text-xs font-medium text-gray-700"
+                  >
+                    {t.myProfile.personalDetails.phone.label[lang]}
+                  </label>
+                  <input
+                    id="phone"
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="visibleName"
+                    className="block text-xs font-medium text-gray-700"
+                  >
+                    {t.myProfile.personalDetails.visibleName.label[lang]}
+                  </label>
+                  <input
+                    id="visibleName"
+                    type="text"
+                    value={visibleName}
+                    onChange={(e) => setVisibleName(e.target.value)}
+                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Roles */}
+              <CurrentUserRoles />
+
+              {/* Addresses */}
+              <div>
+                <h3 className="text-md font-semibold text-gray-700 mb-4">
+                  {t.myProfile.addresses.title[lang]}
+                </h3>
+
+                {userAddresses && userAddresses.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {addresses.map((address, index) => (
+                      <div
+                        key={index}
+                        className="border p-4 rounded-md bg-slate-50"
+                      >
+                        <div className="mb-2">
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              className="accent-secondary"
+                              type="checkbox"
+                              checked={address.is_default}
+                              onChange={(e) =>
+                                handleAddressChange(
+                                  index,
+                                  "is_default",
+                                  e.target.checked,
+                                )
+                              }
+                            />
+                            {t.myProfile.addresses.defaultAddress[lang]}
+                          </label>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700">
+                              {t.myProfile.addresses.streetAddress.label[lang]}
                             </label>
+                            <input
+                              type="text"
+                              value={address.street_address}
+                              onChange={(e) =>
+                                handleAddressChange(
+                                  index,
+                                  "street_address",
+                                  e.target.value,
+                                )
+                              }
+                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            />
                           </div>
 
-                          <div className="space-y-2">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700">
+                              {t.myProfile.addresses.city.label[lang]}
+                            </label>
+                            <input
+                              type="text"
+                              value={address.city}
+                              onChange={(e) =>
+                                handleAddressChange(
+                                  index,
+                                  "city",
+                                  e.target.value,
+                                )
+                              }
+                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700">
+                              {t.myProfile.addresses.postalCode.label[lang]}
+                            </label>
+                            <input
+                              type="text"
+                              value={address.postal_code}
+                              onChange={(e) =>
+                                handleAddressChange(
+                                  index,
+                                  "postal_code",
+                                  e.target.value,
+                                )
+                              }
+                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700">
+                              {t.myProfile.addresses.country.label[lang]}
+                            </label>
+                            <input
+                              type="text"
+                              value={address.country}
+                              onChange={(e) =>
+                                handleAddressChange(
+                                  index,
+                                  "country",
+                                  e.target.value,
+                                )
+                              }
+                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700">
+                              {t.myProfile.addresses.type.label[lang]}
+                            </label>
+                            <select
+                              value={address.address_type}
+                              onChange={(e) =>
+                                handleAddressChange(
+                                  index,
+                                  "address_type",
+                                  e.target.value,
+                                )
+                              }
+                              className="border p-2 rounded text-sm w-full bg-white text-gray-600"
+                            >
+                              <option value="both">
+                                {t.myProfile.addresses.type.options.both[lang]}
+                              </option>
+                              <option value="billing">
                                 {
-                                  t.myProfile.addresses.streetAddress.label[
+                                  t.myProfile.addresses.type.options.billing[
                                     lang
                                   ]
                                 }
-                              </label>
-                              <input
-                                type="text"
-                                value={address.street_address}
-                                onChange={(e) =>
-                                  handleAddressChange(
-                                    index,
-                                    "street_address",
-                                    e.target.value,
-                                  )
+                              </option>
+                              <option value="shipping">
+                                {
+                                  t.myProfile.addresses.type.options.shipping[
+                                    lang
+                                  ]
                                 }
-                                className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                              />
-                            </div>
+                              </option>
+                            </select>
+                          </div>
 
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700">
-                                {t.myProfile.addresses.city.label[lang]}
-                              </label>
-                              <input
-                                type="text"
-                                value={address.city}
-                                onChange={(e) =>
-                                  handleAddressChange(
-                                    index,
-                                    "city",
-                                    e.target.value,
-                                  )
-                                }
-                                className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700">
-                                {t.myProfile.addresses.postalCode.label[lang]}
-                              </label>
-                              <input
-                                type="text"
-                                value={address.postal_code}
-                                onChange={(e) =>
-                                  handleAddressChange(
-                                    index,
-                                    "postal_code",
-                                    e.target.value,
-                                  )
-                                }
-                                className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700">
-                                {t.myProfile.addresses.country.label[lang]}
-                              </label>
-                              <input
-                                type="text"
-                                value={address.country}
-                                onChange={(e) =>
-                                  handleAddressChange(
-                                    index,
-                                    "country",
-                                    e.target.value,
-                                  )
-                                }
-                                className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700">
-                                {t.myProfile.addresses.type.label[lang]}
-                              </label>
-                              <select
-                                value={address.address_type}
-                                onChange={(e) =>
-                                  handleAddressChange(
-                                    index,
-                                    "address_type",
-                                    e.target.value,
-                                  )
-                                }
-                                className="border p-2 rounded text-sm w-full bg-white text-gray-600"
-                              >
-                                <option value="both">
-                                  {
-                                    t.myProfile.addresses.type.options.both[
-                                      lang
-                                    ]
-                                  }
-                                </option>
-                                <option value="billing">
-                                  {
-                                    t.myProfile.addresses.type.options.billing[
-                                      lang
-                                    ]
-                                  }
-                                </option>
-                                <option value="shipping">
-                                  {
-                                    t.myProfile.addresses.type.options.shipping[
-                                      lang
-                                    ]
-                                  }
-                                </option>
-                              </select>
-                            </div>
-
-                            <div className="flex justify-end mt-4">
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                className="text-xs"
-                                onClick={() => handleDeleteAddress(index)}
-                              >
-                                <Trash2 className="mr-1" />{" "}
-                                {t.myProfile.addresses.remove[lang]}
-                              </Button>
-                            </div>
+                          <div className="flex justify-end mt-4">
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="text-xs"
+                              onClick={() => handleDeleteAddress(index)}
+                            >
+                              <Trash2 className="mr-1" />{" "}
+                              {t.myProfile.addresses.remove[lang]}
+                            </Button>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 mt-4">
-                      {t.myProfile.addresses.noAddresses[lang]}
-                    </p>
-                  )}
-                </div>
-
-                {/* Buttons */}
-                <div className="flex justify-between items-center mt-6 gap-3">
-                  {/* Delete Account */}
-                  <div className="flex justify-start items-center p-4 rounded-md bg-slate-50 mb-0">
-                    <Accordion type="single" collapsible>
-                      <AccordionItem value="danger-zone" className="mb-0">
-                        <AccordionTrigger className="text-red-200 mb-0">
-                          {t.myProfile.dangerZone.title[lang]}
-                        </AccordionTrigger>
-                        <AccordionContent className="text-sm text-muted-foreground">
-                          <p className="mb-4">
-                            {t.myProfile.dangerZone.description[lang]}
-                          </p>
-                          <Button
-                            size={"sm"}
-                            variant="destructive"
-                            onClick={handleDeleteUser}
-                          >
-                            {t.myProfile.dangerZone.deleteAccount[lang]}
-                          </Button>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
+                      </div>
+                    ))}
                   </div>
-                  <div className="items-center flex flex-col md:flex-row md:justify-end gap-4">
-                    <Button
-                      onClick={() => setShowAddAddressForm(true)}
-                      size="sm"
-                      className="editBtn"
-                    >
-                      {t.myProfile.buttons.addNewAddress[lang]}
-                    </Button>
-                    <Button
-                      onClick={handleSaveChanges}
-                      size="sm"
-                      variant="outline"
-                    >
-                      {t.myProfile.buttons.saveChanges[lang]}
-                    </Button>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-gray-500 mt-4">
+                    {t.myProfile.addresses.noAddresses[lang]}
+                  </p>
+                )}
               </div>
 
-              {showAddAddressForm && (
-                <Dialog
-                  open={showAddAddressForm}
-                  onOpenChange={setShowAddAddressForm}
-                >
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>
-                        {t.myProfile.newAddress.title[lang]}
-                      </DialogTitle>
-                    </DialogHeader>
-
-                    <div className="grid gap-4 py-4">
-                      <div className="grid gap-2">
-                        <Label>{t.myProfile.addresses.type.label[lang]}</Label>
-                        <Select
-                          value={newAddress.address_type}
-                          onValueChange={(value) =>
-                            setNewAddress({
-                              ...newAddress,
-                              address_type: value as Address["address_type"],
-                            })
-                          }
+              {/* Buttons */}
+              <div className="flex justify-between items-center mt-6 gap-3">
+                {/* Delete Account */}
+                <div className="flex justify-start items-center p-4 rounded-md bg-slate-50 mb-0">
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="danger-zone" className="mb-0">
+                      <AccordionTrigger className="text-red-200 mb-0">
+                        {t.myProfile.dangerZone.title[lang]}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-muted-foreground">
+                        <p className="mb-4">
+                          {t.myProfile.dangerZone.description[lang]}
+                        </p>
+                        <Button
+                          size={"sm"}
+                          variant="destructive"
+                          onClick={handleDeleteUser}
                         >
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={
-                                t.myProfile.newAddress.selectType[lang]
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="both">
-                              {t.myProfile.addresses.type.options.both[lang]}
-                            </SelectItem>
-                            <SelectItem value="billing">
-                              {t.myProfile.addresses.type.options.billing[lang]}
-                            </SelectItem>
-                            <SelectItem value="shipping">
-                              {
-                                t.myProfile.addresses.type.options.shipping[
-                                  lang
-                                ]
-                              }
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                          {t.myProfile.dangerZone.deleteAccount[lang]}
+                        </Button>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+                <div className="items-center flex flex-col md:flex-row md:justify-end gap-4">
+                  <Button
+                    onClick={() => setShowAddAddressForm(true)}
+                    size="sm"
+                    className="editBtn"
+                  >
+                    {t.myProfile.buttons.addNewAddress[lang]}
+                  </Button>
+                  <Button
+                    onClick={handleSaveChanges}
+                    size="sm"
+                    variant="outline"
+                  >
+                    {t.myProfile.buttons.saveChanges[lang]}
+                  </Button>
+                </div>
+              </div>
+            </div>
 
-                      <div className="grid gap-2">
-                        <Label>
-                          {t.myProfile.addresses.streetAddress.label[lang]}
-                        </Label>
-                        <Input
-                          value={newAddress.street_address}
-                          onChange={(e) =>
-                            setNewAddress({
-                              ...newAddress,
-                              street_address: e.target.value,
-                            })
-                          }
-                          placeholder={
-                            t.myProfile.addresses.streetAddress.placeholder[
-                              lang
-                            ]
-                          }
-                        />
-                      </div>
+            {showAddAddressForm && (
+              <Dialog
+                open={showAddAddressForm}
+                onOpenChange={setShowAddAddressForm}
+              >
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      {t.myProfile.newAddress.title[lang]}
+                    </DialogTitle>
+                  </DialogHeader>
 
-                      <div className="grid gap-2">
-                        <Label>{t.myProfile.addresses.city.label[lang]}</Label>
-                        <Input
-                          value={newAddress.city}
-                          onChange={(e) =>
-                            setNewAddress({
-                              ...newAddress,
-                              city: e.target.value,
-                            })
-                          }
-                          placeholder={
-                            t.myProfile.addresses.city.placeholder[lang]
-                          }
-                        />
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label>
-                          {t.myProfile.addresses.postalCode.label[lang]}
-                        </Label>
-                        <Input
-                          value={newAddress.postal_code}
-                          onChange={(e) =>
-                            setNewAddress({
-                              ...newAddress,
-                              postal_code: e.target.value,
-                            })
-                          }
-                          placeholder={
-                            t.myProfile.addresses.postalCode.placeholder[lang]
-                          }
-                        />
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label>
-                          {t.myProfile.addresses.country.label[lang]}
-                        </Label>
-                        <Input
-                          value={newAddress.country}
-                          onChange={(e) =>
-                            setNewAddress({
-                              ...newAddress,
-                              country: e.target.value,
-                            })
-                          }
-                          placeholder={
-                            t.myProfile.addresses.country.placeholder[lang]
-                          }
-                        />
-                      </div>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label>{t.myProfile.addresses.type.label[lang]}</Label>
+                      <Select
+                        value={newAddress.address_type}
+                        onValueChange={(value) =>
+                          setNewAddress({
+                            ...newAddress,
+                            address_type: value as Address["address_type"],
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              t.myProfile.newAddress.selectType[lang]
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="both">
+                            {t.myProfile.addresses.type.options.both[lang]}
+                          </SelectItem>
+                          <SelectItem value="billing">
+                            {t.myProfile.addresses.type.options.billing[lang]}
+                          </SelectItem>
+                          <SelectItem value="shipping">
+                            {t.myProfile.addresses.type.options.shipping[lang]}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
-                    <DialogFooter>
-                      <Button
-                        variant="outline"
-                        size={"sm"}
-                        onClick={() => {
-                          if (!newAddress.street_address || !newAddress.city) {
-                            toast.error(
-                              t.myProfile.toast.fillAllRequiredFields[lang],
+                    <div className="grid gap-2">
+                      <Label>
+                        {t.myProfile.addresses.streetAddress.label[lang]}
+                      </Label>
+                      <Input
+                        value={newAddress.street_address}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            street_address: e.target.value,
+                          })
+                        }
+                        placeholder={
+                          t.myProfile.addresses.streetAddress.placeholder[lang]
+                        }
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>{t.myProfile.addresses.city.label[lang]}</Label>
+                      <Input
+                        value={newAddress.city}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            city: e.target.value,
+                          })
+                        }
+                        placeholder={
+                          t.myProfile.addresses.city.placeholder[lang]
+                        }
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>
+                        {t.myProfile.addresses.postalCode.label[lang]}
+                      </Label>
+                      <Input
+                        value={newAddress.postal_code}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            postal_code: e.target.value,
+                          })
+                        }
+                        placeholder={
+                          t.myProfile.addresses.postalCode.placeholder[lang]
+                        }
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>{t.myProfile.addresses.country.label[lang]}</Label>
+                      <Input
+                        value={newAddress.country}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            country: e.target.value,
+                          })
+                        }
+                        placeholder={
+                          t.myProfile.addresses.country.placeholder[lang]
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      size={"sm"}
+                      onClick={() => {
+                        if (!newAddress.street_address || !newAddress.city) {
+                          toast.error(
+                            t.myProfile.toast.fillAllRequiredFields[lang],
+                          );
+                          return;
+                        }
+
+                        // Convert AddressForm to CreateAddressInput by excluding user_id
+                        const addressInput = {
+                          address_type: newAddress.address_type,
+                          street_address: newAddress.street_address,
+                          city: newAddress.city,
+                          postal_code: newAddress.postal_code,
+                          country: newAddress.country,
+                          is_default: newAddress.is_default,
+                        };
+
+                        dispatch(
+                          addAddress({
+                            id: selectedUser?.id || "",
+                            address: addressInput,
+                          }),
+                        )
+                          .unwrap()
+                          .then(() => {
+                            void dispatch(
+                              getUserAddresses(selectedUser?.id || ""),
                             );
-                            return;
-                          }
-
-                          // Convert AddressForm to CreateAddressInput by excluding user_id
-                          const addressInput = {
-                            address_type: newAddress.address_type,
-                            street_address: newAddress.street_address,
-                            city: newAddress.city,
-                            postal_code: newAddress.postal_code,
-                            country: newAddress.country,
-                            is_default: newAddress.is_default,
-                          };
-
-                          dispatch(
-                            addAddress({
-                              id: selectedUser?.id || "",
-                              address: addressInput,
-                            }),
-                          )
-                            .unwrap()
-                            .then(() => {
-                              void dispatch(
-                                getUserAddresses(selectedUser?.id || ""),
-                              );
-                              setNewAddress({
-                                user_id: selectedUser?.id || "",
-                                address_type: "both",
-                                street_address: "",
-                                city: "",
-                                postal_code: "",
-                                country: "",
-                                is_default: false,
-                              });
-                              toast.success(
-                                t.myProfile.toast.addressAddSuccess[lang],
-                              );
-                            })
-                            .catch(() => {
-                              toast.error(
-                                t.myProfile.toast.addressAddError[lang],
-                              );
+                            setNewAddress({
+                              user_id: selectedUser?.id || "",
+                              address_type: "both",
+                              street_address: "",
+                              city: "",
+                              postal_code: "",
+                              country: "",
+                              is_default: false,
                             });
+                            toast.success(
+                              t.myProfile.toast.addressAddSuccess[lang],
+                            );
+                          })
+                          .catch(() => {
+                            toast.error(
+                              t.myProfile.toast.addressAddError[lang],
+                            );
+                          });
 
-                          setShowAddAddressForm(false);
-                        }}
-                      >
-                        {t.myProfile.newAddress.save[lang]}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size={"sm"}
-                        onClick={() => setShowAddAddressForm(false)}
-                      >
-                        {t.myProfile.newAddress.cancel[lang]}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
-          ) : (
-            <Spinner
-              loaderClasses="text-secondary w-8 h-8"
-              containerClasses="flex-1"
-            />
-          )}
-        </TabsContent>
-
-        {/* Bookings Tab */}
-        <TabsContent value="bookings" className="flex flex-col">
-          <MyBookings />
-        </TabsContent>
-      </Tabs>
+                        setShowAddAddressForm(false);
+                      }}
+                    >
+                      {t.myProfile.newAddress.save[lang]}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size={"sm"}
+                      onClick={() => setShowAddAddressForm(false)}
+                    >
+                      {t.myProfile.newAddress.cancel[lang]}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        ) : (
+          <Spinner
+            loaderClasses="text-secondary w-8 h-8"
+            containerClasses="flex-1"
+          />
+        )}
+      </div>
     </div>
   );
 };

@@ -1,12 +1,12 @@
 import { Module } from "@nestjs/common";
-import { MailController } from "./mail.controller";
 import { MailService } from "./mail.service";
 import { BookingEmailAssembler } from "./booking-email-assembler";
 import { SupabaseService } from "../supabase/supabase.service";
 import { UserEmailAssembler } from "./user-email-assembler";
+import { MailController } from "./mail.controller";
 
 @Module({
-  controllers: [MailController], // You put the controllers of this module here
+  controllers: [MailController],
   providers: [
     MailService,
     BookingEmailAssembler,

@@ -89,9 +89,7 @@ export class UserSetupController {
     @Body() body: CheckStatusDto,
     @Req() req: AuthRequest,
   ) {
-    this.logger.log(
-      `Setup request received for userId: ${body.userId}, auth user: ${req.user?.id || "none"}`,
-    );
+    this.logger.log(`Setup request received for userId: ${body.userId}}`);
     try {
       if (!body.userId) {
         throw new BadRequestException("userId is required");

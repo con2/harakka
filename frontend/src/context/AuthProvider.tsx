@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../config/supabase";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
 import { AuthContext } from "./AuthContext";
 import { useAppDispatch } from "@/store/hooks";
@@ -26,7 +26,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useState<boolean>(false);
 
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useAppDispatch();
   /**
    * Handle user authentication for signup events
@@ -109,14 +108,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [setupInProgress, processedSignups],
   );
 
-  // get inital session
   useEffect(() => {
+    const isRecoveryFlow =
+      window.location.href.includes("type=recovery") ||
+      new URLSearchParams(window.location.search).get("type") === "recovery";
+
+    if (isRecoveryFlow) {
+      setSession(null);
+      setUser(null);
+      setAuthLoading(false);
+
+      // Optionally, redirect to the password reset page
+      //navigate("/password-reset");
+      return;
+    }
+
+    // Fetch the initial session
     void supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setAuthLoading(false);
     });
-    // listen for auth changes
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event: string, session) => {
@@ -125,8 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthLoading(false);
 
       if (session?.user) {
-        // Only process actual signup/signin events, not token refreshes
-        // or initial session events to avoid the loop
+        // Handle signup/signin events
         if (
           !initialSetupComplete &&
           (event === "SIGNED_IN" || event === "SIGNED_UP")
@@ -173,7 +185,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [handleUserAuthentication, processedSignups, initialSetupComplete]);
+  }, [
+    navigate,
+    initialSetupComplete,
+    processedSignups,
+    handleUserAuthentication,
+  ]);
 
   // Handle role loading after authentication
   useEffect(() => {
@@ -247,19 +264,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, authLoading, setupInProgress, dispatch, rolesLoaded]);
 
-  useEffect(() => {
-    const isRecoveryFlow =
-      window.location.href.includes("type=recovery") ||
-      window.location.hash.includes("type=recovery");
-
-    if (isRecoveryFlow) {
-      setSession(null);
-      setUser(null);
-      setAuthLoading(false);
-      return;
-    }
-  }, [user, location.pathname, navigate]);
-
   const signOut = async () => {
     try {
       // 0. Clear any cached auth token before signing out
@@ -318,29 +322,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // 7. For Google OAuth specifically, clear any Google session cookies
       // This helps ensure the next login shows the account picker
-      // Note: This is a best-effort approach for Google session clearing
-      // Clear cookies whose names match known Google OAuth session cookie patterns
-      const googleCookieNames = [
-        "G_AUTHUSER",      // Google auth user session
-        "GAPS",            // Google account session
-        "LSID",            // Google session ID
-        "Oauth_Token",     // Google OAuth token
-        "_ga",             // Google Analytics
-        // Add any other cookie names as needed
-      ];
-      document.cookie.split(";").forEach((c) => {
-        const eqPos = c.indexOf("=");
-        const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
-        if (
-          googleCookieNames.some((cookieName) => name.startsWith(cookieName)) ||
-          name.toLowerCase().includes("google") ||
-          name.toLowerCase().includes("oauth")
-        ) {
-          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.google.com`;
-          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.accounts.google.com`;
-          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-        }
-      });
+      if (document.cookie.includes("accounts.google.com")) {
+        // Note: This is a best-effort approach for Google session clearing
+        document.cookie.split(";").forEach((c) => {
+          const eqPos = c.indexOf("=");
+          const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
+          if (
+            name.includes("google") ||
+            name.includes("oauth") ||
+            name.includes("_ga")
+          ) {
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.google.com`;
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.accounts.google.com`;
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+          }
+        });
+      }
+      // 8. Clear signup prosessing
+      setProcessedSignups(new Set());
     } catch {
       clearCachedAuthToken();
       // Even if there's an error, still clear local data and navigate
