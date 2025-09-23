@@ -10,6 +10,7 @@ import {
   BookingWithDetails,
   ValidBookingOrder,
   ExtendedBookingPreview,
+  BookingItemWithDetails,
 } from "@/types";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { BookingItemUpdate } from "@common/bookings/booking-items.types";
@@ -272,6 +273,76 @@ export const updateBooking = createAsyncThunk<
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to update booking"),
+      );
+    }
+  },
+);
+
+// Update individual booking item thunk
+export const updateBookingItem = createAsyncThunk<
+  BookingItemWithDetails,
+  { bookingItemId: string; updates: BookingItemUpdate }
+>(
+  "bookings/updateBookingItem",
+  async ({ bookingItemId, updates }, { rejectWithValue }) => {
+    try {
+      return await bookingsApi.updateBookingItem(bookingItemId, updates);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to update booking item"),
+      );
+    }
+  },
+);
+
+// Remove individual booking item thunk (soft delete)
+export const removeBookingItem = createAsyncThunk<
+  BookingItemWithDetails,
+  { bookingId: string; bookingItemId: string }
+>(
+  "bookings/removeBookingItem",
+  async ({ bookingId, bookingItemId }, { rejectWithValue }) => {
+    try {
+      return await bookingsApi.removeBookingItem(bookingId, bookingItemId);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to remove booking item"),
+      );
+    }
+  },
+);
+
+// Hard delete individual booking item thunk (for admins)
+export const deleteBookingItem = createAsyncThunk<
+  BookingItemWithDetails,
+  { bookingId: string; bookingItemId: string }
+>(
+  "bookings/deleteBookingItem",
+  async ({ bookingId, bookingItemId }, { rejectWithValue }) => {
+    try {
+      return await bookingsApi.deleteBookingItem(bookingId, bookingItemId);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to delete booking item"),
+      );
+    }
+  },
+);
+
+// Cancel booking item (set status to cancelled)
+export const cancelBookingItem = createAsyncThunk<
+  BookingItemWithDetails,
+  { bookingItemId: string }
+>(
+  "bookings/cancelBookingItem",
+  async ({ bookingItemId }, { rejectWithValue }) => {
+    try {
+      return await bookingsApi.updateBookingItem(bookingItemId, {
+        status: "cancelled",
+      });
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to cancel booking item"),
       );
     }
   },
@@ -624,17 +695,16 @@ export const bookingsSlice = createSlice({
               ? { ...bi, status: "confirmed" }
               : bi,
           );
-        // Roll-up with new rule
+        // Roll-up with new rule (excluding cancelled items)
+        const activeItems = state.currentBooking.booking_items.filter(
+          (bi) => bi.status !== "cancelled",
+        );
         const allRejected =
-          state.currentBooking.booking_items.length > 0 &&
-          state.currentBooking.booking_items.every(
-            (bi) => bi.status === "rejected",
-          );
+          activeItems.length > 0 &&
+          activeItems.every((bi) => bi.status === "rejected");
         const noPending =
-          state.currentBooking.booking_items.length > 0 &&
-          state.currentBooking.booking_items.every(
-            (bi) => bi.status !== "pending",
-          );
+          activeItems.length > 0 &&
+          activeItems.every((bi) => bi.status !== "pending");
         let rolledUpStatus: BookingStatus = "pending";
         if (allRejected) rolledUpStatus = "rejected";
         else if (noPending) rolledUpStatus = "confirmed";
@@ -664,17 +734,16 @@ export const bookingsSlice = createSlice({
               ? { ...bi, status: "rejected" }
               : bi,
           );
-        // Roll-up with new rule
+        // Roll-up with new rule (excluding cancelled items)
+        const activeItems = state.currentBooking.booking_items.filter(
+          (bi) => bi.status !== "cancelled",
+        );
         const allRejected =
-          state.currentBooking.booking_items.length > 0 &&
-          state.currentBooking.booking_items.every(
-            (bi) => bi.status === "rejected",
-          );
+          activeItems.length > 0 &&
+          activeItems.every((bi) => bi.status === "rejected");
         const noPending =
-          state.currentBooking.booking_items.length > 0 &&
-          state.currentBooking.booking_items.every(
-            (bi) => bi.status !== "pending",
-          );
+          activeItems.length > 0 &&
+          activeItems.every((bi) => bi.status !== "pending");
         let rolledUpStatus: BookingStatus = "pending";
         if (allRejected) rolledUpStatus = "rejected";
         else if (noPending) rolledUpStatus = "confirmed";
@@ -837,6 +906,56 @@ export const bookingsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.errorContext = "update";
+      })
+      // Update booking item
+      .addCase(updateBookingItem.fulfilled, (state, action) => {
+        const updatedItem = action.payload;
+        // Update the item in currentBooking if it exists
+        if (state.currentBooking?.booking_items) {
+          const itemIndex = state.currentBooking.booking_items.findIndex(
+            (item) => item.id === updatedItem.id,
+          );
+          if (itemIndex !== -1) {
+            state.currentBooking.booking_items[itemIndex] = updatedItem;
+          }
+        }
+      })
+      // Remove booking item (now sets status to cancelled)
+      .addCase(removeBookingItem.fulfilled, (state, action) => {
+        const cancelledItem = action.payload;
+        // Update the item status to cancelled in currentBooking if it exists
+        if (state.currentBooking?.booking_items) {
+          const itemIndex = state.currentBooking.booking_items.findIndex(
+            (item) => item.id === cancelledItem.id,
+          );
+          if (itemIndex !== -1) {
+            state.currentBooking.booking_items[itemIndex] = cancelledItem;
+          }
+        }
+      })
+      // Delete booking item permanently (admin action)
+      .addCase(deleteBookingItem.fulfilled, (state, action) => {
+        const deletedItem = action.payload;
+        // Remove the item completely from currentBooking if it exists
+        if (state.currentBooking?.booking_items) {
+          state.currentBooking.booking_items =
+            state.currentBooking.booking_items.filter(
+              (item) => item.id !== deletedItem.id,
+            );
+        }
+      })
+      // Cancel booking item
+      .addCase(cancelBookingItem.fulfilled, (state, action) => {
+        const cancelledItem = action.payload;
+        // Update the item in currentBooking if it exists
+        if (state.currentBooking?.booking_items) {
+          const itemIndex = state.currentBooking.booking_items.findIndex(
+            (item) => item.id === cancelledItem.id,
+          );
+          if (itemIndex !== -1) {
+            state.currentBooking.booking_items[itemIndex] = cancelledItem;
+          }
+        }
       })
       // Reject booking
       .addCase(rejectBooking.pending, (state) => {
