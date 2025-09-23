@@ -5,6 +5,7 @@ import {
   selectItemImages,
 } from "@/store/slices/itemImagesSlice";
 import {
+  clearSelectedItem,
   deleteItem,
   getItemById,
   selectSelectedItem,
@@ -124,7 +125,6 @@ const ItemDetailsPage = () => {
 
   const update = (values: z.infer<typeof createItemDto>) => {
     if (!selectedItem) return;
-    console.log(values);
     const { location_details, location_id, location, ...rest } = values;
     try {
       toast.promise(
@@ -209,7 +209,10 @@ const ItemDetailsPage = () => {
       {/*/ Back button */}
       <div className="flex justify-between max-w-[900px]">
         <Button
-          onClick={() => navigate("/admin/items")}
+          onClick={() => {
+            void navigate("/admin/items");
+            dispatch(clearSelectedItem());
+          }}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
         >
           <ChevronLeft /> {t.itemDetailsPage.buttons.back[lang]}

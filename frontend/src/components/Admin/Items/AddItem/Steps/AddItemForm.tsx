@@ -119,22 +119,17 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
       },
   });
 
-  useEffect(() => {
-    console.log("form update: ", form.getValues());
-  }, [form]);
-
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
     form.reset();
     if (onUpdate) return onUpdate(values);
+    dispatch(clearSelectedItem());
     if (isEditing) return handleUpdateItem(values);
     void dispatch(addToItemCreation(values));
     dispatch(setNextStep());
   };
 
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
-    console.log(form.getValues());
     const firstErrorKey = getFirstErrorMessage(errors);
-    console.log(errors);
 
     if (
       firstErrorKey &&
