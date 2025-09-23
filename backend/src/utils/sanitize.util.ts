@@ -43,7 +43,10 @@ export function sanitizeEmailHtml(input: string): string {
   s = s.replace(/\sstyle\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
 
   // Neutralize javascript: and data: URLs in href/src
-  s = s.replace(/\s(href|src)\s*=\s*("|')\s*(javascript:|data:)[^"']*(\2)/gi, "");
+  s = s.replace(
+    /\s(href|src)\s*=\s*("|')\s*(javascript:|data:)[^"']*(\2)/gi,
+    "",
+  );
   s = s.replace(/\s(href|src)\s*=\s*([^\s"'>]+)/gi, (m, attr, url) => {
     try {
       const u = new URL(url, "https://example.org");
@@ -67,7 +70,7 @@ export function sanitizeEmailHtml(input: string): string {
   const allowed = ALLOWED_TAGS.join("|");
   // Replace opening tags not in allow‑list with empty string
   s = s.replace(
-    new RegExp(`<\\s*(?!\/?(?:${allowed})\\b)[a-z0-9-]+[^>]*>`, "gi"),
+    new RegExp(`<\\s*(?!/?(?:${allowed})\\b)[a-z0-9-]+[^>]*>`, "gi"),
     "",
   );
   // Replace closing tags not in allow‑list
@@ -82,7 +85,7 @@ export function sanitizeEmailHtml(input: string): string {
     let safeHref = "";
     if (hrefMatch) {
       let raw = hrefMatch[1];
-      if (raw.startsWith("\"") || raw.startsWith("'")) {
+      if (raw.startsWith('"') || raw.startsWith("'")) {
         raw = raw.slice(1, -1);
       }
       try {
@@ -100,4 +103,3 @@ export function sanitizeEmailHtml(input: string): string {
 
   return s;
 }
-
