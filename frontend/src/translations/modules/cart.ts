@@ -45,6 +45,28 @@ export const cart = {
       en: "Clicking the button below is not a commitment. It's just a request — we'll review it and get back to you shortly.",
     },
   },
+  locations: {
+    differentLocations: {
+      fi: "Huomio: Tuotteesi sijaitsevat eri paikoissa",
+      en: "Notice: Your items are located in different places",
+    },
+    pickupInfo: {
+      fi: "Sinun tulee noutaa tuotteet seuraavista sijainneista:",
+      en: "You will need to pick up items from the following locations:",
+    },
+    itemsAtLocation: {
+      fi: "Tuotteet sijainnissa",
+      en: "Items at location",
+    },
+    itemCount: {
+      fi: "tuotetta",
+      en: "items",
+    },
+    itemCountSingular: {
+      fi: "tuote",
+      en: "item",
+    },
+  },
   item: {
     available: {
       fi: "Yhteensä saatavilla",
@@ -107,6 +129,30 @@ export const cart = {
     cartNotCleared: {
       fi: "Ostoskoria ei tyhjennetty",
       en: "Cart not cleared",
+    },
+    removeItemTitle: {
+      fi: "Poista tuote ostoskorista",
+      en: "Remove item from cart",
+    },
+    removeItemDescription: {
+      fi: "Haluatko varmasti poistaa tämän tuotteen ostoskorista?",
+      en: "Are you sure you want to remove this item from your cart?",
+    },
+    confirmRemove: {
+      fi: "Kyllä, poista",
+      en: "Yes, remove it",
+    },
+    cancelRemove: {
+      fi: "Ei, säilytä",
+      en: "No, keep it",
+    },
+    itemRemoved: {
+      fi: "Tuote poistettu ostoskorista",
+      en: "Item removed from cart",
+    },
+    itemNotRemoved: {
+      fi: "Tuotetta ei poistettu",
+      en: "Item not removed",
     },
     loginRequired: {
       fi: "Kirjaudu sisään suorittaaksesi tilauksesi loppuun",

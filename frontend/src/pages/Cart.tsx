@@ -9,7 +9,13 @@ import {
 } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
-import { Calendar, ChevronLeft, LoaderCircle, Trash2 } from "lucide-react";
+import {
+  Calendar,
+  ChevronLeft,
+  LoaderCircle,
+  MapPin,
+  Trash2,
+} from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -37,8 +43,6 @@ const Cart: React.FC = () => {
   const bookingLoading = useAppSelector(selectBookingLoading);
   const userProfile = useAppSelector(selectSelectedUser);
   const user = useAppSelector(selectSelectedUser);
-
-  // Translation
   const { getTranslation } = useTranslation<ItemTranslation>();
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
@@ -70,6 +74,48 @@ const Cart: React.FC = () => {
     () => (endDateStr ? new Date(endDateStr) : null),
     [endDateStr],
   );
+
+  // Group items by location to detect different pickup locations
+  const itemsByLocation = useMemo(() => {
+    const locationMap = new Map<
+      string,
+      {
+        locationInfo: {
+          id: string;
+          name: string;
+          address: string;
+        };
+        items: typeof cartItems;
+      }
+    >();
+
+    cartItems.forEach((cartItem) => {
+      const locationId = cartItem.item.location_id;
+      const locationName =
+        cartItem.item.location_details?.name ||
+        cartItem.item.location_name ||
+        "Unknown Location";
+      const locationAddress = cartItem.item.location_details?.address || "";
+
+      if (!locationMap.has(locationId)) {
+        locationMap.set(locationId, {
+          locationInfo: {
+            id: locationId,
+            name: locationName,
+            address: locationAddress,
+          },
+          items: [],
+        });
+      }
+
+      locationMap.get(locationId)!.items.push(cartItem);
+    });
+
+    return Array.from(locationMap.values());
+  }, [cartItems]);
+
+  // Check if items are in different locations
+  const hasMultipleLocations = itemsByLocation.length > 1;
 
   useEffect(() => {
     if (!startDate || !endDate || cartItems.length === 0) return;
@@ -128,7 +174,19 @@ const Cart: React.FC = () => {
   };
 
   const handleRemoveItem = (id: string) => {
-    dispatch(removeFromCart(id));
+    toastConfirm({
+      title: t.cart.toast.removeItemTitle[lang],
+      description: t.cart.toast.removeItemDescription[lang],
+      confirmText: t.cart.toast.confirmRemove[lang],
+      cancelText: t.cart.toast.cancelRemove[lang],
+      onConfirm: () => {
+        dispatch(removeFromCart(id));
+        toast.success(t.cart.toast.itemRemoved[lang]);
+      },
+      onCancel: () => {
+        toast.success(t.cart.toast.itemNotRemoved[lang]);
+      },
+    });
   };
 
   const handleClearCart = () => {
@@ -360,6 +418,45 @@ const Cart: React.FC = () => {
             )}
           </div>
 
+          {/* Multiple Locations Notice */}
+          {hasMultipleLocations && (
+            <div
+              className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6"
+              data-cy="cart-multiple-locations-notice"
+            >
+              <h4 className="text-blue-800 font-semibold mb-2 flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                {t.cart.locations.differentLocations[lang]}
+              </h4>
+              <p className="text-blue-700 text-sm mb-3">
+                {t.cart.locations.pickupInfo[lang]}
+              </p>
+              <ul className="space-y-2">
+                {itemsByLocation.map((locationGroup, index) => (
+                  <li
+                    key={locationGroup.locationInfo.id}
+                    className="text-blue-800 font-medium"
+                    data-cy={`cart-location-item-${index}`}
+                  >
+                    {locationGroup.locationInfo.name}{" "}
+                    <span className="text-blue-600 font-normal">
+                      ({locationGroup.items.length}{" "}
+                      {locationGroup.items.length === 1
+                        ? t.cart.locations.itemCountSingular[lang]
+                        : t.cart.locations.itemCount[lang]}
+                      )
+                    </span>
+                    {locationGroup.locationInfo.address && (
+                      <div className="text-xs text-gray-600 font-normal ml-2">
+                        {locationGroup.locationInfo.address}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Cart Items */}
           <div className="space-y-4 p-2" data-cy="cart-items-list">
             {cartItems.map((cartItem) => {
@@ -370,36 +467,28 @@ const Cart: React.FC = () => {
               return (
                 <div
                   key={cartItem.item.id}
-                  className="flex flex-col border-b pb-4"
+                  className="flex flex-col border-b pb-2"
                   data-cy="cart-item"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="font-medium mb-2" data-cy="cart-item-name">
+                      <h3 className="font-medium mb-1" data-cy="cart-item-name">
                         {itemContent?.item_name
                           .toLowerCase()
                           .replace(/^./, (c) => c.toUpperCase())}
                       </h3>
                       <p
-                        className="text-sm text-gray-500"
-                        data-cy="cart-item-type"
+                        className="text-xs text-slate-500 flex items-center gap-1"
+                        data-cy="cart-item-location"
                       >
-                        {itemContent?.item_type
-                          .toLowerCase()
-                          .replace(/^./, (c) => c.toUpperCase())}
-                      </p>
-                      <p
-                        className="text-xs text-slate-400"
-                        data-cy="cart-item-available"
-                      >
-                        {t.cart.item.available[lang]}{" "}
-                        {availabilityMap[cartItem.item.id]?.availableQuantity ??
-                          "-"}{" "}
-                        {t.cart.item.units[lang]}
+                        <MapPin className="h-3 w-3" />
+                        {cartItem.item.location_details?.name ||
+                          cartItem.item.location_name ||
+                          "Unknown Location"}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-center">
                       <div
                         className="flex items-center"
                         data-cy="cart-item-quantity-section"
@@ -452,6 +541,19 @@ const Cart: React.FC = () => {
                           +
                         </Button>
                       </div>
+                      <div>
+                        <p
+                          className="text-xs text-slate-400"
+                          data-cy="cart-item-available"
+                        >
+                          {t.cart.item.available[lang]}{" "}
+                          {availabilityMap[cartItem.item.id]
+                            ?.availableQuantity ?? "-"}{" "}
+                          {t.cart.item.units[lang]}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="ml-2 mb-4">
                       <Button
                         variant="ghost"
                         size="sm"
