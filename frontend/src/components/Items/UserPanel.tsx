@@ -434,7 +434,6 @@ const UserPanel = () => {
                       : t.userPanel.categories.seeAll[lang]}
                   </Button>
                 )}
-                <Separator className="my-2" />
               </div>
             )}
 
