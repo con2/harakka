@@ -275,9 +275,9 @@ const MyBookingsPage = () => {
       },
     },
     {
-      id: "self_pickup",
+      accessorKey: "self_pickup",
       header:
-        booking?.status != "confirmed"
+        booking?.status !== "confirmed"
           ? ""
           : t.myBookingsPage.columns.selfPickup[lang],
       cell: ({ row }) => {
