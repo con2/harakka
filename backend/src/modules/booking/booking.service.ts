@@ -550,7 +550,7 @@ export class BookingService {
 
     const { data: profileAddr, error: profileAddrErr } = await supabase
       .from("user_addresses")
-      .select("address, phone")
+      .select("street_address, city, postal_code, country")
       .eq("user_id", userId);
 
     if (profileAddrErr) {
@@ -563,8 +563,16 @@ export class BookingService {
       );
     }
 
-    const hasValidAddress = addresses.some(
-      (addr) => addr.address && addr.address.trim() != "",
+    const hasValidAddress = profileAddr.some(
+      (addr) =>
+        addr.street_address &&
+        addr.street_address.trim() !== "" &&
+        addr.city &&
+        addr.city.trim() !== "" &&
+        addr.postal_code &&
+        addr.postal_code.trim() !== "" &&
+        addr.country &&
+        addr.country.trim() !== "",
     );
     if (!hasValidAddress) {
       throw new BadRequestException(
