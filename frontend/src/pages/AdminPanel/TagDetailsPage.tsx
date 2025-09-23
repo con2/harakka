@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Tag } from "@/types/tag";
 import TagDelete from "@/components/Admin/Items/TagDelete";
+import { ExtendedTag } from "@common/items/tag.types";
 
 const TagDetailsPage = () => {
   const { id } = useParams();
@@ -26,8 +27,8 @@ const TagDetailsPage = () => {
   const selected = useAppSelector(selectSelectedTags);
   const allTags = useAppSelector(selectAllTags);
 
-  const [tag, setTag] = useState<Tag | null>(
-    selected && selected.length > 0 ? (selected[0] as Tag) : null,
+  const [tag, setTag] = useState<ExtendedTag | null>(
+    selected && selected.length > 0 ? selected[0] : null,
   );
   const [fiName, setFiName] = useState("");
   const [enName, setEnName] = useState("");
@@ -37,7 +38,7 @@ const TagDetailsPage = () => {
 
   useEffect(() => {
     if (!tag && id) {
-      const found = allTags?.find((t) => t.id === id) as Tag | undefined;
+      const found = allTags?.find((t) => t.id === id);
       if (found) {
         void dispatch(selectTag(found));
         setTag(found);
