@@ -29,9 +29,9 @@ export const CurrentUserRoles: React.FC = () => {
 
   //Render
   return (
-    <div className="flex flex-col md:flex-1 space-y-6 p-2 w-full">
+    <div className="flex flex-col md:flex-1 space-y-6 w-full">
       {/* Disables fields for roles */}
-      <h3 className="text-md font-semibold text-gray-700">
+      <h3 className="text-xl font-semibold text-gray-700">
         {t.currentUserRoles.title?.[lang]}
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

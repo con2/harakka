@@ -215,7 +215,7 @@ const MyProfile = () => {
             <form onSubmit={handleSubmit} className="w-full">
               <div className="flex flex-col md:flex-1 space-y-6 p-2 w-full">
                 {/* Editable Fields for Details */}
-                <h3 className="text-md font-semibold text-gray-700">
+                <h3 className="text-xl font-semibold text-gray-700">
                   {t.myProfile.personalDetails.title[lang]}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -291,7 +291,7 @@ const MyProfile = () => {
 
                 {/* Addresses */}
                 <div>
-                  <h3 className="text-md font-semibold text-gray-700 mb-4">
+                  <h3 className="text-xl font-semibold text-gray-700 mb-4">
                     {t.myProfile.addresses.title[lang]}
                   </h3>
 
