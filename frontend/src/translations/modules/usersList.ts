@@ -153,11 +153,11 @@ export const usersList = {
   },
   tooltip: {
     superAdminHelp: {
-      fi: 'Roolin määrittämiseksi käyttäjälle, valitse käyttäjä klikkaamalla sitä ja klikkaa "Lisää rooli"',
-      en: 'To assign a role to any user, choose a user by clicking on it and click on "Add Role"',
+      fi: "Roolin määrittämiseksi valitse käyttäjä alla ja klikkaa Lisää rooli",
+      en: "To assign roles, select a user below, and click Add Role",
     },
     tenantAdminHelp: {
-      fi: 'Lisätäksesi uuden jäsenen organisaatioosi, klikkaa "Lisää Orgni käyttäjää" -painiketta',
+      fi: "Lisätäksesi uuden jäsenen organisaatioosi, klikkaa Lisää Orgni käyttäjää -painiketta",
       en: "To add a new member to your organization, click the Add My Org User button",
     },
   },
