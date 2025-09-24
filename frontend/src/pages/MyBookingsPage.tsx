@@ -495,7 +495,7 @@ const MyBookingsPage = () => {
         </div>
 
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-xl font-normal pt-2">
+          <h3 className="text-xl font-semibold pt-2">
             {t.myBookingsPage.bookingDetails.title[lang]}{" "}
             {booking.booking_number}
           </h3>
@@ -546,22 +546,24 @@ const MyBookingsPage = () => {
           {/* Booking details */}
           <div className="grid grid-cols-2 gap-4 mb-2">
             <div>
-              <h3 className="font-normal text-sm mb-1">
+              <h3 className="font-semibold text-md mb-1">
                 {t.myBookingsPage.bookingDetails.customerInfo[lang]}
               </h3>
-              <p className="text-xs text-grey-500">{booking.full_name ?? ""}</p>
-              <p className="text-xs text-gray-500">{user?.email}</p>
+              <p className="text-sm text-grey-500">
+                {booking?.full_name ?? ""}
+              </p>
+              <p className="text-sm text-gray-500">{booking?.email}</p>
             </div>
 
             <div>
-              <h3 className="font-normal text-sm mb-1">
+              <h3 className="font-semibold text-md mb-1">
                 {t.myBookingsPage.bookingDetails.bookingInfo[lang]}
               </h3>
-              <p className="text-xs">
+              <p className="text-sm">
                 {t.myBookingsPage.columns.status[lang]}:{" "}
                 <StatusBadge status={booking.status} />
               </p>
-              <p className="text-xs">
+              <p className="text-sm">
                 {t.myBookingsPage.headings.createdAt[lang]}:{" "}
                 {formatDate(booking.created_at, "d MMM yyyy")}
               </p>
@@ -571,7 +573,7 @@ const MyBookingsPage = () => {
           <div>
             {/* Booking Dates and Date Picker */}
             <div className="mb-4">
-              <h3 className="font-normal text-sm mb-2">
+              <h3 className="font-semibold text-md mb-2">
                 {t.myBookingsPage.headings.bookingDates[lang]}
               </h3>
               <div>
@@ -607,7 +609,9 @@ const MyBookingsPage = () => {
                     className="mb-4"
                   >
                     <h4 className="text-md font-medium mb-2 text-gray-700 border-b pb-1">
-                      {orgGroup.orgName || "Unknown Organization"}
+                      {orgGroup.orgName || "Unknown Organization"}{" "}
+                      {t.myBookingsPage.bookingDetails.orgItems[lang]} (
+                      {orgGroup.items.length})
                     </h4>
                     <div className="border rounded-md overflow-hidden">
                       <DataTable
