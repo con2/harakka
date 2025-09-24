@@ -178,7 +178,7 @@ const Cart: React.FC = () => {
       // If user is trying to increase quantity beyond availability, show warning and don't allow
       if (quantity > (availability.availableQuantity || 0)) {
         toast.warning(
-          `${t.cart.toast.itemsExceedQuantityInCart[lang]} ${availability.availableQuantity}.`,
+          `${t.cart.toast.itemsExceedQuantity[lang]} ${availability.availableQuantity}.`,
         );
         return;
       }

@@ -191,8 +191,7 @@ export const cart = {
       fi: "Valitse päivämäärät ja lisää tuotteita ostoskoriin",
       en: "Please select dates and add items to cart",
     },
-
-    itemsExceedQuantityInCart: {
+    itemsExceedQuantity: {
       fi: "Olet ostoskorissasi tämän tuotteen määrän rajoissa. Saatavilla olevat tuotteet: ",
       en: "You’re at the limit for this item in your cart. Items available: ",
     },
