@@ -47,18 +47,13 @@ async function bootstrap() {
         "Authorization",
         // Custom headers (allow both casings just in case)
         "x-user-id",
-        "X-User-Id",
         "x-org-id",
-        "X-Org-Id",
         "x-role-name",
-        "X-Role-Name",
         "x-role-version",
-        "X-Role-Version",
       ],
       exposedHeaders: [
         // Expose role version header so the frontend can read it
         "x-role-version",
-        "X-Role-Version",
       ],
     });
     app.getHttpAdapter().get("/health", async (req, res: Response) => {
