@@ -332,21 +332,37 @@ const rolesSlice = createSlice({
         state.currentUserRoles = action.payload.roles;
         state.currentUserOrganizations = action.payload.organizations;
 
-        // If user has no initial context, set it to their GLOBAL role or the first role
-        // that they do have.
-        if (!state.activeRoleContext.organizationId) {
-          const GLOBAL_ROLE = state.currentUserRoles.find(
-            (role) => role.organization_name === "Global",
+        // Validate or initialize active role context against the fresh roles list.
+        // If the persisted context is missing or invalid (not present/active anymore),
+        // reset it to a sane default: prefer Global 'user', else the first active role.
+        const roles = state.currentUserRoles || [];
+        const hasAnyRoles = roles.length > 0;
+
+        const persisted = state.activeRoleContext;
+        const persistedValid = Boolean(
+          persisted?.organizationId &&
+            persisted?.roleName &&
+            roles.some(
+              (r) =>
+                r.is_active &&
+                r.organization_id === persisted.organizationId &&
+                r.role_name === persisted.roleName,
+            ),
+        );
+
+        if (!persistedValid && hasAnyRoles) {
+          const GLOBAL_ROLE = roles.find(
+            (r) =>
+              r.is_active && r.organization_name === "Global" && r.role_name,
           );
-          const FIRST_ROLE = state.currentUserRoles[0];
+          const FIRST_ACTIVE = roles.find((r) => r.is_active) ?? roles[0];
           const newContext = {
             organizationId:
-              GLOBAL_ROLE?.organization_id ?? FIRST_ROLE.organization_id,
+              GLOBAL_ROLE?.organization_id ?? FIRST_ACTIVE.organization_id,
             organizationName:
-              GLOBAL_ROLE?.organization_name ?? FIRST_ROLE.organization_name,
-            roleName: GLOBAL_ROLE?.role_name ?? FIRST_ROLE.role_name,
+              GLOBAL_ROLE?.organization_name ?? FIRST_ACTIVE.organization_name,
+            roleName: GLOBAL_ROLE?.role_name ?? FIRST_ACTIVE.role_name,
           };
-
           state.activeRoleContext = newContext;
           localStorage.setItem("activeRoleContext", JSON.stringify(newContext));
         }

@@ -50,6 +50,10 @@ export const bookingDetailsPage = {
       fi: "Päivämäärä",
       en: "Date",
     },
+    onBehalfOf: {
+      fi: "Varattu organisaation puolesta",
+      en: "Booked on behalf of",
+    },
     bookingItems: {
       columns: {
         item: {

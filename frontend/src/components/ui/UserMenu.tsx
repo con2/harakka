@@ -42,7 +42,7 @@ export const UserMenu: React.FC = () => {
   const { lang, setLanguage } = useLanguage();
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { name: userName, avatarUrl } = useProfile(user);
+  const { name: userName, avatarUrl, email } = useProfile(user);
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
   const [selectGroup, setSelectGroup] = useState<
@@ -124,7 +124,7 @@ export const UserMenu: React.FC = () => {
                 activeOrgName &&
                 getOrgLabel(userName, activeRoleName, activeOrgName)}
             </p>
-            <p className="text-md">{userName}</p>
+            <p className="text-md">{userName || email}</p>
           </div>
           <ChevronDown
             className={`w-3 h-3 transition-transform ${open ? "transform-[rotate(180deg)]" : "transform-[rotate(0deg)]"}`}
