@@ -51,6 +51,24 @@ const UserPanel = () => {
     // eslint-disable-next-line
   }, []);
 
+  const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
+    expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
+
+  // Filter out organizations that shouldn't have items
+  const filterableOrganizations = useMemo(
+    () =>
+      organizations.filter(
+        (org: OrganizationDetails) =>
+          org.name !== "High Council" && org.name !== "Users united union (U3)",
+      ),
+    [organizations],
+  );
+
+  const visibleOrganizations = getVisible(
+    filterableOrganizations,
+    "organizations",
+  );
+
   // Shared expand/collapse state per filter list (max 5 visible by default)
   type ExpandableSection =
     | "itemTypes"
@@ -68,10 +86,8 @@ const UserPanel = () => {
   });
   const toggleExpanded = (key: ExpandableSection) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
-  const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
-    expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
 
-  const visibleOrganizations = getVisible(organizations, "organizations");
+  // const visibleOrganizations = getVisible(organizations, "organizations");
   const visibleLocations = getVisible(locations, "locations");
   const visibleTags = getVisible(tags, "tags");
   const mappedCategories = buildCategoryTree(categories);
@@ -420,7 +436,7 @@ const UserPanel = () => {
             <Separator className="my-4" />
 
             {/* Organizations */}
-            {organizations && organizations.length > 0 && (
+            {organizations && filterableOrganizations.length > 0 && (
               <div className="flex flex-col gap-2 mb-4">
                 <label className="text-primary text-md block mb-0">
                   {t.userPanel.organizations.title[lang]}
@@ -461,7 +477,7 @@ const UserPanel = () => {
                     );
                   })}
                 </div>
-                {organizations.length > MAX_VISIBLE && (
+                {filterableOrganizations.length > MAX_VISIBLE && (
                   <Button
                     variant="ghost"
                     className="text-left text-sm text-secondary"
