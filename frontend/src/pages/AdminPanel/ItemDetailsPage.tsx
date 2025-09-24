@@ -223,10 +223,10 @@ const ItemDetailsPage = () => {
         </Button>
         <div className="gap-2 flex">
           <Button variant="destructive" onClick={handleDelete}>
-            Delete Item
+            {t.itemDetailsPage.buttons.delete[lang]}
           </Button>
           <Button variant="outline" onClick={handleSubmit}>
-            Save Changes
+            {t.itemDetailsPage.buttons.save[lang]}
           </Button>
         </div>
       </div>

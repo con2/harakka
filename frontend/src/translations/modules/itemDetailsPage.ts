@@ -20,6 +20,10 @@ export const itemDetailsPage = {
       fi: "Poista tuote",
       en: "Delete Item",
     },
+    save: {
+      en: "Save Changes",
+      fi: "Tallenna muutokset",
+    },
   },
   messages: {
     deletion: {
