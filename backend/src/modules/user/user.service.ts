@@ -124,12 +124,20 @@ export class UserService {
     // Build the main user query
     let query = supabase.from("user_profiles").select("*", { count: "exact" });
 
-    // Apply organization filtering for all roles except super_admin
-    if (activeRole !== "super_admin") {
+    // Determine which organization to filter by
+    let targetOrgId = activeOrgId; // Default to user's active org
+
+    // For super_admin, check if org_filter is provided in the request
+    if (activeRole === "super_admin" && dto.org_filter) {
+      targetOrgId = dto.org_filter;
+    }
+
+    // Apply organization filtering for tenant_admin or super_admin with org_filter
+    if (activeRole !== "super_admin" || dto.org_filter) {
       const { data: orgUsers, error: orgError } = await supabase
         .from("user_organization_roles")
         .select("user_id")
-        .eq("organization_id", activeOrgId);
+        .eq("organization_id", targetOrgId);
 
       if (orgError) {
         handleSupabaseError(orgError);
