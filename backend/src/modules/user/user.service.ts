@@ -132,23 +132,50 @@ export class UserService {
       targetOrgId = dto.org_filter;
     }
 
-    // Apply organization filtering for tenant_admin or super_admin with org_filter
-    if (activeRole !== "super_admin" || dto.org_filter) {
-      const { data: orgUsers, error: orgError } = await supabase
-        .from("user_organization_roles")
-        .select("user_id")
-        .eq("organization_id", targetOrgId);
+    // Apply organization and role filtering using the view_user_roles_with_details view
+    let filteredUserIds: string[] | null = null;
 
-      if (orgError) {
-        handleSupabaseError(orgError);
+    // Build query conditions for filtering
+    const filterConditions: string[] = [];
+
+    // Add organization filter if applicable
+    if (activeRole !== "super_admin" || dto.org_filter) {
+      filterConditions.push(`organization_id.eq.${targetOrgId}`);
+    }
+
+    // Add role filter if provided
+    if (dto.selected_role) {
+      filterConditions.push(`role_name.eq.${dto.selected_role}`);
+      filterConditions.push(`is_active.eq.true`);
+    }
+
+    // If we have any filters, get the filtered user IDs
+    if (filterConditions.length > 0) {
+      let roleViewQuery = supabase
+        .from("view_user_roles_with_details")
+        .select("user_id");
+
+      // Apply all filter conditions
+      filterConditions.forEach((condition) => {
+        const [column, operator, value] = condition.split(".");
+        if (operator === "eq") {
+          roleViewQuery = roleViewQuery.eq(column, value);
+        }
+      });
+
+      const { data: filteredRoles, error: filterError } = await roleViewQuery;
+
+      if (filterError) {
+        handleSupabaseError(filterError);
       }
 
-      const userIds =
-        orgUsers?.map((r: { user_id: string }) => r.user_id) || [];
+      // Get unique user IDs
+      const userIdSet = new Set(
+        filteredRoles?.map((r: { user_id: string }) => r.user_id) || [],
+      );
+      filteredUserIds = Array.from(userIdSet);
 
-      if (userIds.length > 0) {
-        query = query.in("id", userIds);
-      } else {
+      if (filteredUserIds.length === 0) {
         // No users match the criteria, return empty response
         return {
           data: [],
@@ -159,6 +186,8 @@ export class UserService {
           metadata: getPaginationMeta(0, dto.page || 1, dto.limit || 10),
         };
       }
+
+      query = query.in("id", filteredUserIds);
     }
 
     // Apply search query if provided
