@@ -126,7 +126,7 @@ const ItemDetailsPage = () => {
 
   const update = (values: z.infer<typeof createItemDto>) => {
     if (!selectedItem) return;
-    const { location_details, location_id, location, ...rest } =
+    const { location_details, location, ...rest } =
       values as Partial<UpdateItem> & {
         location: { id: string; address: string; name: string };
       };
@@ -137,8 +137,8 @@ const ItemDetailsPage = () => {
             data: {
               ...rest,
               org_id: activeOrgId!,
-              location_id,
               location_details,
+              location_id: location.id,
             },
             item_id: selectedItem.id,
             orgId: activeOrgId!,
