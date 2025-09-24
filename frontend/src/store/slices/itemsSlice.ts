@@ -11,7 +11,7 @@ import {
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { ApiResponse } from "@common/response.types";
 import { AxiosResponse } from "axios";
-import { CreateItemType, ItemFormData } from "@common/items/form.types";
+import { ItemFormData } from "@common/items/form.types";
 import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 import { formatErrors, formatParsedItems } from "../utils/helper.utils";
 

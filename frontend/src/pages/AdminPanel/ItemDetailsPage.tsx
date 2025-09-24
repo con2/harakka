@@ -27,6 +27,7 @@ import { ChevronLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import z from "zod";
+import { UpdateItem } from "@common/items/storage-items.types";
 
 const ItemDetailsPage = () => {
   const { id } = useParams();
@@ -125,7 +126,10 @@ const ItemDetailsPage = () => {
 
   const update = (values: z.infer<typeof createItemDto>) => {
     if (!selectedItem) return;
-    const { location_details, location_id, location, ...rest } = values;
+    const { location_details, location_id, location, ...rest } =
+      values as Partial<UpdateItem> & {
+        location: { id: string; address: string; name: string };
+      };
     try {
       toast.promise(
         dispatch(

@@ -56,8 +56,7 @@ export const fetchOrgLocationById = createAsyncThunk(
 export const fetchOrgLocationByOrgId = createAsyncThunk(
   "orgLocations/fetchLocByOrgId",
   async (id: string) => {
-    const response = await orgLocationsApi.getOrgLocByOrgId(id);
-    return response;
+    return await orgLocationsApi.getOrgLocByOrgId(id);
   },
 );
 

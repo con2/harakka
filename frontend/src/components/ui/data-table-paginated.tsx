@@ -104,9 +104,6 @@ export function PaginatedDataTable<TData, TValue>({
     }
   };
 
-  console.log("highlight: ", highlight);
-  console.log("highlight includes: ", highlight?.includes(0));
-
   return (
     <div className="space-y-2">
       <div className="rounded-md border-none overflow-x-auto max-w-full">

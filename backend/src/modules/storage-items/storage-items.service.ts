@@ -598,7 +598,6 @@ export class StorageItemsService {
     const supabase = req.supabase;
     // Extract properties that shouldn't be sent to the database
     const { tags, location_details, images, ...itemData } = item;
-    console.log("itemdata: ", itemData);
 
     // Update the main item
     const {

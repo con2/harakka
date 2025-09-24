@@ -49,7 +49,7 @@ export const orgLocationsApi = {
     id: string,
     page: number = 1,
     limit: number = 10,
-  ): Promise<OrgLocationWithNames[]> =>
+  ): Promise<ApiResponse<OrgLocationWithNames[]>> =>
     api.get(
       `/organization-locations/organization/${id}?page=${page}&limit=${limit}`,
     ),
