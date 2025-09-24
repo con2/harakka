@@ -114,6 +114,10 @@ export const bookingList = {
       fi: "Tuntematon",
       en: "Unknown",
     },
+    onBehalfOf: {
+      fi: "organisaation puolesta",
+      en: "on behalf of",
+    },
   },
   modal: {
     customer: {

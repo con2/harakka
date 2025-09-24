@@ -11,6 +11,7 @@ export type BookingPreview = StripNull<BookingUserViewRow>;
 export type BookingPreviewWithOrgData = BookingPreview & {
   org_status_for_active_org?: string;
   start_date?: string;
+  booked_by_org?: string | null;
 };
 
 export type BookingTable = Database["public"]["Tables"]["bookings"];
