@@ -5,7 +5,6 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllOrderedUsers,
-  fetchAllUsers,
   selectAllUsers,
   selectError,
   selectLoading,
@@ -22,7 +21,7 @@ import {
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye, LoaderCircle, Info } from "lucide-react";
+import { LoaderCircle, Info } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,6 +56,7 @@ const UsersList = () => {
   // ————————————— State —————————————
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [orgFilter, setOrgFilter] = useState("all");
   const [showAddUser, setShowAddUser] = useState(false);
   const [addSearchInput, setAddSearchInput] = useState("");
   const [addSearchLoading, setAddSearchLoading] = useState(false);
@@ -77,27 +77,46 @@ const UsersList = () => {
   // ————————————— Derived Values —————————————
   const isAuthorized = hasAnyRole(["tenant_admin", "super_admin"]);
   const isSuper = hasRole("super_admin");
-  const isActiveRoleSuper = activeRoleName === "super_admin";
-  const shouldFetchAllUsers = isSuper && (!activeOrgId || isActiveRoleSuper);
 
   // ————————————— Helper Functions —————————————
   const getOrgFilter = useCallback(() => {
-    if (shouldFetchAllUsers) {
-      return undefined; // No filter - fetch all users
+    // For tenant admin, use their active org
+    if (!isSuper) {
+      return activeOrgId ?? undefined;
     }
-    return activeOrgId ?? undefined; // Use selected org or undefined
-  }, [shouldFetchAllUsers, activeOrgId]);
+    // For super admin, no default org filter (will be set by orgFilter dropdown)
+    return undefined;
+  }, [isSuper, activeOrgId]);
 
-  // Get available roles for filtering - only show roles from current org context
+  // Get available organizations for super admin filtering
+  const availableOrganizations = useMemo(() => {
+    if (!isSuper) return [];
+
+    const uniqueOrgsMap = new Map<string, { id: string; name: string }>();
+    allUserRoles.forEach((role) => {
+      if (role.organization_id && role.organization_name && role.is_active) {
+        // Use organization_id as the key to ensure uniqueness
+        uniqueOrgsMap.set(role.organization_id, {
+          id: role.organization_id,
+          name: role.organization_name,
+        });
+      }
+    });
+
+    return Array.from(uniqueOrgsMap.values());
+  }, [allUserRoles, isSuper]);
+
+  // Get available roles for filtering - simplified since backend handles the actual filtering
   const availableRoles = useMemo(() => {
     const uniqueRoles = new Set<string>();
+
     allUserRoles.forEach((role) => {
       if (role.is_active && role.role_name) {
-        // If super admin with no org selected, show all roles
-        if (isActiveRoleSuper && !activeOrgId) {
+        // For super admin - show all roles, let backend filter
+        if (isSuper) {
           uniqueRoles.add(role.role_name);
         }
-        // Otherwise, show roles from active org AND Global roles
+        // For tenant admin - show roles from active org AND Global roles
         else if (activeOrgId) {
           if (
             role.organization_id === activeOrgId ||
@@ -112,23 +131,20 @@ const UsersList = () => {
     });
 
     return Array.from(uniqueRoles).map((role) => ({ id: role, role }));
-  }, [allUserRoles, activeOrgId, isActiveRoleSuper]);
+  }, [allUserRoles, activeOrgId, isSuper]);
 
-  // Helper function to get user's roles for display based on admin permissions
+  // Helper function to get user's roles for display in the role column (tenant admin only)
   const getUserRolesForDisplay = useCallback(
     (userId: string) => {
       const userRoles = allUserRoles.filter((role) => role.user_id === userId);
 
-      // If the current user is super_admin and no org is selected, show all active roles
-      if (isActiveRoleSuper && !activeOrgId) {
-        return userRoles
-          .filter((role) => role.is_active)
-          .map((role) => ({
-            role: role.role_name,
-            org: role.organization_name,
-          }));
+      // This function is only used for tenant admin role column display
+      // Super admin uses organization column instead
+      if (isSuper) {
+        return [];
       }
 
+      // For tenant admin - show roles from active org AND Global roles
       let filteredRoles;
       if (activeOrgId) {
         // When viewing a specific org context
@@ -160,73 +176,45 @@ const UsersList = () => {
         org: role.organization_name,
       }));
     },
-    [allUserRoles, isActiveRoleSuper, activeOrgId],
+    [allUserRoles, isSuper, activeOrgId],
   );
 
-  // derive the organization name for a given user for this view
-  const getUserOrgName = useCallback(
-    (userId: string) => {
-      // Get all user roles (active and inactive)
-      const allRoles = allUserRoles.filter((r) => r.user_id === userId);
-      // If we're viewing in the context of a specific organization
-      if (activeOrgId) {
-        // First, try to find a role in the active organization
-        const activeOrgRole = allRoles.find(
-          (r) => r.organization_id === activeOrgId,
-        );
-        if (activeOrgRole?.organization_name) {
-          return activeOrgRole.organization_name;
-        }
-      }
-
-      // If no role found in active org, fall back to active roles only
-      const activeRoles = allRoles.filter((r) => r.is_active);
-
-      // If super admin with no org selected, show Global first if present
-      if (isActiveRoleSuper && !activeOrgId) {
-        const global = activeRoles.find(
-          (r) => r.organization_name === "Global",
-        );
-        if (global) return "Global";
-      }
-
-      // Fallback to Global if user has an active Global role
-      const global = activeRoles.find((r) => r.organization_name === "Global");
-      if (global) return "Global";
-
-      // Otherwise, show the first active org name if any
-      return activeRoles[0]?.organization_name ?? "";
-    },
-    [allUserRoles, activeOrgId, isActiveRoleSuper],
-  );
-
-  // Filter users based on role filter
-  const filteredUsers = useMemo(() => {
-    if (!users.data || roleFilter === "all") {
-      return users.data || [];
-    }
-
-    return users.data.filter((user) => {
-      const userRoles = getUserRolesForDisplay(user.id);
-      return userRoles.some((roleInfo) => roleInfo.role === roleFilter);
-    });
-  }, [users.data, roleFilter, getUserRolesForDisplay]);
+  // Users from backend (filtering is now handled by backend)
+  const displayedUsers = users.data || [];
 
   // ————————————— API Actions —————————————
   const loadUserData = useCallback(() => {
     if (authLoading || !isAuthorized) return;
 
+    // Determine the org filter to send to backend
+    let backendOrgFilter = getOrgFilter();
+
+    // For super admin, if org filter is selected, use that for backend filtering
+    if (isSuper && orgFilter !== "all") {
+      backendOrgFilter = orgFilter;
+    }
+
     return dispatch(
       fetchAllOrderedUsers({
-        org_filter: getOrgFilter(),
+        org_filter: backendOrgFilter,
         page: 1,
         limit: 10,
         ascending: true,
         ordered_by: "created_at",
         searchquery: debouncedSearchQuery || undefined,
+        selected_role: roleFilter !== "all" ? roleFilter : undefined,
       }),
     );
-  }, [dispatch, authLoading, isAuthorized, getOrgFilter, debouncedSearchQuery]);
+  }, [
+    dispatch,
+    authLoading,
+    isAuthorized,
+    getOrgFilter,
+    debouncedSearchQuery,
+    isSuper,
+    orgFilter,
+    roleFilter,
+  ]);
 
   const handleAddSearch = async () => {
     if (!addSearchInput || addSearchInput.trim().length === 0) return;
@@ -371,16 +359,10 @@ const UsersList = () => {
     rolesCatalog.length,
   ]);
 
-  // Load super admin users
-  useEffect(() => {
-    if (isSuper) {
-      void dispatch(fetchAllUsers());
-    }
-  }, [isSuper, dispatch]);
-
-  // Reset role filter when active organization changes
+  // Reset filters when active organization changes
   useEffect(() => {
     setRoleFilter("all");
+    setOrgFilter("all");
   }, [activeOrgId, activeRoleName]);
 
   // Fetch users when key dependencies change
@@ -391,20 +373,21 @@ const UsersList = () => {
   // ————————————— Columns —————————————
   const columns: ColumnDef<UserProfile>[] = [
     {
-      id: "view",
-      size: 5,
-      cell: () => (
-        <div className="flex space-x-1">
-          <Button
-            variant={"ghost"}
-            size="sm"
-            title={t.bookingList.buttons.viewDetails[lang]}
-            className="hover:text-slate-900 hover:bg-slate-300"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
+      accessorKey: "profile_picture_url",
+      header: "",
+      size: 50,
+      cell: ({ row }) => {
+        const url = row.original.profile_picture_url;
+        return url ? (
+          <img
+            src={url}
+            alt="Profile"
+            className="h-8 w-8 rounded-full object-cover"
+          />
+        ) : (
+          ""
+        );
+      },
     },
     {
       accessorKey: "full_name",
@@ -438,45 +421,94 @@ const UsersList = () => {
       cell: ({ row }) =>
         formatDate(new Date(row.original.created_at ?? ""), "d MMM yyyy"),
     },
-    {
-      id: "orgName",
-      header: isSuper ? t.usersList.columns.organization[lang] : undefined,
-      size: 120,
-      cell: ({ row }) =>
-        isSuper ? getUserOrgName(row.original.id) : undefined,
-    },
-    {
-      id: "roles",
-      header: t.usersList.columns.role[lang],
-      size: 150,
-      enableSorting: true,
-      enableColumnFilter: true,
-      cell: ({ row }) => {
-        const userId = row.original.id;
-        const userRoles = allUserRoles.filter(
-          (r) => r.user_id === userId && r.role_name,
-        );
-        const orgRole = activeOrgId
-          ? userRoles.find(
-              (r) => r.organization_id === activeOrgId && r.is_active,
-            )
-          : undefined;
-        const globalRole = userRoles.find(
-          (r) => r.organization_name === "Global" && r.is_active,
-        );
-        const roleToShow = orgRole ?? globalRole ?? userRoles[0];
+    // Show Organization column only for super admin
+    ...(isSuper
+      ? [
+          {
+            id: "orgName",
+            header: t.usersList.columns.organization[lang],
+            size: 200,
+            cell: ({ row }: { row: { original: UserProfile } }) => {
+              const userId = row.original.id;
+              const userRoles = allUserRoles.filter(
+                (role) => role.user_id === userId && role.is_active,
+              );
 
-        return roleToShow ? (
-          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-            {formatRoleName(roleToShow.role_name as string)}
-          </span>
-        ) : (
-          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-            User
-          </span>
-        );
-      },
-    },
+              // Get all unique organizations for this user
+              const orgs = new Set<string>();
+              userRoles.forEach((role) => {
+                if (role.organization_name) {
+                  orgs.add(role.organization_name);
+                }
+              });
+
+              const orgArray = Array.from(orgs);
+
+              if (orgArray.length === 0) {
+                return <span className="text-gray-500">No org</span>;
+              }
+
+              if (orgArray.length === 1) {
+                return <span className="text-sm">{orgArray[0]}</span>;
+              }
+
+              // Multiple orgs - show first few with overflow indicator
+              return (
+                <div className="flex flex-wrap gap-1">
+                  {orgArray.slice(0, 2).map((org, index) => (
+                    <span
+                      key={index}
+                      className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded"
+                    >
+                      {org}
+                    </span>
+                  ))}
+                  {orgArray.length > 2 && (
+                    <span
+                      className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                      title={orgArray.slice(2).join(", ")}
+                    >
+                      +{orgArray.length - 2}
+                    </span>
+                  )}
+                </div>
+              );
+            },
+          },
+        ]
+      : []),
+    // Show Role column only for tenant admin
+    ...(!isSuper
+      ? [
+          {
+            id: "roles",
+            header: t.usersList.columns.role[lang],
+            size: 200,
+            enableSorting: true,
+            enableColumnFilter: true,
+            cell: ({ row }: { row: { original: UserProfile } }) => {
+              const userId = row.original.id;
+              const displayRoles = getUserRolesForDisplay(userId);
+
+              if (displayRoles.length === 0) {
+                return (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    User
+                  </span>
+                );
+              }
+
+              // For tenant admin, show the primary role
+              const primaryRole = displayRoles[0];
+              return (
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  {formatRoleName(primaryRole.role || "user")}
+                </span>
+              );
+            },
+          },
+        ]
+      : []),
   ];
 
   // ————————————— Render —————————————
@@ -543,6 +575,23 @@ const UsersList = () => {
             className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           />
 
+          {/* Organization filter for super admin */}
+          {isSuper && (
+            <select
+              value={orgFilter}
+              onChange={(e) => setOrgFilter(e.target.value)}
+              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            >
+              <option value="all">All Organizations</option>
+              {availableOrganizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Role filter - show for all admins since backend handles filtering */}
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
@@ -556,11 +605,14 @@ const UsersList = () => {
             ))}
           </select>
 
-          {(searchQuery || roleFilter !== "all") && (
+          {(searchQuery ||
+            roleFilter !== "all" ||
+            (isSuper && orgFilter !== "all")) && (
             <Button
               onClick={() => {
                 setSearchQuery("");
                 setRoleFilter("all");
+                setOrgFilter("all");
               }}
               size={"sm"}
               className="px-2 py-0 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
@@ -734,21 +786,30 @@ const UsersList = () => {
 
       <PaginatedDataTable
         columns={columns}
-        data={filteredUsers}
+        data={displayedUsers}
         pageIndex={Math.max(0, (users.metadata?.page ?? 1) - 1)}
         pageCount={users.metadata?.totalPages || 1}
-        onPageChange={(page) =>
-          dispatch(
+        onPageChange={(page) => {
+          // Determine the org filter to send to backend
+          let backendOrgFilter = getOrgFilter();
+
+          // For super admin, if org filter is selected, use that for backend filtering
+          if (isSuper && orgFilter !== "all") {
+            backendOrgFilter = orgFilter;
+          }
+
+          void dispatch(
             fetchAllOrderedUsers({
-              org_filter: getOrgFilter(),
+              org_filter: backendOrgFilter,
               page: page + 1,
               limit: 10,
               ascending: true,
               ordered_by: "created_at",
               searchquery: debouncedSearchQuery || undefined,
+              selected_role: roleFilter !== "all" ? roleFilter : undefined,
             }),
-          )
-        }
+          );
+        }}
         rowProps={(row) => ({
           onClick: () => navigate(`/admin/users/${row.original.id}`),
           className: "cursor-pointer",
