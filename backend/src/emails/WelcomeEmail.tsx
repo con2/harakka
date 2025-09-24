@@ -24,7 +24,7 @@ const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
       style={{
         fontFamily: "'Lato', Arial, sans-serif",
         // backgroundColor: "#2f5D9E",
-        backgroundColor: "###d0c1d8",
+        backgroundColor: "#C4C9CC",
         margin: 0,
         padding: "40px 20px",
         color: "#333333",
@@ -63,7 +63,7 @@ const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
             marginBottom: "24px",
           }}
         >
-          Welcome to Illusia rental services
+          Welcome to Harakka Storage Solutions
         </Text>
 
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>

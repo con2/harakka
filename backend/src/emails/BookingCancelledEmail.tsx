@@ -49,7 +49,7 @@ const BookingCancelledEmail = ({
       <Body
         style={{
           fontFamily: "'Lato', Arial, sans-serif",
-          backgroundColor: "#d0c1d8",
+          backgroundColor: "#C4C9CC",
           margin: 0,
           padding: "40px 20px",
           color: "#333333",

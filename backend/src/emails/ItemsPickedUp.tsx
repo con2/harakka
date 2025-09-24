@@ -5,6 +5,7 @@ import {
   Body,
   Container,
   Text,
+  Img,
   Section,
 } from "@react-email/components";
 import { PickUpEmail } from "src/modules/mail/interfaces/mail.interface";
@@ -26,12 +27,19 @@ const ItemsPickedUpMail = ({
       style={{
         fontFamily: "'Lato', Arial, sans-serif",
         // backgroundColor: "#2f5D9E",
-        backgroundColor: "#d0c1d8",
+        backgroundColor: "#C4C9CC",
         margin: 0,
         padding: "40px 20px",
         color: "#333333",
       }}
     >
+      <Img
+        src="url()"
+        style={{
+          width: "200px",
+          height: "auto",
+        }}
+      />
       <Container
         style={{
           backgroundColor: "#ffffff",
