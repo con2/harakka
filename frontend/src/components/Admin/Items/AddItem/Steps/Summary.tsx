@@ -56,7 +56,11 @@ function Summary() {
       void dispatch(setStepper(1));
       void dispatch(clearOrgLocations());
       void navigate("/admin/items", {
-        state: { ascending: false, newItems: newItems },
+        state: {
+          ascending: false,
+          newItems: newItems,
+          highlight: Array.from({ length: newItems.length }, (_, i) => i),
+        },
       });
     } catch (error) {
       toast.error(

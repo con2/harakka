@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,11 +59,22 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { TRANSLATION_FIELDS } from "../add-item.data";
 import ItemImageUpload from "../ItemImageUpload";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 
-function AddItemForm() {
+type AddItemFromProps = {
+  onUpdate?: (values: z.infer<typeof createItemDto>) => void;
+  initialData?: CreateItemType;
+};
+
+function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   const orgLocations = useAppSelector(selectOrgLocations);
   const editItem = useAppSelector(selectSelectedItem);
   const { lang: appLang } = useLanguage();
@@ -79,37 +89,40 @@ function AddItemForm() {
   const isEditing = useAppSelector(selectIsEditing);
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
-    defaultValues: editItem ?? {
-      id: crypto.randomUUID(),
-      location: {
-        id: storage?.id ?? "",
-        name: storage?.name ?? "",
-        address: storage?.address ?? "",
-      },
-      quantity: 1,
-      available_quantity: 1,
-      is_active: true,
-      tags: [],
-      translations: {
-        fi: {
-          item_name: "",
-          item_description: "",
+    defaultValues: initialData ??
+      editItem ?? {
+        id: crypto.randomUUID(),
+        location: {
+          id: storage?.id ?? "",
+          name: storage?.name ?? "",
+          address: storage?.address ?? "",
         },
-        en: {
-          item_name: "",
-          item_description: "",
+        quantity: 1,
+        available_quantity: 1,
+        is_active: true,
+        tags: [],
+        translations: {
+          fi: {
+            item_name: "",
+            item_description: "",
+          },
+          en: {
+            item_name: "",
+            item_description: "",
+          },
+        },
+        category_id: null,
+        images: {
+          main: null,
+          details: [],
         },
       },
-      category_id: "",
-      images: {
-        main: null,
-        details: [],
-      },
-    },
   });
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
     form.reset();
+    if (onUpdate) return onUpdate(values);
+    dispatch(clearSelectedItem());
     if (isEditing) return handleUpdateItem(values);
     void dispatch(addToItemCreation(values));
     dispatch(setNextStep());
@@ -248,55 +261,156 @@ function AddItemForm() {
   return (
     <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px]">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onValidSubmit, onInvalidSubmit)}>
-          {/* Item Details */}
-          <div className="p-10 flex flex-wrap gap-x-6 space-y-8 justify-between">
-            <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
-              {t.addItemForm.headings.itemDetails[appLang]}
-            </p>
-
-            <div className="flex flex-wrap w-full gap-x-6 space-y-4 justify-between">
-              {TRANSLATION_FIELDS.map((entry) => {
-                const {
-                  lang: fieldLang,
-                  fieldKey,
-                  nameValue,
-                  translationKey,
-                } = entry;
-                return (
-                  <div
-                    key={`${fieldLang}.${fieldKey}`}
-                    className="flex flex-[48%] gap-8"
-                  >
-                    {/* Translations */}
-                    <FormField
-                      name={nameValue as any}
-                      control={form.control}
-                      render={({ field }) => (
-                        <FormItem className="w-full">
+        <form
+          id="add-item-form"
+          onSubmit={form.handleSubmit(onValidSubmit, onInvalidSubmit)}
+          className="w-full"
+        >
+          <Accordion
+            defaultValue={
+              onUpdate ? ["details"] : ["details", "tags", "images"]
+            }
+            className="w-full"
+            type="multiple"
+          >
+            {/* Item Details */}
+            <AccordionItem
+              value="details"
+              className="p-10 flex flex-wrap gap-x-6 justify-between"
+            >
+              <AccordionTrigger
+                className="font-main w-full justify-between flex"
+                iconProps="!w-5 h-auto"
+              >
+                <p className="text-2xl font-semibold tracking-tight w-full">
+                  {t.addItemForm.headings.itemDetails[appLang]}
+                </p>
+              </AccordionTrigger>
+              <AccordionContent className="mt-10">
+                <div className="flex flex-wrap w-full gap-x-6 space-y-4 justify-between mb-8">
+                  {TRANSLATION_FIELDS.map((entry) => {
+                    const {
+                      lang: fieldLang,
+                      fieldKey,
+                      nameValue,
+                      translationKey,
+                    } = entry;
+                    return (
+                      <div
+                        key={`${fieldLang}.${fieldKey}`}
+                        className="flex flex-[48%] gap-8"
+                      >
+                        {/* Translations */}
+                        <FormField
+                          name={nameValue as any}
+                          control={form.control}
+                          render={({ field }) => (
+                            <FormItem className="w-full">
+                              <FormLabel>
+                                {
+                                  t.addItemForm.labels[
+                                    translationKey as keyof typeof t.addItemForm.labels
+                                  ][appLang]
+                                }
+                              </FormLabel>
+                              <FormControl>
+                                {fieldKey === "item_description" ? (
+                                  <Textarea
+                                    {...field}
+                                    className="border shadow-none border-grey w-full mb-1"
+                                  />
+                                ) : (
+                                  <Input
+                                    {...field}
+                                    className="border shadow-none border-grey w-full mb-1"
+                                  />
+                                )}
+                              </FormControl>
+                              <ErrorMessage
+                                errors={form.formState.errors}
+                                name={nameValue}
+                                render={({ message }) => (
+                                  <p className="text-[0.8rem] font-medium text-destructive">
+                                    {
+                                      t.addItemForm.messages.validation[
+                                        message as keyof typeof t.addItemForm.messages.validation
+                                      ][appLang]
+                                    }
+                                  </p>
+                                )}
+                              />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Category | Total Quantity | Location | Is active */}
+                <div className="gap-4 flex w-full mb-10">
+                  <FormField
+                    name="category_id"
+                    control={form.control}
+                    render={({ field }) => (
+                      <div className="w-full">
+                        <FormItem>
                           <FormLabel>
-                            {
-                              t.addItemForm.labels[
-                                translationKey as keyof typeof t.addItemForm.labels
-                              ][appLang]
+                            {t.addItemForm.labels.category[appLang]}
+                          </FormLabel>
+                          <Select
+                            defaultValue={field.value || "---"}
+                            onValueChange={(value) =>
+                              form.setValue("category_id", value)
                             }
+                          >
+                            <SelectTrigger className="border shadow-none border-grey w-full">
+                              <SelectValue
+                                className="border shadow-none border-grey"
+                                placeholder={""}
+                              >
+                                {categories.find((c) => c.id === field.value)
+                                  ?.translations[appLang] || "---"}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories?.map((cat) => (
+                                <SelectItem key={cat.id} value={cat.id}>
+                                  {cat.translations[appLang]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      </div>
+                    )}
+                  />
+                  <FormField
+                    name="quantity"
+                    control={form.control}
+                    render={({ field }) => (
+                      <div className="w-full">
+                        <FormItem>
+                          <FormLabel>
+                            {t.addItemForm.labels.totalQuantity[appLang]}
                           </FormLabel>
                           <FormControl>
-                            {fieldKey === "item_description" ? (
-                              <Textarea
-                                {...field}
-                                className="border shadow-none border-grey w-full mb-1"
-                              />
-                            ) : (
-                              <Input
-                                {...field}
-                                className="border shadow-none border-grey w-full mb-1"
-                              />
-                            )}
+                            <Input
+                              type="number"
+                              min="1"
+                              placeholder=""
+                              {...field}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                const numValue =
+                                  value === "" ? "" : parseInt(value, 10);
+                                field.onChange(numValue);
+                              }}
+                              className="border shadow-none border-grey"
+                            />
                           </FormControl>
                           <ErrorMessage
                             errors={form.formState.errors}
-                            name={nameValue}
+                            name="quantity"
                             render={({ message }) => (
                               <p className="text-[0.8rem] font-medium text-destructive">
                                 {
@@ -308,267 +422,201 @@ function AddItemForm() {
                             )}
                           />
                         </FormItem>
-                      )}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Category | Total Quantity | Location | Is active */}
-            <div className="gap-4 flex w-full">
-              <FormField
-                name="category_id"
-                control={form.control}
-                render={({ field }) => (
-                  <div className="w-full">
-                    <FormItem>
-                      <FormLabel>
-                        {t.addItemForm.labels.category[appLang]}
-                      </FormLabel>
-                      <Select
-                        defaultValue={field.value || "---"}
-                        onValueChange={(value) =>
-                          form.setValue("category_id", value)
-                        }
-                      >
-                        <SelectTrigger className="border shadow-none border-grey w-full">
-                          <SelectValue
-                            className="border shadow-none border-grey"
-                            placeholder={""}
+                      </div>
+                    )}
+                  />
+                  <FormField
+                    name="location"
+                    control={form.control}
+                    render={({ field }) => (
+                      <div className="w-full">
+                        <FormItem>
+                          <FormLabel>
+                            {t.addItemForm.labels.location[appLang]}
+                          </FormLabel>
+                          <Select
+                            defaultValue={field?.value?.id ?? ""}
+                            onValueChange={handleLocationChange}
+                            disabled={!onUpdate || storage === null}
                           >
-                            {categories.find((c) => c.id === field.value)
-                              ?.translations[appLang] || "---"}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories?.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                              {cat.translations[appLang]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  </div>
-                )}
-              />
-              <FormField
-                name="quantity"
-                control={form.control}
-                render={({ field }) => (
-                  <div className="w-full">
-                    <FormItem>
-                      <FormLabel>
-                        {t.addItemForm.labels.totalQuantity[appLang]}
-                      </FormLabel>
+                            <SelectTrigger className="border shadow-none border-grey w-full">
+                              <SelectValue
+                                className="border shadow-none border-grey"
+                                placeholder={""}
+                              >
+                                {field?.value?.name ?? ""}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {orgLocations?.map((loc) => (
+                                <SelectItem
+                                  disabled={!onUpdate && storage === undefined}
+                                  key={loc.storage_location_id}
+                                  value={loc.storage_location_id}
+                                >
+                                  {loc?.storage_locations?.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      </div>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg p-4 gap-6 w-full">
+                      <div className="space-y-0.5">
+                        <FormLabel>
+                          {t.addItemForm.labels.active[appLang]}
+                        </FormLabel>
+                        <FormDescription>
+                          {t.addItemForm.paragraphs.activeDescription[appLang]}
+                        </FormDescription>
+                      </div>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          placeholder=""
-                          {...field}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            const numValue =
-                              value === "" ? "" : parseInt(value, 10);
-                            field.onChange(numValue);
-                          }}
-                          className="border shadow-none border-grey"
+                        <Switch
+                          checked={field?.value}
+                          onCheckedChange={field.onChange}
+                          aria-readonly
                         />
                       </FormControl>
-                      <ErrorMessage
-                        errors={form.formState.errors}
-                        name="quantity"
-                        render={({ message }) => (
-                          <p className="text-[0.8rem] font-medium text-destructive">
-                            {
-                              t.addItemForm.messages.validation[
-                                message as keyof typeof t.addItemForm.messages.validation
-                              ][appLang]
-                            }
-                          </p>
-                        )}
-                      />
                     </FormItem>
-                  </div>
-                )}
-              />
-              <FormField
-                name="location"
-                control={form.control}
-                render={({ field }) => (
-                  <div className="w-full">
-                    <FormItem>
-                      <FormLabel>
-                        {t.addItemForm.labels.location[appLang]}
-                      </FormLabel>
-                      <Select
-                        defaultValue={field?.value?.id ?? ""}
-                        onValueChange={handleLocationChange}
-                        disabled={storage === null ? false : true}
-                      >
-                        <SelectTrigger className="border shadow-none border-grey w-full">
-                          <SelectValue
-                            className="border shadow-none border-grey"
-                            placeholder={""}
-                          >
-                            {field?.value?.name ?? ""}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {orgLocations?.map((loc) => (
-                            <SelectItem
-                              disabled={storage === undefined}
-                              key={loc.storage_location_id}
-                              value={loc.storage_location_id}
-                            >
-                              {loc?.storage_locations?.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  </div>
-                )}
-              />
-            </div>
+                  )}
+                />
+              </AccordionContent>
+            </AccordionItem>
 
-            <FormField
-              control={form.control}
-              name="is_active"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg p-4 gap-6 w-full">
-                  <div className="space-y-0.5">
-                    <FormLabel>
-                      {t.addItemForm.labels.active[appLang]}
-                    </FormLabel>
-                    <FormDescription>
-                      {t.addItemForm.paragraphs.activeDescription[appLang]}
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field?.value}
-                      onCheckedChange={field.onChange}
-                      aria-readonly
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <Separator />
-
-          {/* Search tags */}
-          <div className="p-10 w-full">
-            <div>
-              <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-1">
-                {t.addItemForm.headings.assignTags[appLang]}
-              </p>
-              <p className="text-sm leading-none font-medium">
-                {t.addItemForm.paragraphs.tagPrompt[appLang]}
-              </p>
-              <Input
-                placeholder={t.addItemForm.placeholders.searchTags[appLang]}
-                className="max-w-[300px] border shadow-none border-grey my-4"
-                onChange={(e) => setTagSearchValue(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col gap-3 mb-8">
-              <div className="flex gap-2 flex-wrap">
-                {!tagsLoading &&
-                  tags.map((tag) => {
-                    const currentTags = form.getValues("tags");
-                    const isSelected = currentTags?.find((t) => t === tag.id);
-                    return (
-                      <Badge
-                        key={tag.id}
-                        variant={isSelected ? "default" : "outline"}
-                        onClick={toggleTag}
-                        data-id={tag.id}
-                        data-translations={tag.translations}
-                        className=""
-                      >
-                        {tag.translations?.[appLang].name}
-                      </Badge>
-                    );
-                  })}
-                {tagsLoading && (
-                  <div className="flex flex-wrap gap-x-2">
-                    {Array(20)
-                      .fill("")
-                      .map((_, idx) => (
-                        <Skeleton
-                          key={`skeleton-${idx}`}
-                          className={`animate-pulse h-[18px] bg-muted rounded-md w-${idx % 2 === 0 ? "10" : "16"} mb-2`}
-                        />
-                      ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div>
-              <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-2">
-                {t.addItemForm.subheadings.selectedTags[appLang]}
-              </p>
-              <div className="flex gap-2 flex-wrap">
-                {selectedTags.length > 0 ? (
-                  selectedTags.map((tag) => (
-                    <Badge
-                      key={`selected-${tag.tag_id}`}
-                      onClick={toggleTag}
-                      variant="default"
-                      data-id={tag.tag_id}
-                    >
-                      {tag.translations?.[appLang].name}
-                    </Badge>
-                  ))
-                ) : (
-                  <p className="text-sm leading-none font-medium">
-                    {t.addItemForm.paragraphs.noTagsSelected[appLang]}
+            {/* Tags Section */}
+            <AccordionItem value="tags" className="p-10 w-full">
+              <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
+                <div>
+                  <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-1">
+                    {t.addItemForm.headings.assignTags[appLang]}
                   </p>
-                )}
-              </div>
-            </div>
-          </div>
-          <Separator />
+                  <p className="text-sm leading-none font-medium">
+                    {t.addItemForm.paragraphs.tagPrompt[appLang]}
+                  </p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="mt-5">
+                <div className="flex flex-col gap-3 mb-8">
+                  <Input
+                    placeholder={t.addItemForm.placeholders.searchTags[appLang]}
+                    className="max-w-[300px] border shadow-none border-grey my-4"
+                    onChange={(e) => setTagSearchValue(e.target.value)}
+                  />
+                  <div className="flex gap-2 flex-wrap">
+                    {!tagsLoading &&
+                      tags.map((tag) => {
+                        const currentTags = form.getValues("tags");
+                        const isSelected = currentTags?.find(
+                          (t) => t === tag.id,
+                        );
+                        return (
+                          <Badge
+                            key={tag.id}
+                            variant={isSelected ? "default" : "outline"}
+                            onClick={toggleTag}
+                            data-id={tag.id}
+                            data-translations={tag.translations}
+                            className=""
+                          >
+                            {tag.translations?.[appLang].name}
+                          </Badge>
+                        );
+                      })}
+                    {tagsLoading && (
+                      <div className="flex flex-wrap gap-x-2">
+                        {Array(20)
+                          .fill("")
+                          .map((_, idx) => (
+                            <Skeleton
+                              key={`skeleton-${idx}`}
+                              className={`animate-pulse h-[18px] bg-muted rounded-md w-${idx % 2 === 0 ? "10" : "16"} mb-2`}
+                            />
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-2">
+                    {t.addItemForm.subheadings.selectedTags[appLang]}
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedTags.length > 0 ? (
+                      selectedTags.map((tag) => (
+                        <Badge
+                          key={`selected-${tag.tag_id}`}
+                          onClick={toggleTag}
+                          variant="default"
+                          data-id={tag.tag_id}
+                        >
+                          {tag.translations?.[appLang].name}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-sm leading-none font-medium">
+                        {t.addItemForm.paragraphs.noTagsSelected[appLang]}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Images */}
-          <div className="p-10 w-full">
-            <div className="mb-6">
-              <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
-                {t.addItemForm.headings.addImages[appLang]}
-              </p>
-              <p className="text-sm leading-none font-medium">
-                {t.addItemForm.paragraphs.imagePrompt[appLang]}
-              </p>
-            </div>
-
-            <ItemImageUpload
-              item_id={form.watch("id") || ""}
-              formImages={form.watch("images") || { main: null, details: [] }}
-              updateForm={form.setValue}
-            />
-          </div>
-
-          <div className="p-10 pt-2 flex justify-end gap-4">
-            <Button
-              variant="default"
-              disabled={isEditing}
-              onClick={handleNavigateSummary}
-              type="button"
+            {/* Images */}
+            <AccordionItem
+              value="images"
+              className="p-10 w-full border-b-0 w-full"
             >
-              {t.addItemForm.buttons.goToSummary[appLang]}
-            </Button>
-            <Button variant="outline" type="submit">
-              {isEditing
-                ? t.addItemForm.buttons.updateItem[appLang]
-                : t.addItemForm.buttons.addItem[appLang]}
-            </Button>
-          </div>
+              <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
+                <div className="mb-6">
+                  <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
+                    {t.addItemForm.headings.addImages[appLang]}
+                  </p>
+                  <p className="text-sm leading-none font-medium">
+                    {t.addItemForm.paragraphs.imagePrompt[appLang]}
+                  </p>
+                </div>
+              </AccordionTrigger>
+
+              <AccordionContent className="mt-5">
+                <ItemImageUpload
+                  item_id={form.watch("id") || ""}
+                  formImages={
+                    form.watch("images") || { main: null, details: [] }
+                  }
+                  updateForm={form.setValue}
+                />
+              </AccordionContent>
+            </AccordionItem>
+
+            <div className="p-10 pt-2 flex justify-end gap-4">
+              {!onUpdate && (
+                <>
+                  <Button
+                    variant="default"
+                    disabled={isEditing}
+                    onClick={handleNavigateSummary}
+                    type="button"
+                  >
+                    {t.addItemForm.buttons.goToSummary[appLang]}
+                  </Button>
+                  <Button variant="outline" type="submit">
+                    {isEditing || onUpdate
+                      ? t.addItemForm.buttons.updateItem[appLang]
+                      : t.addItemForm.buttons.addItem[appLang]}
+                  </Button>
+                </>
+              )}
+            </div>
+          </Accordion>
         </form>
       </Form>
     </div>
