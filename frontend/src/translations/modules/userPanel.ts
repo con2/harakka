@@ -15,7 +15,7 @@ export const userPanel = {
       en: common.active.en,
     },
     clearFilters: {
-      fi: "Tyhjennä suodattimet",
+      fi: "Tyhjennä",
       en: "Clear Filters",
     },
     clearAllFilters: {
