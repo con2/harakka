@@ -51,6 +51,13 @@ const UserPanel = () => {
     // eslint-disable-next-line
   }, []);
 
+  const [expanded, setExpanded] = useState<Record<ExpandableSection, boolean>>({
+    itemTypes: false,
+    organizations: false,
+    locations: false,
+    tags: false,
+    categories: false,
+  });
   const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
     expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
 
@@ -77,13 +84,6 @@ const UserPanel = () => {
     | "tags"
     | "categories";
   const MAX_VISIBLE = 5;
-  const [expanded, setExpanded] = useState<Record<ExpandableSection, boolean>>({
-    itemTypes: false,
-    organizations: false,
-    locations: false,
-    tags: false,
-    categories: false,
-  });
   const toggleExpanded = (key: ExpandableSection) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
