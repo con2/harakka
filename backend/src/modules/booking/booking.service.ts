@@ -548,6 +548,38 @@ export class BookingService {
       throw new BadRequestException("No userId found: user_id is required");
     }
 
+    const { data: profileAddr, error: profileAddrErr } = await supabase
+      .from("user_addresses")
+      .select("street_address, city, postal_code, country")
+      .eq("user_id", userId);
+
+    if (profileAddrErr) {
+      throw new BadRequestException("Could not retrieve user addresses");
+    }
+
+    if (!profileAddr || profileAddr.length === 0) {
+      throw new BadRequestException(
+        "User must have at least one address before creating a booking",
+      );
+    }
+
+    const hasValidAddress = profileAddr.some(
+      (addr) =>
+        addr.street_address &&
+        addr.street_address.trim() !== "" &&
+        addr.city &&
+        addr.city.trim() !== "" &&
+        addr.postal_code &&
+        addr.postal_code.trim() !== "" &&
+        addr.country &&
+        addr.country.trim() !== "",
+    );
+    if (!hasValidAddress) {
+      throw new BadRequestException(
+        "User must have at least one valid address before creating a booking",
+      );
+    }
+
     // ... your profile checks and availability checks BEFORE any writes ...
     // (keep the existing code you posted up to and including availability checks)
 
