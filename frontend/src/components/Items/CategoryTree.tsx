@@ -71,7 +71,7 @@ export function CategoryTree({
                 <span className="inline-block w-4 mr-1" />
               )}
               <Button
-                className={`justify-start h-fit px-0 no-underline hover:underline hover:bg-transparent hover:text-current focus-visible:ring-0 focus:outline-none ${labelClass}`}
+                className={`justify-start h-fit px-0 no-underline hover:underline hover:bg-transparent hover:text-current focus-visible:ring-0 focus:outline-none  underline-offset-4 ${labelClass}`}
                 variant="ghost"
                 onClick={() => onToggleSelect(node.id)}
               >
