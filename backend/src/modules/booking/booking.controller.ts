@@ -361,12 +361,11 @@ export class BookingController {
 
   /**
    * Cancel a booking.
-   * Users can cancel their own bookings, while storage managers and tenant admins can cancel bookings within their organization.
+   * This endpoint is used to cancel own (users) or own org("requester", "storage_manager", "tenant_admin") bookings completely (not just booking-item).
    * @param id - ID of the booking to cancel
    * @param req - Authenticated request object
    * @returns Cancellation result
    */
-  //TODO: limit to activeContext
   @Delete(":id/cancel")
   @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
     match: "any",
@@ -448,10 +447,14 @@ export class BookingController {
   }
 
   /**
-   * Mark items as cancelled from a booking.
-   * Meaning they will not be picked up
+   * Mark a list of booking-items as cancelled from booking (not the whole booking).
    */
+  //TODO: move into booking-items module
   @Patch(":bookingId/cancel")
+  @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async cancelItems(
     @Param("bookingId") bookingId: string,
     @Req() req: AuthRequest,
