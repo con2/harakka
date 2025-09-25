@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { UpdateTagDto } from "@/types/tag";
-import { ExtendedTag } from "@common/items/tag.types";
 import TagDelete from "@/components/Admin/Items/TagDelete";
 import { ExtendedTag } from "@common/items/tag.types";
 
