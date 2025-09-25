@@ -33,6 +33,7 @@
   "scripts": {
     "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend && npm install --prefix common",
     "start": "echo 'Run frontend and backend separately!'",
+    "build": "npm --prefix frontend run build && npm --prefix backend run build",
     "frontend": "npm --prefix frontend run dev",
     "backend": "npm --prefix backend run start:watch",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
