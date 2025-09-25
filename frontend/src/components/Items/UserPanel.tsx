@@ -33,6 +33,7 @@ const UserPanel = () => {
   const { lang } = useLanguage();
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
   const organizations = useAppSelector(selectOrganizations);
+  const MAX_VISIBLE = 5;
 
   useEffect(() => {
     void dispatch(fetchAllCategories({ page: 1, limit: 50 }));
@@ -83,7 +84,7 @@ const UserPanel = () => {
     | "locations"
     | "tags"
     | "categories";
-  const MAX_VISIBLE = 5;
+
   const toggleExpanded = (key: ExpandableSection) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
