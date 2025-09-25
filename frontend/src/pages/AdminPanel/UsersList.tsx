@@ -21,7 +21,7 @@ import {
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle, Info } from "lucide-react";
+import { LoaderCircle, Info, CircleUser } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -80,11 +80,9 @@ const UsersList = () => {
 
   // ————————————— Helper Functions —————————————
   const getOrgFilter = useCallback(() => {
-    // For tenant admin, use their active org
     if (!isSuper) {
       return activeOrgId ?? undefined;
     }
-    // For super admin, no default org filter (will be set by orgFilter dropdown)
     return undefined;
   }, [isSuper, activeOrgId]);
 
@@ -106,17 +104,17 @@ const UsersList = () => {
     return Array.from(uniqueOrgsMap.values());
   }, [allUserRoles, isSuper]);
 
-  // Get available roles for filtering - simplified since backend handles the actual filtering
+  // Get available roles for filtering
   const availableRoles = useMemo(() => {
     const uniqueRoles = new Set<string>();
 
     allUserRoles.forEach((role) => {
       if (role.is_active && role.role_name) {
-        // For super admin - show all roles, let backend filter
+        // super admin - show all roles, let backend filter
         if (isSuper) {
           uniqueRoles.add(role.role_name);
         }
-        // For tenant admin - show roles from active org AND Global roles
+        // tenant admin - show roles from active org AND Global roles
         else if (activeOrgId) {
           if (
             role.organization_id === activeOrgId ||
@@ -385,7 +383,7 @@ const UsersList = () => {
             className="h-8 w-8 rounded-full object-cover"
           />
         ) : (
-          ""
+          <CircleUser className="h-8 w-8 text-gray-300 items-center justify-center" />
         );
       },
     },
@@ -445,11 +443,19 @@ const UsersList = () => {
               const orgArray = Array.from(orgs);
 
               if (orgArray.length === 0) {
-                return <span className="text-gray-500">No org</span>;
+                return (
+                  <span className="text-gray-500">
+                    {t.usersList.columns.noOrg[lang]}
+                  </span>
+                );
               }
 
               if (orgArray.length === 1) {
-                return <span className="text-sm">{orgArray[0]}</span>;
+                return (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    {orgArray[0]}
+                  </span>
+                );
               }
 
               // Multiple orgs - show first few with overflow indicator
@@ -458,14 +464,14 @@ const UsersList = () => {
                   {orgArray.slice(0, 2).map((org, index) => (
                     <span
                       key={index}
-                      className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded"
+                      className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
                     >
                       {org}
                     </span>
                   ))}
                   {orgArray.length > 2 && (
                     <span
-                      className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                      className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
                       title={orgArray.slice(2).join(", ")}
                     >
                       +{orgArray.length - 2}
