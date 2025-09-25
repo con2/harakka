@@ -32,10 +32,13 @@ import {
   fetchAllCategories,
   selectCategories,
 } from "@/store/slices/categoriesSlice";
+import { cn } from "@/lib/utils";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
-  const redirectState = useLocation().state;
+  const [redirectState, setRedirectState] = useState(
+    useLocation()?.state || null,
+  );
   const items = useAppSelector(selectAllItems);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
@@ -67,7 +70,10 @@ const AdminItemsTable = () => {
   const ITEMS_PER_PAGE = 10;
 
   /*-----------------------handlers-----------------------------------*/
-  const handlePageChange = (newPage: number) => setCurrentPage(newPage);
+  const handlePageChange = (newPage: number) => {
+    if (redirectState) setRedirectState(null);
+    setCurrentPage(newPage);
+  };
 
   // Navigation: open item details page on row click
   const handleRowClick = (id: string) => {
@@ -127,7 +133,7 @@ const AdminItemsTable = () => {
               variant={"ghost"}
               size="sm"
               title={t.adminItemsTable.columns.viewDetails[lang]}
-              className="hover:text-slate-900 hover:bg-slate-300"
+              className={cn("hover:text-slate-900 hover:bg-slate-300")}
             >
               <Eye className="h-4 w-4" />
             </Button>
@@ -379,14 +385,12 @@ const AdminItemsTable = () => {
         order={order}
         ascending={ascending}
         originalSorting="quantity"
+        highlight={redirectState?.highlight}
         rowProps={(row) => ({
           onClick: () =>
             handleRowClick(String((row.original as unknown as Item).id)),
-          className: "cursor-pointer",
         })}
       />
-
-      {/* Item editing / tagging moved to ItemDetailsPage */}
     </div>
   );
 };
