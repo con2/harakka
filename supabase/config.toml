@@ -351,14 +351,26 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # Declare the 'develop' branch as persistent so configs/seed/functions can deploy in PRs.
 [remotes.develop]
 project_id = "kpqrzaisoyxqillzpbms"
+
 [remotes.develop.auth.external.google]
 enabled   = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
 secret    = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 
+# Applied storage settings to develop and main branches
+[remotes.develop.storage]
+enabled = true
+# The maximum file size allowed (e.g. "5MB", "500KB").
+file_size_limit = "5MiB"
+
 # Declare the 'main' branch for production
 [remotes.main]
 project_id = "rcbddkhvysexkvgqpcud"
+
+[remotes.main.storage]
+enabled = true
+# The maximum file size allowed (e.g. "5MB", "500KB").
+file_size_limit = "5MiB"
 
 [remotes.main.auth.external.google]
 enabled   = true
