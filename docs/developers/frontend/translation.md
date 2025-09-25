@@ -8,9 +8,9 @@ This project supports full English and Finnish localization for all user-facing 
 [Database Translations](#2-database-translations)  
 [How DB translations are used in the frontend](#how-db-translations-are-used-in-the-frontend)  
 [Usage](#3-usage-in-components)  
-[Naming conventions](#4b-naming-conventions)  
 [Adding translations](#4-adding-translations)  
-[Checking coverage](#5-checking-coverage)
+[Naming conventions](#5-naming-conventions)  
+[Checking coverage](#6-checking-coverage)
 
 ## 1. Frontend Translations
 
@@ -97,16 +97,101 @@ See [docs/developers/backend/database-schema.md](docs/developers/backend/databas
 ## 4. Adding Translations
 
 1. Add new keys to the relevant module file in [frontend/src/translations/modules/](frontend/src/translations/modules/).
-2. Provide both Finnish (`fi`) and English (`en`) values.
+2. Provide key/value pairs for all supported languages
 3. Import the module in [frontend/src/translations/index.ts](frontend/src/translations/index.ts).
 
-## 4b. Naming Conventions
+## 5. Naming Conventions
 
+### File naming
 Each new file should have its own translation module. The module should have the same naming as the file which uses it, but in camelCase
 
-Therefor the translation module for a file called `ItemModal.tsx` would be called -> `itemModal.ts`
+**Example:** The translations for a file called `ItemModal.tsx` would be called -> `itemModal.ts`
 
-## 5. Checking Coverage
+### Content Structure
+The namings of the key/value pairs should ideally be after the contents of the page, for example all buttons should be under the same "buttons" key, or "labels" for labels, "placeholders" for placeholders, etc.
+```ts
+// Example
+export const addCategory = {
+  headings: {
+    addNew: {
+      en: "Add Category",
+      fi: "Lisää kategoria",
+    },
+    update: {
+      en: "Update Category",
+      fi: "Päivitä kategoria",
+    },
+  },
+  form: {
+    nameFi: {
+      en: "Name (fi)",
+      fi: "Nimi (fi)",
+    },
+    nameEn: {
+      en: "Name (en)",
+      fi: "Nimi (en)",
+    },
+    parentCategory: {
+      en: "Parent Category",
+      fi: "Yläkategoria",
+    },
+  },
+  messages: {
+    update: {
+      fail: {
+        fi: "Kategorian päivitys epäonnistui",
+        en: "Failed to update category",
+      },
+      success: {
+        en: "Category was updated!",
+        fi: "Kategoria päivitetty!",
+      },
+    },
+    create: {
+      fail: {
+        en: "Failed to create category",
+        fi: "Kategorian luominen epäonnistui",
+      },
+      success: {
+        en: "Category was created!",
+        fi: "Kategoria luotu!",
+      },
+    },
+    general: {
+      fi: "Jotain meni pieleen. Yritä uudelleen myöhemmin tai ota yhteyttä tukeen.",
+      en: "Something went wrong. Try again later or contact support",
+    },
+    loading: {
+      en: "Loading...",
+      fi: "Ladataan...",
+    },
+  },
+  buttons: {
+    cancel: {
+      fi: "Peruuta",
+      en: "Cancel",
+    },
+    back: {
+      fi: "Peruuta",
+      en: "Back",
+    },
+    save: {
+      fi: "Tallenna",
+      en: "Save",
+    },
+  },
+  placeholders: {
+    noParent: {
+      en: "No parent",
+      fi: "Ei yläkategoriaa",
+    },
+  },
+};
+
+```
+
+
+## 6. Checking Coverage
 
 Run the translation checker script to ensure all UI strings are properly translated and highlight any hardcoded text that should be moved to translation files.
 
