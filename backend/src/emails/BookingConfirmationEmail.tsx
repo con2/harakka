@@ -35,7 +35,7 @@ const BookingConfirmationEmail = ({
       <Img
         width={200}
         src="https://rcbddkhvysexkvgqpcud.supabase.co/storage/v1/object/public/public-files/v8.5.png"
-        style={{ justifySelf: "center", margin: "0 0 1rem" }}
+        style={{ justifySelf: "center", margin: "0 auto 1rem" }}
       />
       <Container
         style={{
