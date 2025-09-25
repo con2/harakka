@@ -63,14 +63,16 @@ const UserPanel = () => {
     expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
 
   // Filter out organizations that shouldn't have items
-  const filterableOrganizations = useMemo(
-    () =>
-      organizations.filter(
-        (org: OrganizationDetails) =>
-          org.name !== "High Council" && org.name !== "Users united union (U3)",
-      ),
-    [organizations],
-  );
+  const filterableOrganizations = useMemo(() => {
+    const filtered = organizations.filter(
+      (org: OrganizationDetails) =>
+        org.name.toLowerCase() !== "high council" &&
+        org.name.toLowerCase() !== "global" &&
+        org.name.toLowerCase() !== "users united union (u3)",
+    );
+
+    return filtered;
+  }, [organizations]);
 
   const visibleOrganizations = getVisible(
     filterableOrganizations,
