@@ -11,6 +11,7 @@ export type OrderedUsersParams = Partial<{
   ascending: boolean;
   searchquery: string;
   org_filter: string;
+  selected_role: string;
 }>;
 
 /**
