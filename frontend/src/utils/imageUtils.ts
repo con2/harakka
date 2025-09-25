@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { AllowedMimeType, FILE_CONSTRAINTS } from "@/types/storage";
 import { t } from "@/translations";
-import { SUPPORTED_LANGUAGES } from "@/translations/SUPPORTED_LANGUAGES";
+import { SUPPORTED_LANGUAGES_KEYS } from "@/translations/SUPPORTED_LANGUAGES";
 import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
 
@@ -12,7 +12,7 @@ export const getCroppedImg = async (
   _aspect: number,
   croppedAreaPixels: { width: number; height: number; x: number; y: number },
   rotation: number,
-  lang: (typeof SUPPORTED_LANGUAGES)[number] = "en",
+  lang: (typeof SUPPORTED_LANGUAGES_KEYS)[number] = "en",
 ): Promise<File> => {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -96,21 +96,26 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
 export function validateImage(
   maxSize = FILE_CONSTRAINTS.MAX_FILE_SIZE,
   acceptedTypes = FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
-  lang: (typeof SUPPORTED_LANGUAGES)[number] = "en",
+  lang: (typeof SUPPORTED_LANGUAGES_KEYS)[number] = "en",
 ) {
   return z
     .instanceof(File)
     .refine((file) => file.size > 0, {
-      message: t.itemImageUpload.messages.emptyFile[lang],
+      message:
+        t.itemImageUpload.messages.emptyFile[
+          lang as keyof typeof t.itemImageUpload.messages.emptyFile
+        ],
     })
     .refine((file) => file.size <= maxSize, {
-      message: t.itemImageUpload.messages.fileTooLarge[lang].replace(
-        "{size}",
-        `${Math.round(maxSize / (1024 * 1024))}`,
-      ),
+      message: t.itemImageUpload.messages.fileTooLarge[
+        lang as keyof typeof t.itemImageUpload.messages.fileTooLarge
+      ].replace("{size}", `${Math.round(maxSize / (1024 * 1024))}`),
     })
     .refine((file) => acceptedTypes.includes(file.type as AllowedMimeType), {
-      message: t.itemImageUpload.messages.invalidFileType[lang],
+      message:
+        t.itemImageUpload.messages.invalidFileType[
+          lang as keyof typeof t.itemImageUpload.messages.invalidFileType
+        ],
     });
 }
 
