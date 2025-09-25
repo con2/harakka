@@ -411,7 +411,7 @@ Always use appropriate HTML elements for better accessibility:
 
 ```tsx
 // Good
-<button className="bg-primary text-white px-4 py-2 rounded">Click me</button>
+<button onClick={handleClick} className="bg-primary text-white px-4 py-2 rounded">Click me</button>
 
 // Avoid
 <div className="bg-primary text-white px-4 py-2 rounded" onClick={handleClick}>Click me</div>
