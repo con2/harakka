@@ -11,6 +11,7 @@ import { AuthRedirect } from "@/components/Auth/AuthRedirect";
 import { clearCachedAuthToken } from "@/api/axios";
 import { toast } from "sonner";
 import { AuthService } from "@/api/services/auth";
+import { clearCart } from "@/store/slices/cartSlice";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -238,6 +239,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, authLoading, setupInProgress, dispatch, rolesLoaded]);
 
   const signOut = async () => {
+    const keysToPreserve = ["language"];
+    Object.keys(localStorage).forEach((key) => {
+      if (!keysToPreserve.includes(key)) {
+        localStorage.removeItem(key);
+      }
+    });
+
     try {
       // 0. Clear any cached auth token before signing out
       clearCachedAuthToken();
@@ -248,9 +256,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 2. Clear Redux store data
       dispatch(resetRoles());
       dispatch(clearSelectedUser());
+      dispatch(clearCart());
 
-      // 3. Clear all browser storage comprehensively
-      localStorage.clear();
+      // 3. Clear session data
       sessionStorage.clear();
 
       // 4. Clear specific Supabase auth items that might persist
@@ -325,6 +333,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Even if there's an error, still clear local data and navigate
       dispatch(resetRoles());
       dispatch(clearSelectedUser());
+      dispatch(clearCart());
       localStorage.clear();
       sessionStorage.clear();
       setSession(null);
