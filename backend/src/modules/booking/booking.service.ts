@@ -30,6 +30,7 @@ import {
   BookingRow,
   ValidBookingOrder,
   BookingItemInsert,
+  OverdueRow,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { deriveOrgStatus } from "src/utils/booking.utils";
@@ -53,6 +54,36 @@ export class BookingService {
     private readonly roleService: RoleService,
     private readonly bookingItemsService: BookingItemsService,
   ) {}
+
+  /**
+   * List overdue bookings visible to the current user (scoped by RLS).
+   * Uses the `view_bookings_overdue` view which applies Europe/Helsinki day boundaries.
+   */
+  async getOverdueBookings(req: AuthRequest, page: number, limit: number) {
+    const { from, to } = getPaginationRange(page, limit);
+    const supabase = req.supabase;
+
+    const { data, error, count } = await supabase
+      .from("view_bookings_overdue")
+      .select(
+        "booking_id, booking_number, user_id, full_name, user_email, earliest_due_date, days_overdue",
+        { count: "exact" },
+      )
+      .order("days_overdue", { ascending: false })
+      .range(from, to);
+
+    if (error) handleSupabaseError(error);
+
+    const metadata = getPaginationMeta(count ?? 0, page, limit);
+    return {
+      data: (data ?? []) as OverdueRow[],
+      count: count ?? 0,
+      error: null,
+      status: 200,
+      statusText: "OK",
+      metadata,
+    };
+  }
 
   /**
    * Get bookings in an ordered list
@@ -546,6 +577,38 @@ export class BookingService {
     const { roleName, orgId } = activeRole;
     if (!userId) {
       throw new BadRequestException("No userId found: user_id is required");
+    }
+
+    const { data: profileAddr, error: profileAddrErr } = await supabase
+      .from("user_addresses")
+      .select("street_address, city, postal_code, country")
+      .eq("user_id", userId);
+
+    if (profileAddrErr) {
+      throw new BadRequestException("Could not retrieve user addresses");
+    }
+
+    if (!profileAddr || profileAddr.length === 0) {
+      throw new BadRequestException(
+        "User must have at least one address before creating a booking",
+      );
+    }
+
+    const hasValidAddress = profileAddr.some(
+      (addr) =>
+        addr.street_address &&
+        addr.street_address.trim() !== "" &&
+        addr.city &&
+        addr.city.trim() !== "" &&
+        addr.postal_code &&
+        addr.postal_code.trim() !== "" &&
+        addr.country &&
+        addr.country.trim() !== "",
+    );
+    if (!hasValidAddress) {
+      throw new BadRequestException(
+        "User must have at least one valid address before creating a booking",
+      );
     }
 
     // ... your profile checks and availability checks BEFORE any writes ...
@@ -1241,6 +1304,7 @@ export class BookingService {
     const isAdmin = this.roleService.hasAnyRole(req, [
       "tenant_admin",
       "storage_manager",
+      "requester",
     ]);
     const isOwner = booking.user_id === userId;
 

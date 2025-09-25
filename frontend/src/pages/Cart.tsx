@@ -9,7 +9,15 @@ import {
 } from "@/store/slices/usersSlice";
 import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
-import { Calendar, ChevronLeft, LoaderCircle, Trash2 } from "lucide-react";
+import {
+  Calendar,
+  ChevronLeft,
+  LoaderCircle,
+  MapPin,
+  Trash2,
+  AlertTriangle,
+  Edit2,
+} from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -17,6 +25,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { toastConfirm } from "../components/ui/toastConfirm";
 import { ProfileCompletionModal } from "../components/Profile/ProfileCompletionModal";
+import InlineTimeframePicker from "../components/InlineTimeframeSelector";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   clearCart,
@@ -28,6 +37,7 @@ import {
   createBooking,
   selectBookingLoading,
 } from "../store/slices/bookingsSlice";
+import { setTimeframe } from "../store/slices/timeframeSlice";
 import { itemsApi } from "@/api/services/items";
 
 const Cart: React.FC = () => {
@@ -37,8 +47,6 @@ const Cart: React.FC = () => {
   const bookingLoading = useAppSelector(selectBookingLoading);
   const userProfile = useAppSelector(selectSelectedUser);
   const user = useAppSelector(selectSelectedUser);
-
-  // Translation
   const { getTranslation } = useTranslation<ItemTranslation>();
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
@@ -55,6 +63,11 @@ const Cart: React.FC = () => {
   }>({});
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
+  // Date editing states
+  const [isEditingDates, setIsEditingDates] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState<Date | null>(null);
+  const [tempEndDate, setTempEndDate] = useState<Date | null>(null);
+
   // Get start and end dates from the timeframe Redux slice
   const { startDate: startDateStr, endDate: endDateStr } = useAppSelector(
     (state) => state.timeframe,
@@ -70,6 +83,48 @@ const Cart: React.FC = () => {
     () => (endDateStr ? new Date(endDateStr) : null),
     [endDateStr],
   );
+
+  // Group items by location to detect different pickup locations
+  const itemsByLocation = useMemo(() => {
+    const locationMap = new Map<
+      string,
+      {
+        locationInfo: {
+          id: string;
+          name: string;
+          address: string;
+        };
+        items: typeof cartItems;
+      }
+    >();
+
+    cartItems.forEach((cartItem) => {
+      const locationId = cartItem.item.location_id;
+      const locationName =
+        cartItem.item.location_details?.name ||
+        cartItem.item.location_name ||
+        "Unknown Location";
+      const locationAddress = cartItem.item.location_details?.address || "";
+
+      if (!locationMap.has(locationId)) {
+        locationMap.set(locationId, {
+          locationInfo: {
+            id: locationId,
+            name: locationName,
+            address: locationAddress,
+          },
+          items: [],
+        });
+      }
+
+      locationMap.get(locationId)!.items.push(cartItem);
+    });
+
+    return Array.from(locationMap.values());
+  }, [cartItems]);
+
+  // Check if items are in different locations
+  const hasMultipleLocations = itemsByLocation.length > 1;
 
   useEffect(() => {
     if (!startDate || !endDate || cartItems.length === 0) return;
@@ -116,19 +171,36 @@ const Cart: React.FC = () => {
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return;
+
     // validate if quantity exceeds available quantity
     const availability = availabilityMap[id];
     if (availability && quantity > availability.availableQuantity) {
-      toast.warning(
-        `${t.cart.toast.itemsExceedQuantityInCart[lang]} ${availability.availableQuantity}.`,
-      );
-      return;
+      // If user is trying to increase quantity beyond availability, show warning and don't allow
+      if (quantity > (availability.availableQuantity || 0)) {
+        toast.warning(
+          `${t.cart.toast.itemsExceedQuantity[lang]} ${availability.availableQuantity}.`,
+        );
+        return;
+      }
     }
+
     dispatch(updateQuantity({ id, quantity }));
   };
 
   const handleRemoveItem = (id: string) => {
-    dispatch(removeFromCart(id));
+    toastConfirm({
+      title: t.cart.toast.removeItemTitle[lang],
+      description: t.cart.toast.removeItemDescription[lang],
+      confirmText: t.cart.toast.confirmRemove[lang],
+      cancelText: t.cart.toast.cancelRemove[lang],
+      onConfirm: () => {
+        dispatch(removeFromCart(id));
+        toast.success(t.cart.toast.itemRemoved[lang]);
+      },
+      onCancel: () => {
+        toast.success(t.cart.toast.itemNotRemoved[lang]);
+      },
+    });
   };
 
   const handleClearCart = () => {
@@ -145,6 +217,132 @@ const Cart: React.FC = () => {
         toast.success(t.cart.toast.cartNotCleared[lang]);
       },
     });
+  };
+
+  const handleEditDates = () => {
+    setTempStartDate(startDate);
+    setTempEndDate(endDate);
+    setIsEditingDates(true);
+  };
+
+  const handleCancelDateEdit = () => {
+    setIsEditingDates(false);
+    setTempStartDate(null);
+    setTempEndDate(null);
+  };
+
+  const handleSaveDates = async () => {
+    if (!tempStartDate || !tempEndDate) {
+      toast.error(t.cart.toast.selectDatesAndItems[lang]);
+      return;
+    }
+    // check availability for all items with new dates
+    const unavailableItems: string[] = [];
+    // Set loading state for all items
+    cartItems.forEach((cartItem) => {
+      const itemId = cartItem.item.id;
+      setAvailabilityMap((prev) => ({
+        ...prev,
+        [itemId]: {
+          ...prev[itemId],
+          isChecking: true,
+          error: null,
+        },
+      }));
+    });
+
+    try {
+      // Check availability for all items concurrently
+      const availabilityChecks = cartItems.map(async (cartItem) => {
+        try {
+          const response = await itemsApi.checkAvailability(
+            cartItem.item.id,
+            tempStartDate,
+            tempEndDate,
+          );
+
+          const itemContent = getTranslation(cartItem.item, lang) as
+            | ItemTranslation
+            | undefined;
+          const itemName = itemContent?.item_name || "Unknown Item";
+
+          // Update availability map
+          setAvailabilityMap((prev) => ({
+            ...prev,
+            [cartItem.item.id]: {
+              availableQuantity: response.availableQuantity,
+              isChecking: false,
+              error: null,
+            },
+          }));
+
+          // Check if current quantity exceeds availability
+          if (cartItem.quantity > response.availableQuantity) {
+            unavailableItems.push(itemName);
+          }
+
+          return {
+            itemId: cartItem.item.id,
+            availableQuantity: response.availableQuantity,
+            currentQuantity: cartItem.quantity,
+            itemName,
+          };
+        } catch {
+          setAvailabilityMap((prev) => ({
+            ...prev,
+            [cartItem.item.id]: {
+              availableQuantity: 0,
+              isChecking: false,
+              error: "error in availability check",
+            },
+          }));
+
+          const itemContent = getTranslation(cartItem.item, lang) as
+            | ItemTranslation
+            | undefined;
+          const itemName = itemContent?.item_name || "Unknown Item";
+          unavailableItems.push(itemName);
+
+          return {
+            itemId: cartItem.item.id,
+            availableQuantity: 0,
+            currentQuantity: cartItem.quantity,
+            itemName,
+          };
+        }
+      });
+
+      await Promise.all(availabilityChecks);
+
+      // Update the Redux store with new dates
+      dispatch(
+        setTimeframe({
+          startDate: tempStartDate.toISOString(),
+          endDate: tempEndDate.toISOString(),
+        }),
+      );
+      toast.success(t.cart.toast.datesUpdated[lang]);
+
+      // if some items are unavailable, show warning
+      if (unavailableItems.length > 0) {
+        toast.warning(t.cart.toast.someItemsUnavailable[lang]);
+      }
+
+      setIsEditingDates(false);
+      setTempStartDate(null);
+      setTempEndDate(null);
+    } catch (error) {
+      console.error("Error checking availability for new dates:", error);
+      toast.error("Failed to check availability for new dates");
+    }
+  };
+
+  const handleDateChange = (type: "start" | "end", date: Date | null) => {
+    if (type === "start") {
+      setTempStartDate(date);
+    } else {
+      setTempEndDate(date);
+    }
   };
 
   const handleCheckout = async () => {
@@ -179,7 +377,7 @@ const Cart: React.FC = () => {
     });
 
     if (invalidItems.length > 0) {
-      toast.error(t.cart.toast.itemsExceedQuantityInCart[lang]);
+      toast.error(t.cart.toast.someItemsUnavailable[lang]);
       return;
     }
 
@@ -321,37 +519,80 @@ const Cart: React.FC = () => {
           >
             {startDate && endDate ? (
               <div>
-                <Calendar className="h-5 w-5 text-secondary shrink-0" />
-                <div className="flex items-center my-1 flex-wrap gap-x-3 gap-y-1 justify-between">
-                  <div className="flex items-center gap-2 w-fit">
-                    <span
-                      className="text-md min-w-[max-content]
-"
-                    >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-secondary shrink-0" />
+                    <span className="text-md min-w-[max-content]">
                       {t.cart.booking.timeframe[lang]}
                     </span>
                   </div>
-                  <div className="flex items-center justify-end w-fit">
-                    <p
-                      className="text-md font-semibold mr-3"
-                      data-cy="cart-timeframe-dates"
+                  {!isEditingDates && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleEditDates}
+                      className="text-secondary hover:text-secondary/80 hover:bg-secondary/10 p-1 h-auto"
+                      data-cy="cart-edit-dates-btn"
                     >
-                      {formatDate(startDate, "d MMM yyyy")}
-                      <span className="font-semibold"> -</span>{" "}
-                      {formatDate(endDate, "d MMM yyyy")}
-                    </p>
-                    <p
-                      className="text-xs text-muted-foreground"
-                      data-cy="cart-rental-days"
-                    >
-                      ({rentalDays}{" "}
-                      {rentalDays === 1
-                        ? t.cart.booking.day[lang]
-                        : t.cart.booking.days[lang]}{" "}
-                      {t.cart.booking.total[lang]})
-                    </p>
-                  </div>
+                      <Edit2 className="h-4 w-4 mr-1" />
+                      {t.cart.booking.editDates[lang]}
+                    </Button>
+                  )}
                 </div>
+
+                {isEditingDates ? (
+                  <div className="space-y-4">
+                    <InlineTimeframePicker
+                      startDate={tempStartDate}
+                      endDate={tempEndDate}
+                      onChange={handleDateChange}
+                      minDate={new Date()}
+                      maxRangeDays={42}
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelDateEdit}
+                        data-cy="cart-cancel-date-edit-btn"
+                      >
+                        {t.cart.booking.cancelEdit[lang]}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={handleSaveDates}
+                        disabled={!tempStartDate || !tempEndDate}
+                        data-cy="cart-save-dates-btn"
+                      >
+                        {t.cart.booking.saveDates[lang]}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center my-1 flex-wrap gap-x-3 gap-y-1 justify-between">
+                    <div className="flex items-center justify-end w-fit">
+                      <p
+                        className="text-md font-semibold mr-3"
+                        data-cy="cart-timeframe-dates"
+                      >
+                        {formatDate(startDate, "d MMM yyyy")}
+                        <span className="font-semibold"> -</span>{" "}
+                        {formatDate(endDate, "d MMM yyyy")}
+                      </p>
+                      <p
+                        className="text-xs text-muted-foreground"
+                        data-cy="cart-rental-days"
+                      >
+                        ({rentalDays}{" "}
+                        {rentalDays === 1
+                          ? t.cart.booking.day[lang]
+                          : t.cart.booking.days[lang]}{" "}
+                        {t.cart.booking.total[lang]})
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-amber-600" data-cy="cart-no-dates">
@@ -359,6 +600,45 @@ const Cart: React.FC = () => {
               </p>
             )}
           </div>
+
+          {/* Multiple Locations Notice */}
+          {hasMultipleLocations && (
+            <div
+              className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6"
+              data-cy="cart-multiple-locations-notice"
+            >
+              <h4 className="text-blue-800 font-semibold mb-2 flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                {t.cart.locations.differentLocations[lang]}
+              </h4>
+              <p className="text-blue-700 text-sm mb-3">
+                {t.cart.locations.pickupInfo[lang]}
+              </p>
+              <ul className="space-y-2">
+                {itemsByLocation.map((locationGroup, index) => (
+                  <li
+                    key={locationGroup.locationInfo.id}
+                    className="text-blue-800 font-medium"
+                    data-cy={`cart-location-item-${index}`}
+                  >
+                    {locationGroup.locationInfo.name}{" "}
+                    <span className="text-blue-600 font-normal">
+                      ({locationGroup.items.length}{" "}
+                      {locationGroup.items.length === 1
+                        ? t.cart.locations.itemCountSingular[lang]
+                        : t.cart.locations.itemCount[lang]}
+                      )
+                    </span>
+                    {locationGroup.locationInfo.address && (
+                      <div className="text-xs text-gray-600 font-normal ml-2">
+                        {locationGroup.locationInfo.address}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Cart Items */}
           <div className="space-y-4 p-2" data-cy="cart-items-list">
@@ -370,36 +650,28 @@ const Cart: React.FC = () => {
               return (
                 <div
                   key={cartItem.item.id}
-                  className="flex flex-col border-b pb-4"
+                  className="flex flex-col border-b pb-2"
                   data-cy="cart-item"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="font-medium mb-2" data-cy="cart-item-name">
+                      <h3 className="font-medium mb-1" data-cy="cart-item-name">
                         {itemContent?.item_name
                           .toLowerCase()
                           .replace(/^./, (c) => c.toUpperCase())}
                       </h3>
                       <p
-                        className="text-sm text-gray-500"
-                        data-cy="cart-item-type"
+                        className="text-xs text-slate-500 flex items-center gap-1"
+                        data-cy="cart-item-location"
                       >
-                        {itemContent?.item_type
-                          .toLowerCase()
-                          .replace(/^./, (c) => c.toUpperCase())}
-                      </p>
-                      <p
-                        className="text-xs text-slate-400"
-                        data-cy="cart-item-available"
-                      >
-                        {t.cart.item.available[lang]}{" "}
-                        {availabilityMap[cartItem.item.id]?.availableQuantity ??
-                          "-"}{" "}
-                        {t.cart.item.units[lang]}
+                        <MapPin className="h-3 w-3" />
+                        {cartItem.item.location_details?.name ||
+                          cartItem.item.location_name ||
+                          "Unknown Location"}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-center">
                       <div
                         className="flex items-center"
                         data-cy="cart-item-quantity-section"
@@ -407,12 +679,18 @@ const Cart: React.FC = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            handleQuantityChange(
-                              cartItem.item.id,
-                              cartItem.quantity - 1,
-                            )
-                          }
+                          onClick={() => {
+                            const newQuantity = cartItem.quantity - 1;
+                            if (newQuantity >= 1) {
+                              dispatch(
+                                updateQuantity({
+                                  id: cartItem.item.id,
+                                  quantity: newQuantity,
+                                }),
+                              );
+                            }
+                          }}
+                          disabled={cartItem.quantity <= 1}
                           data-cy="cart-item-quantity-minus"
                         >
                           -
@@ -422,12 +700,24 @@ const Cart: React.FC = () => {
                           value={cartItem.quantity}
                           onChange={(e) => {
                             const parsed = parseInt(e.target.value, 10);
-                            handleQuantityChange(
-                              cartItem.item.id,
-                              isNaN(parsed) ? 0 : parsed,
-                            );
+                            if (!isNaN(parsed) && parsed >= 1) {
+                              // any positive quantity input, validation in handleQuantityChange
+                              dispatch(
+                                updateQuantity({
+                                  id: cartItem.item.id,
+                                  quantity: parsed,
+                                }),
+                              );
+                            }
                           }}
-                          className="w-12 mx-2 text-center"
+                          className={`w-12 mx-2 text-center ${
+                            availabilityMap[cartItem.item.id] &&
+                            cartItem.quantity >
+                              availabilityMap[cartItem.item.id]
+                                .availableQuantity
+                              ? "border-red-300 bg-red-50"
+                              : ""
+                          }`}
                           max={
                             availabilityMap[cartItem.item.id]?.availableQuantity
                           }
@@ -452,6 +742,40 @@ const Cart: React.FC = () => {
                           +
                         </Button>
                       </div>
+                      <div className="space-y-1">
+                        <p
+                          className="text-xs text-slate-400"
+                          data-cy="cart-item-available"
+                        >
+                          {t.cart.item.available[lang]}{" "}
+                          {availabilityMap[cartItem.item.id]?.isChecking
+                            ? "..."
+                            : (availabilityMap[cartItem.item.id]
+                                ?.availableQuantity ?? "-")}{" "}
+                          {t.cart.item.units[lang]}
+                        </p>
+                        {/* Availability warning */}
+                        {availabilityMap[cartItem.item.id] &&
+                          !availabilityMap[cartItem.item.id].isChecking &&
+                          cartItem.quantity >
+                            availabilityMap[cartItem.item.id]
+                              .availableQuantity && (
+                            <div
+                              className="flex items-center gap-1 text-xs text-red-600"
+                              data-cy="cart-item-availability-warning"
+                            >
+                              <AlertTriangle className="h-3 w-3" />
+                              <span>
+                                {availabilityMap[cartItem.item.id]
+                                  .availableQuantity === 0
+                                  ? t.cart.item.unavailableForDates[lang]
+                                  : t.cart.item.limitedAvailability[lang]}
+                              </span>
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                    <div className="ml-2 mb-4">
                       <Button
                         variant="ghost"
                         size="sm"

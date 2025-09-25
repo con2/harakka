@@ -3,8 +3,8 @@ import type { Database as Base } from "@common/supabase.types";
 
 /* ── Concrete shapes for our translations ─────────────── */
 type ItemTranslations = {
-  en: { item_name: string; item_type: string; item_description: string };
-  fi: { item_name: string; item_type: string; item_description: string };
+  en: { item_name: string; item_type?: string; item_description: string };
+  fi: { item_name: string; item_type?: string; item_description: string };
 };
 
 type TagTranslations = {

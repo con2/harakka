@@ -76,6 +76,21 @@ export class BookingController {
   }
 
   /**
+   * Overdue bookings for the active organization context (RLS-scoped).
+   */
+  @Get("overdue")
+  @Roles(["storage_manager", "tenant_admin"], { match: "any", sameOrg: true })
+  async getOverdue(
+    @Req() req: AuthRequest,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    return this.bookingService.getOverdueBookings(req, pageNum, limitNum);
+  }
+
+  /**
    * Get bookings of the current authenticated user.
    * Accessible by users and all admins within their organization.
    * @param req - Authenticated request object
@@ -346,14 +361,13 @@ export class BookingController {
 
   /**
    * Cancel a booking.
-   * Users can cancel their own bookings, while storage managers and tenant admins can cancel bookings within their organization.
+   * This endpoint is used to cancel own (users) or own org("requester", "storage_manager", "tenant_admin") bookings completely (not just booking-item).
    * @param id - ID of the booking to cancel
    * @param req - Authenticated request object
    * @returns Cancellation result
    */
-  //TODO: limit to activeContext
   @Delete(":id/cancel")
-  @Roles(["user", "storage_manager", "tenant_admin"], {
+  @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
     match: "any",
     sameOrg: true,
   })
@@ -420,7 +434,7 @@ export class BookingController {
   ) {
     const supabase = req.supabase;
     const { item_ids: itemIds, location_id, org_id } = body;
-    console.log("body: ", body);
+
     // Org ID is either provided in the body (self_pickup) or the headers (admin pickup)
     const orgId = org_id ?? (req.headers["x-org-id"] as string);
     return this.bookingService.confirmPickup(
@@ -433,10 +447,14 @@ export class BookingController {
   }
 
   /**
-   * Mark items as cancelled from a booking.
-   * Meaning they will not be picked up
+   * Mark a list of booking-items as cancelled from booking (not the whole booking).
    */
+  //TODO: move into booking-items module
   @Patch(":bookingId/cancel")
+  @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async cancelItems(
     @Param("bookingId") bookingId: string,
     @Req() req: AuthRequest,

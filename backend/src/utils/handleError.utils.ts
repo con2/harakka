@@ -90,6 +90,14 @@ export function handleSupabaseError(
   // https://postgrest.org/en/stable/errors.html
   const pgError = error as PostgrestError;
   switch (pgError.code) {
+    case "42P01": // undefined_table (e.g., missing view/table)
+      throw new NotFoundException({
+        success: false,
+        message:
+          pgError.message ||
+          "Database object not found (did you run latest migrations?)",
+        code: pgError.code,
+      });
     case "23505": // unique_violation
       throw new ConflictException({
         success: false,

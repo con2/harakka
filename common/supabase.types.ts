@@ -157,6 +157,27 @@ export type Database = {
             foreignKeyName: "order_items_order_id_fkey"
             columns: ["booking_id"]
             isOneToOne: false
+            referencedRelation: "view_bookings_due_status"
+            referencedColumns: ["booking_id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_due_today"
+            referencedColumns: ["booking_id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_overdue"
+            referencedColumns: ["booking_id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
             referencedRelation: "view_bookings_with_details"
             referencedColumns: ["id"]
           },
@@ -310,6 +331,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_due_status"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_due_today"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_overdue"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "notifications_user_id_fkey"
@@ -470,64 +512,84 @@ export type Database = {
           },
         ]
       }
-      reviews: {
+      reminder_logs: {
         Row: {
-          created_at: string | null
+          booking_id: string
+          claimed_at: string | null
+          created_at: string
+          error: string | null
           id: string
-          is_verified: boolean | null
-          item_id: string
-          rating: number
-          review_text: string | null
-          updated_at: string | null
-          user_id: string
+          recipient_email: string
+          reminder_date: string
+          sent_at: string | null
+          status: string
+          type: string
         }
         Insert: {
-          created_at?: string | null
+          booking_id: string
+          claimed_at?: string | null
+          created_at?: string
+          error?: string | null
           id?: string
-          is_verified?: boolean | null
-          item_id: string
-          rating: number
-          review_text?: string | null
-          updated_at?: string | null
-          user_id: string
+          recipient_email: string
+          reminder_date: string
+          sent_at?: string | null
+          status?: string
+          type: string
         }
         Update: {
-          created_at?: string | null
+          booking_id?: string
+          claimed_at?: string | null
+          created_at?: string
+          error?: string | null
           id?: string
-          is_verified?: boolean | null
-          item_id?: string
-          rating?: number
-          review_text?: string | null
-          updated_at?: string | null
-          user_id?: string
+          recipient_email?: string
+          reminder_date?: string
+          sent_at?: string | null
+          status?: string
+          type?: string
         }
         Relationships: [
           {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
+            foreignKeyName: "reminder_logs_booking_id_fkey"
+            columns: ["booking_id"]
             isOneToOne: false
-            referencedRelation: "storage_items"
+            referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
+            foreignKeyName: "reminder_logs_booking_id_fkey"
+            columns: ["booking_id"]
             isOneToOne: false
-            referencedRelation: "view_item_location_summary"
-            referencedColumns: ["storage_item_id"]
+            referencedRelation: "view_bookings_due_status"
+            referencedColumns: ["booking_id"]
           },
           {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
+            foreignKeyName: "reminder_logs_booking_id_fkey"
+            columns: ["booking_id"]
             isOneToOne: false
-            referencedRelation: "view_item_ownership_summary"
-            referencedColumns: ["storage_item_id"]
+            referencedRelation: "view_bookings_due_today"
+            referencedColumns: ["booking_id"]
           },
           {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
+            foreignKeyName: "reminder_logs_booking_id_fkey"
+            columns: ["booking_id"]
             isOneToOne: false
-            referencedRelation: "view_manage_storage_items"
+            referencedRelation: "view_bookings_overdue"
+            referencedColumns: ["booking_id"]
+          },
+          {
+            foreignKeyName: "reminder_logs_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_with_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminder_logs_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["id"]
           },
         ]
@@ -790,6 +852,7 @@ export type Database = {
           org_id: string
           quantity: number
           translations: Json | null
+          updated_at: string | null
         }
         Insert: {
           available_quantity?: number | null
@@ -804,6 +867,7 @@ export type Database = {
           org_id: string
           quantity: number
           translations?: Json | null
+          updated_at?: string | null
         }
         Update: {
           available_quantity?: number | null
@@ -818,6 +882,7 @@ export type Database = {
           org_id?: string
           quantity?: number
           translations?: Json | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -1075,6 +1140,27 @@ export type Database = {
             foreignKeyName: "user_ban_history_banned_by_fkey"
             columns: ["banned_by"]
             isOneToOne: false
+            referencedRelation: "view_bookings_due_status"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_banned_by_fkey"
+            columns: ["banned_by"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_due_today"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_banned_by_fkey"
+            columns: ["banned_by"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_overdue"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_banned_by_fkey"
+            columns: ["banned_by"]
+            isOneToOne: false
             referencedRelation: "view_bookings_with_user_info"
             referencedColumns: ["user_id"]
           },
@@ -1112,6 +1198,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_due_status"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_due_today"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_ban_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "view_bookings_overdue"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "user_ban_history_user_id_fkey"
@@ -1251,6 +1358,45 @@ export type Database = {
         }
         Relationships: []
       }
+      view_bookings_due_status: {
+        Row: {
+          booking_id: string | null
+          booking_number: string | null
+          days_overdue: number | null
+          due_status: string | null
+          earliest_due_date: string | null
+          full_name: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      view_bookings_due_today: {
+        Row: {
+          booking_id: string | null
+          booking_number: string | null
+          days_overdue: number | null
+          due_status: string | null
+          earliest_due_date: string | null
+          full_name: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      view_bookings_overdue: {
+        Row: {
+          booking_id: string | null
+          booking_number: string | null
+          days_overdue: number | null
+          due_status: string | null
+          earliest_due_date: string | null
+          full_name: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       view_bookings_with_details: {
         Row: {
           booking_items: Json | null
@@ -1348,6 +1494,7 @@ export type Database = {
           tag_ids: string[] | null
           tag_translations: Json[] | null
           translations: Json | null
+          updated_at: string | null
         }
         Relationships: [
           {

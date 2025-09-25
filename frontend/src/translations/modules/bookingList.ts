@@ -60,6 +60,10 @@ export const bookingList = {
       fi: "Lähitulevaisuus",
       en: "Upcoming",
     },
+    overdue: {
+      fi: "Myöhästyneet",
+      en: "Overdue",
+    },
   },
   columns: {
     bookingNumber: {
@@ -113,6 +117,10 @@ export const bookingList = {
     unknown: {
       fi: "Tuntematon",
       en: "Unknown",
+    },
+    onBehalfOf: {
+      fi: "organisaation puolesta",
+      en: "on behalf of",
     },
   },
   modal: {

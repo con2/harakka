@@ -15,8 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { UpdateTagDto } from "@/types/tag";
-import type { ExtendedTag } from "@common/items/tag.types";
 import TagDelete from "@/components/Admin/Items/TagDelete";
+import { ExtendedTag } from "@common/items/tag.types";
 
 const TagDetailsPage = () => {
   const { id } = useParams();
@@ -38,7 +38,7 @@ const TagDetailsPage = () => {
 
   useEffect(() => {
     if (!tag && id) {
-      const found = allTags?.find((t) => t.id === id) as ExtendedTag | undefined;
+      const found = allTags?.find((t) => t.id === id);
       if (found) {
         void dispatch(selectTag(found));
         setTag(found);
