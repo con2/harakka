@@ -1,6 +1,8 @@
 name: Build Validation
 
 # Simple workflow to ensure PR builds don't fail
+permissions:
+  contents: read
 on:
   pull_request:
     branches: [develop, deployment]

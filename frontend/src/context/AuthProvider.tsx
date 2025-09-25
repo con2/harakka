@@ -8,7 +8,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { resetRoles, fetchCurrentUserRoles } from "@/store/slices/rolesSlice";
 import { clearSelectedUser, getCurrentUser } from "@/store/slices/usersSlice";
 import { AuthRedirect } from "@/components/Auth/AuthRedirect";
-import { getAuthToken, clearCachedAuthToken } from "@/api/axios";
+import { clearCachedAuthToken } from "@/api/axios";
 import { toast } from "sonner";
 import { AuthService } from "@/api/services/auth";
 
@@ -200,64 +200,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Only fetch roles if we have an authenticated user, auth loading is complete, and setup is not in progress
     if (user && !authLoading && !setupInProgress) {
-      // Add a token readiness check before fetching roles
-      const verifyTokenAndFetchRoles = async () => {
+      // Immediately call a protected endpoint to allow middleware to self-heal JWT roles
+      const fetchRolesWithSelfHeal = async (attempt = 1) => {
         try {
-          // Clear any cached token to ensure we get the fresh one
+          // Ensure we don't reuse a stale cached token
           clearCachedAuthToken();
-
-          // Check if we can get a valid token
-          const token = await getAuthToken();
-
-          if (!token) {
-            // If no token is available yet, retry after a short delay
-            setTimeout(verifyTokenAndFetchRoles, 1000);
+          await dispatch(fetchCurrentUserRoles()).unwrap();
+          setRolesLoaded(true);
+          // After roles are loaded, fetch user profile data
+          void dispatch(getCurrentUser());
+        } catch (err) {
+          // Normalize unknown error shape so we can safely check for an HTTP-like status code
+          const error = (err as { status?: number } | undefined) ?? undefined;
+          // If unauthorized, try a one-time session refresh then retry
+          if ((error?.status === 401 || error?.status === 403) && attempt < 2) {
+            try {
+              clearCachedAuthToken();
+              await supabase.auth.refreshSession();
+            } catch {
+              // ignore refresh errors; we'll still proceed to mark as loaded below
+            }
+            setTimeout(() => void fetchRolesWithSelfHeal(attempt + 1), 500);
             return;
           }
-
-          // Check token content for role readiness
-          try {
-            const tokenPayload = JSON.parse(atob(token.split(".")[1]));
-
-            // Check if token has roles - if not, wait a bit longer for JWT refresh
-            if (
-              !tokenPayload.app_metadata?.roles ||
-              tokenPayload.app_metadata.roles.length === 0
-            ) {
-              setTimeout(verifyTokenAndFetchRoles, 2000);
-              return;
-            }
-          } catch (decodeError) {
-            console.error("Error decoding JWT:", decodeError);
-          }
-
-          // Token is available and has roles, safe to dispatch role fetching
-          dispatch(fetchCurrentUserRoles())
-            .unwrap()
-            .then(() => {
-              setRolesLoaded(true);
-              // After roles are loaded, fetch user profile data
-              void dispatch(getCurrentUser());
-            })
-            .catch((error) => {
-              // If role loading fails, wait a bit and retry
-              if (error?.status === 403 || error?.status === 401) {
-                setTimeout(verifyTokenAndFetchRoles, 1000);
-                return;
-              }
-              setRolesLoaded(true);
-              // Still try to load user profile even if roles failed
-              void dispatch(getCurrentUser());
-            });
-        } catch {
+          // Mark roles as loaded to unblock UI and fetch profile anyway
           setRolesLoaded(true);
-          // Try to load profile even if token verification failed
           void dispatch(getCurrentUser());
         }
       };
 
-      // Start the token verification process with a small delay to allow JWT to be ready
-      setTimeout(verifyTokenAndFetchRoles, 500);
+      // Kick off the fetch shortly after auth stabilizes
+      setTimeout(() => void fetchRolesWithSelfHeal(), 200);
     } else if (!user && !authLoading) {
       // No user, so mark roles as "loaded" (empty)
       setRolesLoaded(true);

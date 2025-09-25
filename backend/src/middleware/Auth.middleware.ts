@@ -32,6 +32,7 @@ import type { Database } from "@common/supabase.types";
 export class AuthMiddleware implements NestMiddleware {
   private readonly supabaseUrl: string;
   private readonly anonKey: string;
+  private readonly serviceRoleKey: string | null;
   private readonly logger = new Logger(AuthMiddleware.name);
 
   // Cache for reducing authentication logging noise
@@ -40,12 +41,20 @@ export class AuthMiddleware implements NestMiddleware {
     { roleSignature: string; timestamp: number }
   >();
 
+  // Cache to avoid hitting the DB on every request when checking for role drift
+  private lastRoleCheck = new Map<
+    string,
+    { signature: string; timestamp: number }
+  >();
+
   constructor(
     private readonly config: ConfigService,
     private readonly jwtService: JwtService,
   ) {
     this.supabaseUrl = this.config.get<string>("SUPABASE_URL", "");
     this.anonKey = this.config.get<string>("SUPABASE_ANON_KEY", "");
+    this.serviceRoleKey =
+      this.config.get<string>("SUPABASE_SERVICE_ROLE_KEY", "") || null;
 
     if (!this.supabaseUrl || !this.anonKey) {
       throw new Error(
@@ -121,8 +130,70 @@ export class AuthMiddleware implements NestMiddleware {
         throw new UnauthorizedException("Invalid or expired token");
       }
 
-      // Extract roles from JWT
-      const userRoles = this.jwtService.extractRolesFromToken(token, user.id);
+      // Extract roles from JWT first (fast path)
+      let userRoles = this.jwtService.extractRolesFromToken(token, user.id);
+
+      // Decide if we should cross-check against DB to correct drift
+      // Conditions:
+      //  - JWT has no roles, or
+      //  - we haven't checked in a while (3 minutes), to catch out-of-band updates
+      const now = Date.now();
+      const jwtSignature = this.createRoleSignature(userRoles);
+      // Include token "iat" in cache key so we always re-check once per new login
+      const roleCacheKey = `${user.id}:${payload.iat}`;
+      const lastCheck = this.lastRoleCheck.get(roleCacheKey);
+      const shouldCheckDb =
+        userRoles.length === 0 ||
+        !lastCheck ||
+        now - lastCheck.timestamp > 3 * 60 * 1000; // 3 minutes
+
+      let _updated = false;
+      let versionForHeader: string | undefined = (
+        user.app_metadata as Record<string, unknown>
+      )?.["last_role_sync"] as string | undefined;
+
+      if (shouldCheckDb) {
+        try {
+          // Query authoritative roles from DB.
+          // Prefer a service-role client to bypass any RLS quirks while restricting
+          // to the caller's verified user id.
+          const reader = this.serviceRoleKey
+            ? createClient<Database>(this.supabaseUrl, this.serviceRoleKey)
+            : supabase;
+          const { data: freshRoles, error: rolesError } = await reader
+            .from("view_user_roles_with_details")
+            .select("*")
+            .eq("user_id", user.id);
+
+          if (!rolesError && freshRoles) {
+            const dbSignature = this.createRoleSignature(freshRoles);
+            // If drift detected (including empty-JWT case), update JWT metadata and use DB roles for this request
+            if (dbSignature !== jwtSignature) {
+              await this.jwtService.forceUpdateJWTWithRoles(
+                user.id,
+                freshRoles,
+              );
+              userRoles = freshRoles;
+              _updated = true;
+              versionForHeader = new Date().toISOString();
+            }
+
+            // Update local check cache regardless to reduce DB reads
+            this.lastRoleCheck.set(roleCacheKey, {
+              signature: dbSignature,
+              timestamp: now,
+            });
+          } else if (rolesError) {
+            this.logger.warn(
+              `Role self-heal DB check failed for user ${user.id}: ${rolesError.message}`,
+            );
+          }
+        } catch (e) {
+          this.logger.warn(
+            `Role self-heal encountered an error for user ${user.id}: ${e instanceof Error ? e.message : String(e)}`,
+          );
+        }
+      }
 
       // JWT status log
       if (this.shouldLogAuth(user.id, userRoles)) {
@@ -138,6 +209,18 @@ export class AuthMiddleware implements NestMiddleware {
       req.supabase = supabase;
       req.user = user;
       req.userRoles = userRoles;
+      // Also patch the in-request user.app_metadata so Guards relying on it see the corrected roles
+      try {
+        req.user.app_metadata = {
+          ...(req.user.app_metadata || {}),
+          roles: userRoles,
+          role_count: userRoles.length,
+          last_role_sync:
+            versionForHeader ?? req.user.app_metadata?.last_role_sync,
+        };
+      } catch {
+        // Non-fatal; continue with req.userRoles for downstream services
+      }
       // Extract x-org-id and x-role-name from headers (frontend activeContext) and attach them to the request object for downstream use.
       req.activeRoleContext = {
         organizationId: req.headers["x-org-id"] as string | undefined,
@@ -148,8 +231,11 @@ export class AuthMiddleware implements NestMiddleware {
       );
 
       // After roles are attached to req, add role version header
-      if (req.user?.app_metadata?.last_role_sync) {
-        _res.setHeader("x-role-version", req.user.app_metadata.last_role_sync);
+      // Prefer the newly generated version if we performed a self-heal this request
+      const headerVersion =
+        versionForHeader || req.user?.app_metadata?.last_role_sync;
+      if (headerVersion) {
+        _res.setHeader("x-role-version", headerVersion);
       }
 
       return next();
@@ -170,10 +256,7 @@ export class AuthMiddleware implements NestMiddleware {
     roles: ViewUserRolesWithDetails[],
   ): boolean {
     const now = Date.now();
-    const roleSignature = roles
-      .map((r) => `${r.role_name}@${r.organization_name}`)
-      .sort()
-      .join(",");
+    const roleSignature = this.createRoleSignature(roles);
     const cached = this.lastAuthLog.get(userId);
 
     if (
@@ -186,6 +269,16 @@ export class AuthMiddleware implements NestMiddleware {
     }
 
     return false;
+  }
+
+  /**
+   * Create a stable signature string for a set of roles
+   */
+  private createRoleSignature(roles: ViewUserRolesWithDetails[]): string {
+    return roles
+      .map((r) => `${r.role_name ?? ""}@${r.organization_id ?? ""}`)
+      .sort()
+      .join(",");
   }
 
   /**
