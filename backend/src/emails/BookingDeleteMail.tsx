@@ -6,6 +6,7 @@ import {
   Container,
   Text,
   Section,
+  Img,
 } from "@react-email/components";
 
 const BookingDeleteMail = ({ name, email, booking }) => (
@@ -19,13 +20,17 @@ const BookingDeleteMail = ({ name, email, booking }) => (
     <Body
       style={{
         fontFamily: "'Lato', Arial, sans-serif",
-        // backgroundColor: "#2f5D9E",
         backgroundColor: "#C4C9CC",
         margin: 0,
         padding: "40px 20px",
         color: "#333333",
       }}
     >
+      <Img
+        width={200}
+        src="https://rcbddkhvysexkvgqpcud.supabase.co/storage/v1/object/public/public-files/v8.5.png"
+        style={{ justifySelf: "center", margin: "0 0 1rem" }}
+      />
       <Container
         style={{
           backgroundColor: "#ffffff",

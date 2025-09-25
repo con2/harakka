@@ -6,6 +6,7 @@ import {
   Container,
   Text,
   Section,
+  Img,
 } from "@react-email/components";
 import type { Org_Roles } from "@common/role.types";
 import type { BookingItem } from "../modules/booking/types/order";
@@ -55,6 +56,11 @@ const BookingCancelledEmail = ({
           color: "#333333",
         }}
       >
+        <Img
+          width={200}
+          src="https://rcbddkhvysexkvgqpcud.supabase.co/storage/v1/object/public/public-files/v8.5.png"
+          style={{ justifySelf: "center", margin: "0 0 1rem" }}
+        />
         <Container
           style={{
             backgroundColor: "#ffffff",
@@ -154,7 +160,7 @@ const BookingCancelledEmail = ({
           {!isElevated && (
             <Section style={{ textAlign: "center", marginTop: "30px" }}>
               <a
-                href="http://localhost:5180/profile?tab=bookings"
+                href="https://agreeable-grass-049dc8010.6.azurestaticapps.net/profile?tab=bookings"
                 style={{
                   backgroundColor: "#2f5D9E",
                   color: "#ffffff",
@@ -174,11 +180,15 @@ const BookingCancelledEmail = ({
           <Text
             style={{ fontSize: "14px", color: "#666666", marginTop: "30px" }}
           >
-            If you have any questions, contact us by replying to this email or
-            use the{" "}
-            <a href="" style={{ color: "#2f5D9E" }}>
-              contact form
-            </a>{" "}
+            If you have any questions, contact us by answering this mail or use
+            the{" "}
+            <a
+              href="https://agreeable-grass-049dc8010.6.azurestaticapps.net/contact-us/"
+              style={{ color: "#2f5D9E" }}
+            >
+              {" "}
+              contact form{" "}
+            </a>
             on our website.
           </Text>
         </Container>
