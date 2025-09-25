@@ -6,6 +6,7 @@ import {
   SupabaseClient,
 } from "@supabase/supabase-js";
 import {
+  AvailabilityOverviewRow,
   LocationRow,
   StorageItem,
   StorageItemWithJoin,
@@ -30,6 +31,7 @@ import { Item, ItemSchema } from "./schema/item-schema";
 import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 import { ZodError } from "zod";
 import { CSVItem, ProcessedCSV } from "@common/items/csv.types";
+import type { Database } from "@common/supabase.types";
 
 @Injectable()
 export class StorageItemsService {
@@ -226,6 +228,77 @@ export class StorageItemsService {
     return {
       ...result,
       metadata: pagination_meta,
+    };
+  }
+
+  /**
+   * Get availability overview for all or selected items in an organization for a time window.
+   * Defaults to current moment if no dates are provided.
+   */
+  async getAvailabilityOverview(
+    req: AuthRequest,
+    orgId: string,
+    opts?: {
+      startDate?: string;
+      endDate?: string;
+      locationIds?: string[];
+      itemIds?: string[];
+      categoryIds?: string[];
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<
+    ApiResponse<{
+      item_id: string;
+      totalQuantity: number;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }>
+  > {
+    const supabase = req.supabase;
+    if (!orgId)
+      throw new BadRequestException("Organization context is required");
+
+    type AvailabilityOverviewArgs =
+      Database["public"]["Functions"]["availability_overview"]["Args"];
+    const args: AvailabilityOverviewArgs = { org_uuid: orgId };
+    if (opts?.startDate) args.start_ts = opts.startDate;
+    if (opts?.endDate) args.end_ts = opts.endDate;
+    if (opts?.locationIds && opts.locationIds.length > 0)
+      args.location_ids = opts.locationIds;
+    if (opts?.itemIds && opts.itemIds.length > 0) args.item_ids = opts.itemIds;
+    if (opts?.categoryIds && opts.categoryIds.length > 0)
+      args.category_ids = opts.categoryIds;
+
+    const result = await supabase.rpc("availability_overview", args);
+
+    if (result.error) handleSupabaseError(result.error);
+
+    // Map snake_case from RPC to camelCase for API consistency
+
+    const mapped = (result.data || []).map((row: AvailabilityOverviewRow) => ({
+      item_id: row.item_id,
+      totalQuantity: row.total_quantity ?? 0,
+      alreadyBookedQuantity: row.already_booked_quantity ?? 0,
+      availableQuantity: row.available_quantity ?? 0,
+    }));
+
+    // Apply simple in-memory pagination (RPC currently returns full set)
+    const page = opts?.page ?? 1;
+    const limit = opts?.limit ?? 10;
+    const total = mapped.length;
+    const meta = getPaginationMeta(total, page, limit);
+    const start = (page - 1) * limit;
+    const end = Math.min(start + limit, total);
+    const pageData = start < total ? mapped.slice(start, end) : [];
+
+    return {
+      data: pageData,
+      error: null,
+      status: 200,
+      statusText: "OK",
+      count: total,
+      metadata: meta,
     };
   }
 

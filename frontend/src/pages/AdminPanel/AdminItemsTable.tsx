@@ -8,6 +8,8 @@ import {
   selectItemsLoading,
   fetchAllAdminItems,
   updateItem,
+  fetchAvailabilityOverview,
+  selectAvailabilityOverview,
 } from "@/store/slices/itemsSlice";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
 import { t } from "@/translations";
@@ -37,6 +39,7 @@ const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
   const redirectState = useLocation().state;
   const items = useAppSelector(selectAllItems);
+  const availabilityByItem = useAppSelector(selectAvailabilityOverview);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
@@ -106,6 +109,15 @@ const AdminItemsTable = () => {
     statusFilter,
     org_id,
   ]);
+
+  // Fetch availability for currently visible items (default to "now")
+  useEffect(() => {
+    const ids = items.map((it) => (it as ManageItemViewRow).id).filter(Boolean);
+    if (ids.length === 0) return;
+    void dispatch(
+      fetchAvailabilityOverview({ itemIds: ids, page: 1, limit: ids.length }),
+    );
+  }, [dispatch, items]);
 
   //fetch tags list
   useEffect(() => {
@@ -179,6 +191,19 @@ const AdminItemsTable = () => {
       accessorFn: (row) => row.quantity,
       cell: ({ row }) =>
         `${row.original.quantity} ${t.adminItemsTable.messages.units[lang]}`,
+    },
+    // Availability snapshot column (optional display)
+    // Shows current available quantity if it has been fetched
+    {
+      header: "Available Now",
+      size: 40,
+      id: "available_now",
+      accessorFn: (row) =>
+        availabilityByItem[row.id]?.availableQuantity ?? null,
+      cell: ({ row }) => {
+        const avail = availabilityByItem[row.original.id]?.availableQuantity;
+        return typeof avail === "number" ? `${avail}` : "-";
+      },
     },
     {
       id: "is_active",

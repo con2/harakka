@@ -137,6 +137,23 @@ export interface ItemState {
     totalPages: number;
   };
   itemCount: number;
+  /** Availability overview keyed by item_id */
+  availabilityOverview?: Record<
+    string,
+    {
+      item_id: string;
+      totalQuantity: number;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }
+  >;
+  availabilityOverviewLoading?: boolean;
+  availabilityOverviewError?: string | null;
+  availabilityOverviewPagination?: {
+    page: number;
+    total: number;
+    totalPages: number;
+  };
   itemCreation: {
     org: SelectedOrg | null;
     location: SelectedStorage | null | undefined;

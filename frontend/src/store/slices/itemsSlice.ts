@@ -31,6 +31,10 @@ const initialState: ItemState = {
     total: 0,
   },
   itemCount: 0,
+  availabilityOverview: {},
+  availabilityOverviewLoading: false,
+  availabilityOverviewError: null,
+  availabilityOverviewPagination: { page: 1, total: 0, totalPages: 1 },
   itemCreation: {
     org: null,
     location: undefined,
@@ -196,6 +200,32 @@ export const fetchAllAdminItems = createAsyncThunk<
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch admin items"),
+      );
+    }
+  },
+);
+
+// Fetch availability overview (admin)
+export const fetchAvailabilityOverview = createAsyncThunk(
+  "items/fetchAvailabilityOverview",
+  async (
+    params: {
+      page?: number;
+      limit?: number;
+      startDate?: Date | string;
+      endDate?: Date | string;
+      itemIds?: string[];
+      locationIds?: string[];
+      categoryIds?: string[];
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      const res = await itemsApi.getAvailabilityOverview(params);
+      return res; // axios interceptor returns response.data already
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch availability overview"),
       );
     }
   },
@@ -545,6 +575,33 @@ export const itemsSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "fetch";
       })
+      // Availability overview
+      .addCase(fetchAvailabilityOverview.pending, (state) => {
+        state.availabilityOverviewLoading = true;
+        state.availabilityOverviewError = null;
+      })
+      .addCase(fetchAvailabilityOverview.fulfilled, (state, action) => {
+        state.availabilityOverviewLoading = false;
+        const rows = action.payload.data as Array<{
+          item_id: string;
+          totalQuantity: number;
+          alreadyBookedQuantity: number;
+          availableQuantity: number;
+        }>;
+        const meta = action.payload.metadata ?? {
+          page: 1,
+          total: rows?.length ?? 0,
+          totalPages: 1,
+        };
+        rows?.forEach((r) => {
+          state.availabilityOverview![r.item_id] = r;
+        });
+        state.availabilityOverviewPagination = meta;
+      })
+      .addCase(fetchAvailabilityOverview.rejected, (state, action) => {
+        state.availabilityOverviewLoading = false;
+        state.availabilityOverviewError = action.payload as string;
+      })
       .addCase(uploadCSV.pending, (state) => {
         state.loading = true;
       })
@@ -601,6 +658,12 @@ export const selectItemsPagination = (state: RootState) =>
   state.items.item_pagination;
 export const selectTotalItemsCount = (state: RootState) =>
   state.items.itemCount;
+export const selectAvailabilityOverview = (state: RootState) =>
+  state.items.availabilityOverview ?? {};
+export const selectAvailabilityOverviewLoading = (state: RootState) =>
+  state.items.availabilityOverviewLoading ?? false;
+export const selectAvailabilityOverviewPagination = (state: RootState) =>
+  state.items.availabilityOverviewPagination!;
 export const selectItemCreation = (state: RootState) =>
   state.items.itemCreation;
 export const selectIsEditing = (state: RootState) => state.items.isEditingItem;

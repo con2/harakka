@@ -178,4 +178,48 @@ export const itemsApi = {
   getItemCount: async (): Promise<ApiSingleResponse<number>> => {
     return await api.get(`/storage-items/count`);
   },
+
+  /**
+   * Get availability overview for items at a moment or within a window
+   */
+  getAvailabilityOverview: async (
+    params: {
+      page?: number;
+      limit?: number;
+      startDate?: Date | string;
+      endDate?: Date | string;
+      itemIds?: string[];
+      locationIds?: string[];
+      categoryIds?: string[];
+    } = {},
+  ) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.append("page", String(params.page));
+    if (params.limit) qs.append("limit", String(params.limit));
+    if (params.startDate)
+      qs.append(
+        "start_date",
+        typeof params.startDate === "string"
+          ? params.startDate
+          : params.startDate.toISOString(),
+      );
+    if (params.endDate)
+      qs.append(
+        "end_date",
+        typeof params.endDate === "string"
+          ? params.endDate
+          : params.endDate.toISOString(),
+      );
+    if (params.itemIds && params.itemIds.length > 0)
+      qs.append("item_ids", params.itemIds.join(","));
+    if (params.locationIds && params.locationIds.length > 0)
+      qs.append("location_ids", params.locationIds.join(","));
+    if (params.categoryIds && params.categoryIds.length > 0)
+      qs.append("category_ids", params.categoryIds.join(","));
+
+    const query = qs.toString();
+    return api.get(
+      `/storage-items/availability-overview${query ? `?${query}` : ""}`,
+    );
+  },
 };
