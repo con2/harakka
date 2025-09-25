@@ -368,7 +368,7 @@ export class BookingController {
    */
   //TODO: limit to activeContext
   @Delete(":id/cancel")
-  @Roles(["user", "storage_manager", "tenant_admin"], {
+  @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
     match: "any",
     sameOrg: true,
   })
