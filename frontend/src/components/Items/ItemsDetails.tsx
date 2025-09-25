@@ -315,7 +315,7 @@ const ItemsDetails: React.FC = () => {
               : "Tuote"}
           </h2>
 
-          {/* Organization, Location, Category, and Tags */}
+          {/* Organization, Location */}
           <div className="space-y-1 mt-4 mb-6">
             {/* Organization */}
             {organization && (
@@ -323,7 +323,7 @@ const ItemsDetails: React.FC = () => {
                 className="flex items-center gap-2"
                 data-cy="item-details-organization"
               >
-                <span className="text-sm text-slate-600 font-medium">
+                <span className="text-sm text-slate-600 font-semibold">
                   {t.itemDetails.organization[lang]}:
                 </span>
                 <span className="text-sm">{organization.name}</span>
@@ -336,7 +336,7 @@ const ItemsDetails: React.FC = () => {
                 className="flex items-center gap-2"
                 data-cy="item-details-location"
               >
-                <span className="text-sm text-slate-600 font-medium">
+                <span className="text-sm text-slate-600 font-semibold">
                   {t.itemDetails.locations.location[lang]}:
                 </span>
                 <span className="text-sm">
@@ -518,7 +518,9 @@ const ItemsDetails: React.FC = () => {
             className="flex items-center gap-2"
             data-cy="item-details-no-tags"
           >
-            <span className="text-sm">{t.itemDetails.tags[lang]}:</span>
+            <span className="text-sm font-semibold text-slate-600">
+              {t.itemDetails.tags[lang]}:
+            </span>
             <span className="text-sm italic">{t.itemDetails.noTags[lang]}</span>
           </div>
         )}
