@@ -1,6 +1,6 @@
 import { Item, ValidItemOrder } from "@/types";
 import { api } from "../axios";
-import { ApiSingleResponse } from "@common/response.types";
+import { ApiResponse, ApiSingleResponse } from "@common/response.types";
 import { ItemFormData } from "@common/items/form.types";
 import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 import { ProcessedCSV } from "@common/items/csv.types";
@@ -192,7 +192,14 @@ export const itemsApi = {
       locationIds?: string[];
       categoryIds?: string[];
     } = {},
-  ) => {
+  ): Promise<
+    ApiResponse<{
+      item_id: string;
+      totalQuantity: number;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }>
+  > => {
     const qs = new URLSearchParams();
     if (params.page) qs.append("page", String(params.page));
     if (params.limit) qs.append("limit", String(params.limit));

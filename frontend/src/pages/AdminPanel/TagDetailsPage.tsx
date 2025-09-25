@@ -14,7 +14,8 @@ import { t } from "@/translations";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Tag } from "@/types/tag";
+import { UpdateTagDto } from "@/types/tag";
+import type { ExtendedTag } from "@common/items/tag.types";
 import TagDelete from "@/components/Admin/Items/TagDelete";
 
 const TagDetailsPage = () => {
@@ -26,8 +27,8 @@ const TagDetailsPage = () => {
   const selected = useAppSelector(selectSelectedTags);
   const allTags = useAppSelector(selectAllTags);
 
-  const [tag, setTag] = useState<Tag | null>(
-    selected && selected.length > 0 ? (selected[0] as Tag) : null,
+  const [tag, setTag] = useState<ExtendedTag | null>(
+    selected && selected.length > 0 ? selected[0] : null,
   );
   const [fiName, setFiName] = useState("");
   const [enName, setEnName] = useState("");
@@ -37,7 +38,7 @@ const TagDetailsPage = () => {
 
   useEffect(() => {
     if (!tag && id) {
-      const found = allTags?.find((t) => t.id === id) as Tag | undefined;
+      const found = allTags?.find((t) => t.id === id) as ExtendedTag | undefined;
       if (found) {
         void dispatch(selectTag(found));
         setTag(found);
@@ -65,9 +66,7 @@ const TagDetailsPage = () => {
 
   const handleSave = async () => {
     if (!tag) return;
-    const payload: Partial<Tag> & {
-      translations: Record<string, { name: string }>;
-    } = {
+    const payload: UpdateTagDto = {
       translations: {
         fi: { name: fiName },
         en: { name: enName },

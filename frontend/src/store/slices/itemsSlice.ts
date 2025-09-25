@@ -206,23 +206,27 @@ export const fetchAllAdminItems = createAsyncThunk<
 );
 
 // Fetch availability overview (admin)
-export const fetchAvailabilityOverview = createAsyncThunk(
+export const fetchAvailabilityOverview = createAsyncThunk<
+  ApiResponse<{
+    item_id: string;
+    totalQuantity: number;
+    alreadyBookedQuantity: number;
+    availableQuantity: number;
+  }>,
+  {
+    page?: number;
+    limit?: number;
+    startDate?: Date | string;
+    endDate?: Date | string;
+    itemIds?: string[];
+    locationIds?: string[];
+    categoryIds?: string[];
+  }
+>(
   "items/fetchAvailabilityOverview",
-  async (
-    params: {
-      page?: number;
-      limit?: number;
-      startDate?: Date | string;
-      endDate?: Date | string;
-      itemIds?: string[];
-      locationIds?: string[];
-      categoryIds?: string[];
-    },
-    { rejectWithValue },
-  ) => {
+  async (params, { rejectWithValue }) => {
     try {
-      const res = await itemsApi.getAvailabilityOverview(params);
-      return res; // axios interceptor returns response.data already
+      return await itemsApi.getAvailabilityOverview(params);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch availability overview"),
