@@ -1,4 +1,3 @@
-import { FacebookIcon, InstagramIcon, YoutubeIcon } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 
