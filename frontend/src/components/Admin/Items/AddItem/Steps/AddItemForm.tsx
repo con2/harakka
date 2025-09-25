@@ -65,10 +65,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  buildCategoryTree,
-  ExtendedCategory,
-} from "@/components/Admin/Categories/category.utils";
+import { buildCategoryTree, Category } from "@/store/utils/format";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -262,7 +259,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
 
   const mappedCategories = buildCategoryTree(categories);
   const renderCategoryOptions = (
-    categories: ExtendedCategory[],
+    categories: Category[],
     level = 0,
   ): ReactNode[] => {
     return categories.flatMap((cat) => [

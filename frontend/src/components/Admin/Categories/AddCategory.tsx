@@ -30,12 +30,11 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { Category } from "@common/items/categories";
 import { toast } from "sonner";
 import { getFirstErrorMessage } from "@/utils/validate";
 import { t } from "@/translations";
 import { ReactNode, useEffect } from "react";
-import { buildCategoryTree, ExtendedCategory } from "./category.utils";
+import { buildCategoryTree, Category } from "@/store/utils/format";
 
 function AddCategory() {
   const { lang } = useLanguage();
@@ -105,7 +104,7 @@ function AddCategory() {
 
   const mappedCategories = buildCategoryTree(categories);
   const renderCategoryOptions = (
-    categories: ExtendedCategory[],
+    categories: Category[],
     level = 0,
   ): ReactNode[] => {
     return categories.flatMap((cat) => [
