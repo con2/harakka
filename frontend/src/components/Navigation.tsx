@@ -24,18 +24,23 @@ import { useState } from "react";
 import { Sheet, SheetTrigger } from "./ui/sheet";
 import MobileMenu from "./MobileMenu";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 export const Navigation = () => {
   // Auth State
   const { user, authLoading } = useAuth();
-  const { hasAnyRole } = useRoles();
+  const { hasAnyRole, hasRole } = useRoles();
   const { lang } = useLanguage();
+  const activeOrg = useAppSelector(selectActiveOrganizationId);
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
+  const isGlobalUser = hasRole("user", activeOrg!);
 
   // Screen Size State
-  const { isMobile, isTablet } = useIsMobile();
+  const { isMobile: defaultMobileSize, width } = useIsMobile();
+  const isTablet = isGlobalUser ? width <= 1210 : width <= 1130;
+  const isMobile = isGlobalUser ? defaultMobileSize : width <= 877;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAnyTypeOfAdmin = hasAnyRole([
@@ -50,7 +55,7 @@ export const Navigation = () => {
 
   const isLandingPage = location.pathname === "/";
   const navClasses = isLandingPage
-    ? "absolute top-0 left-0 w-full z-50 px-2 md:px-10 py-2 md:py-3 bg-white flex lg:justify-around"
+    ? "absolute top-0 left-0 w-full z-50 text-white px-2 md:px-10 py-2 md:py-3 bg-white flex lg:justify-around"
     : "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white lg:justify-around flex justify-between";
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -70,7 +75,7 @@ export const Navigation = () => {
 
   if (isMobile)
     return (
-      <nav className="flex p-4 justify-between shadow-sm items-center z-50 bg-white !font-main">
+      <nav className="flex p-4 justify-between shadow-sm items-center z-50 bg-white">
         <div className="flex gap-4">
           <Link to="/" data-cy="nav-home">
             <LogoSmall className="w-10" />
@@ -78,7 +83,7 @@ export const Navigation = () => {
           <MobileNavigation />
         </div>
 
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-4">
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
@@ -253,6 +258,7 @@ export const Navigation = () => {
       {/* Right side: Cart, notifications, language, auth */}
       <div className="flex items-center gap-3">
         {/* Active role context switcher if user is logged in and has roles */}
+
         <Button
           variant="ghost"
           onClick={() => navigate("/cart")}
@@ -277,7 +283,7 @@ export const Navigation = () => {
               data-cy="nav-login-btn"
               asChild
             >
-              <Link to="/login" className="font-main">
+              <Link to="/login">
                 {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
               </Link>
             </Button>

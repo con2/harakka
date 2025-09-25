@@ -579,6 +579,38 @@ export class BookingService {
       throw new BadRequestException("No userId found: user_id is required");
     }
 
+    const { data: profileAddr, error: profileAddrErr } = await supabase
+      .from("user_addresses")
+      .select("street_address, city, postal_code, country")
+      .eq("user_id", userId);
+
+    if (profileAddrErr) {
+      throw new BadRequestException("Could not retrieve user addresses");
+    }
+
+    if (!profileAddr || profileAddr.length === 0) {
+      throw new BadRequestException(
+        "User must have at least one address before creating a booking",
+      );
+    }
+
+    const hasValidAddress = profileAddr.some(
+      (addr) =>
+        addr.street_address &&
+        addr.street_address.trim() !== "" &&
+        addr.city &&
+        addr.city.trim() !== "" &&
+        addr.postal_code &&
+        addr.postal_code.trim() !== "" &&
+        addr.country &&
+        addr.country.trim() !== "",
+    );
+    if (!hasValidAddress) {
+      throw new BadRequestException(
+        "User must have at least one valid address before creating a booking",
+      );
+    }
+
     // ... your profile checks and availability checks BEFORE any writes ...
     // (keep the existing code you posted up to and including availability checks)
 
@@ -866,7 +898,7 @@ export class BookingService {
       throw new BadRequestException("Failed to confirm booking items");
     }
 
-    // Check booking roll-up based on all items after update
+    // Check booking roll-up based on all items after update (excluding cancelled)
     const { data: items, error: itemsErr } = await supabase
       .from("booking_items")
       .select("status")
@@ -875,10 +907,15 @@ export class BookingService {
       throw new BadRequestException("Failed to fetch booking items");
     }
 
+    // Filter out cancelled items when determining booking status
+    const activeItems = items.filter((it) => it.status !== "cancelled");
+
     const allRejected =
-      items.length > 0 && items.every((it) => it.status === "rejected");
+      activeItems.length > 0 &&
+      activeItems.every((it) => it.status === "rejected");
     const noPending =
-      items.length > 0 && items.every((it) => it.status !== "pending");
+      activeItems.length > 0 &&
+      activeItems.every((it) => it.status !== "pending");
 
     if (allRejected) {
       const { error: bookingUpdateErr } = await supabase
@@ -963,7 +1000,7 @@ export class BookingService {
       handleSupabaseError(updateErr);
     }
 
-    // Roll-up booking status based on all items
+    // Roll-up booking status based on all items (excluding cancelled)
     const { data: items, error: itemsErr } = await supabase
       .from("booking_items")
       .select("status")
@@ -975,10 +1012,15 @@ export class BookingService {
       throw new BadRequestException("Failed to fetch booking items");
     }
 
+    // Filter out cancelled items when determining booking status
+    const activeItems = items.filter((it) => it.status !== "cancelled");
+
     const allRejected =
-      items.length > 0 && items.every((it) => it.status === "rejected");
+      activeItems.length > 0 &&
+      activeItems.every((it) => it.status === "rejected");
     const noPending =
-      items.length > 0 && items.every((it) => it.status !== "pending");
+      activeItems.length > 0 &&
+      activeItems.every((it) => it.status !== "pending");
 
     if (allRejected) {
       const { error: bookingUpdateErr } = await supabase
@@ -1024,6 +1066,13 @@ export class BookingService {
     const supabase = req.supabase;
 
     let warningMessage: string | null = null;
+
+    // 5.0 Validate that booking has at least one booking item
+    if (!dto.items || dto.items.length === 0) {
+      throw new BadRequestException(
+        "Booking must have at least one booking item",
+      );
+    }
 
     // 5.1 check the booking
     const { data: booking } = await supabase

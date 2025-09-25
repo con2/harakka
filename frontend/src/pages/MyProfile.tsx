@@ -174,6 +174,11 @@ const MyProfile = () => {
     });
   };
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleSaveChanges();
+  };
+
   const handleDeleteUser = () => {
     toastConfirm({
       title: t.myProfile.deleteUser.title[lang],
@@ -207,283 +212,296 @@ const MyProfile = () => {
             </div>
 
             {/* user details */}
-            <div className="flex flex-col md:flex-1 space-y-6 p-2 w-full">
-              {/* Editable Fields for Details */}
-              <h3 className="text-md font-semibold text-gray-700">
-                {t.myProfile.personalDetails.title[lang]}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="w-full">
+              <div className="flex flex-col md:flex-1 p-2 w-full gap-12">
+                {/* Editable Fields for Details */}
                 <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-xs font-medium text-gray-700"
-                  >
-                    {t.myProfile.personalDetails.fullName.label[lang]}
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-xs font-medium text-gray-700"
-                  >
-                    {t.myProfile.personalDetails.email.label[lang]}
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="phone"
-                    className="block text-xs font-medium text-gray-700"
-                  >
-                    {t.myProfile.personalDetails.phone.label[lang]}
-                  </label>
-                  <input
-                    id="phone"
-                    type="text"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="visibleName"
-                    className="block text-xs font-medium text-gray-700"
-                  >
-                    {t.myProfile.personalDetails.visibleName.label[lang]}
-                  </label>
-                  <input
-                    id="visibleName"
-                    type="text"
-                    value={visibleName}
-                    onChange={(e) => setVisibleName(e.target.value)}
-                    className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Roles */}
-              <CurrentUserRoles />
-
-              {/* Addresses */}
-              <div>
-                <h3 className="text-md font-semibold text-gray-700 mb-4">
-                  {t.myProfile.addresses.title[lang]}
-                </h3>
-
-                {userAddresses && userAddresses.length > 0 ? (
+                  <h3 className="text-xl font-semibold text-gray-700">
+                    {t.myProfile.personalDetails.title[lang]}
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {addresses.map((address, index) => (
-                      <div
-                        key={index}
-                        className="border p-4 rounded-md bg-slate-50"
+                    <div>
+                      <label
+                        htmlFor="name"
+                        className="block text-xs font-medium text-gray-700"
                       >
-                        <div className="mb-2">
-                          <label className="flex items-center gap-2 text-sm">
-                            <input
-                              className="accent-secondary"
-                              type="checkbox"
-                              checked={address.is_default}
-                              onChange={(e) =>
-                                handleAddressChange(
-                                  index,
-                                  "is_default",
-                                  e.target.checked,
-                                )
-                              }
-                            />
-                            {t.myProfile.addresses.defaultAddress[lang]}
-                          </label>
-                        </div>
+                        {t.myProfile.personalDetails.fullName.label[lang]}
+                      </label>
+                      <input
+                        id="name"
+                        type="text"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                      />
+                    </div>
 
-                        <div className="space-y-2">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700">
-                              {t.myProfile.addresses.streetAddress.label[lang]}
-                            </label>
-                            <input
-                              type="text"
-                              value={address.street_address}
-                              onChange={(e) =>
-                                handleAddressChange(
-                                  index,
-                                  "street_address",
-                                  e.target.value,
-                                )
-                              }
-                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                            />
-                          </div>
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="block text-xs font-medium text-gray-700"
+                      >
+                        {t.myProfile.personalDetails.email.label[lang]}
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                      />
+                    </div>
 
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700">
-                              {t.myProfile.addresses.city.label[lang]}
-                            </label>
-                            <input
-                              type="text"
-                              value={address.city}
-                              onChange={(e) =>
-                                handleAddressChange(
-                                  index,
-                                  "city",
-                                  e.target.value,
-                                )
-                              }
-                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                            />
-                          </div>
+                    <div>
+                      <label
+                        htmlFor="phone"
+                        className="block text-xs font-medium text-gray-700"
+                      >
+                        {t.myProfile.personalDetails.phone.label[lang]}
+                      </label>
+                      <input
+                        id="phone"
+                        type="text"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                      />
+                    </div>
 
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700">
-                              {t.myProfile.addresses.postalCode.label[lang]}
-                            </label>
-                            <input
-                              type="text"
-                              value={address.postal_code}
-                              onChange={(e) =>
-                                handleAddressChange(
-                                  index,
-                                  "postal_code",
-                                  e.target.value,
-                                )
-                              }
-                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700">
-                              {t.myProfile.addresses.country.label[lang]}
-                            </label>
-                            <input
-                              type="text"
-                              value={address.country}
-                              onChange={(e) =>
-                                handleAddressChange(
-                                  index,
-                                  "country",
-                                  e.target.value,
-                                )
-                              }
-                              className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700">
-                              {t.myProfile.addresses.type.label[lang]}
-                            </label>
-                            <select
-                              value={address.address_type}
-                              onChange={(e) =>
-                                handleAddressChange(
-                                  index,
-                                  "address_type",
-                                  e.target.value,
-                                )
-                              }
-                              className="border p-2 rounded text-sm w-full bg-white text-gray-600"
-                            >
-                              <option value="both">
-                                {t.myProfile.addresses.type.options.both[lang]}
-                              </option>
-                              <option value="billing">
-                                {
-                                  t.myProfile.addresses.type.options.billing[
-                                    lang
-                                  ]
-                                }
-                              </option>
-                              <option value="shipping">
-                                {
-                                  t.myProfile.addresses.type.options.shipping[
-                                    lang
-                                  ]
-                                }
-                              </option>
-                            </select>
-                          </div>
-
-                          <div className="flex justify-end mt-4">
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="text-xs"
-                              onClick={() => handleDeleteAddress(index)}
-                            >
-                              <Trash2 className="mr-1" />{" "}
-                              {t.myProfile.addresses.remove[lang]}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                    <div>
+                      <label
+                        htmlFor="visibleName"
+                        className="block text-xs font-medium text-gray-700"
+                      >
+                        {t.myProfile.personalDetails.visibleName.label[lang]}
+                      </label>
+                      <input
+                        id="visibleName"
+                        type="text"
+                        value={visibleName}
+                        onChange={(e) => setVisibleName(e.target.value)}
+                        className="p-3 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-gray-500 mt-4">
-                    {t.myProfile.addresses.noAddresses[lang]}
-                  </p>
-                )}
-              </div>
+                </div>
 
-              {/* Buttons */}
-              <div className="flex justify-between items-center mt-6 gap-3">
-                {/* Delete Account */}
-                <div className="flex justify-start items-center p-4 rounded-md bg-slate-50 mb-0">
-                  <Accordion type="single" collapsible>
-                    <AccordionItem value="danger-zone" className="mb-0">
-                      <AccordionTrigger className="text-red-200 mb-0">
-                        {t.myProfile.dangerZone.title[lang]}
-                      </AccordionTrigger>
-                      <AccordionContent className="text-sm text-muted-foreground">
-                        <p className="mb-4">
-                          {t.myProfile.dangerZone.description[lang]}
-                        </p>
-                        <Button
-                          size={"sm"}
-                          variant="destructive"
-                          onClick={handleDeleteUser}
+                {/* Roles */}
+                <CurrentUserRoles />
+
+                {/* Addresses */}
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-700">
+                    {t.myProfile.addresses.title[lang]}
+                  </h3>
+
+                  {userAddresses && userAddresses.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {addresses.map((address, index) => (
+                        <div
+                          key={index}
+                          className="border p-4 rounded-md bg-slate-50"
                         >
-                          {t.myProfile.dangerZone.deleteAccount[lang]}
-                        </Button>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
+                          <div className="mb-2">
+                            <label className="flex items-center gap-2 text-sm">
+                              <input
+                                className="accent-secondary"
+                                type="checkbox"
+                                checked={address.is_default}
+                                onChange={(e) =>
+                                  handleAddressChange(
+                                    index,
+                                    "is_default",
+                                    e.target.checked,
+                                  )
+                                }
+                              />
+                              {t.myProfile.addresses.defaultAddress[lang]}
+                            </label>
+                          </div>
+
+                          <div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700">
+                                {
+                                  t.myProfile.addresses.streetAddress.label[
+                                    lang
+                                  ]
+                                }
+                              </label>
+                              <input
+                                type="text"
+                                value={address.street_address}
+                                onChange={(e) =>
+                                  handleAddressChange(
+                                    index,
+                                    "street_address",
+                                    e.target.value,
+                                  )
+                                }
+                                className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700">
+                                {t.myProfile.addresses.city.label[lang]}
+                              </label>
+                              <input
+                                type="text"
+                                value={address.city}
+                                onChange={(e) =>
+                                  handleAddressChange(
+                                    index,
+                                    "city",
+                                    e.target.value,
+                                  )
+                                }
+                                className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700">
+                                {t.myProfile.addresses.postalCode.label[lang]}
+                              </label>
+                              <input
+                                type="text"
+                                value={address.postal_code}
+                                onChange={(e) =>
+                                  handleAddressChange(
+                                    index,
+                                    "postal_code",
+                                    e.target.value,
+                                  )
+                                }
+                                className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700">
+                                {t.myProfile.addresses.country.label[lang]}
+                              </label>
+                              <input
+                                type="text"
+                                value={address.country}
+                                onChange={(e) =>
+                                  handleAddressChange(
+                                    index,
+                                    "country",
+                                    e.target.value,
+                                  )
+                                }
+                                className="p-2 w-full border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-2 focus:ring-secondary focus:outline-none"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700">
+                                {t.myProfile.addresses.type.label[lang]}
+                              </label>
+                              <select
+                                value={address.address_type}
+                                onChange={(e) =>
+                                  handleAddressChange(
+                                    index,
+                                    "address_type",
+                                    e.target.value,
+                                  )
+                                }
+                                className="border p-2 rounded text-sm w-full bg-white text-gray-600"
+                              >
+                                <option value="both">
+                                  {
+                                    t.myProfile.addresses.type.options.both[
+                                      lang
+                                    ]
+                                  }
+                                </option>
+                                <option value="billing">
+                                  {
+                                    t.myProfile.addresses.type.options.billing[
+                                      lang
+                                    ]
+                                  }
+                                </option>
+                                <option value="shipping">
+                                  {
+                                    t.myProfile.addresses.type.options.shipping[
+                                      lang
+                                    ]
+                                  }
+                                </option>
+                              </select>
+                            </div>
+
+                            <div className="flex justify-end mt-4">
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                type="button"
+                                className="text-xs"
+                                onClick={() => handleDeleteAddress(index)}
+                              >
+                                <Trash2 className="mr-1" />{" "}
+                                {t.myProfile.addresses.remove[lang]}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 mt-4">
+                      {t.myProfile.addresses.noAddresses[lang]}
+                    </p>
+                  )}
                 </div>
-                <div className="items-center flex flex-col md:flex-row md:justify-end gap-4">
-                  <Button
-                    onClick={() => setShowAddAddressForm(true)}
-                    size="sm"
-                    className="editBtn"
-                  >
-                    {t.myProfile.buttons.addNewAddress[lang]}
-                  </Button>
-                  <Button
-                    onClick={handleSaveChanges}
-                    size="sm"
-                    variant="outline"
-                  >
-                    {t.myProfile.buttons.saveChanges[lang]}
-                  </Button>
+
+                {/* Buttons */}
+                <div className="flex justify-between items-center mt-6 gap-3">
+                  {/* Delete Account */}
+                  <div className="flex justify-start items-center p-4 rounded-md bg-slate-50 mb-0">
+                    <Accordion type="single" collapsible>
+                      <AccordionItem value="danger-zone" className="mb-0">
+                        <AccordionTrigger className="text-red-200 mb-0">
+                          {t.myProfile.dangerZone.title[lang]}
+                        </AccordionTrigger>
+                        <AccordionContent className="text-sm text-muted-foreground">
+                          <p className="mb-4">
+                            {t.myProfile.dangerZone.description[lang]}
+                          </p>
+                          <Button
+                            size={"sm"}
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDeleteUser}
+                          >
+                            {t.myProfile.dangerZone.deleteAccount[lang]}
+                          </Button>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </div>
+                  <div className="items-center flex flex-col md:flex-row md:justify-end gap-4">
+                    <Button
+                      onClick={() => setShowAddAddressForm(true)}
+                      size="sm"
+                      type="button"
+                      className="editBtn"
+                    >
+                      {t.myProfile.buttons.addNewAddress[lang]}
+                    </Button>
+                    <Button type="submit" size="sm" variant="outline">
+                      {t.myProfile.buttons.saveChanges[lang]}
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </form>
 
             {showAddAddressForm && (
               <Dialog

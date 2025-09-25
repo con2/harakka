@@ -86,6 +86,10 @@ export const myBookingsPage = {
       fi: "Tilaustiedot",
       en: "Booking Info",
     },
+    orgItems: {
+      fi: "tuotteet",
+      en: "items",
+    },
   },
   edit: {
     buttons: {

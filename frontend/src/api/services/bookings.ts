@@ -334,6 +334,52 @@ export const bookingsApi = {
       newStatus,
     });
   },
+
+  /**
+   * Update a specific booking item (quantity, dates, status)
+   * @param bookingItemId - ID of the booking item to update
+   * @param updates - Fields to update
+   */
+  updateBookingItem: async (
+    bookingItemId: string,
+    updates: BookingItemUpdate,
+  ): Promise<BookingItemWithDetails> => {
+    const response = await api.patch(
+      `/booking-items/${bookingItemId}`,
+      updates,
+    );
+    return response.data;
+  },
+
+  /**
+   * Remove a specific booking item from a booking (soft delete)
+   * @param bookingId - ID of the booking
+   * @param bookingItemId - ID of the booking item to remove
+   */
+  removeBookingItem: async (
+    bookingId: string,
+    bookingItemId: string,
+  ): Promise<BookingItemWithDetails> => {
+    const response = await api.delete(
+      `/booking-items/${bookingId}/${bookingItemId}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Permanently delete a specific booking item from a booking (admin only)
+   * @param bookingId - ID of the booking
+   * @param bookingItemId - ID of the booking item to permanently delete
+   */
+  deleteBookingItem: async (
+    bookingId: string,
+    bookingItemId: string,
+  ): Promise<BookingItemWithDetails> => {
+    const response = await api.delete(
+      `/booking-items/${bookingId}/${bookingItemId}/permanent`,
+    );
+    return response.data;
+  },
 };
 
 // Types for overdue view rows

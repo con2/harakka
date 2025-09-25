@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { UpdateTagDto } from "@/types/tag";
 import { ExtendedTag } from "@common/items/tag.types";
 import TagDelete from "@/components/Admin/Items/TagDelete";
+import { ExtendedTag } from "@common/items/tag.types";
 
 const TagDetailsPage = () => {
   const { id } = useParams();

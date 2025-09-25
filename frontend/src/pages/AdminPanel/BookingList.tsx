@@ -24,6 +24,7 @@ import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { useAuth } from "@/hooks/useAuth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useOrganizationNames } from "@/hooks/useOrganizationNames";
 import { BookingPreviewWithOrgData } from "@common/bookings/booking.types";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import { useNavigate } from "react-router-dom";
@@ -48,6 +49,17 @@ const BookingList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
+
+  // Get organization IDs from bookings that have booked_by_org set
+  const organizationIds = useMemo(() => {
+    return (bookings as BookingPreviewWithOrgData[])
+      .filter((booking) => booking.booked_by_org)
+      .map((booking) => booking.booked_by_org!)
+      .filter((id, index, arr) => arr.indexOf(id) === index); // Remove duplicates
+  }, [bookings]);
+
+  // Fetch organization names
+  const { organizationNames } = useOrganizationNames(organizationIds);
   // Overdue-only scope
   const [scopeOverdue, setScopeOverdue] = useState(false);
   const [overdueRows, setOverdueRows] = useState<OverdueBookingRow[]>([]);
@@ -153,14 +165,24 @@ const BookingList = () => {
       accessorKey: "full_name",
       header: t.bookingList.columns.customer[lang],
       enableSorting: true,
-      cell: ({ row }) => (
-        <div>
+      cell: ({ row }) => {
+        const booking = row.original;
+        const orgName = booking.booked_by_org
+          ? organizationNames[booking.booked_by_org]
+          : null;
+
+        return (
           <div>
-            {row.original.full_name || t.bookingList.status.unknown[lang]}
+            <div>{booking.full_name || t.bookingList.status.unknown[lang]}</div>
+            <div className="text-xs text-gray-500">{booking.email}</div>
+            {orgName && (
+              <div className="text-xs text-blue-600 font-medium mt-1">
+                {t.bookingList.status.onBehalfOf[lang]} {orgName}
+              </div>
+            )}
           </div>
-          <div className="text-xs text-gray-500">{row.original.email}</div>
-        </div>
-      ),
+        );
+      },
     },
     {
       accessorKey: "start_date",

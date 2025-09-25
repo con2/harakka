@@ -26,12 +26,17 @@ import {
 } from "@/store/slices/itemImagesSlice";
 import { BookingItemWithDetails } from "@/types";
 import InlineTimeframePicker from "@/components/InlineTimeframeSelector";
-import { itemsApi } from "@/api/services/items";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
+import {
+  decrementQuantity,
+  incrementQuantity,
+  updateQuantity,
+  fetchItemsAvailability,
+} from "@/utils/quantityHelpers";
 
 const MyBookingsPage = () => {
   const { id } = useParams();
@@ -50,6 +55,38 @@ const MyBookingsPage = () => {
     if (!booking?.id || !userBookings.length) return null;
     return userBookings.find((ub) => ub.id === booking.id) || null;
   }, [booking?.id, userBookings]);
+
+  // Group booking items by organization
+  const groupBookingItemsByOrg = (
+    items: BookingItemWithDetails[],
+  ): {
+    orgName: string;
+    items: BookingItemWithDetails[];
+  }[] => {
+    const groups = items.reduce<Map<string, BookingItemWithDetails[]>>(
+      (map, item) => {
+        const orgName =
+          item?.org_name ||
+          (item as BookingItemWithDetails & { provider_org?: { name: string } })
+            ?.provider_org?.name ||
+          "Unknown Organization";
+        const key = orgName.toString();
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(item);
+        return map;
+      },
+      new Map(),
+    );
+
+    return [...groups.entries()]
+      .sort(([aName], [bName]) => aName.localeCompare(bName, undefined))
+      .map(([orgName, orgItems]) => ({ orgName, items: orgItems }));
+  };
+
+  const groupedBookingItems = useMemo(() => {
+    if (!booking?.booking_items) return [];
+    return groupBookingItemsByOrg(booking.booking_items);
+  }, [booking?.booking_items]);
 
   const [showEdit, setShowEdit] = useState(false);
   const [editFormItems, setEditFormItems] = useState<BookingItemWithDetails[]>(
@@ -106,27 +143,15 @@ const MyBookingsPage = () => {
 
   // Availability check when timeframe or items change
   useEffect(() => {
-    const fetchAvailability = async () => {
-      if (!globalStartDate || !globalEndDate) return;
-      setLoadingAvailability(true);
-      const promises = editFormItems.map(async (item) => {
-        try {
-          const data = await itemsApi.checkAvailability(
-            item.item_id,
-            new Date(globalStartDate),
-            new Date(globalEndDate),
-          );
-          const corrected = data.availableQuantity + (item.quantity ?? 0);
-          setAvailability((prev) => ({ ...prev, [item.item_id]: corrected }));
-        } catch {
-          /* ignore availability errors */
-        }
-      });
-      await Promise.all(promises);
-      setLoadingAvailability(false);
-    };
+    if (!globalStartDate || !globalEndDate) return;
 
-    void fetchAvailability();
+    void fetchItemsAvailability(
+      editFormItems,
+      globalStartDate,
+      globalEndDate,
+      setAvailability,
+      setLoadingAvailability,
+    );
   }, [globalStartDate, globalEndDate, editFormItems]);
 
   // ItemImage selector using itemImagesSlice
@@ -190,6 +215,9 @@ const MyBookingsPage = () => {
         if (!showEdit) {
           return item.quantity;
         }
+        if (item.status === "cancelled") {
+          return item.quantity;
+        }
 
         return (
           <div className="flex flex-col items-center">
@@ -197,7 +225,7 @@ const MyBookingsPage = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => decrementQuantity(item)}
+                onClick={() => handleDecrementQuantity(item)}
                 className="h-8 w-8 p-0"
                 disabled={
                   (itemQuantities[String(item.id)] ?? item.quantity ?? 0) <= 0
@@ -211,10 +239,7 @@ const MyBookingsPage = () => {
                 onChange={(e) => {
                   const val = Number(e.target.value);
                   if (!isNaN(val) && val >= 0) {
-                    setItemQuantities({
-                      ...itemQuantities,
-                      [String(item.id)]: val,
-                    });
+                    handleUpdateQuantity(item, val);
                   }
                 }}
                 className="w-[50px] text-center"
@@ -222,7 +247,7 @@ const MyBookingsPage = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => incrementQuantity(item)}
+                onClick={() => handleIncrementQuantity(item)}
                 className="h-8 w-8 p-0"
                 disabled={
                   (itemQuantities[String(item.id)] ?? item.quantity ?? 0) >=
@@ -250,9 +275,9 @@ const MyBookingsPage = () => {
       },
     },
     {
-      id: "self_pickup",
+      accessorKey: "self_pickup",
       header:
-        booking?.status != "confirmed"
+        booking?.status !== "confirmed"
           ? ""
           : t.myBookingsPage.columns.selfPickup[lang],
       cell: ({ row }) => {
@@ -344,20 +369,20 @@ const MyBookingsPage = () => {
     }
   };
 
-  const decrementQuantity = (item: BookingItemWithDetails) => {
-    const key = String(item.id);
-    const current = itemQuantities[key] ?? item.quantity ?? 0;
-    const next = Math.max(0, current - 1);
-    setItemQuantities((prev) => ({ ...prev, [key]: next }));
+  // Edit helper functions - using shared utilities
+  const handleDecrementQuantity = (item: BookingItemWithDetails) => {
+    decrementQuantity(item, itemQuantities, setItemQuantities);
   };
 
-  const incrementQuantity = (item: BookingItemWithDetails) => {
-    const key = String(item.id);
-    const current = itemQuantities[key] ?? item.quantity ?? 0;
-    const avail = availability[item.item_id];
-    const max = avail !== undefined ? avail : Infinity;
-    const next = Math.min(max, current + 1);
-    setItemQuantities((prev) => ({ ...prev, [key]: next }));
+  const handleIncrementQuantity = (item: BookingItemWithDetails) => {
+    incrementQuantity(item, itemQuantities, setItemQuantities, availability);
+  };
+
+  const handleUpdateQuantity = (
+    item: BookingItemWithDetails,
+    newQuantity: number,
+  ) => {
+    updateQuantity(item, newQuantity, setItemQuantities, availability);
   };
 
   const removeItem = (item: BookingItemWithDetails) => {
@@ -417,10 +442,6 @@ const MyBookingsPage = () => {
         void navigate("/my-bookings");
         return;
       }
-      console.debug("updateBooking payload", {
-        bookingId: booking.id,
-        items: updatedItems,
-      });
 
       try {
         await dispatch(
@@ -436,7 +457,6 @@ const MyBookingsPage = () => {
           );
         }
       } catch (err: unknown) {
-        console.error("updateBooking failed", err);
         let msg = "";
         if (typeof err === "string") msg = err;
         else if (err && typeof err === "object") {
@@ -474,8 +494,8 @@ const MyBookingsPage = () => {
           </Button>
         </div>
 
-        <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-normal pt-2">
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-xl font-semibold pt-2">
             {t.myBookingsPage.bookingDetails.title[lang]}{" "}
             {booking.booking_number}
           </h3>
@@ -524,24 +544,26 @@ const MyBookingsPage = () => {
 
         <div className="space-y-4">
           {/* Booking details */}
-          <div className="grid grid-cols-2 gap-4 mb-10">
+          <div className="grid grid-cols-2 gap-4 mb-2">
             <div>
-              <h3 className="font-normal text-sm mb-1">
+              <h3 className="font-semibold text-md mb-1">
                 {t.myBookingsPage.bookingDetails.customerInfo[lang]}
               </h3>
-              <p className="text-xs text-grey-500">{booking.full_name ?? ""}</p>
-              <p className="text-xs text-gray-500">{user?.email}</p>
+              <p className="text-sm text-grey-500">
+                {booking?.full_name ?? ""}
+              </p>
+              <p className="text-sm text-gray-500">{booking?.email}</p>
             </div>
 
             <div>
-              <h3 className="font-normal text-sm mb-1">
+              <h3 className="font-semibold text-md mb-1">
                 {t.myBookingsPage.bookingDetails.bookingInfo[lang]}
               </h3>
-              <p className="text-xs">
+              <p className="text-sm">
                 {t.myBookingsPage.columns.status[lang]}:{" "}
                 <StatusBadge status={booking.status} />
               </p>
-              <p className="text-xs">
+              <p className="text-sm">
                 {t.myBookingsPage.headings.createdAt[lang]}:{" "}
                 {formatDate(booking.created_at, "d MMM yyyy")}
               </p>
@@ -551,7 +573,7 @@ const MyBookingsPage = () => {
           <div>
             {/* Booking Dates and Date Picker */}
             <div className="mb-4">
-              <h3 className="font-normal text-sm mb-2">
+              <h3 className="font-semibold text-md mb-2">
                 {t.myBookingsPage.headings.bookingDates[lang]}
               </h3>
               <div>
@@ -580,15 +602,25 @@ const MyBookingsPage = () => {
               <Spinner containerClasses="py-8" />
             ) : (
               <div>
-                <h3 className="font-normal text-sm mb-2">
-                  {t.myBookingsPage.bookingDetails.items[lang]}
-                </h3>
-                <div className="border rounded-md overflow-hidden">
-                  <DataTable
-                    columns={bookingColumns}
-                    data={booking.booking_items || []}
-                  />
-                </div>
+                {/* Grouped booking items by organization */}
+                {groupedBookingItems.map((orgGroup, index) => (
+                  <div
+                    key={orgGroup.orgName || `org-${index}`}
+                    className="mb-4"
+                  >
+                    <h4 className="text-md font-medium mb-2 text-gray-700 border-b pb-1">
+                      {orgGroup.orgName || "Unknown Organization"}{" "}
+                      {t.myBookingsPage.bookingDetails.orgItems[lang]} (
+                      {orgGroup.items.length})
+                    </h4>
+                    <div className="border rounded-md overflow-hidden">
+                      <DataTable
+                        columns={bookingColumns}
+                        data={orgGroup.items}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 

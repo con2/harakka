@@ -145,17 +145,23 @@ export class StorageItemsService {
     // Build a base query without range for counting and apply all filters
 
     // Get nested categories of X category ID.
+    // Support comma-separated list of category IDs; union all descendants
     const matchingCategories: string[] | null = category ? [] : null;
     if (category) {
-      const { data: categories } = await supabase.rpc(
-        "get_category_descendants",
-        {
-          category_uuid: category,
-        },
-      );
-      matchingCategories!.push(
-        ...(categories as { id: string }[]).map((c) => c.id),
-      );
+      const ids = category
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const acc = new Set<string>();
+      for (const id of ids) {
+        const { data: cats } = await supabase.rpc("get_category_descendants", {
+          category_uuid: id,
+        });
+        if (Array.isArray(cats)) {
+          (cats as { id: string }[]).forEach((c) => acc.add(c.id));
+        }
+      }
+      matchingCategories!.push(...Array.from(acc));
     }
     const base = applyItemFilters(
       supabase
@@ -264,17 +270,23 @@ export class StorageItemsService {
       throw new BadRequestException("Supabase client is not initialized.");
     }
     // Get nested categories of X category ID.
+    // Support comma-separated list of category IDs; union all descendants
     const matchingCategories: string[] = [];
     if (category) {
-      const { data: categories } = await supabase.rpc(
-        "get_category_descendants",
-        {
-          category_uuid: category,
-        },
-      );
-      matchingCategories.push(
-        ...(categories as { id: string }[]).map((c) => c.id),
-      );
+      const ids = category
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const acc = new Set<string>();
+      for (const id of ids) {
+        const { data: cats } = await supabase.rpc("get_category_descendants", {
+          category_uuid: id,
+        });
+        if (Array.isArray(cats)) {
+          (cats as { id: string }[]).forEach((c) => acc.add(c.id));
+        }
+      }
+      matchingCategories.push(...Array.from(acc));
     }
     // Build a base query with organization filtering
     const base = applyItemFilters(
@@ -597,7 +609,7 @@ export class StorageItemsService {
   ): Promise<UpdateResponse> {
     const supabase = req.supabase;
     // Extract properties that shouldn't be sent to the database
-    const { tags, location_details, ...itemData } = item;
+    const { tags, location_details, images, ...itemData } = item;
 
     // Update the main item
     const {

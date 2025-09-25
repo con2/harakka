@@ -40,7 +40,7 @@ const BookingItemDisplay: React.FC<BookingItemDisplayProps> = ({ item }) => {
   const itemImages = useAppSelector((state) =>
     selectItemImages(state, item.item_id),
   );
-  const firstImage = itemImages[0].image_url;
+  const firstImage = itemImages[0]?.image_url;
 
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md border">

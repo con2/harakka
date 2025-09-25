@@ -312,7 +312,7 @@ export const tagSlice = createSlice({
       .addCase(assignTagToItem.fulfilled, (state, action) => {
         const { tagIds } = action.payload;
         state.selectedTags = state.tags.filter((tag) =>
-          tagIds.includes(tag.id as string),
+          tagIds.includes(tag.id),
         );
         state.loading = false;
       })

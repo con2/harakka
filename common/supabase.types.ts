@@ -594,68 +594,6 @@ export type Database = {
           },
         ]
       }
-      reviews: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_verified: boolean | null
-          item_id: string
-          rating: number
-          review_text: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_verified?: boolean | null
-          item_id: string
-          rating: number
-          review_text?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_verified?: boolean | null
-          item_id?: string
-          rating?: number
-          review_text?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "storage_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_item_location_summary"
-            referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_item_ownership_summary"
-            referencedColumns: ["storage_item_id"]
-          },
-          {
-            foreignKeyName: "reviews_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "view_manage_storage_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       roles: {
         Row: {
           id: string
@@ -914,6 +852,7 @@ export type Database = {
           org_id: string
           quantity: number
           translations: Json | null
+          updated_at: string | null
         }
         Insert: {
           available_quantity?: number | null
@@ -928,6 +867,7 @@ export type Database = {
           org_id: string
           quantity: number
           translations?: Json | null
+          updated_at?: string | null
         }
         Update: {
           available_quantity?: number | null
@@ -942,6 +882,7 @@ export type Database = {
           org_id?: string
           quantity?: number
           translations?: Json | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -1553,6 +1494,7 @@ export type Database = {
           tag_ids: string[] | null
           tag_translations: Json[] | null
           translations: Json | null
+          updated_at: string | null
         }
         Relationships: [
           {

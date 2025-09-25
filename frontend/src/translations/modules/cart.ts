@@ -24,6 +24,18 @@ export const cart = {
       fi: "Varausajankohta",
       en: "Booking Timeframe",
     },
+    editDates: {
+      fi: "Muokkaa päivämääriä",
+      en: "Edit Dates",
+    },
+    saveDates: {
+      fi: "Tallenna",
+      en: "Update",
+    },
+    cancelEdit: {
+      fi: "Peruuta",
+      en: "Cancel",
+    },
     day: {
       fi: "päivä",
       en: "day",
@@ -45,6 +57,25 @@ export const cart = {
       en: "Clicking the button below is not a commitment. It's just a request — we'll review it and get back to you shortly.",
     },
   },
+  locations: {
+    differentLocations: {
+      fi: "Huomio: Tuotteesi sijaitsevat eri paikoissa",
+      en: "Notice: Your items are located in different places",
+    },
+    pickupInfo: {
+      fi: "Sinun tulee noutaa tuotteet seuraavista sijainneista:",
+      en: "You will need to pick up items from the following locations:",
+    },
+
+    itemCount: {
+      fi: "tuotetta",
+      en: "items",
+    },
+    itemCountSingular: {
+      fi: "tuote",
+      en: "item",
+    },
+  },
   item: {
     available: {
       fi: "Yhteensä saatavilla",
@@ -53,6 +84,22 @@ export const cart = {
     units: {
       fi: "kpl",
       en: "units",
+    },
+    unavailableForDates: {
+      fi: "Ei saatavilla valitulle ajanjaksolle",
+      en: "Not available for selected dates",
+    },
+    limitedAvailability: {
+      fi: "Rajoitettu saatavuus",
+      en: "Limited availability",
+    },
+    unknownItem: {
+      fi: "Tuntematon tuote",
+      en: "Unknown Item",
+    },
+    unknownLocation: {
+      fi: "Tuntematon sijainti",
+      en: "Unknown Location",
     },
   },
   summary: {
@@ -108,6 +155,30 @@ export const cart = {
       fi: "Ostoskoria ei tyhjennetty",
       en: "Cart not cleared",
     },
+    removeItemTitle: {
+      fi: "Poista tuote ostoskorista",
+      en: "Remove item from cart",
+    },
+    removeItemDescription: {
+      fi: "Haluatko varmasti poistaa tämän tuotteen ostoskorista?",
+      en: "Are you sure you want to remove this item from your cart?",
+    },
+    confirmRemove: {
+      fi: "Kyllä, poista",
+      en: "Yes, remove it",
+    },
+    cancelRemove: {
+      fi: "Ei, säilytä",
+      en: "No, keep it",
+    },
+    itemRemoved: {
+      fi: "Tuote poistettu ostoskorista",
+      en: "Item removed from cart",
+    },
+    itemNotRemoved: {
+      fi: "Tuotetta ei poistettu",
+      en: "Item not removed",
+    },
     loginRequired: {
       fi: "Kirjaudu sisään suorittaaksesi tilauksesi loppuun",
       en: "Please log in to complete your booking",
@@ -121,10 +192,6 @@ export const cart = {
       en: "Please select dates and add items to cart",
     },
     itemsExceedQuantity: {
-      fi: "Jotkin tuotteet ylittävät saatavilla olevan määrän",
-      en: "Some items exceed available quantity",
-    },
-    itemsExceedQuantityInCart: {
       fi: "Olet ostoskorissasi tämän tuotteen määrän rajoissa. Saatavilla olevat tuotteet: ",
       en: "You’re at the limit for this item in your cart. Items available: ",
     },
@@ -136,10 +203,7 @@ export const cart = {
       fi: "Varaus luotu onnistuneesti!",
       en: "Booking created successfully!",
     },
-    bookingError: {
-      fi: "Virhe: ",
-      en: "Error: ",
-    },
+
     profileUpdateSuccess: {
       fi: "Profiili päivitetty onnistuneesti! Voit nyt yrittää varausta uudelleen.",
       en: "Profile updated successfully! Please try booking again.",
@@ -147,6 +211,22 @@ export const cart = {
     profileUpdateError: {
       fi: "Profiilin päivittäminen epäonnistui. Yritä uudelleen.",
       en: "Failed to update profile. Please try again.",
+    },
+    datesUpdated: {
+      fi: "Päivämäärät päivitetty onnistuneesti",
+      en: "Dates updated successfully",
+    },
+    someItemsUnavailable: {
+      fi: "Jotkin tuotteet eivät ole saatavilla ajanjaksolle alkuperäisessä määrässä. Valitse uudet päivämäärät tai säädä määriä.",
+      en: "Some items are not available in the requested quantity. Please select new dates or adjust quantities.",
+    },
+    availabilityCheckFailed: {
+      fi: "Saatavuuden tarkistaminen epäonnistui uusille päivämäärille",
+      en: "Failed to check availability for new dates",
+    },
+    checkoutError: {
+      fi: "Kassavirhe:",
+      en: "Checkout error:",
     },
   },
   profileCompletion: {
