@@ -99,7 +99,7 @@
     "sql:check:all": "npx postgrestools check **/*.sql"
   },
   "devDependencies": {
-    "@postgrestools/postgrestools": "^0.11.0",
+    "@postgrestools/postgrestools": "^0.15.0",
     "@supabase/supabase-js": "^2.53.0",
     "concurrently": "^9.1.2",
     "env-cmd": "^10.1.0",

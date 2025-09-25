@@ -7,7 +7,13 @@ import {
   getOrderedBookings,
   selectBookingPagination,
 } from "@/store/slices/bookingsSlice";
-import { Eye, LoaderCircle, Calendar, Clock, AlertTriangle } from "lucide-react";
+import {
+  Eye,
+  LoaderCircle,
+  Calendar,
+  Clock,
+  AlertTriangle,
+} from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
@@ -223,7 +229,11 @@ const BookingList = () => {
     [lang],
   );
 
-  if (authLoading || (loading && !scopeOverdue) || (overdueLoading && scopeOverdue)) {
+  if (
+    authLoading ||
+    (loading && !scopeOverdue) ||
+    (overdueLoading && scopeOverdue)
+  ) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <LoaderCircle className="animate-spin h-8 w-8 mr-2" />
@@ -298,9 +308,7 @@ const BookingList = () => {
             />
             <select
               value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(e.target.value as BookingStatus)
-              }
+              onChange={(e) => setStatusFilter(e.target.value as BookingStatus)}
               className={`select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] ${scopeOverdue ? "opacity-50 cursor-not-allowed" : ""}`}
               disabled={scopeOverdue}
             >
@@ -337,7 +345,11 @@ const BookingList = () => {
             {/* Recent Button */}
             <Button
               onClick={() => handleOrderToggle("created_at")}
-              variant={!scopeOverdue && orderBy === "created_at" ? "secondary" : "default"}
+              variant={
+                !scopeOverdue && orderBy === "created_at"
+                  ? "secondary"
+                  : "default"
+              }
               size="sm"
               disabled={!scopeOverdue && orderBy === "created_at"}
               className={`flex items-center gap-2 ${
@@ -352,7 +364,11 @@ const BookingList = () => {
             {/* Upcoming Button */}
             <Button
               onClick={() => handleOrderToggle("start_date")}
-              variant={!scopeOverdue && orderBy === "start_date" ? "secondary" : "default"}
+              variant={
+                !scopeOverdue && orderBy === "start_date"
+                  ? "secondary"
+                  : "default"
+              }
               size="sm"
               disabled={!scopeOverdue && orderBy === "start_date"}
               className={`flex items-center gap-2 ${
@@ -374,7 +390,9 @@ const BookingList = () => {
               size="sm"
               disabled={scopeOverdue}
               className={`flex items-center gap-2 ${
-                scopeOverdue ? "cursor-not-allowed opacity-75" : "cursor-pointer"
+                scopeOverdue
+                  ? "cursor-not-allowed opacity-75"
+                  : "cursor-pointer"
               }`}
             >
               <AlertTriangle className="h-4 w-4" />
