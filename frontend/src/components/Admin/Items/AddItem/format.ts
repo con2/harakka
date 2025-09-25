@@ -1,15 +1,14 @@
-type Category = {
-  id: string;
-  parent_id: string | null;
-  translations: {
-    fi: string;
-    en: string;
-  };
-  subcategories?: Category[];
+import { Category } from "@common/items/categories";
+
+export type ExtendedCategory = Category & {
+  subcategories?: Subcategories;
+  children?: ExtendedCategory[];
 };
 
-export function buildCategoryTree(categories: Category[]): Category[] {
-  const map = new Map<string, Category>();
+type Subcategories = ExtendedCategory[];
+
+export function buildCategoryTree(categories: Category[]): ExtendedCategory[] {
+  const map = new Map<string, ExtendedCategory>();
 
   // initialize map with empty subcategories
   categories.forEach((cat) => {
