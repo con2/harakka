@@ -14,7 +14,7 @@ import { t } from "@/translations";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Tag } from "@/types/tag";
+import { UpdateTagDto } from "@/types/tag";
 import TagDelete from "@/components/Admin/Items/TagDelete";
 import { ExtendedTag } from "@common/items/tag.types";
 
@@ -66,9 +66,7 @@ const TagDetailsPage = () => {
 
   const handleSave = async () => {
     if (!tag) return;
-    const payload: Partial<Tag> & {
-      translations: Record<string, { name: string }>;
-    } = {
+    const payload: UpdateTagDto = {
       translations: {
         fi: { name: fiName },
         en: { name: enName },

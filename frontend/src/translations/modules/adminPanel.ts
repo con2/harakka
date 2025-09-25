@@ -12,6 +12,10 @@ export const adminPanel = {
       fi: "Tilaukset",
       en: "Bookings",
     },
+    overdue: {
+      fi: "Myöhästyneet",
+      en: "Overdue",
+    },
     items: {
       fi: "Tuotteet",
       en: "Items",
