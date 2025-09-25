@@ -560,11 +560,7 @@ const UsersList = () => {
                 <Info className="w-4 h-4 text-secondary" />
               </span>
             </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              align="start"
-              className="max-w-sm break-words"
-            >
+            <TooltipContent side="top" align="start" className="break-words">
               {isSuper
                 ? t.usersList.tooltip.superAdminHelp[lang]
                 : t.usersList.tooltip.tenantAdminHelp[lang]}
