@@ -30,6 +30,7 @@ import {
   BookingRow,
   ValidBookingOrder,
   BookingItemInsert,
+  OverdueRow,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { deriveOrgStatus } from "src/utils/booking.utils";
@@ -53,6 +54,36 @@ export class BookingService {
     private readonly roleService: RoleService,
     private readonly bookingItemsService: BookingItemsService,
   ) {}
+
+  /**
+   * List overdue bookings visible to the current user (scoped by RLS).
+   * Uses the `view_bookings_overdue` view which applies Europe/Helsinki day boundaries.
+   */
+  async getOverdueBookings(req: AuthRequest, page: number, limit: number) {
+    const { from, to } = getPaginationRange(page, limit);
+    const supabase = req.supabase;
+
+    const { data, error, count } = await supabase
+      .from("view_bookings_overdue")
+      .select(
+        "booking_id, booking_number, user_id, full_name, user_email, earliest_due_date, days_overdue",
+        { count: "exact" },
+      )
+      .order("days_overdue", { ascending: false })
+      .range(from, to);
+
+    if (error) handleSupabaseError(error);
+
+    const metadata = getPaginationMeta(count ?? 0, page, limit);
+    return {
+      data: (data ?? []) as OverdueRow[],
+      count: count ?? 0,
+      error: null,
+      status: 200,
+      statusText: "OK",
+      metadata,
+    };
+  }
 
   /**
    * Get bookings in an ordered list

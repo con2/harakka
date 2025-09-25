@@ -241,7 +241,9 @@ export const router = createBrowserRouter([
           {
             path: "categories",
             element: (
-              <ProtectedRoute allowedRoles={["tenant_admin"]}>
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
                 <Categories />
               </ProtectedRoute>
             ),
@@ -249,7 +251,9 @@ export const router = createBrowserRouter([
           {
             path: "categories/:id",
             element: (
-              <ProtectedRoute allowedRoles={["tenant_admin"]}>
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
                 <AddCategory />
               </ProtectedRoute>
             ),

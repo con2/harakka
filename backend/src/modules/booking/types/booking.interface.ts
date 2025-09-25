@@ -81,3 +81,6 @@ export type BookingWithOrgStatus = BookingPreview & {
   org_status_for_active_org: BookingStatus;
 };
 export type BookingStatus = Database["public"]["Enums"]["booking_status"];
+
+export type OverdueRow =
+  Database["public"]["Views"]["view_bookings_overdue"]["Row"];
