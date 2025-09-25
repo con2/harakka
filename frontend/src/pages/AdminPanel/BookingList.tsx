@@ -53,8 +53,8 @@ const BookingList = () => {
   // Get organization IDs from bookings that have booked_by_org set
   const organizationIds = useMemo(() => {
     return (bookings as BookingPreviewWithOrgData[])
-      .filter((booking) => booking.booked_by_org)
-      .map((booking) => booking.booked_by_org!)
+      .map((booking) => booking.booked_by_org) // Removed ! to avoid excessive type assertion
+      .filter((id): id is string => Boolean(id))
       .filter((id, index, arr) => arr.indexOf(id) === index); // Remove duplicates
   }, [bookings]);
 
@@ -298,7 +298,7 @@ const BookingList = () => {
                   })
                   .finally(() => setOverdueLoading(false));
               } else {
-                dispatch(
+                void dispatch(
                   getOrderedBookings({
                     ordered_by: orderBy,
                     ascending: getAscending(orderBy),

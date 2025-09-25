@@ -504,7 +504,7 @@ const UsersDetailsPage = () => {
         });
       }
     }
-  }, [id]);
+  }, [id, canManageRoles, refreshAllUserRoles, refreshAvailableRoles]);
 
   // Second useEffect: Handle user data loading separately
   useEffect(() => {

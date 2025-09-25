@@ -480,7 +480,7 @@ export const useRoles = () => {
       console.error("Failed to sync session and roles:", error);
       return false;
     }
-  }, [refreshSupabaseSession, refreshCurrentUserRoles, refreshAllUserRoles]);
+  }, [refreshCurrentUserRoles, refreshAllUserRoles]);
 
   const setupPeriodicSessionCheck = useCallback(
     (intervalMinutes = 5) => {
