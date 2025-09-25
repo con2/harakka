@@ -239,6 +239,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, authLoading, setupInProgress, dispatch, rolesLoaded]);
 
   const signOut = async () => {
+    const keysToPreserve = ["language"];
+    Object.keys(localStorage).forEach((key) => {
+      if (!keysToPreserve.includes(key)) {
+        localStorage.removeItem(key);
+      }
+    });
+
     try {
       // 0. Clear any cached auth token before signing out
       clearCachedAuthToken();
@@ -251,8 +258,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       dispatch(clearSelectedUser());
       dispatch(clearCart());
 
-      // 3. Clear all browser storage comprehensively
-      localStorage.clear();
+      // 3. Clear session data
+      //localStorage.clear();
       sessionStorage.clear();
 
       // 4. Clear specific Supabase auth items that might persist
