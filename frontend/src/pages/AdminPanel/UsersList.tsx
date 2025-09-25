@@ -621,7 +621,7 @@ const UsersList = () => {
               <option value="all">{t.usersList.filters.roles.all[lang]}</option>
               {availableRoles.map((role) => (
                 <option key={role.id} value={role.role}>
-                  {role.role}
+                  {formatRoleName(role.role)}
                 </option>
               ))}
             </select>
