@@ -16,15 +16,11 @@ export const userPanel = {
     },
     clearFilters: {
       fi: "Tyhjennä",
-      en: "Clear Filters",
-    },
-    clearAllFilters: {
-      fi: "Tyhjennä kaikki suodattimet",
-      en: "Clear All Filters",
+      en: "Clear",
     },
     closeFilters: {
-      fi: "Sulje suodattimet",
-      en: "Close Filters",
+      fi: "Sulje",
+      en: "Close",
     },
   },
   organizations: {
