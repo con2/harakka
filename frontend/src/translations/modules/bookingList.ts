@@ -60,6 +60,10 @@ export const bookingList = {
       fi: "Lähitulevaisuus",
       en: "Upcoming",
     },
+    overdue: {
+      fi: "Myöhästyneet",
+      en: "Overdue",
+    },
   },
   columns: {
     bookingNumber: {
