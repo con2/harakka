@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import hero from "@/assets/illusiaImage.jpg";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/translations";
 
 function Error() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
   return (
     <div>
       <div
@@ -14,7 +17,7 @@ function Error() {
       />
       <div className="justify-self-center relative top-[100px] max-w-[400px] w-fit p-6 bg-white rounded">
         <h1 className="text-3xl mb-[1rem] font-main font-semibold">
-          Something went wrong
+          {t.error.title[lang]}
         </h1>
         <div className="flex gap-2">
           <Button
@@ -22,14 +25,14 @@ function Error() {
             variant="default"
             onClick={() => navigate(-1)}
           >
-            Go back
+            {t.error.buttons.back[lang]}
           </Button>
           <Button
             className="flex-1 rounded"
             variant="outline"
             onClick={() => navigate("/items")}
           >
-            Home
+            {t.error.buttons.home[lang]}
           </Button>
         </div>
       </div>
