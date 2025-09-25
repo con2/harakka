@@ -1,3 +1,8 @@
+-- Ensure columns exist on storage.buckets (older storage versions may miss these)
+alter table if exists storage.buckets
+  add column if not exists file_size_limit bigint,
+  add column if not exists allowed_mime_types text[];
+
 -- Update constraints for organization-logo-picture bucket
 UPDATE storage.buckets
 SET file_size_limit = 5242880, -- 5MB in bytes
