@@ -103,12 +103,15 @@ See [docs/developers/backend/database-schema.md](docs/developers/backend/databas
 ## 5. Naming Conventions
 
 ### File naming
+
 Each new file should have its own translation module. The module should have the same naming as the file which uses it, but in camelCase
 
 **Example:** The translations for a file called `ItemModal.tsx` would be called -> `itemModal.ts`
 
 ### Content Structure
+
 The namings of the key/value pairs should ideally be after the contents of the page, for example all buttons should be under the same "buttons" key, or "labels" for labels, "placeholders" for placeholders, etc.
+
 ```ts
 // Example
 export const addCategory = {
@@ -187,9 +190,77 @@ export const addCategory = {
     },
   },
 };
-
 ```
 
+## 6. Adding a new language
+
+To make it easier to add new languages, we've created a `SUPPORTED_LANGUAGES` variable containing the relevant country details.
+Each language requires:
+
+1. **lang**: English name of the language for easy identification
+2. **key**: language code ([See list of language codes here](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes))
+3. **translations** ([see below](#translations))
+
+```ts
+import { supportedLanguages } from "@/translations/modules/supportedLanguages";
+
+export const SUPPORTED_LANGUAGES = [
+  {
+    lang: "English",
+    key: "en",
+    translations: supportedLanguages.en,
+  },
+  {
+    lang: "Finnish",
+    key: "fi",
+    translations: supportedLanguages.fi,
+  },
+  // New language example
+  {
+    lang: "Swedish",
+    key: "sv",
+    translations: supportedLanguages.sv,
+  },
+];
+```
+
+### Translations
+
+Add the language translations as the following. **Each language must have a corresponding translation in **ALL** other represented languages**
+
+```ts
+// Language Translations
+export const supportedLanguages = {
+  en: {
+    en: "English",
+    fi: "Englanti",
+    sv: "Engelska",
+  },
+  fi: {
+    en: "Finnish",
+    fi: "Suomi",
+    sv: "Finska",
+  },
+  sv: {
+    en: "Swedish",
+    fi: "Ruotsi",
+    sv: "Svenska",
+  },
+};
+```
+
+### Update the types
+
+Finally, update the `Language` type in the [LanguageContext](frontend/src/context/LanguageContext.tsx) with the newly added key
+
+```ts
+export type Language = "fi" | "en" | "sv";
+```
+
+### The result
+
+The language is now shown in the app. However for the new language to work across the app, you will need to [add the translation to the modules](#4-adding-translations)
+![](https://rcbddkhvysexkvgqpcud.supabase.co/storage/v1/object/public/docs/translations/Screenshot%202025-09-25%20150617.png)
 
 ## 6. Checking Coverage
 
@@ -197,7 +268,7 @@ Run the translation checker script to ensure all UI strings are properly transla
 
 From the project root, run:
 
-Default check (relaxed mode):
+Default check:
 
 ```sh
 npm run check-translation
@@ -207,6 +278,17 @@ More aggressive detection (catches more, but may include false positives):
 
 ```sh
 npm run check-translation:strict
+```
+
+### All available translation checks
+
+```json
+"check-translation": "cd frontend && npx tsx src/scripts/check-translations.ts",
+"check-translation:strict": "cd frontend && npx tsx src/scripts/check-translations.ts strict",
+"check-translation:relaxed": "cd frontend && npx tsx src/scripts/check-translations.ts",
+"check-translation:unused": "cd frontend && npx tsx src/scripts/clean-unused-translations.ts",
+"check-translation:clean": "cd frontend && npx tsx src/scripts/clean-unused-translations.ts --confirm",
+"check-translation:create": "cd frontend && npx tsx src/scripts/create-missing-translation-modules"
 ```
 
 **What is checked:**
