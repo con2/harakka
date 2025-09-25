@@ -493,7 +493,7 @@ const UserPanel = () => {
                       })
                     }
                   >
-                    {t.userPanel.filters.clearAllFilters[lang]}
+                    {t.userPanel.filters.clearFilters[lang]}
                   </Button>
                 </div>
               </div>

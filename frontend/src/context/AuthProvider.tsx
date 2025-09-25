@@ -295,24 +295,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setRolesLoaded(false);
 
-      // 7. For Google OAuth specifically, clear any Google session cookies
-      // This helps ensure the next login shows the account picker
-      if (document.cookie.includes("accounts.google.com")) {
-        // Note: This is a best-effort approach for Google session clearing
+      // 7. Clear any auth-related cookies (best-effort; current domain only)
+      (() => {
+        const cookieNamesToClear = [
+          "google",
+          "oauth",
+          "_ga",
+          "sb-access-token",
+          "sb-refresh-token",
+          "sb-provider-token",
+        ];
+        const expires = "Thu, 01 Jan 1970 00:00:00 GMT";
+        const host = location.hostname.replace(/^www\./, "");
+
         document.cookie.split(";").forEach((c) => {
           const eqPos = c.indexOf("=");
-          const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
-          if (
-            name.includes("google") ||
-            name.includes("oauth") ||
-            name.includes("_ga")
-          ) {
-            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.google.com`;
-            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.accounts.google.com`;
-            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+          const name = (eqPos > -1 ? c.substr(0, eqPos) : c).trim();
+          if (cookieNamesToClear.some((k) => name.includes(k))) {
+            // Clear for current host
+            document.cookie = `${name}=;expires=${expires};path=/`;
+            // Clear for base domain (subdomains)
+            document.cookie = `${name}=;expires=${expires};path=/;domain=.${host}`;
           }
         });
-      }
+      })();
+
       // 8. Clear signup prosessing
       setProcessedSignups(new Set());
     } catch {

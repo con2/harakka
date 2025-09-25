@@ -154,6 +154,7 @@ const ItemDetailsPage = () => {
         state: {
           order: "updated_at",
           highlight: [0],
+          ascending: false,
         },
       });
     } catch {
