@@ -107,6 +107,19 @@ export class StorageItemsController {
   }
 
   /**
+   * Get distinct locations where the active organization has items.
+   */
+  @Get("admin-location-options")
+  @Roles(["storage_manager", "tenant_admin"], { match: "any", sameOrg: true })
+  async getAdminLocationOptions(@Req() req: AuthRequest) {
+    const activeOrgId = req.headers["x-org-id"] as string;
+    if (!activeOrgId) {
+      throw new BadRequestException("Organization context is required");
+    }
+    return this.storageItemsService.getAdminLocationOptions(req, activeOrgId);
+  }
+
+  /**
    * Get ordered and/or filtered storage items.
    * This endpoint is public and allows filtering, searching, and ordering of storage items.
    * @param searchquery Optional search query to filter items.

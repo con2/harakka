@@ -12,6 +12,8 @@ import {
   selectAvailabilityOverview,
 } from "@/store/slices/itemsSlice";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
+// Use items API to fetch only locations that actually have items for the org
+import { itemsApi } from "@/api/services/items";
 import { t } from "@/translations";
 import { Item, ManageItemViewRow, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
@@ -42,6 +44,9 @@ const AdminItemsTable = () => {
   const availabilityByItem = useAppSelector(selectAvailabilityOverview);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
+  const [locationOptions, setLocationOptions] = useState<
+    { id: string; name: string | null }[]
+  >([]);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const org_id = useAppSelector(selectActiveOrganizationId);
   const categories = useAppSelector(selectCategories);
@@ -69,6 +74,9 @@ const AdminItemsTable = () => {
   const loading = useAppSelector(selectItemsLoading);
   const ITEMS_PER_PAGE = 10;
 
+  // New: location filter (multi-select)
+  const [locationFilter, setLocationFilter] = useState<string[]>([]);
+
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
 
@@ -94,7 +102,7 @@ const AdminItemsTable = () => {
         searchquery: debouncedSearchQuery,
         ascending: ascending === false ? false : true,
         tag_filters: tagFilter,
-        location_filter: [],
+        location_filter: locationFilter,
         category: "",
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
       }),
@@ -106,6 +114,7 @@ const AdminItemsTable = () => {
     debouncedSearchQuery,
     currentPage,
     tagFilter,
+    locationFilter,
     statusFilter,
     org_id,
   ]);
@@ -115,14 +124,24 @@ const AdminItemsTable = () => {
     const ids = items.map((it) => (it as ManageItemViewRow).id).filter(Boolean);
     if (ids.length === 0) return;
     void dispatch(
-      fetchAvailabilityOverview({ itemIds: ids, page: 1, limit: ids.length }),
+      fetchAvailabilityOverview({
+        itemIds: ids,
+        locationIds: locationFilter,
+        page: 1,
+        limit: ids.length,
+      }),
     );
-  }, [dispatch, items]);
+  }, [dispatch, items, locationFilter]);
 
-  //fetch tags list
+  //fetch tags and locations list
   useEffect(() => {
     if (tags.length === 0)
       void dispatch(fetchFilteredTags({ limit: 20, sortBy: "assigned_to" }));
+    // Load org-specific item locations via items API
+    void itemsApi
+      .getAdminLocationOptions()
+      .then((res) => setLocationOptions(res.data ?? []))
+      .catch(() => setLocationOptions([]));
     if (categories.length === 0)
       void dispatch(fetchAllCategories({ page: 1, limit: 20 }));
   }, [dispatch, tags.length, items.length, categories.length]);
@@ -195,7 +214,7 @@ const AdminItemsTable = () => {
     // Availability snapshot column (optional display)
     // Shows current available quantity if it has been fetched
     {
-      header: "Available Now",
+      header: t.adminItemsTable.columns.availabilityNow[lang],
       size: 40,
       id: "available_now",
       accessorFn: (row) =>
@@ -366,13 +385,69 @@ const AdminItemsTable = () => {
             </PopoverContent>
           </Popover>
 
+          {/* Filter by locations */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                className="px-3 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+                size={"sm"}
+              >
+                {locationFilter.length > 0
+                  ? t.adminItemsTable.filters.locations.filtered[lang].replace(
+                      "{count}",
+                      locationFilter.length.toString(),
+                    )
+                  : t.adminItemsTable.filters.locations.filter[lang]}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[250px] p-0">
+              <Command>
+                <CommandGroup>
+                  {locationOptions.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      {t.adminItemsTable.filters.locations.noLocations?.[
+                        lang
+                      ] || "No locations found"}
+                    </div>
+                  ) : (
+                    locationOptions.map((loc) => (
+                      <CommandItem
+                        key={loc.id}
+                        onSelect={() =>
+                          setLocationFilter((prev) =>
+                            prev.includes(loc.id)
+                              ? prev.filter((l) => l !== loc.id)
+                              : [...prev, loc.id],
+                          )
+                        }
+                        className="cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={locationFilter.includes(loc.id)}
+                          className={
+                            "mr-2 h-4 w-4 border border-secondary bg-white text-white data-[state=checked]:bg-secondary data-[state=checked]:text-white relative z-10"
+                          }
+                        />
+                        <span>{loc.name ?? "Unnamed"}</span>
+                      </CommandItem>
+                    ))
+                  )}
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
           {/* Clear filters button */}
-          {(searchTerm || statusFilter !== "all" || tagFilter.length > 0) && (
+          {(searchTerm ||
+            statusFilter !== "all" ||
+            tagFilter.length > 0 ||
+            locationFilter.length > 0) && (
             <Button
               onClick={() => {
                 setSearchTerm("");
                 setStatusFilter("all");
                 setTagFilter([]);
+                setLocationFilter([]);
               }}
               size={"sm"}
               className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"

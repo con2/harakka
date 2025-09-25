@@ -303,6 +303,54 @@ export class StorageItemsService {
   }
 
   /**
+   * List distinct locations (id, name) where the active organization has items.
+   */
+  async getAdminLocationOptions(
+    req: AuthRequest,
+    activeOrgId: string,
+  ): Promise<
+    ApiResponse<{
+      id: string;
+      name: string | null;
+    }>
+  > {
+    const supabase = req.supabase;
+    if (!activeOrgId)
+      throw new BadRequestException("Organization context is required");
+
+    const result = await supabase
+      .from("view_manage_storage_items")
+      .select("location_id, location_name")
+      .eq("is_deleted", false)
+      .eq("organization_id", activeOrgId);
+
+    if (result.error) handleSupabaseError(result.error);
+
+    // Deduplicate by location_id
+    const seen = new Set<string>();
+    const locations = (result.data || [])
+      .filter((row) => {
+        if (!row.location_id) return false;
+        if (seen.has(row.location_id)) return false;
+        seen.add(row.location_id);
+        return true;
+      })
+      .map((row) => ({
+        id: row.location_id as string,
+        name: row.location_name,
+      }));
+
+    return {
+      data: locations,
+      error: null,
+      status: 200,
+      statusText: "OK",
+      count: locations.length,
+      metadata: { total: locations.length, page: 1, totalPages: 1 },
+    };
+  }
+
+  /**
    * Get all storage items for an admin's organization.
    * This method retrieves storage items based on filters, sorting, and pagination, scoped to the admin's organization.
    *

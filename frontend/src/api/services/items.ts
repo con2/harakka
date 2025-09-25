@@ -222,4 +222,15 @@ export const itemsApi = {
       `/storage-items/availability-overview${query ? `?${query}` : ""}`,
     );
   },
+
+  /**
+   * Get distinct locations where the active organization has items
+   */
+  getAdminLocationOptions: async (): Promise<{
+    data: { id: string; name: string | null }[];
+    count: number;
+    metadata?: unknown;
+  }> => {
+    return api.get(`/storage-items/admin-location-options`);
+  },
 };
