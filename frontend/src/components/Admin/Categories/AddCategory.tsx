@@ -34,7 +34,8 @@ import { Category } from "@common/items/categories";
 import { toast } from "sonner";
 import { getFirstErrorMessage } from "@/utils/validate";
 import { t } from "@/translations";
-import { useEffect } from "react";
+import { ReactNode, useEffect } from "react";
+import { buildCategoryTree, ExtendedCategory } from "./category.utils";
 
 function AddCategory() {
   const { lang } = useLanguage();
@@ -67,7 +68,8 @@ function AddCategory() {
       ? updateCategory({ id: selectedCategory.id, updateCategory: values })
       : createCategory(values);
 
-    toast.promise(dispatch(action as any).unwrap(), { //eslint-disable-line
+    toast.promise(dispatch(action as any).unwrap(), {
+      //eslint-disable-line
       loading: t.addCategory.messages.loading[lang],
       success: () => {
         if (selectedCategory) {
@@ -99,6 +101,28 @@ function AddCategory() {
     } else {
       toast.error(t.addCategory.messages.general[lang]);
     }
+  };
+
+  const mappedCategories = buildCategoryTree(categories);
+  const renderCategoryOptions = (
+    categories: ExtendedCategory[],
+    level = 0,
+  ): ReactNode[] => {
+    return categories.flatMap((cat) => [
+      <SelectItem
+        style={{
+          paddingLeft: `calc(var(--spacing) * 2 + (var(--spacing) * ${level * 4}))`,
+          fontWeight: level === 0 ? "600" : "400",
+        }}
+        key={cat.id}
+        value={cat.id}
+      >
+        {cat.translations[lang]}
+      </SelectItem>,
+      ...(cat.subcategories && cat.subcategories.length
+        ? renderCategoryOptions(cat.subcategories, level + 1)
+        : []),
+    ]);
   };
 
   return (
@@ -165,13 +189,8 @@ function AddCategory() {
                   </FormControl>
 
                   <SelectContent>
-                    {categories
-                      ?.filter((cat) => cat.id !== selectedCategory?.id) // Remove the selected category from options
-                      .map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id ?? ""}>
-                          {cat.translations[lang]}
-                        </SelectItem>
-                      ))}
+                    {mappedCategories &&
+                      renderCategoryOptions(mappedCategories)}
                   </SelectContent>
                 </Select>
               </FormItem>

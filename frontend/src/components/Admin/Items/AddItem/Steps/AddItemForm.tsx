@@ -211,10 +211,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   }, []);
 
   useEffect(() => {
-    if (categories.length === 0)
-      void dispatch(
-        fetchAllCategories({ page: 1, limit: 20, order: "assigned_to" }),
-      );
+    void dispatch(
+      fetchAllCategories({ page: 1, limit: 100, order: "assigned_to" }),
+    );
   }, []);
 
   useEffect(() => {
