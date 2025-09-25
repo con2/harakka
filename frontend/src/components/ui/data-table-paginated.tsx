@@ -149,14 +149,34 @@ export function PaginatedDataTable<TData, TValue>({
                     data-higlighted={highlight?.includes(row.index)}
                     {...(rowProps?.(row) ?? {})}
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="truncate">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
+                    {row.getVisibleCells().map((cell) => {
+                      const rawValue = cell.getValue();
+                      const isEmpty =
+                        rawValue === null ||
+                        rawValue === undefined ||
+                        rawValue === "" ||
+                        (typeof rawValue === "string" &&
+                          rawValue.trim() === "");
+
+                      if (isEmpty) {
+                        return (
+                          <TableCell key={cell.id} className="truncate">
+                            {t.uiComponents.dataTable.emptyCell[lang]}
+                          </TableCell>
+                        );
+                      }
+
+                      const cellContent = flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      );
+
+                      return (
+                        <TableCell key={cell.id} className="truncate">
+                          {cellContent}
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 );
               })

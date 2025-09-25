@@ -65,11 +65,29 @@ export function DataTable<TData, TValue>({
                 onClick={rowClick ? () => rowClick(row) : undefined}
                 className={rowClick ? "cursor-pointer hover:bg-gray-50" : ""}
               >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+                {row.getVisibleCells().map((cell) => {
+                  const rawValue = cell.getValue();
+                  const isEmpty =
+                    rawValue === null ||
+                    rawValue === undefined ||
+                    rawValue === "" ||
+                    (typeof rawValue === "string" && rawValue.trim() === "");
+
+                  if (isEmpty) {
+                    return (
+                      <TableCell key={cell.id}>
+                        {t.uiComponents.dataTable.emptyCell[lang]}
+                      </TableCell>
+                    );
+                  }
+
+                  const cellContent = flexRender(
+                    cell.column.columnDef.cell,
+                    cell.getContext(),
+                  );
+
+                  return <TableCell key={cell.id}>{cellContent}</TableCell>;
+                })}
               </TableRow>
             ))
           ) : (
