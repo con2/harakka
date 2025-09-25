@@ -259,7 +259,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       dispatch(clearCart());
 
       // 3. Clear session data
-      //localStorage.clear();
       sessionStorage.clear();
 
       // 4. Clear specific Supabase auth items that might persist
