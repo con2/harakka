@@ -76,6 +76,7 @@
     "react-email": "^4.0.13",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "sanitize-html": "^2.13.0",
     "supabase": "^2.31.8",
     "type-fest": "^4.41.0",
     "uuid": "^11.1.0",

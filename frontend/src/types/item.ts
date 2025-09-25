@@ -185,7 +185,8 @@ export type ValidItemOrder =
   | "location_name"
   | "quantity"
   | "is_active"
-  | "created_at";
+  | "created_at"
+  | "updated_at";
 
 export type BucketUploadResult = {
   paths: string[];

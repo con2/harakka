@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -31,6 +32,7 @@ interface DataTableProps<TData, TValue> {
   handleOrder?: (order: string) => void;
   originalSorting?: string;
   rowProps?: (row: Row<TData>) => React.HTMLAttributes<HTMLTableRowElement>;
+  highlight?: number[];
 }
 
 /**
@@ -51,6 +53,7 @@ export function PaginatedDataTable<TData, TValue>({
   handleOrder,
   originalSorting,
   rowProps,
+  highlight,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -137,23 +140,26 @@ export function PaginatedDataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="h-10"
-                  data-state={row.getIsSelected() && "selected"}
-                  {...(rowProps?.(row) ?? {})}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="truncate">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                return (
+                  <TableRow
+                    key={row.id}
+                    className={`h-10 hover:cursor-pointer ${highlight?.includes(row.index) ? "bg-green-50" : ""}`}
+                    data-state={row.getIsSelected() && "selected"}
+                    data-higlighted={highlight?.includes(row.index)}
+                    {...(rowProps?.(row) ?? {})}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="truncate">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell

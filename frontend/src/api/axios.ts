@@ -5,6 +5,7 @@ import { fetchCurrentUserRoles } from "@/store/slices/rolesSlice";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 import { toast } from "sonner";
+import { t } from "@/translations";
 
 // Cache the token to avoid unnecessary async calls
 let cachedToken: string | null = null;
@@ -79,34 +80,58 @@ let rolesRefreshPromise: Promise<unknown> | null = null;
 api.interceptors.response.use(
   (response) => {
     // Check for role version header
-    const roleVersion = response.headers["x-role-version"];
+    // Support both header casings and potential runtime types
+    const headers: Record<string, unknown> & {
+      get?: (k: string) => string | null;
+    } = (response.headers as unknown as Record<string, unknown>) || {};
+    const roleVersion =
+      (headers["x-role-version"] as string | undefined) ||
+      (headers["X-Role-Version"] as string | undefined) ||
+      (typeof headers.get === "function"
+        ? headers.get("x-role-version") ||
+          headers.get("X-Role-Version") ||
+          undefined
+        : undefined);
     if (roleVersion) {
-      const lastKnownVersion = localStorage.getItem("last-role-version");
+      // Namespace role-version per user to avoid cross-user cache effects
+      const storedUserId = localStorage.getItem("userId");
+      const userKey = storedUserId
+        ? `last-role-version:${storedUserId}`
+        : "last-role-version";
+      // Read both the new per-user key and the legacy global key
+      const legacyKey = "last-role-version";
+      const lastKnownVersion =
+        localStorage.getItem(userKey) || localStorage.getItem(legacyKey);
 
       // If we have a new version or first time seeing a version, update local storage
       if (!lastKnownVersion || roleVersion !== lastKnownVersion) {
         // Store new version
-        localStorage.setItem("last-role-version", roleVersion);
+        localStorage.setItem(userKey, roleVersion);
+        // Keep legacy key in sync for backward compatibility with older checks
+        localStorage.setItem(legacyKey, roleVersion);
 
-        // Only notify and refresh if this isn't the first time (to avoid refresh on initial load)
-        if (lastKnownVersion) {
-          console.info(
-            "Your permissions have been updated. Refreshing session...",
-          );
-
-          // Refresh session and roles data
-          refreshSupabaseSession()
-            .then(() => {
-              // Refresh roles in Redux store
-              store.dispatch(fetchCurrentUserRoles());
-
-              // Show notification to user
-              toast.info("Your permissions have been updated.");
-            })
-            .catch((error) => {
-              console.error("Error refreshing session:", error);
-            });
+        // Always refresh on change to aggressively converge state,
+        // including first-time detection after login. Also surface a toast
+        // when this is not the very first time we've seen a version value.
+        if (import.meta.env.mode === "development") {
+          console.info("Permissions changed. Refreshing session...");
         }
+        refreshSupabaseSession()
+          .then(() => {
+            void store.dispatch(fetchCurrentUserRoles());
+            // Show notification if this is not the first detection for this user
+            if (lastKnownVersion) {
+              const lang =
+                (localStorage.getItem("language") as "fi" | "en") || "en";
+              toast.info(t.roleManagement.toast.info.permissionsUpdated[lang]);
+            }
+          })
+          .catch((error) => {
+            // Log in dev mode only to avoid spamming logs
+            if (import.meta.env.mode === "development") {
+              console.error("Error refreshing session:", error);
+            }
+          });
       }
     }
 
@@ -121,8 +146,10 @@ api.interceptors.response.use(
       originalRequest._retry = true; // Mark that we've retried
 
       try {
+        if (import.meta.env.mode === "development") {
+          console.error("Permission denied - refreshing roles");
+        }
         // De-dupe concurrent refreshes
-        console.error("Permission denied - refreshing roles");
         if (!rolesRefreshPromise) {
           rolesRefreshPromise = store
             .dispatch(fetchCurrentUserRoles())
@@ -136,7 +163,9 @@ api.interceptors.response.use(
         // Retry the original request with the same configuration
         return api(originalRequest);
       } catch (refreshError) {
-        console.error("Failed to refresh roles:", refreshError);
+        if (import.meta.env.mode === "development") {
+          console.error("Failed to refresh roles:", refreshError);
+        }
         // Continue with the original error if role refresh fails
       }
     }

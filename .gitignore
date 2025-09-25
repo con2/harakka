@@ -12,6 +12,7 @@ supabase/.env.keys
 !.env.supabase.local.template
 supabase-project
 supabase-prod
+.codeql-db-js
 # Volumes that get created when running supabase instance
 supabase-project/volumes/db
 
