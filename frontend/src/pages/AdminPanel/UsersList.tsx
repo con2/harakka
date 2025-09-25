@@ -86,14 +86,13 @@ const UsersList = () => {
     return undefined;
   }, [isSuper, activeOrgId]);
 
-  // Get available organizations for super admin filtering
+  // available orgs for super admin filtering
   const availableOrganizations = useMemo(() => {
     if (!isSuper) return [];
 
     const uniqueOrgsMap = new Map<string, { id: string; name: string }>();
     allUserRoles.forEach((role) => {
       if (role.organization_id && role.organization_name && role.is_active) {
-        // Use organization_id as the key to ensure uniqueness
         uniqueOrgsMap.set(role.organization_id, {
           id: role.organization_id,
           name: role.organization_name,
@@ -110,9 +109,21 @@ const UsersList = () => {
 
     allUserRoles.forEach((role) => {
       if (role.is_active && role.role_name) {
-        // super admin - show all roles, let backend filter
         if (isSuper) {
-          uniqueRoles.add(role.role_name);
+          // If org filter is selected, show roles from that org only
+          if (orgFilter !== "all") {
+            const selectedOrg = availableOrganizations.find(
+              (org) => org.id === orgFilter,
+            );
+            if (
+              selectedOrg &&
+              (role.organization_id === orgFilter ||
+                role.organization_name === selectedOrg.name)
+            ) {
+              uniqueRoles.add(role.role_name);
+            }
+          }
+          // If no org filter selected, don't show any roles
         }
         // tenant admin - show roles from active org AND Global roles
         else if (activeOrgId) {
@@ -129,7 +140,7 @@ const UsersList = () => {
     });
 
     return Array.from(uniqueRoles).map((role) => ({ id: role, role }));
-  }, [allUserRoles, activeOrgId, isSuper]);
+  }, [allUserRoles, activeOrgId, isSuper, orgFilter, availableOrganizations]);
 
   // Helper function to get user's roles for display in the role column (tenant admin only)
   const getUserRolesForDisplay = useCallback(
@@ -581,11 +592,14 @@ const UsersList = () => {
             className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           />
 
-          {/* Organization filter for super admin */}
+          {/* Org filter for super admin */}
           {isSuper && (
             <select
               value={orgFilter}
-              onChange={(e) => setOrgFilter(e.target.value)}
+              onChange={(e) => {
+                setOrgFilter(e.target.value);
+                setRoleFilter("all"); // reset role filter when org changes
+              }}
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             >
               <option value="all">All Organizations</option>
@@ -597,19 +611,21 @@ const UsersList = () => {
             </select>
           )}
 
-          {/* Role filter - show for all admins since backend handles filtering */}
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-          >
-            <option value="all">{t.usersList.filters.roles.all[lang]}</option>
-            {availableRoles.map((role) => (
-              <option key={role.id} value={role.role}>
-                {role.role}
-              </option>
-            ))}
-          </select>
+          {/* Role filter - always for tenant admin, only after org is selected for super admins */}
+          {(!isSuper || orgFilter !== "all") && (
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            >
+              <option value="all">{t.usersList.filters.roles.all[lang]}</option>
+              {availableRoles.map((role) => (
+                <option key={role.id} value={role.role}>
+                  {role.role}
+                </option>
+              ))}
+            </select>
+          )}
 
           {(searchQuery ||
             roleFilter !== "all" ||
