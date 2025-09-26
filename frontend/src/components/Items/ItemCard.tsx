@@ -26,12 +26,17 @@ import {
 import { Item } from "../../types/item";
 import { Input } from "../ui/input";
 import { itemsApi } from "@/api/services/items";
+import { cn } from "@/lib/utils";
+import { ImageSchemaType } from "@/store/utils/validate";
 
 interface ItemsCardProps {
-  item: Item;
+  item: Item & {
+    images?: { main: ImageSchemaType };
+  };
+  preview?: boolean;
 }
 
-const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
+const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const itemImages = useAppSelector(selectItemImages);
@@ -61,7 +66,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   const failedImageUrlsRef = useRef<Set<string>>(new Set());
 
   // Stable URL calculation that won't change between renders
-  const stableImageUrl = useMemo(() => {
+  const stableImage = useMemo(() => {
     // Get all possible images for this item
     const validImages = itemImagesForCurrentItem.filter(
       (img) => !failedImageUrlsRef.current.has(img.image_url),
@@ -78,36 +83,44 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       : validImages.find((img) => img.image_type === "main");
 
     // Use thumbnail or main image URL
-    return thumbnailImage?.image_url || mainImage?.image_url || "";
+    return {
+      image_url: thumbnailImage?.image_url || mainImage?.image_url || "",
+      object_fit:
+        thumbnailImage?.object_fit || mainImage?.object_fit || "cover",
+    };
   }, [itemImagesForCurrentItem]);
 
   // Image handling states
-  const [currentImageUrl, setCurrentImageUrl] = useState("");
+  const [currentImage, setCurrentImage] = useState({
+    image_url: "",
+    object_fit: "cover",
+  });
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const imageLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Set the image URL just once when it changes
   useEffect(() => {
-    if (stableImageUrl && !failedImageUrlsRef.current.has(stableImageUrl)) {
+    const { image_url } = stableImage;
+    if (image_url && !failedImageUrlsRef.current.has(image_url)) {
       // Clear any existing timeout
       if (imageLoadingTimeoutRef.current) {
         clearTimeout(imageLoadingTimeoutRef.current);
       }
 
-      setCurrentImageUrl(stableImageUrl);
+      setCurrentImage(stableImage);
       setIsImageLoading(true);
       setLoadFailed(false);
 
       // Set a timeout to prevent infinite loading
       imageLoadingTimeoutRef.current = setTimeout(() => {
         setIsImageLoading(false);
-        failedImageUrlsRef.current.add(stableImageUrl); // Mark as failed due to timeout
-        console.warn(`Image loading timed out for ${stableImageUrl}`);
+        failedImageUrlsRef.current.add(stableImage.image_url); // Mark as failed due to timeout
+        console.warn(`Image loading timed out for ${stableImage.image_url}`);
       }, 5000); // 5 seconds timeout
     } else {
       // If no URL or URL previously failed
-      setCurrentImageUrl("");
+      setCurrentImage(stableImage);
       setIsImageLoading(false);
       setLoadFailed(true);
     }
@@ -118,7 +131,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         clearTimeout(imageLoadingTimeoutRef.current);
       }
     };
-  }, [stableImageUrl]);
+  }, [stableImage]);
 
   // Fetch images only once per item
   useEffect(() => {
@@ -165,6 +178,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
     toast.success(`${itemContent?.item_name} ${t.itemCard.addedToCart[lang]}`);
   };
+
+  console.log(item);
 
   // Update availability info based on dates selection
   useEffect(() => {
@@ -227,9 +242,14 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           </div>
         )}
         <img
-          src={currentImageUrl || imagePlaceholder}
+          src={
+            item.images?.main?.url || currentImage.image_url || imagePlaceholder
+          }
           alt={itemContent?.item_name || "Tuotteen kuva"}
-          className="w-full h-full object-cover transition-opacity duration-300"
+          className={cn(
+            "w-full h-full transition-opacity duration-300",
+            `object-${item.images?.main?.metadata?.object_fit || currentImage.object_fit}`,
+          )}
           onLoad={() => {
             if (imageLoadingTimeoutRef.current) {
               clearTimeout(imageLoadingTimeoutRef.current);
@@ -240,9 +260,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           }}
           onError={(e) => {
             // Prevent infinite loops by tracking which URLs have failed
-            if (currentImageUrl) {
-              console.warn(`Failed to load image: ${currentImageUrl}`);
-              failedImageUrlsRef.current.add(currentImageUrl);
+            if (currentImage.image_url) {
+              console.warn(`Failed to load image: ${currentImage.image_url}`);
+              failedImageUrlsRef.current.add(currentImage.image_url);
             }
 
             // Clear the timeout

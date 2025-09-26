@@ -40,6 +40,7 @@ export interface ItemImage extends BaseEntity {
   alt_text?: string;
   is_active: boolean;
   storage_path?: string;
+  object_fit: "cover" | "contain";
 }
 
 /**

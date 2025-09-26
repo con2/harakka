@@ -48,7 +48,7 @@ import {
 import { setNextStep } from "@/store/slices/uiSlice";
 import { createItemDto } from "@/store/utils/validate";
 import { t } from "@/translations";
-import { ItemFormTag } from "@/types";
+import { Item, ItemFormTag } from "@/types";
 import { getFirstErrorMessage } from "@/utils/validate";
 import { CreateItemType } from "@common/items/form.types";
 import { ErrorMessage } from "@hookform/error-message";
@@ -66,6 +66,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { buildCategoryTree, Category } from "@/store/utils/format";
+import ItemCard from "@/components/Items/ItemCard";
+import { Separator } from "@/components/ui/separator";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -114,7 +116,19 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
         },
         category_id: null,
         images: {
-          main: null,
+          main: {
+            id: crypto.randomUUID(),
+            url: "https://rcbddkhvysexkvgqpcud.supabase.co/storage/v1/object/public/item-images/1769ed28-f6ca-47b8-b609-744ece61c7c8/cb0e5124-7f9b-408e-af74-7269eab9c2ca.jpeg",
+            full_path: "",
+            path: "",
+            metadata: {
+              image_type: "main",
+              display_order: 0,
+              alt_text: "alt",
+              is_active: true,
+              object_fit: "cover",
+            },
+          },
           details: [],
         },
       },
@@ -606,7 +620,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="mt-5">
+              <AccordionContent className="mt-5 grid grid-cols-[1fr_1fr] gap-8">
                 <ItemImageUpload
                   item_id={form.watch("id") || ""}
                   formImages={
@@ -614,6 +628,10 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   }
                   updateForm={form.setValue}
                 />
+                <div className="flex-1 flex flex-col h-fit">
+                  <h2 className="text-start">Preview</h2>
+                  <ItemCard item={form.getValues() as unknown as Item} />
+                </div>
               </AccordionContent>
             </AccordionItem>
 

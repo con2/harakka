@@ -21,6 +21,7 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useImageValidator } from "@/utils/imageUtils";
 import { FILE_CONSTRAINTS } from "@/types";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const MAX_DETAIL_IMAGES = 5;
 
@@ -100,6 +101,7 @@ function ItemImageUpload({
             display_order: 0,
             alt_text: "",
             is_active: true,
+            object_fit: formImages.main?.metadata.object_fit || "cover",
           },
         });
 
@@ -116,6 +118,7 @@ function ItemImageUpload({
             display_order: 0,
             alt_text: "",
             is_active: true,
+            object_fit: formImages.main?.metadata.object_fit || "cover",
           },
         });
 
@@ -168,6 +171,7 @@ function ItemImageUpload({
               display_order: currentDetailsCount + idx,
               alt_text: "",
               is_active: true,
+              object_fit: "cover",
             },
           };
         });
@@ -355,13 +359,13 @@ function ItemImageUpload({
   const isDetailUploading = uploadingStates.details.size > 0;
 
   return (
-    <>
+    <div className="flex flex-col flex-1">
       <div className="mb-8">
         <div>
           <p className="scroll-m-20 text-base font-semibold tracking-tight w-full mb-1">
             {t.itemImageUpload.paragraphs.mainImage[lang]}
           </p>
-          <p className="text-sm leading-none font-medium mb-4">
+          <p className="text-sm leading-[1.4] font-medium mb-4">
             {t.itemImageUpload.paragraphs.mainImageDescription[lang]}
           </p>
         </div>
@@ -408,10 +412,10 @@ function ItemImageUpload({
             onChange={(e) => handleFileSelect(e, "main")}
           />
         </div>
-        <div className="flex justify-between items-end">
+        <div className="flex justify-between items-center">
           {formImages?.main?.url && (
             <div className="max-w-[400px]">
-              <div className="flex gap-2 w-fit items-center mb-2">
+              {/* <div className="flex gap-2 w-fit items-center mb-2">
                 <Label className="mb-0">
                   {t.itemImageUpload.labels.altText[lang]}
                 </Label>
@@ -431,7 +435,19 @@ function ItemImageUpload({
                 value={formImages.main?.metadata.alt_text || ""}
                 onChange={(e) => updateImageAltText("main", 0, e.target.value)}
                 disabled={!formImages.main}
-              />
+              /> */}
+              <div className="flex gap-2">
+                <Checkbox
+                  onCheckedChange={() => {
+                    const newValue =
+                      formImages.main?.metadata.object_fit === "cover"
+                        ? "contain"
+                        : "cover";
+                    updateForm("images.main.metadata.object_fit", newValue);
+                  }}
+                />
+                <Label>Image cover</Label>
+              </div>
             </div>
           )}
           {formImages?.main?.url && (
@@ -519,7 +535,7 @@ function ItemImageUpload({
                   alt={`Detail image ${idx + 1}`}
                 />
                 <div className="flex justify-between w-full">
-                  <div>
+                  {/* <div>
                     <div className="flex gap-2 w-fit items-center mb-2">
                       <Label className="mb-0">
                         {t.itemImageUpload.labels.altText[lang]}
@@ -538,7 +554,7 @@ function ItemImageUpload({
                       }
                       disabled={uploadingStates.details.has(image.id)}
                     />
-                  </div>
+                  </div> */}
                   <Button
                     variant="destructive"
                     className="self-center"
@@ -557,7 +573,7 @@ function ItemImageUpload({
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
 

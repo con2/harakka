@@ -44,6 +44,7 @@ export type CreateItemType = {
         alt_text?: string;
         display_order: number;
         is_active: boolean;
+        object_fit: "contain" | "cover";
       };
     } | null;
     details: {
@@ -56,12 +57,16 @@ export type CreateItemType = {
         alt_text?: string;
         display_order: number;
         is_active: boolean;
+        object_fit: "contain" | "cover";
       };
     }[];
   };
 };
 
-export type MappedItem = Omit<CreateItemType, "location" | "tags" | "images"> & {
+export type MappedItem = Omit<
+  CreateItemType,
+  "location" | "tags" | "images"
+> & {
   location_id: string;
   org_id: string;
 };
