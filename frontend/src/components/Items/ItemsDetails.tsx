@@ -28,14 +28,14 @@ import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { useTranslation } from "@/hooks/useTranslation";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
-import { Item, ItemImageAvailabilityInfo, ItemTranslation } from "@/types";
+import {
+  Item,
+  ItemImageAvailabilityInfo,
+  ItemTranslation,
+  ItemWithTags,
+} from "@/types";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { itemsApi } from "@/api/services/items";
-import { ExtendedTag } from "@common/items/tag.types";
-
-interface ItemWithTags extends Item {
-  tags?: ExtendedTag[];
-}
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
