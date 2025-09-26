@@ -35,6 +35,10 @@ const initialState: ItemState = {
   availabilityOverviewLoading: false,
   availabilityOverviewError: null,
   availabilityOverviewPagination: { page: 1, total: 0, totalPages: 1 },
+  // Admin location options (org-scoped item locations)
+  adminLocationOptions: [],
+  adminLocationOptionsLoading: false,
+  adminLocationOptionsError: null,
   itemCreation: {
     org: null,
     location: undefined,
@@ -222,14 +226,25 @@ export const fetchAvailabilityOverview = createAsyncThunk<
     locationIds?: string[];
     categoryIds?: string[];
   }
->(
-  "items/fetchAvailabilityOverview",
-  async (params, { rejectWithValue }) => {
+>("items/fetchAvailabilityOverview", async (params, { rejectWithValue }) => {
+  try {
+    return await itemsApi.getAvailabilityOverview(params);
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to fetch availability overview"),
+    );
+  }
+});
+
+// Fetch locations that the active org actually has items in
+export const fetchAdminLocationOptions = createAsyncThunk(
+  "items/fetchAdminLocationOptions",
+  async (_: void, { rejectWithValue }) => {
     try {
-      return await itemsApi.getAvailabilityOverview(params);
+      return await itemsApi.getAdminLocationOptions();
     } catch (error: unknown) {
       return rejectWithValue(
-        extractErrorMessage(error, "Failed to fetch availability overview"),
+        extractErrorMessage(error, "Failed to fetch location options"),
       );
     }
   },
@@ -606,6 +621,19 @@ export const itemsSlice = createSlice({
         state.availabilityOverviewLoading = false;
         state.availabilityOverviewError = action.payload as string;
       })
+      // Admin location options
+      .addCase(fetchAdminLocationOptions.pending, (state) => {
+        state.adminLocationOptionsLoading = true;
+        state.adminLocationOptionsError = null;
+      })
+      .addCase(fetchAdminLocationOptions.fulfilled, (state, action) => {
+        state.adminLocationOptionsLoading = false;
+        state.adminLocationOptions = action.payload.data ?? [];
+      })
+      .addCase(fetchAdminLocationOptions.rejected, (state, action) => {
+        state.adminLocationOptionsLoading = false;
+        state.adminLocationOptionsError = action.payload as string;
+      })
       .addCase(uploadCSV.pending, (state) => {
         state.loading = true;
       })
@@ -668,6 +696,10 @@ export const selectAvailabilityOverviewLoading = (state: RootState) =>
   state.items.availabilityOverviewLoading ?? false;
 export const selectAvailabilityOverviewPagination = (state: RootState) =>
   state.items.availabilityOverviewPagination!;
+export const selectAdminLocationOptions = (state: RootState) =>
+  state.items.adminLocationOptions ?? [];
+export const selectAdminLocationOptionsLoading = (state: RootState) =>
+  state.items.adminLocationOptionsLoading ?? false;
 export const selectItemCreation = (state: RootState) =>
   state.items.itemCreation;
 export const selectIsEditing = (state: RootState) => state.items.isEditingItem;

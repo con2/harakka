@@ -12,8 +12,10 @@ import {
   selectAvailabilityOverview,
 } from "@/store/slices/itemsSlice";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
-// Use items API to fetch only locations that actually have items for the org
-import { itemsApi } from "@/api/services/items";
+import {
+  fetchAdminLocationOptions,
+  selectAdminLocationOptions,
+} from "@/store/slices/itemsSlice";
 import { t } from "@/translations";
 import { Item, ManageItemViewRow, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
@@ -47,9 +49,7 @@ const AdminItemsTable = () => {
   const availabilityByItem = useAppSelector(selectAvailabilityOverview);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
-  const [locationOptions, setLocationOptions] = useState<
-    { id: string; name: string | null }[]
-  >([]);
+  const locationOptions = useAppSelector(selectAdminLocationOptions);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const org_id = useAppSelector(selectActiveOrganizationId);
   const categories = useAppSelector(selectCategories);
@@ -139,15 +139,12 @@ const AdminItemsTable = () => {
     );
   }, [dispatch, items, locationFilter]);
 
-  //fetch tags and locations list
+  //fetch tags and org-specific item locations list
   useEffect(() => {
     if (tags.length === 0)
       void dispatch(fetchFilteredTags({ limit: 20, sortBy: "assigned_to" }));
-    // Load org-specific item locations via items API
-    void itemsApi
-      .getAdminLocationOptions()
-      .then((res) => setLocationOptions(res.data ?? []))
-      .catch(() => setLocationOptions([]));
+    // Load org-specific item locations via thunk
+    void dispatch(fetchAdminLocationOptions());
     if (categories.length === 0)
       void dispatch(fetchAllCategories({ page: 1, limit: 20 }));
   }, [dispatch, tags.length, items.length, categories.length]);

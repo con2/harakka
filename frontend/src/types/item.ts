@@ -163,6 +163,10 @@ export interface ItemState {
     total: number;
     totalPages: number;
   };
+  // Admin locations where the org has items
+  adminLocationOptions?: { id: string; name: string | null }[];
+  adminLocationOptionsLoading?: boolean;
+  adminLocationOptionsError?: string | null;
   itemCreation: {
     org: SelectedOrg | null;
     location: SelectedStorage | null | undefined;
