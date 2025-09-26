@@ -6,12 +6,12 @@ This document outlines the process for deploying the application.
 
 - [Prerequisites](#prerequisites)
 - [Environment Configuration](#environment-configuration)
-- [Backend Deployment](#backend-deployment)
-- [Frontend Deployment](#frontend-deployment)
+  - [Setting Environment Variables](#setting-environment-variables)
+- [Deployment Configuration with YAML](#deployment-configuration-with-yaml)
+  - [Backend Deployment](#backend-deployment)
+  - [Frontend Deployment](#frontend-deployment)
 - [Database Setup](#database-setup)
-- [CI/CD Options](#cicd-options)
-- [Monitoring and Maintenance](#monitoring-and-maintenance)
-- [Troubleshooting](#troubleshooting)
+- [Post-Deployment Verification](#post-deployment-verification)
 
 ## Prerequisites
 
@@ -239,7 +239,7 @@ jobs:
 
 The application uses a remote Supabase instance for database and authentication.
 
-<!-- TODO: UPDATE THE LINK. -->
+<!-- TODO: UPDATE THE LINK AFTER WE REFINE SUPABASE SETUP DOC -->
 
 Refer to the [Supabase Setup Guide](../backend/supabase-setup.md) guide for detailed instructions on configuring your Supabase instance.
 
