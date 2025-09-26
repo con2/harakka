@@ -13,7 +13,7 @@ import {
   uploadToBucket,
 } from "@/store/slices/itemImagesSlice";
 import { CreateItemType } from "@common/items/form.types";
-import { Info, Trash } from "lucide-react";
+import { ImagePlus, Info, Trash } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { UseFormSetValue } from "react-hook-form";
 import { toast } from "sonner";
@@ -359,7 +359,7 @@ function ItemImageUpload({
   const isDetailUploading = uploadingStates.details.size > 0;
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col">
       <div className="mb-8">
         <div>
           <p className="scroll-m-20 text-base font-semibold tracking-tight w-full mb-1">
@@ -395,10 +395,11 @@ function ItemImageUpload({
               />
             ) : (
               <>
+                <ImagePlus className="!w-10 !h-10 text-muted-foreground mb-1" />
                 {isMainUploading
                   ? t.itemImageUpload.buttons.uploading[lang]
                   : t.itemImageUpload.buttons.mainImageUpload[lang]}
-                <p className="text-xs mt-1 text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {t.itemImageUpload.buttons.uploadSubtext[lang]}
                 </p>
               </>
@@ -510,8 +511,9 @@ function ItemImageUpload({
               t.itemImageUpload.buttons.maxReached[lang]
             ) : (
               <>
+                <ImagePlus className="!w-10 !h-10 text-muted-foreground mb-1" />
                 {t.itemImageUpload.buttons.detailImageUpload[lang]}
-                <p className="text-xs mt-1 text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {t.itemImageUpload.buttons.uploadSubtext[lang]}
                 </p>
               </>
