@@ -1,4 +1,3 @@
-import { FacebookIcon, InstagramIcon, YoutubeIcon } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 
@@ -59,37 +58,10 @@ const Footer = () => {
                 </a>
               </p>
             </div>
-            <div className="flex flex-row items-center mt-4 justify-between gap-4">
-              <h4>{t.footer.sections.stayUpdated.followUs[lang]}</h4>
-              <div className="flex gap-2">
-                <a
-                  href="https://www.instagram.com/illusia_ry/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <InstagramIcon className="h-5 w-5" />
-                </a>
-                <a
-                  href="https://www.facebook.com/illusiary/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <FacebookIcon className="h-5 w-5" />
-                </a>
-                {/* TODO: Add link */}
-                <a
-                  href="https://www.youtube.com/@illusia"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <YoutubeIcon className="h-5 w-5" />
-                </a>
-              </div>
-            </div>
           </div>
         </div>
         <p className="mt-10 text-xs">
-          &copy; {new Date().getFullYear()} Illusia. {t.footer.copyright[lang]}
+          &copy; {new Date().getFullYear()} Harakka. {t.footer.copyright[lang]}
         </p>
       </div>
     </footer>

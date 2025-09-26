@@ -180,6 +180,9 @@ const AdminItemsTable = () => {
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
         const name = row.original.translations[lang].item_name || "";
+        if (!name || name.trim() === "") {
+          return t.uiComponents.dataTable.emptyCell[lang] || "—";
+        }
         return name.charAt(0).toUpperCase() + name.slice(1);
       },
     },
@@ -194,8 +197,7 @@ const AdminItemsTable = () => {
           lang === "fi"
             ? row.original.category_fi_name
             : row.original.category_en_name;
-        if (!cat) return "---";
-        return cat;
+        return cat || t.uiComponents.dataTable.emptyCell[lang] || "—";
       },
     },
     {
@@ -205,7 +207,9 @@ const AdminItemsTable = () => {
       accessorFn: (row) => row.location_name || "N/A",
       cell: ({ row }) => (
         <div className="flex items-center gap-1 text-sm">
-          {row.original.location_name || "N/A"}
+          {row.original.location_name ||
+            t.uiComponents.dataTable.emptyCell[lang] ||
+            "—"}
         </div>
       ),
     },
