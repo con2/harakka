@@ -438,6 +438,7 @@ function ItemImageUpload({
               /> */}
               <div className="flex gap-2">
                 <Checkbox
+                  checked={formImages.main?.metadata.object_fit === "cover"}
                   onCheckedChange={() => {
                     const newValue =
                       formImages.main?.metadata.object_fit === "cover"
@@ -535,7 +536,7 @@ function ItemImageUpload({
                   alt={`Detail image ${idx + 1}`}
                 />
                 <div className="flex justify-between w-full">
-                  {/* <div>
+                  <div>
                     <div className="flex gap-2 w-fit items-center mb-2">
                       <Label className="mb-0">
                         {t.itemImageUpload.labels.altText[lang]}
@@ -554,7 +555,7 @@ function ItemImageUpload({
                       }
                       disabled={uploadingStates.details.has(image.id)}
                     />
-                  </div> */}
+                  </div>
                   <Button
                     variant="destructive"
                     className="self-center"

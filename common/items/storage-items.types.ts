@@ -29,26 +29,27 @@ export type OrgItem = {
   is_active: boolean;
 };
 
-type Image = {
-            id: string,
-          url: string,
-            full_path: string,
-            path: string,
-            metadata: {
-              image_type: string,
-              display_order: number,
-              alt_text: string,
-              is_active: boolean,
-            },
-}
+export type Image = {
+  id: string;
+  url: string;
+  full_path: string;
+  path: string;
+  metadata: {
+    image_type: string;
+    display_order: number;
+    alt_text: string;
+    is_active: boolean;
+    object_fit: "cover" | "contain";
+  };
+};
 
 export type UpdateItem = StorageItemInsert & {
   tags: string[];
   location_details: LocationRow;
   images: {
-    main: Image | null,
-    details: Image[]
-  }
+    main: Image | null;
+    details: Image[];
+  };
 };
 
 export type StorageItem = StorageItemRow & {

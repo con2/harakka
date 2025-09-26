@@ -57,7 +57,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { SubmitErrorHandler, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { TRANSLATION_FIELDS } from "../add-item.data";
+import { getInitialItemData, TRANSLATION_FIELDS } from "../add-item.data";
 import ItemImageUpload from "../ItemImageUpload";
 import {
   Accordion,
@@ -67,7 +67,6 @@ import {
 } from "@/components/ui/accordion";
 import { buildCategoryTree, Category } from "@/store/utils/format";
 import ItemCard from "@/components/Items/ItemCard";
-import { Separator } from "@/components/ui/separator";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -92,46 +91,8 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   const isEditing = useAppSelector(selectIsEditing);
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
-    defaultValues: initialData ??
-      editItem ?? {
-        id: crypto.randomUUID(),
-        location: {
-          id: storage?.id ?? "",
-          name: storage?.name ?? "",
-          address: storage?.address ?? "",
-        },
-        quantity: 1,
-        available_quantity: 1,
-        is_active: true,
-        tags: [],
-        translations: {
-          fi: {
-            item_name: "",
-            item_description: "",
-          },
-          en: {
-            item_name: "",
-            item_description: "",
-          },
-        },
-        category_id: null,
-        images: {
-          main: {
-            id: crypto.randomUUID(),
-            url: "https://rcbddkhvysexkvgqpcud.supabase.co/storage/v1/object/public/item-images/1769ed28-f6ca-47b8-b609-744ece61c7c8/cb0e5124-7f9b-408e-af74-7269eab9c2ca.jpeg",
-            full_path: "",
-            path: "",
-            metadata: {
-              image_type: "main",
-              display_order: 0,
-              alt_text: "alt",
-              is_active: true,
-              object_fit: "cover",
-            },
-          },
-          details: [],
-        },
-      },
+    defaultValues:
+      initialData ?? editItem ?? getInitialItemData(storage || undefined),
   });
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
@@ -629,8 +590,11 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   updateForm={form.setValue}
                 />
                 <div className="flex-1 flex flex-col h-fit">
-                  <h2 className="text-start">Preview</h2>
-                  <ItemCard item={form.getValues() as unknown as Item} />
+                  <h2 className="text-start font-main text-primary">Preview</h2>
+                  <ItemCard
+                    preview
+                    item={form.getValues() as unknown as Item}
+                  />
                 </div>
               </AccordionContent>
             </AccordionItem>

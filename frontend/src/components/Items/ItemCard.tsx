@@ -72,21 +72,13 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
       (img) => !failedImageUrlsRef.current.has(img.image_url),
     );
 
-    // Find thumbnail image for this item
-    const thumbnailImage = validImages.find(
-      (img) => img.image_type === "thumbnail",
-    );
-
     // If no thumbnail found, try to get main image
-    const mainImage = thumbnailImage
-      ? null
-      : validImages.find((img) => img.image_type === "main");
+    const mainImage = validImages.find((img) => img.image_type === "main");
 
     // Use thumbnail or main image URL
     return {
-      image_url: thumbnailImage?.image_url || mainImage?.image_url || "",
-      object_fit:
-        thumbnailImage?.object_fit || mainImage?.object_fit || "cover",
+      image_url: mainImage?.image_url || "",
+      object_fit: mainImage?.object_fit || "cover",
     };
   }, [itemImagesForCurrentItem]);
 
@@ -179,8 +171,6 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
     toast.success(`${itemContent?.item_name} ${t.itemCard.addedToCart[lang]}`);
   };
 
-  console.log(item);
-
   // Update availability info based on dates selection
   useEffect(() => {
     if (startDate && endDate) {
@@ -248,7 +238,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
           alt={itemContent?.item_name || "Tuotteen kuva"}
           className={cn(
             "w-full h-full transition-opacity duration-300",
-            `object-${item.images?.main?.metadata?.object_fit || currentImage.object_fit}`,
+            `object-${preview ? item.images?.main?.metadata?.object_fit : currentImage.object_fit}`,
           )}
           onLoad={() => {
             if (imageLoadingTimeoutRef.current) {
