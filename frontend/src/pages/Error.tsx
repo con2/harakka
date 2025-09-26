@@ -4,9 +4,14 @@ import hero from "@/assets/illusiaImage.jpg";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 
-function Error() {
+type ErrorProps = {
+  type?: "not-found" | "server-error";
+};
+
+function Error({ type = "server-error" }: ErrorProps) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
+
   return (
     <div>
       <div
@@ -15,10 +20,20 @@ function Error() {
           backgroundImage: `url(${hero})`,
         }}
       />
-      <div className="justify-self-center relative top-[100px] max-w-[400px] w-fit p-6 bg-white rounded">
-        <h1 className="text-3xl mb-[1rem] font-main font-semibold">
-          {t.error.title[lang]}
+      <div className="justify-self-center relative top-[150px] max-w-[400px] w-fit p-11 bg-white rounded">
+        <img
+          className="absolute left-0 top-[-24%] w-[70px]"
+          src="https://rcbddkhvysexkvgqpcud.supabase.co/storage/v1/object/public/public-files/angy.png"
+        />
+        <h1 className="text-[5rem] text-center font-main font-semibold leading-[1]">
+          {type === "not-found" ? "404" : "500"}
         </h1>
+        <h2 className="text-3xl mb-[1rem] font-main text-primary font-semibold">
+          {t.error.titles[type][lang]}
+        </h2>
+        <p className="mb-[2rem] text-center text-base font-main">
+          {t.error.descriptions[type][lang]}
+        </p>
         <div className="flex gap-2">
           <Button
             className="flex-1 rounded border border-1-(--subtle-grey) shadow-none"
