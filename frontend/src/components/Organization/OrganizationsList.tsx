@@ -34,19 +34,24 @@ const OrganizationsList = () => {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[...Array(3)].map((_item, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-muted rounded w-1/2"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-3 bg-muted rounded w-full mb-2"></div>
-              <div className="h-3 bg-muted rounded w-2/3"></div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {[...Array(6)].map((_item, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-muted rounded-lg"></div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="h-3 bg-muted rounded w-full mb-2"></div>
+                <div className="h-3 bg-muted rounded w-3/4 mb-3"></div>
+                <div className="h-3 bg-muted rounded w-1/3"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
@@ -68,74 +73,75 @@ const OrganizationsList = () => {
     {} as Record<string, string[]>,
   );
 
+  // Filter out High Council and Global organizations
+  const filteredOrganizations = organizations.filter(
+    (org) =>
+      !org.name.toLowerCase().includes("high council") &&
+      !org.name.toLowerCase().includes("global"),
+  );
+
   return (
-    <div className="space-y-6 p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {organizations.map((org) => (
+    <div className="container mx-auto px-4 py-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {filteredOrganizations.map((org) => (
           <Card
             key={org.id}
-            className="relative flex flex-col h-full hover:shadow-lg transition-shadow duration-200 border-0 shadow-sm"
+            className="hover:shadow-md transition-shadow duration-200"
           >
-            <CardHeader className="pb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4 flex-1">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1">
                   {/* Organization logo */}
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center overflow-hidden shadow-sm">
+                  <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center overflow-hidden">
                     {org.logo_picture_url ? (
                       <img
                         src={org.logo_picture_url}
                         alt={t.organizationList.alt.organizationLogo[
                           lang
                         ].replace("{orgName}", org.name)}
-                        className="h-12 w-12 object-cover rounded-xl"
+                        className="h-10 w-10 object-cover rounded-lg"
                       />
                     ) : (
-                      <Building2 className="h-6 w-6 text-blue-600" />
+                      <Building2 className="h-5 w-5 text-blue-600" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg font-semibold text-gray-900 truncate">
+                    <CardTitle className="font-semibold text-gray-900 truncate">
                       {org.name}
                     </CardTitle>
                   </div>
                 </div>
 
-                {/* Membership indicator on the right */}
+                {/* Membership indicator */}
                 {userOrgRoles[org.id] && (
-                  <div className="flex flex-col items-end ml-4">
-                    <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {t.organizationList.membership.youAreRole[lang].replace(
-                          "{role}",
-                          formatRoleName(userOrgRoles[org.id][0]),
-                        )}
-                        {userOrgRoles[org.id].length > 1 &&
-                          ` +${userOrgRoles[org.id].length - 1}`}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-1 text-sm text-green-600 font-medium">
+                    <Users className="h-4 w-4" />
+                    <span>
+                      {formatRoleName(userOrgRoles[org.id][0])}
+                      {userOrgRoles[org.id].length > 1 &&
+                        ` +${userOrgRoles[org.id].length - 1}`}
+                    </span>
                   </div>
                 )}
               </div>
             </CardHeader>
 
-            <CardContent className="pt-0 flex-grow flex flex-col">
-              <CardDescription className="text-sm text-gray-600 mb-4 overflow-hidden">
-                {org.description ||
-                  t.organizationList.columns.description[lang]}
-              </CardDescription>
+            <CardContent className="pt-0">
+              {org.description && (
+                <CardDescription className="text-sm text-gray-600 mb-3 line-clamp-2">
+                  {org.description}
+                </CardDescription>
+              )}
 
-              <div className="mt-auto">
-                <Link
-                  to={`/storage?organization=${encodeURIComponent(org.name)}`}
-                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors duration-200 group"
-                >
-                  <span>
-                    {t.organizationList.actions.browseStorage[lang]} {org.name}
-                  </span>
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-                </Link>
-              </div>
+              <Link
+                to={`/storage?organization=${encodeURIComponent(org.name)}`}
+                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors duration-200 group"
+              >
+                <span>
+                  {t.organizationList.actions.browseStorage[lang]} {org.name}
+                </span>
+                <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-200" />
+              </Link>
             </CardContent>
           </Card>
         ))}
