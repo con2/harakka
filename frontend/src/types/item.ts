@@ -6,6 +6,7 @@ import {
 import { ErrorContext, StorageLocationRow, Tag, TagTranslation } from "@/types";
 import { Override } from "./db-helpers";
 import { StorageItemRow } from "@common/items/storage-items.types";
+import { ExtendedTag } from "@common/items/tag.types";
 
 /**
  * Item translations content
@@ -60,6 +61,14 @@ export type Item = Override<StorageItemRow, ItemAugmentedFields> & {
   organization_id?: string;
   org_id?: string;
 };
+
+/**
+ * Item with extended tag information
+ * Used when displaying items with full tag details including translations
+ */
+export interface ItemWithTags extends Item {
+  tags?: ExtendedTag[];
+}
 
 /**
  * Row shape returned by GET /storage-items/ordered

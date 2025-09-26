@@ -53,7 +53,7 @@ import { getFirstErrorMessage } from "@/utils/validate";
 import { CreateItemType } from "@common/items/form.types";
 import { ErrorMessage } from "@hookform/error-message";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { SubmitErrorHandler, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -65,6 +65,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { buildCategoryTree, Category } from "@/store/utils/format";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -207,10 +208,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   }, []);
 
   useEffect(() => {
-    if (categories.length === 0)
-      void dispatch(
-        fetchAllCategories({ page: 1, limit: 20, order: "assigned_to" }),
-      );
+    void dispatch(
+      fetchAllCategories({ page: 1, limit: 100, order: "assigned_to" }),
+    );
   }, []);
 
   useEffect(() => {
@@ -256,6 +256,28 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
       );
     }
   }, [tags, editItem]);
+
+  const mappedCategories = buildCategoryTree(categories);
+  const renderCategoryOptions = (
+    categories: Category[],
+    level = 0,
+  ): ReactNode[] => {
+    return categories.flatMap((cat) => [
+      <SelectItem
+        style={{
+          paddingLeft: `calc(var(--spacing) * 2 + (var(--spacing) * ${level * 4}))`,
+          fontWeight: level === 0 ? "600" : "400",
+        }}
+        key={cat.id}
+        value={cat.id}
+      >
+        {cat.translations[appLang]}
+      </SelectItem>,
+      ...(cat.subcategories && cat.subcategories.length
+        ? renderCategoryOptions(cat.subcategories, level + 1)
+        : []),
+    ]);
+  };
 
   /*------------------render-------------------------------------------------*/
   return (
@@ -373,11 +395,8 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
-                              {categories?.map((cat) => (
-                                <SelectItem key={cat.id} value={cat.id}>
-                                  {cat.translations[appLang]}
-                                </SelectItem>
-                              ))}
+                              {mappedCategories &&
+                                renderCategoryOptions(mappedCategories)}
                             </SelectContent>
                           </Select>
                         </FormItem>
@@ -524,7 +543,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                             onClick={toggleTag}
                             data-id={tag.id}
                             data-translations={tag.translations}
-                            className=""
+                            className="hover:cursor-pointer"
                           >
                             {tag.translations?.[appLang].name}
                           </Badge>
@@ -556,6 +575,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                           onClick={toggleTag}
                           variant="default"
                           data-id={tag.tag_id}
+                          className="hover:cursor-pointer"
                         >
                           {tag.translations?.[appLang].name}
                         </Badge>

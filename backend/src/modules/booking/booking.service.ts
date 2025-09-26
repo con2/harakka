@@ -1304,6 +1304,7 @@ export class BookingService {
     const isAdmin = this.roleService.hasAnyRole(req, [
       "tenant_admin",
       "storage_manager",
+      "requester",
     ]);
     const isOwner = booking.user_id === userId;
 

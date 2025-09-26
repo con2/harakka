@@ -387,7 +387,7 @@ const UsersList = () => {
       size: 50,
       cell: ({ row }) => {
         const url = row.original.profile_picture_url;
-        return url ? (
+        return url && url.trim() ? (
           <img
             src={url}
             alt="Profile"
@@ -402,11 +402,17 @@ const UsersList = () => {
       accessorKey: "full_name",
       header: t.usersList.columns.name[lang],
       size: 100,
+      cell: ({ row }) =>
+        row.original.full_name ||
+        t.uiComponents.dataTable.emptyCell[lang] ||
+        "—",
     },
     {
       accessorKey: "phone",
       header: t.usersList.columns.phone[lang],
       size: 100,
+      cell: ({ row }) =>
+        row.original.phone || t.uiComponents.dataTable.emptyCell[lang] || "—",
     },
     {
       accessorKey: "email",
@@ -418,7 +424,9 @@ const UsersList = () => {
           email
         ) : (
           <span className="text-red-500">
-            {t.usersList.status.unverified[lang]}
+            {t.usersList.status.unverified[lang] ||
+              t.uiComponents.dataTable.emptyCell[lang] ||
+              "—"}
           </span>
         );
       },
