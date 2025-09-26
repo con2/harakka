@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
-import { Outlet } from "react-router-dom";
+import { Outlet, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SlidersIcon } from "lucide-react";
@@ -34,6 +34,10 @@ const UserPanel = () => {
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
   const organizations = useAppSelector(selectOrganizations);
   const MAX_VISIBLE = 5;
+  const [searchParams] = useSearchParams();
+
+  // State to track if URL params have been processed
+  const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
 
   useEffect(() => {
     void dispatch(fetchAllCategories({ page: 1, limit: 50 }));
@@ -199,6 +203,26 @@ const UserPanel = () => {
       filterRef.current.scrollTop = 0;
     }
   }, [isFilterVisible]);
+
+  // Process URL parameters when organizations are loaded
+  useEffect(() => {
+    if (organizations.length > 0 && !urlParamsProcessed) {
+      const organizationParam = searchParams.get("organization");
+
+      if (organizationParam) {
+        // Find organization by name and set it as selected
+        const org = organizations.find((o) => o.name === organizationParam);
+        if (org) {
+          setFilters((prev) => ({
+            ...prev,
+            orgIds: [org.id],
+          }));
+        }
+      }
+
+      setUrlParamsProcessed(true);
+    }
+  }, [organizations, searchParams, urlParamsProcessed]);
 
   return (
     <div className="flex min-h-screen w-full overflow-y-auto justify-around pt-4 md:pt-0 gap-4">

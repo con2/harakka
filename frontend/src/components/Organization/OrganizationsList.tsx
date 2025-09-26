@@ -130,7 +130,9 @@ const OrganizationsList = () => {
                   to={`/storage?organization=${encodeURIComponent(org.name)}`}
                   className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors duration-200 group"
                 >
-                  <span>{t.organizationList.actions.browseStorage[lang]}</span>
+                  <span>
+                    {t.organizationList.actions.browseStorage[lang]} {org.name}
+                  </span>
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                 </Link>
               </div>

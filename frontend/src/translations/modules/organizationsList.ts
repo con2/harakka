@@ -27,8 +27,8 @@ export const organizationList = {
   },
   actions: {
     browseStorage: {
-      fi: "Selaa varastoa",
-      en: "Browse Storage",
+      fi: "Selaa esineitä",
+      en: "Browse Items from",
     },
   },
   alt: {
