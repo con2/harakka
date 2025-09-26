@@ -11,6 +11,14 @@ import {
   getItemImages,
   selectItemImages,
 } from "../../store/slices/itemImagesSlice";
+import {
+  fetchOrganizationById,
+  selectedOrganization,
+} from "../../store/slices/organizationSlice";
+import {
+  fetchAllCategories,
+  selectCategories,
+} from "../../store/slices/categoriesSlice";
 import { Button } from "../../components/ui/button";
 import { ChevronLeft, Clock, Info, LoaderCircle } from "lucide-react";
 import { addToCart } from "../../store/slices/cartSlice";
@@ -20,7 +28,12 @@ import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { useTranslation } from "@/hooks/useTranslation";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
-import { Item, ItemImageAvailabilityInfo, ItemTranslation } from "@/types";
+import {
+  Item,
+  ItemImageAvailabilityInfo,
+  ItemTranslation,
+  ItemWithTags,
+} from "@/types";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { itemsApi } from "@/api/services/items";
 
@@ -35,6 +48,8 @@ const ItemsDetails: React.FC = () => {
   const error = useAppSelector(selectItemsError);
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
   const itemImages = useAppSelector(selectItemImages);
+  const organization = useAppSelector(selectedOrganization);
+  const categories = useAppSelector(selectCategories);
   const [quantity, setQuantity] = useState(1);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [isImageVisible, setIsImageVisible] = useState(false);
@@ -143,8 +158,6 @@ const ItemsDetails: React.FC = () => {
   useEffect(() => {
     if (id) {
       void dispatch(getItemById(id));
-
-      // Fetch images for this item
       dispatch(getItemImages(id))
         .unwrap()
         .catch((error) => {
@@ -152,6 +165,33 @@ const ItemsDetails: React.FC = () => {
         });
     }
   }, [id, dispatch]);
+
+  // Fetch org data when item is loaded
+  useEffect(() => {
+    const itemWithOrgId = item as Item;
+    if (
+      itemWithOrgId?.org_id &&
+      (!organization || organization.id !== itemWithOrgId.org_id)
+    ) {
+      void dispatch(fetchOrganizationById(itemWithOrgId.org_id));
+    }
+  }, [item, organization, dispatch]);
+
+  // Fetch categories if not already loaded
+  useEffect(() => {
+    if (categories.length === 0) {
+      void dispatch(fetchAllCategories({ page: 1, limit: 100 }));
+    }
+  }, [categories.length, dispatch]);
+
+  // Find the category for this item
+  const itemCategory = useMemo(() => {
+    const itemWithCategory = item as Item;
+    if (itemWithCategory?.category_id && categories.length > 0) {
+      return categories.find((cat) => cat.id === itemWithCategory.category_id);
+    }
+    return null;
+  }, [item, categories]);
 
   if (loading) {
     return (
@@ -275,20 +315,37 @@ const ItemsDetails: React.FC = () => {
               : "Tuote"}
           </h2>
 
-          {/* Location Details Section */}
-          {(item as Item).location_details && (
-            <div className="text-sm mt-2" data-cy="item-details-location">
-              {(item as Item).location_details?.name && (
-                <div className="flex items-start">
-                  <span>{t.itemDetails.locations.location[lang]}:</span>
-                  <span className="ml-1">
-                    {(item as Item).location_details?.name}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Organization, Location */}
+          <div className="space-y-1 mt-4 mb-6">
+            {/* Organization */}
+            {organization && (
+              <div
+                className="flex items-center gap-2"
+                data-cy="item-details-organization"
+              >
+                <span className="text-sm text-slate-600 font-semibold">
+                  {t.itemDetails.organization[lang]}:
+                </span>
+                <span className="text-sm">{organization.name}</span>
+              </div>
+            )}
 
+            {/* Location Details */}
+            {(item as Item).location_details && (
+              <div
+                className="flex items-center gap-2"
+                data-cy="item-details-location"
+              >
+                <span className="text-sm text-slate-600 font-semibold">
+                  {t.itemDetails.locations.location[lang]}:
+                </span>
+                <span className="text-sm">
+                  {(item as Item).location_details?.name}
+                </span>
+              </div>
+            )}
+          </div>
+          {/* Item description */}
           <p data-cy="item-details-description">
             {itemContent?.item_description
               ? `${itemContent.item_description
@@ -419,6 +476,54 @@ const ItemsDetails: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
+      <div className="mt-6 space-y-2">
+        {/* Category */}
+        {itemCategory && (
+          <div
+            className="flex items-center gap-2"
+            data-cy="item-details-category"
+          >
+            <span className="text-sm text-slate-600 font-semibold">
+              {t.itemDetails.category[lang]}:
+            </span>
+            <span className="text-sm">
+              {itemCategory.translations[lang] || itemCategory.translations.en}
+            </span>
+          </div>
+        )}
+
+        {/* Tags */}
+        {(item as ItemWithTags).tags &&
+        (item as ItemWithTags).tags!.length > 0 ? (
+          <div
+            className="flex items-baseline gap-2"
+            data-cy="item-details-tags"
+          >
+            <span className="text-sm text-slate-600 font-semibold">
+              {t.itemDetails.tags[lang]}:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {(item as ItemWithTags).tags!.map((tag) => (
+                <span key={tag.id} className="text-sm">
+                  {tag.translations?.[lang as "en" | "fi"]?.name ||
+                    tag.translations?.en?.name ||
+                    "Tag"}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div
+            className="flex items-center gap-2"
+            data-cy="item-details-no-tags"
+          >
+            <span className="text-sm font-semibold text-slate-600">
+              {t.itemDetails.tags[lang]}:
+            </span>
+            <span className="text-sm italic">{t.itemDetails.noTags[lang]}</span>
+          </div>
+        )}
       </div>
     </div>
     // </div>
