@@ -5,8 +5,13 @@ import Footer from "./components/Footer";
 import { Outlet } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { ReactNode } from "react";
 
-function App() {
+type App = {
+  children?: ReactNode;
+};
+
+function App({ children }: App) {
   return (
     <AuthProvider>
       {/* Added TooltipProvider to App so we only have one provider for tooltips */}
@@ -19,6 +24,7 @@ function App() {
           <UserProfileLoader />
           <Navigation />
           <main className="flex-1">
+            {children}
             <Outlet />
           </main>
           <Footer />

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 
 // Auth
 import AuthCallback from "../components/Auth/AuthCallback";
@@ -35,6 +35,7 @@ import UserPanel from "../components/Items/UserPanel";
 import BookingConfirmation from "../components/BookingConfirmation";
 import { UserGuide } from "../components/UserGuidelines";
 import ContactForm from "../components/ContactForm";
+import Error from "@/pages/Error";
 
 // Layout
 import App from "../App";
@@ -50,6 +51,11 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    errorElement: (
+      <App>
+        <Error />
+      </App>
+    ),
     children: [
       {
         index: true,
@@ -320,7 +326,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "*",
-        element: <Navigate to="/" />,
+        element: <Error type="not-found" />,
       },
     ],
   },
