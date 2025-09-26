@@ -117,7 +117,7 @@ const ItemDetailsPage = () => {
       }
     };
     void load();
-  }, [dispatch, id]);
+  }, [activeOrgId, dispatch, id]);
 
   // Initialize form state once selectedItem is loaded
   useEffect(() => {

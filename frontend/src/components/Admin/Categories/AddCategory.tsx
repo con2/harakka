@@ -63,12 +63,13 @@ function AddCategory() {
     values: z.infer<typeof createCategoryDto>,
     e?: React.BaseSyntheticEvent,
   ) => {
-    const action = selectedCategory
-      ? updateCategory({ id: selectedCategory.id, updateCategory: values })
-      : createCategory(values);
+    const promise = selectedCategory
+      ? dispatch(
+          updateCategory({ id: selectedCategory.id, updateCategory: values }),
+        ).unwrap()
+      : dispatch(createCategory(values)).unwrap();
 
-    toast.promise(dispatch(action as any).unwrap(), {
-      //eslint-disable-line
+    toast.promise(promise, {
       loading: t.addCategory.messages.loading[lang],
       success: () => {
         if (selectedCategory) {
