@@ -48,12 +48,6 @@ jobs:
           cd frontend
           npm run build
 
-      - name: Check build file count
-        run: |
-          echo "Counting files in frontend/dist..."
-          find frontend/dist -type f | wc -l
-          echo "If this number is >4000, deployment will likely fail."
-
       - name: Prepare for deployment
         run: |
           cd frontend
@@ -97,7 +91,7 @@ jobs:
           echo "VITE_SUPABASE_ANON_KEY available: $(if [ -n "$VITE_SUPABASE_ANON_KEY" ]; then echo "Yes"; else echo "No"; fi)"
           echo "VITE_API_URL available: $(if [ -n "$VITE_API_URL" ]; then echo "Yes"; else echo "No"; fi)"
         env:
-          VITE_SUPABASE_URL: "https://rcbddkhvysexkvgqpcud.supabase.co" ###### hardcoded for debugging purposes ######
+          VITE_SUPABASE_URL: "https://rcbddkhvysexkvgqpcud.supabase.co"
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           VITE_API_URL: https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net
 
