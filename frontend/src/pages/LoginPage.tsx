@@ -1,9 +1,4 @@
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import illusiaImage from "@/assets/illusiaImage.jpg";
 import {
   Card,
@@ -19,17 +14,11 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useEffect } from "react";
-import { useAppDispatch } from "@/store/hooks";
-import { fetchCurrentUserRoles } from "@/store/slices/rolesSlice";
-import { toast } from "sonner";
 
 const LoginPage = () => {
   const { lang } = useLanguage();
   const [searchParams, _] = useSearchParams();
   const { state } = useLocation();
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
 
   const VALID_VIEWS = [
     "sign_up",
@@ -42,31 +31,6 @@ const LoginPage = () => {
   const viewParam = searchParams.get("view");
   const view = String(viewParam).toLowerCase().replace("-", "_");
   const currentView = VALID_VIEWS.includes(view) ? view : "sign_in";
-
-  // Handle authentication state changes to properly process email/password login
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (
-        (event === "SIGNED_IN" || event === "USER_UPDATED") &&
-        session?.user?.app_metadata?.provider === "email"
-      ) {
-        try {
-          // Fetch user roles
-          await dispatch(fetchCurrentUserRoles()).unwrap();
-          // Now navigate to storage page (or admin page if needed)
-          void navigate("/storage", { replace: true });
-        } catch {
-          toast.error(t.login.authError[lang]);
-        }
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [dispatch, navigate, lang]);
 
   return (
     <div

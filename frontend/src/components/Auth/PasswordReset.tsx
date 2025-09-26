@@ -42,7 +42,7 @@ const PasswordReset = () => {
     };
 
     extractToken();
-  }, [searchParams]);
+  }, [searchParams, lang]);
 
   useEffect(() => {
     const formSubmitListener = () => {

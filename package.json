@@ -33,6 +33,7 @@
   "scripts": {
     "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend && npm install --prefix common",
     "start": "echo 'Run frontend and backend separately!'",
+    "build": "npm --prefix frontend run build && npm --prefix backend run build",
     "frontend": "npm --prefix frontend run dev",
     "backend": "npm --prefix backend run start:watch",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
@@ -99,7 +100,7 @@
     "sql:check:all": "npx postgrestools check **/*.sql"
   },
   "devDependencies": {
-    "@postgrestools/postgrestools": "^0.11.0",
+    "@postgrestools/postgrestools": "^0.15.0",
     "@supabase/supabase-js": "^2.53.0",
     "concurrently": "^9.1.2",
     "env-cmd": "^10.1.0",
@@ -107,6 +108,6 @@
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.49.0",
-    "supabase": "^2.34.3"
+    "supabase": "^2.45.5"
   }
 }

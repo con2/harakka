@@ -66,7 +66,7 @@ function ItemImageUpload({
         }),
       ).unwrap();
     },
-    [dispatch],
+    [dispatch, item_id],
   );
 
   // MAIN IMAGE HANDLERS

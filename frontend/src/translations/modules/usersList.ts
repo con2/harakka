@@ -128,6 +128,10 @@ export const usersList = {
       fi: common.status.fi,
       en: common.status.en,
     },
+    noOrg: {
+      fi: "Ei organisaatiota",
+      en: "No Organization",
+    },
   },
   status: {
     unverified: {

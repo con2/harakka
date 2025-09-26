@@ -52,6 +52,74 @@ export class StorageItemsController {
   }
 
   /**
+   * Get availability overview for items at a moment or within a window.
+   * Protected: tenant_admin or storage_manager within the same organization.
+   *
+   * Query params (all optional):
+   * - start_date, end_date (ISO strings). If omitted, defaults to now.
+   * - item_ids, location_ids, category_ids: CSV lists of UUIDs to filter.
+   */
+  @Get("availability-overview")
+  @Roles(["storage_manager", "tenant_admin"], { match: "any", sameOrg: true })
+  async getAvailabilityOverview(
+    @Req() req: AuthRequest,
+    @Query("start_date") startDate?: string,
+    @Query("end_date") endDate?: string,
+    @Query("item_ids") itemIdsCsv?: string,
+    @Query("location_ids") locationIdsCsv?: string,
+    @Query("category_ids") categoryIdsCsv?: string,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+  ) {
+    const activeOrgId = req.headers["x-org-id"] as string;
+    if (!activeOrgId) {
+      throw new BadRequestException("Organization context is required");
+    }
+
+    const parseCsv = (s?: string) =>
+      s
+        ? s
+            .split(",")
+            .map((v) => v.trim())
+            .filter((v) => v.length > 0)
+        : undefined;
+
+    const itemIds = parseCsv(itemIdsCsv);
+    const locationIds = parseCsv(locationIdsCsv);
+    const categoryIds = parseCsv(categoryIdsCsv);
+
+    // If neither date provided, use "now" by omitting params to let RPC defaults apply
+    const start = startDate && startDate.trim() !== "" ? startDate : undefined;
+    const end = endDate && endDate.trim() !== "" ? endDate : undefined;
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    return this.storageItemsService.getAvailabilityOverview(req, activeOrgId, {
+      startDate: start,
+      endDate: end,
+      itemIds,
+      locationIds,
+      categoryIds,
+      page: pageNum,
+      limit: limitNum,
+    });
+  }
+
+  /**
+   * Get distinct locations where the active organization has items.
+   */
+  @Get("admin-location-options")
+  @Roles(["storage_manager", "tenant_admin"], { match: "any", sameOrg: true })
+  async getAdminLocationOptions(@Req() req: AuthRequest) {
+    const activeOrgId = req.headers["x-org-id"] as string;
+    if (!activeOrgId) {
+      throw new BadRequestException("Organization context is required");
+    }
+    return this.storageItemsService.getAdminLocationOptions(req, activeOrgId);
+  }
+
+  /**
    * Get ordered and/or filtered storage items.
    * This endpoint is public and allows filtering, searching, and ordering of storage items.
    * @param searchquery Optional search query to filter items.

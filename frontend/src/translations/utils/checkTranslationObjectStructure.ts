@@ -1,4 +1,4 @@
-import { SUPPORTED_LANGUAGES } from "../SUPPORTED_LANGUAGES";
+import { SUPPORTED_LANGUAGES_KEYS } from "../SUPPORTED_LANGUAGES";
 
 export interface TranslationIssue {
   path: string;
@@ -10,9 +10,7 @@ function isTranslationLeaf(obj: unknown): boolean {
   if (typeof obj !== "object" || obj === null) return false;
   const keys = Object.keys(obj as Record<string, unknown>);
   // Explicitly cast `lang` to the union type
-  return keys.some((lang) =>
-    SUPPORTED_LANGUAGES.includes(lang as (typeof SUPPORTED_LANGUAGES)[number]),
-  );
+  return keys.some((lang) => SUPPORTED_LANGUAGES_KEYS.includes(lang));
 }
 
 export function checkTranslationObjectStructure(
@@ -34,7 +32,7 @@ export function checkTranslationObjectStructure(
 
   if (isTranslationLeaf(obj)) {
     // If keys do not match SUPPORTED_LANGUAGES, report which are missing
-    const missingLangs = SUPPORTED_LANGUAGES.filter(
+    const missingLangs = SUPPORTED_LANGUAGES_KEYS.filter(
       (lang) => !keys.includes(lang),
     );
     if (missingLangs.length > 0) {
@@ -45,10 +43,10 @@ export function checkTranslationObjectStructure(
     }
 
     // --- Required checks below ---
-    const translations = SUPPORTED_LANGUAGES.map((lang) => {
-      return (obj as Record<(typeof SUPPORTED_LANGUAGES)[number], unknown>)[
-        lang
-      ] as string;
+    const translations = SUPPORTED_LANGUAGES_KEYS.map((lang) => {
+      return (
+        obj as Record<(typeof SUPPORTED_LANGUAGES_KEYS)[number], unknown>
+      )[lang] as string;
     }).filter((t) => typeof t === "string" && t.length > 0);
 
     if (translations.length >= 2) {

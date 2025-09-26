@@ -1,4 +1,4 @@
-type Category = {
+export type Category = {
   id: string;
   parent_id: string | null;
   translations: {

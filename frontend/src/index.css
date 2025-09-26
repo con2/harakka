@@ -76,9 +76,8 @@
 }
 
 @theme {
-  --font-main: "Lato", sans-serif;
-  --font-heading: "Roboto Slab", serif;
-
+  --main-font: var(--main-font);
+  --heading-font: var(--heading-font);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -128,8 +127,7 @@
   }
   h1,
   h2,
-  h3,
-  nav {
+  h3 {
     font-family: var(--heading-font);
   }
   aside > nav {

@@ -69,6 +69,8 @@ const AdminPanel = () => {
             />
           )}
 
+          {/* Overdue moved under Bookings as a filter */}
+
           {hasAnyRole(["tenant_admin", "storage_manager"]) && (
             <SidebarLink
               to="/admin/items"

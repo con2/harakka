@@ -20,6 +20,10 @@ export const itemDetailsPage = {
       fi: "Poista tuote",
       en: "Delete Item",
     },
+    save: {
+      en: "Save Changes",
+      fi: "Tallenna muutokset",
+    },
   },
   messages: {
     deletion: {
@@ -76,6 +80,20 @@ export const itemDetailsPage = {
       statusUpdateFail: {
         fi: "Tuotteen tilan päivittäminen epäonnistui",
         en: "Failed to update item status",
+      },
+      update: {
+        loading: {
+          en: "Updating item...",
+          fi: "Päivitetään tuotetta...",
+        },
+        success: {
+          en: "Item was successfully updated!",
+          fi: "Tuote on päivitetty onnistuneesti!",
+        },
+        error: {
+          en: "Failed to update item",
+          fi: "Tuotteen päivitys epäonnistui",
+        },
       },
     },
   },

@@ -38,6 +38,7 @@ import { OrganizationLocationsModule } from "../organization-locations/organizat
 import { CategoriesModule } from "../categories/categories.module";
 import { StorageItemsController } from "../storage-items/storage-items.controller";
 import { UserSetupController } from "../user/user-setup.controller";
+import { RemindersModule } from "../reminders/reminders.module";
 
 // Load and expand environment variables before NestJS modules initialize
 // Only load env files if SUPABASE_URL is not already set (meaning env-cmd hasn't run)
@@ -93,6 +94,7 @@ if (!process.env.SUPABASE_URL) {
     OrganizationsModule,
     UserBanningModule,
     OrganizationLocationsModule,
+    RemindersModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: "APP_GUARD", useClass: RolesGuard }],
@@ -151,6 +153,9 @@ export class AppModule implements NestModule {
 
         // Public Category Endpoint
         { path: "categories", method: RequestMethod.GET },
+
+        // Cron/scheduler endpoints (secured by header secret)
+        { path: "cron/reminders/run", method: RequestMethod.POST },
 
         // Public mail endpoint for contact form
         { path: "mail/send", method: RequestMethod.POST },

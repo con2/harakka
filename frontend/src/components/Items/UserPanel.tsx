@@ -33,6 +33,7 @@ const UserPanel = () => {
   const { lang } = useLanguage();
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
   const organizations = useAppSelector(selectOrganizations);
+  const MAX_VISIBLE = 5;
 
   useEffect(() => {
     void dispatch(fetchAllCategories({ page: 1, limit: 50 }));
@@ -51,14 +52,6 @@ const UserPanel = () => {
     // eslint-disable-next-line
   }, []);
 
-  // Shared expand/collapse state per filter list (max 5 visible by default)
-  type ExpandableSection =
-    | "itemTypes"
-    | "organizations"
-    | "locations"
-    | "tags"
-    | "categories";
-  const MAX_VISIBLE = 5;
   const [expanded, setExpanded] = useState<Record<ExpandableSection, boolean>>({
     itemTypes: false,
     organizations: false,
@@ -66,12 +59,38 @@ const UserPanel = () => {
     tags: false,
     categories: false,
   });
-  const toggleExpanded = (key: ExpandableSection) =>
-    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
     expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
 
-  const visibleOrganizations = getVisible(organizations, "organizations");
+  // Filter out organizations that shouldn't have items
+  const filterableOrganizations = useMemo(() => {
+    const filtered = organizations.filter(
+      (org: OrganizationDetails) =>
+        org.name.toLowerCase() !== "high council" &&
+        org.name.toLowerCase() !== "global" &&
+        org.name.toLowerCase() !== "users united union (u3)",
+    );
+
+    return filtered;
+  }, [organizations]);
+
+  const visibleOrganizations = getVisible(
+    filterableOrganizations,
+    "organizations",
+  );
+
+  // Shared expand/collapse state per filter list (max 5 visible by default)
+  type ExpandableSection =
+    | "itemTypes"
+    | "organizations"
+    | "locations"
+    | "tags"
+    | "categories";
+
+  const toggleExpanded = (key: ExpandableSection) =>
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  // const visibleOrganizations = getVisible(organizations, "organizations");
   const visibleLocations = getVisible(locations, "locations");
   const visibleTags = getVisible(tags, "tags");
   const mappedCategories = buildCategoryTree(categories);
@@ -420,7 +439,7 @@ const UserPanel = () => {
             <Separator className="my-4" />
 
             {/* Organizations */}
-            {organizations && organizations.length > 0 && (
+            {organizations && filterableOrganizations.length > 0 && (
               <div className="flex flex-col gap-2 mb-4">
                 <label className="text-primary text-md block mb-0">
                   {t.userPanel.organizations.title[lang]}
@@ -461,7 +480,7 @@ const UserPanel = () => {
                     );
                   })}
                 </div>
-                {organizations.length > MAX_VISIBLE && (
+                {filterableOrganizations.length > MAX_VISIBLE && (
                   <Button
                     variant="ghost"
                     className="text-left text-sm text-secondary"
@@ -493,7 +512,7 @@ const UserPanel = () => {
                       })
                     }
                   >
-                    {t.userPanel.filters.clearAllFilters[lang]}
+                    {t.userPanel.filters.clearFilters[lang]}
                   </Button>
                 </div>
               </div>

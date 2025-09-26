@@ -12,6 +12,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidationArguments,
+  IsDefined,
 } from "class-validator";
 import { Type } from "class-transformer";
 
@@ -63,12 +64,17 @@ class BookingItemDto {
   @Validate(StartBeforeEndConstraint)
   end_date!: string;
 
-  @IsString()
-  @IsUUID()
+  // Added messages for missing fields
+  @IsString({ message: "provider_organization_id must be a string" })
+  @IsDefined({ message: "provider_organization_id is required" })
+  @IsUUID("4", {
+    message: "provider_organization_id must be a valid UUID v4",
+  })
   provider_organization_id: string;
 
-  @IsString()
-  @IsUUID()
+  @IsDefined({ message: "location_id is required" })
+  @IsString({ message: "location_id must be a string" })
+  @IsUUID("4", { message: "location_id must be a valid UUID v4" })
   location_id: string;
 }
 

@@ -1,23 +1,33 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import AddItemForm from "@/components/Admin/Items/AddItem/Steps/AddItemForm";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
+  getItemImages,
+  selectItemImages,
+} from "@/store/slices/itemImagesSlice";
+import {
+  clearSelectedItem,
+  deleteItem,
   getItemById,
   selectSelectedItem,
-  deleteItem,
+  updateItem,
 } from "@/store/slices/itemsSlice";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Edit, Trash2 } from "lucide-react";
-import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import Spinner from "@/components/Spinner";
 import { toast } from "sonner";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { Item } from "@/types/item";
-import UpdateItemForm from "@/components/Admin/Items/UpdateItemForm";
 import { fetchTagsForItem } from "@/store/slices/tagSlice";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
-import { Separator } from "@/components/ui/separator";
+import { fetchOrgLocationByOrgId } from "@/store/slices/organizationLocationsSlice";
+import { selectSelectedTags } from "@/store/slices/tagSlice";
+import { createItemDto } from "@/store/utils/validate";
+import { t } from "@/translations";
+import { ChevronLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import z from "zod";
+import { UpdateItem } from "@common/items/storage-items.types";
 
 const ItemDetailsPage = () => {
   const { id } = useParams();
@@ -25,11 +35,71 @@ const ItemDetailsPage = () => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
   const selectedItem = useAppSelector(selectSelectedItem);
+  const selectedTags = useAppSelector(selectSelectedTags);
+  const selectedImages = useAppSelector(selectItemImages);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const [loading, setLoading] = useState(true);
-  const [updateOpen, setUpdateOpen] = useState(false);
+
   // Form state for inline editing
-  const [formData, setFormData] = useState<Item | null>(null);
+  const mainImg = selectedImages.find(
+    (img) => img.item_id === selectedItem?.id && img.image_type === "main",
+  );
+  const detailImgs = selectedImages.filter(
+    (img) => img.item_id === selectedItem?.id && img.image_type === "detail",
+  );
+
+  // format selected item to fit the item form
+  const formattedItem = {
+    ...(selectedItem as Item),
+    location: {
+      id: (selectedItem as Item)?.location_details.id,
+      name: (selectedItem as Item)?.location_details.name,
+      address: (selectedItem as Item)?.location_details.address,
+    },
+    quantity: (selectedItem as Item)?.quantity ?? 1,
+    category_id: selectedItem?.category_id ?? null,
+    tags: (selectedTags ?? []).map((tag) => tag.id),
+    images: {
+      main: mainImg
+        ? {
+            id: mainImg.id ?? "",
+            url: mainImg.image_url ?? "",
+            full_path: mainImg.storage_path ?? "",
+            path: mainImg.storage_path?.split("/")[1] ?? "",
+            metadata: {
+              image_type: mainImg.image_type ?? "",
+              display_order: mainImg.display_order ?? 0,
+              alt_text: mainImg.alt_text ?? "",
+              is_active: mainImg.is_active ?? true,
+            },
+          }
+        : null,
+      details: (detailImgs ?? []).map((img) => {
+        const {
+          image_url,
+          id,
+          image_type,
+          display_order,
+          is_active,
+          storage_path,
+          alt_text,
+        } = img;
+        return {
+          id,
+          url: image_url,
+          full_path: storage_path ?? "",
+          path: storage_path?.split("/")[1] ?? "",
+          metadata: {
+            id: id,
+            image_type: image_type,
+            display_order: display_order,
+            alt_text: alt_text,
+            is_active: is_active,
+          },
+        };
+      }),
+    },
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -38,6 +108,8 @@ const ItemDetailsPage = () => {
       try {
         await dispatch(getItemById(id)).unwrap();
         await dispatch(fetchTagsForItem(id)).unwrap();
+        await dispatch(getItemImages(id)).unwrap();
+        await dispatch(fetchOrgLocationByOrgId(activeOrgId!));
       } catch (err) {
         console.error(err);
       } finally {
@@ -45,14 +117,56 @@ const ItemDetailsPage = () => {
       }
     };
     void load();
-  }, [dispatch, id]);
+  }, [activeOrgId, dispatch, id]);
 
   // Initialize form state once selectedItem is loaded
   useEffect(() => {
     if (!selectedItem) return;
-    setFormData(selectedItem as Item);
   }, [selectedItem]);
 
+  const update = (values: z.infer<typeof createItemDto>) => {
+    if (!selectedItem) return;
+    const { location_details, location, ...rest } =
+      values as Partial<UpdateItem> & {
+        location: { id: string; address: string; name: string };
+      };
+    try {
+      toast.promise(
+        dispatch(
+          updateItem({
+            data: {
+              ...rest,
+              org_id: activeOrgId!,
+              location_details,
+              location_id: location.id,
+            },
+            item_id: selectedItem.id,
+            orgId: activeOrgId!,
+          }),
+        ).unwrap(),
+        {
+          loading: t.itemDetailsPage.messages.toast.update.loading[lang],
+          success: t.itemDetailsPage.messages.toast.update.success[lang],
+          error: t.itemDetailsPage.messages.toast.update.error[lang],
+        },
+      );
+      void navigate("/admin/items", {
+        state: {
+          order: "updated_at",
+          highlight: [0],
+          ascending: false,
+        },
+      });
+    } catch {
+      // Do nothing on error — toast already shows the failure message
+    }
+  };
+
+  const handleSubmit = () => {
+    (
+      document.querySelector("#add-item-form") as HTMLFormElement
+    ).requestSubmit();
+  };
   const handleDelete = () => {
     if (!selectedItem) return;
     const orgId = activeOrgId;
@@ -96,67 +210,28 @@ const ItemDetailsPage = () => {
   }
 
   return (
-    <div className="mx-8 mt-6">
-      <div className="mb-4">
-        {/*/ Back button */}
+    <div>
+      {/*/ Back button */}
+      <div className="flex justify-between max-w-[900px]">
         <Button
           onClick={() => {
-            window.location.href = "/admin/items";
+            void navigate("/admin/items");
+            dispatch(clearSelectedItem());
           }}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
         >
           <ChevronLeft /> {t.itemDetailsPage.buttons.back[lang]}
         </Button>
-      </div>
-      {/*/ Title */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl">
-          {formData?.translations[lang]?.item_name ||
-            formData?.translations.fi.item_name}
-        </h2>
-        <div className="flex gap-2">
-          <Button
-            variant={"outline"}
-            size="sm"
-            onClick={() => {
-              if (updateOpen) {
-                // Cancel: revert parent-local form state and close edit mode
-                setFormData(selectedItem as Item);
-                setUpdateOpen(false);
-              } else {
-                setUpdateOpen(true);
-              }
-            }}
-          >
-            <Edit className="h-4 w-4 mr-2" />{" "}
-            {updateOpen
-              ? t.itemDetailsPage.messages.deletion.cancel[lang]
-              : t.itemDetailsPage.buttons.edit[lang]}
+        <div className="gap-2 flex">
+          <Button variant="destructive" onClick={handleDelete}>
+            {t.itemDetailsPage.buttons.delete[lang]}
+          </Button>
+          <Button variant="outline" onClick={handleSubmit}>
+            {t.itemDetailsPage.buttons.save[lang]}
           </Button>
         </div>
       </div>
-
-      {/* Edit item fields */}
-      <div className="mt-2">
-        {formData && (
-          <UpdateItemForm
-            initialData={formData}
-            editable={updateOpen}
-            onActiveTabChange={() => {}}
-            onSaved={() => {
-              void dispatch(getItemById(String(formData?.id ?? id)));
-              void dispatch(fetchTagsForItem(String(formData?.id ?? id)));
-              setUpdateOpen(false);
-            }}
-          />
-        )}
-      </div>
-      <Separator className="my-2 mt-10" />
-      {/* Delete item */}
-      <Button size="sm" variant="destructive" onClick={handleDelete}>
-        <Trash2 className="h-4 w-4 mr-2" /> {""}
-        {t.itemDetailsPage.buttons.delete[lang]}
-      </Button>
+      <AddItemForm onUpdate={update} initialData={formattedItem} />
     </div>
   );
 };
