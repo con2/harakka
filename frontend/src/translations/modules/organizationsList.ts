@@ -19,6 +19,24 @@ export const organizationList = {
     fi: "Omat roolit",
     en: "My roles",
   },
+  membership: {
+    youAreRole: {
+      fi: "Olet {role} täällä",
+      en: "You are a {role} here",
+    },
+  },
+  actions: {
+    browseStorage: {
+      fi: "Selaa varastoa",
+      en: "Browse Storage",
+    },
+  },
+  alt: {
+    organizationLogo: {
+      fi: "{orgName} logo",
+      en: "{orgName} logo",
+    },
+  },
 };
 
 export const organizationDelete = {
