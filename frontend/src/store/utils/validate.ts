@@ -33,7 +33,7 @@ const imageSchema = z.object({
 
 export const createItemDto = z.object({
   id: z.string().uuid(),
-  category_id: z.nullable(z.string()),
+  category_id: z.string().uuid({ message: "category" }),
   location: z.object(
     {
       id: z.string().uuid({ message: "location" }),
