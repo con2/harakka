@@ -136,12 +136,17 @@ function Summary() {
                                 );
                               } else if (errors.length === 1) {
                                 const [field, code] = errors[0].split(":");
+                                const translated =
+                                  t.itemSummary.fields?.[
+                                    field as keyof typeof t.itemSummary.fields
+                                  ]?.[lang] ||
+                                  t.itemSummary.fields.unknown[lang];
                                 return (
                                   <p>
                                     {code === "invalid_type"
                                       ? t.itemSummary.errorCodes.invalid_type[
                                           lang
-                                        ].replace("{field}", field)
+                                        ].replace("{field}", translated)
                                       : (
                                           t.itemSummary.errorCodes as Record<
                                             string,

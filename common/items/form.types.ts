@@ -13,7 +13,7 @@ export type SelectedStorage = {
  */
 export type CreateItemType = {
   id: string;
-  category_id: string | null;
+  category_id: string;
   location: {
     id: string;
     name: string;

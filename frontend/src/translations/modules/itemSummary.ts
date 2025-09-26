@@ -70,16 +70,6 @@ export const itemSummary = {
         fi: "Tuotenimen arvo (en) oli liian pitkä",
       },
     },
-    en_item_type: {
-      too_small: {
-        en: "The value for item type (en) was too short",
-        fi: "Tuotetyypin arvo (en) oli liian lyhyt",
-      },
-      too_big: {
-        en: "The value for item type (en) was too long",
-        fi: "Tuotetyypin arvo (en) oli liian pitkä",
-      },
-    },
     en_item_description: {
       too_small: {
         en: "The value for item description (en) was too short",
@@ -98,16 +88,6 @@ export const itemSummary = {
       too_big: {
         en: "The value for item name (fi) was too long",
         fi: "Tuotenimen arvo (fi) oli liian pitkä",
-      },
-    },
-    fi_item_type: {
-      too_small: {
-        en: "The value for item type (fi) was too short",
-        fi: "Tuotetyypin arvo (fi) oli liian lyhyt",
-      },
-      too_big: {
-        en: "The value for item type (fi) was too long",
-        fi: "Tuotetyypin arvo (fi) oli liian pitkä",
       },
     },
     fi_item_description: {
@@ -129,6 +109,28 @@ export const itemSummary = {
     invalid_type: {
       en: "An invalid type was provided for {field}",
       fi: "Virheellinen tyyppi annettu kentälle {field}",
+    },
+  },
+  fields: {
+    category_id: {
+      en: "category",
+      fi: "kategoria",
+    },
+    quantity: {
+      en: "quantity",
+      fi: "määrä",
+    },
+    item_description: {
+      en: "item description",
+      fi: "tuotteen kuvaus",
+    },
+    item_name: {
+      en: "item name",
+      fi: "tuotteen nimi",
+    },
+    unknown: {
+      en: "one field",
+      fi: "yksi kenttä",
     },
   },
 };
