@@ -8,7 +8,7 @@ import {
   filterUIComponents,
   filterNonUIComponents,
 } from "../translations/utils/getAllComponents";
-import { SUPPORTED_LANGUAGES } from "../translations/SUPPORTED_LANGUAGES";
+import { SUPPORTED_LANGUAGES_KEYS } from "../translations/SUPPORTED_LANGUAGES";
 
 // Fix for ES module __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -29,7 +29,7 @@ function lowerFirst(str: string): string {
 // Get CLI params
 const args = process.argv.slice(2);
 const langArg = args.find((a) => /^[a-zA-Z,]+$/.test(a));
-const languages = langArg ? langArg.split(",") : SUPPORTED_LANGUAGES;
+const languages = langArg ? langArg.split(",") : SUPPORTED_LANGUAGES_KEYS;
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -102,4 +102,4 @@ async function main() {
   }
 }
 
-main();
+void main();

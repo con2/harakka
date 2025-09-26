@@ -1,0 +1,71 @@
+name: Booking Reminders
+
+on:
+  schedule:
+    # Run twice daily to approximate 09:00 Helsinki across DST
+    # Summer (EEST, UTC+3): 06:00 UTC ≈ 09:00 local
+    # Winter (EET, UTC+2): 07:00 UTC ≈ 09:00 local
+    - cron: '0 6 * * *'
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Reminder scope (all | due_today | overdue)"
+        required: false
+        default: "all"
+
+concurrency:
+  group: booking-reminders
+  cancel-in-progress: true
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compute scope
+        id: scope
+        run: |
+          if [ -n "${{ github.event.inputs.scope }}" ]; then
+            echo "scope=${{ github.event.inputs.scope }}" >> $GITHUB_OUTPUT
+          else
+            echo "scope=all" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Call backend reminders endpoint
+        env:
+          CRON_URL: ${{ secrets.CRON_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SCOPE: ${{ steps.scope.outputs.scope }}
+        run: |
+          if [ -z "$CRON_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "CRON_URL and/or CRON_SECRET are not set as repo secrets" >&2
+            exit 1
+          fi
+
+          # Build URL with scope param if needed
+          if echo "$CRON_URL" | grep -q '\\?'; then
+            URL="$CRON_URL&scope=$SCOPE"
+          else
+            URL="$CRON_URL?scope=$SCOPE"
+          fi
+
+          echo "POST $URL"
+          http_code=$(curl -sS -o response.json -w "%{http_code}" \
+            -X POST "$URL" \
+            -H "X-Cron-Secret: $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            --max-time 60)
+
+          echo "Status: $http_code"
+          echo "Response:"
+          cat response.json || true
+
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "Request failed with status $http_code" >&2
+            exit 1
+          fi
+
+          # Optional: fail if sent skyrockets unusually (spam guard)
+          # jq -e 'if .sent != null and .sent > 500 then false else true end' response.json
+          # [ $? -ne 0 ] && { echo "Aborting: unusually high send count" >&2; exit 1; }
+

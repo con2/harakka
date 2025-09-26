@@ -81,6 +81,7 @@ import { userPanel } from "./modules/userPanel";
 import { usersDetailsPage } from "./modules/usersDetailsPage";
 import { userSignupModal } from "./modules/userSignupModal";
 import { usersList } from "./modules/usersList";
+import { overdueBookings } from "./modules/OverdueBookings";
 
 export const t = {
   addCategory,
@@ -164,4 +165,5 @@ export const t = {
   userSignupModal,
   usersDetailsPage,
   usersList,
+  overdueBookings,
 };

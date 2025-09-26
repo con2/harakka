@@ -23,8 +23,7 @@ const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
     <Body
       style={{
         fontFamily: "'Lato', Arial, sans-serif",
-        // backgroundColor: "#2f5D9E",
-        backgroundColor: "###d0c1d8",
+        backgroundColor: "#C4C9CC",
         margin: 0,
         padding: "40px 20px",
         color: "#333333",
@@ -38,7 +37,6 @@ const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
           maxWidth: "600px",
           margin: "0 auto",
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-          // border: "2px solid #D87AFF",
         }}
       >
         <Section
@@ -63,7 +61,7 @@ const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
             marginBottom: "24px",
           }}
         >
-          Welcome to Illusia rental services
+          Welcome to Harakka Storage Solutions
         </Text>
 
         <Text style={{ fontSize: "16px", marginBottom: "10px" }}>
@@ -76,7 +74,7 @@ const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
 
         <Section style={{ textAlign: "center", marginTop: "30px" }}>
           <a
-            href="http://localhost:5180/profile" // TODO: replace with actual link
+            href="https://agreeable-grass-049dc8010.6.azurestaticapps.net/profile"
             style={{
               backgroundColor: "#2f5D9E",
               color: "#ffffff",
@@ -91,11 +89,13 @@ const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
             Add your information
           </a>
         </Section>
-        {/*  TODO: add contact form link */}
         <Text style={{ fontSize: "14px", color: "#666666", marginTop: "30px" }}>
           If you have any questions, contact us by answering this mail or use
           the
-          <a href="" style={{ color: "#2f5D9E" }}>
+          <a
+            href="https://agreeable-grass-049dc8010.6.azurestaticapps.net/contact-us"
+            style={{ color: "#2f5D9E" }}
+          >
             contact form
           </a>
           in our website.

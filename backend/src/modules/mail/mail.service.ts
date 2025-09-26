@@ -1,10 +1,13 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import * as nodemailer from "nodemailer";
+import type Mail from "nodemailer/lib/mailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { render } from "@react-email/render";
 import { ReactElement } from "react";
 import {
   BookingMailType,
   BookingMailParams,
+  MailSendResult,
 } from "./interfaces/mail.interface";
 import * as dayjs from "dayjs"; // Keep this as a named import to avoid issues.
 import type { BookingEmailPayload } from "./booking-email-assembler";
@@ -67,6 +70,7 @@ interface SendMailOptions {
  */
 @Injectable()
 export class MailService {
+  private readonly logger = new Logger(MailService.name);
   constructor(private readonly assembler: BookingEmailAssembler) {}
 
   /**
@@ -97,7 +101,13 @@ export class MailService {
    * @param options - See {@link SendMailOptions}.
    * @returns The Nodemailer result or an error object in production.
    */
-  async sendMail({ to, subject, template, html, bcc }: SendMailOptions) {
+  async sendMail({
+    to,
+    subject,
+    template,
+    html,
+    bcc,
+  }: SendMailOptions): Promise<MailSendResult> {
     try {
       const transport = nodemailer.createTransport({
         host: "smtp.gmail.com",
@@ -109,19 +119,47 @@ export class MailService {
         },
       });
 
+      // In dev, try to verify SMTP config for clearer errors
+      if (process.env.NODE_ENV !== "production") {
+        try {
+          await transport.verify();
+          this.logger.log("SMTP transport verified successfully.");
+        } catch (verr) {
+          this.logger.warn(
+            "SMTP transport verification failed: " +
+              (verr instanceof Error ? verr.message : String(verr)),
+          );
+        }
+      }
+
       const finalHtml = await this.generateHtml(template, html);
 
-      const mailOptions: Record<string, unknown> = {
+      const mailOptions: Mail.Options = {
         from: `Harakka Storage Solutions <${process.env.STORAGE_EMAIL}>`,
         to,
         subject,
         html: finalHtml,
+        bcc,
       };
-      if (bcc) mailOptions.bcc = bcc;
 
-      const result = await transport.sendMail(mailOptions);
-
-      return result;
+      const result: SMTPTransport.SentMessageInfo =
+        await transport.sendMail(mailOptions);
+      const accepted: string[] = Array.isArray(result.accepted)
+        ? (result.accepted as string[])
+        : [];
+      const rejected: string[] = Array.isArray(result.rejected)
+        ? (result.rejected as string[])
+        : [];
+      const messageId: string | null =
+        (result as SMTPTransport.SentMessageInfo & { messageId?: string })
+          .messageId ?? null;
+      const response: string | undefined = result.response as
+        | string
+        | undefined;
+      this.logger.log(
+        `Mail sent: messageId=${String(messageId)} accepted=${accepted.length} rejected=${rejected.length}`,
+      );
+      return { success: true, accepted, rejected, messageId, response };
     } catch (error) {
       if (process.env.NODE_ENV === "production") {
         return {
