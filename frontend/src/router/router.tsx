@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 
 // Auth
 import AuthCallback from "../components/Auth/AuthCallback";
@@ -326,7 +326,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "*",
-        element: <Navigate to="/" />,
+        element: <Error type="not-found" />,
       },
     ],
   },
