@@ -253,7 +253,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
               <MapPin className="h-4 w-4" />
               {t.cart.profileCompletion.fields.address.label[lang]}
               <span className="text-muted-foreground text-xs">
-                ({t.cart.profileCompletion.fields.address.optional[lang]})
+                {t.cart.profileCompletion.fields.address.optional[lang]}
               </span>
             </Label>
             <p className="text-xs text-muted-foreground">
@@ -368,7 +368,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
             </div>
           </div>
 
-          <DialogFooter className="flex gap-3 pt-4">
+          <DialogFooter className="flex justify-between gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
@@ -377,7 +377,12 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
             >
               {t.cart.profileCompletion.buttons.cancel[lang]}
             </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
+            <Button
+              type="submit"
+              variant="secondary"
+              disabled={loading}
+              className="flex-1"
+            >
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

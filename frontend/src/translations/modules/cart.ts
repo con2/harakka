@@ -129,6 +129,10 @@ export const cart = {
       fi: "Tuntematon virhe",
       en: "Unknown error",
     },
+    wrongRole: {
+      fi: "Valitse toinen rooli jatkaaksesi kassalle",
+      en: "Please choose another role to proceed with checkout",
+    },
   },
   toast: {
     clearCartTitle: {
