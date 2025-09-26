@@ -81,14 +81,24 @@ const OrganizationsList = () => {
   );
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 bg-white">
+      {/* Header Section */}
+      <section className="w-full max-w-2xl px-4 sm:px-6 md:px-8 mx-auto mb-6">
+        <h2 className="text-2xl font-bold text-center mb-2">
+          {t.organizationList.header.title[lang]}
+        </h2>
+        <p className="text-gray-700 text-center">
+          {t.organizationList.header.description[lang]}
+        </p>
+      </section>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:px-2 md:px-2 pb-10">
         {filteredOrganizations.map((org) => (
           <Card
             key={org.id}
-            className="hover:shadow-md transition-shadow duration-200"
+            className="hover:shadow-md transition-shadow duration-200 py-4 px-0"
           >
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1">
                   {/* Organization logo */}
@@ -125,23 +135,39 @@ const OrganizationsList = () => {
                 )}
               </div>
             </CardHeader>
-
-            <CardContent className="pt-0">
+            <CardContent className="pt-2">
               {org.description && (
-                <CardDescription className="text-sm text-gray-600 mb-3 line-clamp-2">
+                <CardDescription className="text-sm text-gray-600 mb-6 line-clamp-2">
                   {org.description}
                 </CardDescription>
               )}
 
-              <Link
-                to={`/storage?organization=${encodeURIComponent(org.name)}`}
-                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors duration-200 group"
-              >
-                <span>
-                  {t.organizationList.actions.browseStorage[lang]} {org.name}
-                </span>
-                <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-200" />
-              </Link>
+              <div className="flex flex-row justify-between gap-2">
+                <Link
+                  to={`/storage?organization=${encodeURIComponent(org.name)}`}
+                  className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors duration-200 group"
+                >
+                  <span>
+                    {t.organizationList.actions.browseStorage[lang]} {org.name}{" "}
+                    {t.organizationList.actions.browseItems[lang]}
+                  </span>
+                  <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-200" />
+                </Link>
+
+                {org.slug ? (
+                  <Link
+                    to={`/organization/${org.slug}`}
+                    className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 font-medium text-sm transition-colors duration-200 group"
+                  >
+                    <span>{t.organizationList.actions.readMore[lang]}</span>
+                    <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-200" />
+                  </Link>
+                ) : (
+                  <span className="text-gray-400 text-sm">
+                    {t.organizationList.actions.readMore[lang]} (unavailable)
+                  </span>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}

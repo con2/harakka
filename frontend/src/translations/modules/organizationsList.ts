@@ -1,6 +1,16 @@
 import { common } from "./common";
 
 export const organizationList = {
+  header: {
+    title: {
+      fi: "Organisaatiot",
+      en: "Organizations",
+    },
+    description: {
+      fi: "Selaa eri organisaatioita ja niiden tarjoamia esineitä.",
+      en: "Browse different organizations and their available items.",
+    },
+  },
   columns: {
     description: {
       fi: "Kuvaus",
@@ -27,8 +37,20 @@ export const organizationList = {
   },
   actions: {
     browseStorage: {
-      fi: "Selaa esineitä",
-      en: "Browse Items from",
+      fi: "Selaa",
+      en: "Browse",
+    },
+    browseItems: {
+      fi: "esineitä",
+      en: "Items",
+    },
+    readMore: {
+      fi: "Lue lisää",
+      en: "Read More",
+    },
+    backButton: {
+      fi: "Takaisin",
+      en: "Back",
     },
   },
   alt: {
