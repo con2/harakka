@@ -3,17 +3,11 @@ import {
   Controller,
   Post,
   BadRequestException,
-  InternalServerErrorException,
   UseGuards,
 } from "@nestjs/common";
 import { MailService } from "./mail.service";
 import { SendEmailDto } from "./dto/mail.dto";
 import { Throttle, ThrottlerGuard } from "@nestjs/throttler";
-import { EmailProps } from "./interfaces/mail.interface";
-import { SendMailDto } from "./dto/send-mail.dto";
-import BookingConfirmationEmail from "../../emails/BookingConfirmationEmail";
-import WelcomeEmail, { WelcomeEmailProps } from "../../emails/WelcomeEmail";
-import * as React from "react";
 import { sanitizeEmailHtml, sanitizeSubject } from "../../utils/sanitize.util";
 
 @Controller("mail")
