@@ -53,8 +53,8 @@ const BookingList = () => {
   // Get organization IDs from bookings that have booked_by_org set
   const organizationIds = useMemo(() => {
     return (bookings as BookingPreviewWithOrgData[])
+      .filter((booking) => booking.booked_by_org)
       .map((booking) => booking.booked_by_org)
-      .filter((id): id is string => Boolean(id))
       .filter((id, index, arr) => arr.indexOf(id) === index); // Remove duplicates
   }, [bookings]);
 
@@ -160,6 +160,10 @@ const BookingList = () => {
       accessorKey: "booking_number",
       header: t.bookingList.columns.bookingNumber[lang],
       enableSorting: true,
+      cell: ({ row }) =>
+        row.original.booking_number ||
+        t.uiComponents.dataTable.emptyCell[lang] ||
+        "—",
     },
     {
       accessorKey: "full_name",
@@ -173,8 +177,14 @@ const BookingList = () => {
 
         return (
           <div>
-            <div>{booking.full_name || t.bookingList.status.unknown[lang]}</div>
-            <div className="text-xs text-gray-500">{booking.email}</div>
+            <div>
+              {booking.full_name ||
+                t.uiComponents.dataTable.emptyCell[lang] ||
+                "—"}
+            </div>
+            <div className="text-xs text-gray-500">
+              {booking.email || t.uiComponents.dataTable.emptyCell[lang] || "—"}
+            </div>
             {orgName && (
               <div className="text-xs text-blue-600 font-medium mt-1">
                 {t.bookingList.status.onBehalfOf[lang]} {orgName}
@@ -190,7 +200,9 @@ const BookingList = () => {
       enableSorting: true,
       cell: ({ row }) => {
         const startDate = row.original.start_date;
-        if (!startDate) return t.bookingList.status.unknown[lang];
+        if (!startDate) {
+          return t.uiComponents.dataTable.emptyCell[lang] || "—";
+        }
         return formatDate(new Date(startDate), "d MMM yyyy");
       },
     },
@@ -213,8 +225,13 @@ const BookingList = () => {
       accessorKey: "created_at",
       header: t.bookingList.columns.bookingDate[lang],
       enableSorting: true,
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
+      cell: ({ row }) => {
+        const createdAt = row.original.created_at;
+        if (!createdAt) {
+          return t.uiComponents.dataTable.emptyCell[lang] || "—";
+        }
+        return formatDate(new Date(createdAt), "d MMM yyyy");
+      },
     },
   ];
 
@@ -223,6 +240,10 @@ const BookingList = () => {
       {
         accessorKey: "booking_number",
         header: t.overdueBookings.columns.bookingNumber[lang],
+        cell: ({ row }) =>
+          row.original.booking_number ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—",
       },
       {
         accessorKey: "full_name",
@@ -230,10 +251,14 @@ const BookingList = () => {
         cell: ({ row }) => (
           <div>
             <div>
-              {row.original.full_name ?? t.overdueBookings.status.unknown[lang]}
+              {row.original.full_name ||
+                t.uiComponents.dataTable.emptyCell[lang] ||
+                "—"}
             </div>
             <div className="text-xs text-gray-500">
-              {row.original.user_email ?? "-"}
+              {row.original.user_email ||
+                t.uiComponents.dataTable.emptyCell[lang] ||
+                "—"}
             </div>
           </div>
         ),
@@ -241,11 +266,18 @@ const BookingList = () => {
       {
         accessorKey: "earliest_due_date",
         header: t.overdueBookings.columns.dueDate[lang],
-        cell: ({ row }) => row.original.earliest_due_date,
+        cell: ({ row }) =>
+          row.original.earliest_due_date ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—",
       },
       {
         accessorKey: "days_overdue",
         header: t.overdueBookings.columns.daysOverdue[lang],
+        cell: ({ row }) =>
+          row.original.days_overdue ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—",
       },
     ],
     [lang],
