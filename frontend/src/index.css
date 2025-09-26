@@ -76,8 +76,8 @@
 }
 
 @theme {
-  --main-font: var(--main-font);
-  --heading-font: var(--heading-font);
+  --font-main: var(--main-font);
+  --font-heading: var(--heading-font);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
