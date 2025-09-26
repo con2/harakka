@@ -25,8 +25,8 @@ export const uiComponents = {
       en: "No results.",
     },
     emptyCell: {
-      fi: "NA",
-      en: "NA",
+      fi: "--",
+      en: "--",
     },
   },
 };

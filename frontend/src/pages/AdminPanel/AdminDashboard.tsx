@@ -102,6 +102,10 @@ const AdminDashboard = () => {
     {
       accessorKey: "booking_number",
       header: t.bookingList.columns.bookingNumber[lang],
+      cell: ({ row }) =>
+        row.original.booking_number ||
+        t.uiComponents.dataTable.emptyCell[lang] ||
+        "—",
     },
     {
       accessorKey: "user_profile.name",
@@ -109,9 +113,15 @@ const AdminDashboard = () => {
       cell: ({ row }) => (
         <div>
           <div>
-            {row.original.full_name || t.bookingList.status.unknown[lang]}
+            {row.original.full_name ||
+              t.uiComponents.dataTable.emptyCell[lang] ||
+              "—"}
           </div>
-          <div className="text-xs text-gray-500">{row.original.email}</div>
+          <div className="text-xs text-gray-500">
+            {row.original.email ||
+              t.uiComponents.dataTable.emptyCell[lang] ||
+              "—"}
+          </div>
         </div>
       ),
     },
@@ -131,8 +141,13 @@ const AdminDashboard = () => {
     {
       accessorKey: "created_at",
       header: t.bookingList.columns.bookingDate[lang],
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
+      cell: ({ row }) => {
+        const createdAt = row.original.created_at;
+        if (!createdAt) {
+          return t.uiComponents.dataTable.emptyCell[lang] || "—";
+        }
+        return formatDate(new Date(createdAt), "d MMM yyyy");
+      },
     },
   ];
 
@@ -140,16 +155,40 @@ const AdminDashboard = () => {
     {
       accessorKey: "full_name",
       header: t.adminDashboard.columns.userList.name[lang],
+      cell: ({ row }) => {
+        const name = row.original.full_name;
+        return (
+          (typeof name === "string" ? name : "") ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—"
+        );
+      },
     },
     {
       accessorKey: "email",
       header: t.adminDashboard.columns.userList.email[lang],
+      cell: ({ row }) => {
+        const email = row.original.email;
+        return (
+          (typeof email === "string" ? email : "") ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—"
+        );
+      },
     },
     {
       accessorKey: "created_at",
       header: t.adminDashboard.columns.userList.joined[lang],
-      cell: ({ row }) =>
-        formatDate(new Date(String(row.original.created_at)), "d MMM yyyy"),
+      cell: ({ row }) => {
+        const createdAt = row.original.created_at;
+        if (!createdAt) {
+          return t.uiComponents.dataTable.emptyCell[lang] || "—";
+        }
+        return formatDate(
+          new Date(typeof createdAt === "string" ? createdAt : ""),
+          "d MMM yyyy",
+        );
+      },
     },
   ];
 
