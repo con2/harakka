@@ -67,4 +67,24 @@ export const itemDetails = {
     fi: "Virhe",
     en: "Error",
   },
+  organization: {
+    fi: "Organisaatio",
+    en: "Organization",
+  },
+  tags: {
+    fi: "Tagit",
+    en: "Tags",
+  },
+  category: {
+    fi: "Kategoria",
+    en: "Category",
+  },
+  noTags: {
+    fi: "Ei tageja",
+    en: "No tags",
+  },
+  noCategory: {
+    fi: "Ei kategoriaa",
+    en: "No category",
+  },
 };

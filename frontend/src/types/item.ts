@@ -6,6 +6,7 @@ import {
 import { ErrorContext, StorageLocationRow, Tag, TagTranslation } from "@/types";
 import { Override } from "./db-helpers";
 import { StorageItemRow } from "@common/items/storage-items.types";
+import { ExtendedTag } from "@common/items/tag.types";
 
 /**
  * Item translations content
@@ -60,6 +61,14 @@ export type Item = Override<StorageItemRow, ItemAugmentedFields> & {
   organization_id?: string;
   org_id?: string;
 };
+
+/**
+ * Item with extended tag information
+ * Used when displaying items with full tag details including translations
+ */
+export interface ItemWithTags extends Item {
+  tags?: ExtendedTag[];
+}
 
 /**
  * Row shape returned by GET /storage-items/ordered
@@ -137,6 +146,27 @@ export interface ItemState {
     totalPages: number;
   };
   itemCount: number;
+  /** Availability overview keyed by item_id */
+  availabilityOverview?: Record<
+    string,
+    {
+      item_id: string;
+      totalQuantity: number;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }
+  >;
+  availabilityOverviewLoading?: boolean;
+  availabilityOverviewError?: string | null;
+  availabilityOverviewPagination?: {
+    page: number;
+    total: number;
+    totalPages: number;
+  };
+  // Admin locations where the org has items
+  adminLocationOptions?: { id: string; name: string | null }[];
+  adminLocationOptionsLoading?: boolean;
+  adminLocationOptionsError?: string | null;
   itemCreation: {
     org: SelectedOrg | null;
     location: SelectedStorage | null | undefined;

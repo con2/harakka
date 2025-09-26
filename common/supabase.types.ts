@@ -1779,6 +1779,22 @@ export type Database = {
         Args: { "": unknown }
         Returns: string
       }
+      availability_overview: {
+        Args: {
+          category_ids?: string[]
+          end_ts?: string
+          item_ids?: string[]
+          location_ids?: string[]
+          org_uuid: string
+          start_ts?: string
+        }
+        Returns: {
+          already_booked_quantity: number
+          available_quantity: number
+          item_id: string
+          total_quantity: number
+        }[]
+      }
       calculate_storage_item_total: {
         Args: { item_id: string }
         Returns: number
