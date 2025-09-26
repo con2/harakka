@@ -53,7 +53,7 @@ const BookingList = () => {
   // Get organization IDs from bookings that have booked_by_org set
   const organizationIds = useMemo(() => {
     return (bookings as BookingPreviewWithOrgData[])
-      .map((booking) => booking.booked_by_org) // Removed ! to avoid excessive type assertion
+      .map((booking) => booking.booked_by_org) 
       .filter((id): id is string => Boolean(id))
       .filter((id, index, arr) => arr.indexOf(id) === index); // Remove duplicates
   }, [bookings]);
