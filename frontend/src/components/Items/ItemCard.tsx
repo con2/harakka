@@ -298,7 +298,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
       </div>
 
       {/* Display selected booking timeframe if it exists */}
-      {startDate && endDate && (
+      {startDate && endDate && !preview && (
         <div
           className="bg-slate-100 p-2 rounded-md mb-1 flex flex-col items-center"
           data-cy="item-timeframe"
@@ -321,6 +321,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
         <div className="flex flex-col flex-wrap items-center space-y-2 justify-between">
           <div className="flex items-center">
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => setQuantity(Math.max(0, quantity - 1))}
@@ -346,6 +347,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
               max={availabilityInfo.availableQuantity}
             />
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => {
@@ -361,17 +363,17 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
           </div>
 
           <div className="flex items-center justify-end mb-3 mt-1">
-            {availabilityInfo.isChecking ? (
+            {!preview && availabilityInfo.isChecking ? (
               <p className="text-xs text-slate-400 italic m-0">
                 {t.itemCard.checkingAvailability[lang]}
               </p>
-            ) : availabilityInfo.error ? (
+            ) : !preview && availabilityInfo.error ? (
               <p className="text-xs text-red-500 italic m-0">
                 {t.itemCard.availabilityError[lang]}
               </p>
             ) : (
               <p className="text-xs text-slate-400 italic m-0">
-                {startDate && endDate
+                {!preview && startDate && endDate
                   ? availabilityInfo.availableQuantity > 0
                     ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
                     : `${t.itemCard.notAvailable[lang]}`
@@ -393,7 +395,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
               }
             >
               <Button
-                onClick={handleAddToCart}
+                type="button"
+                onClick={!preview ? handleAddToCart : () => {}}
                 className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-white hover:bg-secondary"
                 disabled={isAddToCartDisabled}
                 style={{
@@ -419,7 +422,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
 
       {/* View Details Button */}
       <Button
-        onClick={() => handleItemClick(item.id)}
+        type="button"
+        onClick={!preview ? () => handleItemClick(item.id) : () => {}}
         className="w-full bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
         data-cy="item-view-details-btn"
       >
