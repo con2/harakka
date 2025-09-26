@@ -45,7 +45,7 @@ function Error({ type = "server-error" }: ErrorProps) {
           <Button
             className="flex-1 rounded"
             variant="outline"
-            onClick={() => navigate("/items")}
+            onClick={() => navigate("/storage")}
           >
             {t.error.buttons.home[lang]}
           </Button>
