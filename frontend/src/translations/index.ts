@@ -26,6 +26,7 @@ import { contactForm } from "./modules/contactForm";
 import { currentUserRoles } from "./modules/currentUserRoles";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
 import { editLocationModal } from "./modules/editLocationModal";
+import { error } from "./modules/error";
 import { footer } from "./modules/footer";
 import { itemCard } from "./modules/itemCard";
 import { itemDetails } from "./modules/itemDetails";
@@ -54,6 +55,7 @@ import {
 } from "./modules/organizationsList";
 import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { orgStep } from "./modules/orgStep";
+import { overdueBookings } from "./modules/OverdueBookings";
 import { pagination } from "./modules/pagination";
 import { passwordReset } from "./modules/passwordReset";
 import { privacyPolicy } from "./modules/privacyPolicy";
@@ -81,7 +83,6 @@ import { userPanel } from "./modules/userPanel";
 import { usersDetailsPage } from "./modules/usersDetailsPage";
 import { userSignupModal } from "./modules/userSignupModal";
 import { usersList } from "./modules/usersList";
-import { overdueBookings } from "./modules/OverdueBookings";
 
 export const t = {
   addCategory,
@@ -112,6 +113,7 @@ export const t = {
   currentUserRoles,
   deleteLocationButton,
   editLocationModal,
+  error,
   footer,
   itemCard,
   itemDetails,
