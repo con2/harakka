@@ -194,11 +194,6 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
     dispatch(setNextStep());
   };
 
-  useEffect(() => {
-    console.log(form.formState.errors);
-    console.log(!!form.formState.errors.category_id);
-  }, [form.formState.errors]);
-
   const handleLocationChange = (selectedId: string) => {
     const newLoc = orgLocations?.find(
       (org) => org.storage_location_id === selectedId,
