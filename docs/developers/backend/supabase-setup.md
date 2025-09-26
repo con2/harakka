@@ -1,5 +1,7 @@
 # Supabase Setup Guide
 
+Important: This document contains legacy setup notes that predate our current Supabase Branching workflow. For day-to-day development, migrations, and deployments, follow docs/developers/Supabase.md. Only use the guidance below for historical context or initial project bootstrapping details.
+
 This document provides step-by-step instructions for setting up Supabase for the Storage and Booking Application.
 
 ## Table of Contents

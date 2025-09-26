@@ -154,7 +154,7 @@ npm run backend:live
 
 ### For Local Development
 
-When using local Supabase CLI, the database schema is automatically set up. You can use these helpful commands:
+When using local Supabase CLI, the database schema is managed by migrations in the `supabase/` folder. You can use these helpful commands (see docs/developers/Supabase.md for the full branching workflow):
 
 ```sh
 # Supabase CLI Commands
@@ -164,8 +164,8 @@ npm run s:restart        # Restart local Supabase
 npm run s:reset          # Reset local database
 npm run s:status         # Check Supabase status
 npm run s:studio         # Open Supabase Studio
-npm run s:pull           # Pull schema from remote
-npm run s:push           # Push schema to remote
+npm run s:pull           # Pull schema from remote (rarely needed)
+# Do NOT push schema manually; rely on GitHub integration
 ```
 
 #### Database Migration Commands
