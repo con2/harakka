@@ -169,12 +169,72 @@ const Cart: React.FC = () => {
     });
   }, [cartItems, startDate, endDate]);
 
+  // Reusable function to check all availabilities (for save dates and checkout)
+  const checkAllAvailabilities = async (
+    items = cartItems,
+    start = startDate,
+    end = endDate,
+  ) => {
+    if (!start || !end) return [];
+    const unavailableItems: string[] = [];
+    await Promise.all(
+      items.map(async (cartItem) => {
+        const itemId = cartItem.item.id;
+        setAvailabilityMap((prev) => ({
+          ...prev,
+          [itemId]: {
+            ...prev[itemId],
+            isChecking: true,
+            error: null,
+          },
+        }));
+        try {
+          const response = await itemsApi.checkAvailability(itemId, start, end);
+          const itemContent = getTranslation(cartItem.item, lang) as
+            | ItemTranslation
+            | undefined;
+          const itemName = itemContent?.item_name || "Unknown Item";
+          setAvailabilityMap((prev) => ({
+            ...prev,
+            [itemId]: {
+              availableQuantity: response.availableQuantity,
+              isChecking: false,
+              error: null,
+            },
+          }));
+          if (cartItem.quantity > response.availableQuantity) {
+            unavailableItems.push(itemName);
+          }
+        } catch {
+          setAvailabilityMap((prev) => ({
+            ...prev,
+            [itemId]: {
+              availableQuantity: 0,
+              isChecking: false,
+              error: "error in availability check",
+            },
+          }));
+          const itemContent = getTranslation(cartItem.item, lang) as
+            | ItemTranslation
+            | undefined;
+          const itemName = itemContent?.item_name || "Unknown Item";
+          unavailableItems.push(itemName);
+        }
+      }),
+    );
+    return unavailableItems;
+  };
+
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return;
 
     // validate if quantity exceeds available quantity
     const availability = availabilityMap[id];
-    if (availability && quantity > availability.availableQuantity) {
+    if (
+      availability &&
+      !availability.isChecking &&
+      quantity > availability.availableQuantity
+    ) {
       // If user is trying to increase quantity beyond availability, show warning and don't allow
       if (quantity > (availability.availableQuantity || 0)) {
         toast.warning(
@@ -236,105 +296,31 @@ const Cart: React.FC = () => {
       toast.error(t.cart.toast.selectDatesAndItems[lang]);
       return;
     }
+
     // check availability for all items with new dates
-    const unavailableItems: string[] = [];
-    // Set loading state for all items
-    cartItems.forEach((cartItem) => {
-      const itemId = cartItem.item.id;
-      setAvailabilityMap((prev) => ({
-        ...prev,
-        [itemId]: {
-          ...prev[itemId],
-          isChecking: true,
-          error: null,
-        },
-      }));
-    });
+    const unavailableItems = await checkAllAvailabilities(
+      cartItems,
+      tempStartDate,
+      tempEndDate,
+    );
 
-    try {
-      // Check availability for all items concurrently
-      const availabilityChecks = cartItems.map(async (cartItem) => {
-        try {
-          const response = await itemsApi.checkAvailability(
-            cartItem.item.id,
-            tempStartDate,
-            tempEndDate,
-          );
+    // Update the Redux store with new dates
+    dispatch(
+      setTimeframe({
+        startDate: tempStartDate.toISOString(),
+        endDate: tempEndDate.toISOString(),
+      }),
+    );
+    toast.success(t.cart.toast.datesUpdated[lang]);
 
-          const itemContent = getTranslation(cartItem.item, lang) as
-            | ItemTranslation
-            | undefined;
-          const itemName = itemContent?.item_name || "Unknown Item";
-
-          // Update availability map
-          setAvailabilityMap((prev) => ({
-            ...prev,
-            [cartItem.item.id]: {
-              availableQuantity: response.availableQuantity,
-              isChecking: false,
-              error: null,
-            },
-          }));
-
-          // Check if current quantity exceeds availability
-          if (cartItem.quantity > response.availableQuantity) {
-            unavailableItems.push(itemName);
-          }
-
-          return {
-            itemId: cartItem.item.id,
-            availableQuantity: response.availableQuantity,
-            currentQuantity: cartItem.quantity,
-            itemName,
-          };
-        } catch {
-          setAvailabilityMap((prev) => ({
-            ...prev,
-            [cartItem.item.id]: {
-              availableQuantity: 0,
-              isChecking: false,
-              error: "error in availability check",
-            },
-          }));
-
-          const itemContent = getTranslation(cartItem.item, lang) as
-            | ItemTranslation
-            | undefined;
-          const itemName = itemContent?.item_name || "Unknown Item";
-          unavailableItems.push(itemName);
-
-          return {
-            itemId: cartItem.item.id,
-            availableQuantity: 0,
-            currentQuantity: cartItem.quantity,
-            itemName,
-          };
-        }
-      });
-
-      await Promise.all(availabilityChecks);
-
-      // Update the Redux store with new dates
-      dispatch(
-        setTimeframe({
-          startDate: tempStartDate.toISOString(),
-          endDate: tempEndDate.toISOString(),
-        }),
-      );
-      toast.success(t.cart.toast.datesUpdated[lang]);
-
-      // if some items are unavailable, show warning
-      if (unavailableItems.length > 0) {
-        toast.warning(t.cart.toast.someItemsUnavailable[lang]);
-      }
-
-      setIsEditingDates(false);
-      setTempStartDate(null);
-      setTempEndDate(null);
-    } catch (error) {
-      console.error("Error checking availability for new dates:", error);
-      toast.error("Failed to check availability for new dates");
+    // if some items are unavailable, show warning
+    if (unavailableItems.length > 0) {
+      toast.warning(`${t.cart.toast.someItemsUnavailable[lang]}}`);
     }
+
+    setIsEditingDates(false);
+    setTempStartDate(null);
+    setTempEndDate(null);
   };
 
   const handleDateChange = (type: "start" | "end", date: Date | null) => {
@@ -367,6 +353,14 @@ const Cart: React.FC = () => {
 
     if (!startDate || !endDate || cartItems.length === 0) {
       toast.error(t.cart.toast.selectDatesAndItems[lang]);
+      return;
+    }
+
+    // Re-check all availabilities before proceeding
+    const unavailableItems = await checkAllAvailabilities();
+
+    if (unavailableItems.length > 0) {
+      toast.error(`${t.cart.toast.someoneBooked[lang]}`);
       return;
     }
 
@@ -420,9 +414,6 @@ const Cart: React.FC = () => {
       // Navigate to bookings page or confirmation
       void navigate("/bookings/confirmation");
     } catch (error: unknown) {
-      console.error("Checkout error:", error);
-      console.error("Booking data that failed:", bookingData);
-
       // Dismiss any existing toasts first
       toast.dismiss();
 
