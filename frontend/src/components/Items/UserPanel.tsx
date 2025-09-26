@@ -36,9 +36,6 @@ const UserPanel = () => {
   const MAX_VISIBLE = 5;
   const [searchParams] = useSearchParams();
 
-  // State to track if URL params have been processed
-  const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
-
   useEffect(() => {
     void dispatch(fetchAllCategories({ page: 1, limit: 50 }));
     void dispatch(
@@ -204,25 +201,44 @@ const UserPanel = () => {
     }
   }, [isFilterVisible]);
 
-  // Process URL parameters when organizations are loaded
+  // Process URL parameters when organizations are loaded or search params change
   useEffect(() => {
-    if (organizations.length > 0 && !urlParamsProcessed) {
+    if (organizations.length > 0) {
       const organizationParam = searchParams.get("organization");
 
       if (organizationParam) {
         // Find organization by name and set it as selected
         const org = organizations.find((o) => o.name === organizationParam);
         if (org) {
-          setFilters((prev) => ({
-            ...prev,
-            orgIds: [org.id],
-          }));
+          setFilters((prev) => {
+            // Only update if the org filter is different
+            if (
+              !prev.orgIds ||
+              prev.orgIds.length !== 1 ||
+              prev.orgIds[0] !== org.id
+            ) {
+              return {
+                ...prev,
+                orgIds: [org.id],
+              };
+            }
+            return prev;
+          });
         }
+      } else {
+        // No organization parameter, clear org filter if it's set
+        setFilters((prev) => {
+          if (prev.orgIds && prev.orgIds.length > 0) {
+            return {
+              ...prev,
+              orgIds: [],
+            };
+          }
+          return prev;
+        });
       }
-
-      setUrlParamsProcessed(true);
     }
-  }, [organizations, searchParams, urlParamsProcessed]);
+  }, [organizations, searchParams]);
 
   return (
     <div className="flex min-h-screen w-full overflow-y-auto justify-around pt-4 md:pt-0 gap-4">
