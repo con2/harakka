@@ -52,7 +52,7 @@ const Cart: React.FC = () => {
   const { formatDate } = useFormattedDate();
 
   // Profile completion hook
-  const { updateProfile } = useProfileCompletion();
+  const { status: profileStatus, updateProfile } = useProfileCompletion();
 
   const [availabilityMap, setAvailabilityMap] = useState<{
     [itemId: string]: {
@@ -168,6 +168,15 @@ const Cart: React.FC = () => {
         });
     });
   }, [cartItems, startDate, endDate]);
+
+  // Load user addresses for profile completion check
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(getUserAddresses(user.id)).catch((error) => {
+        console.warn("Failed to load user addresses:", error);
+      });
+    }
+  }, [dispatch, user?.id]);
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return;
@@ -367,6 +376,12 @@ const Cart: React.FC = () => {
 
     if (!startDate || !endDate || cartItems.length === 0) {
       toast.error(t.cart.toast.selectDatesAndItems[lang]);
+      return;
+    }
+
+    // Check if profile is complete before proceeding
+    if (profileStatus && !profileStatus.isComplete) {
+      setIsProfileModalOpen(true);
       return;
     }
 
