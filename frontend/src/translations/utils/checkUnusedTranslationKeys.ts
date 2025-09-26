@@ -1,5 +1,5 @@
 import { getAllComponents } from "./getAllComponents";
-import { SUPPORTED_LANGUAGES } from "../SUPPORTED_LANGUAGES";
+import { SUPPORTED_LANGUAGES_KEYS } from "../SUPPORTED_LANGUAGES";
 import { t } from "../index.js";
 import fs from "fs";
 
@@ -19,8 +19,8 @@ function collectAllTranslationKeys(
 
   // Check if this is a translation leaf node
   const isTranslationObj =
-    SUPPORTED_LANGUAGES.every((lang) => objKeys.includes(lang)) &&
-    objKeys.length <= SUPPORTED_LANGUAGES.length;
+    SUPPORTED_LANGUAGES_KEYS.every((lang) => objKeys.includes(lang)) &&
+    objKeys.length <= SUPPORTED_LANGUAGES_KEYS.length;
 
   if (isTranslationObj && pathArr.length > 0) {
     keys.add(pathArr.join("."));

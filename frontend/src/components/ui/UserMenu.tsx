@@ -19,11 +19,7 @@ import {
   UserRound,
 } from "lucide-react";
 
-import {
-  Language,
-  SUPPORTED_LANGUAGES,
-  useLanguage,
-} from "@/context/LanguageContext";
+import { Language, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useRoles } from "@/hooks/useRoles";
@@ -31,6 +27,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { setRedirectUrl } from "@/store/slices/uiSlice";
 import { getOrgLabel } from "@/utils/format";
 import { t } from "@/translations";
+import { SUPPORTED_LANGUAGES } from "@/translations/SUPPORTED_LANGUAGES";
 
 export const UserMenu: React.FC = () => {
   const {

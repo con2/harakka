@@ -15,8 +15,8 @@ export const footer = {
           en: "Cart",
         },
         contactUs: {
-          fi: "OTA YHTEYTTÄ",
-          en: "CONTACT US",
+          fi: "Ota Yhteyttä",
+          en: "Contact Us",
         },
       },
     },
