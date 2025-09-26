@@ -1067,13 +1067,6 @@ export class BookingService {
 
     let warningMessage: string | null = null;
 
-    // 5.0 Validate that booking has at least one booking item
-    if (!dto.items || dto.items.length === 0) {
-      throw new BadRequestException(
-        "Booking must have at least one booking item",
-      );
-    }
-
     // 5.1 check the booking
     const { data: booking } = await supabase
       .from("bookings")
@@ -1095,17 +1088,43 @@ export class BookingService {
       throw new ForbiddenException("Not allowed to update this booking");
     }
 
-    // 5.4 Status check (users are restricted)
+    // 5.3 Status check (users are restricted)
     if (booking.status !== "pending") {
       throw new ForbiddenException(
         "Your booking has been confirmed. You can't update it.",
       );
     }
 
-    // 5.3. Delete existing items from booking_items to avoid douplicates
+    // 5.4 Check if any booking items have non-pending status
+    const { data: existingItems, error: itemsError } = await supabase
+      .from("booking_items")
+      .select("id, status, item_id, quantity, start_date, end_date")
+      .eq("booking_id", booking_id);
+
+    if (itemsError) {
+      throw new BadRequestException("Could not fetch existing booking items");
+    }
+
+    const hasNonPendingItems = existingItems?.some(
+      (item) => item.status !== "pending",
+    );
+
+    if (hasNonPendingItems) {
+      throw new ForbiddenException(
+        "Cannot update booking items when some items have already been confirmed or processed",
+      );
+    }
+
+    // 5.5 Handle case where all items are removed
+    if (!dto.items || dto.items.length === 0) {
+      // Cancel the entire booking if no items are provided
+      return await this.cancelBooking(booking_id, userId, req);
+    }
+
+    // 5.6. Delete existing items from booking_items to avoid duplicates
     await supabase.from("booking_items").delete().eq("booking_id", booking_id);
 
-    // 5.4. insert updated items with validations and availability checks
+    // 5.7. insert updated items with validations and availability checks
     const checkedItems: BookingItemInsert[] = [];
     for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
@@ -1137,7 +1156,7 @@ export class BookingService {
         throw new BadRequestException("Booking cannot exceed 6 weeks");
       }
 
-      // 5.5. Check virtual availability for the time range
+      // 5.8. Check availability for the time range
       const { availableQuantity } = await calculateAvailableQuantity(
         supabase,
         item_id,
@@ -1151,7 +1170,7 @@ export class BookingService {
         );
       }
 
-      // 5.6. Fetch location_id and org_id (provider_organization_id)
+      // 5.9. Fetch location_id and org_id (provider_organization_id)
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
         .select("location_id, org_id")
@@ -1178,7 +1197,7 @@ export class BookingService {
     }
     await this.bookingItemsService.createBookingItems(supabase, checkedItems);
 
-    // 5.8 notify user via centralized mail service
+    // 5.10 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Update, {
       bookingId: booking_id,
       triggeredBy: userId,
