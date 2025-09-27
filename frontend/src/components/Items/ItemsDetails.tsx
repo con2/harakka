@@ -1,27 +1,27 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getItemById,
   selectSelectedItem,
   selectItemsLoading,
   selectItemsError,
-} from "../../store/slices/itemsSlice";
+} from "@/store/slices/itemsSlice";
 import {
   getItemImages,
   selectItemImages,
-} from "../../store/slices/itemImagesSlice";
+} from "@/store/slices/itemImagesSlice";
 import {
   fetchOrganizationById,
   selectedOrganization,
-} from "../../store/slices/organizationSlice";
+} from "@/store/slices/organizationSlice";
 import {
   fetchAllCategories,
   selectCategories,
-} from "../../store/slices/categoriesSlice";
-import { Button } from "../../components/ui/button";
+} from "@/store/slices/categoriesSlice";
+import { Button } from "@/components/ui/button";
 import { ChevronLeft, Clock, Info, LoaderCircle } from "lucide-react";
-import { addToCart } from "../../store/slices/cartSlice";
+import { addToCart } from "@/store/slices/cartSlice";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
 import imagePlaceholder from "@/assets/defaultImage.jpg";
@@ -241,7 +241,10 @@ const ItemsDetails: React.FC = () => {
             data-cy="item-details-main-image"
           >
             {/* Main Image Container */}
-            <div className="border rounded-md bg-slate-50 overflow-hidden h-full w-full">
+            <button
+              className="border rounded-md bg-slate-50 overflow-hidden h-full w-full"
+              onClick={toggleImageVisibility}
+            >
               <img
                 src={mainImage}
                 alt={itemContent?.item_name || "Tuotteen kuva"}
@@ -250,9 +253,8 @@ const ItemsDetails: React.FC = () => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = imagePlaceholder;
                 }}
-                onClick={toggleImageVisibility}
               />
-            </div>
+            </button>
 
             {/* overlay for enlarged preview (closes on any click) */}
             {isImageVisible && (
@@ -280,7 +282,7 @@ const ItemsDetails: React.FC = () => {
               data-cy="item-details-gallery"
             >
               {detailImages.map((img) => (
-                <div
+                <button
                   key={img.id}
                   className="border rounded-md overflow-hidden bg-slate-50 cursor-pointer"
                   onClick={() => setSelectedImageUrl(img.image_url)}
@@ -295,7 +297,7 @@ const ItemsDetails: React.FC = () => {
                       e.currentTarget.src = imagePlaceholder;
                     }}
                   />
-                </div>
+                </button>
               ))}
             </div>
           )}
