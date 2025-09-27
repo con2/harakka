@@ -11,4 +11,12 @@ export const itemsList = {
     fi: "Virhe: ",
     en: "Error: ",
   },
+  aria: {
+    labels: {
+      clearSearch: {
+        en: "Clear search",
+        fi: "Tyhjennä haku",
+      },
+    },
+  },
 };

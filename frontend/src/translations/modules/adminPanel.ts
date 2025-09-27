@@ -8,9 +8,13 @@ export const adminPanel = {
       fi: "Kojelauta",
       en: "Dashboard",
     },
-    bookings: {
-      fi: "Tilaukset",
-      en: "Bookings",
+    bookingsIn: {
+      fi: "Saapuvat varaukset",
+      en: "Incoming Bookings",
+    },
+    bookingsOut: {
+      fi: "Lähtevät varaukset",
+      en: "Outgoing Bookings",
     },
     overdue: {
       fi: "Myöhästyneet",

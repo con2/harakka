@@ -165,4 +165,14 @@ export const usersList = {
       en: "To add a new member to your organization, click the Add My Org User button",
     },
   },
+  aria: {
+    labels: {
+      filters: {
+        roleFilter: {
+          en: "Filter users by role",
+          fi: "Suodata käyttäjät roolin mukaan",
+        },
+      },
+    },
+  },
 };

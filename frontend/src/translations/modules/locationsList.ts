@@ -33,4 +33,12 @@ export const locationsList = {
     fi: common.edit.fi,
     en: common.edit.en,
   },
+  aria: {
+    labels: {
+      editLocation: {
+        en: "Edit location",
+        fi: "Muokkaa sijaintia",
+      },
+    },
+  },
 };

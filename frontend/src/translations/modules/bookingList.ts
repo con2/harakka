@@ -156,4 +156,32 @@ export const bookingList = {
     fi: "Ladataan tilauksia...",
     en: "Loading bookings...",
   },
+  aria: {
+    placeholders: {
+      search: {
+        en: "Search booking number or customer name",
+        fi: "Hae varausnumerolla tai asiakkaan nimellä",
+      },
+    },
+    labels: {
+      filters: {
+        recent: {
+          en: "View recently made bookings",
+          fi: "Näytä viimeisimmät varaukset",
+        },
+        upcoming: {
+          en: "View upcoming bookings",
+          fi: "Näytä tulevat varaukset",
+        },
+        overdue: {
+          en: "View overdue bookings",
+          fi: "Näytä myöhästyneet varaukset",
+        },
+        status: {
+          en: "Filter by booking status",
+          fi: "Suodata varaustilan mukaan",
+        },
+      },
+    },
+  },
 };

@@ -55,4 +55,16 @@ export const profilePicUploader = {
       en: "Failed to update profile picture",
     },
   },
+  aria: {
+    labels: {
+      updateProfilePic: {
+        noPic: {
+          en: "Update profile picture. No current picture chosen",
+          fi: "Päivitä profiilikuva. Ei valittua kuvaa tällä hetkellä.",
+        },
+        en: "Update profile picture",
+        fi: "Päivitä profiilikuva",
+      },
+    },
+  },
 };

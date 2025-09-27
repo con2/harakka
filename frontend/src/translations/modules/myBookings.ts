@@ -213,4 +213,18 @@ export const myBookings = {
       },
     },
   },
+  aria: {
+    placeholders: {
+      search: {
+        en: "Search by booking number.",
+        fi: "Hae varausnumerolla.",
+      },
+    },
+    labels: {
+      filterByStatus: {
+        en: "Filter by booking status.",
+        fi: "Suodata varaustilan mukaan.",
+      },
+    },
+  },
 };
