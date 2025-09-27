@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import hero from "@/assets/illusiaImage.jpg";
+import hero1 from "@/assets/23045509900_f5dfa32a54_k.jpg";
+import hero2 from "@/assets/26966104314_87b1105fcc_k.jpg";
+import hero3 from "@/assets/29561469952_622d8912ba_k.jpg";
 
 const LandingPage = () => {
   // Translation
@@ -13,7 +16,7 @@ const LandingPage = () => {
       <div
         className="absolute inset-[-8px] bg-cover bg-center -z-10 filter brightness-[0.6] blur-[3px]"
         style={{
-          backgroundImage: `url(${hero})`,
+          backgroundImage: `url(${hero3})`,
         }}
       />
 
