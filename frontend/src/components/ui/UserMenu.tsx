@@ -109,19 +109,19 @@ export const UserMenu: React.FC = () => {
             <img
               src={avatarUrl}
               className="inline h-6 w-6 rounded-full"
-              alt="User avatar"
+              alt=""
             />
           ) : (
             <UserIcon className="inline h-6 w-6 rounded-full" />
           )}
-          <div className="flex flex-col text-start font-main flex-col-reverse">
+          <div className="flex flex-col text-start font-main flex-col">
+            <p className="text-md">{userName || email}</p>
             <p className="text-xs !font-[var(--main-font)]">
               {activeRoleName !== "user" &&
                 activeRoleName &&
                 activeOrgName &&
                 getOrgLabel(userName, activeRoleName, activeOrgName)}
             </p>
-            <p className="text-md">{userName || email}</p>
           </div>
           <ChevronDown
             className={`w-3 h-3 transition-transform ${open ? "transform-[rotate(180deg)]" : "transform-[rotate(0deg)]"}`}
