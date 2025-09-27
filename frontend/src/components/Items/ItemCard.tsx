@@ -13,17 +13,17 @@ import { getItemById } from "@/store/slices/itemsSlice";
 import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
 import { ItemImageAvailabilityInfo } from "@/types/storage";
-import { Clock, MapPin } from "lucide-react";
+import { Clock, MapPin, Minus, Plus } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   getItemImages,
   selectItemImages,
-} from "../../store/slices/itemImagesSlice";
-import { Item } from "../../types/item";
+} from "@/store/slices/itemImagesSlice";
+import { Item } from "@/types/item";
 import { Input } from "../ui/input";
 import { itemsApi } from "@/api/services/items";
 
@@ -315,9 +315,13 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
               size="sm"
               onClick={() => setQuantity(Math.max(0, quantity - 1))}
               className="h-8 w-8 p-0"
+              aria-label={t.itemCard.aria.labels.quantity.reduce[lang].replace(
+                "{number}",
+                (quantity - 1).toString(),
+              )}
               disabled={quantity <= 0}
             >
-              -
+              <Minus aria-hidden />
             </Button>
             <Input
               type="text"
@@ -344,9 +348,12 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                 );
               }}
               className="h-8 w-8 p-0"
+              aria-label={t.itemCard.aria.labels.quantity.increase[
+                lang
+              ].replace("{number}", (quantity - 1).toString())}
               disabled={quantity >= availabilityInfo.availableQuantity}
             >
-              +
+              <Plus aria-hidden />
             </Button>
           </div>
 
