@@ -325,6 +325,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
             </Button>
             <Input
               type="text"
+              aria-label={t.itemCard.aria.labels.quantity.enterQuantity[
+                lang
+              ].replace("{number}", quantity.toString())}
               value={quantity}
               onChange={(e) => {
                 const value = parseInt(e.target.value) || 0;

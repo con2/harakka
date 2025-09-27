@@ -21,6 +21,7 @@ import {
   getBookingsCount,
   getOrderedBookings,
   selectAllBookings,
+  selectBookingLoading,
   selectTotalBookingsCount,
 } from "@/store/slices/bookingsSlice";
 import {
@@ -46,34 +47,38 @@ const AdminDashboard = () => {
   const dispatch = useAppDispatch();
   const items = useAppSelector(selectAllItems);
   const bookings = useAppSelector(selectAllBookings);
-  const bookingsLoading = useAppSelector((s) => s.bookings.loading);
+  const bookingsLoading = useAppSelector(selectBookingLoading);
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const itemCount = useAppSelector(selectTotalItemsCount);
   const bookingsCount = useAppSelector(selectTotalBookingsCount);
   const userCount = useAppSelector(selectTotalUsersCount);
-  const { activeContext } = useRoles();
   const organizationsCount = useAppSelector(selectTotalOrganizationsCount);
+  const {
+    activeContext: {
+      organizationName: org_name,
+      roleName: currentRole,
+      organizationId: org_id,
+    },
+  } = useRoles();
   const usersList = useAppSelector((s) => s.users.users.data || []);
-
+  const isSuperAdmin = currentRole === "super_admin";
   useEffect(() => {
     if (items.length <= 1) void dispatch(fetchAllItems({ page: 1, limit: 10 }));
   }, [dispatch, items.length]);
-  useEffect(() => {
-    if (userCount < 1) void dispatch(getUserCount());
-  }, [userCount]); //eslint-disable-line
+
   useEffect(() => {
     void dispatch(getItemCount());
     void dispatch(getUserCount());
     void dispatch(getBookingsCount());
-    if (activeContext?.roleName === "super_admin") {
+    if (isSuperAdmin) {
       void dispatch(getOrganizationsCount());
     }
-  }, [dispatch, activeContext?.organizationId, activeContext?.roleName]);
+  }, [dispatch, org_id, isSuperAdmin]);
 
   useEffect(() => {
-    if (activeContext?.roleName === "super_admin") {
+    if (isSuperAdmin) {
       void dispatch(
         fetchAllOrderedUsers({
           page: 1,
@@ -83,10 +88,10 @@ const AdminDashboard = () => {
         }),
       );
     }
-  }, [dispatch, activeContext?.roleName]);
+  }, [dispatch, isSuperAdmin]);
 
   useEffect(() => {
-    if (activeContext?.roleName !== "super_admin") {
+    if (!isSuperAdmin) {
       void dispatch(
         getOrderedBookings({
           ordered_by: "created_at",
@@ -96,7 +101,7 @@ const AdminDashboard = () => {
         }),
       );
     }
-  }, [dispatch, activeContext?.organizationId, activeContext?.roleName]);
+  }, [dispatch, org_id, isSuperAdmin]);
 
   const bookingColumns: ColumnDef<BookingPreview>[] = [
     {
@@ -195,12 +200,16 @@ const AdminDashboard = () => {
   return (
     <div>
       <div className="w-full flex flex-wrap justify-center items-center mb-8 gap-4">
-        {activeContext?.roleName === "super_admin" && (
+        {isSuperAdmin && (
           <button
+            aria-label={t.adminDashboard.aria.labels.viewOrgs[lang].replace(
+              "{number}",
+              organizationsCount.toString(),
+            )}
             className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
             onClick={() => navigate("/admin/organizations")}
           >
-            <div className="flex justify-center items-center">
+            <div aria-hidden className="flex justify-center items-center">
               <p className="text-slate-500">
                 {t.adminDashboard.cards.organizations[lang]}
               </p>
@@ -212,10 +221,20 @@ const AdminDashboard = () => {
           </button>
         )}
         <button
+          aria-label={
+            isSuperAdmin
+              ? t.adminDashboard.aria.labels.viewUsers[lang].replace(
+                  "{number}",
+                  userCount.toString(),
+                )
+              : t.adminDashboard.aria.labels.viewUsers.ofOrg[lang]
+                  .replace("{number}", userCount.toString())
+                  .replace("{org_name}", org_name || "organization")
+          }
           className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
           onClick={() => navigate("/admin/users")}
         >
-          <div className="flex justify-center items-center">
+          <div aria-hidden className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.users[lang]}
             </p>
@@ -228,18 +247,24 @@ const AdminDashboard = () => {
         </button>
 
         <button
+          aria-label={
+            isSuperAdmin
+              ? t.adminDashboard.aria.labels.viewItems[lang].replace(
+                  "{number}",
+                  itemCount.toString(),
+                )
+              : t.adminDashboard.aria.labels.viewItems.ofOrg[lang]
+                  .replace("{number}", itemCount.toString())
+                  .replace("{org_name}", org_name || "organization")
+          }
           className={`flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-default ${
-            activeContext?.roleName === "super_admin"
+            isSuperAdmin
               ? ""
               : "cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
           }`}
-          onClick={
-            activeContext?.roleName === "super_admin"
-              ? undefined
-              : () => navigate("/admin/items")
-          }
+          onClick={isSuperAdmin ? undefined : () => navigate("/admin/items")}
         >
-          <div className="flex justify-center items-center">
+          <div aria-hidden className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.items[lang]}
             </p>
@@ -250,18 +275,24 @@ const AdminDashboard = () => {
           </div>
         </button>
         <button
+          aria-label={
+            isSuperAdmin
+              ? t.adminDashboard.aria.labels.viewBookings[lang].replace(
+                  "{number}",
+                  bookingsCount.toString(),
+                )
+              : t.adminDashboard.aria.labels.viewBookings.ofOrg[lang]
+                  .replace("{number}", bookingsCount.toString())
+                  .replace("{org_name}", org_name || "organization")
+          }
           className={`flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-default ${
-            activeContext?.roleName === "super_admin"
+            isSuperAdmin
               ? ""
               : "cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
           }`}
-          onClick={
-            activeContext?.roleName === "super_admin"
-              ? undefined
-              : () => navigate("/admin/bookings")
-          }
+          onClick={isSuperAdmin ? undefined : () => navigate("/admin/bookings")}
         >
-          <div className="flex justify-center items-center">
+          <div aria-hidden className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.bookings[lang]}
             </p>
@@ -274,7 +305,7 @@ const AdminDashboard = () => {
       </div>
       {/* Recent section - users for super_admin, bookings for others */}
       <div className="mb-8">
-        {activeContext?.roleName === "super_admin" ? (
+        {isSuperAdmin ? (
           <>
             <h2 className="text-left">
               {t.adminDashboard.sections.recentUsers[lang]}

@@ -30,7 +30,8 @@ import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import { useNavigate } from "react-router-dom";
 import { formatBookingStatus } from "@/utils/format";
 import { bookingsApi, OverdueBookingRow } from "@/api/services/bookings";
-//
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const BookingList = () => {
   const dispatch = useAppDispatch();
@@ -351,8 +352,9 @@ const BookingList = () => {
         {/* Search and Filters */}
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex gap-4 items-center">
-            <input
+            <Input
               type="text"
+              aria-placeholder={t.bookingList.aria.placeholders.search[lang]}
               placeholder={t.bookingList.filters.search[lang]}
               value={searchQuery}
               size={50}
@@ -361,6 +363,7 @@ const BookingList = () => {
               disabled={scopeOverdue}
             />
             <select
+              aria-label={t.bookingList.aria.labels.filters.status[lang]}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as BookingStatus)}
               className={`select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] ${scopeOverdue ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -393,9 +396,9 @@ const BookingList = () => {
 
           {/* Ordering/Scope Toggle Buttons */}
           <div className="flex gap-2 items-center">
-            <span className="text-sm italic text-primary/70">
+            <Label className="text-sm italic text-primary/70">
               {t.bookingList.filters.filterBy[lang]}
-            </span>
+            </Label>
             {/* Recent Button */}
             <Button
               onClick={() => handleOrderToggle("created_at")}
@@ -405,14 +408,15 @@ const BookingList = () => {
                   : "default"
               }
               size="sm"
-              disabled={!scopeOverdue && orderBy === "created_at"}
+              aria-label={t.bookingList.aria.labels.filters.recent[lang]}
+              aria-disabled={!scopeOverdue && orderBy === "created_at"}
               className={`flex items-center gap-2 ${
                 !scopeOverdue && orderBy === "created_at"
                   ? "cursor-not-allowed opacity-75"
                   : "cursor-pointer"
               }`}
             >
-              <Clock className="h-4 w-4" />
+              <Clock aria-hidden className="h-4 w-4" />
               {t.bookingList.filters.recent[lang]}
             </Button>
             {/* Upcoming Button */}
@@ -424,14 +428,15 @@ const BookingList = () => {
                   : "default"
               }
               size="sm"
-              disabled={!scopeOverdue && orderBy === "start_date"}
+              aria-label={t.bookingList.aria.labels.filters.upcoming[lang]}
+              aria-disabled={!scopeOverdue && orderBy === "start_date"}
               className={`flex items-center gap-2 ${
                 !scopeOverdue && orderBy === "start_date"
                   ? "cursor-not-allowed opacity-75"
                   : "cursor-pointer"
               }`}
             >
-              <Calendar className="h-4 w-4" />
+              <Calendar aria-hidden className="h-4 w-4" />
               {t.bookingList.filters.upcoming[lang]}
             </Button>
             {/* Overdue Button */}
@@ -442,6 +447,7 @@ const BookingList = () => {
               }}
               variant={scopeOverdue ? "secondary" : "default"}
               size="sm"
+              aria-label={t.bookingList.aria.labels.filters.overdue[lang]}
               disabled={scopeOverdue}
               className={`flex items-center gap-2 ${
                 scopeOverdue
@@ -449,7 +455,7 @@ const BookingList = () => {
                   : "cursor-pointer"
               }`}
             >
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle aria-hidden className="h-4 w-4" />
               {t.bookingList.filters.overdue[lang]}
             </Button>
           </div>

@@ -21,7 +21,7 @@ import {
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle, Info, CircleUser } from "lucide-react";
+import { LoaderCircle, Info, CircleUser, Plus, Search } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,6 +35,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
 
 const UsersList = () => {
   // ————————————— Hooks & Selectors —————————————
@@ -585,16 +586,21 @@ const UsersList = () => {
 
       {error && <p className="text-red-500">Error: {error}</p>}
 
-      <div className="flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex gap-4 items-center">
-          <input
-            type="text"
-            placeholder={t.usersList.filters.search[lang]}
-            value={searchQuery}
-            size={50}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-          />
+      <div className="flex flex-wrap items-center justify-between">
+        <div className="flex flex-wrap gap-4">
+          <div className="flex gap-4 items-center relative sm:max-w-xs min-w-[250px]">
+            <Search
+              aria-hidden
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
+            />
+            <Input
+              type="text"
+              placeholder={t.usersList.filters.search[lang]}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-sm pl-10 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            />
+          </div>
 
           {/* Org filter for super admin */}
           {isSuper && (
@@ -650,18 +656,21 @@ const UsersList = () => {
 
         {/* Add a new member to an org section */}
         <div className="relative">
-          {!isSuper ? (
-            <Button variant={"outline"} onClick={toggleAddUser}>
+          {!isSuper && (
+            <Button
+              variant={"outline"}
+              onClick={toggleAddUser}
+              className="gap-2"
+            >
+              <Plus aria-hidden />
               {t.usersList.addUser.title[lang]}
             </Button>
-          ) : (
-            ""
           )}
 
           {showAddUser && (
             <div className="absolute right-0 mt-2 p-4 w-96 bg-white border rounded shadow-lg z-50">
               <div className="flex gap-2 items-center mb-2">
-                <input
+                <Input
                   type="text"
                   placeholder={t.usersList.filters.search[lang]}
                   value={addSearchInput}
@@ -764,6 +773,7 @@ const UsersList = () => {
 
               <div className="flex gap-2 items-center justify-between">
                 <select
+                  aria-label={t.usersList.aria.labels.filters.roleFilter[lang]}
                   value={selectedAddUserRole}
                   onChange={(e) => setSelectedAddUserRole(e.target.value)}
                   className="select bg-white text-sm p-2 rounded-md"

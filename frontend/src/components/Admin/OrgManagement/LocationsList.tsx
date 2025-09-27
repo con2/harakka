@@ -53,7 +53,7 @@ const LocationsList: React.FC<LocationsListProps> = ({
   if (locations.length === 0) {
     return (
       <div className="text-center py-10 text-muted-foreground">
-        <MapPin className="h-12 w-12 mx-auto mb-4" />
+        <MapPin aria-hidden className="h-12 w-12 mx-auto mb-4" />
         <p>{t.locationsList.noLocations[lang]}</p>
       </div>
     );
@@ -66,8 +66,8 @@ const LocationsList: React.FC<LocationsListProps> = ({
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-primary" />
-                <CardTitle className="text-sm">
+                <MapPin aria-hidden className="h-6 w-6 text-primary" />
+                <CardTitle className="font-semibold">
                   {location.storage_locations?.name ||
                     `Location #${location.id}`}
                 </CardTitle>
@@ -79,32 +79,33 @@ const LocationsList: React.FC<LocationsListProps> = ({
               </Badge>
             </div>
             <CardDescription className="text-xs">
-              {t.locationsList.address[lang]}:{" "}
-              {location.storage_locations?.address ||
-                t.locationsList.noAddress[lang]}
+              {`${t.locationsList.address[lang]}: 
+              ${
+                location.storage_locations?.address ||
+                t.locationsList.noAddress[lang]
+              }`}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-xs text-muted-foreground">
               <p>
-                {t.locationsList.organization[lang]}:{" "}
-                {location.organizations?.name || location.organization_id}
+                {`${t.locationsList.organization[lang]}: ${location.organizations?.name || location.organization_id}`}
               </p>
               {location.created_at && (
                 <p>
-                  {t.locationsList.created[lang]}:{" "}
-                  {new Date(location.created_at).toLocaleDateString()}
+                  {`${t.locationsList.created[lang]}: ${new Date(location.created_at).toLocaleDateString()}`}
                 </p>
               )}
             </div>
             {showActions && organizationId && (
               <div className="flex items-center space-x-2 mt-4">
                 <Button
+                  aria-label={t.locationsList.aria.labels.editLocation[lang]}
                   variant="outline"
                   size="sm"
                   onClick={() => onEdit?.(location)}
                 >
-                  <Edit className="h-3 w-3 mr-1" />
+                  <Edit aria-hidden className="h-3 w-3 mr-1" />
                   {t.locationsList.edit[lang]}
                 </Button>
                 <DeleteLocationButton

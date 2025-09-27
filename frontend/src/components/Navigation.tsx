@@ -87,7 +87,7 @@ export const Navigation = () => {
           <MobileNavigation />
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}

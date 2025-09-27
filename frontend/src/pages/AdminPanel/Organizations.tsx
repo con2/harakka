@@ -10,7 +10,7 @@ import {
   setSelectedOrganization,
 } from "@/store/slices/organizationSlice";
 import { OrganizationDetails } from "@/types/organization";
-import { Building2, Edit, Eye, LoaderCircle } from "lucide-react";
+import { Building2, Edit, Eye, LoaderCircle, Plus } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { t } from "@/translations";
@@ -23,6 +23,7 @@ import OrganizationModal, {
   OrganizationFormValues,
 } from "@/components/Admin/Organizations/OrganizationModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDate } from "date-fns";
 
 const Organizations = () => {
   const dispatch = useAppDispatch();
@@ -193,7 +194,7 @@ const Organizations = () => {
       accessorKey: "created_at",
       cell: ({ row }) =>
         row.original.created_at
-          ? new Date(row.original.created_at).toLocaleDateString()
+          ? formatDate(new Date(row.original.created_at), "d MMM yyyy")
           : "—",
     },
   ];
@@ -205,7 +206,13 @@ const Organizations = () => {
 
         {/* Add New Org button */}
         <div className="flex gap-4 justify-end">
-          <Button onClick={openCreateModal} variant="outline" size="sm">
+          <Button
+            onClick={openCreateModal}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Plus aria-hidden />
             {t.organizations.createButton[lang]}
           </Button>
         </div>

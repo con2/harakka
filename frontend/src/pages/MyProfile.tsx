@@ -446,7 +446,7 @@ const MyProfile = () => {
                                 className="text-xs"
                                 onClick={() => handleDeleteAddress(index)}
                               >
-                                <Trash2 className="mr-1" />{" "}
+                                <Trash2 aria-hidden className="mr-1" />
                                 {t.myProfile.addresses.remove[lang]}
                               </Button>
                             </div>
