@@ -1,12 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
-import {
-  Outlet,
-  useSearchParams,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SlidersIcon } from "lucide-react";
@@ -34,6 +29,7 @@ interface NavigationState {
   preSelectedFilters?: {
     categories?: string[];
     tagIds?: string[];
+    orgIds?: string[];
   };
 }
 
@@ -49,7 +45,6 @@ const UserPanel = () => {
   const navigate = useNavigate();
   const navigationState = routerLocation.state as NavigationState | null;
   const MAX_VISIBLE = 5;
-  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     void dispatch(fetchAllCategories({ page: 1, limit: 50 }));
@@ -171,7 +166,7 @@ const UserPanel = () => {
     categories: navigationState?.preSelectedFilters?.categories || [],
     tagIds: navigationState?.preSelectedFilters?.tagIds || [],
     locationIds: [],
-    orgIds: [],
+    orgIds: navigationState?.preSelectedFilters?.orgIds || [],
   }));
 
   // --- slider thumb state so the handle moves smoothly without refetching ---
@@ -192,6 +187,7 @@ const UserPanel = () => {
         ...prevFilters,
         categories: currentNavState.preSelectedFilters?.categories || [],
         tagIds: currentNavState.preSelectedFilters?.tagIds || [],
+        orgIds: currentNavState.preSelectedFilters?.orgIds || [],
       }));
       // clear nav state to prevent reapplying filters on refresh
       void navigate(routerLocation.pathname, { replace: true, state: null });
@@ -229,45 +225,6 @@ const UserPanel = () => {
       filterRef.current.scrollTop = 0;
     }
   }, [isFilterVisible]);
-
-  // Process URL parameters when organizations are loaded or search params change
-  useEffect(() => {
-    if (organizations.length > 0) {
-      const organizationParam = searchParams.get("organization");
-
-      if (organizationParam) {
-        // Find organization by name and set it as selected
-        const org = organizations.find((o) => o.name === organizationParam);
-        if (org) {
-          setFilters((prev) => {
-            // Only update if the org filter is different
-            if (
-              !prev.orgIds ||
-              prev.orgIds.length !== 1 ||
-              prev.orgIds[0] !== org.id
-            ) {
-              return {
-                ...prev,
-                orgIds: [org.id],
-              };
-            }
-            return prev;
-          });
-        }
-      } else {
-        // No organization parameter, clear org filter if it's set
-        setFilters((prev) => {
-          if (prev.orgIds && prev.orgIds.length > 0) {
-            return {
-              ...prev,
-              orgIds: [],
-            };
-          }
-          return prev;
-        });
-      }
-    }
-  }, [organizations, searchParams]);
 
   return (
     <div className="flex min-h-screen w-full overflow-y-auto justify-around pt-4 md:pt-0 gap-4">
