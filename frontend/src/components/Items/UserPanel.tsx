@@ -179,14 +179,15 @@ const UserPanel = () => {
 
   // Handle navigation state changes for pre-selected filters
   useEffect(() => {
-    if (navigationState?.preSelectedFilters) {
+    const currentNavState = routerLocation.state as NavigationState | null;
+    if (currentNavState?.preSelectedFilters) {
       setFilters((prevFilters) => ({
         ...prevFilters,
-        categories: navigationState.preSelectedFilters?.categories || [],
-        tagIds: navigationState.preSelectedFilters?.tagIds || [],
+        categories: currentNavState.preSelectedFilters?.categories || [],
+        tagIds: currentNavState.preSelectedFilters?.tagIds || [],
       }));
     }
-  }, [navigationState]);
+  }, [routerLocation.state]);
 
   // Handle filter change
   const handleFilterChange = (filterKey: string, value: FilterValue) => {
