@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { OrganizationDetails } from "@/types/organization";
 import { Building2, ArrowRight, Users } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
@@ -17,6 +17,7 @@ const OrganizationInfo: React.FC<OrganizationInfoProps> = ({
 }) => {
   const { lang } = useLanguage();
   const { currentUserOrganizations } = useRoles();
+  const navigate = useNavigate();
 
   // Get user's role information for this organization
   const userOrgRole = currentUserOrganizations.find(
@@ -74,18 +75,24 @@ const OrganizationInfo: React.FC<OrganizationInfoProps> = ({
           )}
 
           {/* Browse Storage Button */}
-          <Button asChild variant="secondary">
-            <Link
-              to={`/storage?organization=${encodeURIComponent(organization.name)}`}
-              className="gap-2 group"
-            >
-              <span>
-                {t.organizationList.actions.browseStorage[lang]}{" "}
-                {organization.name}{" "}
-                {t.organizationList.actions.browseItems[lang]}
-              </span>
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform duration-200" />
-            </Link>
+          <Button
+            variant="secondary"
+            className="gap-2 group"
+            onClick={() =>
+              navigate("/storage", {
+                state: {
+                  preSelectedFilters: {
+                    orgIds: [organization.id],
+                  },
+                },
+              })
+            }
+          >
+            <span>
+              {t.organizationList.actions.browseStorage[lang]}{" "}
+              {organization.name} {t.organizationList.actions.browseItems[lang]}
+            </span>
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform duration-200" />
           </Button>
         </div>
       </section>
