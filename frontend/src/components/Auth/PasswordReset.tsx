@@ -101,6 +101,27 @@ const PasswordReset = () => {
     return () => clearTimeout(timer);
   }, [navigate, recoveryToken]); //eslint-disable-line
 
+  useEffect(() => {
+    const handler = () => setError(null);
+
+    const observer = new MutationObserver(() => {
+      const passwordInput = document.querySelector('input[type="password"]');
+      if (passwordInput) {
+        passwordInput.addEventListener("input", handler);
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+      const passwordInput = document.querySelector('input[type="password"]');
+      if (passwordInput) {
+        passwordInput.removeEventListener("input", handler);
+      }
+    };
+  }, []);
+
   return (
     <div className="flex min-h-screen relative items-center justify-center p-4 pb-0">
       <Card className="w-full max-w-md shadow-lg">

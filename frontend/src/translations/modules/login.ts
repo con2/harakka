@@ -21,6 +21,10 @@ export const login = {
     fi: "Salasana on päivitetty onnistuneesti. Ole hyvä ja kirjaudu sisään uudella salasanallasi.",
     en: "Password has been updated successfully. Please log in with your new password.",
   },
+  resetSuccessTitle: {
+    en: "Welcome back!",
+    fi: "Tervetuloa takaisin!",
+  },
   expiredLink: {
     fi: 'Salasanan nollauslinkki on vanhentunut. Pyydä uusi linkki käyttämällä "Unohditko salasanasi" -vaihtoehtoa alla.',
     en: 'Your password reset link has expired. Please request a new one using the "Forgot password" option below.',

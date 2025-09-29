@@ -85,11 +85,11 @@ const LoginPage = () => {
                 className="text-center text-2xl font-bold text-primary mb-2"
                 data-cy="login-card-title"
               >
-                {
-                  t.login.titles[currentView as keyof typeof t.login.titles][
-                    lang
-                  ]
-                }
+                {state?.message
+                  ? t.login.resetSuccessTitle[lang]
+                  : t.login.titles[currentView as keyof typeof t.login.titles][
+                      lang
+                    ]}
               </CardTitle>
               <div
                 className="w-16 h-1 bg-gradient-to-r from-secondary to-highlight2 mx-auto rounded-full"
