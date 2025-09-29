@@ -636,7 +636,7 @@ export class BookingService {
     if (unavailableItems.length > 0) {
       throw new BadRequestException({
         message:
-          "Unfortunately, some of your items has just been booked by another user",
+          "Unfortunately, some of your items have just been booked by another user",
       });
     }
 

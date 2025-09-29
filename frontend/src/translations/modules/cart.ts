@@ -230,7 +230,7 @@ export const cart = {
     },
     someoneBooked: {
       fi: "Valitettavasti toinen käyttäjä on juuri varannut osan tuotteistasi",
-      en: "Unfortunately, some of your items has just been booked by another user",
+      en: "Unfortunately, some of your items have just been booked by another user",
     },
   },
   profileCompletion: {
