@@ -97,7 +97,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
     defaultValues:
-      initialData ?? editItem ?? getInitialItemData(storage || undefined),
+      (initialData as CreateItemType) ??
+      editItem ??
+      getInitialItemData(storage || undefined),
   });
 
   const refetchCategories = () => {
