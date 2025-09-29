@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * <Notifications />
@@ -47,7 +48,9 @@ type NotificationRow = DBTables<"notifications">;
 
 export const Notifications: React.FC<Props> = ({ userId }) => {
   const [feed, setFeed] = React.useState<NotificationRow[]>([]);
+  const { user } = useAuth();
 
+  console.log("Current user:", user);
   const feedUniq = React.useMemo(
     () => Array.from(new Map(feed.map((n) => [n.id, n])).values()),
     [feed],
@@ -112,6 +115,18 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
       .in("id", ids);
   };
 
+  /** Deletes **all** notifications currently in the feed, locally and in DB. */
+  const deleteAll = async () => {
+    const ids = feedUniq.map((n) => n.id);
+    if (ids.length === 0) return;
+
+    // Optimistically remove all from local state
+    setFeed((prev) => prev.filter((n) => !ids.includes(n.id))); // or simply: setFeed([])
+
+    // Delete from DB
+    await supabase.from("notifications").delete().in("id", ids);
+  };
+
   /** Deletes a row locally *and* remotely (requires RLS delete policy). */
   const removeNotification = async (id: string) => {
     // delete from local state first
@@ -143,17 +158,30 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
       <DropdownMenuContent className="w-80 md:w-96" align="end">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>{t.navigation.notifications.label[lang]}</span>
-          {unseen > 0 && (
-            <Button
-              size="sm"
-              variant="ghost"
-              title={t.navigation.notifications.markAllRead[lang]}
-              onClick={markAllRead}
-              className="h-5 w-5"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {feedUniq.length > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                title="Delete all"
+                onClick={deleteAll}
+                className="h-5 w-5"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            {unseen > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                title={t.navigation.notifications.markAllRead[lang]}
+                onClick={markAllRead}
+                className="h-5 w-5"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {feedUniq.length === 0 ? (
