@@ -42,7 +42,29 @@ export function subscribeToNotifications(
   userId: string,
   onNew: (n: NotificationRow) => void,
 ): () => void {
+  const isDebugEnabled = (): boolean => {
+    try {
+      if (typeof window !== "undefined") {
+        const ls = window.localStorage?.getItem("notifDebug");
+        if (ls && ls !== "0" && ls !== "false") return true;
+        const qp = new URLSearchParams(window.location.search);
+        if (qp.get("notifDebug") === "1") return true;
+        if (/localhost|127\.0\.0\.1/.test(window.location.hostname)) return true;
+      }
+      const vite = (import.meta as any)?.env;
+      if (vite?.DEV === true) return true;
+      if (vite?.MODE === "development") return true;
+      const nodeEnv = (typeof process !== "undefined" ? (process as any).env?.NODE_ENV : undefined);
+      if (nodeEnv === "development") return true;
+    } catch {}
+    return false;
+  };
+  const dlog = (...args: unknown[]) => {
+    if (isDebugEnabled()) console.log("[NotifLib]", ...args);
+  };
+
   // -------- initial unread fetch
+  dlog("Initial fetch", { userId });
   supabase
     .from("notifications")
     .select("*")
@@ -53,13 +75,22 @@ export function subscribeToNotifications(
       if (error) {
         console.error("Failed to fetch initial notifications:", error);
       } else {
+        dlog("Initial rows", { count: data?.length ?? 0 });
         data?.forEach((notification) => {
+          dlog("Initial row", {
+            id: notification.id,
+            type: notification.type,
+            sev: notification.severity,
+            created_at: notification.created_at,
+            metadata: notification.metadata,
+          });
           onNew(notification);
         });
       }
     });
 
   // -------- live inserts via Realtime
+  dlog("Subscribe channel", { channel: "user:notifications" });
   const channel = supabase
     .channel("user:notifications")
     .on(
@@ -71,6 +102,13 @@ export function subscribeToNotifications(
         filter: `user_id=eq.${userId}`,
       },
       (payload: RealtimePostgresInsertPayload<NotificationRow>) => {
+        dlog("Realtime insert", {
+          id: payload.new.id,
+          type: payload.new.type,
+          sev: payload.new.severity,
+          created_at: payload.new.created_at,
+          metadata: payload.new.metadata,
+        });
         onNew(payload.new);
       },
     )
@@ -78,6 +116,7 @@ export function subscribeToNotifications(
 
   // -------- caller's cleanup
   return () => {
+    dlog("Remove channel");
     void supabase.removeChannel(channel);
   };
 }

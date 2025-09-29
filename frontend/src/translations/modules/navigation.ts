@@ -44,9 +44,45 @@ export const navigation = {
     },
   },
   notifications: {
-    label: { en: "Notifications", fi: "Ilmoitukset" },
-    none: { en: "Nothing new yet.", fi: "Ei uusia ilmoituksia" },
-    markAllRead: { en: "Mark all as read", fi: "Merkitse kaikki luetuiksi" },
-    srOpen: { en: "Open notifications", fi: "Avaa ilmoitukset" },
+    label: {
+      en: "Notifications",
+      fi: "Ilmoitukset",
+    },
+    none: {
+      en: "Nothing new yet.",
+      fi: "Ei uusia ilmoituksia",
+    },
+    markAllRead: {
+      en: "Mark all as read",
+      fi: "Merkitse kaikki luetuiksi",
+    },
+    markAsRead: {
+      en: "Mark as read",
+      fi: "Merkitse luetuksi",
+    },
+    deleteAll: {
+      en: "Delete all",
+      fi: "Poista kaikki",
+    },
+    deleteOne: {
+      en: "Delete notification",
+      fi: "Poista ilmoitus",
+    },
+    viewActive: {
+      en: "Active",
+      fi: "Konteksti",
+    },
+    viewAll: {
+      en: "All",
+      fi: "Kaikki",
+    },
+    otherContextsPrefix: {
+      en: "Other contexts:",
+      fi: "Muut kontekstit:",
+    },
+    srOpen: {
+      en: "Open notifications",
+      fi: "Avaa ilmoitukset",
+    },
   },
 };

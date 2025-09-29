@@ -27,15 +27,25 @@ type NotificationMetadataByType = {
     booking_id: string;
     booking_number: string;
     status: "confirmed";
+    organization_id?: string; // context for provider org (admin)
   };
   "booking.status_rejected": {
     booking_id: string;
     booking_number: string;
     status: "rejected";
+    organization_id?: string; // context for provider org (admin)
   };
   "user.created": {
     new_user_id: string;
     email: string;
+    audience_roles?: string[]; // e.g. ["super_admin"]
+    scope?: "global" | "org" | "role";
+  };
+  "booking.created": {
+    booking_id: string;
+    booking_number: string;
+    status: string;
+    organization_id?: string; // provider org for admin audience
   };
 };
 
