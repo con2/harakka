@@ -357,7 +357,7 @@ const MyBookingsPage = () => {
                 id={booking.id}
                 org_id={item.provider_organization_id}
               >
-                {t.bookingList.buttons.return[lang]}
+                {t.myBookingsPage.buttons.return[lang]}
               </BookingReturnButton>
             )}
           </div>
@@ -568,7 +568,7 @@ const MyBookingsPage = () => {
 
       if (!hasRemovals && !hasQuantityChanges && !hasDateChanges) {
         setShowEdit(false);
-        toast.info("No changes to save");
+        toast.info(t.myBookingsPage.edit.toast.noChanges[lang]);
         return;
       }
 
