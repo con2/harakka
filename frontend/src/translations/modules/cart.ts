@@ -228,6 +228,10 @@ export const cart = {
       fi: "Kassavirhe:",
       en: "Checkout error:",
     },
+    someoneBooked: {
+      fi: "Valitettavasti toinen käyttäjä on juuri varannut osan tuotteistasi",
+      en: "Unfortunately, some of your items have just been booked by another user",
+    },
   },
   profileCompletion: {
     title: {
