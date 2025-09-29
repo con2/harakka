@@ -57,7 +57,7 @@ const ItemDetailsPage = () => {
       address: (selectedItem as Item)?.location_details.address,
     },
     quantity: (selectedItem as Item)?.quantity ?? 1,
-    category_id: selectedItem?.category_id ?? null,
+    category_id: selectedItem?.category_id ?? "",
     tags: (selectedTags ?? []).map((tag) => tag.id),
     images: {
       main: mainImg

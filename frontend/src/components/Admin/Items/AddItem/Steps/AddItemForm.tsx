@@ -25,6 +25,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllCategories,
   selectCategories,
+  selectCategoriesLoading,
 } from "@/store/slices/categoriesSlice";
 import {
   addToItemCreation,
@@ -67,6 +68,9 @@ import {
 } from "@/components/ui/accordion";
 import { buildCategoryTree, Category } from "@/store/utils/format";
 import ItemCard from "@/components/Items/ItemCard";
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import Spinner from "@/components/Spinner";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -88,12 +92,17 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector(selectTagsLoading);
   const categories = useAppSelector(selectCategories);
+  const categoriesLoading = useAppSelector(selectCategoriesLoading);
   const isEditing = useAppSelector(selectIsEditing);
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
     defaultValues:
       initialData ?? editItem ?? getInitialItemData(storage || undefined),
   });
+
+  const refetchCategories = () => {
+    void dispatch(fetchAllCategories({ page: 1, limit: 100 }));
+  };
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
     form.reset();
@@ -314,7 +323,21 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                                 {fieldKey === "item_description" ? (
                                   <Textarea
                                     {...field}
-                                    className="border shadow-none border-grey w-full mb-1"
+                                    className={
+                                      (cn(
+                                        "!border shadow-none border-grey w-full mb-1",
+                                      ),
+                                      typeof form.formState.errors
+                                        .translations === "object" &&
+                                        form.formState.errors.translations &&
+                                        fieldLang in
+                                          form.formState.errors.translations &&
+                                        (
+                                          form.formState.errors
+                                            .translations as Record<string, any>
+                                        )[fieldLang]?.[fieldKey] &&
+                                        "!border-(--destructive)")
+                                    }
                                   />
                                 ) : (
                                   <Input
@@ -353,14 +376,27 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                         <FormItem>
                           <FormLabel>
                             {t.addItemForm.labels.category[appLang]}
+                            {categoriesLoading && (
+                              <Spinner
+                                containerClasses="!p-0 m-0"
+                                loaderClasses="!w-3 !h-3"
+                              />
+                            )}
                           </FormLabel>
                           <Select
                             defaultValue={field.value || "---"}
-                            onValueChange={(value) =>
-                              form.setValue("category_id", value)
-                            }
+                            onValueChange={(value) => {
+                              form.setValue("category_id", value);
+                              form.clearErrors("category_id");
+                            }}
                           >
-                            <SelectTrigger className="border shadow-none border-grey w-full">
+                            <SelectTrigger
+                              className={cn(
+                                "border shadow-none border-grey w-full",
+                                form.formState.errors.category_id &&
+                                  "!border-(--destructive)",
+                              )}
+                            >
                               <SelectValue
                                 className="border shadow-none border-grey"
                                 placeholder={""}
@@ -374,6 +410,40 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                                 renderCategoryOptions(mappedCategories)}
                             </SelectContent>
                           </Select>
+                          <FormDescription className="text-primary leading-[0.5] mt-4">
+                            {
+                              t.addItemForm.formDescription.category.prompt[
+                                appLang
+                              ]
+                            }
+                            <br />
+                            <Link
+                              to="/admin/categories"
+                              target="_blank"
+                              className="underline"
+                            >
+                              {
+                                t.addItemForm.formDescription.category
+                                  .createOne[appLang]
+                              }
+                            </Link>{" "}
+                            {
+                              t.addItemForm.formDescription.category.then[
+                                appLang
+                              ]
+                            }{" "}
+                            <Button
+                              type="button"
+                              className="underline px-0"
+                              onClick={refetchCategories}
+                            >
+                              {
+                                t.addItemForm.formDescription.category.refresh[
+                                  appLang
+                                ]
+                              }
+                            </Button>
+                          </FormDescription>
                         </FormItem>
                       </div>
                     )}

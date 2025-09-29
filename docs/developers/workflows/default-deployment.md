@@ -1,453 +1,249 @@
 # Deployment Guide
 
-This document outlines the process for deploying the Storage and Booking Application to production environments.
+This document outlines the process for deploying the application.
 
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
 - [Environment Configuration](#environment-configuration)
-- [Backend Deployment](#backend-deployment)
-- [Frontend Deployment](#frontend-deployment)
+  - [Setting Environment Variables](#setting-environment-variables)
+- [Deployment Configuration with YAML](#deployment-configuration-with-yaml)
+  - [Backend Deployment](#backend-deployment)
+  - [Frontend Deployment](#frontend-deployment)
 - [Database Setup](#database-setup)
-- [CI/CD Options](#cicd-options)
-- [Monitoring and Maintenance](#monitoring-and-maintenance)
-- [Troubleshooting](#troubleshooting)
+- [Post-Deployment Verification](#post-deployment-verification)
 
 ## Prerequisites
 
 Before deployment, ensure you have:
 
-- Node.js (v18 or higher)
-- Access to Supabase project
-- Access to hosting platform accounts (Vercel/Netlify/Heroku/etc.)
-- AWS credentials (if using S3 for storage)
-- Git CLI installed
+- **Node.js**: v20 or higher
+- **Git CLI**: Installed and configured
+- **Supabase Account**: Remote instance with production-ready configuration
+- **Azure Account**: For managing Azure deployment
 
 ## Environment Configuration
 
-The project uses a `.env.local` file for development. For production deployment, we use YAML configuration files in our deployment branch rather than separate environment files.
+The project uses a `.env.local` file for development.
+For production deployment build stage, we use YAML configuration files rather than separate environment files. These are managed securely via CI/CD secrets in GitHub Actions. Runtime env variables are stored in Azure.
 
-### Deployment Configuration with YAML
+### Setting Environment Variables
 
-1. Our deployment configurations are maintained in a separate branch containing YAML files for different environments.
+- **GitHub Actions**: Add these variables to your repository's `Secrets` under **Settings > Secrets and Variables > Actions**.
+- **Local Development**: Use `.env.local` files for development.
 
-2. Example deployment YAML structure:
+## Deployment Configuration with YAML
 
-```yaml
-# Example deployment configuration
-version: "1.0"
-environment:
-  # Supabase Configuration
-  SUPABASE_PROJECT_ID: production-project-id
-  SUPABASE_ANON_KEY: production-anon-key
-  SUPABASE_SERVICE_ROLE_KEY: production-service-role-key
-  SUPABASE_URL: https://production-project-id.supabase.co
+Our deployment configurations are maintained in YAML files.
 
-  # Backend Configuration
-  PORT: 3000
-  NODE_ENV: production
-  ALLOWED_ORIGINS: https://production-domain.com
+### Backend Deployment
 
-  # Frontend Configuration
-  VITE_SUPABASE_URL: https://production-project-id.supabase.co
-  VITE_SUPABASE_ANON_KEY: production-anon-key
-  VITE_API_URL: https://api.production-domain.com
+The backend deployment configuration is located at [Backend yaml](../../github/workflows/deployment-back.yml`)
 
-  # S3 Configuration
-  SUPABASE_STORAGE_URL: https://production-project-id.supabase.co/storage/v1/s3
-  S3_REGION: eu-north-1
-  S3_BUCKET: production-item-images
+The CI/CD pipelines are triggered automatically on:
 
-  # Email Configuration
-  EMAIL_FROM: noreply@production-domain.com
-  GMAIL_CLIENT_ID: production-client-id
-  GMAIL_CLIENT_SECRET: production-client-secret
-  GMAIL_REFRESH_TOKEN: production-refresh-token
-```
-
-3. For security, sensitive values in YAML files should be replaced with environment variables or secrets in your CI/CD pipeline:
+- Push events to the `main` branch.
+- Pull request events for `main`.
 
 ```yaml
-# Example with CI/CD secrets
-SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
-SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
-GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET}
+   name: Deploy Backend to Azure
+
+   permissions:
+   contents: read
+
+   on:
+   push:
+      branches: [main]
+   workflow_dispatch:
+
+   jobs:
+   build-and-deploy:
+      runs-on: ubuntu-latest
+
+      steps:
+         - uses: actions/checkout@v4
+
+         - name: Set up Node.js
+         uses: actions/setup-node@v3
+         with:
+            node-version: "20.x"
+            cache: "npm"
+            cache-dependency-path: "backend/package-lock.json"
+
+         - name: Install common dependencies (common types folder)
+         run: |
+            cd common
+            npm ci
+
+         - name: Install dependencies
+         run: |
+            cd backend
+            npm ci
+
+         - name: Build
+         run: |
+            cd backend
+            npm run build
+         env:
+            NODE_OPTIONS: "--max-old-space-size=4096"
+
+         - name: Prepare deployment
+         run: |
+            cd backend
+            # Create deployment package without dev dependencies
+            mkdir deployment
+            cp -r dist Procfile package.json package-lock.json assets config.mts deployment/
+            cd deployment
+            npm ci --omit=dev
+
+         - name: Deploy to Azure Web App
+         id: deploy-to-webapp
+         uses: azure/webapps-deploy@v2
+         with:
+            app-name: "booking-app-backend"
+            publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+            package: "./backend/deployment"
+         env:
+            SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+            SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+            ALLOWED_ORIGINS: "https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180"
+            SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
+            NODE_ENV: "production"
+            ENV: "production"
+
+         - name: Post-deployment verification
+         if: success()
+         run: |
+            echo "Deployment completed, waiting for app to start..."
+            sleep 15
+            curl -s "https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net/health" || echo "App may still be starting"
 ```
 
-### Platform-specific Environment Configuration
+### Frontend Deployment
 
-When deploying to specific platforms, you'll need to configure environment variables in their respective dashboards:
+The frontend deployment configuration is located at [Frontend yaml](../../github/workflows/deployment-front.yml).
 
-#### Backend (Heroku example):
+```yaml
+   name: Azure Static Web Apps CI/CD
+permissions:
+  contents: read
+  pull-requests: write
 
-```bash
-# Set Heroku environment variables
-heroku config:set SUPABASE_PROJECT_ID=production-project-id
-heroku config:set SUPABASE_ANON_KEY=production-anon-key
-heroku config:set SUPABASE_SERVICE_ROLE_KEY=production-service-role-key
-# Set remaining backend variables
-```
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
 
-#### Frontend (Vercel example):
+jobs:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: Build and Deploy Job
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+          lfs: false
+      - name: Install common dependencies (common types folder)
+        run: |
+          cd common
+          npm ci
+      - name: Install front dependencies
+        working-directory: ./frontend
+        run: |
+          rm -f package-lock.json
+          npm install
+      - name: Clean problematic symlinks (circular references)
+        run: |
+          find frontend/node_modules -type l -name "common" -delete
+          find frontend/node_modules -type l -name "full-stack-booking-app" -delete
+      - name: Create environment file
+        run: |
+          cd frontend
+          echo "VITE_SUPABASE_URL=https://rcbddkhvysexkvgqpcud.supabase.co" > .env.production
+          echo "VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env.production
+          echo "VITE_API_URL=https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net" >> .env.production
 
-```bash
-# Set Vercel environment variables
-vercel env add VITE_SUPABASE_URL https://production-project-id.supabase.co
-vercel env add VITE_SUPABASE_ANON_KEY production-anon-key
-vercel env add VITE_API_URL https://api.production-domain.com
-```
+        # Build the frontend
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+      - name: Prepare for deployment
+        run: |
+          cd frontend
+           # Copy staticwebapp.config.json into dist if it's not already there
+           if [ ! -f dist/staticwebapp.config.json ]; then
+             cp staticwebapp.config.json dist/
+           fi
 
-## Backend Deployment
+           # Clean up the dist folder to ensure minimum files
+           echo "=== Files in dist before cleanup ==="
+           find dist -type f | sort
 
-### Build the Backend
+           # Double-check file count
+           echo "Final file count before deployment:"
+           find dist -type f | wc -l
 
-```bash
-cd backend
-npm install
-npm run build
-```
+           # Show size of distribution
+           du -sh dist
 
-### Option 1: Deploy to Heroku
+      - name: Deploy to Azure Static Web Apps
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_GRASS_049DC8010 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          action: "upload"
+          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
+          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
+          app_location: "/frontend/dist" # App source code path
+          api_location: "" # Api source code path - optional
+          output_location: "" # Built app content directory - optional
+          skip_app_build: true # Set to true to skip building the app - optional
+          app_build_command: "echo 'Skipping build'"
+          config_file_location: "/frontend"
+          ###### End of Repository/Build Configurations ######
+      - name: Verify Environment Variables
+        run: |
+          cd frontend
+          echo "Checking environment variables for troubleshooting:"
+          echo "VITE_SUPABASE_URL length: ${#VITE_SUPABASE_URL}"
+          echo "VITE_SUPABASE_ANON_KEY available: $(if [ -n "$VITE_SUPABASE_ANON_KEY" ]; then echo "Yes"; else echo "No"; fi)"
+          echo "VITE_API_URL available: $(if [ -n "$VITE_API_URL" ]; then echo "Yes"; else echo "No"; fi)"
+        env:
+          VITE_SUPABASE_URL: "https://rcbddkhvysexkvgqpcud.supabase.co"
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          VITE_API_URL: https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net
 
-1. Install Heroku CLI and login
-
-   ```bash
-   npm install -g heroku
-   heroku login
-   ```
-
-2. Create a Heroku app
-
-   ```bash
-   heroku create your-app-name
-   ```
-
-3. Set environment variables
-
-   ```bash
-   heroku config:set SUPABASE_URL=https://your-production-supabase-instance.supabase.co
-   heroku config:set SUPABASE_SERVICE_KEY=your-service-key
-   # Set all other environment variables
-   ```
-
-4. Deploy to Heroku
-   ```bash
-   git push heroku main
-   ```
-
-### Option 2: Deploy to AWS EC2
-
-1. Create and configure EC2 instance
-2. Install Node.js
-3. Clone repository
-4. Set up environment variables
-5. Build the application
-6. Use PM2 for process management:
-   ```bash
-   npm install -g pm2
-   pm2 start dist/main.js --name "booking-app-backend"
-   pm2 startup
-   pm2 save
-   ```
-
-### Option 3: Deploy to Azure App Service
-
-1. Create an App Service:
-
-   ```bash
-   az group create --name booking-app-rg --location westeurope
-   az appservice plan create --name booking-app-plan --resource-group booking-app-rg --sku B1
-   az webapp create --name your-backend-name --resource-group booking-app-rg --plan booking-app-plan --runtime "NODE:18-lts"
-   ```
-
-2. Configure environment variables:
-
-   ```bash
-   az webapp config appsettings set --name your-backend-name --resource-group booking-app-rg --settings \
-     SUPABASE_PROJECT_ID="your-production-project-id" \
-     SUPABASE_URL="https://your-production-project-id.supabase.co" \
-     SUPABASE_ANON_KEY="your-production-anon-key" \
-     NODE_ENV="production"
-   ```
-
-3. Deploy code:
-   ```bash
-   az webapp deployment source config-local-git --name your-backend-name --resource-group booking-app-rg
-   git remote add azure <git-url-from-previous-command>
-   git push azure main
-   ```
-
-### Option 4: Use Docker
-
-1. Build Docker image:
-
-   ```bash
-   docker build -t booking-app-backend .
-   ```
-
-2. Run container:
-   ```bash
-   docker run -d -p 3000:3000 --env-file .env.production --name booking-app-backend booking-app-backend
-   ```
-
-## Frontend Deployment
-
-### Build the Frontend
-
-```bash
-cd frontend
-npm install
-npm run build
-```
-
-### Option 1: Deploy to Vercel
-
-1. Install Vercel CLI
-
-   ```bash
-   npm install -g vercel
-   vercel login
-   ```
-
-2. Deploy to Vercel
-   ```bash
-   vercel --prod
-   ```
-
-### Option 2: Deploy to Netlify
-
-1. Install Netlify CLI
-
-   ```bash
-   npm install -g netlify-cli
-   netlify login
-   ```
-
-2. Deploy to Netlify
-   ```bash
-   netlify deploy --prod
-   ```
-
-### Option 3: Deploy to Azure Static Web Apps
-
-1. Install Azure Static Web Apps CLI:
-
-   ```bash
-   npm install -g @azure/static-web-apps-cli
-   ```
-
-2. Deploy to Azure:
-   ```bash
-   swa deploy ./frontend/dist --env production --api-location ./backend/dist
-   ```
-
-### Option 4: Serve from Nginx
-
-1. Copy the build folder to your server
-2. Configure Nginx to serve the static files:
-
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-
-    root /var/www/html/booking-app/frontend/dist;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    location /api {
-        proxy_pass http://localhost:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_GRASS_049DC8010 }}
+          action: "close"
+          app_location: "/frontend/dist"
 ```
 
 ## Database Setup
 
-### Supabase Production Setup
+The application uses a remote Supabase instance for database and authentication.
 
-1. Create a production project in Supabase
-2. Run migration scripts to set up schema
-3. Configure Row-Level Security (RLS) policies
-4. Set up database triggers for notifications
-5. Enable required extensions (e.g., pg_net)
+<!-- TODO: UPDATE THE LINK AFTER WE REFINE SUPABASE SETUP DOC -->
 
-```sql
--- Example: Enable pg_net extension for HTTP requests
-CREATE EXTENSION IF NOT EXISTS pg_net;
+Refer to the [Supabase Setup Guide](../backend/supabase-setup.md) guide for detailed instructions on configuring your Supabase instance.
 
--- Set up audit log triggers
-CREATE TRIGGER after_insert_send_welcome_email
-AFTER INSERT ON user_profiles
-FOR EACH ROW
-EXECUTE FUNCTION notify_user_created();
-```
+## Post-Deployment Verification
 
-## CI/CD Options
-
-### GitHub Actions
-
-Create `.github/workflows/deploy.yml` to use YAML configuration:
-
-```yaml
-name: Deploy
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy-backend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      # Checkout deployment configuration branch to access YAML files
-      - name: Checkout deployment config
-        run: |
-          git fetch origin deployment-config
-          git checkout deployment-config -- deployment/production.yml
-
-      # Parse YAML and set environment variables
-      - name: Set environment from YAML
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq eval '.environment | to_entries | .[] | .key + "=" + .value' deployment/production.yml >> $GITHUB_ENV
-
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18.x"
-
-      - name: Install backend dependencies
-        run: cd backend && npm ci
-
-      - name: Build backend
-        run: cd backend && npm run build
-
-      # Deploy steps continue...
-
-  deploy-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      # Similar config for frontend
-      # ...
-
-      - name: Install frontend dependencies
-        run: cd frontend && npm ci
-
-      - name: Build frontend
-        run: cd frontend && npm run build
-
-      # Deploy steps continue...
-```
-
-## Monitoring and Maintenance
-
-### Backend Monitoring
-
-1. Implement health check endpoints
-2. Set up application logging to a service like CloudWatch or Loggly
-3. Configure alerts for critical errors
-4. Use PM2 monitoring for Node.js:
-   ```bash
-   pm2 monit
-   ```
-
-### Frontend Monitoring
-
-1. Set up error tracking with Sentry
-2. Implement analytics (Google Analytics, Mixpanel, etc.)
-3. Configure performance monitoring with Lighthouse CI
-
-### Database Monitoring
-
-1. Configure Supabase monitoring
-2. Set up regular database backups
-3. Monitor database performance metrics
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Connectivity Issues**
-
-   - Check network configurations
-   - Verify firewall settings
-   - Test API endpoints with Postman or curl
-
-2. **Authentication Problems**
-
-   - Verify Supabase connection keys
-   - Check JWT token configuration
-   - Review RLS policies
-
-3. **Performance Issues**
-
-   - Review database query performance
-   - Check frontend bundle size
-   - Monitor server resources (CPU, memory)
-
-4. **Email Delivery Problems**
-   - Verify SMTP settings
-   - Check SPF and DKIM records
-   - Review email templates
-
-### Logging
-
-Ensure proper logging is implemented throughout the application to assist with debugging:
-
-```typescript
-// Backend logging example using LogsService
-import { logError } from "../utils/logging";
-
-try {
-  // Operation
-} catch (error) {
-  logError(logsService, "Failed to process operation", "OrderService", error);
-}
-```
-
-### Rollback Procedures
-
-In case of failed deployments:
-
-1. For Heroku:
-
-   ```bash
-   heroku rollback
-   ```
-
-2. For Vercel:
-
-   ```bash
-   vercel rollback
-   ```
-
-3. Manual rollback - deploy previous stable version:
-   ```bash
-   git checkout [previous-stable-tag]
-   # Follow deployment steps again
-   ```
-
-### Security Considerations
-
-1. **Never commit sensitive credentials to your repository:**
-
-   - Store sensitive values in GitHub Secrets or your CI/CD platform's secure storage
-   - Use environment variables in your deployment YAML files
-
-2. **Rotate credentials regularly:**
-
-   - Update API keys, service keys, and tokens periodically
-   - Use shorter expiration times for temporary credentials
-
-3. **Use least privilege principle:**
-   - Production deployments should use limited-permission service accounts
-   - Separate permissions for development and production environments
+- **Backend**: Verify the health endpoint at `<backend-url>/health`.
+- **Frontend**: Open the deployed frontend URL and ensure the application loads correctly.
