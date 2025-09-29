@@ -129,6 +129,10 @@ export const cart = {
       fi: "Tuntematon virhe",
       en: "Unknown error",
     },
+    wrongRole: {
+      fi: "Valitse toinen rooli jatkaaksesi kassalle",
+      en: "Please choose another role to proceed with checkout",
+    },
   },
   toast: {
     clearCartTitle: {
@@ -227,6 +231,10 @@ export const cart = {
     checkoutError: {
       fi: "Kassavirhe:",
       en: "Checkout error:",
+    },
+    someoneBooked: {
+      fi: "Valitettavasti toinen käyttäjä on juuri varannut osan tuotteistasi",
+      en: "Unfortunately, some of your items have just been booked by another user",
     },
   },
   profileCompletion: {
