@@ -2,6 +2,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { useRoles } from "@/hooks/useRoles";
 import {
   selectSelectedUser,
   getCurrentUser,
@@ -24,6 +25,8 @@ import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { toastConfirm } from "../components/ui/toastConfirm";
+import { TooltipTrigger, TooltipContent } from "../components/ui/tooltip";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { ProfileCompletionModal } from "../components/Profile/ProfileCompletionModal";
 import InlineTimeframePicker from "../components/InlineTimeframeSelector";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -52,7 +55,10 @@ const Cart: React.FC = () => {
   const { formatDate } = useFormattedDate();
 
   // Profile completion hook
-  const { updateProfile } = useProfileCompletion();
+  const { status: profileStatus, updateProfile } = useProfileCompletion();
+
+  // Roles hook for checking user permissions
+  const { activeContext } = useRoles();
 
   const [availabilityMap, setAvailabilityMap] = useState<{
     [itemId: string]: {
@@ -125,6 +131,27 @@ const Cart: React.FC = () => {
 
   // Check if items are in different locations
   const hasMultipleLocations = itemsByLocation.length > 1;
+
+  // Check if checkout should be disabled based on active role context
+  const isCheckoutDisabled = useMemo(() => {
+    if (
+      !activeContext ||
+      !activeContext.roleName ||
+      !activeContext.organizationName
+    ) {
+      return false;
+    }
+    if (activeContext.roleName === "super_admin") {
+      return true;
+    }
+    if (
+      activeContext.roleName === "user" &&
+      activeContext.organizationName !== "Global"
+    ) {
+      return true;
+    }
+    return false;
+  }, [activeContext]);
 
   useEffect(() => {
     if (!startDate || !endDate || cartItems.length === 0) return;
@@ -224,6 +251,15 @@ const Cart: React.FC = () => {
     );
     return unavailableItems;
   };
+
+  // Load user addresses for profile completion check
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(getUserAddresses(user.id)).catch((error) => {
+        console.warn("Failed to load user addresses:", error);
+      });
+    }
+  }, [dispatch, user?.id]);
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return;
@@ -331,6 +367,15 @@ const Cart: React.FC = () => {
     }
   };
 
+  const handleCheckoutClick = () => {
+    if (isCheckoutDisabled) {
+      toast.error(t.cart.buttons.wrongRole[lang]);
+      return;
+    }
+
+    void handleCheckout();
+  };
+
   const handleCheckout = async () => {
     if (!user) {
       toast.error(t.cart.toast.loginRequired[lang]);
@@ -361,6 +406,12 @@ const Cart: React.FC = () => {
 
     if (unavailableItems.length > 0) {
       toast.error(`${t.cart.toast.someoneBooked[lang]}`);
+      return;
+    }
+
+    // Check if profile is complete before proceeding
+    if (profileStatus && !profileStatus.isComplete) {
+      setIsProfileModalOpen(true);
       return;
     }
 
@@ -813,23 +864,38 @@ const Cart: React.FC = () => {
           </div>
 
           {/* Checkout Button Below Summary */}
-          <Button
-            className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary w-full"
-            disabled={
-              !startDate || !endDate || bookingLoading || cartItems.length === 0
-            }
-            onClick={handleCheckout}
-            data-cy="cart-checkout-btn"
-          >
-            {bookingLoading ? (
-              <>
-                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                {t.cart.buttons.processing[lang]}
-              </>
-            ) : (
-              t.cart.buttons.checkout[lang]
+          <TooltipPrimitive.Root>
+            <TooltipTrigger asChild>
+              <div className="w-full">
+                <Button
+                  className="bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-background hover:bg-secondary w-full"
+                  disabled={
+                    !startDate ||
+                    !endDate ||
+                    bookingLoading ||
+                    cartItems.length === 0 ||
+                    isCheckoutDisabled
+                  }
+                  onClick={handleCheckoutClick}
+                  data-cy="cart-checkout-btn"
+                >
+                  {bookingLoading ? (
+                    <>
+                      <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                      {t.cart.buttons.processing[lang]}
+                    </>
+                  ) : (
+                    t.cart.buttons.checkout[lang]
+                  )}
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {isCheckoutDisabled && (
+              <TooltipContent>
+                <p>{t.cart.buttons.wrongRole[lang]}</p>
+              </TooltipContent>
             )}
-          </Button>
+          </TooltipPrimitive.Root>
         </div>
       </div>
 
