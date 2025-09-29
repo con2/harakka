@@ -3,15 +3,16 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   selectCurrentBooking,
-  getBookingByID,
   getBookingItems,
   cancelBooking,
   updateBooking,
   selectUserBookings,
+  selectBooking,
 } from "@/store/slices/bookingsSlice";
 import { getOwnBookings } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { Button } from "@/components/ui/button";
+import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
@@ -117,7 +118,14 @@ const MyBookingsPage = () => {
     setLoading(true);
     void (async () => {
       try {
-        await dispatch(getBookingByID(id)).unwrap();
+        const res = await dispatch(
+          getOwnBookings({ page: 1, limit: 200 }),
+        ).unwrap();
+        const list = (res && "data" in res ? res.data : []) as
+          | typeof userBookings
+          | undefined;
+        const found = list?.find((b) => b.id === id) || null;
+        if (found) dispatch(selectBooking(found));
         await dispatch(getBookingItems(id)).unwrap();
       } catch {
         // ignore - errors stored in slice
@@ -325,9 +333,7 @@ const MyBookingsPage = () => {
         );
         const location = org?.locations?.find((l) => l.id === item.location_id);
 
-        if (!location?.self_pickup || location.pickup_status !== "confirmed") {
-          return null;
-        }
+        if (!location?.self_pickup) return null;
 
         return (
           <div className="flex gap-1">
@@ -342,6 +348,17 @@ const MyBookingsPage = () => {
               >
                 {t.myBookingsPage.buttons.pickedUp[lang]}
               </BookingPickupButton>
+            )}
+            {/* Show return button if item is already picked up */}
+            {item.status === "picked_up" && booking?.id && (
+              <BookingReturnButton
+                onSuccess={refetchBookings}
+                location_id={item.location_id}
+                id={booking.id}
+                org_id={item.provider_organization_id}
+              >
+                {t.bookingList.buttons.return[lang]}
+              </BookingReturnButton>
             )}
           </div>
         );
@@ -441,10 +458,23 @@ const MyBookingsPage = () => {
   }, [booking, formatDate]);
 
   const refetchBookings = () => {
-    if (id) {
-      void dispatch(getBookingByID(id));
-      void dispatch(getBookingItems(id));
-    }
+    if (!id) return;
+    void (async () => {
+      try {
+        const res = await dispatch(
+          getOwnBookings({ page: 1, limit: 200 }),
+        ).unwrap();
+        const list = (res && "data" in res ? res.data : []) as
+          | typeof userBookings
+          | undefined;
+        const found = list?.find((b) => b.id === id) || null;
+        if (found) dispatch(selectBooking(found));
+      } catch {
+        // ignore
+      } finally {
+        void dispatch(getBookingItems(id));
+      }
+    })();
   };
 
   // Edit helper functions - using shared utilities
@@ -550,17 +580,15 @@ const MyBookingsPage = () => {
 
         // Clear marked items and refresh data
         setItemsMarkedForRemoval(new Set());
-        await dispatch(getBookingByID(booking.id!)).unwrap();
+        const res = await dispatch(
+          getOwnBookings({ page: 1, limit: 200 }),
+        ).unwrap();
+        const list = (res && "data" in res ? res.data : []) as
+          | typeof userBookings
+          | undefined;
+        const found = list?.find((b) => b.id === booking.id) || null;
+        if (found) dispatch(selectBooking(found));
         await dispatch(getBookingItems(booking.id!)).unwrap();
-
-        if (user?.id) {
-          void dispatch(
-            getOwnBookings({
-              page: 1,
-              limit: 10,
-            }),
-          );
-        }
       })();
 
       // Determine success message
