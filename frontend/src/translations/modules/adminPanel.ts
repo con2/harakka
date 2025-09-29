@@ -8,7 +8,7 @@ export const adminPanel = {
       fi: "Kojelauta",
       en: "Dashboard",
     },
-    bookingsIn: {
+    bookings: {
       fi: "Tilaukset",
       en: "Bookings",
     },

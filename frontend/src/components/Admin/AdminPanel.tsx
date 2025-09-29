@@ -64,7 +64,7 @@ const AdminPanel = () => {
             <SidebarLink
               to="/admin/bookings"
               icon={<ShoppingBag aria-hidden className="w-6 h-5" />}
-              label={t.adminPanel.navigation.bookingsIn[lang]}
+              label={t.adminPanel.navigation.bookings[lang]}
               dataCy="admin-nav-bookings"
             />
           )}
