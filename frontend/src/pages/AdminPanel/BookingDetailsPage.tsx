@@ -200,7 +200,7 @@ const BookingDetailsPage = () => {
     setSelectedItemIds(allSelected ? [] : allSelectableIds);
   };
 
-  const bookingOrg = booking?.booking_items?.[0].provider_organization_id;
+  const bookingOrg = booking?.booking_items?.[0]?.provider_organization_id;
   const sortedBookingItems = sortByStatus(orgItems);
   const LOCATION_IDS = new Set(
     booking?.booking_items?.map((i) => i.location_id),
