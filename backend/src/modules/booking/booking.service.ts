@@ -611,6 +611,35 @@ export class BookingService {
       );
     }
 
+    // Check availability for each item in the booking before we create it
+    const unavailableItems: {
+      item_id: string;
+      availableQuantity: number;
+    }[] = [];
+    for (const item of dto.items) {
+      const { item_id, quantity, start_date, end_date } = item;
+
+      const { availableQuantity } = await calculateAvailableQuantity(
+        supabase,
+        item_id,
+        start_date,
+        end_date,
+      );
+
+      if (quantity > availableQuantity) {
+        unavailableItems.push({
+          item_id,
+          availableQuantity,
+        });
+      }
+    }
+    if (unavailableItems.length > 0) {
+      throw new BadRequestException({
+        message:
+          "Unfortunately, some of your items have just been booked by another user",
+      });
+    }
+
     // ... your profile checks and availability checks BEFORE any writes ...
     // (keep the existing code you posted up to and including availability checks)
 

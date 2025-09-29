@@ -23,7 +23,7 @@ export function formatParsedItems(
     return {
       ...rest,
       id: crypto.randomUUID() as string,
-      category_id: null,
+      category_id: "",
       translations: {
         fi: {
           item_name: fi_item_name,
