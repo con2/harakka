@@ -1,5 +1,5 @@
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import hero from "@/assets/23045509900_f5dfa32a54_k.jpg";
+import hero from "@/assets/hero.jpg";
 import {
   Card,
   CardContent,

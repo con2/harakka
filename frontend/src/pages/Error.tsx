@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import hero from "@/assets/23045509900_f5dfa32a54_k.jpg";
+import hero from "@/assets/hero.jpg";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 
