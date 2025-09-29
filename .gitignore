@@ -86,7 +86,6 @@ USER_profiles-access-with_ANON-key.md
 RPC-SQL-functions.md
 
 Notes
-.env*
 .flaskenv*
 !.env.project
 !.env.vault
