@@ -84,7 +84,7 @@ const OrganizationsList = () => {
                       className="h-10 w-10 object-cover"
                     />
                   ) : (
-                    <Building2 aria-hidden className="h-6 w-6 text-gray-500" />
+                    <Building2 className="h-6 w-6 text-gray-500" />
                   )}
                 </div>
                 <CardTitle className="text-lg font-xl">{org.name}</CardTitle>

@@ -21,7 +21,7 @@ const OrganizationInfo: React.FC<OrganizationInfoProps> = ({
               className="h-full w-full object-cover"
             />
           ) : (
-            <Building2 aria-hidden className="h-10 w-10" />
+            <Building2 className="h-10 w-10" />
           )}
         </div>
 

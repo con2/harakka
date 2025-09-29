@@ -81,12 +81,6 @@ export const adminDashboard = {
         en: "View bookings of {org_name}. Total {number} bookings.",
         fi: "Näytä organisaation {org_name} varaukset. Yhteensä {number} varausta.",
       },
-      headers: {
-        bookingNumber: {
-          en: "Booking number",
-          fi: "Varausnumero",
-        },
-      },
     },
   },
 };

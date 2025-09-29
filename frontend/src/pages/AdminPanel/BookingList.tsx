@@ -13,7 +13,6 @@ import {
   Calendar,
   Clock,
   AlertTriangle,
-  Search,
 } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
@@ -27,7 +26,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useOrganizationNames } from "@/hooks/useOrganizationNames";
 import { BookingPreviewWithOrgData } from "@common/bookings/booking.types";
-import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import { useNavigate } from "react-router-dom";
 import { formatBookingStatus } from "@/utils/format";
 import { bookingsApi, OverdueBookingRow } from "@/api/services/bookings";
@@ -50,8 +49,7 @@ const BookingList = () => {
   const { formatDate } = useFormattedDate();
   const [currentPage, setCurrentPage] = useState(1);
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
-  const { organizationId: activeOrgId, organizationName: activeOrgName } =
-    useAppSelector(selectActiveRoleContext);
+  const activeOrgId = useAppSelector(selectActiveOrganizationId);
 
   // Get organization IDs from bookings that have booked_by_org set
   const organizationIds = useMemo(() => {
@@ -161,11 +159,7 @@ const BookingList = () => {
     },
     {
       accessorKey: "booking_number",
-      header: () => (
-        <p aria-label={t.bookingList.aria.labels.headers.bookingNumber[lang]}>
-          {t.bookingList.columns.bookingNumber[lang]}
-        </p>
-      ),
+      header: t.bookingList.columns.bookingNumber[lang],
       enableSorting: true,
       cell: ({ row }) =>
         row.original.booking_number ||
@@ -357,18 +351,15 @@ const BookingList = () => {
         </div>
         {/* Search and Filters */}
         <div className="flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex gap-4 items-center relative">
-            <Search
-              aria-hidden
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
-            />
+          <div className="flex gap-4 items-center">
             <Input
               type="text"
+              aria-placeholder={t.bookingList.aria.placeholders.search[lang]}
               placeholder={t.bookingList.filters.search[lang]}
               value={searchQuery}
               size={50}
               onChange={(e) => handleSearchQuery(e)}
-              className={`w-full text-sm pl-10 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] ${scopeOverdue ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] ${scopeOverdue ? "opacity-50 cursor-not-allowed" : ""}`}
               disabled={scopeOverdue}
             />
             <select
@@ -474,12 +465,6 @@ const BookingList = () => {
           <PaginatedDataTable
             columns={overdueColumns}
             data={overdueRows}
-            aria={{
-              table: t.bookingList.aria.labels.table.overdue[lang].replace(
-                "{org_name}",
-                activeOrgName || t.common.fallbacks.yourOrg[lang],
-              ),
-            }}
             pageIndex={currentPage - 1}
             pageCount={overduePageCount}
             onPageChange={(page) => handlePageChange(page + 1)}
@@ -495,24 +480,11 @@ const BookingList = () => {
             data={bookings}
             pageIndex={currentPage - 1}
             pageCount={totalPages}
-            aria={{
-              table: t.bookingList.aria.labels.table.list[lang].replace(
-                "{org_name}",
-                activeOrgName || t.common.fallbacks.yourOrg[lang],
-              ),
-            }}
             onPageChange={(page) => handlePageChange(page + 1)}
-            rowProps={(row) => {
-              const { full_name, visible_name, email, id, booking_number } =
-                row.original;
-              return {
-                style: { cursor: "pointer" },
-                onClick: () => navigate(`/admin/bookings/${id}`),
-                ariaLabel: t.bookingList.aria.labels.table.row[lang]
-                  .replace("{user_name}", full_name || visible_name || email)
-                  .replace("{booking_number}", booking_number),
-              };
-            }}
+            rowProps={(row) => ({
+              style: { cursor: "pointer" },
+              onClick: () => navigate(`/admin/bookings/${row.original.id}`),
+            })}
           />
         )}
       </div>

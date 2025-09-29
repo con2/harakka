@@ -5,8 +5,8 @@ import {
   selectTotalUsersCount,
 } from "@/store/slices/usersSlice";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
+import { Button } from "../../components/ui/button";
+import { DataTable } from "../../components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
 import {
@@ -106,11 +106,7 @@ const AdminDashboard = () => {
   const bookingColumns: ColumnDef<BookingPreview>[] = [
     {
       accessorKey: "booking_number",
-      header: () => (
-        <p aria-label={t.bookingList.aria.labels.headers.bookingNumber[lang]}>
-          {t.bookingList.columns.bookingNumber[lang]}
-        </p>
-      ),
+      header: t.bookingList.columns.bookingNumber[lang],
       cell: ({ row }) =>
         row.original.booking_number ||
         t.uiComponents.dataTable.emptyCell[lang] ||

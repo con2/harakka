@@ -36,7 +36,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-import Spinner from "@/components/Spinner";
 
 const UsersList = () => {
   // ————————————— Hooks & Selectors —————————————
@@ -541,9 +540,10 @@ const UsersList = () => {
   // ————————————— Render —————————————
   if (authLoading || loading) {
     return (
-      <Spinner containerClasses="flex justify-center items-center min-h-screen">
-        {t.usersList.loading[lang]}
-      </Spinner>
+      <div className="flex justify-center items-center min-h-screen">
+        <LoaderCircle className="animate-spin h-8 w-8 mr-2" />
+        <span>{t.usersList.loading[lang]}</span>
+      </div>
     );
   }
 
@@ -564,20 +564,12 @@ const UsersList = () => {
                 )}
           </h1>
           <Tooltip>
-            <TooltipTrigger
-              aria-describedby="userslist-tooltip-content"
-              asChild
-            >
-              <button className="cursor-pointer text-muted-foreground">
-                <Info aria-hidden className="w-4 h-4 text-secondary" />
-              </button>
+            <TooltipTrigger asChild>
+              <span className="cursor-pointer text-muted-foreground">
+                <Info className="w-4 h-4 text-secondary" />
+              </span>
             </TooltipTrigger>
-            <TooltipContent
-              id="userslist-tooltip-content"
-              side="top"
-              align="start"
-              className="break-words"
-            >
+            <TooltipContent side="top" align="start" className="break-words">
               {isSuper
                 ? t.usersList.tooltip.superAdminHelp[lang]
                 : t.usersList.tooltip.tenantAdminHelp[lang]}
@@ -586,7 +578,11 @@ const UsersList = () => {
         </div>
       </div>
 
-      {loading && <Spinner />}
+      {loading && (
+        <p>
+          <LoaderCircle className="animate-spin" />
+        </p>
+      )}
 
       {error && <p className="text-red-500">Error: {error}</p>}
 
@@ -609,7 +605,6 @@ const UsersList = () => {
           {/* Org filter for super admin */}
           {isSuper && (
             <select
-              aria-label={t.usersList.aria.labels.filters.orgFilter[lang]}
               value={orgFilter}
               onChange={(e) => {
                 setOrgFilter(e.target.value);
@@ -617,7 +612,7 @@ const UsersList = () => {
               }}
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             >
-              <option value="all">{t.usersList.filters.orgFilter[lang]}</option>
+              <option value="all">All Organizations</option>
               {availableOrganizations.map((org) => (
                 <option key={org.id} value={org.id}>
                   {org.name}
@@ -629,7 +624,6 @@ const UsersList = () => {
           {/* Role filter - always for tenant admin, only after org is selected for super admins */}
           {(!isSuper || orgFilter !== "all") && (
             <select
-              aria-label={t.usersList.aria.labels.filters.roleFilter[lang]}
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
@@ -703,7 +697,7 @@ const UsersList = () => {
                   }
                 >
                   {addSearchLoading ? (
-                    <Spinner />
+                    <LoaderCircle className="animate-spin h-4 w-4" />
                   ) : (
                     t.usersList.addUser.searchButton[lang]
                   )}
@@ -735,27 +729,20 @@ const UsersList = () => {
                         <input
                           type="radio"
                           name="selectedAddUser"
-                          aria-hidden={disabled}
                           checked={selectedAddUserId === u.id}
                           onChange={() => {
                             if (!disabled) setSelectedAddUserId(u.id);
                           }}
                           disabled={disabled}
-                          aria-label={t.usersList.aria.labels.userRadio[lang]
-                            .replace("{user_full_name}", u.full_name ?? "")
-                            .replace("{user_email}", u.email ?? "")}
                         />
-                        <div aria-hidden className="text-sm">
+                        <div className="text-sm">
                           <div className="font-medium">{u.full_name}</div>
                           <div className="text-xs text-muted-foreground">
                             {u.email}
                           </div>
                         </div>
                         {disabled && (
-                          <div
-                            aria-hidden
-                            className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded ml-auto"
-                          >
+                          <div className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded ml-auto">
                             {t.usersList.addUser.member[lang]}
                           </div>
                         )}
@@ -786,7 +773,7 @@ const UsersList = () => {
 
               <div className="flex gap-2 items-center justify-between">
                 <select
-                  aria-label={t.usersList.aria.labels.selectRole[lang]}
+                  aria-label={t.usersList.aria.labels.filters.roleFilter[lang]}
                   value={selectedAddUserRole}
                   onChange={(e) => setSelectedAddUserRole(e.target.value)}
                   className="select bg-white text-sm p-2 rounded-md"
