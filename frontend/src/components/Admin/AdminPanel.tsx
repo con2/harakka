@@ -15,8 +15,6 @@ import {
 } from "lucide-react";
 import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import IncomingBookings from "@/assets/incoming_bookings.svg?react";
-import OutgoingBookings from "@/assets/outgoing_bookings.svg?react";
 
 const AdminPanel = () => {
   const { lang } = useLanguage();
@@ -65,16 +63,8 @@ const AdminPanel = () => {
           {hasAnyRole(["storage_manager", "tenant_admin"]) && (
             <SidebarLink
               to="/admin/bookings"
-              icon={<IncomingBookings aria-hidden className="w-6 h-5" />}
+              icon={<ShoppingBag aria-hidden className="w-6 h-5" />}
               label={t.adminPanel.navigation.bookingsIn[lang]}
-              dataCy="admin-nav-bookings"
-            />
-          )}
-          {hasAnyRole(["storage_manager", "tenant_admin"]) && (
-            <SidebarLink
-              to="/admin/bookings/out"
-              icon={<OutgoingBookings aria-hidden className="w-6 h-5" />}
-              label={t.adminPanel.navigation.bookingsOut[lang]}
               dataCy="admin-nav-bookings"
             />
           )}

@@ -20,9 +20,16 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 
+type Translation = {
+  en: string;
+  fi: string;
+};
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  aria: {
+    table: string;
+  };
   pageIndex: number;
   pageCount: number;
   onPageChange: (pageIndex: number) => void;
@@ -31,7 +38,9 @@ interface DataTableProps<TData, TValue> {
   handleAscending?: (asc: boolean | null) => void;
   handleOrder?: (order: string) => void;
   originalSorting?: string;
-  rowProps?: (row: Row<TData>) => React.HTMLAttributes<HTMLTableRowElement>;
+  rowProps?: (row: Row<TData>) => React.HTMLAttributes<HTMLTableRowElement> & {
+    ariaLabel?: string;
+  };
   highlight?: number[];
 }
 
@@ -44,6 +53,7 @@ interface DataTableProps<TData, TValue> {
 export function PaginatedDataTable<TData, TValue>({
   columns,
   data,
+  aria,
   pageIndex,
   pageCount,
   onPageChange,
@@ -103,11 +113,15 @@ export function PaginatedDataTable<TData, TValue>({
       handleOrder?.(originalSorting ?? table.getHeaderGroups()[0].id);
     }
   };
+  const hasOnClick = (row: Row<any>): boolean => {
+    const props = rowProps?.(row);
+    return typeof props?.onClick === "function";
+  };
 
   return (
     <div className="space-y-2">
       <div className="rounded-md border-none overflow-x-auto max-w-full">
-        <Table className="w-full min-w-[600px]">
+        <Table className="w-full min-w-[600px]" aria-description={aria.table}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -141,9 +155,13 @@ export function PaginatedDataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
+                const extraProps = rowProps?.(row) ?? {};
+
                 return (
                   <TableRow
                     key={row.id}
+                    aria-label={extraProps?.ariaLabel || ""}
+                    role={hasOnClick(row) ? "button" : "row"}
                     className={`h-10 hover:cursor-pointer ${highlight?.includes(row.index) ? "bg-green-50" : ""}`}
                     data-state={row.getIsSelected() && "selected"}
                     data-higlighted={highlight?.includes(row.index)}
