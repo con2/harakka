@@ -7,6 +7,8 @@ This document explains how we use Supabase (Pro plan) with Branching and the Git
 ## Table of Contents
 
 - [Supabase Docs Index](#supabase-docs-index)
+- [Environment Files](#environment-files)
+- [Secrets & Encryption](#secrets--encryption)
 - [Prerequisites](#prerequisites)
 - [Quick Start (Local)](#quick-start-local)
 - [Creating a Migration](#creating-a-migration)
@@ -29,6 +31,72 @@ This document explains how we use Supabase (Pro plan) with Branching and the Git
 - Supabase Setup Guide (Legacy) — Deprecated
   - Path: docs/developers/backend/supabase-setup.md
   - Purpose: Historical manual setup for auth, storage, and policies. Kept for reference only. Do not follow for day-to-day work.
+
+## Environment Files
+
+You need two environment files to switch between live Supabase and local Supabase CLI:
+
+- `.env.local` — Live/hosted Supabase
+  - Contains live project values: `SUPABASE_PROJECT_ID`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, etc.
+  - Used by scripts: `npm run dev:live`, `npm run frontend:live`, `npm run backend:live`.
+
+- `.env.supabase.local` — Local Supabase (CLI)
+  - Contains local values printed by the Supabase CLI after `npm run s:start` (API URL, keys, studio URL, etc.).
+  - Used by scripts: `npm run dev:local`, `npm run frontend:local`, `npm run backend:local`.
+
+Script mapping summary:
+
+- Live (uses `.env.local`): `dev:live`, `frontend:live`, `backend:live`
+- Local (uses `.env.supabase.local`): `dev:local`, `frontend:local`, `backend:local`
+
+Templates to start from:
+
+- `.env.local.template` → copy to `.env.local` and fill live keys
+- `.env.supabase.local.template` → copy to `.env.supabase.local` and fill values from the CLI output
+
+### Script ↔ Env Matrix
+
+| Purpose | Script | Env file |
+| --- | --- | --- |
+| Live app (both) | `npm run dev:live` | `.env.local` |
+| Live frontend | `npm run frontend:live` | `.env.local` |
+| Live backend | `npm run backend:live` | `.env.local` |
+| Local app (both) | `npm run dev:local` | `.env.supabase.local` |
+| Local frontend | `npm run frontend:local` | `.env.supabase.local` |
+| Local backend | `npm run backend:local` | `.env.supabase.local` |
+| Start local Supabase | `npm run s:start` | `.env.supabase.local` |
+| Restart local Supabase | `npm run s:restart` | `.env.supabase.local` |
+| Reset local DB | `npm run s:reset` | `.env.supabase.local` |
+| Link production project | `npm run s:link:prod` | `supabase/.env.production` |
+| Link develop/preview | `npm run s:link:dev` | `supabase/.env.preview` |
+
+## Secrets & Encryption
+
+We use dotenvx to encrypt sensitive values (e.g., Google OAuth client secret) inside the Supabase environment files:
+
+- `supabase/.env.production` and `supabase/.env.preview` may contain values like `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET="encrypted:..."`.
+- The decryption keys live in `supabase/.env.keys` and are ignored by Git (see `supabase/.gitignore`). Keep this file private.
+
+How it works
+
+- Our link scripts (`npm run s:link:prod`, `npm run s:link:dev`) use `dotenvx run -f ...` to load the env file, automatically decrypting any `encrypted:` values using the matching key from `supabase/.env.keys`.
+- `supabase/config.toml` reads `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` via `env(...)` for the Google provider configuration.
+
+Updating encrypted secrets
+
+- To update the encrypted Google secret, edit `supabase/.env.production` or `.env.preview` and re‑encrypt using dotenvx per their docs. Ensure the corresponding private key in `supabase/.env.keys` matches.
+- Do not commit real secrets or private keys to Git.
+
+Uploading secrets to Supabase
+
+- If you need Supabase to hold certain envs for CLI/functions, upload only the required variables (e.g., decrypted provider secrets), not the private decryption keys. Example:
+
+```bash
+# Upload env vars from a file (choose only the needed ones)
+npx supabase secrets set --env-file supabase/.env.production
+```
+
+Warning: Avoid uploading `supabase/.env.keys` to Supabase secrets. Those keys are for local decryption only.
 
 ## Sources
 
@@ -203,7 +271,7 @@ npm run s:restart
 
 ### Error response from daemon
 
-Sometimes if you are switching back and forth between using `npm run s:` commands and `supabase`commands, you will get an error about the port being allocated already. If this happens try stopping the container that it suggests 
+Sometimes if you are switching back and forth between using `npm run s:` commands and `supabase`commands, you will get an error about the port being allocated already. If this happens try stopping the container that it suggests
 
 ```bash
 npx supabase stop --project-id <project-id>
@@ -237,6 +305,7 @@ If the CLI complains about linking just run:
 npm run s:link:prod
 ## or
 supabase link --project-ref rcbddkhvysexkvgqpcud
+```
 
 ## Useful Scripts
 

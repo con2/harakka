@@ -68,6 +68,43 @@ Download the latest release from the [Supabase CLI releases page](https://github
 supabase --version
 ```
 
+## Environment Files
+
+To switch between live Supabase and your local Supabase CLI instance, prepare both files:
+
+- `.env.local` — Live/hosted Supabase
+  - Contains live project values (project id, anon key, service role key, JWT secret, etc.).
+  - Used by scripts: `npm run dev:live`, `npm run frontend:live`, `npm run backend:live`.
+
+- `.env.supabase.local` — Local Supabase (CLI)
+  - Contains local values printed by the Supabase CLI after you start it (API URL, keys, studio URL, etc.).
+  - Used by scripts: `npm run dev:local`, `npm run frontend:local`, `npm run backend:local`.
+
+Templates:
+
+- Copy `.env.local.template` → `.env.local` and fill live keys.
+- Copy `.env.supabase.local.template` → `.env.supabase.local` and fill the local values.
+
+Tip: Start local Supabase with `npm run s:start`; the CLI prints the local API URL, studio URL, and publishable/secret keys you can use in `.env.supabase.local`.
+
+Note on encrypted secrets
+
+- The file `supabase/.env.keys` stores private decryption keys for values encrypted in `supabase/.env.production` and `.env.preview` (e.g., Google OAuth secret). It’s not required for local‑only development. See [Secrets & Encryption](./Supabase.md#secrets--encryption) (Secrets & Encryption).
+
+### Script ↔ Env Matrix
+
+| Purpose | Script | Env file |
+| --- | --- | --- |
+| Live app (both) | `npm run dev:live` | `.env.local` |
+| Live frontend | `npm run frontend:live` | `.env.local` |
+| Live backend | `npm run backend:live` | `.env.local` |
+| Local app (both) | `npm run dev:local` | `.env.supabase.local` |
+| Local frontend | `npm run frontend:local` | `.env.supabase.local` |
+| Local backend | `npm run backend:local` | `.env.supabase.local` |
+| Start local Supabase | `npm run s:start` | `.env.supabase.local` |
+| Restart local Supabase | `npm run s:restart` | `.env.supabase.local` |
+| Reset local DB | `npm run s:reset` | `.env.supabase.local` |
+
 ## Commands
 
 To get a full list of commands you can run `supabase`. If **"supabase is not found"**, prefix it as such: `npx supabase`.  
@@ -122,12 +159,13 @@ To find out more about **any command** run `npx supabase [command] --help` and t
 3. **Optional: Create/refresh seed data**  
    If you need seed data: `npm run s:seed:main`
 
-3. **Start the containers**  
+4. **Start the containers**
+
    `npx supabase start` or `npm run s:start`
 
    After starting up the containers, you can visit the [studio](http://127.0.0.1:54323) to get a comprehensive overview of the local instance
 
-   ![](https://supabase.com/docs/img/guides/cli/local-studio.png)
+   ![Supabase Studio Screenshot](https://supabase.com/docs/img/guides/cli/local-studio.png)
 
 ## Local Development
 
@@ -148,7 +186,7 @@ npm run dev:local
 
 After creating your new table, restart the containers to view them locally using
 
-```
+```bash
 npm run s:reset
 ```
 
