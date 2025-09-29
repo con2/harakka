@@ -96,7 +96,7 @@ const OrganizationsList = () => {
         {filteredOrganizations.map((org) => (
           <Card
             key={org.id}
-            className="hover:shadow-md transition-shadow duration-200 py-4 px-0"
+            className="hover:shadow-md transition-shadow duration-200 px-0 h-full flex flex-col"
           >
             <CardHeader className="pb-1">
               <div className="flex items-center justify-between">
@@ -135,14 +135,16 @@ const OrganizationsList = () => {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="pt-2">
-              {org.description && (
-                <CardDescription className="text-sm text-gray-600 mb-6 line-clamp-2">
-                  {org.description}
-                </CardDescription>
-              )}
+            <CardContent className="pt-2 flex-1 flex flex-col">
+              <div className="flex-1">
+                {org.description && (
+                  <CardDescription className="text-sm text-gray-600 mb-6 line-clamp-2">
+                    {org.description}
+                  </CardDescription>
+                )}
+              </div>
 
-              <div className="flex flex-row justify-between gap-2">
+              <div className="flex flex-row justify-between gap-2 mt-auto">
                 <Link
                   to={`/storage?organization=${encodeURIComponent(org.name)}`}
                   className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors duration-200 group"
