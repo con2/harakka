@@ -80,6 +80,16 @@ export const navigation = {
       en: "Other contexts:",
       fi: "Muut kontekstit:",
     },
+    toasts: {
+      switchedContext: {
+        en: "Switched to {role} in {org} to open this booking.",
+        fi: "Vaihdettiin rooliin {role} organisaatiossa {org} tämän varauksen avaamiseksi.",
+      },
+      revertedContext: {
+        en: "Reverted to {role} in {org}.",
+        fi: "Palattiin rooliin {role} organisaatiossa {org}.",
+      },
+    },
     srOpen: {
       en: "Open notifications",
       fi: "Avaa ilmoitukset",

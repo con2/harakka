@@ -44,6 +44,10 @@ export const common = {
     fi: "Vahvista",
     en: "Confirm",
   },
+  undo: {
+    fi: "Kumoa",
+    en: "Undo",
+  },
   active: {
     fi: "Aktiivinen",
     en: "Active",

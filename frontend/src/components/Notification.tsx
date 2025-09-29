@@ -24,6 +24,8 @@ import {
   selectActiveOrganizationId,
   selectActiveRoleName,
 } from "@/store/slices/rolesSlice";
+import { useRoles } from "@/hooks/useRoles";
+import { toast } from "sonner";
 
 /**
  * <Notifications />
@@ -53,7 +55,6 @@ type NotificationRow = DBTables<"notifications">;
 export const Notifications: React.FC<Props> = ({ userId }) => {
   const [feed, setFeed] = React.useState<NotificationRow[]>([]);
   const [viewAll, setViewAll] = React.useState(false);
-  console.log("VIEW_ALL", viewAll);
   const feedUniq = React.useMemo(
     () => Array.from(new Map(feed.map((n) => [n.id, n])).values()),
     [feed],
@@ -75,32 +76,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   const { lang } = useLanguage();
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRoleName = useAppSelector(selectActiveRoleName);
-
-  // Debug helper – enable via localStorage('notifDebug'='1') or ?notifDebug=1
-  const isDebugEnabled = (): boolean => {
-    try {
-      if (typeof window !== "undefined") {
-        const ls = window.localStorage?.getItem("notifDebug");
-        if (ls && ls !== "0" && ls !== "false") return true;
-        const qp = new URLSearchParams(window.location.search);
-        if (qp.get("notifDebug") === "1") return true;
-        if (/localhost|127\.0\.0\.1/.test(window.location.hostname))
-          return true;
-      }
-      const vite = (import.meta as any)?.env;
-      if (vite?.DEV === true) return true;
-      if (vite?.MODE === "development") return true;
-      const nodeEnv =
-        typeof process !== "undefined"
-          ? (process as any).env?.NODE_ENV
-          : undefined;
-      if (nodeEnv === "development") return true;
-    } catch {}
-    return false;
-  };
-  const dlog = (...args: unknown[]) => {
-    if (isDebugEnabled()) console.log("[Notifications]", ...args);
-  };
+  const { setActiveContext, activeContext, findBestOrgAdminRole } = useRoles();
 
   // Filter notifications according to active role/org context
   const inActiveContext = React.useCallback(
@@ -120,12 +96,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
       // Fallback policy for Active view when older rows lack context:
       // Hide admin-scoped types that should have org context but don't.
       // These remain visible in "All" view.
-      if (n.type === "booking.created") {
-        dlog("Filter: missing-context booking.created → hide in Active", {
-          id: n.id,
-        });
-        return false;
-      }
+      if (n.type === "booking.created") return false;
 
       return true; // no explicit context => global
     },
@@ -148,94 +119,20 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
     [visibleFeed],
   );
 
-  // Debug: log context + filter evaluation when inputs change
-  React.useEffect(() => {
-    dlog("Context", {
-      userId,
-      activeOrgId,
-      activeRoleName,
-      viewAll,
-      feedCount: feedUniq.length,
-      visibleCount: visibleFeed.length,
-      unseenTotal: unseen,
-      unseenVisible: visibleUnseen,
-    });
-
-    if (!viewAll) {
-      const report = feedUniq.map((n) => {
-        const meta = (n.metadata ?? {}) as Record<string, unknown>;
-        const orgId =
-          typeof meta.organization_id === "string"
-            ? meta.organization_id
-            : null;
-        const audience = Array.isArray(meta.audience_roles)
-          ? (meta.audience_roles as string[]).filter(
-              (r) => typeof r === "string",
-            )
-          : [];
-        let reason = "global-default";
-        let included = true;
-        if (n.severity === "critical") {
-          reason = "critical";
-          included = true;
-        } else if (orgId && activeOrgId) {
-          included = orgId === activeOrgId;
-          reason = `org:${orgId}`;
-        } else if (audience.length && activeRoleName) {
-          included = audience.includes(activeRoleName);
-          reason = `audience:[${audience.join(",")}]`;
-        } else if (n.type === "booking.created") {
-          included = false;
-          reason = "missing-context:booking.created";
-        }
-        return {
-          id: n.id,
-          type: n.type,
-          sev: n.severity,
-          orgId,
-          audience,
-          included,
-          reason,
-        };
-      });
-      dlog("Eval (Active)", report);
-    } else {
-      dlog("Eval (All) — no filtering");
-    }
-  }, [
-    userId,
-    activeOrgId,
-    activeRoleName,
-    viewAll,
-    feedUniq,
-    visibleFeed,
-    unseen,
-    visibleUnseen,
-  ]);
+  // (debug logging removed)
 
   // live subscription — mount / unmount
   React.useEffect(() => {
     if (!userId) return;
 
-    dlog("Subscribe start", { userId });
     const unsubscribe = subscribeToNotifications(
       userId,
       (n: NotificationRow) => {
-        dlog("New notification", {
-          id: n.id,
-          type: n.type,
-          sev: n.severity,
-          created_at: n.created_at,
-          metadata: n.metadata,
-        });
         setFeed((prev) => upsert(prev, n));
       },
     );
 
-    return () => {
-      dlog("Unsubscribe", { userId });
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [userId, upsert]);
 
   /** Optimistically sets `read_at` in UI, then persists to DB. */
@@ -409,7 +306,15 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                     void markRead(n.id); // mark read on click
 
                     if (n.type === "user.created") {
-                      void navigate("/admin/users");
+                      const id =
+                        "new_user_id" in n.metadata
+                          ? safe(n.metadata.new_user_id)
+                          : null;
+                      if (id) {
+                        void navigate(`/admin/users/${id}`);
+                      } else {
+                        void navigate("/admin/users");
+                      }
                     } else if (
                       (n.type === "booking.created" ||
                         n.type === "booking.status_approved" ||
@@ -418,6 +323,96 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                     ) {
                       // Navigate to the detailed booking view
                       const bookingId = safe(n.metadata.booking_id);
+                      const orgId =
+                        "organization_id" in n.metadata
+                          ? safe(n.metadata.organization_id)
+                          : null;
+
+                      if (orgId) {
+                        const candidate = findBestOrgAdminRole(orgId);
+
+                        if (candidate) {
+                          const needsSwitch =
+                            activeOrgId !== candidate.organization_id ||
+                            activeRoleName !== candidate.role_name;
+                          if (needsSwitch) {
+                            const prev = {
+                              organizationId: activeContext.organizationId,
+                              roleName: activeContext.roleName,
+                              organizationName: activeContext.organizationName,
+                            };
+                            // Guard against nullable fields from the view type
+                            if (
+                              candidate.organization_id &&
+                              candidate.role_name
+                            ) {
+                              setActiveContext(
+                                candidate.organization_id,
+                                candidate.role_name,
+                                candidate.organization_name ?? "",
+                              );
+                            }
+
+                            // Toast: explain the automatic context switch
+                            const roleKey = candidate.role_name;
+                            const roleLabel =
+                              roleKey === "tenant_admin"
+                                ? t.common.roles.tenantAdmin[lang]
+                                : roleKey === "storage_manager"
+                                  ? t.common.roles.storageManager[lang]
+                                  : roleKey === "super_admin"
+                                    ? t.common.roles.superAdmin[lang]
+                                    : roleKey;
+                            const orgLabel = candidate.organization_name ?? "";
+                            const msgTpl =
+                              t.navigation.notifications.toasts.switchedContext[
+                                lang
+                              ];
+                            const msg = msgTpl
+                              .replace("{role}", roleLabel)
+                              .replace("{org}", orgLabel);
+                            toast.info(msg, {
+                              action: {
+                                label: t.common.undo[lang],
+                                onClick: () => {
+                                  // Revert to previous context (if present)
+                                  if (
+                                    prev.organizationId &&
+                                    prev.roleName &&
+                                    prev.organizationName
+                                  ) {
+                                    setActiveContext(
+                                      prev.organizationId,
+                                      prev.roleName,
+                                      prev.organizationName,
+                                    );
+                                    const prevRoleLabel =
+                                      prev.roleName === "tenant_admin"
+                                        ? t.common.roles.tenantAdmin[lang]
+                                        : prev.roleName === "storage_manager"
+                                          ? t.common.roles.storageManager[lang]
+                                          : prev.roleName === "super_admin"
+                                            ? t.common.roles.superAdmin[lang]
+                                            : prev.roleName;
+                                    const revertTpl =
+                                      t.navigation.notifications.toasts
+                                        .revertedContext[lang];
+                                    toast.info(
+                                      revertTpl
+                                        .replace("{role}", prevRoleLabel)
+                                        .replace(
+                                          "{org}",
+                                          prev.organizationName ?? "",
+                                        ),
+                                    );
+                                  }
+                                },
+                              },
+                            });
+                          }
+                        }
+                      }
+
                       void navigate(`/admin/bookings/${bookingId}`);
                     }
                   }}

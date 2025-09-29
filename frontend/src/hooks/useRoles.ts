@@ -548,5 +548,29 @@ export const useRoles = () => {
 
     // Periodic session check setup
     setupPeriodicSessionCheck,
+
+    // Helpers
+    findBestOrgAdminRole: (orgId: string) => {
+      const preferred: Array<"tenant_admin" | "storage_manager"> = [
+        "tenant_admin",
+        "storage_manager",
+      ];
+      const match = currentUserRoles.find(
+        (r) =>
+          r.is_active &&
+          r.organization_id === orgId &&
+          r.role_name !== null &&
+          preferred.includes(r.role_name as (typeof preferred)[number]) &&
+          r.organization_id !== null,
+      );
+      if (match && match.organization_id && match.role_name) {
+        return {
+          organization_id: match.organization_id,
+          role_name: match.role_name,
+          organization_name: match.organization_name ?? null,
+        };
+      }
+      return null;
+    },
   };
 };
