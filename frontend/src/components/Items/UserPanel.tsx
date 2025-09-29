@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SlidersIcon } from "lucide-react";
@@ -25,6 +25,13 @@ import {
 import { buildCategoryTree } from "@/store/utils/format";
 import CategoryTree from "@/components/Items/CategoryTree";
 
+interface LocationState {
+  preSelectedFilters?: {
+    categories?: string[];
+    tagIds?: string[];
+  };
+}
+
 const UserPanel = () => {
   const tags = useAppSelector(selectAllTags);
   const categories = useAppSelector(selectCategories);
@@ -33,6 +40,8 @@ const UserPanel = () => {
   const { lang } = useLanguage();
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
   const organizations = useAppSelector(selectOrganizations);
+  const location = useLocation();
+  const locationState = location.state as LocationState | null;
   const MAX_VISIBLE = 5;
 
   useEffect(() => {
@@ -149,14 +158,14 @@ const UserPanel = () => {
     tagIds: string[];
     locationIds: string[];
     orgIds?: string[];
-  }>({
+  }>(() => ({
     isActive: true, // Is item active or not filter
     itemsNumberAvailable: [0, 100], // add a range for number of items
-    categories: [],
-    tagIds: [],
+    categories: locationState?.preSelectedFilters?.categories || [],
+    tagIds: locationState?.preSelectedFilters?.tagIds || [],
     locationIds: [],
     orgIds: [],
-  });
+  }));
 
   // --- slider thumb state so the handle moves smoothly without refetching ---
   const [tempAvailableRange, setTempAvailableRange] = useState<
