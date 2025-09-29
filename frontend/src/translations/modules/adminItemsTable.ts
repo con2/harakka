@@ -37,6 +37,20 @@ export const adminItemsTable = {
       },
       unnamed: { fi: "Nimetön", en: "Unnamed" },
     },
+    locations: {
+      filter: {
+        fi: "Suodata sijainnin mukaan",
+        en: "Filter by locations",
+      },
+      filtered: {
+        fi: "{count} sijaintia valittu",
+        en: "{count} locations selected",
+      },
+      noLocations: {
+        fi: "Ei sijainteja",
+        en: "No locations found",
+      },
+    },
     clear: {
       fi: "Tyhjennä suodattimet",
       en: "Clear Filters",
@@ -72,6 +86,10 @@ export const adminItemsTable = {
     active: {
       fi: "Aktiivinen",
       en: "Active",
+    },
+    availabilityNow: {
+      fi: "Saatavilla nyt",
+      en: "Available Now",
     },
   },
   tooltips: {
