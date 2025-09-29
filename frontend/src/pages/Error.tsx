@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import hero from "@/assets/illusiaImage.jpg";
+import hero from "@/assets/23045509900_f5dfa32a54_k.jpg";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 
@@ -15,7 +15,7 @@ function Error({ type = "server-error" }: ErrorProps) {
   return (
     <div>
       <div
-        className="absolute inset-[-8px] bg-cover bg-center -z-10 filter brightness-[0.6] blur-[3px]"
+        className="absolute inset-[-8px] bg-cover bg-center -z-10 filter brightness-[0.6] bg-left"
         style={{
           backgroundImage: `url(${hero})`,
         }}

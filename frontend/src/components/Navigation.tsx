@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAppSelector } from "@/store/hooks";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -50,13 +50,10 @@ export const Navigation = () => {
   ]);
 
   const cartItemsCount = useAppSelector(selectCartItemsCount);
-  const location = useLocation();
   const navigate = useNavigate();
 
-  const isLandingPage = location.pathname === "/";
-  const navClasses = isLandingPage
-    ? "absolute top-0 left-0 w-full z-50 text-white px-2 md:px-10 py-2 md:py-3 bg-white flex lg:justify-around"
-    : "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white lg:justify-around flex justify-between";
+  const navClasses =
+    "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white lg:justify-around flex justify-between";
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
