@@ -219,7 +219,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
   return (
     <Card
       data-cy="items-card"
-      className="w-full flex flex-col justify-between p-4 flex-[1_0_250px]"
+      className={cn(
+        "w-full flex flex-col justify-between p-4 flex-[1_0_250px]",
+        preview && "shadow-none max-w-[350px]",
+      )}
     >
       {/* Image Section */}
       <div

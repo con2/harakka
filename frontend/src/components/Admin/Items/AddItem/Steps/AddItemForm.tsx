@@ -581,7 +581,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="mt-5 grid grid-cols-[1fr_1fr] gap-8">
+              <AccordionContent className="mt-5 grid grid-cols-[1fr] lg:grid-cols-[6fr_4fr] gap-8">
                 <ItemImageUpload
                   item_id={form.watch("id") || ""}
                   formImages={
@@ -590,7 +590,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   updateForm={form.setValue}
                 />
                 <div className="flex-1 flex flex-col h-fit">
-                  <h2 className="text-start font-main text-primary">Preview</h2>
+                  <h2 className="text-start font-main text-primary">
+                    {t.itemImageUpload.headings.preview[appLang]}
+                  </h2>
                   <ItemCard
                     preview
                     item={form.getValues() as unknown as Item}

@@ -171,7 +171,7 @@ function ItemImageUpload({
               display_order: currentDetailsCount + idx,
               alt_text: "",
               is_active: true,
-              object_fit: "cover",
+              object_fit: "cover" as "cover" | "contain",
             },
           };
         });
@@ -416,7 +416,7 @@ function ItemImageUpload({
         <div className="flex justify-between items-center">
           {formImages?.main?.url && (
             <div className="max-w-[400px]">
-              {/* <div className="flex gap-2 w-fit items-center mb-2">
+              <div className="flex gap-2 w-fit items-center mb-2">
                 <Label className="mb-0">
                   {t.itemImageUpload.labels.altText[lang]}
                 </Label>
@@ -436,8 +436,8 @@ function ItemImageUpload({
                 value={formImages.main?.metadata.alt_text || ""}
                 onChange={(e) => updateImageAltText("main", 0, e.target.value)}
                 disabled={!formImages.main}
-              /> */}
-              <div className="flex gap-2">
+              />
+              <div className="flex gap-2 mt-4">
                 <Checkbox
                   checked={formImages.main?.metadata.object_fit === "cover"}
                   onCheckedChange={() => {
@@ -448,7 +448,7 @@ function ItemImageUpload({
                     updateForm("images.main.metadata.object_fit", newValue);
                   }}
                 />
-                <Label>Image cover</Label>
+                <Label>{t.itemImageUpload.labels.imageCover[lang]}</Label>
               </div>
             </div>
           )}
