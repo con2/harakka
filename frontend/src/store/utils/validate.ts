@@ -54,4 +54,7 @@ export const createItemDto = z.object({
     main: z.nullable(imageSchema),
     details: z.array(imageSchema),
   }),
+  placement_description: z
+    .string()
+    .min(1, { message: "placement_description" }),
 });
