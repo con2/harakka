@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SlidersIcon } from "lucide-react";
@@ -41,6 +41,7 @@ const UserPanel = () => {
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
   const organizations = useAppSelector(selectOrganizations);
   const routerLocation = useLocation();
+  const navigate = useNavigate();
   const navigationState = routerLocation.state as NavigationState | null;
   const MAX_VISIBLE = 5;
 
@@ -186,8 +187,10 @@ const UserPanel = () => {
         categories: currentNavState.preSelectedFilters?.categories || [],
         tagIds: currentNavState.preSelectedFilters?.tagIds || [],
       }));
+      // clear nav state to prevent reapplying filters on refresh
+      void navigate(routerLocation.pathname, { replace: true, state: null });
     }
-  }, [routerLocation.state]);
+  }, [routerLocation.state, routerLocation.pathname, navigate]);
 
   // Handle filter change
   const handleFilterChange = (filterKey: string, value: FilterValue) => {
