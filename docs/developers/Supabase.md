@@ -6,6 +6,7 @@ This document explains how we use Supabase (Pro plan) with Branching and the Git
 
 ## Table of Contents
 
+- [Supabase Docs Index](#supabase-docs-index)
 - [Prerequisites](#prerequisites)
 - [Quick Start (Local)](#quick-start-local)
 - [Creating a Migration](#creating-a-migration)
@@ -14,6 +15,20 @@ This document explains how we use Supabase (Pro plan) with Branching and the Git
 - [Troubleshooting](#troubleshooting)
 - [Useful Scripts](#useful-scripts)
 - [Do Not Use](#do-not-use)
+
+## Supabase Docs Index
+
+- Supabase Local Development Guide — Current
+  - Path: docs/developers/supabase-local-development.md
+  - Purpose: Docker/CLI install details, local commands, running local stack. Use this for local-only workflows. For migrations/branching, see this page.
+
+- Migration Separation Documentation — Deep-dive
+  - Path: docs/developers/README_MIGRATION_SEPARATION.md
+  - Purpose: Background on separating auth/storage vs public schema to satisfy preview branch constraints. Read for context; follow this page for the workflow.
+
+- Supabase Setup Guide (Legacy) — Deprecated
+  - Path: docs/developers/backend/supabase-setup.md
+  - Purpose: Historical manual setup for auth, storage, and policies. Kept for reference only. Do not follow for day-to-day work.
 
 ## Sources
 
@@ -161,7 +176,7 @@ npm run s:link:prod
 
 ### Persistent Branch(develop)
 
-Project ref: `kpqrzaisoyxqillzpbms``
+Project ref: `kpqrzaisoyxqillzpbms`
 Script:
 
 ```bash
@@ -172,11 +187,11 @@ These scripts are defined in `package.json` and use environment files in `supaba
 
 ## Troubleshooting
 
-#### Workflow failed or branch out of sync
+### Workflow failed or branch out of sync
 
 Reset the branch in the [Supabase UI](https://supabase.com/dashboard/project/rcbddkhvysexkvgqpcud/branches), then the migrations should run properly.
 
-#### Error message when trying to run supabase db reset
+### Error message when trying to run supabase db reset
 
 Sometimes you will get odd errors about connections failing when doing a `db reset`, If this happens restart your local supabase instance and try to **reset** again.
 
@@ -186,7 +201,7 @@ supabase stop && supabase start
 npm run s:restart
 ```
 
-#### Error response from daemon
+### Error response from daemon
 
 Sometimes if you are switching back and forth between using `npm run s:` commands and `supabase`commands, you will get an error about the port being allocated already. If this happens try stopping the container that it suggests 
 
@@ -208,13 +223,13 @@ docker volume ls --filter "name=supabase" -q | xargs -r docker volume rm
 # Then start your local supabase again with your prefered command
 ```
 
-#### Migrations
+### Migrations
 
 **Warning** Never edit previously merged migration files.
 
 Migrations are read from top-to-bottom. If something needs changing, create a new migration to fix/adjust prior work. Editing old migrations after a PR is opened or merged can break the branching workflow.
 
-#### Linking
+### Linking
 
 If the CLI complains about linking just run:
 

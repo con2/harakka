@@ -1,6 +1,6 @@
 # Supabase Local Development Guide
 
-Note: This guide predates our Supabase Branching workflow. For the current, recommended process (branching + GitHub integration), see docs/developers/Supabase.md. The steps below focus on running Supabase locally and basic CLI usage.
+This guide focuses on local Supabase (Docker + CLI). For branching, migrations, and the GitHub integration, use the canonical guide: docs/developers/Supabase.md.
 
 This guide covers setting up the Supabase CLI for team development, including installation and local development workflow.
 
@@ -144,22 +144,7 @@ npm run backend:local
 npm run dev:local
 ```
 
-### 1. Create a migration file
-
-```
-supabase migration new <file-name>
-```
-
-### 2. Add your SQL
-
-```sql
-CREATE TABLE test_migration (
-  coffee VARCHAR(255),
-  year INT
-);
-```
-
-### 3. View changes locally
+### View changes locally
 
 After creating your new table, restart the containers to view them locally using
 
@@ -169,14 +154,7 @@ npm run s:reset
 
 This will apply your new migration and you will be able to see it in the [studio](http://127.0.0.1:54323)
 
-### 4. Generate Local Types  
+### Migrations & Types
 
-If you have made changes to the schema, make sure you update the supabase types
-
-```
-npx supabase gen types typescript --local > common/supabase.types.ts
-```
-
-### 5. Apply migrations via GitHub (Branching)
-
-Open a PR with changes in the `supabase/` folder. The Supabase workflow (provided by Supabase) runs automatically. Verify it passes before merging. Do not use `supabase db push`; we rely on the GitHub integration to apply migrations when merging to `develop` and later to `main`. See docs/developers/Supabase.md for details.
+- Creating migrations, applying them, and CI workflow: see docs/developers/Supabase.md (Creating a Migration, Branching & GitHub Integration).
+- Regenerating types from local/remote: see docs/developers/Supabase.md (Useful Scripts section).
