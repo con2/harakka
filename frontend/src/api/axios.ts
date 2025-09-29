@@ -12,10 +12,29 @@ let cachedToken: string | null = null;
 
 // Get token with fallback to cached token
 export async function getAuthToken(): Promise<string | null> {
-  if (cachedToken) return cachedToken;
+  if (cachedToken) {
+    // Decode the JWT to check expiration
+    const [, payloadBase64] = cachedToken.split(".");
+    const payload = JSON.parse(atob(payloadBase64));
+    const now = Math.floor(Date.now() / 1000);
 
-  const { data } = await supabase.auth.getSession();
-  cachedToken = data.session?.access_token || null;
+    // If the token is expired or close to expiry, refresh the session
+    if (payload.exp && payload.exp <= now + 60) {
+      // Refresh if token expires in 60 seconds
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) {
+        console.error("Failed to refresh session:", error);
+        return null;
+      }
+      cachedToken = data.session?.access_token || null;
+    }
+  }
+
+  if (!cachedToken) {
+    const { data } = await supabase.auth.getSession();
+    cachedToken = data.session?.access_token || null;
+  }
+
   return cachedToken;
 }
 
