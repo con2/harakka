@@ -9,12 +9,8 @@ export const adminPanel = {
       en: "Dashboard",
     },
     bookingsIn: {
-      fi: "Saapuvat varaukset",
-      en: "Incoming Bookings",
-    },
-    bookingsOut: {
-      fi: "Lähtevät varaukset",
-      en: "Outgoing Bookings",
+      fi: "Tilaukset",
+      en: "Bookings",
     },
     overdue: {
       fi: "Myöhästyneet",

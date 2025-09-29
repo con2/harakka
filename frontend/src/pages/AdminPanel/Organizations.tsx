@@ -197,6 +197,45 @@ const Organizations = () => {
           ? formatDate(new Date(row.original.created_at), "d MMM yyyy")
           : "—",
     },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const org = row.original;
+        return (
+          <div className="flex gap-2">
+            {/* view */}
+            <Button
+              size="sm"
+              onClick={() => openDetailsModal(org)}
+              title={t.organizations.view[lang]}
+              className="text-gray-500 hover:text-primary hover:bg-primary/10"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+
+            {/* edit */}
+            <Button
+              size="sm"
+              onClick={() => openEditModal(org)}
+              title={t.organizations.edit[lang]}
+              className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+
+            {/* delete */}
+            <OrganizationDelete
+              id={org.id}
+              onDeleted={() => {
+                void dispatch(
+                  fetchAllOrganizations({ page: currentPage, limit }),
+                );
+              }}
+            />
+          </div>
+        );
+      },
+    },
   ];
 
   return (
@@ -224,48 +263,7 @@ const Organizations = () => {
         </div>
       ) : (
         <PaginatedDataTable
-          columns={[
-            ...columns,
-            {
-              id: "actions",
-              cell: ({ row }) => {
-                const org = row.original;
-                return (
-                  <div className="flex gap-2">
-                    {/* view */}
-                    <Button
-                      size="sm"
-                      onClick={() => openDetailsModal(org)}
-                      title={t.organizations.view[lang]}
-                      className="text-gray-500 hover:text-primary hover:bg-primary/10"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-
-                    {/* edit */}
-                    <Button
-                      size="sm"
-                      onClick={() => openEditModal(org)}
-                      title={t.organizations.edit[lang]}
-                      className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-
-                    {/* delete */}
-                    <OrganizationDelete
-                      id={org.id}
-                      onDeleted={() => {
-                        void dispatch(
-                          fetchAllOrganizations({ page: currentPage, limit }),
-                        );
-                      }}
-                    />
-                  </div>
-                );
-              },
-            },
-          ]}
+          columns={columns}
           data={organizations}
           pageIndex={currentPage - 1}
           pageCount={totalPages}
