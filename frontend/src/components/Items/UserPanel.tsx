@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
-import { Outlet } from "react-router-dom";
+import { Outlet, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SlidersIcon } from "lucide-react";
@@ -34,6 +34,7 @@ const UserPanel = () => {
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
   const organizations = useAppSelector(selectOrganizations);
   const MAX_VISIBLE = 5;
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     void dispatch(fetchAllCategories({ page: 1, limit: 50 }));
@@ -199,6 +200,45 @@ const UserPanel = () => {
       filterRef.current.scrollTop = 0;
     }
   }, [isFilterVisible]);
+
+  // Process URL parameters when organizations are loaded or search params change
+  useEffect(() => {
+    if (organizations.length > 0) {
+      const organizationParam = searchParams.get("organization");
+
+      if (organizationParam) {
+        // Find organization by name and set it as selected
+        const org = organizations.find((o) => o.name === organizationParam);
+        if (org) {
+          setFilters((prev) => {
+            // Only update if the org filter is different
+            if (
+              !prev.orgIds ||
+              prev.orgIds.length !== 1 ||
+              prev.orgIds[0] !== org.id
+            ) {
+              return {
+                ...prev,
+                orgIds: [org.id],
+              };
+            }
+            return prev;
+          });
+        }
+      } else {
+        // No organization parameter, clear org filter if it's set
+        setFilters((prev) => {
+          if (prev.orgIds && prev.orgIds.length > 0) {
+            return {
+              ...prev,
+              orgIds: [],
+            };
+          }
+          return prev;
+        });
+      }
+    }
+  }, [organizations, searchParams]);
 
   return (
     <div className="flex min-h-screen w-full overflow-y-auto justify-around pt-4 md:pt-0 gap-4">

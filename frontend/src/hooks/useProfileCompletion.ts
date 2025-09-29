@@ -16,6 +16,7 @@ export interface ProfileCompletionStatus {
   isComplete: boolean;
   hasName: boolean;
   hasPhone: boolean;
+  hasAddress: boolean;
   missingFields: string[];
   warnings: string[];
 }
@@ -65,11 +66,18 @@ export function useProfileCompletion(): {
         profileWithPhone.phone && profileWithPhone.phone.trim()
       );
 
+      // Check if user has at least one address
+      const hasAddress = !!(existingAddresses && existingAddresses.length > 0);
+
       const missingFields: string[] = [];
       const warnings: string[] = [];
 
       if (!hasName) {
         missingFields.push("full_name");
+      }
+
+      if (!hasAddress) {
+        missingFields.push("address");
       }
 
       if (!hasPhone) {
@@ -78,12 +86,13 @@ export function useProfileCompletion(): {
         );
       }
 
-      const isComplete = hasName; // Only name is required for booking
+      const isComplete = hasName && hasAddress; // Name and address are required for booking
 
       setStatus({
         isComplete,
         hasName,
         hasPhone,
+        hasAddress,
         missingFields,
         warnings,
       });
@@ -93,13 +102,14 @@ export function useProfileCompletion(): {
         isComplete: false,
         hasName: false,
         hasPhone: false,
-        missingFields: ["full_name"],
+        hasAddress: false,
+        missingFields: ["full_name", "address"],
         warnings: [],
       });
     } finally {
       setLoading(false);
     }
-  }, [user, userProfile]);
+  }, [user, userProfile, existingAddresses]);
 
   const updateProfile = useCallback(
     async (data: CompleteProfileData): Promise<boolean> => {
