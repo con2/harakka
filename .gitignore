@@ -10,6 +10,7 @@ supabase/.env.local
 supabase/.env.keys
 .env.supabase.local
 !.env.supabase.local.template
+
 supabase-project
 supabase-prod
 .codeql-db-js
