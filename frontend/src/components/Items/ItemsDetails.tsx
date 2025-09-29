@@ -30,12 +30,14 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   Item,
+  ItemImage,
   ItemImageAvailabilityInfo,
   ItemTranslation,
   ItemWithTags,
 } from "@/types";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { itemsApi } from "@/api/services/items";
+import { cn } from "@/lib/utils";
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -95,12 +97,7 @@ const ItemsDetails: React.FC = () => {
     const anyImg = mainImg || thumbnailImg ? null : itemImagesForCurrentItem[0];
 
     // Return image URL or placeholder
-    return (
-      mainImg?.image_url ||
-      thumbnailImg?.image_url ||
-      anyImg?.image_url ||
-      imagePlaceholder
-    );
+    return mainImg || thumbnailImg || anyImg || imagePlaceholder;
   }, [itemImagesForCurrentItem, selectedImageUrl]);
 
   const handleAddToCart = () => {
@@ -243,9 +240,12 @@ const ItemsDetails: React.FC = () => {
             {/* Main Image Container */}
             <div className="border rounded-md bg-slate-50 overflow-hidden h-full w-full">
               <img
-                src={mainImage}
+                src={(mainImage as ItemImage).image_url}
                 alt={itemContent?.item_name || "Tuotteen kuva"}
-                className="w-full h-full object-cover cursor-pointer hover:opacity-90 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-in-out"
+                className={cn(
+                  "w-full h-full cursor-pointer hover:opacity-90 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-in-out",
+                  `object-${(mainImage as ItemImage)?.object_fit || "cover"}`,
+                )}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = imagePlaceholder;
