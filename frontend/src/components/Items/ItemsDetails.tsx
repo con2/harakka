@@ -264,7 +264,7 @@ const ItemsDetails: React.FC = () => {
               >
                 <div className="w-[90%] max-w-[420px] max-h-[80%] h-auto border rounded-lg shadow-lg bg-white flex justify-center items-center p-2">
                   <img
-                    src={mainImage}
+                    src={(mainImage as ItemImage).image_url}
                     alt={itemContent?.item_name || "Tuotteen kuva"}
                     className="object-contain w-[400px] h-[400px] max-w-full max-h-full cursor-pointer"
                   />
