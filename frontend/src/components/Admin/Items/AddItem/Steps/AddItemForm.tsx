@@ -141,7 +141,6 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
 
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
     const firstErrorKey = getFirstErrorMessage(errors);
-    console.log(errors)
 
     if (
       firstErrorKey &&
