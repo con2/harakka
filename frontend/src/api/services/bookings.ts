@@ -254,7 +254,8 @@ export const bookingsApi = {
     itemIds?: string[],
   ): Promise<Booking> => {
     return api.patch(`/bookings/${bookingId}/pickup`, {
-      itemIds,
+      // Backend expects `item_ids` (snake_case)
+      item_ids: itemIds,
       location_id,
       org_id,
     });
