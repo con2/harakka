@@ -140,8 +140,25 @@ api.interceptors.response.use(
   async (error) => {
     console.error("API Error:", error);
 
-    // Check if the error is a 403 (Forbidden) and we haven't retried already
     const originalRequest = error.config;
+    // Handle 401 Unauthorized errors
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // Mark that we've retried
+
+      try {
+        // Attempt to refresh the session
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError) {
+          // Retry the original request with the same configuration
+          return api(originalRequest);
+        } else {
+          console.error("Failed to refresh session:", refreshError);
+        }
+      } catch (refreshError) {
+        console.error("Error during session refresh:", refreshError);
+      }
+    }
+    // Handle 403 Forbidden errors
     if (error.response?.status === 403 && !originalRequest._retry) {
       originalRequest._retry = true; // Mark that we've retried
 
@@ -170,6 +187,7 @@ api.interceptors.response.use(
       }
     }
 
+    // Reject the error if it cannot be handled
     return Promise.reject(
       error instanceof Error ? error : new Error(String(error)),
     );
