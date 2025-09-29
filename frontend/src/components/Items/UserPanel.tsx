@@ -25,7 +25,7 @@ import {
 import { buildCategoryTree } from "@/store/utils/format";
 import CategoryTree from "@/components/Items/CategoryTree";
 
-interface LocationState {
+interface NavigationState {
   preSelectedFilters?: {
     categories?: string[];
     tagIds?: string[];
@@ -40,8 +40,8 @@ const UserPanel = () => {
   const { lang } = useLanguage();
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
   const organizations = useAppSelector(selectOrganizations);
-  const location = useLocation();
-  const locationState = location.state as LocationState | null;
+  const routerLocation = useLocation();
+  const navigationState = routerLocation.state as NavigationState | null;
   const MAX_VISIBLE = 5;
 
   useEffect(() => {
@@ -161,8 +161,8 @@ const UserPanel = () => {
   }>(() => ({
     isActive: true, // Is item active or not filter
     itemsNumberAvailable: [0, 100], // add a range for number of items
-    categories: locationState?.preSelectedFilters?.categories || [],
-    tagIds: locationState?.preSelectedFilters?.tagIds || [],
+    categories: navigationState?.preSelectedFilters?.categories || [],
+    tagIds: navigationState?.preSelectedFilters?.tagIds || [],
     locationIds: [],
     orgIds: [],
   }));
@@ -176,6 +176,17 @@ const UserPanel = () => {
   useEffect(() => {
     setTempAvailableRange(filters.itemsNumberAvailable);
   }, [filters.itemsNumberAvailable]);
+
+  // Handle navigation state changes for pre-selected filters
+  useEffect(() => {
+    if (navigationState?.preSelectedFilters) {
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        categories: navigationState.preSelectedFilters?.categories || [],
+        tagIds: navigationState.preSelectedFilters?.tagIds || [],
+      }));
+    }
+  }, [navigationState]);
 
   // Handle filter change
   const handleFilterChange = (filterKey: string, value: FilterValue) => {
