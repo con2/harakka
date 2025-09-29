@@ -189,10 +189,14 @@ const UserPanel = () => {
         tagIds: currentNavState.preSelectedFilters?.tagIds || [],
         orgIds: currentNavState.preSelectedFilters?.orgIds || [],
       }));
-      // clear nav state to prevent reapplying filters on refresh
+    }
+  }, [routerLocation.state, routerLocation.pathname]);
+
+  const clearNavigationState = () => {
+    if (routerLocation.state) {
       void navigate(routerLocation.pathname, { replace: true, state: null });
     }
-  }, [routerLocation.state, routerLocation.pathname, navigate]);
+  };
 
   // Handle filter change
   const handleFilterChange = (filterKey: string, value: FilterValue) => {
@@ -200,6 +204,8 @@ const UserPanel = () => {
       ...prevFilters,
       [filterKey]: value,
     }));
+    // Clear navigation state when user manually changes filters
+    clearNavigationState();
   };
 
   const countActiveFilters = () => {
@@ -254,7 +260,7 @@ const UserPanel = () => {
                       variant="ghost"
                       size={"sm"}
                       className="text-xs px-1 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white h-fit"
-                      onClick={() =>
+                      onClick={() => {
                         setFilters({
                           isActive: true,
                           itemsNumberAvailable: [0, 100],
@@ -262,8 +268,9 @@ const UserPanel = () => {
                           tagIds: [],
                           locationIds: [],
                           orgIds: [],
-                        })
-                      }
+                        });
+                        clearNavigationState();
+                      }}
                     >
                       {t.userPanel.filters.clearFilters[lang]}
                     </Button>
@@ -527,7 +534,7 @@ const UserPanel = () => {
                   <Button
                     variant={"outline"}
                     size={"sm"}
-                    onClick={() =>
+                    onClick={() => {
                       setFilters({
                         isActive: true,
                         itemsNumberAvailable: [0, 100],
@@ -535,8 +542,9 @@ const UserPanel = () => {
                         tagIds: [],
                         locationIds: [],
                         orgIds: [],
-                      })
-                    }
+                      });
+                      clearNavigationState();
+                    }}
                   >
                     {t.userPanel.filters.clearFilters[lang]}
                   </Button>
