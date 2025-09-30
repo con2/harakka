@@ -62,7 +62,7 @@ export const bookingsApi = {
     const params = new URLSearchParams();
     params.append("page", page.toString());
     params.append("limit", limit.toString());
-    return api.get(`/bookings/my`);
+    return api.get(`/bookings/my?${params.toString()}`);
   },
 
   /**

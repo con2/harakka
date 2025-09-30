@@ -8,6 +8,7 @@ import {
   updateBooking,
   selectUserBookings,
   selectBooking,
+  selectBookingPagination,
 } from "@/store/slices/bookingsSlice";
 import { getOwnBookings } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
@@ -111,6 +112,7 @@ const MyBookingsPage = () => {
   const [itemsMarkedForRemoval, setItemsMarkedForRemoval] = useState<
     Set<string>
   >(new Set());
+  const pagination = useAppSelector(selectBookingPagination);
 
   useEffect(() => {
     if (!id) return;
@@ -119,7 +121,7 @@ const MyBookingsPage = () => {
     void (async () => {
       try {
         const res = await dispatch(
-          getOwnBookings({ page: 1, limit: 200 }),
+          getOwnBookings({ page: pagination.page, limit: pagination.limit }),
         ).unwrap();
         const list = (res && "data" in res ? res.data : []) as
           | typeof userBookings
@@ -133,7 +135,7 @@ const MyBookingsPage = () => {
         setLoading(false);
       }
     })();
-  }, [id, dispatch]);
+  }, [id, dispatch, pagination.page, pagination.limit]);
 
   // When booking is loaded, populate edit form defaults
   useEffect(() => {
@@ -462,7 +464,7 @@ const MyBookingsPage = () => {
     void (async () => {
       try {
         const res = await dispatch(
-          getOwnBookings({ page: 1, limit: 200 }),
+          getOwnBookings({ page: pagination.page, limit: pagination.limit }),
         ).unwrap();
         const list = (res && "data" in res ? res.data : []) as
           | typeof userBookings
@@ -539,8 +541,8 @@ const MyBookingsPage = () => {
         if (user?.id) {
           void dispatch(
             getOwnBookings({
-              page: 1,
-              limit: 10,
+              page: pagination.page,
+              limit: pagination.limit,
             }),
           );
         }
@@ -581,7 +583,7 @@ const MyBookingsPage = () => {
         // Clear marked items and refresh data
         setItemsMarkedForRemoval(new Set());
         const res = await dispatch(
-          getOwnBookings({ page: 1, limit: 200 }),
+          getOwnBookings({ page: pagination.page, limit: pagination.limit }),
         ).unwrap();
         const list = (res && "data" in res ? res.data : []) as
           | typeof userBookings
