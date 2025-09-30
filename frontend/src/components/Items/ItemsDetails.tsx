@@ -489,9 +489,22 @@ const ItemsDetails: React.FC = () => {
             <span className="text-sm text-slate-600 font-semibold">
               {t.itemDetails.category[lang]}:
             </span>
-            <span className="text-sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-sm p-1 h-auto text-secondary hover:text-secondary hover:bg-secondary/10 underline-offset-2 hover:underline"
+              onClick={() =>
+                navigate("/storage", {
+                  state: {
+                    preSelectedFilters: {
+                      categories: [itemCategory.id],
+                    },
+                  },
+                })
+              }
+            >
               {itemCategory.translations[lang] || itemCategory.translations.en}
-            </span>
+            </Button>
           </div>
         )}
 
@@ -507,11 +520,25 @@ const ItemsDetails: React.FC = () => {
             </span>
             <div className="flex flex-wrap gap-2">
               {(item as ItemWithTags).tags!.map((tag) => (
-                <span key={tag.id} className="text-sm">
+                <Button
+                  key={tag.id}
+                  variant="ghost"
+                  size="sm"
+                  className="text-sm p-1 h-auto text-secondary hover:text-secondary hover:bg-secondary/10 underline-offset-2 hover:underline"
+                  onClick={() =>
+                    navigate("/storage", {
+                      state: {
+                        preSelectedFilters: {
+                          tagIds: [tag.id],
+                        },
+                      },
+                    })
+                  }
+                >
                   {tag.translations?.[lang as "en" | "fi"]?.name ||
                     tag.translations?.en?.name ||
                     "Tag"}
-                </span>
+                </Button>
               ))}
             </div>
           </div>

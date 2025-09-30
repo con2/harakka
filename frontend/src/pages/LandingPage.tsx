@@ -1,7 +1,7 @@
+import hero from "@/assets/hero.jpg";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import hero from "@/assets/illusiaImage.jpg";
 
 const LandingPage = () => {
   // Translation
@@ -11,7 +11,7 @@ const LandingPage = () => {
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Background Image */}
       <div
-        className="absolute inset-[-8px] bg-cover bg-center -z-10 filter brightness-[0.6] blur-[3px]"
+        className="absolute inset-[-8px] bg-cover -z-10 filter brightness-[0.6] bg-top-left"
         style={{
           backgroundImage: `url(${hero})`,
         }}

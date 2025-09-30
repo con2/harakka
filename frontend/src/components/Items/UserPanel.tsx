@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SlidersIcon } from "lucide-react";
@@ -25,6 +25,14 @@ import {
 import { buildCategoryTree } from "@/store/utils/format";
 import CategoryTree from "@/components/Items/CategoryTree";
 
+interface NavigationState {
+  preSelectedFilters?: {
+    categories?: string[];
+    tagIds?: string[];
+    orgIds?: string[];
+  };
+}
+
 const UserPanel = () => {
   const tags = useAppSelector(selectAllTags);
   const categories = useAppSelector(selectCategories);
@@ -33,6 +41,9 @@ const UserPanel = () => {
   const { lang } = useLanguage();
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
   const organizations = useAppSelector(selectOrganizations);
+  const routerLocation = useLocation();
+  const navigate = useNavigate();
+  const navigationState = routerLocation.state as NavigationState | null;
   const MAX_VISIBLE = 5;
 
   useEffect(() => {
@@ -149,14 +160,14 @@ const UserPanel = () => {
     tagIds: string[];
     locationIds: string[];
     orgIds?: string[];
-  }>({
+  }>(() => ({
     isActive: true, // Is item active or not filter
     itemsNumberAvailable: [0, 100], // add a range for number of items
-    categories: [],
-    tagIds: [],
+    categories: navigationState?.preSelectedFilters?.categories || [],
+    tagIds: navigationState?.preSelectedFilters?.tagIds || [],
     locationIds: [],
-    orgIds: [],
-  });
+    orgIds: navigationState?.preSelectedFilters?.orgIds || [],
+  }));
 
   // --- slider thumb state so the handle moves smoothly without refetching ---
   const [tempAvailableRange, setTempAvailableRange] = useState<
@@ -168,12 +179,33 @@ const UserPanel = () => {
     setTempAvailableRange(filters.itemsNumberAvailable);
   }, [filters.itemsNumberAvailable]);
 
+  // Handle navigation state changes for pre-selected filters
+  useEffect(() => {
+    const currentNavState = routerLocation.state as NavigationState | null;
+    if (currentNavState?.preSelectedFilters) {
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        categories: currentNavState.preSelectedFilters?.categories || [],
+        tagIds: currentNavState.preSelectedFilters?.tagIds || [],
+        orgIds: currentNavState.preSelectedFilters?.orgIds || [],
+      }));
+    }
+  }, [routerLocation.state, routerLocation.pathname]);
+
+  const clearNavigationState = () => {
+    if (routerLocation.state) {
+      void navigate(routerLocation.pathname, { replace: true, state: null });
+    }
+  };
+
   // Handle filter change
   const handleFilterChange = (filterKey: string, value: FilterValue) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
       [filterKey]: value,
     }));
+    // Clear navigation state when user manually changes filters
+    clearNavigationState();
   };
 
   const countActiveFilters = () => {
@@ -228,7 +260,7 @@ const UserPanel = () => {
                       variant="ghost"
                       size={"sm"}
                       className="text-xs px-1 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white h-fit"
-                      onClick={() =>
+                      onClick={() => {
                         setFilters({
                           isActive: true,
                           itemsNumberAvailable: [0, 100],
@@ -236,8 +268,9 @@ const UserPanel = () => {
                           tagIds: [],
                           locationIds: [],
                           orgIds: [],
-                        })
-                      }
+                        });
+                        clearNavigationState();
+                      }}
                     >
                       {t.userPanel.filters.clearFilters[lang]}
                     </Button>
@@ -501,7 +534,7 @@ const UserPanel = () => {
                   <Button
                     variant={"outline"}
                     size={"sm"}
-                    onClick={() =>
+                    onClick={() => {
                       setFilters({
                         isActive: true,
                         itemsNumberAvailable: [0, 100],
@@ -509,8 +542,9 @@ const UserPanel = () => {
                         tagIds: [],
                         locationIds: [],
                         orgIds: [],
-                      })
-                    }
+                      });
+                      clearNavigationState();
+                    }}
                   >
                     {t.userPanel.filters.clearFilters[lang]}
                   </Button>

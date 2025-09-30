@@ -161,6 +161,14 @@ export const myBookingsPage = {
         fi: "Tuote poistettu varauksesta",
         en: "Item removed from booking",
       },
+      bookingUpdatedItemRemoved: {
+        fi: "Tilaus päivitetty ja tuotteet poistettu onnistuneesti!",
+        en: "Booking updated and items removed successfully!",
+      },
+      updatingBooking: {
+        fi: "Päivitetään tilausta...",
+        en: "Updating your booking...",
+      },
     },
   },
   aria: {

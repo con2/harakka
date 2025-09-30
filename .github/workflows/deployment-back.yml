@@ -60,15 +60,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           ALLOWED_ORIGINS: "https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180"
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          EMAIL_FROM_NEW: ${{ secrets.EMAIL_FROM_NEW }}
-          EMAIL_FROM_2: ${{ secrets.EMAIL_FROM_2 }}
-          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
-          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
-          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
           SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          GMAIL_APP_PASSWORD_NEW: ${{ secrets.GMAIL_APP_PASSWORD_NEW }}
           NODE_ENV: "production"
           ENV: "production"
 

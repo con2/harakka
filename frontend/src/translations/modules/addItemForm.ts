@@ -103,6 +103,26 @@ export const addItemForm = {
       fi: "Sinulla on keskeneräisiä tuotteita. Lataa tai poista ne vaihtaaksesi organisaatiota",
     },
   },
+  formDescription: {
+    category: {
+      prompt: {
+        en: "Can't find a matching category?",
+        fi: "Etkö löydä sopivaa kategoriaa?",
+      },
+      createOne: {
+        en: "Create one here",
+        fi: "Luo uusi tästä",
+      },
+      then: {
+        en: "then",
+        fi: "sitten",
+      },
+      refresh: {
+        en: "refresh",
+        fi: "päivitä",
+      },
+    },
+  },
   messages: {
     validation: {
       itemName: {
@@ -124,6 +144,10 @@ export const addItemForm = {
       quantity: {
         en: "Quantity is required",
         fi: "Määrä on pakollinen",
+      },
+      category_id: {
+        en: "Category is required",
+        fi: "Kategoria vaaditaan",
       },
     },
     error: {

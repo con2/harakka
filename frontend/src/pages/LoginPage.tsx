@@ -1,5 +1,5 @@
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import illusiaImage from "@/assets/illusiaImage.jpg";
+import hero from "@/assets/hero.jpg";
 import {
   Card,
   CardContent,
@@ -39,17 +39,13 @@ const LoginPage = () => {
     >
       {/* Background Image with Overlay */}
       <div
-        className="absolute inset-[-8px] bg-cover bg-center -z-10 blur-[5px]"
+        className="absolute inset-[-8px] bg-cover -z-10 filter brightness-[0.6] bg-top-left"
         style={{
-          backgroundImage: `url(${illusiaImage})`,
+          backgroundImage: `url(${hero})`,
         }}
         data-cy="login-bg"
       />
-      {/* Gradient Overlay for Better Text Readability */}
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-secondary/20 via-primary/40 to-secondary/30 -z-10"
-        data-cy="login-gradient"
-      />
+
       {/* Login Content */}
       <div
         className="flex min-h-screen items-center justify-center p-4"
@@ -85,11 +81,11 @@ const LoginPage = () => {
                 className="text-center text-2xl font-bold text-primary mb-2"
                 data-cy="login-card-title"
               >
-                {
-                  t.login.titles[currentView as keyof typeof t.login.titles][
-                    lang
-                  ]
-                }
+                {state?.message
+                  ? t.login.resetSuccessTitle[lang]
+                  : t.login.titles[currentView as keyof typeof t.login.titles][
+                      lang
+                    ]}
               </CardTitle>
               <div
                 className="w-16 h-1 bg-gradient-to-r from-secondary to-highlight2 mx-auto rounded-full"

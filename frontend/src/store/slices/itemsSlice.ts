@@ -35,6 +35,8 @@ const initialState: ItemState = {
   availabilityOverviewLoading: false,
   availabilityOverviewError: null,
   availabilityOverviewPagination: { page: 1, total: 0, totalPages: 1 },
+  // Signature of the in-flight fetchOrderedItems request (JSON stringified args)
+  currentRequestSig: null as string | null,
   // Admin location options (org-scoped item locations)
   adminLocationOptions: [],
   adminLocationOptionsLoading: false,
@@ -46,6 +48,15 @@ const initialState: ItemState = {
     errors: {},
   },
   isEditingItem: false,
+};
+
+// Helper to safely stringify the async thunk arg (request params)
+const serializeRequestArg = (arg: unknown): string | null => {
+  try {
+    return JSON.stringify(arg);
+  } catch {
+    return null;
+  }
 };
 
 // Fetch all available items
@@ -464,20 +475,32 @@ export const itemsSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "fetch";
       })
-      .addCase(fetchOrderedItems.pending, (state) => {
+      .addCase(fetchOrderedItems.pending, (state, action) => {
+        // Mark a new request andget its signature so we can ignore any stale responses.
         state.loading = true;
         state.error = null;
         state.errorContext = null;
+        state.currentRequestSig = serializeRequestArg(action.meta.arg);
       })
       .addCase(fetchOrderedItems.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload.data ?? [];
-        state.item_pagination = action.payload.metadata;
+        // Only apply results if this response matches the current request
+        const respSig = serializeRequestArg(action.meta.arg);
+        if (state.currentRequestSig && respSig === state.currentRequestSig) {
+          state.loading = false;
+          state.items = action.payload.data ?? [];
+          state.item_pagination = action.payload.metadata;
+          state.currentRequestSig = null;
+        }
       })
       .addCase(fetchOrderedItems.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-        state.errorContext = "fetch";
+        // Only surface error if it belongs to the active request
+        const respSig = serializeRequestArg(action.meta.arg);
+        if (state.currentRequestSig && respSig === state.currentRequestSig) {
+          state.loading = false;
+          state.error = action.payload as string;
+          state.errorContext = "fetch";
+          state.currentRequestSig = null;
+        }
       })
       .addCase(fetchAllAdminItems.pending, (state) => {
         state.loading = true;
