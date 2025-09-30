@@ -6,7 +6,7 @@ import {
   selectOrganizationLoading,
   selectOrganizationError,
 } from "@/store/slices/organizationSlice";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Building2, Users, ArrowRight } from "lucide-react";
 import { useRoles } from "@/hooks/useRoles";
 import {
@@ -27,6 +27,7 @@ const OrganizationsList = () => {
   const error = useAppSelector(selectOrganizationError);
   const { currentUserOrganizations } = useRoles();
   const { lang } = useLanguage();
+  const navigate = useNavigate();
 
   useEffect(() => {
     void dispatch(fetchAllOrganizations({ page: 1, limit: 50 }));
@@ -145,8 +146,16 @@ const OrganizationsList = () => {
               </div>
 
               <div className="flex flex-row justify-between gap-2 mt-auto">
-                <Link
-                  to={`/storage?organization=${encodeURIComponent(org.name)}`}
+                <button
+                  onClick={() =>
+                    navigate("/storage", {
+                      state: {
+                        preSelectedFilters: {
+                          orgIds: [org.id],
+                        },
+                      },
+                    })
+                  }
                   className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors duration-200 group"
                 >
                   <span>
@@ -154,7 +163,7 @@ const OrganizationsList = () => {
                     {t.organizationList.actions.browseItems[lang]}
                   </span>
                   <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-200" />
-                </Link>
+                </button>
 
                 {org.slug ? (
                   <Link
