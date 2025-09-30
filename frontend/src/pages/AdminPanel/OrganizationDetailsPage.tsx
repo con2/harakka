@@ -24,6 +24,7 @@ import { toastConfirm } from "@/components/ui/toastConfirm";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import OrganizationDelete from "@/components/Admin/Organizations/OrganizationDelete";
 import OrganizationLogoUploader from "@/components/Admin/Organizations/OrganizationLogoUploader";
 
@@ -253,6 +254,25 @@ const OrganizationDetailsPage = () => {
 
           {/* Organization Info */}
           <div className="space-y-4 text-sm">
+            <div>
+              <strong>{t.organizationDetailsPage.fields.name[lang]}:</strong>{" "}
+              {isEditing && !isProtectedOrg ? (
+                <Input
+                  value={editForm.name}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
+                  }
+                  className="mt-2"
+                  placeholder={t.organizationDetailsPage.fields.name[lang]}
+                />
+              ) : (
+                <span>{selectedOrg.name}</span>
+              )}
+            </div>
+
             <div>
               <strong>
                 {t.organizationDetailsPage.fields.description[lang]}:
