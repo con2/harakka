@@ -3,7 +3,7 @@ import { BaseEntity } from "./common";
 /**
  * Supported image types for uploads
  */
-export type ImageType = "main" | "thumbnail" | "detail";
+export type ImageType = "main" | "detail";
 
 /**
  * Allowed MIME types for file uploads
@@ -40,6 +40,7 @@ export interface ItemImage extends BaseEntity {
   alt_text?: string;
   is_active: boolean;
   storage_path?: string;
+  object_fit: "cover" | "contain";
 }
 
 /**

@@ -18,6 +18,10 @@ export const myBookingsPage = {
       en: "Mark as Picked Up",
       fi: "Merkitse noudetuksi",
     },
+    return: {
+      en: "Mark Items Returned",
+      fi: "Merkitse palautetuiksi",
+    },
   },
   headings: {
     createdAt: {
@@ -141,6 +145,10 @@ export const myBookingsPage = {
       },
     },
     toast: {
+      noChanges: {
+        en: "No changes to save",
+        fi: "Ei muutoksia tallennettavaksi",
+      },
       bookingUpdated: {
         fi: "Tilaus päivitetty!",
         en: "Booking updated!",
