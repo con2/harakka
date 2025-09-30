@@ -94,6 +94,7 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
+          {isLoggedIn && <Notifications userId={user.id} />}
           {isLoggedIn && <UserMenu />}
           {!authLoading && !isLoggedIn && (
             <>
