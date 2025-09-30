@@ -1,17 +1,7 @@
 export const landingPage = {
   heading: {
-    fi: {
-      abbr: "LARP",
-      title: "Liveroolipeli",
-      prefix: "Valmiina viemään",
-      suffix: "seuraavalle tasolle?",
-    },
-    en: {
-      abbr: "LARP?",
-      title: "Live Action Role Play?",
-      prefix: "Ready to level up your next",
-      suffix: "",
-    },
+    fi: "Valmiina viemään LARPisi seuraavalle tasolle?",
+    en: "Ready to level up your next LARP?",
   },
   subheading: {
     fi: "Selaa varustevalikoimaamme, tee varaus verkossa ja herätä maailmasi eloon.",
