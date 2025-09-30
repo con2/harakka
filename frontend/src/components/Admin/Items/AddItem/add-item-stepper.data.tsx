@@ -21,6 +21,6 @@ export const steps: Step[] = [
 /* The components shown for each step */
 export const stepperData: ReactNode[] = [
   <OrgStep />,
-  <AddItemForm />,
+  <AddItemForm initialData={undefined} />,
   <Summary />,
 ];

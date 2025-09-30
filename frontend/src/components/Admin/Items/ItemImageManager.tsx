@@ -81,11 +81,10 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
   useEffect(() => {
     const sorted = [...images].sort((a: ItemImage, b: ItemImage) => {
       if (a.image_type !== b.image_type) {
-        // Order by type: main, thumbnail, detail
+        // Order by type: main, detail
         const typeOrder: Record<ImageType, number> = {
           main: 0,
-          thumbnail: 1,
-          detail: 2,
+          detail: 1,
         };
         return typeOrder[a.image_type] - typeOrder[b.image_type];
       }
@@ -342,7 +341,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
               </Label>
               <Select
                 value={imageType}
-                onValueChange={(val: "main" | "thumbnail" | "detail") =>
+                onValueChange={(val: "main" | "detail") =>
                   setImageType(val)
                 }
               >
@@ -354,9 +353,6 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
                 <SelectContent>
                   <SelectItem value="main">
                     {t.itemImageManager.options.main[lang]}
-                  </SelectItem>
-                  <SelectItem value="thumbnail">
-                    {t.itemImageManager.options.thumbnail[lang]}
                   </SelectItem>
                   <SelectItem value="detail">
                     {t.itemImageManager.options.detail[lang]}
@@ -435,7 +431,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
         )}
 
         {/* Grouped by image type */}
-        {["main", "thumbnail", "detail"].map((type) => {
+        {["main", "detail"].map((type) => {
           const typeImages = sortedImages.filter(
             (img) => img.image_type === type,
           );
