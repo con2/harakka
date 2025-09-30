@@ -33,6 +33,12 @@ import { formatBookingStatus } from "@/utils/format";
 import { bookingsApi, OverdueBookingRow } from "@/api/services/bookings";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 
 const BookingList = () => {
   const dispatch = useAppDispatch();
@@ -372,23 +378,27 @@ const BookingList = () => {
               className={`w-full text-sm pl-10 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] ${scopeOverdue ? "opacity-50 cursor-not-allowed" : ""}`}
               disabled={scopeOverdue}
             />
-            <select
+            <Select
               aria-label={t.bookingList.aria.labels.filters.status[lang]}
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as BookingStatus)}
-              className={`select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] ${scopeOverdue ? "opacity-50 cursor-not-allowed" : ""}`}
+              onValueChange={(value) => setStatusFilter(value as BookingStatus)}
               disabled={scopeOverdue}
             >
-              {statusFilterOptions.map((option) => (
-                <option key={`option-${option}`} value={option}>
-                  {
-                    t.bookingList.filters.status[
-                      option as keyof typeof t.bookingList.filters.status
-                    ]?.[lang]
-                  }
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                {formatBookingStatus(statusFilter, true)}
+              </SelectTrigger>
+              <SelectContent>
+                {statusFilterOptions.map((option) => (
+                  <SelectItem key={`option-${option}`} value={option}>
+                    {
+                      t.bookingList.filters.status[
+                        option as keyof typeof t.bookingList.filters.status
+                      ]?.[lang]
+                    }
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {(searchQuery || statusFilter !== "all" || scopeOverdue) && (
               <Button
                 onClick={() => {
