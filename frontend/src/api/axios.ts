@@ -12,10 +12,29 @@ let cachedToken: string | null = null;
 
 // Get token with fallback to cached token
 export async function getAuthToken(): Promise<string | null> {
-  if (cachedToken) return cachedToken;
+  if (cachedToken) {
+    // Decode the JWT to check expiration
+    const [, payloadBase64] = cachedToken.split(".");
+    const payload = JSON.parse(atob(payloadBase64));
+    const now = Math.floor(Date.now() / 1000);
 
-  const { data } = await supabase.auth.getSession();
-  cachedToken = data.session?.access_token || null;
+    // If the token is expired or close to expiry, refresh the session
+    if (payload.exp && payload.exp <= now + 60) {
+      // Refresh if token expires in 60 seconds
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) {
+        console.error("Failed to refresh session:", error);
+        return null;
+      }
+      cachedToken = data.session?.access_token || null;
+    }
+  }
+
+  if (!cachedToken) {
+    const { data } = await supabase.auth.getSession();
+    cachedToken = data.session?.access_token || null;
+  }
+
   return cachedToken;
 }
 
@@ -140,8 +159,25 @@ api.interceptors.response.use(
   async (error) => {
     console.error("API Error:", error);
 
-    // Check if the error is a 403 (Forbidden) and we haven't retried already
     const originalRequest = error.config;
+    // Handle 401 Unauthorized errors
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // Mark that we've retried
+
+      try {
+        // Attempt to refresh the session
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError) {
+          // Retry the original request with the same configuration
+          return api(originalRequest);
+        } else {
+          console.error("Failed to refresh session:", refreshError);
+        }
+      } catch (refreshError) {
+        console.error("Error during session refresh:", refreshError);
+      }
+    }
+    // Handle 403 Forbidden errors
     if (error.response?.status === 403 && !originalRequest._retry) {
       originalRequest._retry = true; // Mark that we've retried
 
@@ -170,6 +206,7 @@ api.interceptors.response.use(
       }
     }
 
+    // Reject the error if it cannot be handled
     return Promise.reject(
       error instanceof Error ? error : new Error(String(error)),
     );
