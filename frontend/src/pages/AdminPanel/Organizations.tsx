@@ -6,7 +6,6 @@ import {
   selectOrganizations,
   selectOrganizationLoading,
   updateOrganization,
-  createOrganization,
 } from "@/store/slices/organizationSlice";
 import { OrganizationDetails } from "@/types/organization";
 import { Building2, LoaderCircle, Plus } from "lucide-react";
@@ -18,9 +17,6 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { toastConfirm } from "@/components/ui/toastConfirm";
-import OrganizationModal, {
-  OrganizationFormValues,
-} from "@/components/Admin/Organizations/OrganizationModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "date-fns";
 
@@ -33,7 +29,6 @@ const Organizations = () => {
   const totalPages = useAppSelector((state) => state.organizations.totalPages);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [modalOpen, setModalOpen] = useState(false);
   const limit = 10;
 
   // Fetch organizations on mount & page change
@@ -45,9 +40,8 @@ const Organizations = () => {
     void navigate(`/admin/organizations/${org.id}`);
   };
 
-  // Open modal in "create" mode only
-  const openCreateModal = () => {
-    setModalOpen(true);
+  const openCreatePage = () => {
+    void navigate("/admin/organizations/create");
   };
 
   // Handle toggle active/inactive
@@ -91,19 +85,6 @@ const Organizations = () => {
       },
       onCancel: () => {},
     });
-  };
-
-  // Handle create organization form submit
-  const onSubmit = async (data: OrganizationFormValues) => {
-    try {
-      await dispatch(createOrganization(data)).unwrap();
-      toast.success(t.organizations.toasts.created[lang]);
-      setModalOpen(false);
-      // Reload list after creation
-      void dispatch(fetchAllOrganizations({ page: currentPage, limit }));
-    } catch {
-      toast.error(t.organizations.toasts.creationFailed[lang]);
-    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -190,7 +171,7 @@ const Organizations = () => {
         {/* Add New Org button */}
         <div className="flex gap-4 justify-end">
           <Button
-            onClick={openCreateModal}
+            onClick={openCreatePage}
             variant="outline"
             size="sm"
             className="gap-2"
@@ -219,15 +200,6 @@ const Organizations = () => {
           })}
         />
       )}
-
-      {/* Create Modal */}
-      <OrganizationModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        onSubmit={onSubmit}
-        mode="create"
-        organization={null}
-      />
     </div>
   );
 };

@@ -5,6 +5,10 @@ export const organizationDetailsPage = {
     fi: "Organisaation tiedot",
     en: "Organization Details",
   },
+  createTitle: {
+    fi: "Luo uusi organisaatio",
+    en: "Create New Organization",
+  },
   backButton: {
     fi: "Takaisin",
     en: "Back",
@@ -16,6 +20,12 @@ export const organizationDetailsPage = {
   protected: {
     fi: "Suojattu",
     en: "Protected",
+  },
+  tooltips: {
+    logoPlaceholder: {
+      fi: "Logo voidaan lisätä myöhemmin organisaation luonnin jälkeen",
+      en: "Logo can be added later after creating the organization",
+    },
   },
   buttons: {
     edit: {
