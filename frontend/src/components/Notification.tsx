@@ -315,7 +315,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                       variant="ghost"
                       title={t.navigation.notifications.markAllRead[lang]}
                       onClick={markAllRead}
-                      className="h-9 w-9 p-1.5 rounded-md hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+                      className="h-9 w-9 p-1.5 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
                     >
                       <CheckCheck className="h-5 w-5" />
                     </Button>
@@ -327,7 +327,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                     variant="ghost"
                     title={t.navigation.notifications.deleteAll[lang]}
                     onClick={deleteAll}
-                    className="h-9 w-9 p-1.5 rounded-md hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+                    className="h-9 w-9 p-1.5 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </Button>
@@ -447,7 +447,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                                 e.stopPropagation();
                                 void markRead(n.id);
                               }}
-                              className="h-9 w-9 p-1.5 rounded-md hover:bg-(--subtle-grey) text-(--midnight-black)"
+                              className="h-9 w-9 p-1.5 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
                               title={
                                 t.navigation.notifications.markAsRead[lang]
                               }
@@ -463,7 +463,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                               e.stopPropagation();
                               void removeNotification(n.id);
                             }}
-                            className="h-9 w-9 p-1.5 rounded-md hover:bg-(--subtle-grey) text-(--midnight-black)"
+                            className="h-9 w-9 p-1.5 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
                             title={
                               t.navigation.notifications.deleteOne?.[lang] ??
                               t.navigation.notifications.deleteAll[lang]
@@ -771,7 +771,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                               e.stopPropagation();
                               void markRead(n.id);
                             }}
-                            className="h-8 w-8 p-1 rounded-md hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+                            className="h-8 w-8 p-1 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
                             title={t.navigation.notifications.markAsRead[lang]}
                           >
                             <Check className="h-4 w-4" />
@@ -785,7 +785,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                             e.stopPropagation();
                             void removeNotification(n.id);
                           }}
-                          className="h-8 w-8 p-1 rounded-md hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+                          className="h-8 w-8 p-1 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
                           title={
                             t.navigation.notifications.deleteOne?.[lang] ??
                             t.navigation.notifications.deleteAll[lang]
