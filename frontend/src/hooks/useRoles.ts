@@ -550,6 +550,16 @@ export const useRoles = () => {
     setupPeriodicSessionCheck,
 
     // Helpers
+    /**
+     * Pick the best admin-capable role for a given organization.
+     * Preference order: `tenant_admin` → `storage_manager` because those roles are allowed
+     * manage/view bookings with provider organizations.
+     * Returns a narrowed, non-nullable context shape suitable for setActiveContext.
+     *
+     * @param orgId - Organization id to match against the user's roles
+     * @returns {null | { organization_id: string; role_name: string; organization_name: string | null }}
+     *          Best matching role context or null if none found.
+     */
     findBestOrgAdminRole: (orgId: string) => {
       const preferred: Array<"tenant_admin" | "storage_manager"> = [
         "tenant_admin",
@@ -572,10 +582,19 @@ export const useRoles = () => {
       }
       return null;
     },
+    /**
+     * Find a super_admin context for the current user.
+     * Prefers the "Global" organization when available, falls back to the first super_admin role.
+     * Returns a narrowed, non-nullable context shape suitable for setActiveContext.
+     *
+     * @returns {null | { organization_id: string; role_name: string; organization_name: string | null }}
+     *          A super_admin role context or null if user lacks that role.
+     */
     findSuperAdminRole: () => {
       // Prefer a Global super_admin if present, else first valid match
       const supers = currentUserRoles.filter(
-        (r) => r.is_active && r.role_name === "super_admin" && r.organization_id,
+        (r) =>
+          r.is_active && r.role_name === "super_admin" && r.organization_id,
       );
       if (supers.length === 0) return null;
       const globalFirst =
