@@ -173,7 +173,7 @@ const ProfilePictureUploader = () => {
 
       {/* open the modal containing also the cropper*/}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-[700px]">
+        <DialogContent className="max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-semibold tracking-tight">
               {t.profilePicUploader.changeProfilePicture[lang]}
