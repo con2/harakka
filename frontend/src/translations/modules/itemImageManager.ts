@@ -13,10 +13,6 @@ export const itemImageManager = {
         fi: "Pääkuvat ({count})",
         en: "Main Images ({count})",
       },
-      thumbnail: {
-        fi: "Pikkukuvat ({count})",
-        en: "Thumbnail Images ({count})",
-      },
       detail: {
         fi: "Yksityiskohtakuvat ({count})",
         en: "Detail Images ({count})",
@@ -57,10 +53,6 @@ export const itemImageManager = {
     main: {
       fi: "Pääkuva",
       en: "Main",
-    },
-    thumbnail: {
-      fi: "Pikkukuva",
-      en: "Thumbnail",
     },
     detail: {
       fi: "Yksityiskohta",

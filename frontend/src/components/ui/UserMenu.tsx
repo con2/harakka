@@ -103,7 +103,7 @@ export const UserMenu: React.FC = () => {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild className="text-primary">
         <button className="gap-3 p-1 px-2 h-fit flex items-center">
           {avatarUrl && avatarUrl.trim() !== "" ? (
             <img
