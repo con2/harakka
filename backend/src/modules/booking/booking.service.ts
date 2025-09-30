@@ -1051,6 +1051,7 @@ export class BookingService {
       activeItems.every((it) => it.status !== "pending");
 
     if (allRejected) {
+      // If all items are rejected, update the booking status to "rejected"
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
         .update({ status: "rejected" })
@@ -1078,14 +1079,45 @@ export class BookingService {
         .from("bookings")
         .update({ status: "confirmed" })
         .eq("id", bookingId);
-      // TODO: add new email "your whole booking is confirmed, but some items were rejected"
+
       if (bookingUpdateErr) {
         throw new BadRequestException("Failed to set booking to confirmed");
+      }
+
+      // Send partly confirmed email if there are still confirmed items
+      const confirmedItems = activeItems.filter(
+        (item) => item.status === "confirmed",
+      );
+      const rejectedItems = activeItems.filter(
+        (item) => item.status === "rejected",
+      );
+
+      console.log("Confirmed Items:", confirmedItems);
+      console.log("Rejected Items:", rejectedItems);
+
+      try {
+        await this.mailService.sendBookingMail(
+          BookingMailType.PartlyConfirmed,
+          {
+            bookingId,
+            triggeredBy: req.user.id,
+            extraData: { confirmedItems, rejectedItems },
+          },
+        );
+      } catch (emailErr) {
+        console.error(
+          "Booking confirmed, but notification about rejected items failed:",
+          emailErr,
+        );
       }
     }
 
     return {
-      message: "Items rejected; booking status rolled up where applicable",
+      message: allRejected
+        ? "All items rejected; booking status updated to rejected"
+        : noPending
+          ? "Items rejected for organization; booking status updated to confirmed"
+          : "Items rejected for organization; booking status remains unchanged",
     };
   }
 
