@@ -78,13 +78,11 @@ const Organizations = () => {
     }
   };
 
-  // Handle pagination
   const handlePageChange = (newPage: number) => {
     if (newPage < 1) return;
     setCurrentPage(newPage);
   };
 
-  // Table columns
   const columns: ColumnDef<OrganizationDetails>[] = [
     {
       header: t.organizations.columns.logo[lang],
