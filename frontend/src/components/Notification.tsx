@@ -25,12 +25,7 @@ import {
 import { useRoles } from "@/hooks/useRoles";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 /**
  * Notifications dropdown component
@@ -276,7 +271,11 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
         </Button>
 
         <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
-          <SheetContent side="right" hideClose className="w-[90vw] sm:max-w-sm p-0">
+          <SheetContent
+            side="right"
+            hideClose
+            className="w-[90vw] sm:max-w-sm p-0"
+          >
             <div className="p-3 border-b flex items-center justify-between gap-2 flex-wrap">
               <div className="text-base font-medium truncate">
                 {t.navigation.notifications.label[lang]}
