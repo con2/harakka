@@ -40,7 +40,7 @@ export class ItemImagesController {
     @Body()
     metadata: {
       alt_text?: string;
-      image_type: "main" | "thumbnail" | "detail";
+      image_type: "main" | "detail";
       display_order: number;
     },
   ) {

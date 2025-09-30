@@ -99,14 +99,18 @@ export const getOwnBookings = createAsyncThunk(
     {
       page = 1,
       limit = 10,
+      status,
+      search,
     }: {
       page?: number;
       limit?: number;
+      status?: BookingStatus | "all";
+      search?: string;
     },
     { rejectWithValue },
   ) => {
     try {
-      return await bookingsApi.getOwnBookings(page, limit);
+      return await bookingsApi.getOwnBookings(page, limit, status, search);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch own bookings"),
@@ -1072,8 +1076,37 @@ export const bookingsSlice = createSlice({
         state.error = null;
         state.errorContext = null;
       })
-      .addCase(pickUpItems.fulfilled, (state) => {
+      .addCase(pickUpItems.fulfilled, (state, action) => {
         state.loading = false;
+        // Optimistically update currentBooking items to reflect pickup
+        const { bookingId, location_id, org_id, itemIds } = action.payload as {
+          bookingId: string;
+          location_id?: string;
+          org_id?: string;
+          itemIds?: string[];
+        };
+        if (
+          state.currentBooking?.id === bookingId &&
+          state.currentBooking.booking_items
+        ) {
+          state.currentBooking.booking_items =
+            state.currentBooking.booking_items.map((bi) => {
+              const matchesLocation = location_id
+                ? bi.location_id === location_id
+                : true;
+              const matchesOrg = org_id
+                ? bi.provider_organization_id === org_id
+                : true;
+              const matchesId =
+                itemIds && itemIds.length > 0
+                  ? itemIds.includes(bi.id)
+                  : bi.status === "confirmed";
+              if (matchesLocation && matchesOrg && matchesId) {
+                return { ...bi, status: "picked_up" };
+              }
+              return bi;
+            });
+        }
       })
       .addCase(pickUpItems.rejected, (state, action) => {
         state.error = action.payload as string;

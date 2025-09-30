@@ -1,5 +1,5 @@
 import { ItemFormData, MappedItem } from "@common/items/form.types";
-import { StorageItem, TagLink } from "@common/items/storage-items.types";
+import { Image, StorageItem, TagLink } from "@common/items/storage-items.types";
 import { ItemImageInsert } from "@src/modules/item-images/types/item-image.types";
 
 export function mapStorageItems(payload: ItemFormData): MappedItem[] {
@@ -224,3 +224,19 @@ export function applyItemFilters<T extends FilterableQuery>(
 
   return query;
 }
+
+export const mapItemImagesUpdate = (
+  images: Image[],
+  item_id: string,
+): ItemImageInsert[] => {
+  return images.map((img: Image) => {
+    const { metadata, url, full_path, path, ...rest } = img;
+    return {
+      image_url: url,
+      item_id,
+      storage_path: full_path,
+      ...rest,
+      ...metadata,
+    };
+  });
+};

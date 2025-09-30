@@ -43,38 +43,23 @@ const MyBookingsPage = () => {
   const { activeContext } = useRoles();
 
   useEffect(() => {
+    const status = statusFilter === "all" ? undefined : statusFilter;
     void dispatch(
       getOwnBookings({
         page: currentPage + 1,
         limit: 10,
+        status,
+        search: searchQuery,
       }),
     );
-  }, [dispatch, currentPage, activeContext]);
+  }, [dispatch, currentPage, activeContext, statusFilter, searchQuery]);
 
   useEffect(() => {
     setCurrentPage(0);
   }, [searchQuery, statusFilter]);
 
-  const filteredBookings = useMemo(() => {
-    if (!bookings) return [];
-    return bookings.filter((b) => {
-      const booking = b as Record<string, unknown>;
-      const status = (booking.status as BookingStatus) ?? "pending";
-
-      if (statusFilter !== "all" && status !== statusFilter) return false;
-
-      if (searchQuery && searchQuery.length > 0) {
-        const num = (booking.booking_number as string) ?? "";
-        const created = (booking.created_at as string) ?? "";
-        const q = searchQuery.toLowerCase();
-        if (num.toLowerCase().includes(q)) return true;
-        if (created.toLowerCase().includes(q)) return true;
-        return false;
-      }
-
-      return true;
-    });
-  }, [bookings, searchQuery, statusFilter]);
+  // Server-side filtering is applied via getOwnBookings; use results as-is
+  const filteredBookings = bookings;
 
   const columns: ColumnDef<unknown, unknown>[] = useMemo(() => {
     const formatDate = (dateString?: string): string => {

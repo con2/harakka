@@ -13,7 +13,7 @@ import {
   uploadToBucket,
 } from "@/store/slices/itemImagesSlice";
 import { CreateItemType } from "@common/items/form.types";
-import { Info, Trash } from "lucide-react";
+import { ImagePlus, Info, Trash } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { UseFormSetValue } from "react-hook-form";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useImageValidator } from "@/utils/imageUtils";
 import { FILE_CONSTRAINTS } from "@/types";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const MAX_DETAIL_IMAGES = 5;
 
@@ -100,6 +101,7 @@ function ItemImageUpload({
             display_order: 0,
             alt_text: "",
             is_active: true,
+            object_fit: formImages.main?.metadata.object_fit || "cover",
           },
         });
 
@@ -116,6 +118,7 @@ function ItemImageUpload({
             display_order: 0,
             alt_text: "",
             is_active: true,
+            object_fit: formImages.main?.metadata.object_fit || "cover",
           },
         });
 
@@ -168,6 +171,7 @@ function ItemImageUpload({
               display_order: currentDetailsCount + idx,
               alt_text: "",
               is_active: true,
+              object_fit: "cover" as "cover" | "contain",
             },
           };
         });
@@ -355,13 +359,13 @@ function ItemImageUpload({
   const isDetailUploading = uploadingStates.details.size > 0;
 
   return (
-    <>
+    <div className="flex flex-col">
       <div className="mb-8">
         <div>
           <p className="scroll-m-20 text-base font-semibold tracking-tight w-full mb-1">
             {t.itemImageUpload.paragraphs.mainImage[lang]}
           </p>
-          <p className="text-sm leading-none font-medium mb-4">
+          <p className="text-sm leading-[1.4] font-medium mb-4">
             {t.itemImageUpload.paragraphs.mainImageDescription[lang]}
           </p>
         </div>
@@ -391,10 +395,11 @@ function ItemImageUpload({
               />
             ) : (
               <>
+                <ImagePlus className="!w-10 !h-10 text-muted-foreground mb-1" />
                 {isMainUploading
                   ? t.itemImageUpload.buttons.uploading[lang]
                   : t.itemImageUpload.buttons.mainImageUpload[lang]}
-                <p className="text-xs mt-1 text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {t.itemImageUpload.buttons.uploadSubtext[lang]}
                 </p>
               </>
@@ -408,7 +413,7 @@ function ItemImageUpload({
             onChange={(e) => handleFileSelect(e, "main")}
           />
         </div>
-        <div className="flex justify-between items-end">
+        <div className="flex justify-between items-center">
           {formImages?.main?.url && (
             <div className="max-w-[400px]">
               <div className="flex gap-2 w-fit items-center mb-2">
@@ -432,6 +437,19 @@ function ItemImageUpload({
                 onChange={(e) => updateImageAltText("main", 0, e.target.value)}
                 disabled={!formImages.main}
               />
+              <div className="flex gap-2 mt-4">
+                <Checkbox
+                  checked={formImages.main?.metadata.object_fit === "cover"}
+                  onCheckedChange={() => {
+                    const newValue =
+                      formImages.main?.metadata.object_fit === "cover"
+                        ? "contain"
+                        : "cover";
+                    updateForm("images.main.metadata.object_fit", newValue);
+                  }}
+                />
+                <Label>{t.itemImageUpload.labels.imageCover[lang]}</Label>
+              </div>
             </div>
           )}
           {formImages?.main?.url && (
@@ -493,8 +511,9 @@ function ItemImageUpload({
               t.itemImageUpload.buttons.maxReached[lang]
             ) : (
               <>
+                <ImagePlus className="!w-10 !h-10 text-muted-foreground mb-1" />
                 {t.itemImageUpload.buttons.detailImageUpload[lang]}
-                <p className="text-xs mt-1 text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {t.itemImageUpload.buttons.uploadSubtext[lang]}
                 </p>
               </>
@@ -557,7 +576,7 @@ function ItemImageUpload({
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
 

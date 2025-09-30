@@ -15,7 +15,7 @@ import { BookingService } from "./booking.service";
 import { RoleService } from "../role/role.service";
 import { CreateBookingDto } from "./dto/create-booking.dto";
 import { AuthRequest } from "src/middleware/interfaces/auth-request.interface";
-import { ValidBookingOrder } from "./types/booking.interface";
+import { ValidBookingOrder, BookingStatus } from "./types/booking.interface";
 import { UpdateBookingDto } from "./dto/update-booking.dto";
 import { Roles } from "src/decorators/roles.decorator";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
@@ -107,6 +107,8 @@ export class BookingController {
     @Req() req: AuthRequest,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
+    @Query("status") status?: BookingStatus | "all",
+    @Query("search") search?: string,
   ) {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
@@ -124,6 +126,8 @@ export class BookingController {
       userId,
       activeOrgId,
       activeRole,
+      status,
+      search,
     );
   }
 
