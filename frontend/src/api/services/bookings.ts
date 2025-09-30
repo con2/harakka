@@ -58,10 +58,14 @@ export const bookingsApi = {
   getOwnBookings: async (
     page: number = 1,
     limit: number = 10,
+    status?: string,
+    search?: string,
   ): Promise<ApiResponse<BookingPreview>> => {
     const params = new URLSearchParams();
     params.append("page", page.toString());
     params.append("limit", limit.toString());
+    if (status && status !== "all") params.append("status", status);
+    if (search && search.trim()) params.append("search", search.trim());
     return api.get(`/bookings/my?${params.toString()}`);
   },
 
