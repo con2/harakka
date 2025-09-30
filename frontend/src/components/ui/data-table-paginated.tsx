@@ -35,9 +35,7 @@ interface DataTableProps<TData, TValue> {
   handleAscending?: (asc: boolean | null) => void;
   handleOrder?: (order: string) => void;
   originalSorting?: string;
-  rowProps?: (row: Row<TData>) => React.HTMLAttributes<HTMLTableRowElement> & {
-    ariaLabel?: string;
-  };
+  rowProps?: (row: Row<TData>) => React.HTMLAttributes<HTMLTableRowElement>;
   highlight?: number[];
 }
 
@@ -151,12 +149,9 @@ export function PaginatedDataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
-                const extraProps = rowProps?.(row) ?? {};
-
                 return (
                   <TableRow
                     key={row.id}
-                    aria-label={extraProps?.ariaLabel || ""}
                     role={hasOnClick(row) ? "button" : "row"}
                     className={`h-10 hover:cursor-pointer ${highlight?.includes(row.index) ? "bg-green-50" : ""}`}
                     data-state={row.getIsSelected() && "selected"}
