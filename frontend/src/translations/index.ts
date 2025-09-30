@@ -60,6 +60,7 @@ import { pagination } from "./modules/pagination";
 import { passwordReset } from "./modules/passwordReset";
 import { privacyPolicy } from "./modules/privacyPolicy";
 import { profilePicUploader } from "./modules/profilePicUploader";
+import { requests } from "./modules/requests";
 import { roleManagement } from "./modules/roleManagement";
 import { rolesList } from "./modules/rolesList";
 import { statusBadge } from "./modules/statusBadge";
@@ -144,6 +145,7 @@ export const t = {
   passwordReset,
   privacyPolicy,
   profilePicUploader,
+  requests,
   roleManagement,
   rolesList,
   statusBadge,

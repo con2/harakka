@@ -20,6 +20,7 @@ import Logs from "@/pages/AdminPanel/Logs";
 import Organizations from "@/pages/AdminPanel/Organizations";
 import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
 import Categories from "@/pages/AdminPanel/Categories";
+import Requests from "@/pages/AdminPanel/Requests";
 
 // General
 import LandingPage from "@/pages/LandingPage";
@@ -165,6 +166,16 @@ export const router = createBrowserRouter([
                 allowedRoles={["storage_manager", "tenant_admin"]}
               >
                 <BookingList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "requests",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["storage_manager", "tenant_admin"]}
+              >
+                <Requests />
               </ProtectedRoute>
             ),
           },

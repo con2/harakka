@@ -30,7 +30,6 @@ import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import { useNavigate } from "react-router-dom";
 import { formatBookingStatus } from "@/utils/format";
 import { bookingsApi, OverdueBookingRow } from "@/api/services/bookings";
-//
 
 const BookingList = () => {
   const dispatch = useAppDispatch();

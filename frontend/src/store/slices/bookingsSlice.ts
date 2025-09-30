@@ -21,6 +21,7 @@ import { selectActiveOrganizationId, selectActiveRoleName } from "./rolesSlice";
 const initialState: BookingsState = {
   bookings: [],
   userBookings: [],
+  orgBookings: [],
   loading: false,
   error: null,
   errorContext: null,
