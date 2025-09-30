@@ -119,21 +119,27 @@ const CreateOrganizationPage = () => {
           {/* Organization Form */}
           <div className="space-y-4 text-sm">
             <div>
-              <strong>{t.organizationDetailsPage.fields.name[lang]}:</strong>
+              <label htmlFor="org-name" className="font-semibold">
+                {t.organizationDetailsPage.fields.name[lang]}:
+              </label>
               <Input
+                id="org-name"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
                 className="mt-2"
                 placeholder={t.organizationDetailsPage.fields.name[lang]}
                 required
+                aria-required="true"
+                aria-describedby="org-name-error"
               />
             </div>
 
             <div>
-              <strong>
+              <label htmlFor="org-description" className="font-semibold">
                 {t.organizationDetailsPage.fields.description[lang]}:
-              </strong>
+              </label>
               <Textarea
+                id="org-description"
                 value={formData.description}
                 onChange={(e) =>
                   handleInputChange("description", e.target.value)
@@ -141,7 +147,14 @@ const CreateOrganizationPage = () => {
                 className="mt-2"
                 rows={3}
                 placeholder={t.organizationDetailsPage.fields.description[lang]}
+                aria-describedby="org-description-help"
               />
+              <div id="org-description-help" className="sr-only">
+                {
+                  t.organizationDetailsPage.accessibility.labels
+                    .descriptionHelp[lang]
+                }
+              </div>
             </div>
           </div>
         </CardContent>

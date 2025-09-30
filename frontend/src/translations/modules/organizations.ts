@@ -143,6 +143,30 @@ export const organizations = {
       en: "Failed to update status",
     },
   },
+  accessibility: {
+    viewDetails: {
+      fi: "Näytä {orgName} organisaation tiedot",
+      en: "View details for {orgName} organization",
+    },
+    toggleStatus: {
+      activate: {
+        fi: "Aktivoi {orgName} organisaatio",
+        en: "Activate {orgName} organization",
+      },
+      deactivate: {
+        fi: "Deaktivoi {orgName} organisaatio",
+        en: "Deactivate {orgName} organization",
+      },
+      protected: {
+        fi: " (suojattu organisaatio)",
+        en: " (protected organization)",
+      },
+    },
+    loading: {
+      fi: "Ladataan organisaatioita...",
+      en: "Loading organizations...",
+    },
+  },
 };
 
 export const organizationDelete = {
@@ -192,6 +216,12 @@ export const organizationDelete = {
     generalError: {
       en: "Something went wrong.",
       fi: "Jotain meni pieleen.",
+    },
+  },
+  accessibility: {
+    deleteButton: {
+      fi: "Poista organisaatio - {title}",
+      en: "Delete organization - {title}",
     },
   },
 };

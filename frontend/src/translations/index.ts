@@ -48,12 +48,12 @@ import { notification } from "./modules/notification";
 import { organizationLocations } from "./modules/organizationLocations";
 import { organizationLogoUploader } from "./modules/organizationLogoUploader";
 import { organizationPage } from "./modules/organizationPage";
-import { organizations } from "./modules/organizations";
-import { organizationDetailsPage } from "./modules/organizationDetailsPage";
 import {
-  organizationDelete,
-  organizationList,
-} from "./modules/organizationsList";
+  organizations,
+  organizationDelete as orgDelete,
+} from "./modules/organizations";
+import { organizationDetailsPage } from "./modules/organizationDetailsPage";
+import { organizationList } from "./modules/organizationsList";
 import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { orgStep } from "./modules/orgStep";
 import { overdueBookings } from "./modules/OverdueBookings";
@@ -135,7 +135,7 @@ export const t = {
   notification,
   orgLocationManagement,
   orgStep,
-  organizationDelete,
+  organizationDelete: orgDelete,
   organizationDetailsPage,
   organizationList,
   organizationLocations,

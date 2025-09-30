@@ -116,6 +116,10 @@ const Organizations = () => {
         <button
           className="text-primary hover:underline font-medium text-left"
           onClick={() => openDetailsPage(row.original)}
+          aria-label={t.organizations.accessibility.viewDetails[lang].replace(
+            "{orgName}",
+            row.original.name,
+          )}
         >
           {row.original.name}
         </button>
@@ -149,6 +153,10 @@ const Organizations = () => {
               handleToggle(row.original.id, checked)
             }
             disabled={isProtected}
+            aria-label={`${row.original.is_active ? t.organizations.accessibility.toggleStatus.deactivate[lang] : t.organizations.accessibility.toggleStatus.activate[lang]}${isProtected ? t.organizations.accessibility.toggleStatus.protected[lang] : ""}`.replace(
+              "{orgName}",
+              row.original.name,
+            )}
           />
         );
       },
@@ -183,8 +191,18 @@ const Organizations = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-8">
-          <LoaderCircle className="animate-spin text-muted" />
+        <div
+          className="flex justify-center p-8"
+          role="status"
+          aria-live="polite"
+        >
+          <LoaderCircle
+            className="animate-spin text-muted"
+            aria-hidden="true"
+          />
+          <span className="sr-only">
+            {t.organizations.accessibility.loading[lang]}
+          </span>
         </div>
       ) : (
         <PaginatedDataTable

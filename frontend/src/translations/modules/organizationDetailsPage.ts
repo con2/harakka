@@ -145,4 +145,34 @@ export const organizationDetailsPage = {
       },
     },
   },
+  accessibility: {
+    labels: {
+      nameField: {
+        fi: "Organisaation nimi",
+        en: "Organization name",
+      },
+      descriptionField: {
+        fi: "Organisaation kuvaus",
+        en: "Organization description",
+      },
+      descriptionHelp: {
+        fi: "Valinnainen kuvaus organisaatiolle",
+        en: "Optional description for the organization",
+      },
+    },
+    toggleStatus: {
+      activate: {
+        fi: "Aktivoi {orgName} organisaatio",
+        en: "Activate {orgName} organization",
+      },
+      deactivate: {
+        fi: "Deaktivoi {orgName} organisaatio",
+        en: "Deactivate {orgName} organization",
+      },
+      protected: {
+        fi: " (suojattu organisaatio)",
+        en: " (protected organization)",
+      },
+    },
+  },
 };

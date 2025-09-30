@@ -255,9 +255,12 @@ const OrganizationDetailsPage = () => {
           {/* Organization Info */}
           <div className="space-y-4 text-sm">
             <div>
-              <strong>{t.organizationDetailsPage.fields.name[lang]}:</strong>{" "}
+              <label htmlFor="edit-org-name" className="font-semibold">
+                {t.organizationDetailsPage.fields.name[lang]}:
+              </label>{" "}
               {isEditing && !isProtectedOrg ? (
                 <Input
+                  id="edit-org-name"
                   value={editForm.name}
                   onChange={(e) =>
                     setEditForm((prev) => ({
@@ -267,6 +270,7 @@ const OrganizationDetailsPage = () => {
                   }
                   className="mt-2"
                   placeholder={t.organizationDetailsPage.fields.name[lang]}
+                  aria-required="true"
                 />
               ) : (
                 <span>{selectedOrg.name}</span>
@@ -274,11 +278,12 @@ const OrganizationDetailsPage = () => {
             </div>
 
             <div>
-              <strong>
+              <label htmlFor="edit-org-description" className="font-semibold">
                 {t.organizationDetailsPage.fields.description[lang]}:
-              </strong>{" "}
+              </label>{" "}
               {isEditing ? (
                 <Textarea
+                  id="edit-org-description"
                   value={editForm.description}
                   onChange={(e) =>
                     setEditForm((prev) => ({
@@ -288,12 +293,21 @@ const OrganizationDetailsPage = () => {
                   }
                   className="mt-2"
                   rows={3}
+                  aria-describedby="edit-description-help"
                 />
               ) : (
                 <span>
                   {selectedOrg.description ||
                     t.organizationDetailsPage.fields.noDescription[lang]}
                 </span>
+              )}
+              {isEditing && (
+                <div id="edit-description-help" className="sr-only">
+                  {
+                    t.organizationDetailsPage.accessibility.labels
+                      .descriptionHelp[lang]
+                  }
+                </div>
               )}
             </div>
 
@@ -316,6 +330,10 @@ const OrganizationDetailsPage = () => {
                   }
                   onCheckedChange={handleToggleActive}
                   disabled={isProtectedOrg}
+                  aria-label={`${(isEditing ? editForm.is_active : selectedOrg.is_active) ? t.organizationDetailsPage.accessibility.toggleStatus.deactivate[lang] : t.organizationDetailsPage.accessibility.toggleStatus.activate[lang]}${isProtectedOrg ? t.organizationDetailsPage.accessibility.toggleStatus.protected[lang] : ""}`.replace(
+                    "{orgName}",
+                    selectedOrg.name,
+                  )}
                 />
               </div>
             </div>
