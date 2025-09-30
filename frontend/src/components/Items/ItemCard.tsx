@@ -72,13 +72,13 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
       (img) => !failedImageUrlsRef.current.has(img.image_url),
     );
 
-    // If no thumbnail found, try to get main image
-    const mainImage = validImages.find((img) => img.image_type === "main");
+    // Return main image if found, or first valid image if no main image.
+    const displayImg =
+      validImages.find((img) => img.image_type === "main") ?? validImages[0];
 
-    // Use thumbnail or main image URL
     return {
-      image_url: mainImage?.image_url || "",
-      object_fit: mainImage?.object_fit || "cover",
+      image_url: displayImg?.image_url || "",
+      object_fit: displayImg?.object_fit || "cover",
     };
   }, [itemImagesForCurrentItem]);
 

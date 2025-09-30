@@ -3,7 +3,7 @@ import { BaseEntity } from "./common";
 /**
  * Supported image types for uploads
  */
-export type ImageType = "main" | "thumbnail" | "detail";
+export type ImageType = "main" | "detail";
 
 /**
  * Allowed MIME types for file uploads

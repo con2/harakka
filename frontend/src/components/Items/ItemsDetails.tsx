@@ -88,16 +88,10 @@ const ItemsDetails: React.FC = () => {
     const mainImg = itemImagesForCurrentItem.find(
       (img) => img.image_type === "main",
     );
-
-    // If no main image, try thumbnail
-    const thumbnailImg = mainImg
-      ? null
-      : itemImagesForCurrentItem.find((img) => img.image_type === "thumbnail");
-
-    const anyImg = mainImg || thumbnailImg ? null : itemImagesForCurrentItem[0];
+    const firstImg = itemImagesForCurrentItem[0];
 
     // Return image URL or placeholder
-    return mainImg || thumbnailImg || anyImg || imagePlaceholder;
+    return mainImg || firstImg || imagePlaceholder;
   }, [itemImagesForCurrentItem, selectedImageUrl]);
 
   const handleAddToCart = () => {
