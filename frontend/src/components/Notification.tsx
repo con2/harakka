@@ -1,11 +1,9 @@
 import * as React from "react";
-import { Bell, X, Trash2 } from "lucide-react";
-
+import { Bell, X, Check, CheckCheck } from "lucide-react";
 import { supabase } from "@/config/supabase";
 import { DBTables } from "@common/database.types";
 import { subscribeToNotifications } from "@/lib/notifications";
 import { useNavigate } from "react-router-dom";
-
 import { t } from "@/translations";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,9 +58,19 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
     [feed],
   );
 
+  // Hide self user.created notifications (do not show to the newly created user)
+  const baseFeed = React.useMemo(() => {
+    return feedUniq.filter((n) => {
+      if (n.type === "user.created") {
+        return n.metadata.new_user_id !== userId;
+      }
+      return true;
+    });
+  }, [feedUniq, userId]);
+
   const unseen = React.useMemo(
-    () => feedUniq.filter((n) => n.read_at === null).length,
-    [feedUniq],
+    () => baseFeed.filter((n) => n.read_at === null).length,
+    [baseFeed],
   );
 
   const upsert = React.useCallback(
@@ -76,7 +84,12 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   const { lang } = useLanguage();
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRoleName = useAppSelector(selectActiveRoleName);
-  const { setActiveContext, activeContext, findBestOrgAdminRole, findSuperAdminRole } = useRoles();
+  const {
+    setActiveContext,
+    activeContext,
+    findBestOrgAdminRole,
+    findSuperAdminRole,
+  } = useRoles();
 
   // Filter notifications according to active role/org context
   const inActiveContext = React.useCallback(
@@ -104,14 +117,14 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   );
 
   const visibleFeed = React.useMemo(
-    () => (viewAll ? feedUniq : feedUniq.filter(inActiveContext)),
-    [feedUniq, inActiveContext, viewAll],
+    () => (viewAll ? baseFeed : baseFeed.filter(inActiveContext)),
+    [baseFeed, inActiveContext, viewAll],
   );
 
   const otherUnread = React.useMemo(
     () =>
-      feedUniq.filter((n) => n.read_at === null && !inActiveContext(n)).length,
-    [feedUniq, inActiveContext],
+      baseFeed.filter((n) => n.read_at === null && !inActiveContext(n)).length,
+    [baseFeed, inActiveContext],
   );
 
   const visibleUnseen = React.useMemo(
@@ -150,7 +163,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
 
   /** Marks **every** unread notification as read in one batch. */
   const markAllRead = async () => {
-    const target = viewAll ? feedUniq : visibleFeed;
+    const target = viewAll ? baseFeed : visibleFeed;
     const ids = target.filter((n) => n.read_at === null).map((n) => n.id);
     if (ids.length === 0) return;
 
@@ -168,7 +181,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
 
   /** Deletes **all** notifications currently in the feed, locally and in DB. */
   const deleteAll = async () => {
-    const target = viewAll ? feedUniq : visibleFeed;
+    const target = viewAll ? baseFeed : visibleFeed;
     const ids = target.map((n) => n.id);
     if (ids.length === 0) return;
 
@@ -235,23 +248,23 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
             )}
           </div>
           <div className="flex items-center gap-1">
-            {visibleFeed.length > 0 && (
-              <Button
-                size="sm"
-                variant="ghost"
-                title={t.navigation.notifications.deleteAll[lang]}
-                onClick={deleteAll}
-                className="h-5 w-5"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
             {(viewAll ? unseen > 0 : visibleUnseen > 0) && (
               <Button
                 size="sm"
                 variant="ghost"
                 title={t.navigation.notifications.markAllRead[lang]}
                 onClick={markAllRead}
+                className="h-5 w-5"
+              >
+                <CheckCheck className="h-4 w-4" />
+              </Button>
+            )}
+            {visibleFeed.length > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                title={t.navigation.notifications.deleteAll[lang]}
+                onClick={deleteAll}
                 className="h-5 w-5"
               >
                 <X className="h-4 w-4" />
@@ -334,17 +347,15 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                         void navigate("/admin/users");
                       }
                     } else if (
-                      (n.type === "booking.created" ||
-                        n.type === "booking.status_approved" ||
-                        n.type === "booking.status_rejected") &&
-                      "booking_id" in n.metadata
+                      n.type === "booking.created" ||
+                      n.type === "booking.status_approved" ||
+                      n.type === "booking.status_rejected"
                     ) {
                       // Navigate to the detailed booking view
                       const bookingId = safe(n.metadata.booking_id);
-                      const orgId =
-                        "organization_id" in n.metadata
-                          ? safe(n.metadata.organization_id)
-                          : null;
+                      const orgId = n.metadata.organization_id
+                        ? safe(n.metadata.organization_id)
+                        : null;
 
                       if (orgId) {
                         const candidate = findBestOrgAdminRole(orgId);
@@ -458,7 +469,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                           className="h-5 w-5"
                           title={t.navigation.notifications.markAsRead[lang]}
                         >
-                          <X className="h-4 w-4" />
+                          <Check className="h-4 w-4" />
                         </Button>
                       )}
                       <Button
@@ -474,7 +485,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                           t.navigation.notifications.deleteAll[lang]
                         }
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

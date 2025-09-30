@@ -63,8 +63,16 @@ type NotificationRow = {
   };
 }[keyof NotificationMetadataByType];
 
-/* fallback for any unforeseen type */
-type NotificationRowFallback = BaseNotificationRow & {
+/* fallback for any unforeseen type
+ * Ensure the discriminant `type` does NOT overlap with known keys,
+ * so narrowing by `n.type === '...'` works correctly.
+ */
+type NotificationFallbackType = Exclude<
+  SupaBase["public"]["Enums"]["notification_type"],
+  keyof NotificationMetadataByType
+>;
+type NotificationRowFallback = Omit<BaseNotificationRow, "type" | "metadata"> & {
+  type: NotificationFallbackType;
   metadata: Record<string, unknown>;
 };
 
