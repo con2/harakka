@@ -213,6 +213,24 @@ export const bookingDetailsPage = {
           fi: "Peruuta",
         },
       },
+      cancelItem: {
+        title: {
+          en: "Cancel Item",
+          fi: "Peruuta tuote",
+        },
+        description: {
+          en: "Are you sure you want to cancel this item?",
+          fi: "Haluatko varmasti peruuttaa tämän tuotteen? ",
+        },
+        confirmText: {
+          en: "Cancel Item",
+          fi: "Peruuta tuote",
+        },
+        cancelText: {
+          en: "Keep Item",
+          fi: "Pidä tuote",
+        },
+      },
       removeItem: {
         title: {
           en: "Remove Item",
@@ -298,6 +316,14 @@ export const bookingDetailsPage = {
       failedToRemoveItem: {
         en: "Failed to remove item",
         fi: "Tuotteen poistaminen epäonnistui",
+      },
+      itemCancelled: {
+        en: "Item has been cancelled",
+        fi: "Tuote on peruutettu",
+      },
+      failedToCancelItem: {
+        en: "Failed to cancel item",
+        fi: "Tuotteen peruuttaminen epäonnistui",
       },
     },
   },
