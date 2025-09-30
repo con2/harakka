@@ -22,7 +22,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import OrganizationDelete from "@/components/Admin/Organizations/OrganizationDelete";
 import OrganizationLogoUploader from "@/components/Admin/Organizations/OrganizationLogoUploader";
@@ -40,14 +39,13 @@ const OrganizationDetailsPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
-    slug: "",
     description: "",
     is_active: true,
   });
 
   // Check if this is a protected organization
   const isProtectedOrg =
-    selectedOrg?.name === "Global" || selectedOrg?.name === "High Council";
+    selectedOrg?.name === "Global" || selectedOrg?.name === "High council";
 
   useEffect(() => {
     if (id) {
@@ -59,7 +57,6 @@ const OrganizationDetailsPage = () => {
     if (selectedOrg) {
       setEditForm({
         name: selectedOrg.name || "",
-        slug: selectedOrg.slug || "",
         description: selectedOrg.description || "",
         is_active: selectedOrg.is_active,
       });
@@ -78,7 +75,6 @@ const OrganizationDetailsPage = () => {
     if (selectedOrg) {
       setEditForm({
         name: selectedOrg.name || "",
-        slug: selectedOrg.slug || "",
         description: selectedOrg.description || "",
         is_active: selectedOrg.is_active,
       });
@@ -150,7 +146,7 @@ const OrganizationDetailsPage = () => {
         <p className="text-muted-foreground">
           {t.organizationDetailsPage.notFound[lang]}
         </p>
-        <Button onClick={handleBackToList} variant="outline">
+        <Button onClick={handleBackToList} variant="ghost">
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t.organizationDetailsPage.backButton[lang]}
         </Button>
@@ -162,7 +158,7 @@ const OrganizationDetailsPage = () => {
     <div className="max-w-4xl mx-4 p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Button onClick={handleBackToList} variant="ghost" size="sm">
+        <Button onClick={handleBackToList} variant="secondary" size="sm">
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t.organizationDetailsPage.backButton[lang]}
         </Button>
@@ -174,13 +170,13 @@ const OrganizationDetailsPage = () => {
                 <>
                   <Button
                     onClick={handleCancelEdit}
-                    variant="outline"
+                    variant="default"
                     size="sm"
                   >
                     <X className="w-4 h-4 mr-2" />
                     {t.organizationDetailsPage.buttons.cancel[lang]}
                   </Button>
-                  <Button onClick={handleSave} size="sm">
+                  <Button onClick={handleSave} size="sm" variant="outline">
                     <Save className="w-4 h-4 mr-2" />
                     {t.organizationDetailsPage.buttons.save[lang]}
                   </Button>
@@ -212,7 +208,7 @@ const OrganizationDetailsPage = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Logo - Show uploader when editing and not protected, otherwise show static avatar */}
+          {/* Logo */}
           <div className="flex justify-center">
             {isEditing && !isProtectedOrg ? (
               <OrganizationLogoUploader
@@ -263,17 +259,7 @@ const OrganizationDetailsPage = () => {
 
             <div>
               <strong>{t.organizationDetailsPage.fields.slug[lang]}:</strong>{" "}
-              {isEditing ? (
-                <Input
-                  value={editForm.slug}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, slug: e.target.value }))
-                  }
-                  className="mt-2"
-                />
-              ) : (
-                <span>{selectedOrg.slug || "—"}</span>
-              )}
+              <span>{selectedOrg.slug || "—"}</span>
             </div>
 
             <div className="flex items-center justify-between">
