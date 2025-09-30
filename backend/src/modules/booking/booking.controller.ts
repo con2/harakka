@@ -130,11 +130,13 @@ export class BookingController {
   }
 
   /**
-   * Get bookings of the current authenticated user.
+   * Get bookings of an organization.
    * Accessible by users and all admins within their organization.
    * @param req - Authenticated request object
    * @param page - Page number for pagination (default: 1)
    * @param limit - Number of items per page (default: 10)
+   * @param status - Optional. status of entire booking
+   * @param searchquery - Optional. Searches booking_number, full_name and created_at for a match.
    * @returns Paginated list of the user's bookings
    */
   @Get("org/:org_id")
