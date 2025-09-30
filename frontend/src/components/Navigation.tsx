@@ -32,7 +32,6 @@ export const Navigation = () => {
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
-  // const isGlobalUser = hasRole("user", activeOrg!);
 
   // Screen Size State
   const { isMobile, width } = useIsMobile();

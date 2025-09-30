@@ -370,7 +370,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                 {t.itemCard.availabilityError[lang]}
               </p>
             ) : (
-              <p className="text-xs text-slate-400 italic m-0">
+              <p className="text-xs text-slate-500 italic m-0">
                 {startDate && endDate
                   ? availabilityInfo.availableQuantity > 0
                     ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`

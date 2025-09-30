@@ -75,7 +75,6 @@ export const CurrentUserRoles: React.FC = () => {
                     <button
                       type="button"
                       aria-haspopup="true"
-                      aria-label={""}
                       aria-expanded={openMenuId === (role.id as string)}
                       className="p-1 rounded hover:bg-gray-100"
                       onClick={(e) => {

@@ -9,7 +9,6 @@ type SpinnerProps = {
   padding?: string;
   containerClasses?: string;
   loaderClasses?: string;
-  text?: string;
 };
 
 function Spinner({
@@ -18,7 +17,6 @@ function Spinner({
   padding = "p-2",
   containerClasses,
   loaderClasses,
-  text,
 }: SpinnerProps) {
   const { lang } = useLanguage();
   const CONTAINER_CLASSES = `flex justify-center items-center flex-col gap-1 ${height} ${padding} ${containerClasses}`;
@@ -27,7 +25,6 @@ function Spinner({
   return (
     <div className={CONTAINER_CLASSES} aria-label={t.common.loading[lang]}>
       <LoaderCircle aria-hidden className={LOADER_CLASSES} />
-      {text && <span>{text}</span>}
       {children}
     </div>
   );

@@ -45,10 +45,7 @@ const OrganizationInfo: React.FC<OrganizationInfoProps> = ({
                 className="h-24 w-24 object-cover rounded-xl"
               />
             ) : (
-              <Building2
-                aria-label={`${organization.name} logo`}
-                className="h-12 w-12 text-blue-600"
-              />
+              <Building2 className="h-12 w-12 text-blue-600" />
             )}
           </div>
 
