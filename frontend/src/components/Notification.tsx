@@ -24,6 +24,13 @@ import {
 } from "@/store/slices/rolesSlice";
 import { useRoles } from "@/hooks/useRoles";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 /**
  * Notifications dropdown component
@@ -64,6 +71,7 @@ type NotificationRow = DBTables<"notifications">;
 export const Notifications: React.FC<Props> = ({ userId }) => {
   const [feed, setFeed] = React.useState<NotificationRow[]>([]);
   const [viewAll, setViewAll] = React.useState(false);
+  const [panelOpen, setPanelOpen] = React.useState(false);
   const feedUniq = React.useMemo(
     () => Array.from(new Map(feed.map((n) => [n.id, n])).values()),
     [feed],
@@ -102,6 +110,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
     findBestOrgAdminRole,
     findSuperAdminRole,
   } = useRoles();
+  const { isMobile } = useIsMobile();
 
   // Show the Active/All toggle only when the user has more than one
   // distinct active role context (org + role pair)
@@ -246,6 +255,224 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
     await supabase.from("notifications").delete().eq("id", id);
   };
 
+  // Mobile: use a right-side Sheet panel for larger, easier tap targets
+  if (isMobile) {
+    return (
+      <>
+        <Button
+          variant="ghost"
+          className="relative hover:bg-(--subtle-grey) w-fit px-2"
+          onClick={() => setPanelOpen(true)}
+        >
+          <Bell className="!h-4.5 !w-5 text-(--midnight-black)" />
+          {unseen > 0 && (
+            <Badge className="absolute -right-1 -top-1 h-4 min-w-[1rem] px-1 text-[0.625rem] font-sans text-white leading-none !bg-(--emerald-green)">
+              {unseen}
+            </Badge>
+          )}
+          <span className="sr-only">
+            {t.navigation.notifications.srOpen[lang]}
+          </span>
+        </Button>
+
+        <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
+          <SheetContent side="right" hideClose className="w-[90vw] sm:max-w-sm p-0">
+            <div className="p-3 border-b flex items-center justify-between gap-2 flex-wrap">
+              <div className="text-base font-medium truncate">
+                {t.navigation.notifications.label[lang]}
+              </div>
+              <div className="flex items-center gap-2 flex-none ml-auto">
+                {showToggle && (
+                  <div className="inline-flex rounded border border-(--subtle-grey) overflow-hidden">
+                    <button
+                      className={`px-2 py-1 text-xs ${!viewAll ? "bg-(--subtle-grey)" : ""}`}
+                      onClick={() => setViewAll(false)}
+                      title={t.navigation.notifications.viewActive[lang]}
+                    >
+                      {t.navigation.notifications.viewActive[lang]}
+                    </button>
+                    <button
+                      className={`px-2 py-1 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
+                      onClick={() => setViewAll(true)}
+                      title={t.navigation.notifications.viewAll[lang]}
+                    >
+                      {t.navigation.notifications.viewAll[lang]}
+                    </button>
+                  </div>
+                )}
+                {visibleFeed.length > 0 &&
+                  (viewAll ? unseen > 0 : visibleUnseen > 0) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      title={t.navigation.notifications.markAllRead[lang]}
+                      onClick={markAllRead}
+                      className="h-9 w-9 p-1.5 rounded-md hover:bg-(--subtle-grey) text-(--midnight-black)"
+                    >
+                      <CheckCheck className="h-5 w-5" />
+                    </Button>
+                  )}
+                {visibleFeed.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title={t.navigation.notifications.deleteAll[lang]}
+                    onClick={deleteAll}
+                    className="h-9 w-9 p-1.5 rounded-md hover:bg-(--subtle-grey) text-(--midnight-black)"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {visibleFeed.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground">
+                {t.navigation.notifications.none[lang]}
+              </p>
+            ) : (
+              <ScrollArea className="max-h-[80vh]">
+                {visibleFeed.map((n) => {
+                  const tpl =
+                    (
+                      t.notification as Record<
+                        string,
+                        (typeof t.notification)[keyof typeof t.notification]
+                      >
+                    )[n.type] ?? null;
+                  const safe = (v: unknown) =>
+                    typeof v === "string" || typeof v === "number"
+                      ? String(v)
+                      : "";
+                  const interpolate = (s: string) =>
+                    s
+                      .replace(
+                        "{num}",
+                        "booking_number" in n.metadata
+                          ? safe(n.metadata.booking_number)
+                          : "",
+                      )
+                      .replace(
+                        "{email}",
+                        "email" in n.metadata ? safe(n.metadata.email) : "",
+                      );
+                  const title = tpl ? interpolate(tpl.title[lang]) : n.title;
+                  const message =
+                    tpl && tpl.message[lang]
+                      ? interpolate(tpl.message[lang])
+                      : (n.message ?? "");
+
+                  return (
+                    <div
+                      key={n.id}
+                      onClick={() => {
+                        void markRead(n.id);
+                        if (n.type === "user.created") {
+                          const id =
+                            "new_user_id" in n.metadata
+                              ? safe(n.metadata.new_user_id)
+                              : null;
+                          if (activeRoleName !== "super_admin") {
+                            const superCtx = findSuperAdminRole();
+                            if (superCtx) {
+                              const needsSwitch =
+                                activeOrgId !== superCtx.organization_id ||
+                                activeRoleName !== superCtx.role_name;
+                              if (needsSwitch)
+                                setActiveContext(
+                                  superCtx.organization_id,
+                                  superCtx.role_name,
+                                  superCtx.organization_name ?? "",
+                                );
+                            }
+                          }
+                          if (id) void navigate(`/admin/users/${id}`);
+                          else void navigate("/admin/users");
+                        } else if (
+                          n.type === "booking.created" ||
+                          n.type === "booking.status_approved" ||
+                          n.type === "booking.status_rejected"
+                        ) {
+                          const bookingId = safe(n.metadata.booking_id);
+                          const orgId = n.metadata.organization_id
+                            ? safe(n.metadata.organization_id)
+                            : null;
+                          if (orgId) {
+                            const candidate = findBestOrgAdminRole(orgId);
+                            if (candidate) {
+                              const needsSwitch =
+                                activeOrgId !== candidate.organization_id ||
+                                activeRoleName !== candidate.role_name;
+                              if (needsSwitch)
+                                setActiveContext(
+                                  candidate.organization_id,
+                                  candidate.role_name,
+                                  candidate.organization_name ?? "",
+                                );
+                            }
+                          }
+                          void navigate(`/admin/bookings/${bookingId}`);
+                        }
+                      }}
+                      className="flex flex-col gap-1 py-3 px-3 border-b cursor-pointer hover:bg-(--subtle-grey)"
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div className="flex w-full items-start justify-between gap-2">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{title}</span>
+                          {message && (
+                            <span className="text-xs text-muted-foreground">
+                              {message}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {n.read_at === null && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void markRead(n.id);
+                              }}
+                              className="h-9 w-9 p-1.5 rounded-md hover:bg-(--subtle-grey) text-(--midnight-black)"
+                              title={
+                                t.navigation.notifications.markAsRead[lang]
+                              }
+                            >
+                              <Check className="h-5 w-5" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void removeNotification(n.id);
+                            }}
+                            className="h-9 w-9 p-1.5 rounded-md hover:bg-(--subtle-grey) text-(--midnight-black)"
+                            title={
+                              t.navigation.notifications.deleteOne?.[lang] ??
+                              t.navigation.notifications.deleteAll[lang]
+                            }
+                          >
+                            <X className="h-5 w-5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </ScrollArea>
+            )}
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  // Desktop/tablet: keep dropdown menu
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
