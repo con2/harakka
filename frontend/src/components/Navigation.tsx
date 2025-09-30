@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAppSelector } from "@/store/hooks";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -49,13 +49,10 @@ export const Navigation = () => {
   ]);
 
   const cartItemsCount = useAppSelector(selectCartItemsCount);
-  const location = useLocation();
   const navigate = useNavigate();
 
-  const isLandingPage = location.pathname === "/";
-  const navClasses = isLandingPage
-    ? "absolute top-0 left-0 w-full z-50 text-primary px-2 md:px-10 py-2 md:py-3 bg-white flex lg:justify-around"
-    : "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white lg:justify-around flex justify-between";
+  const navClasses =
+    "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white lg:justify-around flex justify-between";
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -175,7 +172,9 @@ export const Navigation = () => {
                 asChild
               >
                 <Link to="/login">
-                  {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
+                  <>
+                    {t.login.login[lang]} <UserIcon className="ml-1 h-5 w-5" />
+                  </>
                 </Link>
               </Button>
             </>
@@ -275,7 +274,7 @@ export const Navigation = () => {
 
       {/* Right side: Cart, notifications, language, auth */}
       <div className="flex items-center gap-3">
-        {/* Active role context switcher if user is logged in and has roles */}
+        {/* UserMenu if user is logged in and has roles */}
 
         <Button
           aria-label={t.navigation.aria.labels.cart[lang]?.replace(
@@ -310,8 +309,10 @@ export const Navigation = () => {
               asChild
               aria-label={t.navigation.aria.labels.logIn[lang]}
             >
-              {t.login.login[lang]}{" "}
-              <UserIcon aria-hidden className="ml-1 h-5 w-5" />
+              <>
+                {t.login.login[lang]}{" "}
+                <UserIcon aria-hidden className="ml-1 h-5 w-5" />
+              </>
             </Button>
           </>
         )}
