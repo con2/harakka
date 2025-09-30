@@ -26,16 +26,19 @@ import { useRoles } from "@/hooks/useRoles";
 import { toast } from "sonner";
 
 /**
- * <Notifications />
- * -----------------
- * Dropdown bell component that:
- * • Shows an unread badge
- * • Streams live inserts from Supabase Realtime
- * • Lets the user mark rows as read ✅ or delete them 🗑️
+ * Notifications dropdown component
+ * --------------------------------
+ * Renders the bell icon with an unread badge and a dropdown feed of
+ * in‑app notifications. Subscribes to Supabase Realtime inserts and
+ * performs an initial fetch. Supports an “Active/All” toggle that
+ * filters by the currently selected organization/role context.
  *
- * Shared state mechanics:
- *  - `feed   ` raw rows
- *  - `feedUniq` deduped view (handles Realtime + initial fetch overlap)
+ * UX details
+ * - Badge shows total unread across contexts so nothing is missed.
+ * - Header actions: mark all as read (current view) and delete all (current view).
+ * - Row actions: mark one as read and delete one.
+ * - Clicking booking‑related items can auto‑switch active role context
+ *   to an org admin role to avoid broken pages, with a toast + undo.
  */
 
 /**
@@ -45,11 +48,19 @@ import { toast } from "sonner";
  *                only see their own rows.
  */
 interface Props {
+  /** Current authenticated user id (auth.user().id) used for scoping */
   userId: string;
 }
 
 type NotificationRow = DBTables<"notifications">;
 
+/**
+ * Top‑level React component that renders the bell + dropdown feed.
+ *
+ * @param props.userId - Current authenticated user id; used to fetch and
+ *                       subscribe to rows for this user only.
+ * @returns JSX.Element dropdown menu with a role‑aware notifications feed.
+ */
 export const Notifications: React.FC<Props> = ({ userId }) => {
   const [feed, setFeed] = React.useState<NotificationRow[]>([]);
   const [viewAll, setViewAll] = React.useState(false);
@@ -92,6 +103,13 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   } = useRoles();
 
   // Filter notifications according to active role/org context
+  /**
+   * Predicate that decides whether a notification belongs to the
+   * currently active role/org context. Critical items always pass.
+   *
+   * @param n - A notification row from the feed
+   * @returns true if the row should be visible in “Active” view
+   */
   const inActiveContext = React.useCallback(
     (n: NotificationRow) => {
       if (n.severity === "critical") return true;
@@ -149,6 +167,10 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   }, [userId, upsert]);
 
   /** Optimistically sets `read_at` in UI, then persists to DB. */
+  /**
+   * Mark a single notification as read (optimistic UI + DB update).
+   * @param id - notification id
+   */
   const markRead = async (id: string) => {
     setFeed((prev) =>
       prev.map((n) =>
@@ -162,6 +184,10 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   };
 
   /** Marks **every** unread notification as read in one batch. */
+  /**
+   * Mark all unread notifications in the current view as read.
+   * “Current view” is Active or All depending on the toggle state.
+   */
   const markAllRead = async () => {
     const target = viewAll ? baseFeed : visibleFeed;
     const ids = target.filter((n) => n.read_at === null).map((n) => n.id);
@@ -180,6 +206,10 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   };
 
   /** Deletes **all** notifications currently in the feed, locally and in DB. */
+  /**
+   * Delete all notifications in the current view (Active/All).
+   * Uses optimistic local removal followed by a DB delete.
+   */
   const deleteAll = async () => {
     const target = viewAll ? baseFeed : visibleFeed;
     const ids = target.map((n) => n.id);
@@ -193,6 +223,10 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   };
 
   /** Deletes a row locally *and* remotely (requires RLS delete policy). */
+  /**
+   * Delete a single notification (optimistic local removal + DB delete).
+   * @param id - notification id
+   */
   const removeNotification = async (id: string) => {
     // delete from local state first
     setFeed((prev) => prev.filter((n) => n.id !== id));
