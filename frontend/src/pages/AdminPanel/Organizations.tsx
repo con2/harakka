@@ -54,7 +54,7 @@ const Organizations = () => {
   const handleToggle = (id: string, checked: boolean) => {
     // Find the organization to check if it's protected
     const org = organizations.find((o) => o.id === id);
-    const isProtected = org?.name === "Global" || org?.name === "High Council";
+    const isProtected = org?.name === "Global" || org?.name === "High council";
 
     if (isProtected) return;
 
@@ -160,7 +160,7 @@ const Organizations = () => {
       cell: ({ row }) => {
         const isProtected =
           row.original.name === "Global" ||
-          row.original.name === "High Council";
+          row.original.name === "High council";
         return (
           <Switch
             checked={row.original.is_active}
