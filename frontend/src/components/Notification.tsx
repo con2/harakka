@@ -96,11 +96,22 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRoleName = useAppSelector(selectActiveRoleName);
   const {
+    currentUserRoles,
     setActiveContext,
     activeContext,
     findBestOrgAdminRole,
     findSuperAdminRole,
   } = useRoles();
+
+  // Show the Active/All toggle only when the user has more than one
+  // distinct active role context (org + role pair)
+  const showToggle = React.useMemo(() => {
+    const active = (currentUserRoles || []).filter((r) => r.is_active);
+    const distinct = new Set(
+      active.map((r) => `${r.organization_id ?? ""}:${r.role_name ?? ""}`),
+    );
+    return distinct.size > 1;
+  }, [currentUserRoles]);
 
   // Filter notifications according to active role/org context
   /**
@@ -258,23 +269,25 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
         <DropdownMenuLabel className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span>{t.navigation.notifications.label[lang]}</span>
-            <div className="ml-2 inline-flex rounded border border-(--subtle-grey) overflow-hidden">
-              <button
-                className={`px-2 py-0.5 text-xs ${!viewAll ? "bg-(--subtle-grey)" : ""}`}
-                onClick={() => setViewAll(false)}
-                title={t.navigation.notifications.viewActive[lang]}
-              >
-                {t.navigation.notifications.viewActive[lang]}
-              </button>
-              <button
-                className={`px-2 py-0.5 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
-                onClick={() => setViewAll(true)}
-                title={t.navigation.notifications.viewAll[lang]}
-              >
-                {t.navigation.notifications.viewAll[lang]}
-              </button>
-            </div>
-            {!viewAll && otherUnread > 0 && (
+            {showToggle && (
+              <div className="ml-2 inline-flex rounded border border-(--subtle-grey) overflow-hidden">
+                <button
+                  className={`px-2 py-0.5 text-xs ${!viewAll ? "bg-(--subtle-grey)" : ""}`}
+                  onClick={() => setViewAll(false)}
+                  title={t.navigation.notifications.viewActive[lang]}
+                >
+                  {t.navigation.notifications.viewActive[lang]}
+                </button>
+                <button
+                  className={`px-2 py-0.5 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
+                  onClick={() => setViewAll(true)}
+                  title={t.navigation.notifications.viewAll[lang]}
+                >
+                  {t.navigation.notifications.viewAll[lang]}
+                </button>
+              </div>
+            )}
+            {showToggle && !viewAll && otherUnread > 0 && (
               <span className="ml-1 text-[0.7rem] text-muted-foreground">
                 {t.navigation.notifications.otherContextsPrefix[lang]}{" "}
                 {otherUnread}
