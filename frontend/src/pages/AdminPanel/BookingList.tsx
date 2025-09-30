@@ -228,11 +228,7 @@ const BookingList = () => {
         const status =
           row.original.org_status_for_active_org ??
           (row.original.status as string | undefined);
-        return (
-          <StatusBadge
-            status={formatBookingStatus(status as BookingStatus) ?? "unknown"}
-          />
-        );
+        return <StatusBadge status={(status as BookingStatus) ?? "unknown"} />;
       },
     },
     {
