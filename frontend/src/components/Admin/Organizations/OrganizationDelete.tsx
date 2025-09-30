@@ -51,8 +51,9 @@ const OrganizationDelete = ({
       onClick={handleDelete}
       size="sm"
       title={t.organizationDelete.button.title[lang]}
-      className="text-red-600 hover:text-red-800 hover:bg-red-100"
+      className="text-red-600 hover:text-red-800 hover:bg-red-100 gap-2"
     >
+      {t.organizationDetailsPage.buttons.deleteOrg[lang]}
       <Trash2 className="h-4 w-4" />
     </Button>
   );
