@@ -10,7 +10,7 @@ import {
   setSelectedOrganization,
 } from "@/store/slices/organizationSlice";
 import { OrganizationDetails } from "@/types/organization";
-import { Building2, Edit, Eye, LoaderCircle } from "lucide-react";
+import { Building2, Edit, Eye, LoaderCircle, Plus } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { t } from "@/translations";
@@ -23,6 +23,7 @@ import OrganizationModal, {
   OrganizationFormValues,
 } from "@/components/Admin/Organizations/OrganizationModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDate } from "date-fns";
 
 const Organizations = () => {
   const dispatch = useAppDispatch();
@@ -193,8 +194,47 @@ const Organizations = () => {
       accessorKey: "created_at",
       cell: ({ row }) =>
         row.original.created_at
-          ? new Date(row.original.created_at).toLocaleDateString()
+          ? formatDate(new Date(row.original.created_at), "d MMM yyyy")
           : "—",
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const org = row.original;
+        return (
+          <div className="flex gap-2">
+            {/* view */}
+            <Button
+              size="sm"
+              onClick={() => openDetailsModal(org)}
+              title={t.organizations.view[lang]}
+              className="text-gray-500 hover:text-primary hover:bg-primary/10"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+
+            {/* edit */}
+            <Button
+              size="sm"
+              onClick={() => openEditModal(org)}
+              title={t.organizations.edit[lang]}
+              className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+
+            {/* delete */}
+            <OrganizationDelete
+              id={org.id}
+              onDeleted={() => {
+                void dispatch(
+                  fetchAllOrganizations({ page: currentPage, limit }),
+                );
+              }}
+            />
+          </div>
+        );
+      },
     },
   ];
 
@@ -205,7 +245,13 @@ const Organizations = () => {
 
         {/* Add New Org button */}
         <div className="flex gap-4 justify-end">
-          <Button onClick={openCreateModal} variant="outline" size="sm">
+          <Button
+            onClick={openCreateModal}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Plus aria-hidden />
             {t.organizations.createButton[lang]}
           </Button>
         </div>
@@ -217,48 +263,7 @@ const Organizations = () => {
         </div>
       ) : (
         <PaginatedDataTable
-          columns={[
-            ...columns,
-            {
-              id: "actions",
-              cell: ({ row }) => {
-                const org = row.original;
-                return (
-                  <div className="flex gap-2">
-                    {/* view */}
-                    <Button
-                      size="sm"
-                      onClick={() => openDetailsModal(org)}
-                      title={t.organizations.view[lang]}
-                      className="text-gray-500 hover:text-primary hover:bg-primary/10"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-
-                    {/* edit */}
-                    <Button
-                      size="sm"
-                      onClick={() => openEditModal(org)}
-                      title={t.organizations.edit[lang]}
-                      className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-
-                    {/* delete */}
-                    <OrganizationDelete
-                      id={org.id}
-                      onDeleted={() => {
-                        void dispatch(
-                          fetchAllOrganizations({ page: currentPage, limit }),
-                        );
-                      }}
-                    />
-                  </div>
-                );
-              },
-            },
-          ]}
+          columns={columns}
           data={organizations}
           pageIndex={currentPage - 1}
           pageCount={totalPages}

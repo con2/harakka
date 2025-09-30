@@ -11,8 +11,8 @@ export const usersList = {
   },
   filters: {
     search: {
-      fi: "Hae nimellä tai sähköpostilla",
-      en: "Search by name or email",
+      fi: "Hae käyttäjiä nimen tai sähköpostin perusteella",
+      en: "Search users by name or email",
     },
     roles: {
       all: {
@@ -24,6 +24,10 @@ export const usersList = {
       fi: "Tyhjennä suodattimet",
       en: "Clear Filters",
     },
+    orgFilter: {
+      en: "All organizations",
+      fi: "Kaikki organisaatiot",
+    },
   },
   addUser: {
     title: {
@@ -31,8 +35,8 @@ export const usersList = {
       en: "Add My Org User",
     },
     search: {
-      fi: "Hae nimellä tai sähköpostilla",
-      en: "Search by name or email",
+      fi: "Hae käyttäjiä nimen tai sähköpostin perusteella",
+      en: "Search users by name or email",
     },
     searchButton: {
       fi: "Hae",
@@ -163,6 +167,28 @@ export const usersList = {
     tenantAdminHelp: {
       fi: "Lisätäksesi uuden jäsenen organisaatioosi, klikkaa Lisää Orgni käyttäjää -painiketta",
       en: "To add a new member to your organization, click the Add My Org User button",
+    },
+  },
+  aria: {
+    labels: {
+      filters: {
+        roleFilter: {
+          en: "Filter users by role",
+          fi: "Suodata käyttäjät roolin mukaan",
+        },
+        orgFilter: {
+          en: "Filter users by organization",
+          fi: "Suodata käyttäjät organisaation mukaan",
+        },
+      },
+      selectRole: {
+        en: "Select role to assign",
+        fi: "Valitse rooli, joka liitetään käyttäjään",
+      },
+      userRadio: {
+        en: "{user_full_name}, {user_email}",
+        fi: "{user_full_name}, {user_email}",
+      },
     },
   },
 };

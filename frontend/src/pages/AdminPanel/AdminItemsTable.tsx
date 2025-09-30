@@ -19,7 +19,7 @@ import {
 import { t } from "@/translations";
 import { Item, ManageItemViewRow, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye, LoaderCircle, Search, X } from "lucide-react";
+import { Eye, LoaderCircle, Plus, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -278,9 +278,12 @@ const AdminItemsTable = () => {
       </div>
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
         <div className="flex gap-4 items-center">
-          {/* Search by item name/type */}
-          <div className="relative w-full sm:max-w-md bg-white rounded-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+          {/* Search */}
+          <div className="relative w-full sm:max-w-xs bg-white rounded-md">
+            <Search
+              aria-hidden
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
+            />
             <Input
               placeholder={t.adminItemsTable.filters.searchPlaceholder[lang]}
               value={searchTerm}
@@ -296,13 +299,14 @@ const AdminItemsTable = () => {
                 onClick={() => setSearchTerm("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
-                <X className="w-4 h-4" />
+                <X aria-hidden className="w-4 h-4" />
               </button>
             )}
           </div>
 
           {/* Filter by active status */}
           <select
+            aria-label={t.adminItemsTable.aria.labels.statusFilter[lang]}
             value={statusFilter}
             onChange={(e) =>
               setStatusFilter(e.target.value as "all" | "active" | "inactive")
@@ -466,10 +470,11 @@ const AdminItemsTable = () => {
         {/* Add New Item button */}
         <div className="flex gap-4 justify-end">
           <Button
-            className="addBtn"
+            className="addBtn gap-2"
             onClick={() => navigate("/admin/items/add")}
             size={"sm"}
           >
+            <Plus aria-hidden />
             {t.adminItemsTable.buttons.addNew[lang]}
           </Button>
         </div>

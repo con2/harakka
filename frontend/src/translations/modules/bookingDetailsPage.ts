@@ -162,6 +162,10 @@ export const bookingDetailsPage = {
     },
   },
   edit: {
+    hasItemsFromMultipleOrgs: {
+      en: "This booking contains items from multiple organizations. You can not edit the dates of this booking.",
+      fi: "Tämä varaus sisältää tuotteita useista organisaatioista. Et voi muokata tämän varauksen päivämääriä.",
+    },
     buttons: {
       editBooking: {
         en: "Edit Booking",

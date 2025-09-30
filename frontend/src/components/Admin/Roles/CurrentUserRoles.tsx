@@ -86,7 +86,7 @@ export const CurrentUserRoles: React.FC = () => {
                         );
                       }}
                     >
-                      <MoreVertical className="w-5 h-5" />
+                      <MoreVertical aria-hidden className="w-5 h-5" />
                     </button>
 
                     {openMenuId === (role.id as string) && (
