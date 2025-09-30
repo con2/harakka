@@ -77,8 +77,8 @@ export const navigation = {
       fi: "Kaikki",
     },
     otherContextsPrefix: {
-      en: "Other contexts:",
-      fi: "Muut kontekstit:",
+      en: "Others:",
+      fi: "Muut:",
     },
     toasts: {
       switchedContext: {

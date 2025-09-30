@@ -331,7 +331,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
               </p>
             ) : (
               <ScrollArea className="max-h-[80vh]">
-                {visibleFeed.map((n) => {
+              {visibleFeed.map((n) => {
                   const tpl =
                     (
                       t.notification as Record<
@@ -362,8 +362,9 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                       : (n.message ?? "");
 
                   return (
-                    <div
+                    <button
                       key={n.id}
+                      type="button"
                       onClick={() => {
                         void markRead(n.id);
                         if (n.type === "user.created") {
@@ -413,9 +414,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                           void navigate(`/admin/bookings/${bookingId}`);
                         }
                       }}
-                      className="flex flex-col gap-1 py-3 px-3 border-b cursor-pointer hover:bg-(--subtle-grey)"
-                      role="button"
-                      tabIndex={0}
+                      className="flex flex-col gap-1 py-3 px-3 border-b cursor-pointer hover:bg-(--subtle-grey) text-left w-full"
                     >
                       <div className="flex w-full items-start justify-between gap-2">
                         <div className="flex flex-col">
@@ -460,7 +459,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                           </Button>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </ScrollArea>
@@ -586,10 +585,11 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
 
               return (
                 // One notification card — click -> navigate; small buttons handle read/delete
-                <DropdownMenuItem
-                  key={n.id}
-                  onClick={() => {
-                    void markRead(n.id); // mark read on click
+                <DropdownMenuItem key={n.id} asChild>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void markRead(n.id); // mark read on click
 
                     if (n.type === "user.created") {
                       const id =
@@ -717,9 +717,9 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
 
                       void navigate(`/admin/bookings/${bookingId}`);
                     }
-                  }}
-                  className="flex flex-col gap-0.5 py-2 cursor-pointer data-[highlighted]:bg-(--subtle-grey) focus:bg-(--subtle-grey)"
-                >
+                    }}
+                    className="flex w-full flex-col gap-0.5 py-2 text-left cursor-pointer data-[highlighted]:bg-(--subtle-grey) focus:bg-(--subtle-grey)"
+                  >
                   <div className="flex w-full items-start justify-between gap-2">
                     <div className="flex flex-col">
                       <span className="font-medium">{title}</span>
@@ -762,6 +762,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                       </Button>
                     </div>
                   </div>
+                  </button>
                 </DropdownMenuItem>
               );
             })}
