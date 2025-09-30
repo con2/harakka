@@ -12,10 +12,10 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  getOwnBookings,
+  getOrgBookings,
   selectBookingLoading,
   selectBookingPagination,
-  selectUserBookings,
+  selectOrgBookings,
 } from "@/store/slices/bookingsSlice";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { t } from "@/translations";
@@ -31,7 +31,7 @@ function Requests() {
   const { lang } = useLanguage();
   const dispatch = useAppDispatch();
   const bookingsLoading = useAppSelector(selectBookingLoading);
-  const bookings = useAppSelector(selectUserBookings);
+  const bookings = useAppSelector(selectOrgBookings);
   const [currentPage, setCurrentPage] = useState(1);
 
   // Filters
@@ -39,12 +39,12 @@ function Requests() {
   const [statusFilter, setStatusFilter] = useState<BookingStatus | "all">(
     "all",
   );
-  const debouncedSearchQuery = useDebouncedValue(searchTerm);
+  const debouncedSearchQuery = useDebouncedValue(searchTerm, 200);
 
   const { organizationId: activeOrgId } = useAppSelector(
     selectActiveRoleContext,
   );
-  const { totalPages, page, limit } = useAppSelector(selectBookingPagination);
+  const { totalPages, limit } = useAppSelector(selectBookingPagination);
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
@@ -59,8 +59,17 @@ function Requests() {
   ];
 
   useEffect(() => {
-    void dispatch(getOwnBookings({ page, limit, status: statusFilter }));
-  }, [page, statusFilter]);
+    if (!activeOrgId) return;
+    void dispatch(
+      getOrgBookings({
+        org_id: activeOrgId,
+        page: currentPage,
+        limit,
+        status: statusFilter,
+        search: debouncedSearchQuery,
+      }),
+    );
+  }, [currentPage, statusFilter, activeOrgId, debouncedSearchQuery]);
 
   const columns: ColumnDef<BookingPreviewWithOrgData>[] = [
     {
@@ -74,10 +83,9 @@ function Requests() {
         const original = row.original as Record<string, unknown>;
         return (
           <StatusBadge
-            status={formatBookingStatus(
-              (original.status as BookingStatus) ??
-                ("pending" as BookingStatus),
-            )}
+            status={
+              (original.status as BookingStatus) ?? ("pending" as BookingStatus)
+            }
           />
         );
       },
@@ -149,10 +157,10 @@ function Requests() {
           data={bookings}
           pageIndex={currentPage - 1}
           pageCount={totalPages}
-          onPageChange={handlePageChange}
+          onPageChange={(page) => handlePageChange(page + 1)}
           rowProps={() => ({
-            style: { cursor: "pointer" },
             // If time, implement single view for booking
+            // style: { cursor: "pointer" },
             // onClick: () => navigate(`/admin/requests/${row.original.id}`),
           })}
         />

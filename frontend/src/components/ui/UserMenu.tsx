@@ -221,9 +221,7 @@ export const UserMenu: React.FC = () => {
                   aria-hidden
                   className="w-4 h-4 text-muted-foreground"
                 />
-                {activeRoleName === "user"
-                  ? t.userMenu.links.myBookings[lang]
-                  : t.userMenu.links.orgBookings[lang]}
+                {t.userMenu.links.myBookings[lang]}
               </Link>
             </DropdownMenuItem>
 
