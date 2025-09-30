@@ -23,23 +23,20 @@ import { useState } from "react";
 import { Sheet, SheetTrigger } from "./ui/sheet";
 import MobileMenu from "./MobileMenu";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 export const Navigation = () => {
   // Auth State
   const { user, authLoading } = useAuth();
-  const { hasAnyRole, hasRole } = useRoles();
+  const { hasAnyRole } = useRoles();
   const { lang } = useLanguage();
-  const activeOrg = useAppSelector(selectActiveOrganizationId);
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
-  const isGlobalUser = hasRole("user", activeOrg!);
+  // const isGlobalUser = hasRole("user", activeOrg!);
 
   // Screen Size State
-  const { isMobile: defaultMobileSize, width } = useIsMobile();
-  const isTablet = isGlobalUser ? width <= 1210 : width <= 1130;
-  const isMobile = isGlobalUser ? defaultMobileSize : width <= 877;
+  const { isMobile, width } = useIsMobile();
+  const isTablet = width <= 1000;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAnyTypeOfAdmin = hasAnyRole([
@@ -52,16 +49,12 @@ export const Navigation = () => {
   const navigate = useNavigate();
 
   const navClasses =
-    "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white lg:justify-around flex justify-between";
+    "relative w-full z-50 text-primary shadow-sm px-2 md:px-10 py-2 md:py-3 bg-white lg:justify-around flex justify-between h-[84px]";
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   const MobileNavigation = () => (
-    <Sheet
-      open={mobileMenuOpen}
-      onOpenChange={setMobileMenuOpen}
-      aria-describedby="Navigate"
-    >
+    <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
       <SheetTrigger className="hover:bg-(--subtle-grey) p-2 h-fit rounded-sm self-center">
         <Menu />
         {mobileMenuOpen && <MobileMenu closeMenu={closeMobileMenu} />}
@@ -304,14 +297,13 @@ export const Navigation = () => {
             <Button
               variant={"ghost"}
               onClick={() => navigate("/login")}
-              className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
+              className="hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black) gap-2 flex"
               data-cy="nav-login-btn"
-              asChild
               aria-label={t.navigation.aria.labels.logIn[lang]}
             >
               <>
-                {t.login.login[lang]}{" "}
-                <UserIcon aria-hidden className="ml-1 h-5 w-5" />
+                <UserIcon aria-hidden className="h-5 w-5" />
+                {t.login.login[lang]}
               </>
             </Button>
           </>

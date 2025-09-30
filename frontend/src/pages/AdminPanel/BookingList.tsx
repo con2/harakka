@@ -50,8 +50,9 @@ const BookingList = () => {
   const { formatDate } = useFormattedDate();
   const [currentPage, setCurrentPage] = useState(1);
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
-  const { organizationId: activeOrgId, organizationName: activeOrgName } =
-    useAppSelector(selectActiveRoleContext);
+  const { organizationId: activeOrgId } = useAppSelector(
+    selectActiveRoleContext,
+  );
 
   // Get organization IDs from bookings that have booked_by_org set
   const organizationIds = useMemo(() => {
@@ -474,12 +475,6 @@ const BookingList = () => {
           <PaginatedDataTable
             columns={overdueColumns}
             data={overdueRows}
-            aria={{
-              table: t.bookingList.aria.labels.table.overdue[lang].replace(
-                "{org_name}",
-                activeOrgName || t.common.fallbacks.yourOrg[lang],
-              ),
-            }}
             pageIndex={currentPage - 1}
             pageCount={overduePageCount}
             onPageChange={(page) => handlePageChange(page + 1)}
@@ -495,22 +490,11 @@ const BookingList = () => {
             data={bookings}
             pageIndex={currentPage - 1}
             pageCount={totalPages}
-            aria={{
-              table: t.bookingList.aria.labels.table.list[lang].replace(
-                "{org_name}",
-                activeOrgName || t.common.fallbacks.yourOrg[lang],
-              ),
-            }}
             onPageChange={(page) => handlePageChange(page + 1)}
             rowProps={(row) => {
-              const { full_name, visible_name, email, id, booking_number } =
-                row.original;
               return {
                 style: { cursor: "pointer" },
-                onClick: () => navigate(`/admin/bookings/${id}`),
-                ariaLabel: t.bookingList.aria.labels.table.row[lang]
-                  .replace("{user_name}", full_name || visible_name || email)
-                  .replace("{booking_number}", booking_number),
+                onClick: () => navigate(`/admin/bookings/${row.original.id}`),
               };
             }}
           />
