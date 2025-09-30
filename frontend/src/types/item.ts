@@ -174,6 +174,8 @@ export interface ItemState {
     errors: Record<string, string[]>;
   };
   isEditingItem: boolean;
+  // Signature of the in-flight fetchOrderedItems request (JSON stringified args)
+  currentRequestSig?: string | null;
 }
 
 type ItemCreatable = Omit<
