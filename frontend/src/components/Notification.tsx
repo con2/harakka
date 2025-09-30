@@ -301,7 +301,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                 variant="ghost"
                 title={t.navigation.notifications.markAllRead[lang]}
                 onClick={markAllRead}
-                className="h-5 w-5"
+                className="h-8 w-8 p-1 rounded-md hover:bg-(--subtle-grey) text-(--midnight-black)"
               >
                 <CheckCheck className="h-4 w-4" />
               </Button>
@@ -312,7 +312,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                 variant="ghost"
                 title={t.navigation.notifications.deleteAll[lang]}
                 onClick={deleteAll}
-                className="h-5 w-5"
+                className="h-8 w-8 p-1 rounded-md hover:bg-(--subtle-grey) text-(--midnight-black)"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -492,7 +492,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                       void navigate(`/admin/bookings/${bookingId}`);
                     }
                   }}
-                  className="flex flex-col gap-0.5 py-2 cursor-pointer"
+                  className="flex flex-col gap-0.5 py-2 cursor-pointer data-[highlighted]:bg-(--subtle-grey) focus:bg-(--subtle-grey)"
                 >
                   <div className="flex w-full items-start justify-between gap-2">
                     <div className="flex flex-col">
@@ -513,7 +513,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                             e.stopPropagation();
                             void markRead(n.id);
                           }}
-                          className="h-5 w-5"
+                          className="h-8 w-8 p-1 rounded-md hover:bg-(--subtle-grey) text-(--midnight-black)"
                           title={t.navigation.notifications.markAsRead[lang]}
                         >
                           <Check className="h-4 w-4" />
@@ -526,7 +526,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                           e.stopPropagation();
                           void removeNotification(n.id);
                         }}
-                        className="h-5 w-5"
+                        className="h-8 w-8 p-1 rounded-md hover:bg-(--subtle-grey) text-(--midnight-black)"
                         title={
                           t.navigation.notifications.deleteOne?.[lang] ??
                           t.navigation.notifications.deleteAll[lang]
