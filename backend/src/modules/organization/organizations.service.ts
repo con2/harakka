@@ -124,10 +124,10 @@ export class OrganizationsService {
       throw new NotFoundException("Organization not found");
     }
 
-    // Prevent updating Global and High Council organizations
-    if (existingOrg.name === "Global" || existingOrg.name === "High Council") {
+    // Prevent updating Global and High council organizations
+    if (existingOrg.name === "Global" || existingOrg.name === "High council") {
       throw new BadRequestException(
-        "Cannot update Global or High Council organizations",
+        "Cannot update Global or High council organizations",
       );
     }
 
@@ -304,10 +304,10 @@ export class OrganizationsService {
       throw new BadRequestException("Organization is already deleted");
     }
 
-    // Prevent deletion of Global and High Council organizations
-    if (org.name === "Global" || org.name === "High Council") {
+    // Prevent deletion of Global and High council organizations
+    if (org.name === "Global" || org.name === "High council") {
       throw new BadRequestException(
-        "Cannot delete Global or High Council organizations",
+        "Cannot delete Global or High council organizations",
       );
     }
 
