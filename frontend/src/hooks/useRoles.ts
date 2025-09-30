@@ -572,5 +572,21 @@ export const useRoles = () => {
       }
       return null;
     },
+    findSuperAdminRole: () => {
+      // Prefer a Global super_admin if present, else first valid match
+      const supers = currentUserRoles.filter(
+        (r) => r.is_active && r.role_name === "super_admin" && r.organization_id,
+      );
+      if (supers.length === 0) return null;
+      const globalFirst =
+        supers.find(
+          (r) => (r.organization_name || "").toLowerCase() === "global",
+        ) || supers[0];
+      return {
+        organization_id: globalFirst.organization_id as string,
+        role_name: globalFirst.role_name as string,
+        organization_name: globalFirst.organization_name ?? null,
+      };
+    },
   };
 };

@@ -76,7 +76,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
   const { lang } = useLanguage();
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRoleName = useAppSelector(selectActiveRoleName);
-  const { setActiveContext, activeContext, findBestOrgAdminRole } = useRoles();
+  const { setActiveContext, activeContext, findBestOrgAdminRole, findSuperAdminRole } = useRoles();
 
   // Filter notifications according to active role/org context
   const inActiveContext = React.useCallback(
@@ -310,6 +310,24 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                         "new_user_id" in n.metadata
                           ? safe(n.metadata.new_user_id)
                           : null;
+
+                      // Ensure we have super_admin context to view users
+                      if (activeRoleName !== "super_admin") {
+                        const superCtx = findSuperAdminRole();
+                        if (superCtx) {
+                          const needsSwitch =
+                            activeOrgId !== superCtx.organization_id ||
+                            activeRoleName !== superCtx.role_name;
+                          if (needsSwitch) {
+                            setActiveContext(
+                              superCtx.organization_id,
+                              superCtx.role_name,
+                              superCtx.organization_name ?? "",
+                            );
+                          }
+                        }
+                      }
+
                       if (id) {
                         void navigate(`/admin/users/${id}`);
                       } else {
