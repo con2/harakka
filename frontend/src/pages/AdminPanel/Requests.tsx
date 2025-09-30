@@ -30,9 +30,10 @@ import { useEffect, useState } from "react";
 function Requests() {
   const { lang } = useLanguage();
   const dispatch = useAppDispatch();
+
+  // Bookings
   const bookingsLoading = useAppSelector(selectBookingLoading);
   const bookings = useAppSelector(selectOrgBookings);
-  const [currentPage, setCurrentPage] = useState(1);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,10 +45,14 @@ function Requests() {
   const { organizationId: activeOrgId } = useAppSelector(
     selectActiveRoleContext,
   );
+
+  // Pagination
   const { totalPages, limit } = useAppSelector(selectBookingPagination);
+  const [currentPage, setCurrentPage] = useState(1);
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
+
   const STATUS_OPTIONS: Array<BookingStatus | "all"> = [
     "all",
     "pending",
@@ -69,7 +74,7 @@ function Requests() {
         search: debouncedSearchQuery,
       }),
     );
-  }, [currentPage, statusFilter, activeOrgId, debouncedSearchQuery]);
+  }, [currentPage, statusFilter, activeOrgId, debouncedSearchQuery]); //eslint-disable-line
 
   const columns: ColumnDef<BookingPreviewWithOrgData>[] = [
     {
@@ -150,7 +155,7 @@ function Requests() {
         </Select>
       </div>
       {bookingsLoading ? (
-        <Spinner />
+        <Spinner containerClasses="mt-30" />
       ) : (
         <PaginatedDataTable
           columns={columns}
