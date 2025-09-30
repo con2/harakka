@@ -6,8 +6,8 @@ export const organizationDetailsPage = {
     en: "Organization Details",
   },
   backButton: {
-    fi: "Takaisin organisaatioihin",
-    en: "Back to Organizations",
+    fi: "Takaisin",
+    en: "Back",
   },
   notFound: {
     fi: "Organisaatiota ei löytynyt",
