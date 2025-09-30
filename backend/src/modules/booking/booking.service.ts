@@ -31,6 +31,7 @@ import {
   ValidBookingOrder,
   BookingItemInsert,
   OverdueRow,
+  BookingStatus,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { deriveOrgStatus } from "src/utils/booking.utils";
@@ -340,6 +341,8 @@ export class BookingService {
     userId: string,
     activeOrgId: string,
     activeRole: string,
+    status_filter?: BookingStatus | "all",
+    searchquery?: string,
   ) {
     const { from, to } = getPaginationRange(page, limit);
     const supabase = req.supabase;
@@ -360,6 +363,19 @@ export class BookingService {
       baseQuery.eq("user_id", userId).is("booked_by_org", null);
     } else if (isRequesterRole) {
       baseQuery.eq("booked_by_org", activeOrgId);
+    }
+
+    // Optional filters
+    if (status_filter && status_filter !== "all") {
+      const narrowed = status_filter;
+      baseQuery.eq("status", narrowed);
+    }
+    if (searchquery) {
+      baseQuery.or(
+        `booking_number.ilike.%${searchquery}%,` +
+          `full_name.ilike.%${searchquery}%,` +
+          `created_at_text.ilike.%${searchquery}%`,
+      );
     }
 
     const bookingItemsQuery = supabase
