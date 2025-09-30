@@ -68,7 +68,7 @@ const OrganizationDetailsPage = () => {
 
   const handleEdit = () => {
     if (isProtectedOrg) {
-      toast.error("Cannot edit Global or High Council organizations");
+      toast.error(t.organizationDetailsPage.toasts.protectedEditError[lang]);
       return;
     }
     setIsEditing(true);
@@ -93,16 +93,12 @@ const OrganizationDetailsPage = () => {
       await dispatch(
         updateOrganization({ id: selectedOrg.id, data: editForm }),
       ).unwrap();
-      toast.success(
-        t.organizations.toasts.updated[lang] || "Organization updated!",
-      );
+      toast.success(t.organizationDetailsPage.toasts.updateSuccess[lang]);
       setIsEditing(false);
       // Refresh the data
       void dispatch(fetchOrganizationById(selectedOrg.id));
     } catch {
-      toast.error(
-        t.organizations.toasts.creationFailed[lang] || "Something went wrong.",
-      );
+      toast.error(t.organizationDetailsPage.toasts.updateError[lang]);
     }
   };
 
@@ -118,15 +114,15 @@ const OrganizationDetailsPage = () => {
       ).unwrap();
       toast.success(
         checked
-          ? t.adminItemsTable.messages.toast.activateSuccess[lang]
-          : t.adminItemsTable.messages.toast.deactivateSuccess[lang],
+          ? t.organizationDetailsPage.toasts.activateSuccess[lang]
+          : t.organizationDetailsPage.toasts.deactivateSuccess[lang],
       );
       // Update local state
       setEditForm((prev) => ({ ...prev, is_active: checked }));
       // Refresh the data
       void dispatch(fetchOrganizationById(selectedOrg.id));
     } catch {
-      toast.error(t.adminItemsTable.messages.toast.statusUpdateFail[lang]);
+      toast.error(t.organizationDetailsPage.toasts.statusUpdateError[lang]);
     }
   };
 
@@ -151,10 +147,12 @@ const OrganizationDetailsPage = () => {
   if (!selectedOrg) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <p className="text-muted-foreground">Organization not found</p>
+        <p className="text-muted-foreground">
+          {t.organizationDetailsPage.notFound[lang]}
+        </p>
         <Button onClick={handleBackToList} variant="outline">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Organizations
+          {t.organizationDetailsPage.backButton[lang]}
         </Button>
       </div>
     );
@@ -166,7 +164,7 @@ const OrganizationDetailsPage = () => {
       <div className="flex items-center justify-between">
         <Button onClick={handleBackToList} variant="ghost" size="sm">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Organizations
+          {t.organizationDetailsPage.backButton[lang]}
         </Button>
 
         <div className="flex items-center space-x-2">
@@ -180,17 +178,17 @@ const OrganizationDetailsPage = () => {
                     size="sm"
                   >
                     <X className="w-4 h-4 mr-2" />
-                    Cancel
+                    {t.organizationDetailsPage.buttons.cancel[lang]}
                   </Button>
                   <Button onClick={handleSave} size="sm">
                     <Save className="w-4 h-4 mr-2" />
-                    Save Changes
+                    {t.organizationDetailsPage.buttons.save[lang]}
                   </Button>
                 </>
               ) : (
                 <Button onClick={handleEdit} variant="outline" size="sm">
                   <Edit className="w-4 h-4 mr-2" />
-                  Edit
+                  {t.organizationDetailsPage.buttons.edit[lang]}
                 </Button>
               )}
             </>
@@ -206,7 +204,7 @@ const OrganizationDetailsPage = () => {
               {selectedOrg.name}
               {isProtectedOrg && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  Protected
+                  {t.organizationDetailsPage.protected[lang]}
                 </span>
               )}
             </CardTitle>
@@ -240,7 +238,9 @@ const OrganizationDetailsPage = () => {
           {/* Organization Info */}
           <div className="space-y-4 text-sm">
             <div>
-              <strong>Description:</strong>{" "}
+              <strong>
+                {t.organizationDetailsPage.fields.description[lang]}:
+              </strong>{" "}
               {isEditing ? (
                 <Textarea
                   value={editForm.description}
@@ -254,12 +254,15 @@ const OrganizationDetailsPage = () => {
                   rows={3}
                 />
               ) : (
-                <span>{selectedOrg.description || "—"}</span>
+                <span>
+                  {selectedOrg.description ||
+                    t.organizationDetailsPage.fields.noDescription[lang]}
+                </span>
               )}
             </div>
 
             <div>
-              <strong>Slug:</strong>{" "}
+              <strong>{t.organizationDetailsPage.fields.slug[lang]}:</strong>{" "}
               {isEditing ? (
                 <Input
                   value={editForm.slug}
@@ -274,7 +277,7 @@ const OrganizationDetailsPage = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <strong>Active:</strong>
+              <strong>{t.organizationDetailsPage.fields.status[lang]}:</strong>
               <div className="flex items-center space-x-2">
                 <Switch
                   checked={
@@ -285,32 +288,42 @@ const OrganizationDetailsPage = () => {
                 />
                 <span>
                   {(isEditing ? editForm.is_active : selectedOrg.is_active)
-                    ? "Yes"
-                    : "No"}
+                    ? t.organizationDetailsPage.fields.active[lang]
+                    : t.organizationDetailsPage.fields.inactive[lang]}
                 </span>
               </div>
             </div>
 
             <div>
-              <strong>Created At:</strong>{" "}
+              <strong>
+                {t.organizationDetailsPage.fields.createdAt[lang]}:
+              </strong>{" "}
               {selectedOrg.created_at
                 ? new Date(selectedOrg.created_at).toLocaleString()
                 : "—"}
             </div>
 
             <div>
-              <strong>Created By:</strong> {selectedOrg.created_by || "—"}
+              <strong>
+                {t.organizationDetailsPage.fields.createdBy[lang]}:
+              </strong>{" "}
+              {selectedOrg.created_by || "—"}
             </div>
 
             <div>
-              <strong>Updated At:</strong>{" "}
+              <strong>
+                {t.organizationDetailsPage.fields.updatedAt[lang]}:
+              </strong>{" "}
               {selectedOrg.updated_at
                 ? new Date(selectedOrg.updated_at).toLocaleString()
                 : "—"}
             </div>
 
             <div>
-              <strong>Updated By:</strong> {selectedOrg.updated_by || "—"}
+              <strong>
+                {t.organizationDetailsPage.fields.updatedBy[lang]}:
+              </strong>{" "}
+              {selectedOrg.updated_by || "—"}
             </div>
           </div>
         </CardContent>

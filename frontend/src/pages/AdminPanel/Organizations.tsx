@@ -57,11 +57,11 @@ const Organizations = () => {
       ).unwrap();
       toast.success(
         checked
-          ? t.adminItemsTable.messages.toast.activateSuccess[lang]
-          : t.adminItemsTable.messages.toast.deactivateSuccess[lang],
+          ? t.organizations.toasts.activateSuccess[lang]
+          : t.organizations.toasts.deactivateSuccess[lang],
       );
     } catch {
-      toast.error(t.adminItemsTable.messages.toast.statusUpdateFail[lang]);
+      toast.error(t.organizations.toasts.statusUpdateError[lang]);
     }
   };
 
@@ -74,9 +74,7 @@ const Organizations = () => {
       // Reload list after creation
       void dispatch(fetchAllOrganizations({ page: currentPage, limit }));
     } catch {
-      toast.error(
-        t.organizations.toasts.creationFailed[lang] || "Something went wrong.",
-      );
+      toast.error(t.organizations.toasts.creationFailed[lang]);
     }
   };
 
