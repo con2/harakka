@@ -812,20 +812,19 @@ export class BookingService {
         requester_org_id: createdBooking.requester_org_id, // if requester
       };
 
-      // All DB writes succeeded. Now optionally send email.
-      // IMPORTANT: per your requirement - email failures should NOT trigger rollback.
+      // All DB writes succeeded. Now send email.
       try {
-        // await sendEmailOrNotifyBookingCreated(booking, dto, otherArgs...);
-        // keep the email handling logic separated; if it fails, catch it and log/report it
+        await this.mailService.sendBookingMail(BookingMailType.Creation, {
+          bookingId: booking.id,
+          triggeredBy: userId,
+        });
       } catch (emailErr) {
         console.error("Booking created but email failed:", emailErr);
-        // optionally record a 'notification_failed' flag in DB, but DO NOT rollback
       }
       // return the booking (or assembled DTO) to caller
       return {
         message: "Booking created",
         booking: bookingWithRole,
-        // warning?
       };
     } catch (err) {
       // Something failed during the DB-write phase (not email).
