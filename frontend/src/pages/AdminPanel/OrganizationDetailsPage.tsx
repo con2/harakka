@@ -20,6 +20,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { toastConfirm } from "@/components/ui/toastConfirm";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -98,28 +99,47 @@ const OrganizationDetailsPage = () => {
     }
   };
 
-  const handleToggleActive = async (checked: boolean) => {
+  const handleToggleActive = (checked: boolean) => {
     if (!selectedOrg || isProtectedOrg) return;
 
-    try {
-      await dispatch(
-        updateOrganization({
-          id: selectedOrg.id,
-          data: { is_active: checked },
-        }),
-      ).unwrap();
-      toast.success(
-        checked
-          ? t.organizationDetailsPage.toasts.activateSuccess[lang]
-          : t.organizationDetailsPage.toasts.deactivateSuccess[lang],
-      );
-      // Update local state
-      setEditForm((prev) => ({ ...prev, is_active: checked }));
-      // Refresh the data
-      void dispatch(fetchOrganizationById(selectedOrg.id));
-    } catch {
-      toast.error(t.organizationDetailsPage.toasts.statusUpdateError[lang]);
-    }
+    toastConfirm({
+      title: checked
+        ? t.organizationDetailsPage.confirmation.statusChange.activateTitle[
+            lang
+          ]
+        : t.organizationDetailsPage.confirmation.statusChange.deactivateTitle[
+            lang
+          ],
+      description: checked
+        ? t.organizationDetailsPage.confirmation.statusChange
+            .activateDescription[lang]
+        : t.organizationDetailsPage.confirmation.statusChange
+            .deactivateDescription[lang],
+      confirmText:
+        t.organizationDetailsPage.confirmation.statusChange.confirm[lang],
+      cancelText:
+        t.organizationDetailsPage.confirmation.statusChange.cancel[lang],
+      onConfirm: async () => {
+        try {
+          await dispatch(
+            updateOrganization({
+              id: selectedOrg.id,
+              data: { is_active: checked },
+            }),
+          ).unwrap();
+          toast.success(
+            checked
+              ? t.organizationDetailsPage.toasts.activateSuccess[lang]
+              : t.organizationDetailsPage.toasts.deactivateSuccess[lang],
+          );
+          setEditForm((prev) => ({ ...prev, is_active: checked }));
+          void dispatch(fetchOrganizationById(selectedOrg.id));
+        } catch {
+          toast.error(t.organizationDetailsPage.toasts.statusUpdateError[lang]);
+        }
+      },
+      onCancel: () => {},
+    });
   };
 
   const handleBackToList = () => {
@@ -262,9 +282,14 @@ const OrganizationDetailsPage = () => {
               <span>{selectedOrg.slug || "—"}</span>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 justify-start">
               <strong>{t.organizationDetailsPage.fields.status[lang]}:</strong>
               <div className="flex items-center space-x-2">
+                <span>
+                  {(isEditing ? editForm.is_active : selectedOrg.is_active)
+                    ? t.organizationDetailsPage.fields.active[lang]
+                    : t.organizationDetailsPage.fields.inactive[lang]}
+                </span>
                 <Switch
                   checked={
                     isEditing ? editForm.is_active : selectedOrg.is_active
@@ -272,51 +297,50 @@ const OrganizationDetailsPage = () => {
                   onCheckedChange={handleToggleActive}
                   disabled={isProtectedOrg}
                 />
-                <span>
-                  {(isEditing ? editForm.is_active : selectedOrg.is_active)
-                    ? t.organizationDetailsPage.fields.active[lang]
-                    : t.organizationDetailsPage.fields.inactive[lang]}
-                </span>
               </div>
             </div>
 
-            <div>
-              <strong>
-                {t.organizationDetailsPage.fields.createdAt[lang]}:
-              </strong>{" "}
-              {selectedOrg.created_at
-                ? new Date(selectedOrg.created_at).toLocaleString()
-                : "—"}
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-10 text-xs text-muted-foreground">
+              <div>
+                <strong>
+                  {t.organizationDetailsPage.fields.createdAt[lang]}:
+                </strong>{" "}
+                {selectedOrg.created_at
+                  ? new Date(selectedOrg.created_at).toLocaleString()
+                  : "—"}
+              </div>
 
-            <div>
-              <strong>
-                {t.organizationDetailsPage.fields.createdBy[lang]}:
-              </strong>{" "}
-              {selectedOrg.created_by || "—"}
-            </div>
+              <div>
+                <strong>
+                  {t.organizationDetailsPage.fields.createdBy[lang]}:
+                </strong>{" "}
+                {selectedOrg.created_by || "—"}
+              </div>
 
-            <div>
-              <strong>
-                {t.organizationDetailsPage.fields.updatedAt[lang]}:
-              </strong>{" "}
-              {selectedOrg.updated_at
-                ? new Date(selectedOrg.updated_at).toLocaleString()
-                : "—"}
-            </div>
+              <div>
+                <strong>
+                  {t.organizationDetailsPage.fields.updatedAt[lang]}:
+                </strong>{" "}
+                {selectedOrg.updated_at
+                  ? new Date(selectedOrg.updated_at).toLocaleString()
+                  : "—"}
+              </div>
 
-            <div>
-              <strong>
-                {t.organizationDetailsPage.fields.updatedBy[lang]}:
-              </strong>{" "}
-              {selectedOrg.updated_by || "—"}
+              <div>
+                <strong>
+                  {t.organizationDetailsPage.fields.updatedBy[lang]}:
+                </strong>{" "}
+                {selectedOrg.updated_by || "—"}
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
-      <div className="flex justify-end">
-        <OrganizationDelete id={selectedOrg.id} onDeleted={handleDeleted} />
-      </div>
+      {!isProtectedOrg && (
+        <div className="flex justify-end">
+          <OrganizationDelete id={selectedOrg.id} onDeleted={handleDeleted} />
+        </div>
+      )}
     </div>
   );
 };

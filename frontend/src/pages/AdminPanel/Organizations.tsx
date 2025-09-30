@@ -17,6 +17,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { toastConfirm } from "@/components/ui/toastConfirm";
 import OrganizationModal, {
   OrganizationFormValues,
 } from "@/components/Admin/Organizations/OrganizationModal";
@@ -50,19 +51,46 @@ const Organizations = () => {
   };
 
   // Handle toggle active/inactive
-  const handleToggle = async (id: string, checked: boolean) => {
-    try {
-      await dispatch(
-        updateOrganization({ id, data: { is_active: checked } }),
-      ).unwrap();
-      toast.success(
-        checked
-          ? t.organizations.toasts.activateSuccess[lang]
-          : t.organizations.toasts.deactivateSuccess[lang],
-      );
-    } catch {
-      toast.error(t.organizations.toasts.statusUpdateError[lang]);
-    }
+  const handleToggle = (id: string, checked: boolean) => {
+    // Find the organization to check if it's protected
+    const org = organizations.find((o) => o.id === id);
+    const isProtected = org?.name === "Global" || org?.name === "High Council";
+
+    if (isProtected) return;
+
+    toastConfirm({
+      title: checked
+        ? t.organizationDetailsPage.confirmation.statusChange.activateTitle[
+            lang
+          ]
+        : t.organizationDetailsPage.confirmation.statusChange.deactivateTitle[
+            lang
+          ],
+      description: checked
+        ? t.organizationDetailsPage.confirmation.statusChange
+            .activateDescription[lang]
+        : t.organizationDetailsPage.confirmation.statusChange
+            .deactivateDescription[lang],
+      confirmText:
+        t.organizationDetailsPage.confirmation.statusChange.confirm[lang],
+      cancelText:
+        t.organizationDetailsPage.confirmation.statusChange.cancel[lang],
+      onConfirm: async () => {
+        try {
+          await dispatch(
+            updateOrganization({ id, data: { is_active: checked } }),
+          ).unwrap();
+          toast.success(
+            checked
+              ? t.organizationDetailsPage.toasts.activateSuccess[lang]
+              : t.organizationDetailsPage.toasts.deactivateSuccess[lang],
+          );
+        } catch {
+          toast.error(t.organizationDetailsPage.toasts.statusUpdateError[lang]);
+        }
+      },
+      onCancel: () => {},
+    });
   };
 
   // Handle create organization form submit

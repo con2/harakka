@@ -107,4 +107,32 @@ export const organizationDetailsPage = {
       en: "Failed to update status",
     },
   },
+  confirmation: {
+    statusChange: {
+      activateTitle: {
+        fi: "Aktivoi organisaatio",
+        en: "Activate Organization",
+      },
+      deactivateTitle: {
+        fi: "Deaktivoi organisaatio",
+        en: "Deactivate Organization",
+      },
+      activateDescription: {
+        fi: "Organisaation aktivointi tekee sen ja sen tuotteet näkyviksi koko sovelluksessa. Haluatko jatkaa?",
+        en: "Activating the organization will make it and its items visible app-wide. Do you want to continue?",
+      },
+      deactivateDescription: {
+        fi: "Organisaation deaktivointi piilottaa sen ja sen tuotteet koko sovelluksesta. Haluatko jatkaa?",
+        en: "Deactivating the organization will hide it and its items app-wide. Do you want to continue?",
+      },
+      confirm: {
+        fi: "Vahvista",
+        en: "Confirm",
+      },
+      cancel: {
+        fi: common.cancel.fi,
+        en: common.cancel.en,
+      },
+    },
+  },
 };
