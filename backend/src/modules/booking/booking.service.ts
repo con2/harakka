@@ -455,6 +455,7 @@ export class BookingService {
         booking_items: (import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
           storage_items: Partial<StorageItemRow>;
         })[];
+        has_items_from_multiple_orgs?: boolean;
       }
     >
   > {
@@ -465,6 +466,13 @@ export class BookingService {
       .single();
 
     if (result.error) handleSupabaseError(result.error);
+
+    // Get total booking items count
+    const { count: totalBookingItemsCount } = await this.supabaseService
+      .getServiceClient()
+      .from("booking_items")
+      .select("*", { count: "exact", head: true })
+      .eq("booking_id", booking_id);
 
     const booking_items_result: ApiResponse<
       import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
@@ -495,15 +503,24 @@ export class BookingService {
         org_status_for_active_org = deriveOrgStatus(statuses);
       }
     }
+
+    // Calculate if booking has items from multiple organizations
+    const orgBookingItemsCount = booking_items_result.data?.length || 0;
+    const has_items_from_multiple_orgs =
+      totalBookingItemsCount !== null &&
+      totalBookingItemsCount !== orgBookingItemsCount;
+
     // Spread result.data and allow extra property
     const bookingData: BookingPreview & {
       booking_items: (import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
         storage_items: Partial<StorageItemRow>;
       })[];
       org_status_for_active_org?: string;
+      has_items_from_multiple_orgs?: boolean;
     } = {
       ...result.data,
       booking_items: booking_items_result.data,
+      has_items_from_multiple_orgs,
     };
     if (org_status_for_active_org !== undefined) {
       bookingData.org_status_for_active_org = org_status_for_active_org;

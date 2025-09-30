@@ -78,6 +78,8 @@ const BookingDetailsPage = () => {
       booking?.org_status_for_active_org === "confirmed") &&
     isAdmin;
 
+  const hasItemsFromOtherOrgs = booking?.has_items_from_multiple_orgs ?? false;
+
   // Edit state management
   const [showEdit, setShowEdit] = useState(false);
   const [editFormItems, setEditFormItems] = useState<
@@ -151,7 +153,13 @@ const BookingDetailsPage = () => {
 
   // Availability check when timeframe or items change during edit mode
   useEffect(() => {
-    if (!globalStartDate || !globalEndDate || !showEdit) return;
+    if (
+      !globalStartDate ||
+      !globalEndDate ||
+      !showEdit ||
+      hasItemsFromOtherOrgs
+    )
+      return;
 
     void fetchItemsAvailability(
       editFormItems,
@@ -160,7 +168,13 @@ const BookingDetailsPage = () => {
       setAvailability,
       setLoadingAvailability,
     );
-  }, [globalStartDate, globalEndDate, editFormItems, showEdit]);
+  }, [
+    globalStartDate,
+    globalEndDate,
+    editFormItems,
+    showEdit,
+    hasItemsFromOtherOrgs,
+  ]);
 
   // Track selected item IDs for bulk actions
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
@@ -558,8 +572,11 @@ const BookingDetailsPage = () => {
         const newEndDate = globalEndDate ?? originalItem.end_date;
 
         const quantityChanged = newQuantity !== originalItem.quantity;
-        const startDateChanged = newStartDate !== originalItem.start_date;
-        const endDateChanged = newEndDate !== originalItem.end_date;
+        // Only allow date changes if there are no items from other organizations
+        const startDateChanged =
+          !hasItemsFromOtherOrgs && newStartDate !== originalItem.start_date;
+        const endDateChanged =
+          !hasItemsFromOtherOrgs && newEndDate !== originalItem.end_date;
 
         if (quantityChanged || startDateChanged || endDateChanged) {
           const updates: {
@@ -867,20 +884,25 @@ const BookingDetailsPage = () => {
         {/* Date picker for edit mode */}
         {showEdit && (
           <div className="mb-4">
-            <h3 className="font-normal text-sm mb-2">
-              {t.bookingDetailsPage.dateRange[lang]}
-            </h3>
-            <InlineTimeframePicker
-              startDate={globalStartDate ? new Date(globalStartDate) : null}
-              endDate={globalEndDate ? new Date(globalEndDate) : null}
-              onChange={(type, date) => {
-                if (type === "start") {
-                  setGlobalStartDate(date ? date.toISOString() : null);
-                  return;
-                }
-                setGlobalEndDate(date ? date.toISOString() : null);
-              }}
-            />
+            {hasItemsFromOtherOrgs ? (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  {t.bookingDetailsPage.edit.hasItemsFromMultipleOrgs[lang]}
+                </p>
+              </div>
+            ) : (
+              <InlineTimeframePicker
+                startDate={globalStartDate ? new Date(globalStartDate) : null}
+                endDate={globalEndDate ? new Date(globalEndDate) : null}
+                onChange={(type, date) => {
+                  if (type === "start") {
+                    setGlobalStartDate(date ? date.toISOString() : null);
+                    return;
+                  }
+                  setGlobalEndDate(date ? date.toISOString() : null);
+                }}
+              />
+            )}
           </div>
         )}
 
