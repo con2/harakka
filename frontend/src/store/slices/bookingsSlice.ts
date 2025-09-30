@@ -119,6 +119,40 @@ export const getOwnBookings = createAsyncThunk(
     }
   },
 );
+// Get my bookings thunk
+export const getOrgBookings = createAsyncThunk(
+  "bookings/getOrgBookings",
+  async (
+    {
+      org_id,
+      page = 1,
+      limit = 10,
+      status,
+      search,
+    }: {
+      org_id: string;
+      page?: number;
+      limit?: number;
+      status?: BookingStatus | "all";
+      search?: string;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await bookingsApi.getOrgBookings(
+        org_id,
+        page,
+        limit,
+        status,
+        search,
+      );
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch own bookings"),
+      );
+    }
+  },
+);
 
 // get booking by ID
 export const getBookingByID = createAsyncThunk(
@@ -689,6 +723,26 @@ export const bookingsSlice = createSlice({
         state.errorContext = "fetch";
         state.loading = false;
       })
+      // Get org bookings
+      .addCase(getOrgBookings.pending, (state) => {
+        state.loading = true; // Set loading to true while fetching
+        state.error = null; // Clear any previous errors
+        state.errorContext = null;
+      })
+      .addCase(getOrgBookings.fulfilled, (state, action) => {
+        if (action.payload) {
+          state.orgBookings = action.payload.data as ExtendedBookingPreview[];
+          state.bookings_pagination = action.payload.metadata;
+        } else {
+          state.userBookings = [];
+        }
+        state.loading = false;
+      })
+      .addCase(getOrgBookings.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+        state.loading = false;
+      })
       // Confirm items for org (all or selected)
       .addCase(confirmItemsForOrg.fulfilled, (state, action) => {
         if (!state.currentBooking || !state.currentBooking.booking_items)
@@ -1180,6 +1234,8 @@ export const selectbookingErrorWithContext = (state: RootState) => ({
 });
 export const selectUserBookings = (state: RootState) =>
   state.bookings.userBookings;
+export const selectOrgBookings = (state: RootState) =>
+  state.bookings.orgBookings;
 
 // Pagination data
 export const selectBookingPagination = (state: RootState) =>
