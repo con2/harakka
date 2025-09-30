@@ -519,7 +519,6 @@ export class BookingService {
         org_status_for_active_org = deriveOrgStatus(statuses);
       }
     }
-
     // Calculate if booking has items from multiple organizations
     const orgBookingItemsCount = booking_items_result.data?.length || 0;
     const has_items_from_multiple_orgs =

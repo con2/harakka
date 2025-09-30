@@ -1,7 +1,7 @@
 export const organizationLocations = {
   title: {
-    en: "Organization Locations",
-    fi: "Organisaation sijainnit",
+    en: "Manage Locations",
+    fi: "Hallinnoi sijainteja",
   },
   noAccess: {
     title: {

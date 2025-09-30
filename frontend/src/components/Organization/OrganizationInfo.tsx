@@ -89,8 +89,7 @@ const OrganizationInfo: React.FC<OrganizationInfoProps> = ({
             }
           >
             <span>
-              {t.organizationList.actions.browseStorage[lang]}{" "}
-              {organization.name} {t.organizationList.actions.browseItems[lang]}
+              {`${t.organizationList.actions.browseStorage[lang]} ${organization.name} ${t.organizationList.actions.browseItems[lang]}`}
             </span>
             <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform duration-200" />
           </Button>

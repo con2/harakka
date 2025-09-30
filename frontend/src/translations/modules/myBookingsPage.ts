@@ -179,4 +179,22 @@ export const myBookingsPage = {
       },
     },
   },
+  aria: {
+    labels: {
+      quantity: {
+        decrease: {
+          en: "Reduce quantity to {number}",
+          fi: "Vähennä määrää arvoon {number}",
+        },
+        increase: {
+          en: "Increase quantity to {number}",
+          fi: "Lisää määrää arvoon {number}",
+        },
+        enterQuantity: {
+          en: "Enter quantity. Current quantity {number}.",
+          fi: "Anna määrä. Nykyinen määrä {number}.",
+        },
+      },
+    },
+  },
 };

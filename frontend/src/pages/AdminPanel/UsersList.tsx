@@ -21,7 +21,7 @@ import {
 import { t } from "@/translations";
 import { UserProfile } from "@common/user.types";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle, Info, CircleUser } from "lucide-react";
+import { LoaderCircle, Info, CircleUser, Plus, Search } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,6 +35,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
+import Spinner from "@/components/Spinner";
 
 const UsersList = () => {
   // ————————————— Hooks & Selectors —————————————
@@ -539,10 +541,9 @@ const UsersList = () => {
   // ————————————— Render —————————————
   if (authLoading || loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <LoaderCircle className="animate-spin h-8 w-8 mr-2" />
-        <span>{t.usersList.loading[lang]}</span>
-      </div>
+      <Spinner containerClasses="flex justify-center items-center min-h-screen">
+        {t.usersList.loading[lang]}
+      </Spinner>
     );
   }
 
@@ -563,12 +564,20 @@ const UsersList = () => {
                 )}
           </h1>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="cursor-pointer text-muted-foreground">
-                <Info className="w-4 h-4 text-secondary" />
-              </span>
+            <TooltipTrigger
+              aria-describedby="userslist-tooltip-content"
+              asChild
+            >
+              <button className="cursor-pointer text-muted-foreground">
+                <Info aria-hidden className="w-4 h-4 text-secondary" />
+              </button>
             </TooltipTrigger>
-            <TooltipContent side="top" align="start" className="break-words">
+            <TooltipContent
+              id="userslist-tooltip-content"
+              side="top"
+              align="start"
+              className="break-words"
+            >
               {isSuper
                 ? t.usersList.tooltip.superAdminHelp[lang]
                 : t.usersList.tooltip.tenantAdminHelp[lang]}
@@ -577,28 +586,30 @@ const UsersList = () => {
         </div>
       </div>
 
-      {loading && (
-        <p>
-          <LoaderCircle className="animate-spin" />
-        </p>
-      )}
+      {loading && <Spinner />}
 
       {error && <p className="text-red-500">Error: {error}</p>}
 
-      <div className="flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex gap-4 items-center">
-          <input
-            type="text"
-            placeholder={t.usersList.filters.search[lang]}
-            value={searchQuery}
-            size={50}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-          />
+      <div className="flex flex-wrap items-center justify-between">
+        <div className="flex flex-wrap gap-4">
+          <div className="flex gap-4 items-center relative sm:max-w-xs min-w-[250px]">
+            <Search
+              aria-hidden
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
+            />
+            <Input
+              type="text"
+              placeholder={t.usersList.filters.search[lang]}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-sm pl-10 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            />
+          </div>
 
           {/* Org filter for super admin */}
           {isSuper && (
             <select
+              aria-label={t.usersList.aria.labels.filters.orgFilter[lang]}
               value={orgFilter}
               onChange={(e) => {
                 setOrgFilter(e.target.value);
@@ -606,7 +617,7 @@ const UsersList = () => {
               }}
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             >
-              <option value="all">All Organizations</option>
+              <option value="all">{t.usersList.filters.orgFilter[lang]}</option>
               {availableOrganizations.map((org) => (
                 <option key={org.id} value={org.id}>
                   {org.name}
@@ -618,6 +629,7 @@ const UsersList = () => {
           {/* Role filter - always for tenant admin, only after org is selected for super admins */}
           {(!isSuper || orgFilter !== "all") && (
             <select
+              aria-label={t.usersList.aria.labels.filters.roleFilter[lang]}
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
               className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
@@ -650,18 +662,21 @@ const UsersList = () => {
 
         {/* Add a new member to an org section */}
         <div className="relative">
-          {!isSuper ? (
-            <Button variant={"outline"} onClick={toggleAddUser}>
+          {!isSuper && (
+            <Button
+              variant={"outline"}
+              onClick={toggleAddUser}
+              className="gap-2"
+            >
+              <Plus aria-hidden />
               {t.usersList.addUser.title[lang]}
             </Button>
-          ) : (
-            ""
           )}
 
           {showAddUser && (
             <div className="absolute right-0 mt-2 p-4 w-96 bg-white border rounded shadow-lg z-50">
               <div className="flex gap-2 items-center mb-2">
-                <input
+                <Input
                   type="text"
                   placeholder={t.usersList.filters.search[lang]}
                   value={addSearchInput}
@@ -688,7 +703,7 @@ const UsersList = () => {
                   }
                 >
                   {addSearchLoading ? (
-                    <LoaderCircle className="animate-spin h-4 w-4" />
+                    <Spinner />
                   ) : (
                     t.usersList.addUser.searchButton[lang]
                   )}
@@ -720,20 +735,27 @@ const UsersList = () => {
                         <input
                           type="radio"
                           name="selectedAddUser"
+                          aria-hidden={disabled}
                           checked={selectedAddUserId === u.id}
                           onChange={() => {
                             if (!disabled) setSelectedAddUserId(u.id);
                           }}
                           disabled={disabled}
+                          aria-label={t.usersList.aria.labels.userRadio[lang]
+                            .replace("{user_full_name}", u.full_name ?? "")
+                            .replace("{user_email}", u.email ?? "")}
                         />
-                        <div className="text-sm">
+                        <div aria-hidden className="text-sm">
                           <div className="font-medium">{u.full_name}</div>
                           <div className="text-xs text-muted-foreground">
                             {u.email}
                           </div>
                         </div>
                         {disabled && (
-                          <div className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded ml-auto">
+                          <div
+                            aria-hidden
+                            className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded ml-auto"
+                          >
                             {t.usersList.addUser.member[lang]}
                           </div>
                         )}
@@ -764,6 +786,7 @@ const UsersList = () => {
 
               <div className="flex gap-2 items-center justify-between">
                 <select
+                  aria-label={t.usersList.aria.labels.selectRole[lang]}
                   value={selectedAddUserRole}
                   onChange={(e) => setSelectedAddUserRole(e.target.value)}
                   className="select bg-white text-sm p-2 rounded-md"
