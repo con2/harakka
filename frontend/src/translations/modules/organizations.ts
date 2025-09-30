@@ -130,14 +130,18 @@ export const organizations = {
       fi: "Organisaation luonti epäonnistui.",
       en: "Failed to create organization.",
     },
-  },
-  view: {
-    fi: "Näytä",
-    en: "View",
-  },
-  edit: {
-    fi: "Muokkaa",
-    en: "Edit",
+    activateSuccess: {
+      fi: "Organisaatio aktivoitu onnistuneesti",
+      en: "Organization activated successfully",
+    },
+    deactivateSuccess: {
+      fi: "Organisaatio deaktivoitu onnistuneesti",
+      en: "Organization deactivated successfully",
+    },
+    statusUpdateError: {
+      fi: "Tilan päivitys epäonnistui",
+      en: "Failed to update status",
+    },
   },
 };
 

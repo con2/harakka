@@ -49,6 +49,7 @@ import { organizationLocations } from "./modules/organizationLocations";
 import { organizationLogoUploader } from "./modules/organizationLogoUploader";
 import { organizationPage } from "./modules/organizationPage";
 import { organizations } from "./modules/organizations";
+import { organizationDetailsPage } from "./modules/organizationDetailsPage";
 import {
   organizationDelete,
   organizationList,
@@ -135,6 +136,7 @@ export const t = {
   orgLocationManagement,
   orgStep,
   organizationDelete,
+  organizationDetailsPage,
   organizationList,
   organizationLocations,
   organizationLogoUploader,
