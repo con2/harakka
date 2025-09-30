@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllOrganizations,
-  fetchOrganizationById,
   selectOrganizations,
   selectOrganizationLoading,
   updateOrganization,
   createOrganization,
-  setSelectedOrganization,
 } from "@/store/slices/organizationSlice";
 import { OrganizationDetails } from "@/types/organization";
-import { Building2, Edit, Eye, LoaderCircle, Plus } from "lucide-react";
+import { Building2, LoaderCircle, Plus } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { t } from "@/translations";
@@ -18,7 +17,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import OrganizationDelete from "@/components/Admin/Organizations/OrganizationDelete";
 import OrganizationModal, {
   OrganizationFormValues,
 } from "@/components/Admin/Organizations/OrganizationModal";
@@ -27,24 +25,14 @@ import { formatDate } from "date-fns";
 
 const Organizations = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { lang } = useLanguage();
-
-  // global Redux state
   const organizations = useAppSelector(selectOrganizations);
   const loading = useAppSelector(selectOrganizationLoading);
-  // const error = useAppSelector(selectOrganizationError);
   const totalPages = useAppSelector((state) => state.organizations.totalPages);
 
-  // local state
   const [currentPage, setCurrentPage] = useState(1);
-  const selectedOrg = useAppSelector(
-    (state) => state.organizations.selectedOrganization,
-  );
-
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"view" | "edit" | "create">(
-    "view",
-  );
   const limit = 10;
 
   // Fetch organizations on mount & page change
@@ -52,39 +40,12 @@ const Organizations = () => {
     void dispatch(fetchAllOrganizations({ page: currentPage, limit }));
   }, [dispatch, currentPage]);
 
-  // Open modal in "view" mode
-  const openDetailsModal = async (org: OrganizationDetails) => {
-    // Optional: fetch fresh data for this org
-    const resultAction = await dispatch(fetchOrganizationById(org.id));
-    if (fetchOrganizationById.fulfilled.match(resultAction)) {
-      dispatch(setSelectedOrganization(resultAction.payload));
-      setModalMode("view");
-      setModalOpen(true);
-    } else {
-      toast.error(
-        t.organizations.toasts.creationFailed[lang] || "Something went wrong.",
-      );
-    }
+  const openDetailsPage = (org: OrganizationDetails) => {
+    void navigate(`/admin/organizations/${org.id}`);
   };
 
-  // Open modal in "edit" mode
-  const openEditModal = async (org: OrganizationDetails) => {
-    const resultAction = await dispatch(fetchOrganizationById(org.id));
-    if (fetchOrganizationById.fulfilled.match(resultAction)) {
-      dispatch(setSelectedOrganization(resultAction.payload));
-      setModalMode("edit");
-      setModalOpen(true);
-    } else {
-      toast.error(
-        t.organizations.toasts.creationFailed[lang] || "Something went wrong.",
-      );
-    }
-  };
-
-  // Open modal in "create" mode
+  // Open modal in "create" mode only
   const openCreateModal = () => {
-    dispatch(setSelectedOrganization(null));
-    setModalMode("create");
     setModalOpen(true);
   };
 
@@ -104,23 +65,13 @@ const Organizations = () => {
     }
   };
 
-  // Handle modal form submit (create or update)
+  // Handle create organization form submit
   const onSubmit = async (data: OrganizationFormValues) => {
     try {
-      if (modalMode === "create") {
-        await dispatch(createOrganization(data)).unwrap();
-        toast.success(t.organizations.toasts.created[lang]);
-      } else if (modalMode === "edit" && selectedOrg) {
-        await dispatch(
-          updateOrganization({ id: selectedOrg.id, data }),
-        ).unwrap();
-        toast.success(
-          t.organizations.toasts.updated[lang] || "Organization updated!",
-        );
-      }
+      await dispatch(createOrganization(data)).unwrap();
+      toast.success(t.organizations.toasts.created[lang]);
       setModalOpen(false);
-      dispatch(setSelectedOrganization(null));
-      // Reload list after changes
+      // Reload list after creation
       void dispatch(fetchAllOrganizations({ page: currentPage, limit }));
     } catch {
       toast.error(
@@ -158,8 +109,8 @@ const Organizations = () => {
       accessorKey: "name",
       cell: ({ row }) => (
         <button
-          className="text-primary"
-          onClick={() => openDetailsModal(row.original)}
+          className="text-primary hover:underline font-medium text-left"
+          onClick={() => openDetailsPage(row.original)}
         >
           {row.original.name}
         </button>
@@ -182,12 +133,20 @@ const Organizations = () => {
     {
       header: t.organizations.columns.isActive[lang],
       accessorKey: "is_active",
-      cell: ({ row }) => (
-        <Switch
-          checked={row.original.is_active}
-          onCheckedChange={(checked) => handleToggle(row.original.id, checked)}
-        />
-      ),
+      cell: ({ row }) => {
+        const isProtected =
+          row.original.name === "Global" ||
+          row.original.name === "High Council";
+        return (
+          <Switch
+            checked={row.original.is_active}
+            onCheckedChange={(checked) =>
+              handleToggle(row.original.id, checked)
+            }
+            disabled={isProtected}
+          />
+        );
+      },
     },
     {
       header: t.organizations.columns.createdAt[lang],
@@ -196,45 +155,6 @@ const Organizations = () => {
         row.original.created_at
           ? formatDate(new Date(row.original.created_at), "d MMM yyyy")
           : "—",
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const org = row.original;
-        return (
-          <div className="flex gap-2">
-            {/* view */}
-            <Button
-              size="sm"
-              onClick={() => openDetailsModal(org)}
-              title={t.organizations.view[lang]}
-              className="text-gray-500 hover:text-primary hover:bg-primary/10"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-
-            {/* edit */}
-            <Button
-              size="sm"
-              onClick={() => openEditModal(org)}
-              title={t.organizations.edit[lang]}
-              className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-
-            {/* delete */}
-            <OrganizationDelete
-              id={org.id}
-              onDeleted={() => {
-                void dispatch(
-                  fetchAllOrganizations({ page: currentPage, limit }),
-                );
-              }}
-            />
-          </div>
-        );
-      },
     },
   ];
 
@@ -269,16 +189,20 @@ const Organizations = () => {
           pageCount={totalPages}
           onPageChange={(page) => handlePageChange(page + 1)}
           originalSorting="created_at"
+          rowProps={(row) => ({
+            onClick: () => openDetailsPage(row.original),
+            className: "cursor-pointer hover:bg-muted/50",
+          })}
         />
       )}
 
-      {/* Modal */}
+      {/* Create Modal */}
       <OrganizationModal
         open={modalOpen}
         onOpenChange={setModalOpen}
         onSubmit={onSubmit}
-        mode={modalMode}
-        organization={selectedOrg}
+        mode="create"
+        organization={null}
       />
     </div>
   );
