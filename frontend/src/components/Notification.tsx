@@ -250,7 +250,9 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
     await supabase.from("notifications").delete().eq("id", id);
   };
 
-  // Mobile: use a right-side Sheet panel for larger, easier tap targets
+  // ——————————————————————————————— Mobile View ———————————————————————————————
+  // Mobile: use a slide-in panel instead of a dropdown menu
+  // because tap targets are larger and easier to hit.
   if (isMobile) {
     return (
       <>
@@ -307,6 +309,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                 )}
                 {visibleFeed.length > 0 &&
                   (viewAll ? unseen > 0 : visibleUnseen > 0) && (
+                    /* Mark All Read */
                     <Button
                       size="sm"
                       variant="ghost"
@@ -318,6 +321,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                     </Button>
                   )}
                 {visibleFeed.length > 0 && (
+                  /* Delete All */
                   <Button
                     size="sm"
                     variant="ghost"
@@ -422,6 +426,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                       }}
                       className="flex flex-col gap-1 py-3 px-3 border-b cursor-pointer hover:bg-(--subtle-grey) text-left w-full"
                     >
+                      {/* Notification item */}
                       <div className="flex w-full items-start justify-between gap-2">
                         <div className="flex flex-col">
                           <span className="font-medium">{title}</span>
@@ -431,8 +436,10 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                             </span>
                           )}
                         </div>
+                        {/* Notification actions */}
                         <div className="flex items-center gap-2">
                           {n.read_at === null && (
+                            /* Mark as read button */
                             <Button
                               size="sm"
                               variant="ghost"
@@ -448,6 +455,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                               <Check className="h-5 w-5" />
                             </Button>
                           )}
+                          {/* Delete notification */}
                           <Button
                             size="sm"
                             variant="ghost"
@@ -476,32 +484,38 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
     );
   }
 
-  // Desktop/tablet: keep dropdown menu
+  // ——————————————————————————————— Desktop View ———————————————————————————————
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
+        {/* Notification bell */}
         <Button
           variant="ghost"
           className="relative hover:bg-(--subtle-grey) w-fit px-2"
         >
           <Bell className="!h-4.5 !w-5 text-(--midnight-black)" />
+          {/* Notification count badge */}
           {unseen > 0 && (
             <Badge className="absolute -right-1 -top-1 h-4 min-w-[1rem] px-1 text-[0.625rem] font-sans text-white leading-none !bg-(--emerald-green)">
               {unseen}
             </Badge>
           )}
+          {/* Screen reader label */}
           <span className="sr-only">
             {t.navigation.notifications.srOpen[lang]}
           </span>
         </Button>
       </DropdownMenuTrigger>
-
+      {/* Notification Container */}
       <DropdownMenuContent className="w-80 md:w-96" align="end">
+        {/* Top part of container */}
         <DropdownMenuLabel className="flex items-center justify-between">
           <div className="flex items-center gap-2">
+            {/* "Notifications" */}
             <span>{t.navigation.notifications.label[lang]}</span>
             {showToggle && (
               <div className="ml-2 inline-flex rounded border border-(--subtle-grey) overflow-hidden">
+                {/* "Active" */}
                 <button
                   className={`px-2 py-0.5 text-xs ${!viewAll ? "bg-(--subtle-grey)" : ""}`}
                   onClick={() => setViewAll(false)}
@@ -509,6 +523,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                 >
                   {t.navigation.notifications.viewActive[lang]}
                 </button>
+                {/* "All" */}
                 <button
                   className={`px-2 py-0.5 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
                   onClick={() => setViewAll(true)}
@@ -518,6 +533,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                 </button>
               </div>
             )}
+            {/* "Other" */}
             {showToggle && !viewAll && otherUnread > 0 && (
               <span className="ml-1 text-[0.7rem] text-muted-foreground">
                 {t.navigation.notifications.otherContextsPrefix[lang]}{" "}
@@ -525,8 +541,10 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
               </span>
             )}
           </div>
+          {/* Actions */}
           <div className="flex items-center gap-1">
             {(viewAll ? unseen > 0 : visibleUnseen > 0) && (
+              /* Mark All as Read */
               <Button
                 size="sm"
                 variant="ghost"
@@ -538,6 +556,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
               </Button>
             )}
             {visibleFeed.length > 0 && (
+              /* Delete All */
               <Button
                 size="sm"
                 variant="ghost"
@@ -550,6 +569,8 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
             )}
           </div>
         </DropdownMenuLabel>
+
+        {/* Notification list */}
         <DropdownMenuSeparator />
         {visibleFeed.length === 0 ? (
           <p className="p-4 text-sm text-muted-foreground">
@@ -558,7 +579,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
         ) : (
           <ScrollArea className="max-h-[70vh]">
             {visibleFeed.map((n) => {
-              // -------- translate title / message ---------------------------------
+              // ———————————— Translate Title / Message ————————————
               const tpl = // Translation template for this notification type
                 (
                   t.notification as Record<
@@ -592,6 +613,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
               return (
                 // One notification card — click -> navigate; small buttons handle read/delete
                 <DropdownMenuItem key={n.id} asChild>
+                  {/* Mark Read */}
                   <button
                     type="button"
                     onClick={() => {
@@ -741,6 +763,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
 
                       <div className="flex items-center gap-1">
                         {n.read_at === null && (
+                          /* Mark as read button */
                           <Button
                             size="sm"
                             variant="ghost"
@@ -754,6 +777,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                             <Check className="h-4 w-4" />
                           </Button>
                         )}
+                        {/* Delete notification */}
                         <Button
                           size="sm"
                           variant="ghost"
