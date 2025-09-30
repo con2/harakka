@@ -285,47 +285,12 @@ export class BookingController {
     return this.bookingService.updateBooking(id, userId, dto, req);
   }
 
-  /**
-   * Confirm a booking.
-   * Accessible by storage managers and tenant admins within their organization.
-   * @param bookingId - ID of the booking to confirm
-   * @param req - Authenticated request object
-   * @returns Confirmation result
-   */
-  //TODO: limit to activeContext organization
-  @Put(":id/confirm")
-  @Roles(["storage_manager", "tenant_admin"], {
-    match: "any",
-    sameOrg: true,
-  })
-  async confirm(@Param("id") bookingId: string, @Req() req: AuthRequest) {
-    const userId = req.user.id;
-    const supabase = req.supabase;
-
-    return this.bookingService.confirmBooking(bookingId, userId, supabase);
-  }
-
-  /**
-   * Reject a booking.
-   * Accessible by storage managers and tenant admins within their organization.
-   * @param id - ID of the booking to reject
-   * @param req - Authenticated request object
-   * @returns Rejection result
-   */
-  //TODO: limit to activeContext organization
-  @Put(":id/reject")
-  @Roles(["storage_manager", "tenant_admin"], {
-    match: "any",
-    sameOrg: true,
-  })
-  async reject(@Param("id") id: string, @Req() req: AuthRequest) {
-    const userId = req.user.id;
-    return this.bookingService.rejectBooking(id, userId, req);
-  }
-
-  //TODO: remove and replace by id/confirm, it already contain activeRole
   // Confirm booking items for the active organization; supports all or a selected subset via item_ids
   @Put(":id/confirm-for-org")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async confirmForOrg(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -346,6 +311,10 @@ export class BookingController {
   //TODO: remove and replace by id/reject, it already contain activeRole
   // Reject booking items for the active organization; supports all or a selected subset via item_ids
   @Put(":id/reject-for-org")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async rejectForOrg(
     @Param("id") id: string,
     @Req() req: AuthRequest,
