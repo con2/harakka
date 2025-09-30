@@ -13,4 +13,24 @@ export const requests = {
       fi: "Hae pyyntöjä",
     },
   },
+  table: {
+    headers: {
+      bookingNumber: {
+        fi: "Tilaus #",
+        en: "Booking #",
+      },
+      madeBy: {
+        en: "Made by",
+        fi: "Tekijä",
+      },
+      status: {
+        fi: "Tila",
+        en: "Status",
+      },
+      createdAt: {
+        en: "Made at",
+        fi: "Tehty klo",
+      },
+    },
+  },
 };

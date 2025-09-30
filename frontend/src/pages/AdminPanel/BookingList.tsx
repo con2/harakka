@@ -395,7 +395,7 @@ const BookingList = () => {
                 ))}
               </SelectContent>
             </Select>
-            {(searchQuery || statusFilter !== "all" || scopeOverdue) && (
+            {(searchQuery || statusFilter !== "all") && (
               <Button
                 onClick={() => {
                   setSearchQuery("");

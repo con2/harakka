@@ -26,10 +26,12 @@ import { ColumnDef } from "@tanstack/react-table";
 import { formatDate } from "date-fns";
 import { Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Requests() {
   const { lang } = useLanguage();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   // Bookings
   const bookingsLoading = useAppSelector(selectBookingLoading);
@@ -42,7 +44,7 @@ function Requests() {
   );
   const debouncedSearchQuery = useDebouncedValue(searchTerm, 200);
 
-  const { organizationId: activeOrgId } = useAppSelector(
+  const { organizationId: activeOrgId, roleName: activeRole } = useAppSelector(
     selectActiveRoleContext,
   );
 
@@ -82,17 +84,26 @@ function Requests() {
       header: t.myBookings.columns.bookingNumber[lang],
     },
     {
+      accessorKey: "full_name",
+      header: t.myBookings.columns.status[lang],
+      cell: ({ row }) => {
+        const { full_name, email } = row.original;
+        return (
+          <>
+            <p>{full_name}</p>
+            {activeRole === "tenant_admin" && (
+              <p className="text-xs text-muted-foreground">{email}</p>
+            )}
+          </>
+        );
+      },
+    },
+    {
       accessorKey: "status",
       header: t.myBookings.columns.status[lang],
       cell: ({ row }) => {
-        const original = row.original as Record<string, unknown>;
-        return (
-          <StatusBadge
-            status={
-              (original.status as BookingStatus) ?? ("pending" as BookingStatus)
-            }
-          />
-        );
+        const { status } = row.original;
+        return <StatusBadge status={status ?? "pending"} />;
       },
     },
     {
@@ -163,10 +174,9 @@ function Requests() {
           pageIndex={currentPage - 1}
           pageCount={totalPages}
           onPageChange={(page) => handlePageChange(page + 1)}
-          rowProps={() => ({
-            // If time, implement single view for booking
-            // style: { cursor: "pointer" },
-            // onClick: () => navigate(`/admin/requests/${row.original.id}`),
+          rowProps={(row) => ({
+            style: { cursor: "pointer" },
+            onClick: () => navigate(`/admin/requests/${row.original.id}`),
           })}
         />
       )}

@@ -21,6 +21,7 @@ import Organizations from "@/pages/AdminPanel/Organizations";
 import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
 import Categories from "@/pages/AdminPanel/Categories";
 import Requests from "@/pages/AdminPanel/Requests";
+import RequestDetailsPage from "@/pages/AdminPanel/RequestDetailsPage";
 
 // General
 import LandingPage from "@/pages/LandingPage";
@@ -176,6 +177,16 @@ export const router = createBrowserRouter([
                 allowedRoles={["storage_manager", "tenant_admin"]}
               >
                 <Requests />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "requests/:id",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["storage_manager", "tenant_admin"]}
+              >
+                <RequestDetailsPage />
               </ProtectedRoute>
             ),
           },

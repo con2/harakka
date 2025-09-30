@@ -741,8 +741,7 @@ const BookingDetailsPage = () => {
       {/* Booking Info Section */}
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-normal pt-4">
-          {t.bookingDetailsPage.modal.bookingDetails[lang]}{" "}
-          {booking.booking_number}
+          {`${t.bookingDetailsPage.modal.bookingDetails[lang]} ${booking.booking_number}`}
         </h3>
         {canEdit && (
           <Button onClick={() => setShowEdit((s) => !s)} variant="outline">
