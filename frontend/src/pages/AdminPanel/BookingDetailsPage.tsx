@@ -153,13 +153,7 @@ const BookingDetailsPage = () => {
 
   // Availability check when timeframe or items change during edit mode
   useEffect(() => {
-    if (
-      !globalStartDate ||
-      !globalEndDate ||
-      !showEdit ||
-      hasItemsFromOtherOrgs
-    )
-      return;
+    if (!globalStartDate || !globalEndDate || !showEdit) return;
 
     void fetchItemsAvailability(
       editFormItems,
@@ -168,13 +162,7 @@ const BookingDetailsPage = () => {
       setAvailability,
       setLoadingAvailability,
     );
-  }, [
-    globalStartDate,
-    globalEndDate,
-    editFormItems,
-    showEdit,
-    hasItemsFromOtherOrgs,
-  ]);
+  }, [globalStartDate, globalEndDate, editFormItems, showEdit]);
 
   // Track selected item IDs for bulk actions
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
