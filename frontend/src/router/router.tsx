@@ -20,8 +20,8 @@ import Logs from "@/pages/AdminPanel/Logs";
 import Organizations from "@/pages/AdminPanel/Organizations";
 import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
 import Categories from "@/pages/AdminPanel/Categories";
-import Requests from "@/pages/AdminPanel/Requests";
-import RequestDetailsPage from "@/pages/AdminPanel/RequestDetailsPage";
+import Requests from "@/pages/AdminPanel/Requests/Requests";
+import RequestDetailsPage from "@/pages/AdminPanel/Requests/RequestDetailsPage";
 
 // General
 import LandingPage from "@/pages/LandingPage";
