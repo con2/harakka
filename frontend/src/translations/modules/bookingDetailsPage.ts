@@ -80,6 +80,10 @@ export const bookingDetailsPage = {
           fi: "Tila",
           en: "Status",
         },
+        loading: {
+          fi: "Ladataan...",
+          en: "Loading...",
+        },
       },
     },
     buttons: {
