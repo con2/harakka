@@ -4,7 +4,7 @@ import { BookingItemWithDetails, BookingWithDetails } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { t } from "@/translations";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ export const getRequestDetailsColumns: (
   handleIncrementQuantity: (item: BookingItemWithDetails) => void,
   handleDecrementQuantity: (item: BookingItemWithDetails) => void,
   availability: Record<string, number>,
+  removeItem: (item: BookingItemWithDetails) => void,
 ) => ColumnDef<NonNullable<BookingWithDetails["booking_items"]>[number]>[] = (
   lang: Language,
   showEdit: boolean,
@@ -35,6 +36,7 @@ export const getRequestDetailsColumns: (
   handleIncrementQuantity: (item: BookingItemWithDetails) => void,
   handleDecrementQuantity: (item: BookingItemWithDetails) => void,
   availability: Record<string, number>,
+  removeItem: (item: BookingItemWithDetails) => void,
 ) => [
   {
     accessorKey: "image",
@@ -152,5 +154,30 @@ export const getRequestDetailsColumns: (
         </div>
       );
     },
+  },
+  {
+    id: "actions",
+    header: showEdit ? t.bookingDetailsPage.edit.columns.actions[lang] : "",
+    cell: ({ row }) => {
+      const item = row.original;
+      if (!showEdit || item.status === "cancelled") {
+        return null;
+      }
+
+      return (
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => removeItem(item)}
+            className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 rounded-md"
+            aria-label="remove item"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      );
+    },
+    size: 60,
   },
 ];
