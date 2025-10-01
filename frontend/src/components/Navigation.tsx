@@ -9,7 +9,7 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { Menu, ShoppingCart, UserIcon } from "lucide-react";
-import { Notifications } from "@/components/Notification";
+import { Notifications } from "@/components/Notifications/Notification";
 import { selectCartItemsCount } from "../store/slices/cartSlice";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";

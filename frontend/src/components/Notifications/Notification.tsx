@@ -25,7 +25,12 @@ import {
 import { useRoles } from "@/hooks/useRoles";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 
 /**
  * Notifications dropdown component
@@ -281,9 +286,15 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
             className="w-[90vw] sm:max-w-sm p-0"
           >
             <div className="p-3 border-b flex items-center justify-between gap-2 flex-wrap">
-              {/* Notifications */}
-              <div className="text-base font-medium truncate">
-                {t.navigation.notifications.label[lang]}
+              {/* Notifications title (SheetTitle for accessibility) */}
+              <div className="flex flex-col min-w-0">
+                <SheetTitle className="text-base font-medium truncate">
+                  {t.navigation.notifications.label[lang]}
+                </SheetTitle>
+                {/* Visually hidden description to satisfy Dialog a11y */}
+                <SheetDescription className="sr-only">
+                  View and manage your notifications.
+                </SheetDescription>
               </div>
               <div className="flex items-center gap-2 flex-none ml-auto">
                 {showToggle && (
@@ -372,10 +383,65 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                       : (n.message ?? "");
 
                   return (
-                    <button
+                    <div
                       key={n.id}
-                      type="button"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          // open row
+                          void markRead(n.id);
+                          if (n.type === "user.created") {
+                            const id =
+                              "new_user_id" in n.metadata
+                                ? safe(n.metadata.new_user_id)
+                                : null;
+                            if (activeRoleName !== "super_admin") {
+                              const superCtx = findSuperAdminRole();
+                              if (superCtx) {
+                                const needsSwitch =
+                                  activeOrgId !== superCtx.organization_id ||
+                                  activeRoleName !== superCtx.role_name;
+                                if (needsSwitch)
+                                  setActiveContext(
+                                    superCtx.organization_id,
+                                    superCtx.role_name,
+                                    superCtx.organization_name ?? "",
+                                  );
+                              }
+                            }
+                            if (id) void navigate(`/admin/users/${id}`);
+                            else void navigate("/admin/users");
+                          } else if (
+                            n.type === "booking.created" ||
+                            n.type === "booking.status_approved" ||
+                            n.type === "booking.status_rejected"
+                          ) {
+                            const bookingId = safe(n.metadata.booking_id);
+                            const orgId = n.metadata.organization_id
+                              ? safe(n.metadata.organization_id)
+                              : null;
+                            if (orgId) {
+                              const candidate = findBestOrgAdminRole(orgId);
+                              if (candidate) {
+                                const needsSwitch =
+                                  activeOrgId !== candidate.organization_id ||
+                                  activeRoleName !== candidate.role_name;
+                                if (needsSwitch)
+                                  setActiveContext(
+                                    candidate.organization_id,
+                                    candidate.role_name,
+                                    candidate.organization_name ?? "",
+                                  );
+                              }
+                            }
+                            void navigate(`/admin/bookings/${bookingId}`);
+                          }
+                        }
+                      }}
                       onClick={() => {
+                        // open row
                         void markRead(n.id);
                         if (n.type === "user.created") {
                           const id =
@@ -473,7 +539,7 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                           </Button>
                         </div>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </ScrollArea>
@@ -618,191 +684,186 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
                   : (n.message ?? "");
 
               return (
-                // One notification card — click -> navigate; small buttons handle read/delete
-                <DropdownMenuItem key={n.id} asChild>
-                  {/* Mark Read */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void markRead(n.id); // mark read on click
+                // One notification card — use DropdownMenuItem directly (no nested button)
+                <DropdownMenuItem
+                  key={n.id}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    void markRead(n.id);
 
-                      if (n.type === "user.created") {
-                        const id =
-                          "new_user_id" in n.metadata
-                            ? safe(n.metadata.new_user_id)
-                            : null;
-
-                        // Ensure we have super_admin context to view users
-                        if (activeRoleName !== "super_admin") {
-                          const superCtx = findSuperAdminRole();
-                          if (superCtx) {
-                            const needsSwitch =
-                              activeOrgId !== superCtx.organization_id ||
-                              activeRoleName !== superCtx.role_name;
-                            if (needsSwitch) {
-                              setActiveContext(
-                                superCtx.organization_id,
-                                superCtx.role_name,
-                                superCtx.organization_name ?? "",
-                              );
-                            }
-                          }
-                        }
-
-                        if (id) {
-                          void navigate(`/admin/users/${id}`);
-                        } else {
-                          void navigate("/admin/users");
-                        }
-                      } else if (
-                        n.type === "booking.created" ||
-                        n.type === "booking.status_approved" ||
-                        n.type === "booking.status_rejected"
-                      ) {
-                        // Navigate to the detailed booking view
-                        const bookingId = safe(n.metadata.booking_id);
-                        const orgId = n.metadata.organization_id
-                          ? safe(n.metadata.organization_id)
+                    if (n.type === "user.created") {
+                      const id =
+                        "new_user_id" in n.metadata
+                          ? safe(n.metadata.new_user_id)
                           : null;
 
-                        if (orgId) {
-                          const candidate = findBestOrgAdminRole(orgId);
-
-                          if (candidate) {
-                            const needsSwitch =
-                              activeOrgId !== candidate.organization_id ||
-                              activeRoleName !== candidate.role_name;
-                            if (needsSwitch) {
-                              const prev = {
-                                organizationId: activeContext.organizationId,
-                                roleName: activeContext.roleName,
-                                organizationName:
-                                  activeContext.organizationName,
-                              };
-                              // Guard against nullable fields from the view type
-                              if (
-                                candidate.organization_id &&
-                                candidate.role_name
-                              ) {
-                                setActiveContext(
-                                  candidate.organization_id,
-                                  candidate.role_name,
-                                  candidate.organization_name ?? "",
-                                );
-                              }
-
-                              // Toast: explain the automatic context switch
-                              const roleKey = candidate.role_name;
-                              const roleLabel =
-                                roleKey === "tenant_admin"
-                                  ? t.common.roles.tenantAdmin[lang]
-                                  : roleKey === "storage_manager"
-                                    ? t.common.roles.storageManager[lang]
-                                    : roleKey === "super_admin"
-                                      ? t.common.roles.superAdmin[lang]
-                                      : roleKey;
-                              const orgLabel =
-                                candidate.organization_name ?? "";
-                              const msgTpl =
-                                t.navigation.notifications.toasts
-                                  .switchedContext[lang];
-                              const msg = msgTpl
-                                .replace("{role}", roleLabel)
-                                .replace("{org}", orgLabel);
-                              toast.info(msg, {
-                                action: {
-                                  label: t.common.undo[lang],
-                                  onClick: () => {
-                                    // Revert to previous context (if present)
-                                    if (
-                                      prev.organizationId &&
-                                      prev.roleName &&
-                                      prev.organizationName
-                                    ) {
-                                      setActiveContext(
-                                        prev.organizationId,
-                                        prev.roleName,
-                                        prev.organizationName,
-                                      );
-                                      const prevRoleLabel =
-                                        prev.roleName === "tenant_admin"
-                                          ? t.common.roles.tenantAdmin[lang]
-                                          : prev.roleName === "storage_manager"
-                                            ? t.common.roles.storageManager[
-                                                lang
-                                              ]
-                                            : prev.roleName === "super_admin"
-                                              ? t.common.roles.superAdmin[lang]
-                                              : prev.roleName;
-                                      const revertTpl =
-                                        t.navigation.notifications.toasts
-                                          .revertedContext[lang];
-                                      toast.info(
-                                        revertTpl
-                                          .replace("{role}", prevRoleLabel)
-                                          .replace(
-                                            "{org}",
-                                            prev.organizationName ?? "",
-                                          ),
-                                      );
-                                    }
-                                  },
-                                },
-                              });
-                            }
+                      // Ensure we have super_admin context to view users
+                      if (activeRoleName !== "super_admin") {
+                        const superCtx = findSuperAdminRole();
+                        if (superCtx) {
+                          const needsSwitch =
+                            activeOrgId !== superCtx.organization_id ||
+                            activeRoleName !== superCtx.role_name;
+                          if (needsSwitch) {
+                            setActiveContext(
+                              superCtx.organization_id,
+                              superCtx.role_name,
+                              superCtx.organization_name ?? "",
+                            );
                           }
                         }
-
-                        void navigate(`/admin/bookings/${bookingId}`);
                       }
-                    }}
-                    className="flex w-full flex-col gap-0.5 py-2 text-left cursor-pointer hover:bg-(--subtle-grey) data-[highlighted]:bg-(--subtle-grey) focus:bg-(--subtle-grey)"
-                  >
-                    <div className="flex w-full items-start justify-between gap-2">
-                      <div className="flex flex-col">
-                        <span className="font-medium">{title}</span>
-                        {message && (
-                          <span className="text-xs text-muted-foreground">
-                            {message}
-                          </span>
-                        )}
-                      </div>
 
-                      <div className="flex items-center gap-1">
-                        {n.read_at === null && (
-                          /* Mark as read button */
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              void markRead(n.id);
-                            }}
-                            className="h-8 w-8 p-1 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
-                            title={t.navigation.notifications.markAsRead[lang]}
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {/* Delete notification */}
+                      if (id) {
+                        void navigate(`/admin/users/${id}`);
+                      } else {
+                        void navigate("/admin/users");
+                      }
+                    } else if (
+                      n.type === "booking.created" ||
+                      n.type === "booking.status_approved" ||
+                      n.type === "booking.status_rejected"
+                    ) {
+                      // Navigate to the detailed booking view
+                      const bookingId = safe(n.metadata.booking_id);
+                      const orgId = n.metadata.organization_id
+                        ? safe(n.metadata.organization_id)
+                        : null;
+
+                      if (orgId) {
+                        const candidate = findBestOrgAdminRole(orgId);
+
+                        if (candidate) {
+                          const needsSwitch =
+                            activeOrgId !== candidate.organization_id ||
+                            activeRoleName !== candidate.role_name;
+                          if (needsSwitch) {
+                            const prev = {
+                              organizationId: activeContext.organizationId,
+                              roleName: activeContext.roleName,
+                              organizationName: activeContext.organizationName,
+                            };
+                            // Guard against nullable fields from the view type
+                            if (
+                              candidate.organization_id &&
+                              candidate.role_name
+                            ) {
+                              setActiveContext(
+                                candidate.organization_id,
+                                candidate.role_name,
+                                candidate.organization_name ?? "",
+                              );
+                            }
+
+                            // Toast: explain the automatic context switch
+                            const roleKey = candidate.role_name;
+                            const roleLabel =
+                              roleKey === "tenant_admin"
+                                ? t.common.roles.tenantAdmin[lang]
+                                : roleKey === "storage_manager"
+                                  ? t.common.roles.storageManager[lang]
+                                  : roleKey === "super_admin"
+                                    ? t.common.roles.superAdmin[lang]
+                                    : roleKey;
+                            const orgLabel = candidate.organization_name ?? "";
+                            const msgTpl =
+                              t.navigation.notifications.toasts.switchedContext[
+                                lang
+                              ];
+                            const msg = msgTpl
+                              .replace("{role}", roleLabel)
+                              .replace("{org}", orgLabel);
+                            toast.info(msg, {
+                              action: {
+                                label: t.common.undo[lang],
+                                onClick: () => {
+                                  // Revert to previous context (if present)
+                                  if (
+                                    prev.organizationId &&
+                                    prev.roleName &&
+                                    prev.organizationName
+                                  ) {
+                                    setActiveContext(
+                                      prev.organizationId,
+                                      prev.roleName,
+                                      prev.organizationName,
+                                    );
+                                    const prevRoleLabel =
+                                      prev.roleName === "tenant_admin"
+                                        ? t.common.roles.tenantAdmin[lang]
+                                        : prev.roleName === "storage_manager"
+                                          ? t.common.roles.storageManager[lang]
+                                          : prev.roleName === "super_admin"
+                                            ? t.common.roles.superAdmin[lang]
+                                            : prev.roleName;
+                                    const revertTpl =
+                                      t.navigation.notifications.toasts
+                                        .revertedContext[lang];
+                                    toast.info(
+                                      revertTpl
+                                        .replace("{role}", prevRoleLabel)
+                                        .replace(
+                                          "{org}",
+                                          prev.organizationName ?? "",
+                                        ),
+                                    );
+                                  }
+                                },
+                              },
+                            });
+                          }
+                        }
+                      }
+
+                      void navigate(`/admin/bookings/${bookingId}`);
+                    }
+                  }}
+                  className="flex w-full flex-col gap-0.5 py-2 text-left cursor-pointer hover:bg-(--subtle-grey) data-[highlighted]:bg-(--subtle-grey) focus:bg-(--subtle-grey)"
+                >
+                  <div className="flex w-full items-start justify-between gap-2">
+                    <div className="flex flex-col">
+                      <span className="font-medium">{title}</span>
+                      {message && (
+                        <span className="text-xs text-muted-foreground">
+                          {message}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {n.read_at === null && (
+                        /* Mark as read button */
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={(e) => {
                             e.stopPropagation();
-                            void removeNotification(n.id);
+                            void markRead(n.id);
                           }}
                           className="h-8 w-8 p-1 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
-                          title={
-                            t.navigation.notifications.deleteOne?.[lang] ??
-                            t.navigation.notifications.deleteAll[lang]
-                          }
+                          title={t.navigation.notifications.markAsRead[lang]}
                         >
-                          <X className="h-4 w-4" />
+                          <Check className="h-4 w-4" />
                         </Button>
-                      </div>
+                      )}
+                      {/* Delete notification */}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void removeNotification(n.id);
+                        }}
+                        className="h-8 w-8 p-1 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
+                        title={
+                          t.navigation.notifications.deleteOne?.[lang] ??
+                          t.navigation.notifications.deleteAll[lang]
+                        }
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </button>
+                  </div>
                 </DropdownMenuItem>
               );
             })}
