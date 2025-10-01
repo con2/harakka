@@ -71,6 +71,10 @@ export const adminItemsTable = {
       fi: "Tuotteen nimi",
       en: "Item Name",
     },
+    placement: {
+      fi: "Sijoittelun kuvaus",
+      en: "Placement Description",
+    },
     category: {
       fi: "Kategoria",
       en: "Category",

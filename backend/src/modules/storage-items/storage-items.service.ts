@@ -29,18 +29,11 @@ import { mapItemImages, mapTagLinks } from "@src/utils/storage-items.utils";
 import { ItemImagesService } from "../item-images/item-images.service";
 import { parse, ParseResult } from "papaparse";
 import { Item, ItemSchema } from "./schema/item-schema";
-import {
-  Image,
-  UpdateItem,
-  UpdateResponse,
-} from "@common/items/storage-items.types";
+import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
 import { ZodError } from "zod";
 import { CSVItem, ProcessedCSV } from "@common/items/csv.types";
 import type { Database } from "@common/supabase.types";
-import {
-  ItemImageInsert,
-  ItemImageUpdate,
-} from "../item-images/types/item-image.types";
+import { ItemImageInsert } from "../item-images/types/item-image.types";
 
 @Injectable()
 export class StorageItemsService {

@@ -5,6 +5,7 @@ export type CSVItem = {
   fi_item_description: string;
   quantity: number;
   category_id: string;
+  placement_description: string;
 };
 
 export type ProcessedCSV = {

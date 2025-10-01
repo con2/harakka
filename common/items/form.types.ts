@@ -22,6 +22,7 @@ export type CreateItemType = {
   quantity: number;
   available_quantity: number;
   is_active: boolean;
+  placement_description: string;
   translations: {
     fi: {
       item_name: string;
