@@ -20,6 +20,10 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 
+// type Translation = {
+//   en: string;
+//   fi: string;
+// };
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -103,6 +107,10 @@ export function PaginatedDataTable<TData, TValue>({
       handleOrder?.(originalSorting ?? table.getHeaderGroups()[0].id);
     }
   };
+  const hasOnClick = (row: Row<any>): boolean => {
+    const props = rowProps?.(row);
+    return typeof props?.onClick === "function";
+  };
 
   return (
     <div className="space-y-2">
@@ -144,6 +152,7 @@ export function PaginatedDataTable<TData, TValue>({
                 return (
                   <TableRow
                     key={row.id}
+                    role={hasOnClick(row) ? "button" : "row"}
                     className={`h-10 hover:cursor-pointer ${highlight?.includes(row.index) ? "bg-green-50" : ""}`}
                     data-state={row.getIsSelected() && "selected"}
                     data-higlighted={highlight?.includes(row.index)}

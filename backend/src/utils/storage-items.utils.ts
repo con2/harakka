@@ -1,5 +1,5 @@
 import { ItemFormData, MappedItem } from "@common/items/form.types";
-import { StorageItem, TagLink } from "@common/items/storage-items.types";
+import { Image, StorageItem, TagLink } from "@common/items/storage-items.types";
 import { ItemImageInsert } from "@src/modules/item-images/types/item-image.types";
 
 export function mapStorageItems(payload: ItemFormData): MappedItem[] {
@@ -193,6 +193,10 @@ export function applyItemFilters<T extends FilterableQuery>(
         `fi_item_type.ilike.%${searchquery}%,` +
         `en_item_name.ilike.%${searchquery}%,` +
         `en_item_type.ilike.%${searchquery}%,` +
+        `category_en_name.ilike.%${searchquery}%,` +
+        `category_fi_name.ilike.%${searchquery}%,` +
+        `translations->en->>item_description.ilike.%${searchquery}%,` +
+        `translations->fi->>item_description.ilike.%${searchquery}%,` +
         `location_name.ilike.%${searchquery}%`,
     );
   }
@@ -224,3 +228,19 @@ export function applyItemFilters<T extends FilterableQuery>(
 
   return query;
 }
+
+export const mapItemImagesUpdate = (
+  images: Image[],
+  item_id: string,
+): ItemImageInsert[] => {
+  return images.map((img: Image) => {
+    const { metadata, url, full_path, path, ...rest } = img;
+    return {
+      image_url: url,
+      item_id,
+      storage_path: full_path,
+      ...rest,
+      ...metadata,
+    };
+  });
+};

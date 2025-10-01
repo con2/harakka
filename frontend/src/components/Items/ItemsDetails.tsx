@@ -1,27 +1,27 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getItemById,
   selectSelectedItem,
   selectItemsLoading,
   selectItemsError,
-} from "../../store/slices/itemsSlice";
+} from "@/store/slices/itemsSlice";
 import {
   getItemImages,
   selectItemImages,
-} from "../../store/slices/itemImagesSlice";
+} from "@/store/slices/itemImagesSlice";
 import {
   fetchOrganizationById,
   selectedOrganization,
-} from "../../store/slices/organizationSlice";
+} from "@/store/slices/organizationSlice";
 import {
   fetchAllCategories,
   selectCategories,
-} from "../../store/slices/categoriesSlice";
-import { Button } from "../../components/ui/button";
+} from "@/store/slices/categoriesSlice";
+import { Button } from "@/components/ui/button";
 import { ChevronLeft, Clock, Info, LoaderCircle } from "lucide-react";
-import { addToCart } from "../../store/slices/cartSlice";
+import { addToCart } from "@/store/slices/cartSlice";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
 import imagePlaceholder from "@/assets/defaultImage.jpg";
@@ -30,12 +30,14 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   Item,
+  ItemImage,
   ItemImageAvailabilityInfo,
   ItemTranslation,
   ItemWithTags,
 } from "@/types";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { itemsApi } from "@/api/services/items";
+import { cn } from "@/lib/utils";
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
@@ -86,21 +88,10 @@ const ItemsDetails: React.FC = () => {
     const mainImg = itemImagesForCurrentItem.find(
       (img) => img.image_type === "main",
     );
-
-    // If no main image, try thumbnail
-    const thumbnailImg = mainImg
-      ? null
-      : itemImagesForCurrentItem.find((img) => img.image_type === "thumbnail");
-
-    const anyImg = mainImg || thumbnailImg ? null : itemImagesForCurrentItem[0];
+    const firstImg = itemImagesForCurrentItem[0];
 
     // Return image URL or placeholder
-    return (
-      mainImg?.image_url ||
-      thumbnailImg?.image_url ||
-      anyImg?.image_url ||
-      imagePlaceholder
-    );
+    return mainImg || firstImg || imagePlaceholder;
   }, [itemImagesForCurrentItem, selectedImageUrl]);
 
   const handleAddToCart = () => {
@@ -241,18 +232,23 @@ const ItemsDetails: React.FC = () => {
             data-cy="item-details-main-image"
           >
             {/* Main Image Container */}
-            <div className="border rounded-md bg-slate-50 overflow-hidden h-full w-full">
+            <button
+              className="border rounded-md bg-slate-50 overflow-hidden h-full w-full"
+              onClick={toggleImageVisibility}
+            >
               <img
-                src={mainImage}
+                src={(mainImage as ItemImage).image_url}
                 alt={itemContent?.item_name || "Tuotteen kuva"}
-                className="w-full h-full object-cover cursor-pointer hover:opacity-90 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-in-out"
+                className={cn(
+                  "w-full h-full cursor-pointer hover:opacity-90 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-in-out",
+                  `object-${(mainImage as ItemImage)?.object_fit || "cover"}`,
+                )}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = imagePlaceholder;
                 }}
-                onClick={toggleImageVisibility}
               />
-            </div>
+            </button>
 
             {/* overlay for enlarged preview (closes on any click) */}
             {isImageVisible && (
@@ -264,7 +260,7 @@ const ItemsDetails: React.FC = () => {
               >
                 <div className="w-[90%] max-w-[420px] max-h-[80%] h-auto border rounded-lg shadow-lg bg-white flex justify-center items-center p-2">
                   <img
-                    src={mainImage}
+                    src={(mainImage as ItemImage).image_url}
                     alt={itemContent?.item_name || "Tuotteen kuva"}
                     className="object-contain w-[400px] h-[400px] max-w-full max-h-full cursor-pointer"
                   />
@@ -280,7 +276,7 @@ const ItemsDetails: React.FC = () => {
               data-cy="item-details-gallery"
             >
               {detailImages.map((img) => (
-                <div
+                <button
                   key={img.id}
                   className="border rounded-md overflow-hidden bg-slate-50 cursor-pointer"
                   onClick={() => setSelectedImageUrl(img.image_url)}
@@ -295,7 +291,7 @@ const ItemsDetails: React.FC = () => {
                       e.currentTarget.src = imagePlaceholder;
                     }}
                   />
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -487,9 +483,22 @@ const ItemsDetails: React.FC = () => {
             <span className="text-sm text-slate-600 font-semibold">
               {t.itemDetails.category[lang]}:
             </span>
-            <span className="text-sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-sm p-1 h-auto text-secondary hover:text-secondary hover:bg-secondary/10 underline-offset-2 hover:underline"
+              onClick={() =>
+                navigate("/storage", {
+                  state: {
+                    preSelectedFilters: {
+                      categories: [itemCategory.id],
+                    },
+                  },
+                })
+              }
+            >
               {itemCategory.translations[lang] || itemCategory.translations.en}
-            </span>
+            </Button>
           </div>
         )}
 
@@ -505,11 +514,25 @@ const ItemsDetails: React.FC = () => {
             </span>
             <div className="flex flex-wrap gap-2">
               {(item as ItemWithTags).tags!.map((tag) => (
-                <span key={tag.id} className="text-sm">
+                <Button
+                  key={tag.id}
+                  variant="ghost"
+                  size="sm"
+                  className="text-sm p-1 h-auto text-secondary hover:text-secondary hover:bg-secondary/10 underline-offset-2 hover:underline"
+                  onClick={() =>
+                    navigate("/storage", {
+                      state: {
+                        preSelectedFilters: {
+                          tagIds: [tag.id],
+                        },
+                      },
+                    })
+                  }
+                >
                   {tag.translations?.[lang as "en" | "fi"]?.name ||
                     tag.translations?.en?.name ||
                     "Tag"}
-                </span>
+                </Button>
               ))}
             </div>
           </div>

@@ -49,7 +49,7 @@ import {
 import { setNextStep } from "@/store/slices/uiSlice";
 import { createItemDto } from "@/store/utils/validate";
 import { t } from "@/translations";
-import { ItemFormTag } from "@/types";
+import { Item, ItemFormTag } from "@/types";
 import { getFirstErrorMessage } from "@/utils/validate";
 import { CreateItemType } from "@common/items/form.types";
 import { ErrorMessage } from "@hookform/error-message";
@@ -58,7 +58,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { SubmitErrorHandler, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { TRANSLATION_FIELDS } from "../add-item.data";
+import { getInitialItemData, TRANSLATION_FIELDS } from "../add-item.data";
 import ItemImageUpload from "../ItemImageUpload";
 import {
   Accordion,
@@ -67,6 +67,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { buildCategoryTree, Category } from "@/store/utils/format";
+import ItemCard from "@/components/Items/ItemCard";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import Spinner from "@/components/Spinner";
@@ -95,34 +96,10 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   const isEditing = useAppSelector(selectIsEditing);
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
-    defaultValues: (initialData as CreateItemType) ??
-      editItem ?? {
-        id: crypto.randomUUID(),
-        location: {
-          id: storage?.id ?? "",
-          name: storage?.name ?? "",
-          address: storage?.address ?? "",
-        },
-        quantity: 1,
-        available_quantity: 1,
-        is_active: true,
-        tags: [],
-        translations: {
-          fi: {
-            item_name: "",
-            item_description: "",
-          },
-          en: {
-            item_name: "",
-            item_description: "",
-          },
-        },
-        category_id: "",
-        images: {
-          main: null,
-          details: [],
-        },
-      },
+    defaultValues:
+      (initialData as CreateItemType) ??
+      editItem ??
+      getInitialItemData(storage || undefined),
   });
 
   const refetchCategories = () => {
@@ -313,9 +290,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                 className="font-main w-full justify-between flex"
                 iconProps="!w-5 h-auto"
               >
-                <p className="text-2xl font-semibold tracking-tight w-full">
+                <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                   {t.addItemForm.headings.itemDetails[appLang]}
-                </p>
+                </h2>
               </AccordionTrigger>
               <AccordionContent className="mt-10">
                 <div className="flex flex-wrap w-full gap-x-6 space-y-4 justify-between mb-8">
@@ -553,7 +530,6 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                     )}
                   />
                 </div>
-
                 <FormField
                   control={form.control}
                   name="is_active"
@@ -577,6 +553,36 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="placement_description"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg p-4 gap-6 w-full mt-5">
+                      <div className="space-y-0.5 flex-1">
+                        <FormLabel>
+                          {t.addItemForm.labels.placement[appLang]}
+                        </FormLabel>
+                        <FormDescription>
+                          {
+                            t.addItemForm.paragraphs.placementDescription[
+                              appLang
+                            ]
+                          }
+                        </FormDescription>
+                      </div>
+                      <FormControl className="flex-1">
+                        <Textarea
+                          {...field}
+                          className={
+                            (cn("!border shadow-none border-grey mb-1"),
+                            form.formState.errors.placement_description &&
+                              "!border-(--destructive)")
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </AccordionContent>
             </AccordionItem>
 
@@ -584,9 +590,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             <AccordionItem value="tags" className="p-10 w-full">
               <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
                 <div>
-                  <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-1">
+                  <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                     {t.addItemForm.headings.assignTags[appLang]}
-                  </p>
+                  </h2>
                   <p className="text-sm leading-none font-medium">
                     {t.addItemForm.paragraphs.tagPrompt[appLang]}
                   </p>
@@ -667,16 +673,16 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             >
               <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
                 <div className="mb-6">
-                  <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
+                  <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                     {t.addItemForm.headings.addImages[appLang]}
-                  </p>
+                  </h2>
                   <p className="text-sm leading-none font-medium">
                     {t.addItemForm.paragraphs.imagePrompt[appLang]}
                   </p>
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="mt-5">
+              <AccordionContent className="mt-5 grid grid-cols-[1fr] lg:grid-cols-[6fr_4fr] gap-8">
                 <ItemImageUpload
                   item_id={form.watch("id") || ""}
                   formImages={
@@ -684,6 +690,15 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   }
                   updateForm={form.setValue}
                 />
+                <div className="flex-1 flex flex-col h-fit">
+                  <h2 className="text-start font-main text-primary">
+                    {t.itemImageUpload.headings.preview[appLang]}
+                  </h2>
+                  <ItemCard
+                    preview
+                    item={form.getValues() as unknown as Item}
+                  />
+                </div>
               </AccordionContent>
             </AccordionItem>
 

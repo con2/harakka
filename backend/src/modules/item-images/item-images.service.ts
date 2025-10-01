@@ -28,7 +28,7 @@ export class ItemImagesService {
     file: Express.Multer.File,
     metadata: {
       alt_text?: string;
-      image_type: "main" | "thumbnail" | "detail";
+      image_type: "main" | "detail";
       display_order: number;
     },
   ) {

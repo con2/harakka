@@ -1,17 +1,19 @@
+import hero from "@/assets/hero.jpg";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import hero from "@/assets/illusiaImage.jpg";
+import { useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
   // Translation
   const { lang } = useLanguage();
+  const navigate = useNavigate();
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Background Image */}
       <div
-        className="absolute inset-[-8px] bg-cover bg-center -z-10 filter brightness-[0.6] blur-[3px]"
+        className="absolute inset-[-8px] bg-cover -z-10 filter brightness-[0.6] bg-top-left"
         style={{
           backgroundImage: `url(${hero})`,
         }}
@@ -26,7 +28,7 @@ const LandingPage = () => {
           {t.landingPage.subheading[lang]}
         </p>
         <Button
-          onClick={() => (window.location.href = "/storage")}
+          onClick={() => navigate("/storage")}
           className="bg-secondary text-white border:secondary font-semibold px-6 py-5 rounded-lg shadow hover:bg-white hover:text-secondary hover:border-secondary transition"
         >
           {t.landingPage.button[lang]}

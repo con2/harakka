@@ -162,6 +162,10 @@ export const bookingDetailsPage = {
     },
   },
   edit: {
+    hasItemsFromMultipleOrgs: {
+      en: "This booking contains items from multiple organizations. You can not edit the dates of this booking.",
+      fi: "Tämä varaus sisältää tuotteita useista organisaatioista. Et voi muokata tämän varauksen päivämääriä.",
+    },
     buttons: {
       editBooking: {
         en: "Edit Booking",
@@ -207,6 +211,24 @@ export const bookingDetailsPage = {
         cancelText: {
           en: "Cancel",
           fi: "Peruuta",
+        },
+      },
+      cancelItem: {
+        title: {
+          en: "Cancel Item",
+          fi: "Peruuta tuote",
+        },
+        description: {
+          en: "Are you sure you want to cancel this item?",
+          fi: "Haluatko varmasti peruuttaa tämän tuotteen? ",
+        },
+        confirmText: {
+          en: "Cancel Item",
+          fi: "Peruuta tuote",
+        },
+        cancelText: {
+          en: "Keep Item",
+          fi: "Pidä tuote",
         },
       },
       removeItem: {
@@ -294,6 +316,14 @@ export const bookingDetailsPage = {
       failedToRemoveItem: {
         en: "Failed to remove item",
         fi: "Tuotteen poistaminen epäonnistui",
+      },
+      itemCancelled: {
+        en: "Item has been cancelled",
+        fi: "Tuote on peruutettu",
+      },
+      failedToCancelItem: {
+        en: "Failed to cancel item",
+        fi: "Tuotteen peruuttaminen epäonnistui",
       },
     },
   },

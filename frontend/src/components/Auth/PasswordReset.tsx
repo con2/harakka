@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "../../config/supabase";
+import { supabase } from "@/config/supabase";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useEffect, useState } from "react";
@@ -7,7 +7,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import hero from "@/assets/illusiaImage.jpg";
+import hero from "@/assets/hero.jpg";
 
 const PasswordReset = () => {
   const navigate = useNavigate();
@@ -184,7 +184,7 @@ const PasswordReset = () => {
         </CardContent>
       </Card>
       <div
-        className="absolute inset-[-8px] bg-cover bg-center -z-10 h-full filter brightness-[0.6] blur-[3px] top-0 scale-[1.01]"
+        className="absolute inset-[-8px] bg-cover bg-center -z-10 h-full filter brightness-[0.6] bg-left top-0 scale-[1.01]"
         style={{
           backgroundImage: `url(${hero})`,
         }}

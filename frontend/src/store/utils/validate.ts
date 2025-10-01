@@ -28,8 +28,23 @@ const imageSchema = z.object({
     display_order: z.number(),
     alt_text: z.string().optional(),
     is_active: z.boolean(),
+    object_fit: z.enum(["cover", "contain"]),
   }),
 });
+
+export type ImageSchemaType = {
+  id: string;
+  url: string;
+  full_path: string;
+  path: string;
+  metadata: {
+    image_Type: string;
+    display_order: number;
+    alt_text: string;
+    is_active: boolean;
+    object_fit: "cover" | "contain";
+  };
+};
 
 export const createItemDto = z.object({
   id: z.string().uuid(),
@@ -54,4 +69,8 @@ export const createItemDto = z.object({
     main: z.nullable(imageSchema),
     details: z.array(imageSchema),
   }),
+  placement_description: z
+    .string()
+    .min(1, { message: "placement_description" })
+    .max(200, { message: "placement_description" }),
 });

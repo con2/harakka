@@ -22,6 +22,7 @@ export type CreateItemType = {
   quantity: number;
   available_quantity: number;
   is_active: boolean;
+  placement_description: string;
   translations: {
     fi: {
       item_name: string;
@@ -44,6 +45,7 @@ export type CreateItemType = {
         alt_text?: string;
         display_order: number;
         is_active: boolean;
+        object_fit: "contain" | "cover";
       };
     } | null;
     details: {
@@ -56,12 +58,16 @@ export type CreateItemType = {
         alt_text?: string;
         display_order: number;
         is_active: boolean;
+        object_fit: "contain" | "cover";
       };
     }[];
   };
 };
 
-export type MappedItem = Omit<CreateItemType, "location" | "tags" | "images"> & {
+export type MappedItem = Omit<
+  CreateItemType,
+  "location" | "tags" | "images"
+> & {
   location_id: string;
   org_id: string;
 };

@@ -201,7 +201,7 @@ CREATE TABLE storage_item_images (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   item_id UUID REFERENCES storage_items(id) NOT NULL,
   image_url VARCHAR NOT NULL,
-  image_type VARCHAR NOT NULL CHECK (image_type IN ('main', 'thumbnail', 'detail')),
+  image_type VARCHAR NOT NULL CHECK (image_type IN ('main', 'detail')),
   display_order INTEGER NOT NULL,
   alt_text VARCHAR,
   is_active BOOLEAN DEFAULT TRUE,
