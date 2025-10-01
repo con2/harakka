@@ -24,7 +24,6 @@ import { toastConfirm } from "@/components/ui/toastConfirm";
 import {
   getItemImages,
   selectItemsWithLoadedImages,
-  makeSelectItemImages,
 } from "@/store/slices/itemImagesSlice";
 import { BookingItemWithDetails } from "@/types";
 import InlineTimeframePicker from "@/components/InlineTimeframeSelector";
@@ -39,6 +38,7 @@ import {
   updateQuantity,
   fetchItemsAvailability,
 } from "@/utils/quantityHelpers";
+import { ItemImage } from "@/components/ItemImage";
 
 const MyBookingsPage = () => {
   const { id } = useParams();
@@ -174,35 +174,6 @@ const MyBookingsPage = () => {
       setLoadingAvailability,
     );
   }, [globalStartDate, globalEndDate, editFormItems]);
-
-  // ItemImage selector using itemImagesSlice
-  const ItemImage = ({
-    itemId,
-    itemName,
-  }: {
-    itemId: string;
-    itemName?: string;
-  }) => {
-    const selectItemImages = useMemo(() => makeSelectItemImages(), []);
-    const images = useAppSelector((s) => selectItemImages(s, itemId));
-    const first = images?.[0]?.image_url;
-
-    return (
-      <div className="h-8 w-8 rounded-md ring-1 ring-gray-200 overflow-hidden bg-gray-100 flex items-center justify-center">
-        {first ? (
-          <img
-            src={first}
-            alt={itemName ?? ""}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <span className="text-xs font-medium text-gray-600">
-            {(itemName ?? "").slice(0, 2).toUpperCase()}
-          </span>
-        )}
-      </div>
-    );
-  };
 
   /**
    * Columns for booking items data table
