@@ -315,7 +315,7 @@ function RequestDetailsPage() {
             }),
           );
         }
-        void navigate("/my-bookings");
+        void navigate("/requests");
         return;
       }
 
@@ -436,12 +436,12 @@ function RequestDetailsPage() {
           </h1>
           <div className="space-y-2 grid grid-cols-2 gap-4 text-sm text-primary">
             <div className="flex flex-col">
-              <p>{full_name || t.bookingList.status.unknown[lang]}</p>
+              <p>{full_name}</p>
               <div className="flex items-center gap-2">
                 <p className="mb-0">{email}</p>
               </div>
               <div className="flex flex-row gap-x-2 flex-wrap">
-                {t.bookingDetailsPage.dateRange[lang]}{" "}
+                {t.requestDetailsPage.dateRange[lang]}{" "}
                 <p>
                   {booking_items && booking_items.length > 0
                     ? `${formatDate(
@@ -457,12 +457,12 @@ function RequestDetailsPage() {
             </div>
             <div className="flex flex-col">
               <p className="font-normal mb-0 flex gap-2">
-                {`${t.bookingDetailsPage.status[lang]}: `}
+                {`${t.common.status[lang]}: `}
                 <StatusBadge status={status} />
               </p>
               <p>{`Total items: ${booking_items?.length ?? 0}`}</p>
               <p>
-                {`${t.bookingDetailsPage.modal.date[lang]} ${formatDate(new Date(created_at || ""), "d MMM yyyy")}`}
+                {`${t.common.date[lang]} ${formatDate(new Date(created_at || ""), "d MMM yyyy")}`}
               </p>
             </div>
           </div>
@@ -523,7 +523,7 @@ function RequestDetailsPage() {
                           toast.success(
                             t.myBookingsPage.edit.toast.emptyCancelled[lang],
                           );
-                          void navigate("/my-bookings");
+                          void navigate("/admin/requests");
                         }
                       } catch {
                         toast.error(
@@ -535,7 +535,7 @@ function RequestDetailsPage() {
                 }}
                 variant="destructive"
               >
-                {t.myBookingsPage.edit.buttons.cancel[lang]}
+                {t.common.cancel[lang]}
               </Button>
             )}
           </div>

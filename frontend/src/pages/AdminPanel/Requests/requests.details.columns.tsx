@@ -50,7 +50,7 @@ export const getRequestDetailsColumns: (
   },
   {
     accessorKey: "item_name",
-    header: t.myBookingsPage.columns.item[lang],
+    header: t.requestDetailsPage.columns.itemName[lang],
     cell: ({ row }) => {
       const itemName = row.original.storage_items.translations[lang].item_name;
       const formattedName =
@@ -70,7 +70,7 @@ export const getRequestDetailsColumns: (
     accessorKey: "quantity",
     header: () => (
       <p className={cn(showEdit ? "text-center" : "text-start")}>
-        {t.myBookingsPage.columns.quantity[lang]}
+        {t.requestDetailsPage.columns.quantity[lang]}
       </p>
     ),
     cell: ({ row }) => {
@@ -144,7 +144,7 @@ export const getRequestDetailsColumns: (
   },
   {
     accessorKey: "status",
-    header: t.myBookingsPage.columns.status[lang],
+    header: t.requestDetailsPage.columns.status[lang],
     cell: ({ row }) => {
       const { id, status } = row.original;
       const isMarkedForRemoval = itemsMarkedForRemoval.has(String(id));
@@ -157,7 +157,7 @@ export const getRequestDetailsColumns: (
   },
   {
     id: "actions",
-    header: showEdit ? t.bookingDetailsPage.edit.columns.actions[lang] : "",
+    header: showEdit ? t.requestDetailsPage.columns.actions[lang] : "",
     cell: ({ row }) => {
       const item = row.original;
       if (!showEdit || item.status === "cancelled") {

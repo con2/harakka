@@ -556,7 +556,7 @@ export class BookingService {
     booking_id: string,
     page: number,
     limit: number,
-    providerOrgId: string,
+    providerOrgId?: string,
   ): Promise<
     ApiSingleResponse<
       BookingPreview & {
