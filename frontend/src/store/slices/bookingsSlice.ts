@@ -157,19 +157,15 @@ export const getOrgBookings = createAsyncThunk(
 // get booking by ID
 export const getBookingByID = createAsyncThunk(
   "bookings/getBookingByID",
-  async (booking_id: string, { rejectWithValue, getState }) => {
+  async (
+    {
+      booking_id,
+      provider_org_id,
+    }: { booking_id: string; provider_org_id?: string },
+    { rejectWithValue },
+  ) => {
     try {
-      const state = getState() as RootState;
-      const roleName = selectActiveRoleName(state);
-      const isElevated = roleName === "super_admin";
-      const orgId = isElevated
-        ? undefined
-        : selectActiveOrganizationId(state) || undefined;
-      if (orgId) {
-        return await bookingsApi.getBookingByID(booking_id, orgId);
-      } else {
-        return await bookingsApi.getBookingByID(booking_id, "");
-      }
+      return await bookingsApi.getBookingByID(booking_id, provider_org_id);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch user bookings"),

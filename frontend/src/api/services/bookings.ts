@@ -92,16 +92,16 @@ export const bookingsApi = {
 
   /**
    * Get bookings for a specific user
-   * @param user_id - User ID of booking
    * @param booking_id ID of the booking to fetch
+   * @param orgId
    * @returns Promise with user's bookings
    */
   getBookingByID: async (
     booking_id: string,
-    orgId: string,
+    orgId?: string,
   ): Promise<ApiSingleResponse<BookingPreview>> => {
     return api.get(
-      `/bookings/id/${booking_id}?org_id=${encodeURIComponent(orgId)}`,
+      `/bookings/id/${booking_id}${orgId ? `?org_id=${encodeURIComponent(orgId)}` : ""}`,
     );
   },
 

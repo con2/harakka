@@ -180,7 +180,9 @@ const BookingDetailsPage = () => {
   // Refetch booking details (after confirm/reject)
   const refetchBooking = () => {
     if (!id) return;
-    void dispatch(getBookingByID(id));
+    void dispatch(
+      getBookingByID({ booking_id: id, provider_org_id: activeOrgId! }),
+    );
   };
 
   // Statuses which have no further actions
@@ -716,7 +718,9 @@ const BookingDetailsPage = () => {
 
   useEffect(() => {
     if (id) {
-      void dispatch(getBookingByID(id));
+      void dispatch(
+        getBookingByID({ booking_id: id, provider_org_id: activeOrgId! }),
+      );
     }
   }, [id, dispatch, activeOrgId]);
 
