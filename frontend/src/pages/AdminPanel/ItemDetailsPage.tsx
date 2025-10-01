@@ -157,8 +157,7 @@ const ItemDetailsPage = () => {
       void navigate("/admin/items", {
         state: {
           order: "updated_at",
-          highlight: [0],
-          ascending: false,
+          ascending: true,
         },
       });
     } catch {
