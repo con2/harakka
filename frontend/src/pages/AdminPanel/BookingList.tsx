@@ -459,12 +459,10 @@ const BookingList = () => {
             pageIndex={currentPage - 1}
             pageCount={totalPages}
             onPageChange={(page) => handlePageChange(page + 1)}
-            rowProps={(row) => {
-              return {
-                style: { cursor: "pointer" },
-                onClick: () => navigate(`/admin/bookings/${row.original.id}`),
-              };
-            }}
+            rowProps={(row) => ({
+              style: { cursor: "pointer" },
+              onClick: () => navigate(`/admin/bookings/${row.original.id}`),
+            })}
           />
         )}
       </div>
