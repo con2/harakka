@@ -12,6 +12,7 @@ import {
 import { ApiResponse, ApiSingleResponse } from "@common/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { StorageItemRow } from "../storage-items/interfaces/storage-item.interface";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Injectable()
 export class BookingItemsService {
@@ -117,13 +118,36 @@ export class BookingItemsService {
   ): Promise<
     ApiResponse<BookingItemsRow> | ApiSingleResponse<BookingItemsRow>
   > {
-    const query = supabase.from("booking_items").insert(booking_items).select();
-    if (!Array.isArray(booking_items)) query.single();
-    const result = await query;
-    if (result.error)
-      throw new BadRequestException("Could not create booking-item");
+    // If inserting multiple rows, return a PostgrestResponse
+    if (Array.isArray(booking_items)) {
+      const result: PostgrestResponse<BookingItemsRow> = await supabase
+        .from("booking_items")
+        .insert(booking_items)
+        .select();
+      if (process.env.NODE_ENV !== "production") {
+        if (result.error) handleSupabaseError(result.error);
+      } else {
+        if (result.error)
+          throw new BadRequestException("Could not create booking-item");
+      }
+      return result;
+    }
 
-    return result;
+    // If inserting a single row, ask PostgREST to return exactly one row
+    const singleResult: PostgrestSingleResponse<BookingItemsRow> =
+      await supabase
+        .from("booking_items")
+        .insert(booking_items)
+        .select()
+        .single();
+
+    if (process.env.NODE_ENV !== "production") {
+      if (singleResult.error) handleSupabaseError(singleResult.error);
+    } else {
+      if (singleResult.error)
+        throw new BadRequestException("Could not create booking-item");
+    }
+    return singleResult;
   }
   // Soft delete by setting status to cancelled
   async removeBookingItem(
