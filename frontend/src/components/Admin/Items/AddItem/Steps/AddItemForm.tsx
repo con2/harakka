@@ -49,7 +49,7 @@ import {
 import { setNextStep } from "@/store/slices/uiSlice";
 import { createItemDto } from "@/store/utils/validate";
 import { t } from "@/translations";
-import { ItemFormTag } from "@/types";
+import { Item, ItemFormTag } from "@/types";
 import { getFirstErrorMessage } from "@/utils/validate";
 import { CreateItemType } from "@common/items/form.types";
 import { ErrorMessage } from "@hookform/error-message";
@@ -58,7 +58,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { SubmitErrorHandler, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { TRANSLATION_FIELDS } from "../add-item.data";
+import { getInitialItemData, TRANSLATION_FIELDS } from "../add-item.data";
 import ItemImageUpload from "../ItemImageUpload";
 import {
   Accordion,
@@ -67,6 +67,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { buildCategoryTree, Category } from "@/store/utils/format";
+import ItemCard from "@/components/Items/ItemCard";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import Spinner from "@/components/Spinner";
@@ -95,35 +96,10 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   const isEditing = useAppSelector(selectIsEditing);
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
-    defaultValues: (initialData as CreateItemType) ??
-      editItem ?? {
-        id: crypto.randomUUID(),
-        location: {
-          id: storage?.id ?? "",
-          name: storage?.name ?? "",
-          address: storage?.address ?? "",
-        },
-        quantity: 1,
-        available_quantity: 1,
-        is_active: true,
-        tags: [],
-        translations: {
-          fi: {
-            item_name: "",
-            item_description: "",
-          },
-          en: {
-            item_name: "",
-            item_description: "",
-          },
-        },
-        category_id: "",
-        images: {
-          main: null,
-          details: [],
-        },
-        placement_description: "",
-      },
+    defaultValues:
+      (initialData as CreateItemType) ??
+      editItem ??
+      getInitialItemData(storage || undefined),
   });
 
   const refetchCategories = () => {
@@ -706,7 +682,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="mt-5">
+              <AccordionContent className="mt-5 grid grid-cols-[1fr] lg:grid-cols-[6fr_4fr] gap-8">
                 <ItemImageUpload
                   item_id={form.watch("id") || ""}
                   formImages={
@@ -714,6 +690,15 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   }
                   updateForm={form.setValue}
                 />
+                <div className="flex-1 flex flex-col h-fit">
+                  <h2 className="text-start font-main text-primary">
+                    {t.itemImageUpload.headings.preview[appLang]}
+                  </h2>
+                  <ItemCard
+                    preview
+                    item={form.getValues() as unknown as Item}
+                  />
+                </div>
               </AccordionContent>
             </AccordionItem>
 

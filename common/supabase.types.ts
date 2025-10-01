@@ -716,6 +716,7 @@ export type Database = {
           image_url: string
           is_active: boolean | null
           item_id: string
+          object_fit: Database["public"]["Enums"]["object_fit"]
           storage_path: string
         }
         Insert: {
@@ -727,6 +728,7 @@ export type Database = {
           image_url: string
           is_active?: boolean | null
           item_id: string
+          object_fit?: Database["public"]["Enums"]["object_fit"]
           storage_path: string
         }
         Update: {
@@ -738,6 +740,7 @@ export type Database = {
           image_url?: string
           is_active?: boolean | null
           item_id?: string
+          object_fit?: Database["public"]["Enums"]["object_fit"]
           storage_path?: string
         }
         Relationships: [
@@ -2427,6 +2430,7 @@ export type Database = {
         | "booking.status_rejected"
         | "booking.created"
         | "user.created"
+      object_fit: "cover" | "contain"
       role_type:
         | "User"
         | "Admin"
@@ -2598,6 +2602,7 @@ export const Constants = {
         "booking.created",
         "user.created",
       ],
+      object_fit: ["cover", "contain"],
       role_type: [
         "User",
         "Admin",

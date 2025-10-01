@@ -72,6 +72,7 @@ const ItemDetailsPage = () => {
               display_order: mainImg.display_order ?? 0,
               alt_text: mainImg.alt_text ?? "",
               is_active: mainImg.is_active ?? true,
+              object_fit: mainImg.object_fit ?? "cover",
             },
           }
         : null,
@@ -84,6 +85,7 @@ const ItemDetailsPage = () => {
           is_active,
           storage_path,
           alt_text,
+          object_fit,
         } = img;
         return {
           id,
@@ -96,6 +98,7 @@ const ItemDetailsPage = () => {
             display_order: display_order,
             alt_text: alt_text,
             is_active: is_active,
+            object_fit: object_fit,
           },
         };
       }),
