@@ -193,6 +193,10 @@ export function applyItemFilters<T extends FilterableQuery>(
         `fi_item_type.ilike.%${searchquery}%,` +
         `en_item_name.ilike.%${searchquery}%,` +
         `en_item_type.ilike.%${searchquery}%,` +
+        `category_en_name.ilike.%${searchquery}%,` +
+        `category_fi_name.ilike.%${searchquery}%,` +
+        `translations->en->>item_description.ilike.%${searchquery}%,` +
+        `translations->fi->>item_description.ilike.%${searchquery}%,` +
         `location_name.ilike.%${searchquery}%`,
     );
   }
