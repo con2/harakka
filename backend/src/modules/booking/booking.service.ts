@@ -1814,6 +1814,33 @@ export class BookingService {
     const { error: itemsUpdateError } = await updateQuery;
     if (itemsUpdateError) handleSupabaseError(itemsUpdateError);
 
+    // Check if all booking items are now cancelled and update parent booking status
+    const { data: allItems, error: allItemsError } = await supabase
+      .from("booking_items")
+      .select("status")
+      .eq("booking_id", bookingId);
+
+    if (allItemsError) handleSupabaseError(allItemsError);
+
+    if (allItems && allItems.length > 0) {
+      const allStatuses = allItems.map((item) => item.status);
+
+      // If all items are cancelled, update booking status to cancelled
+      if (allStatuses.every((status) => status === "cancelled")) {
+        const { error: bookingUpdateError } = await supabase
+          .from("bookings")
+          .update({ status: "cancelled" })
+          .eq("id", bookingId);
+
+        if (bookingUpdateError) {
+          console.error(
+            "Failed to update booking status to cancelled:",
+            bookingUpdateError,
+          );
+        }
+      }
+    }
+
     return {
       message: `Items cancelled for booking ${bookingId}`,
     };

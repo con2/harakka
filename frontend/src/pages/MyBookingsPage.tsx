@@ -298,18 +298,17 @@ const MyBookingsPage = () => {
     },
     {
       accessorKey: "self_pickup",
-      header:
-        booking?.status !== "confirmed"
-          ? ""
-          : t.myBookingsPage.columns.selfPickup[lang],
+      header: booking?.booking_items?.some((item) => item.self_pickup)
+        ? t.myBookingsPage.columns.selfPickup[lang]
+        : "",
       cell: ({ row }) => {
         const item = row.original;
 
-        if (booking?.status === "pending" || !item.self_pickup) {
+        if (!item.self_pickup) {
           return null;
         }
 
-        // Find the corresponding organization and location from extendedBooking
+        // find the corresponding org and location from extendedBooking
         const org = extendedBooking?.orgs?.find(
           (o) => o.id === item.provider_organization_id,
         );

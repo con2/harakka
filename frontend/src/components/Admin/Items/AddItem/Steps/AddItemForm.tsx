@@ -290,9 +290,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                 className="font-main w-full justify-between flex"
                 iconProps="!w-5 h-auto"
               >
-                <p className="text-2xl font-semibold tracking-tight w-full">
+                <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                   {t.addItemForm.headings.itemDetails[appLang]}
-                </p>
+                </h2>
               </AccordionTrigger>
               <AccordionContent className="mt-10">
                 <div className="flex flex-wrap w-full gap-x-6 space-y-4 justify-between mb-8">
@@ -530,7 +530,6 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                     )}
                   />
                 </div>
-
                 <FormField
                   control={form.control}
                   name="is_active"
@@ -554,6 +553,36 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="placement_description"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg p-4 gap-6 w-full mt-5">
+                      <div className="space-y-0.5 flex-1">
+                        <FormLabel>
+                          {t.addItemForm.labels.placement[appLang]}
+                        </FormLabel>
+                        <FormDescription>
+                          {
+                            t.addItemForm.paragraphs.placementDescription[
+                              appLang
+                            ]
+                          }
+                        </FormDescription>
+                      </div>
+                      <FormControl className="flex-1">
+                        <Textarea
+                          {...field}
+                          className={
+                            (cn("!border shadow-none border-grey mb-1"),
+                            form.formState.errors.placement_description &&
+                              "!border-(--destructive)")
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </AccordionContent>
             </AccordionItem>
 
@@ -561,9 +590,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             <AccordionItem value="tags" className="p-10 w-full">
               <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
                 <div>
-                  <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-1">
+                  <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                     {t.addItemForm.headings.assignTags[appLang]}
-                  </p>
+                  </h2>
                   <p className="text-sm leading-none font-medium">
                     {t.addItemForm.paragraphs.tagPrompt[appLang]}
                   </p>
@@ -644,9 +673,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             >
               <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
                 <div className="mb-6">
-                  <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
+                  <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                     {t.addItemForm.headings.addImages[appLang]}
-                  </p>
+                  </h2>
                   <p className="text-sm leading-none font-medium">
                     {t.addItemForm.paragraphs.imagePrompt[appLang]}
                   </p>

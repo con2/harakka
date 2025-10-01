@@ -110,6 +110,16 @@ export const itemSummary = {
       en: "An invalid type was provided for {field}",
       fi: "Virheellinen tyyppi annettu kentälle {field}",
     },
+    placement_description: {
+      too_small: {
+        en: "A placement description is required",
+        fi: "Sijoittelun kuvaus on pakollinen",
+      },
+      too_big: {
+        en: "Placement description is too long, please keep it under 200 characters.",
+        fi: "Sijoittelun kuvaus on liian pitkä, pituus saa olla enintään 200 merkkiä.",
+      },
+    },
   },
   fields: {
     category_id: {
