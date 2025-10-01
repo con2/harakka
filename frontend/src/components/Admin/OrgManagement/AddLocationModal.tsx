@@ -166,7 +166,7 @@ const AddLocationModal = ({
                 placeholder={t.addLocationModal.fields.name.placeholder[lang]}
                 required
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs italic text-muted-foreground">
                 {t.addLocationModal.fields.name.notVisibleToUsers[lang]}
               </p>
             </div>

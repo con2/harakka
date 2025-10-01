@@ -270,7 +270,7 @@ const EditLocationModal = ({
               placeholder={t.editLocationModal.fields.name.placeholder[lang]}
               required
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs italic text-muted-foreground">
               {t.editLocationModal.fields.name.notVisibleToUsers[lang]}
             </p>
           </div>

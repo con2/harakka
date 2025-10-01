@@ -20,8 +20,8 @@ export const editLocationModal = {
         fi: "Syötä sijainnin nimi",
       },
       notVisibleToUsers: {
-        en: "This will not be visible to users",
-        fi: "Tämä ei ole näkyvissä käyttäjille",
+        en: "Location name will not be visible to users",
+        fi: "Sijainti ei ole näkyvissä käyttäjille",
       },
     },
     street: {
