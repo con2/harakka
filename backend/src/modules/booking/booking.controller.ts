@@ -185,19 +185,21 @@ export class BookingController {
    */
   //TODO: limit to activeContext organization
   @Get("id/:id")
-  @Roles(["tenant_admin", "storage_manager"])
+  @Roles(["requester", "tenant_admin", "storage_manager"], {
+    match: "any",
+    sameOrg: true,
+  })
   async getBookingByID(
     @Req() req: AuthRequest,
     @Param("id") booking_id: string,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
+    @Query("org_id") org_id?: string,
   ) {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const supabase = req.supabase;
-    const org_id = req.headers["x-org-id"] as string;
-    if (!org_id)
-      throw new BadRequestException("org_id query param is required");
+
     return this.bookingService.getBookingByID(
       supabase,
       booking_id,

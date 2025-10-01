@@ -117,7 +117,12 @@ export const router = createBrowserRouter([
         path: "/admin",
         element: (
           <ProtectedRoute
-            allowedRoles={["storage_manager", "tenant_admin", "super_admin"]}
+            allowedRoles={[
+              "requester",
+              "storage_manager",
+              "tenant_admin",
+              "super_admin",
+            ]}
           >
             <AdminPanel />
           </ProtectedRoute>
@@ -174,7 +179,7 @@ export const router = createBrowserRouter([
             path: "requests",
             element: (
               <ProtectedRoute
-                allowedRoles={["storage_manager", "tenant_admin"]}
+                allowedRoles={["requester", "storage_manager", "tenant_admin"]}
               >
                 <Requests />
               </ProtectedRoute>
@@ -184,7 +189,7 @@ export const router = createBrowserRouter([
             path: "requests/:id",
             element: (
               <ProtectedRoute
-                allowedRoles={["storage_manager", "tenant_admin"]}
+                allowedRoles={["requester", "storage_manager", "tenant_admin"]}
               >
                 <RequestDetailsPage />
               </ProtectedRoute>

@@ -69,7 +69,7 @@ const AdminPanel = () => {
               dataCy="admin-nav-bookings"
             />
           )}
-          {hasAnyRole(["storage_manager", "tenant_admin"]) && (
+          {hasAnyRole(["requester", "storage_manager", "tenant_admin"]) && (
             <SidebarLink
               to="/admin/requests"
               icon={<OutgoingBookings aria-hidden className="w-6 h-5" />}
