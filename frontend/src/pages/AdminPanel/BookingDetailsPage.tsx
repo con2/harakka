@@ -34,6 +34,7 @@ import { formatBookingStatus } from "@/utils/format";
 import {
   fetchAllOrgLocations,
   selectOrgLocations,
+  selectOrgLocationsLoading,
 } from "@/store/slices/organizationLocationsSlice";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import {
@@ -64,6 +65,7 @@ const BookingDetailsPage = () => {
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const orgLocations = useAppSelector(selectOrgLocations);
+  const orgLocationsLoading = useAppSelector(selectOrgLocationsLoading);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRole = useAppSelector(selectActiveRoleName);
 
@@ -79,7 +81,6 @@ const BookingDetailsPage = () => {
     isAdmin;
 
   const hasItemsFromOtherOrgs = booking?.has_items_from_multiple_orgs ?? false;
-
   // Edit state management
   const [showEdit, setShowEdit] = useState(false);
   const [editFormItems, setEditFormItems] = useState<
@@ -109,10 +110,24 @@ const BookingDetailsPage = () => {
   };
 
   useEffect(() => {
-    if (orgLocations.length === 0)
-      void dispatch(fetchAllOrgLocations({ orgId: activeOrgId! }));
-  }, [orgLocations, activeOrgId, dispatch]);
+    if (!activeOrgId) return;
+    const missingForBooking = booking?.booking_items?.some(
+      (b) =>
+        b.provider_organization_id === activeOrgId &&
+        b.location_id &&
+        !orgLocations.some((l) => l.storage_location_id === b.location_id),
+    );
 
+    if (orgLocations.length === 0 || missingForBooking) {
+      void dispatch(
+        fetchAllOrgLocations({
+          orgId: activeOrgId,
+          pageSize: 20,
+          currentPage: 1,
+        }),
+      );
+    }
+  }, [booking, orgLocations, activeOrgId, dispatch]);
   // Computed booking item data
   const orgItems = useMemo(
     () =>
@@ -366,10 +381,16 @@ const BookingDetailsPage = () => {
       accessorKey: "location",
       header: t.bookingDetailsPage.modal.bookingItems.columns.location[lang],
       cell: ({ row }) => {
-        const loc = orgLocations.find(
-          (l) => l.storage_location_id === row.original.location_id,
+        if (orgLocationsLoading) {
+          return t.bookingDetailsPage.modal.bookingItems.columns.loading[lang];
+        }
+        const locId = row.original.location_id;
+        const loc = orgLocations.find((l) => l.storage_location_id === locId);
+        return (
+          loc?.storage_locations?.name ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—"
         );
-        return loc?.storage_locations?.name ?? "";
       },
     },
     {
