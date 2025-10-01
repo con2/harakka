@@ -1,5 +1,4 @@
 import Spinner from "@/components/Spinner";
-import { StatusBadge } from "@/components/StatusBadge";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,12 +20,11 @@ import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { t } from "@/translations";
 import { BookingStatus } from "@/types";
 import { formatBookingStatus } from "@/utils/format";
-import { BookingPreviewWithOrgData } from "@common/bookings/booking.types";
-import { ColumnDef } from "@tanstack/react-table";
-import { formatDate } from "date-fns";
 import { Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getRequestColumns } from "./requests.columns";
+import { Role } from "@common/role.types";
 
 function Requests() {
   const { lang } = useLanguage();
@@ -47,6 +45,8 @@ function Requests() {
   const { organizationId: activeOrgId, roleName: activeRole } = useAppSelector(
     selectActiveRoleContext,
   );
+
+  const columns = getRequestColumns(lang, activeRole as Role["role"]);
 
   // Pagination
   const { totalPages, limit } = useAppSelector(selectBookingPagination);
@@ -77,48 +77,6 @@ function Requests() {
       }),
     );
   }, [currentPage, statusFilter, activeOrgId, debouncedSearchQuery]); //eslint-disable-line
-
-  const columns: ColumnDef<BookingPreviewWithOrgData>[] = [
-    {
-      accessorKey: "booking_number",
-      header: t.myBookings.columns.bookingNumber[lang],
-    },
-    {
-      accessorKey: "full_name",
-      header: t.myBookings.columns.status[lang],
-      cell: ({ row }) => {
-        const { full_name, email } = row.original;
-        return (
-          <>
-            <p>{full_name}</p>
-            {activeRole === "tenant_admin" && (
-              <p className="text-xs text-muted-foreground">{email}</p>
-            )}
-          </>
-        );
-      },
-    },
-    {
-      accessorKey: "status",
-      header: t.myBookings.columns.status[lang],
-      cell: ({ row }) => {
-        const { status } = row.original;
-        return <StatusBadge status={status ?? "pending"} />;
-      },
-    },
-    {
-      accessorKey: "created_at",
-      header: t.myBookings.columns.date[lang],
-      cell: ({ row }) => {
-        const original = row.original as Record<string, unknown>;
-        return formatDate(original.created_at as string, "d MMM yyyy");
-      },
-    },
-    {
-      id: "actions",
-      cell: () => <div className="text-sm" />,
-    },
-  ];
 
   return (
     <div className="space-y-4">
