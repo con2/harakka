@@ -47,8 +47,4 @@ export const getRequestColumns: (
       return formatDate(row.original.created_at, "d MMM yyyy");
     },
   },
-  {
-    id: "actions",
-    cell: () => <div className="text-sm" />,
-  },
 ];

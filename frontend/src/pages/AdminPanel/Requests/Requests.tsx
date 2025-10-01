@@ -111,7 +111,7 @@ function Requests() {
         <Select
           onValueChange={(value) => setStatusFilter(value as BookingStatus)}
         >
-          <SelectTrigger>
+          <SelectTrigger aria-label={t.requests.aria.labels.filter[lang]}>
             {formatBookingStatus(statusFilter, true)}
           </SelectTrigger>
           <SelectContent>

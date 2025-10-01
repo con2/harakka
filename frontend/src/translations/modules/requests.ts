@@ -33,4 +33,12 @@ export const requests = {
       },
     },
   },
+  aria: {
+    labels: {
+      filter: {
+        en: "Filter by booking status",
+        fi: "Suodata varaustilan mukaan",
+      },
+    },
+  },
 };
