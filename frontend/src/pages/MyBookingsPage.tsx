@@ -337,7 +337,7 @@ const MyBookingsPage = () => {
           return null;
         }
 
-        // Find the corresponding organization and location from extendedBooking
+        // find the corresponding org and location from extendedBooking
         const org = extendedBooking?.orgs?.find(
           (o) => o.id === item.provider_organization_id,
         );
