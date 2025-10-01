@@ -28,6 +28,7 @@ import { toastConfirm } from "../components/ui/toastConfirm";
 import { TooltipTrigger, TooltipContent } from "../components/ui/tooltip";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { ProfileCompletionModal } from "../components/Profile/ProfileCompletionModal";
+import { extractCityFromLocationName } from "@/utils/validation";
 import InlineTimeframePicker from "../components/InlineTimeframeSelector";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
@@ -107,9 +108,11 @@ const Cart: React.FC = () => {
     cartItems.forEach((cartItem) => {
       const locationId = cartItem.item.location_id;
       const locationName =
-        cartItem.item.location_details?.name ||
-        cartItem.item.location_name ||
-        "Unknown Location";
+        extractCityFromLocationName(
+          cartItem.item.location_details?.name ||
+            cartItem.item.location_name ||
+            "",
+        ) || "Unknown Location";
       const locationAddress = cartItem.item.location_details?.address || "";
 
       if (!locationMap.has(locationId)) {
@@ -707,9 +710,11 @@ const Cart: React.FC = () => {
                         data-cy="cart-item-location"
                       >
                         <MapPin className="h-3 w-3" />
-                        {cartItem.item.location_details?.name ||
-                          cartItem.item.location_name ||
-                          "Unknown Location"}
+                        {extractCityFromLocationName(
+                          cartItem.item.location_details?.name ||
+                            cartItem.item.location_name ||
+                            "",
+                        ) || "Unknown Location"}
                       </p>
                     </div>
 

@@ -28,6 +28,7 @@ import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { useTranslation } from "@/hooks/useTranslation";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
+import { extractCityFromLocationName } from "@/utils/validation";
 import {
   Item,
   ItemImage,
@@ -336,7 +337,9 @@ const ItemsDetails: React.FC = () => {
                   {t.itemDetails.locations.location[lang]}:
                 </span>
                 <span className="text-sm">
-                  {(item as Item).location_details?.name}
+                  {extractCityFromLocationName(
+                    (item as Item).location_details?.name || "",
+                  )}
                 </span>
               </div>
             )}
