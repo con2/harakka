@@ -17,11 +17,19 @@ This backend delivers the API that runs our Storage & Booking system, which is b
 
 ```
 backend/src/
-├── modules/           # Feature modules (booking, auth, etc.)
-├── guards/           # Authentication & authorization
+├── modules/           # Feature modules (13 modules)
+│   ├── auth/         # Authentication
+│   ├── booking/      # Booking management
+│   ├── storage-items/ # Inventory management
+│   ├── organization/ # Multi-tenant orgs
+│   ├── user/         # User management
+│   ├── mail/         # Email system
+│   ├── item-images/  # File uploads
+│   └── ...           # Other modules
+├── guards/           # Auth & role guards
 ├── middleware/       # Request preprocessing
 ├── utils/           # Shared utilities
-├── emails/          # Email templates
+├── emails/          # React Email templates (10 templates)
 └── types/           # TypeScript definitions
 ```
 

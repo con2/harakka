@@ -10,7 +10,7 @@ This document provides a comprehensive reference for the backend API endpoints i
 - [Storage Items](#storage-items)
 - [Storage Locations](#storage-locations)
 - [Tags](#tags)
-- [Orders](#orders)
+- [Orders](#orders) <!-- change to bookings -->
 - [Payments and Invoices](#payments-and-invoices)
 - [Logs](#logs)
 - [Error Handling](#error-handling)
@@ -23,7 +23,7 @@ This document provides a comprehensive reference for the backend API endpoints i
 All API endpoints are relative to the base URL:
 
 - **Development**: `http://localhost:3000`
-- **Production**: `https://api.your-production-domain.com`
+- **Production**: `https://api.your-production-domain.com` <!-- change to actual domain -->
 
 ### Response Format
 
