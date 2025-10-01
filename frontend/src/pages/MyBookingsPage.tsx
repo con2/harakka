@@ -356,6 +356,7 @@ const MyBookingsPage = () => {
                 id={booking.id}
                 className="gap-1 h-8 text-xs"
                 org_id={item.provider_organization_id}
+                disabled={new Date(item.start_date) > new Date()}
               >
                 {t.myBookingsPage.buttons.pickedUp[lang]}
               </BookingPickupButton>

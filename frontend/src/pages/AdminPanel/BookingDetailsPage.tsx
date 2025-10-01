@@ -65,7 +65,7 @@ const BookingDetailsPage = () => {
   const orgLocations = useAppSelector(selectOrgLocations);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRole = useAppSelector(selectActiveRoleName);
-
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   // Fetch organization name if booking was made on behalf of an organization
   const organizationIds = booking?.booked_by_org ? [booking.booked_by_org] : [];
   const { organizationNames } = useOrganizationNames(organizationIds);
@@ -135,6 +135,18 @@ const BookingDetailsPage = () => {
   const hasReviewedBooking = orgItems.every(
     (item) => item.status !== "pending",
   );
+
+  // Prevent pickup before start_date: if any selected (or scoped) confirmed item has a future start_date
+  const pickupBlockedForSelection = useMemo(() => {
+    const now = new Date();
+    const scope =
+      selectedItemIds.length > 0
+        ? orgItems.filter((i) => selectedItemIds.includes(String(i.id)))
+        : orgItems;
+    return scope.some(
+      (i) => i.status === "confirmed" && new Date(i.start_date) > now,
+    );
+  }, [orgItems, selectedItemIds]);
 
   // Initialize edit form when booking is loaded (only active items)
   useEffect(() => {
@@ -862,6 +874,7 @@ const BookingDetailsPage = () => {
                 id={booking.id}
                 selectedItemIds={selectedItemIds}
                 onSuccess={refetchBooking}
+                disabled={pickupBlockedForSelection}
               />
             </div>
           )}
