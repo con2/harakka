@@ -346,6 +346,11 @@ const MyBookingsPage = () => {
 
         if (!location?.self_pickup) return null;
 
+        const isBeforeStart = new Date(item.start_date) > new Date();
+        const pickupDisabledReason = isBeforeStart
+          ? t.bookingPickup.errors.beforeStartDate[lang]
+          : undefined;
+
         return (
           <div className="flex gap-1">
             {/* Show pickup button if item status is confirmed */}
@@ -356,7 +361,8 @@ const MyBookingsPage = () => {
                 id={booking.id}
                 className="gap-1 h-8 text-xs"
                 org_id={item.provider_organization_id}
-                disabled={new Date(item.start_date) > new Date()}
+                disabled={isBeforeStart}
+                disabledReason={pickupDisabledReason}
               >
                 {t.myBookingsPage.buttons.pickedUp[lang]}
               </BookingPickupButton>

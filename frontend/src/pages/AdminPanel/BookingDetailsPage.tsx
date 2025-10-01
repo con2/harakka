@@ -136,17 +136,44 @@ const BookingDetailsPage = () => {
     (item) => item.status !== "pending",
   );
 
-  // Prevent pickup before start_date: if any selected (or scoped) confirmed item has a future start_date
-  const pickupBlockedForSelection = useMemo(() => {
+  const pickupScope = useMemo(() => {
+    if (selectedItemIds.length > 0) {
+      return orgItems.filter((i) => selectedItemIds.includes(String(i.id)));
+    }
+    return orgItems;
+  }, [orgItems, selectedItemIds]);
+
+  const pickupLocationId = useMemo(() => {
+    if (pickupScope.length === 0) return undefined;
+    const locationSet = new Set(pickupScope.map((i) => i.location_id));
+    return locationSet.size === 1 ? Array.from(locationSet)[0] : undefined;
+  }, [pickupScope]);
+
+  const pickupHasMixedLocations = useMemo(() => {
+    if (pickupScope.length === 0) return false;
+    const locationSet = new Set(pickupScope.map((i) => i.location_id));
+    return locationSet.size > 1;
+  }, [pickupScope]);
+
+  const pickupHasFutureStart = useMemo(() => {
     const now = new Date();
-    const scope =
-      selectedItemIds.length > 0
-        ? orgItems.filter((i) => selectedItemIds.includes(String(i.id)))
-        : orgItems;
-    return scope.some(
+    return pickupScope.some(
       (i) => i.status === "confirmed" && new Date(i.start_date) > now,
     );
-  }, [orgItems, selectedItemIds]);
+  }, [pickupScope]);
+
+  const pickupDisabledReason = useMemo(() => {
+    if (pickupHasMixedLocations) {
+      return t.bookingPickup.errors.multiLocation[lang];
+    }
+    if (pickupHasFutureStart) {
+      return t.bookingPickup.errors.beforeStartDate[lang];
+    }
+    return undefined;
+  }, [pickupHasMixedLocations, pickupHasFutureStart, lang]);
+
+  const pickupBlockedForSelection =
+    pickupHasFutureStart || pickupHasMixedLocations || !pickupLocationId;
 
   // Initialize edit form when booking is loaded (only active items)
   useEffect(() => {
@@ -188,7 +215,6 @@ const BookingDetailsPage = () => {
   ]);
 
   // Track selected item IDs for bulk actions
-  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   // When booking changes, clear out any selected IDs that are no longer pending
   useEffect(() => {
     if (!booking) return;
@@ -874,7 +900,9 @@ const BookingDetailsPage = () => {
                 id={booking.id}
                 selectedItemIds={selectedItemIds}
                 onSuccess={refetchBooking}
+                location_id={pickupLocationId ?? ""}
                 disabled={pickupBlockedForSelection}
+                disabledReason={pickupDisabledReason}
               />
             </div>
           )}

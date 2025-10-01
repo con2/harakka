@@ -10,10 +10,11 @@ import { ReactNode } from "react";
 
 type BookingPickUpProps = {
   id: string;
-  location_id?: string;
+  location_id: string;
   org_id?: string;
   selectedItemIds?: string[];
   disabled?: boolean;
+  disabledReason?: string;
   onSuccess?: () => void;
   children?: ReactNode;
   className?: string;
@@ -26,6 +27,7 @@ const BookingPickupButton = ({
   selectedItemIds,
   onSuccess,
   disabled = false,
+  disabledReason,
   children,
   className,
 }: BookingPickUpProps) => {
@@ -62,13 +64,16 @@ const BookingPickupButton = ({
     });
   };
   const base_classes = "text-green-600 hover:text-green-800 hover:bg-green-100";
+  const defaultTitle = t.bookingList.buttons.pickedUp[lang];
+  const title = disabled && disabledReason ? disabledReason : defaultTitle;
 
   return (
     <Button
       variant="ghost"
       size="sm"
       disabled={disabled}
-      title={t.bookingList.buttons.pickedUp[lang]}
+      title={title}
+      aria-disabled={disabled}
       className={className ? [className, base_classes].join(" ") : base_classes}
       onClick={handlePickup}
     >
