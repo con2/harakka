@@ -2,6 +2,7 @@ import Spinner from "@/components/Spinner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   cancelBooking,
+  deleteBookingItem,
   getBookingByID,
   getBookingItems,
   getOrgBookings,
@@ -36,6 +37,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { toastConfirm } from "@/components/ui/toastConfirm";
+import InlineTimeframePicker from "@/components/InlineTimeframeSelector";
 
 function RequestDetailsPage() {
   const { id } = useParams();
@@ -104,7 +106,7 @@ function RequestDetailsPage() {
       ),
     );
     setGlobalStartDate(booking.booking_items?.[0]?.start_date ?? null);
-    _setGlobalEndDate(booking.booking_items?.[0]?.end_date ?? null);
+    setGlobalEndDate(booking.booking_items?.[0]?.end_date ?? null);
     // Clear any previously marked items when re-initializing
     setItemsMarkedForRemoval(new Set());
     // Fetch images for booking items
@@ -127,7 +129,7 @@ function RequestDetailsPage() {
     [],
   );
   const [globalStartDate, setGlobalStartDate] = useState<string | null>(null);
-  const [globalEndDate, _setGlobalEndDate] = useState<string | null>(null);
+  const [globalEndDate, setGlobalEndDate] = useState<string | null>(null);
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>(
     {},
   );
@@ -138,10 +140,78 @@ function RequestDetailsPage() {
   const [itemsMarkedForRemoval, setItemsMarkedForRemoval] = useState<
     Set<string>
   >(new Set());
+  const hasItemsFromOtherOrgs = booking?.has_items_from_multiple_orgs ?? false;
 
-  useEffect(() => {
-    console.log("status: ", booking?.org_status_for_active_org);
-  }, [booking?.org_status_for_active_org]);
+  const removeItem = (
+    item: NonNullable<BookingWithDetails["booking_items"]>[number],
+  ) => {
+    if (!booking?.booking_items) return;
+
+    const orgItems = booking.booking_items.filter(
+      (bookingItem) =>
+        bookingItem.provider_organization_id === activeOrgId &&
+        bookingItem.status !== "cancelled",
+    );
+    const isLastOrgItem = orgItems.length === 1 && orgItems[0].id === item.id;
+
+    confirmItemDeletion(item, isLastOrgItem);
+  };
+  // Reusable confirmation function for item deletions
+  const confirmItemDeletion = (
+    item: NonNullable<BookingWithDetails["booking_items"]>[number],
+    isLastOrgItem: boolean,
+  ) => {
+    const config = isLastOrgItem
+      ? {
+          title: t.bookingDetailsPage.confirmations.removeAllItems.title[lang],
+          description:
+            t.bookingDetailsPage.confirmations.removeAllItems.description[lang],
+          confirmText:
+            t.bookingDetailsPage.confirmations.removeAllItems.confirmText[lang],
+          onSuccess: () => void navigate("/admin/bookings"),
+        }
+      : {
+          title: t.bookingDetailsPage.confirmations.removeItem.title[lang],
+          description:
+            t.bookingDetailsPage.confirmations.removeItem.description[lang],
+          confirmText:
+            t.bookingDetailsPage.confirmations.removeItem.confirmText[lang],
+          onSuccess: () =>
+            toast.success(
+              t.bookingDetailsPage.edit.toast.itemPermanentlyRemoved[lang],
+            ),
+        };
+
+    toastConfirm({
+      title: config.title,
+      description: config.description,
+      confirmText: config.confirmText,
+      cancelText:
+        t.bookingDetailsPage.confirmations.removeItem.cancelText[lang],
+      onConfirm: async () => {
+        try {
+          await dispatch(
+            deleteBookingItem({
+              bookingId: booking!.id,
+              bookingItemId: item.id,
+            }),
+          ).unwrap();
+
+          if (isLastOrgItem) {
+            toast.success(
+              t.bookingDetailsPage.edit.toast.itemRemovedWillNotAppear[lang],
+            );
+            config.onSuccess();
+          } else {
+            config.onSuccess();
+          }
+        } catch {
+          toast.error(t.bookingDetailsPage.edit.toast.failedToRemoveItem[lang]);
+        }
+      },
+    });
+  };
+
   // Availability check when timeframe or items change
   useEffect(() => {
     if (!globalStartDate || !globalEndDate) return;
@@ -342,6 +412,7 @@ function RequestDetailsPage() {
     handleIncrementQuantity,
     handleDecrementQuantity,
     availability,
+    removeItem,
   );
 
   if (loading) return <Spinner />;
@@ -469,7 +540,29 @@ function RequestDetailsPage() {
             )}
           </div>
         </div>
-
+        {showEdit && (
+          <div className="mb-4">
+            {hasItemsFromOtherOrgs ? (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  {t.bookingDetailsPage.edit.hasItemsFromMultipleOrgs[lang]}
+                </p>
+              </div>
+            ) : (
+              <InlineTimeframePicker
+                startDate={globalStartDate ? new Date(globalStartDate) : null}
+                endDate={globalEndDate ? new Date(globalEndDate) : null}
+                onChange={(type, date) => {
+                  if (type === "start") {
+                    setGlobalStartDate(date ? date.toISOString() : null);
+                    return;
+                  }
+                  setGlobalEndDate(date ? date.toISOString() : null);
+                }}
+              />
+            )}
+          </div>
+        )}
         {/* Table */}
         {groupedBookingItems.map((orgGroup, index) => (
           <div key={orgGroup.orgName || `org-${index}`} className="mb-4">
