@@ -71,5 +71,6 @@ export const createItemDto = z.object({
   }),
   placement_description: z
     .string()
-    .min(1, { message: "placement_description" }),
+    .min(1, { message: "placement_description" })
+    .max(200, { message: "placement_description" }),
 });
