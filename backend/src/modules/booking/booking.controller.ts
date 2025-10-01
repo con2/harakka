@@ -140,7 +140,7 @@ export class BookingController {
    * @returns Paginated list of the user's bookings
    */
   @Get("org/:org_id")
-  @Roles(["user", "requester", "storage_manager", "tenant_admin"], {
+  @Roles(["requester", "storage_manager", "tenant_admin"], {
     match: "any",
     sameOrg: true,
   })
