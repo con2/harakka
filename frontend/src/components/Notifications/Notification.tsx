@@ -1,21 +1,9 @@
 import * as React from "react";
-import { Bell, X, Check, CheckCheck } from "lucide-react";
 import { supabase } from "@/config/supabase";
 import { DBTables } from "@common/database.types";
 import { subscribeToNotifications } from "@/lib/notifications";
 import { useNavigate } from "react-router-dom";
 import { t } from "@/translations";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppSelector } from "@/store/hooks";
 import {
@@ -25,12 +13,8 @@ import {
 import { useRoles } from "@/hooks/useRoles";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+import { NotificationDesktopView } from "@/components/Notifications/NotificationDesktopView";
+import { NotificationMobile } from "@/components/Notifications/NotificationMobile";
 
 /**
  * Notifications dropdown component
@@ -255,621 +239,175 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
     await supabase.from("notifications").delete().eq("id", id);
   };
 
-  // ——————————————————————————————— Mobile View ———————————————————————————————
-  // Mobile: use a slide-in panel instead of a dropdown menu
-  // because tap targets are larger and easier to hit.
+  // Row open behavior shared by both views
+  const onOpenRow = (n: NotificationRow) => {
+    const safe = (v: unknown) =>
+      typeof v === "string" || typeof v === "number" ? String(v) : "";
+
+    void markRead(n.id);
+
+    if (n.type === "user.created") {
+      const id =
+        "new_user_id" in n.metadata ? safe(n.metadata.new_user_id) : null;
+
+      // Ensure we have super_admin context to view users
+      if (activeRoleName !== "super_admin") {
+        const superCtx = findSuperAdminRole();
+        if (superCtx) {
+          const needsSwitch =
+            activeOrgId !== superCtx.organization_id ||
+            activeRoleName !== superCtx.role_name;
+          if (needsSwitch) {
+            setActiveContext(
+              superCtx.organization_id,
+              superCtx.role_name,
+              superCtx.organization_name ?? "",
+            );
+          }
+        }
+      }
+
+      if (id) void navigate(`/admin/users/${id}`);
+      else void navigate("/admin/users");
+      return;
+    }
+
+    if (
+      n.type === "booking.created" ||
+      n.type === "booking.status_approved" ||
+      n.type === "booking.status_rejected"
+    ) {
+      const bookingId = safe(n.metadata.booking_id);
+      const orgId = n.metadata.organization_id
+        ? safe(n.metadata.organization_id)
+        : null;
+
+      if (orgId) {
+        const candidate = findBestOrgAdminRole(orgId);
+        if (candidate) {
+          const needsSwitch =
+            activeOrgId !== candidate.organization_id ||
+            activeRoleName !== candidate.role_name;
+          if (needsSwitch) {
+            // On desktop, show a toast with undo when switching context
+            if (!isMobile) {
+              const prev = {
+                organizationId: activeContext.organizationId,
+                roleName: activeContext.roleName,
+                organizationName: activeContext.organizationName,
+              };
+              if (candidate.organization_id && candidate.role_name) {
+                setActiveContext(
+                  candidate.organization_id,
+                  candidate.role_name,
+                  candidate.organization_name ?? "",
+                );
+              }
+
+              const roleKey = candidate.role_name;
+              const roleLabel =
+                roleKey === "tenant_admin"
+                  ? t.common.roles.tenantAdmin[lang]
+                  : roleKey === "storage_manager"
+                    ? t.common.roles.storageManager[lang]
+                    : roleKey === "super_admin"
+                      ? t.common.roles.superAdmin[lang]
+                      : roleKey;
+              const orgLabel = candidate.organization_name ?? "";
+              const msgTpl =
+                t.navigation.notifications.toasts.switchedContext[lang];
+              const msg = msgTpl
+                .replace("{role}", roleLabel)
+                .replace("{org}", orgLabel);
+              toast.info(msg, {
+                action: {
+                  label: t.common.undo[lang],
+                  onClick: () => {
+                    if (
+                      prev.organizationId &&
+                      prev.roleName &&
+                      prev.organizationName
+                    ) {
+                      setActiveContext(
+                        prev.organizationId,
+                        prev.roleName,
+                        prev.organizationName,
+                      );
+                      const prevRoleLabel =
+                        prev.roleName === "tenant_admin"
+                          ? t.common.roles.tenantAdmin[lang]
+                          : prev.roleName === "storage_manager"
+                            ? t.common.roles.storageManager[lang]
+                            : prev.roleName === "super_admin"
+                              ? t.common.roles.superAdmin[lang]
+                              : prev.roleName;
+                      const revertTpl =
+                        t.navigation.notifications.toasts.revertedContext[lang];
+                      toast.info(
+                        revertTpl
+                          .replace("{role}", prevRoleLabel)
+                          .replace("{org}", prev.organizationName ?? ""),
+                      );
+                    }
+                  },
+                },
+              });
+            } else {
+              // Mobile: switch silently (no toast), as before
+              if (candidate.organization_id && candidate.role_name) {
+                setActiveContext(
+                  candidate.organization_id,
+                  candidate.role_name,
+                  candidate.organization_name ?? "",
+                );
+              }
+            }
+          }
+        }
+      }
+
+      void navigate(`/admin/bookings/${bookingId}`);
+    }
+  };
+
+  // Render per device
   if (isMobile) {
     return (
-      <>
-        <Button
-          variant="ghost"
-          className="relative hover:bg-(--subtle-grey) w-fit px-2"
-          onClick={() => setPanelOpen(true)}
-        >
-          {/* Notification Bell */}
-          <Bell className="!h-4.5 !w-5 text-(--midnight-black)" />
-          {unseen > 0 && (
-            <Badge className="absolute -right-1 -top-1 h-4 min-w-[1rem] px-1 text-[0.625rem] font-sans text-white leading-none !bg-(--emerald-green)">
-              {unseen}
-            </Badge>
-          )}
-          {/* Open notification */}
-          <span className="sr-only">
-            {t.navigation.notifications.srOpen[lang]}
-          </span>
-        </Button>
-        {/* Notification Panel */}
-        <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
-          <SheetContent
-            side="right"
-            hideClose
-            className="w-[90vw] sm:max-w-sm p-0"
-          >
-            <div className="p-3 border-b flex items-center justify-between gap-2 flex-wrap">
-              {/* Notifications title (SheetTitle for accessibility) */}
-              <div className="flex flex-col min-w-0">
-                <SheetTitle className="text-base font-medium truncate">
-                  {t.navigation.notifications.label[lang]}
-                </SheetTitle>
-                {/* Visually hidden description to satisfy Dialog a11y */}
-                <SheetDescription className="sr-only">
-                  View and manage your notifications.
-                </SheetDescription>
-              </div>
-              <div className="flex items-center gap-2 flex-none ml-auto">
-                {showToggle && (
-                  <div className="inline-flex rounded border border-(--subtle-grey) overflow-hidden">
-                    {/* Active */}
-                    <button
-                      className={`px-2 py-1 text-xs ${!viewAll ? "bg-(--subtle-grey)" : ""}`}
-                      onClick={() => setViewAll(false)}
-                      title={t.navigation.notifications.viewActive[lang]}
-                    >
-                      {t.navigation.notifications.viewActive[lang]}
-                    </button>
-
-                    {/* All */}
-                    <button
-                      className={`px-2 py-1 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
-                      onClick={() => setViewAll(true)}
-                      title={t.navigation.notifications.viewAll[lang]}
-                    >
-                      {t.navigation.notifications.viewAll[lang]}
-                    </button>
-                  </div>
-                )}
-                {visibleFeed.length > 0 &&
-                  (viewAll ? unseen > 0 : visibleUnseen > 0) && (
-                    /* Mark All Read */
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      title={t.navigation.notifications.markAllRead[lang]}
-                      onClick={markAllRead}
-                      className="h-9 w-9 p-1.5 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
-                    >
-                      <CheckCheck className="h-5 w-5" />
-                    </Button>
-                  )}
-                {visibleFeed.length > 0 && (
-                  /* Delete All */
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    title={t.navigation.notifications.deleteAll[lang]}
-                    onClick={deleteAll}
-                    className="h-9 w-9 p-1.5 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {visibleFeed.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground">
-                {t.navigation.notifications.none[lang]}
-              </p>
-            ) : (
-              <ScrollArea className="max-h-[80vh]">
-                {visibleFeed.map((n) => {
-                  const tpl =
-                    (
-                      t.notification as Record<
-                        string,
-                        (typeof t.notification)[keyof typeof t.notification]
-                      >
-                    )[n.type] ?? null;
-                  const safe = (v: unknown) =>
-                    typeof v === "string" || typeof v === "number"
-                      ? String(v)
-                      : "";
-                  const interpolate = (s: string) =>
-                    s
-                      .replace(
-                        "{num}",
-                        "booking_number" in n.metadata
-                          ? safe(n.metadata.booking_number)
-                          : "",
-                      )
-                      .replace(
-                        "{email}",
-                        "email" in n.metadata ? safe(n.metadata.email) : "",
-                      );
-                  const title = tpl ? interpolate(tpl.title[lang]) : n.title;
-                  const message =
-                    tpl && tpl.message[lang]
-                      ? interpolate(tpl.message[lang])
-                      : (n.message ?? "");
-
-                  return (
-                    <div
-                      key={n.id}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          // open row
-                          void markRead(n.id);
-                          if (n.type === "user.created") {
-                            const id =
-                              "new_user_id" in n.metadata
-                                ? safe(n.metadata.new_user_id)
-                                : null;
-                            if (activeRoleName !== "super_admin") {
-                              const superCtx = findSuperAdminRole();
-                              if (superCtx) {
-                                const needsSwitch =
-                                  activeOrgId !== superCtx.organization_id ||
-                                  activeRoleName !== superCtx.role_name;
-                                if (needsSwitch)
-                                  setActiveContext(
-                                    superCtx.organization_id,
-                                    superCtx.role_name,
-                                    superCtx.organization_name ?? "",
-                                  );
-                              }
-                            }
-                            if (id) void navigate(`/admin/users/${id}`);
-                            else void navigate("/admin/users");
-                          } else if (
-                            n.type === "booking.created" ||
-                            n.type === "booking.status_approved" ||
-                            n.type === "booking.status_rejected"
-                          ) {
-                            const bookingId = safe(n.metadata.booking_id);
-                            const orgId = n.metadata.organization_id
-                              ? safe(n.metadata.organization_id)
-                              : null;
-                            if (orgId) {
-                              const candidate = findBestOrgAdminRole(orgId);
-                              if (candidate) {
-                                const needsSwitch =
-                                  activeOrgId !== candidate.organization_id ||
-                                  activeRoleName !== candidate.role_name;
-                                if (needsSwitch)
-                                  setActiveContext(
-                                    candidate.organization_id,
-                                    candidate.role_name,
-                                    candidate.organization_name ?? "",
-                                  );
-                              }
-                            }
-                            void navigate(`/admin/bookings/${bookingId}`);
-                          }
-                        }
-                      }}
-                      onClick={() => {
-                        // open row
-                        void markRead(n.id);
-                        if (n.type === "user.created") {
-                          const id =
-                            "new_user_id" in n.metadata
-                              ? safe(n.metadata.new_user_id)
-                              : null;
-                          if (activeRoleName !== "super_admin") {
-                            const superCtx = findSuperAdminRole();
-                            if (superCtx) {
-                              const needsSwitch =
-                                activeOrgId !== superCtx.organization_id ||
-                                activeRoleName !== superCtx.role_name;
-                              if (needsSwitch)
-                                setActiveContext(
-                                  superCtx.organization_id,
-                                  superCtx.role_name,
-                                  superCtx.organization_name ?? "",
-                                );
-                            }
-                          }
-                          if (id) void navigate(`/admin/users/${id}`);
-                          else void navigate("/admin/users");
-                        } else if (
-                          n.type === "booking.created" ||
-                          n.type === "booking.status_approved" ||
-                          n.type === "booking.status_rejected"
-                        ) {
-                          const bookingId = safe(n.metadata.booking_id);
-                          const orgId = n.metadata.organization_id
-                            ? safe(n.metadata.organization_id)
-                            : null;
-                          if (orgId) {
-                            const candidate = findBestOrgAdminRole(orgId);
-                            if (candidate) {
-                              const needsSwitch =
-                                activeOrgId !== candidate.organization_id ||
-                                activeRoleName !== candidate.role_name;
-                              if (needsSwitch)
-                                setActiveContext(
-                                  candidate.organization_id,
-                                  candidate.role_name,
-                                  candidate.organization_name ?? "",
-                                );
-                            }
-                          }
-                          void navigate(`/admin/bookings/${bookingId}`);
-                        }
-                      }}
-                      className="flex flex-col gap-1 py-3 px-3 border-b cursor-pointer hover:bg-(--subtle-grey) text-left w-full"
-                    >
-                      {/* Notification item */}
-                      <div className="flex w-full items-start justify-between gap-2">
-                        <div className="flex flex-col">
-                          <span className="font-medium">{title}</span>
-                          {message && (
-                            <span className="text-xs text-muted-foreground">
-                              {message}
-                            </span>
-                          )}
-                        </div>
-                        {/* Notification actions */}
-                        <div className="flex items-center gap-2">
-                          {n.read_at === null && (
-                            /* Mark as read button */
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                void markRead(n.id);
-                              }}
-                              className="h-9 w-9 p-1.5 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
-                              title={
-                                t.navigation.notifications.markAsRead[lang]
-                              }
-                            >
-                              <Check className="h-5 w-5" />
-                            </Button>
-                          )}
-                          {/* Delete notification */}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              void removeNotification(n.id);
-                            }}
-                            className="h-9 w-9 p-1.5 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
-                            title={
-                              t.navigation.notifications.deleteOne?.[lang] ??
-                              t.navigation.notifications.deleteAll[lang]
-                            }
-                          >
-                            <X className="h-5 w-5" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </ScrollArea>
-            )}
-          </SheetContent>
-        </Sheet>
-      </>
+      <NotificationMobile
+        lang={lang}
+        unseen={unseen}
+        visibleUnseen={visibleUnseen}
+        showToggle={showToggle}
+        viewAll={viewAll}
+        setViewAll={setViewAll}
+        otherUnread={otherUnread}
+        visibleFeed={visibleFeed}
+        panelOpen={panelOpen}
+        setPanelOpen={setPanelOpen}
+        markAllRead={markAllRead}
+        deleteAll={deleteAll}
+        markRead={markRead}
+        removeNotification={removeNotification}
+        onOpenRow={onOpenRow}
+      />
     );
   }
 
-  // ——————————————————————————————— Desktop View ———————————————————————————————
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        {/* Notification bell */}
-        <Button
-          variant="ghost"
-          aria-label={t.navigation.aria.labels.notifications[lang].replace(
-            "{number}",
-            unseen.toString(),
-          )}
-          className="relative hover:bg-(--subtle-grey) w-fit px-2"
-        >
-          <Bell
-            aria-hidden="true"
-            className="!h-4.5 !w-5 text-(--midnight-black)"
-          />
-          {/* Notification count badge */}
-          {unseen > 0 && (
-            <Badge className="absolute -right-1 -top-1 h-4 min-w-[1rem] px-1 text-[0.625rem] font-sans text-white leading-none !bg-(--emerald-green)">
-              {unseen}
-            </Badge>
-          )}
-          {/* Screen reader label */}
-          <span className="sr-only">
-            {t.navigation.notifications.srOpen[lang]}
-          </span>
-        </Button>
-      </DropdownMenuTrigger>
-      {/* Notification Container */}
-      <DropdownMenuContent className="w-80 md:w-96" align="end">
-        {/* Top part of container */}
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {/* "Notifications" */}
-            <span>{t.navigation.notifications.label[lang]}</span>
-            {showToggle && (
-              <div className="ml-2 inline-flex rounded border border-(--subtle-grey) overflow-hidden">
-                {/* "Active" */}
-                <button
-                  className={`px-2 py-0.5 text-xs ${!viewAll ? "bg-(--subtle-grey)" : ""}`}
-                  onClick={() => setViewAll(false)}
-                  title={t.navigation.notifications.viewActive[lang]}
-                >
-                  {t.navigation.notifications.viewActive[lang]}
-                </button>
-                {/* "All" */}
-                <button
-                  className={`px-2 py-0.5 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
-                  onClick={() => setViewAll(true)}
-                  title={t.navigation.notifications.viewAll[lang]}
-                >
-                  {t.navigation.notifications.viewAll[lang]}
-                </button>
-              </div>
-            )}
-            {/* "Other" */}
-            {showToggle && !viewAll && otherUnread > 0 && (
-              <span className="ml-1 text-[0.7rem] text-muted-foreground">
-                {t.navigation.notifications.otherContextsPrefix[lang]}{" "}
-                {otherUnread}
-              </span>
-            )}
-          </div>
-          {/* Actions */}
-          <div className="flex items-center gap-1">
-            {(viewAll ? unseen > 0 : visibleUnseen > 0) && (
-              /* Mark All as Read */
-              <Button
-                size="sm"
-                variant="ghost"
-                title={t.navigation.notifications.markAllRead[lang]}
-                onClick={markAllRead}
-                className="h-8 w-8 p-1 rounded-md hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
-              >
-                <CheckCheck className="h-4 w-4" />
-              </Button>
-            )}
-            {visibleFeed.length > 0 && (
-              /* Delete All */
-              <Button
-                size="sm"
-                variant="ghost"
-                title={t.navigation.notifications.deleteAll[lang]}
-                onClick={deleteAll}
-                className="h-8 w-8 p-1 rounded-md hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </DropdownMenuLabel>
-
-        {/* Notification list */}
-        <DropdownMenuSeparator />
-        {visibleFeed.length === 0 ? (
-          <p className="p-4 text-sm text-muted-foreground">
-            {t.navigation.notifications.none[lang]}
-          </p>
-        ) : (
-          <ScrollArea className="max-h-[70vh]">
-            {visibleFeed.map((n) => {
-              // ———————————— Translate Title / Message ————————————
-              const tpl = // Translation template for this notification type
-                (
-                  t.notification as Record<
-                    string,
-                    (typeof t.notification)[keyof typeof t.notification]
-                  >
-                )[n.type] ?? null;
-
-              const safe = (v: unknown) =>
-                typeof v === "string" || typeof v === "number" ? String(v) : "";
-
-              const interpolate = (s: string) =>
-                s
-                  .replace(
-                    "{num}",
-                    "booking_number" in n.metadata
-                      ? safe(n.metadata.booking_number)
-                      : "",
-                  )
-                  .replace(
-                    "{email}",
-                    "email" in n.metadata ? safe(n.metadata.email) : "",
-                  );
-
-              const title = tpl ? interpolate(tpl.title[lang]) : n.title;
-              const message =
-                tpl && tpl.message[lang]
-                  ? interpolate(tpl.message[lang])
-                  : (n.message ?? "");
-
-              return (
-                // One notification card — use DropdownMenuItem directly (no nested button)
-                <DropdownMenuItem
-                  key={n.id}
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    void markRead(n.id);
-
-                    if (n.type === "user.created") {
-                      const id =
-                        "new_user_id" in n.metadata
-                          ? safe(n.metadata.new_user_id)
-                          : null;
-
-                      // Ensure we have super_admin context to view users
-                      if (activeRoleName !== "super_admin") {
-                        const superCtx = findSuperAdminRole();
-                        if (superCtx) {
-                          const needsSwitch =
-                            activeOrgId !== superCtx.organization_id ||
-                            activeRoleName !== superCtx.role_name;
-                          if (needsSwitch) {
-                            setActiveContext(
-                              superCtx.organization_id,
-                              superCtx.role_name,
-                              superCtx.organization_name ?? "",
-                            );
-                          }
-                        }
-                      }
-
-                      if (id) {
-                        void navigate(`/admin/users/${id}`);
-                      } else {
-                        void navigate("/admin/users");
-                      }
-                    } else if (
-                      n.type === "booking.created" ||
-                      n.type === "booking.status_approved" ||
-                      n.type === "booking.status_rejected"
-                    ) {
-                      // Navigate to the detailed booking view
-                      const bookingId = safe(n.metadata.booking_id);
-                      const orgId = n.metadata.organization_id
-                        ? safe(n.metadata.organization_id)
-                        : null;
-
-                      if (orgId) {
-                        const candidate = findBestOrgAdminRole(orgId);
-
-                        if (candidate) {
-                          const needsSwitch =
-                            activeOrgId !== candidate.organization_id ||
-                            activeRoleName !== candidate.role_name;
-                          if (needsSwitch) {
-                            const prev = {
-                              organizationId: activeContext.organizationId,
-                              roleName: activeContext.roleName,
-                              organizationName: activeContext.organizationName,
-                            };
-                            // Guard against nullable fields from the view type
-                            if (
-                              candidate.organization_id &&
-                              candidate.role_name
-                            ) {
-                              setActiveContext(
-                                candidate.organization_id,
-                                candidate.role_name,
-                                candidate.organization_name ?? "",
-                              );
-                            }
-
-                            // Toast: explain the automatic context switch
-                            const roleKey = candidate.role_name;
-                            const roleLabel =
-                              roleKey === "tenant_admin"
-                                ? t.common.roles.tenantAdmin[lang]
-                                : roleKey === "storage_manager"
-                                  ? t.common.roles.storageManager[lang]
-                                  : roleKey === "super_admin"
-                                    ? t.common.roles.superAdmin[lang]
-                                    : roleKey;
-                            const orgLabel = candidate.organization_name ?? "";
-                            const msgTpl =
-                              t.navigation.notifications.toasts.switchedContext[
-                                lang
-                              ];
-                            const msg = msgTpl
-                              .replace("{role}", roleLabel)
-                              .replace("{org}", orgLabel);
-                            toast.info(msg, {
-                              action: {
-                                label: t.common.undo[lang],
-                                onClick: () => {
-                                  // Revert to previous context (if present)
-                                  if (
-                                    prev.organizationId &&
-                                    prev.roleName &&
-                                    prev.organizationName
-                                  ) {
-                                    setActiveContext(
-                                      prev.organizationId,
-                                      prev.roleName,
-                                      prev.organizationName,
-                                    );
-                                    const prevRoleLabel =
-                                      prev.roleName === "tenant_admin"
-                                        ? t.common.roles.tenantAdmin[lang]
-                                        : prev.roleName === "storage_manager"
-                                          ? t.common.roles.storageManager[lang]
-                                          : prev.roleName === "super_admin"
-                                            ? t.common.roles.superAdmin[lang]
-                                            : prev.roleName;
-                                    const revertTpl =
-                                      t.navigation.notifications.toasts
-                                        .revertedContext[lang];
-                                    toast.info(
-                                      revertTpl
-                                        .replace("{role}", prevRoleLabel)
-                                        .replace(
-                                          "{org}",
-                                          prev.organizationName ?? "",
-                                        ),
-                                    );
-                                  }
-                                },
-                              },
-                            });
-                          }
-                        }
-                      }
-
-                      void navigate(`/admin/bookings/${bookingId}`);
-                    }
-                  }}
-                  className="flex w-full flex-col gap-0.5 py-2 text-left cursor-pointer hover:bg-(--subtle-grey) data-[highlighted]:bg-(--subtle-grey) focus:bg-(--subtle-grey)"
-                >
-                  <div className="flex w-full items-start justify-between gap-2">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{title}</span>
-                      {message && (
-                        <span className="text-xs text-muted-foreground">
-                          {message}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      {n.read_at === null && (
-                        /* Mark as read button */
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void markRead(n.id);
-                          }}
-                          className="h-8 w-8 p-1 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
-                          title={t.navigation.notifications.markAsRead[lang]}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {/* Delete notification */}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void removeNotification(n.id);
-                        }}
-                        className="h-8 w-8 p-1 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
-                        title={
-                          t.navigation.notifications.deleteOne?.[lang] ??
-                          t.navigation.notifications.deleteAll[lang]
-                        }
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-              );
-            })}
-          </ScrollArea>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <NotificationDesktopView
+      lang={lang}
+      unseen={unseen}
+      visibleUnseen={visibleUnseen}
+      showToggle={showToggle}
+      viewAll={viewAll}
+      setViewAll={setViewAll}
+      otherUnread={otherUnread}
+      visibleFeed={visibleFeed}
+      markAllRead={markAllRead}
+      deleteAll={deleteAll}
+      markRead={markRead}
+      removeNotification={removeNotification}
+      onOpenRow={onOpenRow}
+    />
   );
 };
