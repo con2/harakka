@@ -30,6 +30,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { ProfileCompletionModal } from "../components/Profile/ProfileCompletionModal";
 import { extractCityFromLocationName } from "@/utils/validation";
 import InlineTimeframePicker from "../components/InlineTimeframeSelector";
+import LocationList from "../components/Cart/LocationList";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   clearCart,
@@ -100,6 +101,8 @@ const Cart: React.FC = () => {
           id: string;
           name: string;
           address: string;
+          cityName: string;
+          fullLocationName: string;
         };
         items: typeof cartItems;
       }
@@ -107,20 +110,22 @@ const Cart: React.FC = () => {
 
     cartItems.forEach((cartItem) => {
       const locationId = cartItem.item.location_id;
-      const locationName =
-        extractCityFromLocationName(
-          cartItem.item.location_details?.name ||
-            cartItem.item.location_name ||
-            "",
-        ) || "Unknown Location";
+      const fullLocationName =
+        cartItem.item.location_details?.name ||
+        cartItem.item.location_name ||
+        "";
+      const cityName =
+        extractCityFromLocationName(fullLocationName) || "Unknown Location";
       const locationAddress = cartItem.item.location_details?.address || "";
 
       if (!locationMap.has(locationId)) {
         locationMap.set(locationId, {
           locationInfo: {
             id: locationId,
-            name: locationName,
+            name: cityName,
             address: locationAddress,
+            cityName: cityName,
+            fullLocationName: fullLocationName,
           },
           items: [],
         });
@@ -132,8 +137,26 @@ const Cart: React.FC = () => {
     return Array.from(locationMap.values());
   }, [cartItems]);
 
-  // Check if items are in different locations
-  const hasMultipleLocations = itemsByLocation.length > 1;
+  // Check if items are in different locations and analyze if they're in same city
+  const locationAnalysis = useMemo(() => {
+    if (itemsByLocation.length <= 1) {
+      return { hasMultipleLocations: false, sameCity: false, cityName: null };
+    }
+
+    const uniqueCities = new Set(
+      itemsByLocation.map((loc) => loc.locationInfo.cityName),
+    );
+    const sameCity = uniqueCities.size === 1;
+    const cityName = sameCity ? Array.from(uniqueCities)[0] : null;
+
+    return {
+      hasMultipleLocations: true,
+      sameCity,
+      cityName,
+    };
+  }, [itemsByLocation]);
+
+  const hasMultipleLocations = locationAnalysis.hasMultipleLocations;
 
   // Check if checkout should be disabled based on active role context
   const isCheckoutDisabled = useMemo(() => {
@@ -647,43 +670,11 @@ const Cart: React.FC = () => {
           </div>
 
           {/* Multiple Locations Notice */}
-          {hasMultipleLocations && (
-            <div
-              className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6"
-              data-cy="cart-multiple-locations-notice"
-            >
-              <h4 className="text-blue-800 font-semibold mb-2 flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                {t.cart.locations.differentLocations[lang]}
-              </h4>
-              <p className="text-blue-700 text-sm mb-3">
-                {t.cart.locations.pickupInfo[lang]}
-              </p>
-              <ul className="space-y-2">
-                {itemsByLocation.map((locationGroup, index) => (
-                  <li
-                    key={locationGroup.locationInfo.id}
-                    className="text-blue-800 font-medium"
-                    data-cy={`cart-location-item-${index}`}
-                  >
-                    {locationGroup.locationInfo.name}{" "}
-                    <span className="text-blue-600 font-normal">
-                      ({locationGroup.items.length}{" "}
-                      {locationGroup.items.length === 1
-                        ? t.cart.locations.itemCountSingular[lang]
-                        : t.cart.locations.itemCount[lang]}
-                      )
-                    </span>
-                    {locationGroup.locationInfo.address && (
-                      <div className="text-xs text-gray-600 font-normal ml-2">
-                        {locationGroup.locationInfo.address}
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <LocationList
+            itemsByLocation={itemsByLocation}
+            locationAnalysis={locationAnalysis}
+            hasMultipleLocations={hasMultipleLocations}
+          />
 
           {/* Cart Items */}
           <div className="space-y-4 p-2" data-cy="cart-items-list">

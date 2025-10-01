@@ -62,9 +62,17 @@ export const cart = {
       fi: "Huomio: Tuotteesi sijaitsevat eri paikoissa",
       en: "Notice: Your items are located in different places",
     },
+    sameCityMultipleLocations: {
+      fi: "Sinun tulee noutaa nämä tuotteet {count} eri paikasta kaupungissa {city}",
+      en: "You need to pick these items from {count} different locations within {city}",
+    },
     pickupInfo: {
       fi: "Sinun tulee noutaa tuotteet seuraavista sijainneista:",
       en: "You will need to pick up items from the following locations:",
+    },
+    sameCityPickupInfo: {
+      fi: "Nämä tuotteet ovat saatavilla useista paikoista samassa kaupungissa. Saatat joutua käymään jokaisessa paikassa erikseen.",
+      en: "These items are available from multiple locations within the same city. You may need to visit each location separately.",
     },
 
     itemCount: {
