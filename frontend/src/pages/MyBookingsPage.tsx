@@ -673,7 +673,17 @@ const MyBookingsPage = () => {
 
         <div className="space-y-4">
           {/* Booking details */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            {/* Booking Dates and Date Picker */}
+
+            <div className="mb-4">
+              <h3 className="font-semibold text-md mb-1">
+                {t.myBookingsPage.headings.bookingDates[lang]}
+              </h3>
+              <div>
+                <div className="text-sm">{timeframeDisplay}</div>
+              </div>
+            </div>
             <div>
               <h3 className="font-semibold text-md mb-1">
                 {t.myBookingsPage.bookingDetails.bookingInfo[lang]}
@@ -687,35 +697,22 @@ const MyBookingsPage = () => {
                 {formatDate(booking.created_at, "d MMM yyyy")}
               </p>
             </div>
-            <div className="mb-4">
-              <h3 className="font-semibold text-md mb-1">
-                {t.myBookingsPage.headings.bookingDates[lang]}
-              </h3>
-              <div>
-                {showEdit && allItemsPending ? (
-                  <InlineTimeframePicker
-                    startDate={
-                      globalStartDate ? new Date(globalStartDate) : null
-                    }
-                    endDate={globalEndDate ? new Date(globalEndDate) : null}
-                    onChange={(type, date) => {
-                      if (type === "start") {
-                        setGlobalStartDate(date ? date.toISOString() : null);
-                        return;
-                      }
-                      _setGlobalEndDate(date ? date.toISOString() : null);
-                    }}
-                  />
-                ) : (
-                  <div className="text-sm">{timeframeDisplay}</div>
-                )}
-              </div>
-            </div>
+            {showEdit && allItemsPending && (
+              <InlineTimeframePicker
+                startDate={globalStartDate ? new Date(globalStartDate) : null}
+                endDate={globalEndDate ? new Date(globalEndDate) : null}
+                onChange={(type, date) => {
+                  if (type === "start") {
+                    setGlobalStartDate(date ? date.toISOString() : null);
+                    return;
+                  }
+                  _setGlobalEndDate(date ? date.toISOString() : null);
+                }}
+              />
+            )}
           </div>
 
           <div>
-            {/* Booking Dates and Date Picker */}
-
             {/* Booking Items */}
             {loading || _loadingAvailability ? (
               <Spinner containerClasses="py-8" />
