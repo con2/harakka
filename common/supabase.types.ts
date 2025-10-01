@@ -853,6 +853,7 @@ export type Database = {
           is_deleted: boolean | null
           location_id: string
           org_id: string
+          placement_description: string
           quantity: number
           translations: Json | null
           updated_at: string | null
@@ -868,6 +869,7 @@ export type Database = {
           is_deleted?: boolean | null
           location_id: string
           org_id: string
+          placement_description?: string
           quantity: number
           translations?: Json | null
           updated_at?: string | null
@@ -883,6 +885,7 @@ export type Database = {
           is_deleted?: boolean | null
           location_id?: string
           org_id?: string
+          placement_description?: string
           quantity?: number
           translations?: Json | null
           updated_at?: string | null
@@ -1493,6 +1496,7 @@ export type Database = {
           location_id: string | null
           location_name: string | null
           organization_id: string | null
+          placement_description: string | null
           quantity: number | null
           tag_ids: string[] | null
           tag_translations: Json[] | null

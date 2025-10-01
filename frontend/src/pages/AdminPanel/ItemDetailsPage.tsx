@@ -58,6 +58,7 @@ const ItemDetailsPage = () => {
     },
     quantity: (selectedItem as Item)?.quantity ?? 1,
     category_id: selectedItem?.category_id ?? "",
+    placement_description: (selectedItem as Item)?.placement_description || "",
     tags: (selectedTags ?? []).map((tag) => tag.id),
     images: {
       main: mainImg
@@ -156,8 +157,7 @@ const ItemDetailsPage = () => {
       void navigate("/admin/items", {
         state: {
           order: "updated_at",
-          highlight: [0],
-          ascending: false,
+          ascending: true,
         },
       });
     } catch {
