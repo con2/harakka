@@ -191,24 +191,21 @@ const AdminItemsTable = () => {
       maxSize: 200,
       id: "placement_description",
       cell: ({ row }) => {
-        const { placement_description } = row.original;
-        const hasOverflow = placement_description.length >= 60;
+        // Some rows may not have a placement description; guard against undefined/null
+        const placement = row.original.placement_description ?? "";
+        const hasOverflow = placement.length >= 60;
         if (hasOverflow)
           return (
             <Tooltip>
               <TooltipTrigger>
-                <p className="truncate max-w-[200px]">
-                  {placement_description}
-                </p>
+                <p className="truncate max-w-[200px]">{placement}</p>
               </TooltipTrigger>
               <TooltipContent className="max-w-[300px]">
-                {placement_description}
+                {placement}
               </TooltipContent>
             </Tooltip>
           );
-        return (
-          <p className="truncate max-w-[200px]">{placement_description}</p>
-        );
+        return <p className="truncate max-w-[200px]">{placement || "-"}</p>;
       },
     },
     {
