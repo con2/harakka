@@ -42,7 +42,7 @@
     "generate:types:local": "npx supabase gen types typescript --local > common/supabase.types.ts",
     "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > common/supabase.types.ts",
     "s:login": "npx supabase login",
-    "s:link": "env-cmd -f supabase-local.env npx supabase link",
+    "s:link": "env-cmd -f .env.supabase.local npx supabase link",
     "s:link:prod": "npx @dotenvx/dotenvx run -f supabase/.env.production -- npx supabase link --project-ref rcbddkhvysexkvgqpcud",
     "s:link:dev": "npx @dotenvx/dotenvx run -f supabase/.env.preview -- npx supabase link --project-ref kpqrzaisoyxqillzpbms",
     "s:start": "env-cmd -f .env.supabase.local npx supabase start",
