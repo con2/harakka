@@ -113,6 +113,24 @@ export class OrganizationsService {
   ): Promise<OrganizationRow> {
     const supabase = this.getClient(req);
 
+    // Check if organization exists and get its name
+    const { data: existingOrg, error: fetchError } = await supabase
+      .from("organizations")
+      .select("name")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !existingOrg) {
+      throw new NotFoundException("Organization not found");
+    }
+
+    // Prevent updating Global and High council organizations
+    if (existingOrg.name === "Global" || existingOrg.name === "High council") {
+      throw new BadRequestException(
+        "Cannot update Global or High council organizations",
+      );
+    }
+
     const { data, error } = await supabase
       .from("organizations")
       .update({ ...org, updated_by: req.user.id })
@@ -276,7 +294,7 @@ export class OrganizationsService {
     // check if it exists and is not already deleted
     const { data: org, error: orgError } = await supabase
       .from("organizations")
-      .select("id, is_deleted")
+      .select("id, is_deleted, name")
       .eq("id", id)
       .single();
 
@@ -284,6 +302,13 @@ export class OrganizationsService {
 
     if (org.is_deleted) {
       throw new BadRequestException("Organization is already deleted");
+    }
+
+    // Prevent deletion of Global and High council organizations
+    if (org.name === "Global" || org.name === "High council") {
+      throw new BadRequestException(
+        "Cannot delete Global or High council organizations",
+      );
     }
 
     // and soft-delete
