@@ -6,14 +6,42 @@ This guide covers setting up the Supabase CLI for team development, including in
 
 ## Table of contents
 
-1. [Sources](#sources)
-2. [Prerequisites](#prerequisites)
-3. Installation
-   - [Docker](#docker-installation)
-   - [Supabase CLI](#cli-installation)
-4. [Commands](#commands)
-5. [Project setup](#project-setup)
-6. [Local Development](#local-development)
+- [Sources](#sources)
+- [Prerequisites](#prerequisites)
+- [Docker Installation](#docker-installation)
+- [CLI Installation](#cli-installation)
+  - [Option 1: Using Homebrew (macOS/Linux - Recommended)](#option-1-using-homebrew-macoslinux---recommended)
+  - [Option 2: Using npx (Cross-platform)](#option-2-using-npx-cross-platform)
+  - [Option 3: Direct Download](#option-3-direct-download)
+  - [Verify Installation](#verify-installation)
+- [Environment Files](#environment-files)
+  - [Script ↔ Env Matrix](#script--env-matrix)
+- [Secrets & Encryption](#secrets--encryption)
+- [Commands](#commands)
+  - [Available npm scripts](#available-npm-scripts)
+    - [Core Development](#core-development)
+    - [Supabase Management](#supabase-management)
+    - [Database Operations](#database-operations)
+- [Project Setup](#project-setup)
+  - [Login with Supabase](#login-with-supabase)
+  - [Linking & Project Refs](#linking--project-refs)
+  - [Production(main)](#productionmain)
+  - [Persistent Branch(develop)](#persistent-branchdevelop)
+  - [Start Container](#start-container)
+  - [(Optional)Create/refresh seed data](#optionalcreaterefresh-seed-data)
+- [Local Development](#local-development)
+  - [View changes locally](#view-changes-locally)
+  - [Migrations & Types](#migrations--types)
+    - [Creating a Migration](#creating-a-migration)
+    - [Branching & GitHub Integration](#branching--github-integration)
+- [Troubleshooting](#troubleshooting)
+  - [Workflow failed or branch out of sync](#workflow-failed-or-branch-out-of-sync)
+  - [Error message when trying to run supabase db reset](#error-message-when-trying-to-run-supabase-db-reset)
+  - [Error response from daemon](#error-response-from-daemon)
+  - [Migrations](#migrations)
+  - [Linking](#linking)
+- [Useful Scripts](#useful-scripts)
+- [Do Not Use](#do-not-use)
 
 ## Sources
 
@@ -170,24 +198,57 @@ To find out more about **any command** run `npx supabase [command] --help` and t
 
 ## Project Setup
 
-1. **Login with Supabase**  
-   Run and follow terminal instructions: `supabase login` (Homebrew install) or `npx supabase login`.
+### Login with Supabase
 
-2. **Link the project**  
-   Use our scripts for the correct project:
-   - Production (main): `npm run s:link:prod`
-   - Develop/persistent preview: `npm run s:link:dev`
+Homebrew
 
-3. **Optional: Create/refresh seed data**  
-   If you need seed data: `npm run s:seed:main`
+```bash
+supabase login # (Homebrew install)
+```
 
-4. **Start the containers**
+Global
 
-   `npx supabase start` or `npm run s:start`
+```bash
+npx supabase login
+```
 
-   After starting up the containers, you can visit the [studio](http://127.0.0.1:54323) to get a comprehensive overview of the local instance
+### Linking & Project Refs
 
-   ![Supabase Studio Screenshot](https://supabase.com/docs/img/guides/cli/local-studio.png)
+### Production(main)
+
+Project ref: `rcbddkhvysexkvgqpcud`
+Script:
+
+```bash
+npm run s:link:prod
+```
+
+### Persistent Branch(develop)
+
+Project ref: `kpqrzaisoyxqillzpbms`
+Script:
+
+```bash
+npm run s:link:dev
+```
+
+### Start Container
+
+```bash
+npm run s:start
+## Or
+supabase start # Add npx in front if using global
+
+```
+
+### (Optional)Create/refresh seed data
+
+If you want to start your local database with seed data from production you can run:
+
+```bash
+npm run s:seed:main
+npm run s:reset
+```
 
 ## Local Development
 
@@ -216,5 +277,120 @@ This will apply your new migration and you will be able to see it in the [studio
 
 ### Migrations & Types
 
-- Creating migrations, applying them, and CI workflow: see [Migrations](supabase-index.md#migrations).
-- Regenerating types from local/remote: see [Supabase Useful Scripts](supabase-index.md#useful-scripts)
+#### Creating a Migration
+
+Create a new migration with a descriptive, underscore‑separated name:
+
+```bash
+npm run s:migration:new my_feature_or_fix_name
+```
+
+This creates a new file under `supabase/migrations/`. Add your SQL there. To validate locally, rebuild your local DB:
+
+```bash
+npm run s:reset
+```
+
+If needed, regenerate local types for the app:
+
+```bash
+npm run generate:types:local
+```
+
+#### Branching & GitHub Integration
+
+- Our Supabase project is set up with Branching. Changes to the `supabase/` folder in a PR trigger the Supabase workflow (provided by Supabase, not custom).
+- Typical flow:
+  - Commit your migration(s) under `supabase/migrations/`.
+  - Open a PR on GitHub. Ensure the Supabase workflow/checks pass.
+  - If `supabase db reset` works locally without issues, it’s a good indicator the workflow will succeed.
+  - Merge into `develop` when the workflow passes. The persistent `develop` Supabase branch is updated with the new SQL.
+  - Later, changes are merged to `main` for production. Our `main` Supabase branch mirrors the GitHub `main` branch.
+
+Important: We do not run manual pushes. Do not use `supabase db push` or any `s:db:push...` scripts for schema. Let the GitHub integration apply migrations.
+
+## Troubleshooting
+
+### Workflow failed or branch out of sync
+
+Reset the branch in the [Supabase UI](https://supabase.com/dashboard/project/rcbddkhvysexkvgqpcud/branches), then the migrations should run properly.
+
+### Error message when trying to run supabase db reset
+
+Sometimes you will get odd errors about connections failing when doing a `db reset`, If this happens restart your local supabase instance and try to **reset** again.
+
+```bash
+supabase stop && supabase start
+# or
+npm run s:restart
+```
+
+### Error response from daemon
+
+Sometimes if you are switching back and forth between using `npm run s:` commands and `supabase`commands, you will get an error about the port being allocated already. If this happens try stopping the container that it suggests
+
+```bash
+npx supabase stop --project-id <project-id>
+# or
+supabase stop --project-id <project-id>
+```
+
+If this does not help you might need to delete all of your supabase containers before starting the server again.
+**Warning:** This will remove all data from your current local containers.
+
+```bash
+npm run s:stop
+# or
+supabase stop
+
+docker volume ls --filter "name=supabase" -q | xargs -r docker volume rm
+# Then start your local supabase again with your prefered command
+```
+
+### Migrations
+
+**Warning** Never edit previously merged migration files.
+
+Migrations are read from top-to-bottom. If something needs changing, create a new migration to fix/adjust prior work. Editing old migrations after a PR is opened or merged can break the branching workflow.
+
+### Linking
+
+If the CLI complains about linking just run:
+
+```bash
+npm run s:link:prod
+## or
+supabase link --project-ref rcbddkhvysexkvgqpcud
+```
+
+## Useful Scripts
+
+- Start/restart/status/studio
+
+```bash
+npm run s:start
+npm run s:restart
+npm run s:status
+npm run s:studio
+```
+
+- Migrations
+
+```bash
+npm run s:migration:new my_change
+npm run s:reset
+```
+
+- Types
+
+```bash
+npm run generate:types:local
+npm run generate:types # Generates the types from the supabase main branch
+```
+
+## Do Not Use
+
+- `supabase db push`
+- `npm run s:db:push:prod` / `npm run s:db:push:preview`
+
+These are not part of our branching workflow. Always rely on the GitHub integration to apply migrations.
